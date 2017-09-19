@@ -1,5 +1,143 @@
-apply plugin: 'java'
+plugins {
+  id 'java-gradle-plugin'
+  id 'maven'
+  id 'checkstyle'
+  id 'com.github.sherter.google-java-format' version '0.6'
+  id 'net.researchgate.release' version '2.6.0'
+}
+
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+  compile gradleApi()
+  testCompile 'junit:junit:4.11'
+  testCompile 'org.apache.commons:commons-lang3:3.6'
+  testCompile 'org.mockito:mockito-core:2.+'
+}
 
 task wrapper(type: Wrapper) {
-  gradleVersion = '4.0'
+  gradleVersion = "4.1"
 }
+
+group = 'com.google.cloud.tools'
+version = '1.0.0-SNAPSHOT'
+
+jar {
+  manifest {
+    attributes 'Implementation-Title': project.name,
+        'Implementation-Version': version,
+        'Built-By': System.getProperty('user.name'),
+        'Built-Date': new Date(),
+        'Built-JDK': System.getProperty('java.version'),
+        'Built-Gradle': gradle.gradleVersion
+  }
+}
+
+test {
+  testLogging {
+    showStandardStreams = true
+    exceptionFormat = 'full'
+  }
+}
+
+
+/* GOOGLE JAVA FORMAT */
+check.dependsOn verifyGoogleJavaFormat
+/* GOOGLE JAVA FORMAT */
+
+
+/* CHECKSTYLE */
+checkstyle {
+  toolVersion = "7.6.1"
+
+  // get the google_checks.xml file from the checkstyle jar and take out the java checks
+  def googleChecks = resources.text.fromArchiveEntry(configurations.checkstyle[0], 'google_checks.xml').asString()
+  def fileExtensionsBefore = '<property name="fileExtensions" value="java, properties, xml"/>'
+  def fileExtensionsAfter = '<property name="fileExtensions" value="properties, xml"/>'
+  def googleChecksNoJava = googleChecks.replace(fileExtensionsBefore, fileExtensionsAfter)
+  assert !googleChecks.equals(googleChecksNoJava)
+
+  config = resources.text.fromString(googleChecksNoJava)
+
+  maxErrors = 0
+  maxWarnings = 0
+}
+/* CHECKSTYLE */
+
+/* RELEASE */
+task sourceJar(type: Jar) {
+  from sourceSets.main.allJava
+  classifier 'sources'
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+  from javadoc.destinationDir
+  classifier = 'javadoc'
+}
+
+task writePom {
+  project.afterEvaluate {
+    def outputFile = file("$buildDir/pom/${project.name}-${project.version}.pom")
+    outputs.file outputFile
+
+    doLast {
+      pom {
+        project {
+          name 'Minikube Gradle Plugin'
+          description 'This Gradle plugin provides tasks to manage a Minikube lifecycle'
+          url 'https://github.com/GoogleCloudPlatform/minikube-build-tools-for-java'
+          inceptionYear '2017'
+
+          scm {
+            url 'https://github.com/GoogleCloudPlatform/minikube-build-tools-for-java'
+            connection 'scm:https://github.com/GoogleCloudPlatform/minikube-build-tools-for-java.git'
+            developerConnection 'scm:git://github.com/GoogleCloudPlatform/minikube-build-tools-for-java.git'
+          }
+
+          licenses {
+            license {
+              name 'The Apache Software License, Version 2.0'
+              url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+              distribution 'repo'
+            }
+          }
+
+          developers {
+            developer {
+              id 'loosebazooka'
+              name 'Appu Goundan'
+              email 'appu@google.com'
+            }
+          }
+        }
+      }.writeTo(outputFile)
+    }
+  }
+}
+
+// this is for kokoro sign and releases
+task prepareRelease(type: Copy) {
+  from jar
+  from sourceJar
+  from javadocJar
+  from writePom
+
+  into "${buildDir}/release-artifacts"
+
+  dependsOn build
+  dependsOn cleanPrepareRelease
+}
+
+// Release plugin (git release commits and version updates)
+release {
+  tagTemplate = 'v$version'
+  git {
+    requireBranch = /^release_v\d+.*$/  //regex
+  }
+}
+/* RELEASE */
