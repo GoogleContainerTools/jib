@@ -1,7 +1,7 @@
 plugins {
   id 'java-gradle-plugin'
-  id 'maven'
   id 'checkstyle'
+  id 'com.gradle.plugin-publish' version '0.9.7'
   id 'com.github.sherter.google-java-format' version '0.6'
   id 'net.researchgate.release' version '2.6.0'
 }
@@ -10,7 +10,8 @@ sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
 
 repositories {
-    mavenCentral()
+  // use jcenter for gradle plugin portal releases.
+  jcenter()
 }
 
 dependencies {
@@ -25,7 +26,6 @@ task wrapper(type: Wrapper) {
 }
 
 group = 'com.google.cloud.tools'
-version = '1.0.0-SNAPSHOT'
 
 jar {
   manifest {
@@ -70,67 +70,19 @@ checkstyle {
 /* CHECKSTYLE */
 
 /* RELEASE */
-task sourceJar(type: Jar) {
-  from sourceSets.main.allJava
-  classifier 'sources'
-}
+// gradle plugin portal releases
+pluginBundle {
+  website = 'https://github.com/GoogleCloudPlatform/minikube-build-tools-for-java/'
+  vcsUrl = 'https://github.com/GoogleCloudPlatform/minikube-build-tools-for-java/'
 
-task javadocJar(type: Jar, dependsOn: javadoc) {
-  from javadoc.destinationDir
-  classifier = 'javadoc'
-}
-
-task writePom {
-  project.afterEvaluate {
-    def outputFile = file("$buildDir/pom/${project.name}-${project.version}.pom")
-    outputs.file outputFile
-
-    doLast {
-      pom {
-        project {
-          name 'Minikube Gradle Plugin'
-          description 'This Gradle plugin provides tasks to manage a Minikube lifecycle'
-          url 'https://github.com/GoogleCloudPlatform/minikube-build-tools-for-java'
-          inceptionYear '2017'
-
-          scm {
-            url 'https://github.com/GoogleCloudPlatform/minikube-build-tools-for-java'
-            connection 'scm:https://github.com/GoogleCloudPlatform/minikube-build-tools-for-java.git'
-            developerConnection 'scm:git://github.com/GoogleCloudPlatform/minikube-build-tools-for-java.git'
-          }
-
-          licenses {
-            license {
-              name 'The Apache Software License, Version 2.0'
-              url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-              distribution 'repo'
-            }
-          }
-
-          developers {
-            developer {
-              id 'loosebazooka'
-              name 'Appu Goundan'
-              email 'appu@google.com'
-            }
-          }
-        }
-      }.writeTo(outputFile)
+  plugins {
+    minikubePlugin {
+      id = 'com.google.cloud.tools.minikube'
+      displayName = 'Gradle Minikube plugin'
+      description = 'A plugin to manage the minikube lifecycle in a gradle project'
+      tags = ['google', 'minikube']
     }
   }
-}
-
-// this is for kokoro sign and releases
-task prepareRelease(type: Copy) {
-  from jar
-  from sourceJar
-  from javadocJar
-  from writePom
-
-  into "${buildDir}/release-artifacts"
-
-  dependsOn build
-  dependsOn cleanPrepareRelease
 }
 
 // Release plugin (git release commits and version updates)
