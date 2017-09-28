@@ -1,6 +1,8 @@
 Minikube Gradle Plugin
 ======================
 
+Now available on [gradle plugin portal](https://plugins.gradle.org/plugin/com.google.cloud.tools.minikube).
+
 This plugin provides tasks and configuration to manage a minikube lifecycle for gradle developers.
 
 It exposes the following tasks
