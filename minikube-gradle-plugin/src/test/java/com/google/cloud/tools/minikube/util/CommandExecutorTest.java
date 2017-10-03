@@ -21,7 +21,9 @@ import static org.mockito.Mockito.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.apache.tools.ant.filters.StringInputStream;
@@ -69,6 +71,36 @@ public class CommandExecutorTest {
 
     // Verifies the process building and output reading is correct.
     verifyProcessBuilding(command);
+    Assert.assertEquals(expectedOutput, output);
+
+    verifyZeroInteractions(loggerMock);
+  }
+
+  @Test
+  public void testRunCommandWithEnvironmentVariables() throws IOException, InterruptedException {
+    List<String> environmentStrings =
+        Arrays.asList("SOME_VARIABLE_1=SOME_VALUE_1", "SOME_VARIABLE_2=SOME_VALUE_2");
+    List<String> command = Arrays.asList("someCommand", "someOption");
+    List<String> expectedOutput = Arrays.asList("some output line 1", "some output line 2");
+
+    // Converts the environment into key-value pairs.
+    Map<String, String> expectedEnvironment = MinikubeDockerEnvParser.parse(environmentStrings);
+
+    // Mocks the environment for the processBuilderMock to put the environment map in.
+    Map<String, String> processEnvironment = new HashMap<>();
+    when(processBuilderMock.environment()).thenReturn(processEnvironment);
+
+    setProcessMockOutput(expectedOutput);
+
+    List<String> output =
+        new CommandExecutor()
+            .setEnvironment(expectedEnvironment)
+            .setProcessBuilderFactory(processBuilderFactoryMock)
+            .run(command);
+
+    verifyProcessBuilding(command);
+    verify(processBuilderMock).environment();
+    Assert.assertEquals(expectedEnvironment, processEnvironment);
     Assert.assertEquals(expectedOutput, output);
 
     verifyZeroInteractions(loggerMock);

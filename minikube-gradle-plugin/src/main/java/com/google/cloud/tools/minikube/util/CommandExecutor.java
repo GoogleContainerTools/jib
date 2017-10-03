@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -29,15 +30,21 @@ import org.gradle.api.logging.Logger;
 
 /** Executes a shell command. */
 public class CommandExecutor {
-  public CommandExecutor() {}
 
+  // @VisibleForTesting
+  static final int TIMEOUT_SECONDS = 5;
+
+  /** Sets the {@code Logger} to use to log messages during the command execution. */
   public CommandExecutor setLogger(Logger logger) {
     this.logger = logger;
     return this;
   }
 
-  // @VisibleForTesting
-  static final int TIMEOUT_SECONDS = 5;
+  /** Sets the environment variables to run the command with. */
+  public CommandExecutor setEnvironment(Map<String, String> environmentMap) {
+    this.environment = environmentMap;
+    return this;
+  }
 
   // @VisibleForTesting
   static class ProcessBuilderFactory {
@@ -68,6 +75,7 @@ public class CommandExecutor {
   private ProcessBuilderFactory processBuilderFactory = new ProcessBuilderFactory();
   private ExecutorServiceFactory executorServiceFactory = new ExecutorServiceFactory();
   private Logger logger;
+  private Map<String, String> environment;
 
   /**
    * Runs the command.
@@ -87,6 +95,9 @@ public class CommandExecutor {
     ProcessBuilder processBuilder = processBuilderFactory.createProcessBuilder();
     processBuilder.command(command);
     processBuilder.redirectErrorStream(true);
+    if (environment != null) {
+      processBuilder.environment().putAll(environment);
+    }
     final Process process = processBuilder.start();
 
     // Runs the command and streams the output.
