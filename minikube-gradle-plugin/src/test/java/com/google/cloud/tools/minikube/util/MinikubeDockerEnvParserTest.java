@@ -47,7 +47,9 @@ public class MinikubeDockerEnvParserTest {
       MinikubeDockerEnvParser.parse(keyValueStrings);
       Assert.fail("Expected an IllegalArgumentException to be thrown");
     } catch (IllegalArgumentException ex) {
-      Assert.assertEquals("Environment variable name cannot be empty", ex.getMessage());
+      Assert.assertEquals(
+          "Error while parsing minikube's Docker environment: encountered empty environment variable name",
+          ex.getMessage());
     }
   }
 
@@ -61,7 +63,8 @@ public class MinikubeDockerEnvParserTest {
       Assert.fail("Expected an IllegalArgumentException to be thrown");
     } catch (IllegalArgumentException ex) {
       Assert.assertEquals(
-          "Environment variable string must be in KEY=VALUE format", ex.getMessage());
+          "Error while parsing minikube's Docker environment: environment variable string not in KEY=VALUE format",
+          ex.getMessage());
     }
   }
 }

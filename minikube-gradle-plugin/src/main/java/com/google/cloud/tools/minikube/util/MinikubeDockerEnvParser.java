@@ -39,10 +39,11 @@ public class MinikubeDockerEnvParser {
 
       if (keyValuePair.length < 2) {
         throw new IllegalArgumentException(
-            "Environment variable string must be in KEY=VALUE format");
+            "Error while parsing minikube's Docker environment: environment variable string not in KEY=VALUE format");
       }
       if (keyValuePair[0].length() == 0) {
-        throw new IllegalArgumentException("Environment variable name cannot be empty");
+        throw new IllegalArgumentException(
+            "Error while parsing minikube's Docker environment: encountered empty environment variable name");
       }
 
       environmentMap.put(keyValuePair[0], keyValuePair[1]);
