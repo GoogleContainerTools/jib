@@ -22,13 +22,10 @@ import org.gradle.api.provider.PropertyState;
 /** Minikube configuration extension. */
 public class MinikubeExtension {
   private final PropertyState<String> minikube;
-  private final PropertyState<String> docker;
 
   public MinikubeExtension(Project project) {
     minikube = project.property(String.class);
-    docker = project.property(String.class);
     setMinikube("minikube");
-    setDocker("docker");
   }
 
   public String getMinikube() {
@@ -41,17 +38,5 @@ public class MinikubeExtension {
 
   public PropertyState<String> getMinikubeProvider() {
     return minikube;
-  }
-
-  public String getDocker() {
-    return docker.get();
-  }
-
-  public void setDocker(String docker) {
-    this.docker.set(docker);
-  }
-
-  public PropertyState<String> getDockerProvider() {
-    return docker;
   }
 }
