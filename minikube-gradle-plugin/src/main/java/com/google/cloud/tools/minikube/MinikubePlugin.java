@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.minikube;
 
+import com.google.cloud.tools.minikube.util.CommandExecutorFactory;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 
@@ -28,17 +29,19 @@ public class MinikubePlugin implements Plugin<Project> {
   @Override
   public void apply(Project project) {
     this.project = project;
+    CommandExecutorFactory commandExecutorFactory = new CommandExecutorFactory(project.getLogger());
 
-    createMinikubeExtension();
+    createMinikubeExtension(commandExecutorFactory);
 
-    configureMinikubeTaskAdditionCallback();
+    configureMinikubeTaskAdditionCallback(commandExecutorFactory);
     createMinikubeStartTask();
     createMinikubeStopTask();
     createMinikubeDeleteTask();
   }
 
   // Configure tasks as they are added. This allows us to configure our own AND any user configured tasks.
-  private void configureMinikubeTaskAdditionCallback() {
+  private void configureMinikubeTaskAdditionCallback(
+      CommandExecutorFactory commandExecutorFactory) {
     project
         .getTasks()
         .withType(MinikubeTask.class)
@@ -46,12 +49,15 @@ public class MinikubePlugin implements Plugin<Project> {
             task -> {
               task.setMinikube(minikubeExtension.getMinikubeProvider());
               task.setGroup(MINIKUBE_GROUP);
+              task.setCommandExecutorFactory(commandExecutorFactory);
             });
   }
 
-  private void createMinikubeExtension() {
+  private void createMinikubeExtension(CommandExecutorFactory commandExecutorFactory) {
     minikubeExtension =
-        project.getExtensions().create("minikube", MinikubeExtension.class, project);
+        project
+            .getExtensions()
+            .create("minikube", MinikubeExtension.class, project, commandExecutorFactory);
   }
 
   private void createMinikubeStartTask() {
