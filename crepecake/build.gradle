@@ -1,0 +1,53 @@
+plugins {
+    id 'java-gradle-plugin'
+    id 'checkstyle'
+    id 'com.github.sherter.google-java-format' version '0.6'
+}
+
+group 'com.google.cloud.tools'
+
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile gradleApi()
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.mockito:mockito-core:2.12.0'
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = "4.3.1"
+}
+
+test {
+    testLogging {
+        showStandardStreams = true
+        exceptionFormat = 'full'
+    }
+}
+
+/* GOOGLE JAVA FORMAT */
+check.dependsOn verifyGoogleJavaFormat
+/* GOOGLE JAVA FORMAT */
+
+/* CHECKSTYLE */
+checkstyle {
+    toolVersion = "7.6.1"
+
+    // get the google_checks.xml file from the checkstyle jar and take out the java checks
+    def googleChecks = resources.text.fromArchiveEntry(configurations.checkstyle[0], 'google_checks.xml').asString()
+    def fileExtensionsBefore = '<property name="fileExtensions" value="java, properties, xml"/>'
+    def fileExtensionsAfter = '<property name="fileExtensions" value="properties, xml"/>'
+    def googleChecksNoJava = googleChecks.replace(fileExtensionsBefore, fileExtensionsAfter)
+    assert !googleChecks.equals(googleChecksNoJava)
+
+    config = resources.text.fromString(googleChecksNoJava)
+
+    maxErrors = 0
+    maxWarnings = 0
+}
+/* CHECKSTYLE */
