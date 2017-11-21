@@ -19,7 +19,6 @@ package com.google.cloud.tools.crepecake.image;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 /** Tests for {@link Digest}. */
