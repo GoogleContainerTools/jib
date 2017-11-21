@@ -33,7 +33,7 @@ public class BlobStream {
 
   /** Initializes with the contents of the input blob. */
   public BlobStream(InputStream inputStream) throws IOException {
-    byteArrayOutputStream = new ByteArrayOutputStream(0);
+    byteArrayOutputStream = new ByteArrayOutputStream();
     ByteStreams.copy(inputStream, byteArrayOutputStream);
   }
 
