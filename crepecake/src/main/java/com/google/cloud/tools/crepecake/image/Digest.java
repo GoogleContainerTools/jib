@@ -81,7 +81,7 @@ public class Digest {
   @Override
   public boolean equals(Object obj) {
     if (obj instanceof Digest) {
-      return digest.equals(Digest.class.cast(obj).digest);
+      return digest.equals(((Digest) obj).digest);
     }
 
     return false;
