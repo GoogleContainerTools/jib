@@ -14,21 +14,21 @@
  * the License.
  */
 
-package com.google.cloud.tools.crepecake.stream;
+package com.google.cloud.tools.crepecake.blob;
 
 import java.io.*;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** Tests for {@link ContentStream} */
-public class ContentStreamTest {
+/** Tests for {@link BlobStream} */
+public class BlobStreamTest {
 
   @Test
   public void testEmpty() throws IOException {
     OutputStream outputStream = new ByteArrayOutputStream();
 
-    ContentStream contentStream = new ContentStream();
-    contentStream.writeTo(outputStream);
+    BlobStream blobStream = new BlobStream();
+    blobStream.writeTo(outputStream);
 
     String output = outputStream.toString();
 
@@ -42,8 +42,8 @@ public class ContentStreamTest {
     InputStream inputStream = new ByteArrayInputStream(expected.getBytes());
     OutputStream outputStream = new ByteArrayOutputStream();
 
-    ContentStream contentStream = new ContentStream(inputStream);
-    contentStream.writeTo(outputStream);
+    BlobStream blobStream = new BlobStream(inputStream);
+    blobStream.writeTo(outputStream);
 
     String output = outputStream.toString();
 
@@ -56,8 +56,8 @@ public class ContentStreamTest {
 
     OutputStream outputStream = new ByteArrayOutputStream();
 
-    ContentStream contentStream = new ContentStream(expected);
-    contentStream.writeTo(outputStream);
+    BlobStream blobStream = new BlobStream(expected);
+    blobStream.writeTo(outputStream);
 
     String output = outputStream.toString();
 

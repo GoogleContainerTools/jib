@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.crepecake.stream;
+package com.google.cloud.tools.crepecake.blob;
 
 import com.google.common.io.ByteStreams;
 import java.io.ByteArrayOutputStream;
@@ -23,22 +23,22 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 /** A read-only {@link OutputStream} for BLOBs. */
-public class ContentStream {
+public class BlobStream {
   private final ByteArrayOutputStream byteArrayOutputStream;
 
   /** Initializes an empty BLOB. */
-  public ContentStream() {
+  public BlobStream() {
     byteArrayOutputStream = new ByteArrayOutputStream(0);
   }
 
-  /** Initializes with the contents of the input stream. */
-  public ContentStream(InputStream inputStream) throws IOException {
+  /** Initializes with the contents of the input blob. */
+  public BlobStream(InputStream inputStream) throws IOException {
     byteArrayOutputStream = new ByteArrayOutputStream(0);
     ByteStreams.copy(inputStream, byteArrayOutputStream);
   }
 
   /** Initializes with a string. */
-  public ContentStream(String content) throws IOException {
+  public BlobStream(String content) throws IOException {
     final byte[] contentBytes = content.getBytes();
     byteArrayOutputStream = new ByteArrayOutputStream(contentBytes.length);
     byteArrayOutputStream.write(contentBytes);
