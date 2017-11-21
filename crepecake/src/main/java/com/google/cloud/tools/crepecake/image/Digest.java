@@ -41,7 +41,7 @@ public class Digest {
   /** Creates a new instance from a valid hash string. */
   public static Digest fromHash(String hash) throws DigestException {
     if (!hash.matches(HASH_PATTERN)) {
-      throwInvalidHash(hash);
+      throw new DigestException("Invalid hash: " + hash);
     }
 
     String digest = "sha256:" + hash;
@@ -51,12 +51,12 @@ public class Digest {
   /** Creates a new instance from a valid digest string. */
   public static Digest fromDigest(String digest) throws DigestException {
     if (!digest.matches(DIGEST_PATTERN)) {
-      throwInvalidDigest(digest);
+      throw new DigestException("Invalid digest: " + digest);
     }
 
     Matcher matcher = HashPattern.matcher(digest);
     if (!matcher.find()) {
-      throwInvalidDigest(digest);
+      throw new DigestException("Invalid digest: " + digest);
     }
 
     String hash = matcher.group(0);
@@ -85,14 +85,6 @@ public class Digest {
     }
 
     return false;
-  }
-
-  private static void throwInvalidHash(String hash) throws DigestException {
-    throw new DigestException("Invalid hash: " + hash);
-  }
-
-  private static void throwInvalidDigest(String digest) throws DigestException {
-    throw new DigestException("Invalid digest: " + digest);
   }
 
   private Digest(String digest, String hash) {
