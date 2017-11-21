@@ -25,9 +25,6 @@ import org.junit.Test;
 /** Tests for {@link Digest}. */
 public class DigestTest {
 
-  @Before
-  public void setUp() {}
-
   @Test
   public void testCreateFromHash_pass() throws DigestException {
     final String goodHash = createGoodHash('a');
