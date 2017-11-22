@@ -18,19 +18,46 @@ package com.google.cloud.tools.crepecake.image;
 
 import com.google.cloud.tools.crepecake.blob.BlobStream;
 
+import javax.annotation.Nullable;
+import javax.annotation.RegEx;
+import java.util.Optional;
+
 /** Represents a layer in an image. */
-public class Layer extends AbstractBlob {
+public class Layer {
+
+  @Nullable
+  private final BlobStream content;
+
+  private final Digest digest;
+  private final int size;
 
   /** The digest of the uncompressed layer content. */
   private final Digest diffId;
 
   public Layer(Digest digest, int size, Digest diffId) {
-    super(digest, size);
-    this.diffId = diffId;
+    this(digest, size, diffId, null);
   }
 
   public Layer(Digest digest, int size, Digest diffId, BlobStream content) {
-    super(digest, size, content);
+    this.digest = digest;
+    this.size = size;
     this.diffId = diffId;
+    this.content = content;
+  }
+
+  public boolean hasContent() {
+    return content != null;
+  }
+
+  public Digest getDigest() {
+    return digest;
+  }
+
+  public int getSize() {
+    return size;
+  }
+
+  public BlobStream getContent() {
+    return content;
   }
 }
