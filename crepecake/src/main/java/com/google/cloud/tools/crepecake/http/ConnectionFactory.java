@@ -23,7 +23,7 @@ import java.net.URL;
 class ConnectionFactory {
 
   /** Opens a connection to a URL. */
-  public HttpURLConnection newConnection(URL url) throws IOException {
+  HttpURLConnection newConnection(URL url) throws IOException {
     return (HttpURLConnection) url.openConnection();
   }
 }
