@@ -28,7 +28,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
-public class HttpResponseTest {
+public class ResponseTest {
 
   @Mock private HttpURLConnection httpUrlConnectionMock;
 
@@ -46,8 +46,8 @@ public class HttpResponseTest {
     Mockito.when(httpUrlConnectionMock.getResponseCode()).thenReturn(HttpURLConnection.HTTP_OK);
     Mockito.when(httpUrlConnectionMock.getInputStream()).thenReturn(responseInputStream);
 
-    HttpResponse httpResponse = new HttpResponse(httpUrlConnectionMock);
-    BlobStream responseStream = httpResponse.getContent();
+    Response response = new Response(httpUrlConnectionMock);
+    BlobStream responseStream = response.getContent();
 
     ByteArrayOutputStream responseOutputStream = new ByteArrayOutputStream();
     responseStream.writeTo(responseOutputStream);
@@ -65,8 +65,8 @@ public class HttpResponseTest {
         .thenReturn(HttpURLConnection.HTTP_BAD_REQUEST);
     Mockito.when(httpUrlConnectionMock.getErrorStream()).thenReturn(responseErrorStream);
 
-    HttpResponse httpResponse = new HttpResponse(httpUrlConnectionMock);
-    BlobStream responseStream = httpResponse.getContent();
+    Response response = new Response(httpUrlConnectionMock);
+    BlobStream responseStream = response.getContent();
 
     ByteArrayOutputStream responseOutputStream = new ByteArrayOutputStream();
     responseStream.writeTo(responseOutputStream);

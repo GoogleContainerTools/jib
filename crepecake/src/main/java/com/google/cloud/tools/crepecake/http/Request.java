@@ -28,7 +28,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /** Sends an HTTP request. */
-public class HttpRequest {
+public class Request {
 
   private static class HttpMethod {
     private static final String PUT = "PUT";
@@ -43,18 +43,18 @@ public class HttpRequest {
 
   private Map<String, String> headers = new HashMap<>();
 
-  public HttpRequest(URL url) {
+  public Request(URL url) {
     this(url, new ConnectionFactory());
   }
 
   @VisibleForTesting
-  HttpRequest(URL url, ConnectionFactory connectionFactory) {
+  Request(URL url, ConnectionFactory connectionFactory) {
     this.url = url;
     this.connectionFactory = connectionFactory;
   }
 
   /** Sends request with body. */
-  public HttpResponse send(BlobStream body) throws IOException {
+  public Response send(BlobStream body) throws IOException {
     HttpURLConnection connection = connectionFactory.newConnection(url);
 
     headers.forEach(connection::setRequestProperty);
@@ -69,25 +69,25 @@ public class HttpRequest {
       }
     }
 
-    return new HttpResponse(connection);
+    return new Response(connection);
   }
 
   /** Sends request without body. */
-  public HttpResponse send() throws IOException {
+  public Response send() throws IOException {
     return send(new BlobStream());
   }
 
-  public HttpRequest setContentType(String contentType) {
+  public Request setContentType(String contentType) {
     headers.put(HttpHeaders.CONTENT_TYPE, contentType);
     return this;
   }
 
-  public HttpRequest setMethodPut() {
+  public Request setMethodPut() {
     method = HttpMethod.PUT;
     return this;
   }
 
-  public HttpRequest setMethodPost() {
+  public Request setMethodPost() {
     method = HttpMethod.POST;
     return this;
   }

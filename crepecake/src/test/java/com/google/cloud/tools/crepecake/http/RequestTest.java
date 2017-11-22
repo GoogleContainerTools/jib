@@ -28,8 +28,8 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
-/** Tests for {@link HttpRequest}. */
-public class HttpRequestTest {
+/** Tests for {@link Request}. */
+public class RequestTest {
 
   @Mock private ConnectionFactory connectionFactoryMock;
   @Mock private HttpURLConnection httpUrlConnectionMock;
@@ -47,17 +47,17 @@ public class HttpRequestTest {
 
   @Test
   public void testSendGet_withoutBody() throws IOException {
-    HttpRequest httpRequest = new HttpRequest(fakeUrl, connectionFactoryMock);
-    httpRequest.send();
+    Request request = new Request(fakeUrl, connectionFactoryMock);
+    request.send();
 
     Mockito.verifyZeroInteractions(httpUrlConnectionMock);
   }
 
   @Test
   public void testSendGet_setContentType() throws IOException {
-    HttpRequest httpRequest = new HttpRequest(fakeUrl, connectionFactoryMock);
-    httpRequest.setContentType("some content type");
-    httpRequest.send();
+    Request request = new Request(fakeUrl, connectionFactoryMock);
+    request.setContentType("some content type");
+    request.send();
 
     Mockito.verify(httpUrlConnectionMock).setRequestProperty("Content-Type", "some content type");
     Mockito.verifyNoMoreInteractions(httpUrlConnectionMock);
@@ -69,10 +69,10 @@ public class HttpRequestTest {
     ByteArrayOutputStream responseStream = new ByteArrayOutputStream();
     Mockito.when(httpUrlConnectionMock.getOutputStream()).thenReturn(responseStream);
 
-    HttpRequest httpRequest = new HttpRequest(fakeUrl, connectionFactoryMock);
-    httpRequest.setMethodPut();
-    httpRequest.setContentType("some content type");
-    httpRequest.send(new BlobStream(requestBody));
+    Request request = new Request(fakeUrl, connectionFactoryMock);
+    request.setMethodPut();
+    request.setContentType("some content type");
+    request.send(new BlobStream(requestBody));
 
     Mockito.verify(httpUrlConnectionMock).setRequestMethod("PUT");
     Mockito.verify(httpUrlConnectionMock).setRequestProperty("Content-Type", "some content type");
@@ -89,10 +89,10 @@ public class HttpRequestTest {
     ByteArrayOutputStream responseStream = new ByteArrayOutputStream();
     Mockito.when(httpUrlConnectionMock.getOutputStream()).thenReturn(responseStream);
 
-    HttpRequest httpRequest = new HttpRequest(fakeUrl, connectionFactoryMock);
-    httpRequest.setMethodPost();
-    httpRequest.setContentType("some content type");
-    httpRequest.send(new BlobStream(requestBody));
+    Request request = new Request(fakeUrl, connectionFactoryMock);
+    request.setMethodPost();
+    request.setContentType("some content type");
+    request.send(new BlobStream(requestBody));
 
     Mockito.verify(httpUrlConnectionMock).setRequestMethod("POST");
     Mockito.verify(httpUrlConnectionMock).setRequestProperty("Content-Type", "some content type");

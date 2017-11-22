@@ -22,11 +22,11 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 
 /** Captures an HTTP response. */
-public class HttpResponse {
+public class Response {
 
   private final HttpURLConnection connection;
 
-  HttpResponse(HttpURLConnection connection) {
+  Response(HttpURLConnection connection) {
     this.connection = connection;
   }
 
