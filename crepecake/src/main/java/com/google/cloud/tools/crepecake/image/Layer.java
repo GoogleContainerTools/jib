@@ -17,16 +17,12 @@
 package com.google.cloud.tools.crepecake.image;
 
 import com.google.cloud.tools.crepecake.blob.BlobStream;
-
 import javax.annotation.Nullable;
-import javax.annotation.RegEx;
-import java.util.Optional;
 
 /** Represents a layer in an image. */
 public class Layer {
 
-  @Nullable
-  private final BlobStream content;
+  @Nullable private final BlobStream content;
 
   private final Digest digest;
   private final int size;
