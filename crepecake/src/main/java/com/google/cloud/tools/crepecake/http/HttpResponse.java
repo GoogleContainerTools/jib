@@ -40,7 +40,7 @@ public class HttpResponse {
 
   public BlobStream getContent() throws IOException {
     InputStream responseStream;
-    if (getResponseCode() >= HttpURLConnection.HTTP_BAD_REQUEST) {
+    if (getResponseCode() < HttpURLConnection.HTTP_BAD_REQUEST) {
       responseStream = connection.getInputStream();
     } else {
       responseStream = connection.getErrorStream();

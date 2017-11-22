@@ -17,6 +17,7 @@
 package com.google.cloud.tools.crepecake.http;
 
 import com.google.cloud.tools.crepecake.blob.BlobStream;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.net.HttpHeaders;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -46,6 +47,7 @@ public class HttpRequest {
     this(url, new ConnectionFactory());
   }
 
+  @VisibleForTesting
   HttpRequest(URL url, ConnectionFactory connectionFactory) {
     this.url = url;
     this.connectionFactory = connectionFactory;
