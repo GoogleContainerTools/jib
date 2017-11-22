@@ -16,60 +16,44 @@
 
 package com.google.cloud.tools.crepecake.http;
 
+import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpHeaders;
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpRequestFactory;
+import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.cloud.tools.crepecake.blob.BlobStream;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.net.HttpHeaders;
+
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
 import javax.annotation.Nullable;
 
 /** Sends an HTTP request. */
 public class Request {
+
+  private static final HttpRequestFactory HTTP_REQUEST_FACTORY = new NetHttpTransport().createRequestFactory();
 
   private static class HttpMethod {
     private static final String PUT = "PUT";
     private static final String POST = "POST";
   }
 
-  private final URL url;
-  private final ConnectionFactory connectionFactory;
+  private final HttpRequest request;
 
   /** The request method; uses GET if null. */
   @Nullable private String method;
 
-  private Map<String, String> headers = new HashMap<>();
+  private HttpHeaders headers = new HttpHeaders();
 
-  public Request(URL url) {
-    this(url, new ConnectionFactory());
-  }
-
-  @VisibleForTesting
-  Request(URL url, ConnectionFactory connectionFactory) {
-    this.url = url;
-    this.connectionFactory = connectionFactory;
+  public Request(URL url) throws IOException {
+    request = HTTP_REQUEST_FACTORY.buildGetRequest(new GenericUrl(url));
   }
 
   /** Sends request with body. */
   public Response send(BlobStream body) throws IOException {
-    HttpURLConnection connection = connectionFactory.newConnection(url);
+    request.setContent(body);
 
-    headers.forEach(connection::setRequestProperty);
-
-    if (method != null) {
-      connection.setRequestMethod(method);
-
-      // Any method besides GET should send a body.
-      connection.setDoOutput(true);
-      try (OutputStream outputStream = connection.getOutputStream()) {
-        body.writeTo(outputStream);
-      }
-    }
-
-    return new Response(connection);
+    return new Response(request);
   }
 
   /** Sends request without body. */
@@ -78,17 +62,17 @@ public class Request {
   }
 
   public Request setContentType(String contentType) {
-    headers.put(HttpHeaders.CONTENT_TYPE, contentType);
+    headers.setContentType(contentType);
     return this;
   }
 
   public Request setMethodPut() {
-    method = HttpMethod.PUT;
+    request.setRequestMethod(HttpMethod.PUT);
     return this;
   }
 
   public Request setMethodPost() {
-    method = HttpMethod.POST;
+    request.setRequestMethod(HttpMethod.POST);
     return this;
   }
 }

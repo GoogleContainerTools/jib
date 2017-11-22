@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.crepecake.blob;
 
+import com.google.api.client.http.HttpContent;
 import com.google.common.io.ByteStreams;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -23,11 +24,15 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 /** A read-only {@link OutputStream} for BLOBs. */
-public class BlobStream {
+public class BlobStream implements HttpContent {
   private final ByteArrayOutputStream byteArrayOutputStream;
+
+  /** The length of the BLOB; -1 if not known. */
+  private long length = -1;
 
   /** Initializes an empty BLOB. */
   public BlobStream() {
+    length = 0;
     byteArrayOutputStream = new ByteArrayOutputStream(0);
   }
 
@@ -40,8 +45,24 @@ public class BlobStream {
   /** Initializes with a string. */
   public BlobStream(String content) throws IOException {
     final byte[] contentBytes = content.getBytes();
+    length = contentBytes.length;
     byteArrayOutputStream = new ByteArrayOutputStream(contentBytes.length);
     byteArrayOutputStream.write(contentBytes);
+  }
+
+  @Override
+  public long getLength() throws IOException {
+    return length;
+  }
+
+  @Override
+  public String getType() {
+    return null;
+  }
+
+  @Override
+  public boolean retrySupported() {
+    return true;
   }
 
   public void writeTo(OutputStream outputStream) throws IOException {

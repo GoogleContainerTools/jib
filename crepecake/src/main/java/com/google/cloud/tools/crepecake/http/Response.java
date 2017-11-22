@@ -16,36 +16,58 @@
 
 package com.google.cloud.tools.crepecake.http;
 
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpResponse;
 import com.google.cloud.tools.crepecake.blob.BlobStream;
+
+import javax.annotation.Nullable;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
+import java.util.List;
 
-/** Captures an HTTP response. */
-public class Response {
+/** Lazily captures an HTTP response. */
+public class Response implements Closeable {
 
-  private final HttpURLConnection connection;
+  private final HttpRequest request;
 
-  Response(HttpURLConnection connection) {
-    this.connection = connection;
+  @Nullable
+  private HttpResponse response;
+
+  Response(HttpRequest request) {
+    this.request = request;
   }
 
   public int getResponseCode() throws IOException {
-    return connection.getResponseCode();
+    executeRequest();
+    return response.getStatusCode();
   }
 
-  public String getHeader(String headerName) {
-    return connection.getHeaderField(headerName);
+  public List<String> getHeader(String headerName) throws IOException {
+    executeRequest();
+    return response.getHeaders().getHeaderStringValues(headerName);
   }
 
   public BlobStream getContent() throws IOException {
-    InputStream responseStream;
-    if (getResponseCode() < HttpURLConnection.HTTP_BAD_REQUEST) {
-      responseStream = connection.getInputStream();
-    } else {
-      responseStream = connection.getErrorStream();
+    executeRequest();
+
+    return new BlobStream(response.getContent());
+  }
+
+  @Override
+  public void close() throws IOException {
+    if (response == null) {
+      return;
     }
 
-    return new BlobStream(responseStream);
+    response.disconnect();
+  }
+
+  private void executeRequest() throws IOException {
+    if (response != null) {
+      return;
+    }
+
+    response = request.execute();
   }
 }
