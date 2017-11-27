@@ -28,19 +28,19 @@ import java.util.regex.Pattern;
 public class Digest {
 
   /** Pattern matches a SHA-256 hash - 32 bytes in lowercase hexadecimal. */
-  private static final String HASH_PATTERN = "[a-f0-9]{64}";
+  private static final String HASH_REGEX = "[a-f0-9]{64}";
 
   /** Pattern matches a SHA-256 digest - a SHA-256 hash prefixed with "sha256:". */
-  private static final String DIGEST_PATTERN = "sha256:" + HASH_PATTERN;
+  private static final String DIGEST_REGEX = "sha256:" + HASH_REGEX;
 
-  private static final Pattern HashPattern = Pattern.compile(HASH_PATTERN);
+  private static final Pattern HASH_PATTERN = Pattern.compile(HASH_REGEX);
 
   private final String digest;
   private final String hash;
 
   /** Creates a new instance from a valid hash string. */
   public static Digest fromHash(String hash) throws DigestException {
-    if (!hash.matches(HASH_PATTERN)) {
+    if (!hash.matches(HASH_REGEX)) {
       throw new DigestException("Invalid hash: " + hash);
     }
 
@@ -50,11 +50,11 @@ public class Digest {
 
   /** Creates a new instance from a valid digest string. */
   public static Digest fromDigest(String digest) throws DigestException {
-    if (!digest.matches(DIGEST_PATTERN)) {
+    if (!digest.matches(DIGEST_REGEX)) {
       throw new DigestException("Invalid digest: " + digest);
     }
 
-    Matcher matcher = HashPattern.matcher(digest);
+    Matcher matcher = HASH_PATTERN.matcher(digest);
     if (!matcher.find()) {
       throw new DigestException("Invalid digest: " + digest);
     }
