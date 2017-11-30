@@ -32,7 +32,7 @@ public class BlobStreamTest {
 
     String output = outputStream.toString();
 
-    Assert.assertEquals("", output);
+    Assert.assertEquals(0, output.length());
   }
 
   @Test

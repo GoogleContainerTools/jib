@@ -31,7 +31,7 @@ public class BlobStream {
     byteArrayOutputStream = new ByteArrayOutputStream(0);
   }
 
-  /** Initializes with the contents of the input blob. */
+  /** Initializes with the contents of the {@param inputStream}. */
   public BlobStream(InputStream inputStream) throws IOException {
     byteArrayOutputStream = new ByteArrayOutputStream();
     ByteStreams.copy(inputStream, byteArrayOutputStream);
