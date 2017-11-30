@@ -62,10 +62,18 @@ public class Layer {
   /** The digest of the uncompressed layer content. */
   private final Digest diffId;
 
+  /**
+   * Instantiate a layer without the content BLOB. This is to work with layer references that don't
+   * require the actual layer itself.
+   */
   public Layer(Digest digest, int size, Digest diffId) {
     this(digest, size, diffId, null);
   }
 
+  /**
+   * Instantiate a layer with the content BLOB. This is for representing a full layer where use of
+   * its content BLOB is expected.
+   */
   public Layer(Digest digest, int size, Digest diffId, BlobStream content) {
     this.digest = digest;
     this.size = size;
