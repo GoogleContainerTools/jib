@@ -61,6 +61,11 @@ public class Digest {
     return new Digest(digest, hash);
   }
 
+  private Digest(String digest, String hash) {
+    this.digest = digest;
+    this.hash = hash;
+  }
+
   public String getHash() {
     return hash;
   }
@@ -83,10 +88,5 @@ public class Digest {
     }
 
     return false;
-  }
-
-  private Digest(String digest, String hash) {
-    this.digest = digest;
-    this.hash = hash;
   }
 }
