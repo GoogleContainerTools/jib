@@ -54,11 +54,8 @@ public class Digest {
       throw new DigestException("Invalid digest: " + digest);
     }
 
+    // Extracts the hash portion of the digest.
     Matcher matcher = HASH_PATTERN.matcher(digest);
-    if (!matcher.find()) {
-      throw new DigestException("Invalid digest: " + digest);
-    }
-
     String hash = matcher.group(0);
     return new Digest(digest, hash);
   }

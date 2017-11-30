@@ -26,7 +26,7 @@ public class DigestTest {
 
   @Test
   public void testCreateFromHash_pass() throws DigestException {
-    final String goodHash = createGoodHash('a');
+    String goodHash = createGoodHash('a');
 
     Digest digest = Digest.fromHash(goodHash);
 
@@ -36,7 +36,7 @@ public class DigestTest {
 
   @Test
   public void testCreateFromHash_fail() {
-    final String badHash = "not a valid hash";
+    String badHash = "not a valid hash";
 
     try {
       Digest.fromHash(badHash);
@@ -48,8 +48,8 @@ public class DigestTest {
 
   @Test
   public void testCreateFromDigest_pass() throws DigestException {
-    final String goodHash = createGoodHash('a');
-    final String goodDigest = "sha256:" + createGoodHash('a');
+    String goodHash = createGoodHash('a');
+    String goodDigest = "sha256:" + createGoodHash('a');
 
     Digest digest = Digest.fromDigest(goodDigest);
 
@@ -59,7 +59,7 @@ public class DigestTest {
 
   @Test
   public void testCreateFromDigest_fail() {
-    final String badDigest = "sha256:not a valid digest";
+    String badDigest = "sha256:not a valid digest";
 
     try {
       Digest.fromDigest(badDigest);
@@ -71,10 +71,10 @@ public class DigestTest {
 
   @Test
   public void testUseAsMapKey() throws DigestException {
-    final Digest digestA1 = Digest.fromHash(createGoodHash('a'));
-    final Digest digestA2 = Digest.fromHash(createGoodHash('a'));
-    final Digest digestA3 = Digest.fromDigest("sha256:" + createGoodHash('a'));
-    final Digest digestB = Digest.fromHash(createGoodHash('b'));
+    Digest digestA1 = Digest.fromHash(createGoodHash('a'));
+    Digest digestA2 = Digest.fromHash(createGoodHash('a'));
+    Digest digestA3 = Digest.fromDigest("sha256:" + createGoodHash('a'));
+    Digest digestB = Digest.fromHash(createGoodHash('b'));
 
     Map<Digest, String> digestMap = new HashMap<>();
 
