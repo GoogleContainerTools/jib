@@ -56,6 +56,7 @@ public class Digest {
 
     // Extracts the hash portion of the digest.
     Matcher matcher = HASH_PATTERN.matcher(digest);
+    matcher.find();
     String hash = matcher.group(0);
     return new Digest(digest, hash);
   }
