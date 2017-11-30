@@ -16,10 +16,11 @@
 
 package com.google.cloud.tools.crepecake.http;
 
+import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpHeaders;
+import com.google.api.client.http.HttpRequest;
 import com.google.cloud.tools.crepecake.blob.BlobStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import org.junit.Assert;
 import org.junit.Before;
@@ -31,8 +32,9 @@ import org.mockito.MockitoAnnotations;
 /** Tests for {@link Request}. */
 public class RequestTest {
 
-  @Mock private ConnectionFactory connectionFactoryMock;
-  @Mock private HttpURLConnection httpUrlConnectionMock;
+  @Mock private HttpRequest httpRequestMock;
+  @Mock private HttpHeaders httpHeadersMock;
+  @Mock private BlobStream blobStreamMock;
 
   private URL fakeUrl;
 
@@ -41,65 +43,54 @@ public class RequestTest {
     fakeUrl = new URL("http://crepecake/fake/url");
 
     MockitoAnnotations.initMocks(this);
-
-    Mockito.when(connectionFactoryMock.newConnection(fakeUrl)).thenReturn(httpUrlConnectionMock);
   }
 
   @Test
   public void testSendGet_withoutBody() throws IOException {
-    Request request = new Request(fakeUrl, connectionFactoryMock);
+    Request request = new Request(fakeUrl, httpHeadersMock);
     request.send();
 
-    Mockito.verifyZeroInteractions(httpUrlConnectionMock);
+    Mockito.verifyZeroInteractions(httpRequestMock);
+    Mockito.verifyZeroInteractions(httpHeadersMock);
+
+    Assert.assertEquals(new GenericUrl(fakeUrl), request.getRequest().getUrl());
   }
 
   @Test
   public void testSendGet_setContentType() throws IOException {
-    Request request = new Request(fakeUrl, connectionFactoryMock);
+    Request request = new Request(fakeUrl, httpHeadersMock);
     request.setContentType("some content type");
     request.send();
 
-    Mockito.verify(httpUrlConnectionMock).setRequestProperty("Content-Type", "some content type");
-    Mockito.verifyNoMoreInteractions(httpUrlConnectionMock);
+    Mockito.verify(httpHeadersMock).setContentType("some content type");
+    Mockito.verifyZeroInteractions(httpRequestMock);
+
+    Assert.assertEquals(new GenericUrl(fakeUrl), request.getRequest().getUrl());
   }
 
   @Test
   public void testSendPut() throws IOException {
-    String requestBody = "crepecake";
-    ByteArrayOutputStream responseStream = new ByteArrayOutputStream();
-    Mockito.when(httpUrlConnectionMock.getOutputStream()).thenReturn(responseStream);
-
-    Request request = new Request(fakeUrl, connectionFactoryMock);
+    Request request = new Request(fakeUrl, httpHeadersMock);
     request.setMethodPut();
-    request.setContentType("some content type");
-    request.send(new BlobStream(requestBody));
+    request.send(blobStreamMock);
 
-    Mockito.verify(httpUrlConnectionMock).setRequestMethod("PUT");
-    Mockito.verify(httpUrlConnectionMock).setRequestProperty("Content-Type", "some content type");
-    Mockito.verify(httpUrlConnectionMock).setDoOutput(true);
-    Mockito.verify(httpUrlConnectionMock).getOutputStream();
-    Mockito.verifyNoMoreInteractions(httpUrlConnectionMock);
+    Mockito.verify(httpRequestMock).setRequestMethod("PUT");
+    Mockito.verify(httpRequestMock).setContent(blobStreamMock);
+    Mockito.verifyNoMoreInteractions(httpRequestMock);
 
-    Assert.assertEquals(requestBody, responseStream.toString());
+    Assert.assertEquals(new GenericUrl(fakeUrl), request.getRequest().getUrl());
   }
 
   @Test
   public void testSendPost() throws IOException {
-    String requestBody = "crepecake";
-    ByteArrayOutputStream responseStream = new ByteArrayOutputStream();
-    Mockito.when(httpUrlConnectionMock.getOutputStream()).thenReturn(responseStream);
-
-    Request request = new Request(fakeUrl, connectionFactoryMock);
+    Request request = new Request(fakeUrl, httpHeadersMock);
     request.setMethodPost();
-    request.setContentType("some content type");
-    request.send(new BlobStream(requestBody));
+    request.send(blobStreamMock);
 
-    Mockito.verify(httpUrlConnectionMock).setRequestMethod("POST");
-    Mockito.verify(httpUrlConnectionMock).setRequestProperty("Content-Type", "some content type");
-    Mockito.verify(httpUrlConnectionMock).setDoOutput(true);
-    Mockito.verify(httpUrlConnectionMock).getOutputStream();
-    Mockito.verifyNoMoreInteractions(httpUrlConnectionMock);
+    Mockito.verify(httpRequestMock).setRequestMethod("POST");
+    Mockito.verify(httpRequestMock).setContent(blobStreamMock);
+    Mockito.verifyNoMoreInteractions(httpRequestMock);
 
-    Assert.assertEquals(requestBody, responseStream.toString());
+    Assert.assertEquals(new GenericUrl(fakeUrl), request.getRequest().getUrl());
   }
 }

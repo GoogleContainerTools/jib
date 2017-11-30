@@ -22,16 +22,16 @@ import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.cloud.tools.crepecake.blob.BlobStream;
-
+import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.URL;
 import javax.annotation.Nullable;
 
 /** Sends an HTTP request. */
 public class Request {
 
-  private static final HttpRequestFactory HTTP_REQUEST_FACTORY = new NetHttpTransport().createRequestFactory();
+  private static final HttpRequestFactory HTTP_REQUEST_FACTORY =
+      new NetHttpTransport().createRequestFactory();
 
   private static class HttpMethod {
     private static final String PUT = "PUT";
@@ -47,6 +47,12 @@ public class Request {
 
   public Request(URL url) throws IOException {
     request = HTTP_REQUEST_FACTORY.buildGetRequest(new GenericUrl(url));
+  }
+
+  @VisibleForTesting
+  Request(URL url, HttpHeaders headers) throws IOException {
+    this(url);
+    this.headers = headers;
   }
 
   /** Sends request with body. */
@@ -74,5 +80,10 @@ public class Request {
   public Request setMethodPost() {
     request.setRequestMethod(HttpMethod.POST);
     return this;
+  }
+
+  @VisibleForTesting
+  HttpRequest getRequest() {
+    return request;
   }
 }

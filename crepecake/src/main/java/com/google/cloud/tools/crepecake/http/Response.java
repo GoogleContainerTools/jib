@@ -19,20 +19,17 @@ package com.google.cloud.tools.crepecake.http;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
 import com.google.cloud.tools.crepecake.blob.BlobStream;
-
-import javax.annotation.Nullable;
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /** Lazily captures an HTTP response. */
 public class Response implements Closeable {
 
   private final HttpRequest request;
 
-  @Nullable
-  private HttpResponse response;
+  @Nullable private HttpResponse response;
 
   Response(HttpRequest request) {
     this.request = request;

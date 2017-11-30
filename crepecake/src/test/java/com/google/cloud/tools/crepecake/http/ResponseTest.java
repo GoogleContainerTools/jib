@@ -16,11 +16,12 @@
 
 package com.google.cloud.tools.crepecake.http;
 
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpResponse;
 import com.google.cloud.tools.crepecake.blob.BlobStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,42 +31,25 @@ import org.mockito.MockitoAnnotations;
 
 public class ResponseTest {
 
-  @Mock private HttpURLConnection httpUrlConnectionMock;
+  @Mock private HttpRequest httpRequestMock;
+  @Mock private HttpResponse httpResponseMock;
 
   @Before
   public void setUpMocksAndFakes() throws IOException {
     MockitoAnnotations.initMocks(this);
+
+    Mockito.when(httpRequestMock.execute()).thenReturn(httpResponseMock);
   }
 
   @Test
-  public void testGetContent_success() throws IOException {
+  public void testGetContent() throws IOException {
     String expectedResponse = "crepecake\nis\ngood!";
     ByteArrayInputStream responseInputStream =
         new ByteArrayInputStream(expectedResponse.getBytes());
 
-    Mockito.when(httpUrlConnectionMock.getResponseCode()).thenReturn(HttpURLConnection.HTTP_OK);
-    Mockito.when(httpUrlConnectionMock.getInputStream()).thenReturn(responseInputStream);
+    Mockito.when(httpResponseMock.getContent()).thenReturn(responseInputStream);
 
-    Response response = new Response(httpUrlConnectionMock);
-    BlobStream responseStream = response.getContent();
-
-    ByteArrayOutputStream responseOutputStream = new ByteArrayOutputStream();
-    responseStream.writeTo(responseOutputStream);
-
-    Assert.assertEquals(expectedResponse, responseOutputStream.toString());
-  }
-
-  @Test
-  public void testGetContent_error() throws IOException {
-    String expectedResponse = "crepecake\nhas\ngone\nbad";
-    ByteArrayInputStream responseErrorStream =
-        new ByteArrayInputStream(expectedResponse.getBytes());
-
-    Mockito.when(httpUrlConnectionMock.getResponseCode())
-        .thenReturn(HttpURLConnection.HTTP_BAD_REQUEST);
-    Mockito.when(httpUrlConnectionMock.getErrorStream()).thenReturn(responseErrorStream);
-
-    Response response = new Response(httpUrlConnectionMock);
+    Response response = new Response(httpRequestMock);
     BlobStream responseStream = response.getContent();
 
     ByteArrayOutputStream responseOutputStream = new ByteArrayOutputStream();
