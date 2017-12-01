@@ -18,6 +18,7 @@ package com.google.cloud.tools.crepecake.http;
 
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpHeaders;
+import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.javanet.NetHttpTransport;
@@ -32,11 +33,6 @@ public class Request {
 
   private static final HttpRequestFactory HTTP_REQUEST_FACTORY =
       new NetHttpTransport().createRequestFactory();
-
-  private static class HttpMethod {
-    private static final String PUT = "PUT";
-    private static final String POST = "POST";
-  }
 
   private final HttpRequest request;
 
@@ -55,31 +51,35 @@ public class Request {
     this.headers = headers;
   }
 
-  /** Sends request with body. */
-  public Response send(BlobStream body) throws IOException {
-    request.setContent(body);
-
-    return new Response(request);
-  }
-
-  /** Sends request without body. */
-  public Response send() throws IOException {
-    return send(new BlobStream());
-  }
-
+  /** Sets the {@code Content-Type} header. */
   public Request setContentType(String contentType) {
     headers.setContentType(contentType);
     return this;
   }
 
-  public Request setMethodPut() {
-    request.setRequestMethod(HttpMethod.PUT);
-    return this;
+  /** Sends the request with method GET. */
+  public Response get() throws IOException {
+    request.setRequestMethod(HttpMethods.GET);
+    return send(new BlobStream());
   }
 
-  public Request setMethodPost() {
-    request.setRequestMethod(HttpMethod.POST);
-    return this;
+  /** Sends the request with method POST. */
+  public Response post(BlobStream body) throws IOException {
+    request.setRequestMethod(HttpMethods.POST);
+    return send(body);
+  }
+
+  /** Sends the request with method PUT. */
+  public Response put(BlobStream body) throws IOException {
+    request.setRequestMethod(HttpMethods.PUT);
+    return send(body);
+  }
+
+  /** Sends request with body. */
+  private Response send(BlobStream body) throws IOException {
+    request.setContent(body);
+
+    return new Response(request);
   }
 
   @VisibleForTesting

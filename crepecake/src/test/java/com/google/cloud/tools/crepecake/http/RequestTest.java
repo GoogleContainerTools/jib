@@ -18,6 +18,7 @@ package com.google.cloud.tools.crepecake.http;
 
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpHeaders;
+import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequest;
 import com.google.cloud.tools.crepecake.blob.BlobStream;
 import java.io.IOException;
@@ -46,21 +47,10 @@ public class RequestTest {
   }
 
   @Test
-  public void testSendGet_withoutBody() throws IOException {
-    Request request = new Request(fakeUrl, httpHeadersMock);
-    request.send();
-
-    Mockito.verifyZeroInteractions(httpRequestMock);
-    Mockito.verifyZeroInteractions(httpHeadersMock);
-
-    Assert.assertEquals(new GenericUrl(fakeUrl), request.getRequest().getUrl());
-  }
-
-  @Test
-  public void testSendGet_setContentType() throws IOException {
+  public void testGet() throws IOException {
     Request request = new Request(fakeUrl, httpHeadersMock);
     request.setContentType("some content type");
-    request.send();
+    request.get();
 
     Mockito.verify(httpHeadersMock).setContentType("some content type");
     Mockito.verifyZeroInteractions(httpRequestMock);
@@ -71,10 +61,11 @@ public class RequestTest {
   @Test
   public void testSendPut() throws IOException {
     Request request = new Request(fakeUrl, httpHeadersMock);
-    request.setMethodPut();
-    request.send(blobStreamMock);
+    request.setContentType("some content type");
+    request.put(blobStreamMock);
 
-    Mockito.verify(httpRequestMock).setRequestMethod("PUT");
+    Mockito.verify(httpHeadersMock).setContentType("some content type");
+    Mockito.verify(httpRequestMock).setRequestMethod(HttpMethods.PUT);
     Mockito.verify(httpRequestMock).setContent(blobStreamMock);
     Mockito.verifyNoMoreInteractions(httpRequestMock);
 
@@ -84,10 +75,11 @@ public class RequestTest {
   @Test
   public void testSendPost() throws IOException {
     Request request = new Request(fakeUrl, httpHeadersMock);
-    request.setMethodPost();
-    request.send(blobStreamMock);
+    request.setContentType("some content type");
+    request.post(blobStreamMock);
 
-    Mockito.verify(httpRequestMock).setRequestMethod("POST");
+    Mockito.verify(httpHeadersMock).setContentType("some content type");
+    Mockito.verify(httpRequestMock).setRequestMethod(HttpMethods.POST);
     Mockito.verify(httpRequestMock).setContent(blobStreamMock);
     Mockito.verifyNoMoreInteractions(httpRequestMock);
 
