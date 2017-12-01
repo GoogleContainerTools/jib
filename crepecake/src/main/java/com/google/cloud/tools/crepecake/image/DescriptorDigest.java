@@ -76,7 +76,7 @@ public class DescriptorDigest {
   /** Pass-through hash code of the digest string. */
   @Override
   public int hashCode() {
-    return toString().hashCode();
+    return hash.hashCode();
   }
 
   /** Two digest objects are equal if their digest strings are equal. */

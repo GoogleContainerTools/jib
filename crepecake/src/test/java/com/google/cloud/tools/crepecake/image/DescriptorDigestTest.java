@@ -65,7 +65,7 @@ public class DescriptorDigestTest {
       DescriptorDigest.fromDigest(badDigest);
       Assert.fail("Invalid digest should have caused digest creation failure.");
     } catch (DigestException ex) {
-      // pass
+      Assert.assertEquals("Invalid digest: " + badDigest, ex.getMessage());
     }
   }
 
@@ -106,7 +106,7 @@ public class DescriptorDigestTest {
 
   /** Creates a 32 byte hexademical string to fit valid hash pattern. */
   private static String createGoodHash(char character) {
-    StringBuffer goodHashBuffer = new StringBuffer(64);
+    StringBuilder goodHashBuffer = new StringBuilder(64);
     for (int i = 0; i < 64; i++) {
       goodHashBuffer.append(character);
     }
