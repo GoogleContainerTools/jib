@@ -20,12 +20,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Represents a SHA-256 digest as defined by the Registry HTTP API v2 reference.
+ * Represents a SHA-256 content descriptor digest as defined by the Registry HTTP API v2 reference.
  *
  * @see <a
  *     href="https://docs.docker.com/registry/spec/api/#content-digests">https://docs.docker.com/registry/spec/api/#content-digests</a>
+ * @see <a href="https://github.com/opencontainers/image-spec/blob/master/descriptor.md#digests">OCI
+ *     Content Descriptor Digest</a>
  */
-public class Digest {
+public class DescriptorDigest {
 
   /** Pattern matches a SHA-256 hash - 32 bytes in lowercase hexadecimal. */
   private static final String HASH_REGEX = "[a-f0-9]{64}";
@@ -35,21 +37,19 @@ public class Digest {
 
   private static final Pattern HASH_PATTERN = Pattern.compile(HASH_REGEX);
 
-  private final String digest;
   private final String hash;
 
   /** Creates a new instance from a valid hash string. */
-  public static Digest fromHash(String hash) throws DigestException {
+  public static DescriptorDigest fromHash(String hash) throws DigestException {
     if (!hash.matches(HASH_REGEX)) {
       throw new DigestException("Invalid hash: " + hash);
     }
 
-    String digest = "sha256:" + hash;
-    return new Digest(digest, hash);
+    return new DescriptorDigest(hash);
   }
 
   /** Creates a new instance from a valid digest string. */
-  public static Digest fromDigest(String digest) throws DigestException {
+  public static DescriptorDigest fromDigest(String digest) throws DigestException {
     if (!digest.matches(DIGEST_REGEX)) {
       throw new DigestException("Invalid digest: " + digest);
     }
@@ -58,11 +58,10 @@ public class Digest {
     Matcher matcher = HASH_PATTERN.matcher(digest);
     matcher.find();
     String hash = matcher.group(0);
-    return new Digest(digest, hash);
+    return new DescriptorDigest(hash);
   }
 
-  private Digest(String digest, String hash) {
-    this.digest = digest;
+  private DescriptorDigest(String hash) {
     this.hash = hash;
   }
 
@@ -71,20 +70,20 @@ public class Digest {
   }
 
   public String toString() {
-    return digest;
+    return "sha256:" + hash;
   }
 
   /** Pass-through hash code of the digest string. */
   @Override
   public int hashCode() {
-    return digest.hashCode();
+    return toString().hashCode();
   }
 
   /** Two digest objects are equal if their digest strings are equal. */
   @Override
   public boolean equals(Object obj) {
-    if (obj instanceof Digest) {
-      return digest.equals(((Digest) obj).digest);
+    if (obj instanceof DescriptorDigest) {
+      return hash.equals(((DescriptorDigest) obj).hash);
     }
 
     return false;
