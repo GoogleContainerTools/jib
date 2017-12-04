@@ -66,7 +66,6 @@ public class ByteHashBuilder extends OutputStream {
     } catch (NoSuchAlgorithmException ex) {
       throw new IOException(ex);
     }
-    totalBytes += length;
   }
 
   @Override
@@ -76,7 +75,6 @@ public class ByteHashBuilder extends OutputStream {
     } catch (NoSuchAlgorithmException ex) {
       throw new IOException(ex);
     }
-    totalBytes += data.length;
   }
 
   @Override
@@ -88,6 +86,5 @@ public class ByteHashBuilder extends OutputStream {
     } catch (NoSuchAlgorithmException ex) {
       throw new IOException(ex);
     }
-    totalBytes ++;
   }
 }
