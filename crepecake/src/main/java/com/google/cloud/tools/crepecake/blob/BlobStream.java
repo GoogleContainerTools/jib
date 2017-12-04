@@ -16,35 +16,42 @@
 
 package com.google.cloud.tools.crepecake.blob;
 
+import com.google.cloud.tools.crepecake.image.DescriptorDigest;
+import com.google.cloud.tools.crepecake.image.DigestException;
 import com.google.common.io.ByteStreams;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.NoSuchAlgorithmException;
 
 /** A read-only {@link OutputStream} for BLOBs. */
-public class BlobStream {
-  private final ByteArrayOutputStream byteArrayOutputStream;
+public interface BlobStream {
+//  private final ByteArrayOutputStream byteArrayOutputStream;
+//
+//  /** Initializes an empty BLOB. */
+//  public BlobStream() {
+//    byteArrayOutputStream = new ByteArrayOutputStream(0);
+//  }
+//
+//  /** Initializes with the contents of the {@code inputStream} parameter. */
+//  public BlobStream(InputStream inputStream) throws IOException {
+//    byteArrayOutputStream = new ByteArrayOutputStream();
+//    ByteStreams.copy(inputStream, byteArrayOutputStream);
+//  }
+//
+//  /** Initializes with a string. */
+//  public BlobStream(String content) throws IOException {
+//    final byte[] contentBytes = content.getBytes();
+//    byteArrayOutputStream = new ByteArrayOutputStream(contentBytes.length);
+//    byteArrayOutputStream.write(contentBytes);
+//  }
 
-  /** Initializes an empty BLOB. */
-  public BlobStream() {
-    byteArrayOutputStream = new ByteArrayOutputStream(0);
-  }
-
-  /** Initializes with the contents of the {@code inputStream} parameter. */
-  public BlobStream(InputStream inputStream) throws IOException {
-    byteArrayOutputStream = new ByteArrayOutputStream();
-    ByteStreams.copy(inputStream, byteArrayOutputStream);
-  }
-
-  /** Initializes with a string. */
-  public BlobStream(String content) throws IOException {
-    final byte[] contentBytes = content.getBytes();
-    byteArrayOutputStream = new ByteArrayOutputStream(contentBytes.length);
-    byteArrayOutputStream.write(contentBytes);
-  }
-
-  public void writeTo(OutputStream outputStream) throws IOException {
-    byteArrayOutputStream.writeTo(outputStream);
-  }
+  /**
+   * Writes the BLOB to an {@link OutputStream}.
+   *
+   * @param outputStream the {@link OutputStream} to write to
+   * @return a {@link BlobDescriptor} describing the written BLOB
+   */
+  BlobDescriptor writeTo(OutputStream outputStream) throws IOException, NoSuchAlgorithmException, DigestException;
 }
