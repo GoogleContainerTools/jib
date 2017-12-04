@@ -26,8 +26,6 @@ public class BlobStreams {
 
   /** Wraps a {@link BlobStream} in an {@link HttpContent}. */
   public static HttpContent toHttpContent(BlobStream blobStream) {
-    if (blobStream instanceof ProvidedFileBlobStream) {
-      return new FileContent(null, (ProvidedFileBlobStream) blobStream.getFile())
-    }
+    return new BlobStreamHttpContent(blobStream);
   }
 }

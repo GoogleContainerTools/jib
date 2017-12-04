@@ -78,7 +78,7 @@ public class Request {
 
   /** Sends request with body. */
   private Response send(BlobStream body) throws IOException {
-    request.setContent(body);
+    request.setContent(BlobStreams.toHttpContent(body));
 
     return new Response(request);
   }
