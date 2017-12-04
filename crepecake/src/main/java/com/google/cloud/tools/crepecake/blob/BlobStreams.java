@@ -1,6 +1,6 @@
 package com.google.cloud.tools.crepecake.blob;
 
-import java.io.InputStream;
+import java.io.File;
 
 /** Static initializers for {@link BlobStream}. */
 public class BlobStreams {
@@ -9,8 +9,8 @@ public class BlobStreams {
     return new EmptyBlobStream();
   }
 
-  public static BlobStream from(InputStream inputStream) {
-    return new ProvidedInputStreamBlobStream(inputStream);
+  public static BlobStream from(File file) {
+    return new ProvidedFileBlobStream(file);
   }
 
   public static BlobStream from(String content) {

@@ -20,11 +20,13 @@ import com.google.cloud.tools.crepecake.hash.ByteHashBuilder;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.image.DigestException;
 import com.google.common.base.Charsets;
-import java.io.ByteArrayInputStream;
+import com.google.common.io.Resources;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.security.NoSuchAlgorithmException;
 import org.junit.Assert;
 import org.junit.Test;
@@ -38,10 +40,11 @@ public class BlobStreamTest {
   }
 
   @Test
-  public void testFromInputStream() throws IOException, DigestException, NoSuchAlgorithmException {
-    String expected = "crepecake";
-    InputStream inputStream = new ByteArrayInputStream(expected.getBytes());
-    verifyBlobStreamWriteTo(expected, BlobStreams.from(inputStream));
+  public void testFromFile()
+      throws IOException, DigestException, NoSuchAlgorithmException, URISyntaxException {
+    File fileA = new File(Resources.getResource("fileA").toURI());
+    String expected = new String(Files.readAllBytes(fileA.toPath()), Charsets.UTF_8);
+    verifyBlobStreamWriteTo(expected, BlobStreams.from(fileA));
   }
 
   @Test
