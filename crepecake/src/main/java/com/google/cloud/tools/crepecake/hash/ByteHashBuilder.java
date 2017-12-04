@@ -31,11 +31,15 @@ public class ByteHashBuilder extends OutputStream {
 
   private final MessageDigest messageDigest = MessageDigest.getInstance(SHA_256_ALGORITHM);
 
+  /** Keeps track of the total number of bytes appended. */
+  private long totalBytes = 0;
+
   public ByteHashBuilder() throws NoSuchAlgorithmException {}
 
   /** Appends data to the bytes the hash. */
   public void append(byte[] data, int offset, int length) throws NoSuchAlgorithmException {
     messageDigest.update(data, offset, length);
+    totalBytes += length;
   }
 
   /** Builds the hash in hexadecimal format. */
@@ -50,6 +54,11 @@ public class ByteHashBuilder extends OutputStream {
     return stringBuilder.toString();
   }
 
+  /** @return the total number of bytes that were hashed */
+  public long getTotalBytes() {
+    return totalBytes;
+  }
+
   @Override
   public void write(byte[] data, int offset, int length) throws IOException {
     try {
@@ -60,9 +69,9 @@ public class ByteHashBuilder extends OutputStream {
   }
 
   @Override
-  public void write(byte b[]) throws IOException {
+  public void write(byte data[]) throws IOException {
     try {
-      append(b, 0, b.length);
+      append(data, 0, data.length);
     } catch (NoSuchAlgorithmException ex) {
       throw new IOException(ex);
     }

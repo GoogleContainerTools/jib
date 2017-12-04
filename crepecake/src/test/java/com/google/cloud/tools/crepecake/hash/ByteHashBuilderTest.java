@@ -60,7 +60,7 @@ public class ByteHashBuilderTest {
       ByteHashBuilder byteHashBuilder = new ByteHashBuilder();
 
       // Reads the bytes to hash piecewise and appends to the builder.
-      byte[] bytesToHash = toHash.getBytes();
+      byte[] bytesToHash = toHash.getBytes(Charsets.UTF_8);
       ByteArrayInputStream bytesToHashStream = new ByteArrayInputStream(bytesToHash);
       int bytesRead;
       while ((bytesRead = bytesToHashStream.read(bytesToAppend)) != -1) {
@@ -68,6 +68,7 @@ public class ByteHashBuilderTest {
       }
 
       Assert.assertEquals(expectedHash, byteHashBuilder.toHash());
+      Assert.assertEquals(bytesToHash.length, byteHashBuilder.getTotalBytes());
     }
   }
 
@@ -83,6 +84,7 @@ public class ByteHashBuilderTest {
       ByteStreams.copy(toHashInputStream, byteHashBuilder);
 
       Assert.assertEquals(expectedHash, byteHashBuilder.toHash());
+      Assert.assertEquals(toHash.getBytes(Charsets.UTF_8).length, byteHashBuilder.getTotalBytes());
     }
   }
 }
