@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.crepecake.hash;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -24,7 +26,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class ByteHasherTest {
+public class ByteHashBuilderTest {
 
   private Map<String, String> knownSha256Hashes;
 
@@ -44,11 +46,25 @@ public class ByteHasherTest {
   }
 
   @Test
-  public void testHash() throws NoSuchAlgorithmException {
+  public void testHash() throws NoSuchAlgorithmException, IOException {
+    // Creates a buffer to hold bytes to append to the hash builder.
+    byte[] bytesToAppend = new byte[3];
+
     for (Map.Entry<String, String> knownHash : knownSha256Hashes.entrySet()) {
       String toHash = knownHash.getKey();
       String expectedHash = knownHash.getValue();
-      String outputHash = ByteHasher.hash(toHash.getBytes());
+
+      byte[] bytesToHash = toHash.getBytes();
+      ByteArrayInputStream bytesToHashStream = new ByteArrayInputStream(bytesToHash);
+
+      ByteHashBuilder byteHashBuilder = new ByteHashBuilder();
+
+      int bytesRead;
+      while ((bytesRead = bytesToHashStream.read(bytesToAppend)) != -1) {
+        byteHashBuilder.append(bytesToAppend, 0, bytesRead);
+      }
+
+      String outputHash = byteHashBuilder.buildHash();
       Assert.assertEquals(expectedHash, outputHash);
     }
   }
