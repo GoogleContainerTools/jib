@@ -27,25 +27,6 @@ import java.security.NoSuchAlgorithmException;
 
 /** A read-only {@link OutputStream} for BLOBs. */
 public interface BlobStream {
-//  private final ByteArrayOutputStream byteArrayOutputStream;
-//
-//  /** Initializes an empty BLOB. */
-//  public BlobStream() {
-//    byteArrayOutputStream = new ByteArrayOutputStream(0);
-//  }
-//
-//  /** Initializes with the contents of the {@code inputStream} parameter. */
-//  public BlobStream(InputStream inputStream) throws IOException {
-//    byteArrayOutputStream = new ByteArrayOutputStream();
-//    ByteStreams.copy(inputStream, byteArrayOutputStream);
-//  }
-//
-//  /** Initializes with a string. */
-//  public BlobStream(String content) throws IOException {
-//    final byte[] contentBytes = content.getBytes();
-//    byteArrayOutputStream = new ByteArrayOutputStream(contentBytes.length);
-//    byteArrayOutputStream.write(contentBytes);
-//  }
 
   /**
    * Writes the BLOB to an {@link OutputStream}.

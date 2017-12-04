@@ -10,31 +10,23 @@ import java.io.OutputStream;
 import java.security.NoSuchAlgorithmException;
 
 /** A {@link BlobStream} that streams from an {@link InputStream}. */
-class InputStreamBackedBlobStream implements BlobStream {
+class ProvidedInputStreamBlobStream extends AbstractHashingBlobStream {
 
   private final InputStream inputStream;
 
   private final byte[] byteBuffer = new byte[8192];
 
-  InputStreamBackedBlobStream(InputStream inputStream) {
+  ProvidedInputStreamBlobStream(InputStream inputStream) {
     this.inputStream = inputStream;
   }
 
   @Override
-  public BlobDescriptor writeTo(OutputStream outputStream) throws IOException, NoSuchAlgorithmException, DigestException {
-    ByteHashBuilder byteHashBuilder = new ByteHashBuilder();
-
-    long totalBytes = 0;
-
+  protected void writeToAndHash(OutputStream outputStream, ByteHashBuilder byteHashBuilder) throws IOException {
     int bytesRead;
     while ((bytesRead = inputStream.read(byteBuffer)) != -1) {
       // Writes to the output stream and builds the BLOB's hash as well.
       outputStream.write(byteBuffer, 0, bytesRead);
-      byteHashBuilder.append(byteBuffer, 0, bytesRead);
-      totalBytes += bytesRead;
+      byteHashBuilder.write(byteBuffer, 0, bytesRead);
     }
-
-    DescriptorDigest digest = DescriptorDigest.fromHash(byteHashBuilder.toHash());
-    return new BlobDescriptor(digest, totalBytes);
   }
 }
