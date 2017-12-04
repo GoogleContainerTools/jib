@@ -16,9 +16,7 @@
 
 package com.google.cloud.tools.crepecake.blob;
 
-import com.google.api.client.http.FileContent;
 import com.google.api.client.http.HttpContent;
-
 import java.io.File;
 import java.io.InputStream;
 

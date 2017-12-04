@@ -20,7 +20,6 @@ import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
 import com.google.cloud.tools.crepecake.blob.BlobStream;
 import com.google.cloud.tools.crepecake.blob.BlobStreams;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
