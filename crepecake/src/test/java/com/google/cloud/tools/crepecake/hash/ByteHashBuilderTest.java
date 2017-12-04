@@ -64,7 +64,7 @@ public class ByteHashBuilderTest {
       ByteArrayInputStream bytesToHashStream = new ByteArrayInputStream(bytesToHash);
       int bytesRead;
       while ((bytesRead = bytesToHashStream.read(bytesToAppend)) != -1) {
-        byteHashBuilder.append(bytesToAppend, 0, bytesRead);
+        byteHashBuilder.write(bytesToAppend, 0, bytesRead);
       }
 
       Assert.assertEquals(expectedHash, byteHashBuilder.toHash());

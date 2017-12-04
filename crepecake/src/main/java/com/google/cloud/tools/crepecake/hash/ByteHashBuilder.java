@@ -36,12 +36,6 @@ public class ByteHashBuilder extends OutputStream {
 
   public ByteHashBuilder() throws NoSuchAlgorithmException {}
 
-  /** Appends data to the bytes the hash. */
-  public void append(byte[] data, int offset, int length) throws NoSuchAlgorithmException {
-    messageDigest.update(data, offset, length);
-    totalBytes += length;
-  }
-
   /** Builds the hash in hexadecimal format. */
   public String toHash() {
     byte[] hashedBytes = messageDigest.digest();
@@ -86,5 +80,11 @@ public class ByteHashBuilder extends OutputStream {
     } catch (NoSuchAlgorithmException ex) {
       throw new IOException(ex);
     }
+  }
+
+  /** Appends data to the bytes the hash. */
+  private void append(byte[] data, int offset, int length) throws NoSuchAlgorithmException {
+    messageDigest.update(data, offset, length);
+    totalBytes += length;
   }
 }
