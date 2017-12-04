@@ -21,9 +21,11 @@ import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.image.DigestException;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -37,6 +39,14 @@ public class BlobStreamTest {
   @Test
   public void testEmpty() throws IOException, DigestException, NoSuchAlgorithmException {
     verifyBlobStreamWriteTo("", BlobStreams.empty());
+  }
+
+  @Test
+  public void testFromInputStream()
+      throws IOException, DigestException, NoSuchAlgorithmException, URISyntaxException {
+    String expected = "crepecake";
+    InputStream inputStream = new ByteArrayInputStream(expected.getBytes(Charsets.UTF_8));
+    verifyBlobStreamWriteTo(expected, BlobStreams.from(inputStream));
   }
 
   @Test
