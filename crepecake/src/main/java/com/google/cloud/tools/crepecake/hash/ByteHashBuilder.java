@@ -19,7 +19,7 @@ package com.google.cloud.tools.crepecake.hash;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-/** Static utility class for generating SHA-256 hashes in hexadecimal. */
+/** Generates SHA-256 hashes in hexadecimal. */
 public class ByteHashBuilder {
 
   private static final String SHA_256_ALGORITHM = "SHA-256";

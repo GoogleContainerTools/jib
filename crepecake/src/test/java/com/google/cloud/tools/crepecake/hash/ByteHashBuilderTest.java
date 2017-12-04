@@ -54,11 +54,11 @@ public class ByteHashBuilderTest {
       String toHash = knownHash.getKey();
       String expectedHash = knownHash.getValue();
 
-      byte[] bytesToHash = toHash.getBytes();
-      ByteArrayInputStream bytesToHashStream = new ByteArrayInputStream(bytesToHash);
-
       ByteHashBuilder byteHashBuilder = new ByteHashBuilder();
 
+      // Reads the bytes to hash piecewise and appends to the builder.
+      byte[] bytesToHash = toHash.getBytes();
+      ByteArrayInputStream bytesToHashStream = new ByteArrayInputStream(bytesToHash);
       int bytesRead;
       while ((bytesRead = bytesToHashStream.read(bytesToAppend)) != -1) {
         byteHashBuilder.append(bytesToAppend, 0, bytesRead);
