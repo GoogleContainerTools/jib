@@ -23,6 +23,7 @@ import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.cloud.tools.crepecake.blob.BlobStream;
+import com.google.cloud.tools.crepecake.blob.BlobStreams;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.net.URL;
@@ -60,7 +61,7 @@ public class Request {
   /** Sends the request with method GET. */
   public Response get() throws IOException {
     request.setRequestMethod(HttpMethods.GET);
-    return send(new BlobStream());
+    return send(BlobStreams.empty());
   }
 
   /** Sends the request with method POST. */

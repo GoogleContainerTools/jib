@@ -19,6 +19,8 @@ package com.google.cloud.tools.crepecake.http;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
 import com.google.cloud.tools.crepecake.blob.BlobStream;
+import com.google.cloud.tools.crepecake.blob.BlobStreams;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
@@ -45,10 +47,10 @@ public class Response implements Closeable {
     return response.getHeaders().getHeaderStringValues(headerName);
   }
 
-  public BlobStream getContent() throws IOException {
+  public BlobStream getContentStream() throws IOException {
     executeRequest();
 
-    return new BlobStream(response.getContent());
+    return BlobStreams.from(response.getContent());
   }
 
   @Override

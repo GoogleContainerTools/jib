@@ -50,7 +50,7 @@ public class ResponseTest {
     Mockito.when(httpResponseMock.getContent()).thenReturn(responseInputStream);
 
     Response response = new Response(httpRequestMock);
-    BlobStream responseStream = response.getContent();
+    BlobStream responseStream = response.getContentStream();
 
     ByteArrayOutputStream responseOutputStream = new ByteArrayOutputStream();
     responseStream.writeTo(responseOutputStream);

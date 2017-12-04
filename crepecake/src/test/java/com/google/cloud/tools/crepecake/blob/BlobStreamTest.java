@@ -16,7 +16,16 @@
 
 package com.google.cloud.tools.crepecake.blob;
 
-import java.io.*;
+import com.google.cloud.tools.crepecake.hash.ByteHashBuilder;
+import com.google.cloud.tools.crepecake.image.DescriptorDigest;
+import com.google.cloud.tools.crepecake.image.DigestException;
+import com.google.common.base.Charsets;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.security.NoSuchAlgorithmException;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -24,43 +33,51 @@ import org.junit.Test;
 public class BlobStreamTest {
 
   @Test
-  public void testEmpty() throws IOException {
-    OutputStream outputStream = new ByteArrayOutputStream();
-
-    BlobStream blobStream = new BlobStream();
-    blobStream.writeTo(outputStream);
-
-    String output = outputStream.toString();
-
-    Assert.assertEquals("", output);
+  public void testEmpty() throws IOException, DigestException, NoSuchAlgorithmException {
+    verifyBlobStreamWriteTo("", BlobStreams.empty());
   }
 
   @Test
-  public void testFromInputStream() throws IOException {
+  public void testFromInputStream() throws IOException, DigestException, NoSuchAlgorithmException {
     String expected = "crepecake";
-
     InputStream inputStream = new ByteArrayInputStream(expected.getBytes());
-    OutputStream outputStream = new ByteArrayOutputStream();
-
-    BlobStream blobStream = new BlobStream(inputStream);
-    blobStream.writeTo(outputStream);
-
-    String output = outputStream.toString();
-
-    Assert.assertEquals(expected, output);
+    verifyBlobStreamWriteTo(expected, BlobStreams.from(inputStream));
   }
 
   @Test
-  public void testFromString() throws IOException {
+  public void testFromString() throws IOException, DigestException, NoSuchAlgorithmException {
+    String expected = "crepecake";
+    verifyBlobStreamWriteTo(expected, BlobStreams.from(expected));
+  }
+
+  @Test
+  public void testFromBlobWriter() throws NoSuchAlgorithmException, IOException, DigestException {
     String expected = "crepecake";
 
-    OutputStream outputStream = new ByteArrayOutputStream();
+    BlobStreamWriter writer =
+        outputStream -> {
+          outputStream.write(expected.getBytes(Charsets.UTF_8));
+        };
 
-    BlobStream blobStream = new BlobStream(expected);
-    blobStream.writeTo(outputStream);
+    verifyBlobStreamWriteTo(expected, BlobStreams.from(writer));
+  }
+
+  /** Checks that the {@link BlobStream} streams the expected string. */
+  private void verifyBlobStreamWriteTo(String expected, BlobStream blobStream)
+      throws NoSuchAlgorithmException, IOException, DigestException {
+    OutputStream outputStream = new ByteArrayOutputStream();
+    BlobDescriptor blobDescriptor = blobStream.writeTo(outputStream);
 
     String output = outputStream.toString();
-
     Assert.assertEquals(expected, output);
+
+    byte[] expectedBytes = expected.getBytes(Charsets.UTF_8);
+
+    ByteHashBuilder byteHashBuilder = new ByteHashBuilder();
+    byteHashBuilder.write(expectedBytes);
+    DescriptorDigest expectedDigest = DescriptorDigest.fromHash(byteHashBuilder.toHash());
+
+    Assert.assertEquals(expectedBytes.length, blobDescriptor.getSize());
+    Assert.assertEquals(expectedDigest, blobDescriptor.getDigest());
   }
 }
