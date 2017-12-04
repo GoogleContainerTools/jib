@@ -16,8 +16,11 @@
 
 package com.google.cloud.tools.crepecake.hash;
 
+import com.google.common.base.Charsets;
+import com.google.common.io.ByteStreams;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -64,8 +67,22 @@ public class ByteHashBuilderTest {
         byteHashBuilder.append(bytesToAppend, 0, bytesRead);
       }
 
-      String outputHash = byteHashBuilder.buildHash();
-      Assert.assertEquals(expectedHash, outputHash);
+      Assert.assertEquals(expectedHash, byteHashBuilder.toHash());
+    }
+  }
+
+  @Test
+  public void testHash_asOutputStream() throws NoSuchAlgorithmException, IOException {
+    for (Map.Entry<String, String> knownHash : knownSha256Hashes.entrySet()) {
+      String toHash = knownHash.getKey();
+      String expectedHash = knownHash.getValue();
+
+      ByteHashBuilder byteHashBuilder = new ByteHashBuilder();
+
+      InputStream toHashInputStream = new ByteArrayInputStream(toHash.getBytes(Charsets.UTF_8));
+      ByteStreams.copy(toHashInputStream, byteHashBuilder);
+
+      Assert.assertEquals(expectedHash, byteHashBuilder.toHash());
     }
   }
 }

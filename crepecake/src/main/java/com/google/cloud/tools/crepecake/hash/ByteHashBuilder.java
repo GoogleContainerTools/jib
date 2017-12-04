@@ -16,11 +16,16 @@
 
 package com.google.cloud.tools.crepecake.hash;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-/** Generates SHA-256 hashes in hexadecimal. */
-public class ByteHashBuilder {
+/**
+ * Generates SHA-256 hashes in hexadecimal. Can act as an {@link OutputStream} that captures the
+ * bytes to hash.
+ */
+public class ByteHashBuilder extends OutputStream {
 
   private static final String SHA_256_ALGORITHM = "SHA-256";
 
@@ -34,7 +39,7 @@ public class ByteHashBuilder {
   }
 
   /** Builds the hash in hexadecimal format. */
-  public String buildHash() {
+  public String toHash() {
     byte[] hashedBytes = messageDigest.digest();
 
     // Encodes each hashed byte into 2-character hexadecimal representation.
@@ -43,5 +48,34 @@ public class ByteHashBuilder {
       stringBuilder.append(String.format("%02x", b));
     }
     return stringBuilder.toString();
+  }
+
+  @Override
+  public void write(byte[] data, int offset, int length) throws IOException {
+    try {
+      append(data, offset, length);
+    } catch (NoSuchAlgorithmException ex) {
+      throw new IOException(ex);
+    }
+  }
+
+  @Override
+  public void write(byte b[]) throws IOException {
+    try {
+      append(b, 0, b.length);
+    } catch (NoSuchAlgorithmException ex) {
+      throw new IOException(ex);
+    }
+  }
+
+  @Override
+  public void write(int singleByte) throws IOException {
+    // Only write the 8 low-order bits.
+    byte[] singleByteArray = {(byte) (singleByte & 0xff)};
+    try {
+      append(singleByteArray, 0, 1);
+    } catch (NoSuchAlgorithmException ex) {
+      throw new IOException(ex);
+    }
   }
 }
