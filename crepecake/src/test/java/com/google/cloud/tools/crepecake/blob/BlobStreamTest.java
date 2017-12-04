@@ -69,7 +69,8 @@ public class BlobStreamTest {
   private void verifyBlobStreamWriteTo(String expected, BlobStream blobStream)
       throws NoSuchAlgorithmException, IOException, DigestException {
     OutputStream outputStream = new ByteArrayOutputStream();
-    BlobDescriptor blobDescriptor = blobStream.writeTo(outputStream);
+    blobStream.writeTo(outputStream);
+    BlobDescriptor blobDescriptor = blobStream.getWrittenBlobDescriptor();
 
     String output = outputStream.toString();
     Assert.assertEquals(expected, output);
