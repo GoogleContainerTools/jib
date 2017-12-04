@@ -28,8 +28,14 @@ public interface BlobStream {
    * Writes the BLOB to an {@link OutputStream}.
    *
    * @param outputStream the {@link OutputStream} to write to
-   * @return a {@link BlobDescriptor} describing the written BLOB
    */
-  BlobDescriptor writeTo(OutputStream outputStream)
+  void writeTo(OutputStream outputStream)
       throws IOException, NoSuchAlgorithmException, DigestException;
+
+  /**
+   * This is only valid <b>after</b> {@code writeTo} is called.
+   *
+   * @return the {@link BlobDescriptor} of the written BLOB
+   */
+  BlobDescriptor getWrittenBlobDescriptor();
 }

@@ -9,6 +9,8 @@ import java.security.NoSuchAlgorithmException;
 
 abstract class AbstractHashingBlobStream implements BlobStream {
 
+  private BlobDescriptor writtenBlobDescriptor;
+
   /**
    * Writes to an {@link OutputStream} and appends the bytes written to a {@link ByteHashBuilder}.
    *
@@ -19,7 +21,7 @@ abstract class AbstractHashingBlobStream implements BlobStream {
       throws IOException;
 
   @Override
-  public BlobDescriptor writeTo(OutputStream outputStream)
+  public void writeTo(OutputStream outputStream)
       throws IOException, NoSuchAlgorithmException, DigestException {
     ByteHashBuilder byteHashBuilder = new ByteHashBuilder();
 
@@ -27,6 +29,11 @@ abstract class AbstractHashingBlobStream implements BlobStream {
 
     DescriptorDigest digest = DescriptorDigest.fromHash(byteHashBuilder.toHash());
     long totalBytes = byteHashBuilder.getTotalBytes();
-    return new BlobDescriptor(digest, totalBytes);
+    writtenBlobDescriptor = new BlobDescriptor(digest, totalBytes);
+  }
+
+  @Override
+  public BlobDescriptor getWrittenBlobDescriptor() {
+    return writtenBlobDescriptor;
   }
 }
