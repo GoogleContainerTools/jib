@@ -19,24 +19,29 @@ package com.google.cloud.tools.crepecake.hash;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-/** Static utility class for generating SHA-256 hashes in hexadecimal. */
-public class ByteHasher {
+/** Generates SHA-256 hashes in hexadecimal. */
+public class ByteHashBuilder {
 
   private static final String SHA_256_ALGORITHM = "SHA-256";
 
-  public static String hash(byte[] data) throws NoSuchAlgorithmException {
-    // Hashes the bytes with SHA-256 algorithm.
-    MessageDigest messageDigest = MessageDigest.getInstance(SHA_256_ALGORITHM);
-    messageDigest.update(data);
+  private final MessageDigest messageDigest = MessageDigest.getInstance(SHA_256_ALGORITHM);
+
+  public ByteHashBuilder() throws NoSuchAlgorithmException {}
+
+  /** Appends data to the bytes the hash. */
+  public void append(byte[] data, int offset, int length) throws NoSuchAlgorithmException {
+    messageDigest.update(data, offset, length);
+  }
+
+  /** Builds the hash in hexadecimal format. */
+  public String buildHash() {
     byte[] hashedBytes = messageDigest.digest();
 
     // Encodes each hashed byte into 2-character hexadecimal representation.
-    StringBuffer stringBuffer = new StringBuffer(2 * hashedBytes.length);
+    StringBuilder stringBuilder = new StringBuilder(2 * hashedBytes.length);
     for (byte b : hashedBytes) {
-      stringBuffer.append(String.format("%02x", b));
+      stringBuilder.append(String.format("%02x", b));
     }
-    return stringBuffer.toString();
+    return stringBuilder.toString();
   }
-
-  private ByteHasher() {}
 }
