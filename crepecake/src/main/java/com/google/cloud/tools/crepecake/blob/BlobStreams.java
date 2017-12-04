@@ -5,15 +5,19 @@ import java.io.InputStream;
 /** Static initializers for {@link BlobStream}. */
 public class BlobStreams {
 
-  public static BlobStream of(InputStream inputStream) {
+  public static BlobStream empty() {
+    return new EmptyBlobStream();
+  }
+
+  public static BlobStream from(InputStream inputStream) {
     return new ProvidedInputStreamBlobStream(inputStream);
   }
 
-  public static BlobStream of(String content) {
-
+  public static BlobStream from(String content) {
+    return new ProvidedStringBlobStream(content);
   }
 
-  public static BlobStream of(BlobStreamWriter writer) {
+  public static BlobStream from(BlobStreamWriter writer) {
     return new ProvidedWriterBlobStream(writer);
   }
 }

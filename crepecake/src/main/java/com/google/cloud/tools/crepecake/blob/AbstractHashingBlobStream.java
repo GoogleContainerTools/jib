@@ -1,10 +1,8 @@
 package com.google.cloud.tools.crepecake.blob;
 
-
 import com.google.cloud.tools.crepecake.hash.ByteHashBuilder;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.image.DigestException;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.NoSuchAlgorithmException;
@@ -17,10 +15,12 @@ abstract class AbstractHashingBlobStream implements BlobStream {
    * @param outputStream the {@link OutputStream} to write to
    * @param byteHashBuilder the {@link ByteHashBuilder} to write to as well
    */
-  protected abstract void writeToAndHash(OutputStream outputStream, ByteHashBuilder byteHashBuilder) throws IOException;
+  protected abstract void writeToAndHash(OutputStream outputStream, ByteHashBuilder byteHashBuilder)
+      throws IOException;
 
   @Override
-  public BlobDescriptor writeTo(OutputStream outputStream) throws IOException, NoSuchAlgorithmException, DigestException {
+  public BlobDescriptor writeTo(OutputStream outputStream)
+      throws IOException, NoSuchAlgorithmException, DigestException {
     ByteHashBuilder byteHashBuilder = new ByteHashBuilder();
 
     writeToAndHash(outputStream, byteHashBuilder);

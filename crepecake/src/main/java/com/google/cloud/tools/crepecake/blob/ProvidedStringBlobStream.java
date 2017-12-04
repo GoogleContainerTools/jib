@@ -1,13 +1,9 @@
 package com.google.cloud.tools.crepecake.blob;
 
 import com.google.cloud.tools.crepecake.hash.ByteHashBuilder;
-import com.google.cloud.tools.crepecake.image.DescriptorDigest;
-import com.google.cloud.tools.crepecake.image.DigestException;
 import com.google.common.base.Charsets;
-
 import java.io.IOException;
 import java.io.OutputStream;
-import java.security.NoSuchAlgorithmException;
 
 class ProvidedStringBlobStream extends AbstractHashingBlobStream {
 
@@ -18,7 +14,8 @@ class ProvidedStringBlobStream extends AbstractHashingBlobStream {
   }
 
   @Override
-  protected void writeToAndHash(OutputStream outputStream, ByteHashBuilder byteHashBuilder) throws IOException {
+  protected void writeToAndHash(OutputStream outputStream, ByteHashBuilder byteHashBuilder)
+      throws IOException {
     outputStream.write(contentBytes);
     byteHashBuilder.write(contentBytes);
   }
