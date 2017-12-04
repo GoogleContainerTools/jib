@@ -1,8 +1,11 @@
 package com.google.cloud.tools.crepecake.blob;
 
+import com.google.api.client.http.FileContent;
+import com.google.api.client.http.HttpContent;
+
 import java.io.File;
 
-/** Static initializers for {@link BlobStream}. */
+/** Static methods for constructing and using specific implementations of {@link BlobStream}. */
 public class BlobStreams {
 
   public static BlobStream empty() {
@@ -19,5 +22,12 @@ public class BlobStreams {
 
   public static BlobStream from(BlobStreamWriter writer) {
     return new ProvidedWriterBlobStream(writer);
+  }
+
+  /** Wraps a {@link BlobStream} in an {@link HttpContent}. */
+  public static HttpContent toHttpContent(BlobStream blobStream) {
+    if (blobStream instanceof ProvidedFileBlobStream) {
+      return new FileContent(null, (ProvidedFileBlobStream) blobStream.getFile())
+    }
   }
 }
