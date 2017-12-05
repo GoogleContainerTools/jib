@@ -16,13 +16,14 @@
 
 package com.google.cloud.tools.crepecake.image;
 
+import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
 import com.google.cloud.tools.crepecake.blob.BlobStream;
 import javax.annotation.Nullable;
 
 /**
  * Represents a layer in an image.
  *
- * <p>A layer consists of:
+ * <p>An image layer consists of:
  *
  * <ul>
  *   <li>Content BLOB
@@ -54,46 +55,32 @@ import javax.annotation.Nullable;
  */
 public class Layer {
 
-  @Nullable private final BlobStream content;
+  /** Different types have different properties. */
+  protected enum Type {
+    /** A layer that has not been written out and only has the unwritten content {@link BlobStream}. Once written, this layer becomes a {@code CACHED} layer. */
+    UNWRITTEN,
 
-  private final DescriptorDigest digest;
-  private final int size;
+    /** A layer that has been written out (i.e. to a cache) and has its file-backed content BLOB, digest, size, and diff ID. */
+    CACHED,
 
-  /** The digest of the uncompressed layer content. */
-  private final DescriptorDigest diffId;
+    /** A layer that does not have its content BLOB. It is only referenced by its digest, size, and diff ID. */
+    REFERENCE,
 
-  /**
-   * Instantiate a layer without the content BLOB. This is to work with layer references that don't
-   * require the actual layer itself.
-   */
-  public Layer(DescriptorDigest digest, int size, DescriptorDigest diffId) {
-    this(digest, size, diffId, null);
+    /** A layer that has its content BLOB, digest, and size, but not its diff ID. The content BLOB can be decompressed to get the diff ID. */
+    REFERENCE_NO_DIFF_ID,
   }
 
-  /**
-   * Instantiate a layer with the content BLOB. This is for representing a full layer where use of
-   * its content BLOB is expected.
-   */
-  public Layer(DescriptorDigest digest, int size, DescriptorDigest diffId, BlobStream content) {
-    this.digest = digest;
-    this.size = size;
-    this.diffId = diffId;
-    this.content = content;
+  private Type type;
+  private LayerProvider layerProvider;
+
+  public static Layer newUnwritten(BlobStream compressedBlobStream, BlobStream uncompressedBlobStream) {
+    return new Layer(Type.UNWRITTEN, new UnwrittenLayerProvider(compressedBlobStream, uncompressedBlobStream));
   }
 
-  public boolean hasContent() {
-    return content != null;
+  private Layer(Type type, LayerProvider layerProvider) {
+    this.type = type;
+    this.layerProvider = layerProvider;
   }
 
-  public DescriptorDigest getDigest() {
-    return digest;
-  }
 
-  public int getSize() {
-    return size;
-  }
-
-  public BlobStream getContent() {
-    return content;
-  }
 }
