@@ -27,7 +27,7 @@ import java.security.NoSuchAlgorithmException;
  * An empty {@link BlobStream}. This is used, for e.g., to send an HTTP request with an empty body
  * without having to pass {@code null} for the body {@link BlobStream}.
  */
-public class EmptyBlobStream implements BlobStream {
+class EmptyBlobStream implements BlobStream {
 
   private BlobDescriptor writtenBlobDescriptor;
 
