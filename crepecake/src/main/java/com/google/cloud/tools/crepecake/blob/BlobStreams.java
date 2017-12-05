@@ -31,7 +31,7 @@ public class BlobStreams {
   }
 
   public static BlobStream from(File file) {
-    return new HashingFileBlobStream(file);
+    return new FileBlobStream(file);
   }
 
   public static BlobStream from(String content, boolean hashing) {

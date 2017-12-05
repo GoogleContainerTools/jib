@@ -23,25 +23,26 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-/** A {@link BlobStream} that streams from a {@link File} and hashes the bytes. */
-class HashingFileBlobStream extends AbstractHashingBlobStream {
+/** A {@link BlobStream} that streams from a {@link File}. */
+class FileBlobStream extends InputStreamBlobStream {
 
   private final File file;
 
-  private final byte[] byteBuffer = new byte[8192];
-
-  HashingFileBlobStream(File file) {
+  FileBlobStream(File file) {
+    // The input stream will be opened when writing.
+    super(null);
     this.file = file;
   }
 
   @Override
-  protected void writeToAndHash(OutputStream outputStream) throws IOException {
+  public void writeTo(OutputStream outputStream) throws IOException {
     try (InputStream fileStream = new BufferedInputStream(new FileInputStream(file))) {
-      int bytesRead;
-      while ((bytesRead = fileStream.read(byteBuffer)) != -1) {
-        // Writes to the output stream and builds the BLOB's hash as well.
-        outputStream.write(byteBuffer, 0, bytesRead);
-      }
+      writeFromInputStream(fileStream, outputStream);
     }
+  }
+
+  @Override
+  public BlobDescriptor getWrittenBlobDescriptor() {
+    return writtenBlobDescriptor;
   }
 }

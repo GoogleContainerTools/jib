@@ -29,15 +29,14 @@ class InputStreamBlobStream implements BlobStream {
 
   private final byte[] byteBuffer = new byte[8192];
 
-  private BlobDescriptor writtenBlobDescriptor;
+  protected BlobDescriptor writtenBlobDescriptor;
 
   InputStreamBlobStream(InputStream inputStream) {
     this.inputStream = inputStream;
   }
 
-  @Override
-  public void writeTo(OutputStream outputStream)
-      throws IOException, NoSuchAlgorithmException, DigestException {
+  protected void writeFromInputStream(InputStream inputStream, OutputStream outputStream)
+      throws IOException {
     long bytesWritten = 0;
     int bytesRead;
     while ((bytesRead = inputStream.read(byteBuffer)) != -1) {
@@ -46,6 +45,12 @@ class InputStreamBlobStream implements BlobStream {
     }
     outputStream.flush();
     writtenBlobDescriptor = new BlobDescriptor(bytesWritten);
+  }
+
+  @Override
+  public void writeTo(OutputStream outputStream)
+      throws IOException, NoSuchAlgorithmException, DigestException {
+    writeFromInputStream(inputStream, outputStream);
   }
 
   @Override
