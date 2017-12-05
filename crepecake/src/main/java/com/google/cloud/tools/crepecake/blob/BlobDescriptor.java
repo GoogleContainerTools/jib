@@ -17,18 +17,29 @@
 package com.google.cloud.tools.crepecake.blob;
 
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
+import javax.annotation.Nullable;
 
-/** Contains properties describing a BLOB, including its digest and size (in bytes). */
+/** Contains properties describing a BLOB, including size (in bytes) and possibly its digest. */
 public class BlobDescriptor {
 
-  private final DescriptorDigest digest;
+  @Nullable private final DescriptorDigest digest;
+
   private final long size;
 
-  public BlobDescriptor(DescriptorDigest digest, long size) {
-    this.digest = digest;
+  public BlobDescriptor(long size, DescriptorDigest digest) {
     this.size = size;
+    this.digest = digest;
   }
 
+  public BlobDescriptor(long size) {
+    this(size, null);
+  }
+
+  public boolean hasDigest() {
+    return digest != null;
+  }
+
+  @Nullable
   public DescriptorDigest getDigest() {
     return digest;
   }

@@ -27,18 +27,18 @@ public class BlobStreams {
   }
 
   public static BlobStream from(InputStream inputStream) {
-    return new ProvidedInputStreamBlobStream(inputStream);
+    return new InputStreamBlobStream(inputStream);
   }
 
   public static BlobStream from(File file) {
-    return new ProvidedFileBlobStream(file);
+    return new HashingFileBlobStream(file);
   }
 
-  public static BlobStream from(String content) {
-    return new ProvidedStringBlobStream(content);
+  public static BlobStream from(String content, boolean hashing) {
+    return hashing ? new HashingStringBlobStream(content) : new StringBlobStream(content);
   }
 
   public static BlobStream from(BlobStreamWriter writer) {
-    return new ProvidedWriterBlobStream(writer);
+    return new HashingWriterBlobStream(writer);
   }
 }

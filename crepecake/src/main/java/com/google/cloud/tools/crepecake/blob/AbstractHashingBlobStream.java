@@ -22,7 +22,9 @@ import com.google.cloud.tools.crepecake.image.DigestException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.NoSuchAlgorithmException;
+import javax.annotation.Nullable;
 
+/** Abstract parent for {@link BlobStream}s that hash the BLOB as well. */
 abstract class AbstractHashingBlobStream implements BlobStream {
 
   private BlobDescriptor writtenBlobDescriptor;
@@ -43,12 +45,13 @@ abstract class AbstractHashingBlobStream implements BlobStream {
 
     writeToAndHash(outputStream, byteHashBuilder);
 
-    DescriptorDigest digest = DescriptorDigest.fromHash(byteHashBuilder.toHash());
     long totalBytes = byteHashBuilder.getTotalBytes();
-    writtenBlobDescriptor = new BlobDescriptor(digest, totalBytes);
+    DescriptorDigest digest = DescriptorDigest.fromHash(byteHashBuilder.toHash());
+    writtenBlobDescriptor = new BlobDescriptor(totalBytes, digest);
   }
 
   @Override
+  @Nullable
   public BlobDescriptor getWrittenBlobDescriptor() {
     return writtenBlobDescriptor;
   }

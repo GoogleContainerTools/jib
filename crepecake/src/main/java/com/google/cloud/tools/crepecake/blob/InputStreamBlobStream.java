@@ -16,35 +16,39 @@
 
 package com.google.cloud.tools.crepecake.blob;
 
-import com.google.cloud.tools.crepecake.hash.ByteHashBuilder;
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
+import com.google.cloud.tools.crepecake.image.DigestException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.NoSuchAlgorithmException;
 
-/** A {@link BlobStream} that streams from a {@link File}. */
-class ProvidedFileBlobStream extends AbstractHashingBlobStream {
+/** A {@link BlobStream} that streams from an {@link InputStream}. */
+class InputStreamBlobStream implements BlobStream {
 
-  private final File file;
+  private final InputStream inputStream;
 
   private final byte[] byteBuffer = new byte[8192];
 
-  ProvidedFileBlobStream(File file) {
-    this.file = file;
+  private BlobDescriptor writtenBlobDescriptor;
+
+  InputStreamBlobStream(InputStream inputStream) {
+    this.inputStream = inputStream;
   }
 
   @Override
-  protected void writeToAndHash(OutputStream outputStream, ByteHashBuilder byteHashBuilder)
-      throws IOException {
-    InputStream fileStream = new BufferedInputStream(new FileInputStream(file));
-
+  public void writeTo(OutputStream outputStream)
+      throws IOException, NoSuchAlgorithmException, DigestException {
+    long bytesWritten = 0;
     int bytesRead;
-    while ((bytesRead = fileStream.read(byteBuffer)) != -1) {
-      // Writes to the output stream and builds the BLOB's hash as well.
+    while ((bytesRead = inputStream.read(byteBuffer)) != -1) {
       outputStream.write(byteBuffer, 0, bytesRead);
-      byteHashBuilder.write(byteBuffer, 0, bytesRead);
+      bytesWritten += bytesRead;
     }
+    writtenBlobDescriptor = new BlobDescriptor(bytesWritten);
+  }
+
+  @Override
+  public BlobDescriptor getWrittenBlobDescriptor() {
+    return writtenBlobDescriptor;
   }
 }
