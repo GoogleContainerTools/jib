@@ -56,17 +56,17 @@ public class Layer {
 
   @Nullable private final BlobStream content;
 
-  private final Digest digest;
+  private final DescriptorDigest digest;
   private final int size;
 
   /** The digest of the uncompressed layer content. */
-  private final Digest diffId;
+  private final DescriptorDigest diffId;
 
   /**
    * Instantiate a layer without the content BLOB. This is to work with layer references that don't
    * require the actual layer itself.
    */
-  public Layer(Digest digest, int size, Digest diffId) {
+  public Layer(DescriptorDigest digest, int size, DescriptorDigest diffId) {
     this(digest, size, diffId, null);
   }
 
@@ -74,7 +74,7 @@ public class Layer {
    * Instantiate a layer with the content BLOB. This is for representing a full layer where use of
    * its content BLOB is expected.
    */
-  public Layer(Digest digest, int size, Digest diffId, BlobStream content) {
+  public Layer(DescriptorDigest digest, int size, DescriptorDigest diffId, BlobStream content) {
     this.digest = digest;
     this.size = size;
     this.diffId = diffId;
@@ -85,7 +85,7 @@ public class Layer {
     return content != null;
   }
 
-  public Digest getDigest() {
+  public DescriptorDigest getDigest() {
     return digest;
   }
 
