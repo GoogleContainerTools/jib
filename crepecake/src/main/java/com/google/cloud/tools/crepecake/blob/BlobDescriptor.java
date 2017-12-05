@@ -47,4 +47,22 @@ public class BlobDescriptor {
   public long getSize() {
     return size;
   }
+
+  /**
+   * Two {@link BlobDescriptor} objects are equal if their
+   *
+   * <ol>
+   *   <li>{@code digest}s are not null and equal
+   *   <li>{@code size} is equal
+   * </ol>
+   */
+  @Override
+  public boolean equals(Object obj) {
+    if (digest == null || !(obj instanceof BlobDescriptor)) {
+      return false;
+    }
+
+    BlobDescriptor other = (BlobDescriptor) obj;
+    return digest.equals(other.getDigest()) && size == other.getSize();
+  }
 }

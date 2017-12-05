@@ -44,6 +44,7 @@ class InputStreamBlobStream implements BlobStream {
       outputStream.write(byteBuffer, 0, bytesRead);
       bytesWritten += bytesRead;
     }
+    outputStream.flush();
     writtenBlobDescriptor = new BlobDescriptor(bytesWritten);
   }
 

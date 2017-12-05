@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.crepecake.blob;
 
-import com.google.cloud.tools.crepecake.hash.ByteHashBuilder;
+import com.google.cloud.tools.crepecake.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.image.DigestException;
 import com.google.common.base.Charsets;
@@ -32,8 +32,9 @@ import java.nio.file.Files;
 import java.security.NoSuchAlgorithmException;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
 
-/** Tests for {@link BlobStream} */
+/** Tests for {@link BlobStream}. */
 public class BlobStreamTest {
 
   @Test
@@ -97,9 +98,10 @@ public class BlobStreamTest {
     Assert.assertEquals(expectedBytes.length, blobDescriptor.getSize());
 
     if (blobDescriptor.hasDigest()) {
-      ByteHashBuilder byteHashBuilder = new ByteHashBuilder();
-      byteHashBuilder.write(expectedBytes);
-      DescriptorDigest expectedDigest = DescriptorDigest.fromHash(byteHashBuilder.toHash());
+      CountingDigestOutputStream countingDigestOutputStream =
+          new CountingDigestOutputStream(Mockito.mock(OutputStream.class));
+      countingDigestOutputStream.write(expectedBytes);
+      DescriptorDigest expectedDigest = countingDigestOutputStream.toBlobDescriptor().getDigest();
       Assert.assertEquals(expectedDigest, blobDescriptor.getDigest());
     }
   }

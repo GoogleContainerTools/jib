@@ -16,11 +16,16 @@
 
 package com.google.cloud.tools.crepecake.hash;
 
+import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
+import com.google.cloud.tools.crepecake.image.DescriptorDigest;
+import com.google.cloud.tools.crepecake.image.DigestException;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -29,7 +34,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class ByteHashBuilderTest {
+/** Tests for {@link CountingDigestOutputStream}. */
+public class CountingDigestOutputStreamTest {
 
   private Map<String, String> knownSha256Hashes;
 
@@ -49,42 +55,23 @@ public class ByteHashBuilderTest {
   }
 
   @Test
-  public void testHash() throws NoSuchAlgorithmException, IOException {
-    // Creates a buffer to hold bytes to append to the hash builder.
-    byte[] bytesToAppend = new byte[3];
-
+  public void test_smokeTest() throws NoSuchAlgorithmException, IOException, DigestException {
     for (Map.Entry<String, String> knownHash : knownSha256Hashes.entrySet()) {
       String toHash = knownHash.getKey();
       String expectedHash = knownHash.getValue();
 
-      ByteHashBuilder byteHashBuilder = new ByteHashBuilder();
+      OutputStream underlyingOutputStream = new ByteArrayOutputStream();
+      CountingDigestOutputStream countingDigestOutputStream =
+          new CountingDigestOutputStream(underlyingOutputStream);
 
-      // Reads the bytes to hash piecewise and appends to the builder.
       byte[] bytesToHash = toHash.getBytes(Charsets.UTF_8);
-      ByteArrayInputStream bytesToHashStream = new ByteArrayInputStream(bytesToHash);
-      int bytesRead;
-      while ((bytesRead = bytesToHashStream.read(bytesToAppend)) != -1) {
-        byteHashBuilder.write(bytesToAppend, 0, bytesRead);
-      }
+      InputStream toHashInputStream = new ByteArrayInputStream(bytesToHash);
+      ByteStreams.copy(toHashInputStream, countingDigestOutputStream);
 
-      Assert.assertEquals(expectedHash, byteHashBuilder.toHash());
-      Assert.assertEquals(bytesToHash.length, byteHashBuilder.getTotalBytes());
-    }
-  }
-
-  @Test
-  public void testHash_asOutputStream() throws NoSuchAlgorithmException, IOException {
-    for (Map.Entry<String, String> knownHash : knownSha256Hashes.entrySet()) {
-      String toHash = knownHash.getKey();
-      String expectedHash = knownHash.getValue();
-
-      ByteHashBuilder byteHashBuilder = new ByteHashBuilder();
-
-      InputStream toHashInputStream = new ByteArrayInputStream(toHash.getBytes(Charsets.UTF_8));
-      ByteStreams.copy(toHashInputStream, byteHashBuilder);
-
-      Assert.assertEquals(expectedHash, byteHashBuilder.toHash());
-      Assert.assertEquals(toHash.getBytes(Charsets.UTF_8).length, byteHashBuilder.getTotalBytes());
+      BlobDescriptor expectedBlobDescriptor =
+          new BlobDescriptor(bytesToHash.length, DescriptorDigest.fromHash(expectedHash));
+      Assert.assertEquals(expectedBlobDescriptor, countingDigestOutputStream.toBlobDescriptor());
+      Assert.assertEquals(bytesToHash.length, countingDigestOutputStream.getTotalBytes());
     }
   }
 }

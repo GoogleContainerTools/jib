@@ -16,14 +16,17 @@
 
 package com.google.cloud.tools.crepecake.blob;
 
-import com.google.cloud.tools.crepecake.hash.ByteHashBuilder;
-import com.google.cloud.tools.crepecake.image.DescriptorDigest;
+import com.google.cloud.tools.crepecake.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.crepecake.image.DigestException;
+import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.NoSuchAlgorithmException;
 
-/** An empty {@link BlobStream}. This is used, for e.g., to send an HTTP request with an empty body without having to pass {@code null} for the body {@link BlobStream}. */
+/**
+ * An empty {@link BlobStream}. This is used, for e.g., to send an HTTP request with an empty body
+ * without having to pass {@code null} for the body {@link BlobStream}.
+ */
 public class EmptyBlobStream implements BlobStream {
 
   private BlobDescriptor writtenBlobDescriptor;
@@ -31,8 +34,8 @@ public class EmptyBlobStream implements BlobStream {
   @Override
   public void writeTo(OutputStream outputStream)
       throws IOException, NoSuchAlgorithmException, DigestException {
-    DescriptorDigest digest = DescriptorDigest.fromHash(new ByteHashBuilder().toHash());
-    writtenBlobDescriptor = new BlobDescriptor(0, digest);
+    writtenBlobDescriptor =
+        new CountingDigestOutputStream(ByteStreams.nullOutputStream()).toBlobDescriptor();
   }
 
   @Override

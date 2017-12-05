@@ -16,36 +16,42 @@
 
 package com.google.cloud.tools.crepecake.hash;
 
+import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
+import com.google.cloud.tools.crepecake.image.DescriptorDigest;
+import com.google.cloud.tools.crepecake.image.DigestException;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.security.DigestOutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-/**
- * Generates SHA-256 hashes in hexadecimal. Can act as an {@link OutputStream} that captures the
- * bytes to hash.
- */
-public class ByteHashBuilder extends OutputStream {
+/** A {@link DigestOutputStream} that also keeps track of the total number of bytes written. */
+public class CountingDigestOutputStream extends DigestOutputStream {
 
   private static final String SHA_256_ALGORITHM = "SHA-256";
-
-  private final MessageDigest messageDigest = MessageDigest.getInstance(SHA_256_ALGORITHM);
 
   /** Keeps track of the total number of bytes appended. */
   private long totalBytes = 0;
 
-  public ByteHashBuilder() throws NoSuchAlgorithmException {}
+  /** Wraps the {@code outputStream}. */
+  public CountingDigestOutputStream(OutputStream outputStream) throws NoSuchAlgorithmException {
+    super(outputStream, null);
+    setMessageDigest(MessageDigest.getInstance(SHA_256_ALGORITHM));
+  }
 
-  /** Builds the hash in hexadecimal format. */
-  public String toHash() {
-    byte[] hashedBytes = messageDigest.digest();
+  /** Builds a {@link BlobDescriptor} with the hash and size of the bytes written. */
+  public BlobDescriptor toBlobDescriptor() throws DigestException {
+    byte[] hashedBytes = digest.digest();
 
     // Encodes each hashed byte into 2-character hexadecimal representation.
     StringBuilder stringBuilder = new StringBuilder(2 * hashedBytes.length);
     for (byte b : hashedBytes) {
       stringBuilder.append(String.format("%02x", b));
     }
-    return stringBuilder.toString();
+    String hash = stringBuilder.toString();
+
+    DescriptorDigest digest = DescriptorDigest.fromHash(hash);
+    return new BlobDescriptor(totalBytes, digest);
   }
 
   /** @return the total number of bytes that were hashed */
@@ -55,36 +61,13 @@ public class ByteHashBuilder extends OutputStream {
 
   @Override
   public void write(byte[] data, int offset, int length) throws IOException {
-    try {
-      append(data, offset, length);
-    } catch (NoSuchAlgorithmException ex) {
-      throw new IOException(ex);
-    }
-  }
-
-  @Override
-  public void write(byte data[]) throws IOException {
-    try {
-      append(data, 0, data.length);
-    } catch (NoSuchAlgorithmException ex) {
-      throw new IOException(ex);
-    }
+    super.write(data, offset, length);
+    totalBytes += length;
   }
 
   @Override
   public void write(int singleByte) throws IOException {
-    // Only write the 8 low-order bits.
-    byte[] singleByteArray = {(byte) (singleByte & 0xff)};
-    try {
-      append(singleByteArray, 0, 1);
-    } catch (NoSuchAlgorithmException ex) {
-      throw new IOException(ex);
-    }
-  }
-
-  /** Appends data to the bytes the hash. */
-  private void append(byte[] data, int offset, int length) throws NoSuchAlgorithmException {
-    messageDigest.update(data, offset, length);
-    totalBytes += length;
+    super.write(singleByte);
+    totalBytes++;
   }
 }

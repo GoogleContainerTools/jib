@@ -38,6 +38,7 @@ class StringBlobStream implements BlobStream {
       throws IOException, NoSuchAlgorithmException, DigestException {
     byte[] contentBytes = content.getBytes(Charsets.UTF_8);
     outputStream.write(contentBytes);
+    outputStream.flush();
     writtenBlobDescriptor = new BlobDescriptor(content.length());
   }
 

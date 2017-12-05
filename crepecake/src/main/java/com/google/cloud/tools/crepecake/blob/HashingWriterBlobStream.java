@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.crepecake.blob;
 
-import com.google.cloud.tools.crepecake.hash.ByteHashBuilder;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -32,9 +31,7 @@ class HashingWriterBlobStream extends AbstractHashingBlobStream {
   }
 
   @Override
-  protected void writeToAndHash(OutputStream outputStream, ByteHashBuilder byteHashBuilder)
-      throws IOException {
+  protected void writeToAndHash(OutputStream outputStream) throws IOException {
     writer.writeTo(outputStream);
-    writer.writeTo(byteHashBuilder);
   }
 }
