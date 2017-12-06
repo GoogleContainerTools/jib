@@ -47,6 +47,8 @@ public class LayerTest {
   public void testNew_unwritten() {
     Layer layer = Layer.newUnwritten(mockCompressedBlobStream, mockUncompressedBlobStream);
 
+    Assert.assertEquals(LayerType.UNWRITTEN, layer.getType());
+
     try {
       layer.getBlobDescriptor();
       Assert.fail("Blob descriptor should not be available for unwritten layer");
@@ -66,6 +68,7 @@ public class LayerTest {
   public void testNew_cached() throws LayerException {
     Layer layer = Layer.newCached(mockFile, mockBlobDescriptor, mockDiffId);
 
+    Assert.assertEquals(LayerType.CACHED, layer.getType());
     Assert.assertEquals(mockBlobDescriptor, layer.getBlobDescriptor());
     Assert.assertEquals(mockDiffId, layer.getDiffId());
   }
@@ -74,6 +77,7 @@ public class LayerTest {
   public void testNew_reference() throws LayerException {
     Layer layer = Layer.newReference(mockBlobDescriptor, mockDiffId);
 
+    Assert.assertEquals(LayerType.REFERENCE, layer.getType());
     Assert.assertEquals(mockBlobDescriptor, layer.getBlobDescriptor());
     Assert.assertEquals(mockDiffId, layer.getDiffId());
   }
@@ -82,6 +86,7 @@ public class LayerTest {
   public void testNew_referenceNoDiffId() throws LayerException {
     Layer layer = Layer.newReferenceNoDiffId(mockBlobDescriptor);
 
+    Assert.assertEquals(LayerType.REFERENCE_NO_DIFF_ID, layer.getType());
     Assert.assertEquals(mockBlobDescriptor, layer.getBlobDescriptor());
 
     try {
