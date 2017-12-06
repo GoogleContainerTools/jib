@@ -35,7 +35,6 @@ public class RequestTest {
 
   @Mock private HttpRequest httpRequestMock;
   @Mock private HttpHeaders httpHeadersMock;
-  @Mock private BlobStream blobStreamMock;
 
   private URL fakeUrl;
 
@@ -59,7 +58,7 @@ public class RequestTest {
   }
 
   @Test
-  public void testSendPut() throws IOException {
+  public void testPut() throws IOException {
     Request request = new Request(fakeUrl, httpHeadersMock);
     request.setContentType("some content type");
     request.put(blobStreamMock);
@@ -73,7 +72,7 @@ public class RequestTest {
   }
 
   @Test
-  public void testSendPost() throws IOException {
+  public void testPost() throws IOException {
     Request request = new Request(fakeUrl, httpHeadersMock);
     request.setContentType("some content type");
     request.post(blobStreamMock);
