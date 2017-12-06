@@ -18,8 +18,6 @@ package com.google.cloud.tools.crepecake.http;
 
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpHeaders;
-import com.google.api.client.http.HttpMethods;
-import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.cloud.tools.crepecake.blob.BlobStream;
@@ -35,21 +33,30 @@ public class Request {
   private static final HttpRequestFactory HTTP_REQUEST_FACTORY =
       new NetHttpTransport().createRequestFactory();
 
-  private final HttpRequest request;
+  private final HttpRequestFactory requestFactory;
+
+  /** The URL to send the request to. */
+  private GenericUrl url;
 
   /** The request method; uses GET if null. */
   @Nullable private String method;
 
+  /** The HTTP request headers. */
   private HttpHeaders headers = new HttpHeaders();
 
   public Request(URL url) throws IOException {
-    request = HTTP_REQUEST_FACTORY.buildGetRequest(new GenericUrl(url));
+    this(url, HTTP_REQUEST_FACTORY);
   }
 
   @VisibleForTesting
-  Request(URL url, HttpHeaders headers) throws IOException {
-    this(url);
+  Request(URL url, HttpRequestFactory requestFactory, HttpHeaders headers) throws IOException {
+    this(url, requestFactory);
     this.headers = headers;
+  }
+
+  private Request(URL url, HttpRequestFactory requestFactory) throws IOException {
+    this.url = new GenericUrl(url);
+    this.requestFactory = requestFactory;
   }
 
   /** Sets the {@code Content-Type} header. */
@@ -60,31 +67,16 @@ public class Request {
 
   /** Sends the request with method GET. */
   public Response get() throws IOException {
-    request.setRequestMethod(HttpMethods.GET);
-    return send(BlobStreams.empty());
+    return new Response(requestFactory.buildGetRequest(url));
   }
 
   /** Sends the request with method POST. */
   public Response post(BlobStream body) throws IOException {
-    request.setRequestMethod(HttpMethods.POST);
-    return send(body);
+    return new Response(requestFactory.buildPostRequest(url, BlobStreams.toHttpContent(body)));
   }
 
   /** Sends the request with method PUT. */
   public Response put(BlobStream body) throws IOException {
-    request.setRequestMethod(HttpMethods.PUT);
-    return send(body);
-  }
-
-  /** Sends request with body. */
-  private Response send(BlobStream body) throws IOException {
-    request.setContent(BlobStreams.toHttpContent(body));
-
-    return new Response(request);
-  }
-
-  @VisibleForTesting
-  HttpRequest getRequest() {
-    return request;
+    return new Response(requestFactory.buildPutRequest(url, BlobStreams.toHttpContent(body)));
   }
 }

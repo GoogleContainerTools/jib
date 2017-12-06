@@ -19,9 +19,11 @@ package com.google.cloud.tools.crepecake.http;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
 import com.google.cloud.tools.crepecake.blob.BlobStream;
+import com.google.cloud.tools.crepecake.image.DigestException;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -42,7 +44,7 @@ public class ResponseTest {
   }
 
   @Test
-  public void testGetContent() throws IOException {
+  public void testGetContent() throws IOException, DigestException, NoSuchAlgorithmException {
     String expectedResponse = "crepecake\nis\ngood!";
     ByteArrayInputStream responseInputStream =
         new ByteArrayInputStream(expectedResponse.getBytes());
