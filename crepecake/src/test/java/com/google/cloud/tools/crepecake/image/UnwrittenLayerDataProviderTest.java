@@ -37,13 +37,13 @@ public class UnwrittenLayerDataProviderTest {
 
   @Rule public TemporaryFolder fakeFolder = new TemporaryFolder();
 
-  @Mock BlobStream mockCompressedBlobStream;
+  @Mock private BlobStream mockCompressedBlobStream;
 
-  @Mock BlobStream mockUncompressedBlobStream;
+  @Mock private BlobStream mockUncompressedBlobStream;
 
-  @Mock BlobDescriptor mockBlobDescriptor;
+  @Mock private BlobDescriptor mockBlobDescriptor;
 
-  @Mock DescriptorDigest mockDiffId;
+  @Mock private DescriptorDigest mockDiffId;
 
   @Before
   public void setUpMocks() {

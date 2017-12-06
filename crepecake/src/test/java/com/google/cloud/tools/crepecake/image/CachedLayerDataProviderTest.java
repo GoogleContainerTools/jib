@@ -35,9 +35,9 @@ import org.mockito.MockitoAnnotations;
 /** Tests for {@link CachedLayerDataProvider}. */
 public class CachedLayerDataProviderTest {
 
-  @Mock BlobDescriptor mockBlobDescriptor;
+  @Mock private BlobDescriptor mockBlobDescriptor;
 
-  @Mock DescriptorDigest mockDiffId;
+  @Mock private DescriptorDigest mockDiffId;
 
   @Before
   public void setUpMocks() {

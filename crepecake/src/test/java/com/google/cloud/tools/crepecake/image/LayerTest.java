@@ -28,15 +28,15 @@ import org.mockito.MockitoAnnotations;
 /** Tests for {@link Layer}. */
 public class LayerTest {
 
-  @Mock BlobStream mockCompressedBlobStream;
+  @Mock private BlobStream mockCompressedBlobStream;
 
-  @Mock BlobStream mockUncompressedBlobStream;
+  @Mock private BlobStream mockUncompressedBlobStream;
 
-  @Mock File mockFile;
+  @Mock private File mockFile;
 
-  @Mock BlobDescriptor mockBlobDescriptor;
+  @Mock private BlobDescriptor mockBlobDescriptor;
 
-  @Mock DescriptorDigest mockDiffId;
+  @Mock private DescriptorDigest mockDiffId;
 
   @Before
   public void setUpMocks() {
