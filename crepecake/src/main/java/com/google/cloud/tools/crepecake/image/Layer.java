@@ -18,7 +18,7 @@ package com.google.cloud.tools.crepecake.image;
 
 import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
 import com.google.cloud.tools.crepecake.blob.BlobStream;
-import javax.annotation.Nullable;
+import java.io.File;
 
 /**
  * Represents a layer in an image.
@@ -56,31 +56,69 @@ import javax.annotation.Nullable;
 public class Layer {
 
   /** Different types have different properties. */
-  protected enum Type {
-    /** A layer that has not been written out and only has the unwritten content {@link BlobStream}. Once written, this layer becomes a {@code CACHED} layer. */
+  private enum Type {
+    /**
+     * A layer that has not been written out and only has the unwritten content {@link BlobStream}.
+     * Once written, this layer becomes a {@code CACHED} layer.
+     */
     UNWRITTEN,
 
-    /** A layer that has been written out (i.e. to a cache) and has its file-backed content BLOB, digest, size, and diff ID. */
+    /**
+     * A layer that has been written out (i.e. to a cache) and has its file-backed content BLOB,
+     * digest, size, and diff ID.
+     */
     CACHED,
 
-    /** A layer that does not have its content BLOB. It is only referenced by its digest, size, and diff ID. */
+    /**
+     * A layer that does not have its content BLOB. It is only referenced by its digest, size, and
+     * diff ID.
+     */
     REFERENCE,
 
-    /** A layer that has its content BLOB, digest, and size, but not its diff ID. The content BLOB can be decompressed to get the diff ID. */
+    /**
+     * A layer that has its content BLOB, digest, and size, but not its diff ID. The content BLOB
+     * can be decompressed to get the diff ID.
+     */
     REFERENCE_NO_DIFF_ID,
   }
 
   private Type type;
-  private LayerProvider layerProvider;
+  private LayerDataProvider layerDataProvider;
 
-  public static Layer newUnwritten(BlobStream compressedBlobStream, BlobStream uncompressedBlobStream) {
-    return new Layer(Type.UNWRITTEN, new UnwrittenLayerProvider(compressedBlobStream, uncompressedBlobStream));
+  /** Instantiate a new {@code UNWRITTEN} {@link Layer}. */
+  public static Layer newUnwritten(
+      BlobStream compressedBlobStream, BlobStream uncompressedBlobStream) {
+    return new Layer(
+        Type.UNWRITTEN,
+        new UnwrittenLayerDataProvider(compressedBlobStream, uncompressedBlobStream));
   }
 
-  private Layer(Type type, LayerProvider layerProvider) {
+  /** Instantiate a new {@code CACHED} {@link Layer}. */
+  public static Layer newCached(File file, BlobDescriptor blobDescriptor, DescriptorDigest diffId) {
+    return new Layer(Type.CACHED, new CachedLayerDataProvider(file, blobDescriptor, diffId));
+  }
+
+  /** Instantiate a new {@code REFERENCE} {@link Layer}. */
+  public static Layer newReference(BlobDescriptor blobDescriptor, DescriptorDigest diffId) {
+    return new Layer(Type.REFERENCE, new ReferenceLayerDataProvider(blobDescriptor, diffId));
+  }
+
+  /** Instantiate a new {@code REFERENCE_NO_DIFF_ID} {@link Layer}. */
+  public static Layer newReferenceNoDiffId(BlobDescriptor blobDescriptor) {
+    return new Layer(
+        Type.REFERENCE_NO_DIFF_ID, new ReferenceNoDiffIdLayerDataProvider(blobDescriptor));
+  }
+
+  private Layer(Type type, LayerDataProvider layerDataProvider) {
     this.type = type;
-    this.layerProvider = layerProvider;
+    this.layerDataProvider = layerDataProvider;
   }
 
+  public BlobDescriptor getBlobDescriptor() throws LayerException {
+    return layerDataProvider.getBlobDescriptor();
+  }
 
+  public DescriptorDigest getDiffId() throws LayerException {
+    return layerDataProvider.getDiffId();
+  }
 }
