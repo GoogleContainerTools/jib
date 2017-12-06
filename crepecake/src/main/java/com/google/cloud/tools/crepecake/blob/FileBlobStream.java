@@ -16,23 +16,33 @@
 
 package com.google.cloud.tools.crepecake.blob;
 
-import com.google.cloud.tools.crepecake.hash.ByteHashBuilder;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 
-/** A {@link BlobStream} that streams with a {@link BlobStreamWriter} function. */
-class ProvidedWriterBlobStream extends AbstractHashingBlobStream {
+/** A {@link BlobStream} that streams from a {@link File}. */
+class FileBlobStream extends InputStreamBlobStream {
 
-  private final BlobStreamWriter writer;
+  private final File file;
 
-  ProvidedWriterBlobStream(BlobStreamWriter writer) {
-    this.writer = writer;
+  FileBlobStream(File file) {
+    // The input stream will be opened when writing.
+    super(null);
+    this.file = file;
   }
 
   @Override
-  protected void writeToAndHash(OutputStream outputStream, ByteHashBuilder byteHashBuilder)
-      throws IOException {
-    writer.writeTo(outputStream);
-    writer.writeTo(byteHashBuilder);
+  public void writeTo(OutputStream outputStream) throws IOException {
+    try (InputStream fileStream = new BufferedInputStream(new FileInputStream(file))) {
+      writeFromInputStream(fileStream, outputStream);
+    }
+  }
+
+  @Override
+  public BlobDescriptor getWrittenBlobDescriptor() {
+    return writtenBlobDescriptor;
   }
 }
