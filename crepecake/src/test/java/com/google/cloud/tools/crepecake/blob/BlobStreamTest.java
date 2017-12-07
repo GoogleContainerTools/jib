@@ -18,7 +18,6 @@ package com.google.cloud.tools.crepecake.blob;
 
 import com.google.cloud.tools.crepecake.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
-import com.google.cloud.tools.crepecake.image.DigestException;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import java.io.ByteArrayInputStream;
@@ -29,6 +28,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.security.DigestException;
 import java.security.NoSuchAlgorithmException;
 import org.junit.Assert;
 import org.junit.Test;
