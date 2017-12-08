@@ -16,10 +16,10 @@
 
 package com.google.cloud.tools.crepecake.blob;
 
-import com.google.cloud.tools.crepecake.image.DigestException;
 import com.google.common.base.Charsets;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.security.DigestException;
 import java.security.NoSuchAlgorithmException;
 
 /** A {@link BlobStream} that streams from a {@link String}. */

@@ -17,9 +17,9 @@
 package com.google.cloud.tools.crepecake.blob;
 
 import com.google.cloud.tools.crepecake.hash.CountingDigestOutputStream;
-import com.google.cloud.tools.crepecake.image.DigestException;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.security.DigestException;
 import java.security.DigestOutputStream;
 import java.security.NoSuchAlgorithmException;
 import javax.annotation.Nullable;

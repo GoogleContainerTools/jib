@@ -18,7 +18,6 @@ package com.google.cloud.tools.crepecake.hash;
 
 import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
-import com.google.cloud.tools.crepecake.image.DigestException;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import java.io.ByteArrayInputStream;
@@ -26,6 +25,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.DigestException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 import java.util.HashMap;
