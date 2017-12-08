@@ -22,6 +22,7 @@ import com.google.common.io.ByteStreams;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.security.DigestException;
 import java.security.NoSuchAlgorithmException;
 import org.junit.Assert;
 import org.junit.Before;
