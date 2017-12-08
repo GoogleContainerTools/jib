@@ -17,34 +17,33 @@
 package com.google.cloud.tools.crepecake.image;
 
 import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
-import com.google.cloud.tools.crepecake.blob.BlobStream;
-import com.google.cloud.tools.crepecake.blob.BlobStreams;
-import java.io.File;
 
-class CachedLayerDataProvider extends LayerDataProvider {
+/**
+ * A {@link Layer} reference that <b>does not</b> have the underlying content. It references the
+ * layer with its digest and size, but <b>not</b> its diff ID.
+ */
+public class ReferenceNoDiffIdLayer extends Layer {
 
-  private final File file;
+  /** The {@link BlobDescriptor} of the compressed layer content. */
   private final BlobDescriptor blobDescriptor;
-  private final DescriptorDigest diffId;
 
-  CachedLayerDataProvider(File file, BlobDescriptor blobDescriptor, DescriptorDigest diffId) {
-    this.file = file;
+  /** Instantiate with a {@link BlobDescriptor} and diff ID. */
+  public ReferenceNoDiffIdLayer(BlobDescriptor blobDescriptor) {
     this.blobDescriptor = blobDescriptor;
-    this.diffId = diffId;
-  }
-
-  /** Gets a new {@link BlobStream} for the content of the cached layer. */
-  BlobStream getBlobStream() {
-    return BlobStreams.from(file);
   }
 
   @Override
-  BlobDescriptor getBlobDescriptor() {
+  public LayerType getType() {
+    return LayerType.REFERENCE_NO_DIFF_ID;
+  }
+
+  @Override
+  public BlobDescriptor getBlobDescriptor() {
     return blobDescriptor;
   }
 
   @Override
-  DescriptorDigest getDiffId() {
-    return diffId;
+  public DescriptorDigest getDiffId() throws LayerException {
+    throw new LayerException("Diff ID not available for reference layer without diff ID");
   }
 }

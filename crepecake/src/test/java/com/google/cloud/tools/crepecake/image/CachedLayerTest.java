@@ -32,8 +32,8 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-/** Tests for {@link CachedLayerDataProvider}. */
-public class CachedLayerDataProviderTest {
+/** Tests for {@link CachedLayer}. */
+public class CachedLayerTest {
 
   @Mock private BlobDescriptor mockBlobDescriptor;
 
@@ -50,16 +50,15 @@ public class CachedLayerDataProviderTest {
     File fileA = new File(Resources.getResource("fileA").toURI());
     String expectedFileAString = new String(Files.readAllBytes(fileA.toPath()), Charsets.UTF_8);
 
-    CachedLayerDataProvider cachedLayerDataProvider =
-        new CachedLayerDataProvider(fileA, mockBlobDescriptor, mockDiffId);
+    CachedLayer cachedLayer = new CachedLayer(fileA, mockBlobDescriptor, mockDiffId);
 
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    BlobStream fileBlobStream = cachedLayerDataProvider.getBlobStream();
+    BlobStream fileBlobStream = cachedLayer.getBlobStream();
     fileBlobStream.writeTo(outputStream);
 
     Assert.assertEquals(
         expectedFileAString, new String(outputStream.toByteArray(), Charsets.UTF_8));
-    Assert.assertEquals(mockBlobDescriptor, cachedLayerDataProvider.getBlobDescriptor());
-    Assert.assertEquals(mockDiffId, cachedLayerDataProvider.getDiffId());
+    Assert.assertEquals(mockBlobDescriptor, cachedLayer.getBlobDescriptor());
+    Assert.assertEquals(mockDiffId, cachedLayer.getDiffId());
   }
 }

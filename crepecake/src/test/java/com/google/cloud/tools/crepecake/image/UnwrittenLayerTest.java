@@ -32,8 +32,8 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
-/** Tests for {@link UnwrittenLayerDataProvider}. */
-public class UnwrittenLayerDataProviderTest {
+/** Tests for {@link UnwrittenLayer}. */
+public class UnwrittenLayerTest {
 
   @Rule public TemporaryFolder fakeFolder = new TemporaryFolder();
 
@@ -60,15 +60,15 @@ public class UnwrittenLayerDataProviderTest {
   public void testWriteTo() throws IOException, DigestException, NoSuchAlgorithmException {
     File testFile = fakeFolder.newFile("fakefile");
 
-    UnwrittenLayerDataProvider unwrittenLayerDataProvider =
-        new UnwrittenLayerDataProvider(mockCompressedBlobStream, mockUncompressedBlobStream);
+    UnwrittenLayer unwrittenLayer =
+        new UnwrittenLayer(mockCompressedBlobStream, mockUncompressedBlobStream);
 
-    CachedLayerDataProvider cachedLayerDataProvider = unwrittenLayerDataProvider.writeTo(testFile);
+    CachedLayer cachedLayer = unwrittenLayer.writeTo(testFile);
 
     Mockito.verify(mockCompressedBlobStream).writeTo(Mockito.any(OutputStream.class));
     Mockito.verify(mockUncompressedBlobStream).writeTo(ByteStreams.nullOutputStream());
 
-    Assert.assertEquals(mockBlobDescriptor, cachedLayerDataProvider.getBlobDescriptor());
-    Assert.assertEquals(mockDiffId, cachedLayerDataProvider.getDiffId());
+    Assert.assertEquals(mockBlobDescriptor, cachedLayer.getBlobDescriptor());
+    Assert.assertEquals(mockDiffId, cachedLayer.getDiffId());
   }
 }

@@ -17,11 +17,9 @@
 package com.google.cloud.tools.crepecake.image;
 
 import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
-import com.google.cloud.tools.crepecake.blob.BlobStream;
-import java.io.File;
 
 /**
- * Represents a layer in an image.
+ * Represents a layer in an image. Implementations represent the various {@link LayerType}s.
  *
  * <p>An image layer consists of:
  *
@@ -53,49 +51,22 @@ import java.io.File;
  *
  * </ul>
  */
-public class Layer {
+public abstract class Layer {
 
-  private LayerType type;
-  private LayerDataProvider layerDataProvider;
+  protected Layer() {}
 
-  /** Instantiate a new {@code UNWRITTEN} {@link Layer}. */
-  public static Layer newUnwritten(
-      BlobStream compressedBlobStream, BlobStream uncompressedBlobStream) {
-    return new Layer(
-        LayerType.UNWRITTEN,
-        new UnwrittenLayerDataProvider(compressedBlobStream, uncompressedBlobStream));
-  }
+  /** @return the layer's {@link LayerType} */
+  public abstract LayerType getType();
 
-  /** Instantiate a new {@code CACHED} {@link Layer}. */
-  public static Layer newCached(File file, BlobDescriptor blobDescriptor, DescriptorDigest diffId) {
-    return new Layer(LayerType.CACHED, new CachedLayerDataProvider(file, blobDescriptor, diffId));
-  }
+  /**
+   * @return the layer's content {@link BlobDescriptor}
+   * @throws LayerException if not available
+   */
+  public abstract BlobDescriptor getBlobDescriptor() throws LayerException;
 
-  /** Instantiate a new {@code REFERENCE} {@link Layer}. */
-  public static Layer newReference(BlobDescriptor blobDescriptor, DescriptorDigest diffId) {
-    return new Layer(LayerType.REFERENCE, new ReferenceLayerDataProvider(blobDescriptor, diffId));
-  }
-
-  /** Instantiate a new {@code REFERENCE_NO_DIFF_ID} {@link Layer}. */
-  public static Layer newReferenceNoDiffId(BlobDescriptor blobDescriptor) {
-    return new Layer(
-        LayerType.REFERENCE_NO_DIFF_ID, new ReferenceNoDiffIdLayerDataProvider(blobDescriptor));
-  }
-
-  private Layer(LayerType type, LayerDataProvider layerDataProvider) {
-    this.type = type;
-    this.layerDataProvider = layerDataProvider;
-  }
-
-  public LayerType getType() {
-    return type;
-  }
-
-  public BlobDescriptor getBlobDescriptor() throws LayerException {
-    return layerDataProvider.getBlobDescriptor();
-  }
-
-  public DescriptorDigest getDiffId() throws LayerException {
-    return layerDataProvider.getDiffId();
-  }
+  /**
+   * @return the layer's diff ID
+   * @throws LayerException if not available
+   */
+  public abstract DescriptorDigest getDiffId() throws LayerException;
 }

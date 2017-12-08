@@ -27,7 +27,7 @@ import java.io.OutputStream;
 import java.security.NoSuchAlgorithmException;
 
 /** A layer that has not been written out and only has the unwritten content {@link BlobStream}. */
-class UnwrittenLayerDataProvider extends LayerDataProvider {
+public class UnwrittenLayer extends Layer {
 
   private final BlobStream compressedBlobStream;
   private final BlobStream uncompressedBlobStream;
@@ -36,16 +36,16 @@ class UnwrittenLayerDataProvider extends LayerDataProvider {
    * @param compressedBlobStream the compressed {@link BlobStream} of the layer content
    * @param uncompressedBlobStream the uncompressed {@link BlobStream} of the layer content
    */
-  UnwrittenLayerDataProvider(BlobStream compressedBlobStream, BlobStream uncompressedBlobStream) {
+  public UnwrittenLayer(BlobStream compressedBlobStream, BlobStream uncompressedBlobStream) {
     this.compressedBlobStream = compressedBlobStream;
     this.uncompressedBlobStream = uncompressedBlobStream;
   }
 
   /**
-   * Writes the compressed layer BLOB to a file and returns a {@link CachedLayerDataProvider} that
-   * represents the new cached layer.
+   * Writes the compressed layer BLOB to a file and returns a {@link CachedLayer} that represents
+   * the new cached layer.
    */
-  CachedLayerDataProvider writeTo(File file)
+  public CachedLayer writeTo(File file)
       throws NoSuchAlgorithmException, IOException, DigestException {
     try (OutputStream fileOutputStream = new BufferedOutputStream(new FileOutputStream(file))) {
       compressedBlobStream.writeTo(fileOutputStream);
@@ -54,17 +54,22 @@ class UnwrittenLayerDataProvider extends LayerDataProvider {
       BlobDescriptor blobDescriptor = compressedBlobStream.getWrittenBlobDescriptor();
       DescriptorDigest diffId = uncompressedBlobStream.getWrittenBlobDescriptor().getDigest();
 
-      return new CachedLayerDataProvider(file, blobDescriptor, diffId);
+      return new CachedLayer(file, blobDescriptor, diffId);
     }
   }
 
   @Override
-  BlobDescriptor getBlobDescriptor() throws LayerException {
+  public LayerType getType() {
+    return LayerType.UNWRITTEN;
+  }
+
+  @Override
+  public BlobDescriptor getBlobDescriptor() throws LayerException {
     throw new LayerException("Blob descriptor not available for unwritten layer");
   }
 
   @Override
-  DescriptorDigest getDiffId() throws LayerException {
+  public DescriptorDigest getDiffId() throws LayerException {
     throw new LayerException("Diff ID not available for unwritten layer");
   }
 }

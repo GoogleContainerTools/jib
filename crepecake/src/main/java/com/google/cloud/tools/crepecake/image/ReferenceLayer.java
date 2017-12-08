@@ -22,7 +22,7 @@ import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
  * A {@link Layer} reference that <b>does not</b> have the underlying content. It references the
  * layer with its digest, size, and diff ID.
  */
-class ReferenceLayerDataProvider extends LayerDataProvider {
+public class ReferenceLayer extends Layer {
 
   /** The {@link BlobDescriptor} of the compressed layer content. */
   private final BlobDescriptor blobDescriptor;
@@ -31,18 +31,23 @@ class ReferenceLayerDataProvider extends LayerDataProvider {
   private final DescriptorDigest diffId;
 
   /** Instantiate with a {@link BlobDescriptor} and diff ID. */
-  ReferenceLayerDataProvider(BlobDescriptor blobDescriptor, DescriptorDigest diffId) {
+  public ReferenceLayer(BlobDescriptor blobDescriptor, DescriptorDigest diffId) {
     this.blobDescriptor = blobDescriptor;
     this.diffId = diffId;
   }
 
   @Override
-  BlobDescriptor getBlobDescriptor() {
+  public LayerType getType() {
+    return LayerType.REFERENCE;
+  }
+
+  @Override
+  public BlobDescriptor getBlobDescriptor() {
     return blobDescriptor;
   }
 
   @Override
-  DescriptorDigest getDiffId() {
+  public DescriptorDigest getDiffId() {
     return diffId;
   }
 }
