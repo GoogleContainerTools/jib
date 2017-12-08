@@ -29,7 +29,7 @@ class ImageLayers {
   private final List<Layer> layers = new ArrayList<>();
 
   /** Keeps track of the layers already added. */
-  private final Set<Digest> layerDigests = new HashSet<>();
+  private final Set<DescriptorDigest> layerDigests = new HashSet<>();
 
   /** Returns an immutable copy of the image layers. */
   List<Layer> asList() {
@@ -42,12 +42,12 @@ class ImageLayers {
    * @param layer the layer to add
    * @throws ImageException if the layer has already been added
    */
-  void add(Layer layer) throws ImageException {
-    if (layerDigests.contains(layer.getDigest())) {
+  void add(Layer layer) throws ImageException, LayerException {
+    if (layerDigests.contains(layer.getBlobDescriptor().getDigest())) {
       throw new ImageException("Cannot add the same layer more than once");
     }
 
-    layerDigests.add(layer.getDigest());
+    layerDigests.add(layer.getBlobDescriptor().getDigest());
     layers.add(layer);
   }
 }
