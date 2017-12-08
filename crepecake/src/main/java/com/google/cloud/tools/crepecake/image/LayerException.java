@@ -16,9 +16,9 @@
 
 package com.google.cloud.tools.crepecake.image;
 
-public class DigestException extends Exception {
+public class LayerException extends Exception {
 
-  public DigestException(String message) {
+  public LayerException(String message) {
     super(message);
   }
 }

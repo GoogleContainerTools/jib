@@ -16,6 +16,16 @@
 
 package com.google.cloud.tools.crepecake.hash;
 
+import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
+import com.google.cloud.tools.crepecake.image.DescriptorDigest;
+import com.google.common.base.Charsets;
+import com.google.common.io.ByteStreams;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.security.DigestException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -24,7 +34,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class ByteHasherTest {
+/** Tests for {@link CountingDigestOutputStream}. */
+public class CountingDigestOutputStreamTest {
 
   private Map<String, String> knownSha256Hashes;
 
@@ -44,12 +55,23 @@ public class ByteHasherTest {
   }
 
   @Test
-  public void testHash() throws NoSuchAlgorithmException {
+  public void test_smokeTest() throws NoSuchAlgorithmException, IOException, DigestException {
     for (Map.Entry<String, String> knownHash : knownSha256Hashes.entrySet()) {
       String toHash = knownHash.getKey();
       String expectedHash = knownHash.getValue();
-      String outputHash = ByteHasher.hash(toHash.getBytes());
-      Assert.assertEquals(expectedHash, outputHash);
+
+      OutputStream underlyingOutputStream = new ByteArrayOutputStream();
+      CountingDigestOutputStream countingDigestOutputStream =
+          new CountingDigestOutputStream(underlyingOutputStream);
+
+      byte[] bytesToHash = toHash.getBytes(Charsets.UTF_8);
+      InputStream toHashInputStream = new ByteArrayInputStream(bytesToHash);
+      ByteStreams.copy(toHashInputStream, countingDigestOutputStream);
+
+      BlobDescriptor expectedBlobDescriptor =
+          new BlobDescriptor(bytesToHash.length, DescriptorDigest.fromHash(expectedHash));
+      Assert.assertEquals(expectedBlobDescriptor, countingDigestOutputStream.toBlobDescriptor());
+      Assert.assertEquals(bytesToHash.length, countingDigestOutputStream.getTotalBytes());
     }
   }
 }

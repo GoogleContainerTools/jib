@@ -18,24 +18,20 @@ package com.google.cloud.tools.crepecake.blob;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.security.DigestException;
-import java.security.NoSuchAlgorithmException;
 
-/** A stream for BLOBs. */
-public interface BlobStream {
+/**
+ * A {@link BlobStream} that streams with a {@link BlobStreamWriter} function and hashes the bytes.
+ */
+class HashingWriterBlobStream extends AbstractHashingBlobStream {
 
-  /**
-   * Writes the BLOB to an {@link OutputStream}.
-   *
-   * @param outputStream the {@link OutputStream} to write to
-   */
-  void writeTo(OutputStream outputStream)
-      throws IOException, NoSuchAlgorithmException, DigestException;
+  private final BlobStreamWriter writer;
 
-  /**
-   * This is only valid <b>after</b> {@code writeTo} is called.
-   *
-   * @return the {@link BlobDescriptor} of the written BLOB
-   */
-  BlobDescriptor getWrittenBlobDescriptor();
+  HashingWriterBlobStream(BlobStreamWriter writer) {
+    this.writer = writer;
+  }
+
+  @Override
+  protected void writeToAndHash(OutputStream outputStream) throws IOException {
+    writer.writeTo(outputStream);
+  }
 }

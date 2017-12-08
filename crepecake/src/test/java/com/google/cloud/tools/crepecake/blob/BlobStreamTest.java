@@ -16,51 +16,93 @@
 
 package com.google.cloud.tools.crepecake.blob;
 
-import java.io.*;
+import com.google.cloud.tools.crepecake.hash.CountingDigestOutputStream;
+import com.google.cloud.tools.crepecake.image.DescriptorDigest;
+import com.google.common.base.Charsets;
+import com.google.common.io.Resources;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.security.DigestException;
+import java.security.NoSuchAlgorithmException;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
 
-/** Tests for {@link BlobStream} */
+/** Tests for {@link BlobStream}. */
 public class BlobStreamTest {
 
   @Test
-  public void testEmpty() throws IOException {
-    OutputStream outputStream = new ByteArrayOutputStream();
-
-    BlobStream blobStream = new BlobStream();
-    blobStream.writeTo(outputStream);
-
-    String output = outputStream.toString();
-
-    Assert.assertEquals("", output);
+  public void testEmpty() throws IOException, DigestException, NoSuchAlgorithmException {
+    verifyBlobStreamWriteTo("", BlobStreams.empty());
   }
 
   @Test
-  public void testFromInputStream() throws IOException {
+  public void testFromInputStream()
+      throws IOException, DigestException, NoSuchAlgorithmException, URISyntaxException {
     String expected = "crepecake";
-
-    InputStream inputStream = new ByteArrayInputStream(expected.getBytes());
-    OutputStream outputStream = new ByteArrayOutputStream();
-
-    BlobStream blobStream = new BlobStream(inputStream);
-    blobStream.writeTo(outputStream);
-
-    String output = outputStream.toString();
-
-    Assert.assertEquals(expected, output);
+    InputStream inputStream = new ByteArrayInputStream(expected.getBytes(Charsets.UTF_8));
+    verifyBlobStreamWriteTo(expected, BlobStreams.from(inputStream));
   }
 
   @Test
-  public void testFromString() throws IOException {
+  public void testFromFile()
+      throws IOException, DigestException, NoSuchAlgorithmException, URISyntaxException {
+    File fileA = new File(Resources.getResource("fileA").toURI());
+    String expected = new String(Files.readAllBytes(fileA.toPath()), Charsets.UTF_8);
+    verifyBlobStreamWriteTo(expected, BlobStreams.from(fileA));
+  }
+
+  @Test
+  public void testFromString_hashing()
+      throws IOException, DigestException, NoSuchAlgorithmException {
+    String expected = "crepecake";
+    verifyBlobStreamWriteTo(expected, BlobStreams.from(expected, true));
+  }
+
+  @Test
+  public void testFromString_noHashing()
+      throws IOException, DigestException, NoSuchAlgorithmException {
+    String expected = "crepecake";
+    verifyBlobStreamWriteTo(expected, BlobStreams.from(expected, false));
+  }
+
+  @Test
+  public void testFromBlobWriter() throws NoSuchAlgorithmException, IOException, DigestException {
     String expected = "crepecake";
 
-    OutputStream outputStream = new ByteArrayOutputStream();
+    BlobStreamWriter writer =
+        outputStream -> {
+          outputStream.write(expected.getBytes(Charsets.UTF_8));
+        };
 
-    BlobStream blobStream = new BlobStream(expected);
+    verifyBlobStreamWriteTo(expected, BlobStreams.from(writer));
+  }
+
+  /** Checks that the {@link BlobStream} streams the expected string. */
+  private void verifyBlobStreamWriteTo(String expected, BlobStream blobStream)
+      throws NoSuchAlgorithmException, IOException, DigestException {
+    OutputStream outputStream = new ByteArrayOutputStream();
     blobStream.writeTo(outputStream);
+    BlobDescriptor blobDescriptor = blobStream.getWrittenBlobDescriptor();
 
     String output = outputStream.toString();
-
     Assert.assertEquals(expected, output);
+
+    byte[] expectedBytes = expected.getBytes(Charsets.UTF_8);
+    Assert.assertEquals(expectedBytes.length, blobDescriptor.getSize());
+
+    if (blobDescriptor.hasDigest()) {
+      CountingDigestOutputStream countingDigestOutputStream =
+          new CountingDigestOutputStream(Mockito.mock(OutputStream.class));
+      countingDigestOutputStream.write(expectedBytes);
+      DescriptorDigest expectedDigest = countingDigestOutputStream.toBlobDescriptor().getDigest();
+      Assert.assertEquals(expectedDigest, blobDescriptor.getDigest());
+    }
   }
 }

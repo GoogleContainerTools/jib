@@ -16,26 +16,30 @@
 
 package com.google.cloud.tools.crepecake.blob;
 
+import com.google.cloud.tools.crepecake.hash.CountingDigestOutputStream;
+import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.DigestException;
 import java.security.NoSuchAlgorithmException;
 
-/** A stream for BLOBs. */
-public interface BlobStream {
+/**
+ * An empty {@link BlobStream}. This is used, for e.g., to send an HTTP request with an empty body
+ * without having to pass {@code null} for the body {@link BlobStream}.
+ */
+class EmptyBlobStream implements BlobStream {
 
-  /**
-   * Writes the BLOB to an {@link OutputStream}.
-   *
-   * @param outputStream the {@link OutputStream} to write to
-   */
-  void writeTo(OutputStream outputStream)
-      throws IOException, NoSuchAlgorithmException, DigestException;
+  private BlobDescriptor writtenBlobDescriptor;
 
-  /**
-   * This is only valid <b>after</b> {@code writeTo} is called.
-   *
-   * @return the {@link BlobDescriptor} of the written BLOB
-   */
-  BlobDescriptor getWrittenBlobDescriptor();
+  @Override
+  public void writeTo(OutputStream outputStream)
+      throws IOException, NoSuchAlgorithmException, DigestException {
+    writtenBlobDescriptor =
+        new CountingDigestOutputStream(ByteStreams.nullOutputStream()).toBlobDescriptor();
+  }
+
+  @Override
+  public BlobDescriptor getWrittenBlobDescriptor() {
+    return writtenBlobDescriptor;
+  }
 }
