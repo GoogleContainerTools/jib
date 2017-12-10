@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.DigestException;
-import java.security.NoSuchAlgorithmException;
 
 /** A {@link BlobStream} that streams from an {@link InputStream}. */
 class InputStreamBlobStream implements BlobStream {
@@ -29,13 +28,11 @@ class InputStreamBlobStream implements BlobStream {
 
   private final byte[] byteBuffer = new byte[8192];
 
-  protected BlobDescriptor writtenBlobDescriptor;
-
   InputStreamBlobStream(InputStream inputStream) {
     this.inputStream = inputStream;
   }
 
-  protected void writeFromInputStream(InputStream inputStream, OutputStream outputStream)
+  protected BlobDescriptor writeFromInputStream(InputStream inputStream, OutputStream outputStream)
       throws IOException {
     long bytesWritten = 0;
     int bytesRead;
@@ -44,17 +41,11 @@ class InputStreamBlobStream implements BlobStream {
       bytesWritten += bytesRead;
     }
     outputStream.flush();
-    writtenBlobDescriptor = new BlobDescriptor(bytesWritten);
+    return new BlobDescriptor(bytesWritten);
   }
 
   @Override
-  public void writeTo(OutputStream outputStream)
-      throws IOException, NoSuchAlgorithmException, DigestException {
-    writeFromInputStream(inputStream, outputStream);
-  }
-
-  @Override
-  public BlobDescriptor getWrittenBlobDescriptor() {
-    return writtenBlobDescriptor;
+  public BlobDescriptor writeTo(OutputStream outputStream) throws IOException, DigestException {
+    return writeFromInputStream(inputStream, outputStream);
   }
 }

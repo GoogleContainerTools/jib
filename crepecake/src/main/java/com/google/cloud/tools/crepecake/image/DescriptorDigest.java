@@ -16,6 +16,10 @@
 
 package com.google.cloud.tools.crepecake.image;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.google.cloud.tools.crepecake.json.DescriptorDigestDeserializer;
+import com.google.cloud.tools.crepecake.json.DescriptorDigestSerializer;
 import java.security.DigestException;
 
 /**
@@ -26,6 +30,8 @@ import java.security.DigestException;
  * @see <a href="https://github.com/opencontainers/image-spec/blob/master/descriptor.md#digests">OCI
  *     Content Descriptor Digest</a>
  */
+@JsonSerialize(using = DescriptorDigestSerializer.class)
+@JsonDeserialize(using = DescriptorDigestDeserializer.class)
 public class DescriptorDigest {
 
   /** Pattern matches a SHA-256 hash - 32 bytes in lowercase hexadecimal. */

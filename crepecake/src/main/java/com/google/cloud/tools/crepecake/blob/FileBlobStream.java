@@ -35,14 +35,9 @@ class FileBlobStream extends InputStreamBlobStream {
   }
 
   @Override
-  public void writeTo(OutputStream outputStream) throws IOException {
+  public BlobDescriptor writeTo(OutputStream outputStream) throws IOException {
     try (InputStream fileStream = new BufferedInputStream(new FileInputStream(file))) {
-      writeFromInputStream(fileStream, outputStream);
+      return writeFromInputStream(fileStream, outputStream);
     }
-  }
-
-  @Override
-  public BlobDescriptor getWrittenBlobDescriptor() {
-    return writtenBlobDescriptor;
   }
 }
