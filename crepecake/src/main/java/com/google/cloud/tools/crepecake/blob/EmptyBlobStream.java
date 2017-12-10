@@ -21,7 +21,6 @@ import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.DigestException;
-import java.security.NoSuchAlgorithmException;
 
 /**
  * An empty {@link BlobStream}. This is used, for e.g., to send an HTTP request with an empty body
@@ -31,10 +30,6 @@ class EmptyBlobStream implements BlobStream {
 
   @Override
   public BlobDescriptor writeTo(OutputStream outputStream) throws IOException, DigestException {
-    try {
-      return new CountingDigestOutputStream(ByteStreams.nullOutputStream()).toBlobDescriptor();
-    } catch (NoSuchAlgorithmException ex) {
-      throw new IOException(ex);
-    }
+    return new CountingDigestOutputStream(ByteStreams.nullOutputStream()).toBlobDescriptor();
   }
 }

@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.security.DigestException;
 import java.security.DigestOutputStream;
-import java.security.NoSuchAlgorithmException;
 
 /** Abstract parent for {@link BlobStream}s that hash the BLOB as well. */
 abstract class AbstractHashingBlobStream implements BlobStream {
@@ -37,12 +36,7 @@ abstract class AbstractHashingBlobStream implements BlobStream {
   @Override
   public final BlobDescriptor writeTo(OutputStream outputStream)
       throws IOException, DigestException {
-    CountingDigestOutputStream hashingOutputStream;
-    try {
-      hashingOutputStream = new CountingDigestOutputStream(outputStream);
-    } catch (NoSuchAlgorithmException ex) {
-      throw new IOException(ex);
-    }
+    CountingDigestOutputStream hashingOutputStream = new CountingDigestOutputStream(outputStream);
 
     writeToAndHash(hashingOutputStream);
     hashingOutputStream.flush();
