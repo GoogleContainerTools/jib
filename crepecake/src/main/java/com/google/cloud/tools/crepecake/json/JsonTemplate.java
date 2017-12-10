@@ -14,25 +14,16 @@
  * the License.
  */
 
-package com.google.cloud.tools.crepecake.util;
+package com.google.cloud.tools.crepecake.json;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
-public class JsonParser {
-  private static final Gson GSON;
-
-  static {
-    GsonBuilder gsonBuilder = new GsonBuilder();
-    // TODO: Add serializer for digests.
-    GSON = gsonBuilder.create();
-  }
-
-  public static String toJson(Object src) {
-    return GSON.toJson(src);
-  }
-
-  public static <T> T fromJson(String json, Class<T> classOfT) {
-    return GSON.fromJson(json, classOfT);
-  }
-}
+/**
+ * All JSON templates to be used with {@link JsonHelper} must extend this class.
+ *
+ * <p>Json fields should be private fields and fields that are {@code null} will not be serialized.
+ */
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
+public abstract class JsonTemplate {}
