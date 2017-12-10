@@ -33,10 +33,13 @@ class EmptyBlobStream implements BlobStream {
   private BlobDescriptor writtenBlobDescriptor;
 
   @Override
-  public void writeTo(OutputStream outputStream)
-      throws IOException, NoSuchAlgorithmException, DigestException {
-    writtenBlobDescriptor =
-        new CountingDigestOutputStream(ByteStreams.nullOutputStream()).toBlobDescriptor();
+  public void writeTo(OutputStream outputStream) throws IOException, DigestException {
+    try {
+      writtenBlobDescriptor =
+          new CountingDigestOutputStream(ByteStreams.nullOutputStream()).toBlobDescriptor();
+    } catch (NoSuchAlgorithmException ex) {
+      throw new IOException(ex);
+    }
   }
 
   @Nonnull

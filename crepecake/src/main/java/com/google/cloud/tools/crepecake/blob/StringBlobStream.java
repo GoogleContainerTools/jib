@@ -20,7 +20,6 @@ import com.google.common.base.Charsets;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.DigestException;
-import java.security.NoSuchAlgorithmException;
 import javax.annotation.Nonnull;
 
 /** A {@link BlobStream} that streams from a {@link String}. */
@@ -35,8 +34,7 @@ class StringBlobStream implements BlobStream {
   }
 
   @Override
-  public void writeTo(OutputStream outputStream)
-      throws IOException, NoSuchAlgorithmException, DigestException {
+  public void writeTo(OutputStream outputStream) throws IOException, DigestException {
     byte[] contentBytes = content.getBytes(Charsets.UTF_8);
     outputStream.write(contentBytes);
     outputStream.flush();

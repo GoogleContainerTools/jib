@@ -38,9 +38,13 @@ abstract class AbstractHashingBlobStream implements BlobStream {
   protected abstract void writeToAndHash(OutputStream outputStream) throws IOException;
 
   @Override
-  public void writeTo(OutputStream outputStream)
-      throws IOException, NoSuchAlgorithmException, DigestException {
-    CountingDigestOutputStream hashingOutputStream = new CountingDigestOutputStream(outputStream);
+  public void writeTo(OutputStream outputStream) throws IOException, DigestException {
+    CountingDigestOutputStream hashingOutputStream;
+    try {
+      hashingOutputStream = new CountingDigestOutputStream(outputStream);
+    } catch (NoSuchAlgorithmException ex) {
+      throw new IOException(ex);
+    }
 
     writeToAndHash(hashingOutputStream);
     hashingOutputStream.flush();

@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.DigestException;
-import java.security.NoSuchAlgorithmException;
 import javax.annotation.Nonnull;
 
 /** A {@link BlobStream} that streams from an {@link InputStream}. */
@@ -49,8 +48,7 @@ class InputStreamBlobStream implements BlobStream {
   }
 
   @Override
-  public void writeTo(OutputStream outputStream)
-      throws IOException, NoSuchAlgorithmException, DigestException {
+  public void writeTo(OutputStream outputStream) throws IOException, DigestException {
     writeFromInputStream(inputStream, outputStream);
   }
 
