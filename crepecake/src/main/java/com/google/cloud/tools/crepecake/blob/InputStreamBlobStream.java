@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.DigestException;
 import java.security.NoSuchAlgorithmException;
+import javax.annotation.Nonnull;
 
 /** A {@link BlobStream} that streams from an {@link InputStream}. */
 class InputStreamBlobStream implements BlobStream {
@@ -29,7 +30,7 @@ class InputStreamBlobStream implements BlobStream {
 
   private final byte[] byteBuffer = new byte[8192];
 
-  protected BlobDescriptor writtenBlobDescriptor;
+  private BlobDescriptor writtenBlobDescriptor;
 
   InputStreamBlobStream(InputStream inputStream) {
     this.inputStream = inputStream;
@@ -53,8 +54,12 @@ class InputStreamBlobStream implements BlobStream {
     writeFromInputStream(inputStream, outputStream);
   }
 
+  @Nonnull
   @Override
   public BlobDescriptor getWrittenBlobDescriptor() {
+    if (null == writtenBlobDescriptor) {
+      BlobStream.super.getWrittenBlobDescriptor();
+    }
     return writtenBlobDescriptor;
   }
 }

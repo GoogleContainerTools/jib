@@ -22,7 +22,7 @@ import java.io.OutputStream;
 import java.security.DigestException;
 import java.security.DigestOutputStream;
 import java.security.NoSuchAlgorithmException;
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
 
 /** Abstract parent for {@link BlobStream}s that hash the BLOB as well. */
 abstract class AbstractHashingBlobStream implements BlobStream {
@@ -48,9 +48,12 @@ abstract class AbstractHashingBlobStream implements BlobStream {
     writtenBlobDescriptor = hashingOutputStream.toBlobDescriptor();
   }
 
+  @Nonnull
   @Override
-  @Nullable
-  public BlobDescriptor getWrittenBlobDescriptor() {
+  public BlobDescriptor getWrittenBlobDescriptor() throws IllegalStateException {
+    if (null == writtenBlobDescriptor) {
+      BlobStream.super.getWrittenBlobDescriptor();
+    }
     return writtenBlobDescriptor;
   }
 }

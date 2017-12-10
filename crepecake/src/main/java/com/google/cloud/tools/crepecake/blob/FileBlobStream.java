@@ -40,9 +40,4 @@ class FileBlobStream extends InputStreamBlobStream {
       writeFromInputStream(fileStream, outputStream);
     }
   }
-
-  @Override
-  public BlobDescriptor getWrittenBlobDescriptor() {
-    return writtenBlobDescriptor;
-  }
 }

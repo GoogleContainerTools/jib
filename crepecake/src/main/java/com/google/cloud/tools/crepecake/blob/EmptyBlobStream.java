@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.security.DigestException;
 import java.security.NoSuchAlgorithmException;
+import javax.annotation.Nonnull;
 
 /**
  * An empty {@link BlobStream}. This is used, for e.g., to send an HTTP request with an empty body
@@ -38,8 +39,12 @@ class EmptyBlobStream implements BlobStream {
         new CountingDigestOutputStream(ByteStreams.nullOutputStream()).toBlobDescriptor();
   }
 
+  @Nonnull
   @Override
   public BlobDescriptor getWrittenBlobDescriptor() {
+    if (null == writtenBlobDescriptor) {
+      BlobStream.super.getWrittenBlobDescriptor();
+    }
     return writtenBlobDescriptor;
   }
 }

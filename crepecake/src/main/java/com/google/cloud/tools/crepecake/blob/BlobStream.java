@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.security.DigestException;
 import java.security.NoSuchAlgorithmException;
+import javax.annotation.Nonnull;
 
 /** A stream for BLOBs. */
 public interface BlobStream {
@@ -36,6 +37,11 @@ public interface BlobStream {
    * This is only valid <b>after</b> {@code writeTo} is called.
    *
    * @return the {@link BlobDescriptor} of the written BLOB
+   * @throws IllegalStateException if {@code writeTo} has not been called
    */
-  BlobDescriptor getWrittenBlobDescriptor();
+  @Nonnull
+  default BlobDescriptor getWrittenBlobDescriptor() throws IllegalStateException {
+    throw new IllegalStateException(
+        "Written BlobDescriptor not available - must call writeTo first");
+  }
 }

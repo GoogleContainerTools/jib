@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.security.DigestException;
 import java.security.NoSuchAlgorithmException;
+import javax.annotation.Nonnull;
 
 /** A {@link BlobStream} that streams from a {@link String}. */
 class StringBlobStream implements BlobStream {
@@ -42,8 +43,12 @@ class StringBlobStream implements BlobStream {
     writtenBlobDescriptor = new BlobDescriptor(content.length());
   }
 
+  @Nonnull
   @Override
   public BlobDescriptor getWrittenBlobDescriptor() {
+    if (null == writtenBlobDescriptor) {
+      BlobStream.super.getWrittenBlobDescriptor();
+    }
     return writtenBlobDescriptor;
   }
 }
