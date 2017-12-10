@@ -22,12 +22,9 @@ import java.io.OutputStream;
 import java.security.DigestException;
 import java.security.DigestOutputStream;
 import java.security.NoSuchAlgorithmException;
-import javax.annotation.Nonnull;
 
 /** Abstract parent for {@link BlobStream}s that hash the BLOB as well. */
 abstract class AbstractHashingBlobStream implements BlobStream {
-
-  private BlobDescriptor writtenBlobDescriptor;
 
   /**
    * Writes to an {@link OutputStream} and appends the bytes written to a {@link
@@ -38,7 +35,8 @@ abstract class AbstractHashingBlobStream implements BlobStream {
   protected abstract void writeToAndHash(OutputStream outputStream) throws IOException;
 
   @Override
-  public void writeTo(OutputStream outputStream) throws IOException, DigestException {
+  public final BlobDescriptor writeTo(OutputStream outputStream)
+      throws IOException, DigestException {
     CountingDigestOutputStream hashingOutputStream;
     try {
       hashingOutputStream = new CountingDigestOutputStream(outputStream);
@@ -49,15 +47,6 @@ abstract class AbstractHashingBlobStream implements BlobStream {
     writeToAndHash(hashingOutputStream);
     hashingOutputStream.flush();
 
-    writtenBlobDescriptor = hashingOutputStream.toBlobDescriptor();
-  }
-
-  @Nonnull
-  @Override
-  public BlobDescriptor getWrittenBlobDescriptor() throws IllegalStateException {
-    if (null == writtenBlobDescriptor) {
-      BlobStream.super.getWrittenBlobDescriptor();
-    }
-    return writtenBlobDescriptor;
+    return hashingOutputStream.toBlobDescriptor();
   }
 }

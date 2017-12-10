@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.security.DigestException;
 import java.security.NoSuchAlgorithmException;
-import javax.annotation.Nonnull;
 
 /**
  * An empty {@link BlobStream}. This is used, for e.g., to send an HTTP request with an empty body
@@ -30,24 +29,12 @@ import javax.annotation.Nonnull;
  */
 class EmptyBlobStream implements BlobStream {
 
-  private BlobDescriptor writtenBlobDescriptor;
-
   @Override
-  public void writeTo(OutputStream outputStream) throws IOException, DigestException {
+  public BlobDescriptor writeTo(OutputStream outputStream) throws IOException, DigestException {
     try {
-      writtenBlobDescriptor =
-          new CountingDigestOutputStream(ByteStreams.nullOutputStream()).toBlobDescriptor();
+      return new CountingDigestOutputStream(ByteStreams.nullOutputStream()).toBlobDescriptor();
     } catch (NoSuchAlgorithmException ex) {
       throw new IOException(ex);
     }
-  }
-
-  @Nonnull
-  @Override
-  public BlobDescriptor getWrittenBlobDescriptor() {
-    if (null == writtenBlobDescriptor) {
-      BlobStream.super.getWrittenBlobDescriptor();
-    }
-    return writtenBlobDescriptor;
   }
 }

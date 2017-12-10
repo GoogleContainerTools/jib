@@ -43,18 +43,6 @@ public class BlobStreamTest {
   }
 
   @Test
-  public void testEmpty_didNotCallWriteTo() {
-    try {
-      BlobStreams.empty().getWrittenBlobDescriptor();
-      Assert.fail(
-          "Getting written BlobDescriptor should have failed when writeTo has not been called");
-    } catch (IllegalStateException ex) {
-      Assert.assertEquals(
-          "Written BlobDescriptor not available - must call writeTo first", ex.getMessage());
-    }
-  }
-
-  @Test
   public void testFromInputStream()
       throws IOException, DigestException, NoSuchAlgorithmException, URISyntaxException {
     String expected = "crepecake";
@@ -100,8 +88,7 @@ public class BlobStreamTest {
   private void verifyBlobStreamWriteTo(String expected, BlobStream blobStream)
       throws NoSuchAlgorithmException, IOException, DigestException {
     OutputStream outputStream = new ByteArrayOutputStream();
-    blobStream.writeTo(outputStream);
-    BlobDescriptor blobDescriptor = blobStream.getWrittenBlobDescriptor();
+    BlobDescriptor blobDescriptor = blobStream.writeTo(outputStream);
 
     String output = outputStream.toString();
     Assert.assertEquals(expected, output);

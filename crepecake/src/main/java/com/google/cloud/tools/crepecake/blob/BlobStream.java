@@ -19,7 +19,6 @@ package com.google.cloud.tools.crepecake.blob;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.DigestException;
-import javax.annotation.Nonnull;
 
 /** A stream for BLOBs. */
 public interface BlobStream {
@@ -28,19 +27,8 @@ public interface BlobStream {
    * Writes the BLOB to an {@link OutputStream}.
    *
    * @param outputStream the {@link OutputStream} to write to
+   * @return the {@link BlobDescriptor} of the written BLOB
    * @throws DigestException if the written BLOB digest failed to generate
    */
-  void writeTo(OutputStream outputStream) throws IOException, DigestException;
-
-  /**
-   * This is only valid <b>after</b> {@code writeTo} is called.
-   *
-   * @return the {@link BlobDescriptor} of the written BLOB
-   * @throws IllegalStateException if {@code writeTo} has not been called
-   */
-  @Nonnull
-  default BlobDescriptor getWrittenBlobDescriptor() throws IllegalStateException {
-    throw new IllegalStateException(
-        "Written BlobDescriptor not available - must call writeTo first");
-  }
+  BlobDescriptor writeTo(OutputStream outputStream) throws IOException, DigestException;
 }
