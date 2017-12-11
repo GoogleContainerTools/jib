@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.crepecake.image;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.util.HashMap;
@@ -26,13 +27,22 @@ import java.util.Map;
 public class Image {
 
   /** The layers of the image, in the order in which they are applied. */
-  private final ImageLayers layers = new ImageLayers();
+  private final ImageLayers layers;
 
   /** Environment variables for running the image. Maps from variable name to its value. */
   private final Map<String, String> environmentMap = new HashMap<>();
 
   /** Initial command to run when running the image. */
   private List<String> entrypoint;
+
+  public Image() {
+    layers = new ImageLayers();
+  }
+
+  @VisibleForTesting
+  Image(ImageLayers imageLayers) {
+    layers = imageLayers;
+  }
 
   public Map<String, String> getEnvironmentMap() {
     return ImmutableMap.copyOf(environmentMap);
@@ -54,7 +64,7 @@ public class Image {
     return layers.asList();
   }
 
-  public void addLayer(Layer layer) throws ImageException {
+  public void addLayer(Layer layer) throws ImageException, LayerException {
     layers.add(layer);
   }
 }
