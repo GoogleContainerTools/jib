@@ -27,19 +27,19 @@ import java.io.File;
  */
 public class CachedLayer extends Layer {
 
-  private final File file;
+  private final File contentTarFile;
   private final BlobDescriptor blobDescriptor;
   private final DescriptorDigest diffId;
 
-  public CachedLayer(File file, BlobDescriptor blobDescriptor, DescriptorDigest diffId) {
-    this.file = file;
+  public CachedLayer(File contentTarFile, BlobDescriptor blobDescriptor, DescriptorDigest diffId) {
+    this.contentTarFile = contentTarFile;
     this.blobDescriptor = blobDescriptor;
     this.diffId = diffId;
   }
 
   /** Gets a new {@link BlobStream} for the content of the cached layer. */
   public BlobStream getBlobStream() {
-    return BlobStreams.from(file);
+    return BlobStreams.from(contentTarFile);
   }
 
   @Override
