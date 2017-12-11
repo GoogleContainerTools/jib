@@ -32,7 +32,9 @@ public class CachedLayer extends Layer {
   private final DescriptorDigest diffId;
 
   /**
-   * Initializes the layer with its file-backed content BLOB, content descriptor (digest and size), and diff ID. The {@code blobDescriptor} and {@code diffId} <b>must match</b> the BLOB stored in the file - no checks are made at runtime.
+   * Initializes the layer with its file-backed content BLOB, content descriptor (digest and size),
+   * and diff ID. The {@code blobDescriptor} and {@code diffId} <b>must match</b> the BLOB stored in
+   * the file - no checks are made at runtime.
    *
    * @param file the file with the layer's content BLOB
    * @param blobDescriptor the content descriptor for the layer's content BLOB
