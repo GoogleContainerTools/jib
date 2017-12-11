@@ -19,7 +19,6 @@ package com.google.cloud.tools.crepecake.blob;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.DigestException;
-import java.security.NoSuchAlgorithmException;
 
 /** A stream for BLOBs. */
 public interface BlobStream {
@@ -28,14 +27,8 @@ public interface BlobStream {
    * Writes the BLOB to an {@link OutputStream}.
    *
    * @param outputStream the {@link OutputStream} to write to
-   */
-  void writeTo(OutputStream outputStream)
-      throws IOException, NoSuchAlgorithmException, DigestException;
-
-  /**
-   * This is only valid <b>after</b> {@code writeTo} is called.
-   *
    * @return the {@link BlobDescriptor} of the written BLOB
+   * @throws DigestException if the written BLOB digest failed to generate
    */
-  BlobDescriptor getWrittenBlobDescriptor();
+  BlobDescriptor writeTo(OutputStream outputStream) throws IOException, DigestException;
 }

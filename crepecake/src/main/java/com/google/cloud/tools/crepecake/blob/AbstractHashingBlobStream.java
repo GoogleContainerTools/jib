@@ -21,13 +21,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.security.DigestException;
 import java.security.DigestOutputStream;
-import java.security.NoSuchAlgorithmException;
-import javax.annotation.Nullable;
 
 /** Abstract parent for {@link BlobStream}s that hash the BLOB as well. */
 abstract class AbstractHashingBlobStream implements BlobStream {
-
-  private BlobDescriptor writtenBlobDescriptor;
 
   /**
    * Writes to an {@link OutputStream} and appends the bytes written to a {@link
@@ -38,19 +34,13 @@ abstract class AbstractHashingBlobStream implements BlobStream {
   protected abstract void writeToAndHash(OutputStream outputStream) throws IOException;
 
   @Override
-  public void writeTo(OutputStream outputStream)
-      throws IOException, NoSuchAlgorithmException, DigestException {
+  public final BlobDescriptor writeTo(OutputStream outputStream)
+      throws IOException, DigestException {
     CountingDigestOutputStream hashingOutputStream = new CountingDigestOutputStream(outputStream);
 
     writeToAndHash(hashingOutputStream);
     hashingOutputStream.flush();
 
-    writtenBlobDescriptor = hashingOutputStream.toBlobDescriptor();
-  }
-
-  @Override
-  @Nullable
-  public BlobDescriptor getWrittenBlobDescriptor() {
-    return writtenBlobDescriptor;
+    return hashingOutputStream.toBlobDescriptor();
   }
 }

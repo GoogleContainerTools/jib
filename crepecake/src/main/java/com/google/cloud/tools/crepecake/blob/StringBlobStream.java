@@ -20,30 +20,21 @@ import com.google.common.base.Charsets;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.DigestException;
-import java.security.NoSuchAlgorithmException;
 
 /** A {@link BlobStream} that streams from a {@link String}. */
 class StringBlobStream implements BlobStream {
 
   private final String content;
 
-  private BlobDescriptor writtenBlobDescriptor;
-
   StringBlobStream(String content) {
     this.content = content;
   }
 
   @Override
-  public void writeTo(OutputStream outputStream)
-      throws IOException, NoSuchAlgorithmException, DigestException {
+  public BlobDescriptor writeTo(OutputStream outputStream) throws IOException, DigestException {
     byte[] contentBytes = content.getBytes(Charsets.UTF_8);
     outputStream.write(contentBytes);
     outputStream.flush();
-    writtenBlobDescriptor = new BlobDescriptor(content.length());
-  }
-
-  @Override
-  public BlobDescriptor getWrittenBlobDescriptor() {
-    return writtenBlobDescriptor;
+    return new BlobDescriptor(content.length());
   }
 }

@@ -14,22 +14,21 @@
  * the License.
  */
 
-package com.google.cloud.tools.crepecake.blob;
+package com.google.cloud.tools.crepecake.json;
 
-import com.google.cloud.tools.crepecake.hash.CountingDigestOutputStream;
-import com.google.common.io.ByteStreams;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.security.DigestException;
 
-/**
- * An empty {@link BlobStream}. This is used, for e.g., to send an HTTP request with an empty body
- * without having to pass {@code null} for the body {@link BlobStream}.
- */
-class EmptyBlobStream implements BlobStream {
+/** Serializes a {@link DescriptorDigest} into JSON element. */
+public class DescriptorDigestSerializer extends JsonSerializer<DescriptorDigest> {
 
   @Override
-  public BlobDescriptor writeTo(OutputStream outputStream) throws IOException, DigestException {
-    return new CountingDigestOutputStream(ByteStreams.nullOutputStream()).toBlobDescriptor();
+  public void serialize(
+      DescriptorDigest value, JsonGenerator jsonGenerator, SerializerProvider ignored)
+      throws IOException {
+    jsonGenerator.writeString(value.toString());
   }
 }

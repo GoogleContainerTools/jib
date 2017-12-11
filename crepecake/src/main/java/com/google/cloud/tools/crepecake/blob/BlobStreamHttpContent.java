@@ -4,7 +4,6 @@ import com.google.api.client.http.HttpContent;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.DigestException;
-import java.security.NoSuchAlgorithmException;
 
 /** {@link BlobStream}-backed {@link HttpContent}. */
 class BlobStreamHttpContent implements HttpContent {
@@ -36,7 +35,7 @@ class BlobStreamHttpContent implements HttpContent {
   public void writeTo(OutputStream outputStream) throws IOException {
     try {
       blobStream.writeTo(outputStream);
-    } catch (NoSuchAlgorithmException | DigestException ex) {
+    } catch (DigestException ex) {
       throw new IOException(ex);
     }
   }

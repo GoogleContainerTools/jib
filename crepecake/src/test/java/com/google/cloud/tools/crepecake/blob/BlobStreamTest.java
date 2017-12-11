@@ -29,7 +29,6 @@ import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.security.DigestException;
-import java.security.NoSuchAlgorithmException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -38,42 +37,38 @@ import org.mockito.Mockito;
 public class BlobStreamTest {
 
   @Test
-  public void testEmpty() throws IOException, DigestException, NoSuchAlgorithmException {
+  public void testEmpty() throws IOException, DigestException {
     verifyBlobStreamWriteTo("", BlobStreams.empty());
   }
 
   @Test
-  public void testFromInputStream()
-      throws IOException, DigestException, NoSuchAlgorithmException, URISyntaxException {
+  public void testFromInputStream() throws IOException, DigestException, URISyntaxException {
     String expected = "crepecake";
     InputStream inputStream = new ByteArrayInputStream(expected.getBytes(Charsets.UTF_8));
     verifyBlobStreamWriteTo(expected, BlobStreams.from(inputStream));
   }
 
   @Test
-  public void testFromFile()
-      throws IOException, DigestException, NoSuchAlgorithmException, URISyntaxException {
+  public void testFromFile() throws IOException, DigestException, URISyntaxException {
     File fileA = new File(Resources.getResource("fileA").toURI());
     String expected = new String(Files.readAllBytes(fileA.toPath()), Charsets.UTF_8);
     verifyBlobStreamWriteTo(expected, BlobStreams.from(fileA));
   }
 
   @Test
-  public void testFromString_hashing()
-      throws IOException, DigestException, NoSuchAlgorithmException {
+  public void testFromString_hashing() throws IOException, DigestException {
     String expected = "crepecake";
     verifyBlobStreamWriteTo(expected, BlobStreams.from(expected, true));
   }
 
   @Test
-  public void testFromString_noHashing()
-      throws IOException, DigestException, NoSuchAlgorithmException {
+  public void testFromString_noHashing() throws IOException, DigestException {
     String expected = "crepecake";
     verifyBlobStreamWriteTo(expected, BlobStreams.from(expected, false));
   }
 
   @Test
-  public void testFromBlobWriter() throws NoSuchAlgorithmException, IOException, DigestException {
+  public void testFromBlobWriter() throws IOException, DigestException {
     String expected = "crepecake";
 
     BlobStreamWriter writer =
@@ -86,10 +81,9 @@ public class BlobStreamTest {
 
   /** Checks that the {@link BlobStream} streams the expected string. */
   private void verifyBlobStreamWriteTo(String expected, BlobStream blobStream)
-      throws NoSuchAlgorithmException, IOException, DigestException {
+      throws IOException, DigestException {
     OutputStream outputStream = new ByteArrayOutputStream();
-    blobStream.writeTo(outputStream);
-    BlobDescriptor blobDescriptor = blobStream.getWrittenBlobDescriptor();
+    BlobDescriptor blobDescriptor = blobStream.writeTo(outputStream);
 
     String output = outputStream.toString();
     Assert.assertEquals(expected, output);

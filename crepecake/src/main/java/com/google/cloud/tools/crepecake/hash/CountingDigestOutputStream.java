@@ -34,9 +34,14 @@ public class CountingDigestOutputStream extends DigestOutputStream {
   private long totalBytes = 0;
 
   /** Wraps the {@code outputStream}. */
-  public CountingDigestOutputStream(OutputStream outputStream) throws NoSuchAlgorithmException {
+  public CountingDigestOutputStream(OutputStream outputStream) {
     super(outputStream, null);
-    setMessageDigest(MessageDigest.getInstance(SHA_256_ALGORITHM));
+    try {
+      setMessageDigest(MessageDigest.getInstance(SHA_256_ALGORITHM));
+    } catch (NoSuchAlgorithmException ex) {
+      throw new RuntimeException(
+          "SHA-256 algorithm implementation not found - might be a broken JVM");
+    }
   }
 
   /** Builds a {@link BlobDescriptor} with the hash and size of the bytes written. */
