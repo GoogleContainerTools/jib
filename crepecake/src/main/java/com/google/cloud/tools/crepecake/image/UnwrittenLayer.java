@@ -49,11 +49,9 @@ public class UnwrittenLayer extends Layer {
   public CachedLayer writeTo(File file)
       throws NoSuchAlgorithmException, IOException, DigestException {
     try (OutputStream fileOutputStream = new BufferedOutputStream(new FileOutputStream(file))) {
-      compressedBlobStream.writeTo(fileOutputStream);
-      uncompressedBlobStream.writeTo(ByteStreams.nullOutputStream());
-
-      BlobDescriptor blobDescriptor = compressedBlobStream.getWrittenBlobDescriptor();
-      DescriptorDigest diffId = uncompressedBlobStream.getWrittenBlobDescriptor().getDigest();
+      BlobDescriptor blobDescriptor = compressedBlobStream.writeTo(fileOutputStream);
+      DescriptorDigest diffId =
+          uncompressedBlobStream.writeTo(ByteStreams.nullOutputStream()).getDigest();
 
       return new CachedLayer(file, blobDescriptor, diffId);
     }

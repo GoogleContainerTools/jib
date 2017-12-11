@@ -65,4 +65,11 @@ public class BlobDescriptor {
     BlobDescriptor other = (BlobDescriptor) obj;
     return digest.equals(other.getDigest()) && size == other.getSize();
   }
+
+  @Override
+  public int hashCode() {
+    int result = digest != null ? digest.hashCode() : 0;
+    result = 31 * result + (int) (size ^ (size >>> 32));
+    return result;
+  }
 }
