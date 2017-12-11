@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.crepecake.image;
 
-/** {@link Exception} thrown when accessing non-existent properties of layers. */
+/** Exception thrown when accessing non-existent properties of layers. */
 public class LayerException extends Exception {
 
   LayerException(String message) {
