@@ -32,20 +32,24 @@ public class Response implements Closeable {
 
   @Nullable private HttpResponse response;
 
+  /** Make sure to wrap with a try-with-resource to ensure that the connection is closed after usage. */
   Response(HttpRequest request) {
     this.request = request;
   }
 
+  /** Gets the HTTP status code of the response. */
   public int getResponseCode() throws IOException {
     executeRequest();
     return response.getStatusCode();
   }
 
+  /** Gets a header in the response. */
   public List<String> getHeader(String headerName) throws IOException {
     executeRequest();
     return response.getHeaders().getHeaderStringValues(headerName);
   }
 
+  /** Gets the HTTP response body as a {@link BlobStream}. */
   public BlobStream getContentStream() throws IOException {
     executeRequest();
 

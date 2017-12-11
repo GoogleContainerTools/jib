@@ -28,6 +28,7 @@ class InputStreamBlobStream implements BlobStream {
 
   private final byte[] byteBuffer = new byte[8192];
 
+  /** The caller should manage the closing of {@code inputStream}. */
   InputStreamBlobStream(InputStream inputStream) {
     this.inputStream = inputStream;
   }
