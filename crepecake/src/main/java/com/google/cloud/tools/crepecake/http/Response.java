@@ -32,7 +32,9 @@ public class Response implements Closeable {
 
   @Nullable private HttpResponse response;
 
-  /** Make sure to wrap with a try-with-resource to ensure that the connection is closed after usage. */
+  /**
+   * Make sure to wrap with a try-with-resource to ensure that the connection is closed after usage.
+   */
   Response(HttpRequest request) {
     this.request = request;
   }
