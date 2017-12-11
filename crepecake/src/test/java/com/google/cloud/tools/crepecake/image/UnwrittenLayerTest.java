@@ -47,12 +47,12 @@ public class UnwrittenLayerTest {
   @Mock private DescriptorDigest mockDiffId;
 
   @Before
-  public void setUpMocks() {
+  public void setUpMocks() throws IOException, DigestException {
     MockitoAnnotations.initMocks(this);
 
-    Mockito.when(mockCompressedBlobStream.getWrittenBlobDescriptor())
+    Mockito.when(mockCompressedBlobStream.writeTo(Mockito.any(OutputStream.class)))
         .thenReturn(mockBlobDescriptor);
-    Mockito.when(mockUncompressedBlobStream.getWrittenBlobDescriptor())
+    Mockito.when(mockUncompressedBlobStream.writeTo(Mockito.any(OutputStream.class)))
         .thenReturn(mockBlobDescriptor);
     Mockito.when(mockBlobDescriptor.getDigest()).thenReturn(mockDiffId);
   }
