@@ -16,19 +16,28 @@
 
 package com.google.cloud.tools.crepecake.blob;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
-import java.security.DigestException;
 
-/** A stream for BLOBs. */
-public interface BlobStream {
+/** A {@link Blob} that holds a {@link File}. */
+class FileBlob extends InputStreamBlob {
 
-  /**
-   * Writes the BLOB to an {@link OutputStream}.
-   *
-   * @param outputStream the {@link OutputStream} to write to
-   * @return the {@link BlobDescriptor} of the written BLOB
-   * @throws DigestException if the written BLOB digest failed to generate
-   */
-  BlobDescriptor writeTo(OutputStream outputStream) throws IOException, DigestException;
+  private final File file;
+
+  FileBlob(File file) {
+    // The input stream will be opened when writing.
+    super(null);
+    this.file = file;
+  }
+
+  @Override
+  public BlobDescriptor writeTo(OutputStream outputStream) throws IOException {
+    try (InputStream fileStream = new BufferedInputStream(new FileInputStream(file))) {
+      return writeFromInputStream(fileStream, outputStream);
+    }
+  }
 }

@@ -21,8 +21,8 @@ import com.google.api.client.http.HttpContent;
 import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
-import com.google.cloud.tools.crepecake.blob.BlobStream;
-import com.google.cloud.tools.crepecake.blob.BlobStreams;
+import com.google.cloud.tools.crepecake.blob.Blob;
+import com.google.cloud.tools.crepecake.blob.Blobs;
 import com.google.common.base.Charsets;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -98,7 +98,7 @@ public class RequestTest {
 
   @FunctionalInterface
   private interface SendMethod {
-    Response send(Request request, BlobStream body) throws IOException;
+    Response send(Request request, Blob body) throws IOException;
   }
 
   /**
@@ -110,14 +110,13 @@ public class RequestTest {
   private void testSend(SendMethod sendMethod) throws IOException {
     // Initializes test request input.
     String expectedContentType = "some content type";
-    BlobStream testBlobStream =
-        BlobStreams.from(
-            outputStream -> outputStream.write(testBodyString.getBytes(Charsets.UTF_8)));
+    Blob testBlob =
+        Blobs.from(outputStream -> outputStream.write(testBodyString.getBytes(Charsets.UTF_8)));
 
     // Constructs the request.
     Request request = new Request(fakeUrl, httpRequestFactoryMock, httpHeadersMock);
     request.setContentType(expectedContentType);
-    sendMethod.send(request, testBlobStream);
+    sendMethod.send(request, testBlob);
 
     // Verifies that the content type was set correctly.
     Mockito.verify(httpHeadersMock).setContentType(expectedContentType);

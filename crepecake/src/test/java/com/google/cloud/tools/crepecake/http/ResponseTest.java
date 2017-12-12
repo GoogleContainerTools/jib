@@ -18,7 +18,7 @@ package com.google.cloud.tools.crepecake.http;
 
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
-import com.google.cloud.tools.crepecake.blob.BlobStream;
+import com.google.cloud.tools.crepecake.blob.Blob;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -52,7 +52,7 @@ public class ResponseTest {
     Mockito.when(httpResponseMock.getContent()).thenReturn(responseInputStream);
 
     Response response = new Response(httpRequestMock);
-    BlobStream responseStream = response.getContentStream();
+    Blob responseStream = response.getContentStream();
 
     ByteArrayOutputStream responseOutputStream = new ByteArrayOutputStream();
     responseStream.writeTo(responseOutputStream);

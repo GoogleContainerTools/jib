@@ -22,8 +22,8 @@ import java.io.OutputStream;
 import java.security.DigestException;
 import java.security.DigestOutputStream;
 
-/** Abstract parent for {@link BlobStream}s that hash the BLOB as well. */
-abstract class AbstractHashingBlobStream implements BlobStream {
+/** Abstract parent for {@link Blob}s that hash the BLOB when written out. */
+abstract class AbstractHashingBlob implements Blob {
 
   /**
    * Writes to an {@link OutputStream} and appends the bytes written to a {@link

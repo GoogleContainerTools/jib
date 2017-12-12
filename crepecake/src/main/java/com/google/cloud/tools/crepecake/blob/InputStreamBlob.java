@@ -19,21 +19,20 @@ package com.google.cloud.tools.crepecake.blob;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.security.DigestException;
 
-/** A {@link BlobStream} that streams from an {@link InputStream}. */
-class InputStreamBlobStream implements BlobStream {
+/** A {@link Blob} that holds an {@link InputStream}. */
+class InputStreamBlob implements Blob {
 
   private final InputStream inputStream;
 
   private final byte[] byteBuffer = new byte[8192];
 
   /** The caller should manage the closing of {@code inputStream}. */
-  InputStreamBlobStream(InputStream inputStream) {
+  InputStreamBlob(InputStream inputStream) {
     this.inputStream = inputStream;
   }
 
-  protected BlobDescriptor writeFromInputStream(InputStream inputStream, OutputStream outputStream)
+  BlobDescriptor writeFromInputStream(InputStream inputStream, OutputStream outputStream)
       throws IOException {
     long bytesWritten = 0;
     int bytesRead;
@@ -46,7 +45,7 @@ class InputStreamBlobStream implements BlobStream {
   }
 
   @Override
-  public BlobDescriptor writeTo(OutputStream outputStream) throws IOException, DigestException {
+  public BlobDescriptor writeTo(OutputStream outputStream) throws IOException {
     return writeFromInputStream(inputStream, outputStream);
   }
 }

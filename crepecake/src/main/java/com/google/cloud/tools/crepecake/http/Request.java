@@ -20,8 +20,8 @@ import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.cloud.tools.crepecake.blob.BlobStream;
-import com.google.cloud.tools.crepecake.blob.BlobStreams;
+import com.google.cloud.tools.crepecake.blob.Blob;
+import com.google.cloud.tools.crepecake.blob.Blobs;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.net.URL;
@@ -71,12 +71,12 @@ public class Request {
   }
 
   /** Sends the request with method POST. */
-  public Response post(BlobStream body) throws IOException {
-    return new Response(requestFactory.buildPostRequest(url, BlobStreams.toHttpContent(body)));
+  public Response post(Blob body) throws IOException {
+    return new Response(requestFactory.buildPostRequest(url, Blobs.toHttpContent(body)));
   }
 
   /** Sends the request with method PUT. */
-  public Response put(BlobStream body) throws IOException {
-    return new Response(requestFactory.buildPutRequest(url, BlobStreams.toHttpContent(body)));
+  public Response put(Blob body) throws IOException {
+    return new Response(requestFactory.buildPutRequest(url, Blobs.toHttpContent(body)));
   }
 }

@@ -21,13 +21,13 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.security.DigestException;
 
-/** {@link BlobStream}-backed {@link HttpContent}. */
+/** {@link Blob}-backed {@link HttpContent}. */
 class BlobStreamHttpContent implements HttpContent {
 
-  private final BlobStream blobStream;
+  private final Blob blob;
 
-  BlobStreamHttpContent(BlobStream blobStream) {
-    this.blobStream = blobStream;
+  BlobStreamHttpContent(Blob blob) {
+    this.blob = blob;
   }
 
   @Override
@@ -50,7 +50,7 @@ class BlobStreamHttpContent implements HttpContent {
   @Override
   public void writeTo(OutputStream outputStream) throws IOException {
     try {
-      blobStream.writeTo(outputStream);
+      blob.writeTo(outputStream);
     } catch (DigestException ex) {
       throw new IOException(ex);
     }

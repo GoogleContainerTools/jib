@@ -16,21 +16,11 @@
 
 package com.google.cloud.tools.crepecake.blob;
 
-import com.google.common.base.Charsets;
 import java.io.IOException;
 import java.io.OutputStream;
 
-/** A {@link BlobStream} that streams from a {@link String} and hashes the bytes. */
-class HashingStringBlobStream extends AbstractHashingBlobStream {
+@FunctionalInterface
+public interface BlobWriter {
 
-  private final byte[] contentBytes;
-
-  HashingStringBlobStream(String content) {
-    contentBytes = content.getBytes(Charsets.UTF_8);
-  }
-
-  @Override
-  protected void writeToAndHash(OutputStream outputStream) throws IOException {
-    outputStream.write(contentBytes);
-  }
+  void writeTo(OutputStream outputStream) throws IOException;
 }
