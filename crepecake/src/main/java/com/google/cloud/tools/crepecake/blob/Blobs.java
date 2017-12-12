@@ -16,11 +16,29 @@
 
 package com.google.cloud.tools.crepecake.blob;
 
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.File;
+import java.io.InputStream;
 
-@FunctionalInterface
-public interface BlobStreamWriter {
+/** Static initializers for {@link Blob}. */
+public class Blobs {
 
-  void writeTo(OutputStream outputStream) throws IOException;
+  public static Blob empty() {
+    return new EmptyBlob();
+  }
+
+  public static Blob from(InputStream inputStream) {
+    return new InputStreamBlob(inputStream);
+  }
+
+  public static Blob from(File file) {
+    return new FileBlob(file);
+  }
+
+  public static Blob from(String content, boolean hashing) {
+    return hashing ? new HashingStringBlob(content) : new StringBlob(content);
+  }
+
+  public static Blob from(BlobWriter writer) {
+    return new HashingWriterBlob(writer);
+  }
 }
