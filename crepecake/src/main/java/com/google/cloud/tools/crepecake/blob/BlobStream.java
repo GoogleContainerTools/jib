@@ -18,7 +18,6 @@ package com.google.cloud.tools.crepecake.blob;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.security.DigestException;
 
 /** A stream for BLOBs. */
 public interface BlobStream {
@@ -28,7 +27,6 @@ public interface BlobStream {
    *
    * @param outputStream the {@link OutputStream} to write to
    * @return the {@link BlobDescriptor} of the written BLOB
-   * @throws DigestException if the written BLOB digest failed to generate
    */
-  BlobDescriptor writeTo(OutputStream outputStream) throws IOException, DigestException;
+  BlobDescriptor writeTo(OutputStream outputStream) throws IOException;
 }
