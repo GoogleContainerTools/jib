@@ -21,11 +21,12 @@ import com.google.cloud.tools.crepecake.blob.BlobStream;
 import com.google.cloud.tools.crepecake.blob.BlobStreams;
 import java.io.File;
 
+// TODO: Move this to the package with the caching classes.
 /**
- * A {@link Layer} that has been written out (i.e. to a cache) and has its file-backed content BLOB,
+ * A {@link Layer} that has been written out to a cache and has its file-backed content BLOB,
  * digest, size, and diff ID.
  */
-public class CachedLayer extends Layer {
+public class CachedLayer implements Layer {
 
   private final File file;
   private final BlobDescriptor blobDescriptor;
@@ -41,7 +42,7 @@ public class CachedLayer extends Layer {
    * @param diffId the diff ID for the layer
    * @see Layer
    */
-  public CachedLayer(File file, BlobDescriptor blobDescriptor, DescriptorDigest diffId) {
+  CachedLayer(File file, BlobDescriptor blobDescriptor, DescriptorDigest diffId) {
     this.file = file;
     this.blobDescriptor = blobDescriptor;
     this.diffId = diffId;

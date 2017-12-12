@@ -31,7 +31,7 @@ class InputStreamBlobStream implements BlobStream {
     this.inputStream = inputStream;
   }
 
-  protected BlobDescriptor writeFromInputStream(InputStream inputStream, OutputStream outputStream)
+  BlobDescriptor writeFromInputStream(InputStream inputStream, OutputStream outputStream)
       throws IOException {
     long bytesWritten = 0;
     int bytesRead;

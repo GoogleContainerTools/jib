@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.crepecake.blob;
 
+import com.google.cloud.tools.crepecake.hash.CountingDigestOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 
 /**
  * A {@link BlobStream} that streams with a {@link BlobStreamWriter} function and hashes the bytes.
@@ -31,7 +31,7 @@ class HashingWriterBlobStream extends AbstractHashingBlobStream {
   }
 
   @Override
-  protected void writeToAndHash(OutputStream outputStream) throws IOException {
+  void writeToWithHashing(CountingDigestOutputStream outputStream) throws IOException {
     writer.writeTo(outputStream);
   }
 }

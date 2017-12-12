@@ -26,7 +26,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /** A layer that has not been written out and only has the unwritten content {@link BlobStream}. */
-public class UnwrittenLayer extends Layer {
+public class UnwrittenLayer implements Layer {
 
   private final BlobStream compressedBlobStream;
   private final BlobStream uncompressedBlobStream;
@@ -40,6 +40,7 @@ public class UnwrittenLayer extends Layer {
     this.uncompressedBlobStream = uncompressedBlobStream;
   }
 
+  // TODO: This functionality should belong in the cache management classes.
   /**
    * Writes the compressed layer BLOB to a file and returns a {@link CachedLayer} that represents
    * the new cached layer.
@@ -60,12 +61,12 @@ public class UnwrittenLayer extends Layer {
   }
 
   @Override
-  public BlobDescriptor getBlobDescriptor() throws LayerException {
-    throw new LayerException("Blob descriptor not available for unwritten layer");
+  public BlobDescriptor getBlobDescriptor() throws LayerPropertyNotFoundException {
+    throw new LayerPropertyNotFoundException("Blob descriptor not available for unwritten layer");
   }
 
   @Override
-  public DescriptorDigest getDiffId() throws LayerException {
-    throw new LayerException("Diff ID not available for unwritten layer");
+  public DescriptorDigest getDiffId() throws LayerPropertyNotFoundException {
+    throw new LayerPropertyNotFoundException("Diff ID not available for unwritten layer");
   }
 }

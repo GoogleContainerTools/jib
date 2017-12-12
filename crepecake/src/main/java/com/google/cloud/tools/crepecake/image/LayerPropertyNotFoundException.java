@@ -17,9 +17,9 @@
 package com.google.cloud.tools.crepecake.image;
 
 /** Exception thrown when accessing non-existent properties of layers. */
-public class LayerException extends Exception {
+public class LayerPropertyNotFoundException extends Exception {
 
-  LayerException(String message) {
+  LayerPropertyNotFoundException(String message) {
     super(message);
   }
 }

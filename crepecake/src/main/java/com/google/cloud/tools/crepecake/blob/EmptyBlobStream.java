@@ -19,8 +19,8 @@ package com.google.cloud.tools.crepecake.blob;
 import java.io.OutputStream;
 
 /**
- * An empty {@link BlobStream}. This is used, for e.g., to send an HTTP request with an empty body
- * without having to pass {@code null} for the body {@link BlobStream}.
+ * An empty {@link BlobStream}. This is used, for example, to send an HTTP request with an empty
+ * body without having to pass {@code null} for the body {@link BlobStream}.
  */
 class EmptyBlobStream implements BlobStream {
 

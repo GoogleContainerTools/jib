@@ -22,7 +22,7 @@ import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
  * A {@link Layer} reference that <b>does not</b> have the underlying content. It references the
  * layer with its digest and size, but <b>not</b> its diff ID.
  */
-public class ReferenceNoDiffIdLayer extends Layer {
+public class ReferenceNoDiffIdLayer implements Layer {
 
   /** The {@link BlobDescriptor} of the compressed layer content. */
   private final BlobDescriptor blobDescriptor;
@@ -43,7 +43,8 @@ public class ReferenceNoDiffIdLayer extends Layer {
   }
 
   @Override
-  public DescriptorDigest getDiffId() throws LayerException {
-    throw new LayerException("Diff ID not available for reference layer without diff ID");
+  public DescriptorDigest getDiffId() throws LayerPropertyNotFoundException {
+    throw new LayerPropertyNotFoundException(
+        "Diff ID not available for reference layer without diff ID");
   }
 }
