@@ -16,22 +16,11 @@
 
 package com.google.cloud.tools.crepecake.blob;
 
-import com.google.cloud.tools.crepecake.hash.CountingDigestOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 
-/**
- * A {@link BlobStream} that streams with a {@link BlobStreamWriter} function and hashes the bytes.
- */
-class HashingWriterBlobStream extends AbstractHashingBlobStream {
+@FunctionalInterface
+public interface BlobWriter {
 
-  private final BlobStreamWriter writer;
-
-  HashingWriterBlobStream(BlobStreamWriter writer) {
-    this.writer = writer;
-  }
-
-  @Override
-  void writeToWithHashing(CountingDigestOutputStream outputStream) throws IOException {
-    writer.writeTo(outputStream);
-  }
+  void writeTo(OutputStream outputStream) throws IOException;
 }

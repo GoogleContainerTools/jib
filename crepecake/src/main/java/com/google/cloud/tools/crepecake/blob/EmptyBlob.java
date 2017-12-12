@@ -16,11 +16,16 @@
 
 package com.google.cloud.tools.crepecake.blob;
 
-import java.io.IOException;
 import java.io.OutputStream;
 
-@FunctionalInterface
-public interface BlobStreamWriter {
+/**
+ * An empty {@link Blob}. This is used, for example, to send an HTTP request with an empty body
+ * without having to pass {@code null} for the body {@link Blob}.
+ */
+class EmptyBlob implements Blob {
 
-  void writeTo(OutputStream outputStream) throws IOException;
+  @Override
+  public BlobDescriptor writeTo(OutputStream outputStream) {
+    return new BlobDescriptor(0);
+  }
 }

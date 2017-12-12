@@ -16,14 +16,14 @@
 
 package com.google.cloud.tools.crepecake.image;
 
-import com.google.cloud.tools.crepecake.blob.BlobStream;
+import com.google.cloud.tools.crepecake.blob.Blob;
 
 /** Different types of {@link Layer}s have different properties. */
 public enum LayerType {
 
   /**
-   * A layer that has not been written out and only has the unwritten content {@link BlobStream}.
-   * Once written, this layer becomes a {@code CACHED} layer.
+   * A layer that has not been written out and only has the unwritten content {@link Blob}. Once
+   * written, this layer becomes a {@code CACHED} layer.
    */
   UNWRITTEN,
 

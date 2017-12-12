@@ -16,21 +16,28 @@
 
 package com.google.cloud.tools.crepecake.blob;
 
-import com.google.cloud.tools.crepecake.hash.CountingDigestOutputStream;
-import com.google.common.base.Charsets;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
-/** A {@link BlobStream} that streams from a {@link String} and hashes the bytes. */
-class HashingStringBlobStream extends AbstractHashingBlobStream {
+/** A {@link Blob} that holds a {@link File}. */
+class FileBlob extends InputStreamBlob {
 
-  private final byte[] contentBytes;
+  private final File file;
 
-  HashingStringBlobStream(String content) {
-    contentBytes = content.getBytes(Charsets.UTF_8);
+  FileBlob(File file) {
+    // The input stream will be opened when writing.
+    super(null);
+    this.file = file;
   }
 
   @Override
-  void writeToWithHashing(CountingDigestOutputStream outputStream) throws IOException {
-    outputStream.write(contentBytes);
+  public BlobDescriptor writeTo(OutputStream outputStream) throws IOException {
+    try (InputStream fileStream = new BufferedInputStream(new FileInputStream(file))) {
+      return writeFromInputStream(fileStream, outputStream);
+    }
   }
 }

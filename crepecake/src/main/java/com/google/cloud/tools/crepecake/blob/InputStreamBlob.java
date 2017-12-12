@@ -20,14 +20,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-/** A {@link BlobStream} that streams from an {@link InputStream}. */
-class InputStreamBlobStream implements BlobStream {
+/** A {@link Blob} that holds an {@link InputStream}. */
+class InputStreamBlob implements Blob {
 
   private final InputStream inputStream;
 
   private final byte[] byteBuffer = new byte[8192];
 
-  InputStreamBlobStream(InputStream inputStream) {
+  InputStreamBlob(InputStream inputStream) {
     this.inputStream = inputStream;
   }
 

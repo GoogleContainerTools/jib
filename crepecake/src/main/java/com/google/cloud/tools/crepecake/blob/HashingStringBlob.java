@@ -16,16 +16,21 @@
 
 package com.google.cloud.tools.crepecake.blob;
 
-import java.io.OutputStream;
+import com.google.cloud.tools.crepecake.hash.CountingDigestOutputStream;
+import com.google.common.base.Charsets;
+import java.io.IOException;
 
-/**
- * An empty {@link BlobStream}. This is used, for example, to send an HTTP request with an empty
- * body without having to pass {@code null} for the body {@link BlobStream}.
- */
-class EmptyBlobStream implements BlobStream {
+/** A {@link Blob} that holds a {@link String} and hashes the bytes when written out. */
+class HashingStringBlob extends AbstractHashingBlob {
+
+  private final byte[] contentBytes;
+
+  HashingStringBlob(String content) {
+    contentBytes = content.getBytes(Charsets.UTF_8);
+  }
 
   @Override
-  public BlobDescriptor writeTo(OutputStream outputStream) {
-    return new BlobDescriptor(0);
+  void writeToWithHashing(CountingDigestOutputStream outputStream) throws IOException {
+    outputStream.write(contentBytes);
   }
 }

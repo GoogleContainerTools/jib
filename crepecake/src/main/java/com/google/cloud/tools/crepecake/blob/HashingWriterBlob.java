@@ -16,24 +16,20 @@
 
 package com.google.cloud.tools.crepecake.blob;
 
-import com.google.common.base.Charsets;
+import com.google.cloud.tools.crepecake.hash.CountingDigestOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 
-/** A {@link BlobStream} that streams from a {@link String}. */
-class StringBlobStream implements BlobStream {
+/** A {@link Blob} that writes with a {@link BlobWriter} function and hashes the bytes. */
+class HashingWriterBlob extends AbstractHashingBlob {
 
-  private final String content;
+  private final BlobWriter writer;
 
-  StringBlobStream(String content) {
-    this.content = content;
+  HashingWriterBlob(BlobWriter writer) {
+    this.writer = writer;
   }
 
   @Override
-  public BlobDescriptor writeTo(OutputStream outputStream) throws IOException {
-    byte[] contentBytes = content.getBytes(Charsets.UTF_8);
-    outputStream.write(contentBytes);
-    outputStream.flush();
-    return new BlobDescriptor(content.length());
+  void writeToWithHashing(CountingDigestOutputStream outputStream) throws IOException {
+    writer.writeTo(outputStream);
   }
 }
