@@ -40,7 +40,7 @@ public class ImageTest {
   }
 
   @Test
-  public void test_smokeTest() throws ImageException, LayerPropertyNotFoundException {
+  public void test_smokeTest() throws DuplicateLayerException, LayerPropertyNotFoundException {
     Map<String, String> expectedEnvironment =
         ImmutableMap.of("crepecake", "is great", "VARIABLE", "VALUE");
 
