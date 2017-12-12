@@ -19,14 +19,12 @@ package com.google.cloud.tools.crepecake.blob;
 import java.io.IOException;
 import java.io.OutputStream;
 
-/**
- * A {@link BlobStream} that streams with a {@link BlobStreamWriter} function and hashes the bytes.
- */
-class HashingWriterBlobStream extends AbstractHashingBlobStream {
+/** A {@link Blob} that writes with a {@link BlobWriter} function and hashes the bytes. */
+class HashingWriterBlob extends AbstractHashingBlob {
 
-  private final BlobStreamWriter writer;
+  private final BlobWriter writer;
 
-  HashingWriterBlobStream(BlobStreamWriter writer) {
+  HashingWriterBlob(BlobWriter writer) {
     this.writer = writer;
   }
 

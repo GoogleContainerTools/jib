@@ -16,29 +16,28 @@
 
 package com.google.cloud.tools.crepecake.blob;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 
-/** Static initializers for {@link BlobStream}. */
-public class BlobStreams {
+/** A {@link Blob} that holds a {@link File}. */
+class FileBlob extends InputStreamBlob {
 
-  public static BlobStream empty() {
-    return new EmptyBlobStream();
+  private final File file;
+
+  FileBlob(File file) {
+    // The input stream will be opened when writing.
+    super(null);
+    this.file = file;
   }
 
-  public static BlobStream from(InputStream inputStream) {
-    return new InputStreamBlobStream(inputStream);
-  }
-
-  public static BlobStream from(File file) {
-    return new FileBlobStream(file);
-  }
-
-  public static BlobStream from(String content, boolean hashing) {
-    return hashing ? new HashingStringBlobStream(content) : new StringBlobStream(content);
-  }
-
-  public static BlobStream from(BlobStreamWriter writer) {
-    return new HashingWriterBlobStream(writer);
+  @Override
+  public BlobDescriptor writeTo(OutputStream outputStream) throws IOException {
+    try (InputStream fileStream = new BufferedInputStream(new FileInputStream(file))) {
+      return writeFromInputStream(fileStream, outputStream);
+    }
   }
 }

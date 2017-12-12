@@ -20,8 +20,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.security.DigestException;
 
-/** A stream for BLOBs. */
-public interface BlobStream {
+/** Holds a BLOB source for writing to an {@link OutputStream}. */
+public interface Blob {
 
   /**
    * Writes the BLOB to an {@link OutputStream}.
