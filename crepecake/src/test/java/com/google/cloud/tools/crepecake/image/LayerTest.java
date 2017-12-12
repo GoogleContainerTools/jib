@@ -29,13 +29,9 @@ import org.mockito.MockitoAnnotations;
 public class LayerTest {
 
   @Mock private Blob mockCompressedBlob;
-
   @Mock private Blob mockUncompressedBlob;
-
   @Mock private File mockFile;
-
   @Mock private BlobDescriptor mockBlobDescriptor;
-
   @Mock private DescriptorDigest mockDiffId;
 
   @Before
