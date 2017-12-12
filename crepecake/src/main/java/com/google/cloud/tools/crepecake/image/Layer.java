@@ -51,22 +51,20 @@ import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
  *
  * </ul>
  */
-public abstract class Layer {
-
-  protected Layer() {}
+public interface Layer {
 
   /** @return the layer's {@link LayerType} */
-  public abstract LayerType getType();
+  LayerType getType();
 
   /**
    * @return the layer's content {@link BlobDescriptor}
-   * @throws LayerException if not available
+   * @throws LayerPropertyNotFoundException if not available
    */
-  public abstract BlobDescriptor getBlobDescriptor() throws LayerException;
+  BlobDescriptor getBlobDescriptor() throws LayerPropertyNotFoundException;
 
   /**
    * @return the layer's diff ID
-   * @throws LayerException if not available
+   * @throws LayerPropertyNotFoundException if not available
    */
-  public abstract DescriptorDigest getDiffId() throws LayerException;
+  DescriptorDigest getDiffId() throws LayerPropertyNotFoundException;
 }

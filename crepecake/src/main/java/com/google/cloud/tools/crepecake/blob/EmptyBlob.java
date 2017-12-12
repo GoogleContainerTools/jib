@@ -16,20 +16,16 @@
 
 package com.google.cloud.tools.crepecake.blob;
 
-import com.google.cloud.tools.crepecake.hash.CountingDigestOutputStream;
-import com.google.common.io.ByteStreams;
-import java.io.IOException;
 import java.io.OutputStream;
-import java.security.DigestException;
 
 /**
- * An empty {@link Blob}. This is used, for e.g., to send an HTTP request with an empty body without
- * having to pass {@code null} for the body {@link Blob}.
+ * An empty {@link Blob}. This is used, for example, to send an HTTP request with an empty body
+ * without having to pass {@code null} for the body {@link Blob}.
  */
 class EmptyBlob implements Blob {
 
   @Override
-  public BlobDescriptor writeTo(OutputStream outputStream) throws IOException, DigestException {
-    return new CountingDigestOutputStream(ByteStreams.nullOutputStream()).toBlobDescriptor();
+  public BlobDescriptor writeTo(OutputStream outputStream) {
+    return new BlobDescriptor(0);
   }
 }

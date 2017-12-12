@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.crepecake.image;
 
+import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
-import com.google.cloud.tools.crepecake.blob.BlobStream;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import java.io.ByteArrayOutputStream;
@@ -54,8 +54,8 @@ public class CachedLayerTest {
     CachedLayer cachedLayer = new CachedLayer(fileA, mockBlobDescriptor, mockDiffId);
 
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    BlobStream fileBlobStream = cachedLayer.getBlobStream();
-    fileBlobStream.writeTo(outputStream);
+    Blob fileBlob = cachedLayer.getBlob();
+    fileBlob.writeTo(outputStream);
 
     Assert.assertEquals(
         expectedFileAString, new String(outputStream.toByteArray(), Charsets.UTF_8));

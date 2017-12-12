@@ -19,7 +19,6 @@ package com.google.cloud.tools.crepecake.blob;
 import com.google.common.base.Charsets;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.security.DigestException;
 
 /** A {@link Blob} that holds a {@link String}. */
 class StringBlob implements Blob {
@@ -31,7 +30,7 @@ class StringBlob implements Blob {
   }
 
   @Override
-  public BlobDescriptor writeTo(OutputStream outputStream) throws IOException, DigestException {
+  public BlobDescriptor writeTo(OutputStream outputStream) throws IOException {
     byte[] contentBytes = content.getBytes(Charsets.UTF_8);
     outputStream.write(contentBytes);
     outputStream.flush();

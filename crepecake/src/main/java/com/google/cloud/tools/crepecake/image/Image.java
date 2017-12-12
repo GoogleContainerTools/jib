@@ -68,7 +68,7 @@ public class Image<T extends Layer> {
     return layers.asList();
   }
 
-  public void addLayer(T layer) throws ImageException, LayerException {
+  public void addLayer(T layer) throws ImageException, LayerPropertyNotFoundException {
     layers.add(layer);
   }
 }

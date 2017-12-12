@@ -16,42 +16,40 @@
 
 package com.google.cloud.tools.crepecake.image;
 
+import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
-import com.google.cloud.tools.crepecake.blob.BlobStream;
 import com.google.common.io.ByteStreams;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.security.DigestException;
-import java.security.NoSuchAlgorithmException;
 
-/** A layer that has not been written out and only has the unwritten content {@link BlobStream}. */
-public class UnwrittenLayer extends Layer {
+/** A layer that has not been written out and only has the unwritten content {@link Blob}. */
+public class UnwrittenLayer implements Layer {
 
-  private final BlobStream compressedBlobStream;
-  private final BlobStream uncompressedBlobStream;
+  private final Blob compressedBlob;
+  private final Blob uncompressedBlob;
 
   /**
-   * @param compressedBlobStream the compressed {@link BlobStream} of the layer content
-   * @param uncompressedBlobStream the uncompressed {@link BlobStream} of the layer content
+   * @param compressedBlob the compressed {@link Blob} of the layer content
+   * @param uncompressedBlob the uncompressed {@link Blob} of the layer content
    */
-  public UnwrittenLayer(BlobStream compressedBlobStream, BlobStream uncompressedBlobStream) {
-    this.compressedBlobStream = compressedBlobStream;
-    this.uncompressedBlobStream = uncompressedBlobStream;
+  public UnwrittenLayer(Blob compressedBlob, Blob uncompressedBlob) {
+    this.compressedBlob = compressedBlob;
+    this.uncompressedBlob = uncompressedBlob;
   }
 
+  // TODO: This functionality should belong in the cache management classes.
   /**
    * Writes the compressed layer BLOB to a file and returns a {@link CachedLayer} that represents
    * the new cached layer.
    */
-  public CachedLayer writeTo(File file)
-      throws NoSuchAlgorithmException, IOException, DigestException {
+  public CachedLayer writeTo(File file) throws IOException {
     try (OutputStream fileOutputStream = new BufferedOutputStream(new FileOutputStream(file))) {
-      BlobDescriptor blobDescriptor = compressedBlobStream.writeTo(fileOutputStream);
+      BlobDescriptor blobDescriptor = compressedBlob.writeTo(fileOutputStream);
       DescriptorDigest diffId =
-          uncompressedBlobStream.writeTo(ByteStreams.nullOutputStream()).getDigest();
+          uncompressedBlob.writeTo(ByteStreams.nullOutputStream()).getDigest();
 
       return new CachedLayer(file, blobDescriptor, diffId);
     }
@@ -63,12 +61,12 @@ public class UnwrittenLayer extends Layer {
   }
 
   @Override
-  public BlobDescriptor getBlobDescriptor() throws LayerException {
-    throw new LayerException("Blob descriptor not available for unwritten layer");
+  public BlobDescriptor getBlobDescriptor() throws LayerPropertyNotFoundException {
+    throw new LayerPropertyNotFoundException("Blob descriptor not available for unwritten layer");
   }
 
   @Override
-  public DescriptorDigest getDiffId() throws LayerException {
-    throw new LayerException("Diff ID not available for unwritten layer");
+  public DescriptorDigest getDiffId() throws LayerPropertyNotFoundException {
+    throw new LayerPropertyNotFoundException("Diff ID not available for unwritten layer");
   }
 }

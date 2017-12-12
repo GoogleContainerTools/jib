@@ -20,27 +20,28 @@ import com.google.cloud.tools.crepecake.hash.CountingDigestOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.DigestException;
-import java.security.DigestOutputStream;
 
 /** Abstract parent for {@link Blob}s that hash the BLOB when written out. */
 abstract class AbstractHashingBlob implements Blob {
 
   /**
-   * Writes to an {@link OutputStream} and appends the bytes written to a {@link
-   * CountingDigestOutputStream}.
+   * Writes to a {@link CountingDigestOutputStream}.
    *
-   * @param outputStream the {@link DigestOutputStream} to write to
+   * @param outputStream the {@link CountingDigestOutputStream} to write to
    */
-  protected abstract void writeToAndHash(OutputStream outputStream) throws IOException;
+  abstract void writeToWithHashing(CountingDigestOutputStream outputStream) throws IOException;
 
   @Override
-  public final BlobDescriptor writeTo(OutputStream outputStream)
-      throws IOException, DigestException {
+  public final BlobDescriptor writeTo(OutputStream outputStream) throws IOException {
     CountingDigestOutputStream hashingOutputStream = new CountingDigestOutputStream(outputStream);
 
-    writeToAndHash(hashingOutputStream);
+    writeToWithHashing(hashingOutputStream);
     hashingOutputStream.flush();
 
-    return hashingOutputStream.toBlobDescriptor();
+    try {
+      return hashingOutputStream.toBlobDescriptor();
+    } catch (DigestException ex) {
+      throw new IOException("BLOB hashing failed: " + ex.getMessage());
+    }
   }
 }

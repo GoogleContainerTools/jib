@@ -22,7 +22,7 @@ import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
  * A {@link Layer} reference that <b>does not</b> have the underlying content. It references the
  * layer with its digest, size, and diff ID.
  */
-public class ReferenceLayer extends Layer {
+public class ReferenceLayer implements Layer {
 
   /** The {@link BlobDescriptor} of the compressed layer content. */
   private final BlobDescriptor blobDescriptor;
