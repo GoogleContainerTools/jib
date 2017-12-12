@@ -24,8 +24,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.security.DigestException;
-import java.security.NoSuchAlgorithmException;
 
 /** A layer that has not been written out and only has the unwritten content {@link BlobStream}. */
 public class UnwrittenLayer extends Layer {
@@ -46,8 +44,7 @@ public class UnwrittenLayer extends Layer {
    * Writes the compressed layer BLOB to a file and returns a {@link CachedLayer} that represents
    * the new cached layer.
    */
-  public CachedLayer writeTo(File file)
-      throws NoSuchAlgorithmException, IOException, DigestException {
+  public CachedLayer writeTo(File file) throws IOException {
     try (OutputStream fileOutputStream = new BufferedOutputStream(new FileOutputStream(file))) {
       BlobDescriptor blobDescriptor = compressedBlobStream.writeTo(fileOutputStream);
       DescriptorDigest diffId =
