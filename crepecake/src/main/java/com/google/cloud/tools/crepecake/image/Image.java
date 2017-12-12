@@ -23,11 +23,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/** Represents an image. */
-public class Image {
+/**
+ * Represents an image.
+ *
+ * @param <T> the type of {@link Layer} this image contains
+ */
+public class Image<T extends Layer> {
 
   /** The layers of the image, in the order in which they are applied. */
-  private final ImageLayers layers;
+  private final ImageLayers<T> layers;
 
   /** Environment variables for running the image. Maps from variable name to its value. */
   private final Map<String, String> environmentMap = new HashMap<>();
@@ -36,11 +40,11 @@ public class Image {
   private List<String> entrypoint;
 
   public Image() {
-    layers = new ImageLayers();
+    layers = new ImageLayers<>();
   }
 
   @VisibleForTesting
-  Image(ImageLayers imageLayers) {
+  Image(ImageLayers<T> imageLayers) {
     layers = imageLayers;
   }
 
@@ -60,11 +64,11 @@ public class Image {
     this.entrypoint = entrypoint;
   }
 
-  public List<Layer> getLayers() {
+  public List<T> getLayers() {
     return layers.asList();
   }
 
-  public void addLayer(Layer layer) throws ImageException, LayerException {
+  public void addLayer(T layer) throws ImageException, LayerException {
     layers.add(layer);
   }
 }

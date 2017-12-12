@@ -32,7 +32,7 @@ import org.mockito.MockitoAnnotations;
 public class ImageTest {
 
   @Mock private Layer mockLayer;
-  @Mock private ImageLayers mockImageLayers;
+  @Mock private ImageLayers<Layer> mockImageLayers;
 
   @Before
   public void setUpFakes() throws DigestException {
@@ -44,7 +44,7 @@ public class ImageTest {
     Map<String, String> expectedEnvironment =
         ImmutableMap.of("crepecake", "is great", "VARIABLE", "VALUE");
 
-    Image image = new Image(mockImageLayers);
+    Image<Layer> image = new Image<>(mockImageLayers);
 
     image.setEnvironmentVariable("crepecake", "is great");
     image.setEnvironmentVariable("VARIABLE", "VALUE");

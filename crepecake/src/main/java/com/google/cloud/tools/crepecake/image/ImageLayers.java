@@ -23,16 +23,16 @@ import java.util.List;
 import java.util.Set;
 
 /** Holds the layers for an image. Makes sure that each layer is only added once. */
-class ImageLayers {
+class ImageLayers<T extends Layer> {
 
   /** The layers of the image, in the order in which they are applied. */
-  private final List<Layer> layers = new ArrayList<>();
+  private final List<T> layers = new ArrayList<>();
 
   /** Keeps track of the layers already added. */
   private final Set<DescriptorDigest> layerDigests = new HashSet<>();
 
   /** Returns an immutable copy of the image layers. */
-  List<Layer> asList() {
+  List<T> asList() {
     return ImmutableList.copyOf(layers);
   }
 
@@ -42,7 +42,7 @@ class ImageLayers {
    * @param layer the layer to add
    * @throws ImageException if the layer has already been added
    */
-  void add(Layer layer) throws ImageException, LayerException {
+  void add(T layer) throws ImageException, LayerException {
     if (layerDigests.contains(layer.getBlobDescriptor().getDigest())) {
       throw new ImageException("Cannot add the same layer more than once");
     }

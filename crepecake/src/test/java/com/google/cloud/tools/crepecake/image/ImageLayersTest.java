@@ -71,7 +71,7 @@ public class ImageLayersTest {
     List<Layer> expectedLayers =
         Arrays.asList(mockCachedLayer, mockReferenceLayer, mockReferenceNoDiffIdLayer);
 
-    ImageLayers imageLayers = new ImageLayers();
+    ImageLayers<Layer> imageLayers = new ImageLayers<>();
     imageLayers.add(mockCachedLayer);
     imageLayers.add(mockReferenceLayer);
     imageLayers.add(mockReferenceNoDiffIdLayer);
@@ -81,7 +81,7 @@ public class ImageLayersTest {
 
   @Test
   public void testAddLayer_duplicate() throws ImageException, LayerException {
-    ImageLayers imageLayers = new ImageLayers();
+    ImageLayers<Layer> imageLayers = new ImageLayers<>();
     imageLayers.add(mockCachedLayer);
     imageLayers.add(mockReferenceLayer);
     imageLayers.add(mockReferenceNoDiffIdLayer);
