@@ -20,7 +20,6 @@ import com.google.api.client.http.HttpContent;
 import com.google.cloud.tools.crepecake.blob.Blob;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.security.DigestException;
 
 /** {@link Blob}-backed {@link HttpContent}. */
 class BlobHttpContent implements HttpContent {
@@ -50,10 +49,6 @@ class BlobHttpContent implements HttpContent {
 
   @Override
   public void writeTo(OutputStream outputStream) throws IOException {
-    try {
-      blob.writeTo(outputStream);
-    } catch (DigestException ex) {
-      throw new IOException(ex);
-    }
+    blob.writeTo(outputStream);
   }
 }
