@@ -38,7 +38,7 @@ class BlobHttpContent implements HttpContent {
 
   @Override
   public String getType() {
-    // TODO: This should probably return the actual Content-Type.
+    // TODO: This should return the actual Content-Type.
     return null;
   }
 

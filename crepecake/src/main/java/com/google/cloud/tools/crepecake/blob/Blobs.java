@@ -19,7 +19,7 @@ package com.google.cloud.tools.crepecake.blob;
 import java.io.File;
 import java.io.InputStream;
 
-/** Static methods for constructing and using specific implementations of {@link Blob}. */
+/** Static initializers for {@link Blob}. */
 public class Blobs {
 
   public static Blob empty() {
