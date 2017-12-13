@@ -22,6 +22,8 @@ import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.common.annotations.VisibleForTesting;
+import org.apache.http.HttpMessage;
+
 import java.io.IOException;
 import java.net.URL;
 import javax.annotation.Nullable;

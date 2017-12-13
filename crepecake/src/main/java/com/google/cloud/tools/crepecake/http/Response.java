@@ -52,9 +52,8 @@ public class Response implements Closeable {
   }
 
   /** Gets the HTTP response body as a {@link Blob}. */
-  public Blob getContentStream() throws IOException {
+  public Blob getContentBlob() throws IOException {
     executeRequest();
-
     return Blobs.from(response.getContent());
   }
 
@@ -73,5 +72,6 @@ public class Response implements Closeable {
     }
 
     response = request.execute();
+    assert response != null;
   }
 }
