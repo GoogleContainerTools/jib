@@ -14,9 +14,10 @@
  * the License.
  */
 
-package com.google.cloud.tools.crepecake.blob;
+package com.google.cloud.tools.crepecake.http;
 
 import com.google.api.client.http.HttpContent;
+import com.google.cloud.tools.crepecake.blob.Blob;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.DigestException;

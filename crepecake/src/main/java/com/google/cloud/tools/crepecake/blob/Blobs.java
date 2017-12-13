@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.crepecake.blob;
 
-import com.google.api.client.http.HttpContent;
 import java.io.File;
 import java.io.InputStream;
 
@@ -41,10 +40,5 @@ public class Blobs {
 
   public static Blob from(BlobWriter writer) {
     return new HashingWriterBlob(writer);
-  }
-
-  /** Wraps a {@link Blob} in an {@link HttpContent}. */
-  public static HttpContent toHttpContent(Blob blob) {
-    return new BlobHttpContent(blob);
   }
 }
