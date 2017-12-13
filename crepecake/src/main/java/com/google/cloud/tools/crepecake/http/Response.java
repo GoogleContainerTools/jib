@@ -72,6 +72,5 @@ public class Response implements Closeable {
     }
 
     response = request.execute();
-    assert response != null;
   }
 }
