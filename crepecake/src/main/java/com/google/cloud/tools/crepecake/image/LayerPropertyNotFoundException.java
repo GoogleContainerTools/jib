@@ -14,22 +14,12 @@
  * the License.
  */
 
-package com.google.cloud.tools.crepecake.blob;
+package com.google.cloud.tools.crepecake.image;
 
-import com.google.cloud.tools.crepecake.hash.CountingDigestOutputStream;
-import java.io.IOException;
+/** Exception thrown when accessing non-existent properties of layers. */
+public class LayerPropertyNotFoundException extends Exception {
 
-/** A {@link Blob} that writes with a {@link BlobWriter} function and hashes the bytes. */
-class HashingWriterBlob extends AbstractHashingBlob {
-
-  private final BlobWriter writer;
-
-  HashingWriterBlob(BlobWriter writer) {
-    this.writer = writer;
-  }
-
-  @Override
-  void writeToWithHashing(CountingDigestOutputStream outputStream) throws IOException {
-    writer.writeTo(outputStream);
+  LayerPropertyNotFoundException(String message) {
+    super(message);
   }
 }

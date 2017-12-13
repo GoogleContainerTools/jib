@@ -29,7 +29,6 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.DigestException;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.CompressorException;
@@ -64,7 +63,7 @@ public class TarStreamBuilderTest {
   }
 
   @Test
-  public void testToBlob() throws IOException, DigestException {
+  public void testToBlob() throws IOException {
     Blob blob = testTarStreamBuilder.toBlob();
 
     // Adding another file should not change a previously-obtained Blob.
@@ -83,8 +82,7 @@ public class TarStreamBuilderTest {
   }
 
   @Test
-  public void testToBlob_withCompression()
-      throws IOException, CompressorException, DigestException {
+  public void testToBlob_withCompression() throws IOException, CompressorException {
     Blob blob = testTarStreamBuilder.toBlob();
 
     // Writes the BLOB and captures the output.
