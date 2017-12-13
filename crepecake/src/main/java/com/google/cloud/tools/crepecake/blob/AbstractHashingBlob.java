@@ -41,7 +41,7 @@ abstract class AbstractHashingBlob implements Blob {
     try {
       return hashingOutputStream.toBlobDescriptor();
     } catch (DigestException ex) {
-      throw new IOException("BLOB hashing failed: " + ex.getMessage());
+      throw new IOException("BLOB hashing failed: " + ex.getMessage(), ex);
     }
   }
 }

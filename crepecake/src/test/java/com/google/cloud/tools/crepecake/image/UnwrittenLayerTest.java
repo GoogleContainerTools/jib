@@ -22,8 +22,6 @@ import com.google.common.io.ByteStreams;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.security.DigestException;
-import java.security.NoSuchAlgorithmException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -39,15 +37,12 @@ public class UnwrittenLayerTest {
   @Rule public TemporaryFolder fakeFolder = new TemporaryFolder();
 
   @Mock private Blob mockCompressedBlob;
-
   @Mock private Blob mockUncompressedBlob;
-
   @Mock private BlobDescriptor mockBlobDescriptor;
-
   @Mock private DescriptorDigest mockDiffId;
 
   @Before
-  public void setUpMocks() throws IOException, DigestException {
+  public void setUpMocks() throws IOException {
     MockitoAnnotations.initMocks(this);
 
     Mockito.when(mockCompressedBlob.writeTo(Mockito.any(OutputStream.class)))
@@ -58,7 +53,7 @@ public class UnwrittenLayerTest {
   }
 
   @Test
-  public void testWriteTo() throws IOException, DigestException, NoSuchAlgorithmException {
+  public void testWriteTo() throws IOException {
     File testFile = fakeFolder.newFile("fakefile");
 
     UnwrittenLayer unwrittenLayer = new UnwrittenLayer(mockCompressedBlob, mockUncompressedBlob);

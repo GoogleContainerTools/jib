@@ -40,10 +40,10 @@ public class LayerTest {
   }
 
   @Test
-  public void testNew_unwritten() {
+  public void testNew_unwritten() throws LayerPropertyNotFoundException {
     Layer layer = new UnwrittenLayer(mockCompressedBlob, mockUncompressedBlob);
 
-    Assert.assertEquals(LayerType.UNWRITTEN, layer.getType());
+    Assert.assertEquals(mockCompressedBlob, layer.getBlob());
 
     try {
       layer.getBlobDescriptor();
@@ -64,7 +64,7 @@ public class LayerTest {
   public void testNew_cached() throws LayerPropertyNotFoundException {
     Layer layer = new CachedLayer(mockFile, mockBlobDescriptor, mockDiffId);
 
-    Assert.assertEquals(LayerType.CACHED, layer.getType());
+    Assert.assertNotNull(layer.getBlob());
     Assert.assertEquals(mockBlobDescriptor, layer.getBlobDescriptor());
     Assert.assertEquals(mockDiffId, layer.getDiffId());
   }
@@ -73,7 +73,13 @@ public class LayerTest {
   public void testNew_reference() throws LayerPropertyNotFoundException {
     Layer layer = new ReferenceLayer(mockBlobDescriptor, mockDiffId);
 
-    Assert.assertEquals(LayerType.REFERENCE, layer.getType());
+    try {
+      layer.getBlob();
+      Assert.fail("Blob descriptor should not be available for reference layer");
+    } catch (LayerPropertyNotFoundException ex) {
+      Assert.assertEquals("Blob not available for reference layer", ex.getMessage());
+    }
+
     Assert.assertEquals(mockBlobDescriptor, layer.getBlobDescriptor());
     Assert.assertEquals(mockDiffId, layer.getDiffId());
   }
@@ -82,7 +88,14 @@ public class LayerTest {
   public void testNew_referenceNoDiffId() throws LayerPropertyNotFoundException {
     Layer layer = new ReferenceNoDiffIdLayer(mockBlobDescriptor);
 
-    Assert.assertEquals(LayerType.REFERENCE_NO_DIFF_ID, layer.getType());
+    try {
+      layer.getBlob();
+      Assert.fail("Blob descriptor should not be available for reference layer without diff ID");
+    } catch (LayerPropertyNotFoundException ex) {
+      Assert.assertEquals(
+          "Blob not available for reference layer without diff ID", ex.getMessage());
+    }
+
     Assert.assertEquals(mockBlobDescriptor, layer.getBlobDescriptor());
 
     try {

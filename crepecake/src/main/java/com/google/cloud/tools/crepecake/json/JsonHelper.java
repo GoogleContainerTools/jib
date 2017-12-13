@@ -17,6 +17,7 @@
 package com.google.cloud.tools.crepecake.json;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -44,6 +45,19 @@ import java.io.OutputStream;
 public class JsonHelper {
 
   private static final ObjectMapper objectMapper = new ObjectMapper();
+
+  /**
+   * Deserializes a JSON file via a JSON object template.
+   *
+   * @param jsonFile a file containing a JSON string
+   * @param templateClass the template to deserialize the string to
+   * @return the template filled with the values parsed from {@param jsonFile}
+   * @throws IOException if an error occurred during reading the file or parsing the JSON
+   */
+  public static <T extends JsonTemplate> T readJsonFromFile(File jsonFile, Class<T> templateClass)
+      throws IOException {
+    return objectMapper.readValue(jsonFile, templateClass);
+  }
 
   /**
    * Serializes a JSON object into a JSON string.
