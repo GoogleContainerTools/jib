@@ -45,6 +45,6 @@ public class Blobs {
 
   /** Wraps a {@link Blob} in an {@link HttpContent}. */
   public static HttpContent toHttpContent(Blob blob) {
-    return new BlobStreamHttpContent(blob);
+    return new BlobHttpContent(blob);
   }
 }

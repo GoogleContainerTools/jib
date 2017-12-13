@@ -22,11 +22,11 @@ import java.io.OutputStream;
 import java.security.DigestException;
 
 /** {@link Blob}-backed {@link HttpContent}. */
-class BlobStreamHttpContent implements HttpContent {
+class BlobHttpContent implements HttpContent {
 
   private final Blob blob;
 
-  BlobStreamHttpContent(Blob blob) {
+  BlobHttpContent(Blob blob) {
     this.blob = blob;
   }
 
