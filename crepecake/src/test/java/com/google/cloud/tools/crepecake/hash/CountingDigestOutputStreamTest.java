@@ -26,7 +26,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.DigestException;
-import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -55,7 +54,7 @@ public class CountingDigestOutputStreamTest {
   }
 
   @Test
-  public void test_smokeTest() throws NoSuchAlgorithmException, IOException, DigestException {
+  public void test_smokeTest() throws IOException, DigestException {
     for (Map.Entry<String, String> knownHash : knownSha256Hashes.entrySet()) {
       String toHash = knownHash.getKey();
       String expectedHash = knownHash.getValue();
