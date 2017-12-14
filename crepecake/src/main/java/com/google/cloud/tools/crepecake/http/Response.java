@@ -20,7 +20,6 @@ import com.google.api.client.http.HttpResponse;
 import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.blob.Blobs;
 import com.google.cloud.tools.crepecake.json.JsonTemplate;
-
 import java.io.IOException;
 import java.util.List;
 

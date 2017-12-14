@@ -32,6 +32,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -52,6 +53,8 @@ public class ConnectionTest {
   private final GenericUrl fakeUrl = new GenericUrl("http://crepecake/fake/url");
   private final Request fakeRequest = new Request();
 
+  @InjectMocks private final Connection testConnection = new Connection(fakeUrl.toURL());
+
   @Before
   public void setUpMocksAndFakes() throws IOException {
     Blob fakeBlob = Blobs.from("crepecake", false);
@@ -65,6 +68,7 @@ public class ConnectionTest {
 
     Mockito.when(mockHttpRequest.setHeaders(Mockito.any(HttpHeaders.class)))
         .thenReturn(mockHttpRequest);
+    Mockito.when(mockHttpRequest.setParser(Mockito.any())).thenReturn(mockHttpRequest);
     Mockito.when(mockHttpRequest.execute()).thenReturn(mockHttpResponse);
   }
 
@@ -90,7 +94,7 @@ public class ConnectionTest {
   }
 
   private void testSend(String httpMethod, SendFunction sendFunction) throws IOException {
-    try (Connection connection = new Connection(fakeUrl.toURL(), mockHttpRequestFactory)) {
+    try (Connection connection = testConnection) {
       sendFunction.send(connection, fakeRequest);
     }
 

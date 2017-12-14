@@ -6,7 +6,6 @@ import com.google.cloud.tools.crepecake.json.JsonHelper;
 import com.google.cloud.tools.crepecake.json.JsonTemplate;
 import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;
-
 import java.io.IOException;
 import java.io.InputStreamReader;
 
@@ -36,7 +35,8 @@ public class DockerCredentialRetriever {
   /**
    * Retrieves the Docker credentials by calling the corresponding CLI.
    *
-   * The credential helper CLI is called in the form:
+   * <p>The credential helper CLI is called in the form:
+   *
    * <pre>{@code
    * echo -n <server URL> | docker-credential-<credential helper suffix> get
    * }</pre>
@@ -44,9 +44,11 @@ public class DockerCredentialRetriever {
   public Authorization retrieve() throws IOException {
     Process process = Runtime.getRuntime().exec(credentialHelperCommand);
     process.getOutputStream().write(serverUrl.getBytes(Charsets.UTF_8));
-    String output = CharStreams.toString(new InputStreamReader(process.getInputStream(), Charsets.UTF_8));
+    String output =
+        CharStreams.toString(new InputStreamReader(process.getInputStream(), Charsets.UTF_8));
 
-    DockerCredentialsTemplate dockerCredentials = JsonHelper.readJson(output, DockerCredentialsTemplate.class);
+    DockerCredentialsTemplate dockerCredentials =
+        JsonHelper.readJson(output, DockerCredentialsTemplate.class);
 
     return Authorizations.withBasicToken(dockerCredentials.Secret);
   }

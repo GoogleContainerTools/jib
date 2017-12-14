@@ -6,7 +6,8 @@ import java.util.List;
 /**
  * Holds the credentials for an HTTP {@code Authorization} header.
  *
- * The HTTP {@code Authorization} header is in the format:
+ * <p>The HTTP {@code Authorization} header is in the format:
+ *
  * <pre>{@code Authorization: <scheme> <token>}</pre>
  */
 public class Authorization {
