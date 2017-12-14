@@ -10,7 +10,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 // TODO: Replace with non-CLI method.
-/** Retrieves Docker credentials with a Docker credential helper. */
+/**
+ * Retrieves Docker credentials with a Docker credential helper.
+ *
+ * @see <a href="https://github.com/docker/docker-credential-helpers">https://github.com/docker/docker-credential-helpers</a>
+ */
 public class DockerCredentialRetriever {
 
   private final String serverUrl;
