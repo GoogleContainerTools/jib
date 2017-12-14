@@ -41,7 +41,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class ConnectionTest {
 
   @Mock private HttpRequestFactory mockHttpRequestFactory;
-  @Mock private BlobHttpContent mockBlobHttpContent;
   @Mock private HttpRequest mockHttpRequest;
   @Mock private HttpResponse mockHttpResponse;
 
