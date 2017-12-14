@@ -16,14 +16,11 @@
 
 package com.google.cloud.tools.crepecake.http;
 
-import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
 import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.blob.Blobs;
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
-import javax.annotation.Nullable;
 
 /** Holds an HTTP response. */
 public class Response {

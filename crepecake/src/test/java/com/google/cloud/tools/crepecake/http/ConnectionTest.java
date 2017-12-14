@@ -21,42 +21,39 @@ import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
-import com.google.cloud.tools.crepecake.blob.Blob;
-import com.google.cloud.tools.crepecake.blob.Blobs;
-import com.google.common.base.Charsets;
-import org.junit.Assert;
+import java.io.IOException;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-
-import java.io.IOException;
-import java.net.URL;
-import java.util.function.Consumer;
-import java.util.function.Function;
+import org.mockito.MockitoAnnotations;
 
 /** Tests for {@link Connection}. */
 public class ConnectionTest {
 
   @Mock private HttpRequestFactory mockHttpRequestFactory;
   @Mock private Request mockRequest;
+  @Mock private BlobHttpContent mockBlobHttpContent;
   @Mock private HttpRequest mockHttpRequest;
   @Mock private HttpHeaders mockHttpHeaders;
   @Mock private HttpResponse mockHttpResponse;
 
-  private ArgumentCaptor<GenericUrl> urlArgumentCaptor = ArgumentCaptor.forClass(GenericUrl.class);
-
-  private URL fakeUrl;
+  private GenericUrl fakeUrl;
 
   @Before
   public void setUpMocksAndFakes() throws IOException {
-    fakeUrl = new URL("http://crepecake/fake/url");
+    MockitoAnnotations.initMocks(this);
 
-    Mockito.when(mockHttpRequestFactory.buildGetRequest(Mockito.any(GenericUrl.class)))
+    fakeUrl = new GenericUrl("http://crepecake/fake/url");
+
+    Mockito.when(mockHttpRequestFactory.buildGetRequest(fakeUrl)).thenReturn(mockHttpRequest);
+    Mockito.when(mockHttpRequestFactory.buildPostRequest(fakeUrl, mockBlobHttpContent))
+        .thenReturn(mockHttpRequest);
+    Mockito.when(mockHttpRequestFactory.buildPutRequest(fakeUrl, mockBlobHttpContent))
         .thenReturn(mockHttpRequest);
 
-    Mockito.when(mockHttpRequest.getHeaders()).thenReturn(mockHttpHeaders);
+    Mockito.when(mockRequest.getBody()).thenReturn(mockBlobHttpContent);
+    Mockito.when(mockRequest.getHeaders()).thenReturn(mockHttpHeaders);
     Mockito.when(mockHttpRequest.setHeaders(mockHttpHeaders)).thenReturn(mockHttpRequest);
     Mockito.when(mockHttpRequest.execute()).thenReturn(mockHttpResponse);
   }
@@ -64,33 +61,33 @@ public class ConnectionTest {
   @Test
   public void testGet() throws IOException {
     testSend(Connection::get);
-    try (Connection connection = new Connection(fakeUrl, mockHttpRequestFactory)) {
-      connection.get(mockRequest);
-
-      Mockito.verify(mockHttpRequestFactory).buildGetRequest(urlArgumentCaptor.capture());
-      Mockito.verify(mockHttpRequest).setHeaders(mockHttpHeaders);
-
-      Assert.assertEquals(new GenericUrl(fakeUrl), urlArgumentCaptor.getValue());
-    }
-
-    Mockito.verify(mockHttpResponse).disconnect();
+    Mockito.verify(mockHttpRequestFactory).buildGetRequest(fakeUrl);
   }
 
   @Test
   public void testPost() throws IOException {
-    try (Connection connection = new Connection(fakeUrl, mockHttpRequestFactory)) {
-      connection.post(mockRequest);
-
-      Mockito.verify(mockHttpRequestFactory).buildGetRequest(urlArgumentCaptor.capture());
-      Mockito.verify(mockHttpRequest).setHeaders(mockHttpHeaders);
-
-      Assert.assertEquals(new GenericUrl(fakeUrl), urlArgumentCaptor.getValue());
-    }
-
-    Mockito.verify(mockHttpResponse).disconnect();
+    testSend(Connection::post);
+    Mockito.verify(mockHttpRequestFactory).buildPostRequest(fakeUrl, mockBlobHttpContent);
   }
 
-  private void testSend(Function<Connection, Response> sendFunction) {
-    sendFunction
+  @Test
+  public void testPut() throws IOException {
+    testSend(Connection::put);
+    Mockito.verify(mockHttpRequestFactory).buildPutRequest(fakeUrl, mockBlobHttpContent);
+  }
+
+  @FunctionalInterface
+  private interface SendFunction {
+
+    Response send(Connection connection, Request request) throws IOException;
+  }
+
+  private void testSend(SendFunction sendFunction) throws IOException {
+    try (Connection connection = new Connection(fakeUrl.toURL(), mockHttpRequestFactory)) {
+      sendFunction.send(connection, mockRequest);
+    }
+
+    Mockito.verify(mockHttpRequest).setHeaders(mockHttpHeaders);
+    Mockito.verify(mockHttpResponse).disconnect();
   }
 }

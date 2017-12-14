@@ -16,14 +16,8 @@
 
 package com.google.cloud.tools.crepecake.http;
 
-import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpHeaders;
-import com.google.api.client.http.HttpRequestFactory;
-import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.cloud.tools.crepecake.blob.Blob;
-import com.google.common.annotations.VisibleForTesting;
-import java.io.IOException;
-import java.net.URL;
 import javax.annotation.Nullable;
 
 /** Holds an HTTP request. */
@@ -31,9 +25,6 @@ public class Request {
 
   /** The HTTP request headers. */
   private final HttpHeaders headers = new HttpHeaders();
-
-  /** The request method; uses GET if null. */
-  @Nullable private String method;
 
   /** The HTTP request body. */
   @Nullable private BlobHttpContent body;

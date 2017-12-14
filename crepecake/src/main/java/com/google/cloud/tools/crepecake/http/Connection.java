@@ -17,18 +17,14 @@
 package com.google.cloud.tools.crepecake.http;
 
 import com.google.api.client.http.GenericUrl;
-import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.common.annotations.VisibleForTesting;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.URL;
-import java.util.function.BiFunction;
 
 /** Sends an HTTP {@link Request} and stores the {@link Response}. */
 public class Connection implements Closeable {
@@ -80,14 +76,21 @@ public class Connection implements Closeable {
     return send(request, requestFactory::buildPutRequest);
   }
 
+  /** Function to build an {@link HttpRequest} from a url and a body. */
   @FunctionalInterface
   private interface BuildRequestFunction {
 
     HttpRequest build(GenericUrl url, BlobHttpContent body) throws IOException;
   }
 
-  private Response send(Request request, BuildRequestFunction buildRequestFunction) throws IOException {
-    httpResponse = buildRequestFunction.build(url, request.getBody()).setHeaders(request.getHeaders()).execute();
+  /** Sends the request. */
+  private Response send(Request request, BuildRequestFunction buildRequestFunction)
+      throws IOException {
+    httpResponse =
+        buildRequestFunction
+            .build(url, request.getBody())
+            .setHeaders(request.getHeaders())
+            .execute();
     return new Response(httpResponse);
   }
 }

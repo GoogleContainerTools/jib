@@ -16,14 +16,11 @@
 
 package com.google.cloud.tools.crepecake.http;
 
-import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
 import com.google.cloud.tools.crepecake.blob.Blob;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.security.DigestException;
-import java.security.NoSuchAlgorithmException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,27 +28,25 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
+/** Tests for {@link Response}. */
 public class ResponseTest {
 
-  @Mock private HttpRequest httpRequestMock;
   @Mock private HttpResponse httpResponseMock;
 
   @Before
-  public void setUpMocksAndFakes() throws IOException {
+  public void setUpMocksAndFakes() {
     MockitoAnnotations.initMocks(this);
-
-    Mockito.when(httpRequestMock.execute()).thenReturn(httpResponseMock);
   }
 
   @Test
-  public void testGetContent() throws IOException, DigestException, NoSuchAlgorithmException {
+  public void testGetContent() throws IOException {
     String expectedResponse = "crepecake\nis\ngood!";
     ByteArrayInputStream responseInputStream =
         new ByteArrayInputStream(expectedResponse.getBytes());
 
     Mockito.when(httpResponseMock.getContent()).thenReturn(responseInputStream);
 
-    Response response = new Response(httpRequestMock);
+    Response response = new Response(httpResponseMock);
     Blob responseStream = response.getContentBlob();
 
     ByteArrayOutputStream responseOutputStream = new ByteArrayOutputStream();
