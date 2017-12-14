@@ -17,30 +17,25 @@
 package com.google.cloud.tools.crepecake.image;
 
 import com.google.common.collect.ImmutableMap;
-import java.security.DigestException;
 import java.util.Arrays;
 import java.util.Map;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link Image}. */
+@RunWith(MockitoJUnitRunner.class)
 public class ImageTest {
 
   @Mock private Layer mockLayer;
   @Mock private ImageLayers<Layer> mockImageLayers;
 
   @InjectMocks private Image image;
-
-  @Before
-  public void setUpFakes() throws DigestException {
-    MockitoAnnotations.initMocks(this);
-  }
 
   @Test
   public void test_smokeTest() throws DuplicateLayerException, LayerPropertyNotFoundException {

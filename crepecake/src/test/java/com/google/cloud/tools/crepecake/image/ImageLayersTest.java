@@ -23,11 +23,13 @@ import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link ImageLayers}. */
+@RunWith(MockitoJUnitRunner.class)
 public class ImageLayersTest {
 
   @Mock private CachedLayer mockCachedLayer;
@@ -37,8 +39,6 @@ public class ImageLayersTest {
 
   @Before
   public void setUpFakes() throws LayerPropertyNotFoundException {
-    MockitoAnnotations.initMocks(this);
-
     DescriptorDigest mockDescriptorDigest1 = Mockito.mock(DescriptorDigest.class);
     DescriptorDigest mockDescriptorDigest2 = Mockito.mock(DescriptorDigest.class);
     DescriptorDigest mockDescriptorDigest3 = Mockito.mock(DescriptorDigest.class);
