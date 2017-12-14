@@ -45,6 +45,8 @@ class InputStreamBlob implements Blob {
 
   @Override
   public BlobDescriptor writeTo(OutputStream outputStream) throws IOException {
-    return writeFromInputStream(inputStream, outputStream);
+    try (InputStream inputStream = this.inputStream) {
+      return writeFromInputStream(inputStream, outputStream);
+    }
   }
 }
