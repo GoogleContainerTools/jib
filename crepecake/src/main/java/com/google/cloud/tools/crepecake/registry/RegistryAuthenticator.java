@@ -18,7 +18,8 @@ import java.net.URL;
 /**
  * Authenticates pull access with a registry service.
  *
- * @see <a href="https://docs.docker.com/registry/spec/auth/token/">https://docs.docker.com/registry/spec/auth/token/</a>
+ * @see <a
+ *     href="https://docs.docker.com/registry/spec/auth/token/">https://docs.docker.com/registry/spec/auth/token/</a>
  */
 public class RegistryAuthenticator {
 
