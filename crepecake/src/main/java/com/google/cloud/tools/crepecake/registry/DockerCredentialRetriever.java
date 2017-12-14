@@ -44,6 +44,8 @@ public class DockerCredentialRetriever {
   public Authorization retrieve() throws IOException {
     Process process = Runtime.getRuntime().exec(credentialHelperCommand);
     process.getOutputStream().write(serverUrl.getBytes(Charsets.UTF_8));
+    process.getOutputStream().close();
+
     String output =
         CharStreams.toString(new InputStreamReader(process.getInputStream(), Charsets.UTF_8));
 

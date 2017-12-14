@@ -27,7 +27,8 @@ public class RegistryAuthenticator {
     private String token;
   }
 
-  private static String stringFromBlob(Blob blob) throws IOException {
+  /** Gets the contents of a {@link Blob} as a string. */
+  private static String writeBlobToString(Blob blob) throws IOException {
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     blob.writeTo(byteArrayOutputStream);
     return new String(byteArrayOutputStream.toByteArray(), Charsets.UTF_8);
@@ -43,7 +44,7 @@ public class RegistryAuthenticator {
   public Authorization authenticate() throws RegistryAuthenticationFailedException {
     try (Connection connection = new Connection(authenticationUrl)) {
       Response response = connection.get(new Request());
-      String responseString = stringFromBlob(response.getBody());
+      String responseString = writeBlobToString(response.getBody());
 
       AuthenticationResponseTemplate responseJson =
           JsonHelper.readJson(responseString, AuthenticationResponseTemplate.class);
