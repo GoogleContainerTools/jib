@@ -68,7 +68,6 @@ public class ConnectionTest {
 
     Mockito.when(mockHttpRequest.setHeaders(Mockito.any(HttpHeaders.class)))
         .thenReturn(mockHttpRequest);
-    Mockito.when(mockHttpRequest.setParser(Mockito.any())).thenReturn(mockHttpRequest);
     Mockito.when(mockHttpRequest.execute()).thenReturn(mockHttpResponse);
   }
 

@@ -19,7 +19,6 @@ package com.google.cloud.tools.crepecake.http;
 import com.google.api.client.http.HttpResponse;
 import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.blob.Blobs;
-import com.google.cloud.tools.crepecake.json.JsonTemplate;
 import java.io.IOException;
 import java.util.List;
 
@@ -45,10 +44,5 @@ public class Response {
   /** Gets the HTTP response body as a {@link Blob}. */
   public Blob getBody() throws IOException {
     return Blobs.from(httpResponse.getContent());
-  }
-
-  /** Parses the HTTP response as JSON. */
-  public <T extends JsonTemplate> T parseAs(Class<T> templateClass) throws IOException {
-    return httpResponse.parseAs(templateClass);
   }
 }
