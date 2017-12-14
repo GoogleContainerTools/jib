@@ -16,22 +16,17 @@
 
 package com.google.cloud.tools.crepecake.image;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Represents an image.
- *
- * @param <T> the type of {@link Layer} this image contains
- */
-public class Image<T extends Layer> {
+/** Represents an image. */
+public class Image {
 
   /** The layers of the image, in the order in which they are applied. */
-  private final ImageLayers<T> layers;
+  private ImageLayers<Layer> layers = new ImageLayers<>();
 
   /** Environment variables for running the image. Maps from variable name to its value. */
   private final Map<String, String> environmentMap = new HashMap<>();
@@ -39,16 +34,7 @@ public class Image<T extends Layer> {
   /** Initial command to run when running the image. */
   private List<String> entrypoint;
 
-  public Image() {
-    layers = new ImageLayers<>();
-  }
-
-  @VisibleForTesting
-  Image(ImageLayers<T> imageLayers) {
-    layers = imageLayers;
-  }
-
-  public Map<String, String> getEnvironmentMap() {
+  public ImmutableMap<String, String> getEnvironmentMap() {
     return ImmutableMap.copyOf(environmentMap);
   }
 
@@ -56,7 +42,7 @@ public class Image<T extends Layer> {
     environmentMap.put(name, value);
   }
 
-  public List<String> getEntrypoint() {
+  public ImmutableList<String> getEntrypoint() {
     return ImmutableList.copyOf(entrypoint);
   }
 
@@ -64,11 +50,11 @@ public class Image<T extends Layer> {
     this.entrypoint = entrypoint;
   }
 
-  public List<T> getLayers() {
+  public ImmutableList<Layer> getLayers() {
     return layers.asList();
   }
 
-  public void addLayer(T layer) throws DuplicateLayerException, LayerPropertyNotFoundException {
+  public void addLayer(Layer layer) throws DuplicateLayerException, LayerPropertyNotFoundException {
     layers.add(layer);
   }
 }

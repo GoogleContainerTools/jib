@@ -24,6 +24,7 @@ import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
@@ -34,6 +35,8 @@ public class ImageTest {
   @Mock private Layer mockLayer;
   @Mock private ImageLayers<Layer> mockImageLayers;
 
+  @InjectMocks private Image image;
+
   @Before
   public void setUpFakes() throws DigestException {
     MockitoAnnotations.initMocks(this);
@@ -43,8 +46,6 @@ public class ImageTest {
   public void test_smokeTest() throws DuplicateLayerException, LayerPropertyNotFoundException {
     Map<String, String> expectedEnvironment =
         ImmutableMap.of("crepecake", "is great", "VARIABLE", "VALUE");
-
-    Image<Layer> image = new Image<>(mockImageLayers);
 
     image.setEnvironmentVariable("crepecake", "is great");
     image.setEnvironmentVariable("VARIABLE", "VALUE");

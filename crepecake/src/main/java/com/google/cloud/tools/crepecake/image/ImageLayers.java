@@ -32,7 +32,7 @@ class ImageLayers<T extends Layer> {
   private final Set<DescriptorDigest> layerDigests = new HashSet<>();
 
   /** Returns an immutable copy of the image layers. */
-  List<T> asList() {
+  ImmutableList<T> asList() {
     return ImmutableList.copyOf(layers);
   }
 
