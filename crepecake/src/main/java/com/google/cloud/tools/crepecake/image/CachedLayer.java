@@ -28,7 +28,7 @@ import java.io.File;
  */
 public class CachedLayer implements Layer {
 
-  private final File file;
+  private final File contentFile;
   private final BlobDescriptor blobDescriptor;
   private final DescriptorDigest diffId;
 
@@ -37,20 +37,20 @@ public class CachedLayer implements Layer {
    * and diff ID. The {@code blobDescriptor} and {@code diffId} <b>must match</b> the BLOB stored in
    * the file - no checks are made at runtime.
    *
-   * @param file the file with the layer's content BLOB
+   * @param contentFile the file with the layer's content BLOB
    * @param blobDescriptor the content descriptor for the layer's content BLOB
    * @param diffId the diff ID for the layer
    * @see Layer
    */
-  CachedLayer(File file, BlobDescriptor blobDescriptor, DescriptorDigest diffId) {
-    this.file = file;
+  public CachedLayer(File contentFile, BlobDescriptor blobDescriptor, DescriptorDigest diffId) {
+    this.contentFile = contentFile;
     this.blobDescriptor = blobDescriptor;
     this.diffId = diffId;
   }
 
   @Override
   public Blob getBlob() {
-    return Blobs.from(file);
+    return Blobs.from(contentFile);
   }
 
   @Override
