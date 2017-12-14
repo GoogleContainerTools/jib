@@ -18,6 +18,7 @@ package com.google.cloud.tools.crepecake.http;
 
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpHeaders;
+import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
@@ -46,10 +47,9 @@ public class ConnectionTest {
 
     fakeUrl = new GenericUrl("http://crepecake/fake/url");
 
-    Mockito.when(mockHttpRequestFactory.buildGetRequest(fakeUrl)).thenReturn(mockHttpRequest);
-    Mockito.when(mockHttpRequestFactory.buildPostRequest(fakeUrl, mockBlobHttpContent))
-        .thenReturn(mockHttpRequest);
-    Mockito.when(mockHttpRequestFactory.buildPutRequest(fakeUrl, mockBlobHttpContent))
+    Mockito.when(
+            mockHttpRequestFactory.buildRequest(
+                Mockito.any(String.class), Mockito.eq(fakeUrl), Mockito.eq(mockBlobHttpContent)))
         .thenReturn(mockHttpRequest);
 
     Mockito.when(mockRequest.getBody()).thenReturn(mockBlobHttpContent);
@@ -61,19 +61,22 @@ public class ConnectionTest {
   @Test
   public void testGet() throws IOException {
     testSend(Connection::get);
-    Mockito.verify(mockHttpRequestFactory).buildGetRequest(fakeUrl);
+    Mockito.verify(mockHttpRequestFactory)
+        .buildRequest(HttpMethods.GET, fakeUrl, mockBlobHttpContent);
   }
 
   @Test
   public void testPost() throws IOException {
     testSend(Connection::post);
-    Mockito.verify(mockHttpRequestFactory).buildPostRequest(fakeUrl, mockBlobHttpContent);
+    Mockito.verify(mockHttpRequestFactory)
+        .buildRequest(HttpMethods.POST, fakeUrl, mockBlobHttpContent);
   }
 
   @Test
   public void testPut() throws IOException {
     testSend(Connection::put);
-    Mockito.verify(mockHttpRequestFactory).buildPutRequest(fakeUrl, mockBlobHttpContent);
+    Mockito.verify(mockHttpRequestFactory)
+        .buildRequest(HttpMethods.PUT, fakeUrl, mockBlobHttpContent);
   }
 
   @FunctionalInterface

@@ -17,7 +17,7 @@
 package com.google.cloud.tools.crepecake.http;
 
 import com.google.api.client.http.GenericUrl;
-import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.javanet.NetHttpTransport;
@@ -63,32 +63,24 @@ public class Connection implements Closeable {
 
   /** Sends the request with method GET. */
   public Response get(Request request) throws IOException {
-    return send(request, (url, body) -> requestFactory.buildGetRequest(url));
+    return send(HttpMethods.GET, request);
   }
 
   /** Sends the request with method POST. */
   public Response post(Request request) throws IOException {
-    return send(request, requestFactory::buildPostRequest);
+    return send(HttpMethods.POST, request);
   }
 
   /** Sends the request with method PUT. */
   public Response put(Request request) throws IOException {
-    return send(request, requestFactory::buildPutRequest);
-  }
-
-  /** Function to build an {@link HttpRequest} from a url and a body. */
-  @FunctionalInterface
-  private interface BuildRequestFunction {
-
-    HttpRequest build(GenericUrl url, BlobHttpContent body) throws IOException;
+    return send(HttpMethods.PUT, request);
   }
 
   /** Sends the request. */
-  private Response send(Request request, BuildRequestFunction buildRequestFunction)
-      throws IOException {
+  private Response send(String httpMethod, Request request) throws IOException {
     httpResponse =
-        buildRequestFunction
-            .build(url, request.getBody())
+        requestFactory
+            .buildRequest(httpMethod, url, request.getBody())
             .setHeaders(request.getHeaders())
             .execute();
     return new Response(httpResponse);

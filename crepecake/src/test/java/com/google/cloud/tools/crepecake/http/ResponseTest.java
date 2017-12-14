@@ -18,6 +18,7 @@ package com.google.cloud.tools.crepecake.http;
 
 import com.google.api.client.http.HttpResponse;
 import com.google.cloud.tools.crepecake.blob.Blob;
+import com.google.common.base.Charsets;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -42,7 +43,7 @@ public class ResponseTest {
   public void testGetContent() throws IOException {
     String expectedResponse = "crepecake\nis\ngood!";
     ByteArrayInputStream responseInputStream =
-        new ByteArrayInputStream(expectedResponse.getBytes());
+        new ByteArrayInputStream(expectedResponse.getBytes(Charsets.UTF_8));
 
     Mockito.when(httpResponseMock.getContent()).thenReturn(responseInputStream);
 
