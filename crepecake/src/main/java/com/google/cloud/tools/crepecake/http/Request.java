@@ -34,7 +34,7 @@ public class Request {
   }
 
   @Nullable
-  public BlobHttpContent getBody() {
+  public BlobHttpContent getHttpContent() {
     return body;
   }
 

@@ -22,61 +22,66 @@ import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
+import com.google.cloud.tools.crepecake.blob.Blob;
+import com.google.cloud.tools.crepecake.blob.Blobs;
+import com.google.common.base.Charsets;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link Connection}. */
+@RunWith(MockitoJUnitRunner.class)
 public class ConnectionTest {
 
   @Mock private HttpRequestFactory mockHttpRequestFactory;
-  @Mock private Request mockRequest;
   @Mock private BlobHttpContent mockBlobHttpContent;
   @Mock private HttpRequest mockHttpRequest;
-  @Mock private HttpHeaders mockHttpHeaders;
   @Mock private HttpResponse mockHttpResponse;
 
-  private GenericUrl fakeUrl;
+  private final ArgumentCaptor<HttpHeaders> httpHeadersArgumentCaptor =
+      ArgumentCaptor.forClass(HttpHeaders.class);
+  private final ArgumentCaptor<BlobHttpContent> blobHttpContentArgumentCaptor =
+      ArgumentCaptor.forClass(BlobHttpContent.class);
+
+  private final GenericUrl fakeUrl = new GenericUrl("http://crepecake/fake/url");
+  private final Request fakeRequest = new Request();
 
   @Before
   public void setUpMocksAndFakes() throws IOException {
-    MockitoAnnotations.initMocks(this);
-
-    fakeUrl = new GenericUrl("http://crepecake/fake/url");
+    Blob fakeBlob = Blobs.from("crepecake", false);
+    fakeRequest.setBody(fakeBlob);
+    fakeRequest.setContentType("fake.content.type");
 
     Mockito.when(
             mockHttpRequestFactory.buildRequest(
-                Mockito.any(String.class), Mockito.eq(fakeUrl), Mockito.eq(mockBlobHttpContent)))
+                Mockito.any(String.class), Mockito.eq(fakeUrl), Mockito.any(BlobHttpContent.class)))
         .thenReturn(mockHttpRequest);
 
-    Mockito.when(mockRequest.getBody()).thenReturn(mockBlobHttpContent);
-    Mockito.when(mockRequest.getHeaders()).thenReturn(mockHttpHeaders);
-    Mockito.when(mockHttpRequest.setHeaders(mockHttpHeaders)).thenReturn(mockHttpRequest);
+    Mockito.when(mockHttpRequest.setHeaders(Mockito.any(HttpHeaders.class)))
+        .thenReturn(mockHttpRequest);
     Mockito.when(mockHttpRequest.execute()).thenReturn(mockHttpResponse);
   }
 
   @Test
   public void testGet() throws IOException {
-    testSend(Connection::get);
-    Mockito.verify(mockHttpRequestFactory)
-        .buildRequest(HttpMethods.GET, fakeUrl, mockBlobHttpContent);
+    testSend(HttpMethods.GET, Connection::get);
   }
 
   @Test
   public void testPost() throws IOException {
-    testSend(Connection::post);
-    Mockito.verify(mockHttpRequestFactory)
-        .buildRequest(HttpMethods.POST, fakeUrl, mockBlobHttpContent);
+    testSend(HttpMethods.POST, Connection::post);
   }
 
   @Test
   public void testPut() throws IOException {
-    testSend(Connection::put);
-    Mockito.verify(mockHttpRequestFactory)
-        .buildRequest(HttpMethods.PUT, fakeUrl, mockBlobHttpContent);
+    testSend(HttpMethods.PUT, Connection::put);
   }
 
   @FunctionalInterface
@@ -85,12 +90,24 @@ public class ConnectionTest {
     Response send(Connection connection, Request request) throws IOException;
   }
 
-  private void testSend(SendFunction sendFunction) throws IOException {
+  private void testSend(String httpMethod, SendFunction sendFunction) throws IOException {
     try (Connection connection = new Connection(fakeUrl.toURL(), mockHttpRequestFactory)) {
-      sendFunction.send(connection, mockRequest);
+      sendFunction.send(connection, fakeRequest);
     }
 
-    Mockito.verify(mockHttpRequest).setHeaders(mockHttpHeaders);
+    Mockito.verify(mockHttpRequest).setHeaders(httpHeadersArgumentCaptor.capture());
     Mockito.verify(mockHttpResponse).disconnect();
+
+    Assert.assertEquals("fake.content.type", httpHeadersArgumentCaptor.getValue().getContentType());
+
+    Mockito.verify(mockHttpRequestFactory)
+        .buildRequest(
+            Mockito.eq(httpMethod), Mockito.eq(fakeUrl), blobHttpContentArgumentCaptor.capture());
+
+    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+    blobHttpContentArgumentCaptor.getValue().writeTo(byteArrayOutputStream);
+
+    Assert.assertEquals(
+        "crepecake", new String(byteArrayOutputStream.toByteArray(), Charsets.UTF_8));
   }
 }

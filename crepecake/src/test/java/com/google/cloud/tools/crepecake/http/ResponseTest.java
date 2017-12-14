@@ -25,19 +25,17 @@ import java.io.IOException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link Response}. */
+@RunWith(MockitoJUnitRunner.class)
 public class ResponseTest {
 
   @Mock private HttpResponse httpResponseMock;
-
-  @Before
-  public void setUpMocksAndFakes() {
-    MockitoAnnotations.initMocks(this);
-  }
 
   @Test
   public void testGetContent() throws IOException {
@@ -53,6 +51,6 @@ public class ResponseTest {
     ByteArrayOutputStream responseOutputStream = new ByteArrayOutputStream();
     responseStream.writeTo(responseOutputStream);
 
-    Assert.assertEquals(expectedResponse, responseOutputStream.toString());
+    Assert.assertEquals(expectedResponse, new String(responseOutputStream.toByteArray(), Charsets.UTF_8));
   }
 }

@@ -91,7 +91,7 @@ public class Connection implements Closeable {
   private Response send(String httpMethod, Request request) throws IOException {
     httpResponse =
         requestFactory
-            .buildRequest(httpMethod, url, request.getBody())
+            .buildRequest(httpMethod, url, request.getHttpContent())
             .setHeaders(request.getHeaders())
             .execute();
     return new Response(httpResponse);
