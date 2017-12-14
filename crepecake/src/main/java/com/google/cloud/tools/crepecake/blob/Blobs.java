@@ -20,7 +20,7 @@ import java.io.File;
 import java.io.InputStream;
 
 /** Static initializers for {@link Blob}. */
-public class Blobs {
+public abstract class Blobs {
 
   public static Blob empty() {
     return new EmptyBlob();

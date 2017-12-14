@@ -21,6 +21,7 @@ import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.cloud.tools.crepecake.json.JsonHelper;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.Closeable;
 import java.io.IOException;
@@ -93,6 +94,7 @@ public class Connection implements Closeable {
         requestFactory
             .buildRequest(httpMethod, url, request.getHttpContent())
             .setHeaders(request.getHeaders())
+            .setParser(request.isResponseJson() ? JsonHelper.getJsonObjectParser(): null)
             .execute();
     return new Response(httpResponse);
   }

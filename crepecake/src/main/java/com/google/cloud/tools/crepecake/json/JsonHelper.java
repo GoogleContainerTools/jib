@@ -17,6 +17,9 @@
 package com.google.cloud.tools.crepecake.json;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.client.json.JsonObjectParser;
+import com.google.api.client.json.jackson2.JacksonFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -42,9 +45,10 @@ import java.io.OutputStream;
  *
  * @see <a href="https://github.com/FasterXML/jackson">https://github.com/FasterXML/jackson</a>
  */
-public class JsonHelper {
+public abstract class JsonHelper {
 
-  private static final ObjectMapper objectMapper = new ObjectMapper();
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+  private static final JsonObjectParser JSON_OBJECT_PARSER = new JsonObjectParser(new JacksonFactory());
 
   /**
    * Deserializes a JSON file via a JSON object template.
@@ -56,7 +60,7 @@ public class JsonHelper {
    */
   public static <T extends JsonTemplate> T readJsonFromFile(File jsonFile, Class<T> templateClass)
       throws IOException {
-    return objectMapper.readValue(jsonFile, templateClass);
+    return OBJECT_MAPPER.readValue(jsonFile, templateClass);
   }
 
   /**
@@ -66,6 +70,15 @@ public class JsonHelper {
    * @param source the JSON object to serialize
    */
   public static void writeJson(OutputStream outputStream, JsonTemplate source) throws IOException {
-    objectMapper.writeValue(outputStream, source);
+    OBJECT_MAPPER.writeValue(outputStream, source);
+  }
+
+  /** Deserializes a JSON object from a JSON string. */
+  public static <T extends JsonTemplate> T readJson(String jsonString, Class<T> templateClass) throws IOException {
+    return OBJECT_MAPPER.readValue(jsonString, templateClass);
+  }
+
+  public static JsonObjectParser getJsonObjectParser() {
+    return JSON_OBJECT_PARSER;
   }
 }

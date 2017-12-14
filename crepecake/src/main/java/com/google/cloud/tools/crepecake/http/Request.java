@@ -29,6 +29,9 @@ public class Request {
   /** The HTTP request body. */
   @Nullable private BlobHttpContent body;
 
+  /** Indicates if the response should be parsed as JSON. */
+  private boolean responseIsJson = false;
+
   public HttpHeaders getHeaders() {
     return headers;
   }
@@ -36,6 +39,16 @@ public class Request {
   @Nullable
   public BlobHttpContent getHttpContent() {
     return body;
+  }
+
+  public boolean isResponseJson() {
+    return responseIsJson;
+  }
+
+  // TODO: Add to ConnectionTest.
+  public Request setAuthorization(Authorization authorization) {
+    headers.setAuthorization(authorization.asList());
+    return this;
   }
 
   /** Sets the {@code Content-Type} header. */
@@ -46,6 +59,11 @@ public class Request {
 
   public Request setBody(Blob body) {
     this.body = new BlobHttpContent(body);
+    return this;
+  }
+
+  public Request setResponseIsJson() {
+    responseIsJson = true;
     return this;
   }
 }
