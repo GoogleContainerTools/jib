@@ -26,36 +26,25 @@ import java.io.IOException;
 import java.net.URL;
 import javax.annotation.Nullable;
 
-/** Sends an HTTP request. */
+/** Holds an HTTP request. */
 public class Request {
 
-  private static final HttpRequestFactory HTTP_REQUEST_FACTORY =
-      new NetHttpTransport().createRequestFactory();
-
-  private final HttpRequestFactory requestFactory;
-
-  /** The URL to send the request to. */
-  private GenericUrl url;
+  /** The HTTP request headers. */
+  private final HttpHeaders headers = new HttpHeaders();
 
   /** The request method; uses GET if null. */
   @Nullable private String method;
 
-  /** The HTTP request headers. */
-  private HttpHeaders headers = new HttpHeaders();
+  /** The HTTP request body. */
+  @Nullable private BlobHttpContent body;
 
-  public Request(URL url) throws IOException {
-    this(url, HTTP_REQUEST_FACTORY);
+  public HttpHeaders getHeaders() {
+    return headers;
   }
 
-  @VisibleForTesting
-  Request(URL url, HttpRequestFactory requestFactory, HttpHeaders headers) throws IOException {
-    this(url, requestFactory);
-    this.headers = headers;
-  }
-
-  private Request(URL url, HttpRequestFactory requestFactory) throws IOException {
-    this.url = new GenericUrl(url);
-    this.requestFactory = requestFactory;
+  @Nullable
+  public BlobHttpContent getBody() {
+    return body;
   }
 
   /** Sets the {@code Content-Type} header. */
@@ -64,18 +53,8 @@ public class Request {
     return this;
   }
 
-  /** Sends the request with method GET. */
-  public Response get() throws IOException {
-    return new Response(requestFactory.buildGetRequest(url));
-  }
-
-  /** Sends the request with method POST. */
-  public Response post(Blob body) throws IOException {
-    return new Response(requestFactory.buildPostRequest(url, new BlobHttpContent(body)));
-  }
-
-  /** Sends the request with method PUT. */
-  public Response put(Blob body) throws IOException {
-    return new Response(requestFactory.buildPutRequest(url, new BlobHttpContent(body)));
+  public Request setBody(Blob body) {
+    this.body = new BlobHttpContent(body);
+    return this;
   }
 }

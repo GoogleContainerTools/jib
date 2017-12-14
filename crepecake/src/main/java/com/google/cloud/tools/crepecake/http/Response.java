@@ -25,52 +25,27 @@ import java.io.IOException;
 import java.util.List;
 import javax.annotation.Nullable;
 
-/** Lazily captures an HTTP response. */
-public class Response implements Closeable {
+/** Holds an HTTP response. */
+public class Response {
 
-  private final HttpRequest request;
+  private final HttpResponse httpResponse;
 
-  @Nullable private HttpResponse response;
-
-  /**
-   * Make sure to wrap with a try-with-resource to ensure that the connection is closed after usage.
-   */
-  Response(HttpRequest request) {
-    this.request = request;
+  Response(HttpResponse httpResponse) {
+    this.httpResponse = httpResponse;
   }
 
   /** Gets the HTTP status code of the response. */
-  public int getResponseCode() throws IOException {
-    executeRequest();
-    return response.getStatusCode();
+  public int getStatusCode() {
+    return httpResponse.getStatusCode();
   }
 
   /** Gets a header in the response. */
-  public List<String> getHeader(String headerName) throws IOException {
-    executeRequest();
-    return response.getHeaders().getHeaderStringValues(headerName);
+  public List<String> getHeader(String headerName) {
+    return httpResponse.getHeaders().getHeaderStringValues(headerName);
   }
 
   /** Gets the HTTP response body as a {@link Blob}. */
   public Blob getContentBlob() throws IOException {
-    executeRequest();
-    return Blobs.from(response.getContent());
-  }
-
-  @Override
-  public void close() throws IOException {
-    if (response == null) {
-      return;
-    }
-
-    response.disconnect();
-  }
-
-  private void executeRequest() throws IOException {
-    if (response != null) {
-      return;
-    }
-
-    response = request.execute();
+    return Blobs.from(httpResponse.getContent());
   }
 }
