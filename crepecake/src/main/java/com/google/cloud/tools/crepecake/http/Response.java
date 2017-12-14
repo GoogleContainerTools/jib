@@ -42,7 +42,7 @@ public class Response {
   }
 
   /** Gets the HTTP response body as a {@link Blob}. */
-  public Blob getContentBlob() throws IOException {
+  public Blob getBody() throws IOException {
     return Blobs.from(httpResponse.getContent());
   }
 }

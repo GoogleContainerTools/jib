@@ -27,7 +27,6 @@ class InputStreamBlob implements Blob {
 
   private final byte[] byteBuffer = new byte[8192];
 
-  /** The caller should close {@code inputStream}. */
   InputStreamBlob(InputStream inputStream) {
     this.inputStream = inputStream;
   }
@@ -46,6 +45,8 @@ class InputStreamBlob implements Blob {
 
   @Override
   public BlobDescriptor writeTo(OutputStream outputStream) throws IOException {
-    return writeFromInputStream(inputStream, outputStream);
+    try (InputStream inputStream = this.inputStream) {
+      return writeFromInputStream(inputStream, outputStream);
+    }
   }
 }

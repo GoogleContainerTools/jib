@@ -26,7 +26,18 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.URL;
 
-/** Sends an HTTP {@link Request} and stores the {@link Response}. */
+/**
+ * Sends an HTTP {@link Request} and stores the {@link Response}.
+ *
+ * <p>Example usage:
+ *
+ * <pre>{@code
+ * try (Connection connection = new Connection(url)) {
+ *   Response response = connection.get(request);
+ *   // ... process the response
+ * }
+ * }</pre>
+ */
 public class Connection implements Closeable {
 
   private static final HttpRequestFactory HTTP_REQUEST_FACTORY =
