@@ -40,4 +40,10 @@ public class Authorization {
   public String getToken() {
     return token;
   }
+
+  /** Return the HTTP {@link Authorization} header value. */
+  @Override
+  public String toString() {
+    return scheme + " " + token;
+  }
 }

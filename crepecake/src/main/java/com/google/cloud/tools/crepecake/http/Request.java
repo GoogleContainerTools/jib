@@ -18,7 +18,6 @@ package com.google.cloud.tools.crepecake.http;
 
 import com.google.api.client.http.HttpHeaders;
 import com.google.cloud.tools.crepecake.blob.Blob;
-import java.util.Arrays;
 import javax.annotation.Nullable;
 
 /** Holds an HTTP request. */
@@ -39,9 +38,9 @@ public class Request {
     return body;
   }
 
-  // TODO: Add to ConnectionTest.
+  /** Sets the {@code Authorization} header. */
   public Request setAuthorization(Authorization authorization) {
-    headers.setAuthorization(Arrays.asList(authorization.getScheme(), authorization.getToken()));
+    headers.setAuthorization(authorization.toString());
     return this;
   }
 

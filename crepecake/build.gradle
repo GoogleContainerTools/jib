@@ -31,6 +31,7 @@ configurations {
 
 dependencies {
     compile gradleApi()
+    compile 'com.google.http-client:google-http-client:1.23.0'
     compile 'com.google.http-client:google-http-client-jackson2:1.23.0'
     compile 'org.apache.commons:commons-compress:1.15'
     compile 'com.google.guava:guava:23.5-jre'
