@@ -41,9 +41,9 @@ public class LayerTest {
 
   @Test
   public void testNew_unwritten() throws LayerPropertyNotFoundException {
-    Layer layer = new UnwrittenLayer(mockCompressedBlob, mockUncompressedBlob);
+    Layer layer = new UnwrittenLayer(mockUncompressedBlob);
 
-    Assert.assertEquals(mockCompressedBlob, layer.getBlob());
+    Assert.assertEquals(mockUncompressedBlob, layer.getBlob());
 
     try {
       layer.getBlobDescriptor();

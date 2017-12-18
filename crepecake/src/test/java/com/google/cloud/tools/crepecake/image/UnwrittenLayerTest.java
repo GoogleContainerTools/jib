@@ -18,10 +18,10 @@ package com.google.cloud.tools.crepecake.image;
 
 import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
-import com.google.common.io.ByteStreams;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.zip.GZIPOutputStream;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -56,12 +56,11 @@ public class UnwrittenLayerTest {
   public void testWriteTo() throws IOException {
     File testFile = fakeFolder.newFile("fakefile");
 
-    UnwrittenLayer unwrittenLayer = new UnwrittenLayer(mockCompressedBlob, mockUncompressedBlob);
+    UnwrittenLayer unwrittenLayer = new UnwrittenLayer(mockUncompressedBlob);
 
     CachedLayer cachedLayer = unwrittenLayer.writeTo(testFile);
 
-    Mockito.verify(mockCompressedBlob).writeTo(Mockito.any(OutputStream.class));
-    Mockito.verify(mockUncompressedBlob).writeTo(ByteStreams.nullOutputStream());
+    Mockito.verify(mockUncompressedBlob).writeTo(Mockito.any(GZIPOutputStream.class));
 
     Assert.assertEquals(mockBlobDescriptor, cachedLayer.getBlobDescriptor());
     Assert.assertEquals(mockDiffId, cachedLayer.getDiffId());

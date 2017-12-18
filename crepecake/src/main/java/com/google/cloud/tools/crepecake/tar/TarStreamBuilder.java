@@ -21,7 +21,6 @@ import com.google.cloud.tools.crepecake.blob.Blobs;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
 import java.io.BufferedInputStream;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,22 +43,17 @@ public class TarStreamBuilder {
         new TarArchiveOutputStream(tarByteStream)) {
       for (TarArchiveEntry entry : entries) {
         tarArchiveOutputStream.putArchiveEntry(entry);
-        InputStream contentStream = new BufferedInputStream(new FileInputStream(entry.getFile()));
-        ByteStreams.copy(contentStream, tarArchiveOutputStream);
+        if (entry.isFile()) {
+          InputStream contentStream = new BufferedInputStream(new FileInputStream(entry.getFile()));
+          ByteStreams.copy(contentStream, tarArchiveOutputStream);
+        }
         tarArchiveOutputStream.closeArchiveEntry();
       }
     }
   }
 
-  /**
-   * Adds a file to the archive.
-   *
-   * @param file the file to add
-   * @param path the relative archive extraction path
-   */
-  public void addFile(File file, String path) {
-    TarArchiveEntry entry = new TarArchiveEntry(file, path);
-
+  /** Adds an entry to the archive. */
+  public void addEntry(TarArchiveEntry entry) {
     entries.add(entry);
   }
 
