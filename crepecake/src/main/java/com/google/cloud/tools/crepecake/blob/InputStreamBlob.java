@@ -25,28 +25,14 @@ class InputStreamBlob implements Blob {
 
   private final InputStream inputStream;
 
-  private final byte[] byteBuffer = new byte[8192];
-
   InputStreamBlob(InputStream inputStream) {
     this.inputStream = inputStream;
-  }
-
-  BlobDescriptor writeFromInputStream(InputStream inputStream, OutputStream outputStream)
-      throws IOException {
-    long bytesWritten = 0;
-    int bytesRead;
-    while ((bytesRead = inputStream.read(byteBuffer)) != -1) {
-      outputStream.write(byteBuffer, 0, bytesRead);
-      bytesWritten += bytesRead;
-    }
-    outputStream.flush();
-    return new BlobDescriptor(bytesWritten);
   }
 
   @Override
   public BlobDescriptor writeTo(OutputStream outputStream) throws IOException {
     try (InputStream inputStream = this.inputStream) {
-      return writeFromInputStream(inputStream, outputStream);
+      return BlobDescriptor.fromPipe(inputStream, outputStream);
     }
   }
 }

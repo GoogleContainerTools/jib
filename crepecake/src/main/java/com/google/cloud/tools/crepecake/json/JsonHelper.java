@@ -17,8 +17,8 @@
 package com.google.cloud.tools.crepecake.json;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.api.client.json.JsonObjectParser;
-import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.cloud.tools.crepecake.blob.Blob;
+import com.google.cloud.tools.crepecake.blob.Blobs;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -47,8 +47,6 @@ import java.io.OutputStream;
 public abstract class JsonHelper {
 
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-  private static final JsonObjectParser JSON_OBJECT_PARSER =
-      new JsonObjectParser(new JacksonFactory());
 
   /**
    * Deserializes a JSON file via a JSON object template.
@@ -79,7 +77,8 @@ public abstract class JsonHelper {
     return OBJECT_MAPPER.readValue(jsonString, templateClass);
   }
 
-  public static JsonObjectParser getJsonObjectParser() {
-    return JSON_OBJECT_PARSER;
+  /** Convert a {@link JsonTemplate} to a {@link Blob} of the JSON string. */
+  public static Blob toBlob(JsonTemplate template) throws IOException {
+    return Blobs.from(outputStream -> writeJson(outputStream, template));
   }
 }

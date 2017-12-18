@@ -24,20 +24,18 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 /** A {@link Blob} that holds a {@link File}. */
-class FileBlob extends InputStreamBlob {
+class FileBlob implements Blob {
 
   private final File file;
 
   FileBlob(File file) {
-    // The input stream will be opened when writing.
-    super(null);
     this.file = file;
   }
 
   @Override
   public BlobDescriptor writeTo(OutputStream outputStream) throws IOException {
     try (InputStream fileStream = new BufferedInputStream(new FileInputStream(file))) {
-      return writeFromInputStream(fileStream, outputStream);
+      return BlobDescriptor.fromPipe(fileStream, outputStream);
     }
   }
 }

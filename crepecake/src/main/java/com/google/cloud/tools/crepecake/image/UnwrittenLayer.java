@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * A layer that has not been written out and only has the unwritten content {@link Blob}. Once
@@ -31,15 +32,10 @@ import java.io.OutputStream;
  */
 public class UnwrittenLayer implements Layer {
 
-  private final Blob compressedBlob;
   private final Blob uncompressedBlob;
 
-  /**
-   * @param compressedBlob the compressed {@link Blob} of the layer content
-   * @param uncompressedBlob the uncompressed {@link Blob} of the layer content
-   */
-  public UnwrittenLayer(Blob compressedBlob, Blob uncompressedBlob) {
-    this.compressedBlob = compressedBlob;
+  /** Initializes with the uncompressed {@link Blob} of the layer content. */
+  public UnwrittenLayer(Blob uncompressedBlob) {
     this.uncompressedBlob = uncompressedBlob;
   }
 
@@ -50,7 +46,8 @@ public class UnwrittenLayer implements Layer {
    */
   public CachedLayer writeTo(File file) throws IOException {
     try (OutputStream fileOutputStream = new BufferedOutputStream(new FileOutputStream(file))) {
-      BlobDescriptor blobDescriptor = compressedBlob.writeTo(fileOutputStream);
+      OutputStream compressorStream = new GZIPOutputStream(fileOutputStream);
+      BlobDescriptor blobDescriptor = uncompressedBlob.writeTo(compressorStream);
       DescriptorDigest diffId =
           uncompressedBlob.writeTo(ByteStreams.nullOutputStream()).getDigest();
 
@@ -58,10 +55,10 @@ public class UnwrittenLayer implements Layer {
     }
   }
 
+  /** Gets the uncompressed layer content BLOB. */
   @Override
-  public Blob getBlob() throws LayerPropertyNotFoundException {
-    // TODO: This should change when the #writeTo method is moved.
-    return compressedBlob;
+  public Blob getBlob() {
+    return uncompressedBlob;
   }
 
   @Override
