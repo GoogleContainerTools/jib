@@ -17,6 +17,10 @@
 package com.google.cloud.tools.crepecake.blob;
 
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
+import com.google.common.io.ByteStreams;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import javax.annotation.Nullable;
 
 /** Contains properties describing a BLOB, including size (in bytes) and possibly its digest. */
@@ -25,6 +29,17 @@ public class BlobDescriptor {
   @Nullable private final DescriptorDigest digest;
 
   private final long size;
+
+  /**
+   * Creates a new {@link BlobDescriptor} from the contents of an {@link InputStream} while piping
+   * to an {@link OutputStream}. Does not close either streams.
+   */
+  static BlobDescriptor fromPipe(InputStream inputStream, OutputStream outputStream)
+      throws IOException {
+    BlobDescriptor blobDescriptor = new BlobDescriptor(ByteStreams.copy(inputStream, outputStream));
+    outputStream.flush();
+    return blobDescriptor;
+  }
 
   public BlobDescriptor(long size, DescriptorDigest digest) {
     this.size = size;

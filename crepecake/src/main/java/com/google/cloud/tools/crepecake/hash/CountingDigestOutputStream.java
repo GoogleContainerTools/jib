@@ -45,18 +45,23 @@ public class CountingDigestOutputStream extends DigestOutputStream {
   }
 
   /** Builds a {@link BlobDescriptor} with the hash and size of the bytes written. */
-  public BlobDescriptor toBlobDescriptor() throws DigestException {
-    byte[] hashedBytes = digest.digest();
+  public BlobDescriptor toBlobDescriptor() {
+    try {
+      byte[] hashedBytes = digest.digest();
 
-    // Encodes each hashed byte into 2-character hexadecimal representation.
-    StringBuilder stringBuilder = new StringBuilder(2 * hashedBytes.length);
-    for (byte b : hashedBytes) {
-      stringBuilder.append(String.format("%02x", b));
+      // Encodes each hashed byte into 2-character hexadecimal representation.
+      StringBuilder stringBuilder = new StringBuilder(2 * hashedBytes.length);
+      for (byte b : hashedBytes) {
+        stringBuilder.append(String.format("%02x", b));
+      }
+      String hash = stringBuilder.toString();
+
+      DescriptorDigest digest = DescriptorDigest.fromHash(hash);
+      return new BlobDescriptor(totalBytes, digest);
+
+    } catch (DigestException ex) {
+      throw new RuntimeException("SHA-256 algorithm produced invalid hash: " + ex.getMessage(), ex);
     }
-    String hash = stringBuilder.toString();
-
-    DescriptorDigest digest = DescriptorDigest.fromHash(hash);
-    return new BlobDescriptor(totalBytes, digest);
   }
 
   /** @return the total number of bytes that were hashed */
