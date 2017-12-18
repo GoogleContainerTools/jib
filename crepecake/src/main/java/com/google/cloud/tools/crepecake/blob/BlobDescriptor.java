@@ -24,6 +24,7 @@ public class BlobDescriptor {
 
   @Nullable private final DescriptorDigest digest;
 
+  /** The size of the BLOB (in bytes). Negative if unknown. */
   private final long size;
 
   public BlobDescriptor(long size, DescriptorDigest digest) {
@@ -31,12 +32,22 @@ public class BlobDescriptor {
     this.digest = digest;
   }
 
+  /** Initialize with just size. */
   public BlobDescriptor(long size) {
     this(size, null);
   }
 
+  /** Initialize with just digest. */
+  public BlobDescriptor(DescriptorDigest digest) {
+    this(-1, digest);
+  }
+
   public boolean hasDigest() {
     return digest != null;
+  }
+
+  public boolean hasSize() {
+    return size >= 0;
   }
 
   @Nullable
@@ -52,18 +63,18 @@ public class BlobDescriptor {
    * Two {@link BlobDescriptor} objects are equal if their
    *
    * <ol>
-   *   <li>{@code digest}s are not null and equal
-   *   <li>{@code size} is equal
+   *   <li>{@code digest}s are not null and equal, and
+   *   <li>{@code size}s are non-negative and equal
    * </ol>
    */
   @Override
   public boolean equals(Object obj) {
-    if (digest == null || !(obj instanceof BlobDescriptor)) {
+    if (digest == null || size < 0 || !(obj instanceof BlobDescriptor)) {
       return false;
     }
 
     BlobDescriptor other = (BlobDescriptor) obj;
-    return digest.equals(other.getDigest()) && size == other.getSize();
+    return size == other.getSize() && digest.equals(other.getDigest());
   }
 
   @Override

@@ -34,7 +34,7 @@ public class ImageLayersTest {
 
   @Mock private CachedLayer mockCachedLayer;
   @Mock private ReferenceLayer mockReferenceLayer;
-  @Mock private ReferenceNoDiffIdLayer mockReferenceNoDiffIdLayer;
+  @Mock private DigestOnlyLayer mockDigestOnlyLayer;
   @Mock private UnwrittenLayer mockUnwrittenLayer;
 
   @Before
@@ -52,7 +52,7 @@ public class ImageLayersTest {
 
     Mockito.when(mockCachedLayer.getBlobDescriptor()).thenReturn(cachedLayerBlobDescriptor);
     Mockito.when(mockReferenceLayer.getBlobDescriptor()).thenReturn(referenceLayerBlobDescriptor);
-    Mockito.when(mockReferenceNoDiffIdLayer.getBlobDescriptor())
+    Mockito.when(mockDigestOnlyLayer.getBlobDescriptor())
         .thenReturn(referenceNoDiffIdLayerBlobDescriptor);
     Mockito.when(mockUnwrittenLayer.getBlobDescriptor()).thenReturn(unwrittenLayerBlobDescriptor);
   }
@@ -61,12 +61,12 @@ public class ImageLayersTest {
   public void testAddLayer_success()
       throws DuplicateLayerException, LayerPropertyNotFoundException {
     List<Layer> expectedLayers =
-        Arrays.asList(mockCachedLayer, mockReferenceLayer, mockReferenceNoDiffIdLayer);
+        Arrays.asList(mockCachedLayer, mockReferenceLayer, mockDigestOnlyLayer);
 
     ImageLayers<Layer> imageLayers = new ImageLayers<>();
     imageLayers.add(mockCachedLayer);
     imageLayers.add(mockReferenceLayer);
-    imageLayers.add(mockReferenceNoDiffIdLayer);
+    imageLayers.add(mockDigestOnlyLayer);
 
     Assert.assertThat(imageLayers.asList(), CoreMatchers.is(expectedLayers));
   }
@@ -77,7 +77,7 @@ public class ImageLayersTest {
     ImageLayers<Layer> imageLayers = new ImageLayers<>();
     imageLayers.add(mockCachedLayer);
     imageLayers.add(mockReferenceLayer);
-    imageLayers.add(mockReferenceNoDiffIdLayer);
+    imageLayers.add(mockDigestOnlyLayer);
 
     try {
       imageLayers.add(mockUnwrittenLayer);

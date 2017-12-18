@@ -14,11 +14,13 @@
  * the License.
  */
 
-package com.google.cloud.tools.crepecake.json.templates;
+package com.google.cloud.tools.crepecake.image.json;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,6 +56,7 @@ import java.util.List;
  * @see <a href="https://docs.docker.com/registry/spec/manifest-v2-2/">Image Manifest Version 2,
  *     Schema 2</a>
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class V22ManifestTemplate extends JsonTemplate {
 
   public static final String MEDIA_TYPE = "application/vnd.docker.distribution.manifest.v2+json";
@@ -74,29 +77,41 @@ public class V22ManifestTemplate extends JsonTemplate {
     private final String mediaType = "application/vnd.docker.container.image.v1+json";
 
     private DescriptorDigest digest;
-    private int size;
+    private long size;
   }
 
   /**
    * Template for inner JSON object representing a layer as part of the list of layer references.
    */
-  private static class LayerObjectTemplate extends JsonTemplate {
+  static class LayerObjectTemplate extends JsonTemplate {
 
     private final String mediaType = "application/vnd.docker.image.rootfs.diff.tar.gzip";
 
     private DescriptorDigest digest;
-    private int size;
+    private long size;
+
+    long getSize() {
+      return size;
+    }
+
+    DescriptorDigest getDigest() {
+      return digest;
+    }
   }
 
-  public void setContainerConfiguration(DescriptorDigest digest, int size) {
-    config.digest = digest;
+  public ImmutableList<LayerObjectTemplate> getLayers() {
+    return ImmutableList.copyOf(layers);
+  }
+
+  public void setContainerConfiguration(long size, DescriptorDigest digest) {
     config.size = size;
+    config.digest = digest;
   }
 
-  public void addLayer(DescriptorDigest digest, int size) {
+  public void addLayer(long size, DescriptorDigest digest) {
     LayerObjectTemplate layerObjectTemplate = new LayerObjectTemplate();
-    layerObjectTemplate.digest = digest;
     layerObjectTemplate.size = size;
+    layerObjectTemplate.digest = digest;
     layers.add(layerObjectTemplate);
   }
 
@@ -106,7 +121,7 @@ public class V22ManifestTemplate extends JsonTemplate {
   }
 
   @VisibleForTesting
-  int getContainerConfigurationSize() {
+  long getContainerConfigurationSize() {
     return config.size;
   }
 
@@ -116,7 +131,7 @@ public class V22ManifestTemplate extends JsonTemplate {
   }
 
   @VisibleForTesting
-  int getLayerSize(int index) {
+  long getLayerSize(int index) {
     return layers.get(index).size;
   }
 }

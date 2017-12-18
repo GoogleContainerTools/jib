@@ -29,12 +29,12 @@ public class Request {
   /** The HTTP request body. */
   @Nullable private BlobHttpContent body;
 
-  public HttpHeaders getHeaders() {
+  HttpHeaders getHeaders() {
     return headers;
   }
 
   @Nullable
-  public BlobHttpContent getHttpContent() {
+  BlobHttpContent getHttpContent() {
     return body;
   }
 

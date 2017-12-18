@@ -17,7 +17,6 @@
 package com.google.cloud.tools.crepecake.registry;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.http.Authorization;
 import com.google.cloud.tools.crepecake.http.Authorizations;
 import com.google.cloud.tools.crepecake.http.Connection;
@@ -25,8 +24,6 @@ import com.google.cloud.tools.crepecake.http.Request;
 import com.google.cloud.tools.crepecake.http.Response;
 import com.google.cloud.tools.crepecake.json.JsonHelper;
 import com.google.cloud.tools.crepecake.json.JsonTemplate;
-import com.google.common.base.Charsets;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -48,13 +45,6 @@ public class RegistryAuthenticator {
     private String token;
   }
 
-  /** Gets the contents of a {@link Blob} as a string. */
-  private static String writeBlobToString(Blob blob) throws IOException {
-    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-    blob.writeTo(byteArrayOutputStream);
-    return new String(byteArrayOutputStream.toByteArray(), Charsets.UTF_8);
-  }
-
   RegistryAuthenticator(String realm, String service, String repository)
       throws MalformedURLException {
     authenticationUrl =
@@ -65,7 +55,7 @@ public class RegistryAuthenticator {
   public Authorization authenticate() throws RegistryAuthenticationFailedException {
     try (Connection connection = new Connection(authenticationUrl)) {
       Response response = connection.get(new Request());
-      String responseString = writeBlobToString(response.getBody());
+      String responseString = response.getBody().writeToString();
 
       AuthenticationResponseTemplate responseJson =
           JsonHelper.readJson(responseString, AuthenticationResponseTemplate.class);

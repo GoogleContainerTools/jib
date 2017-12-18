@@ -31,6 +31,7 @@ public class LayerTest {
   @Mock private Blob mockCompressedBlob;
   @Mock private Blob mockUncompressedBlob;
   @Mock private File mockFile;
+  @Mock private DescriptorDigest mockDescriptorDigest;
   @Mock private BlobDescriptor mockBlobDescriptor;
   @Mock private DescriptorDigest mockDiffId;
 
@@ -75,7 +76,7 @@ public class LayerTest {
 
     try {
       layer.getBlob();
-      Assert.fail("Blob descriptor should not be available for reference layer");
+      Assert.fail("Blob content should not be available for reference layer");
     } catch (LayerPropertyNotFoundException ex) {
       Assert.assertEquals("Blob not available for reference layer", ex.getMessage());
     }
@@ -85,25 +86,24 @@ public class LayerTest {
   }
 
   @Test
-  public void testNew_referenceNoDiffId() throws LayerPropertyNotFoundException {
-    Layer layer = new ReferenceNoDiffIdLayer(mockBlobDescriptor);
+  public void testNew_digestOnly() throws LayerPropertyNotFoundException {
+    Layer layer = new DigestOnlyLayer(mockDescriptorDigest);
 
     try {
       layer.getBlob();
-      Assert.fail("Blob descriptor should not be available for reference layer without diff ID");
+      Assert.fail("Blob content should not be available for digest-only layer");
     } catch (LayerPropertyNotFoundException ex) {
-      Assert.assertEquals(
-          "Blob not available for reference layer without diff ID", ex.getMessage());
+      Assert.assertEquals("Blob not available for digest-only layer", ex.getMessage());
     }
 
-    Assert.assertEquals(mockBlobDescriptor, layer.getBlobDescriptor());
+    Assert.assertFalse(layer.getBlobDescriptor().hasSize());
+    Assert.assertEquals(mockDescriptorDigest, layer.getBlobDescriptor().getDigest());
 
     try {
       layer.getDiffId();
-      Assert.fail("Diff ID should not be available for reference layer without diff ID");
+      Assert.fail("Diff ID should not be available for digest-only layer");
     } catch (LayerPropertyNotFoundException ex) {
-      Assert.assertEquals(
-          "Diff ID not available for reference layer without diff ID", ex.getMessage());
+      Assert.assertEquals("Diff ID not available for digest-only layer", ex.getMessage());
     }
   }
 }

@@ -14,11 +14,12 @@
  * the License.
  */
 
-package com.google.cloud.tools.crepecake.json.templates;
+package com.google.cloud.tools.crepecake.image.json;
 
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -98,6 +99,10 @@ public class ContainerConfigurationTemplate extends JsonTemplate {
 
   public void addLayerDiffId(DescriptorDigest diffId) {
     rootfs.diff_ids.add(diffId);
+  }
+
+  ImmutableList<DescriptorDigest> getDiffIds() {
+    return ImmutableList.copyOf(rootfs.diff_ids);
   }
 
   @VisibleForTesting
