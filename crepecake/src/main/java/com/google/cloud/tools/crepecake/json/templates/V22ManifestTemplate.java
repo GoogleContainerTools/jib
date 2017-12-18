@@ -74,7 +74,7 @@ public class V22ManifestTemplate extends JsonTemplate {
     private final String mediaType = "application/vnd.docker.container.image.v1+json";
 
     private DescriptorDigest digest;
-    private int size;
+    private long size;
   }
 
   /**
@@ -85,15 +85,15 @@ public class V22ManifestTemplate extends JsonTemplate {
     private final String mediaType = "application/vnd.docker.image.rootfs.diff.tar.gzip";
 
     private DescriptorDigest digest;
-    private int size;
+    private long size;
   }
 
-  public void setContainerConfiguration(DescriptorDigest digest, int size) {
+  public void setContainerConfiguration(DescriptorDigest digest, long size) {
     config.digest = digest;
     config.size = size;
   }
 
-  public void addLayer(DescriptorDigest digest, int size) {
+  public void addLayer(DescriptorDigest digest, long size) {
     LayerObjectTemplate layerObjectTemplate = new LayerObjectTemplate();
     layerObjectTemplate.digest = digest;
     layerObjectTemplate.size = size;
@@ -106,7 +106,7 @@ public class V22ManifestTemplate extends JsonTemplate {
   }
 
   @VisibleForTesting
-  int getContainerConfigurationSize() {
+  long getContainerConfigurationSize() {
     return config.size;
   }
 
@@ -116,7 +116,7 @@ public class V22ManifestTemplate extends JsonTemplate {
   }
 
   @VisibleForTesting
-  int getLayerSize(int index) {
+  long getLayerSize(int index) {
     return layers.get(index).size;
   }
 }
