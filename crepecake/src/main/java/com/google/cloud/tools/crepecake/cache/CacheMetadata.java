@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
 
+// TODO: Change this to match the new format of CacheMetadataTemplate.
 /**
  * The cache stores all the BLOBs as separate files and the cache metadata contains information
  * about each BLOB.

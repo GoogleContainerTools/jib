@@ -156,6 +156,9 @@ class CacheMetadataLayerObjectTemplate extends JsonTemplate {
 
   /** Instantiates {@link #properties} if it's {@code null}. */
   private PropertiesObject createPropertiesIfNull() {
-    return properties = null == properties ? new PropertiesObject() : properties;
+    if (null != properties) {
+      return properties;
+    }
+    return properties = new PropertiesObject();
   }
 }
