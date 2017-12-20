@@ -33,7 +33,7 @@ import java.util.List;
  *   "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
  *   "config": {
  *     "mediaType": "application/vnd.docker.container.image.v1+json",
- *     "size": "631,
+ *     "size": 631,
  *     "digest": "sha256:26b84ca5b9050d32e68f66ad0f3e2bbcd247198a6e6e09a7effddf126eb8d873"
  *   },
  *   "layers": [

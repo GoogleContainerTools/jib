@@ -18,6 +18,7 @@ package com.google.cloud.tools.crepecake.image;
 
 import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
+import com.google.cloud.tools.crepecake.cache.CachedLayer;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -27,26 +28,23 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link UnwrittenLayer}. */
+@RunWith(MockitoJUnitRunner.class)
 public class UnwrittenLayerTest {
 
   @Rule public TemporaryFolder fakeFolder = new TemporaryFolder();
 
-  @Mock private Blob mockCompressedBlob;
   @Mock private Blob mockUncompressedBlob;
   @Mock private BlobDescriptor mockBlobDescriptor;
   @Mock private DescriptorDigest mockDiffId;
 
   @Before
   public void setUpMocks() throws IOException {
-    MockitoAnnotations.initMocks(this);
-
-    Mockito.when(mockCompressedBlob.writeTo(Mockito.any(OutputStream.class)))
-        .thenReturn(mockBlobDescriptor);
     Mockito.when(mockUncompressedBlob.writeTo(Mockito.any(OutputStream.class)))
         .thenReturn(mockBlobDescriptor);
     Mockito.when(mockBlobDescriptor.getDigest()).thenReturn(mockDiffId);

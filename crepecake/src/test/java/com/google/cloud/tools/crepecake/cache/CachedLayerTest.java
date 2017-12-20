@@ -14,10 +14,11 @@
  * the License.
  */
 
-package com.google.cloud.tools.crepecake.image;
+package com.google.cloud.tools.crepecake.cache;
 
 import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
+import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import java.io.ByteArrayOutputStream;
@@ -26,20 +27,26 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link CachedLayer}. */
+@RunWith(MockitoJUnitRunner.class)
 public class CachedLayerTest {
 
+  @Mock private File mockFile;
   @Mock private BlobDescriptor mockBlobDescriptor;
   @Mock private DescriptorDigest mockDiffId;
 
-  @Before
-  public void setUpMocks() {
-    MockitoAnnotations.initMocks(this);
+  @Test
+  public void testNew() {
+    CachedLayer layer = new CachedLayer(mockFile, mockBlobDescriptor, mockDiffId);
+
+    Assert.assertEquals(mockFile, layer.getContentFile());
+    Assert.assertEquals(mockBlobDescriptor, layer.getBlobDescriptor());
+    Assert.assertEquals(mockDiffId, layer.getDiffId());
   }
 
   @Test
