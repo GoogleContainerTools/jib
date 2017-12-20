@@ -22,7 +22,7 @@ import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.image.Image;
 import com.google.cloud.tools.crepecake.image.Layer;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
-import com.google.cloud.tools.crepecake.json.JsonHelper;
+import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
 import java.io.IOException;
 
 /**
@@ -63,7 +63,7 @@ public class ImageToJsonTranslator {
     template.setContainerEntrypoint(image.getEntrypoint());
 
     // Serializes into JSON.
-    return JsonHelper.toBlob(template);
+    return JsonTemplateMapper.toBlob(template);
   }
 
   /**
@@ -88,6 +88,6 @@ public class ImageToJsonTranslator {
     }
 
     // Serializes into JSON.
-    return JsonHelper.toBlob(template);
+    return JsonTemplateMapper.toBlob(template);
   }
 }

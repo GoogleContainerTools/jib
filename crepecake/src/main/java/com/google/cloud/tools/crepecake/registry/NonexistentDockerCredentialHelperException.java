@@ -14,18 +14,12 @@
  * the License.
  */
 
-package com.google.cloud.tools.crepecake.http;
+package com.google.cloud.tools.crepecake.registry;
 
-/** Static initializers for {@link Authorization}. */
-public class Authorizations {
+/** Thrown because the requested credential helper CLI does not exist. */
+public class NonexistentDockerCredentialHelperException extends Exception {
 
-  public static Authorization withBearerToken(String token) {
-    return new Authorization("Bearer", token);
+  NonexistentDockerCredentialHelperException(String credentialHelperSuffix, Throwable cause) {
+    super("The system does not have docker-credential-" + credentialHelperSuffix + " CLI", cause);
   }
-
-  public static Authorization withBasicToken(String token) {
-    return new Authorization("Basic", token);
-  }
-
-  private Authorizations() {}
 }

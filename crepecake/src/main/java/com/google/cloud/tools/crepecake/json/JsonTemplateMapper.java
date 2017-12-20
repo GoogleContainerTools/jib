@@ -44,9 +44,9 @@ import java.io.OutputStream;
  *
  * @see <a href="https://github.com/FasterXML/jackson">https://github.com/FasterXML/jackson</a>
  */
-public abstract class JsonHelper {
+public class JsonTemplateMapper {
 
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+  private static final ObjectMapper objectMapper = new ObjectMapper();
 
   /**
    * Deserializes a JSON file via a JSON object template.
@@ -58,7 +58,7 @@ public abstract class JsonHelper {
    */
   public static <T extends JsonTemplate> T readJsonFromFile(File jsonFile, Class<T> templateClass)
       throws IOException {
-    return OBJECT_MAPPER.readValue(jsonFile, templateClass);
+    return objectMapper.readValue(jsonFile, templateClass);
   }
 
   /**
@@ -68,17 +68,19 @@ public abstract class JsonHelper {
    * @param source the JSON object to serialize
    */
   public static void writeJson(OutputStream outputStream, JsonTemplate source) throws IOException {
-    OBJECT_MAPPER.writeValue(outputStream, source);
+    objectMapper.writeValue(outputStream, source);
   }
 
   /** Deserializes a JSON object from a JSON string. */
   public static <T extends JsonTemplate> T readJson(String jsonString, Class<T> templateClass)
       throws IOException {
-    return OBJECT_MAPPER.readValue(jsonString, templateClass);
+    return objectMapper.readValue(jsonString, templateClass);
   }
 
   /** Convert a {@link JsonTemplate} to a {@link Blob} of the JSON string. */
   public static Blob toBlob(JsonTemplate template) {
     return Blobs.from(outputStream -> writeJson(outputStream, template));
   }
+
+  private JsonTemplateMapper() {}
 }

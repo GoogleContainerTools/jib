@@ -14,18 +14,16 @@
  * the License.
  */
 
-package com.google.cloud.tools.crepecake.http;
+package com.google.cloud.tools.crepecake.registry;
 
-/** Static initializers for {@link Authorization}. */
-public class Authorizations {
+/** Thrown because the credential helper does not have credentials for the specified server URL. */
+public class NonexistentServerUrlDockerCredentialHelperException extends Exception {
 
-  public static Authorization withBearerToken(String token) {
-    return new Authorization("Bearer", token);
+  NonexistentServerUrlDockerCredentialHelperException(String credentialHelper, String serverUrl) {
+    super(
+        "The credential helper ("
+            + credentialHelper
+            + ") has nothing for server URL: "
+            + serverUrl);
   }
-
-  public static Authorization withBasicToken(String token) {
-    return new Authorization("Basic", token);
-  }
-
-  private Authorizations() {}
 }

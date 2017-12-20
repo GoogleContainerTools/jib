@@ -16,10 +16,11 @@
 
 package com.google.cloud.tools.crepecake.registry;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.crepecake.http.Authorization;
 import com.google.cloud.tools.crepecake.http.Authorizations;
-import com.google.cloud.tools.crepecake.json.JsonHelper;
 import com.google.cloud.tools.crepecake.json.JsonTemplate;
+import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;
 import java.io.IOException;
@@ -35,9 +36,10 @@ import java.io.InputStreamReader;
 public class DockerCredentialRetriever {
 
   private final String serverUrl;
-  private final String credentialHelperCommand;
+  private final String credentialHelperSuffix;
 
   /** Template for a Docker credential helper output. */
+  @JsonIgnoreProperties(ignoreUnknown = true)
   private static class DockerCredentialsTemplate extends JsonTemplate {
 
     private String Username;
@@ -50,7 +52,7 @@ public class DockerCredentialRetriever {
    */
   public DockerCredentialRetriever(String serverUrl, String credentialHelperSuffix) {
     this.serverUrl = serverUrl;
-    credentialHelperCommand = "docker-credential-" + credentialHelperSuffix + " get";
+    this.credentialHelperSuffix = credentialHelperSuffix;
   }
 
   /**
@@ -62,17 +64,36 @@ public class DockerCredentialRetriever {
    * echo -n <server URL> | docker-credential-<credential helper suffix> get
    * }</pre>
    */
-  public Authorization retrieve() throws IOException {
-    Process process = Runtime.getRuntime().exec(credentialHelperCommand);
-    process.getOutputStream().write(serverUrl.getBytes(Charsets.UTF_8));
-    process.getOutputStream().close();
+  public Authorization retrieve()
+      throws IOException, NonexistentServerUrlDockerCredentialHelperException,
+          NonexistentDockerCredentialHelperException {
+    try {
+      String credentialHelper = "docker-credential-" + credentialHelperSuffix;
+      String credentialHelperCommand = credentialHelper + " get";
 
-    String output =
-        CharStreams.toString(new InputStreamReader(process.getInputStream(), Charsets.UTF_8));
+      Process process = Runtime.getRuntime().exec(credentialHelperCommand);
+      process.getOutputStream().write(serverUrl.getBytes(Charsets.UTF_8));
+      process.getOutputStream().close();
 
-    DockerCredentialsTemplate dockerCredentials =
-        JsonHelper.readJson(output, DockerCredentialsTemplate.class);
+      String output =
+          CharStreams.toString(new InputStreamReader(process.getInputStream(), Charsets.UTF_8));
 
-    return Authorizations.withBasicToken(dockerCredentials.Secret);
+      // Throws an exception if the credential store does not have credentials for serverUrl.
+      if (output.contains("credentials not found in native keychain")) {
+        throw new NonexistentServerUrlDockerCredentialHelperException(credentialHelper, serverUrl);
+      }
+
+      DockerCredentialsTemplate dockerCredentials =
+          JsonTemplateMapper.readJson(output, DockerCredentialsTemplate.class);
+
+      return Authorizations.withBasicToken(dockerCredentials.Secret);
+
+    } catch (IOException ex) {
+      // Checks if the failure is due to a nonexistent credential helper CLI.
+      if (ex.getMessage().contains("No such file or directory")) {
+        throw new NonexistentDockerCredentialHelperException(credentialHelperSuffix, ex);
+      }
+      throw ex;
+    }
   }
 }

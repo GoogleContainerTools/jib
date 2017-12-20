@@ -17,7 +17,7 @@
 package com.google.cloud.tools.crepecake.image.json;
 
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
-import com.google.cloud.tools.crepecake.json.JsonHelper;
+import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;
 import java.io.ByteArrayOutputStream;
@@ -56,7 +56,7 @@ public class V22ManifestTemplateTest {
 
     // Serializes the JSON object.
     ByteArrayOutputStream jsonStream = new ByteArrayOutputStream();
-    JsonHelper.writeJson(jsonStream, manifestJson);
+    JsonTemplateMapper.writeJson(jsonStream, manifestJson);
 
     Assert.assertEquals(expectedJson, jsonStream.toString());
   }
@@ -69,7 +69,7 @@ public class V22ManifestTemplateTest {
 
     // Deserializes into a manifest JSON object.
     V22ManifestTemplate manifestJson =
-        JsonHelper.readJsonFromFile(jsonFile, V22ManifestTemplate.class);
+        JsonTemplateMapper.readJsonFromFile(jsonFile, V22ManifestTemplate.class);
 
     Assert.assertEquals(
         DescriptorDigest.fromDigest(

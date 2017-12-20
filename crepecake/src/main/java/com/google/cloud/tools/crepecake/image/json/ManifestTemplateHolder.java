@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.crepecake.image.json;
 
-import com.google.cloud.tools.crepecake.json.JsonHelper;
+import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import javax.annotation.Nonnull;
@@ -33,16 +33,16 @@ public class ManifestTemplateHolder {
   public static ManifestTemplateHolder fromJson(String jsonString)
       throws IOException, UnknownManifestFormatException {
     SchemaVersionManifestTemplate schemaVersionManifestTemplate =
-        JsonHelper.readJson(jsonString, SchemaVersionManifestTemplate.class);
+        JsonTemplateMapper.readJson(jsonString, SchemaVersionManifestTemplate.class);
 
     switch (schemaVersionManifestTemplate.getSchemaVersion()) {
       case 1:
         return new ManifestTemplateHolder(
-            JsonHelper.readJson(jsonString, V21ManifestTemplate.class));
+            JsonTemplateMapper.readJson(jsonString, V21ManifestTemplate.class));
 
       case 2:
         return new ManifestTemplateHolder(
-            JsonHelper.readJson(jsonString, V22ManifestTemplate.class));
+            JsonTemplateMapper.readJson(jsonString, V22ManifestTemplate.class));
 
       default:
         throw new UnknownManifestFormatException(

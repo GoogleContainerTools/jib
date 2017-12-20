@@ -41,4 +41,6 @@ public abstract class Blobs {
   public static Blob from(BlobWriter writer) {
     return new HashingWriterBlob(writer);
   }
+
+  private Blobs() {}
 }

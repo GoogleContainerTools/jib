@@ -24,7 +24,7 @@ import com.google.cloud.tools.crepecake.http.Request;
 import com.google.cloud.tools.crepecake.http.Response;
 import com.google.cloud.tools.crepecake.image.json.ManifestTemplateHolder;
 import com.google.cloud.tools.crepecake.image.json.UnknownManifestFormatException;
-import com.google.cloud.tools.crepecake.json.JsonHelper;
+import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
 import com.google.cloud.tools.crepecake.registry.json.ErrorEntryTemplate;
 import com.google.cloud.tools.crepecake.registry.json.ErrorResponseTemplate;
 import java.io.IOException;
@@ -69,7 +69,7 @@ public class ManifestPuller {
         case HttpStatusCodes.NOT_FOUND:
           // The name or reference was invalid.
           ErrorResponseTemplate errorResponse;
-          errorResponse = JsonHelper.readJson(ex.getContent(), ErrorResponseTemplate.class);
+          errorResponse = JsonTemplateMapper.readJson(ex.getContent(), ErrorResponseTemplate.class);
           String method = "pull image manifest for " + serverUrl + "/" + baseImage + ":" + imageTag;
           RegistryErrorExceptionBuilder registryErrorExceptionBuilder =
               new RegistryErrorExceptionBuilder(method, ex);

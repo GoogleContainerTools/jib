@@ -23,7 +23,7 @@ import com.google.cloud.tools.crepecake.image.Image;
 import com.google.cloud.tools.crepecake.image.Layer;
 import com.google.cloud.tools.crepecake.image.LayerCountMismatchException;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
-import com.google.cloud.tools.crepecake.json.JsonHelper;
+import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
 import com.google.common.collect.ImmutableList;
 import java.io.File;
 import java.io.IOException;
@@ -46,7 +46,7 @@ public class JsonToImageTranslatorTest {
 
     // Deserializes into a manifest JSON object.
     V21ManifestTemplate manifestTemplate =
-        JsonHelper.readJsonFromFile(jsonFile, V21ManifestTemplate.class);
+        JsonTemplateMapper.readJsonFromFile(jsonFile, V21ManifestTemplate.class);
 
     Image image = JsonToImageTranslator.toImage(manifestTemplate);
 
@@ -66,14 +66,14 @@ public class JsonToImageTranslatorTest {
     File containerConfigurationJsonFile =
         new File(getClass().getClassLoader().getResource("json/containerconfig.json").toURI());
     ContainerConfigurationTemplate containerConfigurationTemplate =
-        JsonHelper.readJsonFromFile(
+        JsonTemplateMapper.readJsonFromFile(
             containerConfigurationJsonFile, ContainerConfigurationTemplate.class);
 
     // Loads the manifest JSON.
     File manifestJsonFile =
         new File(getClass().getClassLoader().getResource("json/v22manifest.json").toURI());
     V22ManifestTemplate manifestTemplate =
-        JsonHelper.readJsonFromFile(manifestJsonFile, V22ManifestTemplate.class);
+        JsonTemplateMapper.readJsonFromFile(manifestJsonFile, V22ManifestTemplate.class);
 
     Image image = JsonToImageTranslator.toImage(manifestTemplate, containerConfigurationTemplate);
 

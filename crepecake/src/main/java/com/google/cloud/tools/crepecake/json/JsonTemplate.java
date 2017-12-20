@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
- * All JSON json to be used with {@link JsonHelper} must extend this class.
+ * All JSON templates to be used with {@link JsonTemplateMapper} must extend this class.
  *
  * <p>Json fields should be private fields and fields that are {@code null} will not be serialized.
  */

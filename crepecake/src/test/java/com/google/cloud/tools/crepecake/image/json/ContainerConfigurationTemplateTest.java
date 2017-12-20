@@ -17,7 +17,7 @@
 package com.google.cloud.tools.crepecake.image.json;
 
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
-import com.google.cloud.tools.crepecake.json.JsonHelper;
+import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
 import com.google.common.io.CharStreams;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -53,7 +53,7 @@ public class ContainerConfigurationTemplateTest {
 
     // Serializes the JSON object.
     ByteArrayOutputStream jsonStream = new ByteArrayOutputStream();
-    JsonHelper.writeJson(jsonStream, containerConfigJson);
+    JsonTemplateMapper.writeJson(jsonStream, containerConfigJson);
 
     Assert.assertEquals(expectedJson, jsonStream.toString());
   }
@@ -66,7 +66,7 @@ public class ContainerConfigurationTemplateTest {
 
     // Deserializes into a manifest JSON object.
     ContainerConfigurationTemplate containerConfigJson =
-        JsonHelper.readJsonFromFile(jsonFile, ContainerConfigurationTemplate.class);
+        JsonTemplateMapper.readJsonFromFile(jsonFile, ContainerConfigurationTemplate.class);
 
     Assert.assertEquals(
         Arrays.asList("VAR1=VAL1", "VAR2=VAL2"), containerConfigJson.getContainerEnvironment());
