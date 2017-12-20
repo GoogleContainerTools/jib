@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.crepecake.json;
+package com.google.cloud.tools.crepecake.image.json;
 
 import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
@@ -24,7 +24,6 @@ import com.google.cloud.tools.crepecake.image.Image;
 import com.google.cloud.tools.crepecake.image.Layer;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.crepecake.image.ReferenceLayer;
-import com.google.cloud.tools.crepecake.image.json.ImageToJsonTranslator;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
@@ -40,7 +39,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-/** Tests for {@link ImageToJsonTranslator}. */
+/** Tests for {@link com.google.cloud.tools.crepecake.image.json.ImageToJsonTranslator}. */
 public class ImageToJsonTranslatorTest {
 
   private ImageToJsonTranslator imageToJsonTranslator;

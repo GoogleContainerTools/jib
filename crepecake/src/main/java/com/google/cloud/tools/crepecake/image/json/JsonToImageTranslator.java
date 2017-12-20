@@ -36,9 +36,8 @@ public abstract class JsonToImageTranslator {
       throws LayerPropertyNotFoundException, DuplicateLayerException {
     Image image = new Image();
 
-    for (V21ManifestTemplate.LayerObjectTemplate layerObjectTemplate :
-        manifestTemplate.getFsLayers()) {
-      Layer layer = new DigestOnlyLayer(layerObjectTemplate.getDigest());
+    for (DescriptorDigest digest : manifestTemplate.getLayerDigests()) {
+      Layer layer = new DigestOnlyLayer(digest);
       image.addLayer(layer);
     }
 
@@ -55,24 +54,27 @@ public abstract class JsonToImageTranslator {
       throws LayerCountMismatchException, LayerPropertyNotFoundException, DuplicateLayerException {
     Image image = new Image();
 
-    ImmutableList<V22ManifestTemplate.LayerObjectTemplate> layerObjectTemplates =
+    ImmutableList<ReferenceNoDiffIdLayer> layers =
         manifestTemplate.getLayers();
     ImmutableList<DescriptorDigest> diffIds = containerConfigurationTemplate.getDiffIds();
 
-    if (layerObjectTemplates.size() != diffIds.size()) {
+    if (layers.size() != diffIds.size()) {
       throw new LayerCountMismatchException(
           "Mismatch between image manifest and container configuration");
     }
 
-    for (int layerIndex = 0; layerIndex < layerObjectTemplates.size(); layerIndex++) {
-      V22ManifestTemplate.LayerObjectTemplate layerObjectTemplate =
-          layerObjectTemplates.get(layerIndex);
+    for (int layerIndex = 0; layerIndex < layers.size(); layerIndex++) {
+      ReferenceNoDiffIdLayer noDiffIdLayer = layers.get(layerIndex);
       DescriptorDigest diffId = diffIds.get(layerIndex);
 
-      BlobDescriptor blobDescriptor =
-          new BlobDescriptor(layerObjectTemplate.getSize(), layerObjectTemplate.getDigest());
-      Layer layer = new ReferenceLayer(blobDescriptor, diffId);
+      Layer layer = new ReferenceLayer(noDiffIdLayer.getBlobDescriptor(), diffId);
       image.addLayer(layer);
+    }
+
+    image.setEntrypoint(containerConfigurationTemplate.getContainerEntrypoint());
+
+    for (String environmentVariable : containerConfigurationTemplate.getContainerEnvironment()) {
+      image.addEnvironmentVariableDefinition(environmentVariable);
     }
 
     return image;

@@ -17,7 +17,10 @@
 package com.google.cloud.tools.crepecake.image.json;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
+import com.google.cloud.tools.crepecake.image.Layer;
+import com.google.cloud.tools.crepecake.image.ReferenceLayer;
 import com.google.cloud.tools.crepecake.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -99,8 +102,16 @@ public class V22ManifestTemplate extends JsonTemplate {
     }
   }
 
-  public ImmutableList<LayerObjectTemplate> getLayers() {
-    return ImmutableList.copyOf(layers);
+  public List<ReferenceNoDiffIdLayer> getLayers() {
+    List<Layer> layers = new ArrayList<>();
+
+    for (LayerObjectTemplate layerObjectTemplate : layers) {
+      BlobDescriptor blobDescriptor =
+          new BlobDescriptor(layerObjectTemplate.getSize(), layerObjectTemplate.getDigest());
+      layers.add(new ReferenceNoDiffIdLayer(blobDescriptor))
+    }
+
+    return layers;
   }
 
   public void setContainerConfiguration(long size, DescriptorDigest digest) {
