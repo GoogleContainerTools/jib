@@ -18,35 +18,33 @@ package com.google.cloud.tools.crepecake.image;
 
 import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
-import com.google.common.io.ByteStreams;
+import com.google.cloud.tools.crepecake.cache.CachedLayer;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.zip.GZIPOutputStream;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link UnwrittenLayer}. */
+@RunWith(MockitoJUnitRunner.class)
 public class UnwrittenLayerTest {
 
   @Rule public TemporaryFolder fakeFolder = new TemporaryFolder();
 
-  @Mock private Blob mockCompressedBlob;
   @Mock private Blob mockUncompressedBlob;
   @Mock private BlobDescriptor mockBlobDescriptor;
   @Mock private DescriptorDigest mockDiffId;
 
   @Before
   public void setUpMocks() throws IOException {
-    MockitoAnnotations.initMocks(this);
-
-    Mockito.when(mockCompressedBlob.writeTo(Mockito.any(OutputStream.class)))
-        .thenReturn(mockBlobDescriptor);
     Mockito.when(mockUncompressedBlob.writeTo(Mockito.any(OutputStream.class)))
         .thenReturn(mockBlobDescriptor);
     Mockito.when(mockBlobDescriptor.getDigest()).thenReturn(mockDiffId);
@@ -56,12 +54,11 @@ public class UnwrittenLayerTest {
   public void testWriteTo() throws IOException {
     File testFile = fakeFolder.newFile("fakefile");
 
-    UnwrittenLayer unwrittenLayer = new UnwrittenLayer(mockCompressedBlob, mockUncompressedBlob);
+    UnwrittenLayer unwrittenLayer = new UnwrittenLayer(mockUncompressedBlob);
 
     CachedLayer cachedLayer = unwrittenLayer.writeTo(testFile);
 
-    Mockito.verify(mockCompressedBlob).writeTo(Mockito.any(OutputStream.class));
-    Mockito.verify(mockUncompressedBlob).writeTo(ByteStreams.nullOutputStream());
+    Mockito.verify(mockUncompressedBlob).writeTo(Mockito.any(GZIPOutputStream.class));
 
     Assert.assertEquals(mockBlobDescriptor, cachedLayer.getBlobDescriptor());
     Assert.assertEquals(mockDiffId, cachedLayer.getDiffId());

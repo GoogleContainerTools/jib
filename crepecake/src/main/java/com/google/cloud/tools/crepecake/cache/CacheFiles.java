@@ -14,25 +14,24 @@
  * the License.
  */
 
-package com.google.cloud.tools.crepecake.blob;
+package com.google.cloud.tools.crepecake.cache;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.File;
+import java.nio.file.Path;
 
-/** A {@link Blob} that holds an {@link InputStream}. */
-class InputStreamBlob implements Blob {
+/** Methods for getting static cache filename properties. */
+class CacheFiles {
 
-  private final InputStream inputStream;
+  private static final String METADATA_FILENAME = "metadata.json";
+  private static final String LAYER_FILE_EXTENSION = ".tar.gz";
 
-  InputStreamBlob(InputStream inputStream) {
-    this.inputStream = inputStream;
+  static File getMetadataFile(Path cacheDirectory) {
+    return cacheDirectory.resolve(METADATA_FILENAME).toFile();
   }
 
-  @Override
-  public BlobDescriptor writeTo(OutputStream outputStream) throws IOException {
-    try (InputStream inputStream = this.inputStream) {
-      return BlobDescriptor.fromPipe(inputStream, outputStream);
-    }
+  static File getLayerFile(Path cacheDirectory, String layerName) {
+    return cacheDirectory.resolve(layerName + LAYER_FILE_EXTENSION).toFile();
   }
+
+  private CacheFiles() {}
 }

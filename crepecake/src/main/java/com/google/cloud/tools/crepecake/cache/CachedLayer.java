@@ -14,14 +14,15 @@
  * the License.
  */
 
-package com.google.cloud.tools.crepecake.image;
+package com.google.cloud.tools.crepecake.cache;
 
 import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
 import com.google.cloud.tools.crepecake.blob.Blobs;
+import com.google.cloud.tools.crepecake.image.DescriptorDigest;
+import com.google.cloud.tools.crepecake.image.Layer;
 import java.io.File;
 
-// TODO: Move this to the package with the caching classes.
 /**
  * A {@link Layer} that has been written out to a cache and has its file-backed content BLOB,
  * digest, size, and diff ID.
@@ -46,6 +47,10 @@ public class CachedLayer implements Layer {
     this.contentFile = contentFile;
     this.blobDescriptor = blobDescriptor;
     this.diffId = diffId;
+  }
+
+  public File getContentFile() {
+    return contentFile;
   }
 
   @Override

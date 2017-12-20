@@ -17,6 +17,7 @@
 package com.google.cloud.tools.crepecake.image;
 
 import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
+import com.google.cloud.tools.crepecake.cache.CachedLayer;
 import java.util.Arrays;
 import java.util.List;
 import org.hamcrest.CoreMatchers;

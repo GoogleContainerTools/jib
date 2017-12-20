@@ -23,7 +23,7 @@ import java.io.OutputStream;
 public interface Blob {
 
   /**
-   * Writes the BLOB to an {@link OutputStream}.
+   * Writes the BLOB to an {@link OutputStream}. Does not close the {@code outputStream}.
    *
    * @param outputStream the {@link OutputStream} to write to
    * @return the {@link BlobDescriptor} of the written BLOB

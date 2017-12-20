@@ -14,25 +14,17 @@
  * the License.
  */
 
-package com.google.cloud.tools.crepecake.blob;
+package com.google.cloud.tools.crepecake.cache;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+/** Types of application layers stored in cache. */
+enum ApplicationLayerType {
 
-/** A {@link Blob} that holds an {@link InputStream}. */
-class InputStreamBlob implements Blob {
+  /** Layer of the application dependency JARs. */
+  DEPENDENCIES,
 
-  private final InputStream inputStream;
+  /** Layer of the application resources. */
+  RESOURCES,
 
-  InputStreamBlob(InputStream inputStream) {
-    this.inputStream = inputStream;
-  }
-
-  @Override
-  public BlobDescriptor writeTo(OutputStream outputStream) throws IOException {
-    try (InputStream inputStream = this.inputStream) {
-      return BlobDescriptor.fromPipe(inputStream, outputStream);
-    }
-  }
+  /** Layer of the application classes. */
+  CLASSES
 }
