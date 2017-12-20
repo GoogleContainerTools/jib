@@ -47,7 +47,7 @@ import java.util.List;
  *       },
  *       "existsOn": ["gcr.io/my-project/my-image"],
  *       "properties": {
- *         "sourceDirectory": "build/classes",
+ *         "sourceDirectories": ["build/classes"],
  *         "lastModifiedTime": 255073580723571
  *       }
  *     },

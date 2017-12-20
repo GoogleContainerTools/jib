@@ -31,7 +31,7 @@ import javax.annotation.Nullable;
  *
  * @see CacheMetadataTemplate for example
  */
-class CacheMetadataLayerObjectTemplate extends JsonTemplate {
+public class CacheMetadataLayerObjectTemplate extends JsonTemplate {
 
   /** The type of layer. */
   private CachedLayerType type;

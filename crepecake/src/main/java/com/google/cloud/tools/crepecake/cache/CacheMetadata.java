@@ -19,36 +19,23 @@ package com.google.cloud.tools.crepecake.cache;
 import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
 import com.google.cloud.tools.crepecake.image.ImageLayers;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
-import java.util.HashMap;
-import java.util.Map;
-import javax.annotation.Nullable;
+import com.google.common.annotations.VisibleForTesting;
 
-// TODO: Change this to match the new format of CacheMetadataTemplate.
 /**
- * The cache stores all the BLOBs as separate files and the cache metadata contains information
- * about each BLOB.
+ * The cache stores all the layer BLOBs as separate files and the cache metadata contains
+ * information about each layer BLOB.
  */
 class CacheMetadata {
 
-  private final ImageLayers<TimestampedCachedLayer> baseImageLayers = new ImageLayers<>();
+  private final ImageLayers<CachedLayerWithMetadata> layers = new ImageLayers<>();
 
-  private Map<CachedLayerType, TimestampedCachedLayer> applicationLayers = new HashMap<>();
-
-  ImageLayers<TimestampedCachedLayer> getBaseImageLayers() {
-    return baseImageLayers;
-  }
-
-  void addBaseImageLayer(TimestampedCachedLayer layer)
+  void addLayer(CachedLayerWithMetadata layer)
       throws LayerPropertyNotFoundException, DuplicateLayerException {
-    baseImageLayers.add(layer);
+    layers.add(layer);
   }
 
-  @Nullable
-  TimestampedCachedLayer getApplicationLayer(CachedLayerType layerType) {
-    return applicationLayers.get(layerType);
-  }
-
-  void setApplicationLayer(CachedLayerType layerType, TimestampedCachedLayer layer) {
-    applicationLayers.put(layerType, layer);
+  @VisibleForTesting
+  ImageLayers<CachedLayerWithMetadata> getLayers() {
+    return layers;
   }
 }

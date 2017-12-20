@@ -17,21 +17,16 @@
 package com.google.cloud.tools.crepecake.cache;
 
 /** A {@link CachedLayer} with a last modified time. */
-class TimestampedCachedLayer extends CachedLayer {
+class CachedLayerWithMetadata extends CachedLayer {
 
-  private final long lastModifiedTime;
+  private final LayerMetadata metadata;
 
-  /** Initialize with a {@link CachedLayer} and the current time (in millis). */
-  TimestampedCachedLayer(CachedLayer cachedLayer) {
-    this(cachedLayer, System.currentTimeMillis());
-  }
-
-  TimestampedCachedLayer(CachedLayer cachedLayer, long lastModifiedTime) {
+  CachedLayerWithMetadata(CachedLayer cachedLayer, LayerMetadata metadata) {
     super(cachedLayer.getContentFile(), cachedLayer.getBlobDescriptor(), cachedLayer.getDiffId());
-    this.lastModifiedTime = lastModifiedTime;
+    this.metadata = metadata;
   }
 
-  long getLastModifiedTime() {
-    return lastModifiedTime;
+  LayerMetadata getMetadata() {
+    return metadata;
   }
 }

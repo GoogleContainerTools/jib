@@ -100,6 +100,7 @@ public class CacheMetadataTemplateTest {
 
     // Checks the first layer is correct.
     CacheMetadataLayerObjectTemplate baseLayerTemplate = layers.get(0);
+    Assert.assertEquals(CachedLayerType.BASE, baseLayerTemplate.getType());
     Assert.assertEquals(631, baseLayerTemplate.getSize());
     Assert.assertEquals(
         DescriptorDigest.fromDigest(
@@ -113,6 +114,7 @@ public class CacheMetadataTemplateTest {
 
     // Checks the second layer is correct.
     CacheMetadataLayerObjectTemplate classesLayerTemplate = layers.get(1);
+    Assert.assertEquals(CachedLayerType.CLASSES, classesLayerTemplate.getType());
     Assert.assertEquals(223, classesLayerTemplate.getSize());
     Assert.assertEquals(
         DescriptorDigest.fromDigest(

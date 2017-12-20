@@ -35,8 +35,7 @@ public class CacheMetadataTest {
 
   @Mock private DescriptorDigest mockDescriptorDigest;
   @Mock private BlobDescriptor mockBlobDescriptor;
-  @Mock private TimestampedCachedLayer mockLayer;
-  @Mock private CachedLayerType mockCachedLayerType;
+  @Mock private CachedLayerWithMetadata mockLayer;
 
   @Before
   public void setUpMocks() {
@@ -45,19 +44,10 @@ public class CacheMetadataTest {
   }
 
   @Test
-  public void testAddBaseImageLayer()
-      throws LayerPropertyNotFoundException, DuplicateLayerException {
+  public void testAddLayer() throws LayerPropertyNotFoundException, DuplicateLayerException {
     CacheMetadata cacheMetadata = new CacheMetadata();
-    cacheMetadata.addBaseImageLayer(mockLayer);
+    cacheMetadata.addLayer(mockLayer);
 
-    Assert.assertThat(cacheMetadata.getBaseImageLayers().asList(), CoreMatchers.hasItem(mockLayer));
-  }
-
-  @Test
-  public void testAddApplicationLayer() {
-    CacheMetadata cacheMetadata = new CacheMetadata();
-    cacheMetadata.setApplicationLayer(mockCachedLayerType, mockLayer);
-
-    Assert.assertEquals(mockLayer, cacheMetadata.getApplicationLayer(mockCachedLayerType));
+    Assert.assertThat(cacheMetadata.getLayers().asList(), CoreMatchers.hasItem(mockLayer));
   }
 }
