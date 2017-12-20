@@ -14,16 +14,20 @@
  * the License.
  */
 
-package com.google.cloud.tools.crepecake.json;
+package com.google.cloud.tools.crepecake.registry;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonInclude;
+import java.net.MalformedURLException;
 
-/**
- * All JSON templates to be used with {@link JsonTemplateMapper} must extend this class.
- *
- * <p>Json fields should be private fields and fields that are {@code null} will not be serialized.
- */
-@JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-public abstract class JsonTemplate {}
+/** Static initializers for {@link RegistryAuthenticator}. */
+public abstract class RegistryAuthenticators {
+
+  public static RegistryAuthenticator forDockerHub(String repository)
+      throws RegistryAuthenticationFailedException {
+    try {
+      return new RegistryAuthenticator(
+          "https://auth.docker.io/token", "registry.docker.io", repository);
+    } catch (MalformedURLException ex) {
+      throw new RegistryAuthenticationFailedException(ex);
+    }
+  }
+}

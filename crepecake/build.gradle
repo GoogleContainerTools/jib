@@ -13,9 +13,26 @@ repositories {
     mavenCentral()
 }
 
+sourceSets {
+    integrationTest {
+        java {
+            compileClasspath += main.output + test.output
+            runtimeClasspath += main.output + test.output
+            srcDir file('src/integration-test/java')
+        }
+        resources.srcDir file('src/integration-test/resources')
+    }
+}
+
+configurations {
+    integrationTestCompile.extendsFrom testCompile
+    integrationTestRuntime.extendsFrom testRuntime
+}
+
 dependencies {
     compile gradleApi()
     compile 'com.google.http-client:google-http-client:1.23.0'
+    compile 'com.google.http-client:google-http-client-jackson2:1.23.0'
     compile 'org.apache.commons:commons-compress:1.15'
     compile 'com.google.guava:guava:23.5-jre'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.9.2'
@@ -27,11 +44,22 @@ task wrapper(type: Wrapper) {
     gradleVersion = "4.3.1"
 }
 
+// Integration tests must be run explicitly
+task integrationTest(type: Test) {
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+}
+integrationTest.dependsOn test
+
 test {
     testLogging {
         showStandardStreams = true
         exceptionFormat = 'full'
     }
+}
+
+tasks.withType(Test) {
+    reports.html.setDestination file("${reporting.baseDir}/${name}")
 }
 
 /* GOOGLE JAVA FORMAT */

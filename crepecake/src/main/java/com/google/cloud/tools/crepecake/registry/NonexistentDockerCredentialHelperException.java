@@ -14,16 +14,12 @@
  * the License.
  */
 
-package com.google.cloud.tools.crepecake.json;
+package com.google.cloud.tools.crepecake.registry;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonInclude;
+/** Thrown because the requested credential helper CLI does not exist. */
+public class NonexistentDockerCredentialHelperException extends Exception {
 
-/**
- * All JSON templates to be used with {@link JsonTemplateMapper} must extend this class.
- *
- * <p>Json fields should be private fields and fields that are {@code null} will not be serialized.
- */
-@JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-public abstract class JsonTemplate {}
+  NonexistentDockerCredentialHelperException(String credentialHelperSuffix, Throwable cause) {
+    super("The system does not have docker-credential-" + credentialHelperSuffix + " CLI", cause);
+  }
+}

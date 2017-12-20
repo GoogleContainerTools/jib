@@ -17,7 +17,7 @@
 package com.google.cloud.tools.crepecake.json.templates;
 
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
-import com.google.cloud.tools.crepecake.json.JsonHelper;
+import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -36,7 +36,7 @@ public class V21ManifestTemplateTest {
 
     // Deserializes into a manifest JSON object.
     V21ManifestTemplate manifestJson =
-        JsonHelper.readJsonFromFile(jsonFile, V21ManifestTemplate.class);
+        JsonTemplateMapper.readJsonFromFile(jsonFile, V21ManifestTemplate.class);
 
     Assert.assertEquals(
         DescriptorDigest.fromDigest(

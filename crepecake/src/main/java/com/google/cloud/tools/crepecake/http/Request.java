@@ -38,6 +38,12 @@ public class Request {
     return body;
   }
 
+  /** Sets the {@code Authorization} header. */
+  public Request setAuthorization(Authorization authorization) {
+    headers.setAuthorization(authorization.toString());
+    return this;
+  }
+
   /** Sets the {@code Content-Type} header. */
   public Request setContentType(String contentType) {
     headers.setContentType(contentType);
