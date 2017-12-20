@@ -21,10 +21,10 @@ import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.common.annotations.VisibleForTesting;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.URL;
+import javax.annotation.Nullable;
 
 /**
  * Sends an HTTP {@link Request} and stores the {@link Response}.
@@ -43,24 +43,18 @@ public class Connection implements Closeable {
   private static final HttpRequestFactory HTTP_REQUEST_FACTORY =
       new NetHttpTransport().createRequestFactory();
 
-  private final HttpRequestFactory requestFactory;
+  private HttpRequestFactory requestFactory = HTTP_REQUEST_FACTORY;
 
-  private HttpResponse httpResponse;
+  @Nullable private HttpResponse httpResponse;
 
   /** The URL to send the request to. */
-  private GenericUrl url;
+  private final GenericUrl url;
 
   /**
    * Make sure to wrap with a try-with-resource to ensure that the connection is closed after usage.
    */
-  public Connection(URL url) throws IOException {
-    this(url, HTTP_REQUEST_FACTORY);
-  }
-
-  @VisibleForTesting
-  Connection(URL url, HttpRequestFactory requestFactory) {
+  public Connection(URL url) {
     this.url = new GenericUrl(url);
-    this.requestFactory = requestFactory;
   }
 
   @Override

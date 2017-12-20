@@ -71,8 +71,16 @@ public class JsonTemplateMapper {
     objectMapper.writeValue(outputStream, source);
   }
 
+  /** Deserializes a JSON object from a JSON string. */
+  public static <T extends JsonTemplate> T readJson(String jsonString, Class<T> templateClass)
+      throws IOException {
+    return objectMapper.readValue(jsonString, templateClass);
+  }
+
   /** Convert a {@link JsonTemplate} to a {@link Blob} of the JSON string. */
-  public static Blob toBlob(JsonTemplate template) throws IOException {
+  public static Blob toBlob(JsonTemplate template) {
     return Blobs.from(outputStream -> writeJson(outputStream, template));
   }
+
+  private JsonTemplateMapper() {}
 }
