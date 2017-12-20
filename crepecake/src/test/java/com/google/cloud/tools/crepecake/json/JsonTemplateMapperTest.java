@@ -31,8 +31,8 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** Tests for {@link JsonHelper}. */
-public class JsonHelperTest {
+/** Tests for {@link JsonTemplateMapper}. */
+public class JsonTemplateMapperTest {
 
   private static class TestJson extends JsonTemplate {
     private int number;
@@ -84,7 +84,7 @@ public class JsonHelperTest {
     testJson.list = Arrays.asList(innerObject1, innerObject2);
 
     ByteArrayOutputStream jsonStream = new ByteArrayOutputStream();
-    JsonHelper.writeJson(jsonStream, testJson);
+    JsonTemplateMapper.writeJson(jsonStream, testJson);
 
     Assert.assertEquals(expectedJson, jsonStream.toString());
   }

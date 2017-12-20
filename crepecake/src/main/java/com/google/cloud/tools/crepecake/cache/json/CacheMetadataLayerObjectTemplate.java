@@ -21,13 +21,13 @@ import com.google.cloud.tools.crepecake.cache.CachedLayerType;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.image.Layer;
 import com.google.cloud.tools.crepecake.json.JsonTemplate;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * JSON template for storing metadata about a layer in the cache.
+ * Inner JSON template for storing metadata about a layer in the cache as part of {@link
+ * CacheMetadataTemplate}.
  *
  * @see CacheMetadataTemplate for example
  */
@@ -63,8 +63,8 @@ class CacheMetadataLayerObjectTemplate extends JsonTemplate {
   /** Extra properties for a layer. Only valid for application layers. */
   private static class PropertiesObject extends JsonTemplate {
 
-    /** The source directories that the layer was constructed from. */
-    private List<Path> sourceDirectories = new ArrayList<>();
+    /** The paths to the source directories that the layer was constructed from. */
+    private List<String> sourceDirectories = new ArrayList<>();
 
     /** The last time the layer was constructed. */
     private long lastModifiedTime;
@@ -90,7 +90,7 @@ class CacheMetadataLayerObjectTemplate extends JsonTemplate {
     return existsOn;
   }
 
-  public List<Path> getSourceDirectories() throws CacheMetadataCorruptedException {
+  public List<String> getSourceDirectories() throws CacheMetadataCorruptedException {
     return getPropertiesNonnull().sourceDirectories;
   }
 
@@ -123,7 +123,7 @@ class CacheMetadataLayerObjectTemplate extends JsonTemplate {
     return this;
   }
 
-  public CacheMetadataLayerObjectTemplate setSourceDirectories(List<Path> sourceDirectories) {
+  public CacheMetadataLayerObjectTemplate setSourceDirectories(List<String> sourceDirectories) {
     checkTypeValidForProperties();
     createPropertiesIfNull().sourceDirectories = sourceDirectories;
     return this;

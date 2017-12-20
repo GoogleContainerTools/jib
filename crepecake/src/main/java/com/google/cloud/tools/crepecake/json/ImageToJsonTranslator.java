@@ -77,7 +77,7 @@ public class ImageToJsonTranslator {
     template.setContainerEntrypoint(image.getEntrypoint());
 
     // Serializes into JSON.
-    return JsonHelper.toBlob(template);
+    return JsonTemplateMapper.toBlob(template);
   }
 
   /**
@@ -102,6 +102,6 @@ public class ImageToJsonTranslator {
     }
 
     // Serializes into JSON.
-    return JsonHelper.toBlob(template);
+    return JsonTemplateMapper.toBlob(template);
   }
 }

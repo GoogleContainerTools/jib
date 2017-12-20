@@ -44,7 +44,7 @@ import java.io.OutputStream;
  *
  * @see <a href="https://github.com/FasterXML/jackson">https://github.com/FasterXML/jackson</a>
  */
-public class JsonHelper {
+public class JsonTemplateMapper {
 
   private static final ObjectMapper objectMapper = new ObjectMapper();
 
