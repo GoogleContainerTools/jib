@@ -14,16 +14,16 @@
  * the License.
  */
 
-package com.google.cloud.tools.crepecake.json;
+package com.google.cloud.tools.crepecake.http;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonInclude;
+/** Static initializers for {@link Authorization}. */
+public abstract class Authorizations {
 
-/**
- * All JSON json to be used with {@link JsonHelper} must extend this class.
- *
- * <p>Json fields should be private fields and fields that are {@code null} will not be serialized.
- */
-@JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-public abstract class JsonTemplate {}
+  public static Authorization withBearerToken(String token) {
+    return new Authorization("Bearer", token);
+  }
+
+  public static Authorization withBasicToken(String token) {
+    return new Authorization("Basic", token);
+  }
+}

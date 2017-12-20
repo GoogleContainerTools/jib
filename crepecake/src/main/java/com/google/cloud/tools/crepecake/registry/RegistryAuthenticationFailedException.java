@@ -14,16 +14,12 @@
  * the License.
  */
 
-package com.google.cloud.tools.crepecake.json;
+package com.google.cloud.tools.crepecake.registry;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonInclude;
+/** Thrown because registry authentication failed. */
+public class RegistryAuthenticationFailedException extends Exception {
 
-/**
- * All JSON json to be used with {@link JsonHelper} must extend this class.
- *
- * <p>Json fields should be private fields and fields that are {@code null} will not be serialized.
- */
-@JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-public abstract class JsonTemplate {}
+  RegistryAuthenticationFailedException(Throwable cause) {
+    super("Failed to authenticate with the registry because: " + cause.getMessage(), cause);
+  }
+}

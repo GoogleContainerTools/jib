@@ -29,13 +29,19 @@ public class Request {
   /** The HTTP request body. */
   @Nullable private BlobHttpContent body;
 
-  public HttpHeaders getHeaders() {
+  HttpHeaders getHeaders() {
     return headers;
   }
 
   @Nullable
-  public BlobHttpContent getHttpContent() {
+  BlobHttpContent getHttpContent() {
     return body;
+  }
+
+  /** Sets the {@code Authorization} header. */
+  public Request setAuthorization(Authorization authorization) {
+    headers.setAuthorization(authorization.toString());
+    return this;
   }
 
   /** Sets the {@code Content-Type} header. */

@@ -18,8 +18,8 @@ package com.google.cloud.tools.crepecake.image;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.google.cloud.tools.crepecake.json.DescriptorDigestDeserializer;
-import com.google.cloud.tools.crepecake.json.DescriptorDigestSerializer;
+import com.google.cloud.tools.crepecake.image.json.DescriptorDigestDeserializer;
+import com.google.cloud.tools.crepecake.image.json.DescriptorDigestSerializer;
 import java.security.DigestException;
 
 /**

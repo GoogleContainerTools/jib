@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.crepecake.json.templates;
+package com.google.cloud.tools.crepecake.image.json;
 
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.json.JsonHelper;

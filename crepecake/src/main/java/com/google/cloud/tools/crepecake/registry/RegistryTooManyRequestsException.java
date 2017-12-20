@@ -14,16 +14,15 @@
  * the License.
  */
 
-package com.google.cloud.tools.crepecake.json;
-
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonInclude;
+package com.google.cloud.tools.crepecake.registry;
 
 /**
- * All JSON json to be used with {@link JsonHelper} must extend this class.
- *
- * <p>Json fields should be private fields and fields that are {@code null} will not be serialized.
+ * Thrown when the registry rejects a request because too many requests were sent within a time
+ * interval..
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-public abstract class JsonTemplate {}
+public class RegistryTooManyRequestsException extends Exception {
+
+  RegistryTooManyRequestsException(Throwable cause) {
+    super(cause);
+  }
+}

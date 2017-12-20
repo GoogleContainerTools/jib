@@ -14,16 +14,14 @@
  * the License.
  */
 
-package com.google.cloud.tools.crepecake.json;
+package com.google.cloud.tools.crepecake.http;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonInclude;
+/** Static constants for HTTP status codes. */
+public abstract class HttpStatusCodes {
 
-/**
- * All JSON json to be used with {@link JsonHelper} must extend this class.
- *
- * <p>Json fields should be private fields and fields that are {@code null} will not be serialized.
- */
-@JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-public abstract class JsonTemplate {}
+  public static final int BAD_REQUEST = 400;
+  public static final int NOT_FOUND = 404;
+  public static final int UNAUTHORIZED = 401;
+  public static final int FORBIDDEN = 403;
+  public static final int TOO_MANY_REQUESTS = 429;
+}

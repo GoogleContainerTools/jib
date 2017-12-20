@@ -14,16 +14,29 @@
  * the License.
  */
 
-package com.google.cloud.tools.crepecake.json;
+package com.google.cloud.tools.crepecake.registry.json;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.google.cloud.tools.crepecake.json.JsonTemplate;
 
-/**
- * All JSON json to be used with {@link JsonHelper} must extend this class.
- *
- * <p>Json fields should be private fields and fields that are {@code null} will not be serialized.
- */
-@JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-public abstract class JsonTemplate {}
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class ErrorEntryTemplate extends JsonTemplate {
+
+  private String code;
+  private String message;
+
+  public ErrorEntryTemplate(String code, String message) {
+    this.code = code;
+    this.message = message;
+  }
+
+  private ErrorEntryTemplate() {}
+
+  public String getCode() {
+    return code;
+  }
+
+  public String getMessage() {
+    return message;
+  }
+}

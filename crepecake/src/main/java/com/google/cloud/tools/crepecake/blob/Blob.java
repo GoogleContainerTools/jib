@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.crepecake.blob;
 
+import com.google.common.base.Charsets;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -29,4 +31,11 @@ public interface Blob {
    * @return the {@link BlobDescriptor} of the written BLOB
    */
   BlobDescriptor writeTo(OutputStream outputStream) throws IOException;
+
+  /** Writes the BLOB to a string. */
+  default String writeToString() throws IOException {
+    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+    writeTo(byteArrayOutputStream);
+    return new String(byteArrayOutputStream.toByteArray(), Charsets.UTF_8);
+  }
 }

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.crepecake.json;
+package com.google.cloud.tools.crepecake.image.json;
 
 import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
@@ -22,8 +22,7 @@ import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.image.Image;
 import com.google.cloud.tools.crepecake.image.Layer;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
-import com.google.cloud.tools.crepecake.json.templates.ContainerConfigurationTemplate;
-import com.google.cloud.tools.crepecake.json.templates.V22ManifestTemplate;
+import com.google.cloud.tools.crepecake.json.JsonHelper;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -94,11 +93,11 @@ public class ImageToJsonTranslator {
     DescriptorDigest containerConfigurationDigest =
         containerConfigurationBlobDescriptor.getDigest();
     long containerConfigurationSize = containerConfigurationBlobDescriptor.getSize();
-    template.setContainerConfiguration(containerConfigurationDigest, containerConfigurationSize);
+    template.setContainerConfiguration(containerConfigurationSize, containerConfigurationDigest);
 
     // Adds the layers.
     for (Layer layer : image.getLayers()) {
-      template.addLayer(layer.getBlobDescriptor().getDigest(), layer.getBlobDescriptor().getSize());
+      template.addLayer(layer.getBlobDescriptor().getSize(), layer.getBlobDescriptor().getDigest());
     }
 
     // Serializes into JSON.
