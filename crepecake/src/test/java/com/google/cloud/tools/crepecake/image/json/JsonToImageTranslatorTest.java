@@ -71,7 +71,7 @@ public class JsonToImageTranslatorTest {
 
     // Loads the manifest JSON.
     File manifestJsonFile =
-        new File(getClass().getClassLoader().getResource("json/v21manifest.json").toURI());
+        new File(getClass().getClassLoader().getResource("json/v22manifest.json").toURI());
     V22ManifestTemplate manifestTemplate =
         JsonHelper.readJsonFromFile(manifestJsonFile, V22ManifestTemplate.class);
 

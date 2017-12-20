@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.crepecake.image.json;
 
-import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.image.DigestOnlyLayer;
 import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
@@ -25,7 +24,8 @@ import com.google.cloud.tools.crepecake.image.Layer;
 import com.google.cloud.tools.crepecake.image.LayerCountMismatchException;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.crepecake.image.ReferenceLayer;
-import com.google.common.collect.ImmutableList;
+import com.google.cloud.tools.crepecake.image.ReferenceNoDiffIdLayer;
+import java.util.List;
 
 // TODO: Add translation of container configuration config.
 /** Translates {@link V21ManifestTemplate} and {@link V22ManifestTemplate} into {@link Image}. */
@@ -54,9 +54,8 @@ public abstract class JsonToImageTranslator {
       throws LayerCountMismatchException, LayerPropertyNotFoundException, DuplicateLayerException {
     Image image = new Image();
 
-    ImmutableList<ReferenceNoDiffIdLayer> layers =
-        manifestTemplate.getLayers();
-    ImmutableList<DescriptorDigest> diffIds = containerConfigurationTemplate.getDiffIds();
+    List<ReferenceNoDiffIdLayer> layers = manifestTemplate.getLayers();
+    List<DescriptorDigest> diffIds = containerConfigurationTemplate.getDiffIds();
 
     if (layers.size() != diffIds.size()) {
       throw new LayerCountMismatchException(

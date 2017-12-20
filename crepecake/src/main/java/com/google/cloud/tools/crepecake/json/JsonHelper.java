@@ -78,7 +78,7 @@ public abstract class JsonHelper {
   }
 
   /** Convert a {@link JsonTemplate} to a {@link Blob} of the JSON string. */
-  public static Blob toBlob(JsonTemplate template) throws IOException {
+  public static Blob toBlob(JsonTemplate template) {
     return Blobs.from(outputStream -> writeJson(outputStream, template));
   }
 }
