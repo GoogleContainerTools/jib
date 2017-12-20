@@ -20,7 +20,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -67,13 +66,9 @@ public class V21ManifestTemplate extends JsonTemplate {
   /**
    * Template for inner JSON object representing a layer as part of the list of layer references.
    */
-  static class LayerObjectTemplate extends JsonTemplate {
+  private static class LayerObjectTemplate extends JsonTemplate {
 
     private DescriptorDigest blobSum;
-
-    DescriptorDigest getDigest() {
-      return blobSum;
-    }
   }
 
   /** Template for inner JSON object representing the V1-compatible format for a layer. */
@@ -83,8 +78,14 @@ public class V21ManifestTemplate extends JsonTemplate {
     private String v1Compatibility;
   }
 
-  public ImmutableList<LayerObjectTemplate> getFsLayers() {
-    return ImmutableList.copyOf(fsLayers);
+  public List<DescriptorDigest> getLayerDigests() {
+    List<DescriptorDigest> layerDigests = new ArrayList<>();
+
+    for (LayerObjectTemplate layerObjectTemplate : fsLayers) {
+      layerDigests.add(layerObjectTemplate.blobSum);
+    }
+
+    return layerDigests;
   }
 
   @VisibleForTesting

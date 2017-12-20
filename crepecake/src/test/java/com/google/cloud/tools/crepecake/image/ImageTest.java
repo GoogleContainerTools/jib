@@ -16,10 +16,8 @@
 
 package com.google.cloud.tools.crepecake.image;
 
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableList;
 import java.util.Arrays;
-import java.util.Map;
-import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,8 +37,8 @@ public class ImageTest {
 
   @Test
   public void test_smokeTest() throws DuplicateLayerException, LayerPropertyNotFoundException {
-    Map<String, String> expectedEnvironment =
-        ImmutableMap.of("crepecake", "is great", "VARIABLE", "VALUE");
+    ImmutableList<String> expectedEnvironment =
+        ImmutableList.of("crepecake=is great", "VARIABLE=VALUE");
 
     image.setEnvironmentVariable("crepecake", "is great");
     image.setEnvironmentVariable("VARIABLE", "VALUE");
@@ -51,8 +49,8 @@ public class ImageTest {
 
     Mockito.verify(mockImageLayers).add(mockLayer);
 
-    Assert.assertThat(image.getEnvironmentMap(), CoreMatchers.is(expectedEnvironment));
+    Assert.assertEquals(expectedEnvironment, image.getEnvironment());
 
-    Assert.assertThat(image.getEntrypoint(), CoreMatchers.is(Arrays.asList("some", "command")));
+    Assert.assertEquals(Arrays.asList("some", "command"), image.getEntrypoint());
   }
 }

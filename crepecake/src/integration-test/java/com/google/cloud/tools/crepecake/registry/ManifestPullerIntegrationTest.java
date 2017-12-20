@@ -91,7 +91,7 @@ public class ManifestPullerIntegrationTest {
 
     if (manifestTemplateHolder.isV21()) {
       V21ManifestTemplate manifestTemplate = manifestTemplateHolder.getV21ManifestTemplate();
-      Assert.assertTrue(0 < manifestTemplate.getFsLayers().size());
+      Assert.assertTrue(0 < manifestTemplate.getLayerDigests().size());
     } else if (manifestTemplateHolder.isV22()) {
       V22ManifestTemplate manifestTemplate = manifestTemplateHolder.getV22ManifestTemplate();
       Assert.assertTrue(0 < manifestTemplate.getLayers().size());

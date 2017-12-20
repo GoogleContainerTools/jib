@@ -36,9 +36,8 @@ public abstract class JsonToImageTranslator {
       throws LayerPropertyNotFoundException, DuplicateLayerException {
     Image image = new Image();
 
-    for (V21ManifestTemplate.LayerObjectTemplate layerObjectTemplate :
-        manifestTemplate.getFsLayers()) {
-      Layer layer = new DigestOnlyLayer(layerObjectTemplate.getDigest());
+    for (DescriptorDigest digest : manifestTemplate.getLayerDigests()) {
+      Layer layer = new DigestOnlyLayer(digest);
       image.addLayer(layer);
     }
 
@@ -73,6 +72,12 @@ public abstract class JsonToImageTranslator {
           new BlobDescriptor(layerObjectTemplate.getSize(), layerObjectTemplate.getDigest());
       Layer layer = new ReferenceLayer(blobDescriptor, diffId);
       image.addLayer(layer);
+    }
+
+    image.setEntrypoint(containerConfigurationTemplate.getContainerEntrypoint());
+
+    for (String environmentVariable : containerConfigurationTemplate.getContainerEnvironment()) {
+      image.addEnvironmentVariableDefinition(environmentVariable);
     }
 
     return image;
