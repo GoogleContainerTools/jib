@@ -36,7 +36,7 @@ public class CacheMetadataTest {
   @Mock private DescriptorDigest mockDescriptorDigest;
   @Mock private BlobDescriptor mockBlobDescriptor;
   @Mock private TimestampedCachedLayer mockLayer;
-  @Mock private ApplicationLayerType mockApplicationLayerType;
+  @Mock private CachedLayerType mockCachedLayerType;
 
   @Before
   public void setUpMocks() {
@@ -56,8 +56,8 @@ public class CacheMetadataTest {
   @Test
   public void testAddApplicationLayer() {
     CacheMetadata cacheMetadata = new CacheMetadata();
-    cacheMetadata.setApplicationLayer(mockApplicationLayerType, mockLayer);
+    cacheMetadata.setApplicationLayer(mockCachedLayerType, mockLayer);
 
-    Assert.assertEquals(mockLayer, cacheMetadata.getApplicationLayer(mockApplicationLayerType));
+    Assert.assertEquals(mockLayer, cacheMetadata.getApplicationLayer(mockCachedLayerType));
   }
 }

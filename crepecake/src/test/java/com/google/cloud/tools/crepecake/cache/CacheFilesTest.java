@@ -16,8 +16,10 @@
 
 package com.google.cloud.tools.crepecake.cache;
 
+import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import java.io.File;
 import java.nio.file.Path;
+import java.security.DigestException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,17 +49,21 @@ public class CacheFilesTest {
   }
 
   @Test
-  public void testGetLayerFile() {
-    String testLayerName = "crepecake";
+  public void testGetLayerFile() throws DigestException {
+    DescriptorDigest layerDigest =
+        DescriptorDigest.fromDigest(
+            "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad");
 
     ArgumentCaptor<String> fileNameCaptor = ArgumentCaptor.forClass(String.class);
 
     Mockito.when(mockPath.resolve(fileNameCaptor.capture())).thenReturn(mockPath);
     Mockito.when(mockPath.toFile()).thenReturn(mockFile);
 
-    File layerFile = CacheFiles.getLayerFile(mockPath, testLayerName);
+    File layerFile = CacheFiles.getLayerFile(mockPath, layerDigest);
 
-    Assert.assertEquals(testLayerName + ".tar.gz", fileNameCaptor.getValue());
+    Assert.assertEquals(
+        "8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad.tar.gz",
+        fileNameCaptor.getValue());
     Assert.assertEquals(mockFile, layerFile);
   }
 }
