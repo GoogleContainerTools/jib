@@ -27,27 +27,27 @@ import javax.annotation.Nullable;
  * The cache stores all the BLOBs as separate files and the cache metadata contains information
  * about each BLOB.
  */
-public class CacheMetadata {
+class CacheMetadata {
 
   private final ImageLayers<TimestampedCachedLayer> baseImageLayers = new ImageLayers<>();
 
   private Map<CachedLayerType, TimestampedCachedLayer> applicationLayers = new HashMap<>();
 
-  public ImageLayers<TimestampedCachedLayer> getBaseImageLayers() {
+  ImageLayers<TimestampedCachedLayer> getBaseImageLayers() {
     return baseImageLayers;
   }
 
-  public void addBaseImageLayer(TimestampedCachedLayer layer)
+  void addBaseImageLayer(TimestampedCachedLayer layer)
       throws LayerPropertyNotFoundException, DuplicateLayerException {
     baseImageLayers.add(layer);
   }
 
   @Nullable
-  public TimestampedCachedLayer getApplicationLayer(CachedLayerType layerType) {
+  TimestampedCachedLayer getApplicationLayer(CachedLayerType layerType) {
     return applicationLayers.get(layerType);
   }
 
-  public void setApplicationLayer(CachedLayerType layerType, TimestampedCachedLayer layer) {
+  void setApplicationLayer(CachedLayerType layerType, TimestampedCachedLayer layer) {
     applicationLayers.put(layerType, layer);
   }
 }
