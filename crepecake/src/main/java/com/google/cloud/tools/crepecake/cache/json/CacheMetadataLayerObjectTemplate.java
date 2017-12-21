@@ -91,11 +91,11 @@ public class CacheMetadataLayerObjectTemplate extends JsonTemplate {
   }
 
   public List<String> getSourceDirectories() throws CacheMetadataCorruptedException {
-    return getPropertiesNonnull().sourceDirectories;
+    return getPropertiesNonNull().sourceDirectories;
   }
 
   public long getLastModifiedTime() throws CacheMetadataCorruptedException {
-    return getPropertiesNonnull().lastModifiedTime;
+    return getPropertiesNonNull().lastModifiedTime;
   }
 
   public CacheMetadataLayerObjectTemplate setType(CachedLayerType type) {
@@ -126,7 +126,6 @@ public class CacheMetadataLayerObjectTemplate extends JsonTemplate {
   public CacheMetadataLayerObjectTemplate setSourceDirectories(List<String> sourceDirectories) {
     checkTypeValidForProperties();
     createPropertiesIfNull();
-    assert properties != null;
     properties.sourceDirectories = sourceDirectories;
     return this;
   }
@@ -134,7 +133,6 @@ public class CacheMetadataLayerObjectTemplate extends JsonTemplate {
   public CacheMetadataLayerObjectTemplate setLastModifiedTime(long lastModifiedTime) {
     checkTypeValidForProperties();
     createPropertiesIfNull();
-    assert properties != null;
     properties.lastModifiedTime = lastModifiedTime;
     return this;
   }

@@ -38,11 +38,13 @@ class LayerMetadata {
   /** The last time the layer was constructed. */
   private long lastModifiedTime;
 
+  /** Instantiate for a base image layer. */
   LayerMetadata(CachedLayerType type, List<String> existsOn) {
     this.type = type;
     this.existsOn = existsOn;
   }
 
+  /** Instantiate for an application layer. The metadata must contain the source directories and last modified time. */
   LayerMetadata(
       CachedLayerType type,
       List<String> existsOn,
