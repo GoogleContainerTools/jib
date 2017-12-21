@@ -18,11 +18,13 @@ package com.google.cloud.tools.crepecake.cache;
 
 import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
 import com.google.cloud.tools.crepecake.cache.json.CacheMetadataLayerObjectTemplate;
+import com.google.cloud.tools.crepecake.cache.json.CacheMetadataLayerPropertiesObjectTemplate;
 import com.google.cloud.tools.crepecake.cache.json.CacheMetadataTemplate;
 import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import java.io.File;
 import java.nio.file.Path;
+import java.util.List;
 
 /** Translates {@link CacheMetadata} to and from {@link CacheMetadataTemplate}. */
 public class CacheMetadataTranslator {
@@ -33,31 +35,28 @@ public class CacheMetadataTranslator {
     try {
       CacheMetadata cacheMetadata = new CacheMetadata();
 
+      // Converts each layer object in the template to a cache metadata layer.
       for (CacheMetadataLayerObjectTemplate layerObjectTemplate : template.getLayers()) {
         File layerContentFile =
             CacheFiles.getLayerFile(cacheDirectory, layerObjectTemplate.getDigest());
 
-        LayerMetadata layerMetadata;
-        switch (layerObjectTemplate.getType()) {
-          case BASE:
-            layerMetadata =
-                new LayerMetadata(layerObjectTemplate.getType(), layerObjectTemplate.getExistsOn());
-            break;
-
-          case DEPENDENCIES:
-          case RESOURCES:
-          case CLASSES:
-            layerMetadata =
-                new LayerMetadata(
-                    layerObjectTemplate.getType(),
-                    layerObjectTemplate.getExistsOn(),
-                    layerObjectTemplate.getSourceDirectories(),
-                    layerObjectTemplate.getLastModifiedTime());
-            break;
-
-          default:
-            throw new IllegalStateException("The switch should be exhaustive");
+        // Gets the properties for a layer. Properties only exist for application layers.
+        CacheMetadataLayerPropertiesObjectTemplate propertiesObjectTemplate =
+            layerObjectTemplate.getProperties();
+        List<String> sourceDirectories = null;
+        long lastModifiedTime = -1;
+        if (propertiesObjectTemplate != null) {
+          sourceDirectories = propertiesObjectTemplate.getSourceDirectories();
+          lastModifiedTime = propertiesObjectTemplate.getLastModifiedTime();
         }
+
+        // Constructs the cache metadata layer from a cached layer and layer metadata.
+        LayerMetadata layerMetadata =
+            new LayerMetadata(
+                layerObjectTemplate.getType(),
+                layerObjectTemplate.getExistsOn(),
+                sourceDirectories,
+                lastModifiedTime);
 
         CachedLayer cachedLayer =
             new CachedLayer(
@@ -82,21 +81,25 @@ public class CacheMetadataTranslator {
     CacheMetadataTemplate template = new CacheMetadataTemplate();
 
     for (CachedLayerWithMetadata cachedLayerWithMetadata : cacheMetadata.getLayers().asList()) {
-      CacheMetadataLayerObjectTemplate layerObjectTemplate = new CacheMetadataLayerObjectTemplate();
-
       LayerMetadata layerMetadata = cachedLayerWithMetadata.getMetadata();
-      layerObjectTemplate.setType(layerMetadata.getType());
-      layerObjectTemplate.setSize(cachedLayerWithMetadata.getBlobDescriptor().getSize());
-      layerObjectTemplate.setDigest(cachedLayerWithMetadata.getBlobDescriptor().getDigest());
-      layerObjectTemplate.setDiffId(cachedLayerWithMetadata.getDiffId());
-      layerObjectTemplate.setExistsOn(layerMetadata.getExistsOn());
+
+      CacheMetadataLayerObjectTemplate layerObjectTemplate =
+          new CacheMetadataLayerObjectTemplate()
+              .setType(layerMetadata.getType())
+              .setSize(cachedLayerWithMetadata.getBlobDescriptor().getSize())
+              .setDigest(cachedLayerWithMetadata.getBlobDescriptor().getDigest())
+              .setDiffId(cachedLayerWithMetadata.getDiffId())
+              .setExistsOn(layerMetadata.getExistsOn());
 
       switch (layerMetadata.getType()) {
         case DEPENDENCIES:
         case RESOURCES:
         case CLASSES:
-          layerObjectTemplate.setSourceDirectories(layerMetadata.getSourceDirectories());
-          layerObjectTemplate.setLastModifiedTime(layerMetadata.getLastModifiedTime());
+          CacheMetadataLayerPropertiesObjectTemplate propertiesTemplate =
+              new CacheMetadataLayerPropertiesObjectTemplate()
+                  .setSourceDirectories(layerMetadata.getSourceDirectories())
+                  .setLastModifiedTime(layerMetadata.getLastModifiedTime());
+          layerObjectTemplate.setProperties(propertiesTemplate);
           break;
       }
 

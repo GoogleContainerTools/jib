@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.crepecake.cache.json;
 
-import com.google.cloud.tools.crepecake.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.crepecake.cache.CachedLayerType;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.image.Layer;
@@ -46,7 +45,7 @@ public class CacheMetadataLayerObjectTemplate extends JsonTemplate {
   private List<String> existsOn = new ArrayList<>();
 
   /** Additional properties for the layer. */
-  @Nullable private PropertiesObject properties;
+  @Nullable private CacheMetadataLayerPropertiesObjectTemplate properties;
 
   /**
    * The reference for a layer consists of its size (in bytes), digest, and diff ID.
@@ -58,16 +57,6 @@ public class CacheMetadataLayerObjectTemplate extends JsonTemplate {
     private long size;
     private DescriptorDigest digest;
     private DescriptorDigest diffId;
-  }
-
-  /** Extra properties for a layer. Only valid for application layers. */
-  private static class PropertiesObject extends JsonTemplate {
-
-    /** The paths to the source directories that the layer was constructed from. */
-    private List<String> sourceDirectories = new ArrayList<>();
-
-    /** The last time the layer was constructed. */
-    private long lastModifiedTime;
   }
 
   public CachedLayerType getType() {
@@ -90,12 +79,8 @@ public class CacheMetadataLayerObjectTemplate extends JsonTemplate {
     return existsOn;
   }
 
-  public List<String> getSourceDirectories() throws CacheMetadataCorruptedException {
-    return getPropertiesNonNull().sourceDirectories;
-  }
-
-  public long getLastModifiedTime() throws CacheMetadataCorruptedException {
-    return getPropertiesNonNull().lastModifiedTime;
+  public CacheMetadataLayerPropertiesObjectTemplate getProperties() {
+    return properties;
   }
 
   public CacheMetadataLayerObjectTemplate setType(CachedLayerType type) {
@@ -123,43 +108,9 @@ public class CacheMetadataLayerObjectTemplate extends JsonTemplate {
     return this;
   }
 
-  public CacheMetadataLayerObjectTemplate setSourceDirectories(List<String> sourceDirectories) {
-    checkTypeValidForProperties();
-    createPropertiesIfNull();
-    properties.sourceDirectories = sourceDirectories;
+  public CacheMetadataLayerObjectTemplate setProperties(
+      CacheMetadataLayerPropertiesObjectTemplate properties) {
+    this.properties = properties;
     return this;
-  }
-
-  public CacheMetadataLayerObjectTemplate setLastModifiedTime(long lastModifiedTime) {
-    checkTypeValidForProperties();
-    createPropertiesIfNull();
-    properties.lastModifiedTime = lastModifiedTime;
-    return this;
-  }
-
-  /** Returns properties if non-null; otherwise throws the appropriate exception. */
-  private PropertiesObject getPropertiesNonNull() throws CacheMetadataCorruptedException {
-    checkTypeValidForProperties();
-    if (properties == null) {
-      throw new CacheMetadataCorruptedException("Properties not found for application layer type");
-    }
-    return properties;
-  }
-
-  /** @throws IllegalStateException if is non-application layer type */
-  private void checkTypeValidForProperties() {
-    if (type != CachedLayerType.DEPENDENCIES
-        && type != CachedLayerType.RESOURCES
-        && type != CachedLayerType.CLASSES) {
-      throw new IllegalStateException(
-          "Properties is not a valid field for non-application layer type");
-    }
-  }
-
-  /** Instantiates {@link #properties} if it's {@code null}. */
-  private void createPropertiesIfNull() {
-    if (properties == null) {
-      properties = new PropertiesObject();
-    }
   }
 }

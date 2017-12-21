@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.crepecake.cache.json;
 
-import com.google.cloud.tools.crepecake.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.crepecake.cache.CachedLayerType;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
@@ -61,6 +60,11 @@ public class CacheMetadataTemplateTest {
                     "sha256:b56ae66c29370df48e7377c8f9baa744a3958058a766793f821dadcb144a4647"));
 
     // Adds an application layer.
+    CacheMetadataLayerPropertiesObjectTemplate propertiesTemplate =
+        new CacheMetadataLayerPropertiesObjectTemplate()
+            .setSourceDirectories(
+                Collections.singletonList(Paths.get("some/source/path").toString()))
+            .setLastModifiedTime(255073580723571L);
     CacheMetadataLayerObjectTemplate classesLayerTemplate =
         new CacheMetadataLayerObjectTemplate()
             .setType(CachedLayerType.CLASSES)
@@ -72,9 +76,7 @@ public class CacheMetadataTemplateTest {
                 DescriptorDigest.fromDigest(
                     "sha256:a3f3e99c29370df48e7377c8f9baa744a3958058a766793f821dadcb144a8372"))
             .setExistsOn(Collections.singletonList("some/image/tag"))
-            .setSourceDirectories(
-                Collections.singletonList(Paths.get("some/source/path").toString()))
-            .setLastModifiedTime(255073580723571L);
+            .setProperties(propertiesTemplate);
 
     cacheMetadataTemplate.addLayer(baseLayerTemplate).addLayer(classesLayerTemplate);
 
@@ -86,8 +88,7 @@ public class CacheMetadataTemplateTest {
   }
 
   @Test
-  public void testFromJson()
-      throws URISyntaxException, IOException, DigestException, CacheMetadataCorruptedException {
+  public void testFromJson() throws URISyntaxException, IOException, DigestException {
     // Loads the expected JSON string.
     File jsonFile = new File(getClass().getClassLoader().getResource("json/metadata.json").toURI());
 
@@ -112,6 +113,7 @@ public class CacheMetadataTemplateTest {
             "sha256:b56ae66c29370df48e7377c8f9baa744a3958058a766793f821dadcb144a4647"),
         baseLayerTemplate.getDiffId());
     Assert.assertEquals(0, baseLayerTemplate.getExistsOn().size());
+    Assert.assertNull(baseLayerTemplate.getProperties());
 
     // Checks the second layer is correct.
     CacheMetadataLayerObjectTemplate classesLayerTemplate = layers.get(1);
@@ -127,37 +129,11 @@ public class CacheMetadataTemplateTest {
         classesLayerTemplate.getDiffId());
     Assert.assertEquals(
         Collections.singletonList("some/image/tag"), classesLayerTemplate.getExistsOn());
+    Assert.assertNotNull(classesLayerTemplate.getProperties());
     Assert.assertEquals(
         Collections.singletonList(Paths.get("some/source/path").toString()),
-        classesLayerTemplate.getSourceDirectories());
-    Assert.assertEquals(255073580723571L, classesLayerTemplate.getLastModifiedTime());
-
-    // Checks that the base layer does not have properties.
-    try {
-      baseLayerTemplate.getSourceDirectories();
-      Assert.fail("Should not be able to get source directories for a base layer");
-    } catch (IllegalStateException ex) {
-      Assert.assertEquals(
-          "Properties is not a valid field for non-application layer type", ex.getMessage());
-    }
-  }
-
-  @Test
-  public void testFromJson_noPropertiesForApplicationLayer()
-      throws URISyntaxException, IOException {
-    // Loads the expected JSON string.
-    File jsonFile =
-        new File(getClass().getClassLoader().getResource("json/metadata_corrupted.json").toURI());
-
-    // Deserializes into a metadata JSON object.
-    CacheMetadataTemplate metadataTemplate =
-        JsonTemplateMapper.readJsonFromFile(jsonFile, CacheMetadataTemplate.class);
-
-    try {
-      metadataTemplate.getLayers().get(0).getSourceDirectories();
-      Assert.fail("Corrupted metadata should not have source directories");
-    } catch (CacheMetadataCorruptedException ex) {
-      Assert.assertEquals("Properties not found for application layer type", ex.getMessage());
-    }
+        classesLayerTemplate.getProperties().getSourceDirectories());
+    Assert.assertEquals(
+        255073580723571L, classesLayerTemplate.getProperties().getLastModifiedTime());
   }
 }
