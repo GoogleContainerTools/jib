@@ -18,7 +18,6 @@ package com.google.cloud.tools.crepecake.blob;
 
 import com.google.cloud.tools.crepecake.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
-import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -27,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import org.junit.Assert;
 import org.junit.Test;
@@ -43,14 +43,14 @@ public class BlobTest {
   @Test
   public void testFromInputStream() throws IOException {
     String expected = "crepecake";
-    InputStream inputStream = new ByteArrayInputStream(expected.getBytes(Charsets.UTF_8));
+    InputStream inputStream = new ByteArrayInputStream(expected.getBytes(StandardCharsets.UTF_8));
     verifyBlobWriteTo(expected, Blobs.from(inputStream));
   }
 
   @Test
   public void testFromFile() throws IOException, URISyntaxException {
     File fileA = new File(Resources.getResource("fileA").toURI());
-    String expected = new String(Files.readAllBytes(fileA.toPath()), Charsets.UTF_8);
+    String expected = new String(Files.readAllBytes(fileA.toPath()), StandardCharsets.UTF_8);
     verifyBlobWriteTo(expected, Blobs.from(fileA));
   }
 
@@ -70,7 +70,8 @@ public class BlobTest {
   public void testFromBlobWriter() throws IOException {
     String expected = "crepecake";
 
-    BlobWriter writer = outputStream -> outputStream.write(expected.getBytes(Charsets.UTF_8));
+    BlobWriter writer =
+        outputStream -> outputStream.write(expected.getBytes(StandardCharsets.UTF_8));
 
     verifyBlobWriteTo(expected, Blobs.from(writer));
   }
@@ -83,7 +84,7 @@ public class BlobTest {
     String output = outputStream.toString();
     Assert.assertEquals(expected, output);
 
-    byte[] expectedBytes = expected.getBytes(Charsets.UTF_8);
+    byte[] expectedBytes = expected.getBytes(StandardCharsets.UTF_8);
     Assert.assertEquals(expectedBytes.length, blobDescriptor.getSize());
 
     if (blobDescriptor.hasDigest()) {

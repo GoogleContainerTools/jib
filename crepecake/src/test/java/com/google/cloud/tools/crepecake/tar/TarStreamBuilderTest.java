@@ -17,7 +17,6 @@
 package com.google.cloud.tools.crepecake.tar;
 
 import com.google.cloud.tools.crepecake.blob.Blob;
-import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Resources;
 import java.io.ByteArrayInputStream;
@@ -27,6 +26,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -52,8 +52,8 @@ public class TarStreamBuilderTest {
     Path fileB = Paths.get(Resources.getResource("fileB").toURI());
     Path directoryA = Paths.get(Resources.getResource("directoryA").toURI());
 
-    expectedFileAString = new String(Files.readAllBytes(fileA), Charsets.UTF_8);
-    expectedFileBString = new String(Files.readAllBytes(fileB), Charsets.UTF_8);
+    expectedFileAString = new String(Files.readAllBytes(fileA), StandardCharsets.UTF_8);
+    expectedFileBString = new String(Files.readAllBytes(fileB), StandardCharsets.UTF_8);
 
     // Prepares a test TarStreamBuilder.
     testTarStreamBuilder.addEntry(
@@ -105,14 +105,14 @@ public class TarStreamBuilderTest {
     TarArchiveEntry headerFileA = tarArchiveInputStream.getNextTarEntry();
     Assert.assertEquals("some/path/to/resourceFileA", headerFileA.getName());
     String fileAString =
-        CharStreams.toString(new InputStreamReader(tarArchiveInputStream, Charsets.UTF_8));
+        CharStreams.toString(new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
     Assert.assertEquals(expectedFileAString, fileAString);
 
     // Verifies fileB was archived correctly.
     TarArchiveEntry headerFileB = tarArchiveInputStream.getNextTarEntry();
     Assert.assertEquals("crepecake", headerFileB.getName());
     String fileBString =
-        CharStreams.toString(new InputStreamReader(tarArchiveInputStream, Charsets.UTF_8));
+        CharStreams.toString(new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
     Assert.assertEquals(expectedFileBString, fileBString);
 
     // Verifies directoryA was archived correctly.

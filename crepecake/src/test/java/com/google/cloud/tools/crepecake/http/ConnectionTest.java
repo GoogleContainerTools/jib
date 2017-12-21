@@ -24,9 +24,9 @@ import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
 import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.blob.Blobs;
-import com.google.common.base.Charsets;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -113,6 +113,6 @@ public class ConnectionTest {
     blobHttpContentArgumentCaptor.getValue().writeTo(byteArrayOutputStream);
 
     Assert.assertEquals(
-        "crepecake", new String(byteArrayOutputStream.toByteArray(), Charsets.UTF_8));
+        "crepecake", new String(byteArrayOutputStream.toByteArray(), StandardCharsets.UTF_8));
   }
 }
