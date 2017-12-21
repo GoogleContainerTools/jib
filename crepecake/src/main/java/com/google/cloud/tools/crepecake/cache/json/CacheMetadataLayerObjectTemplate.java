@@ -125,20 +125,24 @@ public class CacheMetadataLayerObjectTemplate extends JsonTemplate {
 
   public CacheMetadataLayerObjectTemplate setSourceDirectories(List<String> sourceDirectories) {
     checkTypeValidForProperties();
-    createPropertiesIfNull().sourceDirectories = sourceDirectories;
+    createPropertiesIfNull();
+    assert properties != null;
+    properties.sourceDirectories = sourceDirectories;
     return this;
   }
 
   public CacheMetadataLayerObjectTemplate setLastModifiedTime(long lastModifiedTime) {
     checkTypeValidForProperties();
-    createPropertiesIfNull().lastModifiedTime = lastModifiedTime;
+    createPropertiesIfNull();
+    assert properties != null;
+    properties.lastModifiedTime = lastModifiedTime;
     return this;
   }
 
   /** Returns properties if non-null; otherwise throws the appropriate exception. */
-  private PropertiesObject getPropertiesNonnull() throws CacheMetadataCorruptedException {
+  private PropertiesObject getPropertiesNonNull() throws CacheMetadataCorruptedException {
     checkTypeValidForProperties();
-    if (null == properties) {
+    if (properties == null) {
       throw new CacheMetadataCorruptedException("Properties not found for application layer type");
     }
     return properties;
@@ -155,10 +159,9 @@ public class CacheMetadataLayerObjectTemplate extends JsonTemplate {
   }
 
   /** Instantiates {@link #properties} if it's {@code null}. */
-  private PropertiesObject createPropertiesIfNull() {
-    if (null != properties) {
-      return properties;
+  private void createPropertiesIfNull() {
+    if (properties == null) {
+      properties = new PropertiesObject();
     }
-    return properties = new PropertiesObject();
   }
 }

@@ -21,6 +21,7 @@ import com.google.cloud.tools.crepecake.image.ImageLayers;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import com.google.common.annotations.VisibleForTesting;
 
+// TODO: Change this to match the new format of CacheMetadataTemplate.
 /**
  * The cache stores all the layer BLOBs as separate files and the cache metadata contains
  * information about each layer BLOB.

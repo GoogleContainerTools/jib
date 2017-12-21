@@ -35,6 +35,7 @@ public class CacheMetadataTest {
 
   @Mock private DescriptorDigest mockDescriptorDigest;
   @Mock private BlobDescriptor mockBlobDescriptor;
+  @Mock private CachedLayerType mockCachedLayerType;
   @Mock private CachedLayerWithMetadata mockLayer;
 
   @Before
