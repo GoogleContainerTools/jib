@@ -128,7 +128,8 @@ public class CacheMetadataTranslatorTest {
     // Loads the expected JSON string.
     File jsonFile = new File(getClass().getClassLoader().getResource("json/metadata.json").toURI());
     final String expectedJson =
-        CharStreams.toString(new InputStreamReader(new FileInputStream(jsonFile), StandardCharsets.UTF_8));
+        CharStreams.toString(
+            new InputStreamReader(new FileInputStream(jsonFile), StandardCharsets.UTF_8));
 
     CacheMetadata cacheMetadata = new CacheMetadata();
 
