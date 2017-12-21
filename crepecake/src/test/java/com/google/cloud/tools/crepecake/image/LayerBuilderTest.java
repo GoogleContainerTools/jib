@@ -18,7 +18,6 @@ package com.google.cloud.tools.crepecake.image;
 
 import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.blob.Blobs;
-import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Resources;
 import java.io.ByteArrayInputStream;
@@ -28,6 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -95,11 +95,11 @@ public class LayerBuilderTest {
                   Blob blob = Blobs.from(path.toFile());
                   blob.writeTo(byteArrayOutputStream);
                   String expectedFileString =
-                      new String(byteArrayOutputStream.toByteArray(), Charsets.UTF_8);
+                      new String(byteArrayOutputStream.toByteArray(), StandardCharsets.UTF_8);
 
                   String extractedFileString =
                       CharStreams.toString(
-                          new InputStreamReader(tarArchiveInputStream, Charsets.UTF_8));
+                          new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
 
                   Assert.assertEquals(expectedFileString, extractedFileString);
                 }

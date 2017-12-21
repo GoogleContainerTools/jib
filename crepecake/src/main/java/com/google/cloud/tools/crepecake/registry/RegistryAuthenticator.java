@@ -25,11 +25,11 @@ import com.google.cloud.tools.crepecake.http.Request;
 import com.google.cloud.tools.crepecake.http.Response;
 import com.google.cloud.tools.crepecake.json.JsonTemplate;
 import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
-import com.google.common.base.Charsets;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Authenticates pull access with a registry service.
@@ -52,7 +52,7 @@ public class RegistryAuthenticator {
   private static String writeBlobToString(Blob blob) throws IOException {
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     blob.writeTo(byteArrayOutputStream);
-    return new String(byteArrayOutputStream.toByteArray(), Charsets.UTF_8);
+    return new String(byteArrayOutputStream.toByteArray(), StandardCharsets.UTF_8);
   }
 
   RegistryAuthenticator(String realm, String service, String repository)

@@ -24,7 +24,6 @@ import com.google.cloud.tools.crepecake.image.Image;
 import com.google.cloud.tools.crepecake.image.Layer;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.crepecake.image.ReferenceLayer;
-import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
 import java.io.ByteArrayOutputStream;
@@ -33,6 +32,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.security.DigestException;
 import java.util.Arrays;
 import org.junit.Assert;
@@ -70,7 +70,8 @@ public class ImageToJsonTranslatorTest {
     File jsonFile =
         new File(getClass().getClassLoader().getResource("json/containerconfig.json").toURI());
     final String expectedJson =
-        CharStreams.toString(new InputStreamReader(new FileInputStream(jsonFile), Charsets.UTF_8));
+        CharStreams.toString(
+            new InputStreamReader(new FileInputStream(jsonFile), StandardCharsets.UTF_8));
 
     // Translates the image to the container configuration and writes the JSON string.
     Blob containerConfigurationBlob = imageToJsonTranslator.getContainerConfigurationBlob();
@@ -88,7 +89,8 @@ public class ImageToJsonTranslatorTest {
     File jsonFile =
         new File(getClass().getClassLoader().getResource("json/translatedmanifest.json").toURI());
     final String expectedJson =
-        CharStreams.toString(new InputStreamReader(new FileInputStream(jsonFile), Charsets.UTF_8));
+        CharStreams.toString(
+            new InputStreamReader(new FileInputStream(jsonFile), StandardCharsets.UTF_8));
 
     // Translates the image to the manifest and writes the JSON string.
     Blob containerConfigurationBlob = imageToJsonTranslator.getContainerConfigurationBlob();
