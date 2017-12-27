@@ -72,6 +72,10 @@ public class Cache {
     this.cacheMetadata = cacheMetadata;
   }
 
+  Path getCacheDirectory() {
+    return cacheDirectory;
+  }
+
   @VisibleForTesting
   CacheMetadata getMetadata() {
     return cacheMetadata;

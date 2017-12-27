@@ -29,7 +29,7 @@ import java.io.File;
  */
 public class CachedLayer implements Layer {
 
-  private final File contentFile;
+  private File contentFile;
   private final BlobDescriptor blobDescriptor;
   private final DescriptorDigest diffId;
 
