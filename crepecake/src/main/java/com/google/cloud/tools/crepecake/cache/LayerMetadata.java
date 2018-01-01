@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.crepecake.cache;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -62,5 +63,10 @@ class LayerMetadata {
 
   public long getLastModifiedTime() {
     return lastModifiedTime;
+  }
+
+  @VisibleForTesting
+  void setSourceDirectories(List<String> sourceDirectories) {
+    this.sourceDirectories = sourceDirectories;
   }
 }

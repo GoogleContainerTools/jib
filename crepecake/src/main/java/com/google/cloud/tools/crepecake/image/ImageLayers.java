@@ -19,11 +19,12 @@ package com.google.cloud.tools.crepecake.image;
 import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
 /** Holds the layers for an image. Makes sure that each layer is only added once. */
-public class ImageLayers<T extends Layer> {
+public class ImageLayers<T extends Layer> implements Iterable<T> {
 
   /** The layers of the image, in the order in which they are applied. */
   private final List<T> layers = new ArrayList<>();
@@ -31,9 +32,19 @@ public class ImageLayers<T extends Layer> {
   /** Keeps track of the layers already added. */
   private final Set<DescriptorDigest> layerDigests = new HashSet<>();
 
-  /** Returns an immutable copy of the image layers. */
+  /** @return an immutable copy of the image layers */
   public ImmutableList<T> asList() {
     return ImmutableList.copyOf(layers);
+  }
+
+  /** @return the layer count */
+  public int size() {
+    return layers.size();
+  }
+
+  /** @return true if the layer with the specified digest exists; false otherwise */
+  public boolean has(DescriptorDigest digest) {
+    return layerDigests.contains(digest);
   }
 
   /**
@@ -49,5 +60,10 @@ public class ImageLayers<T extends Layer> {
 
     layerDigests.add(layer.getBlobDescriptor().getDigest());
     layers.add(layer);
+  }
+
+  @Override
+  public Iterator<T> iterator() {
+    return asList().iterator();
   }
 }

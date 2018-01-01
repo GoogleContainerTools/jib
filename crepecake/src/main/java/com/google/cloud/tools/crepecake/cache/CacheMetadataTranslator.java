@@ -80,7 +80,7 @@ public class CacheMetadataTranslator {
   static CacheMetadataTemplate toTemplate(CacheMetadata cacheMetadata) {
     CacheMetadataTemplate template = new CacheMetadataTemplate();
 
-    for (CachedLayerWithMetadata cachedLayerWithMetadata : cacheMetadata.getLayers().asList()) {
+    for (CachedLayerWithMetadata cachedLayerWithMetadata : cacheMetadata.getLayers()) {
       LayerMetadata layerMetadata = cachedLayerWithMetadata.getMetadata();
 
       CacheMetadataLayerObjectTemplate layerObjectTemplate =

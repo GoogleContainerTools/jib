@@ -19,7 +19,6 @@ package com.google.cloud.tools.crepecake.cache;
 import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
 import com.google.cloud.tools.crepecake.image.ImageLayers;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
-import com.google.common.annotations.VisibleForTesting;
 
 // TODO: Change this to match the new format of CacheMetadataTemplate.
 /**
@@ -35,7 +34,22 @@ class CacheMetadata {
     layers.add(layer);
   }
 
-  @VisibleForTesting
+  ImageLayers<CachedLayerWithMetadata> getLayersWithType(CachedLayerType type)
+      throws CacheMetadataCorruptedException {
+    try {
+      ImageLayers<CachedLayerWithMetadata> filteredLayers = new ImageLayers<>();
+      for (CachedLayerWithMetadata layer : layers) {
+        if (type == layer.getMetadata().getType()) {
+          filteredLayers.add(layer);
+        }
+      }
+      return filteredLayers;
+
+    } catch (DuplicateLayerException | LayerPropertyNotFoundException ex) {
+      throw new CacheMetadataCorruptedException(ex);
+    }
+  }
+
   ImageLayers<CachedLayerWithMetadata> getLayers() {
     return layers;
   }
