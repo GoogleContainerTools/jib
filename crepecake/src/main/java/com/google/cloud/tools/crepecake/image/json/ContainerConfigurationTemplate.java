@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.crepecake.json.templates;
+package com.google.cloud.tools.crepecake.image.json;
 
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.json.JsonTemplate;
@@ -98,6 +98,10 @@ public class ContainerConfigurationTemplate extends JsonTemplate {
 
   public void addLayerDiffId(DescriptorDigest diffId) {
     rootfs.diff_ids.add(diffId);
+  }
+
+  List<DescriptorDigest> getDiffIds() {
+    return rootfs.diff_ids;
   }
 
   @VisibleForTesting

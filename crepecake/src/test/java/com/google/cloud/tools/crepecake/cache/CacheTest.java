@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.crepecake.cache;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -34,7 +33,7 @@ public class CacheTest {
 
   @Test
   public void testInit_empty() throws IOException, CacheMetadataCorruptedException {
-    File cacheDirectory = temporaryCacheDirectory.newFolder();
+    Path cacheDirectory = temporaryCacheDirectory.newFolder().toPath();
 
     Cache cache = Cache.init(cacheDirectory);
     Assert.assertEquals(0, cache.getMetadata().getLayers().asList().size());
@@ -43,11 +42,11 @@ public class CacheTest {
   @Test
   public void testInit_withMetadata()
       throws URISyntaxException, IOException, CacheMetadataCorruptedException {
-    File cacheDirectory = temporaryCacheDirectory.newFolder();
+    Path cacheDirectory = temporaryCacheDirectory.newFolder().toPath();
 
     Path metadataJsonPath =
         Paths.get(getClass().getClassLoader().getResource("json/metadata.json").toURI());
-    Files.copy(metadataJsonPath, cacheDirectory.toPath().resolve(CacheFiles.METADATA_FILENAME));
+    Files.copy(metadataJsonPath, cacheDirectory.resolve(CacheFiles.METADATA_FILENAME));
 
     Cache cache = Cache.init(cacheDirectory);
     Assert.assertEquals(2, cache.getMetadata().getLayers().asList().size());

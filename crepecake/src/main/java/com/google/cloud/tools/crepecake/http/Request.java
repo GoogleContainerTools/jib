@@ -24,34 +24,53 @@ import javax.annotation.Nullable;
 public class Request {
 
   /** The HTTP request headers. */
-  private final HttpHeaders headers = new HttpHeaders();
+  private final HttpHeaders headers;
 
   /** The HTTP request body. */
   @Nullable private BlobHttpContent body;
 
-  public HttpHeaders getHeaders() {
+  public static class Builder {
+
+    private final HttpHeaders headers = new HttpHeaders().setAccept("*/*");
+    @Nullable private BlobHttpContent body;
+
+    public Request build() {
+      return new Request(this);
+    }
+
+    /** Sets the {@code Authorization} header. */
+    public Builder setAuthorization(Authorization authorization) {
+      headers.setAuthorization(authorization.toString());
+      return this;
+    }
+
+    /** Sets the {@code Content-Type} header. */
+    public Builder setContentType(String contentType) {
+      headers.setContentType(contentType);
+      return this;
+    }
+
+    public Builder setBody(Blob body) {
+      this.body = new BlobHttpContent(body);
+      return this;
+    }
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  private Request(Builder builder) {
+    this.headers = builder.headers;
+    this.body = builder.body;
+  }
+
+  HttpHeaders getHeaders() {
     return headers;
   }
 
   @Nullable
-  public BlobHttpContent getHttpContent() {
+  BlobHttpContent getHttpContent() {
     return body;
-  }
-
-  /** Sets the {@code Authorization} header. */
-  public Request setAuthorization(Authorization authorization) {
-    headers.setAuthorization(authorization.toString());
-    return this;
-  }
-
-  /** Sets the {@code Content-Type} header. */
-  public Request setContentType(String contentType) {
-    headers.setContentType(contentType);
-    return this;
-  }
-
-  public Request setBody(Blob body) {
-    this.body = new BlobHttpContent(body);
-    return this;
   }
 }

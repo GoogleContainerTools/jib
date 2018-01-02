@@ -50,7 +50,7 @@ public class CacheCheckerTest {
   @Before
   public void setUp()
       throws CacheMetadataCorruptedException, NotDirectoryException, URISyntaxException {
-    File testCacheFolder = new File(Resources.getResource("cache").toURI());
+    Path testCacheFolder = Paths.get(Resources.getResource("cache").toURI());
     testCache = Cache.init(testCacheFolder);
   }
 
