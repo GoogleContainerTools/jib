@@ -16,25 +16,23 @@
 
 package com.google.cloud.tools.crepecake.cache;
 
-import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link TimestampedCachedLayer}. */
+/** Tests for {@link CachedLayerWithMetadata}. */
 @RunWith(MockitoJUnitRunner.class)
-public class TimestampedCachedLayerTest {
+public class CachedLayerWithMetadataTest {
 
   @Mock private CachedLayer mockCachedLayer;
+  @Mock private LayerMetadata mockLayerMetadata;
 
   @Test
   public void testNew() {
-    long expectedLastModifiedTime = 12345;
-    TimestampedCachedLayer timestampedCachedLayer =
-        new TimestampedCachedLayer(mockCachedLayer, expectedLastModifiedTime);
-    Assert.assertThat(
-        expectedLastModifiedTime, CoreMatchers.is(timestampedCachedLayer.getLastModifiedTime()));
+    CachedLayerWithMetadata cachedLayerWithMetadata =
+        new CachedLayerWithMetadata(mockCachedLayer, mockLayerMetadata);
+    Assert.assertEquals(mockLayerMetadata, cachedLayerWithMetadata.getMetadata());
   }
 }
