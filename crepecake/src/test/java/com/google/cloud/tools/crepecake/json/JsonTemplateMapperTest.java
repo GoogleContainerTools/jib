@@ -17,13 +17,14 @@
 package com.google.cloud.tools.crepecake.json;
 
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
-import com.google.common.io.CharStreams;
+import com.google.common.io.Resources;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.DigestException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -51,9 +52,8 @@ public class JsonTemplateMapperTest {
 
   @Test
   public void testWriteJson() throws DigestException, IOException, URISyntaxException {
-    File jsonFile = new File(getClass().getClassLoader().getResource("json/basic.json").toURI());
-    final String expectedJson =
-        CharStreams.toString(new InputStreamReader(new FileInputStream(jsonFile)));
+    Path jsonFile = Paths.get(Resources.getResource("json/basic.json").toURI());
+    String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
 
     TestJson testJson = new TestJson();
     testJson.number = 54;

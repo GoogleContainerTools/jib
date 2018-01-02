@@ -26,14 +26,14 @@ import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.crepecake.image.ReferenceLayer;
 import com.google.cloud.tools.crepecake.image.json.ImageToJsonTranslator;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.CharStreams;
+import com.google.common.io.Resources;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.DigestException;
 import java.util.Arrays;
 import org.junit.Assert;
@@ -68,11 +68,8 @@ public class ImageToJsonTranslatorTest {
   public void testGetContainerConfiguration()
       throws IOException, LayerPropertyNotFoundException, URISyntaxException {
     // Loads the expected JSON string.
-    File jsonFile =
-        new File(getClass().getClassLoader().getResource("json/containerconfig.json").toURI());
-    final String expectedJson =
-        CharStreams.toString(
-            new InputStreamReader(new FileInputStream(jsonFile), StandardCharsets.UTF_8));
+    Path jsonFile = Paths.get(Resources.getResource("json/containerconfig.json").toURI());
+    String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
 
     // Translates the image to the container configuration and writes the JSON string.
     Blob containerConfigurationBlob = imageToJsonTranslator.getContainerConfigurationBlob();
@@ -87,11 +84,8 @@ public class ImageToJsonTranslatorTest {
   public void testGetManifest()
       throws URISyntaxException, IOException, LayerPropertyNotFoundException {
     // Loads the expected JSON string.
-    File jsonFile =
-        new File(getClass().getClassLoader().getResource("json/translatedmanifest.json").toURI());
-    final String expectedJson =
-        CharStreams.toString(
-            new InputStreamReader(new FileInputStream(jsonFile), StandardCharsets.UTF_8));
+    Path jsonFile = Paths.get(Resources.getResource("json/translatedmanifest.json").toURI());
+    String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
 
     // Translates the image to the manifest and writes the JSON string.
     Blob containerConfigurationBlob = imageToJsonTranslator.getContainerConfigurationBlob();
