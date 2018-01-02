@@ -14,11 +14,12 @@
  * the License.
  */
 
-package com.google.cloud.tools.crepecake.json.templates;
+package com.google.cloud.tools.crepecake.image.json;
 
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,7 +55,7 @@ import java.util.List;
  * @see <a href="https://docs.docker.com/registry/spec/manifest-v2-2/">Image Manifest Version 2,
  *     Schema 2</a>
  */
-public class V22ManifestTemplate extends JsonTemplate {
+public class V22ManifestTemplate extends ManifestTemplate {
 
   public static final String MEDIA_TYPE = "application/vnd.docker.distribution.manifest.v2+json";
 
@@ -80,23 +81,40 @@ public class V22ManifestTemplate extends JsonTemplate {
   /**
    * Template for inner JSON object representing a layer as part of the list of layer references.
    */
-  private static class LayerObjectTemplate extends JsonTemplate {
+  static class LayerObjectTemplate extends JsonTemplate {
 
     private final String mediaType = "application/vnd.docker.image.rootfs.diff.tar.gzip";
 
     private DescriptorDigest digest;
     private long size;
+
+    long getSize() {
+      return size;
+    }
+
+    DescriptorDigest getDigest() {
+      return digest;
+    }
   }
 
-  public void setContainerConfiguration(DescriptorDigest digest, long size) {
-    config.digest = digest;
+  @Override
+  public int getSchemaVersion() {
+    return schemaVersion;
+  }
+
+  public ImmutableList<LayerObjectTemplate> getLayers() {
+    return ImmutableList.copyOf(layers);
+  }
+
+  public void setContainerConfiguration(long size, DescriptorDigest digest) {
     config.size = size;
+    config.digest = digest;
   }
 
-  public void addLayer(DescriptorDigest digest, long size) {
+  public void addLayer(long size, DescriptorDigest digest) {
     LayerObjectTemplate layerObjectTemplate = new LayerObjectTemplate();
-    layerObjectTemplate.digest = digest;
     layerObjectTemplate.size = size;
+    layerObjectTemplate.digest = digest;
     layers.add(layerObjectTemplate);
   }
 

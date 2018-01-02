@@ -25,5 +25,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * <p>Json fields should be private fields and fields that are {@code null} will not be serialized.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
+@JsonAutoDetect(
+  fieldVisibility = JsonAutoDetect.Visibility.ANY,
+  getterVisibility = JsonAutoDetect.Visibility.NONE,
+  setterVisibility = JsonAutoDetect.Visibility.NONE,
+  creatorVisibility = JsonAutoDetect.Visibility.NONE
+)
 public abstract class JsonTemplate {}

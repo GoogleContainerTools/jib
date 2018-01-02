@@ -19,24 +19,20 @@ package com.google.cloud.tools.crepecake.image;
 import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
 
-/**
- * A {@link Layer} reference that <b>does not</b> have the underlying content. It references the
- * layer with its digest and size, but <b>not</b> its diff ID.
- */
-public class ReferenceNoDiffIdLayer implements Layer {
+/** A {@link Layer} reference that only has its {@link DescriptorDigest}. */
+public class DigestOnlyLayer implements Layer {
 
   /** The {@link BlobDescriptor} of the compressed layer content. */
   private final BlobDescriptor blobDescriptor;
 
-  /** Instantiate with a {@link BlobDescriptor} and diff ID. */
-  public ReferenceNoDiffIdLayer(BlobDescriptor blobDescriptor) {
-    this.blobDescriptor = blobDescriptor;
+  /** Instantiate with a {@link DescriptorDigest}. */
+  public DigestOnlyLayer(DescriptorDigest digest) {
+    blobDescriptor = new BlobDescriptor(digest);
   }
 
   @Override
   public Blob getBlob() throws LayerPropertyNotFoundException {
-    throw new LayerPropertyNotFoundException(
-        "Blob not available for reference layer without diff ID");
+    throw new LayerPropertyNotFoundException("Blob not available for digest-only layer");
   }
 
   @Override
@@ -46,7 +42,6 @@ public class ReferenceNoDiffIdLayer implements Layer {
 
   @Override
   public DescriptorDigest getDiffId() throws LayerPropertyNotFoundException {
-    throw new LayerPropertyNotFoundException(
-        "Diff ID not available for reference layer without diff ID");
+    throw new LayerPropertyNotFoundException("Diff ID not available for digest-only layer");
   }
 }
