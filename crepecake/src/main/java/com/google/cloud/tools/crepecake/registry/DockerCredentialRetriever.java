@@ -75,19 +75,21 @@ public class DockerCredentialRetriever {
       process.getOutputStream().write(serverUrl.getBytes(StandardCharsets.UTF_8));
       process.getOutputStream().close();
 
-      String output =
-          CharStreams.toString(
-              new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
+      try (InputStreamReader processStdoutReader =
+          new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)) {
+        String output = CharStreams.toString(processStdoutReader);
 
-      // Throws an exception if the credential store does not have credentials for serverUrl.
-      if (output.contains("credentials not found in native keychain")) {
-        throw new NonexistentServerUrlDockerCredentialHelperException(credentialHelper, serverUrl);
+        // Throws an exception if the credential store does not have credentials for serverUrl.
+        if (output.contains("credentials not found in native keychain")) {
+          throw new NonexistentServerUrlDockerCredentialHelperException(
+              credentialHelper, serverUrl);
+        }
+
+        DockerCredentialsTemplate dockerCredentials =
+            JsonTemplateMapper.readJson(output, DockerCredentialsTemplate.class);
+
+        return Authorizations.withBasicToken(dockerCredentials.Secret);
       }
-
-      DockerCredentialsTemplate dockerCredentials =
-          JsonTemplateMapper.readJson(output, DockerCredentialsTemplate.class);
-
-      return Authorizations.withBasicToken(dockerCredentials.Secret);
 
     } catch (IOException ex) {
       // Checks if the failure is due to a nonexistent credential helper CLI.
