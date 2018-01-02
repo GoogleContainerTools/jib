@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.crepecake.json.templates;
+package com.google.cloud.tools.crepecake.image.json;
 
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
@@ -46,14 +46,14 @@ public class V22ManifestTemplateTest {
     V22ManifestTemplate manifestJson = new V22ManifestTemplate();
 
     manifestJson.setContainerConfiguration(
+        1000,
         DescriptorDigest.fromDigest(
-            "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad"),
-        1000);
+            "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad"));
 
     manifestJson.addLayer(
+        1000_000,
         DescriptorDigest.fromHash(
-            "4945ba5011739b0b98c4a41afe224e417f47c7c99b2ce76830999c9a0861b236"),
-        1000_000);
+            "4945ba5011739b0b98c4a41afe224e417f47c7c99b2ce76830999c9a0861b236"));
 
     // Serializes the JSON object.
     ByteArrayOutputStream jsonStream = new ByteArrayOutputStream();

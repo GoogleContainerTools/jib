@@ -24,6 +24,7 @@ import com.google.cloud.tools.crepecake.image.Image;
 import com.google.cloud.tools.crepecake.image.Layer;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.crepecake.image.ReferenceLayer;
+import com.google.cloud.tools.crepecake.image.json.ImageToJsonTranslator;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
 import java.io.ByteArrayOutputStream;

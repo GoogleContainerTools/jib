@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.crepecake.json;
+package com.google.cloud.tools.crepecake.image.json;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
