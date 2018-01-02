@@ -31,8 +31,8 @@ class LayerMetadata {
    */
   private final List<String> existsOn;
 
-  /** The paths to the source directories that the layer was constructed from. */
-  private List<String> sourceDirectories;
+  /** The paths to the source files that the layer was constructed from. */
+  private List<String> sourceFiles;
 
   /** The last time the layer was constructed, or negative if unknown. */
   private long lastModifiedTime;
@@ -40,11 +40,11 @@ class LayerMetadata {
   LayerMetadata(
       CachedLayerType type,
       List<String> existsOn,
-      List<String> sourceDirectories,
+      List<String> sourceFiles,
       long lastModifiedTime) {
     this.type = type;
     this.existsOn = existsOn;
-    this.sourceDirectories = sourceDirectories;
+    this.sourceFiles = sourceFiles;
     this.lastModifiedTime = lastModifiedTime;
   }
 
@@ -56,8 +56,8 @@ class LayerMetadata {
     return existsOn;
   }
 
-  List<String> getSourceDirectories() {
-    return sourceDirectories;
+  List<String> getSourceFiles() {
+    return sourceFiles;
   }
 
   public long getLastModifiedTime() {
@@ -65,7 +65,7 @@ class LayerMetadata {
   }
 
   @VisibleForTesting
-  void setSourceDirectories(List<String> sourceDirectories) {
-    this.sourceDirectories = sourceDirectories;
+  void setSourceFiles(List<String> sourceFiles) {
+    this.sourceFiles = sourceFiles;
   }
 }

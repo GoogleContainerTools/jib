@@ -52,23 +52,23 @@ public class CacheChecker {
   }
 
   /**
-   * Checks all cached layers built from the source directories to see if the source directories has
-   * been modified since the newest layer build.
+   * Checks all cached layers built from the source files to see if the source files have been
+   * modified since the newest layer build.
    *
-   * @param sourceDirectories the source directories to check
-   * @return true if no cached layer exists that are up-to-date with the source directories; false
+   * @param sourceFiles the source files to check
+   * @return true if no cached layer exists that are up-to-date with the source files; false
    *     otherwise.
    */
-  public boolean areSourceDirectoriesModified(Set<File> sourceDirectories)
+  public boolean areSourceFilesModified(Set<File> sourceFiles)
       throws IOException, CacheMetadataCorruptedException {
-    ImageLayers<CachedLayerWithMetadata> cachedLayersWithSourceDirectories =
-        cache.getMetadata().filterLayers().bySourceDirectories(sourceDirectories).filter();
+    ImageLayers<CachedLayerWithMetadata> cachedLayersWithSourceFiles =
+        cache.getMetadata().filterLayers().bySourceFiles(sourceFiles).filter();
 
-    for (CachedLayerWithMetadata cachedLayer : cachedLayersWithSourceDirectories) {
+    for (CachedLayerWithMetadata cachedLayer : cachedLayersWithSourceFiles) {
       // Checks if the layer is outdated.
       long lastModifiedTime = cachedLayer.getMetadata().getLastModifiedTime();
       boolean hasOutdatedFile = false;
-      for (File file : sourceDirectories) {
+      for (File file : sourceFiles) {
         if (isFileModifiedRecursive(file, lastModifiedTime)) {
           hasOutdatedFile = true;
           break;

@@ -39,12 +39,12 @@ class CacheMetadata {
     private final ImageLayers<CachedLayerWithMetadata> layers;
 
     @Nullable private CachedLayerType type;
-    @Nullable private Set<File> sourceDirectories;
+    @Nullable private Set<File> sourceFiles;
 
     /** True if the filters are used; false otherwise. */
     private boolean isTypeFilterEnabled = false;
 
-    private boolean isSourceDirectoriesFilterEnabled = false;
+    private boolean isSourceFilesFilterEnabled = false;
 
     private LayerFilter(ImageLayers<CachedLayerWithMetadata> layers) {
       this.layers = layers;
@@ -57,10 +57,10 @@ class CacheMetadata {
       return this;
     }
 
-    /** Filters to a certain set of source directories. */
-    LayerFilter bySourceDirectories(Set<File> sourceDirectories) {
-      this.sourceDirectories = sourceDirectories;
-      isSourceDirectoriesFilterEnabled = true;
+    /** Filters to a certain set of source files. */
+    LayerFilter bySourceFiles(Set<File> sourceFiles) {
+      this.sourceFiles = sourceFiles;
+      isSourceFilesFilterEnabled = true;
       return this;
     }
 
@@ -76,19 +76,18 @@ class CacheMetadata {
             }
           }
 
-          if (isSourceDirectoriesFilterEnabled) {
-            List<String> cachedLayerSourceDirectoryPaths =
-                layer.getMetadata().getSourceDirectories();
-            if (cachedLayerSourceDirectoryPaths == null) {
-              if (sourceDirectories != null) {
+          if (isSourceFilesFilterEnabled) {
+            List<String> cachedLayerSourceFilePaths = layer.getMetadata().getSourceFiles();
+            if (cachedLayerSourceFilePaths == null) {
+              if (sourceFiles != null) {
                 continue;
               }
             } else {
-              Set<File> cachedLayerSourceDirectories = new HashSet<>();
-              for (String sourceDirectory : cachedLayerSourceDirectoryPaths) {
-                cachedLayerSourceDirectories.add(new File(sourceDirectory));
+              Set<File> cachedLayerSourceFiles = new HashSet<>();
+              for (String sourceFile : cachedLayerSourceFilePaths) {
+                cachedLayerSourceFiles.add(new File(sourceFile));
               }
-              if (!cachedLayerSourceDirectories.equals(sourceDirectories)) {
+              if (!cachedLayerSourceFiles.equals(sourceFiles)) {
                 continue;
               }
             }
