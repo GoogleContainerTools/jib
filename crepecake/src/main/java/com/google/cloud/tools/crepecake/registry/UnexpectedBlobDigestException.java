@@ -16,10 +16,10 @@
 
 package com.google.cloud.tools.crepecake.registry;
 
-/** Thrown when a registry request was unauthorized and therefore authentication is needed. */
-public class RegistryUnauthorizedException extends RegistryException {
+/** Thrown when a pulled BLOB did not have the same digest as requested. */
+public class UnexpectedBlobDigestException extends RegistryException {
 
-  RegistryUnauthorizedException(Throwable cause) {
-    super(cause);
+  UnexpectedBlobDigestException(String message) {
+    super(message);
   }
 }

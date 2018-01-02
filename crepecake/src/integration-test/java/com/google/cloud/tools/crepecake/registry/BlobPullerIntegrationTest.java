@@ -16,17 +16,31 @@
 
 package com.google.cloud.tools.crepecake.registry;
 
+import com.google.cloud.tools.crepecake.blob.Blob;
+import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
+import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.image.json.ManifestTemplate;
 import com.google.cloud.tools.crepecake.image.json.V21ManifestTemplate;
-import com.google.cloud.tools.crepecake.image.json.V22ManifestTemplate;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.DigestException;
 import org.hamcrest.CoreMatchers;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
 
-public class ManifestPullerIntegrationTest {
+public class BlobPullerIntegrationTest {
+
+  @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @BeforeClass
   public static void startLocalRegistry() throws IOException, InterruptedException {
@@ -54,37 +68,46 @@ public class ManifestPullerIntegrationTest {
   }
 
   @Test
-  public void testPull_v21() throws IOException, RegistryException {
+  public void testPull() throws IOException, RegistryException, DigestException {
+    // Pulls the busybox image.
     RegistryClient registryClient = new RegistryClient(null, "localhost:5000", "busybox");
     ManifestTemplate manifestTemplate = registryClient.pullManifest("latest");
 
-    Assert.assertEquals(1, manifestTemplate.getSchemaVersion());
     V21ManifestTemplate v21ManifestTemplate = (V21ManifestTemplate) manifestTemplate;
-    Assert.assertTrue(0 < v21ManifestTemplate.getFsLayers().size());
+    DescriptorDigest realDigest = v21ManifestTemplate.getLayerDigests().get(0);
+
+    // Pulls a layer BLOB of the busybox image.
+    File destFile = temporaryFolder.newFile();
+    File checkBlobFile = temporaryFolder.newFile();
+
+    Blob blob = registryClient.pullBlob(realDigest, destFile.toPath());
+
+    try (OutputStream outputStream =
+        new BufferedOutputStream(new FileOutputStream(checkBlobFile))) {
+      BlobDescriptor blobDescriptor = blob.writeTo(outputStream);
+      Assert.assertEquals(realDigest, blobDescriptor.getDigest());
+    }
+
+    Assert.assertArrayEquals(
+        Files.readAllBytes(destFile.toPath()), Files.readAllBytes(checkBlobFile.toPath()));
   }
 
   @Test
-  public void testPull_v22() throws IOException, RegistryException {
-    RegistryClient registryClient = new RegistryClient(null, "gcr.io", "distroless/java");
-    ManifestTemplate manifestTemplate = registryClient.pullManifest("latest");
+  public void testPull_unknownBlob() throws RegistryException, IOException, DigestException {
+    DescriptorDigest nonexistentDigest =
+        DescriptorDigest.fromHash(
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
-    Assert.assertEquals(2, manifestTemplate.getSchemaVersion());
-    V22ManifestTemplate v22ManifestTemplate = (V22ManifestTemplate) manifestTemplate;
-    Assert.assertTrue(0 < v22ManifestTemplate.getLayers().size());
-  }
-
-  @Test
-  public void testPull_unknownManifest() throws RegistryException, IOException {
     try {
       RegistryClient registryClient = new RegistryClient(null, "localhost:5000", "busybox");
-      registryClient.pullManifest("nonexistent-tag");
-      Assert.fail("Trying to pull nonexistent image should have errored");
+      registryClient.pullBlob(nonexistentDigest, Mockito.mock(Path.class));
+      Assert.fail("Trying to pull nonexistent blob should have errored");
 
     } catch (RegistryErrorException ex) {
       Assert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
-              "pull image manifest for localhost:5000/busybox:nonexistent-tag"));
+              "pull BLOB for localhost:5000/busybox with digest " + nonexistentDigest));
     }
   }
 }
