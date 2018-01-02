@@ -42,6 +42,11 @@ public class ImageLayers<T extends Layer> implements Iterable<T> {
     return layers.size();
   }
 
+  /** @return the layer at the specified index */
+  public T get(int index) {
+    return layers.get(index);
+  }
+
   /** @return true if the layer with the specified digest exists; false otherwise */
   public boolean has(DescriptorDigest digest) {
     return layerDigests.contains(digest);

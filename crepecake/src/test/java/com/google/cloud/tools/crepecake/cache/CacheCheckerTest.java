@@ -158,5 +158,10 @@ public class CacheCheckerTest {
     Assert.assertTrue(
         cacheChecker.areSourceDirectoriesModified(
             new HashSet<>(Collections.singletonList(testSourceDirectory))));
+
+    // Any non-cached directory should be deemed modified.
+    Assert.assertTrue(
+        cacheChecker.areSourceDirectoriesModified(
+            new HashSet<>(Collections.singletonList(resourceSourceDirectory.toFile()))));
   }
 }

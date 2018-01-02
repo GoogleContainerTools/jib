@@ -19,8 +19,11 @@ package com.google.cloud.tools.crepecake.cache;
 import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
 import com.google.cloud.tools.crepecake.image.ImageLayers;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
+import java.io.File;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-// TODO: Change this to match the new format of CacheMetadataTemplate.
 /**
  * The cache stores all the layer BLOBs as separate files and the cache metadata contains
  * information about each layer BLOB.
@@ -43,6 +46,35 @@ class CacheMetadata {
           filteredLayers.add(layer);
         }
       }
+      return filteredLayers;
+
+    } catch (DuplicateLayerException | LayerPropertyNotFoundException ex) {
+      throw new CacheMetadataCorruptedException(ex);
+    }
+  }
+
+  /** Gets all the layers that have the same set of source directories. */
+  ImageLayers<CachedLayerWithMetadata> getLayersWithSourceDirectories(Set<File> sourceDirectories)
+      throws CacheMetadataCorruptedException {
+    try {
+      ImageLayers<CachedLayerWithMetadata> filteredLayers = new ImageLayers<>();
+
+      for (CachedLayerWithMetadata cachedLayer : layers) {
+        List<String> cachedLayerSourceDirectoryPaths =
+            cachedLayer.getMetadata().getSourceDirectories();
+        if (cachedLayerSourceDirectoryPaths == null) {
+          continue;
+        }
+
+        Set<File> cachedLayerSourceDirectories = new HashSet<>();
+        for (String sourceDirectory : cachedLayerSourceDirectoryPaths) {
+          cachedLayerSourceDirectories.add(new File(sourceDirectory));
+        }
+        if (cachedLayerSourceDirectories.equals(sourceDirectories)) {
+          filteredLayers.add(cachedLayer);
+        }
+      }
+
       return filteredLayers;
 
     } catch (DuplicateLayerException | LayerPropertyNotFoundException ex) {
