@@ -4,6 +4,8 @@ import com.google.common.io.Resources;
 import java.io.File;
 import java.net.URISyntaxException;
 import java.nio.file.NotDirectoryException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashSet;
 import org.junit.Assert;
@@ -18,7 +20,7 @@ public class CacheReaderTest {
   @Before
   public void setUp()
       throws CacheMetadataCorruptedException, NotDirectoryException, URISyntaxException {
-    File testCacheFolder = new File(Resources.getResource("cache").toURI());
+    Path testCacheFolder = Paths.get(Resources.getResource("cache").toURI());
     testCache = Cache.init(testCacheFolder);
   }
 

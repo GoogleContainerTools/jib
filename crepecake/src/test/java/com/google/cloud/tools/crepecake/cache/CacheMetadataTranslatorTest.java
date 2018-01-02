@@ -136,7 +136,8 @@ public class CacheMetadataTranslatorTest {
     CachedLayer baseCachedLayer =
         new CachedLayer(mockFile, baseLayerBlobDescriptor, baseLayerDiffId);
     LayerMetadata baseLayerMetadata =
-        new LayerMetadata(CachedLayerType.BASE, Collections.emptyList(), null, -1);
+        new LayerMetadata(
+            CachedLayerType.BASE, Collections.emptyList(), Collections.emptyList(), -1);
     CachedLayerWithMetadata baseLayer =
         new CachedLayerWithMetadata(baseCachedLayer, baseLayerMetadata);
 

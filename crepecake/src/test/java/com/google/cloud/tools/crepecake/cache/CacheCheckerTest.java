@@ -50,7 +50,7 @@ public class CacheCheckerTest {
   @Before
   public void setUp()
       throws CacheMetadataCorruptedException, NotDirectoryException, URISyntaxException {
-    File testCacheFolder = new File(Resources.getResource("cache").toURI());
+    Path testCacheFolder = Paths.get(Resources.getResource("cache").toURI());
     testCache = Cache.init(testCacheFolder);
   }
 
@@ -132,7 +132,7 @@ public class CacheCheckerTest {
 
     // Sets the metadata source directory to the new temporary folder.
     ImageLayers<CachedLayerWithMetadata> cachedLayers =
-        testCache.getMetadata().getLayersWithType(CachedLayerType.CLASSES);
+        testCache.getMetadata().filterLayers().byType(CachedLayerType.CLASSES).filter();
     cachedLayers.forEach(
         cachedLayer ->
             cachedLayer

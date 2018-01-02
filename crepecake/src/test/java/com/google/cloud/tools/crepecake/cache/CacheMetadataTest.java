@@ -58,7 +58,7 @@ public class CacheMetadataTest {
   }
 
   @Test
-  public void testGetLayersWithType()
+  public void testFilter_byType()
       throws LayerPropertyNotFoundException, DuplicateLayerException,
           CacheMetadataCorruptedException {
     List<CachedLayer> mockLayers =
@@ -82,7 +82,7 @@ public class CacheMetadataTest {
     }
 
     ImageLayers<CachedLayerWithMetadata> filteredLayers =
-        cacheMetadata.getLayersWithType(CachedLayerType.CLASSES);
+        cacheMetadata.filterLayers().byType(CachedLayerType.CLASSES).filter();
 
     Assert.assertEquals(2, filteredLayers.size());
     for (CachedLayerWithMetadata cachedLayer : filteredLayers.asList()) {
@@ -91,7 +91,7 @@ public class CacheMetadataTest {
   }
 
   @Test
-  public void testGetLayersWithSourceDirectories()
+  public void testFilter_bySourceDirectories()
       throws LayerPropertyNotFoundException, DuplicateLayerException,
           CacheMetadataCorruptedException {
     List<CachedLayer> mockLayers =
@@ -133,10 +133,14 @@ public class CacheMetadataTest {
     }
 
     ImageLayers<CachedLayerWithMetadata> filteredLayers =
-        cacheMetadata.getLayersWithSourceDirectories(
-            new HashSet<>(
-                Arrays.asList(
-                    new File("some/source/directory"), new File("some/other/source/directory"))));
+        cacheMetadata
+            .filterLayers()
+            .bySourceDirectories(
+                new HashSet<>(
+                    Arrays.asList(
+                        new File("some/source/directory"),
+                        new File("some/other/source/directory"))))
+            .filter();
 
     Assert.assertEquals(3, filteredLayers.size());
     Assert.assertEquals(

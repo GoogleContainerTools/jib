@@ -17,7 +17,7 @@
 package com.google.cloud.tools.crepecake.registry;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.google.cloud.tools.crepecake.blob.Blob;
+import com.google.cloud.tools.crepecake.blob.Blobs;
 import com.google.cloud.tools.crepecake.http.Authorization;
 import com.google.cloud.tools.crepecake.http.Authorizations;
 import com.google.cloud.tools.crepecake.http.Connection;
@@ -25,11 +25,9 @@ import com.google.cloud.tools.crepecake.http.Request;
 import com.google.cloud.tools.crepecake.http.Response;
 import com.google.cloud.tools.crepecake.json.JsonTemplate;
 import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 
 /**
  * Authenticates pull access with a registry service.
@@ -48,13 +46,6 @@ public class RegistryAuthenticator {
     private String token;
   }
 
-  /** Gets the contents of a {@link Blob} as a string. */
-  private static String writeBlobToString(Blob blob) throws IOException {
-    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-    blob.writeTo(byteArrayOutputStream);
-    return new String(byteArrayOutputStream.toByteArray(), StandardCharsets.UTF_8);
-  }
-
   RegistryAuthenticator(String realm, String service, String repository)
       throws MalformedURLException {
     authenticationUrl =
@@ -64,8 +55,8 @@ public class RegistryAuthenticator {
   /** Sends the authentication request and retrieves the Bearer authorization token. */
   public Authorization authenticate() throws RegistryAuthenticationFailedException {
     try (Connection connection = new Connection(authenticationUrl)) {
-      Response response = connection.get(new Request());
-      String responseString = writeBlobToString(response.getBody());
+      Response response = connection.get(Request.builder().build());
+      String responseString = Blobs.writeToString(response.getBody());
 
       AuthenticationResponseTemplate responseJson =
           JsonTemplateMapper.readJson(responseString, AuthenticationResponseTemplate.class);

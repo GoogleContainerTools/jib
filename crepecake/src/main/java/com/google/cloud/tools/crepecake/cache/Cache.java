@@ -21,6 +21,7 @@ import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 
@@ -37,15 +38,15 @@ public class Cache {
    * Initializes a cache with a directory. This also loads the cache metadata if it exists in the
    * directory.
    */
-  public static Cache init(File cacheDirectory)
+  public static Cache init(Path cacheDirectory)
       throws NotDirectoryException, CacheMetadataCorruptedException {
-    if (!cacheDirectory.isDirectory()) {
+    if (!Files.isDirectory(cacheDirectory)) {
       throw new NotDirectoryException("The cache can only write to a directory");
     }
 
-    CacheMetadata cacheMetadata = loadCacheMetadata(cacheDirectory.toPath());
+    CacheMetadata cacheMetadata = loadCacheMetadata(cacheDirectory);
 
-    return new Cache(cacheDirectory.toPath(), cacheMetadata);
+    return new Cache(cacheDirectory, cacheMetadata);
   }
 
   private static CacheMetadata loadCacheMetadata(Path cacheDirectory)
