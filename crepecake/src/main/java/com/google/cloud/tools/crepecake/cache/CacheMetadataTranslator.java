@@ -24,6 +24,7 @@ import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import java.io.File;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 
 /** Translates {@link CacheMetadata} to and from {@link CacheMetadataTemplate}. */
@@ -43,7 +44,7 @@ public class CacheMetadataTranslator {
         // Gets the properties for a layer. Properties only exist for application layers.
         CacheMetadataLayerPropertiesObjectTemplate propertiesObjectTemplate =
             layerObjectTemplate.getProperties();
-        List<String> sourceDirectories = null;
+        List<String> sourceDirectories = Collections.emptyList();
         long lastModifiedTime = -1;
         if (propertiesObjectTemplate != null) {
           sourceDirectories = propertiesObjectTemplate.getSourceDirectories();
