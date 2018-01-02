@@ -19,36 +19,131 @@ package com.google.cloud.tools.crepecake.cache;
 import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
+import com.google.cloud.tools.crepecake.image.ImageLayers;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
-import org.hamcrest.CoreMatchers;
+import com.google.common.collect.ImmutableList;
+import java.io.File;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link CacheMetadata}. */
-@RunWith(MockitoJUnitRunner.class)
 public class CacheMetadataTest {
 
-  @Mock private DescriptorDigest mockDescriptorDigest;
-  @Mock private BlobDescriptor mockBlobDescriptor;
-  @Mock private CachedLayerType mockCachedLayerType;
-  @Mock private CachedLayerWithMetadata mockLayer;
-
-  @Before
-  public void setUpMocks() {
+  private static CachedLayer mockCachedLayer() {
+    CachedLayer mockCachedLayer = Mockito.mock(CachedLayer.class);
+    BlobDescriptor mockBlobDescriptor = Mockito.mock(BlobDescriptor.class);
+    DescriptorDigest mockDescriptorDigest = Mockito.mock(DescriptorDigest.class);
+    Mockito.when(mockCachedLayer.getBlobDescriptor()).thenReturn(mockBlobDescriptor);
     Mockito.when(mockBlobDescriptor.getDigest()).thenReturn(mockDescriptorDigest);
-    Mockito.when(mockLayer.getBlobDescriptor()).thenReturn(mockBlobDescriptor);
+    return mockCachedLayer;
   }
 
   @Test
   public void testAddLayer() throws LayerPropertyNotFoundException, DuplicateLayerException {
-    CacheMetadata cacheMetadata = new CacheMetadata();
-    cacheMetadata.addLayer(mockLayer);
+    CachedLayerWithMetadata testCachedLayerWithMetadata =
+        new CachedLayerWithMetadata(mockCachedLayer(), Mockito.mock(LayerMetadata.class));
 
-    Assert.assertThat(cacheMetadata.getLayers().asList(), CoreMatchers.hasItem(mockLayer));
+    CacheMetadata cacheMetadata = new CacheMetadata();
+    cacheMetadata.addLayer(testCachedLayerWithMetadata);
+
+    Assert.assertEquals(
+        ImmutableList.of(testCachedLayerWithMetadata), cacheMetadata.getLayers().asList());
+  }
+
+  @Test
+  public void testGetLayersWithType()
+      throws LayerPropertyNotFoundException, DuplicateLayerException,
+          CacheMetadataCorruptedException {
+    List<CachedLayer> mockLayers =
+        Stream.generate(CacheMetadataTest::mockCachedLayer).limit(4).collect(Collectors.toList());
+
+    LayerMetadata fakeBaseLayerMetadata =
+        new LayerMetadata(CachedLayerType.BASE, Collections.emptyList(), null, -1);
+    LayerMetadata fakeClassesLayerMetadata =
+        new LayerMetadata(CachedLayerType.CLASSES, Collections.emptyList(), null, -1);
+
+    List<CachedLayerWithMetadata> cachedLayers =
+        Arrays.asList(
+            new CachedLayerWithMetadata(mockLayers.get(0), fakeBaseLayerMetadata),
+            new CachedLayerWithMetadata(mockLayers.get(1), fakeClassesLayerMetadata),
+            new CachedLayerWithMetadata(mockLayers.get(2), fakeBaseLayerMetadata),
+            new CachedLayerWithMetadata(mockLayers.get(3), fakeClassesLayerMetadata));
+
+    CacheMetadata cacheMetadata = new CacheMetadata();
+    for (CachedLayerWithMetadata cachedLayer : cachedLayers) {
+      cacheMetadata.addLayer(cachedLayer);
+    }
+
+    ImageLayers<CachedLayerWithMetadata> filteredLayers =
+        cacheMetadata.getLayersWithType(CachedLayerType.CLASSES);
+
+    Assert.assertEquals(2, filteredLayers.size());
+    for (CachedLayerWithMetadata cachedLayer : filteredLayers.asList()) {
+      Assert.assertEquals(fakeClassesLayerMetadata, cachedLayer.getMetadata());
+    }
+  }
+
+  @Test
+  public void testGetLayersWithSourceDirectories()
+      throws LayerPropertyNotFoundException, DuplicateLayerException,
+          CacheMetadataCorruptedException {
+    List<CachedLayer> mockLayers =
+        Stream.generate(CacheMetadataTest::mockCachedLayer).limit(5).collect(Collectors.toList());
+
+    LayerMetadata fakeExpectedSourceDirectoresClassesLayerMetadata =
+        new LayerMetadata(
+            CachedLayerType.CLASSES,
+            Collections.emptyList(),
+            Arrays.asList("some/source/directory", "some/other/source/directory"),
+            0);
+    LayerMetadata fakeExpectedSourceDirectoresResourcesLayerMetadata =
+        new LayerMetadata(
+            CachedLayerType.RESOURCES,
+            Collections.emptyList(),
+            Arrays.asList("some/source/directory", "some/other/source/directory"),
+            0);
+    LayerMetadata fakeOtherSourceDirectoriesLayerMetadata =
+        new LayerMetadata(
+            CachedLayerType.CLASSES,
+            Collections.emptyList(),
+            Collections.singletonList("not/the/same/source/directory"),
+            0);
+
+    List<CachedLayerWithMetadata> cachedLayers =
+        Arrays.asList(
+            new CachedLayerWithMetadata(mockLayers.get(0), fakeOtherSourceDirectoriesLayerMetadata),
+            new CachedLayerWithMetadata(
+                mockLayers.get(1), fakeExpectedSourceDirectoresResourcesLayerMetadata),
+            new CachedLayerWithMetadata(mockLayers.get(2), fakeOtherSourceDirectoriesLayerMetadata),
+            new CachedLayerWithMetadata(
+                mockLayers.get(3), fakeExpectedSourceDirectoresClassesLayerMetadata),
+            new CachedLayerWithMetadata(
+                mockLayers.get(4), fakeExpectedSourceDirectoresResourcesLayerMetadata));
+
+    CacheMetadata cacheMetadata = new CacheMetadata();
+    for (CachedLayerWithMetadata cachedLayer : cachedLayers) {
+      cacheMetadata.addLayer(cachedLayer);
+    }
+
+    ImageLayers<CachedLayerWithMetadata> filteredLayers =
+        cacheMetadata.getLayersWithSourceDirectories(
+            new HashSet<>(
+                Arrays.asList(
+                    new File("some/source/directory"), new File("some/other/source/directory"))));
+
+    Assert.assertEquals(3, filteredLayers.size());
+    Assert.assertEquals(
+        fakeExpectedSourceDirectoresResourcesLayerMetadata, filteredLayers.get(0).getMetadata());
+    Assert.assertEquals(
+        fakeExpectedSourceDirectoresClassesLayerMetadata, filteredLayers.get(1).getMetadata());
+    Assert.assertEquals(
+        fakeExpectedSourceDirectoresResourcesLayerMetadata, filteredLayers.get(2).getMetadata());
   }
 }

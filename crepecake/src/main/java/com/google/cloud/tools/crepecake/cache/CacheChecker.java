@@ -20,8 +20,6 @@ import com.google.cloud.tools.crepecake.image.ImageLayers;
 import com.google.cloud.tools.crepecake.image.ReferenceLayer;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /** Checks if cached data is outdated. */
@@ -61,25 +59,12 @@ public class CacheChecker {
    * @return true if no cached layer exists that are up-to-date with the source directories; false
    *     otherwise.
    */
-  public boolean areSourceDirectoriesModified(Set<File> sourceDirectories) throws IOException {
-    ImageLayers<CachedLayerWithMetadata> cachedLayers = cache.getMetadata().getLayers();
+  public boolean areSourceDirectoriesModified(Set<File> sourceDirectories)
+      throws IOException, CacheMetadataCorruptedException {
+    ImageLayers<CachedLayerWithMetadata> cachedLayersWithSourceDirectories =
+        cache.getMetadata().getLayersWithSourceDirectories(sourceDirectories);
 
-    for (CachedLayerWithMetadata cachedLayer : cachedLayers) {
-      // Checks if the cached layer has the same source directories.
-      List<String> cachedLayerSourceDirectoryPaths =
-          cachedLayer.getMetadata().getSourceDirectories();
-      if (cachedLayerSourceDirectoryPaths == null) {
-        continue;
-      }
-
-      Set<File> cachedLayerSourceDirectories = new HashSet<>();
-      for (String sourceDirectory : cachedLayerSourceDirectoryPaths) {
-        cachedLayerSourceDirectories.add(new File(sourceDirectory));
-      }
-      if (!cachedLayerSourceDirectories.equals(sourceDirectories)) {
-        continue;
-      }
-
+    for (CachedLayerWithMetadata cachedLayer : cachedLayersWithSourceDirectories) {
       // Checks if the layer is outdated.
       long lastModifiedTime = cachedLayer.getMetadata().getLastModifiedTime();
       boolean hasOutdatedFile = false;
