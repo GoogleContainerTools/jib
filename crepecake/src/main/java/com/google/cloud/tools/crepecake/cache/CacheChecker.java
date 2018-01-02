@@ -36,7 +36,7 @@ public class CacheChecker {
       throws CacheMetadataCorruptedException {
     // Gets the base image layers.
     ImageLayers<CachedLayerWithMetadata> cachedLayers =
-        cache.getMetadata().getLayersWithType(CachedLayerType.BASE);
+        cache.getMetadata().filterLayers().byType(CachedLayerType.BASE).filter();
 
     if (cachedLayers.size() < baseImageLayers.size()) {
       return false;
@@ -62,7 +62,7 @@ public class CacheChecker {
   public boolean areSourceDirectoriesModified(Set<File> sourceDirectories)
       throws IOException, CacheMetadataCorruptedException {
     ImageLayers<CachedLayerWithMetadata> cachedLayersWithSourceDirectories =
-        cache.getMetadata().getLayersWithSourceDirectories(sourceDirectories);
+        cache.getMetadata().filterLayers().bySourceDirectories(sourceDirectories).filter();
 
     for (CachedLayerWithMetadata cachedLayer : cachedLayersWithSourceDirectories) {
       // Checks if the layer is outdated.

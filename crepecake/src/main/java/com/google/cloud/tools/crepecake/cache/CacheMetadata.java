@@ -23,6 +23,7 @@ import java.io.File;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * The cache stores all the layer BLOBs as separate files and the cache metadata contains
@@ -32,57 +33,88 @@ class CacheMetadata {
 
   private final ImageLayers<CachedLayerWithMetadata> layers = new ImageLayers<>();
 
-  void addLayer(CachedLayerWithMetadata layer)
-      throws LayerPropertyNotFoundException, DuplicateLayerException {
-    layers.add(layer);
-  }
+  /** Can be used to filter layers in the metadata. */
+  static class LayerFilter {
 
-  ImageLayers<CachedLayerWithMetadata> getLayersWithType(CachedLayerType type)
-      throws CacheMetadataCorruptedException {
-    try {
-      ImageLayers<CachedLayerWithMetadata> filteredLayers = new ImageLayers<>();
-      for (CachedLayerWithMetadata layer : layers) {
-        if (type == layer.getMetadata().getType()) {
+    private final ImageLayers<CachedLayerWithMetadata> layers;
+
+    @Nullable private CachedLayerType type;
+    @Nullable private Set<File> sourceDirectories;
+
+    /** True if the filters are used; false otherwise. */
+    private boolean isTypeFilterEnabled = false;
+
+    private boolean isSourceDirectoriesFilterEnabled = false;
+
+    private LayerFilter(ImageLayers<CachedLayerWithMetadata> layers) {
+      this.layers = layers;
+    }
+
+    /** Filters to a certain layer type. */
+    LayerFilter byType(CachedLayerType type) {
+      this.type = type;
+      isTypeFilterEnabled = true;
+      return this;
+    }
+
+    /** Filters to a certain set of source directories. */
+    LayerFilter bySourceDirectories(Set<File> sourceDirectories) {
+      this.sourceDirectories = sourceDirectories;
+      isSourceDirectoriesFilterEnabled = true;
+      return this;
+    }
+
+    /** Applies the filters to the metadata layers. */
+    ImageLayers<CachedLayerWithMetadata> filter() throws CacheMetadataCorruptedException {
+      try {
+        ImageLayers<CachedLayerWithMetadata> filteredLayers = new ImageLayers<>();
+
+        for (CachedLayerWithMetadata layer : layers) {
+          if (isTypeFilterEnabled) {
+            if (type != layer.getMetadata().getType()) {
+              continue;
+            }
+          }
+
+          if (isSourceDirectoriesFilterEnabled) {
+            List<String> cachedLayerSourceDirectoryPaths =
+                layer.getMetadata().getSourceDirectories();
+            if (cachedLayerSourceDirectoryPaths == null) {
+              if (sourceDirectories != null) {
+                continue;
+              }
+            } else {
+              Set<File> cachedLayerSourceDirectories = new HashSet<>();
+              for (String sourceDirectory : cachedLayerSourceDirectoryPaths) {
+                cachedLayerSourceDirectories.add(new File(sourceDirectory));
+              }
+              if (!cachedLayerSourceDirectories.equals(sourceDirectories)) {
+                continue;
+              }
+            }
+          }
+
           filteredLayers.add(layer);
         }
+
+        return filteredLayers;
+
+      } catch (DuplicateLayerException | LayerPropertyNotFoundException ex) {
+        throw new CacheMetadataCorruptedException(ex);
       }
-      return filteredLayers;
-
-    } catch (DuplicateLayerException | LayerPropertyNotFoundException ex) {
-      throw new CacheMetadataCorruptedException(ex);
-    }
-  }
-
-  /** Gets all the layers that have the same set of source directories. */
-  ImageLayers<CachedLayerWithMetadata> getLayersWithSourceDirectories(Set<File> sourceDirectories)
-      throws CacheMetadataCorruptedException {
-    try {
-      ImageLayers<CachedLayerWithMetadata> filteredLayers = new ImageLayers<>();
-
-      for (CachedLayerWithMetadata cachedLayer : layers) {
-        List<String> cachedLayerSourceDirectoryPaths =
-            cachedLayer.getMetadata().getSourceDirectories();
-        if (cachedLayerSourceDirectoryPaths == null) {
-          continue;
-        }
-
-        Set<File> cachedLayerSourceDirectories = new HashSet<>();
-        for (String sourceDirectory : cachedLayerSourceDirectoryPaths) {
-          cachedLayerSourceDirectories.add(new File(sourceDirectory));
-        }
-        if (cachedLayerSourceDirectories.equals(sourceDirectories)) {
-          filteredLayers.add(cachedLayer);
-        }
-      }
-
-      return filteredLayers;
-
-    } catch (DuplicateLayerException | LayerPropertyNotFoundException ex) {
-      throw new CacheMetadataCorruptedException(ex);
     }
   }
 
   ImageLayers<CachedLayerWithMetadata> getLayers() {
     return layers;
+  }
+
+  void addLayer(CachedLayerWithMetadata layer)
+      throws LayerPropertyNotFoundException, DuplicateLayerException {
+    layers.add(layer);
+  }
+
+  LayerFilter filterLayers() {
+    return new LayerFilter(layers);
   }
 }

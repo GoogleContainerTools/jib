@@ -132,7 +132,7 @@ public class CacheCheckerTest {
 
     // Sets the metadata source directory to the new temporary folder.
     ImageLayers<CachedLayerWithMetadata> cachedLayers =
-        testCache.getMetadata().getLayersWithType(CachedLayerType.CLASSES);
+        testCache.getMetadata().filterLayers().byType(CachedLayerType.CLASSES).filter();
     cachedLayers.forEach(
         cachedLayer ->
             cachedLayer
