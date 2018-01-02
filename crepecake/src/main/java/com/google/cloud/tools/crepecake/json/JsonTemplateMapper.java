@@ -28,7 +28,7 @@ import java.io.OutputStream;
  * Helper class for serializing and deserializing JSON.
  *
  * <p>The interface uses Jackson as the JSON parser. Some useful annotations to include on classes
- * used as json for JSON are:
+ * used as templates for JSON are:
  *
  * <p>{@code @JsonInclude(JsonInclude.Include.NON_NULL)}
  *

@@ -79,7 +79,7 @@ class RegistryErrorExceptionBuilder {
     return this;
   }
 
-  RegistryErrorException toRegistryHttpException() {
+  RegistryErrorException build() {
     return new RegistryErrorException(errorMessageBuilder.toString(), cause);
   }
 }

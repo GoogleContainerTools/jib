@@ -47,7 +47,7 @@ public class RegistryErrorExceptionBuilderTest {
     builder.addErrorEntry(errorEntryTemplateUnknown);
 
     try {
-      throw builder.toRegistryHttpException();
+      throw builder.build();
     } catch (RegistryErrorException ex) {
       Assert.assertEquals(
           "Tried to do something but failed because: some error happened, other: some other error happened, unknown: some unknown error happened",

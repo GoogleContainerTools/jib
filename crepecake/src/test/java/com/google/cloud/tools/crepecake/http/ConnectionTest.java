@@ -24,9 +24,9 @@ import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
 import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.blob.Blobs;
-import com.google.common.base.Charsets;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -51,16 +51,19 @@ public class ConnectionTest {
       ArgumentCaptor.forClass(BlobHttpContent.class);
 
   private final GenericUrl fakeUrl = new GenericUrl("http://crepecake/fake/url");
-  private final Request fakeRequest = new Request();
+  private Request fakeRequest;
 
   @InjectMocks private final Connection testConnection = new Connection(fakeUrl.toURL());
 
   @Before
   public void setUpMocksAndFakes() throws IOException {
     Blob fakeBlob = Blobs.from("crepecake", false);
-    fakeRequest.setBody(fakeBlob);
-    fakeRequest.setContentType("fake.content.type");
-    fakeRequest.setAuthorization(Authorizations.withBasicToken("fake-token"));
+    fakeRequest =
+        Request.builder()
+            .setBody(fakeBlob)
+            .setContentType("fake.content.type")
+            .setAuthorization(Authorizations.withBasicToken("fake-token"))
+            .build();
 
     Mockito.when(
             mockHttpRequestFactory.buildRequest(
@@ -113,6 +116,6 @@ public class ConnectionTest {
     blobHttpContentArgumentCaptor.getValue().writeTo(byteArrayOutputStream);
 
     Assert.assertEquals(
-        "crepecake", new String(byteArrayOutputStream.toByteArray(), Charsets.UTF_8));
+        "crepecake", new String(byteArrayOutputStream.toByteArray(), StandardCharsets.UTF_8));
   }
 }

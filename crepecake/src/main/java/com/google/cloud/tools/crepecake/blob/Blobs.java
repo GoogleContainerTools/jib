@@ -16,11 +16,14 @@
 
 package com.google.cloud.tools.crepecake.blob;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
-/** Static initializers for {@link Blob}. */
-public abstract class Blobs {
+/** Static methods for {@link Blob}. */
+public class Blobs {
 
   public static Blob empty() {
     return new EmptyBlob();
@@ -40,6 +43,13 @@ public abstract class Blobs {
 
   public static Blob from(BlobWriter writer) {
     return new HashingWriterBlob(writer);
+  }
+
+  /** Writes the BLOB to a string. */
+  public static String writeToString(Blob blob) throws IOException {
+    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+    blob.writeTo(byteArrayOutputStream);
+    return new String(byteArrayOutputStream.toByteArray(), StandardCharsets.UTF_8);
   }
 
   private Blobs() {}

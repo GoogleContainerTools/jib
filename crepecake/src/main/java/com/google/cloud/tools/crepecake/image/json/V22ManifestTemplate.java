@@ -16,12 +16,10 @@
 
 package com.google.cloud.tools.crepecake.image.json;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
-import com.google.cloud.tools.crepecake.image.ReferenceNoDiffIdLayer;
 import com.google.cloud.tools.crepecake.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,8 +55,7 @@ import java.util.List;
  * @see <a href="https://docs.docker.com/registry/spec/manifest-v2-2/">Image Manifest Version 2,
  *     Schema 2</a>
  */
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class V22ManifestTemplate extends JsonTemplate {
+public class V22ManifestTemplate extends ManifestTemplate {
 
   public static final String MEDIA_TYPE = "application/vnd.docker.distribution.manifest.v2+json";
 
@@ -100,16 +97,13 @@ public class V22ManifestTemplate extends JsonTemplate {
     }
   }
 
-  public List<ReferenceNoDiffIdLayer> getLayers() {
-    List<ReferenceNoDiffIdLayer> layers = new ArrayList<>();
+  @Override
+  public int getSchemaVersion() {
+    return schemaVersion;
+  }
 
-    for (LayerObjectTemplate layerObjectTemplate : this.layers) {
-      BlobDescriptor blobDescriptor =
-          new BlobDescriptor(layerObjectTemplate.getSize(), layerObjectTemplate.getDigest());
-      layers.add(new ReferenceNoDiffIdLayer(blobDescriptor));
-    }
-
-    return layers;
+  public ImmutableList<LayerObjectTemplate> getLayers() {
+    return ImmutableList.copyOf(layers);
   }
 
   public void setContainerConfiguration(long size, DescriptorDigest digest) {

@@ -84,6 +84,9 @@ public class BlobDescriptor {
    */
   @Override
   public boolean equals(Object obj) {
+    if (obj == this) {
+      return true;
+    }
     if (digest == null || size < 0 || !(obj instanceof BlobDescriptor)) {
       return false;
     }

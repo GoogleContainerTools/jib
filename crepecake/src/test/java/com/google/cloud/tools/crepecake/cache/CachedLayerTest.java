@@ -19,12 +19,12 @@ package com.google.cloud.tools.crepecake.cache;
 import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
-import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import org.junit.Assert;
 import org.junit.Test;
@@ -52,7 +52,8 @@ public class CachedLayerTest {
   @Test
   public void testGetBlob() throws URISyntaxException, IOException {
     File fileA = new File(Resources.getResource("fileA").toURI());
-    String expectedFileAString = new String(Files.readAllBytes(fileA.toPath()), Charsets.UTF_8);
+    String expectedFileAString =
+        new String(Files.readAllBytes(fileA.toPath()), StandardCharsets.UTF_8);
 
     CachedLayer cachedLayer = new CachedLayer(fileA, mockBlobDescriptor, mockDiffId);
 
@@ -61,7 +62,7 @@ public class CachedLayerTest {
     fileBlob.writeTo(outputStream);
 
     Assert.assertEquals(
-        expectedFileAString, new String(outputStream.toByteArray(), Charsets.UTF_8));
+        expectedFileAString, new String(outputStream.toByteArray(), StandardCharsets.UTF_8));
     Assert.assertEquals(mockBlobDescriptor, cachedLayer.getBlobDescriptor());
     Assert.assertEquals(mockDiffId, cachedLayer.getDiffId());
   }

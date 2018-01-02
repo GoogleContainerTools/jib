@@ -18,13 +18,13 @@ package com.google.cloud.tools.crepecake.hash;
 
 import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
-import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.security.DigestException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -63,7 +63,7 @@ public class CountingDigestOutputStreamTest {
       CountingDigestOutputStream countingDigestOutputStream =
           new CountingDigestOutputStream(underlyingOutputStream);
 
-      byte[] bytesToHash = toHash.getBytes(Charsets.UTF_8);
+      byte[] bytesToHash = toHash.getBytes(StandardCharsets.UTF_8);
       InputStream toHashInputStream = new ByteArrayInputStream(bytesToHash);
       ByteStreams.copy(toHashInputStream, countingDigestOutputStream);
 

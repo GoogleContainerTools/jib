@@ -14,14 +14,14 @@
  * the License.
  */
 
-package com.google.cloud.tools.crepecake.http;
+package com.google.cloud.tools.crepecake.image.json;
 
-/** Static constants for HTTP status codes. */
-public abstract class HttpStatusCodes {
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.google.cloud.tools.crepecake.json.JsonTemplate;
 
-  public static final int BAD_REQUEST = 400;
-  public static final int NOT_FOUND = 404;
-  public static final int UNAUTHORIZED = 401;
-  public static final int FORBIDDEN = 403;
-  public static final int TOO_MANY_REQUESTS = 429;
+/** Parent class for image manifest JSON templates. */
+@JsonIgnoreProperties(ignoreUnknown = true)
+public abstract class ManifestTemplate extends JsonTemplate {
+
+  public abstract int getSchemaVersion();
 }

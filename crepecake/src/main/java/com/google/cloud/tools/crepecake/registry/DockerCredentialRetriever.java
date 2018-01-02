@@ -21,10 +21,10 @@ import com.google.cloud.tools.crepecake.http.Authorization;
 import com.google.cloud.tools.crepecake.http.Authorizations;
 import com.google.cloud.tools.crepecake.json.JsonTemplate;
 import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
-import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 
 // TODO: Replace with non-CLI method.
 /**
@@ -72,11 +72,12 @@ public class DockerCredentialRetriever {
       String credentialHelperCommand = credentialHelper + " get";
 
       Process process = Runtime.getRuntime().exec(credentialHelperCommand);
-      process.getOutputStream().write(serverUrl.getBytes(Charsets.UTF_8));
+      process.getOutputStream().write(serverUrl.getBytes(StandardCharsets.UTF_8));
       process.getOutputStream().close();
 
       String output =
-          CharStreams.toString(new InputStreamReader(process.getInputStream(), Charsets.UTF_8));
+          CharStreams.toString(
+              new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
 
       // Throws an exception if the credential store does not have credentials for serverUrl.
       if (output.contains("credentials not found in native keychain")) {

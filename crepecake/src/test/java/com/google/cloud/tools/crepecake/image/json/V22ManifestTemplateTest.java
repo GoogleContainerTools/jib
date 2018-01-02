@@ -18,7 +18,6 @@ package com.google.cloud.tools.crepecake.image.json;
 
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
-import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -26,6 +25,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.security.DigestException;
 import org.junit.Assert;
 import org.junit.Test;
@@ -39,7 +39,8 @@ public class V22ManifestTemplateTest {
     File jsonFile =
         new File(getClass().getClassLoader().getResource("json/v22manifest.json").toURI());
     final String expectedJson =
-        CharStreams.toString(new InputStreamReader(new FileInputStream(jsonFile), Charsets.UTF_8));
+        CharStreams.toString(
+            new InputStreamReader(new FileInputStream(jsonFile), StandardCharsets.UTF_8));
 
     // Creates the JSON object to serialize.
     V22ManifestTemplate manifestJson = new V22ManifestTemplate();

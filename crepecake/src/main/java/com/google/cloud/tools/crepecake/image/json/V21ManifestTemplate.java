@@ -16,10 +16,10 @@
 
 package com.google.cloud.tools.crepecake.image.json;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,8 +53,7 @@ import java.util.List;
  *     Schema 1</a>
  * }</pre>
  */
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class V21ManifestTemplate extends JsonTemplate {
+public class V21ManifestTemplate extends ManifestTemplate {
 
   private final int schemaVersion = 1;
 
@@ -66,9 +65,13 @@ public class V21ManifestTemplate extends JsonTemplate {
   /**
    * Template for inner JSON object representing a layer as part of the list of layer references.
    */
-  private static class LayerObjectTemplate extends JsonTemplate {
+  static class LayerObjectTemplate extends JsonTemplate {
 
     private DescriptorDigest blobSum;
+
+    DescriptorDigest getDigest() {
+      return blobSum;
+    }
   }
 
   /** Template for inner JSON object representing the V1-compatible format for a layer. */
@@ -86,6 +89,15 @@ public class V21ManifestTemplate extends JsonTemplate {
     }
 
     return layerDigests;
+  }
+
+  @Override
+  public int getSchemaVersion() {
+    return schemaVersion;
+  }
+
+  public ImmutableList<LayerObjectTemplate> getFsLayers() {
+    return ImmutableList.copyOf(fsLayers);
   }
 
   @VisibleForTesting

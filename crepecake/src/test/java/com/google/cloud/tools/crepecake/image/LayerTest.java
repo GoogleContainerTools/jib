@@ -70,29 +70,6 @@ public class LayerTest {
   }
 
   @Test
-  public void testNew_referenceNoDiffId() throws LayerPropertyNotFoundException {
-    Layer layer = new ReferenceNoDiffIdLayer(mockBlobDescriptor);
-
-    try {
-      layer.getBlob();
-      Assert.fail("Blob content should not be available for reference layer without diff ID");
-    } catch (LayerPropertyNotFoundException ex) {
-      Assert.assertEquals(
-          "Blob not available for reference layer without diff ID", ex.getMessage());
-    }
-
-    Assert.assertEquals(mockBlobDescriptor, layer.getBlobDescriptor());
-
-    try {
-      layer.getDiffId();
-      Assert.fail("Diff ID should not be available for reference layer without diff ID");
-    } catch (LayerPropertyNotFoundException ex) {
-      Assert.assertEquals(
-          "Diff ID not available for reference layer without diff ID", ex.getMessage());
-    }
-  }
-
-  @Test
   public void testNew_digestOnly() throws LayerPropertyNotFoundException {
     Layer layer = new DigestOnlyLayer(mockDescriptorDigest);
 
