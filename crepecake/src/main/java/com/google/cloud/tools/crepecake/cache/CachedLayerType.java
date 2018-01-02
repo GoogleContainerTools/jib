@@ -16,8 +16,11 @@
 
 package com.google.cloud.tools.crepecake.cache;
 
-/** Types of application layers stored in cache. */
-enum ApplicationLayerType {
+/** Types of layers stored in cache. */
+public enum CachedLayerType {
+
+  /** Base image layer. */
+  BASE,
 
   /** Layer of the application dependency JARs. */
   DEPENDENCIES,
