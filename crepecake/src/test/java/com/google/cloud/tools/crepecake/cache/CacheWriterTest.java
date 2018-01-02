@@ -32,6 +32,7 @@ import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import org.junit.Assert;
@@ -49,7 +50,7 @@ public class CacheWriterTest {
 
   @Before
   public void setUp() throws CacheMetadataCorruptedException, IOException {
-    File cacheDirectory = temporaryCacheDirectory.newFolder();
+    Path cacheDirectory = temporaryCacheDirectory.newFolder().toPath();
 
     testCache = Cache.init(cacheDirectory);
   }

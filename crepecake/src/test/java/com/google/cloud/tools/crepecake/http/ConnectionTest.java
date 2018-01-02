@@ -51,16 +51,19 @@ public class ConnectionTest {
       ArgumentCaptor.forClass(BlobHttpContent.class);
 
   private final GenericUrl fakeUrl = new GenericUrl("http://crepecake/fake/url");
-  private final Request fakeRequest = new Request();
+  private Request fakeRequest;
 
   @InjectMocks private final Connection testConnection = new Connection(fakeUrl.toURL());
 
   @Before
   public void setUpMocksAndFakes() throws IOException {
     Blob fakeBlob = Blobs.from("crepecake", false);
-    fakeRequest.setBody(fakeBlob);
-    fakeRequest.setContentType("fake.content.type");
-    fakeRequest.setAuthorization(Authorizations.withBasicToken("fake-token"));
+    fakeRequest =
+        Request.builder()
+            .setBody(fakeBlob)
+            .setContentType("fake.content.type")
+            .setAuthorization(Authorizations.withBasicToken("fake-token"))
+            .build();
 
     Mockito.when(
             mockHttpRequestFactory.buildRequest(

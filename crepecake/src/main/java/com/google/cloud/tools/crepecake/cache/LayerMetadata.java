@@ -17,7 +17,6 @@
 package com.google.cloud.tools.crepecake.cache;
 
 import java.util.List;
-import javax.annotation.Nullable;
 
 /** Metadata about a layer stored in the cache. This is part of the {@link CacheMetadata}. */
 class LayerMetadata {
@@ -32,7 +31,7 @@ class LayerMetadata {
   private final List<String> existsOn;
 
   /** The paths to the source directories that the layer was constructed from. */
-  @Nullable private List<String> sourceDirectories;
+  private List<String> sourceDirectories;
 
   /** The last time the layer was constructed, or negative if unknown. */
   private long lastModifiedTime;
@@ -40,7 +39,7 @@ class LayerMetadata {
   LayerMetadata(
       CachedLayerType type,
       List<String> existsOn,
-      @Nullable List<String> sourceDirectories,
+      List<String> sourceDirectories,
       long lastModifiedTime) {
     this.type = type;
     this.existsOn = existsOn;
