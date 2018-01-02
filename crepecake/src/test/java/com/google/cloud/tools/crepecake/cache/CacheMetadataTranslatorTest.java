@@ -53,7 +53,7 @@ public class CacheMetadataTranslatorTest {
   private BlobDescriptor classesLayerBlobDescriptor;
   private DescriptorDigest classesLayerDiffId;
   private List<String> classesLayerExistsOn;
-  private List<String> classesLayerSourceDirectories;
+  private List<String> classesLayerSourceFiles;
   private long classesLayerLastModifiedTime;
 
   @Before
@@ -75,8 +75,7 @@ public class CacheMetadataTranslatorTest {
         DescriptorDigest.fromDigest(
             "sha256:a3f3e99c29370df48e7377c8f9baa744a3958058a766793f821dadcb144a8372");
     classesLayerExistsOn = Collections.singletonList("some/image/tag");
-    classesLayerSourceDirectories =
-        Collections.singletonList(Paths.get("some/source/path").toString());
+    classesLayerSourceFiles = Collections.singletonList(Paths.get("some/source/path").toString());
     classesLayerLastModifiedTime = 255073580723571L;
   }
 
@@ -115,8 +114,7 @@ public class CacheMetadataTranslatorTest {
     Assert.assertEquals(classesLayerBlobDescriptor, classesLayer.getBlobDescriptor());
     Assert.assertEquals(classesLayerDiffId, classesLayer.getDiffId());
     Assert.assertEquals(classesLayerExistsOn, classesLayer.getMetadata().getExistsOn());
-    Assert.assertEquals(
-        classesLayerSourceDirectories, classesLayer.getMetadata().getSourceDirectories());
+    Assert.assertEquals(classesLayerSourceFiles, classesLayer.getMetadata().getSourceFiles());
     Assert.assertEquals(
         classesLayerLastModifiedTime, classesLayer.getMetadata().getLastModifiedTime());
   }
@@ -147,7 +145,7 @@ public class CacheMetadataTranslatorTest {
         new LayerMetadata(
             CachedLayerType.CLASSES,
             classesLayerExistsOn,
-            classesLayerSourceDirectories,
+            classesLayerSourceFiles,
             classesLayerLastModifiedTime);
     CachedLayerWithMetadata classesLayer =
         new CachedLayerWithMetadata(classesCachedLayer, classesLayerMetadata);
