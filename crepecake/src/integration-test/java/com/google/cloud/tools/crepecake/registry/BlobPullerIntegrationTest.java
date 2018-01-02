@@ -30,9 +30,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.DigestException;
 import org.hamcrest.CoreMatchers;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -40,32 +39,9 @@ import org.mockito.Mockito;
 
 public class BlobPullerIntegrationTest {
 
+  @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
+
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
-
-  @BeforeClass
-  public static void startLocalRegistry() throws IOException, InterruptedException {
-    String runRegistryCommand =
-        "docker run -d -p 5000:5000 --restart=always --name registry registry:2";
-    Runtime.getRuntime().exec(runRegistryCommand).waitFor();
-
-    String pullImageCommand = "docker pull busybox";
-    Runtime.getRuntime().exec(pullImageCommand).waitFor();
-
-    String tagImageCommand = "docker tag busybox localhost:5000/busybox";
-    Runtime.getRuntime().exec(tagImageCommand).waitFor();
-
-    String pushImageCommand = "docker push localhost:5000/busybox";
-    Runtime.getRuntime().exec(pushImageCommand).waitFor();
-  }
-
-  @AfterClass
-  public static void stopLocalRegistry() throws IOException, InterruptedException {
-    String stopRegistryCommand = "docker stop registry";
-    Runtime.getRuntime().exec(stopRegistryCommand).waitFor();
-
-    String removeRegistryContainerCommand = "docker rm -v registry";
-    Runtime.getRuntime().exec(removeRegistryContainerCommand).waitFor();
-  }
 
   @Test
   public void testPull() throws IOException, RegistryException, DigestException {

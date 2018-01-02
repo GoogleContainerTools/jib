@@ -21,37 +21,13 @@ import com.google.cloud.tools.crepecake.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.crepecake.image.json.V22ManifestTemplate;
 import java.io.IOException;
 import org.hamcrest.CoreMatchers;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 public class ManifestPullerIntegrationTest {
 
-  @BeforeClass
-  public static void startLocalRegistry() throws IOException, InterruptedException {
-    String runRegistryCommand =
-        "docker run -d -p 5000:5000 --restart=always --name registry registry:2";
-    Runtime.getRuntime().exec(runRegistryCommand).waitFor();
-
-    String pullImageCommand = "docker pull busybox";
-    Runtime.getRuntime().exec(pullImageCommand).waitFor();
-
-    String tagImageCommand = "docker tag busybox localhost:5000/busybox";
-    Runtime.getRuntime().exec(tagImageCommand).waitFor();
-
-    String pushImageCommand = "docker push localhost:5000/busybox";
-    Runtime.getRuntime().exec(pushImageCommand).waitFor();
-  }
-
-  @AfterClass
-  public static void stopLocalRegistry() throws IOException, InterruptedException {
-    String stopRegistryCommand = "docker stop registry";
-    Runtime.getRuntime().exec(stopRegistryCommand).waitFor();
-
-    String removeRegistryContainerCommand = "docker rm -v registry";
-    Runtime.getRuntime().exec(removeRegistryContainerCommand).waitFor();
-  }
+  @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
 
   @Test
   public void testPull_v21() throws IOException, RegistryException {
