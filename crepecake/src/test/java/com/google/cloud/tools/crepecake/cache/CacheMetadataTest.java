@@ -91,41 +91,41 @@ public class CacheMetadataTest {
   }
 
   @Test
-  public void testFilter_bySourceDirectories()
+  public void testFilter_bySourceFiles()
       throws LayerPropertyNotFoundException, DuplicateLayerException,
           CacheMetadataCorruptedException {
     List<CachedLayer> mockLayers =
         Stream.generate(CacheMetadataTest::mockCachedLayer).limit(5).collect(Collectors.toList());
 
-    LayerMetadata fakeExpectedSourceDirectoresClassesLayerMetadata =
+    LayerMetadata fakeExpectedSourceFilesClassesLayerMetadata =
         new LayerMetadata(
             CachedLayerType.CLASSES,
             Collections.emptyList(),
-            Arrays.asList("some/source/directory", "some/other/source/directory"),
+            Arrays.asList("some/source/file", "some/source/directory"),
             0);
-    LayerMetadata fakeExpectedSourceDirectoresResourcesLayerMetadata =
+    LayerMetadata fakeExpectedSourceFilesResourcesLayerMetadata =
         new LayerMetadata(
             CachedLayerType.RESOURCES,
             Collections.emptyList(),
-            Arrays.asList("some/source/directory", "some/other/source/directory"),
+            Arrays.asList("some/source/file", "some/source/directory"),
             0);
-    LayerMetadata fakeOtherSourceDirectoriesLayerMetadata =
+    LayerMetadata fakeOtherSourceFilesLayerMetadata =
         new LayerMetadata(
             CachedLayerType.CLASSES,
             Collections.emptyList(),
-            Collections.singletonList("not/the/same/source/directory"),
+            Collections.singletonList("not/the/same/source/file"),
             0);
 
     List<CachedLayerWithMetadata> cachedLayers =
         Arrays.asList(
-            new CachedLayerWithMetadata(mockLayers.get(0), fakeOtherSourceDirectoriesLayerMetadata),
+            new CachedLayerWithMetadata(mockLayers.get(0), fakeOtherSourceFilesLayerMetadata),
             new CachedLayerWithMetadata(
-                mockLayers.get(1), fakeExpectedSourceDirectoresResourcesLayerMetadata),
-            new CachedLayerWithMetadata(mockLayers.get(2), fakeOtherSourceDirectoriesLayerMetadata),
+                mockLayers.get(1), fakeExpectedSourceFilesResourcesLayerMetadata),
+            new CachedLayerWithMetadata(mockLayers.get(2), fakeOtherSourceFilesLayerMetadata),
             new CachedLayerWithMetadata(
-                mockLayers.get(3), fakeExpectedSourceDirectoresClassesLayerMetadata),
+                mockLayers.get(3), fakeExpectedSourceFilesClassesLayerMetadata),
             new CachedLayerWithMetadata(
-                mockLayers.get(4), fakeExpectedSourceDirectoresResourcesLayerMetadata));
+                mockLayers.get(4), fakeExpectedSourceFilesResourcesLayerMetadata));
 
     CacheMetadata cacheMetadata = new CacheMetadata();
     for (CachedLayerWithMetadata cachedLayer : cachedLayers) {
@@ -135,19 +135,17 @@ public class CacheMetadataTest {
     ImageLayers<CachedLayerWithMetadata> filteredLayers =
         cacheMetadata
             .filterLayers()
-            .bySourceDirectories(
+            .bySourceFiles(
                 new HashSet<>(
-                    Arrays.asList(
-                        new File("some/source/directory"),
-                        new File("some/other/source/directory"))))
+                    Arrays.asList(new File("some/source/file"), new File("some/source/directory"))))
             .filter();
 
     Assert.assertEquals(3, filteredLayers.size());
     Assert.assertEquals(
-        fakeExpectedSourceDirectoresResourcesLayerMetadata, filteredLayers.get(0).getMetadata());
+        fakeExpectedSourceFilesResourcesLayerMetadata, filteredLayers.get(0).getMetadata());
     Assert.assertEquals(
-        fakeExpectedSourceDirectoresClassesLayerMetadata, filteredLayers.get(1).getMetadata());
+        fakeExpectedSourceFilesClassesLayerMetadata, filteredLayers.get(1).getMetadata());
     Assert.assertEquals(
-        fakeExpectedSourceDirectoresResourcesLayerMetadata, filteredLayers.get(2).getMetadata());
+        fakeExpectedSourceFilesResourcesLayerMetadata, filteredLayers.get(2).getMetadata());
   }
 }

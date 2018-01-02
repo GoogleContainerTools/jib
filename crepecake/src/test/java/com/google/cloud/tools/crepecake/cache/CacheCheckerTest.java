@@ -95,24 +95,24 @@ public class CacheCheckerTest {
   }
 
   @Test
-  public void testAreSourceDirectoriesModified()
+  public void testAreSourceFilesModified()
       throws URISyntaxException, IOException, CacheMetadataCorruptedException {
     // The two last modified times to use. Must be in thousands as most file time granularity is in seconds.
     long olderLastModifiedTime = 1000;
     long newerLastModifiedTime = 2000;
 
     // Copies test files to a modifiable temporary folder.
-    Path resourceSourceDirectory = Paths.get(Resources.getResource("layer").toURI());
-    File testSourceDirectory = temporaryFolder.newFolder();
-    Files.walk(resourceSourceDirectory)
+    Path resourceSourceFiles = Paths.get(Resources.getResource("layer").toURI());
+    File testSourceFiles = temporaryFolder.newFolder();
+    Files.walk(resourceSourceFiles)
         .forEach(
             path -> {
               try {
-                if (path.equals(resourceSourceDirectory)) {
+                if (path.equals(resourceSourceFiles)) {
                   return;
                 }
                 Path newPath =
-                    testSourceDirectory.toPath().resolve(resourceSourceDirectory.relativize(path));
+                    testSourceFiles.toPath().resolve(resourceSourceFiles.relativize(path));
                 Files.copy(path, newPath);
               } catch (IOException ex) {
                 throw new RuntimeException(ex);
@@ -120,7 +120,7 @@ public class CacheCheckerTest {
             });
 
     // The files are in reverse order so that the subfiles are changed before the parent directories are.
-    Files.walk(testSourceDirectory.toPath())
+    Files.walk(testSourceFiles.toPath())
         .sorted(Comparator.reverseOrder())
         .map(Path::toFile)
         .forEach(
@@ -130,23 +130,23 @@ public class CacheCheckerTest {
               }
             });
 
-    // Sets the metadata source directory to the new temporary folder.
+    // Sets the metadata source file to the new temporary folder.
     ImageLayers<CachedLayerWithMetadata> cachedLayers =
         testCache.getMetadata().filterLayers().byType(CachedLayerType.CLASSES).filter();
     cachedLayers.forEach(
         cachedLayer ->
             cachedLayer
                 .getMetadata()
-                .setSourceDirectories(Collections.singletonList(testSourceDirectory.toString())));
+                .setSourceFiles(Collections.singletonList(testSourceFiles.toString())));
 
     CacheChecker cacheChecker = new CacheChecker(testCache);
 
     Assert.assertFalse(
-        cacheChecker.areSourceDirectoriesModified(
-            new HashSet<>(Collections.singletonList(testSourceDirectory))));
+        cacheChecker.areSourceFilesModified(
+            new HashSet<>(Collections.singletonList(testSourceFiles))));
 
     // Changes a file and checks that the change is detected.
-    if (!testSourceDirectory
+    if (!testSourceFiles
         .toPath()
         .resolve("a")
         .resolve("b")
@@ -156,12 +156,12 @@ public class CacheCheckerTest {
       throw new IOException("Could not set last modified time");
     }
     Assert.assertTrue(
-        cacheChecker.areSourceDirectoriesModified(
-            new HashSet<>(Collections.singletonList(testSourceDirectory))));
+        cacheChecker.areSourceFilesModified(
+            new HashSet<>(Collections.singletonList(testSourceFiles))));
 
     // Any non-cached directory should be deemed modified.
     Assert.assertTrue(
-        cacheChecker.areSourceDirectoriesModified(
-            new HashSet<>(Collections.singletonList(resourceSourceDirectory.toFile()))));
+        cacheChecker.areSourceFilesModified(
+            new HashSet<>(Collections.singletonList(resourceSourceFiles.toFile()))));
   }
 }

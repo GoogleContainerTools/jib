@@ -27,7 +27,7 @@
       },
       "existsOn": [],
       "properties": {
-        "sourceDirectories": ["some/source/directory"],
+        "sourceFiles": ["some/source/directory"],
         "lastModifiedTime": 1000
       }
     }

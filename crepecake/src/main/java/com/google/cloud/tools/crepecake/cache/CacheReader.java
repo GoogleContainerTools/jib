@@ -17,11 +17,11 @@ public class CacheReader {
    * Gets the file that stores the content BLOB for an application layer.
    *
    * @param layerType the type of layer
-   * @param sourceDirectories the source directories the layer must be built from
+   * @param sourceFiles the source files the layer must be built from
    * @return
    * @throws CacheMetadataCorruptedException
    */
-  public File getLayerFile(CachedLayerType layerType, Set<File> sourceDirectories)
+  public File getLayerFile(CachedLayerType layerType, Set<File> sourceFiles)
       throws CacheMetadataCorruptedException {
     switch (layerType) {
       case DEPENDENCIES:
@@ -29,11 +29,7 @@ public class CacheReader {
       case CLASSES:
         CacheMetadata cacheMetadata = cache.getMetadata();
         ImageLayers<CachedLayerWithMetadata> cachedLayers =
-            cacheMetadata
-                .filterLayers()
-                .byType(layerType)
-                .bySourceDirectories(sourceDirectories)
-                .filter();
+            cacheMetadata.filterLayers().byType(layerType).bySourceFiles(sourceFiles).filter();
 
         // Finds the newest cached layer for the layer type.
         long newestLastModifiedTime = 0;

@@ -44,10 +44,10 @@ public class CacheMetadataTranslator {
         // Gets the properties for a layer. Properties only exist for application layers.
         CacheMetadataLayerPropertiesObjectTemplate propertiesObjectTemplate =
             layerObjectTemplate.getProperties();
-        List<String> sourceDirectories = Collections.emptyList();
+        List<String> sourceFiles = Collections.emptyList();
         long lastModifiedTime = -1;
         if (propertiesObjectTemplate != null) {
-          sourceDirectories = propertiesObjectTemplate.getSourceDirectories();
+          sourceFiles = propertiesObjectTemplate.getSourceFiles();
           lastModifiedTime = propertiesObjectTemplate.getLastModifiedTime();
         }
 
@@ -56,7 +56,7 @@ public class CacheMetadataTranslator {
             new LayerMetadata(
                 layerObjectTemplate.getType(),
                 layerObjectTemplate.getExistsOn(),
-                sourceDirectories,
+                sourceFiles,
                 lastModifiedTime);
 
         CachedLayer cachedLayer =
@@ -98,7 +98,7 @@ public class CacheMetadataTranslator {
         case CLASSES:
           CacheMetadataLayerPropertiesObjectTemplate propertiesTemplate =
               new CacheMetadataLayerPropertiesObjectTemplate()
-                  .setSourceDirectories(layerMetadata.getSourceDirectories())
+                  .setSourceFiles(layerMetadata.getSourceFiles())
                   .setLastModifiedTime(layerMetadata.getLastModifiedTime());
           layerObjectTemplate.setProperties(propertiesTemplate);
           break;
