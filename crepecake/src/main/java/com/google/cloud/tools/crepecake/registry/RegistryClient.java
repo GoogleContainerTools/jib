@@ -30,7 +30,6 @@ import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
 import com.google.cloud.tools.crepecake.registry.json.ErrorEntryTemplate;
 import com.google.cloud.tools.crepecake.registry.json.ErrorResponseTemplate;
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
@@ -86,7 +85,8 @@ public class RegistryClient {
    * @param blobDigest the digest of the BLOB, used for existence-check
    * @param blob the BLOB to push
    */
-  public String pushBlob(DescriptorDigest blobDigest, Blob blob) throws IOException, RegistryException {
+  public String pushBlob(DescriptorDigest blobDigest, Blob blob)
+      throws IOException, RegistryException {
     BlobPusher blobPusher = new BlobPusher(blobDigest, blob);
 
     // POST /v2/<name>/blobs/uploads/?mount={blob.digest}

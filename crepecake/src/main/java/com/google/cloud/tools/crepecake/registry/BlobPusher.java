@@ -22,10 +22,9 @@ import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.http.Request;
 import com.google.cloud.tools.crepecake.http.Response;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
-
-import javax.annotation.Nullable;
 import java.net.HttpURLConnection;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /** Pushes an image's blob (layer or container configuration). */
 class BlobPusher {
@@ -33,12 +32,15 @@ class BlobPusher {
   private final DescriptorDigest blobDigest;
   private final Blob blob;
 
-  private class Initializer implements RegistryEndpointProvider {
+  private class Initializer implements RegistryEndpointProvider<String> {
 
     @Override
     public void buildRequest(Request.Builder builder) {}
 
-    /** @return a URL to continue pushing the BLOB to, or {@code null} if the BLOB already exists on the registry */
+    /**
+     * @return a URL to continue pushing the BLOB to, or {@code null} if the BLOB already exists on
+     *     the registry
+     */
     @Nullable
     @Override
     public String handleResponse(Response response) throws RegistryErrorException {
@@ -51,13 +53,15 @@ class BlobPusher {
           // Extracts and returns the 'Location' header.
           List<String> locationHeaders = response.getHeader("Location");
           if (locationHeaders.size() != 1) {
-            throw buildRegistryErrorException("Expected 1 'Location' header, but found " + locationHeaders.size());
+            throw buildRegistryErrorException(
+                "Expected 1 'Location' header, but found " + locationHeaders.size());
           }
 
           return response.getHeader("Location").get(0);
 
         default:
-          throw buildRegistryErrorException("Received unrecognized status code " + response.getStatusCode());
+          throw buildRegistryErrorException(
+              "Received unrecognized status code " + response.getStatusCode());
       }
     }
 
