@@ -49,8 +49,8 @@ public class CacheWriter {
 
     // Writes the UnwrittenLayer layer BLOB to a file to convert into a CachedLayer.
     try (CountingDigestOutputStream compressedDigestOutputStream =
-            new CountingDigestOutputStream(
-                new BufferedOutputStream(new FileOutputStream(tempLayerFile)))) {
+        new CountingDigestOutputStream(
+            new BufferedOutputStream(new FileOutputStream(tempLayerFile)))) {
       // Writes the layer with GZIP compression. The original bytes are captured as the layer's
       // diff ID and the bytes outputted from the GZIP compression are captured as the layer's
       // content descriptor.
