@@ -30,9 +30,6 @@ import java.util.zip.GZIPOutputStream;
 /** Writes {@link UnwrittenLayer}s to the cache. */
 public class CacheWriter {
 
-  private static final String TEMP_FILE_PREFIX = ".tmp.";
-  private static final String TEMP_FILE_SUFFIX = ".layer";
-
   private final Cache cache;
 
   public CacheWriter(Cache cache) {
@@ -42,9 +39,7 @@ public class CacheWriter {
   public CachedLayer writeLayer(UnwrittenLayer layer) throws IOException {
     // Writes to a temporary file first because the UnwrittenLayer needs to be written first to
     // obtain its digest.
-    File tempLayerFile =
-        Files.createTempFile(cache.getCacheDirectory(), TEMP_FILE_PREFIX, TEMP_FILE_SUFFIX)
-            .toFile();
+    File tempLayerFile = Files.createTempFile(cache.getCacheDirectory(), null, null).toFile();
     tempLayerFile.deleteOnExit();
 
     // Writes the UnwrittenLayer layer BLOB to a file to convert into a CachedLayer.

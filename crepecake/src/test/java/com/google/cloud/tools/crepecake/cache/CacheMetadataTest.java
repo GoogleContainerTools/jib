@@ -21,7 +21,6 @@ import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
 import com.google.cloud.tools.crepecake.image.ImageLayers;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
-import com.google.common.collect.ImmutableList;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
@@ -54,7 +53,8 @@ public class CacheMetadataTest {
     cacheMetadata.addLayer(testCachedLayerWithMetadata);
 
     Assert.assertEquals(
-        ImmutableList.of(testCachedLayerWithMetadata), cacheMetadata.getLayers().asList());
+        Collections.singletonList(testCachedLayerWithMetadata),
+        cacheMetadata.getLayers().getLayers());
   }
 
   @Test
@@ -85,7 +85,7 @@ public class CacheMetadataTest {
         cacheMetadata.filterLayers().byType(CachedLayerType.CLASSES).filter();
 
     Assert.assertEquals(2, filteredLayers.size());
-    for (CachedLayerWithMetadata cachedLayer : filteredLayers.asList()) {
+    for (CachedLayerWithMetadata cachedLayer : filteredLayers) {
       Assert.assertEquals(fakeClassesLayerMetadata, cachedLayer.getMetadata());
     }
   }
