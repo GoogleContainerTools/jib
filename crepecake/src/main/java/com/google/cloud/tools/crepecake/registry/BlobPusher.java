@@ -17,11 +17,14 @@
 package com.google.cloud.tools.crepecake.registry;
 
 import com.google.api.client.http.HttpMethods;
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.http.Request;
 import com.google.cloud.tools.crepecake.http.Response;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 
+import javax.annotation.Nullable;
+import java.net.HttpURLConnection;
 import java.util.List;
 
 /** Pushes an image's blob (layer or container configuration). */
@@ -35,16 +38,27 @@ class BlobPusher {
     @Override
     public void buildRequest(Request.Builder builder) {}
 
+    /** @return a URL to continue pushing the BLOB to, or {@code null} if the BLOB already exists on the registry */
+    @Nullable
     @Override
-    public String handleResponse(Response response) {
-      List<String> locationHeaders = response.getHeader("Location");
-      if (locationHeaders.size() != 1) {
-        RegistryErrorExceptionBuilder registryErrorExceptionBuilder =
-            // TODO: Qualify the action description
-            new RegistryErrorExceptionBuilder(getActionDescription("", ""));
-        registryErrorExceptionBuilder.addReason("Expected 1 'Location' header, but found " + locationHeaders.size());
+    public String handleResponse(Response response) throws RegistryErrorException {
+      switch (response.getStatusCode()) {
+        case HttpStatusCodes.STATUS_CODE_CREATED:
+          // The BLOB exists in the registry.
+          return null;
+
+        case HttpURLConnection.HTTP_ACCEPTED:
+          // Extracts and returns the 'Location' header.
+          List<String> locationHeaders = response.getHeader("Location");
+          if (locationHeaders.size() != 1) {
+            throw buildRegistryErrorException("Expected 1 'Location' header, but found " + locationHeaders.size());
+          }
+
+          return response.getHeader("Location").get(0);
+
+        default:
+          throw buildRegistryErrorException("Received unrecognized status code " + response.getStatusCode());
       }
-      return response.getHeader("Location").get(0);
     }
 
     @Override
@@ -59,7 +73,7 @@ class BlobPusher {
 
     @Override
     public String getActionDescription(String serverUrl, String imageName) {
-      return "push BLOB for " + serverUrl + "/" + imageName + " with digest " + blobDigest;
+      return BlobPusher.this.getActionDescription(serverUrl, imageName);
     }
   }
 
@@ -70,5 +84,17 @@ class BlobPusher {
 
   RegistryEndpointProvider initializer() {
     return new Initializer();
+  }
+
+  private RegistryErrorException buildRegistryErrorException(String reason) {
+    RegistryErrorExceptionBuilder registryErrorExceptionBuilder =
+        // TODO: Qualify the action description
+        new RegistryErrorExceptionBuilder(getActionDescription("", ""));
+    registryErrorExceptionBuilder.addReason(reason);
+    return registryErrorExceptionBuilder.build();
+  }
+
+  private String getActionDescription(String serverUrl, String imageName) {
+    return "push BLOB for " + serverUrl + "/" + imageName + " with digest " + blobDigest;
   }
 }

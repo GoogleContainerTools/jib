@@ -17,6 +17,7 @@
 package com.google.cloud.tools.crepecake.registry;
 
 import com.google.api.client.http.HttpResponseException;
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.http.Authorization;
 import com.google.cloud.tools.crepecake.http.Connection;
@@ -85,8 +86,11 @@ public class RegistryClient {
    * @param blobDigest the digest of the BLOB, used for existence-check
    * @param blob the BLOB to push
    */
-  public void pushBlob(DescriptorDigest blobDigest, Blob blob) {
+  public String pushBlob(DescriptorDigest blobDigest, Blob blob) throws IOException, RegistryException {
+    BlobPusher blobPusher = new BlobPusher(blobDigest, blob);
+
     // POST /v2/<name>/blobs/uploads/?mount={blob.digest}
+    return (String) callRegistryEndpoint(null, blobPusher.initializer());
 
     // PATCH <Location> with BLOB
 
@@ -125,9 +129,9 @@ public class RegistryClient {
 
     } catch (HttpResponseException ex) {
       switch (ex.getStatusCode()) {
-        case HttpURLConnection.HTTP_BAD_REQUEST:
-        case HttpURLConnection.HTTP_NOT_FOUND:
-        case HttpURLConnection.HTTP_BAD_METHOD:
+        case HttpStatusCodes.STATUS_CODE_BAD_REQUEST:
+        case HttpStatusCodes.STATUS_CODE_NOT_FOUND:
+        case HttpStatusCodes.STATUS_CODE_METHOD_NOT_ALLOWED:
           // The name or reference was invalid.
           ErrorResponseTemplate errorResponse =
               JsonTemplateMapper.readJson(ex.getContent(), ErrorResponseTemplate.class);
@@ -140,11 +144,11 @@ public class RegistryClient {
 
           throw registryErrorExceptionBuilder.build();
 
-        case HttpURLConnection.HTTP_UNAUTHORIZED:
-        case HttpURLConnection.HTTP_FORBIDDEN:
+        case HttpStatusCodes.STATUS_CODE_UNAUTHORIZED:
+        case HttpStatusCodes.STATUS_CODE_FORBIDDEN:
           throw new RegistryUnauthorizedException(ex);
 
-        case 307: // Temporary Redirect
+        case HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT: // Temporary Redirect
           return callRegistryEndpoint(
               new URL(ex.getHeaders().getLocation()), registryEndpointProvider);
 
