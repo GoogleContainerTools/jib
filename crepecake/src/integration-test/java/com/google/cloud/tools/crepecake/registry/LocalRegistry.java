@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.crepecake.registry;
 
+import java.io.IOException;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.TestRule;
 
@@ -55,7 +56,7 @@ class LocalRegistry extends ExternalResource {
       String removeRegistryContainerCommand = "docker rm -v registry";
       Runtime.getRuntime().exec(removeRegistryContainerCommand).waitFor();
 
-    } catch (Exception ex) {
+    } catch (InterruptedException | IOException ex) {
       throw new RuntimeException("Could not stop local registry fully", ex);
     }
   }

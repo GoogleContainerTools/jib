@@ -103,8 +103,8 @@ public class RegistryClient {
         case HttpURLConnection.HTTP_BAD_REQUEST:
         case HttpURLConnection.HTTP_NOT_FOUND:
           // The name or reference was invalid.
-          ErrorResponseTemplate errorResponse;
-          errorResponse = JsonTemplateMapper.readJson(ex.getContent(), ErrorResponseTemplate.class);
+          ErrorResponseTemplate errorResponse =
+              JsonTemplateMapper.readJson(ex.getContent(), ErrorResponseTemplate.class);
           String method = registryEndpointProvider.getActionDescription(serverUrl, imageName);
           RegistryErrorExceptionBuilder registryErrorExceptionBuilder =
               new RegistryErrorExceptionBuilder(method, ex);
