@@ -24,6 +24,7 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.zip.GZIPOutputStream;
 
 /** Writes {@link UnwrittenLayer}s to the cache. */
@@ -39,21 +40,24 @@ public class CacheWriter {
   }
 
   public CachedLayer writeLayer(UnwrittenLayer layer) throws IOException {
-    // Writes to a temporary file first because the UnwrittenLayer needs to be written first to obtain its digest.
+    // Writes to a temporary file first because the UnwrittenLayer needs to be written first to
+    // obtain its digest.
     File tempLayerFile =
-        File.createTempFile(TEMP_FILE_PREFIX, TEMP_FILE_SUFFIX, cache.getCacheDirectory().toFile());
+        Files.createTempFile(cache.getCacheDirectory(), TEMP_FILE_PREFIX, TEMP_FILE_SUFFIX)
+            .toFile();
     tempLayerFile.deleteOnExit();
 
     // Writes the UnwrittenLayer layer BLOB to a file to convert into a CachedLayer.
     try (CountingDigestOutputStream compressedDigestOutputStream =
         new CountingDigestOutputStream(
             new BufferedOutputStream(new FileOutputStream(tempLayerFile)))) {
-      // Writes the layer with GZIP compression. The original bytes are captured as the layer's diff ID and the
-      // bytes outputted from the GZIP compression are captured as the layer's content descriptor.
-      DescriptorDigest diffId;
-      try (GZIPOutputStream compressorStream = new GZIPOutputStream(compressedDigestOutputStream)) {
-        diffId = layer.getBlob().writeTo(compressorStream).getDigest();
-      }
+      // Writes the layer with GZIP compression. The original bytes are captured as the layer's
+      // diff ID and the bytes outputted from the GZIP compression are captured as the layer's
+      // content descriptor.
+      GZIPOutputStream compressorStream = new GZIPOutputStream(compressedDigestOutputStream);
+      DescriptorDigest diffId = layer.getBlob().writeTo(compressorStream).getDigest();
+      compressorStream.close();
+
       BlobDescriptor compressedBlobDescriptor = compressedDigestOutputStream.toBlobDescriptor();
 
       // Renames the temporary layer file to the correct filename.

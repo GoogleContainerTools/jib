@@ -53,11 +53,7 @@ public class CacheMetadataTranslator {
 
         // Constructs the cache metadata layer from a cached layer and layer metadata.
         LayerMetadata layerMetadata =
-            new LayerMetadata(
-                layerObjectTemplate.getType(),
-                layerObjectTemplate.getExistsOn(),
-                sourceFiles,
-                lastModifiedTime);
+            new LayerMetadata(layerObjectTemplate.getType(), sourceFiles, lastModifiedTime);
 
         CachedLayer cachedLayer =
             new CachedLayer(
@@ -89,8 +85,7 @@ public class CacheMetadataTranslator {
               .setType(layerMetadata.getType())
               .setSize(cachedLayerWithMetadata.getBlobDescriptor().getSize())
               .setDigest(cachedLayerWithMetadata.getBlobDescriptor().getDigest())
-              .setDiffId(cachedLayerWithMetadata.getDiffId())
-              .setExistsOn(layerMetadata.getExistsOn());
+              .setDiffId(cachedLayerWithMetadata.getDiffId());
 
       switch (layerMetadata.getType()) {
         case DEPENDENCIES:

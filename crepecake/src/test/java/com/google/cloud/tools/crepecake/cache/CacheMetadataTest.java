@@ -65,9 +65,9 @@ public class CacheMetadataTest {
         Stream.generate(CacheMetadataTest::mockCachedLayer).limit(4).collect(Collectors.toList());
 
     LayerMetadata fakeBaseLayerMetadata =
-        new LayerMetadata(CachedLayerType.BASE, Collections.emptyList(), null, -1);
+        new LayerMetadata(CachedLayerType.BASE, Collections.emptyList(), -1);
     LayerMetadata fakeClassesLayerMetadata =
-        new LayerMetadata(CachedLayerType.CLASSES, Collections.emptyList(), null, -1);
+        new LayerMetadata(CachedLayerType.CLASSES, Collections.emptyList(), -1);
 
     List<CachedLayerWithMetadata> cachedLayers =
         Arrays.asList(
@@ -99,22 +99,15 @@ public class CacheMetadataTest {
 
     LayerMetadata fakeExpectedSourceFilesClassesLayerMetadata =
         new LayerMetadata(
-            CachedLayerType.CLASSES,
-            Collections.emptyList(),
-            Arrays.asList("some/source/file", "some/source/directory"),
-            0);
+            CachedLayerType.CLASSES, Arrays.asList("some/source/file", "some/source/directory"), 0);
     LayerMetadata fakeExpectedSourceFilesResourcesLayerMetadata =
         new LayerMetadata(
             CachedLayerType.RESOURCES,
-            Collections.emptyList(),
             Arrays.asList("some/source/file", "some/source/directory"),
             0);
     LayerMetadata fakeOtherSourceFilesLayerMetadata =
         new LayerMetadata(
-            CachedLayerType.CLASSES,
-            Collections.emptyList(),
-            Collections.singletonList("not/the/same/source/file"),
-            0);
+            CachedLayerType.CLASSES, Collections.singletonList("not/the/same/source/file"), 0);
 
     List<CachedLayerWithMetadata> cachedLayers =
         Arrays.asList(

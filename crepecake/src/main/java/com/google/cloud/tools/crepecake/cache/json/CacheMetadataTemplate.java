@@ -34,8 +34,7 @@ import java.util.List;
  *         "size": 631,
  *         "digest": "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
  *         "diffId": "sha256:b56ae66c29370df48e7377c8f9baa744a3958058a766793f821dadcb144a4647"
- *       },
- *       "existsOn": ["gcr.io/my-project/my-image"]
+ *       }
  *     },
  *     ...
  *     {
@@ -44,8 +43,7 @@ import java.util.List;
  *         "size": 223,
  *         "digest": "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad",
  *         "diffId": "sha256:a3f3e99c29370df48e7377c8f9baa744a3958058a766793f821dadcb144a8372"
- *       },
- *       "existsOn": ["gcr.io/my-project/my-image"],
+ *       }
  *       "properties": {
  *         "sourceFiles": ["build/classes"],
  *         "lastModifiedTime": 255073580723571
