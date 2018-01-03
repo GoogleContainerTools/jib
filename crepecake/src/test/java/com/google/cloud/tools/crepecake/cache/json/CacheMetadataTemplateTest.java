@@ -60,8 +60,7 @@ public class CacheMetadataTemplateTest {
     // Adds an application layer.
     CacheMetadataLayerPropertiesObjectTemplate propertiesTemplate =
         new CacheMetadataLayerPropertiesObjectTemplate()
-            .setSourceDirectories(
-                Collections.singletonList(Paths.get("some/source/path").toString()))
+            .setSourceFiles(Collections.singletonList(Paths.get("some/source/path").toString()))
             .setLastModifiedTime(255073580723571L);
     CacheMetadataLayerObjectTemplate classesLayerTemplate =
         new CacheMetadataLayerObjectTemplate()
@@ -126,7 +125,7 @@ public class CacheMetadataTemplateTest {
     Assert.assertNotNull(classesLayerTemplate.getProperties());
     Assert.assertEquals(
         Collections.singletonList(Paths.get("some/source/path").toString()),
-        classesLayerTemplate.getProperties().getSourceDirectories());
+        classesLayerTemplate.getProperties().getSourceFiles());
     Assert.assertEquals(
         255073580723571L, classesLayerTemplate.getProperties().getLastModifiedTime());
   }
