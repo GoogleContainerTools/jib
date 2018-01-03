@@ -37,7 +37,7 @@ public class CacheTest {
     Path cacheDirectory = temporaryCacheDirectory.newFolder().toPath();
 
     Cache cache = Cache.init(cacheDirectory);
-    Assert.assertEquals(0, cache.getMetadata().getLayers().asList().size());
+    Assert.assertEquals(0, cache.getMetadata().getLayers().getLayers().size());
   }
 
   @Test
@@ -63,6 +63,6 @@ public class CacheTest {
     Files.copy(metadataJsonPath, cacheDirectory.resolve(CacheFiles.METADATA_FILENAME));
 
     Cache cache = Cache.init(cacheDirectory);
-    Assert.assertEquals(2, cache.getMetadata().getLayers().asList().size());
+    Assert.assertEquals(2, cache.getMetadata().getLayers().getLayers().size());
   }
 }

@@ -49,6 +49,6 @@ public class CacheMetadataTest {
     CacheMetadata cacheMetadata = new CacheMetadata();
     cacheMetadata.addLayer(mockLayer);
 
-    Assert.assertThat(cacheMetadata.getLayers().asList(), CoreMatchers.hasItem(mockLayer));
+    Assert.assertThat(cacheMetadata.getLayers().getLayers(), CoreMatchers.hasItem(mockLayer));
   }
 }

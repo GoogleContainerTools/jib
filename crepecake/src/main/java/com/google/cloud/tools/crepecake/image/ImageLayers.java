@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.crepecake.image;
 
-import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -31,9 +31,9 @@ public class ImageLayers<T extends Layer> {
   /** Keeps track of the layers already added. */
   private final Set<DescriptorDigest> layerDigests = new HashSet<>();
 
-  /** Returns an immutable copy of the image layers. */
-  public ImmutableList<T> asList() {
-    return ImmutableList.copyOf(layers);
+  /** Returns a read-only view of the image layers. */
+  public List<T> getLayers() {
+    return Collections.unmodifiableList(layers);
   }
 
   /**
