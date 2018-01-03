@@ -26,23 +26,22 @@ import java.util.List;
  */
 public class CacheMetadataLayerPropertiesObjectTemplate extends JsonTemplate {
 
-  /** The paths to the source directories that the layer was constructed from. */
-  private List<String> sourceDirectories = new ArrayList<>();
+  /** The paths to the source files that the layer was constructed from. */
+  private List<String> sourceFiles = new ArrayList<>();
 
   /** The last time the layer was constructed. */
   private long lastModifiedTime;
 
-  public List<String> getSourceDirectories() {
-    return sourceDirectories;
+  public List<String> getSourceFiles() {
+    return sourceFiles;
   }
 
   public long getLastModifiedTime() {
     return lastModifiedTime;
   }
 
-  public CacheMetadataLayerPropertiesObjectTemplate setSourceDirectories(
-      List<String> sourceDirectories) {
-    this.sourceDirectories = sourceDirectories;
+  public CacheMetadataLayerPropertiesObjectTemplate setSourceFiles(List<String> sourceFiles) {
+    this.sourceFiles = sourceFiles;
     return this;
   }
 

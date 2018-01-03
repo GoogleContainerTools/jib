@@ -24,15 +24,15 @@ class LayerMetadata {
   /** The type of layer. */
   private final CachedLayerType type;
 
-  /** The paths to the source directories that the layer was constructed from. */
-  private List<String> sourceDirectories;
+  /** The paths to the source files that the layer was constructed from. */
+  private List<String> sourceFiles;
 
   /** The last time the layer was constructed, or negative if unknown. */
   private long lastModifiedTime;
 
-  LayerMetadata(CachedLayerType type, List<String> sourceDirectories, long lastModifiedTime) {
+  LayerMetadata(CachedLayerType type, List<String> sourceFiles, long lastModifiedTime) {
     this.type = type;
-    this.sourceDirectories = sourceDirectories;
+    this.sourceFiles = sourceFiles;
     this.lastModifiedTime = lastModifiedTime;
   }
 
@@ -40,8 +40,8 @@ class LayerMetadata {
     return type;
   }
 
-  List<String> getSourceDirectories() {
-    return sourceDirectories;
+  List<String> getSourceFiles() {
+    return sourceFiles;
   }
 
   public long getLastModifiedTime() {

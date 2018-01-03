@@ -50,7 +50,7 @@ public class CacheMetadataTranslatorTest {
   private DescriptorDigest baseLayerDiffId;
   private BlobDescriptor classesLayerBlobDescriptor;
   private DescriptorDigest classesLayerDiffId;
-  private List<String> classesLayerSourceDirectories;
+  private List<String> classesLayerSourceFiles;
   private long classesLayerLastModifiedTime;
 
   @Before
@@ -71,8 +71,7 @@ public class CacheMetadataTranslatorTest {
     classesLayerDiffId =
         DescriptorDigest.fromDigest(
             "sha256:a3f3e99c29370df48e7377c8f9baa744a3958058a766793f821dadcb144a8372");
-    classesLayerSourceDirectories =
-        Collections.singletonList(Paths.get("some/source/path").toString());
+    classesLayerSourceFiles = Collections.singletonList(Paths.get("some/source/path").toString());
     classesLayerLastModifiedTime = 255073580723571L;
   }
 
@@ -109,8 +108,7 @@ public class CacheMetadataTranslatorTest {
         classesLayer.getContentFile());
     Assert.assertEquals(classesLayerBlobDescriptor, classesLayer.getBlobDescriptor());
     Assert.assertEquals(classesLayerDiffId, classesLayer.getDiffId());
-    Assert.assertEquals(
-        classesLayerSourceDirectories, classesLayer.getMetadata().getSourceDirectories());
+    Assert.assertEquals(classesLayerSourceFiles, classesLayer.getMetadata().getSourceFiles());
     Assert.assertEquals(
         classesLayerLastModifiedTime, classesLayer.getMetadata().getLastModifiedTime());
   }
@@ -137,7 +135,7 @@ public class CacheMetadataTranslatorTest {
         new CachedLayer(mockFile, classesLayerBlobDescriptor, classesLayerDiffId);
     LayerMetadata classesLayerMetadata =
         new LayerMetadata(
-            CachedLayerType.CLASSES, classesLayerSourceDirectories, classesLayerLastModifiedTime);
+            CachedLayerType.CLASSES, classesLayerSourceFiles, classesLayerLastModifiedTime);
     CachedLayerWithMetadata classesLayer =
         new CachedLayerWithMetadata(classesCachedLayer, classesLayerMetadata);
 
