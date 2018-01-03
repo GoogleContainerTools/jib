@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.crepecake.cache;
 
-import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
 import com.google.cloud.tools.crepecake.blob.Blobs;
 import com.google.cloud.tools.crepecake.hash.CountingDigestOutputStream;
@@ -68,7 +67,7 @@ public class CacheWriterTest {
     try (GZIPOutputStream compressorStream = new GZIPOutputStream(compressedDigestOutputStream)) {
       uncompressedDigestOutputStream = new CountingDigestOutputStream(compressorStream);
       byte[] expectedBlobABytes = expectedBlobAString.getBytes(StandardCharsets.UTF_8);
-      uncompressedDigestOutputStream.write(expectedBlobABytes, 0, expectedBlobABytes.length);
+      uncompressedDigestOutputStream.write(expectedBlobABytes);
     }
 
     BlobDescriptor expectedBlobADescriptor = compressedDigestOutputStream.toBlobDescriptor();
@@ -78,10 +77,7 @@ public class CacheWriterTest {
     // Writes blobA as a layer to the cache.
     CacheWriter cacheWriter = new CacheWriter(testCache);
 
-    Blob fileBlob = Blobs.from(blobA);
-    Blob hashingWriterBlob = Blobs.from(fileBlob::writeTo);
-
-    UnwrittenLayer unwrittenLayer = new UnwrittenLayer(hashingWriterBlob);
+    UnwrittenLayer unwrittenLayer = new UnwrittenLayer(Blobs.from(blobA));
 
     CachedLayer cachedLayer = cacheWriter.writeLayer(unwrittenLayer);
 

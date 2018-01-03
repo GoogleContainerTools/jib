@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.crepecake.blob;
 
+import com.google.cloud.tools.crepecake.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.common.io.ByteStreams;
 import java.io.IOException;
@@ -37,9 +38,11 @@ public class BlobDescriptor {
    */
   static BlobDescriptor fromPipe(InputStream inputStream, OutputStream outputStream)
       throws IOException {
-    BlobDescriptor blobDescriptor = new BlobDescriptor(ByteStreams.copy(inputStream, outputStream));
-    outputStream.flush();
-    return blobDescriptor;
+    CountingDigestOutputStream countingDigestOutputStream =
+        new CountingDigestOutputStream(outputStream);
+    ByteStreams.copy(inputStream, countingDigestOutputStream);
+    countingDigestOutputStream.flush();
+    return countingDigestOutputStream.toBlobDescriptor();
   }
 
   public BlobDescriptor(long size, DescriptorDigest digest) {
