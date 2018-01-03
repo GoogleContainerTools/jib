@@ -20,8 +20,6 @@ import com.google.cloud.tools.crepecake.cache.CachedLayerType;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.image.Layer;
 import com.google.cloud.tools.crepecake.json.JsonTemplate;
-import java.util.ArrayList;
-import java.util.List;
 import javax.annotation.Nullable;
 
 /**
@@ -37,12 +35,6 @@ public class CacheMetadataLayerObjectTemplate extends JsonTemplate {
 
   /** The reference to the layer. */
   private final ReferenceObject reference = new ReferenceObject();
-
-  /**
-   * A list of image tags where the layer should exist at (i.e. the layer was pushed to the
-   * repository for that image).
-   */
-  private List<String> existsOn = new ArrayList<>();
 
   /** Additional properties for the layer. */
   @Nullable private CacheMetadataLayerPropertiesObjectTemplate properties;
@@ -75,10 +67,6 @@ public class CacheMetadataLayerObjectTemplate extends JsonTemplate {
     return reference.diffId;
   }
 
-  public List<String> getExistsOn() {
-    return existsOn;
-  }
-
   public CacheMetadataLayerPropertiesObjectTemplate getProperties() {
     return properties;
   }
@@ -100,11 +88,6 @@ public class CacheMetadataLayerObjectTemplate extends JsonTemplate {
 
   public CacheMetadataLayerObjectTemplate setDiffId(DescriptorDigest diffId) {
     reference.diffId = diffId;
-    return this;
-  }
-
-  public CacheMetadataLayerObjectTemplate setExistsOn(List<String> existsOn) {
-    this.existsOn = existsOn;
     return this;
   }
 

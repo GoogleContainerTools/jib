@@ -72,7 +72,6 @@ public class CacheMetadataTemplateTest {
             .setDiffId(
                 DescriptorDigest.fromDigest(
                     "sha256:a3f3e99c29370df48e7377c8f9baa744a3958058a766793f821dadcb144a8372"))
-            .setExistsOn(Collections.singletonList("some/image/tag"))
             .setProperties(propertiesTemplate);
 
     cacheMetadataTemplate.addLayer(baseLayerTemplate).addLayer(classesLayerTemplate);
@@ -109,7 +108,6 @@ public class CacheMetadataTemplateTest {
         DescriptorDigest.fromDigest(
             "sha256:b56ae66c29370df48e7377c8f9baa744a3958058a766793f821dadcb144a4647"),
         baseLayerTemplate.getDiffId());
-    Assert.assertEquals(0, baseLayerTemplate.getExistsOn().size());
     Assert.assertNull(baseLayerTemplate.getProperties());
 
     // Checks the second layer is correct.
@@ -124,8 +122,6 @@ public class CacheMetadataTemplateTest {
         DescriptorDigest.fromDigest(
             "sha256:a3f3e99c29370df48e7377c8f9baa744a3958058a766793f821dadcb144a8372"),
         classesLayerTemplate.getDiffId());
-    Assert.assertEquals(
-        Collections.singletonList("some/image/tag"), classesLayerTemplate.getExistsOn());
     Assert.assertNotNull(classesLayerTemplate.getProperties());
     Assert.assertEquals(
         Collections.singletonList(Paths.get("some/source/path").toString()),

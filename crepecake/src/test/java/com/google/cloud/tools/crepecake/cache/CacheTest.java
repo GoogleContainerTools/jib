@@ -19,6 +19,7 @@ package com.google.cloud.tools.crepecake.cache;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.junit.Assert;
@@ -37,6 +38,19 @@ public class CacheTest {
 
     Cache cache = Cache.init(cacheDirectory);
     Assert.assertEquals(0, cache.getMetadata().getLayers().asList().size());
+  }
+
+  @Test
+  public void testInit_notDirectory() throws CacheMetadataCorruptedException, IOException {
+    Path tempFile = temporaryCacheDirectory.newFile().toPath();
+
+    try {
+      Cache.init(tempFile);
+      Assert.fail("Cache should not be able to initialize on non-directory");
+
+    } catch (NotDirectoryException ex) {
+      Assert.assertEquals("The cache can only write to a directory", ex.getMessage());
+    }
   }
 
   @Test

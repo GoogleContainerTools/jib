@@ -24,35 +24,20 @@ class LayerMetadata {
   /** The type of layer. */
   private final CachedLayerType type;
 
-  /**
-   * A list of image tags where the layer should exist at (i.e. the layer was pushed to the
-   * repository for that image).
-   */
-  private final List<String> existsOn;
-
   /** The paths to the source files that the layer was constructed from. */
   private List<String> sourceFiles;
 
   /** The last time the layer was constructed, or negative if unknown. */
   private long lastModifiedTime;
 
-  LayerMetadata(
-      CachedLayerType type,
-      List<String> existsOn,
-      List<String> sourceFiles,
-      long lastModifiedTime) {
+  LayerMetadata(CachedLayerType type, List<String> sourceFiles, long lastModifiedTime) {
     this.type = type;
-    this.existsOn = existsOn;
     this.sourceFiles = sourceFiles;
     this.lastModifiedTime = lastModifiedTime;
   }
 
   CachedLayerType getType() {
     return type;
-  }
-
-  List<String> getExistsOn() {
-    return existsOn;
   }
 
   List<String> getSourceFiles() {
