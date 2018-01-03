@@ -17,8 +17,8 @@
 package com.google.cloud.tools.crepecake.registry.json;
 
 import com.google.cloud.tools.crepecake.json.JsonTemplate;
-import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -42,7 +42,7 @@ public class ErrorResponseTemplate extends JsonTemplate {
 
   private final List<ErrorEntryTemplate> errors = new ArrayList<>();
 
-  public ImmutableList<ErrorEntryTemplate> getErrors() {
-    return ImmutableList.copyOf(errors);
+  public List<ErrorEntryTemplate> getErrors() {
+    return Collections.unmodifiableList(errors);
   }
 }
