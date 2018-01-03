@@ -19,11 +19,15 @@ package com.google.cloud.tools.crepecake.registry;
 import com.google.cloud.tools.crepecake.http.Response;
 import java.io.IOException;
 
-/** Provides implementations for a registry endpoint. */
-interface RegistryEndpointProvider {
+/**
+ * Provides implementations for a registry endpoint.
+ *
+ * @param <T> the type returned from handling the endpoint response
+ */
+interface RegistryEndpointProvider<T> {
 
   /** Handles the response specific to the registry action. */
-  Object handleResponse(Response response) throws IOException, RegistryException;
+  T handleResponse(Response response) throws IOException, RegistryException;
 
   /**
    * @return the suffix for the registry endpoint after the namespace (for example, {@code

@@ -28,7 +28,7 @@ import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
 import java.io.IOException;
 
 /** Pulls an image's manifest. */
-class ManifestPuller implements RegistryEndpointProvider {
+class ManifestPuller implements RegistryEndpointProvider<ManifestTemplate> {
 
   private final String imageTag;
 

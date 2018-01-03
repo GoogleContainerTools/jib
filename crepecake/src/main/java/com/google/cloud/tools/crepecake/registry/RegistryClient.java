@@ -53,7 +53,7 @@ public class RegistryClient {
   /** Pulls the image manifest for a specific tag. */
   public ManifestTemplate pullManifest(String imageTag) throws IOException, RegistryException {
     ManifestPuller manifestPuller = new ManifestPuller(imageTag);
-    return (ManifestTemplate) callRegistryEndpoint(null, manifestPuller);
+    return callRegistryEndpoint(null, manifestPuller);
   }
 
   /**
@@ -67,7 +67,7 @@ public class RegistryClient {
   public Blob pullBlob(DescriptorDigest blobDigest, Path destPath)
       throws RegistryException, IOException {
     BlobPuller blobPuller = new BlobPuller(blobDigest, destPath);
-    return (Blob) callRegistryEndpoint(null, blobPuller);
+    return callRegistryEndpoint(null, blobPuller);
   }
 
   private URL getApiRoute(String routeSuffix) throws MalformedURLException {
@@ -82,8 +82,8 @@ public class RegistryClient {
    *     registryEndpointProvider}
    * @param registryEndpointProvider the {@link RegistryEndpointProvider} to the endpoint
    */
-  private Object callRegistryEndpoint(
-      @Nullable URL url, RegistryEndpointProvider registryEndpointProvider)
+  private <T> T callRegistryEndpoint(
+      @Nullable URL url, RegistryEndpointProvider<T> registryEndpointProvider)
       throws IOException, RegistryException {
     if (url == null) {
       url = getApiRoute(registryEndpointProvider.getApiRouteSuffix());
