@@ -39,7 +39,8 @@ public class CacheWriter {
   }
 
   public CachedLayer writeLayer(UnwrittenLayer layer) throws IOException {
-    // Writes to a temporary file first because the UnwrittenLayer needs to be written first to obtain its digest.
+    // Writes to a temporary file first because the UnwrittenLayer needs to be written first to
+    // obtain its digest.
     File tempLayerFile =
         File.createTempFile(TEMP_FILE_PREFIX, TEMP_FILE_SUFFIX, cache.getCacheDirectory().toFile());
     tempLayerFile.deleteOnExit();
@@ -48,8 +49,9 @@ public class CacheWriter {
     try (CountingDigestOutputStream compressedDigestOutputStream =
         new CountingDigestOutputStream(
             new BufferedOutputStream(new FileOutputStream(tempLayerFile)))) {
-      // Writes the layer with GZIP compression. The original bytes are captured as the layer's diff ID and the
-      // bytes outputted from the GZIP compression are captured as the layer's content descriptor.
+      // Writes the layer with GZIP compression. The original bytes are captured as the layer's
+      // diff ID and the bytes outputted from the GZIP compression are captured as the layer's
+      // content descriptor.
       DescriptorDigest diffId;
       try (GZIPOutputStream compressorStream = new GZIPOutputStream(compressedDigestOutputStream)) {
         diffId = layer.getBlob().writeTo(compressorStream).getDigest();

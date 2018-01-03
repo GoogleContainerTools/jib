@@ -46,7 +46,7 @@ public class CacheWriterTest {
 
   @Rule public TemporaryFolder temporaryCacheDirectory = new TemporaryFolder();
 
-  private static Cache testCache;
+  private Cache testCache;
 
   @Before
   public void setUp() throws CacheMetadataCorruptedException, IOException {

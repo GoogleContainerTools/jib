@@ -43,7 +43,6 @@ class Cache {
     if (!Files.isDirectory(cacheDirectory)) {
       throw new NotDirectoryException("The cache can only write to a directory");
     }
-
     CacheMetadata cacheMetadata = loadCacheMetadata(cacheDirectory);
 
     return new Cache(cacheDirectory, cacheMetadata);
