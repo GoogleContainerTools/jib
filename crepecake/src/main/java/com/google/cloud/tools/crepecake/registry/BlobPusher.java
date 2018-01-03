@@ -50,14 +50,7 @@ class BlobPusher {
           return null;
 
         case HttpURLConnection.HTTP_ACCEPTED:
-          // Extracts and returns the 'Location' header.
-          List<String> locationHeaders = response.getHeader("Location");
-          if (locationHeaders.size() != 1) {
-            throw buildRegistryErrorException(
-                "Expected 1 'Location' header, but found " + locationHeaders.size());
-          }
-
-          return response.getHeader("Location").get(0);
+          return extractLocationHeader(response);
 
         default:
           throw buildRegistryErrorException(
@@ -81,13 +74,81 @@ class BlobPusher {
     }
   }
 
+  private class Writer implements RegistryEndpointProvider<String> {
+
+    @Override
+    public void buildRequest(Request.Builder builder) {}
+
+    /**
+     * @return a URL to continue pushing the BLOB to, or {@code null} if the BLOB already exists on
+     *     the registry
+     */
+    @Override
+    public String handleResponse(Response response) throws RegistryException {
+      // TODO: Handle 204 No Content
+      return extractLocationHeader(response);
+    }
+
+    @Override
+    public String getApiRouteSuffix() {
+      return null;
+    }
+
+    @Override
+    public String getHttpMethod() {
+      return HttpMethods.PATCH;
+    }
+
+    @Override
+    public String getActionDescription(String serverUrl, String imageName) {
+      return BlobPusher.this.getActionDescription(serverUrl, imageName);
+    }
+  }
+
+  private class Committer implements RegistryEndpointProvider<Void> {
+
+    @Override
+    public void buildRequest(Request.Builder builder) {}
+
+    @Override
+    public Void handleResponse(Response response) {
+      return null;
+    }
+
+    @Override
+    public String getApiRouteSuffix() {
+      return null;
+    }
+
+    @Override
+    public String getHttpMethod() {
+      return null;
+    }
+
+    @Override
+    public String getActionDescription(String serverUrl, String imageName) {
+      return null;
+    }
+  }
+
   BlobPusher(DescriptorDigest blobDigest, Blob blob) {
     this.blobDigest = blobDigest;
     this.blob = blob;
   }
 
+  /** */
   RegistryEndpointProvider initializer() {
     return new Initializer();
+  }
+
+  /** */
+  RegistryEndpointProvider writer() {
+    return new Writer();
+  }
+
+  /** */
+  RegistryEndpointProvider committer() {
+    return new Committer();
   }
 
   private RegistryErrorException buildRegistryErrorException(String reason) {
@@ -100,5 +161,16 @@ class BlobPusher {
 
   private String getActionDescription(String serverUrl, String imageName) {
     return "push BLOB for " + serverUrl + "/" + imageName + " with digest " + blobDigest;
+  }
+
+  private String extractLocationHeader(Response response) throws RegistryErrorException {
+    // Extracts and returns the 'Location' header.
+    List<String> locationHeaders = response.getHeader("Location");
+    if (locationHeaders.size() != 1) {
+      throw buildRegistryErrorException(
+          "Expected 1 'Location' header, but found " + locationHeaders.size());
+    }
+
+    return locationHeaders.get(0);
   }
 }
