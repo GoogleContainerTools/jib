@@ -16,14 +16,12 @@
 
 package com.google.cloud.tools.crepecake.registry;
 
-import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.HttpResponseException;
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.crepecake.image.json.ManifestTemplate;
 import com.google.cloud.tools.crepecake.image.json.V22ManifestTemplate;
 import java.io.IOException;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
-import java.util.logging.Logger;
+import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -38,6 +36,16 @@ public class ManifestPusherIntegrationTest {
     ManifestTemplate manifestTemplate = registryClient.pullManifest("latest");
 
     registryClient = new RegistryClient(null, "localhost:5000", "busybox");
-    registryClient.pushManifest((V22ManifestTemplate) manifestTemplate, "latest");
+    try {
+      registryClient.pushManifest((V22ManifestTemplate) manifestTemplate, "latest");
+      Assert.fail("Pushing manifest without its BLOBs should fail");
+
+    } catch (RegistryErrorException ex) {
+      HttpResponseException httpResponseException = (HttpResponseException) ex.getCause();
+      Assert.assertEquals(
+          HttpStatusCodes.STATUS_CODE_BAD_REQUEST, httpResponseException.getStatusCode());
+    }
   }
+
+  // TODO: Add test to push valid manifest after BLOB-pushing is implemented
 }
