@@ -31,7 +31,7 @@ import java.util.List;
 
 // TODO: Add translation of container configuration config.
 /** Translates {@link V21ManifestTemplate} and {@link V22ManifestTemplate} into {@link Image}. */
-public abstract class JsonToImageTranslator {
+public class JsonToImageTranslator {
 
   /** Translates {@link V21ManifestTemplate} to {@link Image}. */
   public static Image toImage(V21ManifestTemplate manifestTemplate)
@@ -86,4 +86,6 @@ public abstract class JsonToImageTranslator {
 
     return image;
   }
+
+  private JsonToImageTranslator() {}
 }
