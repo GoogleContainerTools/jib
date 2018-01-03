@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.crepecake.image;
 
-import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /** Represents an image. */
@@ -32,8 +32,8 @@ public class Image {
   /** Initial command to run when running the image. */
   private List<String> entrypoint;
 
-  public ImmutableList<String> getEnvironment() {
-    return ImmutableList.copyOf(environment);
+  public List<String> getEnvironment() {
+    return Collections.unmodifiableList(environment);
   }
 
   public void setEnvironmentVariable(String name, String value) {
@@ -45,16 +45,16 @@ public class Image {
     environment.add(environmentVariableDefinition);
   }
 
-  public ImmutableList<String> getEntrypoint() {
-    return ImmutableList.copyOf(entrypoint);
+  public List<String> getEntrypoint() {
+    return Collections.unmodifiableList(entrypoint);
   }
 
   public void setEntrypoint(List<String> entrypoint) {
     this.entrypoint = entrypoint;
   }
 
-  public ImmutableList<Layer> getLayers() {
-    return layers.asList();
+  public List<Layer> getLayers() {
+    return layers.getLayers();
   }
 
   public void addLayer(Layer layer) throws DuplicateLayerException, LayerPropertyNotFoundException {

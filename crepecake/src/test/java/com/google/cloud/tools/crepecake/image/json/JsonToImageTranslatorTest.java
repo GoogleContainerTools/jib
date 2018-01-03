@@ -24,12 +24,12 @@ import com.google.cloud.tools.crepecake.image.Layer;
 import com.google.cloud.tools.crepecake.image.LayerCountMismatchException;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
-import com.google.common.collect.ImmutableList;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.security.DigestException;
 import java.util.Arrays;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -50,7 +50,7 @@ public class JsonToImageTranslatorTest {
 
     Image image = JsonToImageTranslator.toImage(manifestTemplate);
 
-    ImmutableList<Layer> layers = image.getLayers();
+    List<Layer> layers = image.getLayers();
     Assert.assertEquals(1, layers.size());
     Assert.assertEquals(
         DescriptorDigest.fromDigest(
@@ -77,7 +77,7 @@ public class JsonToImageTranslatorTest {
 
     Image image = JsonToImageTranslator.toImage(manifestTemplate, containerConfigurationTemplate);
 
-    ImmutableList<Layer> layers = image.getLayers();
+    List<Layer> layers = image.getLayers();
     Assert.assertEquals(1, layers.size());
     Assert.assertEquals(
         new BlobDescriptor(

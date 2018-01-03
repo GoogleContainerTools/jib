@@ -69,7 +69,7 @@ public class ImageLayersTest {
     imageLayers.add(mockReferenceLayer);
     imageLayers.add(mockDigestOnlyLayer);
 
-    Assert.assertThat(imageLayers.asList(), CoreMatchers.is(expectedLayers));
+    Assert.assertThat(imageLayers.getLayers(), CoreMatchers.is(expectedLayers));
   }
 
   @Test
