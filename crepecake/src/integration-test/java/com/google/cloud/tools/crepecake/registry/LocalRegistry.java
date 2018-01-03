@@ -30,36 +30,32 @@ class LocalRegistry extends ExternalResource {
   }
 
   void pullBusybox() throws IOException, InterruptedException {
-    String pullImageCommand = "docker pull busybox";
-    Runtime.getRuntime().exec(pullImageCommand).waitFor();
-
-    String tagImageCommand = "docker tag busybox localhost:" + port + "/busybox";
-    Runtime.getRuntime().exec(tagImageCommand).waitFor();
-
-    String pushImageCommand = "docker push localhost:" + port + "/busybox";
-    Runtime.getRuntime().exec(pushImageCommand).waitFor();
+    runCommand("docker pull busybox");
+    runCommand("docker tag busybox localhost:" + port + "/busybox");
+    runCommand("docker push localhost:" + port + "/busybox");
   }
 
   /** Starts the local registry. */
   @Override
-  protected void before() throws Throwable {
-    String runRegistryCommand =
-        "docker run -d -p " + port + ":5000 --restart=always --name registry registry:2";
-    Runtime.getRuntime().exec(runRegistryCommand).waitFor();
+  protected void before() throws IOException, InterruptedException {
+    runCommand("docker run -d -p " + port + ":5000 --restart=always --name registry registry:2");
   }
 
   /** Stops the local registry. */
   @Override
   protected void after() {
     try {
-      String stopRegistryCommand = "docker stop registry";
-      Runtime.getRuntime().exec(stopRegistryCommand).waitFor();
-
-      String removeRegistryContainerCommand = "docker rm -v registry";
-      Runtime.getRuntime().exec(removeRegistryContainerCommand).waitFor();
+      runCommand("docker stop registry");
+      runCommand("docker rm -v registry");
 
     } catch (InterruptedException | IOException ex) {
       throw new RuntimeException("Could not stop local registry fully", ex);
+    }
+  }
+
+  private void runCommand(String command) throws IOException, InterruptedException {
+    if (Runtime.getRuntime().exec(command).waitFor() != 0) {
+      throw new IOException("Command '" + command + "' failed");
     }
   }
 }

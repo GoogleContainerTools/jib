@@ -26,6 +26,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.URL;
 import javax.annotation.Nullable;
+import org.apache.http.NoHttpResponseException;
 
 /**
  * Sends an HTTP {@link Request} and stores the {@link Response}.
@@ -42,15 +43,14 @@ import javax.annotation.Nullable;
 public class Connection implements Closeable {
 
   /**
-   * Do not use {@link NetHttpTransport}. It does process response errors properly.
+   * Do not use {@link NetHttpTransport}. It does process response errors properly. A new {@link
+   * ApacheHttpTransport} needs to be created for each connection because otherwise, HTTP connection
+   * persistence causes the connection to throw {@link NoHttpResponseException}.
    *
    * @see <a
    *     href="https://github.com/google/google-http-java-client/issues/39">https://github.com/google/google-http-java-client/issues/39</a>
    */
-  private static final HttpRequestFactory HTTP_REQUEST_FACTORY =
-      new ApacheHttpTransport().createRequestFactory();
-
-  private HttpRequestFactory requestFactory = HTTP_REQUEST_FACTORY;
+  private HttpRequestFactory requestFactory = new ApacheHttpTransport().createRequestFactory();
 
   @Nullable private HttpResponse httpResponse;
 

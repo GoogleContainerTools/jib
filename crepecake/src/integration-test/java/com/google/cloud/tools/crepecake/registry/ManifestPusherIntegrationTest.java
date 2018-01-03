@@ -32,34 +32,10 @@ public class ManifestPusherIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
 
-  public static void enableLogging() {
-    Logger logger = Logger.getLogger(HttpTransport.class.getName());
-    logger.setLevel(Level.CONFIG);
-    logger.addHandler(
-        new Handler() {
-
-          @Override
-          public void close() throws SecurityException {}
-
-          @Override
-          public void flush() {}
-
-          @Override
-          public void publish(LogRecord record) {
-            // Default ConsoleHandler will print >= INFO to System.err.
-            if (record.getLevel().intValue() < Level.INFO.intValue()) {
-              System.out.println(record.getMessage());
-            }
-          }
-        });
-  }
-
   @Test
   public void testPush() throws IOException, RegistryException {
     RegistryClient registryClient = new RegistryClient(null, "gcr.io", "distroless/java");
     ManifestTemplate manifestTemplate = registryClient.pullManifest("latest");
-
-    enableLogging();
 
     registryClient = new RegistryClient(null, "localhost:5000", "busybox");
     registryClient.pushManifest((V22ManifestTemplate) manifestTemplate, "latest");

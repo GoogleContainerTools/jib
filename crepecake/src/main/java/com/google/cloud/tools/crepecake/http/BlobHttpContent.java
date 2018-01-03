@@ -18,7 +18,6 @@ package com.google.cloud.tools.crepecake.http;
 
 import com.google.api.client.http.HttpContent;
 import com.google.cloud.tools.crepecake.blob.Blob;
-import com.google.cloud.tools.crepecake.blob.Blobs;
 import java.io.IOException;
 import java.io.OutputStream;
 
