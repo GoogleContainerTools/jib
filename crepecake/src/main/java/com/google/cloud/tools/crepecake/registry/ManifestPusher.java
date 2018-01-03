@@ -23,7 +23,7 @@ import com.google.cloud.tools.crepecake.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
 
 /** Pushes an image's manifest. */
-class ManifestPusher implements RegistryEndpointProvider {
+class ManifestPusher implements RegistryEndpointProvider<Void> {
 
   private final V22ManifestTemplate manifestTemplate;
   private final String imageTag;
@@ -40,7 +40,7 @@ class ManifestPusher implements RegistryEndpointProvider {
   }
 
   @Override
-  public Object handleResponse(Response response) {
+  public Void handleResponse(Response response) {
     return null;
   }
 
