@@ -78,6 +78,21 @@ public class RegistryClient {
     return (Blob) callRegistryEndpoint(null, blobPuller);
   }
 
+  // TODO: Add mount with 'from' parameter
+  /**
+   * Pushes the BLOB, or skips if the BLOB already exists on the registry.
+   *
+   * @param blobDigest the digest of the BLOB, used for existence-check
+   * @param blob the BLOB to push
+   */
+  public void pushBlob(DescriptorDigest blobDigest, Blob blob) {
+    // POST /v2/<name>/blobs/uploads/?mount={blob.digest}
+
+    // PATCH <Location> with BLOB
+
+    // PUT <Location>?digest={blob.digest}
+  }
+
   private URL getApiRoute(String routeSuffix) throws MalformedURLException {
     String apiBase = "/v2/";
     return new URL(PROTOCOL + "://" + serverUrl + apiBase + imageName + routeSuffix);
@@ -120,7 +135,7 @@ public class RegistryClient {
           RegistryErrorExceptionBuilder registryErrorExceptionBuilder =
               new RegistryErrorExceptionBuilder(method, ex);
           for (ErrorEntryTemplate errorEntry : errorResponse.getErrors()) {
-            registryErrorExceptionBuilder.addErrorEntry(errorEntry);
+            registryErrorExceptionBuilder.addReason(errorEntry);
           }
 
           throw registryErrorExceptionBuilder.build();
