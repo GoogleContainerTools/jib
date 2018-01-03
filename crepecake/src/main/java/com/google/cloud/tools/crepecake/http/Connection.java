@@ -20,6 +20,7 @@ import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
+import com.google.api.client.http.apache.ApacheHttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import java.io.Closeable;
 import java.io.IOException;
@@ -40,8 +41,14 @@ import javax.annotation.Nullable;
  */
 public class Connection implements Closeable {
 
+  /**
+   * Do not use {@link NetHttpTransport}. It does process response errors properly.
+   *
+   * @see <a
+   *     href="https://github.com/google/google-http-java-client/issues/39">https://github.com/google/google-http-java-client/issues/39</a>
+   */
   private static final HttpRequestFactory HTTP_REQUEST_FACTORY =
-      new NetHttpTransport().createRequestFactory();
+      new ApacheHttpTransport().createRequestFactory();
 
   private HttpRequestFactory requestFactory = HTTP_REQUEST_FACTORY;
 

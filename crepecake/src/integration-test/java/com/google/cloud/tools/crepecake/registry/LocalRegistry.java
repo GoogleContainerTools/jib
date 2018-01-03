@@ -29,13 +29,7 @@ class LocalRegistry extends ExternalResource {
     this.port = port;
   }
 
-  /** Starts the local registry. */
-  @Override
-  protected void before() throws Throwable {
-    String runRegistryCommand =
-        "docker run -d -p " + port + ":5000 --restart=always --name registry registry:2";
-    Runtime.getRuntime().exec(runRegistryCommand).waitFor();
-
+  void pullBusybox() throws IOException, InterruptedException {
     String pullImageCommand = "docker pull busybox";
     Runtime.getRuntime().exec(pullImageCommand).waitFor();
 
@@ -44,6 +38,14 @@ class LocalRegistry extends ExternalResource {
 
     String pushImageCommand = "docker push localhost:" + port + "/busybox";
     Runtime.getRuntime().exec(pushImageCommand).waitFor();
+  }
+
+  /** Starts the local registry. */
+  @Override
+  protected void before() throws Throwable {
+    String runRegistryCommand =
+        "docker run -d -p " + port + ":5000 --restart=always --name registry registry:2";
+    Runtime.getRuntime().exec(runRegistryCommand).waitFor();
   }
 
   /** Stops the local registry. */

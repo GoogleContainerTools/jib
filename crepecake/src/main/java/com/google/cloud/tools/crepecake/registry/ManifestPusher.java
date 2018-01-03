@@ -20,12 +20,10 @@ import com.google.api.client.http.HttpMethods;
 import com.google.cloud.tools.crepecake.http.Request;
 import com.google.cloud.tools.crepecake.http.Response;
 import com.google.cloud.tools.crepecake.image.json.V22ManifestTemplate;
+import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
 
 /** Pushes an image's manifest. */
 class ManifestPusher implements RegistryEndpointProvider {
-
-  private static final String MANIFEST_V2_2_MEDIA_TYPE =
-      "application/vnd.docker.distribution.manifest.v2+json";
 
   private final V22ManifestTemplate manifestTemplate;
   private final String imageTag;
@@ -37,8 +35,8 @@ class ManifestPusher implements RegistryEndpointProvider {
 
   @Override
   public void buildRequest(Request.Builder builder) {
-    //    builder.setContentType(MANIFEST_V2_2_MEDIA_TYPE);
-    //    builder.setBody(JsonTemplateMapper.toBlob(manifestTemplate));
+    builder.setContentType(V22ManifestTemplate.MEDIA_TYPE);
+    builder.setBody(JsonTemplateMapper.toBlob(manifestTemplate));
   }
 
   @Override
