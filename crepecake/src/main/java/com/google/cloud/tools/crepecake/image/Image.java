@@ -16,8 +16,7 @@
 
 package com.google.cloud.tools.crepecake.image;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,24 +33,24 @@ public class Image {
   /** Initial command to run when running the image. */
   private List<String> entrypoint;
 
-  public ImmutableMap<String, String> getEnvironmentMap() {
-    return ImmutableMap.copyOf(environmentMap);
+  public Map<String, String> getEnvironmentMap() {
+    return Collections.unmodifiableMap(environmentMap);
   }
 
   public void setEnvironmentVariable(String name, String value) {
     environmentMap.put(name, value);
   }
 
-  public ImmutableList<String> getEntrypoint() {
-    return ImmutableList.copyOf(entrypoint);
+  public List<String> getEntrypoint() {
+    return Collections.unmodifiableList(entrypoint);
   }
 
   public void setEntrypoint(List<String> entrypoint) {
     this.entrypoint = entrypoint;
   }
 
-  public ImmutableList<Layer> getLayers() {
-    return layers.asList();
+  public List<Layer> getLayers() {
+    return layers.getLayers();
   }
 
   public void addLayer(Layer layer) throws DuplicateLayerException, LayerPropertyNotFoundException {
