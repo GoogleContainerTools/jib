@@ -19,6 +19,7 @@ package com.google.cloud.tools.crepecake.registry.json;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.crepecake.json.JsonTemplate;
 
+// TODO: Should include detail field as well - need to have custom parser
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ErrorEntryTemplate extends JsonTemplate {
 

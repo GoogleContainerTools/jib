@@ -18,7 +18,9 @@ package com.google.cloud.tools.crepecake.registry;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.api.client.http.HttpMethods;
 import com.google.cloud.tools.crepecake.blob.Blobs;
+import com.google.cloud.tools.crepecake.http.Request;
 import com.google.cloud.tools.crepecake.http.Response;
 import com.google.cloud.tools.crepecake.image.json.ManifestTemplate;
 import com.google.cloud.tools.crepecake.image.json.UnknownManifestFormatException;
@@ -63,6 +65,9 @@ class ManifestPuller implements RegistryEndpointProvider {
     this.imageTag = imageTag;
   }
 
+  @Override
+  public void buildRequest(Request.Builder builder) {}
+
   /** Parses the response body into a {@link ManifestTemplate}. */
   @Override
   public ManifestTemplate handleResponse(Response response)
@@ -73,6 +78,11 @@ class ManifestPuller implements RegistryEndpointProvider {
   @Override
   public String getApiRouteSuffix() {
     return "/manifests/" + imageTag;
+  }
+
+  @Override
+  public String getHttpMethod() {
+    return HttpMethods.GET;
   }
 
   @Override

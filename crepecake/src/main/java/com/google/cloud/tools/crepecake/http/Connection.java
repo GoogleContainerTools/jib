@@ -82,7 +82,7 @@ public class Connection implements Closeable {
   }
 
   /** Sends the request. */
-  private Response send(String httpMethod, Request request) throws IOException {
+  public Response send(String httpMethod, Request request) throws IOException {
     httpResponse =
         requestFactory
             .buildRequest(httpMethod, url, request.getHttpContent())

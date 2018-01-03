@@ -24,6 +24,7 @@ import com.google.cloud.tools.crepecake.http.Request;
 import com.google.cloud.tools.crepecake.http.Response;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.image.json.ManifestTemplate;
+import com.google.cloud.tools.crepecake.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
 import com.google.cloud.tools.crepecake.registry.json.ErrorEntryTemplate;
 import com.google.cloud.tools.crepecake.registry.json.ErrorResponseTemplate;
@@ -54,6 +55,13 @@ public class RegistryClient {
   public ManifestTemplate pullManifest(String imageTag) throws IOException, RegistryException {
     ManifestPuller manifestPuller = new ManifestPuller(imageTag);
     return (ManifestTemplate) callRegistryEndpoint(null, manifestPuller);
+  }
+
+  /** Pushes the image manifest for a specific tag. */
+  public void pushManifest(V22ManifestTemplate manifestTemplate, String imageTag)
+      throws IOException, RegistryException {
+    ManifestPusher manifestPusher = new ManifestPusher(manifestTemplate, imageTag);
+    callRegistryEndpoint(null, manifestPusher);
   }
 
   /**
@@ -94,7 +102,9 @@ public class RegistryClient {
       if (authorization != null) {
         builder.setAuthorization(authorization);
       }
-      Response response = connection.get(builder.build());
+      registryEndpointProvider.buildRequest(builder);
+      Response response =
+          connection.send(registryEndpointProvider.getHttpMethod(), builder.build());
 
       return registryEndpointProvider.handleResponse(response);
 
@@ -102,6 +112,7 @@ public class RegistryClient {
       switch (ex.getStatusCode()) {
         case HttpURLConnection.HTTP_BAD_REQUEST:
         case HttpURLConnection.HTTP_NOT_FOUND:
+        case HttpURLConnection.HTTP_BAD_METHOD:
           // The name or reference was invalid.
           ErrorResponseTemplate errorResponse =
               JsonTemplateMapper.readJson(ex.getContent(), ErrorResponseTemplate.class);

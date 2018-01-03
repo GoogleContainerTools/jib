@@ -16,11 +16,15 @@
 
 package com.google.cloud.tools.crepecake.registry;
 
+import com.google.cloud.tools.crepecake.http.Request;
 import com.google.cloud.tools.crepecake.http.Response;
 import java.io.IOException;
 
 /** Provides implementations for a registry endpoint. */
 interface RegistryEndpointProvider {
+
+  /** Custom builder steps to add to build the request. */
+  void buildRequest(Request.Builder builder);
 
   /** Handles the response specific to the registry action. */
   Object handleResponse(Response response) throws IOException, RegistryException;
@@ -30,6 +34,9 @@ interface RegistryEndpointProvider {
    *     "/manifests/latest"})
    */
   String getApiRouteSuffix();
+
+  /** @return the HTTP method to send the request with */
+  String getHttpMethod();
 
   /**
    * @return a description of the registry action performed, used in error messages to describe the

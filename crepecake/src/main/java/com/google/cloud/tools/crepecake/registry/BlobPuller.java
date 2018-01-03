@@ -16,8 +16,10 @@
 
 package com.google.cloud.tools.crepecake.registry;
 
+import com.google.api.client.http.HttpMethods;
 import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
 import com.google.cloud.tools.crepecake.blob.Blobs;
+import com.google.cloud.tools.crepecake.http.Request;
 import com.google.cloud.tools.crepecake.http.Response;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import java.io.BufferedOutputStream;
@@ -36,6 +38,9 @@ class BlobPuller implements RegistryEndpointProvider {
     this.blobDigest = blobDigest;
     this.destPath = destPath;
   }
+
+  @Override
+  public void buildRequest(Request.Builder builder) {}
 
   @Override
   public Object handleResponse(Response response)
@@ -60,6 +65,11 @@ class BlobPuller implements RegistryEndpointProvider {
   @Override
   public String getApiRouteSuffix() {
     return "/blobs/" + blobDigest;
+  }
+
+  @Override
+  public String getHttpMethod() {
+    return HttpMethods.GET;
   }
 
   @Override
