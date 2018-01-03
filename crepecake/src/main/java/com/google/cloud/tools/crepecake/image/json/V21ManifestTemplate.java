@@ -19,8 +19,8 @@ package com.google.cloud.tools.crepecake.image.json;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -86,8 +86,8 @@ public class V21ManifestTemplate extends ManifestTemplate {
     return schemaVersion;
   }
 
-  public ImmutableList<LayerObjectTemplate> getFsLayers() {
-    return ImmutableList.copyOf(fsLayers);
+  public List<LayerObjectTemplate> getFsLayers() {
+    return Collections.unmodifiableList(fsLayers);
   }
 
   @VisibleForTesting

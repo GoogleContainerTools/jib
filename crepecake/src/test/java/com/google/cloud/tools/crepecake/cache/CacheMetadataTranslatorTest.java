@@ -89,7 +89,7 @@ public class CacheMetadataTranslatorTest {
 
     CacheMetadata cacheMetadata = CacheMetadataTranslator.fromTemplate(metadataTemplate, fakePath);
 
-    List<CachedLayerWithMetadata> layers = cacheMetadata.getLayers().asList();
+    List<CachedLayerWithMetadata> layers = cacheMetadata.getLayers().getLayers();
 
     // Checks that the base layer was translated correctly.
     CachedLayerWithMetadata baseLayer = layers.get(0);
