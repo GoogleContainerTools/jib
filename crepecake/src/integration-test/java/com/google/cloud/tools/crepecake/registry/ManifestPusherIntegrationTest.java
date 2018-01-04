@@ -25,8 +25,6 @@ import com.google.cloud.tools.crepecake.image.json.ManifestTemplate;
 import com.google.cloud.tools.crepecake.image.json.V22ManifestTemplate;
 import java.io.IOException;
 import java.security.DigestException;
-
-import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -75,14 +73,19 @@ public class ManifestPusherIntegrationTest {
     // Pushes the BLOBs.
     RegistryClient registryClient = new RegistryClient(null, "localhost:5000", "busybox");
     Assert.assertFalse(registryClient.pushBlob(testLayerBlobDigest, testLayerBlob));
-    Assert.assertFalse(registryClient.pushBlob(testContainerConfigurationBlobDigest, testContainerConfigurationBlob));
+    Assert.assertFalse(
+        registryClient.pushBlob(
+            testContainerConfigurationBlobDigest, testContainerConfigurationBlob));
 
     // Pushes the manifest.
     registryClient.pushManifest(expectedManifestTemplate, "latest");
 
     // Pulls the manifest.
-    V22ManifestTemplate manifestTemplate = (V22ManifestTemplate) registryClient.pullManifest("latest");
-    
-    // TODO: Check that the manifests are the same.
+    V22ManifestTemplate manifestTemplate =
+        (V22ManifestTemplate) registryClient.pullManifest("latest");
+    Assert.assertEquals(1, manifestTemplate.getLayers().size());
+    Assert.assertEquals(testLayerBlobDigest, manifestTemplate.getLayerDigest(0));
+    Assert.assertEquals(
+        testContainerConfigurationBlobDigest, manifestTemplate.getContainerConfigurationDigest());
   }
 }

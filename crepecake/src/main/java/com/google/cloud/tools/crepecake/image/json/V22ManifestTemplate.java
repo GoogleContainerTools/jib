@@ -102,7 +102,7 @@ public class V22ManifestTemplate extends ManifestTemplate {
     return schemaVersion;
   }
 
-  List<LayerObjectTemplate> getLayers() {
+  public List<LayerObjectTemplate> getLayers() {
     return Collections.unmodifiableList(layers);
   }
 
@@ -119,7 +119,7 @@ public class V22ManifestTemplate extends ManifestTemplate {
   }
 
   @VisibleForTesting
-  DescriptorDigest getContainerConfigurationDigest() {
+  public DescriptorDigest getContainerConfigurationDigest() {
     return config.digest;
   }
 
@@ -129,7 +129,7 @@ public class V22ManifestTemplate extends ManifestTemplate {
   }
 
   @VisibleForTesting
-  DescriptorDigest getLayerDigest(int index) {
+  public DescriptorDigest getLayerDigest(int index) {
     return layers.get(index).digest;
   }
 

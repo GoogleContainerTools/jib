@@ -48,7 +48,6 @@ class BlobPusher {
     @Nullable
     @Override
     public String handleResponse(Response response) throws RegistryErrorException {
-      System.out.println(response.getStatusCode());
       switch (response.getStatusCode()) {
         case HttpStatusCodes.STATUS_CODE_CREATED:
           // The BLOB exists in the registry.

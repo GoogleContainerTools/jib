@@ -37,8 +37,7 @@ public class BlobPusherIntegrationTest {
   }
 
   @Test
-  public void testPush()
-      throws DigestException, IOException, RegistryException {
+  public void testPush() throws DigestException, IOException, RegistryException {
     Blob testBlob = Blobs.from("crepecake", false);
     // Known digest for 'crepecake'
     DescriptorDigest testBlobDigest =
