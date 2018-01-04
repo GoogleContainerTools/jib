@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2018 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,6 +22,7 @@ import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.http.Request;
 import com.google.cloud.tools.crepecake.http.Response;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
+import com.google.common.net.MediaType;
 import java.net.HttpURLConnection;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -77,7 +78,10 @@ class BlobPusher {
   private class Writer implements RegistryEndpointProvider<String> {
 
     @Override
-    public void buildRequest(Request.Builder builder) {}
+    public void buildRequest(Request.Builder builder) {
+      builder.setContentType(MediaType.OCTET_STREAM.toString());
+      builder.setBody(blob);
+    }
 
     /**
      * @return a URL to continue pushing the BLOB to, or {@code null} if the BLOB already exists on
