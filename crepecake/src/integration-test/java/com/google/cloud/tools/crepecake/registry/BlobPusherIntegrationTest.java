@@ -19,11 +19,9 @@ package com.google.cloud.tools.crepecake.registry;
 import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.blob.Blobs;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
-import com.google.common.io.Resources;
-import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.security.DigestException;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -40,15 +38,14 @@ public class BlobPusherIntegrationTest {
 
   @Test
   public void testPush()
-      throws DigestException, URISyntaxException, IOException, RegistryException {
-    Blob fileABlob = Blobs.from(new File(Resources.getResource("fileA").toURI()));
-    DescriptorDigest fakeDigest =
+      throws DigestException, IOException, RegistryException {
+    Blob testBlob = Blobs.from("crepecake", false);
+    // Known digest for 'crepecake'
+    DescriptorDigest testBlobDigest =
         DescriptorDigest.fromHash(
-            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+            "52a9e4d4ba4333ce593707f98564fee1e6d898db0d3602408c0b2a6a424d357c");
 
     RegistryClient registryClient = new RegistryClient(null, "localhost:5000", "busybox");
-    String location = registryClient.pushBlob(fakeDigest, fileABlob);
-
-    System.out.println("Location: " + location);
+    Assert.assertFalse(registryClient.pushBlob(testBlobDigest, testBlob));
   }
 }

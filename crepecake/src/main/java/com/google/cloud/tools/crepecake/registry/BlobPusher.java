@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.crepecake.registry;
 
+import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.crepecake.blob.Blob;
@@ -24,6 +25,7 @@ import com.google.cloud.tools.crepecake.http.Response;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.common.net.MediaType;
 import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -33,6 +35,7 @@ class BlobPusher {
   private final DescriptorDigest blobDigest;
   private final Blob blob;
 
+  // TODO: All RegistryEndpointProviders should construct the actual URL to send the request to
   private class Initializer implements RegistryEndpointProvider<String> {
 
     @Override
@@ -45,6 +48,7 @@ class BlobPusher {
     @Nullable
     @Override
     public String handleResponse(Response response) throws RegistryErrorException {
+      System.out.println(response.getStatusCode());
       switch (response.getStatusCode()) {
         case HttpStatusCodes.STATUS_CODE_CREATED:
           // The BLOB exists in the registry.
@@ -126,7 +130,7 @@ class BlobPusher {
 
     @Override
     public String getHttpMethod() {
-      return null;
+      return HttpMethods.PUT;
     }
 
     @Override
@@ -144,18 +148,23 @@ class BlobPusher {
    * @return a {@link RegistryEndpointProvider} for initializing the BLOB upload with an existence
    *     check
    */
-  RegistryEndpointProvider initializer() {
+  RegistryEndpointProvider<String> initializer() {
     return new Initializer();
   }
 
   /** @return a {@link RegistryEndpointProvider} for writing the BLOB to an upload location */
-  RegistryEndpointProvider writer() {
+  RegistryEndpointProvider<String> writer() {
     return new Writer();
   }
 
   /** @return a {@link RegistryEndpointProvider} for committing the written BLOB with its digest */
-  RegistryEndpointProvider committer() {
+  RegistryEndpointProvider<Void> committer() {
     return new Committer();
+  }
+
+  /** @return {@code location} with query parameter 'digest' set to the BLOB's digest */
+  URL getCommitUrl(URL location) {
+    return new GenericUrl(location).set("digest", blobDigest).toURL();
   }
 
   private RegistryErrorException buildRegistryErrorException(String reason) {

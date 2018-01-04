@@ -21,6 +21,8 @@ import com.google.cloud.tools.crepecake.http.Request;
 import com.google.cloud.tools.crepecake.http.Response;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.security.DigestException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -166,7 +168,14 @@ public class BlobPusherTest {
   public void testCommitter() throws IOException, RegistryException {
     Assert.assertNull(testBlobPusher.committer().handleResponse(Mockito.mock(Response.class)));
     Assert.assertNull(testBlobPusher.committer().getApiRouteSuffix());
-    Assert.assertNull(testBlobPusher.committer().getHttpMethod());
+    Assert.assertEquals("PUT", testBlobPusher.committer().getHttpMethod());
     Assert.assertNull(testBlobPusher.committer().getActionDescription("", ""));
+  }
+
+  @Test
+  public void testGetCommitUrl() throws MalformedURLException {
+    Assert.assertEquals(
+        "https://someurl?somequery=somevalue&digest=" + fakeDescriptorDigest,
+        testBlobPusher.getCommitUrl(new URL("https://someurl?somequery=somevalue")).toString());
   }
 }

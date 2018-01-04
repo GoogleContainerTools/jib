@@ -84,17 +84,27 @@ public class RegistryClient {
    *
    * @param blobDigest the digest of the BLOB, used for existence-check
    * @param blob the BLOB to push
+   * @return {@code true} if the BLOB already exists on the registry and pushing was skipped; false
+   *     if the BLOB was pushed
    */
-  public String pushBlob(DescriptorDigest blobDigest, Blob blob)
+  public boolean pushBlob(DescriptorDigest blobDigest, Blob blob)
       throws IOException, RegistryException {
     BlobPusher blobPusher = new BlobPusher(blobDigest, blob);
 
     // POST /v2/<name>/blobs/uploads/?mount={blob.digest}
-    return (String) callRegistryEndpoint(null, blobPusher.initializer());
+    String locationString = callRegistryEndpoint(null, blobPusher.initializer());
+    if (locationString == null) {
+      return true;
+    }
+    URL location = new URL(locationString);
 
     // PATCH <Location> with BLOB
+    location = new URL(callRegistryEndpoint(location, blobPusher.writer()));
 
     // PUT <Location>?digest={blob.digest}
+    callRegistryEndpoint(blobPusher.getCommitUrl(location), blobPusher.committer());
+
+    return false;
   }
 
   private URL getApiRoute(String routeSuffix) throws MalformedURLException {
