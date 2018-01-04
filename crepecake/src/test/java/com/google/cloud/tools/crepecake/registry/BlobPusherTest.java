@@ -128,5 +128,45 @@ public class BlobPusherTest {
         testBlobPusher.initializer().getActionDescription("someServer", "someImage"));
   }
 
-  // TODO: Test Writer and Committer
+  @Test
+  public void testWriter_buildRequest() {
+    Request.Builder mockRequestBuilder = Mockito.mock(Request.Builder.class);
+    testBlobPusher.writer().buildRequest(mockRequestBuilder);
+    Mockito.verify(mockRequestBuilder).setContentType("application/octet-stream");
+    Mockito.verify(mockRequestBuilder).setBody(mockBlob);
+  }
+
+  @Test
+  public void testWriter_handleResponse() throws IOException, RegistryException {
+    Response mockResponse = Mockito.mock(Response.class);
+
+    Mockito.when(mockResponse.getHeader("Location"))
+        .thenReturn(Collections.singletonList("location"));
+    Assert.assertEquals("location", testBlobPusher.writer().handleResponse(mockResponse));
+  }
+
+  @Test
+  public void testWriter_getApiRouteSuffix() {
+    Assert.assertNull(testBlobPusher.writer().getApiRouteSuffix());
+  }
+
+  @Test
+  public void testWriter_getHttpMethod() {
+    Assert.assertEquals("PATCH", testBlobPusher.writer().getHttpMethod());
+  }
+
+  @Test
+  public void testWriter_getActionDescription() {
+    Assert.assertEquals(
+        "push BLOB for someServer/someImage with digest " + fakeDescriptorDigest,
+        testBlobPusher.writer().getActionDescription("someServer", "someImage"));
+  }
+
+  @Test
+  public void testCommitter() throws IOException, RegistryException {
+    Assert.assertNull(testBlobPusher.committer().handleResponse(Mockito.mock(Response.class)));
+    Assert.assertNull(testBlobPusher.committer().getApiRouteSuffix());
+    Assert.assertNull(testBlobPusher.committer().getHttpMethod());
+    Assert.assertNull(testBlobPusher.committer().getActionDescription("", ""));
+  }
 }

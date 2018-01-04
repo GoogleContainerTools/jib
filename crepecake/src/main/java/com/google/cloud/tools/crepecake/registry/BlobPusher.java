@@ -140,17 +140,20 @@ class BlobPusher {
     this.blob = blob;
   }
 
-  /** */
+  /**
+   * @return a {@link RegistryEndpointProvider} for initializing the BLOB upload with an existence
+   *     check
+   */
   RegistryEndpointProvider initializer() {
     return new Initializer();
   }
 
-  /** */
+  /** @return a {@link RegistryEndpointProvider} for writing the BLOB to an upload location */
   RegistryEndpointProvider writer() {
     return new Writer();
   }
 
-  /** */
+  /** @return a {@link RegistryEndpointProvider} for committing the written BLOB with its digest */
   RegistryEndpointProvider committer() {
     return new Committer();
   }
@@ -163,10 +166,19 @@ class BlobPusher {
     return registryErrorExceptionBuilder.build();
   }
 
+  /**
+   * @return the common action description for {@link Initializer}, {@link Writer}, and {@link
+   *     Committer}
+   */
   private String getActionDescription(String serverUrl, String imageName) {
     return "push BLOB for " + serverUrl + "/" + imageName + " with digest " + blobDigest;
   }
 
+  /**
+   * @param response the response to extract the 'Location' header from
+   * @return the value of the 'Location' header
+   * @throws RegistryErrorException if there was not a single 'Location' header
+   */
   private String extractLocationHeader(Response response) throws RegistryErrorException {
     // Extracts and returns the 'Location' header.
     List<String> locationHeaders = response.getHeader("Location");
