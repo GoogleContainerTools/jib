@@ -51,8 +51,9 @@ public class CacheWriter {
       // content descriptor.
       GZIPOutputStream compressorStream = new GZIPOutputStream(compressedDigestOutputStream);
       DescriptorDigest diffId = layer.getBlob().writeTo(compressorStream).getDigest();
-      compressorStream.close();
 
+      // The GZIPOutputStream must be closed in order to write out the remaining compressed data.
+      compressorStream.close();
       BlobDescriptor compressedBlobDescriptor = compressedDigestOutputStream.toBlobDescriptor();
 
       // Renames the temporary layer file to the correct filename.
