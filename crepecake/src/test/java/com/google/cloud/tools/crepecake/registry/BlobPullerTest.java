@@ -45,12 +45,16 @@ public class BlobPullerTest {
   private DescriptorDigest fakeDigest;
   private Path temporaryPath;
 
+  private BlobPuller testBlobPuller;
+
   @Before
   public void setUpFakes() throws DigestException, IOException {
     fakeDigest =
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
     temporaryPath = temporaryFolder.newFile().toPath();
+
+    testBlobPuller = new BlobPuller(fakeDigest, temporaryPath);
   }
 
   @Test
@@ -79,9 +83,8 @@ public class BlobPullerTest {
     Response mockResponse = Mockito.mock(Response.class);
     Mockito.when(mockResponse.getBody()).thenReturn(testBlob);
 
-    BlobPuller blobPuller = new BlobPuller(fakeDigest, temporaryPath);
     try {
-      blobPuller.handleResponse(mockResponse);
+      testBlobPuller.handleResponse(mockResponse);
       Assert.fail("Receiving an unexpected digest should fail");
 
     } catch (UnexpectedBlobDigestException ex) {
@@ -97,15 +100,18 @@ public class BlobPullerTest {
 
   @Test
   public void testInitializer_getApiRouteSuffix() {
-    BlobPuller blobPuller = new BlobPuller(fakeDigest, temporaryPath);
-    Assert.assertEquals("/blobs/" + fakeDigest, blobPuller.getApiRouteSuffix());
+    Assert.assertEquals("/blobs/" + fakeDigest, testBlobPuller.getApiRouteSuffix());
   }
 
   @Test
   public void testInitializer_getActionDescription() {
-    BlobPuller blobPuller = new BlobPuller(fakeDigest, temporaryPath);
     Assert.assertEquals(
         "pull BLOB for someServer/someImage with digest " + fakeDigest,
-        blobPuller.getActionDescription("someServer", "someImage"));
+        testBlobPuller.getActionDescription("someServer", "someImage"));
+  }
+
+  @Test
+  public void testGetHttpMethod() {
+    Assert.assertEquals("GET", testBlobPuller.getHttpMethod());
   }
 }

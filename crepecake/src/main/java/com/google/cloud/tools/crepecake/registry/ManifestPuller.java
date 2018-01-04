@@ -57,7 +57,8 @@ class ManifestPuller implements RegistryEndpointProvider<ManifestTemplate> {
         throw new UnknownManifestFormatException("`schemaVersion` field is not an integer");
 
       default:
-        throw new UnknownManifestFormatException("Unknown schemaVersion: " + schemaVersion);
+        throw new UnknownManifestFormatException(
+            "Unknown schemaVersion: " + schemaVersion + " - only 1 and 2 are supported");
     }
   }
 
