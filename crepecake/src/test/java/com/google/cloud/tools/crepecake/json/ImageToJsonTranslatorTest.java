@@ -77,7 +77,8 @@ public class ImageToJsonTranslatorTest {
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     containerConfigurationBlob.writeTo(byteArrayOutputStream);
 
-    Assert.assertEquals(expectedJson, byteArrayOutputStream.toString());
+    Assert.assertEquals(
+        expectedJson, new String(byteArrayOutputStream.toByteArray(), StandardCharsets.UTF_8));
   }
 
   @Test
@@ -96,6 +97,7 @@ public class ImageToJsonTranslatorTest {
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     manifestBlob.writeTo(byteArrayOutputStream);
 
-    Assert.assertEquals(expectedJson, byteArrayOutputStream.toString());
+    Assert.assertEquals(
+        expectedJson, new String(byteArrayOutputStream.toByteArray(), StandardCharsets.UTF_8));
   }
 }
