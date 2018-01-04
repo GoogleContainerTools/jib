@@ -18,9 +18,15 @@ package com.google.cloud.tools.crepecake.registry;
 
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
+import com.google.cloud.tools.crepecake.blob.Blob;
+import com.google.cloud.tools.crepecake.blob.Blobs;
+import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.image.json.ManifestTemplate;
 import com.google.cloud.tools.crepecake.image.json.V22ManifestTemplate;
 import java.io.IOException;
+import java.security.DigestException;
+
+import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -31,7 +37,7 @@ public class ManifestPusherIntegrationTest {
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
 
   @Test
-  public void testPush() throws IOException, RegistryException {
+  public void testPush_missingBlobs() throws IOException, RegistryException {
     RegistryClient registryClient = new RegistryClient(null, "gcr.io", "distroless/java");
     ManifestTemplate manifestTemplate = registryClient.pullManifest("latest");
 
@@ -47,5 +53,36 @@ public class ManifestPusherIntegrationTest {
     }
   }
 
-  // TODO: Add test to push valid manifest after BLOB-pushing is implemented
+  /** Tests manifest pushing. This test is a comprehensive test of push and pull. */
+  @Test
+  public void testPush() throws DigestException, IOException, RegistryException {
+    Blob testLayerBlob = Blobs.from("crepecake", false);
+    // Known digest for 'crepecake'
+    DescriptorDigest testLayerBlobDigest =
+        DescriptorDigest.fromHash(
+            "52a9e4d4ba4333ce593707f98564fee1e6d898db0d3602408c0b2a6a424d357c");
+    Blob testContainerConfigurationBlob = Blobs.from("12345", false);
+    // Known digest for '12345'
+    DescriptorDigest testContainerConfigurationBlobDigest =
+        DescriptorDigest.fromHash(
+            "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5");
+
+    // Creates a valid image manifest.
+    V22ManifestTemplate expectedManifestTemplate = new V22ManifestTemplate();
+    expectedManifestTemplate.addLayer(9, testLayerBlobDigest);
+    expectedManifestTemplate.setContainerConfiguration(5, testContainerConfigurationBlobDigest);
+
+    // Pushes the BLOBs.
+    RegistryClient registryClient = new RegistryClient(null, "localhost:5000", "busybox");
+    Assert.assertFalse(registryClient.pushBlob(testLayerBlobDigest, testLayerBlob));
+    Assert.assertFalse(registryClient.pushBlob(testContainerConfigurationBlobDigest, testContainerConfigurationBlob));
+
+    // Pushes the manifest.
+    registryClient.pushManifest(expectedManifestTemplate, "latest");
+
+    // Pulls the manifest.
+    V22ManifestTemplate manifestTemplate = (V22ManifestTemplate) registryClient.pullManifest("latest");
+    
+    // TODO: Check that the manifests are the same.
+  }
 }
