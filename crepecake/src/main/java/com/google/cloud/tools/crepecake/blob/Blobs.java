@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2018 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,12 +33,12 @@ public class Blobs {
     return new FileBlob(file);
   }
 
-  public static Blob from(String content, boolean hashing) {
-    return hashing ? new HashingStringBlob(content) : new StringBlob(content);
+  public static Blob from(String content) {
+    return new StringBlob(content);
   }
 
   public static Blob from(BlobWriter writer) {
-    return new HashingWriterBlob(writer);
+    return new WriterBlob(writer);
   }
 
   /** Writes the BLOB to a string. */
