@@ -29,16 +29,13 @@ class LocalRegistry extends ExternalResource {
     this.port = port;
   }
 
-  void pullBusybox() throws IOException, InterruptedException {
-    runCommand("docker pull busybox");
-    runCommand("docker tag busybox localhost:" + port + "/busybox");
-    runCommand("docker push localhost:" + port + "/busybox");
-  }
-
   /** Starts the local registry. */
   @Override
   protected void before() throws IOException, InterruptedException {
     runCommand("docker run -d -p " + port + ":5000 --restart=always --name registry registry:2");
+    runCommand("docker pull busybox");
+    runCommand("docker tag busybox localhost:" + port + "/busybox");
+    runCommand("docker push localhost:" + port + "/busybox");
   }
 
   /** Stops the local registry. */

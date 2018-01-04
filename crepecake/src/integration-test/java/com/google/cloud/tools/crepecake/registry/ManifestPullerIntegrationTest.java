@@ -22,7 +22,6 @@ import com.google.cloud.tools.crepecake.image.json.V22ManifestTemplate;
 import java.io.IOException;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -30,11 +29,6 @@ import org.junit.Test;
 public class ManifestPullerIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
-
-  @BeforeClass
-  public static void setUpLocalRegistry() throws IOException, InterruptedException {
-    localRegistry.pullBusybox();
-  }
 
   @Test
   public void testPull_v21() throws IOException, RegistryException {

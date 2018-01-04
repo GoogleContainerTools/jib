@@ -34,6 +34,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
 import javax.annotation.Nullable;
+import org.apache.http.NoHttpResponseException;
 
 /** Interfaces with a registry. */
 public class RegistryClient {
@@ -165,6 +166,9 @@ public class RegistryClient {
         default: // Unknown
           throw ex;
       }
+
+    } catch (NoHttpResponseException ex) {
+      throw new RegistryNoResponseException(ex);
     }
   }
 }

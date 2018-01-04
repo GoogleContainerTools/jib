@@ -22,7 +22,6 @@ import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import java.io.IOException;
 import java.security.DigestException;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -30,11 +29,6 @@ import org.junit.Test;
 public class BlobPusherIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
-
-  @BeforeClass
-  public static void setUpLocalRegistry() throws IOException, InterruptedException {
-    localRegistry.pullBusybox();
-  }
 
   @Test
   public void testPush() throws DigestException, IOException, RegistryException {
@@ -44,7 +38,7 @@ public class BlobPusherIntegrationTest {
         DescriptorDigest.fromHash(
             "52a9e4d4ba4333ce593707f98564fee1e6d898db0d3602408c0b2a6a424d357c");
 
-    RegistryClient registryClient = new RegistryClient(null, "localhost:5000", "busybox");
+    RegistryClient registryClient = new RegistryClient(null, "localhost:5000", "testimage");
     Assert.assertFalse(registryClient.pushBlob(testBlobDigest, testBlob));
   }
 }
