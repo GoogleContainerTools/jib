@@ -22,12 +22,11 @@ import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import javax.annotation.Nullable;
 
-/** Contains properties describing a BLOB, including size (in bytes) and possibly its digest. */
+/** Contains properties describing a BLOB, including its digest and possibly its size (in bytes). */
 public class BlobDescriptor {
 
-  @Nullable private final DescriptorDigest digest;
+  private final DescriptorDigest digest;
 
   /** The size of the BLOB (in bytes). Negative if unknown. */
   private final long size;
@@ -50,25 +49,15 @@ public class BlobDescriptor {
     this.digest = digest;
   }
 
-  /** Initialize with just size. */
-  public BlobDescriptor(long size) {
-    this(size, null);
-  }
-
   /** Initialize with just digest. */
   public BlobDescriptor(DescriptorDigest digest) {
     this(-1, digest);
-  }
-
-  public boolean hasDigest() {
-    return digest != null;
   }
 
   public boolean hasSize() {
     return size >= 0;
   }
 
-  @Nullable
   public DescriptorDigest getDigest() {
     return digest;
   }
@@ -90,7 +79,7 @@ public class BlobDescriptor {
     if (obj == this) {
       return true;
     }
-    if (digest == null || size < 0 || !(obj instanceof BlobDescriptor)) {
+    if (size < 0 || !(obj instanceof BlobDescriptor)) {
       return false;
     }
 
@@ -100,7 +89,7 @@ public class BlobDescriptor {
 
   @Override
   public int hashCode() {
-    int result = digest != null ? digest.hashCode() : 0;
+    int result = digest.hashCode();
     result = 31 * result + (int) (size ^ (size >>> 32));
     return result;
   }

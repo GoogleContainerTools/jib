@@ -25,10 +25,6 @@ import java.nio.charset.StandardCharsets;
 /** Static methods for {@link Blob}. */
 public class Blobs {
 
-  public static Blob empty() {
-    return new EmptyBlob();
-  }
-
   public static Blob from(InputStream inputStream) {
     return new InputStreamBlob(inputStream);
   }

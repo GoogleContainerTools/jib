@@ -36,11 +36,6 @@ import org.mockito.Mockito;
 public class BlobTest {
 
   @Test
-  public void testEmpty() throws IOException {
-    verifyBlobWriteTo("", Blobs.empty());
-  }
-
-  @Test
   public void testFromInputStream() throws IOException {
     String expected = "crepecake";
     InputStream inputStream = new ByteArrayInputStream(expected.getBytes(StandardCharsets.UTF_8));
@@ -87,12 +82,10 @@ public class BlobTest {
     byte[] expectedBytes = expected.getBytes(StandardCharsets.UTF_8);
     Assert.assertEquals(expectedBytes.length, blobDescriptor.getSize());
 
-    if (blobDescriptor.hasDigest()) {
-      CountingDigestOutputStream countingDigestOutputStream =
-          new CountingDigestOutputStream(Mockito.mock(OutputStream.class));
-      countingDigestOutputStream.write(expectedBytes);
-      DescriptorDigest expectedDigest = countingDigestOutputStream.toBlobDescriptor().getDigest();
-      Assert.assertEquals(expectedDigest, blobDescriptor.getDigest());
-    }
+    CountingDigestOutputStream countingDigestOutputStream =
+        new CountingDigestOutputStream(Mockito.mock(OutputStream.class));
+    countingDigestOutputStream.write(expectedBytes);
+    DescriptorDigest expectedDigest = countingDigestOutputStream.toBlobDescriptor().getDigest();
+    Assert.assertEquals(expectedDigest, blobDescriptor.getDigest());
   }
 }
