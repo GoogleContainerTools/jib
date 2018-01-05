@@ -32,10 +32,15 @@ import java.nio.file.Path;
 /** Pulls an image's blob (layer or container configuration). */
 class BlobPuller implements RegistryEndpointProvider<Blob> {
 
+  private final RegistryEndpointProperties registryEndpointProperties;
   private final DescriptorDigest blobDigest;
   private final Path destPath;
 
-  BlobPuller(DescriptorDigest blobDigest, Path destPath) {
+  BlobPuller(
+      RegistryEndpointProperties registryEndpointProperties,
+      DescriptorDigest blobDigest,
+      Path destPath) {
+    this.registryEndpointProperties = registryEndpointProperties;
     this.blobDigest = blobDigest;
     this.destPath = destPath;
   }
@@ -65,7 +70,12 @@ class BlobPuller implements RegistryEndpointProvider<Blob> {
   }
 
   @Override
-  public String getActionDescription(String serverUrl, String imageName) {
-    return "pull BLOB for " + serverUrl + "/" + imageName + " with digest " + blobDigest;
+  public String getActionDescription() {
+    return "pull BLOB for "
+        + registryEndpointProperties.getServerUrl()
+        + "/"
+        + registryEndpointProperties.getImageName()
+        + " with digest "
+        + blobDigest;
   }
 }

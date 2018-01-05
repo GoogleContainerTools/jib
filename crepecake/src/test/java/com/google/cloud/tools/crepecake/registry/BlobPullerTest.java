@@ -35,6 +35,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -43,6 +44,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class BlobPullerTest {
 
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+  @Mock private RegistryEndpointProperties mockRegistryEndpointProperties;
 
   private DescriptorDigest fakeDigest;
   private Path temporaryPath;
@@ -63,7 +66,8 @@ public class BlobPullerTest {
     Response mockResponse = Mockito.mock(Response.class);
     Mockito.when(mockResponse.getBody()).thenReturn(testBlob);
 
-    BlobPuller blobPuller = new BlobPuller(testBlobDigest, temporaryPath);
+    BlobPuller blobPuller =
+        new BlobPuller(mockRegistryEndpointProperties, testBlobDigest, temporaryPath);
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     BlobDescriptor blobDescriptor =
         blobPuller.handleResponse(mockResponse).writeTo(byteArrayOutputStream);
@@ -81,7 +85,8 @@ public class BlobPullerTest {
     Response mockResponse = Mockito.mock(Response.class);
     Mockito.when(mockResponse.getBody()).thenReturn(testBlob);
 
-    BlobPuller blobPuller = new BlobPuller(fakeDigest, temporaryPath);
+    BlobPuller blobPuller =
+        new BlobPuller(mockRegistryEndpointProperties, fakeDigest, temporaryPath);
     try {
       blobPuller.handleResponse(mockResponse);
       Assert.fail("Receiving an unexpected digest should fail");
@@ -99,7 +104,8 @@ public class BlobPullerTest {
 
   @Test
   public void testInitializer_getApiRoute() throws MalformedURLException {
-    BlobPuller blobPuller = new BlobPuller(fakeDigest, temporaryPath);
+    BlobPuller blobPuller =
+        new BlobPuller(mockRegistryEndpointProperties, fakeDigest, temporaryPath);
     Assert.assertEquals(
         new URL("http://someApiBase/blobs/" + fakeDigest),
         blobPuller.getApiRoute("http://someApiBase"));
@@ -107,9 +113,11 @@ public class BlobPullerTest {
 
   @Test
   public void testInitializer_getActionDescription() {
-    BlobPuller blobPuller = new BlobPuller(fakeDigest, temporaryPath);
+    BlobPuller blobPuller =
+        new BlobPuller(
+            new RegistryEndpointProperties("someServer", "someImage"), fakeDigest, temporaryPath);
     Assert.assertEquals(
         "pull BLOB for someServer/someImage with digest " + fakeDigest,
-        blobPuller.getActionDescription("someServer", "someImage"));
+        blobPuller.getActionDescription());
   }
 }

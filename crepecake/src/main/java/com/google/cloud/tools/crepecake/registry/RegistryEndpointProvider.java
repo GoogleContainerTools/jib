@@ -41,5 +41,5 @@ interface RegistryEndpointProvider<T> {
    * @return a description of the registry action performed, used in error messages to describe the
    *     action that failed
    */
-  String getActionDescription(String serverUrl, String imageName);
+  String getActionDescription();
 }

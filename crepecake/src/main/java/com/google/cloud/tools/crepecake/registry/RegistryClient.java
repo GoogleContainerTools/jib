@@ -40,18 +40,16 @@ public class RegistryClient {
   private static final String PROTOCOL = "http";
 
   @Nullable private final Authorization authorization;
-  private final String serverUrl;
-  private final String imageName;
+  private final RegistryEndpointProperties registryEndpointProperties;
 
   public RegistryClient(@Nullable Authorization authorization, String serverUrl, String imageName) {
     this.authorization = authorization;
-    this.serverUrl = serverUrl;
-    this.imageName = imageName;
+    this.registryEndpointProperties = new RegistryEndpointProperties(serverUrl, imageName);
   }
 
   /** Pulls the image manifest for a specific tag. */
   public ManifestTemplate pullManifest(String imageTag) throws IOException, RegistryException {
-    ManifestPuller manifestPuller = new ManifestPuller(imageTag);
+    ManifestPuller manifestPuller = new ManifestPuller(registryEndpointProperties, imageTag);
     return callRegistryEndpoint(null, manifestPuller);
   }
 
@@ -65,12 +63,16 @@ public class RegistryClient {
    */
   public Blob pullBlob(DescriptorDigest blobDigest, Path destPath)
       throws RegistryException, IOException {
-    BlobPuller blobPuller = new BlobPuller(blobDigest, destPath);
+    BlobPuller blobPuller = new BlobPuller(registryEndpointProperties, blobDigest, destPath);
     return callRegistryEndpoint(null, blobPuller);
   }
 
   private String getApiRouteBase() {
-    return PROTOCOL + "://" + serverUrl + "/v2/" + imageName;
+    return PROTOCOL
+        + "://"
+        + registryEndpointProperties.getServerUrl()
+        + "/v2/"
+        + registryEndpointProperties.getImageName();
   }
 
   /**
@@ -103,9 +105,9 @@ public class RegistryClient {
           // The name or reference was invalid.
           ErrorResponseTemplate errorResponse =
               JsonTemplateMapper.readJson(ex.getContent(), ErrorResponseTemplate.class);
-          String method = registryEndpointProvider.getActionDescription(serverUrl, imageName);
           RegistryErrorExceptionBuilder registryErrorExceptionBuilder =
-              new RegistryErrorExceptionBuilder(method, ex);
+              new RegistryErrorExceptionBuilder(
+                  registryEndpointProvider.getActionDescription(), ex);
           for (ErrorEntryTemplate errorEntry : errorResponse.getErrors()) {
             registryErrorExceptionBuilder.addErrorEntry(errorEntry);
           }
