@@ -18,7 +18,7 @@ package com.google.cloud.tools.crepecake.builder;
 
 import com.google.cloud.tools.crepecake.registry.DockerCredentialRetriever;
 
-/** Configuration options for the builder process. */
+/** Immutable configuration options for the builder process. */
 public class BuildConfiguration {
 
   public static class Builder {
