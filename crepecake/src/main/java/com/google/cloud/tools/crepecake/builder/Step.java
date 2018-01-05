@@ -16,8 +16,6 @@
 
 package com.google.cloud.tools.crepecake.builder;
 
-import com.google.cloud.tools.crepecake.registry.RegistryAuthenticationFailedException;
-
 /** A step in the builder process. Implementations must be thread-safe. */
 @FunctionalInterface
 interface Step<T, R> {
