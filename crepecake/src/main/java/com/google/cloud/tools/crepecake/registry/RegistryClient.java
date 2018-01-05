@@ -50,6 +50,18 @@ public class RegistryClient {
     this.registryEndpointProperties = new RegistryEndpointProperties(serverUrl, imageName);
   }
 
+  /** Gets the {@link RegistryAuthenticator} to authenticate pulls from the registry. */
+  public RegistryAuthenticator getRegistryAuthenticator()
+      throws IOException, RegistryException, RegistryAuthenticationFailedException {
+    // Gets the WWW-Authenticate header (eg. 'WWW-Authenticate: Bearer realm="https://gcr.io/v2/token",service="gcr.io"')
+    String authenticationMethod =
+        callRegistryEndpoint(new AuthenticationMethodRetriever(registryEndpointProperties));
+
+    // Parses the header to retrieve the components.
+    return RegistryAuthenticator.fromAuthenticationMethod(
+        authenticationMethod, registryEndpointProperties.getImageName());
+  }
+
   /**
    * Pulls the image manifest for a specific tag.
    *

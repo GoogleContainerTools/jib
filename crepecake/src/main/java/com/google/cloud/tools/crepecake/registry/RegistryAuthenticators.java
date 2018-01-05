@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.crepecake.registry;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 
 /** Static initializers for {@link RegistryAuthenticator}. */
@@ -26,18 +27,18 @@ public abstract class RegistryAuthenticators {
     try {
       return new RegistryAuthenticator(
           "https://auth.docker.io/token", "registry.docker.io", repository);
+
     } catch (MalformedURLException ex) {
       throw new RegistryAuthenticationFailedException(ex);
     }
   }
 
   public static RegistryAuthenticator forOther(String serverUrl, String repository)
-      throws RegistryAuthenticationFailedException {
-    // TODO: GET /v2/, use WWW-Authenticate header (eg. WWW-Authenticate: Bearer realm="https://gcr.io/v2/token",service="gcr.io")
-
+      throws RegistryAuthenticationFailedException, IOException, RegistryException {
     try {
-      return new RegistryAuthenticator(
-          "https://auth.docker.io/token", "registry.docker.io", repository);
+      RegistryClient registryClient = new RegistryClient(null, serverUrl, repository);
+      return registryClient.getRegistryAuthenticator();
+
     } catch (MalformedURLException ex) {
       throw new RegistryAuthenticationFailedException(ex);
     }

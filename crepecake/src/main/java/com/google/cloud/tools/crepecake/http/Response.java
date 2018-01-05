@@ -41,6 +41,11 @@ public class Response {
     return httpResponse.getHeaders().getHeaderStringValues(headerName);
   }
 
+  /** Gets the {@code WWW-Authenticate} header, or {@code null} if none. */
+  public String getAuthenticate() {
+    return httpResponse.getHeaders().getAuthenticate();
+  }
+
   /** Gets the HTTP response body as a {@link Blob}. */
   public Blob getBody() throws IOException {
     return Blobs.from(httpResponse.getContent());
