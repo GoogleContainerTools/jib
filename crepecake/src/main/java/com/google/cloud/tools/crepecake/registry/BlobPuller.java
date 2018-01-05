@@ -27,6 +27,8 @@ import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.file.Path;
 
 /** Pulls an image's blob (layer or container configuration). */
@@ -63,8 +65,8 @@ class BlobPuller implements RegistryEndpointProvider<Blob> {
   }
 
   @Override
-  public String getApiRouteSuffix() {
-    return "/blobs/" + blobDigest;
+  public URL getApiRoute(String apiRouteBase) throws MalformedURLException {
+    return new URL(apiRouteBase + "/blobs/" + blobDigest);
   }
 
   @Override

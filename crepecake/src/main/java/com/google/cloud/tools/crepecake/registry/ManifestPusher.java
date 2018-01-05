@@ -21,6 +21,8 @@ import com.google.cloud.tools.crepecake.http.Request;
 import com.google.cloud.tools.crepecake.http.Response;
 import com.google.cloud.tools.crepecake.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 /** Pushes an image's manifest. */
 class ManifestPusher implements RegistryEndpointProvider<Void> {
@@ -45,8 +47,8 @@ class ManifestPusher implements RegistryEndpointProvider<Void> {
   }
 
   @Override
-  public String getApiRouteSuffix() {
-    return "/manifests/" + imageTag;
+  public URL getApiRoute(String apiRouteBase) throws MalformedURLException {
+    return new URL(apiRouteBase + "/manifests/" + imageTag);
   }
 
   @Override

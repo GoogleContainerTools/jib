@@ -25,7 +25,9 @@ import com.google.cloud.tools.crepecake.image.json.V22ManifestTemplate;
 import com.google.common.io.Resources;
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
+import java.net.URL;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Test;
@@ -102,8 +104,10 @@ public class ManifestPullerTest {
   }
 
   @Test
-  public void testGetApiRouteSuffix() {
-    Assert.assertEquals("/manifests/test-image-tag", testManifestPuller.getApiRouteSuffix());
+  public void testGetApiRouteSuffix() throws MalformedURLException {
+    Assert.assertEquals(
+        new URL("http://someApiBase/manifests/test-image-tag"),
+        testManifestPuller.getApiRoute("http://someApiBase"));
   }
 
   @Test

@@ -24,6 +24,8 @@ import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.common.io.ByteStreams;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.security.DigestException;
@@ -99,8 +101,11 @@ public class BlobPullerTest {
   }
 
   @Test
-  public void testInitializer_getApiRouteSuffix() {
-    Assert.assertEquals("/blobs/" + fakeDigest, testBlobPuller.getApiRouteSuffix());
+  public void testInitializer_getApiRoute() throws MalformedURLException {
+    BlobPuller blobPuller = new BlobPuller(fakeDigest, temporaryPath);
+    Assert.assertEquals(
+        new URL("http://someApiBase/blobs/" + fakeDigest),
+        blobPuller.getApiRoute("http://someApiBase"));
   }
 
   @Test

@@ -30,7 +30,6 @@ import com.google.cloud.tools.crepecake.registry.json.ErrorEntryTemplate;
 import com.google.cloud.tools.crepecake.registry.json.ErrorResponseTemplate;
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
 import javax.annotation.Nullable;
@@ -78,9 +77,8 @@ public class RegistryClient {
     return callRegistryEndpoint(null, blobPuller);
   }
 
-  private URL getApiRoute(String routeSuffix) throws MalformedURLException {
-    String apiBase = "/v2/";
-    return new URL(PROTOCOL + "://" + serverUrl + apiBase + imageName + routeSuffix);
+  private String getApiRouteBase() {
+    return PROTOCOL + "://" + serverUrl + "/v2/" + imageName;
   }
 
   /**
@@ -94,7 +92,7 @@ public class RegistryClient {
       @Nullable URL url, RegistryEndpointProvider<T> registryEndpointProvider)
       throws IOException, RegistryException {
     if (url == null) {
-      url = getApiRoute(registryEndpointProvider.getApiRouteSuffix());
+      url = registryEndpointProvider.getApiRoute(getApiRouteBase());
     }
 
     try (Connection connection = new Connection(url)) {
