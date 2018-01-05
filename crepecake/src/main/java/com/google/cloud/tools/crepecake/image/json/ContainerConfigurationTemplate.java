@@ -104,12 +104,10 @@ public class ContainerConfigurationTemplate extends JsonTemplate {
     return rootfs.diff_ids;
   }
 
-  @VisibleForTesting
   List<String> getContainerEnvironment() {
     return config.Env;
   }
 
-  @VisibleForTesting
   List<String> getContainerEntrypoint() {
     return config.Entrypoint;
   }
