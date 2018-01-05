@@ -98,7 +98,7 @@ public class BlobPullerTest {
   }
 
   @Test
-  public void testInitializer_getApiRouteSuffix() throws MalformedURLException {
+  public void testInitializer_getApiRoute() throws MalformedURLException {
     BlobPuller blobPuller = new BlobPuller(fakeDigest, temporaryPath);
     Assert.assertEquals(
         new URL("http://someApiBase/blobs/" + fakeDigest),
