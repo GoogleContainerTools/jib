@@ -70,7 +70,7 @@ public class ManifestPullerTest {
 
   @Test
   public void testHandleResponse_noSchemaVersion() throws IOException {
-    Mockito.when(mockResponse.getBody()).thenReturn(Blobs.from("{}", false));
+    Mockito.when(mockResponse.getBody()).thenReturn(Blobs.from("{}"));
     try {
       testManifestPuller.handleResponse(mockResponse);
       Assert.fail("An empty manifest should throw an error");
@@ -83,7 +83,7 @@ public class ManifestPullerTest {
   @Test
   public void testHandleResponse_invalidSchemaVersion() throws IOException {
     Mockito.when(mockResponse.getBody())
-        .thenReturn(Blobs.from("{\"schemaVersion\":\"not valid\"}", false));
+        .thenReturn(Blobs.from("{\"schemaVersion\":\"not valid\"}"));
     try {
       testManifestPuller.handleResponse(mockResponse);
       Assert.fail("A non-integer schemaVersion should throw an error");
@@ -95,7 +95,7 @@ public class ManifestPullerTest {
 
   @Test
   public void testHandleResponse_unknownSchemaVersion() throws IOException {
-    Mockito.when(mockResponse.getBody()).thenReturn(Blobs.from("{\"schemaVersion\":0}", false));
+    Mockito.when(mockResponse.getBody()).thenReturn(Blobs.from("{\"schemaVersion\":0}"));
     try {
       testManifestPuller.handleResponse(mockResponse);
       Assert.fail("An unknown manifest schemaVersion should throw an error");
