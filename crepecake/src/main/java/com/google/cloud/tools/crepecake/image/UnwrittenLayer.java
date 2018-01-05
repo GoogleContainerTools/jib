@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2018 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,13 +19,6 @@ package com.google.cloud.tools.crepecake.image;
 import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
 import com.google.cloud.tools.crepecake.cache.CachedLayer;
-import com.google.common.io.ByteStreams;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.zip.GZIPOutputStream;
 
 /**
  * A layer that has not been written out and only has the unwritten content {@link Blob}. Once
@@ -38,22 +31,6 @@ public class UnwrittenLayer implements Layer {
   /** Initializes with the uncompressed {@link Blob} of the layer content. */
   public UnwrittenLayer(Blob uncompressedBlob) {
     this.uncompressedBlob = uncompressedBlob;
-  }
-
-  // TODO: This functionality should belong in the cache management classes.
-  /**
-   * Writes the compressed layer BLOB to a file and returns a {@link CachedLayer} that represents
-   * the new cached layer.
-   */
-  public CachedLayer writeTo(File file) throws IOException {
-    try (OutputStream fileOutputStream = new BufferedOutputStream(new FileOutputStream(file))) {
-      OutputStream compressorStream = new GZIPOutputStream(fileOutputStream);
-      BlobDescriptor blobDescriptor = uncompressedBlob.writeTo(compressorStream);
-      DescriptorDigest diffId =
-          uncompressedBlob.writeTo(ByteStreams.nullOutputStream()).getDigest();
-
-      return new CachedLayer(file, blobDescriptor, diffId);
-    }
   }
 
   /** Gets the uncompressed layer content BLOB. */

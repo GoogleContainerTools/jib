@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2018 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,18 +20,19 @@ import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.blob.Blobs;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Resources;
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.zip.GZIPInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.junit.Assert;
@@ -66,15 +67,17 @@ public class LayerBuilderTest {
     // Writes the layer tar to a temporary file.
     UnwrittenLayer unwrittenLayer = layerBuilder.build();
     File temporaryFile = temporaryFolder.newFile();
-    unwrittenLayer.writeTo(temporaryFile);
+    try (OutputStream temporaryFileOutputStream =
+        new BufferedOutputStream(new FileOutputStream(temporaryFile))) {
+      unwrittenLayer.getBlob().writeTo(temporaryFileOutputStream);
+    }
 
     // Reads the file back.
     Blob fileBlob = Blobs.from(temporaryFile);
     ByteArrayOutputStream fileContentStream = new ByteArrayOutputStream();
     fileBlob.writeTo(fileContentStream);
-    ByteArrayInputStream byteArrayInputStream =
+    ByteArrayInputStream tarByteInputStream =
         new ByteArrayInputStream(fileContentStream.toByteArray());
-    InputStream tarByteInputStream = new GZIPInputStream(byteArrayInputStream);
     TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(tarByteInputStream);
 
     // Verifies that all the files have been added to the tarball stream.
