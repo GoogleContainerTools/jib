@@ -21,20 +21,20 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /** A {@link Blob} that writes with a {@link BlobWriter} function and hashes the bytes. */
-class HashingWriterBlob implements Blob {
+class WriterBlob implements Blob {
 
   private final BlobWriter writer;
 
-  HashingWriterBlob(BlobWriter writer) {
+  WriterBlob(BlobWriter writer) {
     this.writer = writer;
   }
 
   @Override
   public BlobDescriptor writeTo(OutputStream outputStream) throws IOException {
-    try (CountingDigestOutputStream countingDigestOutputStream =
-        new CountingDigestOutputStream(outputStream)) {
-      writer.writeTo(countingDigestOutputStream);
-      return countingDigestOutputStream.toBlobDescriptor();
-    }
+    CountingDigestOutputStream countingDigestOutputStream =
+        new CountingDigestOutputStream(outputStream);
+    writer.writeTo(countingDigestOutputStream);
+    countingDigestOutputStream.flush();
+    return countingDigestOutputStream.toBlobDescriptor();
   }
 }
