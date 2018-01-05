@@ -24,7 +24,6 @@ import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.image.json.ManifestTemplate;
 import com.google.cloud.tools.crepecake.image.json.V22ManifestTemplate;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.security.DigestException;
 import org.junit.Assert;
 import org.junit.ClassRule;
@@ -54,14 +53,13 @@ public class ManifestPusherIntegrationTest {
 
   /** Tests manifest pushing. This test is a comprehensive test of push and pull. */
   @Test
-  public void testPush()
-      throws DigestException, IOException, RegistryException, URISyntaxException {
-    Blob testLayerBlob = Blobs.from("crepecake", false);
+  public void testPush() throws DigestException, IOException, RegistryException {
+    Blob testLayerBlob = Blobs.from("crepecake");
     // Known digest for 'crepecake'
     DescriptorDigest testLayerBlobDigest =
         DescriptorDigest.fromHash(
             "52a9e4d4ba4333ce593707f98564fee1e6d898db0d3602408c0b2a6a424d357c");
-    Blob testContainerConfigurationBlob = Blobs.from("12345", false);
+    Blob testContainerConfigurationBlob = Blobs.from("12345");
     DescriptorDigest testContainerConfigurationBlobDigest =
         DescriptorDigest.fromHash(
             "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5");

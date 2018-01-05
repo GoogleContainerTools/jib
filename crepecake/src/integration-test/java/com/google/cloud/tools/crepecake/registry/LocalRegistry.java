@@ -62,11 +62,11 @@ class LocalRegistry extends ExternalResource {
   private void printLogs() throws IOException, InterruptedException {
     Process process = Runtime.getRuntime().exec("docker logs registry");
     try (InputStreamReader inputStreamReader =
-             new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)) {
+        new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)) {
       System.out.println(CharStreams.toString(inputStreamReader));
     }
     try (InputStreamReader inputStreamReader =
-             new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8)) {
+        new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8)) {
       System.err.println(CharStreams.toString(inputStreamReader));
     }
     process.waitFor();
