@@ -18,6 +18,8 @@ package com.google.cloud.tools.crepecake.registry;
 
 import com.google.cloud.tools.crepecake.http.Response;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 /**
  * Provides implementations for a registry endpoint.
@@ -30,10 +32,10 @@ interface RegistryEndpointProvider<T> {
   T handleResponse(Response response) throws IOException, RegistryException;
 
   /**
-   * @return the suffix for the registry endpoint after the namespace (for example, {@code
-   *     "/manifests/latest"})
+   * @param apiRouteBase the registry's base URL (for example, {@code https://gcr.io/v2/})
+   * @return the registry endpoint URL
    */
-  String getApiRouteSuffix();
+  URL getApiRoute(String apiRouteBase) throws MalformedURLException;
 
   /**
    * @return a description of the registry action performed, used in error messages to describe the
