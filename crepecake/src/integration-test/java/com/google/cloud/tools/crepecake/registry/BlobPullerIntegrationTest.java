@@ -19,7 +19,6 @@ package com.google.cloud.tools.crepecake.registry;
 import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
-import com.google.cloud.tools.crepecake.image.json.ManifestTemplate;
 import com.google.cloud.tools.crepecake.image.json.V21ManifestTemplate;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -48,10 +47,10 @@ public class BlobPullerIntegrationTest {
   public void testPull() throws IOException, RegistryException, DigestException {
     // Pulls the busybox image.
     RegistryClient registryClient = new RegistryClient(null, "localhost:5000", "busybox");
-    ManifestTemplate manifestTemplate = registryClient.pullManifest("latest");
+    V21ManifestTemplate manifestTemplate =
+        registryClient.pullManifest("latest", V21ManifestTemplate.class);
 
-    V21ManifestTemplate v21ManifestTemplate = (V21ManifestTemplate) manifestTemplate;
-    DescriptorDigest realDigest = v21ManifestTemplate.getLayerDigests().get(0);
+    DescriptorDigest realDigest = manifestTemplate.getLayerDigests().get(0);
 
     // Pulls a layer BLOB of the busybox image.
     File destFile = temporaryFolder.newFile();

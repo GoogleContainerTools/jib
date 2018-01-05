@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2018 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,6 +24,7 @@ import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.image.json.ManifestTemplate;
 import com.google.cloud.tools.crepecake.image.json.V22ManifestTemplate;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.security.DigestException;
 import org.junit.Assert;
 import org.junit.ClassRule;
@@ -53,14 +54,14 @@ public class ManifestPusherIntegrationTest {
 
   /** Tests manifest pushing. This test is a comprehensive test of push and pull. */
   @Test
-  public void testPush() throws DigestException, IOException, RegistryException {
+  public void testPush()
+      throws DigestException, IOException, RegistryException, URISyntaxException {
     Blob testLayerBlob = Blobs.from("crepecake", false);
     // Known digest for 'crepecake'
     DescriptorDigest testLayerBlobDigest =
         DescriptorDigest.fromHash(
             "52a9e4d4ba4333ce593707f98564fee1e6d898db0d3602408c0b2a6a424d357c");
     Blob testContainerConfigurationBlob = Blobs.from("12345", false);
-    // Known digest for '12345'
     DescriptorDigest testContainerConfigurationBlobDigest =
         DescriptorDigest.fromHash(
             "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5");
@@ -73,19 +74,19 @@ public class ManifestPusherIntegrationTest {
     // Pushes the BLOBs.
     RegistryClient registryClient = new RegistryClient(null, "localhost:5000", "testimage");
     Assert.assertFalse(registryClient.pushBlob(testLayerBlobDigest, testLayerBlob));
-    //    Assert.assertFalse(
-    //        registryClient.pushBlob(
-    //            testContainerConfigurationBlobDigest, testContainerConfigurationBlob));
-    //
-    //    // Pushes the manifest.
-    //    registryClient.pushManifest(expectedManifestTemplate, "latest");
-    //
-    //    // Pulls the manifest.
-    //    V22ManifestTemplate manifestTemplate =
-    //        (V22ManifestTemplate) registryClient.pullManifest("latest");
-    //    Assert.assertEquals(1, manifestTemplate.getLayers().size());
-    //    Assert.assertEquals(testLayerBlobDigest, manifestTemplate.getLayerDigest(0));
-    //    Assert.assertEquals(
-    //        testContainerConfigurationBlobDigest, manifestTemplate.getContainerConfigurationDigest());
+    Assert.assertFalse(
+        registryClient.pushBlob(
+            testContainerConfigurationBlobDigest, testContainerConfigurationBlob));
+
+    // Pushes the manifest.
+    registryClient.pushManifest(expectedManifestTemplate, "latest");
+
+    // Pulls the manifest.
+    V22ManifestTemplate manifestTemplate =
+        registryClient.pullManifest("latest", V22ManifestTemplate.class);
+    Assert.assertEquals(1, manifestTemplate.getLayers().size());
+    Assert.assertEquals(testLayerBlobDigest, manifestTemplate.getLayerDigest(0));
+    Assert.assertEquals(
+        testContainerConfigurationBlobDigest, manifestTemplate.getContainerConfigurationDigest());
   }
 }

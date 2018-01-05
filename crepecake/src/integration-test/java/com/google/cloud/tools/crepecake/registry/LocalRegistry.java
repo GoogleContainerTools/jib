@@ -16,7 +16,10 @@
 
 package com.google.cloud.tools.crepecake.registry;
 
+import com.google.common.io.CharStreams;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.TestRule;
 
@@ -42,6 +45,17 @@ class LocalRegistry extends ExternalResource {
   @Override
   protected void after() {
     try {
+      Process process = Runtime.getRuntime().exec("docker logs registry");
+      try (InputStreamReader inputStreamReader =
+          new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)) {
+        System.out.println(CharStreams.toString(inputStreamReader));
+      }
+      try (InputStreamReader inputStreamReader =
+          new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8)) {
+        System.out.println(CharStreams.toString(inputStreamReader));
+      }
+      process.waitFor();
+
       runCommand("docker stop registry");
       runCommand("docker rm -v registry");
 

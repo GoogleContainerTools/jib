@@ -25,6 +25,7 @@ import com.google.cloud.tools.crepecake.http.Request;
 import com.google.cloud.tools.crepecake.http.Response;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.image.json.ManifestTemplate;
+import com.google.cloud.tools.crepecake.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.crepecake.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
 import com.google.cloud.tools.crepecake.registry.json.ErrorEntryTemplate;
@@ -52,10 +53,21 @@ public class RegistryClient {
     this.imageName = imageName;
   }
 
-  /** Pulls the image manifest for a specific tag. */
-  public ManifestTemplate pullManifest(String imageTag) throws IOException, RegistryException {
-    ManifestPuller manifestPuller = new ManifestPuller(imageTag);
+  /**
+   * Pulls the image manifest for a specific tag.
+   *
+   * @param imageTag the tag to pull on
+   * @param manifestTemplateClass the specific version of manifest template to pull, or {@link
+   *     ManifestTemplate} to pull either {@link V22ManifestTemplate} or {@link V21ManifestTemplate}
+   */
+  public <T extends ManifestTemplate> T pullManifest(
+      String imageTag, Class<T> manifestTemplateClass) throws IOException, RegistryException {
+    ManifestPuller<T> manifestPuller = new ManifestPuller<>(imageTag, manifestTemplateClass);
     return callRegistryEndpoint(null, manifestPuller);
+  }
+
+  public ManifestTemplate pullManifest(String imageTag) throws IOException, RegistryException {
+    return pullManifest(imageTag, ManifestTemplate.class);
   }
 
   /** Pushes the image manifest for a specific tag. */

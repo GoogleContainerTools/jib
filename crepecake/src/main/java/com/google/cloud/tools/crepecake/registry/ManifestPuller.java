@@ -30,49 +30,30 @@ import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
 import java.io.IOException;
 
 /** Pulls an image's manifest. */
-class ManifestPuller implements RegistryEndpointProvider<ManifestTemplate> {
+class ManifestPuller<T extends ManifestTemplate> implements RegistryEndpointProvider<T> {
 
   private final String imageTag;
+  private final Class<T> manifestTemplateClass;
 
-  /**
-   * Instantiates a {@link ManifestTemplate} from a JSON string. This checks the {@code
-   * schemaVersion} field of the JSON to determine which manifest version to use.
-   */
-  private static ManifestTemplate getManifestTemplateFromJson(String jsonString)
-      throws IOException, UnknownManifestFormatException {
-    ObjectNode node = new ObjectMapper().readValue(jsonString, ObjectNode.class);
-    if (!node.has("schemaVersion")) {
-      throw new UnknownManifestFormatException("Cannot find field 'schemaVersion' in manifest");
-    }
-
-    int schemaVersion = node.get("schemaVersion").asInt(-1);
-    switch (schemaVersion) {
-      case 1:
-        return JsonTemplateMapper.readJson(jsonString, V21ManifestTemplate.class);
-
-      case 2:
-        return JsonTemplateMapper.readJson(jsonString, V22ManifestTemplate.class);
-
-      case -1:
-        throw new UnknownManifestFormatException("`schemaVersion` field is not an integer");
-
-      default:
-        throw new UnknownManifestFormatException(
-            "Unknown schemaVersion: " + schemaVersion + " - only 1 and 2 are supported");
-    }
-  }
-
-  ManifestPuller(String imageTag) {
+  ManifestPuller(String imageTag, Class<T> manifestTemplateClass) {
     this.imageTag = imageTag;
+    this.manifestTemplateClass = manifestTemplateClass;
   }
 
   @Override
-  public void buildRequest(Request.Builder builder) {}
+  public void buildRequest(Request.Builder builder) {
+    if (manifestTemplateClass.equals(V21ManifestTemplate.class)) {
+      builder.setAccept(V21ManifestTemplate.MEDIA_TYPE);
+    } else if (manifestTemplateClass.equals(V22ManifestTemplate.class)) {
+      builder.setAccept(V22ManifestTemplate.MEDIA_TYPE);
+    } else {
+      builder.setAccept(V22ManifestTemplate.MEDIA_TYPE + ", " + V21ManifestTemplate.MEDIA_TYPE);
+    }
+  }
 
   /** Parses the response body into a {@link ManifestTemplate}. */
   @Override
-  public ManifestTemplate handleResponse(Response response)
-      throws IOException, UnknownManifestFormatException {
+  public T handleResponse(Response response) throws IOException, UnknownManifestFormatException {
     return getManifestTemplateFromJson(Blobs.writeToString(response.getBody()));
   }
 
@@ -89,5 +70,39 @@ class ManifestPuller implements RegistryEndpointProvider<ManifestTemplate> {
   @Override
   public String getActionDescription(String serverUrl, String imageName) {
     return "pull image manifest for " + serverUrl + "/" + imageName + ":" + imageTag;
+  }
+
+  /**
+   * Instantiates a {@link ManifestTemplate} from a JSON string. This checks the {@code
+   * schemaVersion} field of the JSON to determine which manifest version to use.
+   */
+  private T getManifestTemplateFromJson(String jsonString)
+      throws IOException, UnknownManifestFormatException {
+    ObjectNode node = new ObjectMapper().readValue(jsonString, ObjectNode.class);
+    if (!node.has("schemaVersion")) {
+      throw new UnknownManifestFormatException("Cannot find field 'schemaVersion' in manifest");
+    }
+
+    if (!manifestTemplateClass.equals(ManifestTemplate.class)) {
+      return JsonTemplateMapper.readJson(jsonString, manifestTemplateClass);
+    }
+
+    int schemaVersion = node.get("schemaVersion").asInt(-1);
+    switch (schemaVersion) {
+      case 1:
+        return manifestTemplateClass.cast(
+            JsonTemplateMapper.readJson(jsonString, V21ManifestTemplate.class));
+
+      case 2:
+        return manifestTemplateClass.cast(
+            JsonTemplateMapper.readJson(jsonString, V22ManifestTemplate.class));
+
+      case -1:
+        throw new UnknownManifestFormatException("`schemaVersion` field is not an integer");
+
+      default:
+        throw new UnknownManifestFormatException(
+            "Unknown schemaVersion: " + schemaVersion + " - only 1 and 2 are supported");
+    }
   }
 }

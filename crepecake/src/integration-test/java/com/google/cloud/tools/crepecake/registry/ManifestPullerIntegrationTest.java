@@ -33,11 +33,11 @@ public class ManifestPullerIntegrationTest {
   @Test
   public void testPull_v21() throws IOException, RegistryException {
     RegistryClient registryClient = new RegistryClient(null, "localhost:5000", "busybox");
-    ManifestTemplate manifestTemplate = registryClient.pullManifest("latest");
+    V21ManifestTemplate manifestTemplate =
+        registryClient.pullManifest("latest", V21ManifestTemplate.class);
 
     Assert.assertEquals(1, manifestTemplate.getSchemaVersion());
-    V21ManifestTemplate v21ManifestTemplate = (V21ManifestTemplate) manifestTemplate;
-    Assert.assertTrue(0 < v21ManifestTemplate.getFsLayers().size());
+    Assert.assertTrue(0 < manifestTemplate.getFsLayers().size());
   }
 
   @Test
