@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2018 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -119,7 +119,7 @@ public class V22ManifestTemplate extends ManifestTemplate {
   }
 
   @VisibleForTesting
-  DescriptorDigest getContainerConfigurationDigest() {
+  public DescriptorDigest getContainerConfigurationDigest() {
     return config.digest;
   }
 
@@ -129,7 +129,7 @@ public class V22ManifestTemplate extends ManifestTemplate {
   }
 
   @VisibleForTesting
-  DescriptorDigest getLayerDigest(int index) {
+  public DescriptorDigest getLayerDigest(int index) {
     return layers.get(index).digest;
   }
 

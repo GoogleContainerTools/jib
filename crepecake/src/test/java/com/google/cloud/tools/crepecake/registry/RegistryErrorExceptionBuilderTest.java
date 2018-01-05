@@ -42,9 +42,9 @@ public class RegistryErrorExceptionBuilderTest {
     ErrorEntryTemplate errorEntryTemplateUnknown =
         new ErrorEntryTemplate("unknown", "some unknown error happened");
 
-    builder.addErrorEntry(errorEntryTemplateManifestUnknown);
-    builder.addErrorEntry(errorEntryTemplateOther);
-    builder.addErrorEntry(errorEntryTemplateUnknown);
+    builder.addReason(errorEntryTemplateManifestUnknown);
+    builder.addReason(errorEntryTemplateOther);
+    builder.addReason(errorEntryTemplateUnknown);
 
     try {
       throw builder.build();

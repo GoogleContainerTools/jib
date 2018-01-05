@@ -31,7 +31,7 @@ class BlobHttpContent implements HttpContent {
   }
 
   @Override
-  public long getLength() throws IOException {
+  public long getLength() {
     // Returns negative value for unknown length.
     return -1;
   }
@@ -50,5 +50,6 @@ class BlobHttpContent implements HttpContent {
   @Override
   public void writeTo(OutputStream outputStream) throws IOException {
     blob.writeTo(outputStream);
+    outputStream.flush();
   }
 }

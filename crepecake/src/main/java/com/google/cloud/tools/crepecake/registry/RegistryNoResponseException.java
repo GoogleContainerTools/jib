@@ -16,10 +16,10 @@
 
 package com.google.cloud.tools.crepecake.registry;
 
-/** Thrown when a registry request was unauthorized and therefore authentication is needed. */
-public class RegistryUnauthorizedException extends RegistryException {
+/** Thrown when a registry did not respond. */
+public class RegistryNoResponseException extends RegistryException {
 
-  RegistryUnauthorizedException(Throwable cause) {
+  RegistryNoResponseException(Throwable cause) {
     super(cause);
   }
 }

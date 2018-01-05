@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2018 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.crepecake.json;
+package com.google.cloud.tools.crepecake.image.json;
 
 import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
@@ -24,7 +24,6 @@ import com.google.cloud.tools.crepecake.image.Image;
 import com.google.cloud.tools.crepecake.image.Layer;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.crepecake.image.ReferenceLayer;
-import com.google.cloud.tools.crepecake.image.json.ImageToJsonTranslator;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Resources;
 import java.io.ByteArrayOutputStream;
@@ -77,7 +76,8 @@ public class ImageToJsonTranslatorTest {
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     containerConfigurationBlob.writeTo(byteArrayOutputStream);
 
-    Assert.assertEquals(expectedJson, byteArrayOutputStream.toString());
+    Assert.assertEquals(
+        expectedJson, new String(byteArrayOutputStream.toByteArray(), StandardCharsets.UTF_8));
   }
 
   @Test
@@ -96,6 +96,7 @@ public class ImageToJsonTranslatorTest {
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     manifestBlob.writeTo(byteArrayOutputStream);
 
-    Assert.assertEquals(expectedJson, byteArrayOutputStream.toString());
+    Assert.assertEquals(
+        expectedJson, new String(byteArrayOutputStream.toByteArray(), StandardCharsets.UTF_8));
   }
 }

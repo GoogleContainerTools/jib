@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2018 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -55,6 +55,8 @@ import java.util.List;
  */
 public class V21ManifestTemplate extends ManifestTemplate {
 
+  public static final String MEDIA_TYPE = "application/vnd.docker.distribution.manifest.v1+json";
+
   private final int schemaVersion = 1;
 
   /** The list of layer references. */
@@ -79,6 +81,16 @@ public class V21ManifestTemplate extends ManifestTemplate {
 
     // TODO: Change to its own JSON template that can extract the layer diff ID.
     private String v1Compatibility;
+  }
+
+  public List<DescriptorDigest> getLayerDigests() {
+    List<DescriptorDigest> layerDigests = new ArrayList<>();
+
+    for (LayerObjectTemplate layerObjectTemplate : fsLayers) {
+      layerDigests.add(layerObjectTemplate.blobSum);
+    }
+
+    return layerDigests;
   }
 
   @Override

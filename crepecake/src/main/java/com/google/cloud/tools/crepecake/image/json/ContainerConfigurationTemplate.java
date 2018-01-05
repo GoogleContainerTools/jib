@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2018 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -104,12 +104,10 @@ public class ContainerConfigurationTemplate extends JsonTemplate {
     return rootfs.diff_ids;
   }
 
-  @VisibleForTesting
   List<String> getContainerEnvironment() {
     return config.Env;
   }
 
-  @VisibleForTesting
   List<String> getContainerEntrypoint() {
     return config.Entrypoint;
   }
