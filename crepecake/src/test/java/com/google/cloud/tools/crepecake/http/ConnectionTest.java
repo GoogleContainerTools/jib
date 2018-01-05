@@ -57,7 +57,7 @@ public class ConnectionTest {
 
   @Before
   public void setUpMocksAndFakes() throws IOException {
-    Blob fakeBlob = Blobs.from("crepecake", false);
+    Blob fakeBlob = Blobs.from("crepecake");
     fakeRequest =
         Request.builder()
             .setBody(fakeBlob)

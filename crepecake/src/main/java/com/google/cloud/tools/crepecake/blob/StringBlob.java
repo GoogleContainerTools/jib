@@ -16,7 +16,9 @@
 
 package com.google.cloud.tools.crepecake.blob;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
@@ -31,9 +33,9 @@ class StringBlob implements Blob {
 
   @Override
   public BlobDescriptor writeTo(OutputStream outputStream) throws IOException {
-    byte[] contentBytes = content.getBytes(StandardCharsets.UTF_8);
-    outputStream.write(contentBytes);
-    outputStream.flush();
-    return new BlobDescriptor(content.length());
+    try (InputStream stringInputStream =
+        new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8))) {
+      return BlobDescriptor.fromPipe(stringInputStream, outputStream);
+    }
   }
 }

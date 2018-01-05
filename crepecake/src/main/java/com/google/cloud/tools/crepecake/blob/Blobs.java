@@ -25,10 +25,6 @@ import java.nio.charset.StandardCharsets;
 /** Static methods for {@link Blob}. */
 public class Blobs {
 
-  public static Blob empty() {
-    return new EmptyBlob();
-  }
-
   public static Blob from(InputStream inputStream) {
     return new InputStreamBlob(inputStream);
   }
@@ -37,12 +33,12 @@ public class Blobs {
     return new FileBlob(file);
   }
 
-  public static Blob from(String content, boolean hashing) {
-    return hashing ? new HashingStringBlob(content) : new StringBlob(content);
+  public static Blob from(String content) {
+    return new StringBlob(content);
   }
 
   public static Blob from(BlobWriter writer) {
-    return new HashingWriterBlob(writer);
+    return new WriterBlob(writer);
   }
 
   /** Writes the BLOB to a string. */
