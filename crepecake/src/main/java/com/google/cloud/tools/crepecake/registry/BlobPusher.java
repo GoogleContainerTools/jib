@@ -82,6 +82,8 @@ class BlobPusher {
 
   private class Writer implements RegistryEndpointProvider<String> {
 
+    private final URL location;
+
     @Override
     public void buildRequest(Request.Builder builder) {
       builder.setContentType(MediaType.OCTET_STREAM.toString());
@@ -97,7 +99,7 @@ class BlobPusher {
 
     @Override
     public URL getApiRoute(String apiRouteBase) {
-      return null;
+      return location;
     }
 
     @Override
@@ -109,9 +111,15 @@ class BlobPusher {
     public String getActionDescription() {
       return BlobPusher.this.getActionDescription();
     }
+
+    private Writer(URL location) {
+      this.location = location;
+    }
   }
 
   private class Committer implements RegistryEndpointProvider<Void> {
+
+    private final URL location;
 
     @Override
     public void buildRequest(Request.Builder builder) {}
@@ -121,9 +129,10 @@ class BlobPusher {
       return null;
     }
 
+    /** @return {@code location} with query parameter 'digest' set to the BLOB's digest */
     @Override
     public URL getApiRoute(String apiRouteBase) {
-      return null;
+      return new GenericUrl(location).set("digest", blobDigest).toURL();
     }
 
     @Override
@@ -134,6 +143,10 @@ class BlobPusher {
     @Override
     public String getActionDescription() {
       return BlobPusher.this.getActionDescription();
+    }
+
+    private Committer(URL location) {
+      this.location = location;
     }
   }
 
@@ -154,19 +167,20 @@ class BlobPusher {
     return new Initializer();
   }
 
-  /** @return a {@link RegistryEndpointProvider} for writing the BLOB to an upload location */
-  RegistryEndpointProvider<String> writer() {
-    return new Writer();
+  /**
+   * @param location the upload URL
+   * @return a {@link RegistryEndpointProvider} for writing the BLOB to an upload location
+   */
+  RegistryEndpointProvider<String> writer(URL location) {
+    return new Writer(location);
   }
 
-  /** @return a {@link RegistryEndpointProvider} for committing the written BLOB with its digest */
-  RegistryEndpointProvider<Void> committer() {
-    return new Committer();
-  }
-
-  /** @return {@code location} with query parameter 'digest' set to the BLOB's digest */
-  URL getCommitUrl(URL location) {
-    return new GenericUrl(location).set("digest", blobDigest).toURL();
+  /**
+   * @param location the upload URL
+   * @return a {@link RegistryEndpointProvider} for committing the written BLOB with its digest
+   */
+  RegistryEndpointProvider<Void> committer(URL location) {
+    return new Committer(location);
   }
 
   private RegistryErrorException buildRegistryErrorException(String reason) {

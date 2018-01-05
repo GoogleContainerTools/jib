@@ -61,7 +61,7 @@ public class RegistryClient {
       String imageTag, Class<T> manifestTemplateClass) throws IOException, RegistryException {
     ManifestPuller<T> manifestPuller =
         new ManifestPuller<>(registryEndpointProperties, imageTag, manifestTemplateClass);
-    return callRegistryEndpoint(null, manifestPuller);
+    return callRegistryEndpoint(manifestPuller);
   }
 
   public ManifestTemplate pullManifest(String imageTag) throws IOException, RegistryException {
@@ -73,7 +73,7 @@ public class RegistryClient {
       throws IOException, RegistryException {
     ManifestPusher manifestPusher =
         new ManifestPusher(registryEndpointProperties, manifestTemplate, imageTag);
-    callRegistryEndpoint(null, manifestPusher);
+    callRegistryEndpoint(manifestPusher);
   }
 
   /**
@@ -87,7 +87,7 @@ public class RegistryClient {
   public Blob pullBlob(DescriptorDigest blobDigest, Path destPath)
       throws RegistryException, IOException {
     BlobPuller blobPuller = new BlobPuller(registryEndpointProperties, blobDigest, destPath);
-    return callRegistryEndpoint(null, blobPuller);
+    return callRegistryEndpoint(blobPuller);
   }
 
   // TODO: Add mount with 'from' parameter
@@ -101,20 +101,20 @@ public class RegistryClient {
    */
   public boolean pushBlob(DescriptorDigest blobDigest, Blob blob)
       throws IOException, RegistryException {
-    BlobPusher blobPusher = new BlobPusher(blobDigest, blob);
+    BlobPusher blobPusher = new BlobPusher(registryEndpointProperties, blobDigest, blob);
 
     // POST /v2/<name>/blobs/uploads/?mount={blob.digest}
-    String locationString = callRegistryEndpoint(null, blobPusher.initializer());
+    String locationString = callRegistryEndpoint(blobPusher.initializer());
     if (locationString == null) {
       return true;
     }
     URL location = new URL(locationString);
 
     // PATCH <Location> with BLOB
-    location = new URL(callRegistryEndpoint(location, blobPusher.writer()));
+    location = new URL(callRegistryEndpoint(blobPusher.writer(location)));
 
     // PUT <Location>?digest={blob.digest}
-    callRegistryEndpoint(blobPusher.getCommitUrl(location), blobPusher.committer());
+    callRegistryEndpoint(blobPusher.committer(location));
 
     return false;
   }
@@ -129,6 +129,16 @@ public class RegistryClient {
 
   /**
    * Calls the registry endpoint.
+   *
+   * @param registryEndpointProvider the {@link RegistryEndpointProvider} to the endpoint
+   */
+  private <T> T callRegistryEndpoint(RegistryEndpointProvider<T> registryEndpointProvider)
+      throws IOException, RegistryException {
+    return callRegistryEndpoint(null, registryEndpointProvider);
+  }
+
+  /**
+   * Calls the registry endpoint with an override URL.
    *
    * @param url the endpoint URL to call, or {@code null} to use default from {@code
    *     registryEndpointProvider}

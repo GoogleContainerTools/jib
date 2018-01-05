@@ -44,7 +44,8 @@ public class BlobPullerTest {
 
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  private RegistryEndpointProperties fakeRegistryEndpointProperties;
+  private final RegistryEndpointProperties fakeRegistryEndpointProperties =
+      new RegistryEndpointProperties("someServerUrl", "someImageName");
   private DescriptorDigest fakeDigest;
   private Path temporaryPath;
 
@@ -52,8 +53,6 @@ public class BlobPullerTest {
 
   @Before
   public void setUpFakes() throws DigestException, IOException {
-    fakeRegistryEndpointProperties =
-        new RegistryEndpointProperties("someServerUrl", "someImageName");
     fakeDigest =
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");

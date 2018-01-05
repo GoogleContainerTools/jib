@@ -40,6 +40,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class BlobPusherTest {
 
   @Mock private Blob mockBlob;
+  @Mock private URL mockURL;
 
   private DescriptorDigest fakeDescriptorDigest;
   private BlobPusher testBlobPusher;
@@ -49,7 +50,11 @@ public class BlobPusherTest {
     fakeDescriptorDigest =
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-    testBlobPusher = new BlobPusher(fakeDescriptorDigest, mockBlob);
+    testBlobPusher =
+        new BlobPusher(
+            new RegistryEndpointProperties("someServerUrl", "someImageName"),
+            fakeDescriptorDigest,
+            mockBlob);
   }
 
   @Test
@@ -126,14 +131,14 @@ public class BlobPusherTest {
   @Test
   public void testInitializer_getActionDescription() {
     Assert.assertEquals(
-        "push BLOB for someServer/someImage with digest " + fakeDescriptorDigest,
-        testBlobPusher.initializer().getActionDescription("someServer", "someImage"));
+        "push BLOB for someServerUrl/someImageName with digest " + fakeDescriptorDigest,
+        testBlobPusher.initializer().getActionDescription());
   }
 
   @Test
   public void testWriter_buildRequest() {
     Request.Builder mockRequestBuilder = Mockito.mock(Request.Builder.class);
-    testBlobPusher.writer().buildRequest(mockRequestBuilder);
+    testBlobPusher.writer(mockURL).buildRequest(mockRequestBuilder);
     Mockito.verify(mockRequestBuilder).setContentType("application/octet-stream");
     Mockito.verify(mockRequestBuilder).setBody(mockBlob);
   }
@@ -144,38 +149,49 @@ public class BlobPusherTest {
 
     Mockito.when(mockResponse.getHeader("Location"))
         .thenReturn(Collections.singletonList("location"));
-    Assert.assertEquals("location", testBlobPusher.writer().handleResponse(mockResponse));
+    Assert.assertEquals("location", testBlobPusher.writer(mockURL).handleResponse(mockResponse));
   }
 
   @Test
   public void testWriter_getApiRoute() throws MalformedURLException {
-    Assert.assertNull(testBlobPusher.writer().getApiRoute(""));
+    URL fakeUrl = new URL("http://someurl");
+    Assert.assertEquals(fakeUrl, testBlobPusher.writer(fakeUrl).getApiRoute(""));
   }
 
   @Test
   public void testWriter_getHttpMethod() {
-    Assert.assertEquals("PATCH", testBlobPusher.writer().getHttpMethod());
+    Assert.assertEquals("PATCH", testBlobPusher.writer(mockURL).getHttpMethod());
   }
 
   @Test
   public void testWriter_getActionDescription() {
     Assert.assertEquals(
-        "push BLOB for someServer/someImage with digest " + fakeDescriptorDigest,
-        testBlobPusher.writer().getActionDescription("someServer", "someImage"));
+        "push BLOB for someServerUrl/someImageName with digest " + fakeDescriptorDigest,
+        testBlobPusher.writer(mockURL).getActionDescription());
   }
 
   @Test
-  public void testCommitter() throws IOException, RegistryException {
-    Assert.assertNull(testBlobPusher.committer().handleResponse(Mockito.mock(Response.class)));
-    Assert.assertNull(testBlobPusher.committer().getApiRoute(""));
-    Assert.assertEquals("PUT", testBlobPusher.committer().getHttpMethod());
-    Assert.assertNull(testBlobPusher.committer().getActionDescription("", ""));
+  public void testCommitter_handleResponse() throws IOException, RegistryException {
+    Assert.assertNull(
+        testBlobPusher.committer(mockURL).handleResponse(Mockito.mock(Response.class)));
   }
 
   @Test
-  public void testGetCommitUrl() throws MalformedURLException {
+  public void testCommitter_getApiRoute() throws MalformedURLException {
     Assert.assertEquals(
-        "https://someurl?somequery=somevalue&digest=" + fakeDescriptorDigest,
-        testBlobPusher.getCommitUrl(new URL("https://someurl?somequery=somevalue")).toString());
+        new URL("https://someurl?somequery=somevalue&digest=" + fakeDescriptorDigest),
+        testBlobPusher.committer(new URL("https://someurl?somequery=somevalue")).getApiRoute(""));
+  }
+
+  @Test
+  public void testCommitter_getHttpMethod() {
+    Assert.assertEquals("PUT", testBlobPusher.committer(mockURL).getHttpMethod());
+  }
+
+  @Test
+  public void testCommitter_getActionDescription() {
+    Assert.assertEquals(
+        "push BLOB for someServerUrl/someImageName with digest " + fakeDescriptorDigest,
+        testBlobPusher.committer(mockURL).getActionDescription());
   }
 }
