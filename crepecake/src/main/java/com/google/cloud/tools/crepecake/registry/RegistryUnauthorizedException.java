@@ -16,10 +16,16 @@
 
 package com.google.cloud.tools.crepecake.registry;
 
+import com.google.api.client.http.HttpResponseException;
+
 /** Thrown when a registry request was unauthorized and therefore authentication is needed. */
 public class RegistryUnauthorizedException extends RegistryException {
 
-  RegistryUnauthorizedException(Throwable cause) {
+  RegistryUnauthorizedException(HttpResponseException cause) {
     super(cause);
+  }
+
+  HttpResponseException getHttpResponseException() {
+    return (HttpResponseException) getCause();
   }
 }

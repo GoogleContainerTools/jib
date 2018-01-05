@@ -29,7 +29,6 @@ import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -56,18 +55,18 @@ public class RegistryAuthenticator {
       String authenticationMethod, String repository)
       throws RegistryAuthenticationFailedException, MalformedURLException {
     // Checks that the authentication method starts with 'Bearer '.
-    if (!"Bearer ".equals(Arrays.asList(authenticationMethod.split(" ")).get(0))) {
-      throw newRegistryAuthenticationFailedException(authenticationMethod, "Bearer ");
+    if (!authenticationMethod.matches("^Bearer .*")) {
+      throw newRegistryAuthenticationFailedException(authenticationMethod, "Bearer");
     }
 
-    Pattern realmPattern = Pattern.compile("realm=\"(.*)\"");
+    Pattern realmPattern = Pattern.compile("realm=\"(.*?)\"");
     Matcher realmMatcher = realmPattern.matcher(authenticationMethod);
     if (!realmMatcher.find()) {
       throw newRegistryAuthenticationFailedException(authenticationMethod, "realm");
     }
     String realm = realmMatcher.group(1);
 
-    Pattern servicePattern = Pattern.compile("service=\"(.*)\"");
+    Pattern servicePattern = Pattern.compile("service=\"(.*?)\"");
     Matcher serviceMatcher = servicePattern.matcher(authenticationMethod);
     if (!serviceMatcher.find()) {
       throw newRegistryAuthenticationFailedException(authenticationMethod, "service");

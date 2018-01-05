@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.crepecake.registry;
 
+import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.crepecake.blob.Blob;
@@ -34,13 +35,14 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
 import javax.annotation.Nullable;
+import javax.net.ssl.SSLPeerUnverifiedException;
 import org.apache.http.NoHttpResponseException;
 
 /** Interfaces with a registry. */
 public class RegistryClient {
 
   // TODO: This should be configurable.
-  private static final String PROTOCOL = "http";
+  private static final String PROTOCOL = "https";
 
   @Nullable private final Authorization authorization;
   private final RegistryEndpointProperties registryEndpointProperties;
@@ -54,12 +56,36 @@ public class RegistryClient {
   public RegistryAuthenticator getRegistryAuthenticator()
       throws IOException, RegistryException, RegistryAuthenticationFailedException {
     // Gets the WWW-Authenticate header (eg. 'WWW-Authenticate: Bearer realm="https://gcr.io/v2/token",service="gcr.io"')
-    String authenticationMethod =
-        callRegistryEndpoint(new AuthenticationMethodRetriever(registryEndpointProperties));
+    AuthenticationMethodRetriever authenticationMethodRetriever =
+        new AuthenticationMethodRetriever(registryEndpointProperties);
 
-    // Parses the header to retrieve the components.
-    return RegistryAuthenticator.fromAuthenticationMethod(
-        authenticationMethod, registryEndpointProperties.getImageName());
+    try {
+      callRegistryEndpoint(authenticationMethodRetriever);
+      throw new RegistryErrorExceptionBuilder(authenticationMethodRetriever.getActionDescription())
+          .addReason("Did not receive '401 Unauthorized' response")
+          .build();
+
+    } catch (RegistryUnauthorizedException ex) {
+      HttpResponseException httpResponseException = ex.getHttpResponseException();
+
+      // Only valid for status code of '401 Unauthorized'.
+      if (httpResponseException.getStatusCode() != HttpStatusCodes.STATUS_CODE_UNAUTHORIZED) {
+        throw httpResponseException;
+      }
+
+      // Checks if the 'WWW-Authenticate' header is present.
+      String authenticationMethod = httpResponseException.getHeaders().getAuthenticate();
+      if (authenticationMethod == null) {
+        throw new RegistryErrorExceptionBuilder(
+                authenticationMethodRetriever.getActionDescription(), httpResponseException)
+            .addReason("'WWW-Authenticate' header not found")
+            .build();
+      }
+
+      // Parses the header to retrieve the components.
+      return RegistryAuthenticator.fromAuthenticationMethod(
+          authenticationMethod, registryEndpointProperties.getImageName());
+    }
   }
 
   /**
@@ -132,11 +158,7 @@ public class RegistryClient {
   }
 
   private String getApiRouteBase() {
-    return PROTOCOL
-        + "://"
-        + registryEndpointProperties.getServerUrl()
-        + "/v2/"
-        + registryEndpointProperties.getImageName();
+    return PROTOCOL + "://" + registryEndpointProperties.getServerUrl() + "/v2/";
   }
 
   /**
@@ -205,6 +227,12 @@ public class RegistryClient {
 
     } catch (NoHttpResponseException ex) {
       throw new RegistryNoResponseException(ex);
+
+    } catch (SSLPeerUnverifiedException ex) {
+      // Fall-back to HTTP
+      GenericUrl httpUrl = new GenericUrl(url);
+      httpUrl.setScheme("http");
+      return callRegistryEndpoint(httpUrl.toURL(), registryEndpointProvider);
     }
   }
 }

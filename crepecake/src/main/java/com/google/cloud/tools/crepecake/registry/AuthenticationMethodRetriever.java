@@ -23,7 +23,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 /** Retrieves the {@code WWW-Authenticate} header from the registry API. */
-class AuthenticationMethodRetriever implements RegistryEndpointProvider<String> {
+class AuthenticationMethodRetriever implements RegistryEndpointProvider<Void> {
 
   private final RegistryEndpointProperties registryEndpointProperties;
 
@@ -31,8 +31,8 @@ class AuthenticationMethodRetriever implements RegistryEndpointProvider<String> 
   public void buildRequest(Request.Builder builder) {}
 
   @Override
-  public String handleResponse(Response response) {
-    return response.getAuthenticate();
+  public Void handleResponse(Response response) {
+    return null;
   }
 
   @Override
