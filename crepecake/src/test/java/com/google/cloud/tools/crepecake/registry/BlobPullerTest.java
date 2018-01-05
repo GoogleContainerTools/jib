@@ -63,7 +63,7 @@ public class BlobPullerTest {
 
   @Test
   public void testInitializer_handleResponse() throws IOException, UnexpectedBlobDigestException {
-    Blob testBlob = Blobs.from("some BLOB content", true);
+    Blob testBlob = Blobs.from("some BLOB content");
     DescriptorDigest testBlobDigest = testBlob.writeTo(ByteStreams.nullOutputStream()).getDigest();
 
     Response mockResponse = Mockito.mock(Response.class);
@@ -82,7 +82,7 @@ public class BlobPullerTest {
 
   @Test
   public void testInitializer_handleResponse_unexpectedDigest() throws IOException {
-    Blob testBlob = Blobs.from("some BLOB content", true);
+    Blob testBlob = Blobs.from("some BLOB content");
     DescriptorDigest testBlobDigest = testBlob.writeTo(ByteStreams.nullOutputStream()).getDigest();
 
     Response mockResponse = Mockito.mock(Response.class);
