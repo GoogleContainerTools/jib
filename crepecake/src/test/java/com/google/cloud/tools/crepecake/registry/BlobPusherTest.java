@@ -112,10 +112,10 @@ public class BlobPusherTest {
   }
 
   @Test
-  public void testInitializer_getApiRouteSuffix() {
+  public void testInitializer_getApiRouteSuffix() throws MalformedURLException {
     Assert.assertEquals(
-        "/blobs/uploads/?mount=" + fakeDescriptorDigest,
-        testBlobPusher.initializer().getApiRouteSuffix());
+        new URL("http://someApiBase/blobs/uploads/?mount=" + fakeDescriptorDigest),
+        testBlobPusher.initializer().getApiRoute("http://someApiBase"));
   }
 
   @Test
@@ -148,8 +148,8 @@ public class BlobPusherTest {
   }
 
   @Test
-  public void testWriter_getApiRouteSuffix() {
-    Assert.assertNull(testBlobPusher.writer().getApiRouteSuffix());
+  public void testWriter_getApiRouteSuffix() throws MalformedURLException {
+    Assert.assertNull(testBlobPusher.writer().getApiRoute(""));
   }
 
   @Test
@@ -167,7 +167,7 @@ public class BlobPusherTest {
   @Test
   public void testCommitter() throws IOException, RegistryException {
     Assert.assertNull(testBlobPusher.committer().handleResponse(Mockito.mock(Response.class)));
-    Assert.assertNull(testBlobPusher.committer().getApiRouteSuffix());
+    Assert.assertNull(testBlobPusher.committer().getApiRoute(""));
     Assert.assertEquals("PUT", testBlobPusher.committer().getHttpMethod());
     Assert.assertNull(testBlobPusher.committer().getActionDescription("", ""));
   }

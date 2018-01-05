@@ -20,6 +20,8 @@ import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.http.Request;
 import com.google.cloud.tools.crepecake.http.Response;
 import com.google.cloud.tools.crepecake.image.json.V22ManifestTemplate;
+import java.net.MalformedURLException;
+import java.net.URL;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -56,8 +58,10 @@ public class ManifestPusherTest {
   }
 
   @Test
-  public void testApiRouteSuffix() {
-    Assert.assertEquals("/manifests/test-image-tag", testManifestPusher.getApiRouteSuffix());
+  public void testApiRoute() throws MalformedURLException {
+    Assert.assertEquals(
+        new URL("http://someApiBase/manifests/test-image-tag"),
+        testManifestPusher.getApiRoute("http://someApiBase"));
   }
 
   @Test

@@ -25,6 +25,7 @@ import com.google.cloud.tools.crepecake.http.Response;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.common.net.MediaType;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -63,8 +64,8 @@ class BlobPusher {
     }
 
     @Override
-    public String getApiRouteSuffix() {
-      return "/blobs/uploads/?mount=" + blobDigest;
+    public URL getApiRoute(String apiRouteBase) throws MalformedURLException {
+      return new URL(apiRouteBase + "/blobs/uploads/?mount=" + blobDigest);
     }
 
     @Override
@@ -97,7 +98,7 @@ class BlobPusher {
     }
 
     @Override
-    public String getApiRouteSuffix() {
+    public URL getApiRoute(String apiRouteBase) {
       return null;
     }
 
@@ -123,7 +124,7 @@ class BlobPusher {
     }
 
     @Override
-    public String getApiRouteSuffix() {
+    public URL getApiRoute(String apiRouteBase) {
       return null;
     }
 
