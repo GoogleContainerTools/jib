@@ -45,17 +45,6 @@ class LocalRegistry extends ExternalResource {
   @Override
   protected void after() {
     try {
-      Process process = Runtime.getRuntime().exec("docker logs registry");
-      try (InputStreamReader inputStreamReader =
-          new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)) {
-        System.out.println(CharStreams.toString(inputStreamReader));
-      }
-      try (InputStreamReader inputStreamReader =
-          new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8)) {
-        System.out.println(CharStreams.toString(inputStreamReader));
-      }
-      process.waitFor();
-
       runCommand("docker stop registry");
       runCommand("docker rm -v registry");
 
@@ -68,5 +57,18 @@ class LocalRegistry extends ExternalResource {
     if (Runtime.getRuntime().exec(command).waitFor() != 0) {
       throw new IOException("Command '" + command + "' failed");
     }
+  }
+
+  private void printLogs() throws IOException, InterruptedException {
+    Process process = Runtime.getRuntime().exec("docker logs registry");
+    try (InputStreamReader inputStreamReader =
+             new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)) {
+      System.out.println(CharStreams.toString(inputStreamReader));
+    }
+    try (InputStreamReader inputStreamReader =
+             new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8)) {
+      System.err.println(CharStreams.toString(inputStreamReader));
+    }
+    process.waitFor();
   }
 }
