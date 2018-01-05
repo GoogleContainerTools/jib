@@ -30,4 +30,16 @@ public abstract class RegistryAuthenticators {
       throw new RegistryAuthenticationFailedException(ex);
     }
   }
+
+  public static RegistryAuthenticator forOther(String serverUrl, String repository)
+      throws RegistryAuthenticationFailedException {
+    // TODO: GET /v2/, use WWW-Authenticate header (eg. WWW-Authenticate: Bearer realm="https://gcr.io/v2/token",service="gcr.io")
+
+    try {
+      return new RegistryAuthenticator(
+          "https://auth.docker.io/token", "registry.docker.io", repository);
+    } catch (MalformedURLException ex) {
+      throw new RegistryAuthenticationFailedException(ex);
+    }
+  }
 }
