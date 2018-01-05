@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2018 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -51,8 +51,9 @@ public class CacheWriter {
       // content descriptor.
       GZIPOutputStream compressorStream = new GZIPOutputStream(compressedDigestOutputStream);
       DescriptorDigest diffId = layer.getBlob().writeTo(compressorStream).getDigest();
-      compressorStream.close();
 
+      // The GZIPOutputStream must be closed in order to write out the remaining compressed data.
+      compressorStream.close();
       BlobDescriptor compressedBlobDescriptor = compressedDigestOutputStream.toBlobDescriptor();
 
       // Renames the temporary layer file to the correct filename.
