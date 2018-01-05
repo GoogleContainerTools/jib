@@ -27,10 +27,15 @@ import java.net.URL;
 /** Pushes an image's manifest. */
 class ManifestPusher implements RegistryEndpointProvider<Void> {
 
+  private final RegistryEndpointProperties registryEndpointProperties;
   private final V22ManifestTemplate manifestTemplate;
   private final String imageTag;
 
-  ManifestPusher(V22ManifestTemplate manifestTemplate, String imageTag) {
+  ManifestPusher(
+      RegistryEndpointProperties registryEndpointProperties,
+      V22ManifestTemplate manifestTemplate,
+      String imageTag) {
+    this.registryEndpointProperties = registryEndpointProperties;
     this.manifestTemplate = manifestTemplate;
     this.imageTag = imageTag;
   }
@@ -57,7 +62,12 @@ class ManifestPusher implements RegistryEndpointProvider<Void> {
   }
 
   @Override
-  public String getActionDescription(String serverUrl, String imageName) {
-    return "push image manifest for " + serverUrl + "/" + imageName + ":" + imageTag;
+  public String getActionDescription() {
+    return "push image manifest for "
+        + registryEndpointProperties.getServerUrl()
+        + "/"
+        + registryEndpointProperties.getImageName()
+        + ":"
+        + imageTag;
   }
 }

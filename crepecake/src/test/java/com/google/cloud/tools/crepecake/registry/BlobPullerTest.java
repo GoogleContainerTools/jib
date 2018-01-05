@@ -44,6 +44,7 @@ public class BlobPullerTest {
 
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
+  private RegistryEndpointProperties fakeRegistryEndpointProperties;
   private DescriptorDigest fakeDigest;
   private Path temporaryPath;
 
@@ -51,12 +52,14 @@ public class BlobPullerTest {
 
   @Before
   public void setUpFakes() throws DigestException, IOException {
+    fakeRegistryEndpointProperties =
+        new RegistryEndpointProperties("someServerUrl", "someImageName");
     fakeDigest =
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
     temporaryPath = temporaryFolder.newFile().toPath();
 
-    testBlobPuller = new BlobPuller(fakeDigest, temporaryPath);
+    testBlobPuller = new BlobPuller(fakeRegistryEndpointProperties, fakeDigest, temporaryPath);
   }
 
   @Test
@@ -67,7 +70,8 @@ public class BlobPullerTest {
     Response mockResponse = Mockito.mock(Response.class);
     Mockito.when(mockResponse.getBody()).thenReturn(testBlob);
 
-    BlobPuller blobPuller = new BlobPuller(testBlobDigest, temporaryPath);
+    BlobPuller blobPuller =
+        new BlobPuller(fakeRegistryEndpointProperties, testBlobDigest, temporaryPath);
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     BlobDescriptor blobDescriptor =
         blobPuller.handleResponse(mockResponse).writeTo(byteArrayOutputStream);
@@ -102,17 +106,16 @@ public class BlobPullerTest {
 
   @Test
   public void testInitializer_getApiRoute() throws MalformedURLException {
-    BlobPuller blobPuller = new BlobPuller(fakeDigest, temporaryPath);
     Assert.assertEquals(
         new URL("http://someApiBase/blobs/" + fakeDigest),
-        blobPuller.getApiRoute("http://someApiBase"));
+        testBlobPuller.getApiRoute("http://someApiBase"));
   }
 
   @Test
   public void testInitializer_getActionDescription() {
     Assert.assertEquals(
-        "pull BLOB for someServer/someImage with digest " + fakeDigest,
-        testBlobPuller.getActionDescription("someServer", "someImage"));
+        "pull BLOB for someServerUrl/someImageName with digest " + fakeDigest,
+        testBlobPuller.getActionDescription());
   }
 
   @Test

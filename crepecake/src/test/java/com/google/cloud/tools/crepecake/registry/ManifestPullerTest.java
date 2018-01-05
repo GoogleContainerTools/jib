@@ -42,6 +42,12 @@ public class ManifestPullerTest {
 
   @Mock private Response mockResponse;
 
+  private final RegistryEndpointProperties fakeRegistryEndpointProperties =
+      new RegistryEndpointProperties("someServerUrl", "someImageName");
+  private final ManifestPuller<ManifestTemplate> testManifestPuller =
+      new ManifestPuller<>(
+          fakeRegistryEndpointProperties, "test-image-tag", ManifestTemplate.class);
+
   @Test
   public void testHandleResponse_v21()
       throws URISyntaxException, IOException, UnknownManifestFormatException {
@@ -49,7 +55,8 @@ public class ManifestPullerTest {
 
     Mockito.when(mockResponse.getBody()).thenReturn(Blobs.from(v21ManifestFile));
     ManifestTemplate manifestTemplate =
-        new ManifestPuller<>("test-image-tag", V21ManifestTemplate.class)
+        new ManifestPuller<>(
+                fakeRegistryEndpointProperties, "test-image-tag", V21ManifestTemplate.class)
             .handleResponse(mockResponse);
 
     Assert.assertThat(manifestTemplate, CoreMatchers.instanceOf(V21ManifestTemplate.class));
@@ -62,7 +69,8 @@ public class ManifestPullerTest {
 
     Mockito.when(mockResponse.getBody()).thenReturn(Blobs.from(v22ManifestFile));
     ManifestTemplate manifestTemplate =
-        new ManifestPuller<>("test-image-tag", V22ManifestTemplate.class)
+        new ManifestPuller<>(
+                fakeRegistryEndpointProperties, "test-image-tag", V22ManifestTemplate.class)
             .handleResponse(mockResponse);
 
     Assert.assertThat(manifestTemplate, CoreMatchers.instanceOf(V22ManifestTemplate.class));
@@ -72,7 +80,7 @@ public class ManifestPullerTest {
   public void testHandleResponse_noSchemaVersion() throws IOException {
     Mockito.when(mockResponse.getBody()).thenReturn(Blobs.from("{}", false));
     try {
-      new ManifestPuller<>("test-image-tag", ManifestTemplate.class).handleResponse(mockResponse);
+      testManifestPuller.handleResponse(mockResponse);
       Assert.fail("An empty manifest should throw an error");
 
     } catch (UnknownManifestFormatException ex) {
@@ -85,7 +93,7 @@ public class ManifestPullerTest {
     Mockito.when(mockResponse.getBody())
         .thenReturn(Blobs.from("{\"schemaVersion\":\"not valid\"}", false));
     try {
-      new ManifestPuller<>("test-image-tag", ManifestTemplate.class).handleResponse(mockResponse);
+      testManifestPuller.handleResponse(mockResponse);
       Assert.fail("A non-integer schemaVersion should throw an error");
 
     } catch (UnknownManifestFormatException ex) {
@@ -97,7 +105,7 @@ public class ManifestPullerTest {
   public void testHandleResponse_unknownSchemaVersion() throws IOException {
     Mockito.when(mockResponse.getBody()).thenReturn(Blobs.from("{\"schemaVersion\":0}", false));
     try {
-      new ManifestPuller<>("test-image-tag", ManifestTemplate.class).handleResponse(mockResponse);
+      testManifestPuller.handleResponse(mockResponse);
       Assert.fail("An unknown manifest schemaVersion should throw an error");
 
     } catch (UnknownManifestFormatException ex) {
@@ -109,21 +117,18 @@ public class ManifestPullerTest {
   public void testGetApiRoute() throws MalformedURLException {
     Assert.assertEquals(
         new URL("http://someApiBase/manifests/test-image-tag"),
-        new ManifestPuller<>("test-image-tag", ManifestTemplate.class)
-            .getApiRoute("http://someApiBase"));
+        testManifestPuller.getApiRoute("http://someApiBase"));
   }
 
   @Test
   public void testGetHttpMethod() {
-    Assert.assertEquals(
-        "GET", new ManifestPuller<>("test-image-tag", ManifestTemplate.class).getHttpMethod());
+    Assert.assertEquals("GET", testManifestPuller.getHttpMethod());
   }
 
   @Test
   public void testGetActionDescription() {
     Assert.assertEquals(
         "pull image manifest for someServerUrl/someImageName:test-image-tag",
-        new ManifestPuller<>("test-image-tag", ManifestTemplate.class)
-            .getActionDescription("someServerUrl", "someImageName"));
+        testManifestPuller.getActionDescription());
   }
 }

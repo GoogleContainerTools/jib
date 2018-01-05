@@ -34,10 +34,15 @@ import java.net.URL;
 /** Pulls an image's manifest. */
 class ManifestPuller<T extends ManifestTemplate> implements RegistryEndpointProvider<T> {
 
+  private final RegistryEndpointProperties registryEndpointProperties;
   private final String imageTag;
   private final Class<T> manifestTemplateClass;
 
-  ManifestPuller(String imageTag, Class<T> manifestTemplateClass) {
+  ManifestPuller(
+      RegistryEndpointProperties registryEndpointProperties,
+      String imageTag,
+      Class<T> manifestTemplateClass) {
+    this.registryEndpointProperties = registryEndpointProperties;
     this.imageTag = imageTag;
     this.manifestTemplateClass = manifestTemplateClass;
   }
@@ -69,9 +74,13 @@ class ManifestPuller<T extends ManifestTemplate> implements RegistryEndpointProv
     return HttpMethods.GET;
   }
 
-  @Override
-  public String getActionDescription(String serverUrl, String imageName) {
-    return "pull image manifest for " + serverUrl + "/" + imageName + ":" + imageTag;
+  public String getActionDescription() {
+    return "pull image manifest for "
+        + registryEndpointProperties.getServerUrl()
+        + "/"
+        + registryEndpointProperties.getImageName()
+        + ":"
+        + imageTag;
   }
 
   /**

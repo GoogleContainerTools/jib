@@ -33,6 +33,7 @@ import javax.annotation.Nullable;
 /** Pushes an image's blob (layer or container configuration). */
 class BlobPusher {
 
+  private final RegistryEndpointProperties registryEndpointProperties;
   private final DescriptorDigest blobDigest;
   private final Blob blob;
 
@@ -74,8 +75,8 @@ class BlobPusher {
     }
 
     @Override
-    public String getActionDescription(String serverUrl, String imageName) {
-      return BlobPusher.this.getActionDescription(serverUrl, imageName);
+    public String getActionDescription() {
+      return BlobPusher.this.getActionDescription();
     }
   }
 
@@ -87,9 +88,7 @@ class BlobPusher {
       builder.setBody(blob);
     }
 
-    /**
-     * @return a URL to continue pushing the BLOB to
-     */
+    /** @return a URL to continue pushing the BLOB to */
     @Override
     public String handleResponse(Response response) throws RegistryException {
       // TODO: Handle 204 No Content
@@ -107,8 +106,8 @@ class BlobPusher {
     }
 
     @Override
-    public String getActionDescription(String serverUrl, String imageName) {
-      return BlobPusher.this.getActionDescription(serverUrl, imageName);
+    public String getActionDescription() {
+      return BlobPusher.this.getActionDescription();
     }
   }
 
@@ -133,12 +132,16 @@ class BlobPusher {
     }
 
     @Override
-    public String getActionDescription(String serverUrl, String imageName) {
-      return null;
+    public String getActionDescription() {
+      return BlobPusher.this.getActionDescription();
     }
   }
 
-  BlobPusher(DescriptorDigest blobDigest, Blob blob) {
+  BlobPusher(
+      RegistryEndpointProperties registryEndpointProperties,
+      DescriptorDigest blobDigest,
+      Blob blob) {
+    this.registryEndpointProperties = registryEndpointProperties;
     this.blobDigest = blobDigest;
     this.blob = blob;
   }
@@ -168,8 +171,7 @@ class BlobPusher {
 
   private RegistryErrorException buildRegistryErrorException(String reason) {
     RegistryErrorExceptionBuilder registryErrorExceptionBuilder =
-        // TODO: Qualify the action description
-        new RegistryErrorExceptionBuilder(getActionDescription("", ""));
+        new RegistryErrorExceptionBuilder(getActionDescription());
     registryErrorExceptionBuilder.addReason(reason);
     return registryErrorExceptionBuilder.build();
   }
@@ -178,8 +180,13 @@ class BlobPusher {
    * @return the common action description for {@link Initializer}, {@link Writer}, and {@link
    *     Committer}
    */
-  private String getActionDescription(String serverUrl, String imageName) {
-    return "push BLOB for " + serverUrl + "/" + imageName + " with digest " + blobDigest;
+  private String getActionDescription() {
+    return "push BLOB for "
+        + registryEndpointProperties.getServerUrl()
+        + "/"
+        + registryEndpointProperties.getImageName()
+        + " with digest "
+        + blobDigest;
   }
 
   /**
