@@ -41,7 +41,6 @@ import org.apache.http.NoHttpResponseException;
 /** Interfaces with a registry. */
 public class RegistryClient {
 
-  // TODO: This should be configurable.
   private static final String PROTOCOL = "https";
 
   @Nullable private final Authorization authorization;
