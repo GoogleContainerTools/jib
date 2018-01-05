@@ -42,7 +42,9 @@ public class ManifestPullerTest {
 
   @Mock private Response mockResponse;
 
-  private final ManifestPuller testManifestPuller = new ManifestPuller("test-image-tag");
+  private final ManifestPuller testManifestPuller =
+      new ManifestPuller(
+          new RegistryEndpointProperties("someServerUrl", "someImageName"), "test-image-tag");
 
   @Test
   public void testHandleResponse_v21()
@@ -119,6 +121,6 @@ public class ManifestPullerTest {
   public void testGetActionDescription() {
     Assert.assertEquals(
         "pull image manifest for someServerUrl/someImageName:test-image-tag",
-        testManifestPuller.getActionDescription("someServerUrl", "someImageName"));
+        testManifestPuller.getActionDescription());
   }
 }

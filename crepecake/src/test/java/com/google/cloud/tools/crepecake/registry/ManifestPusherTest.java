@@ -40,7 +40,11 @@ public class ManifestPusherTest {
 
   @Before
   public void setUp() {
-    testManifestPusher = new ManifestPusher(mockManifestTemplate, "test-image-tag");
+    testManifestPusher =
+        new ManifestPusher(
+            new RegistryEndpointProperties("someServerUrl", "someImageName"),
+            mockManifestTemplate,
+            "test-image-tag");
   }
 
   @Test
@@ -73,6 +77,6 @@ public class ManifestPusherTest {
   public void testGetActionDescription() {
     Assert.assertEquals(
         "push image manifest for someServerUrl/someImageName:test-image-tag",
-        testManifestPusher.getActionDescription("someServerUrl", "someImageName"));
+        testManifestPusher.getActionDescription());
   }
 }
