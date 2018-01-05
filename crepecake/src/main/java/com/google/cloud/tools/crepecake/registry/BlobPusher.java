@@ -88,8 +88,7 @@ class BlobPusher {
     }
 
     /**
-     * @return a URL to continue pushing the BLOB to, or {@code null} if the BLOB already exists on
-     *     the registry
+     * @return a URL to continue pushing the BLOB to
      */
     @Override
     public String handleResponse(Response response) throws RegistryException {

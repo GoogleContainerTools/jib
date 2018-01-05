@@ -112,7 +112,7 @@ public class BlobPusherTest {
   }
 
   @Test
-  public void testInitializer_getApiRouteSuffix() throws MalformedURLException {
+  public void testInitializer_getApiRoute() throws MalformedURLException {
     Assert.assertEquals(
         new URL("http://someApiBase/blobs/uploads/?mount=" + fakeDescriptorDigest),
         testBlobPusher.initializer().getApiRoute("http://someApiBase"));
@@ -148,7 +148,7 @@ public class BlobPusherTest {
   }
 
   @Test
-  public void testWriter_getApiRouteSuffix() throws MalformedURLException {
+  public void testWriter_getApiRoute() throws MalformedURLException {
     Assert.assertNull(testBlobPusher.writer().getApiRoute(""));
   }
 
