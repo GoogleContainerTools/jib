@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2018 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,6 +26,30 @@ import java.util.Set;
 public class CacheChecker {
 
   private final Cache cache;
+
+  /**
+   * @return true if the file has been modified since the {@code lastModifiedTime}. Recursively
+   *     checks all subfiles if {@code file} is a directory.
+   */
+  private static boolean isFileModified(File file, long lastModifiedTime) throws IOException {
+    if (file.lastModified() > lastModifiedTime) {
+      return true;
+    }
+
+    if (file.isDirectory()) {
+      File[] subFiles = file.listFiles();
+      if (subFiles == null) {
+        throw new IOException("Failed to read directory: " + file.getAbsolutePath());
+      }
+      for (final File subFile : subFiles) {
+        if (isFileModified(subFile, lastModifiedTime)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
 
   public CacheChecker(Cache cache) {
     this.cache = cache;
@@ -61,21 +85,20 @@ public class CacheChecker {
    */
   public boolean areSourceFilesModified(Set<File> sourceFiles)
       throws IOException, CacheMetadataCorruptedException {
+    // Grabs all the layers that have matching source files.
     ImageLayers<CachedLayerWithMetadata> cachedLayersWithSourceFiles =
         cache.getMetadata().filterLayers().bySourceFiles(sourceFiles).filter();
 
+    // TODO: Move the `isFileModified` check to outside of the layer loop since it is redoing the same `lastModifiedTime` checking
+    // Checks if at least one of the matched layers is up-to-date.
+    checkLayers:
     for (CachedLayerWithMetadata cachedLayer : cachedLayersWithSourceFiles) {
       // Checks if the layer is outdated.
       long lastModifiedTime = cachedLayer.getMetadata().getLastModifiedTime();
-      boolean hasOutdatedFile = false;
       for (File file : sourceFiles) {
-        if (isFileModifiedRecursive(file, lastModifiedTime)) {
-          hasOutdatedFile = true;
-          break;
+        if (isFileModified(file, lastModifiedTime)) {
+          continue checkLayers;
         }
-      }
-      if (hasOutdatedFile) {
-        continue;
       }
 
       // This layer is an up-to-date layer.
@@ -83,29 +106,5 @@ public class CacheChecker {
     }
 
     return true;
-  }
-
-  /**
-   * Checks the file has been modified since the {@code lastModifiedTime}. Recursively checks all
-   * subfiles if {@code file} is a directory.
-   */
-  private boolean isFileModifiedRecursive(File file, long lastModifiedTime) throws IOException {
-    if (file.lastModified() > lastModifiedTime) {
-      return true;
-    }
-
-    if (file.isDirectory()) {
-      File[] subFiles = file.listFiles();
-      if (null == subFiles) {
-        throw new IOException("Failed to read directory: " + file.getAbsolutePath());
-      }
-      for (final File subFile : subFiles) {
-        if (isFileModifiedRecursive(subFile, lastModifiedTime)) {
-          return true;
-        }
-      }
-    }
-
-    return false;
   }
 }
