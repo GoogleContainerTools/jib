@@ -18,8 +18,10 @@ package com.google.cloud.tools.crepecake.builder;
 
 import com.google.cloud.tools.crepecake.registry.DockerCredentialRetriever;
 import com.google.common.annotations.VisibleForTesting;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 
 /** Immutable configuration options for the builder process. */
@@ -94,24 +96,48 @@ public class BuildConfiguration {
       return this;
     }
 
-    public BuildConfiguration build() throws BuildConfigurationMissingValueException {
-      BuildConfigurationMissingValueException.Builder
-          buildConfigurationMissingValueExceptionBuilder =
-              BuildConfigurationMissingValueException.builder();
+    /**
+     * @return the corresponding build configuration
+     * @throws IllegalStateException if required fields were not set
+     */
+    public BuildConfiguration build() {
+      List<String> descriptions = new ArrayList<>();
       for (Fields field : Fields.values()) {
         if (!values.containsKey(field)) {
-          buildConfigurationMissingValueExceptionBuilder.addDescription(
-              FIELD_DESCRIPTIONS.get(field));
+          descriptions.add(FIELD_DESCRIPTIONS.get(field));
         }
       }
-      BuildConfigurationMissingValueException ex =
-          buildConfigurationMissingValueExceptionBuilder.build();
-      if (ex != null) {
-        throw ex;
-      }
+      switch (descriptions.size()) {
+        case 0:
+          values = Collections.unmodifiableMap(values);
+          return new BuildConfiguration(values);
 
-      values = Collections.unmodifiableMap(values);
-      return new BuildConfiguration(values);
+        case 1:
+          throw newIllegalStateException(descriptions.get(0));
+
+        case 2:
+          throw newIllegalStateException(descriptions.get(0) + " and " + descriptions.get(1));
+
+        default:
+          // Appends the descriptions in correct grammar.
+          StringBuilder stringBuilder = new StringBuilder();
+          for (int descriptionsIndex = 0;
+              descriptionsIndex < descriptions.size();
+              descriptionsIndex++) {
+            if (descriptionsIndex == descriptions.size() - 1) {
+              stringBuilder.append(", and ");
+            } else {
+              stringBuilder.append(", ");
+            }
+            stringBuilder.append(descriptions.get(descriptionsIndex));
+          }
+          throw newIllegalStateException(stringBuilder.toString());
+      }
+    }
+
+    private IllegalStateException newIllegalStateException(String requiredDescriptions) {
+      return new IllegalStateException(
+          requiredDescriptions + " required but not set in build configuration");
     }
   }
 

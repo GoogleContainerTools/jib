@@ -24,7 +24,7 @@ import org.junit.Test;
 public class BuildConfigurationTest {
 
   @Test
-  public void testBuilder() throws BuildConfigurationMissingValueException {
+  public void testBuilder() {
     String expectedBaseImageServerUrl = "someserver";
     String expectedBaseImageName = "baseimage";
     String expectedTargetServerUrl = "someotherserver";
@@ -55,7 +55,7 @@ public class BuildConfigurationTest {
       BuildConfiguration.builder().build();
       Assert.fail("Build configuration should not be built with missing values");
 
-    } catch (BuildConfigurationMissingValueException ex) {
+    } catch (IllegalStateException ex) {
       for (Map.Entry<BuildConfiguration.Fields, String> description :
           BuildConfiguration.Builder.FIELD_DESCRIPTIONS.entrySet()) {
         Assert.assertThat(ex.getMessage(), CoreMatchers.containsString(description.getValue()));
