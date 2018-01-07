@@ -17,119 +17,135 @@
 package com.google.cloud.tools.crepecake.builder;
 
 import com.google.cloud.tools.crepecake.registry.DockerCredentialRetriever;
+import com.google.common.annotations.VisibleForTesting;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.Map;
 
 /** Immutable configuration options for the builder process. */
 public class BuildConfiguration {
 
+  /** Enumerates the fields in the configuration. */
+  @VisibleForTesting
+  enum Fields {
+    /** The server URL of the registry to pull the base image from. */
+    BASE_IMAGE_SERVER_URL,
+    /** The image name/repository the base image (also known as the registry namespace). */
+    BASE_IMAGE_NAME,
+
+    /** The server URL of the registry to push the built image to. */
+    TARGET_SERVER_URL,
+    /** The image name/repository of the built image (also known as the registry namespace). */
+    TARGET_IMAGE_NAME,
+    /** The image tag of the built image (the part after the colon). */
+    TARGET_TAG,
+
+    /** The credential helper name used by {@link DockerCredentialRetriever}. */
+    CREDENTIAL_HELPER_NAME,
+  }
+
   public static class Builder {
 
-    private String baseImageServerUrl;
-    private String baseImageName;
+    /** Textual descriptions of the configuration fields. */
+    @VisibleForTesting
+    static final Map<Fields, String> FIELD_DESCRIPTIONS =
+        new EnumMap<Fields, String>(Fields.class) {
+          {
+            put(Fields.BASE_IMAGE_SERVER_URL, "base image registry server URL");
+            put(Fields.BASE_IMAGE_NAME, "base image name");
+            put(Fields.TARGET_SERVER_URL, "target registry server URL");
+            put(Fields.TARGET_IMAGE_NAME, "target image name");
+            put(Fields.TARGET_TAG, "target image tag");
+            put(Fields.CREDENTIAL_HELPER_NAME, "credential helper name");
+          }
+        };
 
-    private String targetServerUrl;
-    private String targetImageName;
-    private String targetTag;
-
-    private String credentialHelperName;
+    private Map<Fields, String> values = new EnumMap<>(Fields.class);
 
     private Builder() {}
 
-    /** Sets the server URL of the registry to pull the base image from. */
     public Builder setBaseImageServerUrl(String baseImageServerUrl) {
-      this.baseImageServerUrl = baseImageServerUrl;
+      values.put(Fields.BASE_IMAGE_SERVER_URL, baseImageServerUrl);
       return this;
     }
 
-    /** Sets the image name/repository the base image (also known as the registry namespace). */
     public Builder setBaseImageName(String baseImageName) {
-      this.baseImageName = baseImageName;
+      values.put(Fields.BASE_IMAGE_NAME, baseImageName);
       return this;
     }
 
-    /** Sets the server URL of the registry to push the built image to. */
     public Builder setTargetServerUrl(String targetServerUrl) {
-      this.targetServerUrl = targetServerUrl;
+      values.put(Fields.TARGET_SERVER_URL, targetServerUrl);
       return this;
     }
 
-    /** Sets the image name/repository the built image (also known as the registry namespace). */
     public Builder setTargetImageName(String targetImageName) {
-      this.targetImageName = targetImageName;
+      values.put(Fields.TARGET_IMAGE_NAME, targetImageName);
       return this;
     }
 
-    /** Sets the image tag of the built image (the part after the colon). */
     public Builder setTargetTag(String targetTag) {
-      this.targetTag = targetTag;
+      values.put(Fields.TARGET_TAG, targetTag);
       return this;
     }
 
-    /** Sets the credential helper name used by {@link DockerCredentialRetriever}. */
     public Builder setCredentialHelperName(String credentialHelperName) {
-      this.credentialHelperName = credentialHelperName;
+      values.put(Fields.CREDENTIAL_HELPER_NAME, credentialHelperName);
       return this;
     }
 
-    public BuildConfiguration build() {
-      return new BuildConfiguration(
-          baseImageServerUrl,
-          baseImageName,
-          targetServerUrl,
-          targetImageName,
-          targetTag,
-          credentialHelperName);
+    public BuildConfiguration build() throws BuildConfigurationMissingValueException {
+      BuildConfigurationMissingValueException.Builder
+          buildConfigurationMissingValueExceptionBuilder =
+              BuildConfigurationMissingValueException.builder();
+      for (Fields field : Fields.values()) {
+        if (!values.containsKey(field)) {
+          buildConfigurationMissingValueExceptionBuilder.addDescription(
+              FIELD_DESCRIPTIONS.get(field));
+        }
+      }
+      BuildConfigurationMissingValueException ex =
+          buildConfigurationMissingValueExceptionBuilder.build();
+      if (ex != null) {
+        throw ex;
+      }
+
+      values = Collections.unmodifiableMap(values);
+      return new BuildConfiguration(values);
     }
   }
 
-  private final String baseImageServerUrl;
-  private final String baseImageName;
-
-  private final String targetServerUrl;
-  private final String targetImageName;
-  private final String targetTag;
-
-  private final String credentialHelperName;
+  private final Map<Fields, String> values;
 
   public static Builder builder() {
     return new Builder();
   }
 
-  private BuildConfiguration(
-      String baseImageServerUrl,
-      String baseImageName,
-      String targetServerUrl,
-      String targetImageName,
-      String targetTag,
-      String credentialHelperName) {
-    this.baseImageServerUrl = baseImageServerUrl;
-    this.baseImageName = baseImageName;
-    this.targetServerUrl = targetServerUrl;
-    this.targetImageName = targetImageName;
-    this.targetTag = targetTag;
-    this.credentialHelperName = credentialHelperName;
+  private BuildConfiguration(Map<Fields, String> values) {
+    this.values = values;
   }
 
   public String getBaseImageServerUrl() {
-    return baseImageServerUrl;
+    return values.get(Fields.BASE_IMAGE_SERVER_URL);
   }
 
   public String getBaseImageName() {
-    return baseImageName;
+    return values.get(Fields.BASE_IMAGE_NAME);
   }
 
   public String getTargetServerUrl() {
-    return targetServerUrl;
+    return values.get(Fields.TARGET_SERVER_URL);
   }
 
   public String getTargetImageName() {
-    return targetImageName;
+    return values.get(Fields.TARGET_IMAGE_NAME);
   }
 
   public String getTargetTag() {
-    return targetTag;
+    return values.get(Fields.TARGET_TAG);
   }
 
   public String getCredentialHelperName() {
-    return credentialHelperName;
+    return values.get(Fields.CREDENTIAL_HELPER_NAME);
   }
 }

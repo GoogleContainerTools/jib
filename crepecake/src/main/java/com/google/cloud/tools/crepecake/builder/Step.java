@@ -17,8 +17,8 @@
 package com.google.cloud.tools.crepecake.builder;
 
 /** A step in the builder process. Implementations must be thread-safe. */
-@FunctionalInterface
 interface Step<T, R> {
 
-  R run(T input) throws Exception;
+  // TODO: Add more exceptions as needed.
+  R run(T input);
 }

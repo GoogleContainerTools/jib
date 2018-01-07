@@ -16,13 +16,15 @@
 
 package com.google.cloud.tools.crepecake.builder;
 
+import java.util.Map;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class BuildConfigurationTest {
 
   @Test
-  public void testBuilder() {
+  public void testBuilder() throws BuildConfigurationMissingValueException {
     String expectedBaseImageServerUrl = "someserver";
     String expectedBaseImageName = "baseimage";
     String expectedTargetServerUrl = "someotherserver";
@@ -40,5 +42,19 @@ public class BuildConfigurationTest {
             .setCredentialHelperName(expectedCredentialHelperName)
             .build();
     Assert.assertEquals(expectedBaseImageName, buildConfiguration.getBaseImageName());
+  }
+
+  @Test
+  public void testBuilder_missingValues() {
+    try {
+      BuildConfiguration.builder().build();
+      Assert.fail("Build configuration should not be built with missing values");
+
+    } catch (BuildConfigurationMissingValueException ex) {
+      for (Map.Entry<BuildConfiguration.Fields, String> description :
+          BuildConfiguration.Builder.FIELD_DESCRIPTIONS.entrySet()) {
+        Assert.assertThat(ex.getMessage(), CoreMatchers.containsString(description.getValue()));
+      }
+    }
   }
 }
