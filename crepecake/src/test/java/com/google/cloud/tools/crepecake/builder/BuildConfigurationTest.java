@@ -41,7 +41,12 @@ public class BuildConfigurationTest {
             .setTargetTag(expectedTargetTag)
             .setCredentialHelperName(expectedCredentialHelperName)
             .build();
+    Assert.assertEquals(expectedBaseImageServerUrl, buildConfiguration.getBaseImageServerUrl());
     Assert.assertEquals(expectedBaseImageName, buildConfiguration.getBaseImageName());
+    Assert.assertEquals(expectedTargetServerUrl, buildConfiguration.getTargetServerUrl());
+    Assert.assertEquals(expectedTargetImageName, buildConfiguration.getTargetImageName());
+    Assert.assertEquals(expectedTargetTag, buildConfiguration.getTargetTag());
+    Assert.assertEquals(expectedCredentialHelperName, buildConfiguration.getCredentialHelperName());
   }
 
   @Test
