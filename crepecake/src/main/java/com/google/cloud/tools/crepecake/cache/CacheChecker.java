@@ -28,13 +28,11 @@ public class CacheChecker {
   private final Cache cache;
 
   /**
-   * @return true if the file has been modified since the {@code lastModifiedTime}. Recursively
-   *     checks all subfiles if {@code file} is a directory.
+   * @return the last modified time for the file. Recursively finds the largest last modified time
+   *     for all subfiles if {@code file} is a directory.
    */
-  private static boolean isFileModified(File file, long lastModifiedTime) throws IOException {
-    if (file.lastModified() > lastModifiedTime) {
-      return true;
-    }
+  private static long getLastModifiedTime(File file) throws IOException {
+    long lastModifiedTime = file.lastModified();
 
     if (file.isDirectory()) {
       File[] subFiles = file.listFiles();
@@ -42,13 +40,14 @@ public class CacheChecker {
         throw new IOException("Failed to read directory: " + file.getAbsolutePath());
       }
       for (final File subFile : subFiles) {
-        if (isFileModified(subFile, lastModifiedTime)) {
-          return true;
+        long subFileLastModifiedTime = getLastModifiedTime(subFile);
+        if (subFileLastModifiedTime > lastModifiedTime) {
+          lastModifiedTime = subFileLastModifiedTime;
         }
       }
     }
 
-    return false;
+    return lastModifiedTime;
   }
 
   public CacheChecker(Cache cache) {
@@ -88,21 +87,22 @@ public class CacheChecker {
     // Grabs all the layers that have matching source files.
     ImageLayers<CachedLayerWithMetadata> cachedLayersWithSourceFiles =
         cache.getMetadata().filterLayers().bySourceFiles(sourceFiles).filter();
+    if (cachedLayersWithSourceFiles.size() == 0) return true;
 
-    // TODO: Move the `isFileModified` check to outside of the layer loop since it is redoing the same `lastModifiedTime` checking
-    // Checks if at least one of the matched layers is up-to-date.
-    checkLayers:
-    for (CachedLayerWithMetadata cachedLayer : cachedLayersWithSourceFiles) {
-      // Checks if the layer is outdated.
-      long lastModifiedTime = cachedLayer.getMetadata().getLastModifiedTime();
-      for (File file : sourceFiles) {
-        if (isFileModified(file, lastModifiedTime)) {
-          continue checkLayers;
-        }
+    long sourceFilesLastModifiedTime = 0;
+    for (File file : sourceFiles) {
+      long lastModifiedTime = getLastModifiedTime(file);
+      if (lastModifiedTime > sourceFilesLastModifiedTime) {
+        sourceFilesLastModifiedTime = lastModifiedTime;
       }
+    }
 
-      // This layer is an up-to-date layer.
-      return false;
+    // Checks if at least one of the matched layers is up-to-date.
+    for (CachedLayerWithMetadata cachedLayer : cachedLayersWithSourceFiles) {
+      if (cachedLayer.getMetadata().getLastModifiedTime() >= sourceFilesLastModifiedTime) {
+        // This layer is an up-to-date layer.
+        return false;
+      }
     }
 
     return true;
