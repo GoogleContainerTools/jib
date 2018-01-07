@@ -28,7 +28,7 @@ public class CacheChecker {
   private final Cache cache;
 
   /**
-   * @return the last modified time for the file. Recursively finds the largest last modified time
+   * @return the last modified time for the file. Recursively finds the most recent last modified time
    *     for all subfiles if {@code file} is a directory.
    */
   private static long getLastModifiedTime(File file) throws IOException {

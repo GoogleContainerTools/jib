@@ -53,14 +53,14 @@ class CacheMetadata {
     /** Filters to a certain layer type. */
     LayerFilter byType(CachedLayerType type) {
       this.type = type;
-      isTypeFilterEnabled = true;
+      isTypeFilterEnabled = this.type != null;
       return this;
     }
 
     /** Filters to a certain set of source files. */
     LayerFilter bySourceFiles(Set<File> sourceFiles) {
       this.sourceFiles = sourceFiles;
-      isSourceFilesFilterEnabled = true;
+      isSourceFilesFilterEnabled = this.sourceFiles != null;
       return this;
     }
 
