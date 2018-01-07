@@ -20,6 +20,8 @@ import com.google.cloud.tools.crepecake.image.ImageLayers;
 import com.google.cloud.tools.crepecake.image.ReferenceLayer;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.util.OptionalLong;
 import java.util.Set;
 
 /** Checks if cached data is outdated. */
@@ -28,22 +30,21 @@ public class CacheChecker {
   private final Cache cache;
 
   /**
-   * @return the last modified time for the file. Recursively finds the most recent last modified time
-   *     for all subfiles if {@code file} is a directory.
+   * @return the last modified time for the file. Recursively finds the most recent last modified
+   *     time for all subfiles if {@code file} is a directory.
    */
   private static long getLastModifiedTime(File file) throws IOException {
     long lastModifiedTime = file.lastModified();
 
-    if (file.isDirectory()) {
-      File[] subFiles = file.listFiles();
-      if (subFiles == null) {
-        throw new IOException("Failed to read directory: " + file.getAbsolutePath());
+    if (file.canRead()) {
+      OptionalLong maxLastModifiedTime =
+          Files.walk(file.toPath()).mapToLong(path -> path.toFile().lastModified()).max();
+      if (!maxLastModifiedTime.isPresent()) {
+        throw new IllegalStateException(
+            "Could not get last modified time for all files in directory '" + file + "'");
       }
-      for (final File subFile : subFiles) {
-        long subFileLastModifiedTime = getLastModifiedTime(subFile);
-        if (subFileLastModifiedTime > lastModifiedTime) {
-          lastModifiedTime = subFileLastModifiedTime;
-        }
+      if (maxLastModifiedTime.getAsLong() > lastModifiedTime) {
+        lastModifiedTime = maxLastModifiedTime.getAsLong();
       }
     }
 
