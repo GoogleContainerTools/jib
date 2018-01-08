@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2018 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,16 +16,10 @@
 
 package com.google.cloud.tools.crepecake.registry;
 
-/** Thrown because registry authentication failed. */
-public class RegistryAuthenticationFailedException extends Exception {
+/** Thrown when a pulled BLOB did not have the same digest as requested. */
+public class UnexpectedBlobDigestException extends RegistryException {
 
-  private static final String REASON_PREFIX = "Failed to authenticate with the registry because: ";
-
-  RegistryAuthenticationFailedException(Throwable cause) {
-    super(REASON_PREFIX + cause.getMessage(), cause);
-  }
-
-  RegistryAuthenticationFailedException(String reason) {
-    super(REASON_PREFIX + reason);
+  UnexpectedBlobDigestException(String message) {
+    super(message);
   }
 }

@@ -63,14 +63,25 @@ class RegistryErrorExceptionBuilder {
     errorMessageBuilder.append(" but failed because: ");
   }
 
+  /** @param method the registry method that errored */
+  RegistryErrorExceptionBuilder(String method) {
+    this(method, null);
+  }
+
   // TODO: Don't use a JsonTemplate as a data object to pass around.
   /**
-   * Adds an entry to the error reasons.
+   * Builds an entry to the error reasons from an {@link ErrorEntryTemplate}.
    *
    * @param errorEntry the {@link ErrorEntryTemplate} to add
    */
-  RegistryErrorExceptionBuilder addErrorEntry(ErrorEntryTemplate errorEntry) {
+  RegistryErrorExceptionBuilder addReason(ErrorEntryTemplate errorEntry) {
     String reason = getReason(errorEntry.getCode(), errorEntry.getMessage());
+    addReason(reason);
+    return this;
+  }
+
+  /** Adds an entry to the error reasons. */
+  RegistryErrorExceptionBuilder addReason(String reason) {
     if (!firstErrorReason) {
       errorMessageBuilder.append(", ");
     }
