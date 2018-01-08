@@ -19,6 +19,8 @@ package com.google.cloud.tools.crepecake.builder;
 import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
 import com.google.cloud.tools.crepecake.image.LayerCountMismatchException;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
+import com.google.cloud.tools.crepecake.registry.NonexistentDockerCredentialHelperException;
+import com.google.cloud.tools.crepecake.registry.NonexistentServerUrlDockerCredentialHelperException;
 import com.google.cloud.tools.crepecake.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.crepecake.registry.RegistryException;
 import java.io.IOException;
@@ -30,5 +32,7 @@ interface Step<T, R> {
   R run(T input)
       throws IOException, RegistryException, LayerPropertyNotFoundException,
           DuplicateLayerException, LayerCountMismatchException,
-          RegistryAuthenticationFailedException;
+          RegistryAuthenticationFailedException,
+          NonexistentServerUrlDockerCredentialHelperException,
+          NonexistentDockerCredentialHelperException;
 }

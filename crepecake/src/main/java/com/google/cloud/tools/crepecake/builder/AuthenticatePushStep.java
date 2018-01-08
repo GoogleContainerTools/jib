@@ -17,24 +17,28 @@
 package com.google.cloud.tools.crepecake.builder;
 
 import com.google.cloud.tools.crepecake.http.Authorization;
-import com.google.cloud.tools.crepecake.registry.RegistryAuthenticationFailedException;
-import com.google.cloud.tools.crepecake.registry.RegistryAuthenticators;
-import com.google.cloud.tools.crepecake.registry.RegistryException;
+import com.google.cloud.tools.crepecake.registry.DockerCredentialRetriever;
+import com.google.cloud.tools.crepecake.registry.NonexistentDockerCredentialHelperException;
+import com.google.cloud.tools.crepecake.registry.NonexistentServerUrlDockerCredentialHelperException;
 import java.io.IOException;
 
-class AuthenticatePullStep implements Step<Void, Authorization> {
+/** Retrieves credentials to push to a target registry. */
+class AuthenticatePushStep implements Step<Void, Authorization> {
 
   private final BuildConfiguration buildConfiguration;
 
-  AuthenticatePullStep(BuildConfiguration buildConfiguration) {
+  AuthenticatePushStep(BuildConfiguration buildConfiguration) {
     this.buildConfiguration = buildConfiguration;
   }
 
   @Override
   public Authorization run(Void input)
-      throws RegistryAuthenticationFailedException, IOException, RegistryException {
-    return RegistryAuthenticators.forOther(
-            buildConfiguration.getBaseImageServerUrl(), buildConfiguration.getBaseImageName())
-        .authenticate();
+      throws NonexistentServerUrlDockerCredentialHelperException,
+          NonexistentDockerCredentialHelperException, IOException {
+    DockerCredentialRetriever dockerCredentialRetriever =
+        new DockerCredentialRetriever(
+            buildConfiguration.getTargetServerUrl(), buildConfiguration.getCredentialHelperName());
+
+    return dockerCredentialRetriever.retrieve();
   }
 }
