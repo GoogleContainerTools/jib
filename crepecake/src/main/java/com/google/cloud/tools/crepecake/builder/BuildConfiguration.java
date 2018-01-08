@@ -62,6 +62,9 @@ public class BuildConfiguration {
           }
         };
 
+    private static final String MISSING_FIELD_MESSAGE_SUFFIX =
+        " required but not set in build configuration";
+
     private Map<Fields, String> values = new EnumMap<>(Fields.class);
 
     private Builder() {}
@@ -113,10 +116,11 @@ public class BuildConfiguration {
           return new BuildConfiguration(values);
 
         case 1:
-          throw newIllegalStateException(descriptions.get(0));
+          throw new IllegalStateException(descriptions.get(0) + MISSING_FIELD_MESSAGE_SUFFIX);
 
         case 2:
-          throw newIllegalStateException(descriptions.get(0) + " and " + descriptions.get(1));
+          throw new IllegalStateException(
+              descriptions.get(0) + " and " + descriptions.get(1) + MISSING_FIELD_MESSAGE_SUFFIX);
 
         default:
           // Appends the descriptions in correct grammar.
@@ -131,13 +135,9 @@ public class BuildConfiguration {
             }
             stringBuilder.append(descriptions.get(descriptionsIndex));
           }
-          throw newIllegalStateException(stringBuilder.toString());
+          throw new IllegalStateException(
+              stringBuilder.append(MISSING_FIELD_MESSAGE_SUFFIX).toString());
       }
-    }
-
-    private IllegalStateException newIllegalStateException(String requiredDescriptions) {
-      return new IllegalStateException(
-          requiredDescriptions + " required but not set in build configuration");
     }
   }
 
