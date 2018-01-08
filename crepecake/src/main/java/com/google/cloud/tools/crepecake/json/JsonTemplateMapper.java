@@ -19,9 +19,10 @@ package com.google.cloud.tools.crepecake.json;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.blob.Blobs;
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 // TODO: Add JsonFactory for HTTP response parsing.
 /**
@@ -56,9 +57,9 @@ public class JsonTemplateMapper {
    * @return the template filled with the values parsed from {@param jsonFile}
    * @throws IOException if an error occurred during reading the file or parsing the JSON
    */
-  public static <T extends JsonTemplate> T readJsonFromFile(File jsonFile, Class<T> templateClass)
+  public static <T extends JsonTemplate> T readJsonFromFile(Path jsonFile, Class<T> templateClass)
       throws IOException {
-    return objectMapper.readValue(jsonFile, templateClass);
+    return objectMapper.readValue(Files.newInputStream(jsonFile), templateClass);
   }
 
   /**

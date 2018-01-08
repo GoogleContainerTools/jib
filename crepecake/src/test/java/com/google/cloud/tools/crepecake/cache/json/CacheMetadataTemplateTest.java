@@ -20,13 +20,13 @@ import com.google.cloud.tools.crepecake.cache.CachedLayerType;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.FileTime;
 import java.security.DigestException;
 import java.util.Collections;
 import java.util.List;
@@ -61,7 +61,7 @@ public class CacheMetadataTemplateTest {
     CacheMetadataLayerPropertiesObjectTemplate propertiesTemplate =
         new CacheMetadataLayerPropertiesObjectTemplate()
             .setSourceFiles(Collections.singletonList(Paths.get("some/source/path").toString()))
-            .setLastModifiedTime(255073580723571L);
+            .setLastModifiedTime(FileTime.fromMillis(255073580723571L));
     CacheMetadataLayerObjectTemplate classesLayerTemplate =
         new CacheMetadataLayerObjectTemplate()
             .setType(CachedLayerType.CLASSES)
@@ -86,7 +86,8 @@ public class CacheMetadataTemplateTest {
   @Test
   public void testFromJson() throws URISyntaxException, IOException, DigestException {
     // Loads the expected JSON string.
-    File jsonFile = new File(getClass().getClassLoader().getResource("json/metadata.json").toURI());
+    Path jsonFile =
+        Paths.get(getClass().getClassLoader().getResource("json/metadata.json").toURI());
 
     // Deserializes into a metadata JSON object.
     CacheMetadataTemplate metadataTemplate =
@@ -127,6 +128,7 @@ public class CacheMetadataTemplateTest {
         Collections.singletonList(Paths.get("some/source/path").toString()),
         classesLayerTemplate.getProperties().getSourceFiles());
     Assert.assertEquals(
-        255073580723571L, classesLayerTemplate.getProperties().getLastModifiedTime());
+        FileTime.fromMillis(255073580723571L),
+        classesLayerTemplate.getProperties().getLastModifiedTime());
   }
 }
