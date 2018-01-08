@@ -17,6 +17,7 @@
 package com.google.cloud.tools.crepecake.registry;
 
 import java.io.IOException;
+import java.util.UUID;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.TestRule;
 
@@ -24,6 +25,9 @@ import org.junit.rules.TestRule;
 class LocalRegistry extends ExternalResource {
 
   private final int port;
+
+  /** The name for the container running the registry. */
+  private final String containerName = "registry-" + UUID.randomUUID();
 
   LocalRegistry(int port) {
     this.port = port;
@@ -33,7 +37,11 @@ class LocalRegistry extends ExternalResource {
   @Override
   protected void before() throws Throwable {
     String runRegistryCommand =
-        "docker run -d -p " + port + ":5000 --restart=always --name registry registry:2";
+        "docker run -d -p "
+            + port
+            + ":5000 --restart=always --name "
+            + containerName
+            + " registry:2";
     Runtime.getRuntime().exec(runRegistryCommand).waitFor();
 
     String pullImageCommand = "docker pull busybox";
@@ -50,14 +58,14 @@ class LocalRegistry extends ExternalResource {
   @Override
   protected void after() {
     try {
-      String stopRegistryCommand = "docker stop registry";
+      String stopRegistryCommand = "docker stop " + containerName;
       Runtime.getRuntime().exec(stopRegistryCommand).waitFor();
 
-      String removeRegistryContainerCommand = "docker rm -v registry";
+      String removeRegistryContainerCommand = "docker rm -v " + containerName;
       Runtime.getRuntime().exec(removeRegistryContainerCommand).waitFor();
 
     } catch (InterruptedException | IOException ex) {
-      throw new RuntimeException("Could not stop local registry fully", ex);
+      throw new RuntimeException("Could not stop local registry fully: " + containerName, ex);
     }
   }
 }
