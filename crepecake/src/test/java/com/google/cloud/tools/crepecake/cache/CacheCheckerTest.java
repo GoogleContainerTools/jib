@@ -23,7 +23,6 @@ import com.google.cloud.tools.crepecake.image.ImageLayers;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.crepecake.image.ReferenceLayer;
 import com.google.common.io.Resources;
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -103,7 +102,7 @@ public class CacheCheckerTest {
 
     // Copies test files to a modifiable temporary folder.
     Path resourceSourceFiles = Paths.get(Resources.getResource("layer").toURI());
-    File testSourceFiles = temporaryFolder.newFolder();
+    Path testSourceFiles = temporaryFolder.newFolder().toPath();
     Files.walk(resourceSourceFiles)
         .forEach(
             path -> {
@@ -111,8 +110,7 @@ public class CacheCheckerTest {
                 if (path.equals(resourceSourceFiles)) {
                   return;
                 }
-                Path newPath =
-                    testSourceFiles.toPath().resolve(resourceSourceFiles.relativize(path));
+                Path newPath = testSourceFiles.resolve(resourceSourceFiles.relativize(path));
                 Files.copy(path, newPath);
               } catch (IOException ex) {
                 throw new RuntimeException(ex);
@@ -120,7 +118,7 @@ public class CacheCheckerTest {
             });
 
     // The files are in reverse order so that the subfiles are changed before the parent directories are.
-    Files.walk(testSourceFiles.toPath())
+    Files.walk(testSourceFiles)
         .sorted(Comparator.reverseOrder())
         .map(Path::toFile)
         .forEach(
@@ -147,7 +145,6 @@ public class CacheCheckerTest {
 
     // Changes a file and checks that the change is detected.
     if (!testSourceFiles
-        .toPath()
         .resolve("a")
         .resolve("b")
         .resolve("bar")
@@ -162,6 +159,6 @@ public class CacheCheckerTest {
     // Any non-cached directory should be deemed modified.
     Assert.assertTrue(
         cacheChecker.areSourceFilesModified(
-            new HashSet<>(Collections.singletonList(resourceSourceFiles.toFile()))));
+            new HashSet<>(Collections.singletonList(resourceSourceFiles))));
   }
 }

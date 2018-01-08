@@ -19,7 +19,8 @@ package com.google.cloud.tools.crepecake.cache;
 import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
 import com.google.cloud.tools.crepecake.image.ImageLayers;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
-import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -39,7 +40,7 @@ class CacheMetadata {
     private final ImageLayers<CachedLayerWithMetadata> layers;
 
     @Nullable private CachedLayerType type;
-    @Nullable private Set<File> sourceFiles;
+    @Nullable private Set<Path> sourceFiles;
 
     private LayerFilter(ImageLayers<CachedLayerWithMetadata> layers) {
       this.layers = layers;
@@ -52,7 +53,7 @@ class CacheMetadata {
     }
 
     /** Filters to a certain set of source files. */
-    LayerFilter bySourceFiles(Set<File> sourceFiles) {
+    LayerFilter bySourceFiles(Set<Path> sourceFiles) {
       this.sourceFiles = sourceFiles;
       return this;
     }
@@ -72,9 +73,9 @@ class CacheMetadata {
           if (sourceFiles != null) {
             List<String> cachedLayerSourceFilePaths = layer.getMetadata().getSourceFiles();
             if (cachedLayerSourceFilePaths != null) {
-              Set<File> cachedLayerSourceFiles = new HashSet<>();
+              Set<Path> cachedLayerSourceFiles = new HashSet<>();
               for (String sourceFile : cachedLayerSourceFilePaths) {
-                cachedLayerSourceFiles.add(new File(sourceFile));
+                cachedLayerSourceFiles.add(Paths.get(sourceFile));
               }
               if (!cachedLayerSourceFiles.equals(sourceFiles)) {
                 continue;

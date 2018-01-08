@@ -18,7 +18,6 @@ package com.google.cloud.tools.crepecake.cache;
 
 import com.google.cloud.tools.crepecake.image.ImageLayers;
 import com.google.cloud.tools.crepecake.image.ReferenceLayer;
-import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -103,7 +102,7 @@ public class CacheChecker {
    * @return true if no cached layer exists that are up-to-date with the source files; false
    *     otherwise.
    */
-  public boolean areSourceFilesModified(Set<File> sourceFiles)
+  public boolean areSourceFilesModified(Set<Path> sourceFiles)
       throws IOException, CacheMetadataCorruptedException {
     // Grabs all the layers that have matching source files.
     ImageLayers<CachedLayerWithMetadata> cachedLayersWithSourceFiles =
@@ -111,8 +110,8 @@ public class CacheChecker {
     if (cachedLayersWithSourceFiles.size() == 0) return true;
 
     FileTime sourceFilesLastModifiedTime = FileTime.from(Instant.MIN);
-    for (File file : sourceFiles) {
-      FileTime lastModifiedTime = getLastModifiedTime(file.toPath());
+    for (Path path : sourceFiles) {
+      FileTime lastModifiedTime = getLastModifiedTime(path);
       if (lastModifiedTime.compareTo(sourceFilesLastModifiedTime) > 0) {
         sourceFilesLastModifiedTime = lastModifiedTime;
       }

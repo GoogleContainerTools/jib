@@ -21,7 +21,7 @@ import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
 import com.google.cloud.tools.crepecake.image.ImageLayers;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
-import java.io.File;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -130,7 +130,8 @@ public class CacheMetadataTest {
             .filterLayers()
             .bySourceFiles(
                 new HashSet<>(
-                    Arrays.asList(new File("some/source/file"), new File("some/source/directory"))))
+                    Arrays.asList(
+                        Paths.get("some/source/file"), Paths.get("some/source/directory"))))
             .filter();
 
     Assert.assertEquals(3, filteredLayers.size());
