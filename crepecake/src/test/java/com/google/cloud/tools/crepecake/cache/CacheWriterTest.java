@@ -51,7 +51,7 @@ public class CacheWriterTest {
 
   private Cache testCache;
 
-  private File blobA;
+  private File resourceBlob;
 
   private static class ExpectedLayer {
 
@@ -72,17 +72,17 @@ public class CacheWriterTest {
 
     testCache = Cache.init(cacheDirectory);
 
-    blobA = new File(Resources.getResource("blobA").toURI());
+    resourceBlob = new File(Resources.getResource("blobA").toURI());
   }
 
   @Test
   public void testWriteLayer_unwritten() throws IOException {
     ExpectedLayer expectedLayer = getExpectedLayer();
 
-    // Writes blobA as a layer to the cache.
+    // Writes resourceBlob as a layer to the cache.
     CacheWriter cacheWriter = new CacheWriter(testCache);
 
-    UnwrittenLayer unwrittenLayer = new UnwrittenLayer(Blobs.from(blobA));
+    UnwrittenLayer unwrittenLayer = new UnwrittenLayer(Blobs.from(resourceBlob));
 
     CachedLayer cachedLayer = cacheWriter.writeLayer(unwrittenLayer);
 
@@ -93,7 +93,7 @@ public class CacheWriterTest {
   public void testWriteLayer_reference() throws IOException {
     ExpectedLayer expectedLayer = getExpectedLayer();
 
-    // Writes blobA as a layer to the cache.
+    // Writes resourceBlob as a layer to the cache.
     CacheWriter cacheWriter = new CacheWriter(testCache);
 
     ReferenceLayer referenceLayer =
@@ -108,7 +108,7 @@ public class CacheWriterTest {
   public void testWriteLayer_digestOnly() throws IOException {
     ExpectedLayer expectedLayer = getExpectedLayer();
 
-    // Writes blobA as a layer to the cache.
+    // Writes resourceBlob as a layer to the cache.
     CacheWriter cacheWriter = new CacheWriter(testCache);
 
     DigestOnlyLayer digestOnlyLayer = new DigestOnlyLayer(expectedLayer.blobDescriptor.getDigest());
@@ -118,10 +118,10 @@ public class CacheWriterTest {
     verifyCachedLayerIsExpected(expectedLayer, cachedLayer);
   }
 
-  /** @return the expected layer to test against, represented by the {@code blobA} resource file */
+  /** @return the expected layer to test against, represented by the {@code resourceBlob} resource file */
   private ExpectedLayer getExpectedLayer() throws IOException {
     String expectedBlobAString =
-        new String(Files.readAllBytes(blobA.toPath()), StandardCharsets.UTF_8);
+        new String(Files.readAllBytes(resourceBlob.toPath()), StandardCharsets.UTF_8);
 
     // Gets the expected content descriptor, diff ID, and compressed BLOB.
     ByteArrayOutputStream compressedBlobOutputStream = new ByteArrayOutputStream();
@@ -153,7 +153,7 @@ public class CacheWriterTest {
       String decompressedString = CharStreams.toString(fileReader);
 
       String expectedBlobAString =
-          new String(Files.readAllBytes(blobA.toPath()), StandardCharsets.UTF_8);
+          new String(Files.readAllBytes(resourceBlob.toPath()), StandardCharsets.UTF_8);
       Assert.assertEquals(expectedBlobAString, decompressedString);
       Assert.assertEquals(
           expectedLayer.blobDescriptor.getSize(), cachedLayer.getBlobDescriptor().getSize());
