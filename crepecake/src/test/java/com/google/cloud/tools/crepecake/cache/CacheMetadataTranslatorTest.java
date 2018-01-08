@@ -23,7 +23,6 @@ import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -44,7 +43,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class CacheMetadataTranslatorTest {
 
-  @Mock private File mockFile;
+  @Mock private Path mockPath;
 
   private BlobDescriptor baseLayerBlobDescriptor;
   private DescriptorDigest baseLayerDiffId;
@@ -81,7 +80,8 @@ public class CacheMetadataTranslatorTest {
     Path fakePath = Paths.get("fake/path");
 
     // Loads the expected JSON string.
-    File jsonFile = new File(getClass().getClassLoader().getResource("json/metadata.json").toURI());
+    Path jsonFile =
+        Paths.get(getClass().getClassLoader().getResource("json/metadata.json").toURI());
 
     // Deserializes into a metadata JSON object.
     CacheMetadataTemplate metadataTemplate =
@@ -125,14 +125,14 @@ public class CacheMetadataTranslatorTest {
     CacheMetadata cacheMetadata = new CacheMetadata();
 
     CachedLayer baseCachedLayer =
-        new CachedLayer(mockFile, baseLayerBlobDescriptor, baseLayerDiffId);
+        new CachedLayer(mockPath, baseLayerBlobDescriptor, baseLayerDiffId);
     LayerMetadata baseLayerMetadata =
         new LayerMetadata(CachedLayerType.BASE, Collections.emptyList(), -1);
     CachedLayerWithMetadata baseLayer =
         new CachedLayerWithMetadata(baseCachedLayer, baseLayerMetadata);
 
     CachedLayer classesCachedLayer =
-        new CachedLayer(mockFile, classesLayerBlobDescriptor, classesLayerDiffId);
+        new CachedLayer(mockPath, classesLayerBlobDescriptor, classesLayerDiffId);
     LayerMetadata classesLayerMetadata =
         new LayerMetadata(
             CachedLayerType.CLASSES, classesLayerSourceFiles, classesLayerLastModifiedTime);

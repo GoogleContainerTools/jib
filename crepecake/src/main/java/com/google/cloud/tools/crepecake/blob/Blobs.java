@@ -17,10 +17,10 @@
 package com.google.cloud.tools.crepecake.blob;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 
 /** Static methods for {@link Blob}. */
 public class Blobs {
@@ -29,7 +29,7 @@ public class Blobs {
     return new InputStreamBlob(inputStream);
   }
 
-  public static Blob from(File file) {
+  public static Blob from(Path file) {
     return new FileBlob(file);
   }
 

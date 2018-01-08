@@ -17,7 +17,6 @@
 package com.google.cloud.tools.crepecake.cache;
 
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
-import java.io.File;
 import java.nio.file.Path;
 import java.security.DigestException;
 import org.junit.Assert;
@@ -33,19 +32,17 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class CacheFilesTest {
 
   @Mock private Path mockPath;
-  @Mock private File mockFile;
 
   @Test
   public void testGetMetadataFile() {
     ArgumentCaptor<String> fileNameCaptor = ArgumentCaptor.forClass(String.class);
 
     Mockito.when(mockPath.resolve(fileNameCaptor.capture())).thenReturn(mockPath);
-    Mockito.when(mockPath.toFile()).thenReturn(mockFile);
 
-    File metadataFile = CacheFiles.getMetadataFile(mockPath);
+    Path metadataFile = CacheFiles.getMetadataFile(mockPath);
 
     Assert.assertEquals("metadata.json", fileNameCaptor.getValue());
-    Assert.assertEquals(mockFile, metadataFile);
+    Assert.assertEquals(mockPath, metadataFile);
   }
 
   @Test
@@ -57,13 +54,12 @@ public class CacheFilesTest {
     ArgumentCaptor<String> fileNameCaptor = ArgumentCaptor.forClass(String.class);
 
     Mockito.when(mockPath.resolve(fileNameCaptor.capture())).thenReturn(mockPath);
-    Mockito.when(mockPath.toFile()).thenReturn(mockFile);
 
-    File layerFile = CacheFiles.getLayerFile(mockPath, layerDigest);
+    Path layerFile = CacheFiles.getLayerFile(mockPath, layerDigest);
 
     Assert.assertEquals(
         "8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad.tar.gz",
         fileNameCaptor.getValue());
-    Assert.assertEquals(mockFile, layerFile);
+    Assert.assertEquals(mockPath, layerFile);
   }
 }

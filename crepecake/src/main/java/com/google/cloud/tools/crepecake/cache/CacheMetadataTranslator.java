@@ -22,7 +22,6 @@ import com.google.cloud.tools.crepecake.cache.json.CacheMetadataLayerPropertiesO
 import com.google.cloud.tools.crepecake.cache.json.CacheMetadataTemplate;
 import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
-import java.io.File;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
@@ -38,7 +37,7 @@ public class CacheMetadataTranslator {
 
       // Converts each layer object in the template to a cache metadata layer.
       for (CacheMetadataLayerObjectTemplate layerObjectTemplate : template.getLayers()) {
-        File layerContentFile =
+        Path layerContentFile =
             CacheFiles.getLayerFile(cacheDirectory, layerObjectTemplate.getDigest());
 
         // Gets the properties for a layer. Properties only exist for application layers.

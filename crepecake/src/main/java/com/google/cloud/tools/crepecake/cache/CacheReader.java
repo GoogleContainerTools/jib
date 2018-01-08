@@ -1,7 +1,6 @@
 package com.google.cloud.tools.crepecake.cache;
 
 import com.google.cloud.tools.crepecake.image.ImageLayers;
-import java.io.File;
 import java.nio.file.Path;
 import java.util.Set;
 
@@ -22,7 +21,7 @@ public class CacheReader {
    * @return
    * @throws CacheMetadataCorruptedException
    */
-  public File getLayerFile(CachedLayerType layerType, Set<Path> sourceFiles)
+  public Path getLayerFile(CachedLayerType layerType, Set<Path> sourceFiles)
       throws CacheMetadataCorruptedException {
     switch (layerType) {
       case DEPENDENCIES:
@@ -34,7 +33,7 @@ public class CacheReader {
 
         // Finds the newest cached layer for the layer type.
         long newestLastModifiedTime = 0;
-        File newestLayerFile = null;
+        Path newestLayerFile = null;
         for (CachedLayerWithMetadata cachedLayer : cachedLayers) {
           long cachedLayerLastModifiedTime = cachedLayer.getMetadata().getLastModifiedTime();
           if (cachedLayerLastModifiedTime <= newestLastModifiedTime) {
