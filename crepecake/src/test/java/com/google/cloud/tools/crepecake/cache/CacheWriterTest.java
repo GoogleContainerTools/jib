@@ -118,7 +118,10 @@ public class CacheWriterTest {
     verifyCachedLayerIsExpected(expectedLayer, cachedLayer);
   }
 
-  /** @return the expected layer to test against, represented by the {@code resourceBlob} resource file */
+  /**
+   * @return the expected layer to test against, represented by the {@code resourceBlob} resource
+   *     file
+   */
   private ExpectedLayer getExpectedLayer() throws IOException {
     String expectedBlobAString =
         new String(Files.readAllBytes(resourceBlob.toPath()), StandardCharsets.UTF_8);
