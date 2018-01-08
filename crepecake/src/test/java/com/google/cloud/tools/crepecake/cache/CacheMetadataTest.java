@@ -22,6 +22,7 @@ import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
 import com.google.cloud.tools.crepecake.image.ImageLayers;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import java.nio.file.Paths;
+import java.nio.file.attribute.FileTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -65,9 +66,9 @@ public class CacheMetadataTest {
         Stream.generate(CacheMetadataTest::mockCachedLayer).limit(4).collect(Collectors.toList());
 
     LayerMetadata fakeBaseLayerMetadata =
-        new LayerMetadata(CachedLayerType.BASE, Collections.emptyList(), -1);
+        new LayerMetadata(CachedLayerType.BASE, Collections.emptyList(), null);
     LayerMetadata fakeClassesLayerMetadata =
-        new LayerMetadata(CachedLayerType.CLASSES, Collections.emptyList(), -1);
+        new LayerMetadata(CachedLayerType.CLASSES, Collections.emptyList(), null);
 
     List<CachedLayerWithMetadata> cachedLayers =
         Arrays.asList(
@@ -99,15 +100,19 @@ public class CacheMetadataTest {
 
     LayerMetadata fakeExpectedSourceFilesClassesLayerMetadata =
         new LayerMetadata(
-            CachedLayerType.CLASSES, Arrays.asList("some/source/file", "some/source/directory"), 0);
+            CachedLayerType.CLASSES,
+            Arrays.asList("some/source/file", "some/source/directory"),
+            FileTime.fromMillis(0));
     LayerMetadata fakeExpectedSourceFilesResourcesLayerMetadata =
         new LayerMetadata(
             CachedLayerType.RESOURCES,
             Arrays.asList("some/source/file", "some/source/directory"),
-            0);
+            FileTime.fromMillis(0));
     LayerMetadata fakeOtherSourceFilesLayerMetadata =
         new LayerMetadata(
-            CachedLayerType.CLASSES, Collections.singletonList("not/the/same/source/file"), 0);
+            CachedLayerType.CLASSES,
+            Collections.singletonList("not/the/same/source/file"),
+            FileTime.fromMillis(0));
 
     List<CachedLayerWithMetadata> cachedLayers =
         Arrays.asList(

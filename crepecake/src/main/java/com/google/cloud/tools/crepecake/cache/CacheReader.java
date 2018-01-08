@@ -2,6 +2,8 @@ package com.google.cloud.tools.crepecake.cache;
 
 import com.google.cloud.tools.crepecake.image.ImageLayers;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
+import java.time.Instant;
 import java.util.Set;
 
 /** Reads image content from the cache. */
@@ -32,11 +34,11 @@ public class CacheReader {
             cacheMetadata.filterLayers().byType(layerType).bySourceFiles(sourceFiles).filter();
 
         // Finds the newest cached layer for the layer type.
-        long newestLastModifiedTime = 0;
+        FileTime newestLastModifiedTime = FileTime.from(Instant.MIN);
         Path newestLayerFile = null;
         for (CachedLayerWithMetadata cachedLayer : cachedLayers) {
-          long cachedLayerLastModifiedTime = cachedLayer.getMetadata().getLastModifiedTime();
-          if (cachedLayerLastModifiedTime <= newestLastModifiedTime) {
+          FileTime cachedLayerLastModifiedTime = cachedLayer.getMetadata().getLastModifiedTime();
+          if (cachedLayerLastModifiedTime.compareTo(newestLastModifiedTime) <= 0) {
             continue;
           }
 

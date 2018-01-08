@@ -29,6 +29,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.FileTime;
 import java.security.DigestException;
 import java.util.Collections;
 import java.util.List;
@@ -49,8 +50,10 @@ public class CacheMetadataTranslatorTest {
   private DescriptorDigest baseLayerDiffId;
   private BlobDescriptor classesLayerBlobDescriptor;
   private DescriptorDigest classesLayerDiffId;
-  private List<String> classesLayerSourceFiles;
-  private long classesLayerLastModifiedTime;
+
+  private final List<String> classesLayerSourceFiles =
+      Collections.singletonList(Paths.get("some/source/path").toString());
+  private final FileTime classesLayerLastModifiedTime = FileTime.fromMillis(255073580723571L);
 
   @Before
   public void setUp() throws DigestException {
@@ -70,8 +73,6 @@ public class CacheMetadataTranslatorTest {
     classesLayerDiffId =
         DescriptorDigest.fromDigest(
             "sha256:a3f3e99c29370df48e7377c8f9baa744a3958058a766793f821dadcb144a8372");
-    classesLayerSourceFiles = Collections.singletonList(Paths.get("some/source/path").toString());
-    classesLayerLastModifiedTime = 255073580723571L;
   }
 
   @Test
@@ -127,7 +128,7 @@ public class CacheMetadataTranslatorTest {
     CachedLayer baseCachedLayer =
         new CachedLayer(mockPath, baseLayerBlobDescriptor, baseLayerDiffId);
     LayerMetadata baseLayerMetadata =
-        new LayerMetadata(CachedLayerType.BASE, Collections.emptyList(), -1);
+        new LayerMetadata(CachedLayerType.BASE, Collections.emptyList(), null);
     CachedLayerWithMetadata baseLayer =
         new CachedLayerWithMetadata(baseCachedLayer, baseLayerMetadata);
 
