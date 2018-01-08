@@ -17,11 +17,11 @@ public class CacheReader {
   }
 
   /**
-   * Gets the file that stores the content BLOB for an application layer.
+   * Finds the file that stores the content BLOB for an application layer.
    *
    * @param layerType the type of layer
    * @param sourceFiles the source files the layer must be built from
-   * @return
+   * @return the newest cached layer file that matches the {@code layerType} and {@code sourceFiles}
    * @throws CacheMetadataCorruptedException
    */
   public File getLayerFile(CachedLayerType layerType, Set<Path> sourceFiles)
