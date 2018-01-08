@@ -2,6 +2,7 @@ package com.google.cloud.tools.crepecake.cache;
 
 import com.google.cloud.tools.crepecake.image.ImageLayers;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Set;
 
 /** Reads image content from the cache. */
@@ -21,7 +22,7 @@ public class CacheReader {
    * @return
    * @throws CacheMetadataCorruptedException
    */
-  public File getLayerFile(CachedLayerType layerType, Set<File> sourceFiles)
+  public File getLayerFile(CachedLayerType layerType, Set<Path> sourceFiles)
       throws CacheMetadataCorruptedException {
     switch (layerType) {
       case DEPENDENCIES:

@@ -38,7 +38,7 @@ public class CacheReaderTest {
         expectedFile,
         cacheReader.getLayerFile(
             CachedLayerType.CLASSES,
-            new HashSet<>(Collections.singletonList(new File("some/source/directory")))));
+            new HashSet<>(Collections.singletonList(Paths.get("some/source/directory")))));
     Assert.assertNull(cacheReader.getLayerFile(CachedLayerType.RESOURCES, new HashSet<>()));
     Assert.assertNull(cacheReader.getLayerFile(CachedLayerType.DEPENDENCIES, new HashSet<>()));
     Assert.assertNull(cacheReader.getLayerFile(CachedLayerType.BASE, new HashSet<>()));
