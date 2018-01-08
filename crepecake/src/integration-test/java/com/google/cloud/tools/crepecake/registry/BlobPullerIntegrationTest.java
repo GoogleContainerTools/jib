@@ -16,17 +16,12 @@
 
 package com.google.cloud.tools.crepecake.registry;
 
-import com.google.cloud.tools.crepecake.blob.Blob;
-import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
+import com.google.cloud.tools.crepecake.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.image.json.V21ManifestTemplate;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.security.DigestException;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
@@ -44,7 +39,7 @@ public class BlobPullerIntegrationTest {
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
-  public void testPull() throws IOException, RegistryException, DigestException {
+  public void testPull() throws IOException, RegistryException {
     // Pulls the busybox image.
     RegistryClient registryClient = new RegistryClient(null, "localhost:5000", "busybox");
     V21ManifestTemplate manifestTemplate =
@@ -53,19 +48,11 @@ public class BlobPullerIntegrationTest {
     DescriptorDigest realDigest = manifestTemplate.getLayerDigests().get(0);
 
     // Pulls a layer BLOB of the busybox image.
-    File destFile = temporaryFolder.newFile();
-    File checkBlobFile = temporaryFolder.newFile();
+    CountingDigestOutputStream layerOutputStream =
+        new CountingDigestOutputStream(new ByteArrayOutputStream());
+    registryClient.pullBlob(realDigest, layerOutputStream);
 
-    Blob blob = registryClient.pullBlob(realDigest, destFile.toPath());
-
-    try (OutputStream outputStream =
-        new BufferedOutputStream(new FileOutputStream(checkBlobFile))) {
-      BlobDescriptor blobDescriptor = blob.writeTo(outputStream);
-      Assert.assertEquals(realDigest, blobDescriptor.getDigest());
-    }
-
-    Assert.assertArrayEquals(
-        Files.readAllBytes(destFile.toPath()), Files.readAllBytes(checkBlobFile.toPath()));
+    Assert.assertEquals(realDigest, layerOutputStream.toBlobDescriptor().getDigest());
   }
 
   @Test
@@ -76,7 +63,7 @@ public class BlobPullerIntegrationTest {
 
     try {
       RegistryClient registryClient = new RegistryClient(null, "localhost:5000", "busybox");
-      registryClient.pullBlob(nonexistentDigest, Mockito.mock(Path.class));
+      registryClient.pullBlob(nonexistentDigest, Mockito.mock(OutputStream.class));
       Assert.fail("Trying to pull nonexistent blob should have errored");
 
     } catch (RegistryErrorException ex) {

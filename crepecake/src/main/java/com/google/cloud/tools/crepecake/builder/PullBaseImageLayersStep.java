@@ -16,17 +16,15 @@
 
 package com.google.cloud.tools.crepecake.builder;
 
-import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
-import com.google.cloud.tools.crepecake.image.LayerCountMismatchException;
-import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
-import com.google.cloud.tools.crepecake.registry.RegistryException;
-import java.io.IOException;
+import com.google.cloud.tools.crepecake.image.Image;
 
-/** A step in the builder process. Implementations must be thread-safe. */
-interface Step<T, R> {
+class PullAndCacheBaseImageLayersStep implements Step<Image, Void> {
 
-  // TODO: Add more exceptions as needed.
-  R run(T input)
-      throws IOException, RegistryException, LayerPropertyNotFoundException,
-          DuplicateLayerException, LayerCountMismatchException;
+  @Override
+  public Void run(Image baseImage) {
+    //    for (Layer layer : baseImage.getLayers()) {
+    //      layer.
+    //    }
+    return null;
+  }
 }

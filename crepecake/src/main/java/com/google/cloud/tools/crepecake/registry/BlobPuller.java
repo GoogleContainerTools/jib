@@ -17,44 +17,44 @@
 package com.google.cloud.tools.crepecake.registry;
 
 import com.google.api.client.http.HttpMethods;
-import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
-import com.google.cloud.tools.crepecake.blob.Blobs;
 import com.google.cloud.tools.crepecake.http.Request;
 import com.google.cloud.tools.crepecake.http.Response;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
-import java.io.BufferedOutputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.file.Path;
 
-/** Pulls an image's blob (layer or container configuration). */
-class BlobPuller implements RegistryEndpointProvider<Blob> {
+/** Pulls an image's BLOB (layer or container configuration). */
+class BlobPuller implements RegistryEndpointProvider<Void> {
 
   private final RegistryEndpointProperties registryEndpointProperties;
+
+  /** The digest of the BLOB to pull. */
   private final DescriptorDigest blobDigest;
-  private final Path destPath;
+
+  /**
+   * The {@link OutputStream} to write the BLOB to. Closes the {@link OutputStream} after writing.
+   */
+  private final OutputStream destOutputStream;
 
   BlobPuller(
       RegistryEndpointProperties registryEndpointProperties,
       DescriptorDigest blobDigest,
-      Path destPath) {
+      OutputStream destOutputStream) {
     this.registryEndpointProperties = registryEndpointProperties;
     this.blobDigest = blobDigest;
-    this.destPath = destPath;
+    this.destOutputStream = destOutputStream;
   }
 
   @Override
   public void buildRequest(Request.Builder builder) {}
 
   @Override
-  public Blob handleResponse(Response response) throws IOException, UnexpectedBlobDigestException {
-    try (OutputStream fileOutputStream =
-        new BufferedOutputStream(new FileOutputStream(destPath.toFile()))) {
-      BlobDescriptor receivedBlobDescriptor = response.getBody().writeTo(fileOutputStream);
+  public Void handleResponse(Response response) throws IOException, UnexpectedBlobDigestException {
+    try (OutputStream outputStream = destOutputStream) {
+      BlobDescriptor receivedBlobDescriptor = response.getBody().writeTo(outputStream);
 
       if (!blobDigest.equals(receivedBlobDescriptor.getDigest())) {
         throw new UnexpectedBlobDigestException(
@@ -64,9 +64,9 @@ class BlobPuller implements RegistryEndpointProvider<Blob> {
                 + blobDigest
                 + "'");
       }
-
-      return Blobs.from(destPath.toFile());
     }
+
+    return null;
   }
 
   @Override

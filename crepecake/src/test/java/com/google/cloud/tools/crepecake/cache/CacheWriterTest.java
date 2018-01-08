@@ -16,14 +16,17 @@
 
 package com.google.cloud.tools.crepecake.cache;
 
+import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
 import com.google.cloud.tools.crepecake.blob.Blobs;
 import com.google.cloud.tools.crepecake.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.image.UnwrittenLayer;
-import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
+import com.google.common.io.CountingOutputStream;
 import com.google.common.io.Resources;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
@@ -46,55 +49,106 @@ public class CacheWriterTest {
 
   private Cache testCache;
 
+  private Path resourceBlob;
+
+  private static class ExpectedLayer {
+
+    private final BlobDescriptor blobDescriptor;
+    private final DescriptorDigest diffId;
+    private final Blob blob;
+
+    private ExpectedLayer(BlobDescriptor blobDescriptor, DescriptorDigest diffId, Blob blob) {
+      this.blobDescriptor = blobDescriptor;
+      this.diffId = diffId;
+      this.blob = blob;
+    }
+  }
+
   @Before
-  public void setUp() throws CacheMetadataCorruptedException, IOException {
+  public void setUp() throws CacheMetadataCorruptedException, IOException, URISyntaxException {
     Path cacheDirectory = temporaryCacheDirectory.newFolder().toPath();
 
     testCache = Cache.init(cacheDirectory);
+
+    resourceBlob = Paths.get(Resources.getResource("blobA").toURI());
   }
 
   @Test
-  public void testWriteLayer() throws URISyntaxException, IOException {
-    Path blobA = Paths.get(Resources.getResource("blobA").toURI());
-    String expectedBlobAString = new String(Files.readAllBytes(blobA), StandardCharsets.UTF_8);
+  public void testWriteLayer_unwritten() throws IOException {
+    ExpectedLayer expectedLayer = getExpectedLayer();
 
-    // Gets the expected content descriptor and diff ID.
+    // Writes resourceBlob as a layer to the cache.
+    CacheWriter cacheWriter = new CacheWriter(testCache);
+
+    UnwrittenLayer unwrittenLayer = new UnwrittenLayer(Blobs.from(resourceBlob));
+
+    CachedLayer cachedLayer = cacheWriter.writeLayer(unwrittenLayer);
+
+    verifyCachedLayerIsExpected(expectedLayer, cachedLayer);
+  }
+
+  @Test
+  public void testGetLayerOutputStream() throws IOException {
+    ExpectedLayer expectedLayer = getExpectedLayer();
+
+    // Writes resourceBlob as a layer to the cache.
+    CacheWriter cacheWriter = new CacheWriter(testCache);
+
+    CountingOutputStream layerOutputStream =
+        cacheWriter.getLayerOutputStream(expectedLayer.blobDescriptor.getDigest());
+    expectedLayer.blob.writeTo(layerOutputStream);
+    CachedLayer cachedLayer =
+        cacheWriter.getCachedLayer(expectedLayer.blobDescriptor.getDigest(), layerOutputStream);
+
+    verifyCachedLayerIsExpected(expectedLayer, cachedLayer);
+  }
+
+  /**
+   * @return the expected layer to test against, represented by the {@code resourceBlob} resource
+   *     file
+   */
+  private ExpectedLayer getExpectedLayer() throws IOException {
+    String expectedBlobAString =
+        new String(Files.readAllBytes(resourceBlob), StandardCharsets.UTF_8);
+
+    // Gets the expected content descriptor, diff ID, and compressed BLOB.
+    ByteArrayOutputStream compressedBlobOutputStream = new ByteArrayOutputStream();
     CountingDigestOutputStream compressedDigestOutputStream =
-        new CountingDigestOutputStream(ByteStreams.nullOutputStream());
+        new CountingDigestOutputStream(compressedBlobOutputStream);
     CountingDigestOutputStream uncompressedDigestOutputStream;
     try (GZIPOutputStream compressorStream = new GZIPOutputStream(compressedDigestOutputStream)) {
       uncompressedDigestOutputStream = new CountingDigestOutputStream(compressorStream);
-      byte[] expectedBlobABytes = expectedBlobAString.getBytes(StandardCharsets.UTF_8);
-      uncompressedDigestOutputStream.write(expectedBlobABytes);
+      uncompressedDigestOutputStream.write(expectedBlobAString.getBytes(StandardCharsets.UTF_8));
     }
 
     BlobDescriptor expectedBlobADescriptor = compressedDigestOutputStream.toBlobDescriptor();
     DescriptorDigest expectedBlobADiffId =
         uncompressedDigestOutputStream.toBlobDescriptor().getDigest();
 
-    // Writes blobA as a layer to the cache.
-    CacheWriter cacheWriter = new CacheWriter(testCache);
+    ByteArrayInputStream compressedBlobInputStream =
+        new ByteArrayInputStream(compressedBlobOutputStream.toByteArray());
+    Blob blob = Blobs.from(compressedBlobInputStream);
 
-    UnwrittenLayer unwrittenLayer = new UnwrittenLayer(Blobs.from(blobA));
+    return new ExpectedLayer(expectedBlobADescriptor, expectedBlobADiffId, blob);
+  }
 
-    CachedLayer cachedLayer = cacheWriter.writeLayer(unwrittenLayer);
-
-    // Reads the cached layer back.
-    Path compressedBlobFile = cachedLayer.getContentFile();
-
+  private void verifyCachedLayerIsExpected(ExpectedLayer expectedLayer, CachedLayer cachedLayer)
+      throws IOException {
     try (InputStreamReader fileReader =
         new InputStreamReader(
-            new GZIPInputStream(Files.newInputStream(compressedBlobFile)),
+            new GZIPInputStream(Files.newInputStream(cachedLayer.getContentFile())),
             StandardCharsets.UTF_8)) {
       String decompressedString = CharStreams.toString(fileReader);
 
+      String expectedBlobAString =
+          new String(Files.readAllBytes(resourceBlob), StandardCharsets.UTF_8);
       Assert.assertEquals(expectedBlobAString, decompressedString);
       Assert.assertEquals(
-          expectedBlobADescriptor.getSize(), cachedLayer.getBlobDescriptor().getSize());
+          expectedLayer.blobDescriptor.getSize(), cachedLayer.getBlobDescriptor().getSize());
       Assert.assertEquals(
-          expectedBlobADescriptor.getDigest(), cachedLayer.getBlobDescriptor().getDigest());
-      Assert.assertEquals(expectedBlobADescriptor, cachedLayer.getBlobDescriptor());
-      Assert.assertEquals(expectedBlobADiffId, cachedLayer.getDiffId());
+          expectedLayer.blobDescriptor.getDigest(), cachedLayer.getBlobDescriptor().getDigest());
+      Assert.assertEquals(expectedLayer.blobDescriptor, cachedLayer.getBlobDescriptor());
+      Assert.assertEquals(expectedLayer.diffId, cachedLayer.getDiffId());
     }
   }
 }

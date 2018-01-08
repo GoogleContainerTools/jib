@@ -27,6 +27,7 @@ public class BuildConfigurationTest {
   public void testBuilder() {
     String expectedBaseImageServerUrl = "someserver";
     String expectedBaseImageName = "baseimage";
+    String expectedBaseImageTag = "baseimagetag";
     String expectedTargetServerUrl = "someotherserver";
     String expectedTargetImageName = "targetimage";
     String expectedTargetTag = "targettag";
@@ -36,6 +37,7 @@ public class BuildConfigurationTest {
         BuildConfiguration.builder()
             .setBaseImageServerUrl(expectedBaseImageServerUrl)
             .setBaseImageName(expectedBaseImageName)
+            .setBaseImageTag(expectedBaseImageTag)
             .setTargetServerUrl(expectedTargetServerUrl)
             .setTargetImageName(expectedTargetImageName)
             .setTargetTag(expectedTargetTag)
@@ -43,6 +45,7 @@ public class BuildConfigurationTest {
             .build();
     Assert.assertEquals(expectedBaseImageServerUrl, buildConfiguration.getBaseImageServerUrl());
     Assert.assertEquals(expectedBaseImageName, buildConfiguration.getBaseImageName());
+    Assert.assertEquals(expectedBaseImageTag, buildConfiguration.getBaseImageTag());
     Assert.assertEquals(expectedTargetServerUrl, buildConfiguration.getTargetServerUrl());
     Assert.assertEquals(expectedTargetImageName, buildConfiguration.getTargetImageName());
     Assert.assertEquals(expectedTargetTag, buildConfiguration.getTargetTag());
