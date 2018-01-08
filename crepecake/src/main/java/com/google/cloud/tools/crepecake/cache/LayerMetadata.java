@@ -33,8 +33,18 @@ class LayerMetadata {
   /** The last time the layer was constructed, or {@code null} if unknown. */
   @Nullable private FileTime lastModifiedTime;
 
+  /** {@code sourceFiles} must be empty if and only if {@code lastModifiedTime} is {@code null}. */
   LayerMetadata(
       CachedLayerType type, List<String> sourceFiles, @Nullable FileTime lastModifiedTime) {
+    if ((sourceFiles.size() == 0) != (lastModifiedTime == null)) {
+      throw new IllegalArgumentException(
+          "lastModifiedTime ("
+              + lastModifiedTime
+              + ") must be null if and only if sourceFiles ("
+              + sourceFiles
+              + ")are not specified");
+    }
+
     this.type = type;
     this.sourceFiles = sourceFiles;
     this.lastModifiedTime = lastModifiedTime;
