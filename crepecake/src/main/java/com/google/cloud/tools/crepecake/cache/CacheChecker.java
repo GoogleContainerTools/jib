@@ -21,7 +21,10 @@ import com.google.cloud.tools.crepecake.image.ReferenceLayer;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.OptionalLong;
+import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
+import java.time.Instant;
+import java.util.Optional;
 import java.util.Set;
 
 /** Checks if cached data is outdated. */
@@ -30,21 +33,32 @@ public class CacheChecker {
   private final Cache cache;
 
   /**
-   * @return the last modified time for the file. Recursively finds the most recent last modified
-   *     time for all subfiles if {@code file} is a directory.
+   * @return the last modified time for the file at {@code path}. Recursively finds the most recent
+   *     last modified time for all subfiles if the file is a directory.
    */
-  private static long getLastModifiedTime(File file) throws IOException {
-    long lastModifiedTime = file.lastModified();
+  private static FileTime getLastModifiedTime(Path path) throws IOException {
+    FileTime lastModifiedTime = Files.getLastModifiedTime(path);
 
-    if (file.canRead()) {
-      OptionalLong maxLastModifiedTime =
-          Files.walk(file.toPath()).mapToLong(path -> path.toFile().lastModified()).max();
+    if (Files.isReadable(path)) {
+      Optional<FileTime> maxLastModifiedTime =
+          Files.walk(path)
+              .map(
+                  subFilePath -> {
+                    try {
+                      return Files.getLastModifiedTime(subFilePath);
+
+                    } catch (IOException ex) {
+                      throw new RuntimeException(ex);
+                    }
+                  })
+              .max(FileTime::compareTo);
+
       if (!maxLastModifiedTime.isPresent()) {
         throw new IllegalStateException(
-            "Could not get last modified time for all files in directory '" + file + "'");
+            "Could not get last modified time for all files in directory '" + path + "'");
       }
-      if (maxLastModifiedTime.getAsLong() > lastModifiedTime) {
-        lastModifiedTime = maxLastModifiedTime.getAsLong();
+      if (maxLastModifiedTime.get().compareTo(lastModifiedTime) > 0) {
+        lastModifiedTime = maxLastModifiedTime.get();
       }
     }
 
@@ -90,17 +104,18 @@ public class CacheChecker {
         cache.getMetadata().filterLayers().bySourceFiles(sourceFiles).filter();
     if (cachedLayersWithSourceFiles.size() == 0) return true;
 
-    long sourceFilesLastModifiedTime = 0;
+    FileTime sourceFilesLastModifiedTime = FileTime.from(Instant.MIN);
     for (File file : sourceFiles) {
-      long lastModifiedTime = getLastModifiedTime(file);
-      if (lastModifiedTime > sourceFilesLastModifiedTime) {
+      FileTime lastModifiedTime = getLastModifiedTime(file.toPath());
+      if (lastModifiedTime.compareTo(sourceFilesLastModifiedTime) > 0) {
         sourceFilesLastModifiedTime = lastModifiedTime;
       }
     }
 
     // Checks if at least one of the matched layers is up-to-date.
     for (CachedLayerWithMetadata cachedLayer : cachedLayersWithSourceFiles) {
-      if (cachedLayer.getMetadata().getLastModifiedTime() >= sourceFilesLastModifiedTime) {
+      if (cachedLayer.getMetadata().getLastModifiedTime()
+          >= sourceFilesLastModifiedTime.toMillis()) {
         // This layer is an up-to-date layer.
         return false;
       }
