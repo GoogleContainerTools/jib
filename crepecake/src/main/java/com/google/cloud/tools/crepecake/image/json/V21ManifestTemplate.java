@@ -81,16 +81,6 @@ public class V21ManifestTemplate extends ManifestTemplate {
     private String v1Compatibility;
   }
 
-  public List<DescriptorDigest> getLayerDigests() {
-    List<DescriptorDigest> layerDigests = new ArrayList<>();
-
-    for (LayerObjectTemplate layerObjectTemplate : fsLayers) {
-      layerDigests.add(layerObjectTemplate.blobSum);
-    }
-
-    return layerDigests;
-  }
-
   @Override
   public int getSchemaVersion() {
     return schemaVersion;

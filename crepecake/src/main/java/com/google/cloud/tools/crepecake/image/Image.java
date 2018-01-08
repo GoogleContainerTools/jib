@@ -16,9 +16,10 @@
 
 package com.google.cloud.tools.crepecake.image;
 
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /** Represents an image. */
 public class Image {
@@ -26,23 +27,18 @@ public class Image {
   /** The layers of the image, in the order in which they are applied. */
   private ImageLayers<Layer> layers = new ImageLayers<>();
 
-  /** Environment variable definitions for running the image, in the format {@code NAME=VALUE}. */
-  private final List<String> environment = new ArrayList<>();
+  /** Environment variables for running the image. Maps from variable name to its value. */
+  private final Map<String, String> environmentMap = new HashMap<>();
 
   /** Initial command to run when running the image. */
   private List<String> entrypoint;
 
-  public List<String> getEnvironment() {
-    return Collections.unmodifiableList(environment);
+  public Map<String, String> getEnvironmentMap() {
+    return Collections.unmodifiableMap(environmentMap);
   }
 
   public void setEnvironmentVariable(String name, String value) {
-    environment.add(name + "=" + value);
-  }
-
-  /** Adds an environment variable definition in the format {@code NAME=VALUE}. */
-  public void addEnvironmentVariableDefinition(String environmentVariableDefinition) {
-    environment.add(environmentVariableDefinition);
+    environmentMap.put(name, value);
   }
 
   public List<String> getEntrypoint() {

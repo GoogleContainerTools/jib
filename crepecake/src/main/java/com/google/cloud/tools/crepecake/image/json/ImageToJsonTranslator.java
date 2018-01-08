@@ -24,6 +24,9 @@ import com.google.cloud.tools.crepecake.image.Layer;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Translates an {@link Image} into a manifest or container configuration JSON BLOB.
@@ -57,7 +60,17 @@ public class ImageToJsonTranslator {
     }
 
     // Adds the environment variables.
-    template.setContainerEnvironment(image.getEnvironment());
+    Map<String, String> environmentMap = image.getEnvironmentMap();
+    List<String> environment = new ArrayList<>(environmentMap.size());
+
+    for (Map.Entry<String, String> environmentVariable : environmentMap.entrySet()) {
+      String variableName = environmentVariable.getKey();
+      String variableValue = environmentVariable.getValue();
+
+      environment.add(variableName + "=" + variableValue);
+    }
+
+    template.setContainerEnvironment(environment);
 
     // Sets the entrypoint.
     template.setContainerEntrypoint(image.getEntrypoint());
