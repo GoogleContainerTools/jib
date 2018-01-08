@@ -41,6 +41,12 @@ public class CacheReaderTest {
             new HashSet<>(Collections.singletonList(Paths.get("some/source/directory")))));
     Assert.assertNull(cacheReader.getLayerFile(CachedLayerType.RESOURCES, new HashSet<>()));
     Assert.assertNull(cacheReader.getLayerFile(CachedLayerType.DEPENDENCIES, new HashSet<>()));
-    Assert.assertNull(cacheReader.getLayerFile(CachedLayerType.BASE, new HashSet<>()));
+    try {
+      cacheReader.getLayerFile(CachedLayerType.BASE, new HashSet<>());
+      Assert.fail("Should not be able to get layer file for base image layer");
+
+    } catch (UnsupportedOperationException ex) {
+      Assert.assertEquals("Can only find layer files for application layers", ex.getMessage());
+    }
   }
 }

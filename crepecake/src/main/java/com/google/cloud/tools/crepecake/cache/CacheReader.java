@@ -50,7 +50,7 @@ public class CacheReader {
         return newestLayerFile;
 
       default:
-        return null;
+        throw new UnsupportedOperationException("Can only find layer files for application layers");
     }
   }
 }
