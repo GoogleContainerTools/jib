@@ -19,46 +19,32 @@ package com.google.cloud.tools.crepecake.cache;
 import com.google.common.annotations.VisibleForTesting;
 import java.nio.file.attribute.FileTime;
 import java.util.List;
-import javax.annotation.Nullable;
 
-/** Metadata about a layer stored in the cache. This is part of the {@link CacheMetadata}. */
+/**
+ * Metadata about an application layer stored in the cache. This is part of the {@link
+ * CacheMetadata}.
+ */
 class LayerMetadata {
-
-  /** The type of layer. */
-  private final CachedLayerType type;
 
   /** The paths to the source files that the layer was constructed from. */
   private List<String> sourceFiles;
 
-  /** The last time the layer was constructed, or {@code null} if unknown. */
-  @Nullable private FileTime lastModifiedTime;
+  /** The last time the layer was constructed. */
+  private final FileTime lastModifiedTime;
 
-  /** {@code sourceFiles} must be empty if and only if {@code lastModifiedTime} is {@code null}. */
-  LayerMetadata(
-      CachedLayerType type, List<String> sourceFiles, @Nullable FileTime lastModifiedTime) {
-    if ((sourceFiles.size() == 0) != (lastModifiedTime == null)) {
-      throw new IllegalArgumentException(
-          "lastModifiedTime ("
-              + lastModifiedTime
-              + ") must be null if and only if sourceFiles ("
-              + sourceFiles
-              + ")are not specified");
+  LayerMetadata(List<String> sourceFiles, FileTime lastModifiedTime) {
+    if (sourceFiles.size() == 0) {
+      throw new IllegalArgumentException("Source files for application layer cannot be empty");
     }
 
-    this.type = type;
     this.sourceFiles = sourceFiles;
     this.lastModifiedTime = lastModifiedTime;
-  }
-
-  CachedLayerType getType() {
-    return type;
   }
 
   List<String> getSourceFiles() {
     return sourceFiles;
   }
 
-  @Nullable
   public FileTime getLastModifiedTime() {
     return lastModifiedTime;
   }
