@@ -48,7 +48,10 @@ public class CacheMetadataTest {
   @Test
   public void testAddLayer() throws LayerPropertyNotFoundException, DuplicateLayerException {
     CachedLayerWithMetadata testCachedLayerWithMetadata =
-        new CachedLayerWithMetadata(mockCachedLayer(), Mockito.mock(LayerMetadata.class));
+        new CachedLayerWithMetadata(
+            mockCachedLayer(),
+            Mockito.mock(CachedLayerType.class),
+            Mockito.mock(LayerMetadata.class));
 
     CacheMetadata cacheMetadata = new CacheMetadata();
     cacheMetadata.addLayer(testCachedLayerWithMetadata);
@@ -65,17 +68,16 @@ public class CacheMetadataTest {
     List<CachedLayer> mockLayers =
         Stream.generate(CacheMetadataTest::mockCachedLayer).limit(4).collect(Collectors.toList());
 
-    LayerMetadata fakeBaseLayerMetadata =
-        new LayerMetadata(CachedLayerType.BASE, Collections.emptyList(), null);
-    LayerMetadata fakeClassesLayerMetadata =
-        new LayerMetadata(CachedLayerType.CLASSES, Collections.emptyList(), null);
+    LayerMetadata mockClassesLayerMetadata = Mockito.mock(LayerMetadata.class);
 
     List<CachedLayerWithMetadata> cachedLayers =
         Arrays.asList(
-            new CachedLayerWithMetadata(mockLayers.get(0), fakeBaseLayerMetadata),
-            new CachedLayerWithMetadata(mockLayers.get(1), fakeClassesLayerMetadata),
-            new CachedLayerWithMetadata(mockLayers.get(2), fakeBaseLayerMetadata),
-            new CachedLayerWithMetadata(mockLayers.get(3), fakeClassesLayerMetadata));
+            new CachedLayerWithMetadata(mockLayers.get(0), CachedLayerType.BASE, null),
+            new CachedLayerWithMetadata(
+                mockLayers.get(1), CachedLayerType.CLASSES, mockClassesLayerMetadata),
+            new CachedLayerWithMetadata(mockLayers.get(2), CachedLayerType.BASE, null),
+            new CachedLayerWithMetadata(
+                mockLayers.get(3), CachedLayerType.CLASSES, mockClassesLayerMetadata));
 
     CacheMetadata cacheMetadata = new CacheMetadata();
     for (CachedLayerWithMetadata cachedLayer : cachedLayers) {
@@ -87,7 +89,7 @@ public class CacheMetadataTest {
 
     Assert.assertEquals(2, filteredLayers.size());
     for (CachedLayerWithMetadata cachedLayer : filteredLayers) {
-      Assert.assertEquals(fakeClassesLayerMetadata, cachedLayer.getMetadata());
+      Assert.assertEquals(mockClassesLayerMetadata, cachedLayer.getMetadata());
     }
   }
 
@@ -100,30 +102,32 @@ public class CacheMetadataTest {
 
     LayerMetadata fakeExpectedSourceFilesClassesLayerMetadata =
         new LayerMetadata(
-            CachedLayerType.CLASSES,
-            Arrays.asList("some/source/file", "some/source/directory"),
-            FileTime.fromMillis(0));
+            Arrays.asList("some/source/file", "some/source/directory"), FileTime.fromMillis(0));
     LayerMetadata fakeExpectedSourceFilesResourcesLayerMetadata =
         new LayerMetadata(
-            CachedLayerType.RESOURCES,
-            Arrays.asList("some/source/file", "some/source/directory"),
-            FileTime.fromMillis(0));
+            Arrays.asList("some/source/file", "some/source/directory"), FileTime.fromMillis(0));
     LayerMetadata fakeOtherSourceFilesLayerMetadata =
         new LayerMetadata(
-            CachedLayerType.CLASSES,
-            Collections.singletonList("not/the/same/source/file"),
-            FileTime.fromMillis(0));
+            Collections.singletonList("not/the/same/source/file"), FileTime.fromMillis(0));
 
     List<CachedLayerWithMetadata> cachedLayers =
         Arrays.asList(
-            new CachedLayerWithMetadata(mockLayers.get(0), fakeOtherSourceFilesLayerMetadata),
             new CachedLayerWithMetadata(
-                mockLayers.get(1), fakeExpectedSourceFilesResourcesLayerMetadata),
-            new CachedLayerWithMetadata(mockLayers.get(2), fakeOtherSourceFilesLayerMetadata),
+                mockLayers.get(0), CachedLayerType.CLASSES, fakeOtherSourceFilesLayerMetadata),
             new CachedLayerWithMetadata(
-                mockLayers.get(3), fakeExpectedSourceFilesClassesLayerMetadata),
+                mockLayers.get(1),
+                CachedLayerType.RESOURCES,
+                fakeExpectedSourceFilesResourcesLayerMetadata),
             new CachedLayerWithMetadata(
-                mockLayers.get(4), fakeExpectedSourceFilesResourcesLayerMetadata));
+                mockLayers.get(2), CachedLayerType.CLASSES, fakeOtherSourceFilesLayerMetadata),
+            new CachedLayerWithMetadata(
+                mockLayers.get(3),
+                CachedLayerType.CLASSES,
+                fakeExpectedSourceFilesClassesLayerMetadata),
+            new CachedLayerWithMetadata(
+                mockLayers.get(4),
+                CachedLayerType.RESOURCES,
+                fakeExpectedSourceFilesResourcesLayerMetadata));
 
     CacheMetadata cacheMetadata = new CacheMetadata();
     for (CachedLayerWithMetadata cachedLayer : cachedLayers) {

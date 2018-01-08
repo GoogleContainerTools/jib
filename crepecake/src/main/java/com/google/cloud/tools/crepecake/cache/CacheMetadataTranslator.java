@@ -23,9 +23,6 @@ import com.google.cloud.tools.crepecake.cache.json.CacheMetadataTemplate;
 import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import java.nio.file.Path;
-import java.nio.file.attribute.FileTime;
-import java.util.Collections;
-import java.util.List;
 
 /** Translates {@link CacheMetadata} to and from {@link CacheMetadataTemplate}. */
 public class CacheMetadataTranslator {
@@ -44,16 +41,15 @@ public class CacheMetadataTranslator {
         // Gets the properties for a layer. Properties only exist for application layers.
         CacheMetadataLayerPropertiesObjectTemplate propertiesObjectTemplate =
             layerObjectTemplate.getProperties();
-        List<String> sourceFiles = Collections.emptyList();
-        FileTime lastModifiedTime = null;
-        if (propertiesObjectTemplate != null) {
-          sourceFiles = propertiesObjectTemplate.getSourceFiles();
-          lastModifiedTime = propertiesObjectTemplate.getLastModifiedTime();
-        }
 
         // Constructs the cache metadata layer from a cached layer and layer metadata.
-        LayerMetadata layerMetadata =
-            new LayerMetadata(layerObjectTemplate.getType(), sourceFiles, lastModifiedTime);
+        LayerMetadata layerMetadata = null;
+        if (propertiesObjectTemplate != null) {
+          layerMetadata =
+              new LayerMetadata(
+                  propertiesObjectTemplate.getSourceFiles(),
+                  propertiesObjectTemplate.getLastModifiedTime());
+        }
 
         CachedLayer cachedLayer =
             new CachedLayer(
@@ -62,7 +58,7 @@ public class CacheMetadataTranslator {
                 layerObjectTemplate.getDiffId());
 
         CachedLayerWithMetadata cachedLayerWithMetadata =
-            new CachedLayerWithMetadata(cachedLayer, layerMetadata);
+            new CachedLayerWithMetadata(cachedLayer, layerObjectTemplate.getType(), layerMetadata);
         cacheMetadata.addLayer(cachedLayerWithMetadata);
       }
 
@@ -78,24 +74,25 @@ public class CacheMetadataTranslator {
     CacheMetadataTemplate template = new CacheMetadataTemplate();
 
     for (CachedLayerWithMetadata cachedLayerWithMetadata : cacheMetadata.getLayers()) {
-      LayerMetadata layerMetadata = cachedLayerWithMetadata.getMetadata();
-
       CacheMetadataLayerObjectTemplate layerObjectTemplate =
           new CacheMetadataLayerObjectTemplate()
-              .setType(layerMetadata.getType())
+              .setType(cachedLayerWithMetadata.getType())
               .setSize(cachedLayerWithMetadata.getBlobDescriptor().getSize())
               .setDigest(cachedLayerWithMetadata.getBlobDescriptor().getDigest())
               .setDiffId(cachedLayerWithMetadata.getDiffId());
 
-      switch (layerMetadata.getType()) {
+      switch (cachedLayerWithMetadata.getType()) {
         case DEPENDENCIES:
         case RESOURCES:
         case CLASSES:
-          CacheMetadataLayerPropertiesObjectTemplate propertiesTemplate =
+          if (cachedLayerWithMetadata.getMetadata() == null) {
+            throw new IllegalStateException("Layer metadata cannot be null for application layers");
+          }
+          layerObjectTemplate.setProperties(
               new CacheMetadataLayerPropertiesObjectTemplate()
-                  .setSourceFiles(layerMetadata.getSourceFiles())
-                  .setLastModifiedTime(layerMetadata.getLastModifiedTime());
-          layerObjectTemplate.setProperties(propertiesTemplate);
+                  .setSourceFiles(cachedLayerWithMetadata.getMetadata().getSourceFiles())
+                  .setLastModifiedTime(
+                      cachedLayerWithMetadata.getMetadata().getLastModifiedTime()));
           break;
       }
 

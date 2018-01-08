@@ -65,12 +65,15 @@ class CacheMetadata {
 
         for (CachedLayerWithMetadata layer : layers) {
           if (type != null) {
-            if (type != layer.getMetadata().getType()) {
+            if (type != layer.getType()) {
               continue;
             }
           }
 
           if (sourceFiles != null) {
+            if (layer.getMetadata() == null) {
+              continue;
+            }
             List<String> cachedLayerSourceFilePaths = layer.getMetadata().getSourceFiles();
             if (cachedLayerSourceFilePaths != null) {
               Set<Path> cachedLayerSourceFiles = new HashSet<>();
