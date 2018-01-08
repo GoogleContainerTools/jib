@@ -18,8 +18,11 @@ package com.google.cloud.tools.crepecake.cache;
 
 import com.google.cloud.tools.crepecake.image.ImageLayers;
 import com.google.cloud.tools.crepecake.image.ReferenceLayer;
+import com.sun.org.apache.xml.internal.utils.WrappedRuntimeException;
+
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
@@ -40,25 +43,30 @@ public class CacheChecker {
     FileTime lastModifiedTime = Files.getLastModifiedTime(path);
 
     if (Files.isReadable(path)) {
-      Optional<FileTime> maxLastModifiedTime =
-          Files.walk(path)
-              .map(
-                  subFilePath -> {
-                    try {
-                      return Files.getLastModifiedTime(subFilePath);
+      try {
+        Optional<FileTime> maxLastModifiedTime =
+            Files.walk(path)
+                .map(
+                    subFilePath -> {
+                      try {
+                        return Files.getLastModifiedTime(subFilePath);
 
-                    } catch (IOException ex) {
-                      throw new RuntimeException(ex);
-                    }
-                  })
-              .max(FileTime::compareTo);
+                      } catch (IOException ex) {
+                        throw new UncheckedIOException(ex);
+                      }
+                    })
+                .max(FileTime::compareTo);
 
-      if (!maxLastModifiedTime.isPresent()) {
-        throw new IllegalStateException(
-            "Could not get last modified time for all files in directory '" + path + "'");
-      }
-      if (maxLastModifiedTime.get().compareTo(lastModifiedTime) > 0) {
-        lastModifiedTime = maxLastModifiedTime.get();
+        if (!maxLastModifiedTime.isPresent()) {
+          throw new IllegalStateException(
+              "Could not get last modified time for all files in directory '" + path + "'");
+        }
+        if (maxLastModifiedTime.get().compareTo(lastModifiedTime) > 0) {
+          lastModifiedTime = maxLastModifiedTime.get();
+        }
+
+      } catch (UncheckedIOException ex) {
+        throw ex.getCause();
       }
     }
 
