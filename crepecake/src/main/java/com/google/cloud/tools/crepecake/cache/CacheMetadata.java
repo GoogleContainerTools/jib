@@ -41,11 +41,6 @@ class CacheMetadata {
     @Nullable private CachedLayerType type;
     @Nullable private Set<File> sourceFiles;
 
-    /** True if the filters are used; false otherwise. */
-    private boolean isTypeFilterEnabled = false;
-
-    private boolean isSourceFilesFilterEnabled = false;
-
     private LayerFilter(ImageLayers<CachedLayerWithMetadata> layers) {
       this.layers = layers;
     }
@@ -53,14 +48,12 @@ class CacheMetadata {
     /** Filters to a certain layer type. */
     LayerFilter byType(CachedLayerType type) {
       this.type = type;
-      isTypeFilterEnabled = this.type != null;
       return this;
     }
 
     /** Filters to a certain set of source files. */
     LayerFilter bySourceFiles(Set<File> sourceFiles) {
       this.sourceFiles = sourceFiles;
-      isSourceFilesFilterEnabled = this.sourceFiles != null;
       return this;
     }
 
@@ -70,19 +63,15 @@ class CacheMetadata {
         ImageLayers<CachedLayerWithMetadata> filteredLayers = new ImageLayers<>();
 
         for (CachedLayerWithMetadata layer : layers) {
-          if (isTypeFilterEnabled) {
+          if (type != null) {
             if (type != layer.getMetadata().getType()) {
               continue;
             }
           }
 
-          if (isSourceFilesFilterEnabled) {
+          if (sourceFiles != null) {
             List<String> cachedLayerSourceFilePaths = layer.getMetadata().getSourceFiles();
-            if (cachedLayerSourceFilePaths == null) {
-              if (sourceFiles != null) {
-                continue;
-              }
-            } else {
+            if (cachedLayerSourceFilePaths != null) {
               Set<File> cachedLayerSourceFiles = new HashSet<>();
               for (String sourceFile : cachedLayerSourceFilePaths) {
                 cachedLayerSourceFiles.add(new File(sourceFile));

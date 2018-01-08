@@ -18,8 +18,6 @@ package com.google.cloud.tools.crepecake.cache;
 
 import com.google.cloud.tools.crepecake.image.ImageLayers;
 import com.google.cloud.tools.crepecake.image.ReferenceLayer;
-import com.sun.org.apache.xml.internal.utils.WrappedRuntimeException;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
