@@ -17,7 +17,9 @@
 package com.google.cloud.tools.crepecake.cache;
 
 import com.google.common.annotations.VisibleForTesting;
+import java.nio.file.attribute.FileTime;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /** Metadata about a layer stored in the cache. This is part of the {@link CacheMetadata}. */
 class LayerMetadata {
@@ -28,10 +30,11 @@ class LayerMetadata {
   /** The paths to the source files that the layer was constructed from. */
   private List<String> sourceFiles;
 
-  /** The last time the layer was constructed, or negative if unknown. */
-  private long lastModifiedTime;
+  /** The last time the layer was constructed, or {@code null} if unknown. */
+  @Nullable private FileTime lastModifiedTime;
 
-  LayerMetadata(CachedLayerType type, List<String> sourceFiles, long lastModifiedTime) {
+  LayerMetadata(
+      CachedLayerType type, List<String> sourceFiles, @Nullable FileTime lastModifiedTime) {
     this.type = type;
     this.sourceFiles = sourceFiles;
     this.lastModifiedTime = lastModifiedTime;
@@ -45,7 +48,8 @@ class LayerMetadata {
     return sourceFiles;
   }
 
-  public long getLastModifiedTime() {
+  @Nullable
+  public FileTime getLastModifiedTime() {
     return lastModifiedTime;
   }
 

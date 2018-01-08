@@ -17,6 +17,7 @@
 package com.google.cloud.tools.crepecake.cache.json;
 
 import com.google.cloud.tools.crepecake.json.JsonTemplate;
+import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,8 +37,8 @@ public class CacheMetadataLayerPropertiesObjectTemplate extends JsonTemplate {
     return sourceFiles;
   }
 
-  public long getLastModifiedTime() {
-    return lastModifiedTime;
+  public FileTime getLastModifiedTime() {
+    return FileTime.fromMillis(lastModifiedTime);
   }
 
   public CacheMetadataLayerPropertiesObjectTemplate setSourceFiles(List<String> sourceFiles) {
@@ -45,8 +46,8 @@ public class CacheMetadataLayerPropertiesObjectTemplate extends JsonTemplate {
     return this;
   }
 
-  public CacheMetadataLayerPropertiesObjectTemplate setLastModifiedTime(long lastModifiedTime) {
-    this.lastModifiedTime = lastModifiedTime;
+  public CacheMetadataLayerPropertiesObjectTemplate setLastModifiedTime(FileTime lastModifiedTime) {
+    this.lastModifiedTime = lastModifiedTime.toMillis();
     return this;
   }
 }
