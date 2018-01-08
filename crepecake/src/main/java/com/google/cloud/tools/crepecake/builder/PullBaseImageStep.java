@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.crepecake.builder;
 
+import com.google.cloud.tools.crepecake.http.Authorization;
 import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
 import com.google.cloud.tools.crepecake.image.Image;
 import com.google.cloud.tools.crepecake.image.LayerCountMismatchException;
@@ -35,9 +36,11 @@ import java.nio.charset.StandardCharsets;
 class PullBaseImageStep implements Step<Void, Image> {
 
   private final BuildConfiguration buildConfiguration;
+  private final Authorization pullAuthorization;
 
-  PullBaseImageStep(BuildConfiguration buildConfiguration) {
+  PullBaseImageStep(BuildConfiguration buildConfiguration, Authorization pullAuthorization) {
     this.buildConfiguration = buildConfiguration;
+    this.pullAuthorization = pullAuthorization;
   }
 
   @Override
@@ -46,7 +49,7 @@ class PullBaseImageStep implements Step<Void, Image> {
           DuplicateLayerException, LayerCountMismatchException {
     RegistryClient registryClient =
         new RegistryClient(
-            null,
+            pullAuthorization,
             buildConfiguration.getBaseImageServerUrl(),
             buildConfiguration.getBaseImageName());
 
@@ -69,7 +72,6 @@ class PullBaseImageStep implements Step<Void, Image> {
         String containerConfigurationString =
             new String(containerConfigurationOutputStream.toByteArray(), StandardCharsets.UTF_8);
 
-        // TODO: Change to readJsonFromBlob
         ContainerConfigurationTemplate containerConfigurationTemplate =
             JsonTemplateMapper.readJson(
                 containerConfigurationString, ContainerConfigurationTemplate.class);

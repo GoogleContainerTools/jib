@@ -16,12 +16,9 @@
 
 package com.google.cloud.tools.crepecake.cache;
 
-import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
 import com.google.cloud.tools.crepecake.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
-import com.google.cloud.tools.crepecake.image.DigestOnlyLayer;
-import com.google.cloud.tools.crepecake.image.ReferenceLayer;
 import com.google.cloud.tools.crepecake.image.UnwrittenLayer;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CountingOutputStream;
@@ -29,7 +26,6 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.zip.GZIPInputStream;
@@ -107,41 +103,6 @@ public class CacheWriter {
         layerFile,
         new BlobDescriptor(countingOutputStream.getCount(), layerDigest),
         getDiffId(layerFile));
-  }
-
-  /**
-   * Writes a {@link ReferenceLayer} with its corresponding compressed layer content BLOB to cache.
-   */
-  @Deprecated
-  public CachedLayer writeLayer(ReferenceLayer layer, Blob layerContent) throws IOException {
-    Path layerFile = getLayerFile(layer.getBlobDescriptor().getDigest());
-
-    // Writes the layer content to file.
-    try (OutputStream fileOutputStream =
-        new BufferedOutputStream(Files.newOutputStream(layerFile))) {
-      layerContent.writeTo(fileOutputStream);
-    }
-    // TODO: Should probably check if the written BLOB has the same digest as expected.
-    return new CachedLayer(layerFile, layer.getBlobDescriptor(), getDiffId(layerFile));
-  }
-
-  /**
-   * Writes a {@link DigestOnlyLayer} with its corresponding compressed layer content BLOB to cache.
-   */
-  @Deprecated
-  public CachedLayer writeLayer(DigestOnlyLayer layer, Blob layerContent) throws IOException {
-    Path layerFile = getLayerFile(layer.getBlobDescriptor().getDigest());
-
-    // Writes the layer content to file.
-    try (CountingDigestOutputStream compressedDigestOutputStream =
-        new CountingDigestOutputStream(
-            new BufferedOutputStream(Files.newOutputStream(layerFile)))) {
-      layerContent.writeTo(compressedDigestOutputStream);
-      compressedDigestOutputStream.close();
-      // TODO: Should probably check if the written BLOB has the same digest as expected.
-      return new CachedLayer(
-          layerFile, compressedDigestOutputStream.toBlobDescriptor(), getDiffId(layerFile));
-    }
   }
 
   /** @return the file for the layer with the specified compressed digest */

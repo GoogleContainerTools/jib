@@ -16,19 +16,25 @@
 
 package com.google.cloud.tools.crepecake.builder;
 
-import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
-import com.google.cloud.tools.crepecake.image.LayerCountMismatchException;
-import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
+import com.google.cloud.tools.crepecake.http.Authorization;
 import com.google.cloud.tools.crepecake.registry.RegistryAuthenticationFailedException;
+import com.google.cloud.tools.crepecake.registry.RegistryAuthenticators;
 import com.google.cloud.tools.crepecake.registry.RegistryException;
 import java.io.IOException;
 
-/** A step in the builder process. Implementations must be thread-safe. */
-interface Step<T, R> {
+public class AuthenticatePullStep implements Step<Void, Authorization> {
 
-  // TODO: Add more exceptions as needed.
-  R run(T input)
-      throws IOException, RegistryException, LayerPropertyNotFoundException,
-          DuplicateLayerException, LayerCountMismatchException,
-          RegistryAuthenticationFailedException;
+  private final BuildConfiguration buildConfiguration;
+
+  AuthenticatePullStep(BuildConfiguration buildConfiguration) {
+    this.buildConfiguration = buildConfiguration;
+  }
+
+  @Override
+  public Authorization run(Void input)
+      throws RegistryAuthenticationFailedException, IOException, RegistryException {
+    return RegistryAuthenticators.forOther(
+            buildConfiguration.getBaseImageServerUrl(), buildConfiguration.getBaseImageName())
+        .authenticate();
+  }
 }

@@ -61,6 +61,9 @@ public class BuildConfigurationTest {
     } catch (IllegalStateException ex) {
       for (Map.Entry<BuildConfiguration.Fields, String> description :
           BuildConfiguration.Builder.FIELD_DESCRIPTIONS.entrySet()) {
+        if (!description.getKey().isRequired()) {
+          continue;
+        }
         Assert.assertThat(ex.getMessage(), CoreMatchers.containsString(description.getValue()));
       }
     }
