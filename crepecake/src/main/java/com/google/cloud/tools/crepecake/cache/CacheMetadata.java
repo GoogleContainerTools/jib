@@ -19,7 +19,8 @@ package com.google.cloud.tools.crepecake.cache;
 import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
 import com.google.cloud.tools.crepecake.image.ImageLayers;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
-import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -39,12 +40,7 @@ class CacheMetadata {
     private final ImageLayers<CachedLayerWithMetadata> layers;
 
     @Nullable private CachedLayerType type;
-    @Nullable private Set<File> sourceFiles;
-
-    /** True if the filters are used; false otherwise. */
-    private boolean isTypeFilterEnabled = false;
-
-    private boolean isSourceFilesFilterEnabled = false;
+    @Nullable private Set<Path> sourceFiles;
 
     private LayerFilter(ImageLayers<CachedLayerWithMetadata> layers) {
       this.layers = layers;
@@ -53,14 +49,12 @@ class CacheMetadata {
     /** Filters to a certain layer type. */
     LayerFilter byType(CachedLayerType type) {
       this.type = type;
-      isTypeFilterEnabled = true;
       return this;
     }
 
     /** Filters to a certain set of source files. */
-    LayerFilter bySourceFiles(Set<File> sourceFiles) {
+    LayerFilter bySourceFiles(Set<Path> sourceFiles) {
       this.sourceFiles = sourceFiles;
-      isSourceFilesFilterEnabled = true;
       return this;
     }
 
@@ -70,22 +64,18 @@ class CacheMetadata {
         ImageLayers<CachedLayerWithMetadata> filteredLayers = new ImageLayers<>();
 
         for (CachedLayerWithMetadata layer : layers) {
-          if (isTypeFilterEnabled) {
+          if (type != null) {
             if (type != layer.getMetadata().getType()) {
               continue;
             }
           }
 
-          if (isSourceFilesFilterEnabled) {
+          if (sourceFiles != null) {
             List<String> cachedLayerSourceFilePaths = layer.getMetadata().getSourceFiles();
-            if (cachedLayerSourceFilePaths == null) {
-              if (sourceFiles != null) {
-                continue;
-              }
-            } else {
-              Set<File> cachedLayerSourceFiles = new HashSet<>();
+            if (cachedLayerSourceFilePaths != null) {
+              Set<Path> cachedLayerSourceFiles = new HashSet<>();
               for (String sourceFile : cachedLayerSourceFilePaths) {
-                cachedLayerSourceFiles.add(new File(sourceFile));
+                cachedLayerSourceFiles.add(Paths.get(sourceFile));
               }
               if (!cachedLayerSourceFiles.equals(sourceFiles)) {
                 continue;
