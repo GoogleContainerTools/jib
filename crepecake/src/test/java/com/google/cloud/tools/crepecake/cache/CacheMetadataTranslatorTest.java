@@ -94,7 +94,7 @@ public class CacheMetadataTranslatorTest {
 
     // Checks that the base layer was translated correctly.
     CachedLayerWithMetadata baseLayer = layers.get(0);
-    Assert.assertEquals(CachedLayerType.BASE, baseLayer.getMetadata().getType());
+    Assert.assertEquals(CachedLayerType.BASE, baseLayer.getType());
     Assert.assertEquals(
         CacheFiles.getLayerFile(fakePath, baseLayerBlobDescriptor.getDigest()),
         baseLayer.getContentFile());
@@ -103,12 +103,13 @@ public class CacheMetadataTranslatorTest {
 
     // Checks that the classses layer was translated correctly.
     CachedLayerWithMetadata classesLayer = layers.get(1);
-    Assert.assertEquals(CachedLayerType.CLASSES, classesLayer.getMetadata().getType());
+    Assert.assertEquals(CachedLayerType.CLASSES, classesLayer.getType());
     Assert.assertEquals(
         CacheFiles.getLayerFile(fakePath, classesLayerBlobDescriptor.getDigest()),
         classesLayer.getContentFile());
     Assert.assertEquals(classesLayerBlobDescriptor, classesLayer.getBlobDescriptor());
     Assert.assertEquals(classesLayerDiffId, classesLayer.getDiffId());
+    Assert.assertNotNull(classesLayer.getMetadata());
     Assert.assertEquals(classesLayerSourceFiles, classesLayer.getMetadata().getSourceFiles());
     Assert.assertEquals(
         classesLayerLastModifiedTime, classesLayer.getMetadata().getLastModifiedTime());
@@ -127,18 +128,16 @@ public class CacheMetadataTranslatorTest {
 
     CachedLayer baseCachedLayer =
         new CachedLayer(mockFile, baseLayerBlobDescriptor, baseLayerDiffId);
-    LayerMetadata baseLayerMetadata =
-        new LayerMetadata(CachedLayerType.BASE, Collections.emptyList(), null);
     CachedLayerWithMetadata baseLayer =
-        new CachedLayerWithMetadata(baseCachedLayer, baseLayerMetadata);
+        new CachedLayerWithMetadata(baseCachedLayer, CachedLayerType.BASE, null);
 
     CachedLayer classesCachedLayer =
         new CachedLayer(mockFile, classesLayerBlobDescriptor, classesLayerDiffId);
     LayerMetadata classesLayerMetadata =
-        new LayerMetadata(
-            CachedLayerType.CLASSES, classesLayerSourceFiles, classesLayerLastModifiedTime);
+        new LayerMetadata(classesLayerSourceFiles, classesLayerLastModifiedTime);
     CachedLayerWithMetadata classesLayer =
-        new CachedLayerWithMetadata(classesCachedLayer, classesLayerMetadata);
+        new CachedLayerWithMetadata(
+            classesCachedLayer, CachedLayerType.CLASSES, classesLayerMetadata);
 
     cacheMetadata.addLayer(baseLayer);
     cacheMetadata.addLayer(classesLayer);

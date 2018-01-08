@@ -42,6 +42,10 @@ public class ImageLayers<T extends Layer> implements Iterable<T> {
     return layers.size();
   }
 
+  public boolean isEmpty() {
+    return layers.isEmpty();
+  }
+
   /** @return the layer at the specified index */
   public T get(int index) {
     return layers.get(index);

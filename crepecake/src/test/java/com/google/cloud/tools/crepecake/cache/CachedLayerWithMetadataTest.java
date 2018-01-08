@@ -18,21 +18,19 @@ package com.google.cloud.tools.crepecake.cache;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.Mockito;
 
 /** Tests for {@link CachedLayerWithMetadata}. */
-@RunWith(MockitoJUnitRunner.class)
 public class CachedLayerWithMetadataTest {
-
-  @Mock private CachedLayer mockCachedLayer;
-  @Mock private LayerMetadata mockLayerMetadata;
 
   @Test
   public void testNew() {
+    LayerMetadata mockLayerMetadata = Mockito.mock(LayerMetadata.class);
     CachedLayerWithMetadata cachedLayerWithMetadata =
-        new CachedLayerWithMetadata(mockCachedLayer, mockLayerMetadata);
+        new CachedLayerWithMetadata(
+            Mockito.mock(CachedLayer.class),
+            Mockito.mock(CachedLayerType.class),
+            mockLayerMetadata);
     Assert.assertEquals(mockLayerMetadata, cachedLayerWithMetadata.getMetadata());
   }
 }
