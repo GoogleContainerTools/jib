@@ -110,6 +110,7 @@ public class BuildConfiguration {
           descriptions.add(FIELD_DESCRIPTIONS.get(field));
         }
       }
+      // TODO: Find and replace with utility method for generating lists in English grammar.
       switch (descriptions.size()) {
         case 0:
           values = Collections.unmodifiableMap(values);
