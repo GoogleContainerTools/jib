@@ -107,7 +107,7 @@ public class CacheChecker {
     // Grabs all the layers that have matching source files.
     ImageLayers<CachedLayerWithMetadata> cachedLayersWithSourceFiles =
         cache.getMetadata().filterLayers().bySourceFiles(sourceFiles).filter();
-    if (cachedLayersWithSourceFiles.size() == 0) {
+    if (cachedLayersWithSourceFiles.isEmpty()) {
       return true;
     }
 
