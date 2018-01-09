@@ -36,36 +36,41 @@ class LocalRegistry extends ExternalResource {
   /** Starts the local registry. */
   @Override
   protected void before() throws Throwable {
-    String runRegistryCommand =
+    // Runs the Docker registry.
+    runCommand(
         "docker run -d -p "
             + port
             + ":5000 --restart=always --name "
             + containerName
-            + " registry:2";
-    Runtime.getRuntime().exec(runRegistryCommand).waitFor();
+            + " registry:2");
 
-    String pullImageCommand = "docker pull busybox";
-    Runtime.getRuntime().exec(pullImageCommand).waitFor();
+    // Pulls 'busybox'.
+    runCommand("docker pull busybox");
 
-    String tagImageCommand = "docker tag busybox localhost:" + port + "/busybox";
-    Runtime.getRuntime().exec(tagImageCommand).waitFor();
+    // Tags 'busybox' to push to our local registry.
+    runCommand("docker tag busybox localhost:" + port + "/busybox");
 
-    String pushImageCommand = "docker push localhost:" + port + "/busybox";
-    Runtime.getRuntime().exec(pushImageCommand).waitFor();
+    // Pushes 'busybox' to our local registry.
+    runCommand("docker push localhost:" + port + "/busybox");
   }
 
   /** Stops the local registry. */
   @Override
   protected void after() {
     try {
-      String stopRegistryCommand = "docker stop " + containerName;
-      Runtime.getRuntime().exec(stopRegistryCommand).waitFor();
+      // Stops the registry.
+      runCommand("docker stop " + containerName);
 
-      String removeRegistryContainerCommand = "docker rm -v " + containerName;
-      Runtime.getRuntime().exec(removeRegistryContainerCommand).waitFor();
+      // Removes the container.
+      runCommand("docker rm -v " + containerName);
 
     } catch (InterruptedException | IOException ex) {
       throw new RuntimeException("Could not stop local registry fully: " + containerName, ex);
     }
+  }
+
+  /** Runs a command with naive tokenization by whitespace. */
+  private void runCommand(String command) throws IOException, InterruptedException {
+    new ProcessBuilder(command.split(" ")).start().waitFor();
   }
 }
