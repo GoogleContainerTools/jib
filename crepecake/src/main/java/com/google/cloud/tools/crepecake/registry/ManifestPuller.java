@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2018 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,10 +18,8 @@ package com.google.cloud.tools.crepecake.registry;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.api.client.http.HttpResponseException;
+import com.google.api.client.http.HttpMethods;
 import com.google.cloud.tools.crepecake.blob.Blobs;
-import com.google.cloud.tools.crepecake.http.Authorization;
-import com.google.cloud.tools.crepecake.http.Connection;
 import com.google.cloud.tools.crepecake.http.Request;
 import com.google.cloud.tools.crepecake.http.Response;
 import com.google.cloud.tools.crepecake.image.json.ManifestTemplate;
@@ -29,100 +27,94 @@ import com.google.cloud.tools.crepecake.image.json.UnknownManifestFormatExceptio
 import com.google.cloud.tools.crepecake.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.crepecake.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
-import com.google.cloud.tools.crepecake.registry.json.ErrorEntryTemplate;
-import com.google.cloud.tools.crepecake.registry.json.ErrorResponseTemplate;
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import javax.annotation.Nullable;
 
-/** Registry interface for pulling an image's manifest. */
-public class ManifestPuller {
+/** Pulls an image's manifest. */
+class ManifestPuller<T extends ManifestTemplate> implements RegistryEndpointProvider<T> {
 
-  // TODO: This should be configurable.
-  private static final String PROTOCOL = "http";
+  private final RegistryEndpointProperties registryEndpointProperties;
+  private final String imageTag;
+  private final Class<T> manifestTemplateClass;
 
-  @Nullable private final Authorization authorization;
-  private final String serverUrl;
-  private final String baseImage;
+  ManifestPuller(
+      RegistryEndpointProperties registryEndpointProperties,
+      String imageTag,
+      Class<T> manifestTemplateClass) {
+    this.registryEndpointProperties = registryEndpointProperties;
+    this.imageTag = imageTag;
+    this.manifestTemplateClass = manifestTemplateClass;
+  }
+
+  @Override
+  public void buildRequest(Request.Builder builder) {
+    if (manifestTemplateClass.equals(V21ManifestTemplate.class)) {
+      builder.setAccept(V21ManifestTemplate.MEDIA_TYPE);
+    } else if (manifestTemplateClass.equals(V22ManifestTemplate.class)) {
+      builder.setAccept(V22ManifestTemplate.MEDIA_TYPE);
+    } else {
+      builder.setAccept(V22ManifestTemplate.MEDIA_TYPE + ", " + V21ManifestTemplate.MEDIA_TYPE);
+    }
+  }
+
+  /** Parses the response body into a {@link ManifestTemplate}. */
+  @Override
+  public T handleResponse(Response response) throws IOException, UnknownManifestFormatException {
+    return getManifestTemplateFromJson(Blobs.writeToString(response.getBody()));
+  }
+
+  @Override
+  public URL getApiRoute(String apiRouteBase) throws MalformedURLException {
+    return new URL(
+        apiRouteBase + registryEndpointProperties.getImageName() + "/manifests/" + imageTag);
+  }
+
+  @Override
+  public String getHttpMethod() {
+    return HttpMethods.GET;
+  }
+
+  public String getActionDescription() {
+    return "pull image manifest for "
+        + registryEndpointProperties.getServerUrl()
+        + "/"
+        + registryEndpointProperties.getImageName()
+        + ":"
+        + imageTag;
+  }
 
   /**
    * Instantiates a {@link ManifestTemplate} from a JSON string. This checks the {@code
    * schemaVersion} field of the JSON to determine which manifest version to use.
    */
-  private static ManifestTemplate getManifestTemplateFromJson(String jsonString)
+  private T getManifestTemplateFromJson(String jsonString)
       throws IOException, UnknownManifestFormatException {
     ObjectNode node = new ObjectMapper().readValue(jsonString, ObjectNode.class);
     if (!node.has("schemaVersion")) {
       throw new UnknownManifestFormatException("Cannot find field 'schemaVersion' in manifest");
     }
 
+    if (!manifestTemplateClass.equals(ManifestTemplate.class)) {
+      return JsonTemplateMapper.readJson(jsonString, manifestTemplateClass);
+    }
+
     int schemaVersion = node.get("schemaVersion").asInt(-1);
     switch (schemaVersion) {
       case 1:
-        return JsonTemplateMapper.readJson(jsonString, V21ManifestTemplate.class);
+        return manifestTemplateClass.cast(
+            JsonTemplateMapper.readJson(jsonString, V21ManifestTemplate.class));
 
       case 2:
-        return JsonTemplateMapper.readJson(jsonString, V22ManifestTemplate.class);
+        return manifestTemplateClass.cast(
+            JsonTemplateMapper.readJson(jsonString, V22ManifestTemplate.class));
 
       case -1:
         throw new UnknownManifestFormatException("`schemaVersion` field is not an integer");
 
       default:
-        throw new UnknownManifestFormatException("Unknown schemaVersion: " + schemaVersion);
+        throw new UnknownManifestFormatException(
+            "Unknown schemaVersion: " + schemaVersion + " - only 1 and 2 are supported");
     }
-  }
-
-  public ManifestPuller(@Nullable Authorization authorization, String serverUrl, String baseImage) {
-    this.authorization = authorization;
-    this.serverUrl = serverUrl;
-    this.baseImage = baseImage;
-  }
-
-  public ManifestTemplate pull(String imageTag)
-      throws IOException, RegistryErrorException, RegistryUnauthorizedException,
-          UnknownManifestFormatException {
-    URL pullUrl = getApiRoute("/manifests/" + imageTag);
-
-    try (Connection connection = new Connection(pullUrl)) {
-      Request.Builder builder = Request.builder();
-      if (authorization != null) {
-        builder.setAuthorization(authorization);
-      }
-      Response response = connection.get(builder.build());
-      String responseString = Blobs.writeToString(response.getBody());
-
-      return getManifestTemplateFromJson(responseString);
-
-    } catch (HttpResponseException ex) {
-      switch (ex.getStatusCode()) {
-        case HttpURLConnection.HTTP_BAD_REQUEST:
-        case HttpURLConnection.HTTP_NOT_FOUND:
-          // The name or reference was invalid.
-          ErrorResponseTemplate errorResponse;
-          errorResponse = JsonTemplateMapper.readJson(ex.getContent(), ErrorResponseTemplate.class);
-          String method = "pull image manifest for " + serverUrl + "/" + baseImage + ":" + imageTag;
-          RegistryErrorExceptionBuilder registryErrorExceptionBuilder =
-              new RegistryErrorExceptionBuilder(method, ex);
-          for (ErrorEntryTemplate errorEntry : errorResponse.getErrors()) {
-            registryErrorExceptionBuilder.addErrorEntry(errorEntry);
-          }
-
-          throw registryErrorExceptionBuilder.build();
-
-        case HttpURLConnection.HTTP_UNAUTHORIZED:
-        case HttpURLConnection.HTTP_FORBIDDEN:
-          throw new RegistryUnauthorizedException(ex);
-
-        default: // Unknown
-          throw ex;
-      }
-    }
-  }
-
-  private URL getApiRoute(String route) throws MalformedURLException {
-    String apiBase = "/v2/";
-    return new URL(PROTOCOL + "://" + serverUrl + apiBase + baseImage + route);
   }
 }
