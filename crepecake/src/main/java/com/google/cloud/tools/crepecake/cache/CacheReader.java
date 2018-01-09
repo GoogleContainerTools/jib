@@ -17,8 +17,6 @@
 package com.google.cloud.tools.crepecake.cache;
 
 import com.google.cloud.tools.crepecake.image.ImageLayers;
-import sun.plugin.dom.exception.InvalidStateException;
-
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
