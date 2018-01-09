@@ -29,6 +29,11 @@ class AuthenticatePushStep implements Step<Void, Authorization> {
 
   AuthenticatePushStep(BuildConfiguration buildConfiguration) {
     this.buildConfiguration = buildConfiguration;
+
+    if (buildConfiguration.getCredentialHelperName() == null) {
+      throw new IllegalArgumentException(
+          "Cannot authenticate push without a credential helper name specified in the build configuration");
+    }
   }
 
   @Override

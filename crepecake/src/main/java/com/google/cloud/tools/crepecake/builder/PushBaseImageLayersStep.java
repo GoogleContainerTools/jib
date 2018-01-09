@@ -16,15 +16,14 @@
 
 package com.google.cloud.tools.crepecake.builder;
 
+import com.google.cloud.tools.crepecake.cache.CachedLayer;
 import com.google.cloud.tools.crepecake.http.Authorization;
-import com.google.cloud.tools.crepecake.image.Image;
-import com.google.cloud.tools.crepecake.image.Layer;
-import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
+import com.google.cloud.tools.crepecake.image.ImageLayers;
 import com.google.cloud.tools.crepecake.registry.RegistryClient;
 import com.google.cloud.tools.crepecake.registry.RegistryException;
 import java.io.IOException;
 
-class PushBaseImageLayersStep implements Step<Image, Void> {
+class PushBaseImageLayersStep implements Step<ImageLayers<CachedLayer>, Void> {
 
   private final BuildConfiguration buildConfiguration;
   private final Authorization pushAuthorization;
@@ -35,8 +34,7 @@ class PushBaseImageLayersStep implements Step<Image, Void> {
   }
 
   @Override
-  public Void run(Image baseImage)
-      throws LayerPropertyNotFoundException, IOException, RegistryException {
+  public Void run(ImageLayers<CachedLayer> baseImageLayers) throws IOException, RegistryException {
     RegistryClient registryClient =
         new RegistryClient(
             pushAuthorization,
@@ -45,8 +43,10 @@ class PushBaseImageLayersStep implements Step<Image, Void> {
 
     // TODO: Pushing any BLOB should be in a separate build step.
     // Pushes the base image layers.
-    for (Layer layer : baseImage.getLayers()) {
+    for (CachedLayer layer : baseImageLayers) {
       registryClient.pushBlob(layer.getBlobDescriptor().getDigest(), layer.getBlob());
     }
+
+    return null;
   }
 }

@@ -78,7 +78,7 @@ public class CacheMetadataTemplateTest {
 
     // Serializes the JSON object.
     ByteArrayOutputStream jsonStream = new ByteArrayOutputStream();
-    JsonTemplateMapper.writeJson(jsonStream, cacheMetadataTemplate);
+    JsonTemplateMapper.toBlob(cacheMetadataTemplate).writeTo(jsonStream);
 
     Assert.assertEquals(expectedJson, jsonStream.toString());
   }
