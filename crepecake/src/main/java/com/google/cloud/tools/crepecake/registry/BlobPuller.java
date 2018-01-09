@@ -31,7 +31,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
 
-/** Pulls an image's blob (layer or container configuration). */
+/** Pulls an image's BLOB (layer or container configuration). */
 class BlobPuller implements RegistryEndpointProvider<Blob> {
 
   private final RegistryEndpointProperties registryEndpointProperties;

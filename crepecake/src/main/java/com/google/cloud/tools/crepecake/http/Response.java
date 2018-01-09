@@ -19,6 +19,7 @@ package com.google.cloud.tools.crepecake.http;
 import com.google.api.client.http.HttpResponse;
 import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.blob.Blobs;
+import com.google.common.net.HttpHeaders;
 import java.io.IOException;
 import java.util.List;
 
@@ -39,6 +40,16 @@ public class Response {
   /** Gets a header in the response. */
   public List<String> getHeader(String headerName) {
     return httpResponse.getHeaders().getHeaderStringValues(headerName);
+  }
+
+  /** Gets the first {@code Content-Length} header, or {@code -1} if not found. */
+  public long getContentLength() {
+    String contentLengthHeader =
+        httpResponse.getHeaders().getFirstHeaderStringValue(HttpHeaders.CONTENT_LENGTH);
+    if (contentLengthHeader == null) {
+      return -1;
+    }
+    return Long.parseLong(contentLengthHeader);
   }
 
   /** Gets the HTTP response body as a {@link Blob}. */
