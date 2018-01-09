@@ -69,9 +69,9 @@ public class DockerCredentialRetriever {
           NonexistentDockerCredentialHelperException {
     try {
       String credentialHelper = "docker-credential-" + credentialHelperSuffix;
-      String credentialHelperCommand = credentialHelper + " get";
+      String[] credentialHelperCommand = {credentialHelper, "get"};
 
-      Process process = Runtime.getRuntime().exec(credentialHelperCommand);
+      Process process = new ProcessBuilder(credentialHelperCommand).start();
       process.getOutputStream().write(serverUrl.getBytes(StandardCharsets.UTF_8));
       process.getOutputStream().close();
 
