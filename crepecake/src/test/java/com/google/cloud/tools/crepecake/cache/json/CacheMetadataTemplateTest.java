@@ -27,6 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.FileTime;
 import java.security.DigestException;
 import java.util.Collections;
 import java.util.List;
@@ -61,7 +62,7 @@ public class CacheMetadataTemplateTest {
     CacheMetadataLayerPropertiesObjectTemplate propertiesTemplate =
         new CacheMetadataLayerPropertiesObjectTemplate()
             .setSourceFiles(Collections.singletonList(Paths.get("some/source/path").toString()))
-            .setLastModifiedTime(255073580723571L);
+            .setLastModifiedTime(FileTime.fromMillis(255073580723571L));
     CacheMetadataLayerObjectTemplate classesLayerTemplate =
         new CacheMetadataLayerObjectTemplate()
             .setType(CachedLayerType.CLASSES)
@@ -127,6 +128,7 @@ public class CacheMetadataTemplateTest {
         Collections.singletonList(Paths.get("some/source/path").toString()),
         classesLayerTemplate.getProperties().getSourceFiles());
     Assert.assertEquals(
-        255073580723571L, classesLayerTemplate.getProperties().getLastModifiedTime());
+        FileTime.fromMillis(255073580723571L),
+        classesLayerTemplate.getProperties().getLastModifiedTime());
   }
 }

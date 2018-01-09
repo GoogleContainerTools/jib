@@ -16,16 +16,34 @@
 
 package com.google.cloud.tools.crepecake.cache;
 
+import javax.annotation.Nullable;
+
 /** A {@link CachedLayer} with a last modified time. */
 class CachedLayerWithMetadata extends CachedLayer {
 
-  private final LayerMetadata metadata;
+  /** The type of layer. */
+  private final CachedLayerType type;
 
-  CachedLayerWithMetadata(CachedLayer cachedLayer, LayerMetadata metadata) {
+  /** Extra layer properties for application layers. */
+  @Nullable private final LayerMetadata metadata;
+
+  CachedLayerWithMetadata(
+      CachedLayer cachedLayer, CachedLayerType type, @Nullable LayerMetadata metadata) {
     super(cachedLayer.getContentFile(), cachedLayer.getBlobDescriptor(), cachedLayer.getDiffId());
+
+    if (type == CachedLayerType.BASE && metadata != null) {
+      throw new IllegalArgumentException("Base image layers cannot have layer metadata");
+    }
+
+    this.type = type;
     this.metadata = metadata;
   }
 
+  CachedLayerType getType() {
+    return type;
+  }
+
+  @Nullable
   LayerMetadata getMetadata() {
     return metadata;
   }
