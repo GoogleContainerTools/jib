@@ -95,7 +95,7 @@ public class CacheMetadataTranslatorTest {
     CachedLayerWithMetadata baseLayer = layers.get(0);
     Assert.assertEquals(CachedLayerType.BASE, baseLayer.getMetadata().getType());
     Assert.assertEquals(
-        CacheFiles.getLayerFile(fakePath, baseLayerBlobDescriptor.getDigest()),
+        CacheFiles.getLayerFile(fakePath, baseLayerBlobDescriptor.getDigest()).toFile(),
         baseLayer.getContentFile());
     Assert.assertEquals(baseLayerBlobDescriptor, baseLayer.getBlobDescriptor());
     Assert.assertEquals(baseLayerDiffId, baseLayer.getDiffId());
@@ -104,7 +104,7 @@ public class CacheMetadataTranslatorTest {
     CachedLayerWithMetadata classesLayer = layers.get(1);
     Assert.assertEquals(CachedLayerType.CLASSES, classesLayer.getMetadata().getType());
     Assert.assertEquals(
-        CacheFiles.getLayerFile(fakePath, classesLayerBlobDescriptor.getDigest()),
+        CacheFiles.getLayerFile(fakePath, classesLayerBlobDescriptor.getDigest()).toFile(),
         classesLayer.getContentFile());
     Assert.assertEquals(classesLayerBlobDescriptor, classesLayer.getBlobDescriptor());
     Assert.assertEquals(classesLayerDiffId, classesLayer.getDiffId());

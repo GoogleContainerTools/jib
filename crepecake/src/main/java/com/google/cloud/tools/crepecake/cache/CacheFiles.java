@@ -31,10 +31,11 @@ class CacheFiles {
   }
 
   /**
-   * Gets the file for a layer digest. The file is {@code <cache directory>/<layer hash>.tar.gz}.
+   * Gets the path to the file for a layer digest. The file is {@code <cache directory>/<layer
+   * hash>.tar.gz}.
    */
-  static File getLayerFile(Path cacheDirectory, DescriptorDigest layerDigest) {
-    return cacheDirectory.resolve(layerDigest.getHash() + LAYER_FILE_EXTENSION).toFile();
+  static Path getLayerFile(Path cacheDirectory, DescriptorDigest layerDigest) {
+    return cacheDirectory.resolve(layerDigest.getHash() + LAYER_FILE_EXTENSION);
   }
 
   private CacheFiles() {}

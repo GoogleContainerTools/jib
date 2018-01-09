@@ -39,7 +39,7 @@ public class CacheMetadataTranslator {
       // Converts each layer object in the template to a cache metadata layer.
       for (CacheMetadataLayerObjectTemplate layerObjectTemplate : template.getLayers()) {
         File layerContentFile =
-            CacheFiles.getLayerFile(cacheDirectory, layerObjectTemplate.getDigest());
+            CacheFiles.getLayerFile(cacheDirectory, layerObjectTemplate.getDigest()).toFile();
 
         // Gets the properties for a layer. Properties only exist for application layers.
         CacheMetadataLayerPropertiesObjectTemplate propertiesObjectTemplate =

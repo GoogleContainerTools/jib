@@ -27,12 +27,12 @@ import com.google.common.io.ByteStreams;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -67,8 +67,8 @@ public class CacheWriter {
       BlobDescriptor compressedBlobDescriptor = compressedDigestOutputStream.toBlobDescriptor();
 
       // Renames the temporary layer file to the correct filename.
-      File layerFile = getLayerFile(compressedBlobDescriptor.getDigest());
-      if (!tempLayerFile.renameTo(layerFile)) {
+      Path layerFile = getLayerFile(compressedBlobDescriptor.getDigest());
+      if (!tempLayerFile.renameTo(layerFile.toFile())) {
         throw new IOException(
             "Could not rename layer "
                 + compressedBlobDescriptor.getDigest().getHash()
@@ -76,7 +76,7 @@ public class CacheWriter {
                 + layerFile);
       }
 
-      return new CachedLayer(layerFile, compressedBlobDescriptor, diffId);
+      return new CachedLayer(layerFile.toFile(), compressedBlobDescriptor, diffId);
     }
   }
 
@@ -84,44 +84,47 @@ public class CacheWriter {
    * Writes a {@link ReferenceLayer} with its corresponding compressed layer content BLOB to cache.
    */
   public CachedLayer writeLayer(ReferenceLayer layer, Blob layerContent) throws IOException {
-    File layerFile = getLayerFile(layer.getBlobDescriptor().getDigest());
+    Path layerFile = getLayerFile(layer.getBlobDescriptor().getDigest());
 
     // Writes the layer content to file.
     try (OutputStream fileOutputStream =
-        new BufferedOutputStream(new FileOutputStream(layerFile))) {
+        new BufferedOutputStream(Files.newOutputStream(layerFile))) {
       layerContent.writeTo(fileOutputStream);
     }
     // TODO: Should probably check if the written BLOB has the same digest as expected.
-    return new CachedLayer(layerFile, layer.getBlobDescriptor(), getDiffId(layerFile));
+    return new CachedLayer(layerFile.toFile(), layer.getBlobDescriptor(), getDiffId(layerFile));
   }
 
   /**
    * Writes a {@link DigestOnlyLayer} with its corresponding compressed layer content BLOB to cache.
    */
   public CachedLayer writeLayer(DigestOnlyLayer layer, Blob layerContent) throws IOException {
-    File layerFile = getLayerFile(layer.getBlobDescriptor().getDigest());
+    Path layerFile = getLayerFile(layer.getBlobDescriptor().getDigest());
 
     // Writes the layer content to file.
     try (CountingDigestOutputStream compressedDigestOutputStream =
-        new CountingDigestOutputStream(new BufferedOutputStream(new FileOutputStream(layerFile)))) {
+        new CountingDigestOutputStream(
+            new BufferedOutputStream(Files.newOutputStream(layerFile)))) {
       layerContent.writeTo(compressedDigestOutputStream);
       compressedDigestOutputStream.close();
       // TODO: Should probably check if the written BLOB has the same digest as expected.
       return new CachedLayer(
-          layerFile, compressedDigestOutputStream.toBlobDescriptor(), getDiffId(layerFile));
+          layerFile.toFile(),
+          compressedDigestOutputStream.toBlobDescriptor(),
+          getDiffId(layerFile));
     }
   }
 
-  /** @return the file for the layer with the specified compressed digest */
-  private File getLayerFile(DescriptorDigest compressedDigest) {
+  /** @return the path to the file for the layer with the specified compressed digest */
+  private Path getLayerFile(DescriptorDigest compressedDigest) {
     return CacheFiles.getLayerFile(cache.getCacheDirectory(), compressedDigest);
   }
 
   /** @return the layer diff ID by decompressing the layer content file */
-  private DescriptorDigest getDiffId(File layerFile) throws IOException {
+  private DescriptorDigest getDiffId(Path layerFile) throws IOException {
     CountingDigestOutputStream diffIdCaptureOutputStream =
         new CountingDigestOutputStream(ByteStreams.nullOutputStream());
-    try (InputStream fileInputStream = new BufferedInputStream(new FileInputStream(layerFile));
+    try (InputStream fileInputStream = new BufferedInputStream(Files.newInputStream(layerFile));
         GZIPInputStream decompressorStream = new GZIPInputStream(fileInputStream)) {
       ByteStreams.copy(decompressorStream, diffIdCaptureOutputStream);
     }

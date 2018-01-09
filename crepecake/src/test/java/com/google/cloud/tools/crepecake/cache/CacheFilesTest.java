@@ -59,7 +59,7 @@ public class CacheFilesTest {
     Mockito.when(mockPath.resolve(fileNameCaptor.capture())).thenReturn(mockPath);
     Mockito.when(mockPath.toFile()).thenReturn(mockFile);
 
-    File layerFile = CacheFiles.getLayerFile(mockPath, layerDigest);
+    File layerFile = CacheFiles.getLayerFile(mockPath, layerDigest).toFile();
 
     Assert.assertEquals(
         "8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad.tar.gz",
