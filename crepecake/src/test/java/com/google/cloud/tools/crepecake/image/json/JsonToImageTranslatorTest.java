@@ -24,9 +24,10 @@ import com.google.cloud.tools.crepecake.image.Layer;
 import com.google.cloud.tools.crepecake.image.LayerCountMismatchException;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.DigestException;
 import java.util.Arrays;
 import java.util.List;
@@ -41,8 +42,8 @@ public class JsonToImageTranslatorTest {
       throws IOException, LayerPropertyNotFoundException, DuplicateLayerException, DigestException,
           URISyntaxException {
     // Loads the JSON string.
-    File jsonFile =
-        new File(getClass().getClassLoader().getResource("json/v21manifest.json").toURI());
+    Path jsonFile =
+        Paths.get(getClass().getClassLoader().getResource("json/v21manifest.json").toURI());
 
     // Deserializes into a manifest JSON object.
     V21ManifestTemplate manifestTemplate =
@@ -63,15 +64,15 @@ public class JsonToImageTranslatorTest {
       throws IOException, LayerPropertyNotFoundException, DuplicateLayerException,
           LayerCountMismatchException, DigestException, URISyntaxException {
     // Loads the container configuration JSON.
-    File containerConfigurationJsonFile =
-        new File(getClass().getClassLoader().getResource("json/containerconfig.json").toURI());
+    Path containerConfigurationJsonFile =
+        Paths.get(getClass().getClassLoader().getResource("json/containerconfig.json").toURI());
     ContainerConfigurationTemplate containerConfigurationTemplate =
         JsonTemplateMapper.readJsonFromFile(
             containerConfigurationJsonFile, ContainerConfigurationTemplate.class);
 
     // Loads the manifest JSON.
-    File manifestJsonFile =
-        new File(getClass().getClassLoader().getResource("json/v22manifest.json").toURI());
+    Path manifestJsonFile =
+        Paths.get(getClass().getClassLoader().getResource("json/v22manifest.json").toURI());
     V22ManifestTemplate manifestTemplate =
         JsonTemplateMapper.readJsonFromFile(manifestJsonFile, V22ManifestTemplate.class);
 

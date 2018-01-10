@@ -23,7 +23,6 @@ import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -45,7 +44,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class CacheMetadataTranslatorTest {
 
-  @Mock private File mockFile;
+  @Mock private Path mockPath;
 
   private BlobDescriptor baseLayerBlobDescriptor;
   private DescriptorDigest baseLayerDiffId;
@@ -82,7 +81,8 @@ public class CacheMetadataTranslatorTest {
     Path fakePath = Paths.get("fake/path");
 
     // Loads the expected JSON string.
-    File jsonFile = new File(getClass().getClassLoader().getResource("json/metadata.json").toURI());
+    Path jsonFile =
+        Paths.get(getClass().getClassLoader().getResource("json/metadata.json").toURI());
 
     // Deserializes into a metadata JSON object.
     CacheMetadataTemplate metadataTemplate =
@@ -96,7 +96,7 @@ public class CacheMetadataTranslatorTest {
     CachedLayerWithMetadata baseLayer = layers.get(0);
     Assert.assertEquals(CachedLayerType.BASE, baseLayer.getType());
     Assert.assertEquals(
-        CacheFiles.getLayerFile(fakePath, baseLayerBlobDescriptor.getDigest()).toFile(),
+        CacheFiles.getLayerFile(fakePath, baseLayerBlobDescriptor.getDigest()),
         baseLayer.getContentFile());
     Assert.assertEquals(baseLayerBlobDescriptor, baseLayer.getBlobDescriptor());
     Assert.assertEquals(baseLayerDiffId, baseLayer.getDiffId());
@@ -105,7 +105,7 @@ public class CacheMetadataTranslatorTest {
     CachedLayerWithMetadata classesLayer = layers.get(1);
     Assert.assertEquals(CachedLayerType.CLASSES, classesLayer.getType());
     Assert.assertEquals(
-        CacheFiles.getLayerFile(fakePath, classesLayerBlobDescriptor.getDigest()).toFile(),
+        CacheFiles.getLayerFile(fakePath, classesLayerBlobDescriptor.getDigest()),
         classesLayer.getContentFile());
     Assert.assertEquals(classesLayerBlobDescriptor, classesLayer.getBlobDescriptor());
     Assert.assertEquals(classesLayerDiffId, classesLayer.getDiffId());
@@ -127,12 +127,12 @@ public class CacheMetadataTranslatorTest {
     CacheMetadata cacheMetadata = new CacheMetadata();
 
     CachedLayer baseCachedLayer =
-        new CachedLayer(mockFile, baseLayerBlobDescriptor, baseLayerDiffId);
+        new CachedLayer(mockPath, baseLayerBlobDescriptor, baseLayerDiffId);
     CachedLayerWithMetadata baseLayer =
         new CachedLayerWithMetadata(baseCachedLayer, CachedLayerType.BASE, null);
 
     CachedLayer classesCachedLayer =
-        new CachedLayer(mockFile, classesLayerBlobDescriptor, classesLayerDiffId);
+        new CachedLayer(mockPath, classesLayerBlobDescriptor, classesLayerDiffId);
     LayerMetadata classesLayerMetadata =
         new LayerMetadata(classesLayerSourceFiles, classesLayerLastModifiedTime);
     CachedLayerWithMetadata classesLayer =

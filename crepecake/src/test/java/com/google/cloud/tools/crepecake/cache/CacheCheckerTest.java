@@ -24,11 +24,13 @@ import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.crepecake.image.ReferenceLayer;
 import com.google.common.io.Resources;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.FileTime;
 import java.security.DigestException;
 import java.util.Collections;
 import java.util.Comparator;
@@ -97,8 +99,8 @@ public class CacheCheckerTest {
   public void testAreSourceFilesModified()
       throws URISyntaxException, IOException, CacheMetadataCorruptedException {
     // The two last modified times to use. Must be in thousands as most file time granularity is in seconds.
-    long olderLastModifiedTime = 1000;
-    long newerLastModifiedTime = 2000;
+    FileTime olderLastModifiedTime = FileTime.fromMillis(1000);
+    FileTime newerLastModifiedTime = FileTime.fromMillis(2000);
 
     // Copies test files to a modifiable temporary folder.
     Path resourceSourceFiles = Paths.get(Resources.getResource("layer").toURI());
@@ -120,11 +122,13 @@ public class CacheCheckerTest {
     // The files are in reverse order so that the subfiles are changed before the parent directories are.
     Files.walk(testSourceFiles)
         .sorted(Comparator.reverseOrder())
-        .map(Path::toFile)
         .forEach(
-            file -> {
-              if (!file.setLastModified(olderLastModifiedTime)) {
-                throw new RuntimeException("Could not set last modified time");
+            path -> {
+              try {
+                Files.setLastModifiedTime(path, olderLastModifiedTime);
+
+              } catch (IOException ex) {
+                throw new UncheckedIOException(ex);
               }
             });
 
@@ -144,14 +148,8 @@ public class CacheCheckerTest {
             new HashSet<>(Collections.singletonList(testSourceFiles))));
 
     // Changes a file and checks that the change is detected.
-    if (!testSourceFiles
-        .resolve("a")
-        .resolve("b")
-        .resolve("bar")
-        .toFile()
-        .setLastModified(newerLastModifiedTime)) {
-      throw new IOException("Could not set last modified time");
-    }
+    Files.setLastModifiedTime(
+        testSourceFiles.resolve("a").resolve("b").resolve("bar"), newerLastModifiedTime);
     Assert.assertTrue(
         cacheChecker.areSourceFilesModified(
             new HashSet<>(Collections.singletonList(testSourceFiles))));

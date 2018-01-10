@@ -21,11 +21,12 @@ import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.common.io.Resources;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,24 +37,23 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class CachedLayerTest {
 
-  @Mock private File mockFile;
+  @Mock private Path mockPath;
   @Mock private BlobDescriptor mockBlobDescriptor;
   @Mock private DescriptorDigest mockDiffId;
 
   @Test
   public void testNew() {
-    CachedLayer layer = new CachedLayer(mockFile, mockBlobDescriptor, mockDiffId);
+    CachedLayer layer = new CachedLayer(mockPath, mockBlobDescriptor, mockDiffId);
 
-    Assert.assertEquals(mockFile, layer.getContentFile());
+    Assert.assertEquals(mockPath, layer.getContentFile());
     Assert.assertEquals(mockBlobDescriptor, layer.getBlobDescriptor());
     Assert.assertEquals(mockDiffId, layer.getDiffId());
   }
 
   @Test
   public void testGetBlob() throws URISyntaxException, IOException {
-    File fileA = new File(Resources.getResource("fileA").toURI());
-    String expectedFileAString =
-        new String(Files.readAllBytes(fileA.toPath()), StandardCharsets.UTF_8);
+    Path fileA = Paths.get(Resources.getResource("fileA").toURI());
+    String expectedFileAString = new String(Files.readAllBytes(fileA), StandardCharsets.UTF_8);
 
     CachedLayer cachedLayer = new CachedLayer(fileA, mockBlobDescriptor, mockDiffId);
 

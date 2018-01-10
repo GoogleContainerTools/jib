@@ -17,7 +17,6 @@
 package com.google.cloud.tools.crepecake.cache;
 
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
-import java.io.File;
 import java.nio.file.Path;
 
 /** Methods for getting static cache filename properties. */
@@ -26,8 +25,8 @@ class CacheFiles {
   static final String METADATA_FILENAME = "metadata.json";
   private static final String LAYER_FILE_EXTENSION = ".tar.gz";
 
-  static File getMetadataFile(Path cacheDirectory) {
-    return cacheDirectory.resolve(METADATA_FILENAME).toFile();
+  static Path getMetadataFile(Path cacheDirectory) {
+    return cacheDirectory.resolve(METADATA_FILENAME);
   }
 
   /**

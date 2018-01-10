@@ -21,13 +21,14 @@ import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.common.io.Resources;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -44,8 +45,8 @@ public class BlobTest {
 
   @Test
   public void testFromFile() throws IOException, URISyntaxException {
-    File fileA = new File(Resources.getResource("fileA").toURI());
-    String expected = new String(Files.readAllBytes(fileA.toPath()), StandardCharsets.UTF_8);
+    Path fileA = Paths.get(Resources.getResource("fileA").toURI());
+    String expected = new String(Files.readAllBytes(fileA), StandardCharsets.UTF_8);
     verifyBlobWriteTo(expected, Blobs.from(fileA));
   }
 

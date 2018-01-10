@@ -28,14 +28,13 @@ import com.google.common.io.CharStreams;
 import com.google.common.io.Resources;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import org.junit.Assert;
@@ -51,7 +50,7 @@ public class CacheWriterTest {
 
   private Cache testCache;
 
-  private File resourceBlob;
+  private Path resourceBlob;
 
   private static class ExpectedLayer {
 
@@ -72,7 +71,7 @@ public class CacheWriterTest {
 
     testCache = Cache.init(cacheDirectory);
 
-    resourceBlob = new File(Resources.getResource("blobA").toURI());
+    resourceBlob = Paths.get(Resources.getResource("blobA").toURI());
   }
 
   @Test
@@ -124,7 +123,7 @@ public class CacheWriterTest {
    */
   private ExpectedLayer getExpectedLayer() throws IOException {
     String expectedBlobAString =
-        new String(Files.readAllBytes(resourceBlob.toPath()), StandardCharsets.UTF_8);
+        new String(Files.readAllBytes(resourceBlob), StandardCharsets.UTF_8);
 
     // Gets the expected content descriptor, diff ID, and compressed BLOB.
     ByteArrayOutputStream compressedBlobOutputStream = new ByteArrayOutputStream();
@@ -149,14 +148,17 @@ public class CacheWriterTest {
 
   private void verifyCachedLayerIsExpected(ExpectedLayer expectedLayer, CachedLayer cachedLayer)
       throws IOException {
+    // Reads the cached layer back.
+    Path compressedBlobFile = cachedLayer.getContentFile();
+
     try (InputStreamReader fileReader =
         new InputStreamReader(
-            new GZIPInputStream(new FileInputStream(cachedLayer.getContentFile())),
+            new GZIPInputStream(Files.newInputStream(compressedBlobFile)),
             StandardCharsets.UTF_8)) {
       String decompressedString = CharStreams.toString(fileReader);
 
       String expectedBlobAString =
-          new String(Files.readAllBytes(resourceBlob.toPath()), StandardCharsets.UTF_8);
+          new String(Files.readAllBytes(resourceBlob), StandardCharsets.UTF_8);
       Assert.assertEquals(expectedBlobAString, decompressedString);
       Assert.assertEquals(
           expectedLayer.blobDescriptor.getSize(), cachedLayer.getBlobDescriptor().getSize());
