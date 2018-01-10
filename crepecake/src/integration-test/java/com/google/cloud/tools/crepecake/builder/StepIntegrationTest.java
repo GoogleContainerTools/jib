@@ -68,16 +68,6 @@ public class StepIntegrationTest {
         new PullAndCacheBaseImageLayersStep(buildConfiguration, cache, pullAuthorization);
     ImageLayers<CachedLayer> baseImageLayers = pullAndCacheBaseImageLayersStep.run(baseImage);
 
-    for (CachedLayer cachedLayer : baseImageLayers) {
-      System.out.println(
-          "CachedLayer(file:"
-              + cachedLayer.getContentFile()
-              + ", digest:"
-              + cachedLayer.getBlobDescriptor().getDigest()
-              + ", diffId:"
-              + cachedLayer.getDiffId());
-    }
-
     // TODO: Integrate any new steps as they are added.
   }
 }
