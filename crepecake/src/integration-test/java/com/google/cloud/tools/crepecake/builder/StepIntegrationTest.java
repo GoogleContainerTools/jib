@@ -94,6 +94,12 @@ public class StepIntegrationTest {
         new BuildAndCacheApplicationLayersStep(sourceFilesConfiguration, cache);
     ImageLayers<CachedLayer> applicationLayers = buildAndCacheApplicationLayersStep.run(null);
 
+    // TODO: Assert application layers cached.
+
+    PushApplicationLayersStep pushApplicationLayersStep =
+        new PushApplicationLayersStep(buildConfiguration, null);
+    pushApplicationLayersStep.run(applicationLayers);
+
     // TODO: Integrate any new steps as they are added.
   }
 }
