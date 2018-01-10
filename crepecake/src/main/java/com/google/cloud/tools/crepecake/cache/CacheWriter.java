@@ -63,7 +63,8 @@ public class CacheWriter {
       BlobDescriptor compressedBlobDescriptor = compressedDigestOutputStream.toBlobDescriptor();
 
       // Renames the temporary layer file to the correct filename.
-      Path layerFile = getLayerFile(compressedBlobDescriptor.getDigest());
+      Path layerFile =
+          CacheFiles.getLayerFile(cache.getCacheDirectory(), compressedBlobDescriptor.getDigest());
       // TODO: Should probably check for existence of target file and whether or not it's the same.
       try {
         Files.move(tempLayerFile, layerFile);
@@ -105,7 +106,7 @@ public class CacheWriter {
         getDiffId(layerFile));
   }
 
-  /** @return the file for the layer with the specified compressed digest */
+  /** @return the path to the file for the layer with the specified compressed digest */
   private Path getLayerFile(DescriptorDigest compressedDigest) {
     return CacheFiles.getLayerFile(cache.getCacheDirectory(), compressedDigest);
   }

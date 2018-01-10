@@ -37,7 +37,6 @@ public class CacheReader {
    * @param layerType the type of layer
    * @param sourceFiles the source files the layer must be built from
    * @return the newest cached layer file that matches the {@code layerType} and {@code sourceFiles}
-   * @throws CacheMetadataCorruptedException
    */
   public Path getLayerFile(CachedLayerType layerType, Set<Path> sourceFiles)
       throws CacheMetadataCorruptedException {
@@ -51,6 +50,7 @@ public class CacheReader {
 
         // Finds the newest cached layer for the layer type.
         FileTime newestLastModifiedTime = FileTime.from(Instant.MIN);
+
         Path newestLayerFile = null;
         for (CachedLayerWithMetadata cachedLayer : cachedLayers) {
           FileTime cachedLayerLastModifiedTime = cachedLayer.getMetadata().getLastModifiedTime();
