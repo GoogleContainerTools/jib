@@ -17,7 +17,6 @@
 package com.google.cloud.tools.crepecake.cache;
 
 import com.google.common.io.Resources;
-import java.io.File;
 import java.net.URISyntaxException;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
@@ -42,8 +41,8 @@ public class CacheReaderTest {
 
   @Test
   public void testGetLayerFile() throws URISyntaxException, CacheMetadataCorruptedException {
-    File expectedFile =
-        new File(
+    Path expectedFile =
+        Paths.get(
             Resources.getResource(
                     "cache/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.tar.gz")
                 .toURI());
@@ -57,6 +56,7 @@ public class CacheReaderTest {
             new HashSet<>(Collections.singletonList(Paths.get("some/source/directory")))));
     Assert.assertNull(cacheReader.getLayerFile(CachedLayerType.RESOURCES, new HashSet<>()));
     Assert.assertNull(cacheReader.getLayerFile(CachedLayerType.DEPENDENCIES, new HashSet<>()));
+
     try {
       cacheReader.getLayerFile(CachedLayerType.BASE, new HashSet<>());
       Assert.fail("Should not be able to get layer file for base image layer");
