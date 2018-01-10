@@ -18,7 +18,6 @@ package com.google.cloud.tools.crepecake.tar;
 
 import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.blob.Blobs;
-import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
@@ -26,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
@@ -38,7 +38,7 @@ public class TarStreamBuilder {
 
   /** Writes each entry in the filesystem to the tarball archive stream. */
   private static void writeEntriesAsTarArchive(
-      ImmutableList<TarArchiveEntry> entries, OutputStream tarByteStream) throws IOException {
+      List<TarArchiveEntry> entries, OutputStream tarByteStream) throws IOException {
     try (TarArchiveOutputStream tarArchiveOutputStream =
         new TarArchiveOutputStream(tarByteStream)) {
       for (TarArchiveEntry entry : entries) {
@@ -59,7 +59,8 @@ public class TarStreamBuilder {
 
   /** Builds a {@link Blob} that can stream the uncompressed tarball archive BLOB. */
   public Blob toBlob() {
-    ImmutableList<TarArchiveEntry> immutableEntries = ImmutableList.copyOf(entries);
-    return Blobs.from(outputStream -> writeEntriesAsTarArchive(immutableEntries, outputStream));
+    return Blobs.from(
+        outputStream ->
+            writeEntriesAsTarArchive(Collections.unmodifiableList(entries), outputStream));
   }
 }
