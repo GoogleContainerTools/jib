@@ -77,19 +77,12 @@ public class CacheWriter {
       compressorStream.close();
       BlobDescriptor compressedBlobDescriptor = compressedDigestOutputStream.toBlobDescriptor();
 
-      // Renames the temporary layer file to the correct filename.
+      // Renames the temporary layer file to the correct filename. If the file already exists, we
+      // skip renaming and use the existing file. This happens if a new layer happens to have the
+      // same content as a previously-cached layer.
       Path layerFile = getLayerFile(compressedBlobDescriptor.getDigest());
-      // TODO: Should probably check for existence of target file and whether or not it's the same.
-      try {
+      if (!Files.exists(layerFile)) {
         Files.move(tempLayerFile, layerFile);
-
-      } catch (IOException ex) {
-        throw new IOException(
-            "Could not rename layer "
-                + compressedBlobDescriptor.getDigest().getHash()
-                + " to "
-                + layerFile,
-            ex);
       }
 
       CachedLayer cachedLayer = new CachedLayer(layerFile, compressedBlobDescriptor, diffId);

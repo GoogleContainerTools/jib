@@ -31,6 +31,7 @@ import com.google.cloud.tools.crepecake.registry.NonexistentServerUrlDockerCrede
 import com.google.cloud.tools.crepecake.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.crepecake.registry.RegistryException;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -49,7 +50,8 @@ public class StepIntegrationTest {
           LayerCountMismatchException, IOException, CacheMetadataCorruptedException,
           RegistryAuthenticationFailedException,
           NonexistentServerUrlDockerCredentialHelperException,
-          NonexistentDockerCredentialHelperException {
+          NonexistentDockerCredentialHelperException, URISyntaxException {
+    SourceFilesConfiguration sourceFilesConfiguration = new TestSourceFilesConfiguration();
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder()
             .setBaseImageServerUrl("registry.hub.docker.com")
@@ -87,6 +89,10 @@ public class StepIntegrationTest {
     PushBaseImageLayersStep pushBaseImageLayersStep =
         new PushBaseImageLayersStep(buildConfiguration, null);
     pushBaseImageLayersStep.run(baseImageLayers);
+
+    BuildAndCacheApplicationLayersStep buildAndCacheApplicationLayersStep =
+        new BuildAndCacheApplicationLayersStep(sourceFilesConfiguration, cache);
+    ImageLayers<CachedLayer> applicationLayers = buildAndCacheApplicationLayersStep.run(null);
 
     // TODO: Integrate any new steps as they are added.
   }

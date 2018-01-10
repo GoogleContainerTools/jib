@@ -25,14 +25,9 @@ import com.google.cloud.tools.crepecake.cache.CachedLayerType;
 import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
 import com.google.cloud.tools.crepecake.image.ImageLayers;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
-import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -40,56 +35,6 @@ import org.junit.rules.TemporaryFolder;
 
 /** Tests for {@link BuildAndCacheApplicationLayersStep}. */
 public class BuildAndCacheApplicationLayersStepTest {
-
-  private static class TestSourceFilesConfiguration implements SourceFilesConfiguration {
-
-    private final Set<Path> dependenciesSourceFiles;
-    private final Set<Path> resourcesSourceFiles;
-    private final Set<Path> classesSourceFiles;
-    private final Path extractionPath = Paths.get("some", "extraction", "path");
-
-    private TestSourceFilesConfiguration() throws URISyntaxException {
-      dependenciesSourceFiles =
-          new HashSet<>(
-              Collections.singletonList(Paths.get(Resources.getResource("layer").toURI())));
-      resourcesSourceFiles =
-          new HashSet<>(
-              Collections.singletonList(Paths.get(Resources.getResource("directoryA").toURI())));
-      classesSourceFiles =
-          new HashSet<>(
-              Collections.singletonList(Paths.get(Resources.getResource("cache").toURI())));
-    }
-
-    @Override
-    public Set<Path> getDependenciesFiles() {
-      return dependenciesSourceFiles;
-    }
-
-    @Override
-    public Set<Path> getResourcesFiles() {
-      return resourcesSourceFiles;
-    }
-
-    @Override
-    public Set<Path> getClassesFiles() {
-      return classesSourceFiles;
-    }
-
-    @Override
-    public Path getDependenciesExtractionPath() {
-      return extractionPath;
-    }
-
-    @Override
-    public Path getResourcesExtractionPath() {
-      return extractionPath;
-    }
-
-    @Override
-    public Path getClassesExtractionPath() {
-      return extractionPath;
-    }
-  }
 
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
