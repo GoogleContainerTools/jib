@@ -23,6 +23,7 @@ import com.google.cloud.tools.crepecake.registry.RegistryClient;
 import com.google.cloud.tools.crepecake.registry.RegistryException;
 import java.io.IOException;
 
+// TODO: Change into push all layers and first check for existence.
 class PushBaseImageLayersStep implements Step<ImageLayers<CachedLayer>, Void> {
 
   private final BuildConfiguration buildConfiguration;

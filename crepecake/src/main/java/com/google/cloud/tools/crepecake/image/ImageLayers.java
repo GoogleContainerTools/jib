@@ -62,13 +62,16 @@ public class ImageLayers<T extends Layer> implements Iterable<T> {
    * @param layer the layer to add
    * @throws DuplicateLayerException if the layer has already been added
    */
-  public void add(T layer) throws DuplicateLayerException, LayerPropertyNotFoundException {
+  public ImageLayers<T> add(T layer)
+      throws DuplicateLayerException, LayerPropertyNotFoundException {
     if (layerDigests.contains(layer.getBlobDescriptor().getDigest())) {
       throw new DuplicateLayerException("Cannot add the same layer more than once");
     }
 
     layerDigests.add(layer.getBlobDescriptor().getDigest());
     layers.add(layer);
+
+    return this;
   }
 
   @Override

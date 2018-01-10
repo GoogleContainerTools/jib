@@ -76,6 +76,8 @@ public class StepIntegrationTest {
         new PullAndCacheBaseImageLayersStep(buildConfiguration, cache, pullAuthorization);
     ImageLayers<CachedLayer> baseImageLayers = pullAndCacheBaseImageLayersStep.run(baseImage);
 
+    // TODO: Assert base image layers cached.
+
     // TODO: Set up authorization and mock a credential helper for the local registry.
     // Authenticates push.
     //    AuthenticatePushStep authenticatePushStep = new AuthenticatePushStep(buildConfiguration);
