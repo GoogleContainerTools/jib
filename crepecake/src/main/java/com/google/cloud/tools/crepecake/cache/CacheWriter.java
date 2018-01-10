@@ -19,6 +19,9 @@ package com.google.cloud.tools.crepecake.cache;
 import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
 import com.google.cloud.tools.crepecake.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
+import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
+import com.google.cloud.tools.crepecake.image.LayerBuilder;
+import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.crepecake.image.UnwrittenLayer;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CountingOutputStream;
@@ -28,6 +31,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
+import java.time.Instant;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -40,8 +45,18 @@ public class CacheWriter {
     this.cache = cache;
   }
 
-  /** Compresses and writes an {@link UnwrittenLayer}'s uncompressed layer content BLOB to cache. */
-  public CachedLayer writeLayer(UnwrittenLayer layer) throws IOException {
+  /**
+   * Builds an {@link UnwrittenLayer} from a {@link LayerBuilder} and compresses and writes the
+   * {@link UnwrittenLayer}'s uncompressed layer content BLOB to cache.
+   *
+   * @param layerBuilder the layer builder
+   * @param layerType the type of layer that is being built
+   * @return the cached layer
+   */
+  public CachedLayer writeLayer(LayerBuilder layerBuilder, CachedLayerType layerType)
+      throws IOException, LayerPropertyNotFoundException, DuplicateLayerException {
+    UnwrittenLayer unwrittenLayer = layerBuilder.build();
+
     // Writes to a temporary file first because the UnwrittenLayer needs to be written first to
     // obtain its digest.
     Path tempLayerFile = Files.createTempFile(cache.getCacheDirectory(), null, null);
@@ -56,7 +71,7 @@ public class CacheWriter {
       // diff ID and the bytes outputted from the GZIP compression are captured as the layer's
       // content descriptor.
       GZIPOutputStream compressorStream = new GZIPOutputStream(compressedDigestOutputStream);
-      DescriptorDigest diffId = layer.getBlob().writeTo(compressorStream).getDigest();
+      DescriptorDigest diffId = unwrittenLayer.getBlob().writeTo(compressorStream).getDigest();
 
       // The GZIPOutputStream must be closed in order to write out the remaining compressed data.
       compressorStream.close();
@@ -77,7 +92,11 @@ public class CacheWriter {
             ex);
       }
 
-      return new CachedLayer(layerFile, compressedBlobDescriptor, diffId);
+      CachedLayer cachedLayer = new CachedLayer(layerFile, compressedBlobDescriptor, diffId);
+      LayerMetadata layerMetadata =
+          new LayerMetadata(layerBuilder.getSourceFiles(), FileTime.from(Instant.now()));
+      cache.addLayerToMetadata(layerType, cachedLayer, layerMetadata);
+      return cachedLayer;
     }
   }
 
@@ -99,6 +118,7 @@ public class CacheWriter {
       DescriptorDigest layerDigest, CountingOutputStream countingOutputStream) throws IOException {
     Path layerFile = getLayerFile(layerDigest);
     countingOutputStream.close();
+    // TODO: Add cached layer to metadata.
     return new CachedLayer(
         layerFile,
         new BlobDescriptor(countingOutputStream.getCount(), layerDigest),

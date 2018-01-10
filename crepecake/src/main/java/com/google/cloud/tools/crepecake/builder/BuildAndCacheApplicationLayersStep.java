@@ -19,11 +19,11 @@ package com.google.cloud.tools.crepecake.builder;
 import com.google.cloud.tools.crepecake.cache.Cache;
 import com.google.cloud.tools.crepecake.cache.CacheWriter;
 import com.google.cloud.tools.crepecake.cache.CachedLayer;
+import com.google.cloud.tools.crepecake.cache.CachedLayerType;
 import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
 import com.google.cloud.tools.crepecake.image.ImageLayers;
 import com.google.cloud.tools.crepecake.image.LayerBuilder;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
-import com.google.cloud.tools.crepecake.image.UnwrittenLayer;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Set;
@@ -47,16 +47,19 @@ class BuildAndCacheApplicationLayersStep implements Step<Void, ImageLayers<Cache
     // TODO: Check if needs rebuilding.
     CachedLayer dependenciesLayer =
         buildAndCacheLayer(
+            CachedLayerType.DEPENDENCIES,
             sourceFilesConfiguration.getDependenciesFiles(),
             sourceFilesConfiguration.getDependenciesExtractionPath());
     CachedLayer resourcesLayer =
         buildAndCacheLayer(
-            sourceFilesConfiguration.getDependenciesFiles(),
-            sourceFilesConfiguration.getDependenciesExtractionPath());
+            CachedLayerType.RESOURCES,
+            sourceFilesConfiguration.getResourcesFiles(),
+            sourceFilesConfiguration.getResourcesExtractionPath());
     CachedLayer classesLayer =
         buildAndCacheLayer(
-            sourceFilesConfiguration.getDependenciesFiles(),
-            sourceFilesConfiguration.getDependenciesExtractionPath());
+            CachedLayerType.CLASSES,
+            sourceFilesConfiguration.getClassesFiles(),
+            sourceFilesConfiguration.getClassesExtractionPath());
 
     return new ImageLayers<CachedLayer>()
         .add(dependenciesLayer)
@@ -64,17 +67,11 @@ class BuildAndCacheApplicationLayersStep implements Step<Void, ImageLayers<Cache
         .add(classesLayer);
   }
 
-  private CachedLayer buildAndCacheLayer(Set<Path> sourceFiles, String extractionPath)
-      throws IOException {
-    LayerBuilder layerBuilder = new LayerBuilder();
+  private CachedLayer buildAndCacheLayer(
+      CachedLayerType layerType, Set<Path> sourceFiles, Path extractionPath)
+      throws IOException, LayerPropertyNotFoundException, DuplicateLayerException {
+    LayerBuilder layerBuilder = new LayerBuilder(sourceFiles, extractionPath);
 
-    for (Path sourceFile : sourceFiles) {
-      layerBuilder.addFile(sourceFile, extractionPath);
-    }
-
-    UnwrittenLayer builtLayer = layerBuilder.build();
-
-    CacheWriter cacheWriter = new CacheWriter(cache);
-    return cacheWriter.writeLayer(builtLayer);
+    return new CacheWriter(cache).writeLayer(layerBuilder, layerType);
   }
 }

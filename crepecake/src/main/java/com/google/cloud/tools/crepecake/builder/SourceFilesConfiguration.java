@@ -35,11 +35,11 @@ public interface SourceFilesConfiguration {
   Set<Path> getClassesFiles();
 
   /** @return the path of to place the dependencies source files in the container filesystem */
-  String getDependenciesExtractionPath();
+  Path getDependenciesExtractionPath();
 
   /** @return the path of to place the resources source files in the container filesystem */
-  String getResourcesExtractionPath();
+  Path getResourcesExtractionPath();
 
   /** @return the path of to place the classes source files in the container filesystem */
-  String getClassesExtractionPath();
+  Path getClassesExtractionPath();
 }

@@ -17,6 +17,8 @@
 package com.google.cloud.tools.crepecake.cache;
 
 import com.google.cloud.tools.crepecake.cache.json.CacheMetadataTemplate;
+import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
+import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.BufferedOutputStream;
@@ -26,8 +28,9 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
+import javax.annotation.Nullable;
 
-/** Manages a cache. */
+/** Manages a cache. Implementation is thread-safe. */
 public class Cache implements Closeable {
 
   /** The path to the root of the cache. */
@@ -78,6 +81,13 @@ public class Cache implements Closeable {
   @Override
   public void close() throws IOException {
     saveCacheMetadata(cacheDirectory);
+  }
+
+  /** Adds the cached layer to the cache metadata. */
+  void addLayerToMetadata(
+      CachedLayerType layerType, CachedLayer cachedLayer, @Nullable LayerMetadata layerMetadata)
+      throws LayerPropertyNotFoundException, DuplicateLayerException {
+    cacheMetadata.addLayer(new CachedLayerWithMetadata(cachedLayer, layerType, layerMetadata));
   }
 
   @VisibleForTesting
