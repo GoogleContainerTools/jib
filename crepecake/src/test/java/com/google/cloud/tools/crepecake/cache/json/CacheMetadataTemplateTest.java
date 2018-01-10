@@ -20,7 +20,6 @@ import com.google.cloud.tools.crepecake.cache.CachedLayerType;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -87,7 +86,8 @@ public class CacheMetadataTemplateTest {
   @Test
   public void testFromJson() throws URISyntaxException, IOException, DigestException {
     // Loads the expected JSON string.
-    File jsonFile = new File(getClass().getClassLoader().getResource("json/metadata.json").toURI());
+    Path jsonFile =
+        Paths.get(getClass().getClassLoader().getResource("json/metadata.json").toURI());
 
     // Deserializes into a metadata JSON object.
     CacheMetadataTemplate metadataTemplate =

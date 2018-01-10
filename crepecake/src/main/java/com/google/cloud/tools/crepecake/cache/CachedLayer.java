@@ -21,7 +21,7 @@ import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
 import com.google.cloud.tools.crepecake.blob.Blobs;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.image.Layer;
-import java.io.File;
+import java.nio.file.Path;
 
 /**
  * A {@link Layer} that has been written out to a cache and has its file-backed content BLOB,
@@ -29,7 +29,7 @@ import java.io.File;
  */
 public class CachedLayer implements Layer {
 
-  private final File contentFile;
+  private final Path contentFile;
   private final BlobDescriptor blobDescriptor;
   private final DescriptorDigest diffId;
 
@@ -43,13 +43,13 @@ public class CachedLayer implements Layer {
    * @param diffId the diff ID for the layer
    * @see Layer
    */
-  public CachedLayer(File contentFile, BlobDescriptor blobDescriptor, DescriptorDigest diffId) {
+  public CachedLayer(Path contentFile, BlobDescriptor blobDescriptor, DescriptorDigest diffId) {
     this.contentFile = contentFile;
     this.blobDescriptor = blobDescriptor;
     this.diffId = diffId;
   }
 
-  public File getContentFile() {
+  public Path getContentFile() {
     return contentFile;
   }
 
