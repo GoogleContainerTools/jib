@@ -122,7 +122,7 @@ public class CacheWriter {
     return cachedLayer;
   }
 
-  /** @return the file for the layer with the specified compressed digest */
+  /** @return the path to the file for the layer with the specified compressed digest */
   private Path getLayerFile(DescriptorDigest compressedDigest) {
     return CacheFiles.getLayerFile(cache.getCacheDirectory(), compressedDigest);
   }
