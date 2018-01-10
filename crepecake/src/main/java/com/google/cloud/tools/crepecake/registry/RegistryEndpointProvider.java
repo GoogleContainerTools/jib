@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.crepecake.registry;
 
+import com.google.api.client.http.HttpResponseException;
 import com.google.cloud.tools.crepecake.http.Request;
 import com.google.cloud.tools.crepecake.http.Response;
 import java.io.IOException;
@@ -29,11 +30,8 @@ import java.net.URL;
  */
 interface RegistryEndpointProvider<T> {
 
-  /** Custom builder steps to add to build the request. */
-  void buildRequest(Request.Builder builder);
-
-  /** Handles the response specific to the registry action. */
-  T handleResponse(Response response) throws IOException, RegistryException;
+  /** @return the HTTP method to send the request with */
+  String getHttpMethod();
 
   /**
    * @param apiRouteBase the registry's base URL (for example, {@code https://gcr.io/v2/})
@@ -41,8 +39,21 @@ interface RegistryEndpointProvider<T> {
    */
   URL getApiRoute(String apiRouteBase) throws MalformedURLException;
 
-  /** @return the HTTP method to send the request with */
-  String getHttpMethod();
+  /** Custom builder steps to add to build the request. */
+  void buildRequest(Request.Builder builder);
+
+  /** Handles the response specific to the registry action. */
+  T handleResponse(Response response) throws IOException, RegistryException;
+
+  /**
+   * Handles an {@link HttpResponseException} that occurs.
+   *
+   * @param ex the {@link HttpResponseException} to handle
+   * @throws HttpResponseException {@code ex} if {@code ex} could not be handled
+   */
+  default T handleHttpResponseException(HttpResponseException ex) throws IOException {
+    throw ex;
+  }
 
   /**
    * @return a description of the registry action performed, used in error messages to describe the

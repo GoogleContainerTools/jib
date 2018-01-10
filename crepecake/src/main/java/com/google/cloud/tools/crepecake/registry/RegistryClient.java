@@ -20,6 +20,7 @@ import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.crepecake.blob.Blob;
+import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
 import com.google.cloud.tools.crepecake.http.Authorization;
 import com.google.cloud.tools.crepecake.http.Connection;
 import com.google.cloud.tools.crepecake.http.Request;
@@ -114,6 +115,16 @@ public class RegistryClient {
   }
 
   /**
+   * @return the BLOB's {@link BlobDescriptor} if the BLOB exists on the registry, or {@code null}
+   *     if it doesn't
+   */
+  public BlobDescriptor checkBlob(DescriptorDigest blobDigest)
+      throws IOException, RegistryException {
+    BlobChecker blobChecker = new BlobChecker(registryEndpointProperties, blobDigest);
+    return callRegistryEndpoint(blobChecker);
+  }
+
+  /**
    * Downloads the BLOB to a file.
    *
    * @param blobDigest the digest of the BLOB to download
@@ -197,32 +208,40 @@ public class RegistryClient {
       return registryEndpointProvider.handleResponse(response);
 
     } catch (HttpResponseException ex) {
-      switch (ex.getStatusCode()) {
-        case HttpStatusCodes.STATUS_CODE_BAD_REQUEST:
-        case HttpStatusCodes.STATUS_CODE_NOT_FOUND:
-        case HttpStatusCodes.STATUS_CODE_METHOD_NOT_ALLOWED:
-          // The name or reference was invalid.
-          ErrorResponseTemplate errorResponse =
-              JsonTemplateMapper.readJson(ex.getContent(), ErrorResponseTemplate.class);
-          RegistryErrorExceptionBuilder registryErrorExceptionBuilder =
-              new RegistryErrorExceptionBuilder(
-                  registryEndpointProvider.getActionDescription(), ex);
-          for (ErrorEntryTemplate errorEntry : errorResponse.getErrors()) {
-            registryErrorExceptionBuilder.addReason(errorEntry);
-          }
+      // First, see if the endpoint provider handles an exception as an expected response.
+      try {
+        return registryEndpointProvider.handleHttpResponseException(ex);
 
-          throw registryErrorExceptionBuilder.build();
+      } catch (HttpResponseException httpResponseException) {
+        switch (httpResponseException.getStatusCode()) {
+          case HttpStatusCodes.STATUS_CODE_BAD_REQUEST:
+          case HttpStatusCodes.STATUS_CODE_NOT_FOUND:
+          case HttpStatusCodes.STATUS_CODE_METHOD_NOT_ALLOWED:
+            // The name or reference was invalid.
+            ErrorResponseTemplate errorResponse =
+                JsonTemplateMapper.readJson(
+                    httpResponseException.getContent(), ErrorResponseTemplate.class);
+            RegistryErrorExceptionBuilder registryErrorExceptionBuilder =
+                new RegistryErrorExceptionBuilder(
+                    registryEndpointProvider.getActionDescription(), httpResponseException);
+            for (ErrorEntryTemplate errorEntry : errorResponse.getErrors()) {
+              registryErrorExceptionBuilder.addReason(errorEntry);
+            }
 
-        case HttpStatusCodes.STATUS_CODE_UNAUTHORIZED:
-        case HttpStatusCodes.STATUS_CODE_FORBIDDEN:
-          throw new RegistryUnauthorizedException(ex);
+            throw registryErrorExceptionBuilder.build();
 
-        case HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT: // Temporary Redirect
-          return callRegistryEndpoint(
-              new URL(ex.getHeaders().getLocation()), registryEndpointProvider);
+          case HttpStatusCodes.STATUS_CODE_UNAUTHORIZED:
+          case HttpStatusCodes.STATUS_CODE_FORBIDDEN:
+            throw new RegistryUnauthorizedException(httpResponseException);
 
-        default: // Unknown
-          throw ex;
+          case HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT: // Temporary Redirect
+            return callRegistryEndpoint(
+                new URL(httpResponseException.getHeaders().getLocation()),
+                registryEndpointProvider);
+
+          default: // Unknown
+            throw httpResponseException;
+        }
       }
 
     } catch (NoHttpResponseException ex) {

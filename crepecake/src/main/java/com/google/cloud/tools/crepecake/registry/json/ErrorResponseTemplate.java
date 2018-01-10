@@ -17,6 +17,7 @@
 package com.google.cloud.tools.crepecake.registry.json;
 
 import com.google.cloud.tools.crepecake.json.JsonTemplate;
+import com.google.common.annotations.VisibleForTesting;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -44,5 +45,11 @@ public class ErrorResponseTemplate extends JsonTemplate {
 
   public List<ErrorEntryTemplate> getErrors() {
     return Collections.unmodifiableList(errors);
+  }
+
+  @VisibleForTesting
+  public ErrorResponseTemplate addError(ErrorEntryTemplate errorEntryTemplate) {
+    errors.add(errorEntryTemplate);
+    return this;
   }
 }
