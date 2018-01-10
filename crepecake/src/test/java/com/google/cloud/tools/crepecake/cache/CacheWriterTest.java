@@ -110,7 +110,8 @@ public class CacheWriterTest {
   }
 
   @Test
-  public void testGetLayerOutputStream() throws IOException {
+  public void testGetLayerOutputStream()
+      throws IOException, LayerPropertyNotFoundException, DuplicateLayerException {
     ExpectedLayer expectedLayer = getExpectedLayer();
 
     // Writes resourceBlob as a layer to the cache.
@@ -121,6 +122,10 @@ public class CacheWriterTest {
     expectedLayer.blob.writeTo(layerOutputStream);
     CachedLayer cachedLayer =
         cacheWriter.getCachedLayer(expectedLayer.blobDescriptor.getDigest(), layerOutputStream);
+
+    CachedLayerWithMetadata layerInMetadata = testCache.getMetadata().getLayers().get(0);
+    Assert.assertEquals(CachedLayerType.BASE, layerInMetadata.getType());
+    Assert.assertNull(layerInMetadata.getMetadata());
 
     verifyCachedLayerIsExpected(expectedLayer, cachedLayer);
   }

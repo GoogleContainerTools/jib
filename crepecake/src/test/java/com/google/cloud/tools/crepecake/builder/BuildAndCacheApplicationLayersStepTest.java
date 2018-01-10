@@ -17,6 +17,7 @@
 package com.google.cloud.tools.crepecake.builder;
 
 import com.google.cloud.tools.crepecake.cache.Cache;
+import com.google.cloud.tools.crepecake.cache.CacheChecker;
 import com.google.cloud.tools.crepecake.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.crepecake.cache.CacheReader;
 import com.google.cloud.tools.crepecake.cache.CachedLayer;
@@ -114,13 +115,13 @@ public class BuildAndCacheApplicationLayersStepTest {
     Cache cache = Cache.init(temporaryCacheDirectory);
 
     // Verifies that the cached layers are up-to-date.
-    //    CacheChecker cacheChecker = new CacheChecker(cache);
-    //    Assert.assertFalse(
-    //        cacheChecker.areSourceFilesModified(testSourceFilesConfiguration.getDependenciesFiles()));
-    //    Assert.assertFalse(
-    //        cacheChecker.areSourceFilesModified(testSourceFilesConfiguration.getResourcesFiles()));
-    //    Assert.assertFalse(
-    //        cacheChecker.areSourceFilesModified(testSourceFilesConfiguration.getClassesFiles()));
+    CacheChecker cacheChecker = new CacheChecker(cache);
+    Assert.assertFalse(
+        cacheChecker.areSourceFilesModified(testSourceFilesConfiguration.getDependenciesFiles()));
+    Assert.assertFalse(
+        cacheChecker.areSourceFilesModified(testSourceFilesConfiguration.getResourcesFiles()));
+    Assert.assertFalse(
+        cacheChecker.areSourceFilesModified(testSourceFilesConfiguration.getClassesFiles()));
 
     // Verifies that the cache reader gets the same layers as the newest application layers.
     CacheReader cacheReader = new CacheReader(cache);

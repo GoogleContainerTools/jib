@@ -115,14 +115,18 @@ public class CacheWriter {
    *     layer BLOB was written to
    */
   public CachedLayer getCachedLayer(
-      DescriptorDigest layerDigest, CountingOutputStream countingOutputStream) throws IOException {
+      DescriptorDigest layerDigest, CountingOutputStream countingOutputStream)
+      throws IOException, LayerPropertyNotFoundException, DuplicateLayerException {
     Path layerFile = getLayerFile(layerDigest);
     countingOutputStream.close();
-    // TODO: Add cached layer to metadata.
-    return new CachedLayer(
-        layerFile,
-        new BlobDescriptor(countingOutputStream.getCount(), layerDigest),
-        getDiffId(layerFile));
+
+    CachedLayer cachedLayer =
+        new CachedLayer(
+            layerFile,
+            new BlobDescriptor(countingOutputStream.getCount(), layerDigest),
+            getDiffId(layerFile));
+    cache.addLayerToMetadata(CachedLayerType.BASE, cachedLayer, null);
+    return cachedLayer;
   }
 
   /** @return the file for the layer with the specified compressed digest */
