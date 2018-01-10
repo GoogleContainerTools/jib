@@ -134,9 +134,12 @@ public class CacheWriterTest {
 
   private void verifyCachedLayerIsExpected(ExpectedLayer expectedLayer, CachedLayer cachedLayer)
       throws IOException {
+    // Reads the cached layer back.
+    Path compressedBlobFile = cachedLayer.getContentFile();
+
     try (InputStreamReader fileReader =
         new InputStreamReader(
-            new GZIPInputStream(Files.newInputStream(cachedLayer.getContentFile())),
+            new GZIPInputStream(Files.newInputStream(compressedBlobFile)),
             StandardCharsets.UTF_8)) {
       String decompressedString = CharStreams.toString(fileReader);
 
