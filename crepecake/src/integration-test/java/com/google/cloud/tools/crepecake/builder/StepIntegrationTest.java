@@ -62,44 +62,46 @@ public class StepIntegrationTest {
             .setTargetTag("testtag")
             .setCredentialHelperName("gcloud")
             .build();
-    Cache cache = Cache.init(temporaryCacheDirectory.newFolder().toPath());
+    try (Cache cache = Cache.init(temporaryCacheDirectory.newFolder().toPath())) {
 
-    // Authenticates base image pull.
-    AuthenticatePullStep authenticatePullStep = new AuthenticatePullStep(buildConfiguration);
-    Authorization pullAuthorization = authenticatePullStep.run(null);
+      // Authenticates base image pull.
+      AuthenticatePullStep authenticatePullStep = new AuthenticatePullStep(buildConfiguration);
+      Authorization pullAuthorization = authenticatePullStep.run(null);
 
-    // Pulls the base image.
-    PullBaseImageStep pullBaseImageStep =
-        new PullBaseImageStep(buildConfiguration, pullAuthorization);
-    Image baseImage = pullBaseImageStep.run(null);
+      // Pulls the base image.
+      PullBaseImageStep pullBaseImageStep =
+          new PullBaseImageStep(buildConfiguration, pullAuthorization);
+      Image baseImage = pullBaseImageStep.run(null);
 
-    // Pulls and caches the base image layers.
-    PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep =
-        new PullAndCacheBaseImageLayersStep(buildConfiguration, cache, pullAuthorization);
-    ImageLayers<CachedLayer> baseImageLayers = pullAndCacheBaseImageLayersStep.run(baseImage);
+      // Pulls and caches the base image layers.
+      PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep =
+          new PullAndCacheBaseImageLayersStep(buildConfiguration, cache, pullAuthorization);
+      ImageLayers<CachedLayer> baseImageLayers = pullAndCacheBaseImageLayersStep.run(baseImage);
 
-    // TODO: Assert base image layers cached.
+      // TODO: Assert base image layers cached.
 
-    // TODO: Set up authorization and mock a credential helper for the local registry.
-    // Authenticates push.
-    //    AuthenticatePushStep authenticatePushStep = new AuthenticatePushStep(buildConfiguration);
-    //    Authorization pushAuthorization = authenticatePushStep.run(null);
+      // TODO: Set up authorization and mock a credential helper for the local registry.
+      // Authenticates push.
+      //    AuthenticatePushStep authenticatePushStep = new AuthenticatePushStep(buildConfiguration);
+      //    Authorization pushAuthorization = authenticatePushStep.run(null);
 
-    // Pushes the base image layers.
-    PushBaseImageLayersStep pushBaseImageLayersStep =
-        new PushBaseImageLayersStep(buildConfiguration, null);
-    pushBaseImageLayersStep.run(baseImageLayers);
+      // Pushes the base image layers.
+      PushBaseImageLayersStep pushBaseImageLayersStep =
+          new PushBaseImageLayersStep(buildConfiguration, null);
+      pushBaseImageLayersStep.run(baseImageLayers);
 
-    BuildAndCacheApplicationLayersStep buildAndCacheApplicationLayersStep =
-        new BuildAndCacheApplicationLayersStep(sourceFilesConfiguration, cache);
-    ImageLayers<CachedLayer> applicationLayers = buildAndCacheApplicationLayersStep.run(null);
+      BuildAndCacheApplicationLayersStep buildAndCacheApplicationLayersStep =
+          new BuildAndCacheApplicationLayersStep(sourceFilesConfiguration, cache);
+      ImageLayers<CachedLayer> applicationLayers = buildAndCacheApplicationLayersStep.run(null);
 
-    // TODO: Assert application layers cached.
+      // TODO: Assert application layers cached.
 
-    PushApplicationLayersStep pushApplicationLayersStep =
-        new PushApplicationLayersStep(buildConfiguration, null);
-    pushApplicationLayersStep.run(applicationLayers);
+      // Pushes the application layers.
+      PushApplicationLayersStep pushApplicationLayersStep =
+          new PushApplicationLayersStep(buildConfiguration, null);
+      pushApplicationLayersStep.run(applicationLayers);
 
-    // TODO: Integrate any new steps as they are added.
+      // TODO: Integrate any new steps as they are added.
+    }
   }
 }
