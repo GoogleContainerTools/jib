@@ -32,6 +32,8 @@ import com.google.cloud.tools.crepecake.registry.RegistryAuthenticationFailedExc
 import com.google.cloud.tools.crepecake.registry.RegistryException;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Arrays;
+import java.util.List;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -101,7 +103,21 @@ public class StepIntegrationTest {
           new PushApplicationLayersStep(buildConfiguration, null);
       pushApplicationLayersStep.run(applicationLayers);
 
+      // Pushes the new image manifest.
+      Image image =
+          new Image()
+              .addLayers(baseImageLayers)
+              .addLayers(applicationLayers)
+              .setEntrypoint(getEntrypoint());
+      PushImageStep pushImageStep = new PushImageStep(buildConfiguration, null);
+      pushImageStep.run(image);
+
       // TODO: Integrate any new steps as they are added.
     }
+  }
+
+  private List<String> getEntrypoint() {
+    // TODO: Make a real entrypoint.
+    return Arrays.asList("echo", "THIS WORKS");
   }
 }

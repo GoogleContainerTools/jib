@@ -27,7 +27,7 @@ import java.util.Set;
 /** Implementation of {@link SourceFilesConfiguration} that uses test resources. */
 class TestSourceFilesConfiguration implements SourceFilesConfiguration {
 
-  private static final Path EXTRACTION_PATH = Paths.get("some", "extraction", "path");
+  static final Path EXTRACTION_PATH = Paths.get("some", "extraction", "path");
 
   private final Set<Path> dependenciesSourceFiles;
   private final Set<Path> resourcesSourceFiles;

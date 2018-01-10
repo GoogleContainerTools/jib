@@ -25,7 +25,8 @@ import java.io.IOException;
 
 // TODO: First check for existence.
 /** Pushes the application layers to the target registry. */
-class PushApplicationLayersStep implements Step<ImageLayers<CachedLayer>, Void> {
+class PushApplicationLayersStep
+    implements Step<ImageLayers<CachedLayer>, ImageLayers<CachedLayer>> {
 
   private final BuildConfiguration buildConfiguration;
   private final Authorization pushAuthorization;
@@ -37,7 +38,7 @@ class PushApplicationLayersStep implements Step<ImageLayers<CachedLayer>, Void> 
   }
 
   @Override
-  public Void run(ImageLayers<CachedLayer> applicationLayers)
+  public ImageLayers<CachedLayer> run(ImageLayers<CachedLayer> applicationLayers)
       throws IOException, RegistryException {
     RegistryClient registryClient =
         new RegistryClient(
@@ -51,6 +52,6 @@ class PushApplicationLayersStep implements Step<ImageLayers<CachedLayer>, Void> 
       registryClient.pushBlob(layer.getBlobDescriptor().getDigest(), layer.getBlob());
     }
 
-    return null;
+    return applicationLayers;
   }
 }
