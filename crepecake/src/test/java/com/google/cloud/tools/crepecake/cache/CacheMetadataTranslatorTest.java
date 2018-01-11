@@ -23,13 +23,13 @@ import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.FileTime;
 import java.security.DigestException;
 import java.util.Collections;
 import java.util.List;
@@ -44,14 +44,16 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class CacheMetadataTranslatorTest {
 
-  @Mock private File mockFile;
+  @Mock private Path mockPath;
 
   private BlobDescriptor baseLayerBlobDescriptor;
   private DescriptorDigest baseLayerDiffId;
   private BlobDescriptor classesLayerBlobDescriptor;
   private DescriptorDigest classesLayerDiffId;
-  private List<String> classesLayerSourceFiles;
-  private long classesLayerLastModifiedTime;
+
+  private final List<String> classesLayerSourceFiles =
+      Collections.singletonList(Paths.get("some/source/path").toString());
+  private final FileTime classesLayerLastModifiedTime = FileTime.fromMillis(255073580723571L);
 
   @Before
   public void setUp() throws DigestException {
@@ -71,8 +73,6 @@ public class CacheMetadataTranslatorTest {
     classesLayerDiffId =
         DescriptorDigest.fromDigest(
             "sha256:a3f3e99c29370df48e7377c8f9baa744a3958058a766793f821dadcb144a8372");
-    classesLayerSourceFiles = Collections.singletonList(Paths.get("some/source/path").toString());
-    classesLayerLastModifiedTime = 255073580723571L;
   }
 
   @Test
@@ -81,7 +81,8 @@ public class CacheMetadataTranslatorTest {
     Path fakePath = Paths.get("fake/path");
 
     // Loads the expected JSON string.
-    File jsonFile = new File(getClass().getClassLoader().getResource("json/metadata.json").toURI());
+    Path jsonFile =
+        Paths.get(getClass().getClassLoader().getResource("json/metadata.json").toURI());
 
     // Deserializes into a metadata JSON object.
     CacheMetadataTemplate metadataTemplate =
@@ -93,7 +94,7 @@ public class CacheMetadataTranslatorTest {
 
     // Checks that the base layer was translated correctly.
     CachedLayerWithMetadata baseLayer = layers.get(0);
-    Assert.assertEquals(CachedLayerType.BASE, baseLayer.getMetadata().getType());
+    Assert.assertEquals(CachedLayerType.BASE, baseLayer.getType());
     Assert.assertEquals(
         CacheFiles.getLayerFile(fakePath, baseLayerBlobDescriptor.getDigest()),
         baseLayer.getContentFile());
@@ -102,12 +103,13 @@ public class CacheMetadataTranslatorTest {
 
     // Checks that the classses layer was translated correctly.
     CachedLayerWithMetadata classesLayer = layers.get(1);
-    Assert.assertEquals(CachedLayerType.CLASSES, classesLayer.getMetadata().getType());
+    Assert.assertEquals(CachedLayerType.CLASSES, classesLayer.getType());
     Assert.assertEquals(
         CacheFiles.getLayerFile(fakePath, classesLayerBlobDescriptor.getDigest()),
         classesLayer.getContentFile());
     Assert.assertEquals(classesLayerBlobDescriptor, classesLayer.getBlobDescriptor());
     Assert.assertEquals(classesLayerDiffId, classesLayer.getDiffId());
+    Assert.assertNotNull(classesLayer.getMetadata());
     Assert.assertEquals(classesLayerSourceFiles, classesLayer.getMetadata().getSourceFiles());
     Assert.assertEquals(
         classesLayerLastModifiedTime, classesLayer.getMetadata().getLastModifiedTime());
@@ -125,19 +127,17 @@ public class CacheMetadataTranslatorTest {
     CacheMetadata cacheMetadata = new CacheMetadata();
 
     CachedLayer baseCachedLayer =
-        new CachedLayer(mockFile, baseLayerBlobDescriptor, baseLayerDiffId);
-    LayerMetadata baseLayerMetadata =
-        new LayerMetadata(CachedLayerType.BASE, Collections.emptyList(), -1);
+        new CachedLayer(mockPath, baseLayerBlobDescriptor, baseLayerDiffId);
     CachedLayerWithMetadata baseLayer =
-        new CachedLayerWithMetadata(baseCachedLayer, baseLayerMetadata);
+        new CachedLayerWithMetadata(baseCachedLayer, CachedLayerType.BASE, null);
 
     CachedLayer classesCachedLayer =
-        new CachedLayer(mockFile, classesLayerBlobDescriptor, classesLayerDiffId);
+        new CachedLayer(mockPath, classesLayerBlobDescriptor, classesLayerDiffId);
     LayerMetadata classesLayerMetadata =
-        new LayerMetadata(
-            CachedLayerType.CLASSES, classesLayerSourceFiles, classesLayerLastModifiedTime);
+        new LayerMetadata(classesLayerSourceFiles, classesLayerLastModifiedTime);
     CachedLayerWithMetadata classesLayer =
-        new CachedLayerWithMetadata(classesCachedLayer, classesLayerMetadata);
+        new CachedLayerWithMetadata(
+            classesCachedLayer, CachedLayerType.CLASSES, classesLayerMetadata);
 
     cacheMetadata.addLayer(baseLayer);
     cacheMetadata.addLayer(classesLayer);

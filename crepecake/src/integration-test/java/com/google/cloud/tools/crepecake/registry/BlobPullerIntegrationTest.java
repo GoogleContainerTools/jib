@@ -22,8 +22,6 @@ import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.image.json.ManifestTemplate;
 import com.google.cloud.tools.crepecake.image.json.V21ManifestTemplate;
 import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -60,19 +58,18 @@ public class BlobPullerIntegrationTest {
     DescriptorDigest realDigest = v21ManifestTemplate.getLayerDigests().get(0);
 
     // Pulls a layer BLOB of the busybox image.
-    File destFile = temporaryFolder.newFile();
-    File checkBlobFile = temporaryFolder.newFile();
+    Path destFile = temporaryFolder.newFile().toPath();
+    Path checkBlobFile = temporaryFolder.newFile().toPath();
 
-    Blob blob = registryClient.pullBlob(realDigest, destFile.toPath());
+    Blob blob = registryClient.pullBlob(realDigest, destFile);
 
     try (OutputStream outputStream =
-        new BufferedOutputStream(new FileOutputStream(checkBlobFile))) {
+        new BufferedOutputStream(Files.newOutputStream(checkBlobFile))) {
       BlobDescriptor blobDescriptor = blob.writeTo(outputStream);
       Assert.assertEquals(realDigest, blobDescriptor.getDigest());
     }
 
-    Assert.assertArrayEquals(
-        Files.readAllBytes(destFile.toPath()), Files.readAllBytes(checkBlobFile.toPath()));
+    Assert.assertArrayEquals(Files.readAllBytes(destFile), Files.readAllBytes(checkBlobFile));
   }
 
   @Test

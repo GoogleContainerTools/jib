@@ -17,6 +17,7 @@
 package com.google.cloud.tools.crepecake.registry;
 
 import com.google.api.client.http.HttpResponseException;
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.http.Authorization;
 import com.google.cloud.tools.crepecake.http.Connection;
@@ -110,32 +111,31 @@ public class RegistryClient {
       return registryEndpointProvider.handleResponse(response);
 
     } catch (HttpResponseException ex) {
-      switch (ex.getStatusCode()) {
-        case HttpURLConnection.HTTP_BAD_REQUEST:
-        case HttpURLConnection.HTTP_NOT_FOUND:
-        case HttpURLConnection.HTTP_BAD_METHOD:
-          // The name or reference was invalid.
-          ErrorResponseTemplate errorResponse =
-              JsonTemplateMapper.readJson(ex.getContent(), ErrorResponseTemplate.class);
-          RegistryErrorExceptionBuilder registryErrorExceptionBuilder =
-              new RegistryErrorExceptionBuilder(
-                  registryEndpointProvider.getActionDescription(), ex);
-          for (ErrorEntryTemplate errorEntry : errorResponse.getErrors()) {
-            registryErrorExceptionBuilder.addErrorEntry(errorEntry);
-          }
+      if (ex.getStatusCode() == HttpURLConnection.HTTP_BAD_REQUEST
+          || ex.getStatusCode() == HttpURLConnection.HTTP_NOT_FOUND
+          || ex.getStatusCode() == HttpURLConnection.HTTP_BAD_METHOD) {
+        // The name or reference was invalid.
+        ErrorResponseTemplate errorResponse =
+            JsonTemplateMapper.readJson(ex.getContent(), ErrorResponseTemplate.class);
+        RegistryErrorExceptionBuilder registryErrorExceptionBuilder =
+            new RegistryErrorExceptionBuilder(registryEndpointProvider.getActionDescription(), ex);
+        for (ErrorEntryTemplate errorEntry : errorResponse.getErrors()) {
+          registryErrorExceptionBuilder.addErrorEntry(errorEntry);
+        }
 
-          throw registryErrorExceptionBuilder.build();
+        throw registryErrorExceptionBuilder.build();
 
-        case HttpURLConnection.HTTP_UNAUTHORIZED:
-        case HttpURLConnection.HTTP_FORBIDDEN:
-          throw new RegistryUnauthorizedException(ex);
+      } else if (ex.getStatusCode() == HttpURLConnection.HTTP_UNAUTHORIZED
+          || ex.getStatusCode() == HttpURLConnection.HTTP_FORBIDDEN) {
+        throw new RegistryUnauthorizedException(ex);
 
-        case 307: // Temporary Redirect
-          return callRegistryEndpoint(
-              new URL(ex.getHeaders().getLocation()), registryEndpointProvider);
+      } else if (ex.getStatusCode() == HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT) {
+        return callRegistryEndpoint(
+            new URL(ex.getHeaders().getLocation()), registryEndpointProvider);
 
-        default: // Unknown
-          throw ex;
+      } else {
+        // Unknown
+        throw ex;
       }
     }
   }

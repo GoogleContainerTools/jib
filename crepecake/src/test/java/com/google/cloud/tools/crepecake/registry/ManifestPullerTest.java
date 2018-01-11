@@ -23,11 +23,12 @@ import com.google.cloud.tools.crepecake.image.json.UnknownManifestFormatExceptio
 import com.google.cloud.tools.crepecake.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.crepecake.image.json.V22ManifestTemplate;
 import com.google.common.io.Resources;
-import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Test;
@@ -49,7 +50,7 @@ public class ManifestPullerTest {
   @Test
   public void testHandleResponse_v21()
       throws URISyntaxException, IOException, UnknownManifestFormatException {
-    File v21ManifestFile = new File(Resources.getResource("json/v21manifest.json").toURI());
+    Path v21ManifestFile = Paths.get(Resources.getResource("json/v21manifest.json").toURI());
 
     Mockito.when(mockResponse.getBody()).thenReturn(Blobs.from(v21ManifestFile));
     ManifestTemplate manifestTemplate = testManifestPuller.handleResponse(mockResponse);
@@ -60,7 +61,7 @@ public class ManifestPullerTest {
   @Test
   public void testHandleResponse_v22()
       throws URISyntaxException, IOException, UnknownManifestFormatException {
-    File v22ManifestFile = new File(Resources.getResource("json/v22manifest.json").toURI());
+    Path v22ManifestFile = Paths.get(Resources.getResource("json/v22manifest.json").toURI());
 
     Mockito.when(mockResponse.getBody()).thenReturn(Blobs.from(v22ManifestFile));
     ManifestTemplate manifestTemplate = testManifestPuller.handleResponse(mockResponse);
