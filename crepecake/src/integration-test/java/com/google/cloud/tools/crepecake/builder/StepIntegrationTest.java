@@ -23,6 +23,7 @@ import com.google.cloud.tools.crepecake.http.Authorization;
 import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
 import com.google.cloud.tools.crepecake.image.Image;
 import com.google.cloud.tools.crepecake.image.ImageLayers;
+import com.google.cloud.tools.crepecake.image.Layer;
 import com.google.cloud.tools.crepecake.image.LayerCountMismatchException;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.crepecake.registry.LocalRegistry;
@@ -64,8 +65,8 @@ public class StepIntegrationTest {
     SourceFilesConfiguration sourceFilesConfiguration = new TestSourceFilesConfiguration();
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder()
-            .setBaseImageServerUrl("registry.hub.docker.com")
-            .setBaseImageName("frolvlad/alpine-oraclejdk8")
+            .setBaseImageServerUrl("gcr.io")
+            .setBaseImageName("distroless/java")
             .setBaseImageTag("latest")
             .setTargetServerUrl("localhost:5000")
             .setTargetImageName("testimage")
@@ -121,6 +122,10 @@ public class StepIntegrationTest {
                   getEntrypoint(sourceFilesConfiguration, buildConfiguration.getMainClass()));
       PushImageStep pushImageStep = new PushImageStep(buildConfiguration, null);
       pushImageStep.run(image);
+
+      for (Layer layer : image.getLayers()) {
+        System.out.println("CACHED " + layer.getBlobDescriptor().getDigest());
+      }
 
       // TODO: Put this in a utility function.
       Runtime.getRuntime().exec("docker pull localhost:5000/testimage:testtag").waitFor();
