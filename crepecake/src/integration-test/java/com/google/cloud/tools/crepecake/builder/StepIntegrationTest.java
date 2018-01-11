@@ -30,10 +30,17 @@ import com.google.cloud.tools.crepecake.registry.NonexistentDockerCredentialHelp
 import com.google.cloud.tools.crepecake.registry.NonexistentServerUrlDockerCredentialHelperException;
 import com.google.cloud.tools.crepecake.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.crepecake.registry.RegistryException;
+import com.google.common.io.CharStreams;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -52,7 +59,7 @@ public class StepIntegrationTest {
           LayerCountMismatchException, IOException, CacheMetadataCorruptedException,
           RegistryAuthenticationFailedException,
           NonexistentServerUrlDockerCredentialHelperException,
-          NonexistentDockerCredentialHelperException, URISyntaxException {
+          NonexistentDockerCredentialHelperException, URISyntaxException, InterruptedException {
     SourceFilesConfiguration sourceFilesConfiguration = new TestSourceFilesConfiguration();
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder()
@@ -63,6 +70,7 @@ public class StepIntegrationTest {
             .setTargetImageName("testimage")
             .setTargetTag("testtag")
             .setCredentialHelperName("gcloud")
+            .setMainClass("HelloWorld")
             .build();
     try (Cache cache = Cache.init(temporaryCacheDirectory.newFolder().toPath())) {
 
@@ -108,16 +116,58 @@ public class StepIntegrationTest {
           new Image()
               .addLayers(baseImageLayers)
               .addLayers(applicationLayers)
-              .setEntrypoint(getEntrypoint());
+              .setEntrypoint(
+                  getEntrypoint(sourceFilesConfiguration, buildConfiguration.getMainClass()));
       PushImageStep pushImageStep = new PushImageStep(buildConfiguration, null);
       pushImageStep.run(image);
+
+      Runtime.getRuntime().exec("docker pull localhost:5000/testimage:testtag").waitFor();
+      Process process = Runtime.getRuntime().exec("docker run localhost:5000/testimage:testtag");
+      try (InputStreamReader inputStreamReader =
+          new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)) {
+        System.out.println(CharStreams.toString(inputStreamReader));
+      }
+      try (InputStreamReader inputStreamReader =
+          new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8)) {
+        System.out.println(CharStreams.toString(inputStreamReader));
+      }
+      process.waitFor();
 
       // TODO: Integrate any new steps as they are added.
     }
   }
 
-  private List<String> getEntrypoint() {
-    // TODO: Make a real entrypoint.
-    return Arrays.asList("echo", "THIS WORKS");
+  private List<String> getEntrypoint(
+      SourceFilesConfiguration sourceFilesConfiguration, String mainClass) {
+    List<String> classPaths = new ArrayList<>();
+    addSourceFilesToClassPaths(
+        sourceFilesConfiguration.getDependenciesFiles(),
+        sourceFilesConfiguration.getDependenciesExtractionPath(),
+        classPaths);
+    addSourceFilesToClassPaths(
+        sourceFilesConfiguration.getResourcesFiles(),
+        sourceFilesConfiguration.getResourcesExtractionPath(),
+        classPaths);
+    addSourceFilesToClassPaths(
+        sourceFilesConfiguration.getClassesFiles(),
+        sourceFilesConfiguration.getClassesExtractionPath(),
+        classPaths);
+
+    String entrypoint = String.join(":", classPaths);
+    System.out.println(entrypoint);
+
+    return Arrays.asList("java", "-cp", entrypoint, mainClass);
+  }
+
+  private void addSourceFilesToClassPaths(
+      Set<Path> sourceFiles, Path extractionPath, List<String> classPaths) {
+    sourceFiles.forEach(
+        sourceFile -> {
+          Path containerPath = extractionPath;
+          if (!Files.isDirectory(sourceFile)) {
+            containerPath = containerPath.resolve(sourceFile.getFileName());
+          }
+          classPaths.add(containerPath.toString());
+        });
   }
 }

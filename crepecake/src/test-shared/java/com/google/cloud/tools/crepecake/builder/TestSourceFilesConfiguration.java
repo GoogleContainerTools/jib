@@ -37,15 +37,17 @@ class TestSourceFilesConfiguration implements SourceFilesConfiguration {
     dependenciesSourceFiles =
         new HashSet<>(
             Collections.singletonList(
-                Paths.get(Resources.getResource("application/dependencies").toURI())));
+                Paths.get(
+                    Resources.getResource("application/dependencies/dependency-1.0.0.jar")
+                        .toURI())));
     resourcesSourceFiles =
         new HashSet<>(
             Collections.singletonList(
-                Paths.get(Resources.getResource("application/resources").toURI())));
+                Paths.get(Resources.getResource("application/resources/").toURI())));
     classesSourceFiles =
         new HashSet<>(
             Collections.singletonList(
-                Paths.get(Resources.getResource("application/classes").toURI())));
+                Paths.get(Resources.getResource("application/classes/").toURI())));
   }
 
   @Override
@@ -65,16 +67,16 @@ class TestSourceFilesConfiguration implements SourceFilesConfiguration {
 
   @Override
   public Path getDependenciesExtractionPath() {
-    return EXTRACTION_PATH;
+    return EXTRACTION_PATH.resolve("libs");
   }
 
   @Override
   public Path getResourcesExtractionPath() {
-    return EXTRACTION_PATH;
+    return EXTRACTION_PATH.resolve("resources");
   }
 
   @Override
   public Path getClassesExtractionPath() {
-    return EXTRACTION_PATH;
+    return EXTRACTION_PATH.resolve("classes");
   }
 }
