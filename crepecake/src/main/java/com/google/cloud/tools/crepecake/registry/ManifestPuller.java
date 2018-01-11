@@ -90,6 +90,7 @@ class ManifestPuller implements RegistryEndpointProvider<ManifestTemplate> {
     return HttpMethods.GET;
   }
 
+  @Override
   public String getActionDescription() {
     return "pull image manifest for "
         + registryEndpointProperties.getServerUrl()

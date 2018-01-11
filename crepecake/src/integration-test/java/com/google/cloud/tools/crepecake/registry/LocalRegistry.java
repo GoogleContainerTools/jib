@@ -34,8 +34,13 @@ class LocalRegistry extends ExternalResource {
   }
 
   void pullBusybox() throws IOException, InterruptedException {
+    // Pulls 'busybox'.
     runCommand("docker pull busybox");
+
+    // Tags 'busybox' to push to our local registry.
     runCommand("docker tag busybox localhost:" + port + "/busybox");
+
+    // Pushes 'busybox' to our local registry.
     runCommand("docker push localhost:" + port + "/busybox");
   }
 
@@ -49,15 +54,6 @@ class LocalRegistry extends ExternalResource {
             + ":5000 --restart=always --name "
             + containerName
             + " registry:2");
-
-    // Pulls 'busybox'.
-    runCommand("docker pull busybox");
-
-    // Tags 'busybox' to push to our local registry.
-    runCommand("docker tag busybox localhost:" + port + "/busybox");
-
-    // Pushes 'busybox' to our local registry.
-    runCommand("docker push localhost:" + port + "/busybox");
   }
 
   /** Stops the local registry. */
