@@ -41,6 +41,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -121,15 +122,13 @@ public class StepIntegrationTest {
       PushImageStep pushImageStep = new PushImageStep(buildConfiguration, null);
       pushImageStep.run(image);
 
+      // TODO: Put this in a utility function.
       Runtime.getRuntime().exec("docker pull localhost:5000/testimage:testtag").waitFor();
       Process process = Runtime.getRuntime().exec("docker run localhost:5000/testimage:testtag");
       try (InputStreamReader inputStreamReader =
           new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)) {
-        System.out.println(CharStreams.toString(inputStreamReader));
-      }
-      try (InputStreamReader inputStreamReader =
-          new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8)) {
-        System.out.println(CharStreams.toString(inputStreamReader));
+        String output = CharStreams.toString(inputStreamReader);
+        Assert.assertEquals("Hello world\n", output);
       }
       process.waitFor();
 
