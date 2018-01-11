@@ -33,6 +33,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -87,7 +88,8 @@ public class CacheWriter {
 
       CachedLayer cachedLayer = new CachedLayer(layerFile, compressedBlobDescriptor, diffId);
       LayerMetadata layerMetadata =
-          new LayerMetadata(layerBuilder.getSourceFiles(), FileTime.from(Instant.now()));
+          new LayerMetadata(
+              new HashSet<>(layerBuilder.getSourceFiles()), FileTime.from(Instant.now()));
       cache.addLayerToMetadata(layerType, cachedLayer, layerMetadata);
       return cachedLayer;
     }

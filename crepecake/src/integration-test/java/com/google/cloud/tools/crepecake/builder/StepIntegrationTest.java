@@ -154,7 +154,6 @@ public class StepIntegrationTest {
         classPaths);
 
     String entrypoint = String.join(":", classPaths);
-    System.out.println(entrypoint);
 
     return Arrays.asList("java", "-cp", entrypoint, mainClass);
   }
