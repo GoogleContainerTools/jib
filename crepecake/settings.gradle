@@ -1,2 +1,3 @@
 rootProject.name = 'crepecake'
+include 'jib-maven-plugin'
 
