@@ -22,7 +22,7 @@ import com.google.api.client.http.HttpResponseException;
  * Thrown when an HTTP request to a registry endpoint failed with errors as defined in {@link
  * ErrorCodes}.
  */
-public class RegistryErrorException extends Exception {
+public class RegistryErrorException extends RegistryException {
 
   RegistryErrorException(String message, HttpResponseException cause) {
     super(message, cause);

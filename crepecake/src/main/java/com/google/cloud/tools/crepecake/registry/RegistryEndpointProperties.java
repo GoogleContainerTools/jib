@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2018 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,26 @@
 
 package com.google.cloud.tools.crepecake.registry;
 
-/** Thrown when a registry request was unauthorized and therefore authentication is needed. */
-public class RegistryUnauthorizedException extends RegistryException {
+/** Properties of registry endpoints. */
+class RegistryEndpointProperties {
 
-  RegistryUnauthorizedException(Throwable cause) {
-    super(cause);
+  private final String serverUrl;
+  private final String imageName;
+
+  /**
+   * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
+   * @param imageName the image/repository name (also known as, namespace)
+   */
+  RegistryEndpointProperties(String serverUrl, String imageName) {
+    this.serverUrl = serverUrl;
+    this.imageName = imageName;
+  }
+
+  String getServerUrl() {
+    return serverUrl;
+  }
+
+  String getImageName() {
+    return imageName;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2018 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 
 package com.google.cloud.tools.crepecake.registry;
 
-/** Thrown when a registry request was unauthorized and therefore authentication is needed. */
-public class RegistryUnauthorizedException extends RegistryException {
+/** Thrown when a pulled BLOB did not have the same digest as requested. */
+public class UnexpectedBlobDigestException extends RegistryException {
 
-  RegistryUnauthorizedException(Throwable cause) {
-    super(cause);
+  UnexpectedBlobDigestException(String message) {
+    super(message);
   }
 }

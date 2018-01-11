@@ -18,34 +18,22 @@ package com.google.cloud.tools.crepecake.registry;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.api.client.http.HttpResponseException;
 import com.google.cloud.tools.crepecake.blob.Blobs;
-import com.google.cloud.tools.crepecake.http.Authorization;
-import com.google.cloud.tools.crepecake.http.Connection;
-import com.google.cloud.tools.crepecake.http.Request;
 import com.google.cloud.tools.crepecake.http.Response;
 import com.google.cloud.tools.crepecake.image.json.ManifestTemplate;
 import com.google.cloud.tools.crepecake.image.json.UnknownManifestFormatException;
 import com.google.cloud.tools.crepecake.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.crepecake.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
-import com.google.cloud.tools.crepecake.registry.json.ErrorEntryTemplate;
-import com.google.cloud.tools.crepecake.registry.json.ErrorResponseTemplate;
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import javax.annotation.Nullable;
 
-/** Registry interface for pulling an image's manifest. */
-public class ManifestPuller {
+/** Pulls an image's manifest. */
+class ManifestPuller implements RegistryEndpointProvider<ManifestTemplate> {
 
-  // TODO: This should be configurable.
-  private static final String PROTOCOL = "http";
-
-  @Nullable private final Authorization authorization;
-  private final String serverUrl;
-  private final String baseImage;
+  private final RegistryEndpointProperties registryEndpointProperties;
+  private final String imageTag;
 
   /**
    * Instantiates a {@link ManifestTemplate} from a JSON string. This checks the {@code
@@ -74,55 +62,30 @@ public class ManifestPuller {
     }
   }
 
-  public ManifestPuller(@Nullable Authorization authorization, String serverUrl, String baseImage) {
-    this.authorization = authorization;
-    this.serverUrl = serverUrl;
-    this.baseImage = baseImage;
+  ManifestPuller(RegistryEndpointProperties registryEndpointProperties, String imageTag) {
+    this.registryEndpointProperties = registryEndpointProperties;
+    this.imageTag = imageTag;
   }
 
-  public ManifestTemplate pull(String imageTag)
-      throws IOException, RegistryErrorException, RegistryUnauthorizedException,
-          UnknownManifestFormatException {
-    URL pullUrl = getApiRoute("/manifests/" + imageTag);
-
-    try (Connection connection = new Connection(pullUrl)) {
-      Request.Builder builder = Request.builder();
-      if (authorization != null) {
-        builder.setAuthorization(authorization);
-      }
-      Response response = connection.get(builder.build());
-      String responseString = Blobs.writeToString(response.getBody());
-
-      return getManifestTemplateFromJson(responseString);
-
-    } catch (HttpResponseException ex) {
-      switch (ex.getStatusCode()) {
-        case HttpURLConnection.HTTP_BAD_REQUEST:
-        case HttpURLConnection.HTTP_NOT_FOUND:
-          // The name or reference was invalid.
-          ErrorResponseTemplate errorResponse;
-          errorResponse = JsonTemplateMapper.readJson(ex.getContent(), ErrorResponseTemplate.class);
-          String method = "pull image manifest for " + serverUrl + "/" + baseImage + ":" + imageTag;
-          RegistryErrorExceptionBuilder registryErrorExceptionBuilder =
-              new RegistryErrorExceptionBuilder(method, ex);
-          for (ErrorEntryTemplate errorEntry : errorResponse.getErrors()) {
-            registryErrorExceptionBuilder.addErrorEntry(errorEntry);
-          }
-
-          throw registryErrorExceptionBuilder.build();
-
-        case HttpURLConnection.HTTP_UNAUTHORIZED:
-        case HttpURLConnection.HTTP_FORBIDDEN:
-          throw new RegistryUnauthorizedException(ex);
-
-        default: // Unknown
-          throw ex;
-      }
-    }
+  /** Parses the response body into a {@link ManifestTemplate}. */
+  @Override
+  public ManifestTemplate handleResponse(Response response)
+      throws IOException, UnknownManifestFormatException {
+    return getManifestTemplateFromJson(Blobs.writeToString(response.getBody()));
   }
 
-  private URL getApiRoute(String route) throws MalformedURLException {
-    String apiBase = "/v2/";
-    return new URL(PROTOCOL + "://" + serverUrl + apiBase + baseImage + route);
+  @Override
+  public URL getApiRoute(String apiRouteBase) throws MalformedURLException {
+    return new URL(apiRouteBase + "/manifests/" + imageTag);
+  }
+
+  @Override
+  public String getActionDescription() {
+    return "pull image manifest for "
+        + registryEndpointProperties.getServerUrl()
+        + "/"
+        + registryEndpointProperties.getImageName()
+        + ":"
+        + imageTag;
   }
 }
