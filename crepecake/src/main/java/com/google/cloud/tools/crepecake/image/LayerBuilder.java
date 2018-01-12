@@ -17,29 +17,60 @@
 package com.google.cloud.tools.crepecake.image;
 
 import com.google.cloud.tools.crepecake.tar.TarStreamBuilder;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 
 /** Builds an {@link UnwrittenLayer} from files. */
 public class LayerBuilder {
 
-  /** The partial filesystem changeset to build the layer with. */
-  private final List<TarArchiveEntry> filesystemEntries = new ArrayList<>();
-
   /**
-   * Prepares a file to be built into the layer.
+   * The source files to build the layer from. Source files that are directories will have all
+   * subfiles in the directory added (but not the directory itself).
    *
-   * @param file the file to add
-   * @param extractionPath the path of the file in the partial filesystem changeset
+   * <p>The source files are specified as a list instead of a set to define the order in which they
+   * are added.
    */
-  public void addFile(Path file, String extractionPath) {
-    filesystemEntries.add(new TarArchiveEntry(file.toFile(), extractionPath));
+  private final List<Path> sourceFiles;
+
+  /** The path of the file in the partial filesystem changeset. */
+  private final Path extractionPath;
+
+  public LayerBuilder(List<Path> sourceFiles, Path extractionPath) {
+    this.sourceFiles = sourceFiles;
+    this.extractionPath = extractionPath;
+  }
+
+  public LayerBuilder(Set<Path> sourceFiles, Path extractionPath) {
+    this(new ArrayList<>(sourceFiles), extractionPath);
   }
 
   /** Builds and returns the layer. */
-  public UnwrittenLayer build() {
+  public UnwrittenLayer build() throws IOException {
+    List<TarArchiveEntry> filesystemEntries = new ArrayList<>();
+
+    for (Path sourceFile : sourceFiles) {
+      if (Files.isDirectory(sourceFile)) {
+        Files.walk(sourceFile)
+            .filter(path -> !path.equals(sourceFile))
+            .forEach(
+                path -> {
+                  Path subExtractionPath = extractionPath.resolve(sourceFile.relativize(path));
+                  filesystemEntries.add(
+                      new TarArchiveEntry(path.toFile(), subExtractionPath.toString()));
+                });
+        continue;
+      }
+
+      filesystemEntries.add(
+          new TarArchiveEntry(
+              sourceFile.toFile(), extractionPath.resolve(sourceFile.getFileName()).toString()));
+    }
+
     TarStreamBuilder tarStreamBuilder = new TarStreamBuilder();
 
     // Adds all the files to a tar stream.
@@ -48,5 +79,9 @@ public class LayerBuilder {
     }
 
     return new UnwrittenLayer(tarStreamBuilder.toBlob());
+  }
+
+  public List<Path> getSourceFiles() {
+    return sourceFiles;
   }
 }

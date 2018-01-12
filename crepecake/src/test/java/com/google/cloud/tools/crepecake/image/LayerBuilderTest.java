@@ -27,6 +27,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.junit.Assert;
@@ -45,18 +47,11 @@ public class LayerBuilderTest {
   @Test
   public void testBuild() throws URISyntaxException, IOException {
     Path layerDirectory = Paths.get(Resources.getResource("layer").toURI());
+    Path blobA = Paths.get(Resources.getResource("blobA").toURI());
 
-    LayerBuilder layerBuilder = new LayerBuilder();
-
-    // Adds each file in the layer directory to the layer builder.
-    Files.walk(layerDirectory)
-        .filter(path -> !path.equals(layerDirectory))
-        .forEach(
-            path -> {
-              Path extractionPathBase = Paths.get("extract/here");
-              Path extractionPath = extractionPathBase.resolve(layerDirectory.relativize(path));
-              layerBuilder.addFile(path, extractionPath.toString());
-            });
+    Path extractionPathBase = Paths.get("extract", "here");
+    LayerBuilder layerBuilder =
+        new LayerBuilder(new ArrayList<>(Arrays.asList(layerDirectory, blobA)), extractionPathBase);
 
     // Writes the layer tar to a temporary file.
     UnwrittenLayer unwrittenLayer = layerBuilder.build();
@@ -78,7 +73,7 @@ public class LayerBuilderTest {
                   TarArchiveEntry header = tarArchiveInputStream.getNextTarEntry();
 
                   Path expectedExtractionPath =
-                      Paths.get("extract/here").resolve(layerDirectory.relativize(path));
+                      Paths.get("extract", "here").resolve(layerDirectory.relativize(path));
                   Assert.assertEquals(expectedExtractionPath, Paths.get(header.getName()));
 
                   // If is a normal file, checks that the file contents match.
@@ -96,6 +91,19 @@ public class LayerBuilderTest {
                   throw new RuntimeException(ex);
                 }
               });
+
+      // Verifies that blobA was added.
+      TarArchiveEntry header = tarArchiveInputStream.getNextTarEntry();
+      Path expectedExtractionPath = Paths.get("extract", "here", "blobA");
+      Assert.assertEquals(expectedExtractionPath, Paths.get(header.getName()));
+
+      String expectedFileString = new String(Files.readAllBytes(blobA), StandardCharsets.UTF_8);
+
+      String extractedFileString =
+          CharStreams.toString(
+              new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
+
+      Assert.assertEquals(expectedFileString, extractedFileString);
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2018 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,7 +22,7 @@ import com.google.api.client.http.HttpResponseException;
  * Thrown when an HTTP request to a registry endpoint failed with errors as defined in {@link
  * ErrorCodes}.
  */
-public class RegistryErrorException extends Exception {
+public class RegistryErrorException extends RegistryException {
 
   RegistryErrorException(String message, HttpResponseException cause) {
     super(message, cause);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2018 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,7 +23,6 @@ import com.google.cloud.tools.crepecake.image.Image;
 import com.google.cloud.tools.crepecake.image.Layer;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
-import java.io.IOException;
 
 /**
  * Translates an {@link Image} into a manifest or container configuration JSON BLOB.
@@ -47,7 +46,7 @@ public class ImageToJsonTranslator {
   }
 
   /** Gets the container configuration as a {@link Blob}. */
-  public Blob getContainerConfigurationBlob() throws IOException, LayerPropertyNotFoundException {
+  public Blob getContainerConfigurationBlob() throws LayerPropertyNotFoundException {
     // Set up the JSON template.
     ContainerConfigurationTemplate template = new ContainerConfigurationTemplate();
 
@@ -67,12 +66,12 @@ public class ImageToJsonTranslator {
   }
 
   /**
-   * Gets the manifest as a {@link Blob}. The {@code containerConfigurationBlobDescriptor} must be
+   * Gets the manifest as a JSON template. The {@code containerConfigurationBlobDescriptor} must be
    * the [@link BlobDescriptor} obtained by writing out the container configuration {@link Blob}
    * returned from {@link #getContainerConfigurationBlob()}.
    */
-  public Blob getManifestBlob(BlobDescriptor containerConfigurationBlobDescriptor)
-      throws IOException, LayerPropertyNotFoundException {
+  public V22ManifestTemplate getManifestTemplate(
+      BlobDescriptor containerConfigurationBlobDescriptor) throws LayerPropertyNotFoundException {
     // Set up the JSON template.
     V22ManifestTemplate template = new V22ManifestTemplate();
 
@@ -88,6 +87,6 @@ public class ImageToJsonTranslator {
     }
 
     // Serializes into JSON.
-    return JsonTemplateMapper.toBlob(template);
+    return template;
   }
 }

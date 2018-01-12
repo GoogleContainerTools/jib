@@ -52,7 +52,7 @@ public class CacheMetadataTranslatorTest {
   private DescriptorDigest classesLayerDiffId;
 
   private final List<String> classesLayerSourceFiles =
-      Collections.singletonList(Paths.get("some/source/path").toString());
+      Collections.singletonList(Paths.get("some", "source", "path").toString());
   private final FileTime classesLayerLastModifiedTime = FileTime.fromMillis(255073580723571L);
 
   @Before
@@ -146,7 +146,7 @@ public class CacheMetadataTranslatorTest {
 
     // Serializes the JSON object.
     ByteArrayOutputStream jsonStream = new ByteArrayOutputStream();
-    JsonTemplateMapper.writeJson(jsonStream, cacheMetadataTemplate);
+    JsonTemplateMapper.toBlob(cacheMetadataTemplate).writeTo(jsonStream);
 
     Assert.assertEquals(expectedJson, jsonStream.toString());
   }

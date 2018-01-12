@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2018 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.crepecake.image.json;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
@@ -48,6 +49,7 @@ import java.util.List;
  * @see <a href="https://docs.docker.com/registry/spec/manifest-v2-2/">Image Manifest Version 2,
  *     Schema 2</a>
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ContainerConfigurationTemplate extends JsonTemplate {
 
   /** The CPU architecture to run the binaries in this container. */
@@ -63,6 +65,7 @@ public class ContainerConfigurationTemplate extends JsonTemplate {
   private final RootFilesystemObjectTemplate rootfs = new RootFilesystemObjectTemplate();
 
   /** Template for inner JSON object representing the configuration for running the container. */
+  @JsonIgnoreProperties(ignoreUnknown = true)
   private static class ConfigurationObjectTemplate extends JsonTemplate {
 
     /** Environment variables in the format {@code VARNAME=VARVALUE}. */

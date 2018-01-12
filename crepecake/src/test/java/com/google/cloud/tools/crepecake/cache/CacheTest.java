@@ -58,11 +58,16 @@ public class CacheTest {
       throws URISyntaxException, IOException, CacheMetadataCorruptedException {
     Path cacheDirectory = temporaryCacheDirectory.newFolder().toPath();
 
-    Path metadataJsonPath =
+    Path resourceMetadataJsonPath =
         Paths.get(getClass().getClassLoader().getResource("json/metadata.json").toURI());
-    Files.copy(metadataJsonPath, cacheDirectory.resolve(CacheFiles.METADATA_FILENAME));
+    Path testMetadataJsonPath = cacheDirectory.resolve(CacheFiles.METADATA_FILENAME);
+    Files.copy(resourceMetadataJsonPath, testMetadataJsonPath);
 
-    Cache cache = Cache.init(cacheDirectory);
-    Assert.assertEquals(2, cache.getMetadata().getLayers().getLayers().size());
+    try (Cache cache = Cache.init(cacheDirectory)) {
+      Assert.assertEquals(2, cache.getMetadata().getLayers().getLayers().size());
+    }
+
+    Assert.assertArrayEquals(
+        Files.readAllBytes(resourceMetadataJsonPath), Files.readAllBytes(testMetadataJsonPath));
   }
 }

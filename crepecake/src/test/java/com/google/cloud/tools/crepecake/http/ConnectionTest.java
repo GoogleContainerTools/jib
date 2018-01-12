@@ -62,6 +62,7 @@ public class ConnectionTest {
         Request.builder()
             .setBody(fakeBlob)
             .setContentType("fake.content.type")
+            .setAccept("fake.accept")
             .setAuthorization(Authorizations.withBasicToken("fake-token"))
             .build();
 
@@ -105,6 +106,7 @@ public class ConnectionTest {
     Mockito.verify(mockHttpResponse).disconnect();
 
     Assert.assertEquals("fake.content.type", httpHeadersArgumentCaptor.getValue().getContentType());
+    Assert.assertEquals("fake.accept", httpHeadersArgumentCaptor.getValue().getAccept());
     Assert.assertEquals(
         "Basic fake-token", httpHeadersArgumentCaptor.getValue().getAuthorization());
 

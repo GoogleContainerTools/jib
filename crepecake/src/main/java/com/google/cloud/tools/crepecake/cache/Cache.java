@@ -17,15 +17,21 @@
 package com.google.cloud.tools.crepecake.cache;
 
 import com.google.cloud.tools.crepecake.cache.json.CacheMetadataTemplate;
+import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
+import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
+import java.io.BufferedOutputStream;
+import java.io.Closeable;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
+import javax.annotation.Nullable;
 
-/** Manages a cache. */
-class Cache {
+/** Manages a cache. Implementation is thread-safe. */
+public class Cache implements Closeable {
 
   /** The path to the root of the cache. */
   private final Path cacheDirectory;
@@ -37,7 +43,7 @@ class Cache {
    * Initializes a cache with a directory. This also loads the cache metadata if it exists in the
    * directory.
    */
-  static Cache init(Path cacheDirectory)
+  public static Cache init(Path cacheDirectory)
       throws NotDirectoryException, CacheMetadataCorruptedException {
     if (!Files.isDirectory(cacheDirectory)) {
       throw new NotDirectoryException("The cache can only write to a directory");
@@ -71,6 +77,19 @@ class Cache {
     this.cacheMetadata = cacheMetadata;
   }
 
+  /** Finishes the use of the cache by flushing any unsaved changes. */
+  @Override
+  public void close() throws IOException {
+    saveCacheMetadata(cacheDirectory);
+  }
+
+  /** Adds the cached layer to the cache metadata. */
+  void addLayerToMetadata(
+      CachedLayerType layerType, CachedLayer cachedLayer, @Nullable LayerMetadata layerMetadata)
+      throws LayerPropertyNotFoundException, DuplicateLayerException {
+    cacheMetadata.addLayer(new CachedLayerWithMetadata(cachedLayer, layerType, layerMetadata));
+  }
+
   @VisibleForTesting
   Path getCacheDirectory() {
     return cacheDirectory;
@@ -79,5 +98,17 @@ class Cache {
   @VisibleForTesting
   CacheMetadata getMetadata() {
     return cacheMetadata;
+  }
+
+  /** Saves the updated cache metadata back to the cache. */
+  private void saveCacheMetadata(Path cacheDirectory) throws IOException {
+    Path cacheMetadataJsonFile = cacheDirectory.resolve(CacheFiles.METADATA_FILENAME);
+
+    CacheMetadataTemplate cacheMetadataJson = CacheMetadataTranslator.toTemplate(cacheMetadata);
+
+    try (OutputStream fileOutputStream =
+        new BufferedOutputStream(Files.newOutputStream(cacheMetadataJsonFile))) {
+      JsonTemplateMapper.toBlob(cacheMetadataJson).writeTo(fileOutputStream);
+    }
   }
 }

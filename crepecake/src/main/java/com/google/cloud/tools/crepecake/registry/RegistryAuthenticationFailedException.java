@@ -19,7 +19,13 @@ package com.google.cloud.tools.crepecake.registry;
 /** Thrown because registry authentication failed. */
 public class RegistryAuthenticationFailedException extends Exception {
 
+  private static final String REASON_PREFIX = "Failed to authenticate with the registry because: ";
+
   RegistryAuthenticationFailedException(Throwable cause) {
-    super("Failed to authenticate with the registry because: " + cause.getMessage(), cause);
+    super(REASON_PREFIX + cause.getMessage(), cause);
+  }
+
+  RegistryAuthenticationFailedException(String reason) {
+    super(REASON_PREFIX + reason);
   }
 }

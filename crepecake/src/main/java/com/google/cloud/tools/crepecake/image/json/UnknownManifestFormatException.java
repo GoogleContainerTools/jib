@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2018 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,8 +16,10 @@
 
 package com.google.cloud.tools.crepecake.image.json;
 
+import com.google.cloud.tools.crepecake.registry.RegistryException;
+
 /** Exception thrown when trying to parse an unknown image manifest format. */
-public class UnknownManifestFormatException extends Exception {
+public class UnknownManifestFormatException extends RegistryException {
 
   public UnknownManifestFormatException(String message) {
     super(message);

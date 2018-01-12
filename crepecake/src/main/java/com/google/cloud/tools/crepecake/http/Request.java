@@ -50,6 +50,12 @@ public class Request {
       return this;
     }
 
+    /** Sets the {@code Accept} header. */
+    public Builder setAccept(String accept) {
+      headers.setAccept(accept);
+      return this;
+    }
+
     public Builder setBody(Blob body) {
       this.body = new BlobHttpContent(body);
       return this;
