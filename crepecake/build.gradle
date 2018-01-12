@@ -2,6 +2,7 @@ plugins {
     id 'java-gradle-plugin'
     id 'checkstyle'
     id 'com.github.sherter.google-java-format' version '0.6'
+    id 'maven-publish'
 }
 
 group 'com.google.cloud.tools'
@@ -38,6 +39,24 @@ dependencies {
     compile 'com.fasterxml.jackson.core:jackson-databind:2.9.2'
     testCompile 'junit:junit:4.12'
     testCompile 'org.mockito:mockito-core:2.12.0'
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            groupId 'com.google.cloud.tools.jib'
+            artifactId 'jib-core'
+            version '0.0.1'
+
+            from components.java
+        }
+    }
+    // Publishes to a local repo at "build/repo".
+    repositories {
+        maven {
+            url "$buildDir/repo"
+        }
+    }
 }
 
 task wrapper(type: Wrapper) {

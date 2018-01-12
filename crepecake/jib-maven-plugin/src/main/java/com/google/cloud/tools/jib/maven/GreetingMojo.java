@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.cloud.tools.crepecake.blob.Blobs;
+import java.io.IOException;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -24,7 +26,14 @@ import org.apache.maven.plugins.annotations.Mojo;
 @Mojo(name = "sayhi")
 public class GreetingMojo extends AbstractMojo {
 
+  @Override
   public void execute() throws MojoExecutionException {
     getLog().info("Hello, world.");
+
+    try {
+      Blobs.from("Hihi").writeTo(System.out);
+    } catch (IOException ex) {
+      throw new MojoExecutionException("", ex);
+    }
   }
 }
