@@ -16,6 +16,11 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.logging.Logger;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
 import org.junit.ClassRule;
@@ -29,10 +34,20 @@ public class GreetingMojoTest {
 
   @Rule public final TestProject testProject = new TestProject(testPlugin);
 
+  private static Logger log = Logger.getLogger("info");
+
   @Test
-  public void testExecute() throws VerificationException {
+  public void testExecute() throws VerificationException, IOException {
+    System.out.println("WTFFF");
+
     Verifier verifier = new Verifier(testProject.getProjectRoot().toString());
     verifier.executeGoal("jib:sayhi");
     verifier.verifyErrorFreeLog();
+
+    System.out.println(Paths.get(verifier.getLogFileName()));
+    log.info("I'm starting");
+    System.out.println(
+        new String(
+            Files.readAllBytes(Paths.get(verifier.getLogFileName())), StandardCharsets.UTF_8));
   }
 }

@@ -16,24 +16,66 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.crepecake.blob.Blobs;
-import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.project.MavenProject;
 
 /** Says "Hi" to the user. */
 @Mojo(name = "sayhi")
 public class GreetingMojo extends AbstractMojo {
 
+  @Parameter(defaultValue = "${project}", readonly = true)
+  private MavenProject project;
+
   @Override
   public void execute() throws MojoExecutionException {
-    getLog().info("Hello, world.");
+    // Gets the dependencies.
 
+  }
+
+  @Deprecated
+  private void projectVals() {
+    System.out.println("afdsfsda");
+    getLog().info("Hello world");
+
+    getLog().info("Source:");
+    Path sourceDir = Paths.get(project.getBuild().getSourceDirectory());
+    getLog().info(sourceDir.toString());
+
+    getLog().info("Classes:");
+    Path classesDir = Paths.get(project.getBuild().getOutputDirectory());
+    getLog().info(classesDir.toString());
+
+    getLog().info("Resources:");
+    project
+        .getResources()
+        .forEach(resource -> getLog().info("Resource: " + resource.getDirectory()));
+
+    getLog().info("Artifacts:");
+    project.getArtifacts().forEach(artifact -> getLog().info(artifact.getFile().toString()));
+
+    getLog().info("Dependencies:");
+    project.getDependencies().forEach(dependency -> getLog().info(dependency.getSystemPath()));
+
+    getLog().info("Compile classpath:");
     try {
-      Blobs.from("Hihi").writeTo(System.out);
-    } catch (IOException ex) {
+      project.getCompileClasspathElements().forEach(classpath -> getLog().info(classpath));
+    } catch (DependencyResolutionRequiredException ex) {
       throw new MojoExecutionException("", ex);
     }
+
+    getLog().info("Runtime classpath:");
+    try {
+      project.getRuntimeClasspathElements().forEach(classpath -> getLog().info(classpath));
+    } catch (DependencyResolutionRequiredException ex) {
+      throw new MojoExecutionException("", ex);
+    }
+
+    throw new MojoExecutionException("WHAT");
   }
 }
