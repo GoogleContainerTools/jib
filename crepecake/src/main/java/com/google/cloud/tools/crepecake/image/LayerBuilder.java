@@ -17,7 +17,7 @@
 package com.google.cloud.tools.crepecake.image;
 
 import com.google.cloud.tools.crepecake.tar.TarStreamBuilder;
-import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -34,8 +34,8 @@ public class LayerBuilder {
    * @param file the file to add
    * @param extractionPath the path of the file in the partial filesystem changeset
    */
-  public void addFile(File file, String extractionPath) {
-    filesystemEntries.add(new TarArchiveEntry(file, extractionPath));
+  public void addFile(Path file, String extractionPath) {
+    filesystemEntries.add(new TarArchiveEntry(file.toFile(), extractionPath));
   }
 
   /** Builds and returns the layer. */

@@ -17,24 +17,24 @@
 package com.google.cloud.tools.crepecake.blob;
 
 import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
-/** A {@link Blob} that holds a {@link File}. */
+/** A {@link Blob} that holds a {@link Path}. */
 class FileBlob implements Blob {
 
-  private final File file;
+  private final Path file;
 
-  FileBlob(File file) {
+  FileBlob(Path file) {
     this.file = file;
   }
 
   @Override
   public BlobDescriptor writeTo(OutputStream outputStream) throws IOException {
-    try (InputStream fileStream = new BufferedInputStream(new FileInputStream(file))) {
+    try (InputStream fileStream = new BufferedInputStream(Files.newInputStream(file))) {
       return BlobDescriptor.fromPipe(fileStream, outputStream);
     }
   }

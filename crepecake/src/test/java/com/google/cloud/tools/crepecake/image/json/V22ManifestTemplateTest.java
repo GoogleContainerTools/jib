@@ -20,7 +20,6 @@ import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
 import com.google.common.io.Resources;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -63,7 +62,7 @@ public class V22ManifestTemplateTest {
   @Test
   public void testFromJson() throws IOException, URISyntaxException, DigestException {
     // Loads the JSON string.
-    File jsonFile = new File(Resources.getResource("json/v22manifest.json").toURI());
+    Path jsonFile = Paths.get(Resources.getResource("json/v22manifest.json").toURI());
 
     // Deserializes into a manifest JSON object.
     V22ManifestTemplate manifestJson =

@@ -19,7 +19,6 @@ package com.google.cloud.tools.crepecake.cache;
 import com.google.cloud.tools.crepecake.cache.json.CacheMetadataTemplate;
 import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NotDirectoryException;
@@ -50,9 +49,9 @@ class Cache {
 
   private static CacheMetadata loadCacheMetadata(Path cacheDirectory)
       throws CacheMetadataCorruptedException {
-    File cacheMetadataJsonFile = cacheDirectory.resolve(CacheFiles.METADATA_FILENAME).toFile();
+    Path cacheMetadataJsonFile = cacheDirectory.resolve(CacheFiles.METADATA_FILENAME);
 
-    if (!cacheMetadataJsonFile.exists()) {
+    if (!Files.exists(cacheMetadataJsonFile)) {
       return new CacheMetadata();
     }
 

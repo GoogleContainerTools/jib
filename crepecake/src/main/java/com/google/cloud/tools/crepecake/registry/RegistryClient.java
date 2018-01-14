@@ -196,32 +196,31 @@ public class RegistryClient {
       return registryEndpointProvider.handleResponse(response);
 
     } catch (HttpResponseException ex) {
-      switch (ex.getStatusCode()) {
-        case HttpStatusCodes.STATUS_CODE_BAD_REQUEST:
-        case HttpStatusCodes.STATUS_CODE_NOT_FOUND:
-        case HttpStatusCodes.STATUS_CODE_METHOD_NOT_ALLOWED:
-          // The name or reference was invalid.
-          ErrorResponseTemplate errorResponse =
-              JsonTemplateMapper.readJson(ex.getContent(), ErrorResponseTemplate.class);
-          RegistryErrorExceptionBuilder registryErrorExceptionBuilder =
-              new RegistryErrorExceptionBuilder(
-                  registryEndpointProvider.getActionDescription(), ex);
-          for (ErrorEntryTemplate errorEntry : errorResponse.getErrors()) {
-            registryErrorExceptionBuilder.addReason(errorEntry);
-          }
+      if (ex.getStatusCode() == HttpStatusCodes.STATUS_CODE_BAD_REQUEST
+          || ex.getStatusCode() == HttpStatusCodes.STATUS_CODE_NOT_FOUND
+          || ex.getStatusCode() == HttpStatusCodes.STATUS_CODE_METHOD_NOT_ALLOWED) {
+        // The name or reference was invalid.
+        ErrorResponseTemplate errorResponse =
+            JsonTemplateMapper.readJson(ex.getContent(), ErrorResponseTemplate.class);
+        RegistryErrorExceptionBuilder registryErrorExceptionBuilder =
+            new RegistryErrorExceptionBuilder(registryEndpointProvider.getActionDescription(), ex);
+        for (ErrorEntryTemplate errorEntry : errorResponse.getErrors()) {
+          registryErrorExceptionBuilder.addReason(errorEntry);
+        }
 
-          throw registryErrorExceptionBuilder.build();
+        throw registryErrorExceptionBuilder.build();
 
-        case HttpStatusCodes.STATUS_CODE_UNAUTHORIZED:
-        case HttpStatusCodes.STATUS_CODE_FORBIDDEN:
-          throw new RegistryUnauthorizedException(ex);
+      } else if (ex.getStatusCode() == HttpStatusCodes.STATUS_CODE_UNAUTHORIZED
+          || ex.getStatusCode() == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
+        throw new RegistryUnauthorizedException(ex);
 
-        case HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT: // Temporary Redirect
-          return callRegistryEndpoint(
-              new URL(ex.getHeaders().getLocation()), registryEndpointProvider);
+      } else if (ex.getStatusCode() == HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT) {
+        return callRegistryEndpoint(
+            new URL(ex.getHeaders().getLocation()), registryEndpointProvider);
 
-        default: // Unknown
-          throw ex;
+      } else {
+        // Unknown
+        throw ex;
       }
 
     } catch (NoHttpResponseException ex) {
