@@ -19,6 +19,10 @@ package com.google.cloud.tools.crepecake.blob;
 import java.io.IOException;
 import java.io.OutputStream;
 
+/**
+ * This function writes the contents of a BLOB. This function should write the same BLOB regardless
+ * of the number of times it is called.
+ */
 @FunctionalInterface
 public interface BlobWriter {
 

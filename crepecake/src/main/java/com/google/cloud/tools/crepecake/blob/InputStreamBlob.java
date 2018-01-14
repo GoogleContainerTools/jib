@@ -25,14 +25,24 @@ class InputStreamBlob implements Blob {
 
   private final InputStream inputStream;
 
+  /** Indicates if the {@link Blob} has already been written or not. */
+  private boolean isWritten = false;
+
   InputStreamBlob(InputStream inputStream) {
     this.inputStream = inputStream;
   }
 
   @Override
   public BlobDescriptor writeTo(OutputStream outputStream) throws IOException {
+    // Cannot rewrite.
+    if (isWritten) {
+      throw new IllegalStateException("Cannot rewrite Blob backed by an InputStream");
+    }
     try (InputStream inputStream = this.inputStream) {
       return BlobDescriptor.fromPipe(inputStream, outputStream);
+
+    } finally {
+      isWritten = true;
     }
   }
 }
