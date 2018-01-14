@@ -29,17 +29,16 @@ class AuthenticatePushStep implements Step<Void, Authorization> {
 
   AuthenticatePushStep(BuildConfiguration buildConfiguration) {
     this.buildConfiguration = buildConfiguration;
-
-    if (buildConfiguration.getCredentialHelperName() == null) {
-      throw new IllegalArgumentException(
-          "Cannot authenticate push without a credential helper name specified in the build configuration");
-    }
   }
 
   @Override
   public Authorization run(Void input)
       throws NonexistentServerUrlDockerCredentialHelperException,
           NonexistentDockerCredentialHelperException, IOException {
+    if (buildConfiguration.getCredentialHelperName() == null) {
+      return null;
+    }
+
     DockerCredentialRetriever dockerCredentialRetriever =
         new DockerCredentialRetriever(
             buildConfiguration.getTargetServerUrl(), buildConfiguration.getCredentialHelperName());
