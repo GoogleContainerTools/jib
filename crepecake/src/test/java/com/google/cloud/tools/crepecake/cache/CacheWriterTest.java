@@ -24,14 +24,13 @@ import com.google.cloud.tools.crepecake.image.UnwrittenLayer;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Resources;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import org.junit.Assert;
@@ -56,9 +55,8 @@ public class CacheWriterTest {
 
   @Test
   public void testWriteLayer() throws URISyntaxException, IOException {
-    File blobA = new File(Resources.getResource("blobA").toURI());
-    String expectedBlobAString =
-        new String(Files.readAllBytes(blobA.toPath()), StandardCharsets.UTF_8);
+    Path blobA = Paths.get(Resources.getResource("blobA").toURI());
+    String expectedBlobAString = new String(Files.readAllBytes(blobA), StandardCharsets.UTF_8);
 
     // Gets the expected content descriptor and diff ID.
     CountingDigestOutputStream compressedDigestOutputStream =
@@ -82,11 +80,12 @@ public class CacheWriterTest {
     CachedLayer cachedLayer = cacheWriter.writeLayer(unwrittenLayer);
 
     // Reads the cached layer back.
-    File compressedBlobFile = cachedLayer.getContentFile();
+    Path compressedBlobFile = cachedLayer.getContentFile();
 
     try (InputStreamReader fileReader =
         new InputStreamReader(
-            new GZIPInputStream(new FileInputStream(compressedBlobFile)), StandardCharsets.UTF_8)) {
+            new GZIPInputStream(Files.newInputStream(compressedBlobFile)),
+            StandardCharsets.UTF_8)) {
       String decompressedString = CharStreams.toString(fileReader);
 
       Assert.assertEquals(expectedBlobAString, decompressedString);

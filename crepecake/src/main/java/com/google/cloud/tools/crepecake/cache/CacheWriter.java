@@ -21,10 +21,9 @@ import com.google.cloud.tools.crepecake.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.image.UnwrittenLayer;
 import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.zip.GZIPOutputStream;
 
 /** Writes {@link UnwrittenLayer}s to the cache. */
@@ -39,13 +38,14 @@ public class CacheWriter {
   public CachedLayer writeLayer(UnwrittenLayer layer) throws IOException {
     // Writes to a temporary file first because the UnwrittenLayer needs to be written first to
     // obtain its digest.
-    File tempLayerFile = Files.createTempFile(cache.getCacheDirectory(), null, null).toFile();
-    tempLayerFile.deleteOnExit();
+    Path tempLayerFile = Files.createTempFile(cache.getCacheDirectory(), null, null);
+    // TODO: Find a way to do this with java.nio.file
+    tempLayerFile.toFile().deleteOnExit();
 
     // Writes the UnwrittenLayer layer BLOB to a file to convert into a CachedLayer.
     try (CountingDigestOutputStream compressedDigestOutputStream =
         new CountingDigestOutputStream(
-            new BufferedOutputStream(new FileOutputStream(tempLayerFile)))) {
+            new BufferedOutputStream(Files.newOutputStream(tempLayerFile)))) {
       // Writes the layer with GZIP compression. The original bytes are captured as the layer's
       // diff ID and the bytes outputted from the GZIP compression are captured as the layer's
       // content descriptor.
@@ -57,14 +57,19 @@ public class CacheWriter {
       BlobDescriptor compressedBlobDescriptor = compressedDigestOutputStream.toBlobDescriptor();
 
       // Renames the temporary layer file to the correct filename.
-      File layerFile =
+      Path layerFile =
           CacheFiles.getLayerFile(cache.getCacheDirectory(), compressedBlobDescriptor.getDigest());
-      if (!tempLayerFile.renameTo(layerFile)) {
+      // TODO: Should probably check for existence of target file and whether or not it's the same.
+      try {
+        Files.move(tempLayerFile, layerFile);
+
+      } catch (IOException ex) {
         throw new IOException(
             "Could not rename layer "
                 + compressedBlobDescriptor.getDigest().getHash()
                 + " to "
-                + layerFile);
+                + layerFile,
+            ex);
       }
 
       return new CachedLayer(layerFile, compressedBlobDescriptor, diffId);

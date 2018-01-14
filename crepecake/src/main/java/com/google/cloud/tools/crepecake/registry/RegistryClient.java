@@ -212,34 +212,35 @@ public class RegistryClient {
         return registryEndpointProvider.handleHttpResponseException(ex);
 
       } catch (HttpResponseException httpResponseException) {
-        switch (httpResponseException.getStatusCode()) {
-          case HttpStatusCodes.STATUS_CODE_BAD_REQUEST:
-          case HttpStatusCodes.STATUS_CODE_NOT_FOUND:
-          case HttpStatusCodes.STATUS_CODE_METHOD_NOT_ALLOWED:
-            // The name or reference was invalid.
-            ErrorResponseTemplate errorResponse =
-                JsonTemplateMapper.readJson(
-                    httpResponseException.getContent(), ErrorResponseTemplate.class);
-            RegistryErrorExceptionBuilder registryErrorExceptionBuilder =
-                new RegistryErrorExceptionBuilder(
-                    registryEndpointProvider.getActionDescription(), httpResponseException);
-            for (ErrorEntryTemplate errorEntry : errorResponse.getErrors()) {
-              registryErrorExceptionBuilder.addReason(errorEntry);
-            }
+        if (httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_BAD_REQUEST
+            || httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_NOT_FOUND
+            || httpResponseException.getStatusCode()
+                == HttpStatusCodes.STATUS_CODE_METHOD_NOT_ALLOWED) {
+          // The name or reference was invalid.
+          ErrorResponseTemplate errorResponse =
+              JsonTemplateMapper.readJson(
+                  httpResponseException.getContent(), ErrorResponseTemplate.class);
+          RegistryErrorExceptionBuilder registryErrorExceptionBuilder =
+              new RegistryErrorExceptionBuilder(
+                  registryEndpointProvider.getActionDescription(), httpResponseException);
+          for (ErrorEntryTemplate errorEntry : errorResponse.getErrors()) {
+            registryErrorExceptionBuilder.addReason(errorEntry);
+          }
 
-            throw registryErrorExceptionBuilder.build();
+          throw registryErrorExceptionBuilder.build();
 
-          case HttpStatusCodes.STATUS_CODE_UNAUTHORIZED:
-          case HttpStatusCodes.STATUS_CODE_FORBIDDEN:
-            throw new RegistryUnauthorizedException(httpResponseException);
+        } else if (httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_UNAUTHORIZED
+            || httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
+          throw new RegistryUnauthorizedException(httpResponseException);
 
-          case HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT: // Temporary Redirect
-            return callRegistryEndpoint(
-                new URL(httpResponseException.getHeaders().getLocation()),
-                registryEndpointProvider);
+        } else if (httpResponseException.getStatusCode()
+            == HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT) {
+          return callRegistryEndpoint(
+              new URL(httpResponseException.getHeaders().getLocation()), registryEndpointProvider);
 
-          default: // Unknown
-            throw httpResponseException;
+        } else {
+          // Unknown
+          throw httpResponseException;
         }
       }
 

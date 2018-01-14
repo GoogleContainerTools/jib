@@ -24,7 +24,7 @@
         "diffId": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
       },
       "properties": {
-        "sourceFiles": ["some/source/file"],
+        "sourceFiles": ["some/source/directory"],
         "lastModifiedTime": 1000
       }
     }

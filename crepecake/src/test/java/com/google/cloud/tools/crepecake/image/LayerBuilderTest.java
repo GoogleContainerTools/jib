@@ -16,15 +16,9 @@
 
 package com.google.cloud.tools.crepecake.image;
 
-import com.google.cloud.tools.crepecake.blob.Blob;
-import com.google.cloud.tools.crepecake.blob.Blobs;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Resources;
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -61,54 +55,47 @@ public class LayerBuilderTest {
             path -> {
               Path extractionPathBase = Paths.get("extract/here");
               Path extractionPath = extractionPathBase.resolve(layerDirectory.relativize(path));
-              layerBuilder.addFile(path.toFile(), extractionPath.toString());
+              layerBuilder.addFile(path, extractionPath.toString());
             });
 
     // Writes the layer tar to a temporary file.
     UnwrittenLayer unwrittenLayer = layerBuilder.build();
-    File temporaryFile = temporaryFolder.newFile();
+    Path temporaryFile = temporaryFolder.newFile().toPath();
     try (OutputStream temporaryFileOutputStream =
-        new BufferedOutputStream(new FileOutputStream(temporaryFile))) {
+        new BufferedOutputStream(Files.newOutputStream(temporaryFile))) {
       unwrittenLayer.getBlob().writeTo(temporaryFileOutputStream);
     }
 
     // Reads the file back.
-    Blob fileBlob = Blobs.from(temporaryFile);
-    ByteArrayOutputStream fileContentStream = new ByteArrayOutputStream();
-    fileBlob.writeTo(fileContentStream);
-    ByteArrayInputStream tarByteInputStream =
-        new ByteArrayInputStream(fileContentStream.toByteArray());
-    TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(tarByteInputStream);
+    try (TarArchiveInputStream tarArchiveInputStream =
+        new TarArchiveInputStream(Files.newInputStream(temporaryFile))) {
+      // Verifies that all the files have been added to the tarball stream.
+      Files.walk(layerDirectory)
+          .filter(path -> !path.equals(layerDirectory))
+          .forEach(
+              path -> {
+                try {
+                  TarArchiveEntry header = tarArchiveInputStream.getNextTarEntry();
 
-    // Verifies that all the files have been added to the tarball stream.
-    Files.walk(layerDirectory)
-        .filter(path -> !path.equals(layerDirectory))
-        .forEach(
-            path -> {
-              try {
-                TarArchiveEntry header = tarArchiveInputStream.getNextTarEntry();
+                  Path expectedExtractionPath =
+                      Paths.get("extract/here").resolve(layerDirectory.relativize(path));
+                  Assert.assertEquals(expectedExtractionPath, Paths.get(header.getName()));
 
-                Path expectedExtractionPath =
-                    Paths.get("extract/here").resolve(layerDirectory.relativize(path));
-                Assert.assertEquals(expectedExtractionPath, Paths.get(header.getName()));
+                  // If is a normal file, checks that the file contents match.
+                  if (Files.isRegularFile(path)) {
+                    String expectedFileString =
+                        new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
 
-                // If is a normal file, checks that the file contents match.
-                if (path.toFile().isFile()) {
-                  ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                  Blob blob = Blobs.from(path.toFile());
-                  blob.writeTo(byteArrayOutputStream);
-                  String expectedFileString =
-                      new String(byteArrayOutputStream.toByteArray(), StandardCharsets.UTF_8);
+                    String extractedFileString =
+                        CharStreams.toString(
+                            new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
 
-                  String extractedFileString =
-                      CharStreams.toString(
-                          new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
-
-                  Assert.assertEquals(expectedFileString, extractedFileString);
+                    Assert.assertEquals(expectedFileString, extractedFileString);
+                  }
+                } catch (IOException ex) {
+                  throw new RuntimeException(ex);
                 }
-              } catch (IOException ex) {
-                throw new RuntimeException(ex);
-              }
-            });
+              });
+    }
   }
 }

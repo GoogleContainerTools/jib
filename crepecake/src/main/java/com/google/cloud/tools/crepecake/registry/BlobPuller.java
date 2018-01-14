@@ -24,11 +24,11 @@ import com.google.cloud.tools.crepecake.http.Request;
 import com.google.cloud.tools.crepecake.http.Response;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import java.io.BufferedOutputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 /** Pulls an image's BLOB (layer or container configuration). */
@@ -53,7 +53,7 @@ class BlobPuller implements RegistryEndpointProvider<Blob> {
   @Override
   public Blob handleResponse(Response response) throws IOException, UnexpectedBlobDigestException {
     try (OutputStream fileOutputStream =
-        new BufferedOutputStream(new FileOutputStream(destPath.toFile()))) {
+        new BufferedOutputStream(Files.newOutputStream(destPath))) {
       BlobDescriptor receivedBlobDescriptor = response.getBody().writeTo(fileOutputStream);
 
       if (!blobDigest.equals(receivedBlobDescriptor.getDigest())) {
@@ -65,7 +65,7 @@ class BlobPuller implements RegistryEndpointProvider<Blob> {
                 + "'");
       }
 
-      return Blobs.from(destPath.toFile());
+      return Blobs.from(destPath);
     }
   }
 
