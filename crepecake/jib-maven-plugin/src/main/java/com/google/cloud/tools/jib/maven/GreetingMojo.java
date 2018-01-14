@@ -16,9 +16,15 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.cloud.tools.crepecake.builder.SourceFilesConfiguration;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import org.apache.maven.artifact.DependencyResolutionRequiredException;
+import java.util.HashSet;
+import java.util.Set;
+import org.apache.maven.model.Dependency;
+import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -29,53 +35,106 @@ import org.apache.maven.project.MavenProject;
 @Mojo(name = "sayhi")
 public class GreetingMojo extends AbstractMojo {
 
+  private static class MavenSourceFilesConfiguration implements SourceFilesConfiguration {
+
+    private final Set<Path> dependenciesFiles = new HashSet<>();
+    private final Set<Path> resourcesFiles = new HashSet<>();
+    private final Set<Path> classesFiles = new HashSet<>();
+
+    private MavenSourceFilesConfiguration(MavenProject project) throws IOException {
+      Path classesOutputDir = Paths.get(project.getBuild().getOutputDirectory());
+
+      for (Dependency dependency : project.getDependencies()) {
+        dependenciesFiles.add(Paths.get(dependency.getSystemPath()));
+      }
+
+      for (Resource resource : project.getResources()) {
+        Path resourceSourceDir = Paths.get(resource.getDirectory());
+        Files.list(resourceSourceDir)
+            .forEach(
+                resourceSourceDirFIle -> {
+                  Path correspondingOutputDirFile =
+                      classesOutputDir.resolve(resourceSourceDir.relativize(resourceSourceDirFIle));
+                  if (Files.exists(correspondingOutputDirFile)) {
+                    resourcesFiles.add(correspondingOutputDirFile);
+                  }
+                });
+      }
+
+      Path classesSourceDir = Paths.get(project.getBuild().getSourceDirectory());
+
+      Files.list(classesSourceDir)
+          .forEach(
+              classesSourceDirFile -> {
+                Path correspondingOutputDirFile =
+                    classesOutputDir.resolve(classesSourceDir.relativize(classesSourceDirFile));
+                if (Files.exists(correspondingOutputDirFile)) {
+                  classesFiles.add(correspondingOutputDirFile);
+                }
+              });
+
+      // TODO: Check if there are still unaccounted-for files in the runtime classpath.
+    }
+
+    @Override
+    public Set<Path> getDependenciesFiles() {
+      return dependenciesFiles;
+    }
+
+    @Override
+    public Set<Path> getResourcesFiles() {
+      return resourcesFiles;
+    }
+
+    @Override
+    public Set<Path> getClassesFiles() {
+      return classesFiles;
+    }
+
+    @Override
+    public Path getDependenciesExtractionPath() {
+      return null;
+    }
+
+    @Override
+    public Path getResourcesExtractionPath() {
+      return null;
+    }
+
+    @Override
+    public Path getClassesExtractionPath() {
+      return null;
+    }
+  }
+
   @Parameter(defaultValue = "${project}", readonly = true)
   private MavenProject project;
 
   @Override
   public void execute() throws MojoExecutionException {
-    // Gets the dependencies.
-
-  }
-
-  @Deprecated
-  private void projectVals() {
-    System.out.println("afdsfsda");
-    getLog().info("Hello world");
-
-    getLog().info("Source:");
-    Path sourceDir = Paths.get(project.getBuild().getSourceDirectory());
-    getLog().info(sourceDir.toString());
-
-    getLog().info("Classes:");
-    Path classesDir = Paths.get(project.getBuild().getOutputDirectory());
-    getLog().info(classesDir.toString());
-
-    getLog().info("Resources:");
-    project
-        .getResources()
-        .forEach(resource -> getLog().info("Resource: " + resource.getDirectory()));
-
-    getLog().info("Artifacts:");
-    project.getArtifacts().forEach(artifact -> getLog().info(artifact.getFile().toString()));
-
-    getLog().info("Dependencies:");
-    project.getDependencies().forEach(dependency -> getLog().info(dependency.getSystemPath()));
-
-    getLog().info("Compile classpath:");
     try {
-      project.getCompileClasspathElements().forEach(classpath -> getLog().info(classpath));
-    } catch (DependencyResolutionRequiredException ex) {
-      throw new MojoExecutionException("", ex);
+      SourceFilesConfiguration sourceFilesConfiguration =
+          new MavenSourceFilesConfiguration(project);
+
+      getLog().info("Dependencies:");
+      sourceFilesConfiguration
+          .getDependenciesFiles()
+          .forEach(dependencyFile -> getLog().info("Dependency: " + dependencyFile));
+
+      getLog().info("Resources:");
+      sourceFilesConfiguration
+          .getResourcesFiles()
+          .forEach(resourceFile -> getLog().info("Resource: " + resourceFile));
+
+      getLog().info("Classes:");
+      sourceFilesConfiguration
+          .getClassesFiles()
+          .forEach(classesFile -> getLog().info("Class: " + classesFile));
+
+    } catch (IOException ex) {
+      throw new MojoExecutionException("Obtaining project build output files failed", ex);
     }
 
-    getLog().info("Runtime classpath:");
-    try {
-      project.getRuntimeClasspathElements().forEach(classpath -> getLog().info(classpath));
-    } catch (DependencyResolutionRequiredException ex) {
-      throw new MojoExecutionException("", ex);
-    }
-
-    throw new MojoExecutionException("WHAT");
+    throw new MojoExecutionException("");
   }
 }

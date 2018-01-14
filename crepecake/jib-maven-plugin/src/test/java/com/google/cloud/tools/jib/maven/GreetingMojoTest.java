@@ -38,9 +38,9 @@ public class GreetingMojoTest {
 
   @Test
   public void testExecute() throws VerificationException, IOException {
-    System.out.println("WTFFF");
-
     Verifier verifier = new Verifier(testProject.getProjectRoot().toString());
+    verifier.setAutoclean(false);
+    verifier.executeGoal("package");
     verifier.executeGoal("jib:sayhi");
     verifier.verifyErrorFreeLog();
 
