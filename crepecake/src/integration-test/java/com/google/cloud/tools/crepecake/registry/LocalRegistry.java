@@ -16,10 +16,8 @@
 
 package com.google.cloud.tools.crepecake.registry;
 
-import com.google.common.io.CharStreams;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.TestRule;
 
@@ -28,16 +26,31 @@ public class LocalRegistry extends ExternalResource {
 
   private final int port;
 
+  /** The name for the container running the registry. */
+  private final String containerName = "registry-" + UUID.randomUUID();
+
   public LocalRegistry(int port) {
     this.port = port;
   }
 
   /** Starts the local registry. */
   @Override
-  protected void before() throws IOException, InterruptedException {
-    runCommand("docker run -d -p " + port + ":5000 --restart=always --name registry registry:2");
+  protected void before() throws Throwable {
+    // Runs the Docker registry.
+    runCommand(
+        "docker run -d -p "
+            + port
+            + ":5000 --restart=always --name "
+            + containerName
+            + " registry:2");
+
+    // Pulls 'busybox'.
     runCommand("docker pull busybox");
+
+    // Tags 'busybox' to push to our local registry.
     runCommand("docker tag busybox localhost:" + port + "/busybox");
+
+    // Pushes 'busybox' to our local registry.
     runCommand("docker push localhost:" + port + "/busybox");
   }
 
@@ -45,30 +58,19 @@ public class LocalRegistry extends ExternalResource {
   @Override
   protected void after() {
     try {
-      runCommand("docker stop registry");
-      runCommand("docker rm -v registry");
+      // Stops the registry.
+      runCommand("docker stop " + containerName);
+
+      // Removes the container.
+      runCommand("docker rm -v " + containerName);
 
     } catch (InterruptedException | IOException ex) {
-      throw new RuntimeException("Could not stop local registry fully", ex);
+      throw new RuntimeException("Could not stop local registry fully: " + containerName, ex);
     }
   }
 
+  /** Runs a command with naive tokenization by whitespace. */
   private void runCommand(String command) throws IOException, InterruptedException {
-    if (Runtime.getRuntime().exec(command).waitFor() != 0) {
-      throw new IOException("Command '" + command + "' failed");
-    }
-  }
-
-  private void printLogs() throws IOException, InterruptedException {
-    Process process = Runtime.getRuntime().exec("docker logs registry");
-    try (InputStreamReader inputStreamReader =
-        new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)) {
-      System.out.println(CharStreams.toString(inputStreamReader));
-    }
-    try (InputStreamReader inputStreamReader =
-        new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8)) {
-      System.err.println(CharStreams.toString(inputStreamReader));
-    }
-    process.waitFor();
+    new ProcessBuilder(command.split(" ")).start().waitFor();
   }
 }
