@@ -103,7 +103,7 @@ public class RegistryClient {
       Request request =
           Request.builder()
               .setAuthorization(authorization)
-              .setBody(registryEndpointProvider.getBodyContent())
+              .setBody(registryEndpointProvider.getContent())
               .build();
       Response response = connection.send(registryEndpointProvider.getHttpMethod(), request);
 

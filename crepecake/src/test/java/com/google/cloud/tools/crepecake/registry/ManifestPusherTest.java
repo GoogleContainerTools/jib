@@ -60,7 +60,7 @@ public class ManifestPusherTest {
 
   @Test
   public void testGetBodyContent() throws IOException {
-    BlobHttpContent body = testManifestPusher.getBodyContent();
+    BlobHttpContent body = testManifestPusher.getContent();
 
     Assert.assertNotNull(body);
     Assert.assertEquals(V22ManifestTemplate.MEDIA_TYPE, body.getType());

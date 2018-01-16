@@ -32,7 +32,7 @@ interface RegistryEndpointProvider<T> {
 
   /** @return the {@link BlobHttpContent} to send as the request body */
   @Nullable
-  BlobHttpContent getBodyContent();
+  BlobHttpContent getContent();
 
   /** Handles the response specific to the registry action. */
   T handleResponse(Response response) throws IOException, RegistryException;

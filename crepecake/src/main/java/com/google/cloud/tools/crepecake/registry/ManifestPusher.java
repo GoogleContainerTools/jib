@@ -41,7 +41,7 @@ class ManifestPusher implements RegistryEndpointProvider<Void> {
   }
 
   @Override
-  public BlobHttpContent getBodyContent() {
+  public BlobHttpContent getContent() {
     return new BlobHttpContent(
         JsonTemplateMapper.toBlob(manifestTemplate), V22ManifestTemplate.MEDIA_TYPE);
   }

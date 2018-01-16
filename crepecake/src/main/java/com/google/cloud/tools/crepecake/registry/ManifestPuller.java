@@ -73,7 +73,7 @@ class ManifestPuller implements RegistryEndpointProvider<ManifestTemplate> {
 
   @Nullable
   @Override
-  public BlobHttpContent getBodyContent() {
+  public BlobHttpContent getContent() {
     return null;
   }
 
