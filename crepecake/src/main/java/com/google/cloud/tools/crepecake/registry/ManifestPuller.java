@@ -111,21 +111,19 @@ class ManifestPuller<T extends ManifestTemplate> implements RegistryEndpointProv
     }
 
     int schemaVersion = node.get("schemaVersion").asInt(-1);
-    switch (schemaVersion) {
-      case 1:
-        return manifestTemplateClass.cast(
-            JsonTemplateMapper.readJson(jsonString, V21ManifestTemplate.class));
-
-      case 2:
-        return manifestTemplateClass.cast(
-            JsonTemplateMapper.readJson(jsonString, V22ManifestTemplate.class));
-
-      case -1:
-        throw new UnknownManifestFormatException("`schemaVersion` field is not an integer");
-
-      default:
-        throw new UnknownManifestFormatException(
-            "Unknown schemaVersion: " + schemaVersion + " - only 1 and 2 are supported");
+    if (schemaVersion == -1) {
+      throw new UnknownManifestFormatException("`schemaVersion` field is not an integer");
     }
+
+    if (schemaVersion == 1) {
+      return manifestTemplateClass.cast(
+          JsonTemplateMapper.readJson(jsonString, V21ManifestTemplate.class));
+    }
+    if (schemaVersion == 2) {
+      return manifestTemplateClass.cast(
+          JsonTemplateMapper.readJson(jsonString, V22ManifestTemplate.class));
+    }
+    throw new UnknownManifestFormatException(
+        "Unknown schemaVersion: " + schemaVersion + " - only 1 and 2 are supported");
   }
 }

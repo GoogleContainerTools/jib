@@ -35,7 +35,7 @@ interface RegistryEndpointProvider<T> {
   @Nullable
   BlobHttpContent getContent();
 
-  /** @return a list of MIME types to pass as an {@code HTTP Accept} header */
+  /** @return a list of MIME types to pass as an HTTP {@code Accept} header */
   List<String> getAccept();
 
   /** Handles the response specific to the registry action. */
