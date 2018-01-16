@@ -30,12 +30,10 @@ import com.google.cloud.tools.crepecake.registry.NonexistentServerUrlDockerCrede
 import com.google.cloud.tools.crepecake.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.crepecake.registry.RegistryException;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 
 /** All the steps to build an image. */
 public class BuildImageSteps {
@@ -102,39 +100,21 @@ public class BuildImageSteps {
       PushImageStep pushImageStep = new PushImageStep(buildConfiguration, pushAuthorization);
       pushImageStep.run(image);
 
+      System.out.println(getEntrypoint());
+
       // TODO: Integrate any new steps as they are added.
     }
   }
 
   private List<String> getEntrypoint() {
     List<String> classPaths = new ArrayList<>();
-    addSourceFilesToClassPaths(
-        sourceFilesConfiguration.getDependenciesFiles(),
-        sourceFilesConfiguration.getDependenciesExtractionPath(),
-        classPaths);
-    addSourceFilesToClassPaths(
-        sourceFilesConfiguration.getResourcesFiles(),
-        sourceFilesConfiguration.getResourcesExtractionPath(),
-        classPaths);
-    addSourceFilesToClassPaths(
-        sourceFilesConfiguration.getClassesFiles(),
-        sourceFilesConfiguration.getClassesExtractionPath(),
-        classPaths);
+    classPaths.add(
+        sourceFilesConfiguration.getDependenciesExtractionPath().resolve("*").toString());
+    classPaths.add(sourceFilesConfiguration.getResourcesExtractionPath().toString());
+    classPaths.add(sourceFilesConfiguration.getClassesExtractionPath().toString());
 
     String entrypoint = String.join(":", classPaths);
 
     return Arrays.asList("java", "-cp", entrypoint, buildConfiguration.getMainClass());
-  }
-
-  private void addSourceFilesToClassPaths(
-      Set<Path> sourceFiles, Path extractionPath, List<String> classPaths) {
-    sourceFiles.forEach(
-        sourceFile -> {
-          Path containerPath = extractionPath;
-          if (!Files.isDirectory(sourceFile)) {
-            containerPath = containerPath.resolve(sourceFile.getFileName());
-          }
-          classPaths.add(containerPath.toString());
-        });
   }
 }

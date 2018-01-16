@@ -103,17 +103,17 @@ public class BuildMojo extends AbstractMojo {
 
     @Override
     public Path getDependenciesExtractionPath() {
-      return null;
+      return Paths.get("app", "libs");
     }
 
     @Override
     public Path getResourcesExtractionPath() {
-      return null;
+      return Paths.get("app", "resources");
     }
 
     @Override
     public Path getClassesExtractionPath() {
-      return null;
+      return Paths.get("app", "classes");
     }
   }
 
@@ -126,11 +126,11 @@ public class BuildMojo extends AbstractMojo {
 
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder()
-            .setBaseImageServerUrl("gcr.io")
-            .setBaseImageName("distroless/java")
+            .setBaseImageServerUrl("registry.hub.docker.com")
+            .setBaseImageName("frolvlad/alpine-oraclejdk8")
             .setBaseImageTag("latest")
             .setTargetServerUrl("gcr.io")
-            .setTargetImageName("jibtestimage")
+            .setTargetImageName("qingyangc-sandbox/jibtestimage")
             .setTargetTag("testtag")
             .setCredentialHelperName("gcr")
             .setMainClass("com.test.HelloWorld")

@@ -17,12 +17,15 @@
 package com.google.cloud.tools.crepecake.builder;
 
 import com.google.common.io.Resources;
+import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /** Implementation of {@link SourceFilesConfiguration} that uses test resources. */
 class TestSourceFilesConfiguration implements SourceFilesConfiguration {
@@ -33,7 +36,7 @@ class TestSourceFilesConfiguration implements SourceFilesConfiguration {
   private final Set<Path> resourcesSourceFiles;
   private final Set<Path> classesSourceFiles;
 
-  TestSourceFilesConfiguration() throws URISyntaxException {
+  TestSourceFilesConfiguration() throws URISyntaxException, IOException {
     dependenciesSourceFiles =
         new HashSet<>(
             Collections.singletonList(
@@ -41,13 +44,11 @@ class TestSourceFilesConfiguration implements SourceFilesConfiguration {
                     Resources.getResource("application/dependencies/dependency-1.0.0.jar")
                         .toURI())));
     resourcesSourceFiles =
-        new HashSet<>(
-            Collections.singletonList(
-                Paths.get(Resources.getResource("application/resources/").toURI())));
+        Files.list(Paths.get(Resources.getResource("application/resources/").toURI()))
+            .collect(Collectors.toSet());
     classesSourceFiles =
-        new HashSet<>(
-            Collections.singletonList(
-                Paths.get(Resources.getResource("application/classes/").toURI())));
+        Files.list(Paths.get(Resources.getResource("application/classes/").toURI()))
+            .collect(Collectors.toSet());
   }
 
   @Override

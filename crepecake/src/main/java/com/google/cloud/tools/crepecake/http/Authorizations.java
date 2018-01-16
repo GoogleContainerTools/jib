@@ -16,6 +16,9 @@
 
 package com.google.cloud.tools.crepecake.http;
 
+import com.google.api.client.util.Base64;
+import java.nio.charset.StandardCharsets;
+
 /** Static initializers for {@link Authorization}. */
 public class Authorizations {
 
@@ -23,7 +26,9 @@ public class Authorizations {
     return new Authorization("Bearer", token);
   }
 
-  public static Authorization withBasicToken(String token) {
+  public static Authorization withBasicToken(String username, String secret) {
+    String credentials = username + ":" + secret;
+    String token = new String(Base64.encodeBase64(credentials.getBytes(StandardCharsets.US_ASCII)));
     return new Authorization("Basic", token);
   }
 

@@ -29,7 +29,8 @@ public class HelloWorld {
   public static void main(String[] args) throws IOException, URISyntaxException {
     String greeting = Greeting.getGreeting();
 
-    Path worldFile = Paths.get(HelloWorld.class.getResource("world").toURI());
+    ClassLoader classLoader = HelloWorld.class.getClassLoader();
+    Path worldFile = Paths.get(classLoader.getResource("world").toURI());
     String world = new String(Files.readAllBytes(worldFile), StandardCharsets.UTF_8);
 
     System.out.println(greeting + " " + world);

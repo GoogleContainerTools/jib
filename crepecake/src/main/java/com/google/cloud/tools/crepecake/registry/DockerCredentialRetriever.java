@@ -98,7 +98,8 @@ public class DockerCredentialRetriever {
           DockerCredentialsTemplate dockerCredentials =
               JsonTemplateMapper.readJson(output, DockerCredentialsTemplate.class);
 
-          return Authorizations.withBasicToken(dockerCredentials.Secret);
+          return Authorizations.withBasicToken(
+              dockerCredentials.Username, dockerCredentials.Secret);
 
         } catch (JsonMappingException ex) {
           throw new NonexistentServerUrlDockerCredentialHelperException(
