@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google Inc.
+ * Copyright 2017 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,7 +37,7 @@ public class ManifestPullerIntegrationTest {
         registryClient.pullManifest("latest", V21ManifestTemplate.class);
 
     Assert.assertEquals(1, manifestTemplate.getSchemaVersion());
-    Assert.assertTrue(0 < manifestTemplate.getFsLayers().size());
+    Assert.assertTrue(manifestTemplate.getFsLayers().size() > 0);
   }
 
   @Test
@@ -47,7 +47,7 @@ public class ManifestPullerIntegrationTest {
 
     Assert.assertEquals(2, manifestTemplate.getSchemaVersion());
     V22ManifestTemplate v22ManifestTemplate = (V22ManifestTemplate) manifestTemplate;
-    Assert.assertTrue(0 < v22ManifestTemplate.getLayers().size());
+    Assert.assertTrue(v22ManifestTemplate.getLayers().size() > 0);
   }
 
   @Test
