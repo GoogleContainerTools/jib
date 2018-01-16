@@ -30,6 +30,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.List;
 import javax.annotation.Nullable;
 
 /** Pulls an image's blob (layer or container configuration). */
@@ -52,6 +54,11 @@ class BlobPuller implements RegistryEndpointProvider<Blob> {
   @Override
   public BlobHttpContent getContent() {
     return null;
+  }
+
+  @Override
+  public List<String> getAccept() {
+    return Collections.emptyList();
   }
 
   @Override

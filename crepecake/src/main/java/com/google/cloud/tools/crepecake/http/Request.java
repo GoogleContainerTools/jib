@@ -17,6 +17,7 @@
 package com.google.cloud.tools.crepecake.http;
 
 import com.google.api.client.http.HttpHeaders;
+import java.util.List;
 import javax.annotation.Nullable;
 
 /** Holds an HTTP request. */
@@ -42,6 +43,12 @@ public class Request {
       if (authorization != null) {
         headers.setAuthorization(authorization.toString());
       }
+      return this;
+    }
+
+    /** Sets the {@code Accept} header. */
+    public Builder setAccept(List<String> mimeTypes) {
+      headers.setAccept(String.join(",", mimeTypes));
       return this;
     }
 

@@ -16,7 +16,10 @@
 
 package com.google.cloud.tools.crepecake.registry;
 
+import com.google.common.io.CharStreams;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.UUID;
 import org.junit.rules.ExternalResource;
@@ -34,17 +37,6 @@ class LocalRegistry extends ExternalResource {
     this.port = port;
   }
 
-  void pullBusybox() throws IOException, InterruptedException {
-    // Pulls 'busybox'.
-    runCommand("docker", "pull", "busybox");
-
-    // Tags 'busybox' to push to our local registry.
-    runCommand("docker", "tag", "busybox", "localhost:" + port + "/busybox");
-
-    // Pushes 'busybox' to our local registry.
-    runCommand("docker", "push", "localhost:" + port + "/busybox");
-  }
-
   /** Starts the local registry. */
   @Override
   protected void before() throws Throwable {
@@ -59,6 +51,15 @@ class LocalRegistry extends ExternalResource {
         "--name",
         containerName,
         "registry:2");
+
+    // Pulls 'busybox'.
+    runCommand("docker", "pull", "busybox");
+
+    // Tags 'busybox' to push to our local registry.
+    runCommand("docker", "tag", "busybox", "localhost:" + port + "/busybox");
+
+    // Pushes 'busybox' to our local registry.
+    runCommand("docker", "push", "localhost:" + port + "/busybox");
   }
 
   /** Stops the local registry. */
@@ -81,5 +82,18 @@ class LocalRegistry extends ExternalResource {
     if (new ProcessBuilder(Arrays.asList(command)).start().waitFor() != 0) {
       throw new IOException("Command '" + String.join(" ", command) + "' failed");
     }
+  }
+
+  private void printLogs() throws IOException, InterruptedException {
+    Process process = Runtime.getRuntime().exec("docker logs registry");
+    try (InputStreamReader inputStreamReader =
+        new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)) {
+      System.out.println(CharStreams.toString(inputStreamReader));
+    }
+    try (InputStreamReader inputStreamReader =
+        new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8)) {
+      System.err.println(CharStreams.toString(inputStreamReader));
+    }
+    process.waitFor();
   }
 }

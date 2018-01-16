@@ -21,6 +21,7 @@ import com.google.cloud.tools.crepecake.http.Response;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
 import javax.annotation.Nullable;
 
 /**
@@ -33,6 +34,9 @@ interface RegistryEndpointProvider<T> {
   /** @return the {@link BlobHttpContent} to send as the request body */
   @Nullable
   BlobHttpContent getContent();
+
+  /** @return a list of MIME types to pass as an HTTP {@code Accept} header */
+  List<String> getAccept();
 
   /** Handles the response specific to the registry action. */
   T handleResponse(Response response) throws IOException, RegistryException;

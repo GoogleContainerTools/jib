@@ -25,15 +25,16 @@ import com.google.cloud.tools.crepecake.http.Request;
 import com.google.cloud.tools.crepecake.http.Response;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.image.json.ManifestTemplate;
+import com.google.cloud.tools.crepecake.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.crepecake.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
 import com.google.cloud.tools.crepecake.registry.json.ErrorEntryTemplate;
 import com.google.cloud.tools.crepecake.registry.json.ErrorResponseTemplate;
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Path;
 import javax.annotation.Nullable;
+import org.apache.http.NoHttpResponseException;
 
 /** Interfaces with a registry. */
 public class RegistryClient {
@@ -49,10 +50,22 @@ public class RegistryClient {
     this.registryEndpointProperties = new RegistryEndpointProperties(serverUrl, imageName);
   }
 
-  /** Pulls the image manifest for a specific tag. */
+  /**
+   * Pulls the image manifest for a specific tag.
+   *
+   * @param imageTag the tag to pull on
+   * @param manifestTemplateClass the specific version of manifest template to pull, or {@link
+   *     ManifestTemplate} to pull either {@link V22ManifestTemplate} or {@link V21ManifestTemplate}
+   */
+  public <T extends ManifestTemplate> T pullManifest(
+      String imageTag, Class<T> manifestTemplateClass) throws IOException, RegistryException {
+    ManifestPuller<T> manifestPuller =
+        new ManifestPuller<>(registryEndpointProperties, imageTag, manifestTemplateClass);
+    return callRegistryEndpoint(manifestPuller);
+  }
+
   public ManifestTemplate pullManifest(String imageTag) throws IOException, RegistryException {
-    ManifestPuller manifestPuller = new ManifestPuller(registryEndpointProperties, imageTag);
-    return callRegistryEndpoint(null, manifestPuller);
+    return pullManifest(imageTag, ManifestTemplate.class);
   }
 
   /** Pushes the image manifest for a specific tag. */
@@ -60,7 +73,7 @@ public class RegistryClient {
       throws IOException, RegistryException {
     ManifestPusher manifestPusher =
         new ManifestPusher(registryEndpointProperties, manifestTemplate, imageTag);
-    callRegistryEndpoint(null, manifestPusher);
+    callRegistryEndpoint(manifestPusher);
   }
 
   /**
@@ -74,7 +87,37 @@ public class RegistryClient {
   public Blob pullBlob(DescriptorDigest blobDigest, Path destPath)
       throws RegistryException, IOException {
     BlobPuller blobPuller = new BlobPuller(registryEndpointProperties, blobDigest, destPath);
-    return callRegistryEndpoint(null, blobPuller);
+    return callRegistryEndpoint(blobPuller);
+  }
+
+  // TODO: Add mount with 'from' parameter
+  /**
+   * Pushes the BLOB, or skips if the BLOB already exists on the registry.
+   *
+   * @param blobDigest the digest of the BLOB, used for existence-check
+   * @param blob the BLOB to push
+   * @return {@code true} if the BLOB already exists on the registry and pushing was skipped; false
+   *     if the BLOB was pushed
+   */
+  public boolean pushBlob(DescriptorDigest blobDigest, Blob blob)
+      throws IOException, RegistryException {
+    BlobPusher blobPusher = new BlobPusher(registryEndpointProperties, blobDigest, blob);
+
+    // POST /v2/<name>/blobs/uploads/?mount={blob.digest}
+    String locationHeader = callRegistryEndpoint(blobPusher.initializer());
+    if (locationHeader == null) {
+      // The BLOB exists already.
+      return true;
+    }
+    URL patchLocation = new URL(locationHeader);
+
+    // PATCH <Location> with BLOB
+    URL putLocation = new URL(callRegistryEndpoint(blobPusher.writer(patchLocation)));
+
+    // PUT <Location>?digest={blob.digest}
+    callRegistryEndpoint(blobPusher.committer(putLocation));
+
+    return false;
   }
 
   private String getApiRouteBase() {
@@ -87,6 +130,16 @@ public class RegistryClient {
 
   /**
    * Calls the registry endpoint.
+   *
+   * @param registryEndpointProvider the {@link RegistryEndpointProvider} to the endpoint
+   */
+  private <T> T callRegistryEndpoint(RegistryEndpointProvider<T> registryEndpointProvider)
+      throws IOException, RegistryException {
+    return callRegistryEndpoint(null, registryEndpointProvider);
+  }
+
+  /**
+   * Calls the registry endpoint with an override URL.
    *
    * @param url the endpoint URL to call, or {@code null} to use default from {@code
    *     registryEndpointProvider}
@@ -103,6 +156,7 @@ public class RegistryClient {
       Request request =
           Request.builder()
               .setAuthorization(authorization)
+              .setAccept(registryEndpointProvider.getAccept())
               .setBody(registryEndpointProvider.getContent())
               .build();
       Response response = connection.send(registryEndpointProvider.getHttpMethod(), request);
@@ -110,22 +164,22 @@ public class RegistryClient {
       return registryEndpointProvider.handleResponse(response);
 
     } catch (HttpResponseException ex) {
-      if (ex.getStatusCode() == HttpURLConnection.HTTP_BAD_REQUEST
-          || ex.getStatusCode() == HttpURLConnection.HTTP_NOT_FOUND
-          || ex.getStatusCode() == HttpURLConnection.HTTP_BAD_METHOD) {
+      if (ex.getStatusCode() == HttpStatusCodes.STATUS_CODE_BAD_REQUEST
+          || ex.getStatusCode() == HttpStatusCodes.STATUS_CODE_NOT_FOUND
+          || ex.getStatusCode() == HttpStatusCodes.STATUS_CODE_METHOD_NOT_ALLOWED) {
         // The name or reference was invalid.
         ErrorResponseTemplate errorResponse =
             JsonTemplateMapper.readJson(ex.getContent(), ErrorResponseTemplate.class);
         RegistryErrorExceptionBuilder registryErrorExceptionBuilder =
             new RegistryErrorExceptionBuilder(registryEndpointProvider.getActionDescription(), ex);
         for (ErrorEntryTemplate errorEntry : errorResponse.getErrors()) {
-          registryErrorExceptionBuilder.addErrorEntry(errorEntry);
+          registryErrorExceptionBuilder.addReason(errorEntry);
         }
 
         throw registryErrorExceptionBuilder.build();
 
-      } else if (ex.getStatusCode() == HttpURLConnection.HTTP_UNAUTHORIZED
-          || ex.getStatusCode() == HttpURLConnection.HTTP_FORBIDDEN) {
+      } else if (ex.getStatusCode() == HttpStatusCodes.STATUS_CODE_UNAUTHORIZED
+          || ex.getStatusCode() == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
         throw new RegistryUnauthorizedException(ex);
 
       } else if (ex.getStatusCode() == HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT) {
@@ -136,6 +190,9 @@ public class RegistryClient {
         // Unknown
         throw ex;
       }
+
+    } catch (NoHttpResponseException ex) {
+      throw new RegistryNoResponseException(ex);
     }
   }
 }

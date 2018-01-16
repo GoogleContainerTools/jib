@@ -23,6 +23,8 @@ import com.google.cloud.tools.crepecake.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collections;
+import java.util.List;
 
 /** Pushes an image's manifest. */
 class ManifestPusher implements RegistryEndpointProvider<Void> {
@@ -44,6 +46,11 @@ class ManifestPusher implements RegistryEndpointProvider<Void> {
   public BlobHttpContent getContent() {
     return new BlobHttpContent(
         JsonTemplateMapper.toBlob(manifestTemplate), V22ManifestTemplate.MEDIA_TYPE);
+  }
+
+  @Override
+  public List<String> getAccept() {
+    return Collections.emptyList();
   }
 
   @Override

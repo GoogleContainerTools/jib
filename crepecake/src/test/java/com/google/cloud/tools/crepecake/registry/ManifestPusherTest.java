@@ -59,7 +59,7 @@ public class ManifestPusherTest {
   }
 
   @Test
-  public void testGetBodyContent() throws IOException {
+  public void testGetContent() throws IOException {
     BlobHttpContent body = testManifestPusher.getContent();
 
     Assert.assertNotNull(body);
@@ -95,5 +95,10 @@ public class ManifestPusherTest {
     Assert.assertEquals(
         "push image manifest for someServerUrl/someImageName:test-image-tag",
         testManifestPusher.getActionDescription());
+  }
+
+  @Test
+  public void testGetAccept() {
+    Assert.assertEquals(0, testManifestPusher.getAccept().size());
   }
 }

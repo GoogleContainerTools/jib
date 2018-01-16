@@ -22,7 +22,6 @@ import com.google.cloud.tools.crepecake.image.json.V22ManifestTemplate;
 import java.io.IOException;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -31,19 +30,14 @@ public class ManifestPullerIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
 
-  @BeforeClass
-  public static void setUpLocalRegistry() throws IOException, InterruptedException {
-    localRegistry.pullBusybox();
-  }
-
   @Test
   public void testPull_v21() throws IOException, RegistryException {
     RegistryClient registryClient = new RegistryClient(null, "localhost:5000", "busybox");
-    ManifestTemplate manifestTemplate = registryClient.pullManifest("latest");
+    V21ManifestTemplate manifestTemplate =
+        registryClient.pullManifest("latest", V21ManifestTemplate.class);
 
     Assert.assertEquals(1, manifestTemplate.getSchemaVersion());
-    V21ManifestTemplate v21ManifestTemplate = (V21ManifestTemplate) manifestTemplate;
-    Assert.assertTrue(0 < v21ManifestTemplate.getFsLayers().size());
+    Assert.assertTrue(manifestTemplate.getFsLayers().size() > 0);
   }
 
   @Test
@@ -53,7 +47,7 @@ public class ManifestPullerIntegrationTest {
 
     Assert.assertEquals(2, manifestTemplate.getSchemaVersion());
     V22ManifestTemplate v22ManifestTemplate = (V22ManifestTemplate) manifestTemplate;
-    Assert.assertTrue(0 < v22ManifestTemplate.getLayers().size());
+    Assert.assertTrue(v22ManifestTemplate.getLayers().size() > 0);
   }
 
   @Test

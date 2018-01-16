@@ -29,6 +29,8 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Collections;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Test;
@@ -43,9 +45,11 @@ public class ManifestPullerTest {
 
   @Mock private Response mockResponse;
 
-  private final ManifestPuller testManifestPuller =
-      new ManifestPuller(
-          new RegistryEndpointProperties("someServerUrl", "someImageName"), "test-image-tag");
+  private final RegistryEndpointProperties fakeRegistryEndpointProperties =
+      new RegistryEndpointProperties("someServerUrl", "someImageName");
+  private final ManifestPuller<ManifestTemplate> testManifestPuller =
+      new ManifestPuller<>(
+          fakeRegistryEndpointProperties, "test-image-tag", ManifestTemplate.class);
 
   @Test
   public void testHandleResponse_v21()
@@ -53,7 +57,10 @@ public class ManifestPullerTest {
     Path v21ManifestFile = Paths.get(Resources.getResource("json/v21manifest.json").toURI());
 
     Mockito.when(mockResponse.getBody()).thenReturn(Blobs.from(v21ManifestFile));
-    ManifestTemplate manifestTemplate = testManifestPuller.handleResponse(mockResponse);
+    ManifestTemplate manifestTemplate =
+        new ManifestPuller<>(
+                fakeRegistryEndpointProperties, "test-image-tag", V21ManifestTemplate.class)
+            .handleResponse(mockResponse);
 
     Assert.assertThat(manifestTemplate, CoreMatchers.instanceOf(V21ManifestTemplate.class));
   }
@@ -64,7 +71,10 @@ public class ManifestPullerTest {
     Path v22ManifestFile = Paths.get(Resources.getResource("json/v22manifest.json").toURI());
 
     Mockito.when(mockResponse.getBody()).thenReturn(Blobs.from(v22ManifestFile));
-    ManifestTemplate manifestTemplate = testManifestPuller.handleResponse(mockResponse);
+    ManifestTemplate manifestTemplate =
+        new ManifestPuller<>(
+                fakeRegistryEndpointProperties, "test-image-tag", V22ManifestTemplate.class)
+            .handleResponse(mockResponse);
 
     Assert.assertThat(manifestTemplate, CoreMatchers.instanceOf(V22ManifestTemplate.class));
   }
@@ -123,5 +133,28 @@ public class ManifestPullerTest {
     Assert.assertEquals(
         "pull image manifest for someServerUrl/someImageName:test-image-tag",
         testManifestPuller.getActionDescription());
+  }
+
+  @Test
+  public void testGetContent() {
+    Assert.assertNull(testManifestPuller.getContent());
+  }
+
+  @Test
+  public void testGetAccept() {
+    Assert.assertEquals(
+        Arrays.asList(V22ManifestTemplate.MEDIA_TYPE, V21ManifestTemplate.MEDIA_TYPE),
+        testManifestPuller.getAccept());
+
+    Assert.assertEquals(
+        Collections.singletonList(V22ManifestTemplate.MEDIA_TYPE),
+        new ManifestPuller<>(
+                fakeRegistryEndpointProperties, "test-image-tag", V22ManifestTemplate.class)
+            .getAccept());
+    Assert.assertEquals(
+        Collections.singletonList(V21ManifestTemplate.MEDIA_TYPE),
+        new ManifestPuller<>(
+                fakeRegistryEndpointProperties, "test-image-tag", V21ManifestTemplate.class)
+            .getAccept());
   }
 }

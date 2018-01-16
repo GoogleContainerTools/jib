@@ -55,6 +55,8 @@ import java.util.List;
  */
 public class V21ManifestTemplate extends ManifestTemplate {
 
+  public static final String MEDIA_TYPE = "application/vnd.docker.distribution.manifest.v1+json";
+
   private final int schemaVersion = 1;
 
   /** The list of layer references. */
