@@ -20,7 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.api.client.http.HttpMethods;
 import com.google.cloud.tools.crepecake.blob.Blobs;
-import com.google.cloud.tools.crepecake.http.Request;
+import com.google.cloud.tools.crepecake.http.BlobHttpContent;
 import com.google.cloud.tools.crepecake.http.Response;
 import com.google.cloud.tools.crepecake.image.json.ManifestTemplate;
 import com.google.cloud.tools.crepecake.image.json.UnknownManifestFormatException;
@@ -30,6 +30,10 @@ import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import javax.annotation.Nullable;
 
 /** Pulls an image's manifest. */
 class ManifestPuller<T extends ManifestTemplate> implements RegistryEndpointProvider<T> {
@@ -47,15 +51,22 @@ class ManifestPuller<T extends ManifestTemplate> implements RegistryEndpointProv
     this.manifestTemplateClass = manifestTemplateClass;
   }
 
+  @Nullable
   @Override
-  public void buildRequest(Request.Builder builder) {
+  public BlobHttpContent getContent() {
+    return null;
+  }
+
+  @Override
+  public List<String> getAccept() {
     if (manifestTemplateClass.equals(V21ManifestTemplate.class)) {
-      builder.setAccept(V21ManifestTemplate.MEDIA_TYPE);
-    } else if (manifestTemplateClass.equals(V22ManifestTemplate.class)) {
-      builder.setAccept(V22ManifestTemplate.MEDIA_TYPE);
-    } else {
-      builder.setAccept(V22ManifestTemplate.MEDIA_TYPE + ", " + V21ManifestTemplate.MEDIA_TYPE);
+      return Collections.singletonList(V21ManifestTemplate.MEDIA_TYPE);
     }
+    if (manifestTemplateClass.equals(V22ManifestTemplate.class)) {
+      return Collections.singletonList(V22ManifestTemplate.MEDIA_TYPE);
+    }
+
+    return Arrays.asList(V22ManifestTemplate.MEDIA_TYPE, V21ManifestTemplate.MEDIA_TYPE);
   }
 
   /** Parses the response body into a {@link ManifestTemplate}. */

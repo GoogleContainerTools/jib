@@ -29,6 +29,8 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Collections;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Test;
@@ -131,5 +133,28 @@ public class ManifestPullerTest {
     Assert.assertEquals(
         "pull image manifest for someServerUrl/someImageName:test-image-tag",
         testManifestPuller.getActionDescription());
+  }
+
+  @Test
+  public void testGetContent() {
+    Assert.assertNull(testManifestPuller.getContent());
+  }
+
+  @Test
+  public void testGetAccept() {
+    Assert.assertEquals(
+        Arrays.asList(V22ManifestTemplate.MEDIA_TYPE, V21ManifestTemplate.MEDIA_TYPE),
+        testManifestPuller.getAccept());
+
+    Assert.assertEquals(
+        Collections.singletonList(V22ManifestTemplate.MEDIA_TYPE),
+        new ManifestPuller<>(
+                fakeRegistryEndpointProperties, "test-image-tag", V22ManifestTemplate.class)
+            .getAccept());
+    Assert.assertEquals(
+        Collections.singletonList(V21ManifestTemplate.MEDIA_TYPE),
+        new ManifestPuller<>(
+                fakeRegistryEndpointProperties, "test-image-tag", V21ManifestTemplate.class)
+            .getAccept());
   }
 }

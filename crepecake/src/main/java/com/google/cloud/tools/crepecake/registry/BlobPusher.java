@@ -20,13 +20,14 @@ import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.crepecake.blob.Blob;
-import com.google.cloud.tools.crepecake.http.Request;
+import com.google.cloud.tools.crepecake.http.BlobHttpContent;
 import com.google.cloud.tools.crepecake.http.Response;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.common.net.MediaType;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -40,8 +41,16 @@ class BlobPusher {
   // TODO: All RegistryEndpointProviders should construct the actual URL to send the request to
   private class Initializer implements RegistryEndpointProvider<String> {
 
+    @Nullable
     @Override
-    public void buildRequest(Request.Builder builder) {}
+    public BlobHttpContent getContent() {
+      return null;
+    }
+
+    @Override
+    public List<String> getAccept() {
+      return Collections.emptyList();
+    }
 
     /**
      * @return a URL to continue pushing the BLOB to, or {@code null} if the BLOB already exists on
@@ -84,10 +93,15 @@ class BlobPusher {
 
     private final URL location;
 
+    @Nullable
     @Override
-    public void buildRequest(Request.Builder builder) {
-      builder.setContentType(MediaType.OCTET_STREAM.toString());
-      builder.setBody(blob);
+    public BlobHttpContent getContent() {
+      return new BlobHttpContent(blob, MediaType.OCTET_STREAM.toString());
+    }
+
+    @Override
+    public List<String> getAccept() {
+      return Collections.emptyList();
     }
 
     /** @return a URL to continue pushing the BLOB to */
@@ -121,8 +135,16 @@ class BlobPusher {
 
     private final URL location;
 
+    @Nullable
     @Override
-    public void buildRequest(Request.Builder builder) {}
+    public BlobHttpContent getContent() {
+      return null;
+    }
+
+    @Override
+    public List<String> getAccept() {
+      return Collections.emptyList();
+    }
 
     @Override
     public Void handleResponse(Response response) {
