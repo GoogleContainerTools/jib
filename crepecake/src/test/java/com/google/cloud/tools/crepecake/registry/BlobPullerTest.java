@@ -62,7 +62,7 @@ public class BlobPullerTest {
   }
 
   @Test
-  public void testInitializer_handleResponse() throws IOException, UnexpectedBlobDigestException {
+  public void testHandleResponse() throws IOException, UnexpectedBlobDigestException {
     Blob testBlob = Blobs.from("some BLOB content");
     DescriptorDigest testBlobDigest = testBlob.writeTo(ByteStreams.nullOutputStream()).getDigest();
 
@@ -81,7 +81,7 @@ public class BlobPullerTest {
   }
 
   @Test
-  public void testInitializer_handleResponse_unexpectedDigest() throws IOException {
+  public void testHandleResponse_unexpectedDigest() throws IOException {
     Blob testBlob = Blobs.from("some BLOB content");
     DescriptorDigest testBlobDigest = testBlob.writeTo(ByteStreams.nullOutputStream()).getDigest();
 
@@ -104,14 +104,14 @@ public class BlobPullerTest {
   }
 
   @Test
-  public void testInitializer_getApiRoute() throws MalformedURLException {
+  public void testGetApiRoute() throws MalformedURLException {
     Assert.assertEquals(
         new URL("http://someApiBase/someImageName/blobs/" + fakeDigest),
         testBlobPuller.getApiRoute("http://someApiBase/"));
   }
 
   @Test
-  public void testInitializer_getActionDescription() {
+  public void testGetActionDescription() {
     Assert.assertEquals(
         "pull BLOB for someServerUrl/someImageName with digest " + fakeDigest,
         testBlobPuller.getActionDescription());
@@ -120,5 +120,15 @@ public class BlobPullerTest {
   @Test
   public void testGetHttpMethod() {
     Assert.assertEquals("GET", testBlobPuller.getHttpMethod());
+  }
+
+  @Test
+  public void testGetContent() {
+    Assert.assertNull(testBlobPuller.getContent());
+  }
+
+  @Test
+  public void testGetAccept() {
+    Assert.assertEquals(0, testBlobPuller.getAccept().size());
   }
 }

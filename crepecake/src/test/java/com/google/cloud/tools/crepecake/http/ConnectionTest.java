@@ -22,11 +22,11 @@ import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
-import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.blob.Blobs;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -57,12 +57,10 @@ public class ConnectionTest {
 
   @Before
   public void setUpMocksAndFakes() throws IOException {
-    Blob fakeBlob = Blobs.from("crepecake");
     fakeRequest =
         Request.builder()
-            .setBody(fakeBlob)
-            .setContentType("fake.content.type")
-            .setAccept("fake.accept")
+            .setAccept(Arrays.asList("fake.accept", "another.fake.accept"))
+            .setBody(new BlobHttpContent(Blobs.from("crepecake"), "fake.content.type"))
             .setAuthorization(Authorizations.withBasicToken("fake-token"))
             .build();
 
@@ -105,14 +103,15 @@ public class ConnectionTest {
     Mockito.verify(mockHttpRequest).setHeaders(httpHeadersArgumentCaptor.capture());
     Mockito.verify(mockHttpResponse).disconnect();
 
-    Assert.assertEquals("fake.content.type", httpHeadersArgumentCaptor.getValue().getContentType());
-    Assert.assertEquals("fake.accept", httpHeadersArgumentCaptor.getValue().getAccept());
+    Assert.assertEquals(
+        "fake.accept,another.fake.accept", httpHeadersArgumentCaptor.getValue().getAccept());
     Assert.assertEquals(
         "Basic fake-token", httpHeadersArgumentCaptor.getValue().getAuthorization());
 
     Mockito.verify(mockHttpRequestFactory)
         .buildRequest(
             Mockito.eq(httpMethod), Mockito.eq(fakeUrl), blobHttpContentArgumentCaptor.capture());
+    Assert.assertEquals("fake.content.type", blobHttpContentArgumentCaptor.getValue().getType());
 
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     blobHttpContentArgumentCaptor.getValue().writeTo(byteArrayOutputStream);
