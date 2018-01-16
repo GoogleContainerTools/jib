@@ -19,7 +19,7 @@ package com.google.cloud.tools.crepecake.registry;
 import com.google.cloud.tools.crepecake.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.image.json.V21ManifestTemplate;
-import java.io.ByteArrayOutputStream;
+import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.DigestException;
@@ -49,7 +49,7 @@ public class BlobPullerIntegrationTest {
 
     // Pulls a layer BLOB of the busybox image.
     CountingDigestOutputStream layerOutputStream =
-        new CountingDigestOutputStream(new ByteArrayOutputStream());
+        new CountingDigestOutputStream(ByteStreams.nullOutputStream());
     registryClient.pullBlob(realDigest, layerOutputStream);
 
     Assert.assertEquals(realDigest, layerOutputStream.toBlobDescriptor().getDigest());
