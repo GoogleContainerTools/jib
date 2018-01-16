@@ -27,8 +27,8 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
-/** Tests for {@link GreetingMojo}. */
-public class GreetingMojoTest {
+/** Tests for {@link BuildMojo}. */
+public class BuildMojoTest {
 
   @ClassRule public static final TestPlugin testPlugin = new TestPlugin();
 
@@ -41,7 +41,7 @@ public class GreetingMojoTest {
     Verifier verifier = new Verifier(testProject.getProjectRoot().toString());
     verifier.setAutoclean(false);
     verifier.executeGoal("package");
-    verifier.executeGoal("jib:sayhi");
+    verifier.executeGoal("jib:build");
     verifier.verifyErrorFreeLog();
 
     System.out.println(Paths.get(verifier.getLogFileName()));

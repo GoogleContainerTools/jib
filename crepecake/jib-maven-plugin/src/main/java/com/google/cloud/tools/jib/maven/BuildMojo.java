@@ -31,9 +31,9 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 
-/** Says "Hi" to the user. */
-@Mojo(name = "sayhi")
-public class GreetingMojo extends AbstractMojo {
+/** Builds a container image. */
+@Mojo(name = "build")
+public class BuildMojo extends AbstractMojo {
 
   private static class MavenSourceFilesConfiguration implements SourceFilesConfiguration {
 
