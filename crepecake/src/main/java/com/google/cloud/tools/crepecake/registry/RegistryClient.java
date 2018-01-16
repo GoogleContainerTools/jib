@@ -196,13 +196,13 @@ public class RegistryClient {
     }
 
     try (Connection connection = new Connection(url)) {
-      Request.Builder builder = Request.builder();
-      if (authorization != null) {
-        builder.setAuthorization(authorization);
-      }
-      registryEndpointProvider.buildRequest(builder);
-      Response response =
-          connection.send(registryEndpointProvider.getHttpMethod(), builder.build());
+      Request request =
+          Request.builder()
+              .setAuthorization(authorization)
+              .setAccept(registryEndpointProvider.getAccept())
+              .setBody(registryEndpointProvider.getContent())
+              .build();
+      Response response = connection.send(registryEndpointProvider.getHttpMethod(), request);
 
       return registryEndpointProvider.handleResponse(response);
 

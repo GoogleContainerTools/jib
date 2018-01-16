@@ -17,18 +17,29 @@
 package com.google.cloud.tools.crepecake.registry;
 
 import com.google.api.client.http.HttpMethods;
-import com.google.cloud.tools.crepecake.http.Request;
+import com.google.cloud.tools.crepecake.http.BlobHttpContent;
 import com.google.cloud.tools.crepecake.http.Response;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collections;
+import java.util.List;
+import javax.annotation.Nullable;
 
 /** Retrieves the {@code WWW-Authenticate} header from the registry API. */
 class AuthenticationMethodRetriever implements RegistryEndpointProvider<Void> {
 
   private final RegistryEndpointProperties registryEndpointProperties;
 
+  @Nullable
   @Override
-  public void buildRequest(Request.Builder builder) {}
+  public BlobHttpContent getContent() {
+    return null;
+  }
+
+  @Override
+  public List<String> getAccept() {
+    return Collections.emptyList();
+  }
 
   @Override
   public Void handleResponse(Response response) {

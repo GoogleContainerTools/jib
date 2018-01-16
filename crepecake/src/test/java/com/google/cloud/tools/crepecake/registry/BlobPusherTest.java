@@ -17,9 +17,10 @@
 package com.google.cloud.tools.crepecake.registry;
 
 import com.google.cloud.tools.crepecake.blob.Blob;
-import com.google.cloud.tools.crepecake.http.Request;
+import com.google.cloud.tools.crepecake.http.BlobHttpContent;
 import com.google.cloud.tools.crepecake.http.Response;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
+import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -58,10 +59,13 @@ public class BlobPusherTest {
   }
 
   @Test
-  public void testInitializer_buildRequest() {
-    Request.Builder mockRequestBuilder = Mockito.mock(Request.Builder.class);
-    testBlobPusher.initializer().buildRequest(mockRequestBuilder);
-    Mockito.verify(mockRequestBuilder, Mockito.never()).setBody(Mockito.any());
+  public void testInitializer_getContent() {
+    Assert.assertNull(testBlobPusher.initializer().getContent());
+  }
+
+  @Test
+  public void testGetAccept() {
+    Assert.assertEquals(0, testBlobPusher.initializer().getAccept().size());
   }
 
   @Test
@@ -136,11 +140,19 @@ public class BlobPusherTest {
   }
 
   @Test
-  public void testWriter_buildRequest() {
-    Request.Builder mockRequestBuilder = Mockito.mock(Request.Builder.class);
-    testBlobPusher.writer(mockURL).buildRequest(mockRequestBuilder);
-    Mockito.verify(mockRequestBuilder).setContentType("application/octet-stream");
-    Mockito.verify(mockRequestBuilder).setBody(mockBlob);
+  public void testWriter_getContent() throws IOException {
+    BlobHttpContent body = testBlobPusher.writer(mockURL).getContent();
+
+    Assert.assertNotNull(body);
+    Assert.assertEquals("application/octet-stream", body.getType());
+
+    body.writeTo(ByteStreams.nullOutputStream());
+    Mockito.verify(mockBlob).writeTo(ByteStreams.nullOutputStream());
+  }
+
+  @Test
+  public void testWriter_GetAccept() {
+    Assert.assertEquals(0, testBlobPusher.writer(mockURL).getAccept().size());
   }
 
   @Test
@@ -168,6 +180,16 @@ public class BlobPusherTest {
     Assert.assertEquals(
         "push BLOB for someServerUrl/someImageName with digest " + fakeDescriptorDigest,
         testBlobPusher.writer(mockURL).getActionDescription());
+  }
+
+  @Test
+  public void testCommitter_getContent() {
+    Assert.assertNull(testBlobPusher.committer(mockURL).getContent());
+  }
+
+  @Test
+  public void testCommitter_GetAccept() {
+    Assert.assertEquals(0, testBlobPusher.committer(mockURL).getAccept().size());
   }
 
   @Test
