@@ -213,9 +213,10 @@ public class RegistryClient {
         return registryEndpointProvider.handleHttpResponseException(ex);
 
       } catch (HttpResponseException httpResponseException) {
-        if (ex.getStatusCode() == HttpStatusCodes.STATUS_CODE_BAD_REQUEST
-            || ex.getStatusCode() == HttpStatusCodes.STATUS_CODE_NOT_FOUND
-            || ex.getStatusCode() == HttpStatusCodes.STATUS_CODE_METHOD_NOT_ALLOWED) {
+        if (httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_BAD_REQUEST
+            || httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_NOT_FOUND
+            || httpResponseException.getStatusCode()
+                == HttpStatusCodes.STATUS_CODE_METHOD_NOT_ALLOWED) {
           // The name or reference was invalid.
           ErrorResponseTemplate errorResponse =
               JsonTemplateMapper.readJson(
@@ -229,11 +230,12 @@ public class RegistryClient {
 
           throw registryErrorExceptionBuilder.build();
 
-        } else if (ex.getStatusCode() == HttpStatusCodes.STATUS_CODE_UNAUTHORIZED
-            || ex.getStatusCode() == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
+        } else if (httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_UNAUTHORIZED
+            || httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
           throw new RegistryUnauthorizedException(httpResponseException);
 
-        } else if (ex.getStatusCode() == HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT) {
+        } else if (httpResponseException.getStatusCode()
+            == HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT) {
           return callRegistryEndpoint(
               new URL(httpResponseException.getHeaders().getLocation()), registryEndpointProvider);
 
@@ -242,7 +244,7 @@ public class RegistryClient {
           throw httpResponseException;
         }
       }
-      
+
     } catch (NoHttpResponseException ex) {
       throw new RegistryNoResponseException(ex);
 
