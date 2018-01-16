@@ -29,17 +29,24 @@ import java.nio.file.Path;
 import java.security.DigestException;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 
+/** Integration tests for {@link BlobPuller}. */
 public class BlobPullerIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
 
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+  @BeforeClass
+  public static void setUpLocalRegistry() throws IOException, InterruptedException {
+    localRegistry.pullBusybox();
+  }
 
   @Test
   public void testPull() throws IOException, RegistryException, DigestException {

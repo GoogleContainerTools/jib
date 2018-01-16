@@ -17,6 +17,7 @@
 package com.google.cloud.tools.crepecake.registry;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.UUID;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.TestRule;
@@ -33,25 +34,31 @@ class LocalRegistry extends ExternalResource {
     this.port = port;
   }
 
+  void pullBusybox() throws IOException, InterruptedException {
+    // Pulls 'busybox'.
+    runCommand("docker", "pull", "busybox");
+
+    // Tags 'busybox' to push to our local registry.
+    runCommand("docker", "tag", "busybox", "localhost:" + port + "/busybox");
+
+    // Pushes 'busybox' to our local registry.
+    runCommand("docker", "push", "localhost:" + port + "/busybox");
+  }
+
   /** Starts the local registry. */
   @Override
   protected void before() throws Throwable {
     // Runs the Docker registry.
     runCommand(
-        "docker run -d -p "
-            + port
-            + ":5000 --restart=always --name "
-            + containerName
-            + " registry:2");
-
-    // Pulls 'busybox'.
-    runCommand("docker pull busybox");
-
-    // Tags 'busybox' to push to our local registry.
-    runCommand("docker tag busybox localhost:" + port + "/busybox");
-
-    // Pushes 'busybox' to our local registry.
-    runCommand("docker push localhost:" + port + "/busybox");
+        "docker",
+        "run",
+        "-d",
+        "-p",
+        port + ":5000",
+        "--restart=always",
+        "--name",
+        containerName,
+        "registry:2");
   }
 
   /** Stops the local registry. */
@@ -59,10 +66,10 @@ class LocalRegistry extends ExternalResource {
   protected void after() {
     try {
       // Stops the registry.
-      runCommand("docker stop " + containerName);
+      runCommand("docker", "stop", containerName);
 
       // Removes the container.
-      runCommand("docker rm -v " + containerName);
+      runCommand("docker", "rm", "-v", containerName);
 
     } catch (InterruptedException | IOException ex) {
       throw new RuntimeException("Could not stop local registry fully: " + containerName, ex);
@@ -70,7 +77,9 @@ class LocalRegistry extends ExternalResource {
   }
 
   /** Runs a command with naive tokenization by whitespace. */
-  private void runCommand(String command) throws IOException, InterruptedException {
-    new ProcessBuilder(command.split(" ")).start().waitFor();
+  private void runCommand(String... command) throws IOException, InterruptedException {
+    if (new ProcessBuilder(Arrays.asList(command)).start().waitFor() != 0) {
+      throw new IOException("Command '" + String.join(" ", command) + "' failed");
+    }
   }
 }

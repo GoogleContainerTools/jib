@@ -35,7 +35,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -45,17 +44,22 @@ public class BlobPullerTest {
 
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  @Mock private RegistryEndpointProperties mockRegistryEndpointProperties;
-
+  private RegistryEndpointProperties fakeRegistryEndpointProperties;
   private DescriptorDigest fakeDigest;
   private Path temporaryPath;
 
+  private BlobPuller testBlobPuller;
+
   @Before
   public void setUpFakes() throws DigestException, IOException {
+    fakeRegistryEndpointProperties =
+        new RegistryEndpointProperties("someServerUrl", "someImageName");
     fakeDigest =
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
     temporaryPath = temporaryFolder.newFile().toPath();
+
+    testBlobPuller = new BlobPuller(fakeRegistryEndpointProperties, fakeDigest, temporaryPath);
   }
 
   @Test
@@ -67,7 +71,7 @@ public class BlobPullerTest {
     Mockito.when(mockResponse.getBody()).thenReturn(testBlob);
 
     BlobPuller blobPuller =
-        new BlobPuller(mockRegistryEndpointProperties, testBlobDigest, temporaryPath);
+        new BlobPuller(fakeRegistryEndpointProperties, testBlobDigest, temporaryPath);
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     BlobDescriptor blobDescriptor =
         blobPuller.handleResponse(mockResponse).writeTo(byteArrayOutputStream);
@@ -85,10 +89,8 @@ public class BlobPullerTest {
     Response mockResponse = Mockito.mock(Response.class);
     Mockito.when(mockResponse.getBody()).thenReturn(testBlob);
 
-    BlobPuller blobPuller =
-        new BlobPuller(mockRegistryEndpointProperties, fakeDigest, temporaryPath);
     try {
-      blobPuller.handleResponse(mockResponse);
+      testBlobPuller.handleResponse(mockResponse);
       Assert.fail("Receiving an unexpected digest should fail");
 
     } catch (UnexpectedBlobDigestException ex) {
@@ -104,20 +106,20 @@ public class BlobPullerTest {
 
   @Test
   public void testInitializer_getApiRoute() throws MalformedURLException {
-    BlobPuller blobPuller =
-        new BlobPuller(mockRegistryEndpointProperties, fakeDigest, temporaryPath);
     Assert.assertEquals(
         new URL("http://someApiBase/blobs/" + fakeDigest),
-        blobPuller.getApiRoute("http://someApiBase"));
+        testBlobPuller.getApiRoute("http://someApiBase"));
   }
 
   @Test
   public void testInitializer_getActionDescription() {
-    BlobPuller blobPuller =
-        new BlobPuller(
-            new RegistryEndpointProperties("someServer", "someImage"), fakeDigest, temporaryPath);
     Assert.assertEquals(
-        "pull BLOB for someServer/someImage with digest " + fakeDigest,
-        blobPuller.getActionDescription());
+        "pull BLOB for someServerUrl/someImageName with digest " + fakeDigest,
+        testBlobPuller.getActionDescription());
+  }
+
+  @Test
+  public void testGetHttpMethod() {
+    Assert.assertEquals("GET", testBlobPuller.getHttpMethod());
   }
 }

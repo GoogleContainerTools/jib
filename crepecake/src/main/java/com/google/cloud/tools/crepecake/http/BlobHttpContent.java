@@ -22,24 +22,25 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /** {@link Blob}-backed {@link HttpContent}. */
-class BlobHttpContent implements HttpContent {
+public class BlobHttpContent implements HttpContent {
 
   private final Blob blob;
+  private final String contentType;
 
-  BlobHttpContent(Blob blob) {
+  public BlobHttpContent(Blob blob, String contentType) {
     this.blob = blob;
+    this.contentType = contentType;
   }
 
   @Override
-  public long getLength() throws IOException {
+  public long getLength() {
     // Returns negative value for unknown length.
     return -1;
   }
 
   @Override
   public String getType() {
-    // TODO: This should return the actual Content-Type.
-    return null;
+    return contentType;
   }
 
   @Override
@@ -50,5 +51,6 @@ class BlobHttpContent implements HttpContent {
   @Override
   public void writeTo(OutputStream outputStream) throws IOException {
     blob.writeTo(outputStream);
+    outputStream.flush();
   }
 }

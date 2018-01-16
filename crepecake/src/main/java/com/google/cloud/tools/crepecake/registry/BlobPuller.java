@@ -16,9 +16,11 @@
 
 package com.google.cloud.tools.crepecake.registry;
 
+import com.google.api.client.http.HttpMethods;
 import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
 import com.google.cloud.tools.crepecake.blob.Blobs;
+import com.google.cloud.tools.crepecake.http.BlobHttpContent;
 import com.google.cloud.tools.crepecake.http.Response;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import java.io.BufferedOutputStream;
@@ -28,6 +30,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import javax.annotation.Nullable;
 
 /** Pulls an image's blob (layer or container configuration). */
 class BlobPuller implements RegistryEndpointProvider<Blob> {
@@ -43,6 +46,12 @@ class BlobPuller implements RegistryEndpointProvider<Blob> {
     this.registryEndpointProperties = registryEndpointProperties;
     this.blobDigest = blobDigest;
     this.destPath = destPath;
+  }
+
+  @Nullable
+  @Override
+  public BlobHttpContent getContent() {
+    return null;
   }
 
   @Override
@@ -70,6 +79,10 @@ class BlobPuller implements RegistryEndpointProvider<Blob> {
   }
 
   @Override
+  public String getHttpMethod() {
+    return HttpMethods.GET;
+  }
+
   public String getActionDescription() {
     return "pull BLOB for "
         + registryEndpointProperties.getServerUrl()

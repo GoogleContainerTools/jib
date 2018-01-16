@@ -17,7 +17,6 @@
 package com.google.cloud.tools.crepecake.http;
 
 import com.google.api.client.http.HttpHeaders;
-import com.google.cloud.tools.crepecake.blob.Blob;
 import javax.annotation.Nullable;
 
 /** Holds an HTTP request. */
@@ -39,19 +38,16 @@ public class Request {
     }
 
     /** Sets the {@code Authorization} header. */
-    public Builder setAuthorization(Authorization authorization) {
-      headers.setAuthorization(authorization.toString());
+    public Builder setAuthorization(@Nullable Authorization authorization) {
+      if (authorization != null) {
+        headers.setAuthorization(authorization.toString());
+      }
       return this;
     }
 
-    /** Sets the {@code Content-Type} header. */
-    public Builder setContentType(String contentType) {
-      headers.setContentType(contentType);
-      return this;
-    }
-
-    public Builder setBody(Blob body) {
-      this.body = new BlobHttpContent(body);
+    /** Sets the body and its corresponding {@code Content-Type} header. */
+    public Builder setBody(@Nullable BlobHttpContent blobHttpContent) {
+      this.body = blobHttpContent;
       return this;
     }
   }

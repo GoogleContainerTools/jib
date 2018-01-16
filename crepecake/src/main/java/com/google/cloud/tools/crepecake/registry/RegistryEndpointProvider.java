@@ -16,10 +16,12 @@
 
 package com.google.cloud.tools.crepecake.registry;
 
+import com.google.cloud.tools.crepecake.http.BlobHttpContent;
 import com.google.cloud.tools.crepecake.http.Response;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import javax.annotation.Nullable;
 
 /**
  * Provides implementations for a registry endpoint.
@@ -27,6 +29,10 @@ import java.net.URL;
  * @param <T> the type returned from handling the endpoint response
  */
 interface RegistryEndpointProvider<T> {
+
+  /** @return the {@link BlobHttpContent} to send as the request body */
+  @Nullable
+  BlobHttpContent getContent();
 
   /** Handles the response specific to the registry action. */
   T handleResponse(Response response) throws IOException, RegistryException;
@@ -36,6 +42,9 @@ interface RegistryEndpointProvider<T> {
    * @return the registry endpoint URL
    */
   URL getApiRoute(String apiRouteBase) throws MalformedURLException;
+
+  /** @return the HTTP method to send the request with */
+  String getHttpMethod();
 
   /**
    * @return a description of the registry action performed, used in error messages to describe the

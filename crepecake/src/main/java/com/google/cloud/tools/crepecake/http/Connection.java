@@ -20,11 +20,13 @@ import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
+import com.google.api.client.http.apache.ApacheHttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.URL;
 import javax.annotation.Nullable;
+import org.apache.http.NoHttpResponseException;
 
 /**
  * Sends an HTTP {@link Request} and stores the {@link Response}.
@@ -40,10 +42,15 @@ import javax.annotation.Nullable;
  */
 public class Connection implements Closeable {
 
-  private static final HttpRequestFactory HTTP_REQUEST_FACTORY =
-      new NetHttpTransport().createRequestFactory();
-
-  private HttpRequestFactory requestFactory = HTTP_REQUEST_FACTORY;
+  /**
+   * Do not use {@link NetHttpTransport}. It does not process response errors properly. A new {@link
+   * ApacheHttpTransport} needs to be created for each connection because otherwise HTTP connection
+   * persistence causes the connection to throw {@link NoHttpResponseException}.
+   *
+   * @see <a
+   *     href="https://github.com/google/google-http-java-client/issues/39">https://github.com/google/google-http-java-client/issues/39</a>
+   */
+  private HttpRequestFactory requestFactory = new ApacheHttpTransport().createRequestFactory();
 
   @Nullable private HttpResponse httpResponse;
 
@@ -82,7 +89,7 @@ public class Connection implements Closeable {
   }
 
   /** Sends the request. */
-  private Response send(String httpMethod, Request request) throws IOException {
+  public Response send(String httpMethod, Request request) throws IOException {
     httpResponse =
         requestFactory
             .buildRequest(httpMethod, url, request.getHttpContent())

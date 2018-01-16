@@ -18,7 +18,9 @@ package com.google.cloud.tools.crepecake.registry;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.api.client.http.HttpMethods;
 import com.google.cloud.tools.crepecake.blob.Blobs;
+import com.google.cloud.tools.crepecake.http.BlobHttpContent;
 import com.google.cloud.tools.crepecake.http.Response;
 import com.google.cloud.tools.crepecake.image.json.ManifestTemplate;
 import com.google.cloud.tools.crepecake.image.json.UnknownManifestFormatException;
@@ -28,6 +30,7 @@ import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import javax.annotation.Nullable;
 
 /** Pulls an image's manifest. */
 class ManifestPuller implements RegistryEndpointProvider<ManifestTemplate> {
@@ -58,13 +61,20 @@ class ManifestPuller implements RegistryEndpointProvider<ManifestTemplate> {
         throw new UnknownManifestFormatException("`schemaVersion` field is not an integer");
 
       default:
-        throw new UnknownManifestFormatException("Unknown schemaVersion: " + schemaVersion);
+        throw new UnknownManifestFormatException(
+            "Unknown schemaVersion: " + schemaVersion + " - only 1 and 2 are supported");
     }
   }
 
   ManifestPuller(RegistryEndpointProperties registryEndpointProperties, String imageTag) {
     this.registryEndpointProperties = registryEndpointProperties;
     this.imageTag = imageTag;
+  }
+
+  @Nullable
+  @Override
+  public BlobHttpContent getContent() {
+    return null;
   }
 
   /** Parses the response body into a {@link ManifestTemplate}. */
@@ -77,6 +87,11 @@ class ManifestPuller implements RegistryEndpointProvider<ManifestTemplate> {
   @Override
   public URL getApiRoute(String apiRouteBase) throws MalformedURLException {
     return new URL(apiRouteBase + "/manifests/" + imageTag);
+  }
+
+  @Override
+  public String getHttpMethod() {
+    return HttpMethods.GET;
   }
 
   @Override
