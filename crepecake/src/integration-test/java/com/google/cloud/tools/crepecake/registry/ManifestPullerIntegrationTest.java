@@ -37,7 +37,7 @@ public class ManifestPullerIntegrationTest {
         registryClient.pullManifest("latest", V21ManifestTemplate.class);
 
     Assert.assertEquals(1, manifestTemplate.getSchemaVersion());
-    Assert.assertTrue(0 < manifestTemplate.getFsLayers().size());
+    Assert.assertTrue(manifestTemplate.getFsLayers().size() > 0);
   }
 
   @Test
