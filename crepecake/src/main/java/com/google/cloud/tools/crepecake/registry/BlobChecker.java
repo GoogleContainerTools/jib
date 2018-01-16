@@ -20,7 +20,7 @@ import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
-import com.google.cloud.tools.crepecake.http.Request;
+import com.google.cloud.tools.crepecake.http.BlobHttpContent;
 import com.google.cloud.tools.crepecake.http.Response;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
@@ -29,7 +29,9 @@ import com.google.cloud.tools.crepecake.registry.json.ErrorResponseTemplate;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Checks if an image's BLOB exists on a registry, and retrieves its {@link BlobDescriptor} if it
@@ -44,9 +46,6 @@ class BlobChecker implements RegistryEndpointProvider<BlobDescriptor> {
     this.registryEndpointProperties = registryEndpointProperties;
     this.blobDigest = blobDigest;
   }
-
-  @Override
-  public void buildRequest(Request.Builder builder) {}
 
   /** @return the BLOB's size, if it exists, or {@code null} if it doesn't */
   @Override
@@ -92,6 +91,17 @@ class BlobChecker implements RegistryEndpointProvider<BlobDescriptor> {
   public URL getApiRoute(String apiRouteBase) throws MalformedURLException {
     return new URL(
         apiRouteBase + registryEndpointProperties.getImageName() + "/blobs/" + blobDigest);
+  }
+
+  @Nullable
+  @Override
+  public BlobHttpContent getContent() {
+    return null;
+  }
+
+  @Override
+  public List<String> getAccept() {
+    return Collections.emptyList();
   }
 
   @Override

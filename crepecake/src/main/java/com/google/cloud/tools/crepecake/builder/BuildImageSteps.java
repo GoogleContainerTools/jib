@@ -23,58 +23,42 @@ import com.google.cloud.tools.crepecake.http.Authorization;
 import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
 import com.google.cloud.tools.crepecake.image.Image;
 import com.google.cloud.tools.crepecake.image.ImageLayers;
-import com.google.cloud.tools.crepecake.image.Layer;
 import com.google.cloud.tools.crepecake.image.LayerCountMismatchException;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
-import com.google.cloud.tools.crepecake.registry.LocalRegistry;
 import com.google.cloud.tools.crepecake.registry.NonexistentDockerCredentialHelperException;
 import com.google.cloud.tools.crepecake.registry.NonexistentServerUrlDockerCredentialHelperException;
 import com.google.cloud.tools.crepecake.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.crepecake.registry.RegistryException;
-import com.google.common.io.CharStreams;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-import org.junit.Assert;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
-/** Integration tests for various {@link Step}s. */
-public class StepIntegrationTest {
+/** All the steps to build an image. */
+public class BuildImageSteps {
 
-  @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
+  private final BuildConfiguration buildConfiguration;
+  private final SourceFilesConfiguration sourceFilesConfiguration;
+  private final Path cacheDirectory;
 
-  @Rule public TemporaryFolder temporaryCacheDirectory = new TemporaryFolder();
+  public BuildImageSteps(
+      BuildConfiguration buildConfiguration,
+      SourceFilesConfiguration sourceFilesConfiguration,
+      Path cacheDirectory) {
+    this.buildConfiguration = buildConfiguration;
+    this.sourceFilesConfiguration = sourceFilesConfiguration;
+    this.cacheDirectory = cacheDirectory;
+  }
 
-  @Test
-  public void testSteps()
-      throws DuplicateLayerException, LayerPropertyNotFoundException, RegistryException,
-          LayerCountMismatchException, IOException, CacheMetadataCorruptedException,
-          RegistryAuthenticationFailedException,
-          NonexistentServerUrlDockerCredentialHelperException,
-          NonexistentDockerCredentialHelperException, URISyntaxException, InterruptedException {
-    SourceFilesConfiguration sourceFilesConfiguration = new TestSourceFilesConfiguration();
-    BuildConfiguration buildConfiguration =
-        BuildConfiguration.builder()
-            .setBaseImageServerUrl("gcr.io")
-            .setBaseImageName("distroless/java")
-            .setBaseImageTag("latest")
-            .setTargetServerUrl("localhost:5000")
-            .setTargetImageName("testimage")
-            .setTargetTag("testtag")
-            .setCredentialHelperName("gcloud")
-            .setMainClass("HelloWorld")
-            .build();
-    try (Cache cache = Cache.init(temporaryCacheDirectory.newFolder().toPath())) {
+  public void run()
+      throws CacheMetadataCorruptedException, IOException, RegistryAuthenticationFailedException,
+          RegistryException, DuplicateLayerException, LayerCountMismatchException,
+          LayerPropertyNotFoundException, NonexistentServerUrlDockerCredentialHelperException,
+          NonexistentDockerCredentialHelperException {
+    try (Cache cache = Cache.init(cacheDirectory)) {
 
       // Authenticates base image pull.
       AuthenticatePullStep authenticatePullStep = new AuthenticatePullStep(buildConfiguration);
@@ -85,32 +69,28 @@ public class StepIntegrationTest {
           new PullBaseImageStep(buildConfiguration, pullAuthorization);
       Image baseImage = pullBaseImageStep.run(null);
 
+      // TODO: Check if base image layers cached.
       // Pulls and caches the base image layers.
       PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep =
           new PullAndCacheBaseImageLayersStep(buildConfiguration, cache, pullAuthorization);
       ImageLayers<CachedLayer> baseImageLayers = pullAndCacheBaseImageLayersStep.run(baseImage);
 
-      // TODO: Assert base image layers cached.
-
-      // TODO: Set up authorization and mock a credential helper for the local registry.
       // Authenticates push.
-      //    AuthenticatePushStep authenticatePushStep = new AuthenticatePushStep(buildConfiguration);
-      //    Authorization pushAuthorization = authenticatePushStep.run(null);
+      AuthenticatePushStep authenticatePushStep = new AuthenticatePushStep(buildConfiguration);
+      Authorization pushAuthorization = authenticatePushStep.run(null);
 
       // Pushes the base image layers.
       PushBaseImageLayersStep pushBaseImageLayersStep =
-          new PushBaseImageLayersStep(buildConfiguration, null);
+          new PushBaseImageLayersStep(buildConfiguration, pushAuthorization);
       pushBaseImageLayersStep.run(baseImageLayers);
 
       BuildAndCacheApplicationLayersStep buildAndCacheApplicationLayersStep =
           new BuildAndCacheApplicationLayersStep(sourceFilesConfiguration, cache);
       ImageLayers<CachedLayer> applicationLayers = buildAndCacheApplicationLayersStep.run(null);
 
-      // TODO: Assert application layers cached.
-
       // Pushes the application layers.
       PushApplicationLayersStep pushApplicationLayersStep =
-          new PushApplicationLayersStep(buildConfiguration, null);
+          new PushApplicationLayersStep(buildConfiguration, pushAuthorization);
       pushApplicationLayersStep.run(applicationLayers);
 
       // Pushes the new image manifest.
@@ -118,31 +98,15 @@ public class StepIntegrationTest {
           new Image()
               .addLayers(baseImageLayers)
               .addLayers(applicationLayers)
-              .setEntrypoint(
-                  getEntrypoint(sourceFilesConfiguration, buildConfiguration.getMainClass()));
-      PushImageStep pushImageStep = new PushImageStep(buildConfiguration, null);
+              .setEntrypoint(getEntrypoint());
+      PushImageStep pushImageStep = new PushImageStep(buildConfiguration, pushAuthorization);
       pushImageStep.run(image);
-
-      for (Layer layer : image.getLayers()) {
-        System.out.println("CACHED " + layer.getBlobDescriptor().getDigest());
-      }
-
-      // TODO: Put this in a utility function.
-      Runtime.getRuntime().exec("docker pull localhost:5000/testimage:testtag").waitFor();
-      Process process = Runtime.getRuntime().exec("docker run localhost:5000/testimage:testtag");
-      try (InputStreamReader inputStreamReader =
-          new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)) {
-        String output = CharStreams.toString(inputStreamReader);
-        Assert.assertEquals("Hello world\n", output);
-      }
-      process.waitFor();
 
       // TODO: Integrate any new steps as they are added.
     }
   }
 
-  private List<String> getEntrypoint(
-      SourceFilesConfiguration sourceFilesConfiguration, String mainClass) {
+  private List<String> getEntrypoint() {
     List<String> classPaths = new ArrayList<>();
     addSourceFilesToClassPaths(
         sourceFilesConfiguration.getDependenciesFiles(),
@@ -159,7 +123,7 @@ public class StepIntegrationTest {
 
     String entrypoint = String.join(":", classPaths);
 
-    return Arrays.asList("java", "-cp", entrypoint, mainClass);
+    return Arrays.asList("java", "-cp", entrypoint, buildConfiguration.getMainClass());
   }
 
   private void addSourceFilesToClassPaths(

@@ -18,13 +18,15 @@ package com.google.cloud.tools.crepecake.registry;
 
 import com.google.api.client.http.HttpMethods;
 import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
-import com.google.cloud.tools.crepecake.http.Request;
+import com.google.cloud.tools.crepecake.http.BlobHttpContent;
 import com.google.cloud.tools.crepecake.http.Response;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collections;
+import java.util.List;
 
 /** Pulls an image's BLOB (layer or container configuration). */
 class BlobPuller implements RegistryEndpointProvider<Void> {
@@ -49,9 +51,6 @@ class BlobPuller implements RegistryEndpointProvider<Void> {
   }
 
   @Override
-  public void buildRequest(Request.Builder builder) {}
-
-  @Override
   public Void handleResponse(Response response) throws IOException, UnexpectedBlobDigestException {
     try (OutputStream outputStream = destOutputStream) {
       BlobDescriptor receivedBlobDescriptor = response.getBody().writeTo(outputStream);
@@ -67,6 +66,15 @@ class BlobPuller implements RegistryEndpointProvider<Void> {
     }
 
     return null;
+  }
+
+  public BlobHttpContent getContent() {
+    return null;
+  }
+
+  @Override
+  public List<String> getAccept() {
+    return Collections.emptyList();
   }
 
   @Override

@@ -43,8 +43,8 @@ import org.apache.http.NoHttpResponseException;
 public class Connection implements Closeable {
 
   /**
-   * Do not use {@link NetHttpTransport}. It does process response errors properly. A new {@link
-   * ApacheHttpTransport} needs to be created for each connection because otherwise, HTTP connection
+   * Do not use {@link NetHttpTransport}. It does not process response errors properly. A new {@link
+   * ApacheHttpTransport} needs to be created for each connection because otherwise HTTP connection
    * persistence causes the connection to throw {@link NoHttpResponseException}.
    *
    * @see <a
