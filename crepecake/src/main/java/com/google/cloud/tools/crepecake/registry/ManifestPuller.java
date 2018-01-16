@@ -20,7 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.api.client.http.HttpMethods;
 import com.google.cloud.tools.crepecake.blob.Blobs;
-import com.google.cloud.tools.crepecake.http.Request;
+import com.google.cloud.tools.crepecake.http.BlobHttpContent;
 import com.google.cloud.tools.crepecake.http.Response;
 import com.google.cloud.tools.crepecake.image.json.ManifestTemplate;
 import com.google.cloud.tools.crepecake.image.json.UnknownManifestFormatException;
@@ -30,6 +30,7 @@ import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import javax.annotation.Nullable;
 
 /** Pulls an image's manifest. */
 class ManifestPuller implements RegistryEndpointProvider<ManifestTemplate> {
@@ -70,8 +71,11 @@ class ManifestPuller implements RegistryEndpointProvider<ManifestTemplate> {
     this.imageTag = imageTag;
   }
 
+  @Nullable
   @Override
-  public void buildRequest(Request.Builder builder) {}
+  public BlobHttpContent getBodyContent() {
+    return null;
+  }
 
   /** Parses the response body into a {@link ManifestTemplate}. */
   @Override

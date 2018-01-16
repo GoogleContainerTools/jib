@@ -16,17 +16,24 @@
 
 package com.google.cloud.tools.crepecake.registry;
 
-import com.google.cloud.tools.crepecake.blob.Blob;
-import com.google.cloud.tools.crepecake.http.Request;
+import com.google.cloud.tools.crepecake.http.BlobHttpContent;
 import com.google.cloud.tools.crepecake.http.Response;
 import com.google.cloud.tools.crepecake.image.json.V22ManifestTemplate;
+import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
+import com.google.common.io.Resources;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -34,26 +41,36 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class ManifestPusherTest {
 
-  @Mock private V22ManifestTemplate mockManifestTemplate;
-
+  private Path v22manifestJsonFile;
+  private V22ManifestTemplate fakeManifestTemplate;
   private ManifestPusher testManifestPusher;
 
   @Before
-  public void setUp() {
+  public void setUp() throws URISyntaxException, IOException {
+    v22manifestJsonFile = Paths.get(Resources.getResource("json/v22manifest.json").toURI());
+    fakeManifestTemplate =
+        JsonTemplateMapper.readJsonFromFile(v22manifestJsonFile, V22ManifestTemplate.class);
+
     testManifestPusher =
         new ManifestPusher(
             new RegistryEndpointProperties("someServerUrl", "someImageName"),
-            mockManifestTemplate,
+            fakeManifestTemplate,
             "test-image-tag");
   }
 
   @Test
-  public void testBuildRequest() {
-    Request.Builder mockRequestBuilder = Mockito.mock(Request.Builder.class);
-    testManifestPusher.buildRequest(mockRequestBuilder);
+  public void testGetBodyContent() throws IOException {
+    BlobHttpContent body = testManifestPusher.getBodyContent();
 
-    Mockito.verify(mockRequestBuilder).setContentType(V22ManifestTemplate.MEDIA_TYPE);
-    Mockito.verify(mockRequestBuilder).setBody(Mockito.any(Blob.class));
+    Assert.assertNotNull(body);
+    Assert.assertEquals(V22ManifestTemplate.MEDIA_TYPE, body.getType());
+
+    ByteArrayOutputStream bodyCaptureStream = new ByteArrayOutputStream();
+    body.writeTo(bodyCaptureStream);
+    String v22manifestJson =
+        new String(Files.readAllBytes(v22manifestJsonFile), StandardCharsets.UTF_8);
+    Assert.assertEquals(
+        v22manifestJson, new String(bodyCaptureStream.toByteArray(), StandardCharsets.UTF_8));
   }
 
   @Test
