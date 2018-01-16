@@ -163,7 +163,17 @@ public class BlobCheckerTest {
   }
 
   @Test
-  public void testInitializer_getActionDescription() {
+  public void testGetContent() {
+    Assert.assertNull(testBlobChecker.getContent());
+  }
+
+  @Test
+  public void testGetAccept() {
+    Assert.assertEquals(0, testBlobChecker.getAccept().size());
+  }
+
+  @Test
+  public void testGetActionDescription() {
     Assert.assertEquals(
         "check BLOB exists for someServerUrl/someImageName with digest " + fakeDigest,
         testBlobChecker.getActionDescription());
