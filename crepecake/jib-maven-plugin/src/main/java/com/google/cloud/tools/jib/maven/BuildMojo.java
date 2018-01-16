@@ -16,7 +16,17 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.cloud.tools.crepecake.builder.BuildConfiguration;
+import com.google.cloud.tools.crepecake.builder.BuildImageSteps;
 import com.google.cloud.tools.crepecake.builder.SourceFilesConfiguration;
+import com.google.cloud.tools.crepecake.cache.CacheMetadataCorruptedException;
+import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
+import com.google.cloud.tools.crepecake.image.LayerCountMismatchException;
+import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
+import com.google.cloud.tools.crepecake.registry.NonexistentDockerCredentialHelperException;
+import com.google.cloud.tools.crepecake.registry.NonexistentServerUrlDockerCredentialHelperException;
+import com.google.cloud.tools.crepecake.registry.RegistryAuthenticationFailedException;
+import com.google.cloud.tools.crepecake.registry.RegistryException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -112,6 +122,49 @@ public class BuildMojo extends AbstractMojo {
 
   @Override
   public void execute() throws MojoExecutionException {
+    SourceFilesConfiguration sourceFilesConfiguration = getSourceFilesConfiguration();
+
+    BuildConfiguration buildConfiguration =
+        BuildConfiguration.builder()
+            .setBaseImageServerUrl("gcr.io")
+            .setBaseImageName("distroless/java")
+            .setBaseImageTag("latest")
+            .setTargetServerUrl("gcr.io")
+            .setTargetImageName("jibtestimage")
+            .setTargetTag("testtag")
+            .setCredentialHelperName("gcr")
+            .setMainClass("com.test.HelloWorld")
+            .build();
+
+    Path cacheDirectory = Paths.get(project.getBuild().getDirectory(), "jib-cache");
+    if (!Files.exists(cacheDirectory)) {
+      try {
+        Files.createDirectory(cacheDirectory);
+
+      } catch (IOException ex) {
+        throw new MojoExecutionException("Could not create cache directory", ex);
+      }
+    }
+
+    try {
+      BuildImageSteps buildImageSteps =
+          new BuildImageSteps(buildConfiguration, sourceFilesConfiguration, cacheDirectory);
+      buildImageSteps.run();
+
+    } catch (IOException
+        | RegistryException
+        | CacheMetadataCorruptedException
+        | DuplicateLayerException
+        | LayerPropertyNotFoundException
+        | LayerCountMismatchException
+        | NonexistentDockerCredentialHelperException
+        | RegistryAuthenticationFailedException
+        | NonexistentServerUrlDockerCredentialHelperException ex) {
+      throw new MojoExecutionException("Build image failed", ex);
+    }
+  }
+
+  private SourceFilesConfiguration getSourceFilesConfiguration() throws MojoExecutionException {
     try {
       SourceFilesConfiguration sourceFilesConfiguration =
           new MavenSourceFilesConfiguration(project);
@@ -131,10 +184,10 @@ public class BuildMojo extends AbstractMojo {
           .getClassesFiles()
           .forEach(classesFile -> getLog().info("Class: " + classesFile));
 
+      return sourceFilesConfiguration;
+
     } catch (IOException ex) {
       throw new MojoExecutionException("Obtaining project build output files failed", ex);
     }
-
-    throw new MojoExecutionException("");
   }
 }
