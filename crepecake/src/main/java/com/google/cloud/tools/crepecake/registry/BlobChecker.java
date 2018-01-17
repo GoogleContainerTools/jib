@@ -61,30 +61,38 @@ class BlobChecker implements RegistryEndpointProvider<BlobDescriptor> {
   }
 
   @Override
-  public BlobDescriptor handleHttpResponseException(HttpResponseException ex) throws IOException {
-    if (ex.getStatusCode() != HttpStatusCodes.STATUS_CODE_NOT_FOUND) {
-      throw ex;
+  public BlobDescriptor handleHttpResponseException(HttpResponseException httpResponseException)
+      throws RegistryErrorException, HttpResponseException {
+    if (httpResponseException.getStatusCode() != HttpStatusCodes.STATUS_CODE_NOT_FOUND) {
+      throw httpResponseException;
     }
 
     // Finds a BLOB_UNKNOWN error response code.
-    String errorContent = ex.getContent();
+    String errorContent = httpResponseException.getContent();
     if (errorContent == null) {
       // TODO: The Google HTTP client gives null content for HEAD requests. Make the content never be null, even for HEAD requests.
       return null;
     } else {
-      ErrorResponseTemplate errorResponse =
-          JsonTemplateMapper.readJson(errorContent, ErrorResponseTemplate.class);
-      List<ErrorEntryTemplate> errors = errorResponse.getErrors();
-      if (errors.size() == 1) {
-        ErrorCodes errorCode = ErrorCodes.valueOf(errors.get(0).getCode());
-        if (errorCode.equals(ErrorCodes.BLOB_UNKNOWN)) {
-          return null;
+      try {
+        ErrorResponseTemplate errorResponse =
+            JsonTemplateMapper.readJson(errorContent, ErrorResponseTemplate.class);
+        List<ErrorEntryTemplate> errors = errorResponse.getErrors();
+        if (errors.size() == 1) {
+          ErrorCodes errorCode = ErrorCodes.valueOf(errors.get(0).getCode());
+          if (errorCode.equals(ErrorCodes.BLOB_UNKNOWN)) {
+            return null;
+          }
         }
+
+      } catch (IOException ex) {
+        throw new RegistryErrorExceptionBuilder(getActionDescription(), ex)
+            .addReason("Failed to parse registry error response body")
+            .build();
       }
     }
 
     // BLOB_UNKNOWN was not found as a error response code.
-    throw ex;
+    throw httpResponseException;
   }
 
   @Override
