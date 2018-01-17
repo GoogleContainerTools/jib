@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.crepecake.registry;
 
+import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.crepecake.blob.Blob;
@@ -34,13 +35,13 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
 import javax.annotation.Nullable;
+import javax.net.ssl.SSLPeerUnverifiedException;
 import org.apache.http.NoHttpResponseException;
 
 /** Interfaces with a registry. */
 public class RegistryClient {
 
-  // TODO: This should be configurable.
-  private static final String PROTOCOL = "http";
+  private static final String PROTOCOL = "https";
 
   @Nullable private final Authorization authorization;
   private final RegistryEndpointProperties registryEndpointProperties;
@@ -48,6 +49,14 @@ public class RegistryClient {
   public RegistryClient(@Nullable Authorization authorization, String serverUrl, String imageName) {
     this.authorization = authorization;
     this.registryEndpointProperties = new RegistryEndpointProperties(serverUrl, imageName);
+  }
+
+  /** Gets the {@link RegistryAuthenticator} to authenticate pulls from the registry. */
+  public RegistryAuthenticator getRegistryAuthenticator() throws IOException, RegistryException {
+    // Gets the WWW-Authenticate header (eg. 'WWW-Authenticate: Bearer realm="https://gcr.io/v2/token",service="gcr.io"')
+    AuthenticationMethodRetriever authenticationMethodRetriever =
+        new AuthenticationMethodRetriever(registryEndpointProperties);
+    return callRegistryEndpoint(authenticationMethodRetriever);
   }
 
   /**
@@ -121,11 +130,7 @@ public class RegistryClient {
   }
 
   private String getApiRouteBase() {
-    return PROTOCOL
-        + "://"
-        + registryEndpointProperties.getServerUrl()
-        + "/v2/"
-        + registryEndpointProperties.getImageName();
+    return PROTOCOL + "://" + registryEndpointProperties.getServerUrl() + "/v2/";
   }
 
   /**
@@ -164,35 +169,51 @@ public class RegistryClient {
       return registryEndpointProvider.handleResponse(response);
 
     } catch (HttpResponseException ex) {
-      if (ex.getStatusCode() == HttpStatusCodes.STATUS_CODE_BAD_REQUEST
-          || ex.getStatusCode() == HttpStatusCodes.STATUS_CODE_NOT_FOUND
-          || ex.getStatusCode() == HttpStatusCodes.STATUS_CODE_METHOD_NOT_ALLOWED) {
-        // The name or reference was invalid.
-        ErrorResponseTemplate errorResponse =
-            JsonTemplateMapper.readJson(ex.getContent(), ErrorResponseTemplate.class);
-        RegistryErrorExceptionBuilder registryErrorExceptionBuilder =
-            new RegistryErrorExceptionBuilder(registryEndpointProvider.getActionDescription(), ex);
-        for (ErrorEntryTemplate errorEntry : errorResponse.getErrors()) {
-          registryErrorExceptionBuilder.addReason(errorEntry);
+      // First, see if the endpoint provider handles an exception as an expected response.
+      try {
+        return registryEndpointProvider.handleHttpResponseException(ex);
+
+      } catch (HttpResponseException httpResponseException) {
+        if (httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_BAD_REQUEST
+            || httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_NOT_FOUND
+            || httpResponseException.getStatusCode()
+                == HttpStatusCodes.STATUS_CODE_METHOD_NOT_ALLOWED) {
+          // The name or reference was invalid.
+          ErrorResponseTemplate errorResponse =
+              JsonTemplateMapper.readJson(
+                  httpResponseException.getContent(), ErrorResponseTemplate.class);
+          RegistryErrorExceptionBuilder registryErrorExceptionBuilder =
+              new RegistryErrorExceptionBuilder(
+                  registryEndpointProvider.getActionDescription(), httpResponseException);
+          for (ErrorEntryTemplate errorEntry : errorResponse.getErrors()) {
+            registryErrorExceptionBuilder.addReason(errorEntry);
+          }
+
+          throw registryErrorExceptionBuilder.build();
+
+        } else if (httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_UNAUTHORIZED
+            || httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
+          throw new RegistryUnauthorizedException(httpResponseException);
+
+        } else if (httpResponseException.getStatusCode()
+            == HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT) {
+          return callRegistryEndpoint(
+              new URL(httpResponseException.getHeaders().getLocation()), registryEndpointProvider);
+
+        } else {
+          // Unknown
+          throw httpResponseException;
         }
-
-        throw registryErrorExceptionBuilder.build();
-
-      } else if (ex.getStatusCode() == HttpStatusCodes.STATUS_CODE_UNAUTHORIZED
-          || ex.getStatusCode() == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
-        throw new RegistryUnauthorizedException(ex);
-
-      } else if (ex.getStatusCode() == HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT) {
-        return callRegistryEndpoint(
-            new URL(ex.getHeaders().getLocation()), registryEndpointProvider);
-
-      } else {
-        // Unknown
-        throw ex;
       }
 
     } catch (NoHttpResponseException ex) {
       throw new RegistryNoResponseException(ex);
+
+    } catch (SSLPeerUnverifiedException ex) {
+      // Fall-back to HTTP
+      GenericUrl httpUrl = new GenericUrl(url);
+      httpUrl.setScheme("http");
+      return callRegistryEndpoint(httpUrl.toURL(), registryEndpointProvider);
     }
   }
 }

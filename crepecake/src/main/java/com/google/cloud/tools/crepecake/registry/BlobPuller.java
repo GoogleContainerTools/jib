@@ -82,7 +82,8 @@ class BlobPuller implements RegistryEndpointProvider<Blob> {
 
   @Override
   public URL getApiRoute(String apiRouteBase) throws MalformedURLException {
-    return new URL(apiRouteBase + "/blobs/" + blobDigest);
+    return new URL(
+        apiRouteBase + registryEndpointProperties.getImageName() + "/blobs/" + blobDigest);
   }
 
   @Override

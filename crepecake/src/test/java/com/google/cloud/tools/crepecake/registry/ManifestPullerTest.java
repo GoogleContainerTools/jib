@@ -119,8 +119,8 @@ public class ManifestPullerTest {
   @Test
   public void testGetApiRoute() throws MalformedURLException {
     Assert.assertEquals(
-        new URL("http://someApiBase/manifests/test-image-tag"),
-        testManifestPuller.getApiRoute("http://someApiBase"));
+        new URL("http://someApiBase/someImageName/manifests/test-image-tag"),
+        testManifestPuller.getApiRoute("http://someApiBase/"));
   }
 
   @Test

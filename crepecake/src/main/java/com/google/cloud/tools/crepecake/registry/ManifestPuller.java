@@ -77,7 +77,8 @@ class ManifestPuller<T extends ManifestTemplate> implements RegistryEndpointProv
 
   @Override
   public URL getApiRoute(String apiRouteBase) throws MalformedURLException {
-    return new URL(apiRouteBase + "/manifests/" + imageTag);
+    return new URL(
+        apiRouteBase + registryEndpointProperties.getImageName() + "/manifests/" + imageTag);
   }
 
   @Override

@@ -25,9 +25,12 @@ import com.google.cloud.tools.crepecake.http.Request;
 import com.google.cloud.tools.crepecake.http.Response;
 import com.google.cloud.tools.crepecake.json.JsonTemplate;
 import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Authenticates pull access with a registry service.
@@ -38,6 +41,49 @@ import java.net.URL;
 public class RegistryAuthenticator {
 
   private final URL authenticationUrl;
+
+  // TODO: Replace with a WWW-Authenticate header parser.
+  /**
+   * Instantiates from parsing a {@code WWW-Authenticate} header.
+   *
+   * @param authenticationMethod the {@code WWW-Authenticate} header value
+   * @param repository the repository/image name
+   * @see <a
+   *     href="https://docs.docker.com/registry/spec/auth/token/#how-to-authenticate">https://docs.docker.com/registry/spec/auth/token/#how-to-authenticate</a>
+   */
+  static RegistryAuthenticator fromAuthenticationMethod(
+      String authenticationMethod, String repository)
+      throws RegistryAuthenticationFailedException, MalformedURLException {
+    // Checks that the authentication method starts with 'Bearer '.
+    if (!authenticationMethod.matches("^Bearer .*")) {
+      throw newRegistryAuthenticationFailedException(authenticationMethod, "Bearer");
+    }
+
+    Pattern realmPattern = Pattern.compile("realm=\"(.*?)\"");
+    Matcher realmMatcher = realmPattern.matcher(authenticationMethod);
+    if (!realmMatcher.find()) {
+      throw newRegistryAuthenticationFailedException(authenticationMethod, "realm");
+    }
+    String realm = realmMatcher.group(1);
+
+    Pattern servicePattern = Pattern.compile("service=\"(.*?)\"");
+    Matcher serviceMatcher = servicePattern.matcher(authenticationMethod);
+    if (!serviceMatcher.find()) {
+      throw newRegistryAuthenticationFailedException(authenticationMethod, "service");
+    }
+    String service = serviceMatcher.group(1);
+
+    return new RegistryAuthenticator(realm, service, repository);
+  }
+
+  private static RegistryAuthenticationFailedException newRegistryAuthenticationFailedException(
+      String authenticationMethod, String authParam) {
+    return new RegistryAuthenticationFailedException(
+        "'"
+            + authParam
+            + "' was not found in the 'WWW-Authenticate' header, tried to parse: "
+            + authenticationMethod);
+  }
 
   /** Template for the authentication response JSON. */
   @JsonIgnoreProperties(ignoreUnknown = true)
@@ -64,5 +110,10 @@ public class RegistryAuthenticator {
     } catch (IOException ex) {
       throw new RegistryAuthenticationFailedException(ex);
     }
+  }
+
+  @VisibleForTesting
+  URL getAuthenticationUrl() {
+    return authenticationUrl;
   }
 }

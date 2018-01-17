@@ -123,8 +123,8 @@ public class BlobPusherTest {
   @Test
   public void testInitializer_getApiRoute() throws MalformedURLException {
     Assert.assertEquals(
-        new URL("http://someApiBase/blobs/uploads/?mount=" + fakeDescriptorDigest),
-        testBlobPusher.initializer().getApiRoute("http://someApiBase"));
+        new URL("http://someApiBase/someImageName/blobs/uploads/?mount=" + fakeDescriptorDigest),
+        testBlobPusher.initializer().getApiRoute("http://someApiBase/"));
   }
 
   @Test
