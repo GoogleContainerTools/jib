@@ -31,14 +31,24 @@ import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
 
-/** Pushes an image's blob (layer or container configuration). */
+/**
+ * Pushes an image's BLOB (layer or container configuration).
+ *
+ * <p>The BLOB is pushed in three stages:
+ *
+ * <ol>
+ *   <li>Initialize - Gets a location back to write the BLOB content to
+ *   <li>Write BLOB - Write the BLOB content to the received location
+ *   <li>Commit BLOB - Commits the BLOB with its digest
+ * </ol>
+ */
 class BlobPusher {
 
   private final RegistryEndpointProperties registryEndpointProperties;
   private final DescriptorDigest blobDigest;
   private final Blob blob;
 
-  // TODO: All RegistryEndpointProviders should construct the actual URL to send the request to
+  /** Initializes the BLOB upload. */
   private class Initializer implements RegistryEndpointProvider<String> {
 
     @Nullable
@@ -93,6 +103,7 @@ class BlobPusher {
     }
   }
 
+  /** Writes the BLOB content to the upload location. */
   private class Writer implements RegistryEndpointProvider<String> {
 
     private final URL location;
@@ -135,6 +146,7 @@ class BlobPusher {
     }
   }
 
+  /** Commits the written BLOB. */
   private class Committer implements RegistryEndpointProvider<Void> {
 
     private final URL location;

@@ -16,16 +16,27 @@
 
 package com.google.cloud.tools.crepecake.registry;
 
+import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpMethods;
+import com.google.api.client.http.HttpResponseException;
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.crepecake.http.Response;
 import java.net.MalformedURLException;
 import java.net.URL;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link AuthenticationMethodRetriever}. */
+@RunWith(MockitoJUnitRunner.class)
 public class AuthenticationMethodRetrieverTest {
+
+  @Mock private HttpResponseException mockHttpResponseException;
+  @Mock private HttpHeaders mockHeaders;
 
   private final RegistryEndpointProperties fakeRegistryEndpointProperties =
       new RegistryEndpointProperties("someServerUrl", "someImageName");
@@ -44,8 +55,15 @@ public class AuthenticationMethodRetrieverTest {
 
   @Test
   public void testHandleResponse() {
-    Assert.assertNull(
-        testAuthenticationMethodRetriever.handleResponse(Mockito.mock(Response.class)));
+    try {
+      testAuthenticationMethodRetriever.handleResponse(Mockito.mock(Response.class));
+      Assert.fail("Authentication method retriever should only handle HTTP error responses");
+
+    } catch (RegistryErrorException ex) {
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.containsString("Did not receive '401 Unauthorized' response"));
+    }
   }
 
   @Test
@@ -65,5 +83,79 @@ public class AuthenticationMethodRetrieverTest {
     Assert.assertEquals(
         "retrieve authentication method for someServerUrl",
         testAuthenticationMethodRetriever.getActionDescription());
+  }
+
+  @Test
+  public void testHandleHttpResponseException_invalidStatusCode() throws RegistryErrorException {
+    Mockito.when(mockHttpResponseException.getStatusCode()).thenReturn(-1);
+
+    try {
+      testAuthenticationMethodRetriever.handleHttpResponseException(mockHttpResponseException);
+      Assert.fail(
+          "Authentication method retriever should only handle HTTP 401 Unauthorized errors");
+
+    } catch (HttpResponseException ex) {
+      Assert.assertEquals(mockHttpResponseException, ex);
+    }
+  }
+
+  @Test
+  public void tsetHandleHttpResponseException_noHeader() throws HttpResponseException {
+    Mockito.when(mockHttpResponseException.getStatusCode())
+        .thenReturn(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED);
+    Mockito.when(mockHttpResponseException.getHeaders()).thenReturn(mockHeaders);
+    Mockito.when(mockHeaders.getAuthenticate()).thenReturn(null);
+
+    try {
+      testAuthenticationMethodRetriever.handleHttpResponseException(mockHttpResponseException);
+      Assert.fail(
+          "Authentication method retriever should fail if 'WWW-Authenticate' header is not found");
+
+    } catch (RegistryErrorException ex) {
+      Assert.assertThat(
+          ex.getMessage(), CoreMatchers.containsString("'WWW-Authenticate' header not found"));
+    }
+  }
+
+  @Test
+  public void testHandleHttpResponseException_badAuthenticationMethod()
+      throws HttpResponseException {
+    String authenticationMethod = "bad authentication method";
+
+    Mockito.when(mockHttpResponseException.getStatusCode())
+        .thenReturn(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED);
+    Mockito.when(mockHttpResponseException.getHeaders()).thenReturn(mockHeaders);
+    Mockito.when(mockHeaders.getAuthenticate()).thenReturn(authenticationMethod);
+
+    try {
+      testAuthenticationMethodRetriever.handleHttpResponseException(mockHttpResponseException);
+      Assert.fail(
+          "Authentication method retriever should fail if 'WWW-Authenticate' header failed to parse");
+
+    } catch (RegistryErrorException ex) {
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.containsString(
+              "Failed get authentication method from 'WWW-Authenticate' header"));
+    }
+  }
+
+  @Test
+  public void testHandleHttpResponseException_pass()
+      throws RegistryErrorException, HttpResponseException, MalformedURLException {
+    String authenticationMethod =
+        "Bearer realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"";
+
+    Mockito.when(mockHttpResponseException.getStatusCode())
+        .thenReturn(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED);
+    Mockito.when(mockHttpResponseException.getHeaders()).thenReturn(mockHeaders);
+    Mockito.when(mockHeaders.getAuthenticate()).thenReturn(authenticationMethod);
+
+    RegistryAuthenticator registryAuthenticator =
+        testAuthenticationMethodRetriever.handleHttpResponseException(mockHttpResponseException);
+
+    Assert.assertEquals(
+        new URL("https://somerealm?service=someservice&scope=repository:someImageName:pull"),
+        registryAuthenticator.getAuthenticationUrl());
   }
 }

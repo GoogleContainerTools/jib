@@ -16,15 +16,13 @@
 
 package com.google.cloud.tools.crepecake.registry;
 
-import com.google.api.client.http.HttpResponseException;
-
 /**
  * Thrown when an HTTP request to a registry endpoint failed with errors as defined in {@link
  * ErrorCodes}.
  */
 public class RegistryErrorException extends RegistryException {
 
-  RegistryErrorException(String message, HttpResponseException cause) {
+  RegistryErrorException(String message, Throwable cause) {
     super(message, cause);
   }
 }
