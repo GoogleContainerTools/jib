@@ -100,14 +100,14 @@ public class RegistryClient {
    * Downloads the BLOB to a file.
    *
    * @param blobDigest the digest of the BLOB to download
-   * @param destOutputStream the {@link OutputStream} to write the BLOB to
+   * @param destinationOutputStream the {@link OutputStream} to write the BLOB to
    * @return a {@link Blob} backed by the file at {@code destPath}. The file at {@code destPath}
    *     must exist for {@link Blob} to be valid.
    */
-  public Void pullBlob(DescriptorDigest blobDigest, OutputStream destOutputStream)
+  public Void pullBlob(DescriptorDigest blobDigest, OutputStream destinationOutputStream)
       throws RegistryException, IOException {
     BlobPuller blobPuller =
-        new BlobPuller(registryEndpointProperties, blobDigest, destOutputStream);
+        new BlobPuller(registryEndpointProperties, blobDigest, destinationOutputStream);
     return callRegistryEndpoint(blobPuller);
   }
 
