@@ -53,39 +53,11 @@ public class RegistryClient {
   }
 
   /** Gets the {@link RegistryAuthenticator} to authenticate pulls from the registry. */
-  public RegistryAuthenticator getRegistryAuthenticator()
-      throws IOException, RegistryException, RegistryAuthenticationFailedException {
+  public RegistryAuthenticator getRegistryAuthenticator() throws IOException, RegistryException {
     // Gets the WWW-Authenticate header (eg. 'WWW-Authenticate: Bearer realm="https://gcr.io/v2/token",service="gcr.io"')
     AuthenticationMethodRetriever authenticationMethodRetriever =
         new AuthenticationMethodRetriever(registryEndpointProperties);
-
-    try {
-      callRegistryEndpoint(authenticationMethodRetriever);
-      throw new RegistryErrorExceptionBuilder(authenticationMethodRetriever.getActionDescription())
-          .addReason("Did not receive '401 Unauthorized' response")
-          .build();
-
-    } catch (RegistryUnauthorizedException ex) {
-      HttpResponseException httpResponseException = ex.getHttpResponseException();
-
-      // Only valid for status code of '401 Unauthorized'.
-      if (httpResponseException.getStatusCode() != HttpStatusCodes.STATUS_CODE_UNAUTHORIZED) {
-        throw httpResponseException;
-      }
-
-      // Checks if the 'WWW-Authenticate' header is present.
-      String authenticationMethod = httpResponseException.getHeaders().getAuthenticate();
-      if (authenticationMethod == null) {
-        throw new RegistryErrorExceptionBuilder(
-                authenticationMethodRetriever.getActionDescription(), httpResponseException)
-            .addReason("'WWW-Authenticate' header not found")
-            .build();
-      }
-
-      // Parses the header to retrieve the components.
-      return RegistryAuthenticator.fromAuthenticationMethod(
-          authenticationMethod, registryEndpointProperties.getImageName());
-    }
+    return callRegistryEndpoint(authenticationMethodRetriever);
   }
 
   /**
@@ -153,17 +125,18 @@ public class RegistryClient {
     BlobPusher blobPusher = new BlobPusher(registryEndpointProperties, blobDigest, blob);
 
     // POST /v2/<name>/blobs/uploads/?mount={blob.digest}
-    String locationString = callRegistryEndpoint(blobPusher.initializer());
-    if (locationString == null) {
+    String locationHeader = callRegistryEndpoint(blobPusher.initializer());
+    if (locationHeader == null) {
+      // The BLOB exists already.
       return true;
     }
-    URL location = new URL(locationString);
+    URL patchLocation = new URL(locationHeader);
 
     // PATCH <Location> with BLOB
-    location = new URL(callRegistryEndpoint(blobPusher.writer(location)));
+    URL putLocation = new URL(callRegistryEndpoint(blobPusher.writer(patchLocation)));
 
     // PUT <Location>?digest={blob.digest}
-    callRegistryEndpoint(blobPusher.committer(location));
+    callRegistryEndpoint(blobPusher.committer(putLocation));
 
     return false;
   }
