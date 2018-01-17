@@ -67,7 +67,6 @@ public class BuildImageSteps {
           new PullBaseImageStep(buildConfiguration, pullAuthorization);
       Image baseImage = pullBaseImageStep.run(null);
 
-      // TODO: Check if base image layers cached.
       // Pulls and caches the base image layers.
       PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep =
           new PullAndCacheBaseImageLayersStep(buildConfiguration, cache, pullAuthorization);
@@ -101,8 +100,6 @@ public class BuildImageSteps {
       pushImageStep.run(image);
 
       System.out.println(getEntrypoint());
-
-      // TODO: Integrate any new steps as they are added.
     }
   }
 

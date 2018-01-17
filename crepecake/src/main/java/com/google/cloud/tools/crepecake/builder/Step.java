@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.crepecake.builder;
 
+import com.google.cloud.tools.crepecake.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
 import com.google.cloud.tools.crepecake.image.LayerCountMismatchException;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
@@ -34,5 +35,5 @@ interface Step<T, R> {
           DuplicateLayerException, LayerCountMismatchException,
           RegistryAuthenticationFailedException,
           NonexistentServerUrlDockerCredentialHelperException,
-          NonexistentDockerCredentialHelperException;
+          NonexistentDockerCredentialHelperException, CacheMetadataCorruptedException;
 }

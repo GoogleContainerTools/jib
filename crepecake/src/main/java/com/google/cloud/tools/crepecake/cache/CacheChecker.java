@@ -16,8 +16,9 @@
 
 package com.google.cloud.tools.crepecake.cache;
 
+import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.image.ImageLayers;
-import com.google.cloud.tools.crepecake.image.ReferenceLayer;
+import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -27,6 +28,7 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.Set;
 
+// TODO: Put into CacheReader and remove this class.
 /** Checks if cached data is outdated. */
 public class CacheChecker {
 
@@ -74,26 +76,45 @@ public class CacheChecker {
     this.cache = cache;
   }
 
-  /** @return true if the base image layers exist in the cache; false otherwise */
-  public boolean areBaseImageLayersCached(ImageLayers<ReferenceLayer> baseImageLayers)
-      throws CacheMetadataCorruptedException {
-    // Gets the base image layers.
-    ImageLayers<CachedLayerWithMetadata> cachedLayers =
-        cache.getMetadata().filterLayers().byType(CachedLayerType.BASE).filter();
+  /**
+   * @return the cached layer with digest {@code layerDigest} exists in the cache; {@code false}
+   *     otherwise *
+   */
+  public CachedLayer getLayer(DescriptorDigest layerDigest) throws LayerPropertyNotFoundException {
+    return cache.getMetadata().getLayers().get(layerDigest);
+  }
 
-    if (cachedLayers.size() < baseImageLayers.size()) {
-      return false;
+  // TODO: Add comment.
+  public CachedLayer getUpToDateLayerBySourceFiles(Set<Path> sourceFiles)
+      throws IOException, CacheMetadataCorruptedException {
+    // Grabs all the layers that have matching source files.
+    ImageLayers<CachedLayerWithMetadata> cachedLayersWithSourceFiles =
+        cache.getMetadata().filterLayers().bySourceFiles(sourceFiles).filter();
+    if (cachedLayersWithSourceFiles.isEmpty()) {
+      return null;
     }
 
-    for (ReferenceLayer baseImageLayer : baseImageLayers) {
-      if (!cachedLayers.has(baseImageLayer.getBlobDescriptor().getDigest())) {
-        return false;
+    FileTime sourceFilesLastModifiedTime = FileTime.from(Instant.MIN);
+    for (Path path : sourceFiles) {
+      FileTime lastModifiedTime = getLastModifiedTime(path);
+      if (lastModifiedTime.compareTo(sourceFilesLastModifiedTime) > 0) {
+        sourceFilesLastModifiedTime = lastModifiedTime;
       }
     }
 
-    return true;
+    // Checks if at least one of the matched layers is up-to-date.
+    for (CachedLayerWithMetadata cachedLayer : cachedLayersWithSourceFiles) {
+      if (sourceFilesLastModifiedTime.compareTo(cachedLayer.getMetadata().getLastModifiedTime())
+          <= 0) {
+        // This layer is an up-to-date layer.
+        return cachedLayer;
+      }
+    }
+
+    return null;
   }
 
+  // TODO: REMOVE
   /**
    * Checks all cached layers built from the source files to see if the source files have been
    * modified since the newest layer build.
@@ -102,6 +123,7 @@ public class CacheChecker {
    * @return true if no cached layer exists that are up-to-date with the source files; false
    *     otherwise.
    */
+  @Deprecated
   public boolean areSourceFilesModified(Set<Path> sourceFiles)
       throws IOException, CacheMetadataCorruptedException {
     // Grabs all the layers that have matching source files.
