@@ -23,6 +23,7 @@ import java.nio.file.Paths;
 import java.util.logging.Logger;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
+import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -41,7 +42,15 @@ public class BuildMojoTest {
     Verifier verifier = new Verifier(testProject.getProjectRoot().toString());
     verifier.setAutoclean(false);
     verifier.executeGoal("package");
+
+    long lastTime = System.nanoTime();
     verifier.executeGoal("jib:build");
+    long timeOne = (System.nanoTime() - lastTime) / 1_000_000;
+    lastTime = System.nanoTime();
+
+    verifier.executeGoal("jib:build");
+    long timeTwo = (System.nanoTime() - lastTime) / 1_000_000;
+
     verifier.verifyErrorFreeLog();
 
     System.out.println(Paths.get(verifier.getLogFileName()));
@@ -49,5 +58,6 @@ public class BuildMojoTest {
     System.out.println(
         new String(
             Files.readAllBytes(Paths.get(verifier.getLogFileName())), StandardCharsets.UTF_8));
+    Assert.fail(timeOne + " > " + timeTwo);
   }
 }
