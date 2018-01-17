@@ -34,7 +34,7 @@ import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
 
-/** Pulls an image's blob (layer or container configuration). */
+/** Pulls an image's BLOB (layer or container configuration). */
 class BlobPuller implements RegistryEndpointProvider<Blob> {
 
   private final RegistryEndpointProperties registryEndpointProperties;

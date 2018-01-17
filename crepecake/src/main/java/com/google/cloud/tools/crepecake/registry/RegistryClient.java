@@ -20,6 +20,7 @@ import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.crepecake.blob.Blob;
+import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
 import com.google.cloud.tools.crepecake.http.Authorization;
 import com.google.cloud.tools.crepecake.http.Connection;
 import com.google.cloud.tools.crepecake.http.Request;
@@ -83,6 +84,16 @@ public class RegistryClient {
     ManifestPusher manifestPusher =
         new ManifestPusher(registryEndpointProperties, manifestTemplate, imageTag);
     callRegistryEndpoint(manifestPusher);
+  }
+
+  /**
+   * @return the BLOB's {@link BlobDescriptor} if the BLOB exists on the registry, or {@code null}
+   *     if it doesn't
+   */
+  public BlobDescriptor checkBlob(DescriptorDigest blobDigest)
+      throws IOException, RegistryException {
+    BlobChecker blobChecker = new BlobChecker(registryEndpointProperties, blobDigest);
+    return callRegistryEndpoint(blobChecker);
   }
 
   /**
