@@ -17,6 +17,7 @@
 package com.google.cloud.tools.crepecake.builder;
 
 import com.google.cloud.tools.crepecake.cache.Cache;
+import com.google.cloud.tools.crepecake.cache.CacheChecker;
 import com.google.cloud.tools.crepecake.cache.CacheWriter;
 import com.google.cloud.tools.crepecake.cache.CachedLayer;
 import com.google.cloud.tools.crepecake.http.Authorization;
@@ -58,10 +59,15 @@ class PullAndCacheBaseImageLayersStep implements Step<Image, ImageLayers<CachedL
     for (Layer layer : baseImage.getLayers()) {
       // TODO: Separate this into another Step.
       DescriptorDigest layerDigest = layer.getBlobDescriptor().getDigest();
-      CacheWriter cacheWriter = new CacheWriter(cache);
-      CountingOutputStream layerOutputStream = cacheWriter.getLayerOutputStream(layerDigest);
-      registryClient.pullBlob(layerDigest, layerOutputStream);
-      CachedLayer cachedLayer = cacheWriter.getCachedLayer(layerDigest, layerOutputStream);
+
+      // Checks if the layer already exists in the cache.
+      CachedLayer cachedLayer = new CacheChecker(cache).getLayer(layerDigest);
+      if (cachedLayer == null) {
+        CacheWriter cacheWriter = new CacheWriter(cache);
+        CountingOutputStream layerOutputStream = cacheWriter.getLayerOutputStream(layerDigest);
+        registryClient.pullBlob(layerDigest, layerOutputStream);
+        cachedLayer = cacheWriter.getCachedLayer(layerDigest, layerOutputStream);
+      }
       baseImageLayers.add(cachedLayer);
     }
 

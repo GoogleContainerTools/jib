@@ -17,6 +17,8 @@
 package com.google.cloud.tools.crepecake.builder;
 
 import com.google.cloud.tools.crepecake.cache.Cache;
+import com.google.cloud.tools.crepecake.cache.CacheChecker;
+import com.google.cloud.tools.crepecake.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.crepecake.cache.CacheWriter;
 import com.google.cloud.tools.crepecake.cache.CachedLayer;
 import com.google.cloud.tools.crepecake.cache.CachedLayerType;
@@ -43,7 +45,8 @@ class BuildAndCacheApplicationLayersStep implements Step<Void, ImageLayers<Cache
 
   @Override
   public ImageLayers<CachedLayer> run(Void input)
-      throws IOException, LayerPropertyNotFoundException, DuplicateLayerException {
+      throws IOException, LayerPropertyNotFoundException, DuplicateLayerException,
+          CacheMetadataCorruptedException {
     // TODO: Check if needs rebuilding.
     CachedLayer dependenciesLayer =
         buildAndCacheLayer(
@@ -69,7 +72,14 @@ class BuildAndCacheApplicationLayersStep implements Step<Void, ImageLayers<Cache
 
   private CachedLayer buildAndCacheLayer(
       CachedLayerType layerType, Set<Path> sourceFiles, Path extractionPath)
-      throws IOException, LayerPropertyNotFoundException, DuplicateLayerException {
+      throws IOException, LayerPropertyNotFoundException, DuplicateLayerException,
+          CacheMetadataCorruptedException {
+    // Don't build the layer if it exists already.
+    CachedLayer cachedLayer = new CacheChecker(cache).getUpToDateLayerBySourceFiles(sourceFiles);
+    if (cachedLayer != null) {
+      return cachedLayer;
+    }
+
     LayerBuilder layerBuilder = new LayerBuilder(sourceFiles, extractionPath);
 
     return new CacheWriter(cache).writeLayer(layerBuilder, layerType);

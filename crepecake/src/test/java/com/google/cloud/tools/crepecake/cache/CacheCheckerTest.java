@@ -60,39 +60,45 @@ public class CacheCheckerTest {
       throws DigestException, LayerPropertyNotFoundException, DuplicateLayerException,
           CacheMetadataCorruptedException {
     ImageLayers<ReferenceLayer> layers = new ImageLayers<>();
-    layers.add(
-        new ReferenceLayer(
-            new BlobDescriptor(
-                1000,
+    layers
+        .add(
+            new ReferenceLayer(
+                new BlobDescriptor(
+                    1000,
+                    DescriptorDigest.fromDigest(
+                        "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef")),
                 DescriptorDigest.fromDigest(
-                    "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef")),
-            DescriptorDigest.fromDigest(
-                "sha256:b56ae66c29370df48e7377c8f9baa744a3958058a766793f821dadcb144a4647")));
+                    "sha256:b56ae66c29370df48e7377c8f9baa744a3958058a766793f821dadcb144a4647")))
+        .add(
+            new ReferenceLayer(
+                new BlobDescriptor(
+                    1001,
+                    DescriptorDigest.fromDigest(
+                        "sha256:6f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef")),
+                DescriptorDigest.fromDigest(
+                    "sha256:b56ae66c29370df48e7377c8f9baa744a3958058a766793f821dadcb144a4647")))
+        .add(
+            new ReferenceLayer(
+                new BlobDescriptor(
+                    2000,
+                    DescriptorDigest.fromDigest(
+                        "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad")),
+                DescriptorDigest.fromDigest(
+                    "sha256:a3f3e99c29370df48e7377c8f9baa744a3958058a766793f821dadcb144a8372")));
 
     CacheChecker cacheChecker = new CacheChecker(testCache);
-    Assert.assertTrue(cacheChecker.areBaseImageLayersCached(layers));
-
-    layers.add(
-        new ReferenceLayer(
-            new BlobDescriptor(
-                1001,
-                DescriptorDigest.fromDigest(
-                    "sha256:6f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef")),
+    Assert.assertNotNull(
+        cacheChecker.getLayer(
             DescriptorDigest.fromDigest(
-                "sha256:b56ae66c29370df48e7377c8f9baa744a3958058a766793f821dadcb144a4647")));
-
-    Assert.assertFalse(cacheChecker.areBaseImageLayersCached(layers));
-
-    layers.add(
-        new ReferenceLayer(
-            new BlobDescriptor(
-                2000,
-                DescriptorDigest.fromDigest(
-                    "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad")),
+                "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef")));
+    Assert.assertNull(
+        cacheChecker.getLayer(
             DescriptorDigest.fromDigest(
-                "sha256:a3f3e99c29370df48e7377c8f9baa744a3958058a766793f821dadcb144a8372")));
-
-    Assert.assertFalse(cacheChecker.areBaseImageLayersCached(layers));
+                "sha256:6f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef")));
+    Assert.assertNotNull(
+        cacheChecker.getLayer(
+            DescriptorDigest.fromDigest(
+                "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad")));
   }
 
   @Test

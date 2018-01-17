@@ -67,7 +67,13 @@ public class BuildImageStepsIntegrationTest {
             buildConfiguration,
             sourceFilesConfiguration,
             temporaryCacheDirectory.getRoot().toPath());
+
+    long lastTime = System.nanoTime();
     buildImageSteps.run();
+    System.out.println("Initial build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
+    lastTime = System.nanoTime();
+    buildImageSteps.run();
+    System.out.println("Secondary build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
 
     // TODO: Put this in a utility function.
     Runtime.getRuntime().exec("docker pull localhost:5000/testimage:testtag").waitFor();
