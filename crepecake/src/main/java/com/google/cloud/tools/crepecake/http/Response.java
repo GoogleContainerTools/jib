@@ -42,8 +42,12 @@ public class Response {
     return httpResponse.getHeaders().getHeaderStringValues(headerName);
   }
 
-  /** Gets the first {@code Content-Length} header, or {@code -1} if not found. */
-  public long getContentLength() {
+  /**
+   * @return the first {@code Content-Length} header, or {@code -1} if not found
+   * @throws NumberFormatException if the {@code Content-Length} header could not be parsed as a
+   *     number
+   */
+  public long getContentLength() throws NumberFormatException {
     String contentLengthHeader =
         httpResponse.getHeaders().getFirstHeaderStringValue(HttpHeaders.CONTENT_LENGTH);
     if (contentLengthHeader == null) {

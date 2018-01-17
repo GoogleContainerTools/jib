@@ -47,17 +47,24 @@ class BlobChecker implements RegistryEndpointProvider<BlobDescriptor> {
     this.blobDigest = blobDigest;
   }
 
-  /** @return the BLOB's size, if it exists, or {@code null} if it doesn't */
+  /** @return the BLOB's content descriptor */
   @Override
   public BlobDescriptor handleResponse(Response response) throws RegistryErrorException {
-    long contentLength = response.getContentLength();
-    if (contentLength < 0) {
-      throw new RegistryErrorExceptionBuilder(getActionDescription())
-          .addReason("Did not receive Content-Length header")
+    try {
+      long contentLength = response.getContentLength();
+      if (contentLength < 0) {
+        throw new RegistryErrorExceptionBuilder(getActionDescription())
+            .addReason("Did not receive Content-Length header")
+            .build();
+      }
+
+      return new BlobDescriptor(contentLength, blobDigest);
+
+    } catch (NumberFormatException ex) {
+      throw new RegistryErrorExceptionBuilder(getActionDescription(), ex)
+          .addReason("Content-Length header was not a number")
           .build();
     }
-
-    return new BlobDescriptor(contentLength, blobDigest);
   }
 
   @Override
