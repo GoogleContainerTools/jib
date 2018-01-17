@@ -16,13 +16,12 @@
 
 package com.google.cloud.tools.crepecake.registry;
 
-import com.google.api.client.http.HttpResponseException;
 import com.google.cloud.tools.crepecake.registry.json.ErrorEntryTemplate;
 
 /** Builds a {@link RegistryErrorException} with multiple causes. */
 class RegistryErrorExceptionBuilder {
 
-  private final HttpResponseException cause;
+  private final Throwable cause;
   private final StringBuilder errorMessageBuilder = new StringBuilder();
 
   private boolean firstErrorReason = true;
@@ -55,7 +54,7 @@ class RegistryErrorExceptionBuilder {
   }
 
   /** @param method the registry method that errored */
-  RegistryErrorExceptionBuilder(String method, HttpResponseException cause) {
+  RegistryErrorExceptionBuilder(String method, Throwable cause) {
     this.cause = cause;
 
     errorMessageBuilder.append("Tried to ");
