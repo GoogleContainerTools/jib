@@ -17,6 +17,8 @@
 package com.google.cloud.tools.crepecake.registry;
 
 import com.google.api.client.http.HttpMethods;
+import com.google.api.client.http.HttpResponseException;
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.crepecake.http.BlobHttpContent;
 import com.google.cloud.tools.crepecake.http.Response;
 import java.net.MalformedURLException;
@@ -26,7 +28,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /** Retrieves the {@code WWW-Authenticate} header from the registry API. */
-class AuthenticationMethodRetriever implements RegistryEndpointProvider<Void> {
+class AuthenticationMethodRetriever implements RegistryEndpointProvider<RegistryAuthenticator> {
 
   private final RegistryEndpointProperties registryEndpointProperties;
 
@@ -42,8 +44,10 @@ class AuthenticationMethodRetriever implements RegistryEndpointProvider<Void> {
   }
 
   @Override
-  public Void handleResponse(Response response) {
-    return null;
+  public RegistryAuthenticator handleResponse(Response response) throws RegistryErrorException {
+    throw new RegistryErrorExceptionBuilder(getActionDescription())
+        .addReason("Did not receive '401 Unauthorized' response")
+        .build();
   }
 
   @Override
@@ -59,6 +63,35 @@ class AuthenticationMethodRetriever implements RegistryEndpointProvider<Void> {
   @Override
   public String getActionDescription() {
     return "retrieve authentication method for " + registryEndpointProperties.getServerUrl();
+  }
+
+  @Override
+  public RegistryAuthenticator handleHttpResponseException(
+      HttpResponseException httpResponseException)
+      throws HttpResponseException, RegistryErrorException {
+    // Only valid for status code of '401 Unauthorized'.
+    if (httpResponseException.getStatusCode() != HttpStatusCodes.STATUS_CODE_UNAUTHORIZED) {
+      throw httpResponseException;
+    }
+
+    // Checks if the 'WWW-Authenticate' header is present.
+    String authenticationMethod = httpResponseException.getHeaders().getAuthenticate();
+    if (authenticationMethod == null) {
+      throw new RegistryErrorExceptionBuilder(getActionDescription(), httpResponseException)
+          .addReason("'WWW-Authenticate' header not found")
+          .build();
+    }
+
+    // Parses the header to retrieve the components.
+    try {
+      return RegistryAuthenticator.fromAuthenticationMethod(
+          authenticationMethod, registryEndpointProperties.getImageName());
+
+    } catch (RegistryAuthenticationFailedException | MalformedURLException ex) {
+      throw new RegistryErrorExceptionBuilder(getActionDescription(), ex)
+          .addReason("Failed get authentication method from 'WWW-Authenticate' header")
+          .build();
+    }
   }
 
   AuthenticationMethodRetriever(RegistryEndpointProperties registryEndpointProperties) {

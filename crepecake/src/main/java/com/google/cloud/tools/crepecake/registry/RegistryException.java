@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.crepecake.registry;
 
-/** Thrown when interacting with a regsitry. */
+/** Thrown when interacting with a registry. */
 public class RegistryException extends Exception {
 
   public RegistryException(String message, Throwable cause) {
