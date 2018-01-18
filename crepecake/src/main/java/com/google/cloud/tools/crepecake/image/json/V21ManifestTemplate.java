@@ -48,10 +48,10 @@ import java.util.List;
  *   ]
  *   ...
  * }
+ * }</pre>
  *
  * @see <a href="https://docs.docker.com/registry/spec/manifest-v2-1/">Image Manifest Version 2,
  *     Schema 1</a>
- * }</pre>
  */
 public class V21ManifestTemplate extends ManifestTemplate {
 

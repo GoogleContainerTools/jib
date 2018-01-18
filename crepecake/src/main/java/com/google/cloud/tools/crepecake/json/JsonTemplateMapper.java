@@ -53,7 +53,7 @@ public class JsonTemplateMapper {
    *
    * @param jsonFile a file containing a JSON string
    * @param templateClass the template to deserialize the string to
-   * @return the template filled with the values parsed from {@param jsonFile}
+   * @return the template filled with the values parsed from {@code jsonFile}
    * @throws IOException if an error occurred during reading the file or parsing the JSON
    */
   public static <T extends JsonTemplate> T readJsonFromFile(Path jsonFile, Class<T> templateClass)
