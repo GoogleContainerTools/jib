@@ -31,19 +31,32 @@ public class BuildConfiguration {
   @VisibleForTesting
   enum Fields {
     /** The server URL of the registry to pull the base image from. */
-    BASE_IMAGE_SERVER_URL,
-    /** The image name/repository the base image (also known as the registry namespace). */
-    BASE_IMAGE_NAME,
+    BASE_IMAGE_SERVER_URL(true),
+    /** The image name/repository of the base image (also known as the registry namespace). */
+    BASE_IMAGE_NAME(true),
+    /** The base image tag. */
+    BASE_IMAGE_TAG(true),
 
     /** The server URL of the registry to push the built image to. */
-    TARGET_SERVER_URL,
+    TARGET_SERVER_URL(true),
     /** The image name/repository of the built image (also known as the registry namespace). */
-    TARGET_IMAGE_NAME,
+    TARGET_IMAGE_NAME(true),
     /** The image tag of the built image (the part after the colon). */
-    TARGET_TAG,
+    TARGET_TAG(true),
 
     /** The credential helper name used by {@link DockerCredentialRetriever}. */
-    CREDENTIAL_HELPER_NAME,
+    CREDENTIAL_HELPER_NAME(false);
+
+    private final boolean required;
+
+    Fields(boolean required) {
+      this.required = required;
+    }
+
+    @VisibleForTesting
+    boolean isRequired() {
+      return required;
+    }
   }
 
   public static class Builder {
@@ -55,6 +68,7 @@ public class BuildConfiguration {
           {
             put(Fields.BASE_IMAGE_SERVER_URL, "base image registry server URL");
             put(Fields.BASE_IMAGE_NAME, "base image name");
+            put(Fields.BASE_IMAGE_TAG, "base image tag");
             put(Fields.TARGET_SERVER_URL, "target registry server URL");
             put(Fields.TARGET_IMAGE_NAME, "target image name");
             put(Fields.TARGET_TAG, "target image tag");
@@ -76,6 +90,11 @@ public class BuildConfiguration {
 
     public Builder setBaseImageName(String baseImageName) {
       values.put(Fields.BASE_IMAGE_NAME, baseImageName);
+      return this;
+    }
+
+    public Builder setBaseImageTag(String baseImageTag) {
+      values.put(Fields.BASE_IMAGE_TAG, baseImageTag);
       return this;
     }
 
@@ -106,7 +125,7 @@ public class BuildConfiguration {
     public BuildConfiguration build() {
       List<String> descriptions = new ArrayList<>();
       for (Fields field : Fields.values()) {
-        if (!values.containsKey(field)) {
+        if (field.isRequired() && !values.containsKey(field)) {
           descriptions.add(FIELD_DESCRIPTIONS.get(field));
         }
       }
@@ -158,6 +177,10 @@ public class BuildConfiguration {
 
   public String getBaseImageName() {
     return values.get(Fields.BASE_IMAGE_NAME);
+  }
+
+  public String getBaseImageTag() {
+    return values.get(Fields.BASE_IMAGE_TAG);
   }
 
   public String getTargetServerUrl() {

@@ -25,7 +25,7 @@ import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 
 /** Manages a cache. */
-class Cache {
+public class Cache {
 
   /** The path to the root of the cache. */
   private final Path cacheDirectory;
@@ -37,7 +37,7 @@ class Cache {
    * Initializes a cache with a directory. This also loads the cache metadata if it exists in the
    * directory.
    */
-  static Cache init(Path cacheDirectory)
+  public static Cache init(Path cacheDirectory)
       throws NotDirectoryException, CacheMetadataCorruptedException {
     if (!Files.isDirectory(cacheDirectory)) {
       throw new NotDirectoryException("The cache can only write to a directory");
