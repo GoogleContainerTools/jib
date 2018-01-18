@@ -42,18 +42,19 @@ public class Response {
     return httpResponse.getHeaders().getHeaderStringValues(headerName);
   }
 
-  /**
-   * @return the first {@code Content-Length} header, or {@code -1} if not found
-   * @throws NumberFormatException if the {@code Content-Length} header could not be parsed as a
-   *     number
-   */
+  /** @return the first {@code Content-Length} header, or {@code -1} if not found */
   public long getContentLength() throws NumberFormatException {
     String contentLengthHeader =
         httpResponse.getHeaders().getFirstHeaderStringValue(HttpHeaders.CONTENT_LENGTH);
     if (contentLengthHeader == null) {
       return -1;
     }
-    return Long.parseLong(contentLengthHeader);
+    try {
+      return Long.parseLong(contentLengthHeader);
+
+    } catch (NumberFormatException ex) {
+      return -1;
+    }
   }
 
   /** Gets the HTTP response body as a {@link Blob}. */
