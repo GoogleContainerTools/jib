@@ -86,7 +86,7 @@ public class AuthenticationMethodRetrieverTest {
   }
 
   @Test
-  public void testHandleHttpResponseException_not401() throws RegistryErrorException {
+  public void testHandleHttpResponseException_invalidStatusCode() throws RegistryErrorException {
     Mockito.when(mockHttpResponseException.getStatusCode()).thenReturn(-1);
 
     try {
