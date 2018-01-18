@@ -47,7 +47,7 @@ class BlobChecker implements RegistryEndpointProvider<BlobDescriptor> {
     this.blobDigest = blobDigest;
   }
 
-  /** @return the BLOB's size, if it exists, or {@code null} if it doesn't */
+  /** @return the BLOB's content descriptor */
   @Override
   public BlobDescriptor handleResponse(Response response) throws RegistryErrorException {
     long contentLength = response.getContentLength();
