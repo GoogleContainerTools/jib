@@ -39,20 +39,20 @@ class BlobPuller implements RegistryEndpointProvider<Void> {
   /**
    * The {@link OutputStream} to write the BLOB to. Closes the {@link OutputStream} after writing.
    */
-  private final OutputStream destOutputStream;
+  private final OutputStream destinationOutputStream;
 
   BlobPuller(
       RegistryEndpointProperties registryEndpointProperties,
       DescriptorDigest blobDigest,
-      OutputStream destOutputStream) {
+      OutputStream destinationOutputStream) {
     this.registryEndpointProperties = registryEndpointProperties;
     this.blobDigest = blobDigest;
-    this.destOutputStream = destOutputStream;
+    this.destinationOutputStream = destinationOutputStream;
   }
 
   @Override
   public Void handleResponse(Response response) throws IOException, UnexpectedBlobDigestException {
-    try (OutputStream outputStream = destOutputStream) {
+    try (OutputStream outputStream = destinationOutputStream) {
       BlobDescriptor receivedBlobDescriptor = response.getBody().writeTo(outputStream);
 
       if (!blobDigest.equals(receivedBlobDescriptor.getDigest())) {
