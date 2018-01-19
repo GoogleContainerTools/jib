@@ -17,11 +17,8 @@
 package com.google.cloud.tools.crepecake.builder;
 
 import com.google.cloud.tools.crepecake.cache.Cache;
-import com.google.cloud.tools.crepecake.cache.CacheChecker;
-import com.google.cloud.tools.crepecake.cache.CacheWriter;
 import com.google.cloud.tools.crepecake.cache.CachedLayer;
 import com.google.cloud.tools.crepecake.http.Authorization;
-import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
 import com.google.cloud.tools.crepecake.image.Image;
 import com.google.cloud.tools.crepecake.image.ImageLayers;
@@ -29,7 +26,6 @@ import com.google.cloud.tools.crepecake.image.Layer;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.crepecake.registry.RegistryClient;
 import com.google.cloud.tools.crepecake.registry.RegistryException;
-import com.google.common.io.CountingOutputStream;
 import java.io.IOException;
 
 class PullAndCacheBaseImageLayersStep implements Step<Image, ImageLayers<CachedLayer>> {
@@ -57,18 +53,9 @@ class PullAndCacheBaseImageLayersStep implements Step<Image, ImageLayers<CachedL
 
     ImageLayers<CachedLayer> baseImageLayers = new ImageLayers<>();
     for (Layer layer : baseImage.getLayers()) {
-      // TODO: Separate this into another Step.
-      DescriptorDigest layerDigest = layer.getBlobDescriptor().getDigest();
-
-      // Checks if the layer already exists in the cache.
-      CachedLayer cachedLayer = new CacheChecker(cache).getLayer(layerDigest);
-      if (cachedLayer == null) {
-        CacheWriter cacheWriter = new CacheWriter(cache);
-        CountingOutputStream layerOutputStream = cacheWriter.getLayerOutputStream(layerDigest);
-        registryClient.pullBlob(layerDigest, layerOutputStream);
-        cachedLayer = cacheWriter.getCachedLayer(layerDigest, layerOutputStream);
-      }
-      baseImageLayers.add(cachedLayer);
+      PullAndCacheBaseImageLayerStep pullAndCacheBaseImageLayerStep =
+          new PullAndCacheBaseImageLayerStep(registryClient, cache);
+      baseImageLayers.add(pullAndCacheBaseImageLayerStep.run(layer));
     }
 
     return baseImageLayers;

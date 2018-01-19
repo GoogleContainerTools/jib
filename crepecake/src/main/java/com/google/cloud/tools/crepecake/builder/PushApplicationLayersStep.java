@@ -18,7 +18,6 @@ package com.google.cloud.tools.crepecake.builder;
 
 import com.google.cloud.tools.crepecake.cache.CachedLayer;
 import com.google.cloud.tools.crepecake.http.Authorization;
-import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.image.ImageLayers;
 import com.google.cloud.tools.crepecake.registry.RegistryClient;
 import com.google.cloud.tools.crepecake.registry.RegistryException;
@@ -47,15 +46,9 @@ class PushApplicationLayersStep
             buildConfiguration.getTargetServerUrl(),
             buildConfiguration.getTargetImageName());
 
-    // TODO: Pushing any BLOB should be in a separate build step.
     // Pushes the application layers.
     for (CachedLayer layer : applicationLayers) {
-      DescriptorDigest layerDigest = layer.getBlobDescriptor().getDigest();
-      if (registryClient.checkBlob(layerDigest) != null) {
-        continue;
-      }
-
-      registryClient.pushBlob(layerDigest, layer.getBlob());
+      new PushBlobStep(registryClient, layer.getBlob()).run(layer.getBlobDescriptor().getDigest());
     }
 
     return applicationLayers;
