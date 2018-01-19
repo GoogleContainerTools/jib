@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.crepecake.builder.BuildConfiguration;
 import com.google.cloud.tools.crepecake.builder.BuildImageSteps;
 import com.google.cloud.tools.crepecake.builder.SourceFilesConfiguration;
@@ -27,14 +28,12 @@ import com.google.cloud.tools.crepecake.registry.NonexistentDockerCredentialHelp
 import com.google.cloud.tools.crepecake.registry.NonexistentServerUrlDockerCredentialHelperException;
 import com.google.cloud.tools.crepecake.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.crepecake.registry.RegistryException;
+import com.google.cloud.tools.crepecake.registry.RegistryUnauthorizedException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashSet;
-import java.util.Set;
-import org.apache.maven.model.Dependency;
-import org.apache.maven.model.Resource;
+import java.util.List;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -43,82 +42,53 @@ import org.apache.maven.project.MavenProject;
 
 /** Builds a container image. */
 @Mojo(name = "build")
-public class BuildMojo extends AbstractMojo {
+public class BuildImageMojo extends AbstractMojo {
 
-  private static class MavenSourceFilesConfiguration implements SourceFilesConfiguration {
+  private static class MojoExceptionBuilder {
 
-    private final Set<Path> dependenciesFiles = new HashSet<>();
-    private final Set<Path> resourcesFiles = new HashSet<>();
-    private final Set<Path> classesFiles = new HashSet<>();
+    private Throwable cause;
+    private String suggestion;
 
-    private MavenSourceFilesConfiguration(MavenProject project) throws IOException {
-      Path classesOutputDir = Paths.get(project.getBuild().getOutputDirectory());
+    private MojoExceptionBuilder(Throwable cause) {
+      this.cause = cause;
+    }
 
-      for (Dependency dependency : project.getDependencies()) {
-        dependenciesFiles.add(Paths.get(dependency.getSystemPath()));
+    private MojoExceptionBuilder suggest(String suggestion) {
+      this.suggestion = suggestion;
+      return this;
+    }
+
+    private MojoExecutionException build() {
+      StringBuilder message = new StringBuilder("Build image failed");
+      if (suggestion != null) {
+        message.append("\nPerhaps you should ");
+        message.append(suggestion);
       }
-
-      for (Resource resource : project.getResources()) {
-        Path resourceSourceDir = Paths.get(resource.getDirectory());
-        Files.list(resourceSourceDir)
-            .forEach(
-                resourceSourceDirFIle -> {
-                  Path correspondingOutputDirFile =
-                      classesOutputDir.resolve(resourceSourceDir.relativize(resourceSourceDirFIle));
-                  if (Files.exists(correspondingOutputDirFile)) {
-                    resourcesFiles.add(correspondingOutputDirFile);
-                  }
-                });
-      }
-
-      Path classesSourceDir = Paths.get(project.getBuild().getSourceDirectory());
-
-      Files.list(classesSourceDir)
-          .forEach(
-              classesSourceDirFile -> {
-                Path correspondingOutputDirFile =
-                    classesOutputDir.resolve(classesSourceDir.relativize(classesSourceDirFile));
-                if (Files.exists(correspondingOutputDirFile)) {
-                  classesFiles.add(correspondingOutputDirFile);
-                }
-              });
-
-      // TODO: Check if there are still unaccounted-for files in the runtime classpath.
-    }
-
-    @Override
-    public Set<Path> getDependenciesFiles() {
-      return dependenciesFiles;
-    }
-
-    @Override
-    public Set<Path> getResourcesFiles() {
-      return resourcesFiles;
-    }
-
-    @Override
-    public Set<Path> getClassesFiles() {
-      return classesFiles;
-    }
-
-    @Override
-    public Path getDependenciesExtractionPath() {
-      return Paths.get("app", "libs");
-    }
-
-    @Override
-    public Path getResourcesExtractionPath() {
-      return Paths.get("app", "resources");
-    }
-
-    @Override
-    public Path getClassesExtractionPath() {
-      return Paths.get("app", "classes");
+      return new MojoExecutionException(message.toString(), cause);
     }
   }
 
   @Parameter(defaultValue = "${project}", readonly = true)
   private MavenProject project;
+
+  @Parameter(defaultValue = "gcr.io/distroless/java", required = true)
+  private String from;
+
+  @Parameter(required = true)
+  private String registry;
+
+  @Parameter(required = true)
+  private String repository;
+
+  @Parameter(defaultValue = "latest", required = true)
+  private String tag;
+
+  @Parameter private String credentialHelperName;
+
+  @Parameter private List<String> jvmFlags;
+
+  @Parameter(required = true)
+  private String mainClass;
 
   @Override
   public void execute() throws MojoExecutionException {
@@ -129,11 +99,11 @@ public class BuildMojo extends AbstractMojo {
             .setBaseImageServerUrl("registry.hub.docker.com")
             .setBaseImageName("frolvlad/alpine-oraclejdk8")
             .setBaseImageTag("latest")
-            .setTargetServerUrl("gcr.io")
-            .setTargetImageName("qingyangc-sandbox/jibtestimage")
-            .setTargetTag("testtag")
-            .setCredentialHelperName("gcr")
-            .setMainClass("com.test.HelloWorld")
+            .setTargetServerUrl(registry)
+            .setTargetImageName(repository)
+            .setTargetTag(tag)
+            .setCredentialHelperName(credentialHelperName)
+            .setMainClass(mainClass)
             .build();
 
     Path cacheDirectory = Paths.get(project.getBuild().getDirectory(), "jib-cache");
@@ -151,6 +121,22 @@ public class BuildMojo extends AbstractMojo {
           new BuildImageSteps(buildConfiguration, sourceFilesConfiguration, cacheDirectory);
       buildImageSteps.run();
 
+    } catch (RegistryUnauthorizedException ex) {
+      MojoExceptionBuilder mojoExceptionBuilder = new MojoExceptionBuilder(ex);
+
+      if (ex.getHttpResponseException().getStatusCode() == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
+        String targetImage = registry + "/" + repository + ":" + tag;
+        mojoExceptionBuilder.suggest("make sure your have permission to push to " + targetImage);
+
+      } else if (credentialHelperName == null) {
+        mojoExceptionBuilder.suggest("set the configuration 'credentialHelperName'");
+
+      } else {
+        mojoExceptionBuilder.suggest("make sure your credential helper is set up correctly");
+      }
+
+      throw mojoExceptionBuilder.build();
+
     } catch (IOException
         | RegistryException
         | CacheMetadataCorruptedException
@@ -160,7 +146,7 @@ public class BuildMojo extends AbstractMojo {
         | NonexistentDockerCredentialHelperException
         | RegistryAuthenticationFailedException
         | NonexistentServerUrlDockerCredentialHelperException ex) {
-      throw new MojoExecutionException("Build image failed", ex);
+      throw new MojoExceptionBuilder(ex).build();
     }
   }
 

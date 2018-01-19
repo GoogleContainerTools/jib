@@ -28,8 +28,8 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
-/** Tests for {@link BuildMojo}. */
-public class BuildMojoTest {
+/** Tests for {@link BuildImageMojo}. */
+public class BuildImageMojoTest {
 
   @ClassRule public static final TestPlugin testPlugin = new TestPlugin();
 
