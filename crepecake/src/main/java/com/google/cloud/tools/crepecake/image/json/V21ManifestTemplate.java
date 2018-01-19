@@ -26,9 +26,11 @@ import java.util.List;
 /**
  * JSON template for Docker Manifest Schema V2.1
  *
- * This is only for parsing manifests in the older V2.1 schema. Generated manifests should be in the V2.2 schema using the {@link V22ManifestTemplate}.
+ * <p>This is only for parsing manifests in the older V2.1 schema. Generated manifests should be in
+ * the V2.2 schema using the {@link V22ManifestTemplate}.
  *
- * Example manifest JSON (only the {@code fsLayers} and {@code history} fields are relevant for parsing):
+ * <p>Example manifest JSON (only the {@code fsLayers} and {@code history} fields are relevant for
+ * parsing):
  *
  * <pre>{@code
  * {
