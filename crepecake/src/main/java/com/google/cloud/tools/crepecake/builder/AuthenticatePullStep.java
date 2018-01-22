@@ -21,8 +21,9 @@ import com.google.cloud.tools.crepecake.registry.RegistryAuthenticationFailedExc
 import com.google.cloud.tools.crepecake.registry.RegistryAuthenticators;
 import com.google.cloud.tools.crepecake.registry.RegistryException;
 import java.io.IOException;
+import java.util.concurrent.Callable;
 
-class AuthenticatePullStep implements Step<Void, Authorization> {
+class AuthenticatePullStep implements Callable<Authorization> {
 
   private final BuildConfiguration buildConfiguration;
 
@@ -31,7 +32,7 @@ class AuthenticatePullStep implements Step<Void, Authorization> {
   }
 
   @Override
-  public Authorization run(Void input)
+  public Authorization call()
       throws RegistryAuthenticationFailedException, IOException, RegistryException {
     return RegistryAuthenticators.forOther(
             buildConfiguration.getBaseImageServerUrl(), buildConfiguration.getBaseImageName())

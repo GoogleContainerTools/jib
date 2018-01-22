@@ -22,20 +22,26 @@ import com.google.cloud.tools.crepecake.image.ImageLayers;
 import com.google.cloud.tools.crepecake.registry.RegistryClient;
 import com.google.cloud.tools.crepecake.registry.RegistryException;
 import java.io.IOException;
+import java.util.concurrent.Callable;
 
 // TODO: Change into push all layers and first check for existence.
-class PushBaseImageLayersStep implements Step<ImageLayers<CachedLayer>, Void> {
+class PushBaseImageLayersStep implements Callable<Void> {
 
   private final BuildConfiguration buildConfiguration;
   private final Authorization pushAuthorization;
+  private final ImageLayers<CachedLayer> baseImageLayers;
 
-  PushBaseImageLayersStep(BuildConfiguration buildConfiguration, Authorization pushAuthorization) {
+  PushBaseImageLayersStep(
+      BuildConfiguration buildConfiguration,
+      Authorization pushAuthorization,
+      ImageLayers<CachedLayer> baseImageLayers) {
     this.buildConfiguration = buildConfiguration;
     this.pushAuthorization = pushAuthorization;
+    this.baseImageLayers = baseImageLayers;
   }
 
   @Override
-  public Void run(ImageLayers<CachedLayer> baseImageLayers) throws IOException, RegistryException {
+  public Void call() throws IOException, RegistryException {
     RegistryClient registryClient =
         new RegistryClient(
             pushAuthorization,
