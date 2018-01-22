@@ -48,8 +48,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-/** Integration tests for various {@link Step}s. */
-public class StepIntegrationTest {
+/** Integration tests for various build steps. */
+public class BuildImageStepsIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
 
@@ -75,20 +75,20 @@ public class StepIntegrationTest {
             .setMainClass("HelloWorld")
             .build();
     try (Cache cache = Cache.init(temporaryCacheDirectory.newFolder().toPath())) {
-
       // Authenticates base image pull.
       AuthenticatePullStep authenticatePullStep = new AuthenticatePullStep(buildConfiguration);
-      Authorization pullAuthorization = authenticatePullStep.run(null);
+      Authorization pullAuthorization = authenticatePullStep.call();
 
       // Pulls the base image.
       PullBaseImageStep pullBaseImageStep =
           new PullBaseImageStep(buildConfiguration, pullAuthorization);
-      Image baseImage = pullBaseImageStep.run(null);
+      Image baseImage = pullBaseImageStep.call();
 
       // Pulls and caches the base image layers.
       PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep =
-          new PullAndCacheBaseImageLayersStep(buildConfiguration, cache, pullAuthorization);
-      ImageLayers<CachedLayer> baseImageLayers = pullAndCacheBaseImageLayersStep.run(baseImage);
+          new PullAndCacheBaseImageLayersStep(
+              buildConfiguration, cache, pullAuthorization, baseImage);
+      ImageLayers<CachedLayer> baseImageLayers = pullAndCacheBaseImageLayersStep.call();
 
       // TODO: Assert base image layers cached.
 
@@ -99,19 +99,19 @@ public class StepIntegrationTest {
 
       // Pushes the base image layers.
       PushBaseImageLayersStep pushBaseImageLayersStep =
-          new PushBaseImageLayersStep(buildConfiguration, null);
-      pushBaseImageLayersStep.run(baseImageLayers);
+          new PushBaseImageLayersStep(buildConfiguration, null, baseImageLayers);
+      pushBaseImageLayersStep.call();
 
       BuildAndCacheApplicationLayersStep buildAndCacheApplicationLayersStep =
           new BuildAndCacheApplicationLayersStep(sourceFilesConfiguration, cache);
-      ImageLayers<CachedLayer> applicationLayers = buildAndCacheApplicationLayersStep.run(null);
+      ImageLayers<CachedLayer> applicationLayers = buildAndCacheApplicationLayersStep.call();
 
       // TODO: Assert application layers cached.
 
       // Pushes the application layers.
       PushApplicationLayersStep pushApplicationLayersStep =
-          new PushApplicationLayersStep(buildConfiguration, null);
-      pushApplicationLayersStep.run(applicationLayers);
+          new PushApplicationLayersStep(buildConfiguration, null, applicationLayers);
+      pushApplicationLayersStep.call();
 
       // Pushes the new image manifest.
       Image image =
@@ -120,8 +120,8 @@ public class StepIntegrationTest {
               .addLayers(applicationLayers)
               .setEntrypoint(
                   getEntrypoint(sourceFilesConfiguration, buildConfiguration.getMainClass()));
-      PushImageStep pushImageStep = new PushImageStep(buildConfiguration, null);
-      pushImageStep.run(image);
+      PushImageStep pushImageStep = new PushImageStep(buildConfiguration, null, image);
+      pushImageStep.call();
 
       for (Layer layer : image.getLayers()) {
         System.out.println("CACHED " + layer.getBlobDescriptor().getDigest());

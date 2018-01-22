@@ -28,21 +28,24 @@ import com.google.cloud.tools.crepecake.registry.RegistryClient;
 import com.google.cloud.tools.crepecake.registry.RegistryException;
 import com.google.common.io.ByteStreams;
 import java.io.IOException;
+import java.util.concurrent.Callable;
 
 /** Pushes the final image. */
-class PushImageStep implements Step<Image, Void> {
+class PushImageStep implements Callable<Void> {
 
   private final BuildConfiguration buildConfiguration;
   private final Authorization pushAuthorization;
+  private final Image image;
 
-  PushImageStep(BuildConfiguration buildConfiguration, Authorization pushAuthorization) {
+  PushImageStep(
+      BuildConfiguration buildConfiguration, Authorization pushAuthorization, Image image) {
     this.buildConfiguration = buildConfiguration;
     this.pushAuthorization = pushAuthorization;
+    this.image = image;
   }
 
   @Override
-  public Void run(Image image)
-      throws IOException, RegistryException, LayerPropertyNotFoundException {
+  public Void call() throws IOException, RegistryException, LayerPropertyNotFoundException {
     RegistryClient registryClient =
         new RegistryClient(
             pushAuthorization,
