@@ -30,11 +30,19 @@ import com.google.cloud.tools.crepecake.registry.NonexistentDockerCredentialHelp
 import com.google.cloud.tools.crepecake.registry.NonexistentServerUrlDockerCredentialHelperException;
 import com.google.cloud.tools.crepecake.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.crepecake.registry.RegistryException;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+
 import java.io.IOException;
+import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /** All the steps to build an image. */
 public class BuildImageSteps {
@@ -50,6 +58,45 @@ public class BuildImageSteps {
     this.buildConfiguration = buildConfiguration;
     this.sourceFilesConfiguration = sourceFilesConfiguration;
     this.cacheDirectory = cacheDirectory;
+  }
+
+  public void runAsync() throws Exception {
+    ListeningExecutorService listeningExecutorService = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
+
+    try (Cache cache = Cache.init(cacheDirectory)) {
+      // Authenticates base image pull.
+      AuthenticatePullStep authenticatePullStep = new AuthenticatePullStep(buildConfiguration);
+      // Pulls the base image.
+      PullBaseImageStep pullBaseImageStep =
+          new PullBaseImageStep(buildConfiguration, pullAuthorization);
+      // Pulls and caches the base image layers.
+      PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep =
+          new PullAndCacheBaseImageLayersStep(
+              buildConfiguration, cache, pullAuthorization, baseImage);
+      // Authenticates push.
+      AuthenticatePushStep authenticatePushStep = new AuthenticatePushStep(buildConfiguration);
+      // Pushes the base image layers.
+      PushBaseImageLayersStep pushBaseImageLayersStep =
+          new PushBaseImageLayersStep(buildConfiguration, pushAuthorization, baseImageLayers);
+      // Builds the application layers.
+      BuildAndCacheApplicationLayersStep buildAndCacheApplicationLayersStep =
+          new BuildAndCacheApplicationLayersStep(sourceFilesConfiguration, cache);
+      // Pushes the application layers.
+      PushApplicationLayersStep pushApplicationLayersStep =
+          new PushApplicationLayersStep(
+              buildConfiguration, pushAuthorization, applicationLayers);
+      // Pushes the new image manifest.
+      Image image =
+          new Image()
+              .addLayers(baseImageLayers)
+              .addLayers(applicationLayers)
+              .setEntrypoint(getEntrypoint());
+      PushImageStep pushImageStep =
+          new PushImageStep(buildConfiguration, pushAuthorization, image);
+
+      ListenableFuture<Authorization> authenticatePullFuture = listeningExecutorService.submit(authenticatePullStep);
+      ListenableFuture<Image> pullBaseImageFuture = listeningExecutorService.submit(pullBaseImageStep);
+    }
   }
 
   public void run()
