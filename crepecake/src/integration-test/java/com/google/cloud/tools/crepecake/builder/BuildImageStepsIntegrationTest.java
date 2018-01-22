@@ -34,8 +34,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-/** Integration tests for various {@link Step}s. */
-public class StepIntegrationTest {
+/** Integration tests for various build steps. */
+public class BuildImageStepsIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
 
@@ -58,15 +58,16 @@ public class StepIntegrationTest {
     Cache cache = Cache.init(temporaryCacheDirectory.newFolder().toPath());
 
     AuthenticatePullStep authenticatePullStep = new AuthenticatePullStep(buildConfiguration);
-    Authorization pullAuthorization = authenticatePullStep.run(null);
+    Authorization pullAuthorization = authenticatePullStep.call();
 
     PullBaseImageStep pullBaseImageStep =
         new PullBaseImageStep(buildConfiguration, pullAuthorization);
-    Image baseImage = pullBaseImageStep.run(null);
+    Image baseImage = pullBaseImageStep.call();
 
     PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep =
-        new PullAndCacheBaseImageLayersStep(buildConfiguration, cache, pullAuthorization);
-    ImageLayers<CachedLayer> baseImageLayers = pullAndCacheBaseImageLayersStep.run(baseImage);
+        new PullAndCacheBaseImageLayersStep(
+            buildConfiguration, cache, pullAuthorization, baseImage);
+    ImageLayers<CachedLayer> baseImageLayers = pullAndCacheBaseImageLayersStep.call();
 
     // TODO: Integrate any new steps as they are added.
   }
