@@ -27,22 +27,28 @@ import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.crepecake.registry.RegistryClient;
 import com.google.cloud.tools.crepecake.registry.RegistryException;
 import java.io.IOException;
+import java.util.concurrent.Callable;
 
-class PullAndCacheBaseImageLayersStep implements Step<Image, ImageLayers<CachedLayer>> {
+class PullAndCacheBaseImageLayersStep implements Callable<ImageLayers<CachedLayer>> {
 
   private final BuildConfiguration buildConfiguration;
   private final Cache cache;
   private final Authorization pullAuthorization;
+  private final Image baseImage;
 
   PullAndCacheBaseImageLayersStep(
-      BuildConfiguration buildConfiguration, Cache cache, Authorization pullAuthorization) {
+      BuildConfiguration buildConfiguration,
+      Cache cache,
+      Authorization pullAuthorization,
+      Image baseImage) {
     this.buildConfiguration = buildConfiguration;
     this.cache = cache;
     this.pullAuthorization = pullAuthorization;
+    this.baseImage = baseImage;
   }
 
   @Override
-  public ImageLayers<CachedLayer> run(Image baseImage)
+  public ImageLayers<CachedLayer> call()
       throws LayerPropertyNotFoundException, IOException, RegistryException,
           DuplicateLayerException {
     RegistryClient registryClient =

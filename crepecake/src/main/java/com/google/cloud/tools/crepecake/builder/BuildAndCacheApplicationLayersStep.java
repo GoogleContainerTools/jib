@@ -29,10 +29,11 @@ import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 // TODO: Add unit test.
 /** Builds and caches application layers. */
-class BuildAndCacheApplicationLayersStep implements Step<Void, ImageLayers<CachedLayer>> {
+class BuildAndCacheApplicationLayersStep implements Callable<ImageLayers<CachedLayer>> {
 
   private final SourceFilesConfiguration sourceFilesConfiguration;
   private final Cache cache;
@@ -44,7 +45,7 @@ class BuildAndCacheApplicationLayersStep implements Step<Void, ImageLayers<Cache
   }
 
   @Override
-  public ImageLayers<CachedLayer> run(Void input)
+  public ImageLayers<CachedLayer> call()
       throws IOException, LayerPropertyNotFoundException, DuplicateLayerException,
           CacheMetadataCorruptedException {
     // TODO: Check if needs rebuilding.

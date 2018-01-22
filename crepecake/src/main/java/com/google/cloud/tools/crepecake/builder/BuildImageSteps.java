@@ -62,35 +62,36 @@ public class BuildImageSteps {
 
       // Authenticates base image pull.
       AuthenticatePullStep authenticatePullStep = new AuthenticatePullStep(buildConfiguration);
-      Authorization pullAuthorization = authenticatePullStep.run(null);
+      Authorization pullAuthorization = authenticatePullStep.call();
 
       // Pulls the base image.
       PullBaseImageStep pullBaseImageStep =
           new PullBaseImageStep(buildConfiguration, pullAuthorization);
-      Image baseImage = pullBaseImageStep.run(null);
+      Image baseImage = pullBaseImageStep.call();
 
       // Pulls and caches the base image layers.
       PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep =
-          new PullAndCacheBaseImageLayersStep(buildConfiguration, cache, pullAuthorization);
-      ImageLayers<CachedLayer> baseImageLayers = pullAndCacheBaseImageLayersStep.run(baseImage);
+          new PullAndCacheBaseImageLayersStep(
+              buildConfiguration, cache, pullAuthorization, baseImage);
+      ImageLayers<CachedLayer> baseImageLayers = pullAndCacheBaseImageLayersStep.call();
 
       // Authenticates push.
       AuthenticatePushStep authenticatePushStep = new AuthenticatePushStep(buildConfiguration);
-      Authorization pushAuthorization = authenticatePushStep.run(null);
+      Authorization pushAuthorization = authenticatePushStep.call();
 
       // Pushes the base image layers.
       PushBaseImageLayersStep pushBaseImageLayersStep =
-          new PushBaseImageLayersStep(buildConfiguration, pushAuthorization);
-      pushBaseImageLayersStep.run(baseImageLayers);
+          new PushBaseImageLayersStep(buildConfiguration, pushAuthorization, baseImageLayers);
+      pushBaseImageLayersStep.call();
 
       BuildAndCacheApplicationLayersStep buildAndCacheApplicationLayersStep =
           new BuildAndCacheApplicationLayersStep(sourceFilesConfiguration, cache);
-      ImageLayers<CachedLayer> applicationLayers = buildAndCacheApplicationLayersStep.run(null);
+      ImageLayers<CachedLayer> applicationLayers = buildAndCacheApplicationLayersStep.call();
 
       // Pushes the application layers.
       PushApplicationLayersStep pushApplicationLayersStep =
-          new PushApplicationLayersStep(buildConfiguration, pushAuthorization);
-      pushApplicationLayersStep.run(applicationLayers);
+          new PushApplicationLayersStep(buildConfiguration, pushAuthorization, applicationLayers);
+      pushApplicationLayersStep.call();
 
       // Pushes the new image manifest.
       Image image =
@@ -98,8 +99,8 @@ public class BuildImageSteps {
               .addLayers(baseImageLayers)
               .addLayers(applicationLayers)
               .setEntrypoint(getEntrypoint());
-      PushImageStep pushImageStep = new PushImageStep(buildConfiguration, pushAuthorization);
-      pushImageStep.run(image);
+      PushImageStep pushImageStep = new PushImageStep(buildConfiguration, pushAuthorization, image);
+      pushImageStep.call();
     }
   }
 
