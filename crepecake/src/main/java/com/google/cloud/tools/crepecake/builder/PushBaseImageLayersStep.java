@@ -18,40 +18,39 @@ package com.google.cloud.tools.crepecake.builder;
 
 import com.google.cloud.tools.crepecake.cache.CachedLayer;
 import com.google.cloud.tools.crepecake.http.Authorization;
-import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.image.ImageLayers;
 import com.google.cloud.tools.crepecake.registry.RegistryClient;
 import com.google.cloud.tools.crepecake.registry.RegistryException;
 import java.io.IOException;
+import java.util.concurrent.Callable;
 
 // TODO: Change into push all layers and first check for existence.
-class PushBaseImageLayersStep implements Step<ImageLayers<CachedLayer>, Void> {
+class PushBaseImageLayersStep implements Callable<Void> {
 
   private final BuildConfiguration buildConfiguration;
   private final Authorization pushAuthorization;
+  private final ImageLayers<CachedLayer> baseImageLayers;
 
-  PushBaseImageLayersStep(BuildConfiguration buildConfiguration, Authorization pushAuthorization) {
+  PushBaseImageLayersStep(
+      BuildConfiguration buildConfiguration,
+      Authorization pushAuthorization,
+      ImageLayers<CachedLayer> baseImageLayers) {
     this.buildConfiguration = buildConfiguration;
     this.pushAuthorization = pushAuthorization;
+    this.baseImageLayers = baseImageLayers;
   }
 
   @Override
-  public Void run(ImageLayers<CachedLayer> baseImageLayers) throws IOException, RegistryException {
+  public Void call() throws IOException, RegistryException {
     RegistryClient registryClient =
         new RegistryClient(
             pushAuthorization,
             buildConfiguration.getTargetServerUrl(),
             buildConfiguration.getTargetImageName());
 
-    // TODO: Pushing any BLOB should be in a separate build step.
     // Pushes the base image layers.
     for (CachedLayer layer : baseImageLayers) {
-      DescriptorDigest layerDigest = layer.getBlobDescriptor().getDigest();
-      if (registryClient.checkBlob(layerDigest) != null) {
-        continue;
-      }
-
-      registryClient.pushBlob(layerDigest, layer.getBlob());
+      new PushBlobStep(registryClient, layer.getBlob()).run(layer.getBlobDescriptor().getDigest());
     }
 
     return null;

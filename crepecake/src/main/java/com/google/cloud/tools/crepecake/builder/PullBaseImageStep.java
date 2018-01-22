@@ -32,8 +32,9 @@ import com.google.cloud.tools.crepecake.registry.RegistryException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.Callable;
 
-class PullBaseImageStep implements Step<Void, Image> {
+class PullBaseImageStep implements Callable<Image> {
 
   private final BuildConfiguration buildConfiguration;
   private final Authorization pullAuthorization;
@@ -44,7 +45,7 @@ class PullBaseImageStep implements Step<Void, Image> {
   }
 
   @Override
-  public Image run(Void input)
+  public Image call()
       throws IOException, RegistryException, LayerPropertyNotFoundException,
           DuplicateLayerException, LayerCountMismatchException {
     RegistryClient registryClient =

@@ -51,7 +51,7 @@ public class BuildAndCacheApplicationLayersStepTest {
       BuildAndCacheApplicationLayersStep buildAndCacheApplicationLayersStep =
           new BuildAndCacheApplicationLayersStep(testSourceFilesConfiguration, cache);
 
-      applicationLayers = buildAndCacheApplicationLayersStep.run(null);
+      applicationLayers = buildAndCacheApplicationLayersStep.call();
 
       Assert.assertEquals(3, applicationLayers.size());
     }
