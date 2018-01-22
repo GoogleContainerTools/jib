@@ -17,13 +17,8 @@
 package com.google.cloud.tools.jib.maven;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.logging.Logger;
 import org.apache.maven.it.VerificationException;
-import org.apache.maven.it.Verifier;
-import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -39,25 +34,26 @@ public class BuildImageMojoTest {
 
   @Test
   public void testExecute() throws VerificationException, IOException {
-    Verifier verifier = new Verifier(testProject.getProjectRoot().toString());
-    verifier.setAutoclean(false);
-    verifier.executeGoal("package");
+      Verifier verifier = new Verifier(testProject.getProjectRoot().toString());
+      verifier.setAutoclean(false);
+      verifier.executeGoal("package");
 
-    long lastTime = System.nanoTime();
-    verifier.executeGoal("jib:build");
-    long timeOne = (System.nanoTime() - lastTime) / 1_000_000;
-    lastTime = System.nanoTime();
+      long lastTime = System.nanoTime();
+      verifier.executeGoal("jib:build");
+      long timeOne = (System.nanoTime() - lastTime) / 1_000_000;
+      lastTime = System.nanoTime();
 
-    verifier.executeGoal("jib:build");
-    long timeTwo = (System.nanoTime() - lastTime) / 1_000_000;
+      verifier.executeGoal("jib:build");
+      long timeTwo = (System.nanoTime() - lastTime) / 1_000_000;
 
-    verifier.verifyErrorFreeLog();
+      verifier.verifyErrorFreeLog();
 
-    System.out.println(Paths.get(verifier.getLogFileName()));
-    log.info("I'm starting");
-    System.out.println(
-        new String(
-            Files.readAllBytes(Paths.get(verifier.getLogFileName())), StandardCharsets.UTF_8));
-    Assert.fail(timeOne + " > " + timeTwo);
+      System.out.println(Paths.get(verifier.getLogFileName()));
+      log.info("I'm starting");
+      System.out.println(
+          new String(
+              Files.readAllBytes(Paths.get(verifier.getLogFileName())),
+   StandardCharsets.UTF_8));
+      Assert.fail(timeOne + " > " + timeTwo);
   }
 }

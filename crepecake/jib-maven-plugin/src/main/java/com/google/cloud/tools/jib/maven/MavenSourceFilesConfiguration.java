@@ -23,7 +23,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
-import org.apache.maven.model.Dependency;
+import org.apache.maven.artifact.Artifact;
 import org.apache.maven.model.Resource;
 import org.apache.maven.project.MavenProject;
 
@@ -36,8 +36,9 @@ class MavenSourceFilesConfiguration implements SourceFilesConfiguration {
   MavenSourceFilesConfiguration(MavenProject project) throws IOException {
     Path classesOutputDir = Paths.get(project.getBuild().getOutputDirectory());
 
-    for (Dependency dependency : project.getDependencies()) {
-      dependenciesFiles.add(Paths.get(dependency.getSystemPath()));
+    // TODO: Fix null pointer exception possibility for getSystemPath.
+    for (Artifact artifact : project.getArtifacts()) {
+      dependenciesFiles.add(artifact.getFile().toPath());
     }
 
     for (Resource resource : project.getResources()) {
