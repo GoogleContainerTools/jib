@@ -28,20 +28,23 @@ import com.google.cloud.tools.crepecake.registry.RegistryClient;
 import com.google.cloud.tools.crepecake.registry.RegistryException;
 import com.google.common.io.CountingOutputStream;
 import java.io.IOException;
+import java.util.concurrent.Callable;
 
 // TODO: Comment and test.
-class PullAndCacheBaseImageLayerStep implements Step<Layer, CachedLayer> {
+class PullAndCacheBaseImageLayerStep implements Callable<CachedLayer> {
 
   private final RegistryClient registryClient;
   private final Cache cache;
+  private final Layer layer;
 
-  PullAndCacheBaseImageLayerStep(RegistryClient registryClient, Cache cache) {
+  PullAndCacheBaseImageLayerStep(RegistryClient registryClient, Cache cache, Layer layer) {
     this.registryClient = registryClient;
     this.cache = cache;
+    this.layer = layer;
   }
 
   @Override
-  public CachedLayer run(Layer layer)
+  public CachedLayer call()
       throws IOException, RegistryException, LayerPropertyNotFoundException,
           DuplicateLayerException {
     DescriptorDigest layerDigest = layer.getBlobDescriptor().getDigest();

@@ -21,20 +21,23 @@ import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.registry.RegistryClient;
 import com.google.cloud.tools.crepecake.registry.RegistryException;
 import java.io.IOException;
+import java.util.concurrent.Callable;
 
 // TODO: Comment and test.
-class PushBlobStep implements Step<DescriptorDigest, Void> {
+class PushBlobStep implements Callable<Void> {
 
   private final RegistryClient registryClient;
   private final Blob blob;
+  private final DescriptorDigest digest;
 
-  PushBlobStep(RegistryClient registryClient, Blob blob) {
+  PushBlobStep(RegistryClient registryClient, Blob blob, DescriptorDigest digest) {
     this.registryClient = registryClient;
     this.blob = blob;
+    this.digest = digest;
   }
 
   @Override
-  public Void run(DescriptorDigest digest) throws IOException, RegistryException {
+  public Void call() throws IOException, RegistryException {
     if (registryClient.checkBlob(digest) != null) {
       return null;
     }
