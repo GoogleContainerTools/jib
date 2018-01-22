@@ -17,6 +17,7 @@
 package com.google.cloud.tools.crepecake.registry;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.google.cloud.tools.crepecake.http.Authorization;
 import com.google.cloud.tools.crepecake.http.Authorizations;
 import com.google.cloud.tools.crepecake.json.JsonTemplate;
@@ -82,13 +83,27 @@ public class DockerCredentialRetriever {
         // Throws an exception if the credential store does not have credentials for serverUrl.
         if (output.contains("credentials not found in native keychain")) {
           throw new NonexistentServerUrlDockerCredentialHelperException(
-              credentialHelper, serverUrl);
+              credentialHelper, serverUrl, output);
+        }
+        if (output.isEmpty()) {
+          try (InputStreamReader processStderrReader =
+              new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8)) {
+            String errorOutput = CharStreams.toString(processStderrReader);
+            throw new NonexistentServerUrlDockerCredentialHelperException(
+                credentialHelper, serverUrl, errorOutput);
+          }
         }
 
-        DockerCredentialsTemplate dockerCredentials =
-            JsonTemplateMapper.readJson(output, DockerCredentialsTemplate.class);
+        try {
+          DockerCredentialsTemplate dockerCredentials =
+              JsonTemplateMapper.readJson(output, DockerCredentialsTemplate.class);
 
-        return Authorizations.withBasicToken(dockerCredentials.Secret);
+          return Authorizations.withBasicToken(dockerCredentials.Secret);
+
+        } catch (JsonMappingException ex) {
+          throw new NonexistentServerUrlDockerCredentialHelperException(
+              credentialHelper, serverUrl, output);
+        }
       }
 
     } catch (IOException ex) {

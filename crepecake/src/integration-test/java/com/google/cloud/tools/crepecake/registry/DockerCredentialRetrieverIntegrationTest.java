@@ -18,6 +18,7 @@ package com.google.cloud.tools.crepecake.registry;
 
 import com.google.cloud.tools.crepecake.http.Authorization;
 import java.io.IOException;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -67,9 +68,10 @@ public class DockerCredentialRetrieverIntegrationTest {
       Assert.fail("Retrieve should have failed for nonexistent server URL");
 
     } catch (NonexistentServerUrlDockerCredentialHelperException ex) {
-      Assert.assertEquals(
-          "The credential helper (docker-credential-gcr) has nothing for server URL: fake.server.url",
-          ex.getMessage());
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.containsString(
+              "The credential helper (docker-credential-gcr) has nothing for server URL: fake.server.url"));
     }
   }
 }

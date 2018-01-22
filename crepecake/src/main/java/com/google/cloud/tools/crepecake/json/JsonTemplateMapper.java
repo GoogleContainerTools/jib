@@ -20,7 +20,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.blob.Blobs;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -62,16 +61,6 @@ public class JsonTemplateMapper {
     return objectMapper.readValue(Files.newInputStream(jsonFile), templateClass);
   }
 
-  /**
-   * Serializes a JSON object into a JSON string.
-   *
-   * @param outputStream the {@link OutputStream} to write to
-   * @param source the JSON object to serialize
-   */
-  public static void writeJson(OutputStream outputStream, JsonTemplate source) throws IOException {
-    objectMapper.writeValue(outputStream, source);
-  }
-
   /** Deserializes a JSON object from a JSON string. */
   public static <T extends JsonTemplate> T readJson(String jsonString, Class<T> templateClass)
       throws IOException {
@@ -80,7 +69,10 @@ public class JsonTemplateMapper {
 
   /** Convert a {@link JsonTemplate} to a {@link Blob} of the JSON string. */
   public static Blob toBlob(JsonTemplate template) {
-    return Blobs.from(outputStream -> writeJson(outputStream, template));
+    return Blobs.from(
+        outputStream -> {
+          objectMapper.writeValue(outputStream, template);
+        });
   }
 
   private JsonTemplateMapper() {}
