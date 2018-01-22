@@ -17,8 +17,8 @@
 package com.google.cloud.tools.crepecake.registry;
 
 import com.google.cloud.tools.crepecake.blob.Blob;
-import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
 import com.google.cloud.tools.crepecake.blob.Blobs;
+import com.google.cloud.tools.crepecake.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.crepecake.http.Response;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.common.io.ByteStreams;
@@ -27,13 +27,10 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.security.DigestException;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -42,12 +39,13 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class BlobPullerTest {
 
-  @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
-
   private final RegistryEndpointProperties fakeRegistryEndpointProperties =
       new RegistryEndpointProperties("someServerUrl", "someImageName");
   private DescriptorDigest fakeDigest;
-  private Path temporaryPath;
+
+  private final ByteArrayOutputStream layerContentOutputStream = new ByteArrayOutputStream();
+  private final CountingDigestOutputStream layerOutputStream =
+      new CountingDigestOutputStream(layerContentOutputStream);
 
   private BlobPuller testBlobPuller;
 
@@ -56,9 +54,8 @@ public class BlobPullerTest {
     fakeDigest =
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-    temporaryPath = temporaryFolder.newFile().toPath();
 
-    testBlobPuller = new BlobPuller(fakeRegistryEndpointProperties, fakeDigest, temporaryPath);
+    testBlobPuller = new BlobPuller(fakeRegistryEndpointProperties, fakeDigest, layerOutputStream);
   }
 
   @Test
@@ -70,14 +67,12 @@ public class BlobPullerTest {
     Mockito.when(mockResponse.getBody()).thenReturn(testBlob);
 
     BlobPuller blobPuller =
-        new BlobPuller(fakeRegistryEndpointProperties, testBlobDigest, temporaryPath);
-    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-    BlobDescriptor blobDescriptor =
-        blobPuller.handleResponse(mockResponse).writeTo(byteArrayOutputStream);
+        new BlobPuller(fakeRegistryEndpointProperties, testBlobDigest, layerOutputStream);
+    blobPuller.handleResponse(mockResponse);
     Assert.assertEquals(
         "some BLOB content",
-        new String(byteArrayOutputStream.toByteArray(), StandardCharsets.UTF_8));
-    Assert.assertEquals(testBlobDigest, blobDescriptor.getDigest());
+        new String(layerContentOutputStream.toByteArray(), StandardCharsets.UTF_8));
+    Assert.assertEquals(testBlobDigest, layerOutputStream.toBlobDescriptor().getDigest());
   }
 
   @Test

@@ -26,14 +26,14 @@ import org.junit.rules.ExternalResource;
 import org.junit.rules.TestRule;
 
 /** {@link TestRule} that runs a local registry. */
-class LocalRegistry extends ExternalResource {
+public class LocalRegistry extends ExternalResource {
 
   private final int port;
 
   /** The name for the container running the registry. */
   private final String containerName = "registry-" + UUID.randomUUID();
 
-  LocalRegistry(int port) {
+  public LocalRegistry(int port) {
     this.port = port;
   }
 

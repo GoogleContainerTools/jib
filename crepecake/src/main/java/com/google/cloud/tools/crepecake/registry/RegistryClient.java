@@ -33,8 +33,8 @@ import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
 import com.google.cloud.tools.crepecake.registry.json.ErrorEntryTemplate;
 import com.google.cloud.tools.crepecake.registry.json.ErrorResponseTemplate;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URL;
-import java.nio.file.Path;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import org.apache.http.NoHttpResponseException;
@@ -100,13 +100,14 @@ public class RegistryClient {
    * Downloads the BLOB to a file.
    *
    * @param blobDigest the digest of the BLOB to download
-   * @param destPath the path of the file to write to
+   * @param destinationOutputStream the {@link OutputStream} to write the BLOB to
    * @return a {@link Blob} backed by the file at {@code destPath}. The file at {@code destPath}
    *     must exist for {@link Blob} to be valid.
    */
-  public Blob pullBlob(DescriptorDigest blobDigest, Path destPath)
+  public Void pullBlob(DescriptorDigest blobDigest, OutputStream destinationOutputStream)
       throws RegistryException, IOException {
-    BlobPuller blobPuller = new BlobPuller(registryEndpointProperties, blobDigest, destPath);
+    BlobPuller blobPuller =
+        new BlobPuller(registryEndpointProperties, blobDigest, destinationOutputStream);
     return callRegistryEndpoint(blobPuller);
   }
 
