@@ -50,7 +50,8 @@ class PushBaseImageLayersStep implements Callable<Void> {
 
     // Pushes the base image layers.
     for (CachedLayer layer : baseImageLayers) {
-      new PushBlobStep(registryClient, layer.getBlob()).run(layer.getBlobDescriptor().getDigest());
+      new PushBlobStep(registryClient, layer.getBlob(), layer.getBlobDescriptor().getDigest())
+          .call();
     }
 
     return null;

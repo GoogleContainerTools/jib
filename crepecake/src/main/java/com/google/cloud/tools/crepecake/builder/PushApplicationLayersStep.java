@@ -51,7 +51,8 @@ class PushApplicationLayersStep implements Callable<ImageLayers<CachedLayer>> {
 
     // Pushes the application layers.
     for (CachedLayer layer : applicationLayers) {
-      new PushBlobStep(registryClient, layer.getBlob()).run(layer.getBlobDescriptor().getDigest());
+      new PushBlobStep(registryClient, layer.getBlob(), layer.getBlobDescriptor().getDigest())
+          .call();
     }
 
     return applicationLayers;

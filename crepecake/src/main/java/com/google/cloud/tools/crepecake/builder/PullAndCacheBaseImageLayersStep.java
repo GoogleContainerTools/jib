@@ -60,8 +60,8 @@ class PullAndCacheBaseImageLayersStep implements Callable<ImageLayers<CachedLaye
     ImageLayers<CachedLayer> baseImageLayers = new ImageLayers<>();
     for (Layer layer : baseImage.getLayers()) {
       PullAndCacheBaseImageLayerStep pullAndCacheBaseImageLayerStep =
-          new PullAndCacheBaseImageLayerStep(registryClient, cache);
-      baseImageLayers.add(pullAndCacheBaseImageLayerStep.run(layer));
+          new PullAndCacheBaseImageLayerStep(registryClient, cache, layer);
+      baseImageLayers.add(pullAndCacheBaseImageLayerStep.call());
     }
 
     return baseImageLayers;
