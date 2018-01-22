@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.crepecake.builder;
 
+import com.google.cloud.tools.crepecake.Timer;
 import com.google.cloud.tools.crepecake.cache.Cache;
 import com.google.cloud.tools.crepecake.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.crepecake.cache.CachedLayer;
@@ -56,50 +57,63 @@ public class BuildImageSteps {
           RegistryException, DuplicateLayerException, LayerCountMismatchException,
           LayerPropertyNotFoundException, NonexistentServerUrlDockerCredentialHelperException,
           NonexistentDockerCredentialHelperException {
-    try (Cache cache = Cache.init(cacheDirectory)) {
+    try (Timer t = Timer.push("BuildImageSteps")) {
 
-      // Authenticates base image pull.
-      AuthenticatePullStep authenticatePullStep = new AuthenticatePullStep(buildConfiguration);
-      Authorization pullAuthorization = authenticatePullStep.run(null);
+      try (Cache cache = Cache.init(cacheDirectory)) {
+        try (Timer t2 = Timer.push("AuthenticatePullStep")) {
+          // Authenticates base image pull.
+          AuthenticatePullStep authenticatePullStep = new AuthenticatePullStep(buildConfiguration);
+          Authorization pullAuthorization = authenticatePullStep.run(null);
 
-      // Pulls the base image.
-      PullBaseImageStep pullBaseImageStep =
-          new PullBaseImageStep(buildConfiguration, pullAuthorization);
-      Image baseImage = pullBaseImageStep.run(null);
+          Timer.time("PullBaseImageStep");
+          // Pulls the base image.
+          PullBaseImageStep pullBaseImageStep =
+              new PullBaseImageStep(buildConfiguration, pullAuthorization);
+          Image baseImage = pullBaseImageStep.run(null);
 
-      // Pulls and caches the base image layers.
-      PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep =
-          new PullAndCacheBaseImageLayersStep(buildConfiguration, cache, pullAuthorization);
-      ImageLayers<CachedLayer> baseImageLayers = pullAndCacheBaseImageLayersStep.run(baseImage);
+          Timer.time("PullAndCacheBaseImageLayersStep");
+          // Pulls and caches the base image layers.
+          PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep =
+              new PullAndCacheBaseImageLayersStep(buildConfiguration, cache, pullAuthorization);
+          ImageLayers<CachedLayer> baseImageLayers = pullAndCacheBaseImageLayersStep.run(baseImage);
 
-      // Authenticates push.
-      AuthenticatePushStep authenticatePushStep = new AuthenticatePushStep(buildConfiguration);
-      Authorization pushAuthorization = authenticatePushStep.run(null);
+          Timer.time("AuthenticatePushStep");
+          // Authenticates push.
+          AuthenticatePushStep authenticatePushStep = new AuthenticatePushStep(buildConfiguration);
+          Authorization pushAuthorization = authenticatePushStep.run(null);
 
-      // Pushes the base image layers.
-      PushBaseImageLayersStep pushBaseImageLayersStep =
-          new PushBaseImageLayersStep(buildConfiguration, pushAuthorization);
-      pushBaseImageLayersStep.run(baseImageLayers);
+          Timer.time("PushBaseImageLayersStep");
+          // Pushes the base image layers.
+          PushBaseImageLayersStep pushBaseImageLayersStep =
+              new PushBaseImageLayersStep(buildConfiguration, pushAuthorization);
+          pushBaseImageLayersStep.run(baseImageLayers);
 
-      BuildAndCacheApplicationLayersStep buildAndCacheApplicationLayersStep =
-          new BuildAndCacheApplicationLayersStep(sourceFilesConfiguration, cache);
-      ImageLayers<CachedLayer> applicationLayers = buildAndCacheApplicationLayersStep.run(null);
+          Timer.time("BuildAndCacheApplicationLayersStep");
+          BuildAndCacheApplicationLayersStep buildAndCacheApplicationLayersStep =
+              new BuildAndCacheApplicationLayersStep(sourceFilesConfiguration, cache);
+          ImageLayers<CachedLayer> applicationLayers = buildAndCacheApplicationLayersStep.run(null);
 
-      // Pushes the application layers.
-      PushApplicationLayersStep pushApplicationLayersStep =
-          new PushApplicationLayersStep(buildConfiguration, pushAuthorization);
-      pushApplicationLayersStep.run(applicationLayers);
+          Timer.time("PushApplicationLayerStep");
+          // Pushes the application layers.
+          PushApplicationLayersStep pushApplicationLayersStep =
+              new PushApplicationLayersStep(buildConfiguration, pushAuthorization);
+          pushApplicationLayersStep.run(applicationLayers);
 
-      // Pushes the new image manifest.
-      Image image =
-          new Image()
-              .addLayers(baseImageLayers)
-              .addLayers(applicationLayers)
-              .setEntrypoint(getEntrypoint());
-      PushImageStep pushImageStep = new PushImageStep(buildConfiguration, pushAuthorization);
-      pushImageStep.run(image);
+          Timer.time("PushImageStep");
+          // Pushes the new image manifest.
+          Image image =
+              new Image()
+                  .addLayers(baseImageLayers)
+                  .addLayers(applicationLayers)
+                  .setEntrypoint(getEntrypoint());
+          PushImageStep pushImageStep = new PushImageStep(buildConfiguration, pushAuthorization);
+          pushImageStep.run(image);
 
-      System.out.println(getEntrypoint());
+          System.out.println(getEntrypoint());
+        }
+      }
+    } finally {
+      Timer.print();
     }
   }
 

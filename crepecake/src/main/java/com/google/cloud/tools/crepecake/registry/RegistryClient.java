@@ -19,6 +19,7 @@ package com.google.cloud.tools.crepecake.registry;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
+import com.google.cloud.tools.crepecake.Timer;
 import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
 import com.google.cloud.tools.crepecake.http.Authorization;
@@ -124,21 +125,31 @@ public class RegistryClient {
       throws IOException, RegistryException {
     BlobPusher blobPusher = new BlobPusher(registryEndpointProperties, blobDigest, blob);
 
-    // POST /v2/<name>/blobs/uploads/?mount={blob.digest}
-    String locationHeader = callRegistryEndpoint(blobPusher.initializer());
-    if (locationHeader == null) {
-      // The BLOB exists already.
-      return true;
+    try (Timer t = Timer.push("pushBlob")) {
+
+      try (Timer t2 = Timer.push("pushBlob POST")) {
+
+        // POST /v2/<name>/blobs/uploads/?mount={blob.digest}
+        String locationHeader = callRegistryEndpoint(blobPusher.initializer());
+        if (locationHeader == null) {
+          // The BLOB exists already.
+          return true;
+        }
+        URL patchLocation = new URL(locationHeader);
+
+        Timer.time("pushBlob PATCH");
+
+        // PATCH <Location> with BLOB
+        URL putLocation = new URL(callRegistryEndpoint(blobPusher.writer(patchLocation)));
+
+        Timer.time("pushBlob PUT");
+
+        // PUT <Location>?digest={blob.digest}
+        callRegistryEndpoint(blobPusher.committer(putLocation));
+
+        return false;
+      }
     }
-    URL patchLocation = new URL(locationHeader);
-
-    // PATCH <Location> with BLOB
-    URL putLocation = new URL(callRegistryEndpoint(blobPusher.writer(patchLocation)));
-
-    // PUT <Location>?digest={blob.digest}
-    callRegistryEndpoint(blobPusher.committer(putLocation));
-
-    return false;
   }
 
   private String getApiRouteBase() {

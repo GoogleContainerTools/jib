@@ -33,6 +33,6 @@ public class HelloWorld {
     Path worldFile = Paths.get(classLoader.getResource("world").toURI());
     String world = new String(Files.readAllBytes(worldFile), StandardCharsets.UTF_8);
 
-    System.out.println(greeting + " " + world);
+    System.out.println(greeting + ", " + world);
   }
 }

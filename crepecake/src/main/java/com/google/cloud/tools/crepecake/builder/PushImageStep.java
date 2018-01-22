@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.crepecake.builder;
 
+import com.google.cloud.tools.crepecake.Timer;
 import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
 import com.google.cloud.tools.crepecake.hash.CountingDigestOutputStream;
@@ -49,21 +50,34 @@ class PushImageStep implements Step<Image, Void> {
             buildConfiguration.getTargetServerUrl(),
             buildConfiguration.getTargetImageName());
 
-    ImageToJsonTranslator imageToJsonTranslator = new ImageToJsonTranslator(image);
+    try (Timer t = Timer.push("PushImageStep")) {
 
-    // Pushes the container configuration.
-    Blob containerConfigurationBlob = imageToJsonTranslator.getContainerConfigurationBlob();
-    CountingDigestOutputStream digestOutputStream =
-        new CountingDigestOutputStream(ByteStreams.nullOutputStream());
-    containerConfigurationBlob.writeTo(digestOutputStream);
-    BlobDescriptor containerConfigurationBlobDescriptor = digestOutputStream.toBlobDescriptor();
-    registryClient.pushBlob(
-        containerConfigurationBlobDescriptor.getDigest(), containerConfigurationBlob);
+      try (Timer t2 = Timer.push("ImagetoJsonTranslator")) {
 
-    // Pushes the image manifest.
-    V22ManifestTemplate manifestTemplate =
-        imageToJsonTranslator.getManifestTemplate(containerConfigurationBlobDescriptor);
-    registryClient.pushManifest(manifestTemplate, buildConfiguration.getTargetTag());
+        ImageToJsonTranslator imageToJsonTranslator = new ImageToJsonTranslator(image);
+
+        Timer.time("build container configuration");
+
+        // Pushes the container configuration.
+        Blob containerConfigurationBlob = imageToJsonTranslator.getContainerConfigurationBlob();
+        CountingDigestOutputStream digestOutputStream =
+            new CountingDigestOutputStream(ByteStreams.nullOutputStream());
+        containerConfigurationBlob.writeTo(digestOutputStream);
+        BlobDescriptor containerConfigurationBlobDescriptor = digestOutputStream.toBlobDescriptor();
+
+        Timer.time("push container configuration");
+
+        registryClient.pushBlob(
+            containerConfigurationBlobDescriptor.getDigest(), containerConfigurationBlob);
+
+        Timer.time("push image manifest");
+
+        // Pushes the image manifest.
+        V22ManifestTemplate manifestTemplate =
+            imageToJsonTranslator.getManifestTemplate(containerConfigurationBlobDescriptor);
+        registryClient.pushManifest(manifestTemplate, buildConfiguration.getTargetTag());
+      }
+    }
 
     return null;
   }
