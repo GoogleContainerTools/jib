@@ -28,8 +28,6 @@ import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.crepecake.registry.RegistryClient;
 import com.google.cloud.tools.crepecake.registry.RegistryException;
 import com.google.common.io.CountingOutputStream;
-import org.gradle.internal.impldep.org.apache.maven.model.Build;
-
 import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -43,7 +41,11 @@ class PullAndCacheBaseImageLayerStep implements Callable<CachedLayer> {
   private final Layer layer;
   private final Future<Authorization> pullAuthorizationFuture;
 
-  PullAndCacheBaseImageLayerStep(BuildConfiguration buildConfiguration, Cache cache, Layer layer, Future pullAuthorizationFuture) {
+  PullAndCacheBaseImageLayerStep(
+      BuildConfiguration buildConfiguration,
+      Cache cache,
+      Layer layer,
+      Future pullAuthorizationFuture) {
     this.buildConfiguration = buildConfiguration;
     this.cache = cache;
     this.layer = layer;
@@ -53,7 +55,7 @@ class PullAndCacheBaseImageLayerStep implements Callable<CachedLayer> {
   @Override
   public CachedLayer call()
       throws IOException, RegistryException, LayerPropertyNotFoundException,
-      DuplicateLayerException, ExecutionException, InterruptedException {
+          DuplicateLayerException, ExecutionException, InterruptedException {
     RegistryClient registryClient =
         new RegistryClient(
             pullAuthorizationFuture.get(),

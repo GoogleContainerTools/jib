@@ -41,8 +41,8 @@ class PullBaseImageStep implements Callable<Image> {
   private final BuildConfiguration buildConfiguration;
   private final Future<Authorization> pullAuthorizationFuture;
 
-  PullBaseImageStep(BuildConfiguration buildConfiguration,
-                    Future<Authorization> pullAuthorizationFuture) {
+  PullBaseImageStep(
+      BuildConfiguration buildConfiguration, Future<Authorization> pullAuthorizationFuture) {
     this.buildConfiguration = buildConfiguration;
     this.pullAuthorizationFuture = pullAuthorizationFuture;
   }
@@ -50,7 +50,8 @@ class PullBaseImageStep implements Callable<Image> {
   @Override
   public Image call()
       throws IOException, RegistryException, LayerPropertyNotFoundException,
-      DuplicateLayerException, LayerCountMismatchException, ExecutionException, InterruptedException {
+          DuplicateLayerException, LayerCountMismatchException, ExecutionException,
+          InterruptedException {
     RegistryClient registryClient =
         new RegistryClient(
             pullAuthorizationFuture.get(),

@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.crepecake.builder;
 
-import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.cache.CachedLayer;
 import com.google.cloud.tools.crepecake.http.Authorization;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
@@ -34,14 +33,18 @@ class PushBlobStep implements Callable<Void> {
   private final Future<Authorization> pushAuthorizationFuture;
   private final Future<CachedLayer> pullLayerFuture;
 
-  PushBlobStep(BuildConfiguration buildConfiguration, Future<Authorization> pushAuthorizationFuture, Future<CachedLayer> pullLayerFuture) {
+  PushBlobStep(
+      BuildConfiguration buildConfiguration,
+      Future<Authorization> pushAuthorizationFuture,
+      Future<CachedLayer> pullLayerFuture) {
     this.buildConfiguration = buildConfiguration;
     this.pushAuthorizationFuture = pushAuthorizationFuture;
     this.pullLayerFuture = pullLayerFuture;
   }
 
   @Override
-  public Void call() throws IOException, RegistryException, ExecutionException, InterruptedException {
+  public Void call()
+      throws IOException, RegistryException, ExecutionException, InterruptedException {
     RegistryClient registryClient =
         new RegistryClient(
             pushAuthorizationFuture.get(),

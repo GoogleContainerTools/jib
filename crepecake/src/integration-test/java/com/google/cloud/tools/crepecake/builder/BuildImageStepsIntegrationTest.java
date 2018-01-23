@@ -16,21 +16,10 @@
 
 package com.google.cloud.tools.crepecake.builder;
 
-import com.google.cloud.tools.crepecake.cache.CacheMetadataCorruptedException;
-import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
-import com.google.cloud.tools.crepecake.image.LayerCountMismatchException;
-import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.crepecake.registry.LocalRegistry;
-import com.google.cloud.tools.crepecake.registry.NonexistentDockerCredentialHelperException;
-import com.google.cloud.tools.crepecake.registry.NonexistentServerUrlDockerCredentialHelperException;
-import com.google.cloud.tools.crepecake.registry.RegistryAuthenticationFailedException;
-import com.google.cloud.tools.crepecake.registry.RegistryException;
 import com.google.common.io.CharStreams;
-import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.ExecutionException;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -45,13 +34,7 @@ public class BuildImageStepsIntegrationTest {
   @Rule public TemporaryFolder temporaryCacheDirectory = new TemporaryFolder();
 
   @Test
-  public void testSteps()
-      throws DuplicateLayerException, LayerPropertyNotFoundException, RegistryException,
-          LayerCountMismatchException, IOException, CacheMetadataCorruptedException,
-          RegistryAuthenticationFailedException,
-          NonexistentServerUrlDockerCredentialHelperException,
-          NonexistentDockerCredentialHelperException, URISyntaxException, InterruptedException,
-          ExecutionException {
+  public void testSteps() throws Exception {
     SourceFilesConfiguration sourceFilesConfiguration = new TestSourceFilesConfiguration();
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder()
@@ -71,10 +54,10 @@ public class BuildImageStepsIntegrationTest {
             temporaryCacheDirectory.getRoot().toPath());
 
     long lastTime = System.nanoTime();
-    buildImageSteps.run();
+    buildImageSteps.runAsync();
     System.out.println("Initial build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
     lastTime = System.nanoTime();
-    buildImageSteps.run();
+    buildImageSteps.runAsync();
     System.out.println("Secondary build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
 
     // TODO: Put this in a utility function.

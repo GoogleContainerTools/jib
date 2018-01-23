@@ -16,30 +16,19 @@
 
 package com.google.cloud.tools.crepecake.builder;
 
-import com.google.cloud.tools.crepecake.Timer;
 import com.google.cloud.tools.crepecake.cache.Cache;
-import com.google.cloud.tools.crepecake.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.crepecake.cache.CachedLayer;
 import com.google.cloud.tools.crepecake.http.Authorization;
-import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
 import com.google.cloud.tools.crepecake.image.Image;
 import com.google.cloud.tools.crepecake.image.ImageLayers;
-import com.google.cloud.tools.crepecake.image.LayerCountMismatchException;
-import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
-import com.google.cloud.tools.crepecake.registry.NonexistentDockerCredentialHelperException;
-import com.google.cloud.tools.crepecake.registry.NonexistentServerUrlDockerCredentialHelperException;
-import com.google.cloud.tools.crepecake.registry.RegistryAuthenticationFailedException;
-import com.google.cloud.tools.crepecake.registry.RegistryException;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
 /** All the steps to build an image. */
@@ -69,23 +58,30 @@ public class BuildImageSteps {
       // Pulls the base image.
       ListenableFuture<Image> pullBaseImageFuture =
           Futures.whenAllSucceed(authenticatePullFuture)
-              .call(new PullBaseImageStep(buildConfiguration, authenticatePullFuture),
+              .call(
+                  new PullBaseImageStep(buildConfiguration, authenticatePullFuture),
                   listeningExecutorService);
       // Pulls and caches the base image layers.
       List<ListenableFuture<CachedLayer>> pullBaseImageLayerFutures =
           new PullAndCacheBaseImageLayersStep(
-                              buildConfiguration,
-                              cache,
-                              listeningExecutorService,
-                              authenticatePullFuture,
-                              pullBaseImageFuture).call();
+                  buildConfiguration,
+                  cache,
+                  listeningExecutorService,
+                  authenticatePullFuture,
+                  pullBaseImageFuture)
+              .call();
 
       // Authenticates push.
       ListenableFuture<Authorization> authenticatePushFuture =
           listeningExecutorService.submit(new AuthenticatePushStep(buildConfiguration));
       // Pushes the base image layers.
-      List<ListenableFuture<Void>> pushBaseImageLayersFuture =
-          new PushBaseImageLayersStep(buildConfiguration, listeningExecutorService, authenticatePushFuture, pullBaseImageLayerFutures).call();
+      List<ListenableFuture<Void>> pushBaseImageLayerFutures =
+          new PushBaseImageLayersStep(
+                  buildConfiguration,
+                  listeningExecutorService,
+                  authenticatePushFuture,
+                  pullBaseImageLayerFutures)
+              .call();
 
       // Builds the application layers.
       ListenableFuture<ImageLayers<CachedLayer>> buildAndCacheApplicationLayersFuture =
@@ -105,15 +101,21 @@ public class BuildImageSteps {
                   listeningExecutorService);
 
       // Pushes the new image manifest.
+      List<ListenableFuture<?>> pushImageFutureDependencies =
+          new ArrayList<>(pushBaseImageLayerFutures);
+      pushImageFutureDependencies.add(pushApplicationLayersFuture);
       ListenableFuture<Void> pushImageFuture =
-          Futures.whenAllSucceed(pushBaseImageLayersFuture, pushApplicationLayersFuture)
+          Futures.whenAllSucceed(pushImageFutureDependencies)
               .call(
                   () -> {
-                    Image image =
-                        new Image()
-                            .addLayers(pullBaseImageLayersFuture.get())
-                            .addLayers(buildAndCacheApplicationLayersFuture.get())
-                            .setEntrypoint(getEntrypoint());
+                    Image image = new Image();
+                    for (ListenableFuture<CachedLayer> pullBaseImageLayerFuture :
+                        pullBaseImageLayerFutures) {
+                      image.addLayer(pullBaseImageLayerFuture.get());
+                    }
+                    image
+                        .addLayers(buildAndCacheApplicationLayersFuture.get())
+                        .setEntrypoint(getEntrypoint());
 
                     return new PushImageStep(
                             buildConfiguration, authenticatePushFuture.get(), image)
@@ -125,73 +127,73 @@ public class BuildImageSteps {
     }
   }
 
-  public void run()
-      throws CacheMetadataCorruptedException, IOException, RegistryAuthenticationFailedException,
-          RegistryException, DuplicateLayerException, LayerCountMismatchException,
-          LayerPropertyNotFoundException, NonexistentServerUrlDockerCredentialHelperException,
-          NonexistentDockerCredentialHelperException, ExecutionException, InterruptedException {
-    try (Timer t = Timer.push("BuildImageSteps")) {
-
-      try (Cache cache = Cache.init(cacheDirectory)) {
-        try (Timer t2 = Timer.push("AuthenticatePullStep")) {
-          // Authenticates base image pull.
-          AuthenticatePullStep authenticatePullStep = new AuthenticatePullStep(buildConfiguration);
-          Authorization pullAuthorization = authenticatePullStep.call();
-
-          Timer.time("PullBaseImageStep");
-          // Pulls the base image.
-          PullBaseImageStep pullBaseImageStep =
-              new PullBaseImageStep(buildConfiguration, pullAuthorization);
-          Image baseImage = pullBaseImageStep.call();
-
-          Timer.time("PullAndCacheBaseImageLayersStep");
-          // Pulls and caches the base image layers.
-          PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep =
-              new PullAndCacheBaseImageLayersStep(
-                  buildConfiguration, cache, pullAuthorization, baseImage);
-          ImageLayers<CachedLayer> baseImageLayers = pullAndCacheBaseImageLayersStep.call();
-
-          Timer.time("AuthenticatePushStep");
-          // Authenticates push.
-          AuthenticatePushStep authenticatePushStep = new AuthenticatePushStep(buildConfiguration);
-          Authorization pushAuthorization = authenticatePushStep.call();
-
-          Timer.time("PushBaseImageLayersStep");
-          // Pushes the base image layers.
-          PushBaseImageLayersStep pushBaseImageLayersStep =
-              new PushBaseImageLayersStep(buildConfiguration, pushAuthorization, baseImageLayers);
-          pushBaseImageLayersStep.call();
-
-          Timer.time("BuildAndCacheApplicationLayersStep");
-          BuildAndCacheApplicationLayersStep buildAndCacheApplicationLayersStep =
-              new BuildAndCacheApplicationLayersStep(sourceFilesConfiguration, cache);
-          ImageLayers<CachedLayer> applicationLayers = buildAndCacheApplicationLayersStep.call();
-
-          Timer.time("PushApplicationLayerStep");
-          // Pushes the application layers.
-          PushApplicationLayersStep pushApplicationLayersStep =
-              new PushApplicationLayersStep(
-                  null, buildConfiguration, pushAuthorization, applicationLayers);
-          pushApplicationLayersStep.call();
-
-          Timer.time("PushImageStep");
-          // Pushes the new image manifest.
-          Image image =
-              new Image()
-                  .addLayers(baseImageLayers)
-                  .addLayers(applicationLayers)
-                  .setEntrypoint(getEntrypoint());
-          PushImageStep pushImageStep =
-              new PushImageStep(buildConfiguration, pushAuthorization, image);
-          pushImageStep.call();
-
-          System.out.println(getEntrypoint());
-        }
-      }
-    } finally {
-      Timer.print();
-    }
-  }
+  //  public void run()
+  //      throws CacheMetadataCorruptedException, IOException, RegistryAuthenticationFailedException,
+  //          RegistryException, DuplicateLayerException, LayerCountMismatchException,
+  //          LayerPropertyNotFoundException, NonexistentServerUrlDockerCredentialHelperException,
+  //          NonexistentDockerCredentialHelperException, ExecutionException, InterruptedException {
+  //    try (Timer t = Timer.push("BuildImageSteps")) {
+  //
+  //      try (Cache cache = Cache.init(cacheDirectory)) {
+  //        try (Timer t2 = Timer.push("AuthenticatePullStep")) {
+  //          // Authenticates base image pull.
+  //          AuthenticatePullStep authenticatePullStep = new AuthenticatePullStep(buildConfiguration);
+  //          Authorization pullAuthorization = authenticatePullStep.call();
+  //
+  //          Timer.time("PullBaseImageStep");
+  //          // Pulls the base image.
+  //          PullBaseImageStep pullBaseImageStep =
+  //              new PullBaseImageStep(buildConfiguration, pullAuthorization);
+  //          Image baseImage = pullBaseImageStep.call();
+  //
+  //          Timer.time("PullAndCacheBaseImageLayersStep");
+  //          // Pulls and caches the base image layers.
+  //          PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep =
+  //              new PullAndCacheBaseImageLayersStep(
+  //                  buildConfiguration, cache, pullAuthorization, baseImage);
+  //          ImageLayers<CachedLayer> baseImageLayers = pullAndCacheBaseImageLayersStep.call();
+  //
+  //          Timer.time("AuthenticatePushStep");
+  //          // Authenticates push.
+  //          AuthenticatePushStep authenticatePushStep = new AuthenticatePushStep(buildConfiguration);
+  //          Authorization pushAuthorization = authenticatePushStep.call();
+  //
+  //          Timer.time("PushBaseImageLayersStep");
+  //          // Pushes the base image layers.
+  //          PushBaseImageLayersStep pushBaseImageLayersStep =
+  //              new PushBaseImageLayersStep(buildConfiguration, pushAuthorization, baseImageLayers);
+  //          pushBaseImageLayersStep.call();
+  //
+  //          Timer.time("BuildAndCacheApplicationLayersStep");
+  //          BuildAndCacheApplicationLayersStep buildAndCacheApplicationLayersStep =
+  //              new BuildAndCacheApplicationLayersStep(sourceFilesConfiguration, cache);
+  //          ImageLayers<CachedLayer> applicationLayers = buildAndCacheApplicationLayersStep.call();
+  //
+  //          Timer.time("PushApplicationLayerStep");
+  //          // Pushes the application layers.
+  //          PushApplicationLayersStep pushApplicationLayersStep =
+  //              new PushApplicationLayersStep(
+  //                  null, buildConfiguration, pushAuthorization, applicationLayers);
+  //          pushApplicationLayersStep.call();
+  //
+  //          Timer.time("PushImageStep");
+  //          // Pushes the new image manifest.
+  //          Image image =
+  //              new Image()
+  //                  .addLayers(baseImageLayers)
+  //                  .addLayers(applicationLayers)
+  //                  .setEntrypoint(getEntrypoint());
+  //          PushImageStep pushImageStep =
+  //              new PushImageStep(buildConfiguration, pushAuthorization, image);
+  //          pushImageStep.call();
+  //
+  //          System.out.println(getEntrypoint());
+  //        }
+  //      }
+  //    } finally {
+  //      Timer.print();
+  //    }
+  //  }
 
   private List<String> getEntrypoint() {
     List<String> classPaths = new ArrayList<>();
