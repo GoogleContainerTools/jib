@@ -132,74 +132,6 @@ public class BuildImageSteps {
     }
   }
 
-  //  public void run()
-  //      throws CacheMetadataCorruptedException, IOException, RegistryAuthenticationFailedException,
-  //          RegistryException, DuplicateLayerException, LayerCountMismatchException,
-  //          LayerPropertyNotFoundException, NonexistentServerUrlDockerCredentialHelperException,
-  //          NonexistentDockerCredentialHelperException, ExecutionException, InterruptedException {
-  //    try (Timer t = Timer.push("BuildImageSteps")) {
-  //
-  //      try (Cache cache = Cache.init(cacheDirectory)) {
-  //        try (Timer t2 = Timer.push("AuthenticatePullStep")) {
-  //          // Authenticates base image pull.
-  //          AuthenticatePullStep authenticatePullStep = new AuthenticatePullStep(buildConfiguration);
-  //          Authorization pullAuthorization = authenticatePullStep.call();
-  //
-  //          Timer.time("PullBaseImageStep");
-  //          // Pulls the base image.
-  //          PullBaseImageStep pullBaseImageStep =
-  //              new PullBaseImageStep(buildConfiguration, pullAuthorization);
-  //          Image baseImage = pullBaseImageStep.call();
-  //
-  //          Timer.time("PullAndCacheBaseImageLayersStep");
-  //          // Pulls and caches the base image layers.
-  //          PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep =
-  //              new PullAndCacheBaseImageLayersStep(
-  //                  buildConfiguration, cache, pullAuthorization, baseImage);
-  //          ImageLayers<CachedLayer> baseImageLayers = pullAndCacheBaseImageLayersStep.call();
-  //
-  //          Timer.time("AuthenticatePushStep");
-  //          // Authenticates push.
-  //          AuthenticatePushStep authenticatePushStep = new AuthenticatePushStep(buildConfiguration);
-  //          Authorization pushAuthorization = authenticatePushStep.call();
-  //
-  //          Timer.time("PushLayersStep");
-  //          // Pushes the base image layers.
-  //          PushLayersStep pushBaseImageLayersStep =
-  //              new PushLayersStep(buildConfiguration, pushAuthorization, baseImageLayers);
-  //          pushBaseImageLayersStep.call();
-  //
-  //          Timer.time("BuildAndCacheApplicationLayersStep");
-  //          BuildAndCacheApplicationLayersStep buildAndCacheApplicationLayersStep =
-  //              new BuildAndCacheApplicationLayersStep(sourceFilesConfiguration, cache);
-  //          ImageLayers<CachedLayer> applicationLayers = buildAndCacheApplicationLayersStep.call();
-  //
-  //          Timer.time("PushApplicationLayerStep");
-  //          // Pushes the application layers.
-  //          PushApplicationLayersStep pushApplicationLayersStep =
-  //              new PushApplicationLayersStep(
-  //                  null, buildConfiguration, pushAuthorization, applicationLayers);
-  //          pushApplicationLayersStep.call();
-  //
-  //          Timer.time("PushImageStep");
-  //          // Pushes the new image manifest.
-  //          Image image =
-  //              new Image()
-  //                  .addLayers(baseImageLayers)
-  //                  .addLayers(applicationLayers)
-  //                  .setEntrypoint(getEntrypoint());
-  //          PushImageStep pushImageStep =
-  //              new PushImageStep(buildConfiguration, pushAuthorization, image);
-  //          pushImageStep.call();
-  //
-  //          System.out.println(getEntrypoint());
-  //        }
-  //      }
-  //    } finally {
-  //      Timer.print();
-  //    }
-  //  }
-
   private List<String> getEntrypoint() {
     List<String> classPaths = new ArrayList<>();
     classPaths.add(
@@ -207,8 +139,11 @@ public class BuildImageSteps {
     classPaths.add(sourceFilesConfiguration.getResourcesExtractionPath().toString());
     classPaths.add(sourceFilesConfiguration.getClassesExtractionPath().toString());
 
-    String entrypoint = String.join(":", classPaths);
+    String classPathsString = String.join(":", classPaths);
 
-    return Arrays.asList("java", "-cp", entrypoint, buildConfiguration.getMainClass());
+    List<String> entrypoint =
+        Arrays.asList("java", "-cp", classPathsString, buildConfiguration.getMainClass());
+    entrypoint.addAll(buildConfiguration.getJvmFlags());
+    return entrypoint;
   }
 }

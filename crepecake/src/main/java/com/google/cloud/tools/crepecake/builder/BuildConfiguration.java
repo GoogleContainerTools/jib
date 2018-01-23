@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /** Immutable configuration options for the builder process. */
 public class BuildConfiguration {
@@ -48,7 +49,10 @@ public class BuildConfiguration {
     CREDENTIAL_HELPER_NAME(false),
 
     /** The main class to use when running the application. */
-    MAIN_CLASS(true);
+    MAIN_CLASS(true),
+
+    /** Additional JVM flags to use when running the application. */
+    JVM_FLAGS(false);
 
     private final boolean required;
 
@@ -77,6 +81,7 @@ public class BuildConfiguration {
             put(Fields.TARGET_TAG, "target image tag");
             put(Fields.CREDENTIAL_HELPER_NAME, "credential helper name");
             put(Fields.MAIN_CLASS, "main class");
+            put(Fields.JVM_FLAGS, "JVM flags");
           }
         };
 
@@ -84,9 +89,11 @@ public class BuildConfiguration {
         " required but not set in build configuration";
 
     private BuildLogger buildLogger;
-    private Map<Fields, String> values = new EnumMap<>(Fields.class);
+    private Map<Fields, Object> values = new EnumMap<>(Fields.class);
 
-    private Builder() {}
+    private Builder() {
+      values.put(Fields.JVM_FLAGS, Collections.emptyList());
+    }
 
     public Builder setBuildLogger(BuildLogger buildLogger) {
       this.buildLogger = buildLogger;
@@ -123,13 +130,18 @@ public class BuildConfiguration {
       return this;
     }
 
-    public Builder setCredentialHelperName(String credentialHelperName) {
+    public Builder setCredentialHelperName(@Nullable String credentialHelperName) {
       values.put(Fields.CREDENTIAL_HELPER_NAME, credentialHelperName);
       return this;
     }
 
     public Builder setMainClass(String mainClass) {
       values.put(Fields.MAIN_CLASS, mainClass);
+      return this;
+    }
+
+    public Builder setJvmFlags(List<String> jvmFlags) {
+      values.put(Fields.JVM_FLAGS, jvmFlags);
       return this;
     }
 
@@ -177,13 +189,13 @@ public class BuildConfiguration {
   }
 
   private final BuildLogger buildLogger;
-  private final Map<Fields, String> values;
+  private final Map<Fields, Object> values;
 
   public static Builder builder() {
     return new Builder();
   }
 
-  private BuildConfiguration(BuildLogger buildLogger, Map<Fields, String> values) {
+  private BuildConfiguration(BuildLogger buildLogger, Map<Fields, Object> values) {
     this.buildLogger = buildLogger;
     this.values = values;
   }
@@ -193,34 +205,44 @@ public class BuildConfiguration {
   }
 
   public String getBaseImageServerUrl() {
-    return values.get(Fields.BASE_IMAGE_SERVER_URL);
+    return getFieldValue(Fields.BASE_IMAGE_SERVER_URL);
   }
 
   public String getBaseImageName() {
-    return values.get(Fields.BASE_IMAGE_NAME);
+    return getFieldValue(Fields.BASE_IMAGE_NAME);
   }
 
   public String getBaseImageTag() {
-    return values.get(Fields.BASE_IMAGE_TAG);
+    return getFieldValue(Fields.BASE_IMAGE_TAG);
   }
 
   public String getTargetServerUrl() {
-    return values.get(Fields.TARGET_SERVER_URL);
+    return getFieldValue(Fields.TARGET_SERVER_URL);
   }
 
   public String getTargetImageName() {
-    return values.get(Fields.TARGET_IMAGE_NAME);
+    return getFieldValue(Fields.TARGET_IMAGE_NAME);
   }
 
   public String getTargetTag() {
-    return values.get(Fields.TARGET_TAG);
+    return getFieldValue(Fields.TARGET_TAG);
   }
 
+  @Nullable
   public String getCredentialHelperName() {
-    return values.get(Fields.CREDENTIAL_HELPER_NAME);
+    return getFieldValue(Fields.CREDENTIAL_HELPER_NAME);
   }
 
   public String getMainClass() {
-    return values.get(Fields.MAIN_CLASS);
+    return getFieldValue(Fields.MAIN_CLASS);
+  }
+
+  public List<String> getJvmFlags() {
+    return Collections.unmodifiableList(getFieldValue(Fields.JVM_FLAGS));
+  }
+
+  @SuppressWarnings("unchecked")
+  private <T> T getFieldValue(Fields field) {
+    return (T) values.get(field);
   }
 }
