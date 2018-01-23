@@ -83,9 +83,15 @@ public class BuildConfiguration {
     private static final String MISSING_FIELD_MESSAGE_SUFFIX =
         " required but not set in build configuration";
 
+    private BuildLogger buildLogger;
     private Map<Fields, String> values = new EnumMap<>(Fields.class);
 
     private Builder() {}
+
+    public Builder setBuildLogger(BuildLogger buildLogger) {
+      this.buildLogger = buildLogger;
+      return this;
+    }
 
     public Builder setBaseImageServerUrl(String baseImageServerUrl) {
       values.put(Fields.BASE_IMAGE_SERVER_URL, baseImageServerUrl);
@@ -142,7 +148,7 @@ public class BuildConfiguration {
       switch (descriptions.size()) {
         case 0:
           values = Collections.unmodifiableMap(values);
-          return new BuildConfiguration(values);
+          return new BuildConfiguration(buildLogger, values);
 
         case 1:
           throw new IllegalStateException(descriptions.get(0) + MISSING_FIELD_MESSAGE_SUFFIX);
@@ -170,14 +176,20 @@ public class BuildConfiguration {
     }
   }
 
+  private final BuildLogger buildLogger;
   private final Map<Fields, String> values;
 
   public static Builder builder() {
     return new Builder();
   }
 
-  private BuildConfiguration(Map<Fields, String> values) {
+  private BuildConfiguration(BuildLogger buildLogger, Map<Fields, String> values) {
+    this.buildLogger = buildLogger;
     this.values = values;
+  }
+
+  public BuildLogger getBuildLogger() {
+    return buildLogger;
   }
 
   public String getBaseImageServerUrl() {

@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.maven;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.crepecake.builder.BuildConfiguration;
 import com.google.cloud.tools.crepecake.builder.BuildImageSteps;
+import com.google.cloud.tools.crepecake.builder.BuildLogger;
 import com.google.cloud.tools.crepecake.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.crepecake.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
@@ -163,8 +164,30 @@ public class BuildImageMojo extends AbstractMojo {
 
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder()
-            .setBaseImageServerUrl("registry.hub.docker.com")
-            .setBaseImageName("frolvlad/alpine-oraclejdk8")
+            .setBuildLogger(
+                new BuildLogger() {
+                  @Override
+                  public void debug(CharSequence charSequence) {
+                    getLog().debug(charSequence);
+                  }
+
+                  @Override
+                  public void info(CharSequence charSequence) {
+                    getLog().info(charSequence);
+                  }
+
+                  @Override
+                  public void warn(CharSequence charSequence) {
+                    getLog().warn(charSequence);
+                  }
+
+                  @Override
+                  public void error(CharSequence charSequence) {
+                    getLog().error(charSequence);
+                  }
+                })
+            .setBaseImageServerUrl("gcr.io")
+            .setBaseImageName("distroless/java")
             .setBaseImageTag("latest")
             .setTargetServerUrl(registry)
             .setTargetImageName(repository)

@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.crepecake;
 
+import com.google.cloud.tools.crepecake.builder.BuildLogger;
 import java.io.Closeable;
 import java.util.Stack;
 
@@ -24,46 +25,53 @@ public class Timer implements Closeable {
   private static Stack<String> labels = new Stack<>();
   private static Stack<Long> times = new Stack<>();
 
-  private static StringBuilder log = new StringBuilder();
+  private final BuildLogger buildLogger;
+  private final int depth;
 
-  public static void print() {
-    System.out.println(log);
+  private String label;
+  private long startTime = System.currentTimeMillis();
+
+  public Timer(BuildLogger buildLogger, String label) {
+    this(buildLogger, label, 0);
   }
 
-  public static Timer push(String label) {
-    logTabs();
-    log.append("TIMING\t");
-    log.append(label);
-    log.append("\n");
-    labels.push(label);
-    times.push(System.currentTimeMillis());
-    return new Timer();
-  }
+  private Timer(BuildLogger buildLogger, String label, int depth) {
+    this.buildLogger = buildLogger;
+    this.label = label;
+    this.depth = depth;
 
-  public static void time(String label) {
-    pop();
-    push(label);
-  }
-
-  private static void pop() {
-    String label = labels.pop();
-    long time = times.pop();
-    logTabs();
-    log.append("TIMED\t");
-    log.append(label);
-    log.append(" : ");
-    log.append(System.currentTimeMillis() - time);
-    log.append("\n");
-  }
-
-  private static void logTabs() {
-    for (int i = 0; i < labels.size(); i++) {
-      log.append("\t");
+    if (buildLogger != null) {
+      buildLogger.info(getTabs().append("TIMING\t").append(label));
     }
+  }
+
+  public Timer subTimer(String label) {
+    return new Timer(buildLogger, label, depth + 1);
+  }
+
+  public void lap(String label) {
+    if (buildLogger != null) {
+      buildLogger.info(
+          getTabs()
+              .append("TIMED\t")
+              .append(this.label)
+              .append(" : ")
+              .append(System.currentTimeMillis() - startTime));
+    }
+    this.label = label;
+    startTime = System.currentTimeMillis();
+  }
+
+  private StringBuilder getTabs() {
+    StringBuilder tabs = new StringBuilder();
+    for (int i = 0; i < depth; i++) {
+      tabs.append("\t");
+    }
+    return tabs;
   }
 
   @Override
   public void close() {
-    Timer.pop();
+    lap("INVALID");
   }
 }

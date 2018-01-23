@@ -53,13 +53,13 @@ class PushImageStep implements Callable<Void> {
             buildConfiguration.getTargetServerUrl(),
             buildConfiguration.getTargetImageName());
 
-    try (Timer t = Timer.push("PushImageStep")) {
+    try (Timer t = new Timer(buildConfiguration.getBuildLogger(), "PushImageStep")) {
 
-      try (Timer t2 = Timer.push("ImagetoJsonTranslator")) {
+      try (Timer t2 = t.subTimer("ImagetoJsonTranslator")) {
 
         ImageToJsonTranslator imageToJsonTranslator = new ImageToJsonTranslator(image);
 
-        Timer.time("build container configuration");
+        t2.lap("build container configuration");
 
         // Pushes the container configuration.
         Blob containerConfigurationBlob = imageToJsonTranslator.getContainerConfigurationBlob();
@@ -68,12 +68,12 @@ class PushImageStep implements Callable<Void> {
         containerConfigurationBlob.writeTo(digestOutputStream);
         BlobDescriptor containerConfigurationBlobDescriptor = digestOutputStream.toBlobDescriptor();
 
-        Timer.time("push container configuration");
+        t2.lap("push container configuration");
 
         registryClient.pushBlob(
             containerConfigurationBlobDescriptor.getDigest(), containerConfigurationBlob);
 
-        Timer.time("push image manifest");
+        t2.lap("push image manifest");
 
         // Pushes the image manifest.
         V22ManifestTemplate manifestTemplate =

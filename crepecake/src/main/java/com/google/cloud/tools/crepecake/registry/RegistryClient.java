@@ -22,6 +22,7 @@ import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.crepecake.Timer;
 import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
+import com.google.cloud.tools.crepecake.builder.BuildLogger;
 import com.google.cloud.tools.crepecake.http.Authorization;
 import com.google.cloud.tools.crepecake.http.Connection;
 import com.google.cloud.tools.crepecake.http.Request;
@@ -42,6 +43,13 @@ import org.apache.http.NoHttpResponseException;
 
 /** Interfaces with a registry. */
 public class RegistryClient {
+
+  // TODO: Remove
+  private BuildLogger buildLogger;
+
+  public void setBuildLogger(BuildLogger buildLogger) {
+    this.buildLogger = buildLogger;
+  }
 
   private static final String PROTOCOL = "https";
 
@@ -125,9 +133,9 @@ public class RegistryClient {
       throws IOException, RegistryException {
     BlobPusher blobPusher = new BlobPusher(registryEndpointProperties, blobDigest, blob);
 
-    try (Timer t = Timer.push("pushBlob")) {
+    try (Timer t = new Timer(buildLogger, "pushBlob")) {
 
-      try (Timer t2 = Timer.push("pushBlob POST")) {
+      try (Timer t2 = t.subTimer("pushBlob POST")) {
 
         // POST /v2/<name>/blobs/uploads/?mount={blob.digest}
         String locationHeader = callRegistryEndpoint(blobPusher.initializer());
@@ -137,12 +145,12 @@ public class RegistryClient {
         }
         URL patchLocation = new URL(locationHeader);
 
-        Timer.time("pushBlob PATCH");
+        t2.lap("pushBlob PATCH");
 
         // PATCH <Location> with BLOB
         URL putLocation = new URL(callRegistryEndpoint(blobPusher.writer(patchLocation)));
 
-        Timer.time("pushBlob PUT");
+        t2.lap("pushBlob PUT");
 
         // PUT <Location>?digest={blob.digest}
         callRegistryEndpoint(blobPusher.committer(putLocation));
