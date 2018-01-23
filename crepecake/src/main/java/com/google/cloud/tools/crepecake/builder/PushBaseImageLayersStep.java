@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
-// TODO: Change into push all layers and first check for existence.
 class PushBaseImageLayersStep implements Callable<List<ListenableFuture<Void>>> {
 
   private final BuildConfiguration buildConfiguration;
