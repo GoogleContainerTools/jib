@@ -18,71 +18,71 @@ package com.google.cloud.tools.crepecake.builder;
 
 import com.google.cloud.tools.crepecake.cache.Cache;
 import com.google.cloud.tools.crepecake.cache.CacheChecker;
-import com.google.cloud.tools.crepecake.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.crepecake.cache.CacheWriter;
 import com.google.cloud.tools.crepecake.cache.CachedLayer;
 import com.google.cloud.tools.crepecake.cache.CachedLayerType;
-import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
-import com.google.cloud.tools.crepecake.image.ImageLayers;
 import com.google.cloud.tools.crepecake.image.LayerBuilder;
-import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
-import java.io.IOException;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
 // TODO: Add unit test.
 /** Builds and caches application layers. */
-class BuildAndCacheApplicationLayersStep implements Callable<ImageLayers<CachedLayer>> {
+class BuildAndCacheApplicationLayersStep implements Callable<List<ListenableFuture<CachedLayer>>> {
 
   private final SourceFilesConfiguration sourceFilesConfiguration;
   private final Cache cache;
+  private final ListeningExecutorService listeningExecutorService;
 
   BuildAndCacheApplicationLayersStep(
-      SourceFilesConfiguration sourceFilesConfiguration, Cache cache) {
+      SourceFilesConfiguration sourceFilesConfiguration,
+      Cache cache,
+      ListeningExecutorService listeningExecutorService) {
     this.sourceFilesConfiguration = sourceFilesConfiguration;
     this.cache = cache;
+    this.listeningExecutorService = listeningExecutorService;
   }
 
   @Override
-  public ImageLayers<CachedLayer> call()
-      throws IOException, LayerPropertyNotFoundException, DuplicateLayerException,
-          CacheMetadataCorruptedException {
-    // TODO: Check if needs rebuilding.
-    CachedLayer dependenciesLayer =
-        buildAndCacheLayer(
+  public List<ListenableFuture<CachedLayer>> call() {
+    List<ListenableFuture<CachedLayer>> applicationLayerFutures = new ArrayList<>(3);
+    applicationLayerFutures.add(
+        buildAndCacheLayerAsync(
             CachedLayerType.DEPENDENCIES,
             sourceFilesConfiguration.getDependenciesFiles(),
-            sourceFilesConfiguration.getDependenciesExtractionPath());
-    CachedLayer resourcesLayer =
-        buildAndCacheLayer(
+            sourceFilesConfiguration.getDependenciesExtractionPath()));
+    applicationLayerFutures.add(
+        buildAndCacheLayerAsync(
             CachedLayerType.RESOURCES,
             sourceFilesConfiguration.getResourcesFiles(),
-            sourceFilesConfiguration.getResourcesExtractionPath());
-    CachedLayer classesLayer =
-        buildAndCacheLayer(
+            sourceFilesConfiguration.getResourcesExtractionPath()));
+    applicationLayerFutures.add(
+        buildAndCacheLayerAsync(
             CachedLayerType.CLASSES,
             sourceFilesConfiguration.getClassesFiles(),
-            sourceFilesConfiguration.getClassesExtractionPath());
+            sourceFilesConfiguration.getClassesExtractionPath()));
 
-    return new ImageLayers<CachedLayer>()
-        .add(dependenciesLayer)
-        .add(resourcesLayer)
-        .add(classesLayer);
+    return applicationLayerFutures;
   }
 
-  private CachedLayer buildAndCacheLayer(
-      CachedLayerType layerType, Set<Path> sourceFiles, Path extractionPath)
-      throws IOException, LayerPropertyNotFoundException, DuplicateLayerException,
-          CacheMetadataCorruptedException {
-    // Don't build the layer if it exists already.
-    CachedLayer cachedLayer = new CacheChecker(cache).getUpToDateLayerBySourceFiles(sourceFiles);
-    if (cachedLayer != null) {
-      return cachedLayer;
-    }
+  private ListenableFuture<CachedLayer> buildAndCacheLayerAsync(
+      CachedLayerType layerType, Set<Path> sourceFiles, Path extractionPath) {
+    return listeningExecutorService.submit(
+        () -> {
+          // Don't build the layer if it exists already.
+          CachedLayer cachedLayer =
+              new CacheChecker(cache).getUpToDateLayerBySourceFiles(sourceFiles);
+          if (cachedLayer != null) {
+            return cachedLayer;
+          }
 
-    LayerBuilder layerBuilder = new LayerBuilder(sourceFiles, extractionPath);
+          LayerBuilder layerBuilder = new LayerBuilder(sourceFiles, extractionPath);
 
-    return new CacheWriter(cache).writeLayer(layerBuilder, layerType);
+          return new CacheWriter(cache).writeLayer(layerBuilder, layerType);
+        });
   }
 }

@@ -25,37 +25,36 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-class PushBaseImageLayersStep implements Callable<List<ListenableFuture<Void>>> {
+class PushLayersStep implements Callable<List<ListenableFuture<Void>>> {
 
   private final BuildConfiguration buildConfiguration;
   private final ListeningExecutorService listeningExecutorService;
   private final ListenableFuture<Authorization> pushAuthorizationFuture;
-  private final List<ListenableFuture<CachedLayer>> pullBaseImageLayerFutures;
+  private final List<ListenableFuture<CachedLayer>> cachedLayersFuture;
 
-  PushBaseImageLayersStep(
+  PushLayersStep(
       BuildConfiguration buildConfiguration,
       ListeningExecutorService listeningExecutorService,
       ListenableFuture<Authorization> pushAuthorizationFuture,
-      List<ListenableFuture<CachedLayer>> pullBaseImageLayerFutures) {
+      List<ListenableFuture<CachedLayer>> cachedLayersFuture) {
     this.buildConfiguration = buildConfiguration;
     this.listeningExecutorService = listeningExecutorService;
     this.pushAuthorizationFuture = pushAuthorizationFuture;
-    this.pullBaseImageLayerFutures = pullBaseImageLayerFutures;
+    this.cachedLayersFuture = cachedLayersFuture;
   }
 
   @Override
   public List<ListenableFuture<Void>> call() {
-    // Pushes the base image layers.
-    List<ListenableFuture<Void>> pushBaseImageLayerFutures = new ArrayList<>();
-    for (ListenableFuture<CachedLayer> pullBaseImageLayerFuture : pullBaseImageLayerFutures) {
-      pushBaseImageLayerFutures.add(
-          Futures.whenAllComplete(pullBaseImageLayerFuture)
+    // Pushes the image layers.
+    List<ListenableFuture<Void>> pushLayerFutures = new ArrayList<>();
+    for (ListenableFuture<CachedLayer> cachedLayerFuture : cachedLayersFuture) {
+      pushLayerFutures.add(
+          Futures.whenAllComplete(cachedLayerFuture)
               .call(
-                  new PushBlobStep(
-                      buildConfiguration, pushAuthorizationFuture, pullBaseImageLayerFuture),
+                  new PushBlobStep(buildConfiguration, pushAuthorizationFuture, cachedLayerFuture),
                   listeningExecutorService));
     }
 
-    return pushBaseImageLayerFutures;
+    return pushLayerFutures;
   }
 }

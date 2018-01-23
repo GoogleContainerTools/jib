@@ -25,9 +25,12 @@ import com.google.cloud.tools.crepecake.cache.CachedLayerType;
 import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
 import com.google.cloud.tools.crepecake.image.ImageLayers;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.util.concurrent.ExecutionException;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -41,17 +44,22 @@ public class BuildAndCacheApplicationLayersStepTest {
   @Test
   public void testRun()
       throws LayerPropertyNotFoundException, DuplicateLayerException, IOException,
-          CacheMetadataCorruptedException, URISyntaxException {
+          CacheMetadataCorruptedException, URISyntaxException, ExecutionException,
+          InterruptedException {
     TestSourceFilesConfiguration testSourceFilesConfiguration = new TestSourceFilesConfiguration();
     Path temporaryCacheDirectory = temporaryFolder.newFolder().toPath();
 
-    ImageLayers<CachedLayer> applicationLayers;
+    ImageLayers<CachedLayer> applicationLayers = new ImageLayers<>();
 
     try (Cache cache = Cache.init(temporaryCacheDirectory)) {
       BuildAndCacheApplicationLayersStep buildAndCacheApplicationLayersStep =
-          new BuildAndCacheApplicationLayersStep(testSourceFilesConfiguration, cache);
+          new BuildAndCacheApplicationLayersStep(
+              testSourceFilesConfiguration, cache, MoreExecutors.newDirectExecutorService());
 
-      applicationLayers = buildAndCacheApplicationLayersStep.call();
+      for (ListenableFuture<CachedLayer> applicationLayerFuture :
+          buildAndCacheApplicationLayersStep.call()) {
+        applicationLayers.add(applicationLayerFuture.get());
+      }
 
       Assert.assertEquals(3, applicationLayers.size());
     }

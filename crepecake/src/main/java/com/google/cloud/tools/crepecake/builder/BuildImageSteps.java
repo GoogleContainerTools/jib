@@ -20,7 +20,6 @@ import com.google.cloud.tools.crepecake.cache.Cache;
 import com.google.cloud.tools.crepecake.cache.CachedLayer;
 import com.google.cloud.tools.crepecake.http.Authorization;
 import com.google.cloud.tools.crepecake.image.Image;
-import com.google.cloud.tools.crepecake.image.ImageLayers;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -76,7 +75,7 @@ public class BuildImageSteps {
           listeningExecutorService.submit(new AuthenticatePushStep(buildConfiguration));
       // Pushes the base image layers.
       List<ListenableFuture<Void>> pushBaseImageLayerFutures =
-          new PushBaseImageLayersStep(
+          new PushLayersStep(
                   buildConfiguration,
                   listeningExecutorService,
                   authenticatePushFuture,
@@ -84,26 +83,23 @@ public class BuildImageSteps {
               .call();
 
       // Builds the application layers.
-      ListenableFuture<ImageLayers<CachedLayer>> buildAndCacheApplicationLayersFuture =
-          listeningExecutorService.submit(
-              new BuildAndCacheApplicationLayersStep(sourceFilesConfiguration, cache));
+      List<ListenableFuture<CachedLayer>> buildAndCacheApplicationLayersFuture =
+          new BuildAndCacheApplicationLayersStep(
+                  sourceFilesConfiguration, cache, listeningExecutorService)
+              .call();
       // Pushes the application layers.
-      ListenableFuture<Void> pushApplicationLayersFuture =
-          Futures.whenAllSucceed(buildAndCacheApplicationLayersFuture)
-              .call(
-                  () ->
-                      new PushApplicationLayersStep(
-                              listeningExecutorService,
-                              buildConfiguration,
-                              authenticatePushFuture.get(),
-                              buildAndCacheApplicationLayersFuture.get())
-                          .call(),
-                  listeningExecutorService);
+      List<ListenableFuture<Void>> pushApplicationLayersFuture =
+          new PushLayersStep(
+                  buildConfiguration,
+                  listeningExecutorService,
+                  authenticatePushFuture,
+                  buildAndCacheApplicationLayersFuture)
+              .call();
 
       // Pushes the new image manifest.
       List<ListenableFuture<?>> pushImageFutureDependencies =
           new ArrayList<>(pushBaseImageLayerFutures);
-      pushImageFutureDependencies.add(pushApplicationLayersFuture);
+      pushImageFutureDependencies.addAll(pushApplicationLayersFuture);
       ListenableFuture<Void> pushImageFuture =
           Futures.whenAllSucceed(pushImageFutureDependencies)
               .call(
@@ -113,9 +109,11 @@ public class BuildImageSteps {
                         pullBaseImageLayerFutures) {
                       image.addLayer(pullBaseImageLayerFuture.get());
                     }
-                    image
-                        .addLayers(buildAndCacheApplicationLayersFuture.get())
-                        .setEntrypoint(getEntrypoint());
+                    for (ListenableFuture<CachedLayer> buildAndCacheApplicationLayerFuture :
+                        buildAndCacheApplicationLayersFuture) {
+                      image.addLayer(buildAndCacheApplicationLayerFuture.get());
+                    }
+                    image.setEntrypoint(getEntrypoint());
 
                     return new PushImageStep(
                             buildConfiguration, authenticatePushFuture.get(), image)
@@ -158,10 +156,10 @@ public class BuildImageSteps {
   //          AuthenticatePushStep authenticatePushStep = new AuthenticatePushStep(buildConfiguration);
   //          Authorization pushAuthorization = authenticatePushStep.call();
   //
-  //          Timer.time("PushBaseImageLayersStep");
+  //          Timer.time("PushLayersStep");
   //          // Pushes the base image layers.
-  //          PushBaseImageLayersStep pushBaseImageLayersStep =
-  //              new PushBaseImageLayersStep(buildConfiguration, pushAuthorization, baseImageLayers);
+  //          PushLayersStep pushBaseImageLayersStep =
+  //              new PushLayersStep(buildConfiguration, pushAuthorization, baseImageLayers);
   //          pushBaseImageLayersStep.call();
   //
   //          Timer.time("BuildAndCacheApplicationLayersStep");
