@@ -17,16 +17,18 @@
 package com.google.cloud.tools.crepecake.builder;
 
 import com.google.cloud.tools.crepecake.Timer;
+import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
 import com.google.cloud.tools.crepecake.cache.CachedLayer;
+import com.google.cloud.tools.crepecake.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.crepecake.http.Authorization;
 import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
 import com.google.cloud.tools.crepecake.image.Image;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.crepecake.image.json.ImageToJsonTranslator;
-import com.google.cloud.tools.crepecake.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.crepecake.registry.RegistryClient;
 import com.google.cloud.tools.crepecake.registry.RegistryException;
+import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,53 +36,62 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-/** Pushes the final image. */
-class PushImageStep implements Callable<Void> {
+class BuildAndPushContainerConfigurationStep implements Callable<BlobDescriptor> {
 
   private final BuildConfiguration buildConfiguration;
   private final Future<Authorization> pushAuthorizationFuture;
   private final List<Future<CachedLayer>> cachedLayerFutures;
-  private final Future<BlobDescriptor> containerConfigurationBlobDescriptorFuture;
+  private final List<String> entrypoint;
 
-  PushImageStep(
+  BuildAndPushContainerConfigurationStep(
       BuildConfiguration buildConfiguration,
       Future<Authorization> pushAuthorizationFuture,
       List<? extends Future<CachedLayer>> baseImageLayerFutures,
       List<? extends Future<CachedLayer>> applicationLayerFutures,
-      Future<BlobDescriptor> containerConfigurationBlobDescriptorFuture) {
+      List<String> entrypoint) {
     this.buildConfiguration = buildConfiguration;
     this.pushAuthorizationFuture = pushAuthorizationFuture;
-    this.containerConfigurationBlobDescriptorFuture = containerConfigurationBlobDescriptorFuture;
+    this.entrypoint = entrypoint;
 
     cachedLayerFutures = new ArrayList<>(baseImageLayerFutures);
     cachedLayerFutures.addAll(applicationLayerFutures);
   }
 
   @Override
-  public Void call()
-      throws IOException, RegistryException, LayerPropertyNotFoundException, ExecutionException,
-          InterruptedException, DuplicateLayerException {
+  public BlobDescriptor call()
+      throws ExecutionException, InterruptedException, LayerPropertyNotFoundException,
+          DuplicateLayerException, IOException, RegistryException {
     RegistryClient registryClient =
         new RegistryClient(
             pushAuthorizationFuture.get(),
             buildConfiguration.getTargetServerUrl(),
             buildConfiguration.getTargetImageName());
 
-    try (Timer t = new Timer(buildConfiguration.getBuildLogger(), "PushImageStep")) {
-      // TODO: Consolidate with BuildAndPushContainerConfigurationStep.
-      Image image = new Image();
-      for (Future<CachedLayer> cachedLayerFuture : cachedLayerFutures) {
-        image.addLayer(cachedLayerFuture.get());
+    try (Timer t =
+        new Timer(buildConfiguration.getBuildLogger(), "BuildAndPushContainerConfigurationStep")) {
+      try (Timer t2 = t.subTimer("build container configuration")) {
+        Image image = new Image();
+        for (Future<CachedLayer> cachedLayerFuture : cachedLayerFutures) {
+          image.addLayer(cachedLayerFuture.get());
+        }
+        image.setEntrypoint(entrypoint);
+
+        ImageToJsonTranslator imageToJsonTranslator = new ImageToJsonTranslator(image);
+
+        // Pushes the container configuration.
+        Blob containerConfigurationBlob = imageToJsonTranslator.getContainerConfigurationBlob();
+        CountingDigestOutputStream digestOutputStream =
+            new CountingDigestOutputStream(ByteStreams.nullOutputStream());
+        containerConfigurationBlob.writeTo(digestOutputStream);
+        BlobDescriptor containerConfigurationBlobDescriptor = digestOutputStream.toBlobDescriptor();
+
+        t2.lap("push container configuration");
+
+        registryClient.pushBlob(
+            containerConfigurationBlobDescriptor.getDigest(), containerConfigurationBlob);
+
+        return containerConfigurationBlobDescriptor;
       }
-      ImageToJsonTranslator imageToJsonTranslator = new ImageToJsonTranslator(image);
-
-      // Pushes the image manifest.
-      V22ManifestTemplate manifestTemplate =
-          imageToJsonTranslator.getManifestTemplate(
-              containerConfigurationBlobDescriptorFuture.get());
-      registryClient.pushManifest(manifestTemplate, buildConfiguration.getTargetTag());
     }
-
-    return null;
   }
 }

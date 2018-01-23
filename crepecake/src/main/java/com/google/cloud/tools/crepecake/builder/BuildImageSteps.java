@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.crepecake.builder;
 
+import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
 import com.google.cloud.tools.crepecake.cache.Cache;
 import com.google.cloud.tools.crepecake.cache.CachedLayer;
 import com.google.cloud.tools.crepecake.http.Authorization;
@@ -83,17 +84,33 @@ public class BuildImageSteps {
               .call();
 
       // Builds the application layers.
-      List<ListenableFuture<CachedLayer>> buildAndCacheApplicationLayersFuture =
+      List<ListenableFuture<CachedLayer>> buildAndCacheApplicationLayerFutures =
           new BuildAndCacheApplicationLayersStep(
                   sourceFilesConfiguration, cache, listeningExecutorService)
               .call();
+
+      // Builds and pushes the container configuration.
+      List<ListenableFuture<?>> buildAndCacheApplicationLayerFuturesDependencies =
+          new ArrayList<>(pullBaseImageLayerFutures);
+      buildAndCacheApplicationLayerFuturesDependencies.addAll(buildAndCacheApplicationLayerFutures);
+      ListenableFuture<BlobDescriptor> buildAndPushContainerConfigurationFuture =
+          Futures.whenAllSucceed(buildAndCacheApplicationLayerFuturesDependencies)
+              .call(
+                  new BuildAndPushContainerConfigurationStep(
+                      buildConfiguration,
+                      authenticatePushFuture,
+                      pullBaseImageLayerFutures,
+                      buildAndCacheApplicationLayerFutures,
+                      getEntrypoint()),
+                  listeningExecutorService);
+
       // Pushes the application layers.
       List<ListenableFuture<Void>> pushApplicationLayersFuture =
           new PushLayersStep(
                   buildConfiguration,
                   listeningExecutorService,
                   authenticatePushFuture,
-                  buildAndCacheApplicationLayersFuture)
+                  buildAndCacheApplicationLayerFutures)
               .call();
 
       // Pushes the new image manifest.
@@ -103,22 +120,12 @@ public class BuildImageSteps {
       ListenableFuture<Void> pushImageFuture =
           Futures.whenAllSucceed(pushImageFutureDependencies)
               .call(
-                  () -> {
-                    Image image = new Image();
-                    for (ListenableFuture<CachedLayer> pullBaseImageLayerFuture :
-                        pullBaseImageLayerFutures) {
-                      image.addLayer(pullBaseImageLayerFuture.get());
-                    }
-                    for (ListenableFuture<CachedLayer> buildAndCacheApplicationLayerFuture :
-                        buildAndCacheApplicationLayersFuture) {
-                      image.addLayer(buildAndCacheApplicationLayerFuture.get());
-                    }
-                    image.setEntrypoint(getEntrypoint());
-
-                    return new PushImageStep(
-                            buildConfiguration, authenticatePushFuture.get(), image)
-                        .call();
-                  },
+                  new PushImageStep(
+                      buildConfiguration,
+                      authenticatePushFuture,
+                      pullBaseImageLayerFutures,
+                      buildAndCacheApplicationLayerFutures,
+                      buildAndPushContainerConfigurationFuture),
                   listeningExecutorService);
 
       pushImageFuture.get();
