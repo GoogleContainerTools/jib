@@ -21,28 +21,37 @@ import com.google.cloud.tools.crepecake.http.Authorization;
 import com.google.cloud.tools.crepecake.image.ImageLayers;
 import com.google.cloud.tools.crepecake.registry.RegistryClient;
 import com.google.cloud.tools.crepecake.registry.RegistryException;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 
 // TODO: First check for existence.
 /** Pushes the application layers to the target registry. */
-class PushApplicationLayersStep implements Callable<ImageLayers<CachedLayer>> {
+class PushApplicationLayersStep implements Callable<Void> {
 
+  private final ListeningExecutorService listeningExecutorService;
   private final BuildConfiguration buildConfiguration;
   private final Authorization pushAuthorization;
   private final ImageLayers<CachedLayer> applicationLayers;
 
   PushApplicationLayersStep(
+      ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
       Authorization pushAuthorization,
       ImageLayers<CachedLayer> applicationLayers) {
+    this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
     this.pushAuthorization = pushAuthorization;
     this.applicationLayers = applicationLayers;
   }
 
   @Override
-  public ImageLayers<CachedLayer> call() throws IOException, RegistryException {
+  public Void call()
+      throws IOException, RegistryException, ExecutionException, InterruptedException {
     RegistryClient registryClient =
         new RegistryClient(
             pushAuthorization,
@@ -50,11 +59,18 @@ class PushApplicationLayersStep implements Callable<ImageLayers<CachedLayer>> {
             buildConfiguration.getTargetImageName());
 
     // Pushes the application layers.
+    List<ListenableFuture<Void>> pushBlobFutures = new ArrayList<>();
     for (CachedLayer layer : applicationLayers) {
-      new PushBlobStep(registryClient, layer.getBlob(), layer.getBlobDescriptor().getDigest())
-          .call();
+      pushBlobFutures.add(
+          listeningExecutorService.submit(
+              new PushBlobStep(
+                  registryClient, layer.getBlob(), layer.getBlobDescriptor().getDigest())));
     }
 
-    return applicationLayers;
+    for (ListenableFuture<Void> pushBlobFuture : pushBlobFutures) {
+      pushBlobFuture.get();
+    }
+
+    return null;
   }
 }

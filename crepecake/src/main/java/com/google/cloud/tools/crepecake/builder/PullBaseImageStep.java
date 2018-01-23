@@ -33,24 +33,27 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 class PullBaseImageStep implements Callable<Image> {
 
   private final BuildConfiguration buildConfiguration;
-  private final Authorization pullAuthorization;
+  private final Future<Authorization> pullAuthorizationFuture;
 
-  PullBaseImageStep(BuildConfiguration buildConfiguration, Authorization pullAuthorization) {
+  PullBaseImageStep(BuildConfiguration buildConfiguration,
+                    Future<Authorization> pullAuthorizationFuture) {
     this.buildConfiguration = buildConfiguration;
-    this.pullAuthorization = pullAuthorization;
+    this.pullAuthorizationFuture = pullAuthorizationFuture;
   }
 
   @Override
   public Image call()
       throws IOException, RegistryException, LayerPropertyNotFoundException,
-          DuplicateLayerException, LayerCountMismatchException {
+      DuplicateLayerException, LayerCountMismatchException, ExecutionException, InterruptedException {
     RegistryClient registryClient =
         new RegistryClient(
-            pullAuthorization,
+            pullAuthorizationFuture.get(),
             buildConfiguration.getBaseImageServerUrl(),
             buildConfiguration.getBaseImageName());
 

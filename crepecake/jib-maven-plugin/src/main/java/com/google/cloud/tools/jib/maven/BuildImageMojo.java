@@ -50,11 +50,7 @@ import org.apache.maven.project.MavenProject;
 public class BuildImageMojo extends AbstractMojo {
 
   /** ERERLEK. */
-  public static void main(String[] args)
-      throws IOException, NonexistentServerUrlDockerCredentialHelperException,
-          DuplicateLayerException, NonexistentDockerCredentialHelperException,
-          CacheMetadataCorruptedException, LayerPropertyNotFoundException,
-          LayerCountMismatchException, RegistryAuthenticationFailedException, RegistryException {
+  public static void main(String[] args) throws Exception {
     SourceFilesConfiguration sourceFilesConfiguration =
         new SourceFilesConfiguration() {
           @Override
@@ -112,7 +108,7 @@ public class BuildImageMojo extends AbstractMojo {
 
     BuildImageSteps buildImageSteps =
         new BuildImageSteps(buildConfiguration, sourceFilesConfiguration, cacheDirectory);
-    buildImageSteps.run();
+    buildImageSteps.runAsync();
   }
 
   private static class MojoExceptionBuilder {
@@ -190,7 +186,7 @@ public class BuildImageMojo extends AbstractMojo {
     try {
       BuildImageSteps buildImageSteps =
           new BuildImageSteps(buildConfiguration, sourceFilesConfiguration, cacheDirectory);
-      buildImageSteps.run();
+      buildImageSteps.runAsync();
 
     } catch (RegistryUnauthorizedException ex) {
       MojoExceptionBuilder mojoExceptionBuilder = new MojoExceptionBuilder(ex);
@@ -218,6 +214,9 @@ public class BuildImageMojo extends AbstractMojo {
         | RegistryAuthenticationFailedException
         | NonexistentServerUrlDockerCredentialHelperException ex) {
       throw new MojoExceptionBuilder(ex).build();
+
+    } catch (Exception ex) {
+      throw new MojoExceptionBuilder(ex).suggest("WTF").build();
     }
   }
 

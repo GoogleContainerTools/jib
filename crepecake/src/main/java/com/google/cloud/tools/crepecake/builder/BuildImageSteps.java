@@ -34,14 +34,12 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-
 import java.io.IOException;
-import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
 /** All the steps to build an image. */
@@ -61,41 +59,69 @@ public class BuildImageSteps {
   }
 
   public void runAsync() throws Exception {
-    ListeningExecutorService listeningExecutorService = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
+    ListeningExecutorService listeningExecutorService =
+        MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
 
     try (Cache cache = Cache.init(cacheDirectory)) {
       // Authenticates base image pull.
-      AuthenticatePullStep authenticatePullStep = new AuthenticatePullStep(buildConfiguration);
+      ListenableFuture<Authorization> authenticatePullFuture =
+          listeningExecutorService.submit(new AuthenticatePullStep(buildConfiguration));
       // Pulls the base image.
-      PullBaseImageStep pullBaseImageStep =
-          new PullBaseImageStep(buildConfiguration, pullAuthorization);
+      ListenableFuture<Image> pullBaseImageFuture =
+          Futures.whenAllSucceed(authenticatePullFuture)
+              .call(new PullBaseImageStep(buildConfiguration, authenticatePullFuture),
+                  listeningExecutorService);
       // Pulls and caches the base image layers.
-      PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep =
+      List<ListenableFuture<CachedLayer>> pullBaseImageLayerFutures =
           new PullAndCacheBaseImageLayersStep(
-              buildConfiguration, cache, pullAuthorization, baseImage);
-      // Authenticates push.
-      AuthenticatePushStep authenticatePushStep = new AuthenticatePushStep(buildConfiguration);
-      // Pushes the base image layers.
-      PushBaseImageLayersStep pushBaseImageLayersStep =
-          new PushBaseImageLayersStep(buildConfiguration, pushAuthorization, baseImageLayers);
-      // Builds the application layers.
-      BuildAndCacheApplicationLayersStep buildAndCacheApplicationLayersStep =
-          new BuildAndCacheApplicationLayersStep(sourceFilesConfiguration, cache);
-      // Pushes the application layers.
-      PushApplicationLayersStep pushApplicationLayersStep =
-          new PushApplicationLayersStep(
-              buildConfiguration, pushAuthorization, applicationLayers);
-      // Pushes the new image manifest.
-      Image image =
-          new Image()
-              .addLayers(baseImageLayers)
-              .addLayers(applicationLayers)
-              .setEntrypoint(getEntrypoint());
-      PushImageStep pushImageStep =
-          new PushImageStep(buildConfiguration, pushAuthorization, image);
+                              buildConfiguration,
+                              cache,
+                              listeningExecutorService,
+                              authenticatePullFuture,
+                              pullBaseImageFuture).call();
 
-      ListenableFuture<Authorization> authenticatePullFuture = listeningExecutorService.submit(authenticatePullStep);
-      ListenableFuture<Image> pullBaseImageFuture = listeningExecutorService.submit(pullBaseImageStep);
+      // Authenticates push.
+      ListenableFuture<Authorization> authenticatePushFuture =
+          listeningExecutorService.submit(new AuthenticatePushStep(buildConfiguration));
+      // Pushes the base image layers.
+      List<ListenableFuture<Void>> pushBaseImageLayersFuture =
+          new PushBaseImageLayersStep(buildConfiguration, listeningExecutorService, authenticatePushFuture, pullBaseImageLayerFutures).call();
+
+      // Builds the application layers.
+      ListenableFuture<ImageLayers<CachedLayer>> buildAndCacheApplicationLayersFuture =
+          listeningExecutorService.submit(
+              new BuildAndCacheApplicationLayersStep(sourceFilesConfiguration, cache));
+      // Pushes the application layers.
+      ListenableFuture<Void> pushApplicationLayersFuture =
+          Futures.whenAllSucceed(buildAndCacheApplicationLayersFuture)
+              .call(
+                  () ->
+                      new PushApplicationLayersStep(
+                              listeningExecutorService,
+                              buildConfiguration,
+                              authenticatePushFuture.get(),
+                              buildAndCacheApplicationLayersFuture.get())
+                          .call(),
+                  listeningExecutorService);
+
+      // Pushes the new image manifest.
+      ListenableFuture<Void> pushImageFuture =
+          Futures.whenAllSucceed(pushBaseImageLayersFuture, pushApplicationLayersFuture)
+              .call(
+                  () -> {
+                    Image image =
+                        new Image()
+                            .addLayers(pullBaseImageLayersFuture.get())
+                            .addLayers(buildAndCacheApplicationLayersFuture.get())
+                            .setEntrypoint(getEntrypoint());
+
+                    return new PushImageStep(
+                            buildConfiguration, authenticatePushFuture.get(), image)
+                        .call();
+                  },
+                  listeningExecutorService);
+
+      pushImageFuture.get();
     }
   }
 
@@ -103,7 +129,7 @@ public class BuildImageSteps {
       throws CacheMetadataCorruptedException, IOException, RegistryAuthenticationFailedException,
           RegistryException, DuplicateLayerException, LayerCountMismatchException,
           LayerPropertyNotFoundException, NonexistentServerUrlDockerCredentialHelperException,
-          NonexistentDockerCredentialHelperException {
+          NonexistentDockerCredentialHelperException, ExecutionException, InterruptedException {
     try (Timer t = Timer.push("BuildImageSteps")) {
 
       try (Cache cache = Cache.init(cacheDirectory)) {
@@ -145,7 +171,7 @@ public class BuildImageSteps {
           // Pushes the application layers.
           PushApplicationLayersStep pushApplicationLayersStep =
               new PushApplicationLayersStep(
-                  buildConfiguration, pushAuthorization, applicationLayers);
+                  null, buildConfiguration, pushAuthorization, applicationLayers);
           pushApplicationLayersStep.call();
 
           Timer.time("PushImageStep");

@@ -26,44 +26,48 @@ import com.google.cloud.tools.crepecake.image.Layer;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.crepecake.registry.RegistryClient;
 import com.google.cloud.tools.crepecake.registry.RegistryException;
-import java.io.IOException;
-import java.util.concurrent.Callable;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
 
-class PullAndCacheBaseImageLayersStep implements Callable<ImageLayers<CachedLayer>> {
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
+
+class PullAndCacheBaseImageLayersStep implements Callable<List<ListenableFuture<CachedLayer>>> {
 
   private final BuildConfiguration buildConfiguration;
   private final Cache cache;
-  private final Authorization pullAuthorization;
-  private final Image baseImage;
+  private final ListeningExecutorService listeningExecutorService;
+  private final ListenableFuture<Authorization> pullAuthorizationFuture;
+  private final ListenableFuture<Image> baseImageFuture;
+
 
   PullAndCacheBaseImageLayersStep(
       BuildConfiguration buildConfiguration,
       Cache cache,
-      Authorization pullAuthorization,
-      Image baseImage) {
+      ListeningExecutorService listeningExecutorService,
+      ListenableFuture<Authorization> pullAuthorizationFuture,
+      ListenableFuture<Image> baseImageFuture) {
     this.buildConfiguration = buildConfiguration;
     this.cache = cache;
-    this.pullAuthorization = pullAuthorization;
-    this.baseImage = baseImage;
+    this.listeningExecutorService = listeningExecutorService;
+    this.pullAuthorizationFuture = pullAuthorizationFuture;
+    this.baseImageFuture = baseImageFuture;
   }
 
   @Override
-  public ImageLayers<CachedLayer> call()
-      throws LayerPropertyNotFoundException, IOException, RegistryException,
-          DuplicateLayerException {
-    RegistryClient registryClient =
-        new RegistryClient(
-            pullAuthorization,
-            buildConfiguration.getBaseImageServerUrl(),
-            buildConfiguration.getBaseImageName());
-
-    ImageLayers<CachedLayer> baseImageLayers = new ImageLayers<>();
-    for (Layer layer : baseImage.getLayers()) {
-      PullAndCacheBaseImageLayerStep pullAndCacheBaseImageLayerStep =
-          new PullAndCacheBaseImageLayerStep(registryClient, cache, layer);
-      baseImageLayers.add(pullAndCacheBaseImageLayerStep.call());
+  public List<ListenableFuture<CachedLayer>> call()
+      throws ExecutionException, InterruptedException {
+    List<ListenableFuture<CachedLayer>> pullAndCacheBaseImageLayerFutures = new ArrayList<>();
+    for (Layer layer : baseImageFuture.get().getLayers()) {
+      pullAndCacheBaseImageLayerFutures.add(Futures.whenAllSucceed(pullAuthorizationFuture, baseImageFuture).call(new PullAndCacheBaseImageLayerStep(buildConfiguration, cache, layer, pullAuthorizationFuture), listeningExecutorService));
     }
 
-    return baseImageLayers;
+    return pullAndCacheBaseImageLayerFutures;
   }
 }

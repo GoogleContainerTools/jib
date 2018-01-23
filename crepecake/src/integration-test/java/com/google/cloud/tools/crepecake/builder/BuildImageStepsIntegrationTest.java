@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ExecutionException;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -49,7 +50,8 @@ public class BuildImageStepsIntegrationTest {
           LayerCountMismatchException, IOException, CacheMetadataCorruptedException,
           RegistryAuthenticationFailedException,
           NonexistentServerUrlDockerCredentialHelperException,
-          NonexistentDockerCredentialHelperException, URISyntaxException, InterruptedException {
+          NonexistentDockerCredentialHelperException, URISyntaxException, InterruptedException,
+          ExecutionException {
     SourceFilesConfiguration sourceFilesConfiguration = new TestSourceFilesConfiguration();
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder()

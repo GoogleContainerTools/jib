@@ -20,6 +20,7 @@ import com.google.cloud.tools.crepecake.cache.Cache;
 import com.google.cloud.tools.crepecake.cache.CacheChecker;
 import com.google.cloud.tools.crepecake.cache.CacheWriter;
 import com.google.cloud.tools.crepecake.cache.CachedLayer;
+import com.google.cloud.tools.crepecake.http.Authorization;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
 import com.google.cloud.tools.crepecake.image.Layer;
@@ -27,26 +28,38 @@ import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.crepecake.registry.RegistryClient;
 import com.google.cloud.tools.crepecake.registry.RegistryException;
 import com.google.common.io.CountingOutputStream;
+import org.gradle.internal.impldep.org.apache.maven.model.Build;
+
 import java.io.IOException;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 // TODO: Comment and test.
 class PullAndCacheBaseImageLayerStep implements Callable<CachedLayer> {
 
-  private final RegistryClient registryClient;
+  private final BuildConfiguration buildConfiguration;
   private final Cache cache;
   private final Layer layer;
+  private final Future<Authorization> pullAuthorizationFuture;
 
-  PullAndCacheBaseImageLayerStep(RegistryClient registryClient, Cache cache, Layer layer) {
-    this.registryClient = registryClient;
+  PullAndCacheBaseImageLayerStep(BuildConfiguration buildConfiguration, Cache cache, Layer layer, Future pullAuthorizationFuture) {
+    this.buildConfiguration = buildConfiguration;
     this.cache = cache;
     this.layer = layer;
+    this.pullAuthorizationFuture = pullAuthorizationFuture;
   }
 
   @Override
   public CachedLayer call()
       throws IOException, RegistryException, LayerPropertyNotFoundException,
-          DuplicateLayerException {
+      DuplicateLayerException, ExecutionException, InterruptedException {
+    RegistryClient registryClient =
+        new RegistryClient(
+            pullAuthorizationFuture.get(),
+            buildConfiguration.getBaseImageServerUrl(),
+            buildConfiguration.getBaseImageName());
+
     DescriptorDigest layerDigest = layer.getBlobDescriptor().getDigest();
 
     // Checks if the layer already exists in the cache.

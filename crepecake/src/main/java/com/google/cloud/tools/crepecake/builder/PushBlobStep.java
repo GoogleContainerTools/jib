@@ -17,32 +17,44 @@
 package com.google.cloud.tools.crepecake.builder;
 
 import com.google.cloud.tools.crepecake.blob.Blob;
+import com.google.cloud.tools.crepecake.cache.CachedLayer;
+import com.google.cloud.tools.crepecake.http.Authorization;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.registry.RegistryClient;
 import com.google.cloud.tools.crepecake.registry.RegistryException;
 import java.io.IOException;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 // TODO: Comment and test.
 class PushBlobStep implements Callable<Void> {
 
-  private final RegistryClient registryClient;
-  private final Blob blob;
-  private final DescriptorDigest digest;
+  private final BuildConfiguration buildConfiguration;
+  private final Future<Authorization> pushAuthorizationFuture;
+  private final Future<CachedLayer> pullLayerFuture;
 
-  PushBlobStep(RegistryClient registryClient, Blob blob, DescriptorDigest digest) {
-    this.registryClient = registryClient;
-    this.blob = blob;
-    this.digest = digest;
+  PushBlobStep(BuildConfiguration buildConfiguration, Future<Authorization> pushAuthorizationFuture, Future<CachedLayer> pullLayerFuture) {
+    this.buildConfiguration = buildConfiguration;
+    this.pushAuthorizationFuture = pushAuthorizationFuture;
+    this.pullLayerFuture = pullLayerFuture;
   }
 
   @Override
-  public Void call() throws IOException, RegistryException {
-    if (registryClient.checkBlob(digest) != null) {
+  public Void call() throws IOException, RegistryException, ExecutionException, InterruptedException {
+    RegistryClient registryClient =
+        new RegistryClient(
+            pushAuthorizationFuture.get(),
+            buildConfiguration.getTargetServerUrl(),
+            buildConfiguration.getTargetImageName());
+    CachedLayer layer = pullLayerFuture.get();
+
+    DescriptorDigest layerDigest = layer.getBlobDescriptor().getDigest();
+    if (registryClient.checkBlob(layerDigest) != null) {
       return null;
     }
 
-    registryClient.pushBlob(digest, blob);
+    registryClient.pushBlob(layerDigest, layer.getBlob());
 
     return null;
   }
