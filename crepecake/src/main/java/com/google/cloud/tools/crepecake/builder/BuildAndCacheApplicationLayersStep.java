@@ -29,7 +29,6 @@ import java.nio.file.Path;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
-// TODO: Add unit test.
 /** Builds and caches application layers. */
 class BuildAndCacheApplicationLayersStep implements Callable<ImageLayers<CachedLayer>> {
 
