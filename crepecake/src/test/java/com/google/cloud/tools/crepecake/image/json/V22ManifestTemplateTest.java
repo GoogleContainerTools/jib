@@ -54,7 +54,7 @@ public class V22ManifestTemplateTest {
 
     // Serializes the JSON object.
     ByteArrayOutputStream jsonStream = new ByteArrayOutputStream();
-    JsonTemplateMapper.writeJson(jsonStream, manifestJson);
+    JsonTemplateMapper.toBlob(manifestJson).writeTo(jsonStream);
 
     Assert.assertEquals(expectedJson, jsonStream.toString());
   }

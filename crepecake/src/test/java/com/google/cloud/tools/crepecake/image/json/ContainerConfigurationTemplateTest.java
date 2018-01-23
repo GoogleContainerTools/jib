@@ -52,7 +52,7 @@ public class ContainerConfigurationTemplateTest {
 
     // Serializes the JSON object.
     ByteArrayOutputStream jsonStream = new ByteArrayOutputStream();
-    JsonTemplateMapper.writeJson(jsonStream, containerConfigJson);
+    JsonTemplateMapper.toBlob(containerConfigJson).writeTo(jsonStream);
 
     Assert.assertEquals(expectedJson, jsonStream.toString());
   }

@@ -84,7 +84,7 @@ public class JsonTemplateMapperTest {
     testJson.list = Arrays.asList(innerObject1, innerObject2);
 
     ByteArrayOutputStream jsonStream = new ByteArrayOutputStream();
-    JsonTemplateMapper.writeJson(jsonStream, testJson);
+    JsonTemplateMapper.toBlob(testJson).writeTo(jsonStream);
 
     Assert.assertEquals(expectedJson, jsonStream.toString());
   }

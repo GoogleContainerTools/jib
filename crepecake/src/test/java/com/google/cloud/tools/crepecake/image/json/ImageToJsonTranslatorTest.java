@@ -24,6 +24,7 @@ import com.google.cloud.tools.crepecake.image.Image;
 import com.google.cloud.tools.crepecake.image.Layer;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.crepecake.image.ReferenceLayer;
+import com.google.cloud.tools.crepecake.json.JsonTemplateMapper;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Resources;
 import java.io.ByteArrayOutputStream;
@@ -91,12 +92,12 @@ public class ImageToJsonTranslatorTest {
     Blob containerConfigurationBlob = imageToJsonTranslator.getContainerConfigurationBlob();
     BlobDescriptor blobDescriptor =
         containerConfigurationBlob.writeTo(ByteStreams.nullOutputStream());
-    Blob manifestBlob = imageToJsonTranslator.getManifestBlob(blobDescriptor);
+    V22ManifestTemplate manifestTemplate =
+        imageToJsonTranslator.getManifestTemplate(blobDescriptor);
 
-    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-    manifestBlob.writeTo(byteArrayOutputStream);
+    ByteArrayOutputStream jsonStream = new ByteArrayOutputStream();
+    JsonTemplateMapper.toBlob(manifestTemplate).writeTo(jsonStream);
 
-    Assert.assertEquals(
-        expectedJson, new String(byteArrayOutputStream.toByteArray(), StandardCharsets.UTF_8));
+    Assert.assertEquals(expectedJson, new String(jsonStream.toByteArray(), StandardCharsets.UTF_8));
   }
 }

@@ -26,6 +26,8 @@ import com.google.cloud.tools.crepecake.image.ImageLayers;
 import com.google.cloud.tools.crepecake.image.LayerCountMismatchException;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.crepecake.registry.LocalRegistry;
+import com.google.cloud.tools.crepecake.registry.NonexistentDockerCredentialHelperException;
+import com.google.cloud.tools.crepecake.registry.NonexistentServerUrlDockerCredentialHelperException;
 import com.google.cloud.tools.crepecake.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.crepecake.registry.RegistryException;
 import java.io.IOException;
@@ -45,7 +47,9 @@ public class BuildImageStepsIntegrationTest {
   public void testSteps()
       throws DuplicateLayerException, LayerPropertyNotFoundException, RegistryException,
           LayerCountMismatchException, IOException, CacheMetadataCorruptedException,
-          RegistryAuthenticationFailedException {
+          RegistryAuthenticationFailedException,
+          NonexistentServerUrlDockerCredentialHelperException,
+          NonexistentDockerCredentialHelperException {
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder()
             .setBaseImageServerUrl("registry.hub.docker.com")
@@ -54,20 +58,34 @@ public class BuildImageStepsIntegrationTest {
             .setTargetServerUrl("localhost:5000")
             .setTargetImageName("testimage")
             .setTargetTag("testtag")
+            .setCredentialHelperName("gcloud")
             .build();
     Cache cache = Cache.init(temporaryCacheDirectory.newFolder().toPath());
 
+    // Authenticates base image pull.
     AuthenticatePullStep authenticatePullStep = new AuthenticatePullStep(buildConfiguration);
     Authorization pullAuthorization = authenticatePullStep.call();
 
+    // Pulls the base image.
     PullBaseImageStep pullBaseImageStep =
         new PullBaseImageStep(buildConfiguration, pullAuthorization);
     Image baseImage = pullBaseImageStep.call();
 
+    // Pulls and caches the base image layers.
     PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep =
         new PullAndCacheBaseImageLayersStep(
             buildConfiguration, cache, pullAuthorization, baseImage);
     ImageLayers<CachedLayer> baseImageLayers = pullAndCacheBaseImageLayersStep.call();
+
+    // TODO: Set up authorization and mock a credential helper for the local registry.
+    // Authenticates push.
+    //    AuthenticatePushStep authenticatePushStep = new AuthenticatePushStep(buildConfiguration);
+    //    Authorization pushAuthorization = authenticatePushStep.run(null);
+
+    // Pushes the base image layers.
+    PushBaseImageLayersStep pushBaseImageLayersStep =
+        new PushBaseImageLayersStep(buildConfiguration, null, baseImageLayers);
+    pushBaseImageLayersStep.call();
 
     // TODO: Integrate any new steps as they are added.
   }
