@@ -21,14 +21,20 @@ import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.function.Function;
 
 /**
  * Metadata about an application layer stored in the cache. This is part of the {@link
  * CacheMetadata}.
  */
 class LayerMetadata {
+
+  static LayerMetadata from(List<Path> sourceFiles, FileTime lastModifiedTime) {
+    List<String> sourceFilesStrings = new ArrayList<>(sourceFiles.size());
+    for (Path sourceFile : sourceFiles) {
+      sourceFilesStrings.add(sourceFile.toString());
+    }
+    return new LayerMetadata(sourceFilesStrings, lastModifiedTime);
+  }
 
   /** The paths to the source files that the layer was constructed from. */
   private List<String> sourceFiles;
@@ -43,20 +49,6 @@ class LayerMetadata {
 
     this.sourceFiles = sourceFiles;
     this.lastModifiedTime = lastModifiedTime;
-  }
-
-  LayerMetadata(Set<Path> sourceFiles, FileTime lastModifiedTime) {
-    this(
-        ((Function<Set<Path>, List<String>>)
-                paths -> {
-                  List<String> sourceFilesStrings = new ArrayList<>(paths.size());
-                  for (Path sourceFile : paths) {
-                    sourceFilesStrings.add(sourceFile.toString());
-                  }
-                  return sourceFilesStrings;
-                })
-            .apply(sourceFiles),
-        lastModifiedTime);
   }
 
   List<String> getSourceFiles() {
