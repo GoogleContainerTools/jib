@@ -28,7 +28,6 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executors;
 
@@ -149,6 +148,10 @@ public class BuildImageSteps {
         }
       }
     }
+
+    buildConfiguration
+        .getBuildLogger()
+        .info("Container entrypoint set to " + getEntrypoint());
   }
 
   private List<String> getEntrypoint() {
@@ -160,9 +163,12 @@ public class BuildImageSteps {
 
     String classPathsString = String.join(":", classPaths);
 
-    List<String> entrypoint =
-        Arrays.asList("java", "-cp", classPathsString, buildConfiguration.getMainClass());
+    List<String> entrypoint = new ArrayList<>(4 + buildConfiguration.getJvmFlags().size());
+    entrypoint.add("java");
     entrypoint.addAll(buildConfiguration.getJvmFlags());
+    entrypoint.add("-cp");
+    entrypoint.add(classPathsString);
+    entrypoint.add(buildConfiguration.getMainClass());
     return entrypoint;
   }
 }

@@ -76,6 +76,7 @@ class BuildAndPushContainerConfigurationStep implements Callable<BlobDescriptor>
       for (Future<CachedLayer> cachedLayerFuture : cachedLayerFutures) {
         image.addLayer(cachedLayerFuture.get());
       }
+      image.setEnvironment(buildConfiguration.getEnvironment());
       image.setEntrypoint(entrypoint);
 
       ImageToJsonTranslator imageToJsonTranslator = new ImageToJsonTranslator(image);

@@ -38,6 +38,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 import org.apache.maven.plugin.AbstractMojo;
@@ -158,6 +159,8 @@ public class BuildImageMojo extends AbstractMojo {
 
   @Parameter private List<String> jvmFlags;
 
+  @Parameter private Map<String, String> environment;
+
   @Parameter private String mainClass;
 
   @Override
@@ -208,6 +211,8 @@ public class BuildImageMojo extends AbstractMojo {
             .setTargetTag(tag)
             .setCredentialHelperName(credentialHelperName)
             .setMainClass(mainClass)
+            .setJvmFlags(jvmFlags)
+            .setEnvironment(environment)
             .build();
 
     Path cacheDirectory = Paths.get(project.getBuild().getDirectory(), "jib-cache");

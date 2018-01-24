@@ -52,7 +52,9 @@ public class BuildConfiguration {
     MAIN_CLASS(true),
 
     /** Additional JVM flags to use when running the application. */
-    JVM_FLAGS(false);
+    JVM_FLAGS(false),
+    /** Environment variables to set when running the application. */
+    ENVIRONMENT(false);
 
     private final boolean required;
 
@@ -82,6 +84,7 @@ public class BuildConfiguration {
             put(Fields.CREDENTIAL_HELPER_NAME, "credential helper name");
             put(Fields.MAIN_CLASS, "main class");
             put(Fields.JVM_FLAGS, "JVM flags");
+            put(Fields.ENVIRONMENT, "environment variables");
           }
         };
 
@@ -142,6 +145,11 @@ public class BuildConfiguration {
 
     public Builder setJvmFlags(List<String> jvmFlags) {
       values.put(Fields.JVM_FLAGS, jvmFlags);
+      return this;
+    }
+
+    public Builder setEnvironment(Map<String, String> environment) {
+      values.put(Fields.ENVIRONMENT, environment);
       return this;
     }
 
@@ -239,6 +247,10 @@ public class BuildConfiguration {
 
   public List<String> getJvmFlags() {
     return Collections.unmodifiableList(getFieldValue(Fields.JVM_FLAGS));
+  }
+
+  public Map<String, String> getEnvironment() {
+    return Collections.unmodifiableMap(getFieldValue(Fields.ENVIRONMENT));
   }
 
   @SuppressWarnings("unchecked")
