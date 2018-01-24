@@ -64,17 +64,17 @@ class TestSourceFilesConfiguration implements SourceFilesConfiguration {
   }
 
   @Override
-  public Path getDependenciesExtractionPath() {
+  public Path getDependenciesPathOnImage() {
     return EXTRACTION_PATH;
   }
 
   @Override
-  public Path getResourcesExtractionPath() {
+  public Path getResourcesPathOnImage() {
     return EXTRACTION_PATH;
   }
 
   @Override
-  public Path getClassesExtractionPath() {
+  public Path getClassesPathOnImage() {
     return EXTRACTION_PATH;
   }
 }

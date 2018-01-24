@@ -49,17 +49,17 @@ class BuildAndCacheApplicationLayersStep implements Callable<ImageLayers<CachedL
         buildAndCacheLayer(
             CachedLayerType.DEPENDENCIES,
             sourceFilesConfiguration.getDependenciesFiles(),
-            sourceFilesConfiguration.getDependenciesExtractionPath());
+            sourceFilesConfiguration.getDependenciesPathOnImage());
     CachedLayer resourcesLayer =
         buildAndCacheLayer(
             CachedLayerType.RESOURCES,
             sourceFilesConfiguration.getResourcesFiles(),
-            sourceFilesConfiguration.getResourcesExtractionPath());
+            sourceFilesConfiguration.getResourcesPathOnImage());
     CachedLayer classesLayer =
         buildAndCacheLayer(
             CachedLayerType.CLASSES,
             sourceFilesConfiguration.getClassesFiles(),
-            sourceFilesConfiguration.getClassesExtractionPath());
+            sourceFilesConfiguration.getClassesPathOnImage());
 
     return new ImageLayers<CachedLayer>()
         .add(dependenciesLayer)
