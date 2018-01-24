@@ -95,7 +95,9 @@ public class BuildConfiguration {
     private Map<Fields, Object> values = new EnumMap<>(Fields.class);
 
     private Builder() {
+      // Sets default empty values.
       values.put(Fields.JVM_FLAGS, Collections.emptyList());
+      values.put(Fields.ENVIRONMENT, Collections.emptyMap());
     }
 
     public Builder setBuildLogger(BuildLogger buildLogger) {
@@ -144,12 +146,16 @@ public class BuildConfiguration {
     }
 
     public Builder setJvmFlags(List<String> jvmFlags) {
-      values.put(Fields.JVM_FLAGS, jvmFlags);
+      if (jvmFlags != null) {
+        values.put(Fields.JVM_FLAGS, jvmFlags);
+      }
       return this;
     }
 
     public Builder setEnvironment(Map<String, String> environment) {
-      values.put(Fields.ENVIRONMENT, environment);
+      if (environment != null) {
+        values.put(Fields.ENVIRONMENT, environment);
+      }
       return this;
     }
 

@@ -149,9 +149,7 @@ public class BuildImageSteps {
       }
     }
 
-    buildConfiguration
-        .getBuildLogger()
-        .info("Container entrypoint set to " + getEntrypoint());
+    buildConfiguration.getBuildLogger().info("Container entrypoint set to " + getEntrypoint());
   }
 
   private List<String> getEntrypoint() {
