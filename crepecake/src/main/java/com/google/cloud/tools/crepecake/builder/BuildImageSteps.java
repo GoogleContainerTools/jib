@@ -122,10 +122,9 @@ public class BuildImageSteps {
 
   private List<String> getEntrypoint() {
     List<String> classPaths = new ArrayList<>();
-    classPaths.add(
-        sourceFilesConfiguration.getDependenciesExtractionPath().resolve("*").toString());
-    classPaths.add(sourceFilesConfiguration.getResourcesExtractionPath().toString());
-    classPaths.add(sourceFilesConfiguration.getClassesExtractionPath().toString());
+    classPaths.add(sourceFilesConfiguration.getDependenciesPathOnImage().resolve("*").toString());
+    classPaths.add(sourceFilesConfiguration.getResourcesPathOnImage().toString());
+    classPaths.add(sourceFilesConfiguration.getClassesPathOnImage().toString());
 
     String entrypoint = String.join(":", classPaths);
 
