@@ -102,12 +102,13 @@ public class BuildImageSteps {
 
         timer.lap("Setting up container configuration push");
         // Builds and pushes the container configuration.
-        List<ListenableFuture<?>> buildAndCacheApplicationLayerFuturesDependencies =
+        List<ListenableFuture<?>> buildAndPushContainerConfigurationFutureDependencies =
             new ArrayList<>(pullBaseImageLayerFutures);
-        buildAndCacheApplicationLayerFuturesDependencies.addAll(
+        buildAndPushContainerConfigurationFutureDependencies.addAll(
             buildAndCacheApplicationLayerFutures);
+        buildAndPushContainerConfigurationFutureDependencies.add(authenticatePushFuture);
         ListenableFuture<BlobDescriptor> buildAndPushContainerConfigurationFuture =
-            Futures.whenAllSucceed(buildAndCacheApplicationLayerFuturesDependencies)
+            Futures.whenAllSucceed(buildAndPushContainerConfigurationFutureDependencies)
                 .call(
                     new BuildAndPushContainerConfigurationStep(
                         buildConfiguration,

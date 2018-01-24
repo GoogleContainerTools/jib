@@ -22,7 +22,6 @@ import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.crepecake.Timer;
 import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
-import com.google.cloud.tools.crepecake.builder.BuildLogger;
 import com.google.cloud.tools.crepecake.http.Authorization;
 import com.google.cloud.tools.crepecake.http.Connection;
 import com.google.cloud.tools.crepecake.http.Request;
@@ -45,10 +44,11 @@ import org.apache.http.NoHttpResponseException;
 public class RegistryClient {
 
   // TODO: Remove
-  private BuildLogger buildLogger;
+  private Timer parentTimer;
 
-  public void setBuildLogger(BuildLogger buildLogger) {
-    this.buildLogger = buildLogger;
+  public RegistryClient setTimer(Timer parentTimer) {
+    this.parentTimer = parentTimer;
+    return this;
   }
 
   private static final String PROTOCOL = "https";
@@ -133,8 +133,7 @@ public class RegistryClient {
       throws IOException, RegistryException {
     BlobPusher blobPusher = new BlobPusher(registryEndpointProperties, blobDigest, blob);
 
-    try (Timer t = new Timer(buildLogger, "pushBlob")) {
-
+    try (Timer t = parentTimer.subTimer("pushBlob")) {
       try (Timer t2 = t.subTimer("pushBlob POST")) {
 
         // POST /v2/<name>/blobs/uploads/?mount={blob.digest}

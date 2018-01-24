@@ -86,7 +86,7 @@ class BuildAndPushContainerConfigurationStep implements Callable<BlobDescriptor>
       containerConfigurationBlob.writeTo(digestOutputStream);
       BlobDescriptor containerConfigurationBlobDescriptor = digestOutputStream.toBlobDescriptor();
 
-      timer.lap("push container configuration");
+      timer.lap("Pushing container configuration");
 
       // Pushes the container configuration.
       registryClient.pushBlob(

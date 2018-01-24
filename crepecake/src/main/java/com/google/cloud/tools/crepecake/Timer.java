@@ -18,12 +18,8 @@ package com.google.cloud.tools.crepecake;
 
 import com.google.cloud.tools.crepecake.builder.BuildLogger;
 import java.io.Closeable;
-import java.util.Stack;
 
 public class Timer implements Closeable {
-
-  private static Stack<String> labels = new Stack<>();
-  private static Stack<Long> times = new Stack<>();
 
   private final BuildLogger buildLogger;
   private final int depth;
@@ -56,7 +52,8 @@ public class Timer implements Closeable {
               .append("TIMED\t")
               .append(this.label)
               .append(" : ")
-              .append((int) ((System.nanoTime() - startTime) / 10) / 100.0));
+              .append((int) ((System.nanoTime() - startTime) / 1000) / 1000.0)
+              .append(" ms"));
     }
     this.label = label;
     startTime = System.nanoTime();

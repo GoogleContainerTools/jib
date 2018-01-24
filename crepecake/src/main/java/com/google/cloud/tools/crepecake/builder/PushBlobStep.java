@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.crepecake.builder;
 
+import com.google.cloud.tools.crepecake.Timer;
 import com.google.cloud.tools.crepecake.cache.CachedLayer;
 import com.google.cloud.tools.crepecake.http.Authorization;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
@@ -28,6 +29,8 @@ import java.util.concurrent.Future;
 
 // TODO: Comment and test.
 class PushBlobStep implements Callable<Void> {
+
+  private static String DESCRIPTION = "Pushing BLOB";
 
   private final BuildConfiguration buildConfiguration;
   private final Future<Authorization> pushAuthorizationFuture;
@@ -45,20 +48,23 @@ class PushBlobStep implements Callable<Void> {
   @Override
   public Void call()
       throws IOException, RegistryException, ExecutionException, InterruptedException {
-    RegistryClient registryClient =
-        new RegistryClient(
-            pushAuthorizationFuture.get(),
-            buildConfiguration.getTargetServerUrl(),
-            buildConfiguration.getTargetImageName());
-    CachedLayer layer = pullLayerFuture.get();
+    try (Timer timer = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
+      RegistryClient registryClient =
+          new RegistryClient(
+                  pushAuthorizationFuture.get(),
+                  buildConfiguration.getTargetServerUrl(),
+                  buildConfiguration.getTargetImageName())
+              .setTimer(timer);
+      CachedLayer layer = pullLayerFuture.get();
 
-    DescriptorDigest layerDigest = layer.getBlobDescriptor().getDigest();
-    if (registryClient.checkBlob(layerDigest) != null) {
+      DescriptorDigest layerDigest = layer.getBlobDescriptor().getDigest();
+      if (registryClient.checkBlob(layerDigest) != null) {
+        return null;
+      }
+
+      registryClient.pushBlob(layerDigest, layer.getBlob());
+
       return null;
     }
-
-    registryClient.pushBlob(layerDigest, layer.getBlob());
-
-    return null;
   }
 }
