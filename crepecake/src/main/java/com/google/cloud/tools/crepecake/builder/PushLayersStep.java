@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.crepecake.builder;
 
+import com.google.cloud.tools.crepecake.Timer;
 import com.google.cloud.tools.crepecake.cache.CachedLayer;
 import com.google.cloud.tools.crepecake.http.Authorization;
 import com.google.common.util.concurrent.Futures;
@@ -26,6 +27,8 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 class PushLayersStep implements Callable<List<ListenableFuture<Void>>> {
+
+  private static final String DESCRIPTION = "Setting up push";
 
   private final BuildConfiguration buildConfiguration;
   private final ListeningExecutorService listeningExecutorService;
@@ -45,16 +48,19 @@ class PushLayersStep implements Callable<List<ListenableFuture<Void>>> {
 
   @Override
   public List<ListenableFuture<Void>> call() {
-    // Pushes the image layers.
-    List<ListenableFuture<Void>> pushLayerFutures = new ArrayList<>();
-    for (ListenableFuture<CachedLayer> cachedLayerFuture : cachedLayersFuture) {
-      pushLayerFutures.add(
-          Futures.whenAllComplete(cachedLayerFuture)
-              .call(
-                  new PushBlobStep(buildConfiguration, pushAuthorizationFuture, cachedLayerFuture),
-                  listeningExecutorService));
-    }
+    try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
+      // Pushes the image layers.
+      List<ListenableFuture<Void>> pushLayerFutures = new ArrayList<>();
+      for (ListenableFuture<CachedLayer> cachedLayerFuture : cachedLayersFuture) {
+        pushLayerFutures.add(
+            Futures.whenAllComplete(cachedLayerFuture)
+                .call(
+                    new PushBlobStep(
+                        buildConfiguration, pushAuthorizationFuture, cachedLayerFuture),
+                    listeningExecutorService));
+      }
 
-    return pushLayerFutures;
+      return pushLayerFutures;
+    }
   }
 }

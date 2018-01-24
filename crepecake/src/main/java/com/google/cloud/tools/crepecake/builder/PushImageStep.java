@@ -37,6 +37,8 @@ import java.util.concurrent.Future;
 /** Pushes the final image. */
 class PushImageStep implements Callable<Void> {
 
+  private static final String DESCRIPTION = "Pushing new image";
+
   private final BuildConfiguration buildConfiguration;
   private final Future<Authorization> pushAuthorizationFuture;
   private final List<Future<CachedLayer>> cachedLayerFutures;
@@ -60,14 +62,15 @@ class PushImageStep implements Callable<Void> {
   public Void call()
       throws IOException, RegistryException, LayerPropertyNotFoundException, ExecutionException,
           InterruptedException, DuplicateLayerException {
-    RegistryClient registryClient =
-        new RegistryClient(
-            pushAuthorizationFuture.get(),
-            buildConfiguration.getTargetServerUrl(),
-            buildConfiguration.getTargetImageName());
+    try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
+      RegistryClient registryClient =
+          new RegistryClient(
+              pushAuthorizationFuture.get(),
+              buildConfiguration.getTargetServerUrl(),
+              buildConfiguration.getTargetImageName());
 
-    try (Timer t = new Timer(buildConfiguration.getBuildLogger(), "PushImageStep")) {
       // TODO: Consolidate with BuildAndPushContainerConfigurationStep.
+      // Constructs the image.
       Image image = new Image();
       for (Future<CachedLayer> cachedLayerFuture : cachedLayerFutures) {
         image.addLayer(cachedLayerFuture.get());

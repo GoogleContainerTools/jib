@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.crepecake.builder;
 
+import com.google.cloud.tools.crepecake.Timer;
 import com.google.cloud.tools.crepecake.cache.Cache;
 import com.google.cloud.tools.crepecake.cache.CacheChecker;
 import com.google.cloud.tools.crepecake.cache.CacheWriter;
@@ -23,7 +24,6 @@ import com.google.cloud.tools.crepecake.cache.CachedLayer;
 import com.google.cloud.tools.crepecake.http.Authorization;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
-import com.google.cloud.tools.crepecake.image.Layer;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.crepecake.registry.RegistryClient;
 import com.google.cloud.tools.crepecake.registry.RegistryException;
@@ -36,19 +36,21 @@ import java.util.concurrent.Future;
 // TODO: Comment and test.
 class PullAndCacheBaseImageLayerStep implements Callable<CachedLayer> {
 
+  private static final String DESCRIPTION = "Pulling base image layer %s";
+
   private final BuildConfiguration buildConfiguration;
   private final Cache cache;
-  private final Layer layer;
+  private final DescriptorDigest layerDigest;
   private final Future<Authorization> pullAuthorizationFuture;
 
   PullAndCacheBaseImageLayerStep(
       BuildConfiguration buildConfiguration,
       Cache cache,
-      Layer layer,
-      Future pullAuthorizationFuture) {
+      DescriptorDigest layerDigest,
+      Future<Authorization> pullAuthorizationFuture) {
     this.buildConfiguration = buildConfiguration;
     this.cache = cache;
-    this.layer = layer;
+    this.layerDigest = layerDigest;
     this.pullAuthorizationFuture = pullAuthorizationFuture;
   }
 
@@ -56,23 +58,24 @@ class PullAndCacheBaseImageLayerStep implements Callable<CachedLayer> {
   public CachedLayer call()
       throws IOException, RegistryException, LayerPropertyNotFoundException,
           DuplicateLayerException, ExecutionException, InterruptedException {
-    RegistryClient registryClient =
-        new RegistryClient(
-            pullAuthorizationFuture.get(),
-            buildConfiguration.getBaseImageServerUrl(),
-            buildConfiguration.getBaseImageName());
+    try (Timer ignored =
+        new Timer(buildConfiguration.getBuildLogger(), String.format(DESCRIPTION, layerDigest))) {
+      RegistryClient registryClient =
+          new RegistryClient(
+              pullAuthorizationFuture.get(),
+              buildConfiguration.getBaseImageServerUrl(),
+              buildConfiguration.getBaseImageName());
 
-    DescriptorDigest layerDigest = layer.getBlobDescriptor().getDigest();
+      // Checks if the layer already exists in the cache.
+      CachedLayer cachedLayer = new CacheChecker(cache).getLayer(layerDigest);
+      if (cachedLayer != null) {
+        return cachedLayer;
+      }
 
-    // Checks if the layer already exists in the cache.
-    CachedLayer cachedLayer = new CacheChecker(cache).getLayer(layerDigest);
-    if (cachedLayer != null) {
-      return cachedLayer;
+      CacheWriter cacheWriter = new CacheWriter(cache);
+      CountingOutputStream layerOutputStream = cacheWriter.getLayerOutputStream(layerDigest);
+      registryClient.pullBlob(layerDigest, layerOutputStream);
+      return cacheWriter.getCachedLayer(layerDigest, layerOutputStream);
     }
-
-    CacheWriter cacheWriter = new CacheWriter(cache);
-    CountingOutputStream layerOutputStream = cacheWriter.getLayerOutputStream(layerDigest);
-    registryClient.pullBlob(layerDigest, layerOutputStream);
-    return cacheWriter.getCachedLayer(layerDigest, layerOutputStream);
   }
 }

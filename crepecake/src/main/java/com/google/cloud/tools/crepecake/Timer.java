@@ -29,7 +29,7 @@ public class Timer implements Closeable {
   private final int depth;
 
   private String label;
-  private long startTime = System.currentTimeMillis();
+  private long startTime = System.nanoTime();
 
   public Timer(BuildLogger buildLogger, String label) {
     this(buildLogger, label, 0);
@@ -56,10 +56,10 @@ public class Timer implements Closeable {
               .append("TIMED\t")
               .append(this.label)
               .append(" : ")
-              .append(System.currentTimeMillis() - startTime));
+              .append((int) ((System.nanoTime() - startTime) / 10) / 100.0));
     }
     this.label = label;
-    startTime = System.currentTimeMillis();
+    startTime = System.nanoTime();
   }
 
   private StringBuilder getTabs() {

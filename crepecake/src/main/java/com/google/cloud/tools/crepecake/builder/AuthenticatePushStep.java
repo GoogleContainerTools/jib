@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.crepecake.builder;
 
+import com.google.cloud.tools.crepecake.Timer;
 import com.google.cloud.tools.crepecake.http.Authorization;
 import com.google.cloud.tools.crepecake.registry.DockerCredentialRetriever;
 import com.google.cloud.tools.crepecake.registry.NonexistentDockerCredentialHelperException;
@@ -25,6 +26,8 @@ import java.util.concurrent.Callable;
 
 /** Retrieves credentials to push to a target registry. */
 class AuthenticatePushStep implements Callable<Authorization> {
+
+  private static final String DESCRIPTION = "Authenticating with %s using docker-credential-%s";
 
   private final BuildConfiguration buildConfiguration;
 
@@ -36,14 +39,23 @@ class AuthenticatePushStep implements Callable<Authorization> {
   public Authorization call()
       throws NonexistentServerUrlDockerCredentialHelperException,
           NonexistentDockerCredentialHelperException, IOException {
-    if (buildConfiguration.getCredentialHelperName() == null) {
-      return null;
+    try (Timer ignored =
+        new Timer(
+            buildConfiguration.getBuildLogger(),
+            String.format(
+                DESCRIPTION,
+                buildConfiguration.getTargetServerUrl(),
+                buildConfiguration.getCredentialHelperName()))) {
+      if (buildConfiguration.getCredentialHelperName() == null) {
+        return null;
+      }
+
+      DockerCredentialRetriever dockerCredentialRetriever =
+          new DockerCredentialRetriever(
+              buildConfiguration.getTargetServerUrl(),
+              buildConfiguration.getCredentialHelperName());
+
+      return dockerCredentialRetriever.retrieve();
     }
-
-    DockerCredentialRetriever dockerCredentialRetriever =
-        new DockerCredentialRetriever(
-            buildConfiguration.getTargetServerUrl(), buildConfiguration.getCredentialHelperName());
-
-    return dockerCredentialRetriever.retrieve();
   }
 }

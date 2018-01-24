@@ -16,11 +16,13 @@
 
 package com.google.cloud.tools.crepecake.builder;
 
+import com.google.cloud.tools.crepecake.Timer;
 import com.google.cloud.tools.crepecake.cache.Cache;
 import com.google.cloud.tools.crepecake.cache.CachedLayer;
 import com.google.cloud.tools.crepecake.http.Authorization;
 import com.google.cloud.tools.crepecake.image.Image;
 import com.google.cloud.tools.crepecake.image.Layer;
+import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -30,6 +32,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 class PullAndCacheBaseImageLayersStep implements Callable<List<ListenableFuture<CachedLayer>>> {
+
+  private static final String DESCRIPTION = "Setting up base image caching";
 
   private final BuildConfiguration buildConfiguration;
   private final Cache cache;
@@ -52,17 +56,22 @@ class PullAndCacheBaseImageLayersStep implements Callable<List<ListenableFuture<
 
   @Override
   public List<ListenableFuture<CachedLayer>> call()
-      throws ExecutionException, InterruptedException {
-    List<ListenableFuture<CachedLayer>> pullAndCacheBaseImageLayerFutures = new ArrayList<>();
-    for (Layer layer : baseImageFuture.get().getLayers()) {
-      pullAndCacheBaseImageLayerFutures.add(
-          Futures.whenAllSucceed(pullAuthorizationFuture, baseImageFuture)
-              .call(
-                  new PullAndCacheBaseImageLayerStep(
-                      buildConfiguration, cache, layer, pullAuthorizationFuture),
-                  listeningExecutorService));
-    }
+      throws ExecutionException, InterruptedException, LayerPropertyNotFoundException {
+    try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
+      List<ListenableFuture<CachedLayer>> pullAndCacheBaseImageLayerFutures = new ArrayList<>();
+      for (Layer layer : baseImageFuture.get().getLayers()) {
+        pullAndCacheBaseImageLayerFutures.add(
+            Futures.whenAllSucceed(pullAuthorizationFuture, baseImageFuture)
+                .call(
+                    new PullAndCacheBaseImageLayerStep(
+                        buildConfiguration,
+                        cache,
+                        layer.getBlobDescriptor().getDigest(),
+                        pullAuthorizationFuture),
+                    listeningExecutorService));
+      }
 
-    return pullAndCacheBaseImageLayerFutures;
+      return pullAndCacheBaseImageLayerFutures;
+    }
   }
 }

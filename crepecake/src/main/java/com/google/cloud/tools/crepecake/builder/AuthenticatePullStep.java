@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.crepecake.builder;
 
+import com.google.cloud.tools.crepecake.Timer;
 import com.google.cloud.tools.crepecake.http.Authorization;
 import com.google.cloud.tools.crepecake.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.crepecake.registry.RegistryAuthenticators;
@@ -24,6 +25,8 @@ import java.io.IOException;
 import java.util.concurrent.Callable;
 
 class AuthenticatePullStep implements Callable<Authorization> {
+
+  private static final String DESCRIPTION = "Authenticating with base image registry";
 
   private final BuildConfiguration buildConfiguration;
 
@@ -34,8 +37,10 @@ class AuthenticatePullStep implements Callable<Authorization> {
   @Override
   public Authorization call()
       throws RegistryAuthenticationFailedException, IOException, RegistryException {
-    return RegistryAuthenticators.forOther(
-            buildConfiguration.getBaseImageServerUrl(), buildConfiguration.getBaseImageName())
-        .authenticate();
+    try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
+      return RegistryAuthenticators.forOther(
+              buildConfiguration.getBaseImageServerUrl(), buildConfiguration.getBaseImageName())
+          .authenticate();
+    }
   }
 }

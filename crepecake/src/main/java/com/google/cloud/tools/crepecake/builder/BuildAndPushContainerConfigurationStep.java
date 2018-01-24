@@ -38,6 +38,8 @@ import java.util.concurrent.Future;
 
 class BuildAndPushContainerConfigurationStep implements Callable<BlobDescriptor> {
 
+  private static final String DESCRIPTION = "Pushing container configuration";
+
   private final BuildConfiguration buildConfiguration;
   private final Future<Authorization> pushAuthorizationFuture;
   private final List<Future<CachedLayer>> cachedLayerFutures;
@@ -61,37 +63,36 @@ class BuildAndPushContainerConfigurationStep implements Callable<BlobDescriptor>
   public BlobDescriptor call()
       throws ExecutionException, InterruptedException, LayerPropertyNotFoundException,
           DuplicateLayerException, IOException, RegistryException {
-    RegistryClient registryClient =
-        new RegistryClient(
-            pushAuthorizationFuture.get(),
-            buildConfiguration.getTargetServerUrl(),
-            buildConfiguration.getTargetImageName());
+    try (Timer timer = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
+      RegistryClient registryClient =
+          new RegistryClient(
+              pushAuthorizationFuture.get(),
+              buildConfiguration.getTargetServerUrl(),
+              buildConfiguration.getTargetImageName());
 
-    try (Timer t =
-        new Timer(buildConfiguration.getBuildLogger(), "BuildAndPushContainerConfigurationStep")) {
-      try (Timer t2 = t.subTimer("build container configuration")) {
-        Image image = new Image();
-        for (Future<CachedLayer> cachedLayerFuture : cachedLayerFutures) {
-          image.addLayer(cachedLayerFuture.get());
-        }
-        image.setEntrypoint(entrypoint);
-
-        ImageToJsonTranslator imageToJsonTranslator = new ImageToJsonTranslator(image);
-
-        // Pushes the container configuration.
-        Blob containerConfigurationBlob = imageToJsonTranslator.getContainerConfigurationBlob();
-        CountingDigestOutputStream digestOutputStream =
-            new CountingDigestOutputStream(ByteStreams.nullOutputStream());
-        containerConfigurationBlob.writeTo(digestOutputStream);
-        BlobDescriptor containerConfigurationBlobDescriptor = digestOutputStream.toBlobDescriptor();
-
-        t2.lap("push container configuration");
-
-        registryClient.pushBlob(
-            containerConfigurationBlobDescriptor.getDigest(), containerConfigurationBlob);
-
-        return containerConfigurationBlobDescriptor;
+      // Constructs the image.
+      Image image = new Image();
+      for (Future<CachedLayer> cachedLayerFuture : cachedLayerFutures) {
+        image.addLayer(cachedLayerFuture.get());
       }
+      image.setEntrypoint(entrypoint);
+
+      ImageToJsonTranslator imageToJsonTranslator = new ImageToJsonTranslator(image);
+
+      // Gets the container configuration content descriptor.
+      Blob containerConfigurationBlob = imageToJsonTranslator.getContainerConfigurationBlob();
+      CountingDigestOutputStream digestOutputStream =
+          new CountingDigestOutputStream(ByteStreams.nullOutputStream());
+      containerConfigurationBlob.writeTo(digestOutputStream);
+      BlobDescriptor containerConfigurationBlobDescriptor = digestOutputStream.toBlobDescriptor();
+
+      timer.lap("push container configuration");
+
+      // Pushes the container configuration.
+      registryClient.pushBlob(
+          containerConfigurationBlobDescriptor.getDigest(), containerConfigurationBlob);
+
+      return containerConfigurationBlobDescriptor;
     }
   }
 }

@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.crepecake.builder;
 
+import com.google.cloud.tools.crepecake.Timer;
 import com.google.cloud.tools.crepecake.cache.Cache;
 import com.google.cloud.tools.crepecake.cache.CacheChecker;
 import com.google.cloud.tools.crepecake.cache.CacheWriter;
@@ -34,14 +35,19 @@ import java.util.concurrent.Callable;
 /** Builds and caches application layers. */
 class BuildAndCacheApplicationLayersStep implements Callable<List<ListenableFuture<CachedLayer>>> {
 
+  private static final String DESCRIPTION = "Building application layers";
+
+  private final BuildConfiguration buildConfiguration;
   private final SourceFilesConfiguration sourceFilesConfiguration;
   private final Cache cache;
   private final ListeningExecutorService listeningExecutorService;
 
   BuildAndCacheApplicationLayersStep(
+      BuildConfiguration buildConfiguration,
       SourceFilesConfiguration sourceFilesConfiguration,
       Cache cache,
       ListeningExecutorService listeningExecutorService) {
+    this.buildConfiguration = buildConfiguration;
     this.sourceFilesConfiguration = sourceFilesConfiguration;
     this.cache = cache;
     this.listeningExecutorService = listeningExecutorService;
@@ -49,40 +55,51 @@ class BuildAndCacheApplicationLayersStep implements Callable<List<ListenableFutu
 
   @Override
   public List<ListenableFuture<CachedLayer>> call() {
-    List<ListenableFuture<CachedLayer>> applicationLayerFutures = new ArrayList<>(3);
-    applicationLayerFutures.add(
-        buildAndCacheLayerAsync(
-            CachedLayerType.DEPENDENCIES,
-            sourceFilesConfiguration.getDependenciesFiles(),
-            sourceFilesConfiguration.getDependenciesExtractionPath()));
-    applicationLayerFutures.add(
-        buildAndCacheLayerAsync(
-            CachedLayerType.RESOURCES,
-            sourceFilesConfiguration.getResourcesFiles(),
-            sourceFilesConfiguration.getResourcesExtractionPath()));
-    applicationLayerFutures.add(
-        buildAndCacheLayerAsync(
-            CachedLayerType.CLASSES,
-            sourceFilesConfiguration.getClassesFiles(),
-            sourceFilesConfiguration.getClassesExtractionPath()));
+    try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
+      List<ListenableFuture<CachedLayer>> applicationLayerFutures = new ArrayList<>(3);
+      applicationLayerFutures.add(
+          buildAndCacheLayerAsync(
+              CachedLayerType.DEPENDENCIES,
+              sourceFilesConfiguration.getDependenciesFiles(),
+              sourceFilesConfiguration.getDependenciesExtractionPath()));
+      applicationLayerFutures.add(
+          buildAndCacheLayerAsync(
+              CachedLayerType.RESOURCES,
+              sourceFilesConfiguration.getResourcesFiles(),
+              sourceFilesConfiguration.getResourcesExtractionPath()));
+      applicationLayerFutures.add(
+          buildAndCacheLayerAsync(
+              CachedLayerType.CLASSES,
+              sourceFilesConfiguration.getClassesFiles(),
+              sourceFilesConfiguration.getClassesExtractionPath()));
 
-    return applicationLayerFutures;
+      return applicationLayerFutures;
+    }
   }
 
   private ListenableFuture<CachedLayer> buildAndCacheLayerAsync(
       CachedLayerType layerType, Set<Path> sourceFiles, Path extractionPath) {
+    String description =
+        String.format(
+            "Building %s layer",
+            layerType == CachedLayerType.DEPENDENCIES
+                ? "dependencies"
+                : layerType == CachedLayerType.RESOURCES ? "resources" : "classes");
+
     return listeningExecutorService.submit(
         () -> {
-          // Don't build the layer if it exists already.
-          CachedLayer cachedLayer =
-              new CacheChecker(cache).getUpToDateLayerBySourceFiles(sourceFiles);
-          if (cachedLayer != null) {
-            return cachedLayer;
+          try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), description)) {
+            // Don't build the layer if it exists already.
+            CachedLayer cachedLayer =
+                new CacheChecker(cache).getUpToDateLayerBySourceFiles(sourceFiles);
+            if (cachedLayer != null) {
+              return cachedLayer;
+            }
+
+            LayerBuilder layerBuilder = new LayerBuilder(sourceFiles, extractionPath);
+
+            return new CacheWriter(cache).writeLayer(layerBuilder, layerType);
           }
-
-          LayerBuilder layerBuilder = new LayerBuilder(sourceFiles, extractionPath);
-
-          return new CacheWriter(cache).writeLayer(layerBuilder, layerType);
         });
   }
 }
