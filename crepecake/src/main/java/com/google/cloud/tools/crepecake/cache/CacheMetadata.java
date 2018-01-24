@@ -101,7 +101,7 @@ class CacheMetadata {
     return layers;
   }
 
-  void addLayer(CachedLayerWithMetadata layer)
+  synchronized void addLayer(CachedLayerWithMetadata layer)
       throws LayerPropertyNotFoundException, DuplicateLayerException {
     layers.add(layer);
   }

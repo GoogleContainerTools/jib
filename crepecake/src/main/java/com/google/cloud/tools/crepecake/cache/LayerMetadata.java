@@ -17,14 +17,25 @@
 package com.google.cloud.tools.crepecake.cache;
 
 import com.google.common.annotations.VisibleForTesting;
+import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Metadata about an application layer stored in the cache. This is part of the {@link
  * CacheMetadata}.
  */
 class LayerMetadata {
+
+  static LayerMetadata from(Set<Path> sourceFiles, FileTime lastModifiedTime) {
+    List<String> sourceFilesStrings = new ArrayList<>(sourceFiles.size());
+    for (Path sourceFile : sourceFiles) {
+      sourceFilesStrings.add(sourceFile.toString());
+    }
+    return new LayerMetadata(sourceFilesStrings, lastModifiedTime);
+  }
 
   /** The paths to the source files that the layer was constructed from. */
   private List<String> sourceFiles;

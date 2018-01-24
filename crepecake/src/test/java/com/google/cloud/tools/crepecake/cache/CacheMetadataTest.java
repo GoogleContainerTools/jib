@@ -140,7 +140,8 @@ public class CacheMetadataTest {
             .bySourceFiles(
                 new HashSet<>(
                     Arrays.asList(
-                        Paths.get("some/source/file"), Paths.get("some/source/directory"))))
+                        Paths.get("some", "source", "file"),
+                        Paths.get("some", "source", "directory"))))
             .filter();
 
     Assert.assertEquals(3, filteredLayers.size());

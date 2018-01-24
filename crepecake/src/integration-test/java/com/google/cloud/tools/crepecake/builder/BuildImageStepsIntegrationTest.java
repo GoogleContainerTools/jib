@@ -31,6 +31,7 @@ import com.google.cloud.tools.crepecake.registry.NonexistentServerUrlDockerCrede
 import com.google.cloud.tools.crepecake.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.crepecake.registry.RegistryException;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -49,7 +50,8 @@ public class BuildImageStepsIntegrationTest {
           LayerCountMismatchException, IOException, CacheMetadataCorruptedException,
           RegistryAuthenticationFailedException,
           NonexistentServerUrlDockerCredentialHelperException,
-          NonexistentDockerCredentialHelperException {
+          NonexistentDockerCredentialHelperException, URISyntaxException {
+    SourceFilesConfiguration sourceFilesConfiguration = new TestSourceFilesConfiguration();
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder()
             .setBaseImageServerUrl("registry.hub.docker.com")
@@ -77,6 +79,8 @@ public class BuildImageStepsIntegrationTest {
             buildConfiguration, cache, pullAuthorization, baseImage);
     ImageLayers<CachedLayer> baseImageLayers = pullAndCacheBaseImageLayersStep.call();
 
+    // TODO: Assert base image layers cached.
+
     // TODO: Set up authorization and mock a credential helper for the local registry.
     // Authenticates push.
     //    AuthenticatePushStep authenticatePushStep = new AuthenticatePushStep(buildConfiguration);
@@ -86,6 +90,10 @@ public class BuildImageStepsIntegrationTest {
     PushBaseImageLayersStep pushBaseImageLayersStep =
         new PushBaseImageLayersStep(buildConfiguration, null, baseImageLayers);
     pushBaseImageLayersStep.call();
+
+    BuildAndCacheApplicationLayersStep buildAndCacheApplicationLayersStep =
+        new BuildAndCacheApplicationLayersStep(sourceFilesConfiguration, cache);
+    ImageLayers<CachedLayer> applicationLayers = buildAndCacheApplicationLayersStep.call();
 
     // TODO: Integrate any new steps as they are added.
   }

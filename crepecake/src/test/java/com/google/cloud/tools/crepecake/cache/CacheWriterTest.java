@@ -21,6 +21,9 @@ import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
 import com.google.cloud.tools.crepecake.blob.Blobs;
 import com.google.cloud.tools.crepecake.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.crepecake.image.DescriptorDigest;
+import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
+import com.google.cloud.tools.crepecake.image.LayerBuilder;
+import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.crepecake.image.UnwrittenLayer;
 import com.google.common.io.CharStreams;
 import com.google.common.io.CountingOutputStream;
@@ -34,6 +37,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import org.junit.Assert;
@@ -41,6 +47,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
 
 /** Tests for {@link CacheWriter}. */
 public class CacheWriterTest {
@@ -74,7 +81,8 @@ public class CacheWriterTest {
   }
 
   @Test
-  public void testWriteLayer_unwritten() throws IOException {
+  public void testWriteLayer_unwritten()
+      throws IOException, LayerPropertyNotFoundException, DuplicateLayerException {
     ExpectedLayer expectedLayer = getExpectedLayer();
 
     // Writes resourceBlob as a layer to the cache.
@@ -82,13 +90,28 @@ public class CacheWriterTest {
 
     UnwrittenLayer unwrittenLayer = new UnwrittenLayer(Blobs.from(resourceBlob));
 
-    CachedLayer cachedLayer = cacheWriter.writeLayer(unwrittenLayer);
+    Set<Path> fakeSourceFiles =
+        new HashSet<>(Collections.singletonList(Paths.get("some", "source", "file")));
+    LayerBuilder mockLayerBuilder = Mockito.mock(LayerBuilder.class);
+    Mockito.when(mockLayerBuilder.build()).thenReturn(unwrittenLayer);
+    Mockito.when(mockLayerBuilder.getSourceFiles()).thenReturn(fakeSourceFiles);
+
+    CachedLayer cachedLayer =
+        cacheWriter.writeLayer(mockLayerBuilder, CachedLayerType.DEPENDENCIES);
+
+    CachedLayerWithMetadata layerInMetadata = testCache.getMetadata().getLayers().get(0);
+    Assert.assertEquals(CachedLayerType.DEPENDENCIES, layerInMetadata.getType());
+    Assert.assertNotNull(layerInMetadata.getMetadata());
+    Assert.assertEquals(
+        Collections.singletonList("some/source/file"),
+        layerInMetadata.getMetadata().getSourceFiles());
 
     verifyCachedLayerIsExpected(expectedLayer, cachedLayer);
   }
 
   @Test
-  public void testGetLayerOutputStream() throws IOException {
+  public void testGetLayerOutputStream()
+      throws IOException, LayerPropertyNotFoundException, DuplicateLayerException {
     ExpectedLayer expectedLayer = getExpectedLayer();
 
     // Writes resourceBlob as a layer to the cache.
@@ -99,6 +122,10 @@ public class CacheWriterTest {
     expectedLayer.blob.writeTo(layerOutputStream);
     CachedLayer cachedLayer =
         cacheWriter.getCachedLayer(expectedLayer.blobDescriptor.getDigest(), layerOutputStream);
+
+    CachedLayerWithMetadata layerInMetadata = testCache.getMetadata().getLayers().get(0);
+    Assert.assertEquals(CachedLayerType.BASE, layerInMetadata.getType());
+    Assert.assertNull(layerInMetadata.getMetadata());
 
     verifyCachedLayerIsExpected(expectedLayer, cachedLayer);
   }
