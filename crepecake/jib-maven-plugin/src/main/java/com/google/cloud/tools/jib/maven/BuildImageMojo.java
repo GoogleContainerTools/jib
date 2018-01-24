@@ -34,12 +34,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import javax.annotation.Nullable;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -53,68 +49,6 @@ import org.codehaus.plexus.util.xml.Xpp3Dom;
 /** Builds a container image. */
 @Mojo(name = "build", requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM)
 public class BuildImageMojo extends AbstractMojo {
-
-  /** ERERLEK. */
-  public static void main(String[] args) throws Exception {
-    SourceFilesConfiguration sourceFilesConfiguration =
-        new SourceFilesConfiguration() {
-          @Override
-          public Set<Path> getDependenciesFiles() {
-            return new HashSet<>(
-                Collections.singletonList(
-                    Paths.get("src/test/resources/project/libs/dependency-1.0.0.jar")));
-          }
-
-          @Override
-          public Set<Path> getResourcesFiles() {
-            return new HashSet<>(
-                Collections.singletonList(
-                    Paths.get("src/test/resources/project/src/main/resources/world")));
-          }
-
-          @Override
-          public Set<Path> getClassesFiles() {
-            return new HashSet<>(
-                Arrays.asList(Paths.get("src/test/resources/project/target/classes")));
-          }
-
-          @Override
-          public Path getDependenciesExtractionPath() {
-            return Paths.get("app", "libs");
-          }
-
-          @Override
-          public Path getResourcesExtractionPath() {
-            return Paths.get("app", "resources");
-          }
-
-          @Override
-          public Path getClassesExtractionPath() {
-            return Paths.get("app", "classes");
-          }
-        };
-
-    BuildConfiguration buildConfiguration =
-        BuildConfiguration.builder()
-            .setBaseImageServerUrl("registry.hub.docker.com")
-            .setBaseImageName("frolvlad/alpine-oraclejdk8")
-            .setBaseImageTag("latest")
-            .setTargetServerUrl("gcr.io")
-            .setTargetImageName("qingyangc-sandbox/jibtestiamge")
-            .setTargetTag("built-with-jib")
-            .setCredentialHelperName("gcr")
-            .setMainClass("com.google.cloud.tools.jib.maven.Main")
-            .build();
-
-    Path cacheDirectory = Paths.get("target", "jib-cache");
-    if (!Files.exists(cacheDirectory)) {
-      Files.createDirectory(cacheDirectory);
-    }
-
-    BuildImageSteps buildImageSteps =
-        new BuildImageSteps(buildConfiguration, sourceFilesConfiguration, cacheDirectory);
-    buildImageSteps.runAsync();
-  }
 
   private static class MojoExceptionBuilder {
 

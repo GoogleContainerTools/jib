@@ -85,17 +85,17 @@ class MavenSourceFilesConfiguration implements SourceFilesConfiguration {
   }
 
   @Override
-  public Path getDependenciesExtractionPath() {
+  public Path getDependenciesPathOnImage() {
     return Paths.get("app", "libs");
   }
 
   @Override
-  public Path getResourcesExtractionPath() {
+  public Path getResourcesPathOnImage() {
     return Paths.get("app", "resources");
   }
 
   @Override
-  public Path getClassesExtractionPath() {
+  public Path getClassesPathOnImage() {
     return Paths.get("app", "classes");
   }
 }
