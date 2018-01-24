@@ -14,17 +14,11 @@ repositories {
 }
 
 sourceSets {
-    File sharedTestDir = file('src/test-shared/java')
-    test {
-        java.srcDir sharedTestDir
-        resources.srcDir file('src/test-shared/resources')
-    }
     integrationTest {
         java {
             compileClasspath += main.output + test.output
             runtimeClasspath += main.output + test.output
             srcDir file('src/integration-test/java')
-            srcDir sharedTestDir
         }
         resources.srcDir file('src/integration-test/resources')
     }

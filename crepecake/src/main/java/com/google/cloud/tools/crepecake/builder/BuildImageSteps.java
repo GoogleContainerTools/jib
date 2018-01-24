@@ -108,15 +108,15 @@ public class BuildImageSteps {
     List<String> classPaths = new ArrayList<>();
     addSourceFilesToClassPaths(
         sourceFilesConfiguration.getDependenciesFiles(),
-        sourceFilesConfiguration.getDependenciesExtractionPath(),
+        sourceFilesConfiguration.getDependenciesPathOnImage(),
         classPaths);
     addSourceFilesToClassPaths(
         sourceFilesConfiguration.getResourcesFiles(),
-        sourceFilesConfiguration.getResourcesExtractionPath(),
+        sourceFilesConfiguration.getResourcesPathOnImage(),
         classPaths);
     addSourceFilesToClassPaths(
         sourceFilesConfiguration.getClassesFiles(),
-        sourceFilesConfiguration.getClassesExtractionPath(),
+        sourceFilesConfiguration.getClassesPathOnImage(),
         classPaths);
 
     String entrypoint = String.join(":", classPaths);
