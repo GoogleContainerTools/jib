@@ -22,6 +22,7 @@ import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.crepecake.Timer;
 import com.google.cloud.tools.crepecake.blob.Blob;
 import com.google.cloud.tools.crepecake.blob.BlobDescriptor;
+import com.google.cloud.tools.crepecake.builder.BuildLogger;
 import com.google.cloud.tools.crepecake.http.Authorization;
 import com.google.cloud.tools.crepecake.http.Connection;
 import com.google.cloud.tools.crepecake.http.Request;
@@ -44,7 +45,22 @@ import org.apache.http.NoHttpResponseException;
 public class RegistryClient {
 
   // TODO: Remove
-  private Timer parentTimer;
+  private Timer parentTimer =
+      new Timer(
+          new BuildLogger() {
+            @Override
+            public void debug(CharSequence message) {}
+
+            @Override
+            public void info(CharSequence message) {}
+
+            @Override
+            public void warn(CharSequence message) {}
+
+            @Override
+            public void error(CharSequence message) {}
+          },
+          "NULL TIMER");
 
   public RegistryClient setTimer(Timer parentTimer) {
     this.parentTimer = parentTimer;

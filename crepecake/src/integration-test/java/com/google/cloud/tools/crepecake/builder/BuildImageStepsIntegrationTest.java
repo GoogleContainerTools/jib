@@ -45,6 +45,28 @@ public class BuildImageStepsIntegrationTest {
             .setTargetImageName("testimage")
             .setTargetTag("testtag")
             .setMainClass("HelloWorld")
+            .setBuildLogger(
+                new BuildLogger() {
+                  @Override
+                  public void debug(CharSequence message) {
+                    System.out.println(message);
+                  }
+
+                  @Override
+                  public void info(CharSequence message) {
+                    System.out.println(message);
+                  }
+
+                  @Override
+                  public void warn(CharSequence message) {
+                    System.out.println(message);
+                  }
+
+                  @Override
+                  public void error(CharSequence message) {
+                    System.out.println(message);
+                  }
+                })
             .build();
 
     BuildImageSteps buildImageSteps =

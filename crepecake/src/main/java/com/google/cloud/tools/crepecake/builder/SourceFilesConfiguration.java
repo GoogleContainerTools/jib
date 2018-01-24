@@ -34,12 +34,12 @@ public interface SourceFilesConfiguration {
   /** @return the source files for the classes layer. */
   Set<Path> getClassesFiles();
 
-  /** @return the path of to place the dependencies source files in the container filesystem */
-  Path getDependenciesExtractionPath();
+  /** @return the path where the dependencies source files are placed in the container filesystem */
+  Path getDependenciesPathOnImage();
 
-  /** @return the path of to place the resources source files in the container filesystem */
-  Path getResourcesExtractionPath();
+  /** @return the path where the resources source files are placed in the container filesystem */
+  Path getResourcesPathOnImage();
 
-  /** @return the path of to place the classes source files in the container filesystem */
-  Path getClassesExtractionPath();
+  /** @return the path where the classes source files are placed in the container filesystem */
+  Path getClassesPathOnImage();
 }

@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
-// TODO: Add unit test.
 /** Builds and caches application layers. */
 class BuildAndCacheApplicationLayersStep implements Callable<List<ListenableFuture<CachedLayer>>> {
 
@@ -61,17 +60,17 @@ class BuildAndCacheApplicationLayersStep implements Callable<List<ListenableFutu
           buildAndCacheLayerAsync(
               CachedLayerType.DEPENDENCIES,
               sourceFilesConfiguration.getDependenciesFiles(),
-              sourceFilesConfiguration.getDependenciesExtractionPath()));
+              sourceFilesConfiguration.getDependenciesPathOnImage()));
       applicationLayerFutures.add(
           buildAndCacheLayerAsync(
               CachedLayerType.RESOURCES,
               sourceFilesConfiguration.getResourcesFiles(),
-              sourceFilesConfiguration.getResourcesExtractionPath()));
+              sourceFilesConfiguration.getResourcesPathOnImage()));
       applicationLayerFutures.add(
           buildAndCacheLayerAsync(
               CachedLayerType.CLASSES,
               sourceFilesConfiguration.getClassesFiles(),
-              sourceFilesConfiguration.getClassesExtractionPath()));
+              sourceFilesConfiguration.getClassesPathOnImage()));
 
       return applicationLayerFutures;
     }
