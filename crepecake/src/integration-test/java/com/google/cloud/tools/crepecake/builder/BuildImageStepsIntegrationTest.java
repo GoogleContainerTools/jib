@@ -23,7 +23,6 @@ import com.google.cloud.tools.crepecake.http.Authorization;
 import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
 import com.google.cloud.tools.crepecake.image.Image;
 import com.google.cloud.tools.crepecake.image.ImageLayers;
-import com.google.cloud.tools.crepecake.image.Layer;
 import com.google.cloud.tools.crepecake.image.LayerCountMismatchException;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.crepecake.registry.LocalRegistry;
@@ -123,10 +122,6 @@ public class BuildImageStepsIntegrationTest {
       PushImageStep pushImageStep = new PushImageStep(buildConfiguration, null, image);
       pushImageStep.call();
 
-      for (Layer layer : image.getLayers()) {
-        System.out.println("CACHED " + layer.getBlobDescriptor().getDigest());
-      }
-
       // TODO: Put this in a utility function.
       Runtime.getRuntime().exec("docker pull localhost:5000/testimage:testtag").waitFor();
       Process process = Runtime.getRuntime().exec("docker run localhost:5000/testimage:testtag");
@@ -146,15 +141,15 @@ public class BuildImageStepsIntegrationTest {
     List<String> classPaths = new ArrayList<>();
     addSourceFilesToClassPaths(
         sourceFilesConfiguration.getDependenciesFiles(),
-        sourceFilesConfiguration.getDependenciesExtractionPath(),
+        sourceFilesConfiguration.getDependenciesPathOnImage(),
         classPaths);
     addSourceFilesToClassPaths(
         sourceFilesConfiguration.getResourcesFiles(),
-        sourceFilesConfiguration.getResourcesExtractionPath(),
+        sourceFilesConfiguration.getResourcesPathOnImage(),
         classPaths);
     addSourceFilesToClassPaths(
         sourceFilesConfiguration.getClassesFiles(),
-        sourceFilesConfiguration.getClassesExtractionPath(),
+        sourceFilesConfiguration.getClassesPathOnImage(),
         classPaths);
 
     String entrypoint = String.join(":", classPaths);
