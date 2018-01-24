@@ -36,7 +36,6 @@ class MavenSourceFilesConfiguration implements SourceFilesConfiguration {
   MavenSourceFilesConfiguration(MavenProject project) throws IOException {
     Path classesOutputDir = Paths.get(project.getBuild().getOutputDirectory());
 
-    // TODO: Fix null pointer exception possibility for getSystemPath.
     for (Artifact artifact : project.getArtifacts()) {
       dependenciesFiles.add(artifact.getFile().toPath());
     }
