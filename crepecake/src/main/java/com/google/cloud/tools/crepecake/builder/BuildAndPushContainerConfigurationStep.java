@@ -66,9 +66,10 @@ class BuildAndPushContainerConfigurationStep implements Callable<BlobDescriptor>
     try (Timer timer = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       RegistryClient registryClient =
           new RegistryClient(
-              pushAuthorizationFuture.get(),
-              buildConfiguration.getTargetServerUrl(),
-              buildConfiguration.getTargetImageName());
+                  pushAuthorizationFuture.get(),
+                  buildConfiguration.getTargetServerUrl(),
+                  buildConfiguration.getTargetImageName())
+              .setTimer(timer);
 
       // Constructs the image.
       Image image = new Image();
@@ -88,6 +89,7 @@ class BuildAndPushContainerConfigurationStep implements Callable<BlobDescriptor>
 
       timer.lap("Pushing container configuration");
 
+      // TODO: Use PushBlobStep.
       // Pushes the container configuration.
       registryClient.pushBlob(
           containerConfigurationBlobDescriptor.getDigest(), containerConfigurationBlob);
