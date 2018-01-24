@@ -87,7 +87,7 @@ public class CacheWriter {
 
       CachedLayer cachedLayer = new CachedLayer(layerFile, compressedBlobDescriptor, diffId);
       LayerMetadata layerMetadata =
-          new LayerMetadata(layerBuilder.getSourceFiles(), FileTime.from(Instant.now()));
+          LayerMetadata.from(layerBuilder.getSourceFiles(), FileTime.from(Instant.now()));
       cache.addLayerToMetadata(layerType, cachedLayer, layerMetadata);
       return cachedLayer;
     }
