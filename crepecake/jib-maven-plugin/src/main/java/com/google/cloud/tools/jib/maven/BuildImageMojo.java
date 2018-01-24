@@ -39,12 +39,15 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.annotation.Nullable;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
 
 /** Builds a container image. */
 @Mojo(name = "build", requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM)
@@ -155,11 +158,22 @@ public class BuildImageMojo extends AbstractMojo {
 
   @Parameter private List<String> jvmFlags;
 
-  @Parameter(required = true)
-  private String mainClass;
+  @Parameter private String mainClass;
 
   @Override
   public void execute() throws MojoExecutionException {
+    if (mainClass == null) {
+      mainClass = getMainClassFromMavenJarPlugin();
+      if (mainClass == null) {
+        throw new MojoExceptionBuilder(
+                new MojoFailureException("Could not find main class specified in maven-jar-plugin"))
+            .suggest("add a `mainClass` configuration to jib-maven-plugin")
+            .build();
+      }
+
+      getLog().info("Using main class from maven-jar-plugin: " + mainClass);
+    }
+
     SourceFilesConfiguration sourceFilesConfiguration = getSourceFilesConfiguration();
 
     BuildConfiguration buildConfiguration =
@@ -268,5 +282,27 @@ public class BuildImageMojo extends AbstractMojo {
     } catch (IOException ex) {
       throw new MojoExecutionException("Obtaining project build output files failed", ex);
     }
+  }
+
+  @Nullable
+  private String getMainClassFromMavenJarPlugin() {
+    Xpp3Dom jarConfiguration =
+        (Xpp3Dom) project.getPlugin("org.apache.maven.plugins:maven-jar-plugin").getConfiguration();
+    if (jarConfiguration == null) {
+      return null;
+    }
+    Xpp3Dom archiveObject = jarConfiguration.getChild("archive");
+    if (archiveObject == null) {
+      return null;
+    }
+    Xpp3Dom manifestObject = archiveObject.getChild("manifest");
+    if (manifestObject == null) {
+      return null;
+    }
+    Xpp3Dom mainClassObject = manifestObject.getChild("mainClass");
+    if (mainClassObject == null) {
+      return null;
+    }
+    return mainClassObject.getValue();
   }
 }
