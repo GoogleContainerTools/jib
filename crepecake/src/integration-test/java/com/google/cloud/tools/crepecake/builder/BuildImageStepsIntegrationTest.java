@@ -40,7 +40,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -158,7 +157,7 @@ public class BuildImageStepsIntegrationTest {
   }
 
   private void addSourceFilesToClassPaths(
-      Set<Path> sourceFiles, Path extractionPath, List<String> classPaths) {
+      List<Path> sourceFiles, Path extractionPath, List<String> classPaths) {
     sourceFiles.forEach(
         sourceFile -> {
           Path containerPath = extractionPath;

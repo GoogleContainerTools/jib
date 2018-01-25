@@ -21,8 +21,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 
 /** Builds an {@link UnwrittenLayer} from files. */
@@ -41,12 +41,8 @@ public class LayerBuilder {
   private final Path extractionPath;
 
   public LayerBuilder(List<Path> sourceFiles, Path extractionPath) {
-    this.sourceFiles = sourceFiles;
+    this.sourceFiles = new ArrayList<>(sourceFiles);
     this.extractionPath = extractionPath;
-  }
-
-  public LayerBuilder(Set<Path> sourceFiles, Path extractionPath) {
-    this(new ArrayList<>(sourceFiles), extractionPath);
   }
 
   /** Builds and returns the layer. */
@@ -82,6 +78,6 @@ public class LayerBuilder {
   }
 
   public List<Path> getSourceFiles() {
-    return sourceFiles;
+    return Collections.unmodifiableList(sourceFiles);
   }
 }
