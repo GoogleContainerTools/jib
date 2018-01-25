@@ -23,7 +23,7 @@ import com.google.cloud.tools.crepecake.registry.RegistryException;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
-// TODO: Comment and test.
+/** Pushes a BLOB to the target registry. */
 class PushBlobStep implements Callable<Void> {
 
   private final RegistryClient registryClient;

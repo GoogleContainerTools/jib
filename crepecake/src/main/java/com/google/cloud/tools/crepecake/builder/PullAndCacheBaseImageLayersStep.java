@@ -29,6 +29,7 @@ import com.google.cloud.tools.crepecake.registry.RegistryException;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
+/** Pulls and caches the base image layers. */
 class PullAndCacheBaseImageLayersStep implements Callable<ImageLayers<CachedLayer>> {
 
   private final BuildConfiguration buildConfiguration;

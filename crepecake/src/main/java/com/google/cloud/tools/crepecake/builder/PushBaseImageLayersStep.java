@@ -24,6 +24,7 @@ import com.google.cloud.tools.crepecake.registry.RegistryException;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
+/** Pushes the base image layers to the target registry. */
 class PushBaseImageLayersStep implements Callable<Void> {
 
   private final BuildConfiguration buildConfiguration;
