@@ -21,9 +21,8 @@ import com.google.cloud.tools.crepecake.image.ImageLayers;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -40,7 +39,7 @@ class CacheMetadata {
     private final ImageLayers<CachedLayerWithMetadata> layers;
 
     @Nullable private CachedLayerType type;
-    @Nullable private Set<Path> sourceFiles;
+    @Nullable private List<Path> sourceFiles;
 
     private LayerFilter(ImageLayers<CachedLayerWithMetadata> layers) {
       this.layers = layers;
@@ -52,8 +51,8 @@ class CacheMetadata {
       return this;
     }
 
-    /** Filters to a certain set of source files. */
-    LayerFilter bySourceFiles(Set<Path> sourceFiles) {
+    /** Filters to a certain list of source files. */
+    LayerFilter bySourceFiles(List<Path> sourceFiles) {
       this.sourceFiles = sourceFiles;
       return this;
     }
@@ -76,7 +75,7 @@ class CacheMetadata {
             }
             List<String> cachedLayerSourceFilePaths = layer.getMetadata().getSourceFiles();
             if (cachedLayerSourceFilePaths != null) {
-              Set<Path> cachedLayerSourceFiles = new HashSet<>();
+              List<Path> cachedLayerSourceFiles = new ArrayList<>();
               for (String sourceFile : cachedLayerSourceFilePaths) {
                 cachedLayerSourceFiles.add(Paths.get(sourceFile));
               }

@@ -17,7 +17,7 @@
 package com.google.cloud.tools.crepecake.builder;
 
 import java.nio.file.Path;
-import java.util.Set;
+import java.util.List;
 
 /**
  * Immutable configuration that defines where the source files for each of the application layers
@@ -26,13 +26,13 @@ import java.util.Set;
 public interface SourceFilesConfiguration {
 
   /** @return the source files for the dependencies layer. */
-  Set<Path> getDependenciesFiles();
+  List<Path> getDependenciesFiles();
 
   /** @return the source files for the resources layer. */
-  Set<Path> getResourcesFiles();
+  List<Path> getResourcesFiles();
 
   /** @return the source files for the classes layer. */
-  Set<Path> getClassesFiles();
+  List<Path> getClassesFiles();
 
   /** @return the path where the dependencies source files are placed in the container filesystem */
   Path getDependenciesPathOnImage();
