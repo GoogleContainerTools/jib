@@ -24,7 +24,6 @@ import com.google.cloud.tools.crepecake.registry.RegistryException;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
-// TODO: First check for existence.
 /** Pushes the application layers to the target registry. */
 class PushApplicationLayersStep implements Callable<ImageLayers<CachedLayer>> {
 

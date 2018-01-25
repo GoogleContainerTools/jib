@@ -30,7 +30,7 @@ import com.google.common.io.CountingOutputStream;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
-// TODO: Comment and test.
+/** Pulls and caches a single base image layer. */
 class PullAndCacheBaseImageLayerStep implements Callable<CachedLayer> {
 
   private final RegistryClient registryClient;

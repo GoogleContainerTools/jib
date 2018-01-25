@@ -25,8 +25,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 // TODO: Put into CacheReader and remove this class.
 /** Checks if cached data is outdated. */
@@ -85,7 +85,7 @@ public class CacheChecker {
   }
 
   // TODO: Add comment.
-  public CachedLayer getUpToDateLayerBySourceFiles(Set<Path> sourceFiles)
+  public CachedLayer getUpToDateLayerBySourceFiles(List<Path> sourceFiles)
       throws IOException, CacheMetadataCorruptedException {
     // Grabs all the layers that have matching source files.
     ImageLayers<CachedLayerWithMetadata> cachedLayersWithSourceFiles =
@@ -124,7 +124,7 @@ public class CacheChecker {
    *     otherwise.
    */
   @Deprecated
-  public boolean areSourceFilesModified(Set<Path> sourceFiles)
+  public boolean areSourceFilesModified(List<Path> sourceFiles)
       throws IOException, CacheMetadataCorruptedException {
     // Grabs all the layers that have matching source files.
     ImageLayers<CachedLayerWithMetadata> cachedLayersWithSourceFiles =

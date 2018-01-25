@@ -23,8 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /** Implementation of {@link SourceFilesConfiguration} that uses test resources. */
@@ -32,37 +31,35 @@ class TestSourceFilesConfiguration implements SourceFilesConfiguration {
 
   private static final Path EXTRACTION_PATH = Paths.get("some", "extraction", "path");
 
-  private final Set<Path> dependenciesSourceFiles;
-  private final Set<Path> resourcesSourceFiles;
-  private final Set<Path> classesSourceFiles;
+  private final List<Path> dependenciesSourceFiles;
+  private final List<Path> resourcesSourceFiles;
+  private final List<Path> classesSourceFiles;
 
   TestSourceFilesConfiguration() throws URISyntaxException, IOException {
     dependenciesSourceFiles =
-        new HashSet<>(
-            Collections.singletonList(
-                Paths.get(
-                    Resources.getResource("application/dependencies/dependency-1.0.0.jar")
-                        .toURI())));
+        Collections.singletonList(
+            Paths.get(
+                Resources.getResource("application/dependencies/dependency-1.0.0.jar").toURI()));
     resourcesSourceFiles =
         Files.list(Paths.get(Resources.getResource("application/resources/").toURI()))
-            .collect(Collectors.toSet());
+            .collect(Collectors.toList());
     classesSourceFiles =
         Files.list(Paths.get(Resources.getResource("application/classes/").toURI()))
-            .collect(Collectors.toSet());
+            .collect(Collectors.toList());
   }
 
   @Override
-  public Set<Path> getDependenciesFiles() {
+  public List<Path> getDependenciesFiles() {
     return dependenciesSourceFiles;
   }
 
   @Override
-  public Set<Path> getResourcesFiles() {
+  public List<Path> getResourcesFiles() {
     return resourcesSourceFiles;
   }
 
   @Override
-  public Set<Path> getClassesFiles() {
+  public List<Path> getClassesFiles() {
     return classesSourceFiles;
   }
 
