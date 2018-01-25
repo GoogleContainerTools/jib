@@ -25,7 +25,6 @@ import com.google.cloud.tools.crepecake.cache.CachedLayerType;
 import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
 import com.google.cloud.tools.crepecake.image.ImageLayers;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -89,8 +88,9 @@ public class BuildAndCacheApplicationLayersStepTest {
               cache,
               MoreExecutors.newDirectExecutorService());
 
-      for (ListenableFuture<CachedLayer> applicationLayerFuture :
+      for (NonBlockingListenableFuture<CachedLayer> applicationLayerFuture :
           buildAndCacheApplicationLayersStep.call()) {
+        applicationLayerFuture.allowBlocking();
         applicationLayers.add(applicationLayerFuture.get());
       }
 

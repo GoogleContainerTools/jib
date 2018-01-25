@@ -24,29 +24,30 @@ import com.google.cloud.tools.crepecake.image.Image;
 import com.google.cloud.tools.crepecake.image.Layer;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
-class PullAndCacheBaseImageLayersStep implements Callable<List<ListenableFuture<CachedLayer>>> {
+/** Pulls and caches the base image layers. */
+class PullAndCacheBaseImageLayersStep
+    implements Callable<List<NonBlockingListenableFuture<CachedLayer>>> {
 
   private static final String DESCRIPTION = "Setting up base image caching";
 
   private final BuildConfiguration buildConfiguration;
   private final Cache cache;
   private final ListeningExecutorService listeningExecutorService;
-  private final ListenableFuture<Authorization> pullAuthorizationFuture;
-  private final ListenableFuture<Image> baseImageFuture;
+  private final NonBlockingListenableFuture<Authorization> pullAuthorizationFuture;
+  private final NonBlockingListenableFuture<Image> baseImageFuture;
 
   PullAndCacheBaseImageLayersStep(
       BuildConfiguration buildConfiguration,
       Cache cache,
       ListeningExecutorService listeningExecutorService,
-      ListenableFuture<Authorization> pullAuthorizationFuture,
-      ListenableFuture<Image> baseImageFuture) {
+      NonBlockingListenableFuture<Authorization> pullAuthorizationFuture,
+      NonBlockingListenableFuture<Image> baseImageFuture) {
     this.buildConfiguration = buildConfiguration;
     this.cache = cache;
     this.listeningExecutorService = listeningExecutorService;
@@ -54,21 +55,24 @@ class PullAndCacheBaseImageLayersStep implements Callable<List<ListenableFuture<
     this.baseImageFuture = baseImageFuture;
   }
 
+  /** Depends on {@code baseImageFuture}. */
   @Override
-  public List<ListenableFuture<CachedLayer>> call()
+  public List<NonBlockingListenableFuture<CachedLayer>> call()
       throws ExecutionException, InterruptedException, LayerPropertyNotFoundException {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
-      List<ListenableFuture<CachedLayer>> pullAndCacheBaseImageLayerFutures = new ArrayList<>();
+      List<NonBlockingListenableFuture<CachedLayer>> pullAndCacheBaseImageLayerFutures =
+          new ArrayList<>();
       for (Layer layer : baseImageFuture.get().getLayers()) {
         pullAndCacheBaseImageLayerFutures.add(
-            Futures.whenAllSucceed(pullAuthorizationFuture, baseImageFuture)
-                .call(
-                    new PullAndCacheBaseImageLayerStep(
-                        buildConfiguration,
-                        cache,
-                        layer.getBlobDescriptor().getDigest(),
-                        pullAuthorizationFuture),
-                    listeningExecutorService));
+            new NonBlockingListenableFuture<>(
+                Futures.whenAllSucceed(pullAuthorizationFuture)
+                    .call(
+                        new PullAndCacheBaseImageLayerStep(
+                            buildConfiguration,
+                            cache,
+                            layer.getBlobDescriptor().getDigest(),
+                            pullAuthorizationFuture),
+                        listeningExecutorService)));
       }
 
       return pullAndCacheBaseImageLayerFutures;

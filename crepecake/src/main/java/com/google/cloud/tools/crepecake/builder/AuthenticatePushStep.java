@@ -35,6 +35,7 @@ class AuthenticatePushStep implements Callable<Authorization> {
     this.buildConfiguration = buildConfiguration;
   }
 
+  /** Depends on nothing. */
   @Override
   public Authorization call()
       throws NonexistentServerUrlDockerCredentialHelperException,

@@ -33,7 +33,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-// TODO: Comment and test.
+/** Pulls and caches a single base image layer. */
 class PullAndCacheBaseImageLayerStep implements Callable<CachedLayer> {
 
   private static final String DESCRIPTION = "Pulling base image layer %s";
@@ -54,6 +54,7 @@ class PullAndCacheBaseImageLayerStep implements Callable<CachedLayer> {
     this.pullAuthorizationFuture = pullAuthorizationFuture;
   }
 
+  /** Depends on {@code pullAuthorizationFuture}. */
   @Override
   public CachedLayer call()
       throws IOException, RegistryException, LayerPropertyNotFoundException,

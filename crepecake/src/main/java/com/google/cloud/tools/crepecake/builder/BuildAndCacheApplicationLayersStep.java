@@ -23,16 +23,15 @@ import com.google.cloud.tools.crepecake.cache.CacheWriter;
 import com.google.cloud.tools.crepecake.cache.CachedLayer;
 import com.google.cloud.tools.crepecake.cache.CachedLayerType;
 import com.google.cloud.tools.crepecake.image.LayerBuilder;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.Callable;
 
 /** Builds and caches application layers. */
-class BuildAndCacheApplicationLayersStep implements Callable<List<ListenableFuture<CachedLayer>>> {
+class BuildAndCacheApplicationLayersStep
+    implements Callable<List<NonBlockingListenableFuture<CachedLayer>>> {
 
   private static final String DESCRIPTION = "Building application layers";
 
@@ -52,10 +51,11 @@ class BuildAndCacheApplicationLayersStep implements Callable<List<ListenableFutu
     this.listeningExecutorService = listeningExecutorService;
   }
 
+  /** Depends on nothing. */
   @Override
-  public List<ListenableFuture<CachedLayer>> call() {
+  public List<NonBlockingListenableFuture<CachedLayer>> call() {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
-      List<ListenableFuture<CachedLayer>> applicationLayerFutures = new ArrayList<>(3);
+      List<NonBlockingListenableFuture<CachedLayer>> applicationLayerFutures = new ArrayList<>(3);
       applicationLayerFutures.add(
           buildAndCacheLayerAsync(
               CachedLayerType.DEPENDENCIES,
@@ -76,8 +76,8 @@ class BuildAndCacheApplicationLayersStep implements Callable<List<ListenableFutu
     }
   }
 
-  private ListenableFuture<CachedLayer> buildAndCacheLayerAsync(
-      CachedLayerType layerType, Set<Path> sourceFiles, Path extractionPath) {
+  private NonBlockingListenableFuture<CachedLayer> buildAndCacheLayerAsync(
+      CachedLayerType layerType, List<Path> sourceFiles, Path extractionPath) {
     String description =
         String.format(
             "Building %s layer",
@@ -85,20 +85,21 @@ class BuildAndCacheApplicationLayersStep implements Callable<List<ListenableFutu
                 ? "dependencies"
                 : layerType == CachedLayerType.RESOURCES ? "resources" : "classes");
 
-    return listeningExecutorService.submit(
-        () -> {
-          try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), description)) {
-            // Don't build the layer if it exists already.
-            CachedLayer cachedLayer =
-                new CacheChecker(cache).getUpToDateLayerBySourceFiles(sourceFiles);
-            if (cachedLayer != null) {
-              return cachedLayer;
-            }
+    return new NonBlockingListenableFuture<>(
+        listeningExecutorService.submit(
+            () -> {
+              try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), description)) {
+                // Don't build the layer if it exists already.
+                CachedLayer cachedLayer =
+                    new CacheChecker(cache).getUpToDateLayerBySourceFiles(sourceFiles);
+                if (cachedLayer != null) {
+                  return cachedLayer;
+                }
 
-            LayerBuilder layerBuilder = new LayerBuilder(sourceFiles, extractionPath);
+                LayerBuilder layerBuilder = new LayerBuilder(sourceFiles, extractionPath);
 
-            return new CacheWriter(cache).writeLayer(layerBuilder, layerType);
-          }
-        });
+                return new CacheWriter(cache).writeLayer(layerBuilder, layerType);
+              }
+            }));
   }
 }

@@ -24,6 +24,7 @@ import com.google.cloud.tools.crepecake.registry.RegistryException;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
+/** Retrieves credentials to push from the base image registry. */
 class AuthenticatePullStep implements Callable<Authorization> {
 
   private static final String DESCRIPTION = "Authenticating with base image registry";
@@ -34,6 +35,7 @@ class AuthenticatePullStep implements Callable<Authorization> {
     this.buildConfiguration = buildConfiguration;
   }
 
+  /** Depends on nothing. */
   @Override
   public Authorization call()
       throws RegistryAuthenticationFailedException, IOException, RegistryException {

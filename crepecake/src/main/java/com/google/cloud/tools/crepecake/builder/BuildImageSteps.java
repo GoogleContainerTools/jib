@@ -58,88 +58,96 @@ public class BuildImageSteps {
         try (Cache cache = Cache.init(cacheDirectory)) {
           timer2.lap("Setting up image pull authentication");
           // Authenticates base image pull.
-          ListenableFuture<Authorization> authenticatePullFuture =
-              listeningExecutorService.submit(new AuthenticatePullStep(buildConfiguration));
+          NonBlockingListenableFuture<Authorization> authenticatePullFuture =
+              new NonBlockingListenableFuture<>(
+                  listeningExecutorService.submit(new AuthenticatePullStep(buildConfiguration)));
           timer2.lap("Setting up base image pull");
           // Pulls the base image.
-          ListenableFuture<Image> pullBaseImageFuture =
-              Futures.whenAllSucceed(authenticatePullFuture)
-                  .call(
-                      new PullBaseImageStep(buildConfiguration, authenticatePullFuture),
-                      listeningExecutorService);
+          NonBlockingListenableFuture<Image> pullBaseImageFuture =
+              new NonBlockingListenableFuture<>(
+                  Futures.whenAllSucceed(authenticatePullFuture)
+                      .call(
+                          new PullBaseImageStep(buildConfiguration, authenticatePullFuture),
+                          listeningExecutorService));
           timer2.lap("Setting up base image layer pull");
           // Pulls and caches the base image layers.
-          List<ListenableFuture<CachedLayer>> pullBaseImageLayerFutures =
-              new PullAndCacheBaseImageLayersStep(
-                      buildConfiguration,
-                      cache,
-                      listeningExecutorService,
-                      authenticatePullFuture,
-                      pullBaseImageFuture)
-                  .call();
+          NonBlockingListenableFuture<List<NonBlockingListenableFuture<CachedLayer>>>
+              pullBaseImageLayerFuturesFuture =
+                  new NonBlockingListenableFuture<>(
+                      Futures.whenAllSucceed(pullBaseImageFuture)
+                          .call(
+                              new PullAndCacheBaseImageLayersStep(
+                                  buildConfiguration,
+                                  cache,
+                                  listeningExecutorService,
+                                  authenticatePullFuture,
+                                  pullBaseImageFuture),
+                              listeningExecutorService));
 
           timer2.lap("Setting up image push authentication");
           // Authenticates push.
-          ListenableFuture<Authorization> authenticatePushFuture =
-              listeningExecutorService.submit(new AuthenticatePushStep(buildConfiguration));
+          NonBlockingListenableFuture<Authorization> authenticatePushFuture =
+              new NonBlockingListenableFuture<>(
+                  listeningExecutorService.submit(new AuthenticatePushStep(buildConfiguration)));
           timer2.lap("Setting up base image layer push");
           // Pushes the base image layers.
-          List<ListenableFuture<Void>> pushBaseImageLayerFutures =
-              new PushLayersStep(
-                      buildConfiguration,
-                      listeningExecutorService,
-                      authenticatePushFuture,
-                      pullBaseImageLayerFutures)
-                  .call();
+          NonBlockingListenableFuture<List<NonBlockingListenableFuture<Void>>>
+              pushBaseImageLayerFuturesFuture =
+                  new NonBlockingListenableFuture<>(
+                      Futures.whenAllSucceed(pullBaseImageLayerFuturesFuture)
+                          .call(
+                              new PushLayersStep(
+                                  buildConfiguration,
+                                  listeningExecutorService,
+                                  authenticatePushFuture,
+                                  pullBaseImageLayerFuturesFuture),
+                              listeningExecutorService));
 
           timer2.lap("Setting up build application layers");
           // Builds the application layers.
-          List<ListenableFuture<CachedLayer>> buildAndCacheApplicationLayerFutures =
+          List<NonBlockingListenableFuture<CachedLayer>> buildAndCacheApplicationLayerFutures =
               new BuildAndCacheApplicationLayersStep(
                       buildConfiguration, sourceFilesConfiguration, cache, listeningExecutorService)
                   .call();
 
           timer2.lap("Setting up container configuration push");
           // Builds and pushes the container configuration.
-          List<ListenableFuture<?>> buildAndPushContainerConfigurationFutureDependencies =
-              new ArrayList<>(pullBaseImageLayerFutures);
-          buildAndPushContainerConfigurationFutureDependencies.addAll(
-              buildAndCacheApplicationLayerFutures);
-          buildAndPushContainerConfigurationFutureDependencies.add(authenticatePushFuture);
-          ListenableFuture<BlobDescriptor> buildAndPushContainerConfigurationFuture =
-              Futures.whenAllSucceed(buildAndPushContainerConfigurationFutureDependencies)
-                  .call(
-                      new BuildAndPushContainerConfigurationStep(
-                          buildConfiguration,
-                          authenticatePushFuture,
-                          pullBaseImageLayerFutures,
-                          buildAndCacheApplicationLayerFutures,
-                          getEntrypoint()),
-                      listeningExecutorService);
+          NonBlockingListenableFuture<BlobDescriptor> buildAndPushContainerConfigurationFuture =
+              new NonBlockingListenableFuture<>(
+                  Futures.whenAllSucceed(pullBaseImageLayerFuturesFuture)
+                      .call(
+                          new BuildAndPushContainerConfigurationStep(
+                              buildConfiguration,
+                              listeningExecutorService,
+                              authenticatePushFuture,
+                              pullBaseImageLayerFuturesFuture,
+                              buildAndCacheApplicationLayerFutures,
+                              getEntrypoint()),
+                          listeningExecutorService));
 
           timer2.lap("Setting up application layer push");
           // Pushes the application layers.
-          List<ListenableFuture<Void>> pushApplicationLayersFuture =
+          List<NonBlockingListenableFuture<Void>> pushApplicationLayersFuture =
               new PushLayersStep(
                       buildConfiguration,
                       listeningExecutorService,
                       authenticatePushFuture,
-                      buildAndCacheApplicationLayerFutures)
+                      Futures.immediateFuture(buildAndCacheApplicationLayerFutures))
                   .call();
 
           timer2.lap("Setting up image manifest push");
           // Pushes the new image manifest.
-          List<ListenableFuture<?>> pushImageFutureDependencies =
-              new ArrayList<>(pushBaseImageLayerFutures);
-          pushImageFutureDependencies.addAll(pushApplicationLayersFuture);
           ListenableFuture<Void> pushImageFuture =
-              Futures.whenAllSucceed(pushImageFutureDependencies)
+              Futures.whenAllSucceed(pushBaseImageLayerFuturesFuture)
                   .call(
                       new PushImageStep(
                           buildConfiguration,
+                          listeningExecutorService,
                           authenticatePushFuture,
-                          pullBaseImageLayerFutures,
+                          pullBaseImageLayerFuturesFuture,
                           buildAndCacheApplicationLayerFutures,
+                          pushBaseImageLayerFuturesFuture,
+                          pushApplicationLayersFuture,
                           buildAndPushContainerConfigurationFuture),
                       listeningExecutorService);
 

@@ -25,39 +25,45 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 
-class PushLayersStep implements Callable<List<ListenableFuture<Void>>> {
+class PushLayersStep implements Callable<List<NonBlockingListenableFuture<Void>>> {
 
   private static final String DESCRIPTION = "Setting up push";
 
   private final BuildConfiguration buildConfiguration;
   private final ListeningExecutorService listeningExecutorService;
-  private final ListenableFuture<Authorization> pushAuthorizationFuture;
-  private final List<ListenableFuture<CachedLayer>> cachedLayersFuture;
+  private final NonBlockingListenableFuture<Authorization> pushAuthorizationFuture;
+  private final ListenableFuture<List<NonBlockingListenableFuture<CachedLayer>>>
+      cachedLayerFuturesFuture;
 
   PushLayersStep(
       BuildConfiguration buildConfiguration,
       ListeningExecutorService listeningExecutorService,
-      ListenableFuture<Authorization> pushAuthorizationFuture,
-      List<ListenableFuture<CachedLayer>> cachedLayersFuture) {
+      NonBlockingListenableFuture<Authorization> pushAuthorizationFuture,
+      ListenableFuture<List<NonBlockingListenableFuture<CachedLayer>>> cachedLayerFuturesFuture) {
     this.buildConfiguration = buildConfiguration;
     this.listeningExecutorService = listeningExecutorService;
     this.pushAuthorizationFuture = pushAuthorizationFuture;
-    this.cachedLayersFuture = cachedLayersFuture;
+    this.cachedLayerFuturesFuture = cachedLayerFuturesFuture;
   }
 
+  /** Depends on {@code cachedLayerFuturesFuture}. */
   @Override
-  public List<ListenableFuture<Void>> call() {
+  public List<NonBlockingListenableFuture<Void>> call()
+      throws ExecutionException, InterruptedException {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       // Pushes the image layers.
-      List<ListenableFuture<Void>> pushLayerFutures = new ArrayList<>();
-      for (ListenableFuture<CachedLayer> cachedLayerFuture : cachedLayersFuture) {
+      List<NonBlockingListenableFuture<Void>> pushLayerFutures = new ArrayList<>();
+      for (NonBlockingListenableFuture<CachedLayer> cachedLayerFuture :
+          cachedLayerFuturesFuture.get()) {
         pushLayerFutures.add(
-            Futures.whenAllComplete(cachedLayerFuture)
-                .call(
-                    new PushBlobStep(
-                        buildConfiguration, pushAuthorizationFuture, cachedLayerFuture),
-                    listeningExecutorService));
+            new NonBlockingListenableFuture<>(
+                Futures.whenAllComplete(pushAuthorizationFuture, cachedLayerFuture)
+                    .call(
+                        new PushBlobStep(
+                            buildConfiguration, pushAuthorizationFuture, cachedLayerFuture),
+                        listeningExecutorService)));
       }
 
       return pushLayerFutures;

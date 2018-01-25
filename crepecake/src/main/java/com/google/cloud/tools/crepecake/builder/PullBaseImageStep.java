@@ -37,6 +37,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+/** Pulls the base image manifest. */
 class PullBaseImageStep implements Callable<Image> {
 
   private static final String DESCRIPTION = "Pulling base image manifest";
@@ -50,6 +51,7 @@ class PullBaseImageStep implements Callable<Image> {
     this.pullAuthorizationFuture = pullAuthorizationFuture;
   }
 
+  /** Depends on {@code pullAuthorizationFuture}. */
   @Override
   public Image call()
       throws IOException, RegistryException, LayerPropertyNotFoundException,

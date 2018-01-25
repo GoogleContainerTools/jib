@@ -23,9 +23,9 @@ import com.google.cloud.tools.crepecake.image.ImageLayers;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -138,7 +138,7 @@ public class CacheMetadataTest {
         cacheMetadata
             .filterLayers()
             .bySourceFiles(
-                new HashSet<>(
+                new ArrayList<>(
                     Arrays.asList(
                         Paths.get("some", "source", "file"),
                         Paths.get("some", "source", "directory"))))

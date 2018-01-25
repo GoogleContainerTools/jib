@@ -20,7 +20,7 @@ import com.google.cloud.tools.crepecake.image.ImageLayers;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
-import java.util.Set;
+import java.util.List;
 
 /** Reads image content from the cache. */
 public class CacheReader {
@@ -38,7 +38,7 @@ public class CacheReader {
    * @param sourceFiles the source files the layer must be built from
    * @return the newest cached layer file that matches the {@code layerType} and {@code sourceFiles}
    */
-  public Path getLayerFile(CachedLayerType layerType, Set<Path> sourceFiles)
+  public Path getLayerFile(CachedLayerType layerType, List<Path> sourceFiles)
       throws CacheMetadataCorruptedException {
     switch (layerType) {
       case DEPENDENCIES:

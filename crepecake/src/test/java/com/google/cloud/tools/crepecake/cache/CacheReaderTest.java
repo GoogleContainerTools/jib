@@ -21,8 +21,8 @@ import java.net.URISyntaxException;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -53,12 +53,12 @@ public class CacheReaderTest {
         expectedFile,
         cacheReader.getLayerFile(
             CachedLayerType.CLASSES,
-            new HashSet<>(Collections.singletonList(Paths.get("some", "source", "directory")))));
-    Assert.assertNull(cacheReader.getLayerFile(CachedLayerType.RESOURCES, new HashSet<>()));
-    Assert.assertNull(cacheReader.getLayerFile(CachedLayerType.DEPENDENCIES, new HashSet<>()));
+            Collections.singletonList(Paths.get("some", "source", "directory"))));
+    Assert.assertNull(cacheReader.getLayerFile(CachedLayerType.RESOURCES, new ArrayList<>()));
+    Assert.assertNull(cacheReader.getLayerFile(CachedLayerType.DEPENDENCIES, new ArrayList<>()));
 
     try {
-      cacheReader.getLayerFile(CachedLayerType.BASE, new HashSet<>());
+      cacheReader.getLayerFile(CachedLayerType.BASE, new ArrayList<>());
       Assert.fail("Should not be able to get layer file for base image layer");
 
     } catch (UnsupportedOperationException ex) {

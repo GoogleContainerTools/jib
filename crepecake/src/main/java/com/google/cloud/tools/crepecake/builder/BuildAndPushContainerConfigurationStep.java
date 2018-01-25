@@ -29,6 +29,8 @@ import com.google.cloud.tools.crepecake.image.json.ImageToJsonTranslator;
 import com.google.cloud.tools.crepecake.registry.RegistryClient;
 import com.google.cloud.tools.crepecake.registry.RegistryException;
 import com.google.common.io.ByteStreams;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,26 +43,48 @@ class BuildAndPushContainerConfigurationStep implements Callable<BlobDescriptor>
   private static final String DESCRIPTION = "Pushing container configuration";
 
   private final BuildConfiguration buildConfiguration;
-  private final Future<Authorization> pushAuthorizationFuture;
-  private final List<Future<CachedLayer>> cachedLayerFutures;
+  private final ListeningExecutorService listeningExecutorService;
+  private final NonBlockingListenableFuture<Authorization> pushAuthorizationFuture;
+  private final NonBlockingListenableFuture<List<NonBlockingListenableFuture<CachedLayer>>>
+      baseImageLayerFuturesFuture;
+  private final List<NonBlockingListenableFuture<CachedLayer>> applicationLayerFutures;
   private final List<String> entrypoint;
 
   BuildAndPushContainerConfigurationStep(
       BuildConfiguration buildConfiguration,
-      Future<Authorization> pushAuthorizationFuture,
-      List<? extends Future<CachedLayer>> baseImageLayerFutures,
-      List<? extends Future<CachedLayer>> applicationLayerFutures,
+      ListeningExecutorService listeningExecutorService,
+      NonBlockingListenableFuture<Authorization> pushAuthorizationFuture,
+      NonBlockingListenableFuture<List<NonBlockingListenableFuture<CachedLayer>>>
+          baseImageLayerFuturesFuture,
+      List<NonBlockingListenableFuture<CachedLayer>> applicationLayerFutures,
       List<String> entrypoint) {
     this.buildConfiguration = buildConfiguration;
+    this.listeningExecutorService = listeningExecutorService;
     this.pushAuthorizationFuture = pushAuthorizationFuture;
+    this.baseImageLayerFuturesFuture = baseImageLayerFuturesFuture;
+    this.applicationLayerFutures = applicationLayerFutures;
     this.entrypoint = entrypoint;
-
-    cachedLayerFutures = new ArrayList<>(baseImageLayerFutures);
-    cachedLayerFutures.addAll(applicationLayerFutures);
   }
 
+  /** Depends on {@code baseImageLayerFuturesFuture}. */
   @Override
-  public BlobDescriptor call()
+  public BlobDescriptor call() throws ExecutionException, InterruptedException {
+    // TODO: This might need to belong in BuildImageSteps.
+    List<NonBlockingListenableFuture<?>> afterBaseImageLayerFuturesFutureDependencies =
+        new ArrayList<>();
+    afterBaseImageLayerFuturesFutureDependencies.add(pushAuthorizationFuture);
+    afterBaseImageLayerFuturesFutureDependencies.addAll(baseImageLayerFuturesFuture.get());
+    afterBaseImageLayerFuturesFutureDependencies.addAll(applicationLayerFutures);
+    return Futures.whenAllSucceed(afterBaseImageLayerFuturesFutureDependencies)
+        .call(this::afterBaseImageLayerFuturesFuture, listeningExecutorService)
+        .get();
+  }
+
+  /**
+   * Depends on {@code pushAuthorizationFuture}, {@code baseImageLayerFuturesFuture.get()}, and
+   * {@code applicationLayerFutures}.
+   */
+  private BlobDescriptor afterBaseImageLayerFuturesFuture()
       throws ExecutionException, InterruptedException, LayerPropertyNotFoundException,
           DuplicateLayerException, IOException, RegistryException {
     try (Timer timer = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
@@ -73,7 +97,10 @@ class BuildAndPushContainerConfigurationStep implements Callable<BlobDescriptor>
 
       // Constructs the image.
       Image image = new Image();
-      for (Future<CachedLayer> cachedLayerFuture : cachedLayerFutures) {
+      for (Future<CachedLayer> cachedLayerFuture : baseImageLayerFuturesFuture.get()) {
+        image.addLayer(cachedLayerFuture.get());
+      }
+      for (Future<CachedLayer> cachedLayerFuture : applicationLayerFutures) {
         image.addLayer(cachedLayerFuture.get());
       }
       image.setEnvironment(buildConfiguration.getEnvironment());

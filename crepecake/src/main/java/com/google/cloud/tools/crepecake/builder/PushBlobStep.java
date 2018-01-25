@@ -27,7 +27,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-// TODO: Comment and test.
+/** Pushes a BLOB to the target registry. */
 class PushBlobStep implements Callable<Void> {
 
   private static String DESCRIPTION = "Pushing BLOB";
@@ -45,6 +45,7 @@ class PushBlobStep implements Callable<Void> {
     this.pullLayerFuture = pullLayerFuture;
   }
 
+  /** Depends on {@code pushAuthorizationFuture} and {@code pullLayerFuture}. */
   @Override
   public Void call()
       throws IOException, RegistryException, ExecutionException, InterruptedException {
