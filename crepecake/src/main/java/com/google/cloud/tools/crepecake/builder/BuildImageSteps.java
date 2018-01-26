@@ -106,7 +106,7 @@ public class BuildImageSteps {
   /**
    * Gets the container entrypoint.
    *
-   * The entrypoint is {@code java -cp [classpaths] [main class]}.
+   * <p>The entrypoint is {@code java -cp [classpaths] [main class]}.
    */
   private List<String> getEntrypoint() {
     List<String> classPaths = new ArrayList<>();
