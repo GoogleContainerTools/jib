@@ -74,6 +74,15 @@ public class ImageLayers<T extends Layer> implements Iterable<T> {
     return this;
   }
 
+  /** Adds all layers in {@code layers}. */
+  public <U extends T> ImageLayers<T> addAll(ImageLayers<U> layers)
+      throws LayerPropertyNotFoundException, DuplicateLayerException {
+    for (U layer : layers) {
+      add(layer);
+    }
+    return this;
+  }
+
   @Override
   public Iterator<T> iterator() {
     return getLayers().iterator();

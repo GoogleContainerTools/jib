@@ -24,8 +24,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 /** Checks if cached data is outdated. */
 public class CacheChecker {
@@ -102,7 +102,7 @@ public class CacheChecker {
    * @return true if no cached layer exists that are up-to-date with the source files; false
    *     otherwise.
    */
-  public boolean areSourceFilesModified(Set<Path> sourceFiles)
+  public boolean areSourceFilesModified(List<Path> sourceFiles)
       throws IOException, CacheMetadataCorruptedException {
     // Grabs all the layers that have matching source files.
     ImageLayers<CachedLayerWithMetadata> cachedLayersWithSourceFiles =

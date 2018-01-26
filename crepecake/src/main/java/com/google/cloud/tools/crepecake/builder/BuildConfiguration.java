@@ -45,7 +45,10 @@ public class BuildConfiguration {
     TARGET_TAG(true),
 
     /** The credential helper name used by {@link DockerCredentialRetriever}. */
-    CREDENTIAL_HELPER_NAME(false);
+    CREDENTIAL_HELPER_NAME(false),
+
+    /** The main class to use when running the application. */
+    MAIN_CLASS(true);
 
     private final boolean required;
 
@@ -73,6 +76,7 @@ public class BuildConfiguration {
             put(Fields.TARGET_IMAGE_NAME, "target image name");
             put(Fields.TARGET_TAG, "target image tag");
             put(Fields.CREDENTIAL_HELPER_NAME, "credential helper name");
+            put(Fields.MAIN_CLASS, "main class");
           }
         };
 
@@ -115,6 +119,11 @@ public class BuildConfiguration {
 
     public Builder setCredentialHelperName(String credentialHelperName) {
       values.put(Fields.CREDENTIAL_HELPER_NAME, credentialHelperName);
+      return this;
+    }
+
+    public Builder setMainClass(String mainClass) {
+      values.put(Fields.MAIN_CLASS, mainClass);
       return this;
     }
 
@@ -197,5 +206,9 @@ public class BuildConfiguration {
 
   public String getCredentialHelperName() {
     return values.get(Fields.CREDENTIAL_HELPER_NAME);
+  }
+
+  public String getMainClass() {
+    return values.get(Fields.MAIN_CLASS);
   }
 }

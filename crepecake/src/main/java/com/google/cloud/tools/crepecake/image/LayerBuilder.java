@@ -21,8 +21,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 
 /** Builds an {@link UnwrittenLayer} from files. */
@@ -31,14 +31,17 @@ public class LayerBuilder {
   /**
    * The source files to build the layer from. Source files that are directories will have all
    * subfiles in the directory added (but not the directory itself).
+   *
+   * <p>The source files are specified as a list instead of a set to define the order in which they
+   * are added.
    */
-  private final Set<Path> sourceFiles;
+  private final List<Path> sourceFiles;
 
   /** The path of the file in the partial filesystem changeset. */
   private final Path extractionPath;
 
-  public LayerBuilder(Set<Path> sourceFiles, Path extractionPath) {
-    this.sourceFiles = sourceFiles;
+  public LayerBuilder(List<Path> sourceFiles, Path extractionPath) {
+    this.sourceFiles = new ArrayList<>(sourceFiles);
     this.extractionPath = extractionPath;
   }
 
@@ -59,7 +62,9 @@ public class LayerBuilder {
         continue;
       }
 
-      filesystemEntries.add(new TarArchiveEntry(sourceFile.toFile(), extractionPath.toString()));
+      filesystemEntries.add(
+          new TarArchiveEntry(
+              sourceFile.toFile(), extractionPath.resolve(sourceFile.getFileName()).toString()));
     }
 
     TarStreamBuilder tarStreamBuilder = new TarStreamBuilder();
@@ -72,7 +77,7 @@ public class LayerBuilder {
     return new UnwrittenLayer(tarStreamBuilder.toBlob());
   }
 
-  public Set<Path> getSourceFiles() {
-    return sourceFiles;
+  public List<Path> getSourceFiles() {
+    return Collections.unmodifiableList(sourceFiles);
   }
 }

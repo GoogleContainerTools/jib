@@ -21,7 +21,6 @@ import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Metadata about an application layer stored in the cache. This is part of the {@link
@@ -29,7 +28,7 @@ import java.util.Set;
  */
 class LayerMetadata {
 
-  static LayerMetadata from(Set<Path> sourceFiles, FileTime lastModifiedTime) {
+  static LayerMetadata from(List<Path> sourceFiles, FileTime lastModifiedTime) {
     List<String> sourceFilesStrings = new ArrayList<>(sourceFiles.size());
     for (Path sourceFile : sourceFiles) {
       sourceFilesStrings.add(sourceFile.toString());

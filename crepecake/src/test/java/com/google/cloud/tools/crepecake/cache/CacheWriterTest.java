@@ -38,8 +38,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import org.junit.Assert;
@@ -90,8 +89,7 @@ public class CacheWriterTest {
 
     UnwrittenLayer unwrittenLayer = new UnwrittenLayer(Blobs.from(resourceBlob));
 
-    Set<Path> fakeSourceFiles =
-        new HashSet<>(Collections.singletonList(Paths.get("some", "source", "file")));
+    List<Path> fakeSourceFiles = Collections.singletonList(Paths.get("some", "source", "file"));
     LayerBuilder mockLayerBuilder = Mockito.mock(LayerBuilder.class);
     Mockito.when(mockLayerBuilder.build()).thenReturn(unwrittenLayer);
     Mockito.when(mockLayerBuilder.getSourceFiles()).thenReturn(fakeSourceFiles);

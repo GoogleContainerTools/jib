@@ -26,7 +26,7 @@ import com.google.cloud.tools.crepecake.image.LayerBuilder;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Set;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 /** Builds and caches application layers. */
@@ -68,7 +68,7 @@ class BuildAndCacheApplicationLayersStep implements Callable<ImageLayers<CachedL
   }
 
   private CachedLayer buildAndCacheLayer(
-      CachedLayerType layerType, Set<Path> sourceFiles, Path extractionPath)
+      CachedLayerType layerType, List<Path> sourceFiles, Path extractionPath)
       throws IOException, LayerPropertyNotFoundException, DuplicateLayerException {
     LayerBuilder layerBuilder = new LayerBuilder(sourceFiles, extractionPath);
 

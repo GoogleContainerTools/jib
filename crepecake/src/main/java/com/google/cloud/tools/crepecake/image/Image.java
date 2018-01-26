@@ -36,28 +36,39 @@ public class Image {
     return Collections.unmodifiableList(environment);
   }
 
-  public void setEnvironmentVariable(String name, String value) {
+  public Image setEnvironmentVariable(String name, String value) {
     environment.add(name + "=" + value);
+    return this;
   }
 
   /** Adds an environment variable definition in the format {@code NAME=VALUE}. */
-  public void addEnvironmentVariableDefinition(String environmentVariableDefinition) {
+  public Image addEnvironmentVariableDefinition(String environmentVariableDefinition) {
     environment.add(environmentVariableDefinition);
+    return this;
   }
 
   public List<String> getEntrypoint() {
     return Collections.unmodifiableList(entrypoint);
   }
 
-  public void setEntrypoint(List<String> entrypoint) {
+  public Image setEntrypoint(List<String> entrypoint) {
     this.entrypoint = entrypoint;
+    return this;
   }
 
   public List<Layer> getLayers() {
     return layers.getLayers();
   }
 
-  public void addLayer(Layer layer) throws DuplicateLayerException, LayerPropertyNotFoundException {
+  public Image addLayer(Layer layer)
+      throws DuplicateLayerException, LayerPropertyNotFoundException {
     layers.add(layer);
+    return this;
+  }
+
+  public <T extends Layer> Image addLayers(ImageLayers<T> layers)
+      throws LayerPropertyNotFoundException, DuplicateLayerException {
+    this.layers.addAll(layers);
+    return this;
   }
 }

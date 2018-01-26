@@ -32,6 +32,7 @@ public class BuildConfigurationTest {
     String expectedTargetImageName = "targetimage";
     String expectedTargetTag = "targettag";
     String expectedCredentialHelperName = "credentialhelper";
+    String expectedMainClass = "mainclass";
 
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder()
@@ -42,6 +43,7 @@ public class BuildConfigurationTest {
             .setTargetImageName(expectedTargetImageName)
             .setTargetTag(expectedTargetTag)
             .setCredentialHelperName(expectedCredentialHelperName)
+            .setMainClass(expectedMainClass)
             .build();
     Assert.assertEquals(expectedBaseImageServerUrl, buildConfiguration.getBaseImageServerUrl());
     Assert.assertEquals(expectedBaseImageName, buildConfiguration.getBaseImageName());
@@ -50,6 +52,7 @@ public class BuildConfigurationTest {
     Assert.assertEquals(expectedTargetImageName, buildConfiguration.getTargetImageName());
     Assert.assertEquals(expectedTargetTag, buildConfiguration.getTargetTag());
     Assert.assertEquals(expectedCredentialHelperName, buildConfiguration.getCredentialHelperName());
+    Assert.assertEquals(expectedMainClass, buildConfiguration.getMainClass());
   }
 
   @Test

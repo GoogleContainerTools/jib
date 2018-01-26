@@ -21,60 +21,56 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
 /** Implementation of {@link SourceFilesConfiguration} that uses test resources. */
 class TestSourceFilesConfiguration implements SourceFilesConfiguration {
 
   private static final Path EXTRACTION_PATH = Paths.get("some", "extraction", "path");
 
-  private final Set<Path> dependenciesSourceFiles;
-  private final Set<Path> resourcesSourceFiles;
-  private final Set<Path> classesSourceFiles;
+  private final List<Path> dependenciesSourceFiles;
+  private final List<Path> resourcesSourceFiles;
+  private final List<Path> classesSourceFiles;
 
   TestSourceFilesConfiguration() throws URISyntaxException {
     dependenciesSourceFiles =
-        new HashSet<>(
-            Collections.singletonList(
-                Paths.get(Resources.getResource("application/dependencies").toURI())));
+        Collections.singletonList(
+            Paths.get(
+                Resources.getResource("application/dependencies/dependency-1.0.0.jar").toURI()));
     resourcesSourceFiles =
-        new HashSet<>(
-            Collections.singletonList(
-                Paths.get(Resources.getResource("application/resources").toURI())));
+        Collections.singletonList(
+            Paths.get(Resources.getResource("application/resources/").toURI()));
     classesSourceFiles =
-        new HashSet<>(
-            Collections.singletonList(
-                Paths.get(Resources.getResource("application/classes").toURI())));
+        Collections.singletonList(Paths.get(Resources.getResource("application/classes/").toURI()));
   }
 
   @Override
-  public Set<Path> getDependenciesFiles() {
+  public List<Path> getDependenciesFiles() {
     return dependenciesSourceFiles;
   }
 
   @Override
-  public Set<Path> getResourcesFiles() {
+  public List<Path> getResourcesFiles() {
     return resourcesSourceFiles;
   }
 
   @Override
-  public Set<Path> getClassesFiles() {
+  public List<Path> getClassesFiles() {
     return classesSourceFiles;
   }
 
   @Override
   public Path getDependenciesPathOnImage() {
-    return EXTRACTION_PATH;
+    return EXTRACTION_PATH.resolve("libs");
   }
 
   @Override
   public Path getResourcesPathOnImage() {
-    return EXTRACTION_PATH;
+    return EXTRACTION_PATH.resolve("resources");
   }
 
   @Override
   public Path getClassesPathOnImage() {
-    return EXTRACTION_PATH;
+    return EXTRACTION_PATH.resolve("classes");
   }
 }

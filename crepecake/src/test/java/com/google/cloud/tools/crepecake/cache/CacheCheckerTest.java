@@ -34,7 +34,6 @@ import java.nio.file.attribute.FileTime;
 import java.security.DigestException;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -144,19 +143,16 @@ public class CacheCheckerTest {
     CacheChecker cacheChecker = new CacheChecker(testCache);
 
     Assert.assertFalse(
-        cacheChecker.areSourceFilesModified(
-            new HashSet<>(Collections.singletonList(testSourceFiles))));
+        cacheChecker.areSourceFilesModified(Collections.singletonList(testSourceFiles)));
 
     // Changes a file and checks that the change is detected.
     Files.setLastModifiedTime(
         testSourceFiles.resolve("a").resolve("b").resolve("bar"), newerLastModifiedTime);
     Assert.assertTrue(
-        cacheChecker.areSourceFilesModified(
-            new HashSet<>(Collections.singletonList(testSourceFiles))));
+        cacheChecker.areSourceFilesModified(Collections.singletonList(testSourceFiles)));
 
     // Any non-cached directory should be deemed modified.
     Assert.assertTrue(
-        cacheChecker.areSourceFilesModified(
-            new HashSet<>(Collections.singletonList(resourceSourceFiles))));
+        cacheChecker.areSourceFilesModified(Collections.singletonList(resourceSourceFiles)));
   }
 }
