@@ -22,6 +22,7 @@ import com.google.cloud.tools.crepecake.registry.NonexistentDockerCredentialHelp
 import com.google.cloud.tools.crepecake.registry.NonexistentServerUrlDockerCredentialHelperException;
 import java.io.IOException;
 import java.util.concurrent.Callable;
+import javax.annotation.Nullable;
 
 /** Retrieves credentials to push to a target registry. */
 class AuthenticatePushStep implements Callable<Authorization> {
@@ -33,6 +34,7 @@ class AuthenticatePushStep implements Callable<Authorization> {
   }
 
   @Override
+  @Nullable
   public Authorization call()
       throws NonexistentServerUrlDockerCredentialHelperException,
           NonexistentDockerCredentialHelperException, IOException {

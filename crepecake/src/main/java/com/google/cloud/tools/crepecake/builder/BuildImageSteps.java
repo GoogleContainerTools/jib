@@ -120,6 +120,11 @@ public class BuildImageSteps {
     }
   }
 
+  /**
+   * Gets the container entrypoint.
+   *
+   * <p>The entrypoint is {@code java -cp [classpaths] [main class]}.
+   */
   private List<String> getEntrypoint() {
     List<String> classPaths = new ArrayList<>();
     classPaths.add(sourceFilesConfiguration.getDependenciesPathOnImage().resolve("*").toString());
