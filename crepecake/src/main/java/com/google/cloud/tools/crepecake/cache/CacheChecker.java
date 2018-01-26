@@ -76,15 +76,12 @@ public class CacheChecker {
     this.cache = cache;
   }
 
-  /**
-   * @return the cached layer with digest {@code layerDigest} exists in the cache; {@code false}
-   *     otherwise *
-   */
+  /** @return the cached layer with digest {@code layerDigest} */
   public CachedLayer getLayer(DescriptorDigest layerDigest) throws LayerPropertyNotFoundException {
     return cache.getMetadata().getLayers().get(layerDigest);
   }
 
-  // TODO: Add comment.
+  /** @return the most up-to-date layer that is built from the {@code sourceFiles}. */
   public CachedLayer getUpToDateLayerBySourceFiles(List<Path> sourceFiles)
       throws IOException, CacheMetadataCorruptedException {
     // Grabs all the layers that have matching source files.
