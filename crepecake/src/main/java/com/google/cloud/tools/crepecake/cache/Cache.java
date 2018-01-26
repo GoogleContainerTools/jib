@@ -46,12 +46,12 @@ public class Cache implements Closeable {
    */
   public static Cache init(Path cacheDirectory)
       throws NotDirectoryException, CacheMetadataCorruptedException {
-      if (!Files.isDirectory(cacheDirectory)) {
-        throw new NotDirectoryException("The cache can only write to a directory");
-      }
-      CacheMetadata cacheMetadata = loadCacheMetadata(cacheDirectory);
+    if (!Files.isDirectory(cacheDirectory)) {
+      throw new NotDirectoryException("The cache can only write to a directory");
+    }
+    CacheMetadata cacheMetadata = loadCacheMetadata(cacheDirectory);
 
-      return new Cache(cacheDirectory, cacheMetadata);
+    return new Cache(cacheDirectory, cacheMetadata);
   }
 
   private static CacheMetadata loadCacheMetadata(Path cacheDirectory)
