@@ -59,9 +59,9 @@ class PushBlobStep implements Callable<Void> {
       CachedLayer layer = pullLayerFuture.get();
 
       DescriptorDigest layerDigest = layer.getBlobDescriptor().getDigest();
-      //      if (registryClient.checkBlob(layerDigest) != null) {
-      //        return null;
-      //      }
+      if (registryClient.checkBlob(layerDigest) != null) {
+        return null;
+      }
 
       registryClient.pushBlob(layerDigest, layer.getBlob());
 
