@@ -63,9 +63,11 @@ public class LayerBuilder {
         continue;
       }
 
-      filesystemEntries.add(
+      TarArchiveEntry tarArchiveEntry =
           new TarArchiveEntry(
-              sourceFile.toFile(), extractionPath.resolve(sourceFile.getFileName()).toString()));
+              sourceFile.toFile(), extractionPath.resolve(sourceFile.getFileName()).toString());
+      tarArchiveEntry.setModTime(0);
+      filesystemEntries.add(tarArchiveEntry);
     }
 
     TarStreamBuilder tarStreamBuilder = new TarStreamBuilder();
