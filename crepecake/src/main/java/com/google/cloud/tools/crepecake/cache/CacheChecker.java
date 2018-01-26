@@ -84,7 +84,7 @@ public class CacheChecker {
     return cache.getMetadata().getLayers().get(layerDigest);
   }
 
-  // TODO: Add comment.
+  /** @return the most up-to-date layer that is built from the {@code sourceFiles}. */
   public CachedLayer getUpToDateLayerBySourceFiles(List<Path> sourceFiles)
       throws IOException, CacheMetadataCorruptedException {
     // Grabs all the layers that have matching source files.
