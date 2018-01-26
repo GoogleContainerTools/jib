@@ -103,6 +103,11 @@ public class BuildImageSteps {
     }
   }
 
+  /**
+   * Gets the container entrypoint.
+   *
+   * The entrypoint is {@code java -cp [classpaths] [main class]}.
+   */
   private List<String> getEntrypoint() {
     List<String> classPaths = new ArrayList<>();
     addSourceFilesToClassPaths(
@@ -123,11 +128,13 @@ public class BuildImageSteps {
     return Arrays.asList("java", "-cp", entrypoint, buildConfiguration.getMainClass());
   }
 
+  /** Adds each of the source files' path on the image to the {@code classPaths} list. */
   private void addSourceFilesToClassPaths(
-      List<Path> sourceFiles, Path extractionPath, List<String> classPaths) {
+      List<Path> sourceFiles, Path pathOnImage, List<String> classPaths) {
     sourceFiles.forEach(
         sourceFile -> {
-          Path containerPath = extractionPath;
+          // Resolves the source file's path on the image.
+          Path containerPath = pathOnImage;
           if (!Files.isDirectory(sourceFile)) {
             containerPath = containerPath.resolve(sourceFile.getFileName());
           }

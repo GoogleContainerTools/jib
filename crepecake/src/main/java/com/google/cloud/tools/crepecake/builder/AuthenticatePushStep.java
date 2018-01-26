@@ -20,6 +20,8 @@ import com.google.cloud.tools.crepecake.http.Authorization;
 import com.google.cloud.tools.crepecake.registry.DockerCredentialRetriever;
 import com.google.cloud.tools.crepecake.registry.NonexistentDockerCredentialHelperException;
 import com.google.cloud.tools.crepecake.registry.NonexistentServerUrlDockerCredentialHelperException;
+
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
@@ -33,6 +35,7 @@ class AuthenticatePushStep implements Callable<Authorization> {
   }
 
   @Override
+  @Nullable
   public Authorization call()
       throws NonexistentServerUrlDockerCredentialHelperException,
           NonexistentDockerCredentialHelperException, IOException {
