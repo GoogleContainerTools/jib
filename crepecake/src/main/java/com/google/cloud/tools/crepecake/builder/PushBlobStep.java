@@ -16,27 +16,34 @@
 
 package com.google.cloud.tools.crepecake.builder;
 
-import com.google.cloud.tools.crepecake.http.Authorization;
-import com.google.cloud.tools.crepecake.registry.RegistryAuthenticationFailedException;
-import com.google.cloud.tools.crepecake.registry.RegistryAuthenticators;
+import com.google.cloud.tools.crepecake.blob.Blob;
+import com.google.cloud.tools.crepecake.image.DescriptorDigest;
+import com.google.cloud.tools.crepecake.registry.RegistryClient;
 import com.google.cloud.tools.crepecake.registry.RegistryException;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
-/** Retrieves credentials to push from the base image registry. */
-class AuthenticatePullStep implements Callable<Authorization> {
+/** Pushes a BLOB to the target registry. */
+class PushBlobStep implements Callable<Void> {
 
-  private final BuildConfiguration buildConfiguration;
+  private final RegistryClient registryClient;
+  private final Blob blob;
+  private final DescriptorDigest digest;
 
-  AuthenticatePullStep(BuildConfiguration buildConfiguration) {
-    this.buildConfiguration = buildConfiguration;
+  PushBlobStep(RegistryClient registryClient, Blob blob, DescriptorDigest digest) {
+    this.registryClient = registryClient;
+    this.blob = blob;
+    this.digest = digest;
   }
 
   @Override
-  public Authorization call()
-      throws RegistryAuthenticationFailedException, IOException, RegistryException {
-    return RegistryAuthenticators.forOther(
-            buildConfiguration.getBaseImageServerUrl(), buildConfiguration.getBaseImageName())
-        .authenticate();
+  public Void call() throws IOException, RegistryException {
+    if (registryClient.checkBlob(digest) != null) {
+      return null;
+    }
+
+    registryClient.pushBlob(digest, blob);
+
+    return null;
   }
 }

@@ -51,6 +51,19 @@ public class ImageLayers<T extends Layer> implements Iterable<T> {
     return layers.get(index);
   }
 
+  /** @return the layer by digest */
+  public T get(DescriptorDigest digest) throws LayerPropertyNotFoundException {
+    if (!has(digest)) {
+      return null;
+    }
+    for (T layer : layers) {
+      if (layer.getBlobDescriptor().getDigest().equals(digest)) {
+        return layer;
+      }
+    }
+    throw new IllegalStateException("Layer digest exists but layer not found");
+  }
+
   /** @return true if the layer with the specified digest exists; false otherwise */
   public boolean has(DescriptorDigest digest) {
     return layerDigests.contains(digest);

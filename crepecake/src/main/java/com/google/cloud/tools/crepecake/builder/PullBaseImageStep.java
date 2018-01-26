@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Callable;
 
+/** Pulls the base image manifest. */
 class PullBaseImageStep implements Callable<Image> {
 
   private final BuildConfiguration buildConfiguration;

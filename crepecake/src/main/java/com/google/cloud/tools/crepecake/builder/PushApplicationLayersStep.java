@@ -24,7 +24,6 @@ import com.google.cloud.tools.crepecake.registry.RegistryException;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
-// TODO: First check for existence.
 /** Pushes the application layers to the target registry. */
 class PushApplicationLayersStep implements Callable<ImageLayers<CachedLayer>> {
 
@@ -49,10 +48,10 @@ class PushApplicationLayersStep implements Callable<ImageLayers<CachedLayer>> {
             buildConfiguration.getTargetServerUrl(),
             buildConfiguration.getTargetImageName());
 
-    // TODO: Pushing any BLOB should be in a separate build step.
     // Pushes the application layers.
     for (CachedLayer layer : applicationLayers) {
-      registryClient.pushBlob(layer.getBlobDescriptor().getDigest(), layer.getBlob());
+      new PushBlobStep(registryClient, layer.getBlob(), layer.getBlobDescriptor().getDigest())
+          .call();
     }
 
     return applicationLayers;

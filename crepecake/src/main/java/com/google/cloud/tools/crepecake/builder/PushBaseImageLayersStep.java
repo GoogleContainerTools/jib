@@ -24,6 +24,7 @@ import com.google.cloud.tools.crepecake.registry.RegistryException;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
+/** Pushes the base image layers to the target registry. */
 class PushBaseImageLayersStep implements Callable<Void> {
 
   private final BuildConfiguration buildConfiguration;
@@ -47,10 +48,10 @@ class PushBaseImageLayersStep implements Callable<Void> {
             buildConfiguration.getTargetServerUrl(),
             buildConfiguration.getTargetImageName());
 
-    // TODO: Pushing any BLOB should be in a separate build step.
     // Pushes the base image layers.
     for (CachedLayer layer : baseImageLayers) {
-      registryClient.pushBlob(layer.getBlobDescriptor().getDigest(), layer.getBlob());
+      new PushBlobStep(registryClient, layer.getBlob(), layer.getBlobDescriptor().getDigest())
+          .call();
     }
 
     return null;

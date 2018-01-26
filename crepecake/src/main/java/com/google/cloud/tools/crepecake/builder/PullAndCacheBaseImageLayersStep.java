@@ -17,10 +17,8 @@
 package com.google.cloud.tools.crepecake.builder;
 
 import com.google.cloud.tools.crepecake.cache.Cache;
-import com.google.cloud.tools.crepecake.cache.CacheWriter;
 import com.google.cloud.tools.crepecake.cache.CachedLayer;
 import com.google.cloud.tools.crepecake.http.Authorization;
-import com.google.cloud.tools.crepecake.image.DescriptorDigest;
 import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
 import com.google.cloud.tools.crepecake.image.Image;
 import com.google.cloud.tools.crepecake.image.ImageLayers;
@@ -28,10 +26,10 @@ import com.google.cloud.tools.crepecake.image.Layer;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.crepecake.registry.RegistryClient;
 import com.google.cloud.tools.crepecake.registry.RegistryException;
-import com.google.common.io.CountingOutputStream;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
+/** Pulls and caches the base image layers. */
 class PullAndCacheBaseImageLayersStep implements Callable<ImageLayers<CachedLayer>> {
 
   private final BuildConfiguration buildConfiguration;
@@ -62,13 +60,9 @@ class PullAndCacheBaseImageLayersStep implements Callable<ImageLayers<CachedLaye
 
     ImageLayers<CachedLayer> baseImageLayers = new ImageLayers<>();
     for (Layer layer : baseImage.getLayers()) {
-      // TODO: Separate this into another Step.
-      DescriptorDigest layerDigest = layer.getBlobDescriptor().getDigest();
-      CacheWriter cacheWriter = new CacheWriter(cache);
-      CountingOutputStream layerOutputStream = cacheWriter.getLayerOutputStream(layerDigest);
-      registryClient.pullBlob(layerDigest, layerOutputStream);
-      CachedLayer cachedLayer = cacheWriter.getCachedLayer(layerDigest, layerOutputStream);
-      baseImageLayers.add(cachedLayer);
+      PullAndCacheBaseImageLayerStep pullAndCacheBaseImageLayerStep =
+          new PullAndCacheBaseImageLayerStep(registryClient, cache, layer);
+      baseImageLayers.add(pullAndCacheBaseImageLayerStep.call());
     }
 
     return baseImageLayers;
