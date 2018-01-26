@@ -31,6 +31,34 @@ public class Timer implements Closeable {
     this(buildLogger, label, 0);
   }
 
+  public Timer(String label) {
+    this(
+        new BuildLogger() {
+
+          @Override
+          public void debug(CharSequence message) {
+            System.out.println("DEBUG: " + message);
+          }
+
+          @Override
+          public void info(CharSequence message) {
+            System.out.println("INFO: " + message);
+          }
+
+          @Override
+          public void warn(CharSequence message) {
+            System.out.println("WARN: " + message);
+          }
+
+          @Override
+          public void error(CharSequence message) {
+            System.out.println("ERROR: " + message);
+          }
+        },
+        label,
+        0);
+  }
+
   private Timer(BuildLogger buildLogger, String label, int depth) {
     this.buildLogger = buildLogger;
     this.label = label;

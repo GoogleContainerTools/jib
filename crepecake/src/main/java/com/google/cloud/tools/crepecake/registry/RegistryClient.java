@@ -150,7 +150,7 @@ public class RegistryClient {
     BlobPusher blobPusher = new BlobPusher(registryEndpointProperties, blobDigest, blob);
 
     try (Timer t = parentTimer.subTimer("pushBlob")) {
-      try (Timer t2 = t.subTimer("pushBlob POST")) {
+      try (Timer t2 = t.subTimer("pushBlob POST " + blobDigest)) {
 
         // POST /v2/<name>/blobs/uploads/?mount={blob.digest}
         String locationHeader = callRegistryEndpoint(blobPusher.initializer());
@@ -160,12 +160,12 @@ public class RegistryClient {
         }
         URL patchLocation = new URL(locationHeader);
 
-        t2.lap("pushBlob PATCH");
+        t2.lap("pushBlob PATCH " + blobDigest);
 
         // PATCH <Location> with BLOB
         URL putLocation = new URL(callRegistryEndpoint(blobPusher.writer(patchLocation)));
 
-        t2.lap("pushBlob PUT");
+        t2.lap("pushBlob PUT " + blobDigest);
 
         // PUT <Location>?digest={blob.digest}
         callRegistryEndpoint(blobPusher.committer(putLocation));

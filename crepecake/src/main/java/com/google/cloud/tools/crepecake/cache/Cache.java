@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.crepecake.cache;
 
+import com.google.cloud.tools.crepecake.Timer;
 import com.google.cloud.tools.crepecake.cache.json.CacheMetadataTemplate;
 import com.google.cloud.tools.crepecake.image.DuplicateLayerException;
 import com.google.cloud.tools.crepecake.image.LayerPropertyNotFoundException;
@@ -45,30 +46,34 @@ public class Cache implements Closeable {
    */
   public static Cache init(Path cacheDirectory)
       throws NotDirectoryException, CacheMetadataCorruptedException {
-    if (!Files.isDirectory(cacheDirectory)) {
-      throw new NotDirectoryException("The cache can only write to a directory");
-    }
-    CacheMetadata cacheMetadata = loadCacheMetadata(cacheDirectory);
+      if (!Files.isDirectory(cacheDirectory)) {
+        throw new NotDirectoryException("The cache can only write to a directory");
+      }
+      CacheMetadata cacheMetadata = loadCacheMetadata(cacheDirectory);
 
-    return new Cache(cacheDirectory, cacheMetadata);
+      return new Cache(cacheDirectory, cacheMetadata);
   }
 
   private static CacheMetadata loadCacheMetadata(Path cacheDirectory)
       throws CacheMetadataCorruptedException {
-    Path cacheMetadataJsonFile = cacheDirectory.resolve(CacheFiles.METADATA_FILENAME);
+    try (Timer timer = new Timer("Checking cache metadata")) {
+      Path cacheMetadataJsonFile = cacheDirectory.resolve(CacheFiles.METADATA_FILENAME);
 
-    if (!Files.exists(cacheMetadataJsonFile)) {
-      return new CacheMetadata();
-    }
+      if (!Files.exists(cacheMetadataJsonFile)) {
+        return new CacheMetadata();
+      }
 
-    try {
-      CacheMetadataTemplate cacheMetadataJson =
-          JsonTemplateMapper.readJsonFromFile(cacheMetadataJsonFile, CacheMetadataTemplate.class);
-      return CacheMetadataTranslator.fromTemplate(cacheMetadataJson, cacheDirectory);
+      try {
+        timer.lap("Reading cache metadata");
+        CacheMetadataTemplate cacheMetadataJson =
+            JsonTemplateMapper.readJsonFromFile(cacheMetadataJsonFile, CacheMetadataTemplate.class);
+        timer.lap("Translating cache metadata");
+        return CacheMetadataTranslator.fromTemplate(cacheMetadataJson, cacheDirectory);
 
-    } catch (IOException ex) {
-      // The cache metadata is probably corrupted.
-      throw new CacheMetadataCorruptedException(ex);
+      } catch (IOException ex) {
+        // The cache metadata is probably corrupted.
+        throw new CacheMetadataCorruptedException(ex);
+      }
     }
   }
 
@@ -102,13 +107,15 @@ public class Cache implements Closeable {
 
   /** Saves the updated cache metadata back to the cache. */
   private void saveCacheMetadata(Path cacheDirectory) throws IOException {
-    Path cacheMetadataJsonFile = cacheDirectory.resolve(CacheFiles.METADATA_FILENAME);
+    try (Timer ignored = new Timer("Saving cache metadata")) {
+      Path cacheMetadataJsonFile = cacheDirectory.resolve(CacheFiles.METADATA_FILENAME);
 
-    CacheMetadataTemplate cacheMetadataJson = CacheMetadataTranslator.toTemplate(cacheMetadata);
+      CacheMetadataTemplate cacheMetadataJson = CacheMetadataTranslator.toTemplate(cacheMetadata);
 
-    try (OutputStream fileOutputStream =
-        new BufferedOutputStream(Files.newOutputStream(cacheMetadataJsonFile))) {
-      JsonTemplateMapper.toBlob(cacheMetadataJson).writeTo(fileOutputStream);
+      try (OutputStream fileOutputStream =
+          new BufferedOutputStream(Files.newOutputStream(cacheMetadataJsonFile))) {
+        JsonTemplateMapper.toBlob(cacheMetadataJson).writeTo(fileOutputStream);
+      }
     }
   }
 }

@@ -37,6 +37,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
+import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -80,6 +81,16 @@ public class BuildImageMojo extends AbstractMojo {
   @Parameter(defaultValue = "gcr.io/distroless/java", required = true)
   private String from;
 
+  // TODO: Remove these in favor of "from".
+  @Parameter(defaultValue = "gcr.io", required = true)
+  private String baseImageRegistry;
+
+  @Parameter(defaultValue = "distroless/java", required = true)
+  private String baseImageRepository;
+
+  @Parameter(defaultValue = "latest", required = true)
+  private String baseImageTag;
+
   @Parameter(required = true)
   private String registry;
 
@@ -100,15 +111,19 @@ public class BuildImageMojo extends AbstractMojo {
   @Override
   public void execute() throws MojoExecutionException {
     if (mainClass == null) {
-      mainClass = getMainClassFromMavenJarPlugin();
-      if (mainClass == null) {
-        throw new MojoExceptionBuilder(
-                new MojoFailureException("Could not find main class specified in maven-jar-plugin"))
-            .suggest("add a `mainClass` configuration to jib-maven-plugin")
-            .build();
-      }
+      Plugin mavenJarPlugin = project.getPlugin("org.apache.maven.plugins:maven-jar-plugin");
+      if (mavenJarPlugin != null) {
+        mainClass = getMainClassFromMavenJarPlugin(mavenJarPlugin);
+        if (mainClass == null) {
+          throw new MojoExceptionBuilder(
+                  new MojoFailureException(
+                      "Could not find main class specified in maven-jar-plugin"))
+              .suggest("add a `mainClass` configuration to jib-maven-plugin")
+              .build();
+        }
 
-      getLog().info("Using main class from maven-jar-plugin: " + mainClass);
+        getLog().info("Using main class from maven-jar-plugin: " + mainClass);
+      }
     }
 
     SourceFilesConfiguration sourceFilesConfiguration = getSourceFilesConfiguration();
@@ -137,9 +152,9 @@ public class BuildImageMojo extends AbstractMojo {
                     getLog().error(charSequence);
                   }
                 })
-            .setBaseImageServerUrl("gcr.io")
-            .setBaseImageName("distroless/java")
-            .setBaseImageTag("latest")
+            .setBaseImageServerUrl(baseImageRegistry)
+            .setBaseImageName(baseImageRepository)
+            .setBaseImageTag(baseImageTag)
             .setTargetServerUrl(registry)
             .setTargetImageName(repository)
             .setTargetTag(tag)
@@ -224,9 +239,8 @@ public class BuildImageMojo extends AbstractMojo {
   }
 
   @Nullable
-  private String getMainClassFromMavenJarPlugin() {
-    Xpp3Dom jarConfiguration =
-        (Xpp3Dom) project.getPlugin("org.apache.maven.plugins:maven-jar-plugin").getConfiguration();
+  private String getMainClassFromMavenJarPlugin(Plugin mavenJarPlugin) {
+    Xpp3Dom jarConfiguration = (Xpp3Dom) mavenJarPlugin.getConfiguration();
     if (jarConfiguration == null) {
       return null;
     }

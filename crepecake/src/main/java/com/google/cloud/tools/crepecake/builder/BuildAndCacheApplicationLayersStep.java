@@ -98,7 +98,12 @@ class BuildAndCacheApplicationLayersStep
 
                 LayerBuilder layerBuilder = new LayerBuilder(sourceFiles, extractionPath);
 
-                return new CacheWriter(cache).writeLayer(layerBuilder, layerType);
+                cachedLayer = new CacheWriter(cache).writeLayer(layerBuilder, layerType);
+                // TODO: Remove
+                buildConfiguration
+                    .getBuildLogger()
+                    .debug(description + " built " + cachedLayer.getBlobDescriptor().getDigest());
+                return cachedLayer;
               }
             }));
   }

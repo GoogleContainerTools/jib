@@ -25,6 +25,7 @@ import org.junit.Test;
 
 public class BuildConfigurationTest {
 
+  // TODO: Should test also if value is set but null
   @Test
   public void testBuilder() {
     String expectedBaseImageServerUrl = "someserver";

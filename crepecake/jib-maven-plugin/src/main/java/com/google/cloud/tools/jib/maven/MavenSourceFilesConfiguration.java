@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.model.Resource;
 import org.apache.maven.project.MavenProject;
 
 class MavenSourceFilesConfiguration implements SourceFilesConfiguration {
@@ -37,37 +36,29 @@ class MavenSourceFilesConfiguration implements SourceFilesConfiguration {
   MavenSourceFilesConfiguration(MavenProject project) throws IOException {
     Path classesOutputDir = Paths.get(project.getBuild().getOutputDirectory());
 
+    // Gets all the dependencies in path-sorted order.
     for (Artifact artifact : project.getArtifacts()) {
       dependenciesFiles.add(artifact.getFile().toPath());
     }
     Collections.sort(dependenciesFiles);
 
-    for (Resource resource : project.getResources()) {
-      Path resourceSourceDir = Paths.get(resource.getDirectory());
-      Files.list(resourceSourceDir)
-          .forEach(
-              resourceSourceDirFIle -> {
-                Path correspondingOutputDirFile =
-                    classesOutputDir.resolve(resourceSourceDir.relativize(resourceSourceDirFIle));
-                if (Files.exists(correspondingOutputDirFile)) {
-                  resourcesFiles.add(correspondingOutputDirFile);
-                }
-              });
-    }
-
     Path classesSourceDir = Paths.get(project.getBuild().getSourceDirectory());
 
-    Files.list(classesSourceDir)
+    // Gets the classes files in the 'classes' output directory. It finds the files that are classes
+    // files by matching them against the .java source files.
+    // TODO: Make this actually match against the .java source files.
+    Files.list(classesOutputDir)
         .forEach(
-            classesSourceDirFile -> {
-              Path correspondingOutputDirFile =
-                  classesOutputDir.resolve(classesSourceDir.relativize(classesSourceDirFile));
-              if (Files.exists(correspondingOutputDirFile)) {
-                classesFiles.add(correspondingOutputDirFile);
+            classesOutputDirFile -> {
+              Path correspondingSourceDirFile =
+                  classesSourceDir.resolve(classesOutputDir.relativize(classesOutputDirFile));
+              if (Files.exists(correspondingSourceDirFile)) {
+                classesFiles.add(classesOutputDirFile);
+              } else {
+                // Adds the file as a resource since it is not a class file.
+                resourcesFiles.add(classesOutputDirFile);
               }
             });
-
-    // TODO: Check if there are still unaccounted-for files in the runtime classpath.
   }
 
   @Override

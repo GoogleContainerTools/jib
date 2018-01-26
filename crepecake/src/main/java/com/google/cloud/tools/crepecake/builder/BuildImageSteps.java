@@ -112,18 +112,19 @@ public class BuildImageSteps {
 
           timer2.lap("Setting up container configuration push");
           // Builds and pushes the container configuration.
-          NonBlockingListenableFuture<BlobDescriptor> buildAndPushContainerConfigurationFuture =
-              new NonBlockingListenableFuture<>(
-                  Futures.whenAllSucceed(pullBaseImageLayerFuturesFuture)
-                      .call(
-                          new BuildAndPushContainerConfigurationStep(
-                              buildConfiguration,
-                              listeningExecutorService,
-                              authenticatePushFuture,
-                              pullBaseImageLayerFuturesFuture,
-                              buildAndCacheApplicationLayerFutures,
-                              getEntrypoint()),
-                          listeningExecutorService));
+          NonBlockingListenableFuture<NonBlockingListenableFuture<BlobDescriptor>>
+              buildAndPushContainerConfigurationFutureFuture =
+                  new NonBlockingListenableFuture<>(
+                      Futures.whenAllSucceed(pullBaseImageLayerFuturesFuture)
+                          .call(
+                              new BuildAndPushContainerConfigurationStep(
+                                  buildConfiguration,
+                                  listeningExecutorService,
+                                  authenticatePushFuture,
+                                  pullBaseImageLayerFuturesFuture,
+                                  buildAndCacheApplicationLayerFutures,
+                                  getEntrypoint()),
+                              listeningExecutorService));
 
           timer2.lap("Setting up application layer push");
           // Pushes the application layers.
@@ -138,7 +139,9 @@ public class BuildImageSteps {
           timer2.lap("Setting up image manifest push");
           // Pushes the new image manifest.
           ListenableFuture<Void> pushImageFuture =
-              Futures.whenAllSucceed(pushBaseImageLayerFuturesFuture)
+              Futures.whenAllSucceed(
+                      pushBaseImageLayerFuturesFuture,
+                      buildAndPushContainerConfigurationFutureFuture)
                   .call(
                       new PushImageStep(
                           buildConfiguration,
@@ -148,7 +151,7 @@ public class BuildImageSteps {
                           buildAndCacheApplicationLayerFutures,
                           pushBaseImageLayerFuturesFuture,
                           pushApplicationLayersFuture,
-                          buildAndPushContainerConfigurationFuture),
+                          buildAndPushContainerConfigurationFutureFuture),
                       listeningExecutorService);
 
           timer2.lap("Running push new image");

@@ -38,16 +38,17 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-class BuildAndPushContainerConfigurationStep implements Callable<BlobDescriptor> {
+class BuildAndPushContainerConfigurationStep
+    implements Callable<NonBlockingListenableFuture<BlobDescriptor>> {
 
-  private static final String DESCRIPTION = "Pushing container configuration";
+  private static final String DESCRIPTION = "Building container configuration";
 
   private final BuildConfiguration buildConfiguration;
   private final ListeningExecutorService listeningExecutorService;
   private final NonBlockingListenableFuture<Authorization> pushAuthorizationFuture;
   private final NonBlockingListenableFuture<List<NonBlockingListenableFuture<CachedLayer>>>
-      baseImageLayerFuturesFuture;
-  private final List<NonBlockingListenableFuture<CachedLayer>> applicationLayerFutures;
+      pullBaseImageLayerFuturesFuture;
+  private final List<NonBlockingListenableFuture<CachedLayer>> buildApplicationLayerFutures;
   private final List<String> entrypoint;
 
   BuildAndPushContainerConfigurationStep(
@@ -55,34 +56,35 @@ class BuildAndPushContainerConfigurationStep implements Callable<BlobDescriptor>
       ListeningExecutorService listeningExecutorService,
       NonBlockingListenableFuture<Authorization> pushAuthorizationFuture,
       NonBlockingListenableFuture<List<NonBlockingListenableFuture<CachedLayer>>>
-          baseImageLayerFuturesFuture,
-      List<NonBlockingListenableFuture<CachedLayer>> applicationLayerFutures,
+          pullBaseImageLayerFuturesFuture,
+      List<NonBlockingListenableFuture<CachedLayer>> buildApplicationLayerFutures,
       List<String> entrypoint) {
     this.buildConfiguration = buildConfiguration;
     this.listeningExecutorService = listeningExecutorService;
     this.pushAuthorizationFuture = pushAuthorizationFuture;
-    this.baseImageLayerFuturesFuture = baseImageLayerFuturesFuture;
-    this.applicationLayerFutures = applicationLayerFutures;
+    this.pullBaseImageLayerFuturesFuture = pullBaseImageLayerFuturesFuture;
+    this.buildApplicationLayerFutures = buildApplicationLayerFutures;
     this.entrypoint = entrypoint;
   }
 
-  /** Depends on {@code baseImageLayerFuturesFuture}. */
+  /** Depends on {@code pullBaseImageLayerFuturesFuture}. */
   @Override
-  public BlobDescriptor call() throws ExecutionException, InterruptedException {
+  public NonBlockingListenableFuture<BlobDescriptor> call()
+      throws ExecutionException, InterruptedException {
     // TODO: This might need to belong in BuildImageSteps.
     List<NonBlockingListenableFuture<?>> afterBaseImageLayerFuturesFutureDependencies =
         new ArrayList<>();
     afterBaseImageLayerFuturesFutureDependencies.add(pushAuthorizationFuture);
-    afterBaseImageLayerFuturesFutureDependencies.addAll(baseImageLayerFuturesFuture.get());
-    afterBaseImageLayerFuturesFutureDependencies.addAll(applicationLayerFutures);
-    return Futures.whenAllSucceed(afterBaseImageLayerFuturesFutureDependencies)
-        .call(this::afterBaseImageLayerFuturesFuture, listeningExecutorService)
-        .get();
+    afterBaseImageLayerFuturesFutureDependencies.addAll(pullBaseImageLayerFuturesFuture.get());
+    afterBaseImageLayerFuturesFutureDependencies.addAll(buildApplicationLayerFutures);
+    return new NonBlockingListenableFuture<>(
+        Futures.whenAllSucceed(afterBaseImageLayerFuturesFutureDependencies)
+            .call(this::afterBaseImageLayerFuturesFuture, listeningExecutorService));
   }
 
   /**
-   * Depends on {@code pushAuthorizationFuture}, {@code baseImageLayerFuturesFuture.get()}, and
-   * {@code applicationLayerFutures}.
+   * Depends on {@code pushAuthorizationFuture}, {@code pullBaseImageLayerFuturesFuture.get()}, and
+   * {@code buildApplicationLayerFutures}.
    */
   private BlobDescriptor afterBaseImageLayerFuturesFuture()
       throws ExecutionException, InterruptedException, LayerPropertyNotFoundException,
@@ -97,10 +99,10 @@ class BuildAndPushContainerConfigurationStep implements Callable<BlobDescriptor>
 
       // Constructs the image.
       Image image = new Image();
-      for (Future<CachedLayer> cachedLayerFuture : baseImageLayerFuturesFuture.get()) {
+      for (Future<CachedLayer> cachedLayerFuture : pullBaseImageLayerFuturesFuture.get()) {
         image.addLayer(cachedLayerFuture.get());
       }
-      for (Future<CachedLayer> cachedLayerFuture : applicationLayerFutures) {
+      for (Future<CachedLayer> cachedLayerFuture : buildApplicationLayerFutures) {
         image.addLayer(cachedLayerFuture.get());
       }
       image.setEnvironment(buildConfiguration.getEnvironment());

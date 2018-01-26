@@ -166,7 +166,7 @@ public class BuildConfiguration {
     public BuildConfiguration build() {
       List<String> descriptions = new ArrayList<>();
       for (Fields field : Fields.values()) {
-        if (field.isRequired() && !values.containsKey(field)) {
+        if (field.isRequired() && (!values.containsKey(field) || values.get(field) == null)) {
           descriptions.add(FIELD_DESCRIPTIONS.get(field));
         }
       }

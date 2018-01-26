@@ -29,7 +29,7 @@ import java.util.concurrent.ExecutionException;
 
 class PushLayersStep implements Callable<List<NonBlockingListenableFuture<Void>>> {
 
-  private static final String DESCRIPTION = "Setting up push";
+  private static final String DESCRIPTION = "Setting up to push layers";
 
   private final BuildConfiguration buildConfiguration;
   private final ListeningExecutorService listeningExecutorService;
