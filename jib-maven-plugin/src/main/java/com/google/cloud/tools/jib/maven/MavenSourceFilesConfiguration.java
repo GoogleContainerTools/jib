@@ -21,17 +21,17 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.model.Resource;
 import org.apache.maven.project.MavenProject;
 
 class MavenSourceFilesConfiguration implements SourceFilesConfiguration {
 
-  private final Set<Path> dependenciesFiles = new HashSet<>();
-  private final Set<Path> resourcesFiles = new HashSet<>();
-  private final Set<Path> classesFiles = new HashSet<>();
+  private final List<Path> dependenciesFiles = new ArrayList<>();
+  private final List<Path> resourcesFiles = new ArrayList<>();
+  private final List<Path> classesFiles = new ArrayList<>();
 
   MavenSourceFilesConfiguration(MavenProject project) throws IOException {
     Path classesOutputDir = Paths.get(project.getBuild().getOutputDirectory());
@@ -70,32 +70,32 @@ class MavenSourceFilesConfiguration implements SourceFilesConfiguration {
   }
 
   @Override
-  public Set<Path> getDependenciesFiles() {
+  public List<Path> getDependenciesFiles() {
     return dependenciesFiles;
   }
 
   @Override
-  public Set<Path> getResourcesFiles() {
+  public List<Path> getResourcesFiles() {
     return resourcesFiles;
   }
 
   @Override
-  public Set<Path> getClassesFiles() {
+  public List<Path> getClassesFiles() {
     return classesFiles;
   }
 
   @Override
-  public Path getDependenciesExtractionPath() {
+  public Path getDependenciesPathOnImage() {
     return Paths.get("app", "libs");
   }
 
   @Override
-  public Path getResourcesExtractionPath() {
+  public Path getResourcesPathOnImage() {
     return Paths.get("app", "resources");
   }
 
   @Override
-  public Path getClassesExtractionPath() {
+  public Path getClassesPathOnImage() {
     return Paths.get("app", "classes");
   }
 }
