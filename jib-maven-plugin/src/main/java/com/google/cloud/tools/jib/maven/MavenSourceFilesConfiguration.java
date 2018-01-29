@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.crepecake.builder.SourceFilesConfiguration;
+import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
