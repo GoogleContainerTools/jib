@@ -45,35 +45,24 @@ import org.apache.maven.project.MavenProject;
 @Mojo(name = "build", requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM)
 public class BuildImageMojo extends AbstractMojo {
 
-  private static class MojoExceptionBuilder {
-
-    private Throwable cause;
-    private String suggestion;
-
-    private MojoExceptionBuilder(Throwable cause) {
-      this.cause = cause;
-    }
-
-    private MojoExceptionBuilder suggest(String suggestion) {
-      this.suggestion = suggestion;
-      return this;
-    }
-
-    private MojoExecutionException build() {
-      StringBuilder message = new StringBuilder("Build image failed");
-      if (suggestion != null) {
-        message.append("\nPerhaps you should ");
-        message.append(suggestion);
-      }
-      return new MojoExecutionException(message.toString(), cause);
-    }
-  }
+  /** Directory name for the cache. The directory will be relative to the build output directory. */
+  private static final String CACHE_DIRECTORY_NAME = "jib-cache";
 
   @Parameter(defaultValue = "${project}", readonly = true)
   private MavenProject project;
 
+  // TODO: Replace the separate base image parameters with this.
   @Parameter(defaultValue = "gcr.io/distroless/java", required = true)
   private String from;
+
+  @Parameter(defaultValue = "gcr.io", required = true)
+  private String baseImageRegistry;
+
+  @Parameter(defaultValue = "distroless/java", required = true)
+  private String baseImageRepository;
+
+  @Parameter(defaultValue = "latest", required = true)
+  private String baseImageTag;
 
   @Parameter(required = true)
   private String registry;
@@ -97,9 +86,9 @@ public class BuildImageMojo extends AbstractMojo {
 
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder()
-            .setBaseImageServerUrl("registry.hub.docker.com")
-            .setBaseImageName("frolvlad/alpine-oraclejdk8")
-            .setBaseImageTag("latest")
+            .setBaseImageServerUrl(baseImageRegistry)
+            .setBaseImageName(baseImageRepository)
+            .setBaseImageTag(baseImageTag)
             .setTargetServerUrl(registry)
             .setTargetImageName(repository)
             .setTargetTag(tag)
@@ -107,13 +96,13 @@ public class BuildImageMojo extends AbstractMojo {
             .setMainClass(mainClass)
             .build();
 
-    Path cacheDirectory = Paths.get(project.getBuild().getDirectory(), "jib-cache");
+    Path cacheDirectory = Paths.get(project.getBuild().getDirectory(), CACHE_DIRECTORY_NAME);
     if (!Files.exists(cacheDirectory)) {
       try {
         Files.createDirectory(cacheDirectory);
 
       } catch (IOException ex) {
-        throw new MojoExecutionException("Could not create cache directory", ex);
+        throw new MojoExecutionException("Could not create cache directory: " + cacheDirectory, ex);
       }
     }
 
@@ -123,20 +112,7 @@ public class BuildImageMojo extends AbstractMojo {
       buildImageSteps.run();
 
     } catch (RegistryUnauthorizedException ex) {
-      MojoExceptionBuilder mojoExceptionBuilder = new MojoExceptionBuilder(ex);
-
-      if (ex.getHttpResponseException().getStatusCode() == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
-        String targetImage = registry + "/" + repository + ":" + tag;
-        mojoExceptionBuilder.suggest("make sure your have permission to push to " + targetImage);
-
-      } else if (credentialHelperName == null) {
-        mojoExceptionBuilder.suggest("set the configuration 'credentialHelperName'");
-
-      } else {
-        mojoExceptionBuilder.suggest("make sure your credential helper is set up correctly");
-      }
-
-      throw mojoExceptionBuilder.build();
+      handleRegistryUnauthorizedException(ex);
 
     } catch (IOException
         | RegistryException
@@ -147,6 +123,7 @@ public class BuildImageMojo extends AbstractMojo {
         | NonexistentDockerCredentialHelperException
         | RegistryAuthenticationFailedException
         | NonexistentServerUrlDockerCredentialHelperException ex) {
+      // TODO: Add more suggestions for various build failures.
       throw new MojoExceptionBuilder(ex).build();
     }
   }
@@ -156,6 +133,7 @@ public class BuildImageMojo extends AbstractMojo {
       SourceFilesConfiguration sourceFilesConfiguration =
           new MavenSourceFilesConfiguration(project);
 
+      // Logs the different source files used.
       getLog().info("Dependencies:");
       sourceFilesConfiguration
           .getDependenciesFiles()
@@ -176,5 +154,26 @@ public class BuildImageMojo extends AbstractMojo {
     } catch (IOException ex) {
       throw new MojoExecutionException("Obtaining project build output files failed", ex);
     }
+  }
+
+  private void handleRegistryUnauthorizedException(RegistryUnauthorizedException ex) throws MojoExecutionException {
+    MojoExceptionBuilder mojoExceptionBuilder = new MojoExceptionBuilder(ex);
+
+    if (ex.getHttpResponseException().getStatusCode() == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
+      // No permissions to push to target image.
+      String targetImage = registry + "/" + repository + ":" + tag;
+      mojoExceptionBuilder.suggest("make sure your have permission to push to " + targetImage);
+
+    } else if (credentialHelperName == null) {
+      // Credential helper not defined.
+      mojoExceptionBuilder.suggest("set the configuration 'credentialHelperName'");
+
+    } else {
+      // Credential helper probably was not configured correctly or did not have the necessary
+      // credentials.
+      mojoExceptionBuilder.suggest("make sure your credential helper is set up correctly");
+    }
+
+    throw mojoExceptionBuilder.build();
   }
 }
