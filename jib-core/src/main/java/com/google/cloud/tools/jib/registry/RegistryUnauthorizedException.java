@@ -25,7 +25,7 @@ public class RegistryUnauthorizedException extends RegistryException {
     super(cause);
   }
 
-  public HttpResponseException getHttpResponseException() {
+  HttpResponseException getHttpResponseException() {
     return (HttpResponseException) getCause();
   }
 }

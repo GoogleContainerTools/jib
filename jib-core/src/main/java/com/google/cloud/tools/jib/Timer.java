@@ -19,6 +19,10 @@ package com.google.cloud.tools.jib;
 import java.io.Closeable;
 import java.util.Stack;
 
+/**
+ * Times execution intervals. This is only for testing purposes and will be removed before the first
+ * release.
+ */
 public class Timer implements Closeable {
 
   private static Stack<String> labels = new Stack<>();
