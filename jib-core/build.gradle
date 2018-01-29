@@ -43,10 +43,6 @@ dependencies {
 publishing {
     publications {
         mavenJava(MavenPublication) {
-            groupId 'com.google.cloud.tools'
-            artifactId 'jib-core'
-            version '0.1.0'
-
             from components.java
         }
     }
