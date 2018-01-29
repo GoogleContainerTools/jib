@@ -1,4 +1,4 @@
-# Contributing to Minikube build tools for java
+# Contributing to Jib
 
 We'd love to accept your patches and contributions to this project. There are
 just a few small guidelines you need to follow.
@@ -24,7 +24,7 @@ again.
    If you're a Googler or other corporate contributor,
    use your corporate email address here, not your personal address.
 2. Fork the repository into your own Github account.
-3. Please include unit tests for all new code.
-4. Make sure all existing tests pass. (gradlew test)
+3. Please include unit tests (and integration tests if applicable) for all new code.
+4. Make sure all existing tests pass. (./gradlew goJF build integrationTest)
 5. Associate the change with an existing issue or file a [new issue](../../issues)
 6. Create a pull request!

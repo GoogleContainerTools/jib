@@ -1,2 +1,0 @@
-Minikube Maven Plugin
-=====================
