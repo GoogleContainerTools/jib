@@ -6,7 +6,7 @@
 
 ## What is Jib?
 
-Jib is tool for building container images for your Java applications.
+Jib is a tool for building container images for your Java applications.
 
 ## Goals
 

@@ -6,9 +6,9 @@
   <version>0.1.0-SNAPSHOT</version>
   <packaging>maven-plugin</packaging>
 
-  <name>TODO</name>
-  <description>TODO</description>
-  <url>TODO</url>
+  <name>Jib</name>
+  <description>A tool for building container images for your Java applications.</description>
+  <url>https://github.com/google/jib</url>
 
   <licenses>
     <license>
