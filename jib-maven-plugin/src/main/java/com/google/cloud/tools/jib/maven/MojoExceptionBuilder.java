@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.maven;
 
 import org.apache.maven.plugin.MojoExecutionException;
 
+/** Builds a {@link MojoExecutionException} with a useful suggestion. */
 class MojoExceptionBuilder {
 
   private Throwable cause;
