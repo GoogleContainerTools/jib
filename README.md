@@ -85,10 +85,13 @@ Extended configuration options provide additional options for customizing the im
 
 Field | Default | Description
 --- | --- | ---
-from|`gcr.io/distroless/java`|The base image to build your application on top of.
+<!--from|`gcr.io/distroless/java`|The base image to build your application on top of.-->
+baseImageRegistry|`gcr.io`|The registry for the base image
+baseImageRepository|`distroless/java`|The image name/repository of the base image
+baseImageTag|`latest`|The tag for the base image
 registry|*Required*|The registry server to push the built image to.
 repository|*Required*|The image name/repository of the built image.
-tag|*Required*|The image tag of the built image (the part after the colon).
+tag|`latest`|The image tag of the built image (the part after the colon).
 jvmFlags|*None*|Additional flags to pass into the JVM when running your application.
 <!--copy|*None*|Additional files to add to the image filesystem.-->
 credentialHelperName|*Required*|The credential helper suffix (following `docker-credential-`)
