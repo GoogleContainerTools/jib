@@ -156,7 +156,8 @@ public class BuildImageMojo extends AbstractMojo {
     }
   }
 
-  private void handleRegistryUnauthorizedException(RegistryUnauthorizedException ex) throws MojoExecutionException {
+  private void handleRegistryUnauthorizedException(RegistryUnauthorizedException ex)
+      throws MojoExecutionException {
     MojoExceptionBuilder mojoExceptionBuilder = new MojoExceptionBuilder(ex);
 
     if (ex.getHttpResponseException().getStatusCode() == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
