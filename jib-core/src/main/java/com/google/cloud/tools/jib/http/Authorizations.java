@@ -26,9 +26,12 @@ public class Authorizations {
     return new Authorization("Bearer", token);
   }
 
-  public static Authorization withBasicToken(String username, String secret) {
+  public static Authorization withBasicCredentials(String username, String secret) {
     String credentials = username + ":" + secret;
-    String token = new String(Base64.encodeBase64(credentials.getBytes(StandardCharsets.US_ASCII)));
+    String token =
+        new String(
+            Base64.encodeBase64(credentials.getBytes(StandardCharsets.US_ASCII)),
+            StandardCharsets.UTF_8);
     return new Authorization("Basic", token);
   }
 

@@ -61,7 +61,7 @@ public class ConnectionTest {
         Request.builder()
             .setAccept(Arrays.asList("fake.accept", "another.fake.accept"))
             .setBody(new BlobHttpContent(Blobs.from("crepecake"), "fake.content.type"))
-            .setAuthorization(Authorizations.withBasicToken("fake-username", "fake-secret"))
+            .setAuthorization(Authorizations.withBasicCredentials("fake-username", "fake-secret"))
             .build();
 
     Mockito.when(

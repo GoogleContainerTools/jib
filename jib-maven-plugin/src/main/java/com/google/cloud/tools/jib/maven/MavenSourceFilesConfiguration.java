@@ -27,6 +27,7 @@ import java.util.List;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.project.MavenProject;
 
+/** {@link SourceFilesConfiguration} implementation based on inputs from a {@link MavenProject}. */
 class MavenSourceFilesConfiguration implements SourceFilesConfiguration {
 
   private final List<Path> dependenciesFiles = new ArrayList<>();

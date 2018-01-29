@@ -19,6 +19,10 @@ package com.google.cloud.tools.jib;
 import com.google.cloud.tools.jib.builder.BuildLogger;
 import java.io.Closeable;
 
+/**
+ * Times execution intervals. This is only for testing purposes and will be removed before the first
+ * release.
+ */
 public class Timer implements Closeable {
 
   private final BuildLogger buildLogger;

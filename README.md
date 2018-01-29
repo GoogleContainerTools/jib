@@ -6,13 +6,13 @@
 
 ## What is Jib?
 
-Jib is tool for building container images for your Java applications.
+Jib is a tool for building container images for your Java applications.
 
 ## Goals
 
 * Fast - Your Java application gets broken down into multiple layers, separating dependencies from classes. Deploy your changes faster - don’t wait for Docker to rebuild your entire Java application.
 
-* Reproducible - Rebuilding your container image with the same contents always generates the same image. Never trigger an unnecessary update again.
+<!--* Reproducible - Rebuilding your container image with the same contents always generates the same image. Never trigger an unnecessary update again.-->
 
 * Native - Reduce your CLI dependencies. Build your Docker image from within Maven or Gradle and push to any registry of your choice. No more writing Dockerfiles and calling docker build/push.
 
@@ -26,7 +26,7 @@ In your Maven Java project, add the plugin to your `pom.xml`:
 <plugin>
     <groupId>com.google.com.tools</groupId>
     <artifactId>jib-maven-plugin</artifactId>
-    <version>0.0.1</version>
+    <version>0.1.0</version>
     <configuration>
         <registry></registry>
         <repository></repository>
@@ -85,10 +85,13 @@ Extended configuration options provide additional options for customizing the im
 
 Field | Default | Description
 --- | --- | ---
-from|`gcr.io/distroless/java`|The base image to build your application on top of.
+<!--from|`gcr.io/distroless/java`|The base image to build your application on top of.-->
+baseImageRegistry|`gcr.io`|The registry for the base image
+baseImageRepository|`distroless/java`|The image name/repository of the base image
+baseImageTag|`latest`|The tag for the base image
 registry|*Required*|The registry server to push the built image to.
 repository|*Required*|The image name/repository of the built image.
-tag|*Required*|The image tag of the built image (the part after the colon).
+tag|`latest`|The image tag of the built image (the part after the colon).
 jvmFlags|*None*|Additional flags to pass into the JVM when running your application.
 <!--copy|*None*|Additional files to add to the image filesystem.-->
 credentialHelperName|*Required*|The credential helper suffix (following `docker-credential-`)
