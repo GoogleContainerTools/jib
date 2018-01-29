@@ -12,7 +12,7 @@ Jib is a tool for building container images for your Java applications.
 
 * Fast - Your Java application gets broken down into multiple layers, separating dependencies from classes. Deploy your changes faster - don’t wait for Docker to rebuild your entire Java application.
 
-* Reproducible - Rebuilding your container image with the same contents always generates the same image. Never trigger an unnecessary update again.
+<!--* Reproducible - Rebuilding your container image with the same contents always generates the same image. Never trigger an unnecessary update again.-->
 
 * Native - Reduce your CLI dependencies. Build your Docker image from within Maven or Gradle and push to any registry of your choice. No more writing Dockerfiles and calling docker build/push.
 
