@@ -24,11 +24,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+/** Example class that uses a dependency and a resource file. */
 public class HelloWorld {
 
   public static void main(String[] args) throws IOException, URISyntaxException {
+    // 'Greeting' comes from the dependency artfiact.
     String greeting = Greeting.getGreeting();
 
+    // Gets the contents of the resource file 'world'.
     ClassLoader classLoader = HelloWorld.class.getClassLoader();
     Path worldFile = Paths.get(classLoader.getResource("world").toURI());
     String world = new String(Files.readAllBytes(worldFile), StandardCharsets.UTF_8);
