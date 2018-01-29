@@ -5,4 +5,4 @@ set -x
 
 cd github/jib
 
-(cd crepecake; ./gradlew clean build --info)
+(cd jib-core; ./gradlew clean build --info)
