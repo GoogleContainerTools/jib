@@ -16,10 +16,13 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.common.io.CharStreams;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.logging.Logger;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
@@ -38,7 +41,7 @@ public class BuildImageMojoIT {
   private static Logger log = Logger.getLogger("info");
 
   @Test
-  public void testExecute() throws VerificationException, IOException {
+  public void testExecute() throws VerificationException, IOException, InterruptedException {
     Verifier verifier = new Verifier(testProject.getProjectRoot().toString());
     verifier.setAutoclean(false);
     verifier.executeGoal("package");
@@ -58,6 +61,25 @@ public class BuildImageMojoIT {
     System.out.println(
         new String(
             Files.readAllBytes(Paths.get(verifier.getLogFileName())), StandardCharsets.UTF_8));
-    Assert.fail(timeOne + " > " + timeTwo);
+    System.out.println(timeOne + " > " + timeTwo);
+
+    runCommand("docker pull gcr.io/qingyangc-sandbox/jibtestimage:built-with-jib");
+
+    Process process =
+        Runtime.getRuntime()
+            .exec("docker run gcr.io/qingyangc-sandbox/jibtestimage:built-with-jib");
+    try (InputStreamReader inputStreamReader =
+        new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)) {
+      String output = CharStreams.toString(inputStreamReader);
+      Assert.assertEquals("Hello, world\n", output);
+    }
+    process.waitFor();
+  }
+
+  /** Runs a command with naive tokenization by whitespace. */
+  private void runCommand(String... command) throws IOException, InterruptedException {
+    if (new ProcessBuilder(Arrays.asList(command)).start().waitFor() != 0) {
+      throw new IOException("Command '" + String.join(" ", command) + "' failed");
+    }
   }
 }
