@@ -47,10 +47,8 @@ public class MavenSourceFilesConfigurationTest {
 
   @Before
   public void setUp() throws IOException, URISyntaxException {
-    Path sourcePath =
-        Paths.get(".").relativize(Paths.get(Resources.getResource("application/source").toURI()));
-    Path outputPath =
-        Paths.get(".").relativize(Paths.get(Resources.getResource("application/output").toURI()));
+    Path sourcePath = Paths.get(Resources.getResource("application/source").toURI());
+    Path outputPath = Paths.get(Resources.getResource("application/output").toURI());
 
     Mockito.when(mockMavenProject.getBuild()).thenReturn(mockBuild);
     Mockito.when(mockBuild.getSourceDirectory()).thenReturn(sourcePath.toString());
@@ -67,7 +65,7 @@ public class MavenSourceFilesConfigurationTest {
   }
 
   @Test
-  public void test_correctFiles() {
+  public void test_correctFiles() throws URISyntaxException {
     List<Path> expectedDependenciesFiles =
         Arrays.asList(
             Paths.get("application", "dependencies", "dependency-1.0.0.jar"),
@@ -75,13 +73,14 @@ public class MavenSourceFilesConfigurationTest {
             Paths.get("application", "dependencies", "libraryB.jar"));
     List<Path> expectedResourcesFiles =
         Arrays.asList(
-            Paths.get("application", "output", "resourceA"),
-            Paths.get("application", "output", "resourceB"),
-            Paths.get("application", "output", "world"));
+            Paths.get(Resources.getResource("application/output").toURI()).resolve("resourceA"),
+            Paths.get(Resources.getResource("application/output").toURI()).resolve("resourceB"),
+            Paths.get(Resources.getResource("application/output").toURI()).resolve("world"));
     List<Path> expectedClassesFiles =
         Arrays.asList(
-            Paths.get("application", "output", "HelloWorld.class"),
-            Paths.get("application", "output", "some.class"));
+            Paths.get(Resources.getResource("application/output").toURI())
+                .resolve("HelloWorld.class"),
+            Paths.get(Resources.getResource("application/output").toURI()).resolve("some.class"));
 
     Assert.assertEquals(
         expectedDependenciesFiles, testMavenSourceFilesConfiguration.getDependenciesFiles());

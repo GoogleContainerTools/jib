@@ -38,37 +38,34 @@ class MavenSourceFilesConfiguration implements SourceFilesConfiguration {
   MavenSourceFilesConfiguration(MavenProject project) throws IOException {
     Path classesOutputDir = Paths.get(project.getBuild().getOutputDirectory());
 
-    // Gets all the dependencies in path-sorted order.
+    // Gets all the dependencies.
     for (Artifact artifact : project.getArtifacts()) {
       dependenciesFiles.add(artifact.getFile().toPath());
     }
-    Collections.sort(dependenciesFiles);
 
     Path classesSourceDir = Paths.get(project.getBuild().getSourceDirectory());
 
+    // TODO: Refactor this logic - too complex to place in one lambda function.
     // Gets the classes files in the 'classes' output directory. It finds the files that are classes
     // files by matching them against the .java source files.
     Files.list(classesOutputDir)
-        // Filters for only class files.
-        .filter(
-            classesOutputDirFile ->
-                FileSystems.getDefault()
-                    .getPathMatcher("glob:**.class")
-                    .matches(classesOutputDirFile))
         .forEach(
             classesOutputDirFile -> {
-              System.out.println("original: " + classesOutputDirFile);
-              // Replaces extension with .java.
-              classesOutputDirFile =
-                  classesOutputDirFile.resolveSibling(
-                      classesOutputDirFile
-                          .getFileName()
-                          .toString()
-                          .replaceAll("(.*?)\\.class", "$1.java"));
-              System.out.println("new: " + classesOutputDirFile);
+              Path classesSourceDirFile = classesOutputDirFile;
+              if (FileSystems.getDefault()
+                  .getPathMatcher("glob:**.class")
+                  .matches(classesOutputDirFile)) {
+                // If is a class file, replace extension with .java.
+                classesSourceDirFile =
+                    classesOutputDirFile.resolveSibling(
+                        classesOutputDirFile
+                            .getFileName()
+                            .toString()
+                            .replaceAll("(.*?)\\.class", "$1.java"));
+              }
 
               Path correspondingSourceDirFile =
-                  classesSourceDir.resolve(classesOutputDir.relativize(classesOutputDirFile));
+                  classesSourceDir.resolve(classesOutputDir.relativize(classesSourceDirFile));
               if (Files.exists(correspondingSourceDirFile)) {
                 classesFiles.add(classesOutputDirFile);
               } else {
@@ -76,6 +73,11 @@ class MavenSourceFilesConfiguration implements SourceFilesConfiguration {
                 resourcesFiles.add(classesOutputDirFile);
               }
             });
+
+    // Sort all files by path for consistent ordering.
+    Collections.sort(dependenciesFiles);
+    Collections.sort(resourcesFiles);
+    Collections.sort(classesFiles);
   }
 
   @Override
