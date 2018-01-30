@@ -46,12 +46,6 @@ publishing {
             from components.java
         }
     }
-    // Publishes to a local repo at "build/repo".
-    repositories {
-        maven {
-            url "$buildDir/repo"
-        }
-    }
 }
 
 task wrapper(type: Wrapper) {
