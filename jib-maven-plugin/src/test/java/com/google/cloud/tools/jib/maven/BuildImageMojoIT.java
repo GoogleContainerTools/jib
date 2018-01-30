@@ -30,6 +30,7 @@ import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.Matchers;
 
 /** Integration tests for {@link BuildImageMojo}. */
 public class BuildImageMojoIT {
@@ -46,25 +47,27 @@ public class BuildImageMojoIT {
     verifier.setAutoclean(false);
     verifier.executeGoal("package");
 
+    // Builds twice, and checks if the second build took less time.
     long lastTime = System.nanoTime();
     verifier.executeGoal("jib:build");
-    long timeOne = (System.nanoTime() - lastTime) / 1_000_000;
+    long timeOne = System.nanoTime() - lastTime;
     lastTime = System.nanoTime();
 
     verifier.executeGoal("jib:build");
-    long timeTwo = (System.nanoTime() - lastTime) / 1_000_000;
+    long timeTwo = System.nanoTime() - lastTime;
 
     verifier.verifyErrorFreeLog();
 
-    System.out.println(Paths.get(verifier.getLogFileName()));
-    log.info("I'm starting");
     System.out.println(
         new String(
             Files.readAllBytes(Paths.get(verifier.getLogFileName())), StandardCharsets.UTF_8));
-    System.out.println(timeOne + " > " + timeTwo);
 
-    runCommand("docker pull gcr.io/qingyangc-sandbox/jibtestimage:built-with-jib");
+    Assert.assertTrue(timeOne > timeTwo);
 
+    // Checks that the built image outputs what was intended.
+    runCommand("docker", "pull", "gcr.io/qingyangc-sandbox/jibtestimage:built-with-jib");
+
+    // TODO: Put this in a utility function.
     Process process =
         Runtime.getRuntime()
             .exec("docker run gcr.io/qingyangc-sandbox/jibtestimage:built-with-jib");

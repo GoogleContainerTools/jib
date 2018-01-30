@@ -50,7 +50,7 @@ class TestProject extends TemporaryFolder {
   private void copyProject() throws IOException {
     projectRoot =
         ResourceExtractor.extractResourcePath(
-                TestProject.class, PROJECT_PATH_IN_RESOURCES, getRoot(), true)
+                TestProject.class, PROJECT_PATH_IN_RESOURCES, newFolder(), true)
             .toPath();
 
     // Puts the correct plugin version into the test project pom.xml.
