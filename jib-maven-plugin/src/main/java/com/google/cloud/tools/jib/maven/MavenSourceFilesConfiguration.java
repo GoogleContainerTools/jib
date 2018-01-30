@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.model.Resource;
 import org.apache.maven.project.MavenProject;
 
 /** {@link SourceFilesConfiguration} implementation based on inputs from a {@link MavenProject}. */
