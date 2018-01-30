@@ -111,9 +111,6 @@ public class BuildImageMojo extends AbstractMojo {
           new BuildImageSteps(buildConfiguration, sourceFilesConfiguration, cacheDirectory);
       buildImageSteps.run();
 
-    } catch (RegistryUnauthorizedException ex) {
-      handleRegistryUnauthorizedException(ex);
-
     } catch (IOException
         | RegistryException
         | CacheMetadataCorruptedException
@@ -123,31 +120,31 @@ public class BuildImageMojo extends AbstractMojo {
         | NonexistentDockerCredentialHelperException
         | RegistryAuthenticationFailedException
         | NonexistentServerUrlDockerCredentialHelperException ex) {
-      // TODO: Add more suggestions for various build failures.
-      throw new MojoExceptionBuilder(ex).build();
+      handleBuildException(ex);
     }
   }
 
+  /** @return the {@link SourceFilesConfiguration} based on the current project */
   private SourceFilesConfiguration getSourceFilesConfiguration() throws MojoExecutionException {
     try {
       SourceFilesConfiguration sourceFilesConfiguration =
           new MavenSourceFilesConfiguration(project);
 
       // Logs the different source files used.
-      getLog().info("Dependencies:");
+      getLog().debug("Dependencies:");
       sourceFilesConfiguration
           .getDependenciesFiles()
-          .forEach(dependencyFile -> getLog().info("Dependency: " + dependencyFile));
+          .forEach(dependencyFile -> getLog().debug("Dependency: " + dependencyFile));
 
-      getLog().info("Resources:");
+      getLog().debug("Resources:");
       sourceFilesConfiguration
           .getResourcesFiles()
-          .forEach(resourceFile -> getLog().info("Resource: " + resourceFile));
+          .forEach(resourceFile -> getLog().debug("Resource: " + resourceFile));
 
-      getLog().info("Classes:");
+      getLog().debug("Classes:");
       sourceFilesConfiguration
           .getClassesFiles()
-          .forEach(classesFile -> getLog().info("Class: " + classesFile));
+          .forEach(classesFile -> getLog().debug("Class: " + classesFile));
 
       return sourceFilesConfiguration;
 
@@ -156,25 +153,34 @@ public class BuildImageMojo extends AbstractMojo {
     }
   }
 
-  private void handleRegistryUnauthorizedException(RegistryUnauthorizedException ex)
-      throws MojoExecutionException {
-    MojoExceptionBuilder mojoExceptionBuilder = new MojoExceptionBuilder(ex);
+  // TODO: Add more suggestions for various build failures.
+  /** Appends suggestions to build exceptions. */
+  private <T extends Exception> void handleBuildException(T ex) throws MojoExecutionException {
+    String suggestion = null;
 
-    if (ex.getHttpResponseException().getStatusCode() == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
-      // No permissions to push to target image.
-      String targetImage = registry + "/" + repository + ":" + tag;
-      mojoExceptionBuilder.suggest("make sure your have permission to push to " + targetImage);
+    if (ex instanceof RegistryUnauthorizedException) {
+      if (((RegistryUnauthorizedException) ex).getHttpResponseException().getStatusCode()
+          == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
+        // No permissions to push to target image.
+        String targetImage = registry + "/" + repository + ":" + tag;
+        suggestion = "make sure your have permission to push to " + targetImage;
 
-    } else if (credentialHelperName == null) {
-      // Credential helper not defined.
-      mojoExceptionBuilder.suggest("set the configuration 'credentialHelperName'");
+      } else if (credentialHelperName == null) {
+        // Credential helper not defined.
+        suggestion = "set the configuration 'credentialHelperName'";
 
-    } else {
-      // Credential helper probably was not configured correctly or did not have the necessary
-      // credentials.
-      mojoExceptionBuilder.suggest("make sure your credential helper is set up correctly");
+      } else {
+        // Credential helper probably was not configured correctly or did not have the necessary
+        // credentials.
+        suggestion = "make sure your credential helper is set up correctly";
+      }
     }
 
-    throw mojoExceptionBuilder.build();
+    StringBuilder message = new StringBuilder("Build image failed");
+    if (suggestion != null) {
+      message.append("\n\tPerhaps you should ");
+      message.append(suggestion);
+    }
+    throw new MojoExecutionException(message.toString(), ex);
   }
 }
