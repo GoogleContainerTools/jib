@@ -177,7 +177,6 @@
       <property name="allowedAbbreviationLength" value="1"/>
     </module>
     <module name="OverloadMethodsDeclarationOrder"/>
-    <module name="VariableDeclarationUsageDistance"/>
     <module name="CustomImportOrder">
       <property name="sortImportsInGroupAlphabetically" value="true"/>
       <property name="separateLineBetweenGroups" value="true"/>
@@ -228,7 +227,7 @@
     </module>
     <module name="SingleLineJavadoc">
       <property name="ignoreInlineTags" value="false"/>
-      <property name="ignoredTags" value="@link"/>
+      <property name="ignoredTags" value="@link, @code"/>
     </module>
     <module name="EmptyCatchBlock">
       <property name="exceptionVariableName" value="expected"/>

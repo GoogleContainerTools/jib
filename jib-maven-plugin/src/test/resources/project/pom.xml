@@ -34,7 +34,7 @@
       </plugin>
 
       <plugin>
-        <groupId>com.google.cloud.tools.jib</groupId>
+        <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
         <version>${jib-maven-plugin.version}</version>
         <configuration>
