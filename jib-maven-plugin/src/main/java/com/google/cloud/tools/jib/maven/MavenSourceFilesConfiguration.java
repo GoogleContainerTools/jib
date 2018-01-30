@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -47,10 +48,25 @@ class MavenSourceFilesConfiguration implements SourceFilesConfiguration {
 
     // Gets the classes files in the 'classes' output directory. It finds the files that are classes
     // files by matching them against the .java source files.
-    // TODO: Make this actually match against the .java source files.
     Files.list(classesOutputDir)
+        // Filters for only class files.
+        .filter(
+            classesOutputDirFile ->
+                FileSystems.getDefault()
+                    .getPathMatcher("glob:**.class")
+                    .matches(classesOutputDirFile))
         .forEach(
             classesOutputDirFile -> {
+              System.out.println("original: " + classesOutputDirFile);
+              // Replaces extension with .java.
+              classesOutputDirFile =
+                  classesOutputDirFile.resolveSibling(
+                      classesOutputDirFile
+                          .getFileName()
+                          .toString()
+                          .replaceAll("(.*?)\\.class", "$1.java"));
+              System.out.println("new: " + classesOutputDirFile);
+
               Path correspondingSourceDirFile =
                   classesSourceDir.resolve(classesOutputDir.relativize(classesOutputDirFile));
               if (Files.exists(correspondingSourceDirFile)) {

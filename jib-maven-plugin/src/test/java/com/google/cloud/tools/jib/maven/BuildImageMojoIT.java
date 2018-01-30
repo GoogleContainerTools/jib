@@ -28,7 +28,7 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
-/** Tests for {@link BuildImageMojo}. */
+/** Integration tests for {@link BuildImageMojo}. */
 public class BuildImageMojoIT {
 
   @ClassRule public static final TestPlugin testPlugin = new TestPlugin();
