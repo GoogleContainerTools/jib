@@ -85,7 +85,7 @@ Extended configuration options provide additional options for customizing the im
 
 Field | Default | Description
 --- | --- | ---
-<!--from|`gcr.io/distroless/java`|The base image to build your application on top of.-->
+from|`gcr.io/distroless/java`|The base image to build your application on top of.
 baseImageRegistry|`gcr.io`|The registry for the base image
 baseImageRepository|`distroless/java`|The image name/repository of the base image
 baseImageTag|`latest`|The tag for the base image
@@ -93,14 +93,13 @@ registry|*Required*|The registry server to push the built image to.
 repository|*Required*|The image name/repository of the built image.
 tag|`latest`|The image tag of the built image (the part after the colon).
 jvmFlags|*None*|Additional flags to pass into the JVM when running your application.
-<!--copy|*None*|Additional files to add to the image filesystem.-->
 credentialHelperName|*Required*|The credential helper suffix (following `docker-credential-`)
 
 ## How Jib Works
 
 Whereas traditionally a Java application is built as a single image layer with the application JAR, the build strategy here breaks the Java application into multiple layers for more granular incremental builds. When you change your code, only your changes are rebuilt, not your entire application. These layers, by default, are layered on top of a [distroless](https://github.com/GoogleCloudPlatform/distroless) base image. 
 
-See also [rules_docker](https://github.com/bazelbuild/rules_docker) for a similar existing container image build tool for the []Bazel build system]9https://github.com/bazelbuild/bazel).
+See also [rules_docker](https://github.com/bazelbuild/rules_docker) for a similar existing container image build tool for the [Bazel build system](https://github.com/bazelbuild/bazel).
 
 ## Frequently Asked Questions (FAQ)
 
