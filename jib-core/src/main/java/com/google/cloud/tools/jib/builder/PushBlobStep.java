@@ -30,7 +30,7 @@ import java.util.concurrent.Future;
 /** Pushes a BLOB to the target registry. */
 class PushBlobStep implements Callable<Void> {
 
-  private static String DESCRIPTION = "Pushing BLOB";
+  private static final String DESCRIPTION = "Pushing BLOB ";
 
   private final BuildConfiguration buildConfiguration;
   private final Future<Authorization> pushAuthorizationFuture;
@@ -49,16 +49,17 @@ class PushBlobStep implements Callable<Void> {
   @Override
   public Void call()
       throws IOException, RegistryException, ExecutionException, InterruptedException {
-    try (Timer timer = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
+    CachedLayer layer = pullLayerFuture.get();
+    DescriptorDigest layerDigest = layer.getBlobDescriptor().getDigest();
+
+    try (Timer timer = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION + layerDigest)) {
       RegistryClient registryClient =
           new RegistryClient(
                   pushAuthorizationFuture.get(),
                   buildConfiguration.getTargetServerUrl(),
                   buildConfiguration.getTargetImageName())
               .setTimer(timer);
-      CachedLayer layer = pullLayerFuture.get();
 
-      DescriptorDigest layerDigest = layer.getBlobDescriptor().getDigest();
       if (registryClient.checkBlob(layerDigest) != null) {
         return null;
       }

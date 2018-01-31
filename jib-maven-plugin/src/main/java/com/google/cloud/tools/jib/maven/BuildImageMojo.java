@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.maven;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.BuildImageSteps;
-import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import java.io.IOException;
@@ -82,8 +81,6 @@ public class BuildImageMojo extends AbstractMojo {
 
   @Parameter private String mainClass;
 
-  private BuildConfiguration buildConfiguration;
-
   @Override
   public void execute() throws MojoExecutionException {
     if (mainClass == null) {
@@ -102,30 +99,9 @@ public class BuildImageMojo extends AbstractMojo {
 
     SourceFilesConfiguration sourceFilesConfiguration = getSourceFilesConfiguration();
 
-    buildConfiguration =
+    BuildConfiguration buildConfiguration =
         BuildConfiguration.builder()
-            .setBuildLogger(
-                new BuildLogger() {
-                  @Override
-                  public void debug(CharSequence charSequence) {
-                    getLog().debug(charSequence);
-                  }
-
-                  @Override
-                  public void info(CharSequence charSequence) {
-                    getLog().info(charSequence);
-                  }
-
-                  @Override
-                  public void warn(CharSequence charSequence) {
-                    getLog().warn(charSequence);
-                  }
-
-                  @Override
-                  public void error(CharSequence charSequence) {
-                    getLog().error(charSequence);
-                  }
-                })
+            .setBuildLogger(new MavenBuildLogger(getLog()))
             .setBaseImageServerUrl(baseImageRegistry)
             .setBaseImageName(baseImageRepository)
             .setBaseImageTag(baseImageTag)
@@ -148,6 +124,10 @@ public class BuildImageMojo extends AbstractMojo {
       }
     }
 
+    getLog().info("");
+    getLog().info("Pushing image as " + registry + "/" + repository + ":" + tag);
+    getLog().info("");
+
     try {
       // TODO: Instead of disabling logging, have authentication credentials be provided
       // Disables annoying Apache HTTP client logging.
@@ -158,6 +138,11 @@ public class BuildImageMojo extends AbstractMojo {
       BuildImageSteps buildImageSteps =
           new BuildImageSteps(buildConfiguration, sourceFilesConfiguration, cacheDirectory);
       buildImageSteps.runAsync();
+
+      getLog().info("");
+      getLog()
+          .info("Built and pushed image as " + registry + "/" + repository + ":" + tag);
+      getLog().info("");
 
     } catch (RegistryUnauthorizedException ex) {
       if (((RegistryUnauthorizedException) ex).getHttpResponseException().getStatusCode()
@@ -197,20 +182,29 @@ public class BuildImageMojo extends AbstractMojo {
           new MavenSourceFilesConfiguration(project);
 
       // Logs the different source files used.
-      getLog().debug("Dependencies:");
+      getLog().info("");
+      getLog().info("Containerizing application with the following files:");
+      getLog().info("");
+
+      getLog().info("\tDependencies:");
+      getLog().info("");
       sourceFilesConfiguration
           .getDependenciesFiles()
-          .forEach(dependencyFile -> getLog().debug("Dependency: " + dependencyFile));
+          .forEach(dependencyFile -> getLog().info("\t\t" + dependencyFile));
 
-      getLog().debug("Resources:");
+      getLog().info("\tResources:");
+      getLog().info("");
       sourceFilesConfiguration
           .getResourcesFiles()
-          .forEach(resourceFile -> getLog().debug("Resource: " + resourceFile));
+          .forEach(resourceFile -> getLog().info("\t\t" + resourceFile));
 
-      getLog().debug("Classes:");
+      getLog().info("\tClasses:");
+      getLog().info("");
       sourceFilesConfiguration
           .getClassesFiles()
-          .forEach(classesFile -> getLog().debug("Class: " + classesFile));
+          .forEach(classesFile -> getLog().info("\t\t" + classesFile));
+
+      getLog().info("");
 
       return sourceFilesConfiguration;
 
@@ -245,7 +239,7 @@ public class BuildImageMojo extends AbstractMojo {
       T ex, @Nullable String suggestion) throws MojoExecutionException {
     StringBuilder message = new StringBuilder("Build image failed");
     if (suggestion != null) {
-      message.append("\n\tPerhaps you should ");
+      message.append(", perhaps you should ");
       message.append(suggestion);
     }
     throw new MojoExecutionException(message.toString(), ex);

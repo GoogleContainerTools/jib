@@ -117,7 +117,8 @@ class BuildAndPushContainerConfigurationStep
       containerConfigurationBlob.writeTo(digestOutputStream);
       BlobDescriptor containerConfigurationBlobDescriptor = digestOutputStream.toBlobDescriptor();
 
-      timer.lap("Pushing container configuration");
+      timer.lap(
+          "Pushing container configuration " + containerConfigurationBlobDescriptor.getDigest());
 
       // TODO: Use PushBlobStep.
       // Pushes the container configuration.

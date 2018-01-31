@@ -42,6 +42,9 @@ public class Timer implements Closeable {
 
     if (buildLogger != null) {
       buildLogger.debug(getTabs().append("TIMING\t").append(label));
+      if (depth == 0) {
+        buildLogger.info("RUNNING\t" + label);
+      }
     }
   }
 
@@ -50,14 +53,21 @@ public class Timer implements Closeable {
   }
 
   public void lap(String label) {
+    if (this.label == null) {
+      throw new IllegalStateException("Tried to lap Timer after closing");
+    }
     if (buildLogger != null) {
+      double timeInMillis = (System.nanoTime() - startTime) / 1000 / 1000.0;
       buildLogger.debug(
           getTabs()
               .append("TIMED\t")
               .append(this.label)
               .append(" : ")
-              .append((int) ((System.nanoTime() - startTime) / 1000) / 1000.0)
+              .append(timeInMillis)
               .append(" ms"));
+      if (depth == 0) {
+        buildLogger.info(this.label + " : " + timeInMillis + " ms");
+      }
     }
     this.label = label;
     startTime = System.nanoTime();
@@ -73,6 +83,6 @@ public class Timer implements Closeable {
 
   @Override
   public void close() {
-    lap("INVALID");
+    lap(null);
   }
 }
