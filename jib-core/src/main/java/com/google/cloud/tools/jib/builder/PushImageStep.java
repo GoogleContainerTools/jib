@@ -52,7 +52,7 @@ class PushImageStep implements Callable<Void> {
       pushBaseImageLayerFuturesFuture;
   private final List<NonBlockingListenableFuture<Void>> pushApplicationLayerFutures;
   private final NonBlockingListenableFuture<NonBlockingListenableFuture<BlobDescriptor>>
-      containerConfigurationBlobDescriptorFuture;
+      containerConfigurationBlobDescriptorFutureFuture;
 
   PushImageStep(
       BuildConfiguration buildConfiguration,
@@ -65,7 +65,7 @@ class PushImageStep implements Callable<Void> {
           pushBaseImageLayerFuturesFuture,
       List<NonBlockingListenableFuture<Void>> pushApplicationLayerFutures,
       NonBlockingListenableFuture<NonBlockingListenableFuture<BlobDescriptor>>
-          containerConfigurationBlobDescriptorFuture) {
+          containerConfigurationBlobDescriptorFutureFuture) {
     this.buildConfiguration = buildConfiguration;
     this.listeningExecutorService = listeningExecutorService;
     this.pushAuthorizationFuture = pushAuthorizationFuture;
@@ -74,12 +74,12 @@ class PushImageStep implements Callable<Void> {
 
     this.pushBaseImageLayerFuturesFuture = pushBaseImageLayerFuturesFuture;
     this.pushApplicationLayerFutures = pushApplicationLayerFutures;
-    this.containerConfigurationBlobDescriptorFuture = containerConfigurationBlobDescriptorFuture;
+    this.containerConfigurationBlobDescriptorFutureFuture = containerConfigurationBlobDescriptorFutureFuture;
   }
 
   /**
    * Depends on {@code pushBaseImageLayerFuturesFuture} and {@code
-   * containerConfigurationBlobDescriptorFuture}.
+   * containerConfigurationBlobDescriptorFutureFuture}.
    */
   @Override
   public Void call() throws ExecutionException, InterruptedException {
@@ -87,7 +87,7 @@ class PushImageStep implements Callable<Void> {
     dependencies.add(pushAuthorizationFuture);
     dependencies.addAll(pushBaseImageLayerFuturesFuture.get());
     dependencies.addAll(pushApplicationLayerFutures);
-    dependencies.add(containerConfigurationBlobDescriptorFuture.get());
+    dependencies.add(containerConfigurationBlobDescriptorFutureFuture.get());
     return Futures.whenAllComplete(dependencies)
         .call(this::afterPushBaseImageLayerFuturesFuture, listeningExecutorService)
         .get();
@@ -95,7 +95,7 @@ class PushImageStep implements Callable<Void> {
 
   /**
    * Depends on {@code pushAuthorizationFuture}, {@code pushBaseImageLayerFuturesFuture.get()},
-   * {@code pushApplicationLayerFutures}, and (@code containerConfigurationBlobDescriptorFuture}.
+   * {@code pushApplicationLayerFutures}, and (@code containerConfigurationBlobDescriptorFutureFuture}.
    */
   private Void afterPushBaseImageLayerFuturesFuture()
       throws IOException, RegistryException, ExecutionException, InterruptedException,
@@ -121,7 +121,7 @@ class PushImageStep implements Callable<Void> {
       // Pushes the image manifest.
       V22ManifestTemplate manifestTemplate =
           imageToJsonTranslator.getManifestTemplate(
-              containerConfigurationBlobDescriptorFuture.get().get());
+              containerConfigurationBlobDescriptorFutureFuture.get().get());
       registryClient.pushManifest(manifestTemplate, buildConfiguration.getTargetTag());
     }
 
