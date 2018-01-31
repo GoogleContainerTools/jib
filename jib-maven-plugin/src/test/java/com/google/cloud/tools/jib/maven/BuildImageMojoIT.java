@@ -55,9 +55,9 @@ public class BuildImageMojoIT {
 
     verifier.verifyErrorFreeLog();
 
-    System.out.println(
-        new String(
-            Files.readAllBytes(Paths.get(verifier.getLogFileName())), StandardCharsets.UTF_8));
+//    System.out.println(
+//        new String(
+//            Files.readAllBytes(Paths.get(verifier.getLogFileName())), StandardCharsets.UTF_8));
 
     Assert.assertTrue(timeOne > timeTwo);
 

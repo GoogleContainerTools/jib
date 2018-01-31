@@ -52,29 +52,7 @@ public class BuildAndCacheApplicationLayersStepTest {
       throws LayerPropertyNotFoundException, DuplicateLayerException, IOException,
           CacheMetadataCorruptedException, URISyntaxException, ExecutionException,
           InterruptedException {
-    Mockito.when(mockBuildConfiguration.getBuildLogger())
-        .thenReturn(
-            new BuildLogger() {
-              @Override
-              public void debug(CharSequence message) {
-                System.out.println(message);
-              }
-
-              @Override
-              public void info(CharSequence message) {
-                System.out.println(message);
-              }
-
-              @Override
-              public void warn(CharSequence message) {
-                System.out.println(message);
-              }
-
-              @Override
-              public void error(CharSequence message) {
-                System.out.println(message);
-              }
-            });
+    Mockito.when(mockBuildConfiguration.getBuildLogger()).thenReturn(new TestBuildLogger());
     TestSourceFilesConfiguration testSourceFilesConfiguration = new TestSourceFilesConfiguration();
     Path temporaryCacheDirectory = temporaryFolder.newFolder().toPath();
 

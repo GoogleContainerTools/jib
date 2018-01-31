@@ -25,11 +25,15 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Integration tests for {@link BuildImageSteps}. */
 public class BuildImageStepsIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(TestBuildLogger.class);
 
   @Rule public TemporaryFolder temporaryCacheDirectory = new TemporaryFolder();
 
@@ -45,28 +49,7 @@ public class BuildImageStepsIntegrationTest {
             .setTargetImageName("testimage")
             .setTargetTag("testtag")
             .setMainClass("HelloWorld")
-            .setBuildLogger(
-                new BuildLogger() {
-                  @Override
-                  public void debug(CharSequence message) {
-                    System.out.println(message);
-                  }
-
-                  @Override
-                  public void info(CharSequence message) {
-                    System.out.println(message);
-                  }
-
-                  @Override
-                  public void warn(CharSequence message) {
-                    System.out.println(message);
-                  }
-
-                  @Override
-                  public void error(CharSequence message) {
-                    System.out.println(message);
-                  }
-                })
+            .setBuildLogger(new TestBuildLogger())
             .build();
 
     BuildImageSteps buildImageSteps =
@@ -77,10 +60,10 @@ public class BuildImageStepsIntegrationTest {
 
     long lastTime = System.nanoTime();
     buildImageSteps.runAsync();
-    System.out.println("Initial build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
+    LOGGER.info("Initial build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
     lastTime = System.nanoTime();
     buildImageSteps.runAsync();
-    System.out.println("Secondary build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
+    LOGGER.info("Secondary build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
 
     // TODO: Put this in a utility function.
     Runtime.getRuntime().exec("docker pull localhost:5000/testimage:testtag").waitFor();
