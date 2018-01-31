@@ -23,6 +23,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nonnull;
 
+/** A {@link ListenableFuture} decorator that makes sure that {@link #get} is only called after the future has returned, and thus never blocks a thread. */
 class NonBlockingListenableFuture<T> implements ListenableFuture<T> {
 
   private final ListenableFuture<T> listenableFuture;
