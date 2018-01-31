@@ -45,7 +45,7 @@ public class RegistryClient {
 
   private static final String PROTOCOL = "https";
 
-  @Nullable private static String userAgentSuffix = "";
+  @Nullable private static String userAgentSuffix;
 
   // TODO: Inject via a RegistryClientFactory.
   /** Sets a suffix to append to {@code User-Agent} headers. */
@@ -53,7 +53,6 @@ public class RegistryClient {
     RegistryClient.userAgentSuffix = userAgentSuffix;
   }
 
-  // TODO: Add more descriptiveness.
   /** Gets the {@code User-Agent} header to send. */
   private static String getUserAgent() {
     String version = RegistryClient.class.getPackage().getImplementationVersion();
