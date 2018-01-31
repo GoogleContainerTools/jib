@@ -52,6 +52,12 @@ public class Request {
       return this;
     }
 
+    /** Sets the {@code User-Agent} header. */
+    public Builder setUserAgent(String userAgent) {
+      headers.setUserAgent(userAgent);
+      return this;
+    }
+
     /** Sets the body and its corresponding {@code Content-Type} header. */
     public Builder setBody(@Nullable BlobHttpContent blobHttpContent) {
       this.body = blobHttpContent;

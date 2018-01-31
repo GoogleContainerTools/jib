@@ -60,6 +60,7 @@ public class ConnectionTest {
     fakeRequest =
         Request.builder()
             .setAccept(Arrays.asList("fake.accept", "another.fake.accept"))
+            .setUserAgent("fake user agent")
             .setBody(new BlobHttpContent(Blobs.from("crepecake"), "fake.content.type"))
             .setAuthorization(Authorizations.withBasicCredentials("fake-username", "fake-secret"))
             .build();
@@ -105,6 +106,7 @@ public class ConnectionTest {
 
     Assert.assertEquals(
         "fake.accept,another.fake.accept", httpHeadersArgumentCaptor.getValue().getAccept());
+    Assert.assertEquals("fake user agent", httpHeadersArgumentCaptor.getValue().getUserAgent());
     // Base64 representation of "fake-username:fake-secret"
     Assert.assertEquals(
         "Basic ZmFrZS11c2VybmFtZTpmYWtlLXNlY3JldA==",

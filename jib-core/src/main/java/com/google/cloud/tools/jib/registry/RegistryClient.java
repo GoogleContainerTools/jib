@@ -45,6 +45,29 @@ public class RegistryClient {
 
   private static final String PROTOCOL = "https";
 
+  @Nullable private static String userAgentSuffix = "";
+
+  // TODO: Inject via a RegistryClientFactory.
+  /** Sets a suffix to append to {@code User-Agent} headers. */
+  public static void setUserAgentSuffix(@Nullable String userAgentSuffix) {
+    RegistryClient.userAgentSuffix = userAgentSuffix;
+  }
+
+  // TODO: Add more descriptiveness.
+  /** Gets the {@code User-Agent} header to send. */
+  private static String getUserAgent() {
+    String version = RegistryClient.class.getPackage().getImplementationVersion();
+    StringBuilder userAgentBuilder = new StringBuilder();
+    userAgentBuilder.append("jib");
+    if (version != null) {
+      userAgentBuilder.append(" ").append(version);
+    }
+    if (userAgentSuffix != null) {
+      userAgentBuilder.append(" ").append(userAgentSuffix);
+    }
+    return userAgentBuilder.toString();
+  }
+
   @Nullable private final Authorization authorization;
   private final RegistryEndpointProperties registryEndpointProperties;
 
@@ -184,6 +207,7 @@ public class RegistryClient {
       Request request =
           Request.builder()
               .setAuthorization(authorization)
+              .setUserAgent(getUserAgent())
               .setAccept(registryEndpointProvider.getAccept())
               .setBody(registryEndpointProvider.getContent())
               .build();

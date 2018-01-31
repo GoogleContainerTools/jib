@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.registry.NonexistentDockerCredentialHelperException;
 import com.google.cloud.tools.jib.registry.NonexistentServerUrlDockerCredentialHelperException;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
+import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryException;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import java.io.IOException;
@@ -47,6 +48,9 @@ public class BuildImageMojo extends AbstractMojo {
 
   /** Directory name for the cache. The directory will be relative to the build output directory. */
   private static final String CACHE_DIRECTORY_NAME = "jib-cache";
+
+  /** {@code User-Agent} header suffix to send to the registry. */
+  private static final String USER_AGENT_SUFFIX = "jib-maven-plugin";
 
   @Parameter(defaultValue = "${project}", readonly = true)
   private MavenProject project;
@@ -107,6 +111,7 @@ public class BuildImageMojo extends AbstractMojo {
     }
 
     try {
+      RegistryClient.setUserAgentSuffix(USER_AGENT_SUFFIX);
       BuildImageSteps buildImageSteps =
           new BuildImageSteps(buildConfiguration, sourceFilesConfiguration, cacheDirectory);
       buildImageSteps.run();
@@ -145,6 +150,7 @@ public class BuildImageMojo extends AbstractMojo {
         | NonexistentDockerCredentialHelperException
         | RegistryAuthenticationFailedException
         | NonexistentServerUrlDockerCredentialHelperException ex) {
+      // TODO: Add more suggestions for various build failures.
       throw new MojoExecutionException("Build image failed", ex);
     }
   }
