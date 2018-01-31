@@ -140,8 +140,7 @@ public class BuildImageMojo extends AbstractMojo {
       buildImageSteps.runAsync();
 
       getLog().info("");
-      getLog()
-          .info("Built and pushed image as " + registry + "/" + repository + ":" + tag);
+      getLog().info("Built and pushed image as " + registry + "/" + repository + ":" + tag);
       getLog().info("");
 
     } catch (RegistryUnauthorizedException ex) {
