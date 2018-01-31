@@ -73,7 +73,8 @@ public class LayerBuilderTest {
                   TarArchiveEntry header = tarArchiveInputStream.getNextTarEntry();
 
                   Path expectedExtractionPath =
-                      Paths.get("extract", "here").resolve(layerDirectory.relativize(path));
+                      Paths.get("extract", "here")
+                          .resolve(layerDirectory.getParent().relativize(path));
                   Assert.assertEquals(expectedExtractionPath, Paths.get(header.getName()));
 
                   // If is a normal file, checks that the file contents match.

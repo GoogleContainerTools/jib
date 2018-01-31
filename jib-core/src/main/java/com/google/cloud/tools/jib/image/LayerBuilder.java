@@ -55,7 +55,8 @@ public class LayerBuilder {
             .filter(path -> !path.equals(sourceFile))
             .forEach(
                 path -> {
-                  Path subExtractionPath = extractionPath.resolve(sourceFile.relativize(path));
+                  Path subExtractionPath =
+                      extractionPath.resolve(sourceFile.getParent().relativize(path));
                   filesystemEntries.add(
                       new TarArchiveEntry(path.toFile(), subExtractionPath.toString()));
                 });

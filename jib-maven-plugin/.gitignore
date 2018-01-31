@@ -1,0 +1,12 @@
+build
+target
+out
+*.iml
+*.ipr
+*.iws
+.idea
+.gradle
+/.settings
+/.classpath
+/.project
+log.txt
