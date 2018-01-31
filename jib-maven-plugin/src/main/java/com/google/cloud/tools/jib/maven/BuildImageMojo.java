@@ -159,8 +159,34 @@ public class BuildImageMojo extends AbstractMojo {
           new BuildImageSteps(buildConfiguration, sourceFilesConfiguration, cacheDirectory);
       buildImageSteps.runAsync();
 
+    } catch (RegistryUnauthorizedException ex) {
+      if (((RegistryUnauthorizedException) ex).getHttpResponseException().getStatusCode()
+          == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
+        // No permissions to push to target image.
+        String targetImage = registry + "/" + repository + ":" + tag;
+        provideSuggestionForException(
+            ex, "make sure your have permission to push to " + targetImage);
+
+      } else if (credentialHelperName == null) {
+        // Credential helper not defined.
+        provideSuggestionForException(ex, "set the configuration 'credentialHelperName'");
+
+      } else {
+        // Credential helper probably was not configured correctly or did not have the necessary
+        // credentials.
+        provideSuggestionForException(ex, "make sure your credential helper is set up correctly");
+      }
+
+    } catch (ExecutionException ex) {
+      if (ex.getCause() instanceof HttpHostConnectException) {
+        // Failed to connect to registry.
+        provideSuggestionForException(
+            ex, "make sure your Internet is up and that the registry you are pushing to exists");
+      }
+
     } catch (Exception ex) {
-      handleBuildException(ex);
+      // TODO: Add more suggestions for various build failures.
+      provideSuggestionForException(ex, null);
     }
   }
 
@@ -215,46 +241,13 @@ public class BuildImageMojo extends AbstractMojo {
     return mainClassObject.getValue();
   }
 
-  private <T extends Exception> void provideSuggestionForException(T ex, String suggestion)
-      throws MojoExecutionException {
+  private <T extends Exception> void provideSuggestionForException(
+      T ex, @Nullable String suggestion) throws MojoExecutionException {
     StringBuilder message = new StringBuilder("Build image failed");
     if (suggestion != null) {
       message.append("\n\tPerhaps you should ");
       message.append(suggestion);
     }
     throw new MojoExecutionException(message.toString(), ex);
-  }
-
-  // TODO: Add more suggestions for various build failures.
-  /** Appends suggestions to build exceptions. */
-  private <T extends Exception> void handleBuildException(T ex) throws MojoExecutionException {
-    String suggestion = null;
-
-    if (ex instanceof RegistryUnauthorizedException) {
-      if (((RegistryUnauthorizedException) ex).getHttpResponseException().getStatusCode()
-          == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
-        // No permissions to push to target image.
-        String targetImage = registry + "/" + repository + ":" + tag;
-        suggestion = "make sure your have permission to push to " + targetImage;
-
-      } else if (credentialHelperName == null) {
-        // Credential helper not defined.
-        suggestion = "set the configuration 'credentialHelperName'";
-
-      } else {
-        // Credential helper probably was not configured correctly or did not have the necessary
-        // credentials.
-        suggestion = "make sure your credential helper is set up correctly";
-      }
-
-    } else if (ex instanceof ExecutionException) {
-      if (ex.getCause() instanceof HttpHostConnectException) {
-        // Failed to connect to registry.
-        suggestion =
-            "make sure your Internet is up and that the registry you are pushing to exists";
-      }
-    }
-
-    provideSuggestionForException(ex, suggestion);
   }
 }

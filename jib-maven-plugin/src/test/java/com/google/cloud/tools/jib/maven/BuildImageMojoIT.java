@@ -38,8 +38,6 @@ public class BuildImageMojoIT {
 
   @Rule public final TestProject testProject = new TestProject(testPlugin);
 
-  private static Logger log = Logger.getLogger("info");
-
   @Test
   public void testExecute() throws VerificationException, IOException, InterruptedException {
     Verifier verifier = new Verifier(testProject.getProjectRoot().toString());
