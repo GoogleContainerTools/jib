@@ -17,11 +17,14 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.common.io.Resources;
+import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /** Implementation of {@link SourceFilesConfiguration} that uses test resources. */
 class TestSourceFilesConfiguration implements SourceFilesConfiguration {
@@ -32,16 +35,17 @@ class TestSourceFilesConfiguration implements SourceFilesConfiguration {
   private final List<Path> resourcesSourceFiles;
   private final List<Path> classesSourceFiles;
 
-  TestSourceFilesConfiguration() throws URISyntaxException {
+  TestSourceFilesConfiguration() throws URISyntaxException, IOException {
     dependenciesSourceFiles =
         Collections.singletonList(
             Paths.get(
                 Resources.getResource("application/dependencies/dependency-1.0.0.jar").toURI()));
     resourcesSourceFiles =
-        Collections.singletonList(
-            Paths.get(Resources.getResource("application/resources/").toURI()));
+        Files.list(Paths.get(Resources.getResource("application/resources/").toURI()))
+            .collect(Collectors.toList());
     classesSourceFiles =
-        Collections.singletonList(Paths.get(Resources.getResource("application/classes/").toURI()));
+        Files.list(Paths.get(Resources.getResource("application/classes/").toURI()))
+            .collect(Collectors.toList());
   }
 
   @Override

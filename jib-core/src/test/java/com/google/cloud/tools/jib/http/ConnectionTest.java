@@ -61,7 +61,7 @@ public class ConnectionTest {
         Request.builder()
             .setAccept(Arrays.asList("fake.accept", "another.fake.accept"))
             .setBody(new BlobHttpContent(Blobs.from("crepecake"), "fake.content.type"))
-            .setAuthorization(Authorizations.withBasicToken("fake-token"))
+            .setAuthorization(Authorizations.withBasicCredentials("fake-username", "fake-secret"))
             .build();
 
     Mockito.when(
@@ -105,8 +105,10 @@ public class ConnectionTest {
 
     Assert.assertEquals(
         "fake.accept,another.fake.accept", httpHeadersArgumentCaptor.getValue().getAccept());
+    // Base64 representation of "fake-username:fake-secret"
     Assert.assertEquals(
-        "Basic fake-token", httpHeadersArgumentCaptor.getValue().getAuthorization());
+        "Basic ZmFrZS11c2VybmFtZTpmYWtlLXNlY3JldA==",
+        httpHeadersArgumentCaptor.getValue().getAuthorization());
 
     Mockito.verify(mockHttpRequestFactory)
         .buildRequest(
