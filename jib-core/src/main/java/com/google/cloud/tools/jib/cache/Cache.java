@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.cache;
 
-import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.cache.json.CacheMetadataTemplate;
 import com.google.cloud.tools.jib.image.DuplicateLayerException;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
@@ -56,24 +55,20 @@ public class Cache implements Closeable {
 
   private static CacheMetadata loadCacheMetadata(Path cacheDirectory)
       throws CacheMetadataCorruptedException {
-    try (Timer timer = new Timer("Checking cache metadata")) {
-      Path cacheMetadataJsonFile = cacheDirectory.resolve(CacheFiles.METADATA_FILENAME);
+    Path cacheMetadataJsonFile = cacheDirectory.resolve(CacheFiles.METADATA_FILENAME);
 
-      if (!Files.exists(cacheMetadataJsonFile)) {
-        return new CacheMetadata();
-      }
+    if (!Files.exists(cacheMetadataJsonFile)) {
+      return new CacheMetadata();
+    }
 
-      try {
-        timer.lap("Reading cache metadata");
-        CacheMetadataTemplate cacheMetadataJson =
-            JsonTemplateMapper.readJsonFromFile(cacheMetadataJsonFile, CacheMetadataTemplate.class);
-        timer.lap("Translating cache metadata");
-        return CacheMetadataTranslator.fromTemplate(cacheMetadataJson, cacheDirectory);
+    try {
+      CacheMetadataTemplate cacheMetadataJson =
+          JsonTemplateMapper.readJsonFromFile(cacheMetadataJsonFile, CacheMetadataTemplate.class);
+      return CacheMetadataTranslator.fromTemplate(cacheMetadataJson, cacheDirectory);
 
-      } catch (IOException ex) {
-        // The cache metadata is probably corrupted.
-        throw new CacheMetadataCorruptedException(ex);
-      }
+    } catch (IOException ex) {
+      // The cache metadata is probably corrupted.
+      throw new CacheMetadataCorruptedException(ex);
     }
   }
 
@@ -107,15 +102,13 @@ public class Cache implements Closeable {
 
   /** Saves the updated cache metadata back to the cache. */
   private void saveCacheMetadata(Path cacheDirectory) throws IOException {
-    try (Timer ignored = new Timer("Saving cache metadata")) {
-      Path cacheMetadataJsonFile = cacheDirectory.resolve(CacheFiles.METADATA_FILENAME);
+    Path cacheMetadataJsonFile = cacheDirectory.resolve(CacheFiles.METADATA_FILENAME);
 
-      CacheMetadataTemplate cacheMetadataJson = CacheMetadataTranslator.toTemplate(cacheMetadata);
+    CacheMetadataTemplate cacheMetadataJson = CacheMetadataTranslator.toTemplate(cacheMetadata);
 
-      try (OutputStream fileOutputStream =
-          new BufferedOutputStream(Files.newOutputStream(cacheMetadataJsonFile))) {
-        JsonTemplateMapper.toBlob(cacheMetadataJson).writeTo(fileOutputStream);
-      }
+    try (OutputStream fileOutputStream =
+        new BufferedOutputStream(Files.newOutputStream(cacheMetadataJsonFile))) {
+      JsonTemplateMapper.toBlob(cacheMetadataJson).writeTo(fileOutputStream);
     }
   }
 }

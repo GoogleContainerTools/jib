@@ -35,41 +35,13 @@ public class Timer implements Closeable {
     this(buildLogger, label, 0);
   }
 
-  public Timer(String label) {
-    this(
-        new BuildLogger() {
-
-          @Override
-          public void debug(CharSequence message) {
-            System.out.println("DEBUG: " + message);
-          }
-
-          @Override
-          public void info(CharSequence message) {
-            System.out.println("INFO: " + message);
-          }
-
-          @Override
-          public void warn(CharSequence message) {
-            System.out.println("WARN: " + message);
-          }
-
-          @Override
-          public void error(CharSequence message) {
-            System.out.println("ERROR: " + message);
-          }
-        },
-        label,
-        0);
-  }
-
   private Timer(BuildLogger buildLogger, String label, int depth) {
     this.buildLogger = buildLogger;
     this.label = label;
     this.depth = depth;
 
     if (buildLogger != null) {
-      buildLogger.info(getTabs().append("TIMING\t").append(label));
+      buildLogger.debug(getTabs().append("TIMING\t").append(label));
     }
   }
 
@@ -79,7 +51,7 @@ public class Timer implements Closeable {
 
   public void lap(String label) {
     if (buildLogger != null) {
-      buildLogger.info(
+      buildLogger.debug(
           getTabs()
               .append("TIMED\t")
               .append(this.label)

@@ -21,14 +21,6 @@ import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.BuildImageSteps;
 import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
-import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
-import com.google.cloud.tools.jib.image.DuplicateLayerException;
-import com.google.cloud.tools.jib.image.LayerCountMismatchException;
-import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
-import com.google.cloud.tools.jib.registry.NonexistentDockerCredentialHelperException;
-import com.google.cloud.tools.jib.registry.NonexistentServerUrlDockerCredentialHelperException;
-import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
-import com.google.cloud.tools.jib.registry.RegistryException;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -36,7 +28,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
+import org.apache.http.conn.HttpHostConnectException;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -88,6 +82,8 @@ public class BuildImageMojo extends AbstractMojo {
 
   @Parameter private String mainClass;
 
+  private BuildConfiguration buildConfiguration;
+
   @Override
   public void execute() throws MojoExecutionException {
     if (mainClass == null) {
@@ -106,7 +102,7 @@ public class BuildImageMojo extends AbstractMojo {
 
     SourceFilesConfiguration sourceFilesConfiguration = getSourceFilesConfiguration();
 
-    BuildConfiguration buildConfiguration =
+    buildConfiguration =
         BuildConfiguration.builder()
             .setBuildLogger(
                 new BuildLogger() {
@@ -153,23 +149,18 @@ public class BuildImageMojo extends AbstractMojo {
     }
 
     try {
+      // TODO: Instead of disabling logging, have authentication credentials be provided
+      // Disables annoying Apache HTTP client logging.
+      System.setProperty(
+          "org.apache.commons.logging.Log", "org.apache.commons.logging.impl.SimpleLog");
+      System.setProperty("org.apache.commons.logging.simplelog.defaultlog", "error");
+
       BuildImageSteps buildImageSteps =
           new BuildImageSteps(buildConfiguration, sourceFilesConfiguration, cacheDirectory);
       buildImageSteps.runAsync();
 
-    } catch (IOException
-        | RegistryException
-        | CacheMetadataCorruptedException
-        | DuplicateLayerException
-        | LayerPropertyNotFoundException
-        | LayerCountMismatchException
-        | NonexistentDockerCredentialHelperException
-        | RegistryAuthenticationFailedException
-        | NonexistentServerUrlDockerCredentialHelperException ex) {
-      handleBuildException(ex);
-
     } catch (Exception ex) {
-      provideSuggestionForException(ex, "WTF");
+      handleBuildException(ex);
     }
   }
 
@@ -254,6 +245,13 @@ public class BuildImageMojo extends AbstractMojo {
         // Credential helper probably was not configured correctly or did not have the necessary
         // credentials.
         suggestion = "make sure your credential helper is set up correctly";
+      }
+
+    } else if (ex instanceof ExecutionException) {
+      if (ex.getCause() instanceof HttpHostConnectException) {
+        // Failed to connect to registry.
+        suggestion =
+            "make sure your Internet is up and that the registry you are pushing to exists";
       }
     }
 
