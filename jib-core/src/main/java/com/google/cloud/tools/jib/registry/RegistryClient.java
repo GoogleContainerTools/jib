@@ -33,6 +33,7 @@ import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.json.ErrorEntryTemplate;
 import com.google.cloud.tools.jib.registry.json.ErrorResponseTemplate;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URL;
@@ -54,7 +55,8 @@ public class RegistryClient {
   }
 
   /** Gets the {@code User-Agent} header to send. */
-  private static String getUserAgent() {
+  @VisibleForTesting
+  static String getUserAgent() {
     String version = RegistryClient.class.getPackage().getImplementationVersion();
     StringBuilder userAgentBuilder = new StringBuilder();
     userAgentBuilder.append("jib");
@@ -174,7 +176,9 @@ public class RegistryClient {
     }
   }
 
-  private String getApiRouteBase() {
+  /** @return the registry endpoint's API root URL */
+  @VisibleForTesting
+  String getApiRouteBase() {
     return PROTOCOL + "://" + registryEndpointProperties.getServerUrl() + "/v2/";
   }
 
