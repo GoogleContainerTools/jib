@@ -52,11 +52,6 @@ public class BuildImageMojoIT {
 
     verifier.verifyErrorFreeLog();
 
-    //    System.out.println(
-    //        new String(
-    //            Files.readAllBytes(Paths.get(verifier.getLogFileName())),
-    // StandardCharsets.UTF_8));
-
     Assert.assertTrue(timeOne > timeTwo);
 
     // Checks that the built image outputs what was intended.
