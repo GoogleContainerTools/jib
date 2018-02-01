@@ -74,10 +74,31 @@ For example, to build the image `aws_account_id.dkr.ecr.region.amazonaws.com/my-
 Build your container image with:
 
 ```commandline
-$ mvn compile jib:build
+mvn compile jib:build
 ```
 
 Subsequent builds would usually be much faster than the initial build.
+
+### Bind to a lifecycle
+
+You can also bind `jib:build` to a Maven lifecycle such as `package` by adding the following execution:
+
+```xml
+<executions>
+  <execution>
+    <phase>package</phase>
+    <goals>
+      <goal>build</goal>
+    </goals>
+  </execution>
+</executions>
+```
+
+Then, you can build your container image with just:
+
+```commandline
+mvn package
+```
 
 ## Extended Usage
 
@@ -115,33 +136,9 @@ These limitations will be fixed in the future.
 
 See [rules_docker](https://github.com/bazelbuild/rules_docker) for a similar existing container image build tool for the [Bazel build system](https://github.com/bazelbuild/bazel). The tool can build images for languages such as Python, NodeJS, Java, Scala, Groovy, C, Go, Rust, and D.
 
-### How do I enable debugging?
+### Can I use other authentication methods besides a Docker credential helper?
 
-*TODO: Provide solution.*
-
-### I would like to run my application with a javaagent.
-
-*TODO: Provide solution.*
-
-### How can I tag my image with a timestamp?
-
-To tag the image with a simple timestamp, add the following to your `pom.xml`:
-
-```xml
-<properties>
-    <maven.build.timestamp.format>yyyyMMdd-HHmmssSSS</maven.build.timestamp.format>
-</properties>
-```
-
-Then in the `jib-maven-plugin` configuration, set the `tag` to:
-
-```xml
-<configuration>
-    <tag>${maven.build.timestamp}</tag>
-</configuration>
-```
-
-You can then use the same timestamp to reference the image in other plugins.
+Other authentication methods will be added in our next release (`v0.2.0`).
 
 ### Can I define a custom entrypoint?
 
@@ -174,3 +171,31 @@ We currently do not support adding a custom directory to the image. If your appl
 We currently do not support building to a local Docker daemon. However, this feature is in the pipeline and will be added in the future.
 
 You can still [`docker pull`](https://docs.docker.com/engine/reference/commandline/pull/) the image built with `jib-maven-plugin` to have it available in your local Docker daemon.
+
+### How do I enable debugging?
+
+*TODO: Provide solution.*
+
+### I would like to run my application with a javaagent.
+
+*TODO: Provide solution.*
+
+### How can I tag my image with a timestamp?
+
+To tag the image with a simple timestamp, add the following to your `pom.xml`:
+
+```xml
+<properties>
+    <maven.build.timestamp.format>yyyyMMdd-HHmmssSSS</maven.build.timestamp.format>
+</properties>
+```
+
+Then in the `jib-maven-plugin` configuration, set the `tag` to:
+
+```xml
+<configuration>
+    <tag>${maven.build.timestamp}</tag>
+</configuration>
+```
+
+You can then use the same timestamp to reference the image in other plugins.
