@@ -22,7 +22,7 @@ Jib is a tool for building container images for your Java applications.
 
 In your Maven Java project, add the plugin to your `pom.xml`:
 
-```
+```xml
 <plugin>
     <groupId>com.google.com.tools</groupId>
     <artifactId>jib-maven-plugin</artifactId>
@@ -45,7 +45,7 @@ Configure the plugin by changing `registry`, `repository`, and `credentialHelper
 
 For example, to build the image `gcr.io/my-gcp-project/my-app`, the configuration would be:
 
-```
+```xml
 <configuration>
     <registry>gcr.io</registry>
     <repository>my-gcp-project/my-app</repository>
@@ -59,7 +59,7 @@ For example, to build the image `gcr.io/my-gcp-project/my-app`, the configuratio
 
 For example, to build the image `aws_account_id.dkr.ecr.region.amazonaws.com/my-app`, the configuration would be:
 
-```
+```xml
 <configuration>
     <registry>aws_account_id.dkr.ecr.region.amazonaws.com</registry>
     <repository>my-app</repository>
@@ -73,7 +73,7 @@ For example, to build the image `aws_account_id.dkr.ecr.region.amazonaws.com/my-
 
 Build your container image with:
 
-```
+```commandline
 $ mvn compile jib:build
 ```
 
@@ -101,38 +101,76 @@ Whereas traditionally a Java application is built as a single image layer with t
 
 See also [rules_docker](https://github.com/bazelbuild/rules_docker) for a similar existing container image build tool for the [Bazel build system](https://github.com/bazelbuild/bazel).
 
-## Frequently Asked Questions (FAQ)
+## Known Limitations
 
-*TODO: Add more answers.*
+These limitations will be fixed in the future.
+
+* Does not build OCI images
+* Pushing to Docker Hub does not seem to work
+* Cannot build directly to a Docker daemon.
+
+## Frequently Asked Questions (FAQ)
 
 ### But, I'm not a Java developer.
 
-[bazelbuild/rules_docker](https://github.com/bazelbuild/rules_docker)
+See [rules_docker](https://github.com/bazelbuild/rules_docker) for a similar existing container image build tool for the [Bazel build system](https://github.com/bazelbuild/bazel). The tool can build images for languages such as Python, NodeJS, Java, Scala, Groovy, C, Go, Rust, and D.
 
 ### How do I enable debugging?
 
-*TODO: Answer this.*
+*TODO: Provide solution.*
 
 ### I would like to run my application with a javaagent.
 
-*TODO: Answer this.*
+*TODO: Provide solution.*
 
 ### How can I tag my image with a timestamp?
 
-*TODO: Answer this.*
+To tag the image with a simple timestamp, add the following to your `pom.xml`:
+
+```xml
+<properties>
+    <maven.build.timestamp.format>yyyyMMdd-HHmmssSSS</maven.build.timestamp.format>
+</properties>
+```
+
+Then in the `jib-maven-plugin` configuration, set the `tag` to:
+
+```xml
+<configuration>
+    <tag>${maven.build.timestamp}</tag>
+</configuration>
+```
+
+You can then use the same timestamp to reference the image in other plugins.
 
 ### Can I define a custom entrypoint?
 
-*TODO: Answer this.*
+The plugin attaches a default entrypoint that will run your application automatically.
+
+When running the image, you can override this default entrypoint with your own custom command.
+
+See [`docker run --entrypoint` reference](https://docs.docker.com/engine/reference/run/#entrypoint-default-command-to-execute-at-runtime) for running the image with Docker.
+
+See [Define a Command and Arguments for a Container](https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/) for running the image in a [Kubernetes](https://kubernetes.io/) Pod.
 
 ### I need to RUN commands like `apt-get`.
 
-*TODO: Answer this.*
+Running commands like `apt-get` slows down the container build process. We recommend and **do not support** running commands as part of the build. 
+
+However, if you need to run commands, you can build a custom base image. You can then use this custom base image in the `jib-maven-plugin` by adding the following configuration:
+
+```xml
+<configuration>
+    <from>custom-base-image</from>
+</configuration>
+```
 
 ### Can I ADD a custom directory to the image?
 
-*TODO: Answer this.*
+We currently do not support adding a custom directory to the image. If your application needs to use custom files, place them into your application's resources directory (`src/main/resources` by default). These resource files will be available on the classpath.
 
 ### Can I build to a local Docker daemon?
 
-*TODO: Answer this.*
+We currently do not support building to a local Docker daemon. However, this feature is in the pipeline and will be added in the future.
+
+You can still [`docker pull`](https://docs.docker.com/engine/reference/commandline/pull/) the image built with `jib-maven-plugin` to have it available in your local Docker daemon.
