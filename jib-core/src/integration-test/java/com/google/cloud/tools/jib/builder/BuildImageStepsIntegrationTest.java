@@ -16,40 +16,29 @@
 
 package com.google.cloud.tools.jib.builder;
 
-import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
-import com.google.cloud.tools.jib.image.DuplicateLayerException;
-import com.google.cloud.tools.jib.image.LayerCountMismatchException;
-import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
-import com.google.cloud.tools.jib.registry.NonexistentDockerCredentialHelperException;
-import com.google.cloud.tools.jib.registry.NonexistentServerUrlDockerCredentialHelperException;
-import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
-import com.google.cloud.tools.jib.registry.RegistryException;
 import com.google.common.io.CharStreams;
-import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Integration tests for {@link BuildImageSteps}. */
 public class BuildImageStepsIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
 
+  private static final Logger logger = LoggerFactory.getLogger(TestBuildLogger.class);
+
   @Rule public TemporaryFolder temporaryCacheDirectory = new TemporaryFolder();
 
   @Test
-  public void testSteps()
-      throws DuplicateLayerException, LayerPropertyNotFoundException, RegistryException,
-          LayerCountMismatchException, IOException, CacheMetadataCorruptedException,
-          RegistryAuthenticationFailedException,
-          NonexistentServerUrlDockerCredentialHelperException,
-          NonexistentDockerCredentialHelperException, URISyntaxException, InterruptedException {
+  public void testSteps() throws Exception {
     SourceFilesConfiguration sourceFilesConfiguration = new TestSourceFilesConfiguration();
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder()
@@ -60,6 +49,7 @@ public class BuildImageStepsIntegrationTest {
             .setTargetImageName("testimage")
             .setTargetTag("testtag")
             .setMainClass("HelloWorld")
+            .setBuildLogger(new TestBuildLogger())
             .build();
 
     BuildImageSteps buildImageSteps =
@@ -69,11 +59,11 @@ public class BuildImageStepsIntegrationTest {
             temporaryCacheDirectory.getRoot().toPath());
 
     long lastTime = System.nanoTime();
-    buildImageSteps.run();
-    System.out.println("Initial build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
+    buildImageSteps.runAsync();
+    logger.info("Initial build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
     lastTime = System.nanoTime();
-    buildImageSteps.run();
-    System.out.println("Secondary build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
+    buildImageSteps.runAsync();
+    logger.info("Secondary build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
 
     // TODO: Put this in a utility function.
     Runtime.getRuntime().exec("docker pull localhost:5000/testimage:testtag").waitFor();

@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.builder;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
@@ -23,6 +25,7 @@ import org.junit.Test;
 
 public class BuildConfigurationTest {
 
+  // TODO: Should test also if value is set but null
   @Test
   public void testBuilder() {
     String expectedBaseImageServerUrl = "someserver";
@@ -33,6 +36,7 @@ public class BuildConfigurationTest {
     String expectedTargetTag = "targettag";
     String expectedCredentialHelperName = "credentialhelper";
     String expectedMainClass = "mainclass";
+    List<String> expectedJvmFlags = Arrays.asList("some", "jvm", "flags");
 
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder()
@@ -44,6 +48,7 @@ public class BuildConfigurationTest {
             .setTargetTag(expectedTargetTag)
             .setCredentialHelperName(expectedCredentialHelperName)
             .setMainClass(expectedMainClass)
+            .setJvmFlags(expectedJvmFlags)
             .build();
     Assert.assertEquals(expectedBaseImageServerUrl, buildConfiguration.getBaseImageServerUrl());
     Assert.assertEquals(expectedBaseImageName, buildConfiguration.getBaseImageName());
@@ -53,6 +58,7 @@ public class BuildConfigurationTest {
     Assert.assertEquals(expectedTargetTag, buildConfiguration.getTargetTag());
     Assert.assertEquals(expectedCredentialHelperName, buildConfiguration.getCredentialHelperName());
     Assert.assertEquals(expectedMainClass, buildConfiguration.getMainClass());
+    Assert.assertEquals(expectedJvmFlags, buildConfiguration.getJvmFlags());
   }
 
   @Test

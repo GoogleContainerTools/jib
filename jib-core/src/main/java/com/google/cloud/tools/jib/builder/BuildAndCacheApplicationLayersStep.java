@@ -16,72 +16,94 @@
 
 package com.google.cloud.tools.jib.builder;
 
+import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheChecker;
-import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.CacheWriter;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.cache.CachedLayerType;
-import com.google.cloud.tools.jib.image.DuplicateLayerException;
-import com.google.cloud.tools.jib.image.ImageLayers;
 import com.google.cloud.tools.jib.image.LayerBuilder;
-import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
-import java.io.IOException;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
 /** Builds and caches application layers. */
-class BuildAndCacheApplicationLayersStep implements Callable<ImageLayers<CachedLayer>> {
+class BuildAndCacheApplicationLayersStep implements Callable<List<ListenableFuture<CachedLayer>>> {
 
+  private static final String DESCRIPTION = "Building application layers";
+
+  private final BuildConfiguration buildConfiguration;
   private final SourceFilesConfiguration sourceFilesConfiguration;
   private final Cache cache;
+  private final ListeningExecutorService listeningExecutorService;
 
   BuildAndCacheApplicationLayersStep(
-      SourceFilesConfiguration sourceFilesConfiguration, Cache cache) {
+      BuildConfiguration buildConfiguration,
+      SourceFilesConfiguration sourceFilesConfiguration,
+      Cache cache,
+      ListeningExecutorService listeningExecutorService) {
+    this.buildConfiguration = buildConfiguration;
     this.sourceFilesConfiguration = sourceFilesConfiguration;
     this.cache = cache;
+    this.listeningExecutorService = listeningExecutorService;
   }
 
+  /** Depends on nothing. */
   @Override
-  public ImageLayers<CachedLayer> call()
-      throws IOException, LayerPropertyNotFoundException, DuplicateLayerException,
-          CacheMetadataCorruptedException {
-    // TODO: Check if needs rebuilding.
-    CachedLayer dependenciesLayer =
-        buildAndCacheLayer(
-            CachedLayerType.DEPENDENCIES,
-            sourceFilesConfiguration.getDependenciesFiles(),
-            sourceFilesConfiguration.getDependenciesPathOnImage());
-    CachedLayer resourcesLayer =
-        buildAndCacheLayer(
-            CachedLayerType.RESOURCES,
-            sourceFilesConfiguration.getResourcesFiles(),
-            sourceFilesConfiguration.getResourcesPathOnImage());
-    CachedLayer classesLayer =
-        buildAndCacheLayer(
-            CachedLayerType.CLASSES,
-            sourceFilesConfiguration.getClassesFiles(),
-            sourceFilesConfiguration.getClassesPathOnImage());
+  public List<ListenableFuture<CachedLayer>> call() {
+    try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
+      List<ListenableFuture<CachedLayer>> applicationLayerFutures = new ArrayList<>(3);
+      applicationLayerFutures.add(
+          buildAndCacheLayerAsync(
+              CachedLayerType.DEPENDENCIES,
+              sourceFilesConfiguration.getDependenciesFiles(),
+              sourceFilesConfiguration.getDependenciesPathOnImage()));
+      applicationLayerFutures.add(
+          buildAndCacheLayerAsync(
+              CachedLayerType.RESOURCES,
+              sourceFilesConfiguration.getResourcesFiles(),
+              sourceFilesConfiguration.getResourcesPathOnImage()));
+      applicationLayerFutures.add(
+          buildAndCacheLayerAsync(
+              CachedLayerType.CLASSES,
+              sourceFilesConfiguration.getClassesFiles(),
+              sourceFilesConfiguration.getClassesPathOnImage()));
 
-    return new ImageLayers<CachedLayer>()
-        .add(dependenciesLayer)
-        .add(resourcesLayer)
-        .add(classesLayer);
+      return applicationLayerFutures;
+    }
   }
 
-  private CachedLayer buildAndCacheLayer(
-      CachedLayerType layerType, List<Path> sourceFiles, Path extractionPath)
-      throws IOException, LayerPropertyNotFoundException, DuplicateLayerException,
-          CacheMetadataCorruptedException {
-    // Don't build the layer if it exists already.
-    CachedLayer cachedLayer = new CacheChecker(cache).getUpToDateLayerBySourceFiles(sourceFiles);
-    if (cachedLayer != null) {
-      return cachedLayer;
-    }
+  private ListenableFuture<CachedLayer> buildAndCacheLayerAsync(
+      CachedLayerType layerType, List<Path> sourceFiles, Path extractionPath) {
+    String description =
+        String.format(
+            "Building %s layer",
+            layerType == CachedLayerType.DEPENDENCIES
+                ? "dependencies"
+                : layerType == CachedLayerType.RESOURCES ? "resources" : "classes");
 
-    LayerBuilder layerBuilder = new LayerBuilder(sourceFiles, extractionPath);
+    return listeningExecutorService.submit(
+        () -> {
+          try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), description)) {
+            // Don't build the layer if it exists already.
+            CachedLayer cachedLayer =
+                new CacheChecker(cache).getUpToDateLayerBySourceFiles(sourceFiles);
+            if (cachedLayer != null) {
+              return cachedLayer;
+            }
 
-    return new CacheWriter(cache).writeLayer(layerBuilder, layerType);
+            LayerBuilder layerBuilder = new LayerBuilder(sourceFiles, extractionPath);
+
+            cachedLayer = new CacheWriter(cache).writeLayer(layerBuilder, layerType);
+            // TODO: Remove
+            buildConfiguration
+                .getBuildLogger()
+                .debug(description + " built " + cachedLayer.getBlobDescriptor().getDigest());
+            return cachedLayer;
+          }
+        });
   }
 }

@@ -17,27 +17,24 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Timer;
+import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.cache.Cache;
-import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.image.DuplicateLayerException;
 import com.google.cloud.tools.jib.image.Image;
-import com.google.cloud.tools.jib.image.ImageLayers;
-import com.google.cloud.tools.jib.image.LayerCountMismatchException;
-import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
-import com.google.cloud.tools.jib.registry.NonexistentDockerCredentialHelperException;
-import com.google.cloud.tools.jib.registry.NonexistentServerUrlDockerCredentialHelperException;
-import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
-import com.google.cloud.tools.jib.registry.RegistryException;
-import java.io.IOException;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Executors;
 
 /** All the steps to build an image. */
 public class BuildImageSteps {
+
+  private static final String DESCRIPTION = "Building and pushing image";
 
   private final BuildConfiguration buildConfiguration;
   private final SourceFilesConfiguration sourceFilesConfiguration;
@@ -52,72 +49,111 @@ public class BuildImageSteps {
     this.cacheDirectory = cacheDirectory;
   }
 
-  public void run()
-      throws CacheMetadataCorruptedException, IOException, RegistryAuthenticationFailedException,
-          RegistryException, DuplicateLayerException, LayerCountMismatchException,
-          LayerPropertyNotFoundException, NonexistentServerUrlDockerCredentialHelperException,
-          NonexistentDockerCredentialHelperException {
-    try (Timer t = Timer.push("BuildImageSteps")) {
+  public void runAsync() throws Exception {
+    try (Timer timer = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
+      try (Timer timer2 = timer.subTimer("Initializing cache")) {
+        ListeningExecutorService listeningExecutorService =
+            MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
 
-      try (Cache cache = Cache.init(cacheDirectory)) {
-        try (Timer t2 = Timer.push("AuthenticatePullStep")) {
+        try (Cache cache = Cache.init(cacheDirectory)) {
+          timer2.lap("Setting up image pull authentication");
           // Authenticates base image pull.
-          AuthenticatePullStep authenticatePullStep = new AuthenticatePullStep(buildConfiguration);
-          Authorization pullAuthorization = authenticatePullStep.call();
-
-          Timer.time("PullBaseImageStep");
+          ListenableFuture<Authorization> authenticatePullFuture =
+              listeningExecutorService.submit(new AuthenticatePullStep(buildConfiguration));
+          timer2.lap("Setting up base image pull");
           // Pulls the base image.
-          PullBaseImageStep pullBaseImageStep =
-              new PullBaseImageStep(buildConfiguration, pullAuthorization);
-          Image baseImage = pullBaseImageStep.call();
-
-          Timer.time("PullAndCacheBaseImageLayersStep");
+          ListenableFuture<Image> pullBaseImageFuture =
+              Futures.whenAllSucceed(authenticatePullFuture)
+                  .call(
+                      new PullBaseImageStep(buildConfiguration, authenticatePullFuture),
+                      listeningExecutorService);
+          timer2.lap("Setting up base image layer pull");
           // Pulls and caches the base image layers.
-          PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep =
-              new PullAndCacheBaseImageLayersStep(
-                  buildConfiguration, cache, pullAuthorization, baseImage);
-          ImageLayers<CachedLayer> baseImageLayers = pullAndCacheBaseImageLayersStep.call();
+          ListenableFuture<List<ListenableFuture<CachedLayer>>> pullBaseImageLayerFuturesFuture =
+              Futures.whenAllSucceed(pullBaseImageFuture)
+                  .call(
+                      new PullAndCacheBaseImageLayersStep(
+                          buildConfiguration,
+                          cache,
+                          listeningExecutorService,
+                          authenticatePullFuture,
+                          pullBaseImageFuture),
+                      listeningExecutorService);
 
-          Timer.time("AuthenticatePushStep");
+          timer2.lap("Setting up image push authentication");
           // Authenticates push.
-          AuthenticatePushStep authenticatePushStep = new AuthenticatePushStep(buildConfiguration);
-          Authorization pushAuthorization = authenticatePushStep.call();
-
-          Timer.time("PushBaseImageLayersStep");
+          ListenableFuture<Authorization> authenticatePushFuture =
+              listeningExecutorService.submit(new AuthenticatePushStep(buildConfiguration));
+          timer2.lap("Setting up base image layer push");
           // Pushes the base image layers.
-          PushBaseImageLayersStep pushBaseImageLayersStep =
-              new PushBaseImageLayersStep(buildConfiguration, pushAuthorization, baseImageLayers);
-          pushBaseImageLayersStep.call();
+          ListenableFuture<List<ListenableFuture<Void>>> pushBaseImageLayerFuturesFuture =
+              Futures.whenAllSucceed(pullBaseImageLayerFuturesFuture)
+                  .call(
+                      new PushLayersStep(
+                          buildConfiguration,
+                          listeningExecutorService,
+                          authenticatePushFuture,
+                          pullBaseImageLayerFuturesFuture),
+                      listeningExecutorService);
 
-          Timer.time("BuildAndCacheApplicationLayersStep");
-          BuildAndCacheApplicationLayersStep buildAndCacheApplicationLayersStep =
-              new BuildAndCacheApplicationLayersStep(sourceFilesConfiguration, cache);
-          ImageLayers<CachedLayer> applicationLayers = buildAndCacheApplicationLayersStep.call();
+          timer2.lap("Setting up build application layers");
+          // Builds the application layers.
+          List<ListenableFuture<CachedLayer>> buildAndCacheApplicationLayerFutures =
+              new BuildAndCacheApplicationLayersStep(
+                      buildConfiguration, sourceFilesConfiguration, cache, listeningExecutorService)
+                  .call();
 
-          Timer.time("PushApplicationLayerStep");
+          timer2.lap("Setting up container configuration push");
+          // Builds and pushes the container configuration.
+          ListenableFuture<ListenableFuture<BlobDescriptor>>
+              buildAndPushContainerConfigurationFutureFuture =
+                  Futures.whenAllSucceed(pullBaseImageLayerFuturesFuture)
+                      .call(
+                          new BuildAndPushContainerConfigurationStep(
+                              buildConfiguration,
+                              listeningExecutorService,
+                              authenticatePushFuture,
+                              pullBaseImageLayerFuturesFuture,
+                              buildAndCacheApplicationLayerFutures,
+                              getEntrypoint()),
+                          listeningExecutorService);
+
+          timer2.lap("Setting up application layer push");
           // Pushes the application layers.
-          PushApplicationLayersStep pushApplicationLayersStep =
-              new PushApplicationLayersStep(
-                  buildConfiguration, pushAuthorization, applicationLayers);
-          pushApplicationLayersStep.call();
+          List<ListenableFuture<Void>> pushApplicationLayersFuture =
+              new PushLayersStep(
+                      buildConfiguration,
+                      listeningExecutorService,
+                      authenticatePushFuture,
+                      Futures.immediateFuture(buildAndCacheApplicationLayerFutures))
+                  .call();
 
-          Timer.time("PushImageStep");
+          timer2.lap("Setting up image manifest push");
           // Pushes the new image manifest.
-          Image image =
-              new Image()
-                  .addLayers(baseImageLayers)
-                  .addLayers(applicationLayers)
-                  .setEntrypoint(getEntrypoint());
-          PushImageStep pushImageStep =
-              new PushImageStep(buildConfiguration, pushAuthorization, image);
-          pushImageStep.call();
+          ListenableFuture<Void> pushImageFuture =
+              Futures.whenAllSucceed(
+                      pushBaseImageLayerFuturesFuture,
+                      buildAndPushContainerConfigurationFutureFuture)
+                  .call(
+                      new PushImageStep(
+                          buildConfiguration,
+                          listeningExecutorService,
+                          authenticatePushFuture,
+                          pullBaseImageLayerFuturesFuture,
+                          buildAndCacheApplicationLayerFutures,
+                          pushBaseImageLayerFuturesFuture,
+                          pushApplicationLayersFuture,
+                          buildAndPushContainerConfigurationFutureFuture),
+                      listeningExecutorService);
 
-          System.out.println(getEntrypoint());
+          timer2.lap("Running push new image");
+          pushImageFuture.get();
         }
       }
-    } finally {
-      Timer.print();
     }
+
+    buildConfiguration.getBuildLogger().info("");
+    buildConfiguration.getBuildLogger().info("Container entrypoint set to " + getEntrypoint());
   }
 
   /**
@@ -131,8 +167,14 @@ public class BuildImageSteps {
     classPaths.add(sourceFilesConfiguration.getResourcesPathOnImage().toString());
     classPaths.add(sourceFilesConfiguration.getClassesPathOnImage().toString());
 
-    String entrypoint = String.join(":", classPaths);
+    String classPathsString = String.join(":", classPaths);
 
-    return Arrays.asList("java", "-cp", entrypoint, buildConfiguration.getMainClass());
+    List<String> entrypoint = new ArrayList<>(4 + buildConfiguration.getJvmFlags().size());
+    entrypoint.add("java");
+    entrypoint.addAll(buildConfiguration.getJvmFlags());
+    entrypoint.add("-cp");
+    entrypoint.add(classPathsString);
+    entrypoint.add(buildConfiguration.getMainClass());
+    return entrypoint;
   }
 }

@@ -22,6 +22,7 @@ import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
+import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Connection;
 import com.google.cloud.tools.jib.http.Request;
@@ -43,6 +44,29 @@ import org.apache.http.NoHttpResponseException;
 
 /** Interfaces with a registry. */
 public class RegistryClient {
+
+  // TODO: Remove
+  private Timer parentTimer =
+      new Timer(
+          new BuildLogger() {
+            @Override
+            public void debug(CharSequence message) {}
+
+            @Override
+            public void info(CharSequence message) {}
+
+            @Override
+            public void warn(CharSequence message) {}
+
+            @Override
+            public void error(CharSequence message) {}
+          },
+          "NULL TIMER");
+
+  public RegistryClient setTimer(Timer parentTimer) {
+    this.parentTimer = parentTimer;
+    return this;
+  }
 
   private static final String PROTOCOL = "https";
 
@@ -149,9 +173,8 @@ public class RegistryClient {
       throws IOException, RegistryException {
     BlobPusher blobPusher = new BlobPusher(registryEndpointProperties, blobDigest, blob);
 
-    try (Timer t = Timer.push("pushBlob")) {
-
-      try (Timer t2 = Timer.push("pushBlob POST")) {
+    try (Timer t = parentTimer.subTimer("pushBlob")) {
+      try (Timer t2 = t.subTimer("pushBlob POST " + blobDigest)) {
 
         // POST /v2/<name>/blobs/uploads/?mount={blob.digest}
         String locationHeader = callRegistryEndpoint(blobPusher.initializer());
@@ -161,12 +184,12 @@ public class RegistryClient {
         }
         URL patchLocation = new URL(locationHeader);
 
-        Timer.time("pushBlob PATCH");
+        t2.lap("pushBlob PATCH " + blobDigest);
 
         // PATCH <Location> with BLOB
         URL putLocation = new URL(callRegistryEndpoint(blobPusher.writer(patchLocation)));
 
-        Timer.time("pushBlob PUT");
+        t2.lap("pushBlob PUT " + blobDigest);
 
         // PUT <Location>?digest={blob.digest}
         callRegistryEndpoint(blobPusher.committer(putLocation));

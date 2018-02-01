@@ -20,10 +20,7 @@ import com.google.common.io.CharStreams;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.logging.Logger;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
 import org.junit.Assert;
@@ -37,8 +34,6 @@ public class BuildImageMojoIT {
   @ClassRule public static final TestPlugin testPlugin = new TestPlugin();
 
   @Rule public final TestProject testProject = new TestProject(testPlugin);
-
-  private static Logger log = Logger.getLogger("info");
 
   @Test
   public void testExecute() throws VerificationException, IOException, InterruptedException {
@@ -56,10 +51,6 @@ public class BuildImageMojoIT {
     long timeTwo = System.nanoTime() - lastTime;
 
     verifier.verifyErrorFreeLog();
-
-    System.out.println(
-        new String(
-            Files.readAllBytes(Paths.get(verifier.getLogFileName())), StandardCharsets.UTF_8));
 
     Assert.assertTrue(timeOne > timeTwo);
 

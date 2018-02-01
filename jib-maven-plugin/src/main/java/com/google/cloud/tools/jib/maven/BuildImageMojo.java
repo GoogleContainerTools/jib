@@ -20,27 +20,26 @@ import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.BuildImageSteps;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
-import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
-import com.google.cloud.tools.jib.image.DuplicateLayerException;
-import com.google.cloud.tools.jib.image.LayerCountMismatchException;
-import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
-import com.google.cloud.tools.jib.registry.NonexistentDockerCredentialHelperException;
-import com.google.cloud.tools.jib.registry.NonexistentServerUrlDockerCredentialHelperException;
-import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.registry.RegistryClient;
-import com.google.cloud.tools.jib.registry.RegistryException;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import javax.annotation.Nullable;
+import org.apache.http.conn.HttpHostConnectException;
+import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
 
 /** Builds a container image. */
 @Mojo(name = "build", requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM)
@@ -59,6 +58,7 @@ public class BuildImageMojo extends AbstractMojo {
   @Parameter(defaultValue = "gcr.io/distroless/java", required = true)
   private String from;
 
+  // TODO: Remove these in favor of "from".
   @Parameter(defaultValue = "gcr.io", required = true)
   private String baseImageRegistry;
 
@@ -81,15 +81,31 @@ public class BuildImageMojo extends AbstractMojo {
 
   @Parameter private List<String> jvmFlags;
 
-  @Parameter(required = true)
-  private String mainClass;
+  @Parameter private Map<String, String> environment;
+
+  @Parameter private String mainClass;
 
   @Override
   public void execute() throws MojoExecutionException {
+    if (mainClass == null) {
+      Plugin mavenJarPlugin = project.getPlugin("org.apache.maven.plugins:maven-jar-plugin");
+      if (mavenJarPlugin != null) {
+        mainClass = getMainClassFromMavenJarPlugin(mavenJarPlugin);
+        if (mainClass == null) {
+          provideSuggestionForException(
+              new MojoFailureException("Could not find main class specified in maven-jar-plugin"),
+              "add a `mainClass` configuration to jib-maven-plugin");
+        }
+
+        getLog().info("Using main class from maven-jar-plugin: " + mainClass);
+      }
+    }
+
     SourceFilesConfiguration sourceFilesConfiguration = getSourceFilesConfiguration();
 
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder()
+            .setBuildLogger(new MavenBuildLogger(getLog()))
             .setBaseImageServerUrl(baseImageRegistry)
             .setBaseImageName(baseImageRepository)
             .setBaseImageTag(baseImageTag)
@@ -98,6 +114,8 @@ public class BuildImageMojo extends AbstractMojo {
             .setTargetTag(tag)
             .setCredentialHelperName(credentialHelperName)
             .setMainClass(mainClass)
+            .setJvmFlags(jvmFlags)
+            .setEnvironment(environment)
             .build();
 
     Path cacheDirectory = Paths.get(project.getBuild().getDirectory(), CACHE_DIRECTORY_NAME);
@@ -110,48 +128,54 @@ public class BuildImageMojo extends AbstractMojo {
       }
     }
 
+    getLog().info("");
+    getLog().info("Pushing image as " + registry + "/" + repository + ":" + tag);
+    getLog().info("");
+
     try {
+      // TODO: Instead of disabling logging, have authentication credentials be provided
+      // Disables annoying Apache HTTP client logging.
+      System.setProperty(
+          "org.apache.commons.logging.Log", "org.apache.commons.logging.impl.SimpleLog");
+      System.setProperty("org.apache.commons.logging.simplelog.defaultlog", "error");
+
       RegistryClient.setUserAgentSuffix(USER_AGENT_SUFFIX);
       BuildImageSteps buildImageSteps =
           new BuildImageSteps(buildConfiguration, sourceFilesConfiguration, cacheDirectory);
-      buildImageSteps.run();
+      buildImageSteps.runAsync();
+
+      getLog().info("");
+      getLog().info("Built and pushed image as " + registry + "/" + repository + ":" + tag);
+      getLog().info("");
 
     } catch (RegistryUnauthorizedException ex) {
-      String suggestion = null;
-
-      if (ex.getHttpResponseException().getStatusCode() == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
+      if (((RegistryUnauthorizedException) ex).getHttpResponseException().getStatusCode()
+          == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
         // No permissions to push to target image.
         String targetImage = registry + "/" + repository + ":" + tag;
-        suggestion = "make sure your have permission to push to " + targetImage;
+        provideSuggestionForException(
+            ex, "make sure your have permission to push to " + targetImage);
 
       } else if (credentialHelperName == null) {
         // Credential helper not defined.
-        suggestion = "set the configuration 'credentialHelperName'";
+        provideSuggestionForException(ex, "set the configuration 'credentialHelperName'");
 
       } else {
         // Credential helper probably was not configured correctly or did not have the necessary
         // credentials.
-        suggestion = "make sure your credential helper is set up correctly";
+        provideSuggestionForException(ex, "make sure your credential helper is set up correctly");
       }
 
-      StringBuilder message = new StringBuilder("Build image failed");
-      if (suggestion != null) {
-        message.append("\n\tPerhaps you should ");
-        message.append(suggestion);
+    } catch (ExecutionException ex) {
+      if (ex.getCause() instanceof HttpHostConnectException) {
+        // Failed to connect to registry.
+        provideSuggestionForException(
+            ex, "make sure your Internet is up and that the registry you are pushing to exists");
       }
-      throw new MojoExecutionException(message.toString(), ex);
 
-    } catch (IOException
-        | RegistryException
-        | CacheMetadataCorruptedException
-        | DuplicateLayerException
-        | LayerPropertyNotFoundException
-        | LayerCountMismatchException
-        | NonexistentDockerCredentialHelperException
-        | RegistryAuthenticationFailedException
-        | NonexistentServerUrlDockerCredentialHelperException ex) {
+    } catch (Exception ex) {
       // TODO: Add more suggestions for various build failures.
-      throw new MojoExecutionException("Build image failed", ex);
+      provideSuggestionForException(ex, null);
     }
   }
 
@@ -162,25 +186,66 @@ public class BuildImageMojo extends AbstractMojo {
           new MavenSourceFilesConfiguration(project);
 
       // Logs the different source files used.
-      getLog().debug("Dependencies:");
+      getLog().info("");
+      getLog().info("Containerizing application with the following files:");
+      getLog().info("");
+
+      getLog().info("\tDependencies:");
+      getLog().info("");
       sourceFilesConfiguration
           .getDependenciesFiles()
-          .forEach(dependencyFile -> getLog().debug("Dependency: " + dependencyFile));
+          .forEach(dependencyFile -> getLog().info("\t\t" + dependencyFile));
 
-      getLog().debug("Resources:");
+      getLog().info("\tResources:");
+      getLog().info("");
       sourceFilesConfiguration
           .getResourcesFiles()
-          .forEach(resourceFile -> getLog().debug("Resource: " + resourceFile));
+          .forEach(resourceFile -> getLog().info("\t\t" + resourceFile));
 
-      getLog().debug("Classes:");
+      getLog().info("\tClasses:");
+      getLog().info("");
       sourceFilesConfiguration
           .getClassesFiles()
-          .forEach(classesFile -> getLog().debug("Class: " + classesFile));
+          .forEach(classesFile -> getLog().info("\t\t" + classesFile));
+
+      getLog().info("");
 
       return sourceFilesConfiguration;
 
     } catch (IOException ex) {
       throw new MojoExecutionException("Obtaining project build output files failed", ex);
     }
+  }
+
+  /** Gets the {@code mainClass} configuration from {@code maven-jar-plugin}. */
+  @Nullable
+  private String getMainClassFromMavenJarPlugin(Plugin mavenJarPlugin) {
+    Xpp3Dom jarConfiguration = (Xpp3Dom) mavenJarPlugin.getConfiguration();
+    if (jarConfiguration == null) {
+      return null;
+    }
+    Xpp3Dom archiveObject = jarConfiguration.getChild("archive");
+    if (archiveObject == null) {
+      return null;
+    }
+    Xpp3Dom manifestObject = archiveObject.getChild("manifest");
+    if (manifestObject == null) {
+      return null;
+    }
+    Xpp3Dom mainClassObject = manifestObject.getChild("mainClass");
+    if (mainClassObject == null) {
+      return null;
+    }
+    return mainClassObject.getValue();
+  }
+
+  private <T extends Exception> void provideSuggestionForException(
+      T ex, @Nullable String suggestion) throws MojoExecutionException {
+    StringBuilder message = new StringBuilder("Build image failed");
+    if (suggestion != null) {
+      message.append(", perhaps you should ");
+      message.append(suggestion);
+    }
+    throw new MojoExecutionException(message.toString(), ex);
   }
 }

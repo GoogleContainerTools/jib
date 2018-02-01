@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder;
 
+import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.DuplicateLayerException;
 import com.google.cloud.tools.jib.image.Image;
@@ -33,53 +34,62 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 /** Pulls the base image manifest. */
 class PullBaseImageStep implements Callable<Image> {
 
-  private final BuildConfiguration buildConfiguration;
-  private final Authorization pullAuthorization;
+  private static final String DESCRIPTION = "Pulling base image manifest";
 
-  PullBaseImageStep(BuildConfiguration buildConfiguration, Authorization pullAuthorization) {
+  private final BuildConfiguration buildConfiguration;
+  private final Future<Authorization> pullAuthorizationFuture;
+
+  PullBaseImageStep(
+      BuildConfiguration buildConfiguration, Future<Authorization> pullAuthorizationFuture) {
     this.buildConfiguration = buildConfiguration;
-    this.pullAuthorization = pullAuthorization;
+    this.pullAuthorizationFuture = pullAuthorizationFuture;
   }
 
+  /** Depends on {@code pullAuthorizationFuture}. */
   @Override
   public Image call()
       throws IOException, RegistryException, LayerPropertyNotFoundException,
-          DuplicateLayerException, LayerCountMismatchException {
-    RegistryClient registryClient =
-        new RegistryClient(
-            pullAuthorization,
-            buildConfiguration.getBaseImageServerUrl(),
-            buildConfiguration.getBaseImageName());
+          DuplicateLayerException, LayerCountMismatchException, ExecutionException,
+          InterruptedException {
+    try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
+      RegistryClient registryClient =
+          new RegistryClient(
+              NonBlockingFutures.get(pullAuthorizationFuture),
+              buildConfiguration.getBaseImageServerUrl(),
+              buildConfiguration.getBaseImageName());
 
-    ManifestTemplate manifestTemplate =
-        registryClient.pullManifest(buildConfiguration.getBaseImageTag());
+      ManifestTemplate manifestTemplate =
+          registryClient.pullManifest(buildConfiguration.getBaseImageTag());
 
-    // TODO: Make schema version be enum.
-    switch (manifestTemplate.getSchemaVersion()) {
-      case 1:
-        V21ManifestTemplate v21ManifestTemplate = (V21ManifestTemplate) manifestTemplate;
-        return JsonToImageTranslator.toImage(v21ManifestTemplate);
+      // TODO: Make schema version be enum.
+      switch (manifestTemplate.getSchemaVersion()) {
+        case 1:
+          V21ManifestTemplate v21ManifestTemplate = (V21ManifestTemplate) manifestTemplate;
+          return JsonToImageTranslator.toImage(v21ManifestTemplate);
 
-      case 2:
-        V22ManifestTemplate v22ManifestTemplate = (V22ManifestTemplate) manifestTemplate;
+        case 2:
+          V22ManifestTemplate v22ManifestTemplate = (V22ManifestTemplate) manifestTemplate;
 
-        ByteArrayOutputStream containerConfigurationOutputStream = new ByteArrayOutputStream();
-        registryClient.pullBlob(
-            v22ManifestTemplate.getContainerConfigurationDigest(),
-            containerConfigurationOutputStream);
-        String containerConfigurationString =
-            new String(containerConfigurationOutputStream.toByteArray(), StandardCharsets.UTF_8);
+          ByteArrayOutputStream containerConfigurationOutputStream = new ByteArrayOutputStream();
+          registryClient.pullBlob(
+              v22ManifestTemplate.getContainerConfigurationDigest(),
+              containerConfigurationOutputStream);
+          String containerConfigurationString =
+              new String(containerConfigurationOutputStream.toByteArray(), StandardCharsets.UTF_8);
 
-        ContainerConfigurationTemplate containerConfigurationTemplate =
-            JsonTemplateMapper.readJson(
-                containerConfigurationString, ContainerConfigurationTemplate.class);
-        return JsonToImageTranslator.toImage(v22ManifestTemplate, containerConfigurationTemplate);
+          ContainerConfigurationTemplate containerConfigurationTemplate =
+              JsonTemplateMapper.readJson(
+                  containerConfigurationString, ContainerConfigurationTemplate.class);
+          return JsonToImageTranslator.toImage(v22ManifestTemplate, containerConfigurationTemplate);
+      }
+
+      throw new IllegalStateException("Unknown manifest schema version");
     }
-
-    throw new IllegalStateException("Unknown manifest schema version");
   }
 }

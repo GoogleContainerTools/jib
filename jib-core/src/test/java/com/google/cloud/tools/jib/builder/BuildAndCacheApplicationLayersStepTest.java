@@ -25,33 +25,52 @@ import com.google.cloud.tools.jib.cache.CachedLayerType;
 import com.google.cloud.tools.jib.image.DuplicateLayerException;
 import com.google.cloud.tools.jib.image.ImageLayers;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.util.concurrent.ExecutionException;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link BuildAndCacheApplicationLayersStep}. */
+@RunWith(MockitoJUnitRunner.class)
 public class BuildAndCacheApplicationLayersStepTest {
 
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
+  @Mock private BuildConfiguration mockBuildConfiguration;
+
   @Test
   public void testRun()
       throws LayerPropertyNotFoundException, DuplicateLayerException, IOException,
-          CacheMetadataCorruptedException, URISyntaxException {
+          CacheMetadataCorruptedException, URISyntaxException, ExecutionException,
+          InterruptedException {
+    Mockito.when(mockBuildConfiguration.getBuildLogger()).thenReturn(new TestBuildLogger());
     TestSourceFilesConfiguration testSourceFilesConfiguration = new TestSourceFilesConfiguration();
     Path temporaryCacheDirectory = temporaryFolder.newFolder().toPath();
 
-    ImageLayers<CachedLayer> applicationLayers;
+    ImageLayers<CachedLayer> applicationLayers = new ImageLayers<>();
 
     try (Cache cache = Cache.init(temporaryCacheDirectory)) {
       BuildAndCacheApplicationLayersStep buildAndCacheApplicationLayersStep =
-          new BuildAndCacheApplicationLayersStep(testSourceFilesConfiguration, cache);
+          new BuildAndCacheApplicationLayersStep(
+              mockBuildConfiguration,
+              testSourceFilesConfiguration,
+              cache,
+              MoreExecutors.newDirectExecutorService());
 
-      applicationLayers = buildAndCacheApplicationLayersStep.call();
+      for (ListenableFuture<CachedLayer> applicationLayerFuture :
+          buildAndCacheApplicationLayersStep.call()) {
+        applicationLayers.add(applicationLayerFuture.get());
+      }
 
       Assert.assertEquals(3, applicationLayers.size());
     }

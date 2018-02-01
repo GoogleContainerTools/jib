@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder;
 
+import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticators;
@@ -26,17 +27,22 @@ import java.util.concurrent.Callable;
 /** Retrieves credentials to push from the base image registry. */
 class AuthenticatePullStep implements Callable<Authorization> {
 
+  private static final String DESCRIPTION = "Authenticating with base image registry";
+
   private final BuildConfiguration buildConfiguration;
 
   AuthenticatePullStep(BuildConfiguration buildConfiguration) {
     this.buildConfiguration = buildConfiguration;
   }
 
+  /** Depends on nothing. */
   @Override
   public Authorization call()
       throws RegistryAuthenticationFailedException, IOException, RegistryException {
-    return RegistryAuthenticators.forOther(
-            buildConfiguration.getBaseImageServerUrl(), buildConfiguration.getBaseImageName())
-        .authenticate();
+    try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
+      return RegistryAuthenticators.forOther(
+              buildConfiguration.getBaseImageServerUrl(), buildConfiguration.getBaseImageName())
+          .authenticate();
+    }
   }
 }

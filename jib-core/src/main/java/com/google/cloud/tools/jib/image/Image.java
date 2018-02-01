@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.image;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /** Represents an image. */
 public class Image {
@@ -34,6 +35,14 @@ public class Image {
 
   public List<String> getEnvironment() {
     return Collections.unmodifiableList(environment);
+  }
+
+  /** Sets the environment with a map from environment variable names to values. */
+  public Image setEnvironment(Map<String, String> environment) {
+    for (Map.Entry<String, String> environmentVariable : environment.entrySet()) {
+      setEnvironmentVariable(environmentVariable.getKey(), environmentVariable.getValue());
+    }
+    return this;
   }
 
   public Image setEnvironmentVariable(String name, String value) {

@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /** Immutable configuration options for the builder process. */
 public class BuildConfiguration {
@@ -48,7 +49,12 @@ public class BuildConfiguration {
     CREDENTIAL_HELPER_NAME(false),
 
     /** The main class to use when running the application. */
-    MAIN_CLASS(true);
+    MAIN_CLASS(true),
+
+    /** Additional JVM flags to use when running the application. */
+    JVM_FLAGS(false),
+    /** Environment variables to set when running the application. */
+    ENVIRONMENT(false);
 
     private final boolean required;
 
@@ -77,15 +83,27 @@ public class BuildConfiguration {
             put(Fields.TARGET_TAG, "target image tag");
             put(Fields.CREDENTIAL_HELPER_NAME, "credential helper name");
             put(Fields.MAIN_CLASS, "main class");
+            put(Fields.JVM_FLAGS, "JVM flags");
+            put(Fields.ENVIRONMENT, "environment variables");
           }
         };
 
     private static final String MISSING_FIELD_MESSAGE_SUFFIX =
         " required but not set in build configuration";
 
-    private Map<Fields, String> values = new EnumMap<>(Fields.class);
+    private BuildLogger buildLogger;
+    private Map<Fields, Object> values = new EnumMap<>(Fields.class);
 
-    private Builder() {}
+    private Builder() {
+      // Sets default empty values.
+      values.put(Fields.JVM_FLAGS, Collections.emptyList());
+      values.put(Fields.ENVIRONMENT, Collections.emptyMap());
+    }
+
+    public Builder setBuildLogger(BuildLogger buildLogger) {
+      this.buildLogger = buildLogger;
+      return this;
+    }
 
     public Builder setBaseImageServerUrl(String baseImageServerUrl) {
       values.put(Fields.BASE_IMAGE_SERVER_URL, baseImageServerUrl);
@@ -117,13 +135,27 @@ public class BuildConfiguration {
       return this;
     }
 
-    public Builder setCredentialHelperName(String credentialHelperName) {
+    public Builder setCredentialHelperName(@Nullable String credentialHelperName) {
       values.put(Fields.CREDENTIAL_HELPER_NAME, credentialHelperName);
       return this;
     }
 
     public Builder setMainClass(String mainClass) {
       values.put(Fields.MAIN_CLASS, mainClass);
+      return this;
+    }
+
+    public Builder setJvmFlags(List<String> jvmFlags) {
+      if (jvmFlags != null) {
+        values.put(Fields.JVM_FLAGS, jvmFlags);
+      }
+      return this;
+    }
+
+    public Builder setEnvironment(Map<String, String> environment) {
+      if (environment != null) {
+        values.put(Fields.ENVIRONMENT, environment);
+      }
       return this;
     }
 
@@ -134,7 +166,7 @@ public class BuildConfiguration {
     public BuildConfiguration build() {
       List<String> descriptions = new ArrayList<>();
       for (Fields field : Fields.values()) {
-        if (field.isRequired() && !values.containsKey(field)) {
+        if (field.isRequired() && (!values.containsKey(field) || values.get(field) == null)) {
           descriptions.add(FIELD_DESCRIPTIONS.get(field));
         }
       }
@@ -142,7 +174,7 @@ public class BuildConfiguration {
       switch (descriptions.size()) {
         case 0:
           values = Collections.unmodifiableMap(values);
-          return new BuildConfiguration(values);
+          return new BuildConfiguration(buildLogger, values);
 
         case 1:
           throw new IllegalStateException(descriptions.get(0) + MISSING_FIELD_MESSAGE_SUFFIX);
@@ -170,45 +202,65 @@ public class BuildConfiguration {
     }
   }
 
-  private final Map<Fields, String> values;
+  private final BuildLogger buildLogger;
+  private final Map<Fields, Object> values;
 
   public static Builder builder() {
     return new Builder();
   }
 
-  private BuildConfiguration(Map<Fields, String> values) {
+  private BuildConfiguration(BuildLogger buildLogger, Map<Fields, Object> values) {
+    this.buildLogger = buildLogger;
     this.values = values;
   }
 
+  public BuildLogger getBuildLogger() {
+    return buildLogger;
+  }
+
   public String getBaseImageServerUrl() {
-    return values.get(Fields.BASE_IMAGE_SERVER_URL);
+    return getFieldValue(Fields.BASE_IMAGE_SERVER_URL);
   }
 
   public String getBaseImageName() {
-    return values.get(Fields.BASE_IMAGE_NAME);
+    return getFieldValue(Fields.BASE_IMAGE_NAME);
   }
 
   public String getBaseImageTag() {
-    return values.get(Fields.BASE_IMAGE_TAG);
+    return getFieldValue(Fields.BASE_IMAGE_TAG);
   }
 
   public String getTargetServerUrl() {
-    return values.get(Fields.TARGET_SERVER_URL);
+    return getFieldValue(Fields.TARGET_SERVER_URL);
   }
 
   public String getTargetImageName() {
-    return values.get(Fields.TARGET_IMAGE_NAME);
+    return getFieldValue(Fields.TARGET_IMAGE_NAME);
   }
 
   public String getTargetTag() {
-    return values.get(Fields.TARGET_TAG);
+    return getFieldValue(Fields.TARGET_TAG);
   }
 
+  @Nullable
   public String getCredentialHelperName() {
-    return values.get(Fields.CREDENTIAL_HELPER_NAME);
+    return getFieldValue(Fields.CREDENTIAL_HELPER_NAME);
   }
 
   public String getMainClass() {
-    return values.get(Fields.MAIN_CLASS);
+    return getFieldValue(Fields.MAIN_CLASS);
+  }
+
+  public List<String> getJvmFlags() {
+    return Collections.unmodifiableList(getFieldValue(Fields.JVM_FLAGS));
+  }
+
+  public Map<String, String> getEnvironment() {
+    return Collections.unmodifiableMap(getFieldValue(Fields.ENVIRONMENT));
+  }
+
+  @SuppressWarnings("unchecked")
+  private <T> T getFieldValue(Fields field) {
+    return (T) values.get(field);
   }
 }

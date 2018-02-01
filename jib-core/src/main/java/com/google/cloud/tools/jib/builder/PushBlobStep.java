@@ -16,34 +16,57 @@
 
 package com.google.cloud.tools.jib.builder;
 
-import com.google.cloud.tools.jib.blob.Blob;
+import com.google.cloud.tools.jib.Timer;
+import com.google.cloud.tools.jib.cache.CachedLayer;
+import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryException;
 import java.io.IOException;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 /** Pushes a BLOB to the target registry. */
 class PushBlobStep implements Callable<Void> {
 
-  private final RegistryClient registryClient;
-  private final Blob blob;
-  private final DescriptorDigest digest;
+  private static final String DESCRIPTION = "Pushing BLOB ";
 
-  PushBlobStep(RegistryClient registryClient, Blob blob, DescriptorDigest digest) {
-    this.registryClient = registryClient;
-    this.blob = blob;
-    this.digest = digest;
+  private final BuildConfiguration buildConfiguration;
+  private final Future<Authorization> pushAuthorizationFuture;
+  private final Future<CachedLayer> pullLayerFuture;
+
+  PushBlobStep(
+      BuildConfiguration buildConfiguration,
+      Future<Authorization> pushAuthorizationFuture,
+      Future<CachedLayer> pullLayerFuture) {
+    this.buildConfiguration = buildConfiguration;
+    this.pushAuthorizationFuture = pushAuthorizationFuture;
+    this.pullLayerFuture = pullLayerFuture;
   }
 
+  /** Depends on {@code pushAuthorizationFuture} and {@code pullLayerFuture}. */
   @Override
-  public Void call() throws IOException, RegistryException {
-    if (registryClient.checkBlob(digest) != null) {
+  public Void call()
+      throws IOException, RegistryException, ExecutionException, InterruptedException {
+    CachedLayer layer = pullLayerFuture.get();
+    DescriptorDigest layerDigest = layer.getBlobDescriptor().getDigest();
+
+    try (Timer timer = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION + layerDigest)) {
+      RegistryClient registryClient =
+          new RegistryClient(
+                  pushAuthorizationFuture.get(),
+                  buildConfiguration.getTargetServerUrl(),
+                  buildConfiguration.getTargetImageName())
+              .setTimer(timer);
+
+      if (registryClient.checkBlob(layerDigest) != null) {
+        return null;
+      }
+
+      registryClient.pushBlob(layerDigest, layer.getBlob());
+
       return null;
     }
-
-    registryClient.pushBlob(digest, blob);
-
-    return null;
   }
 }
