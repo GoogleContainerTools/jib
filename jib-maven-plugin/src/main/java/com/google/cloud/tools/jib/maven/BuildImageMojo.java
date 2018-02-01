@@ -148,29 +148,29 @@ public class BuildImageMojo extends AbstractMojo {
       getLog().info("Built and pushed image as " + registry + "/" + repository + ":" + tag);
       getLog().info("");
 
-    } catch (RegistryUnauthorizedException ex) {
-      if (((RegistryUnauthorizedException) ex).getHttpResponseException().getStatusCode()
+    } catch (RegistryUnauthorizedException registryUnauthorizedException) {
+      if (registryUnauthorizedException.getHttpResponseException().getStatusCode()
           == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
         // No permissions to push to target image.
         String targetImage = registry + "/" + repository + ":" + tag;
         provideSuggestionForException(
-            ex, "make sure your have permission to push to " + targetImage);
+            registryUnauthorizedException, "make sure your have permission to push to " + targetImage);
 
       } else if (credentialHelperName == null) {
         // Credential helper not defined.
-        provideSuggestionForException(ex, "set the configuration 'credentialHelperName'");
+        provideSuggestionForException(registryUnauthorizedException, "set the configuration 'credentialHelperName'");
 
       } else {
         // Credential helper probably was not configured correctly or did not have the necessary
         // credentials.
-        provideSuggestionForException(ex, "make sure your credential helper is set up correctly");
+        provideSuggestionForException(registryUnauthorizedException, "make sure your credential helper is set up correctly");
       }
 
-    } catch (ExecutionException ex) {
-      if (ex.getCause() instanceof HttpHostConnectException) {
+    } catch (ExecutionException executionException) {
+      if (executionException.getCause() instanceof HttpHostConnectException) {
         // Failed to connect to registry.
         provideSuggestionForException(
-            ex, "make sure your Internet is up and that the registry you are pushing to exists");
+            executionException, "make sure your Internet is up and that the registry you are pushing to exists");
       }
 
     } catch (Exception ex) {
