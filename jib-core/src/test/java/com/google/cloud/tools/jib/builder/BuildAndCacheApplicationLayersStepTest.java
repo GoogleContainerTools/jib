@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.cache.CachedLayerType;
 import com.google.cloud.tools.jib.image.DuplicateLayerException;
 import com.google.cloud.tools.jib.image.ImageLayers;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -66,9 +67,8 @@ public class BuildAndCacheApplicationLayersStepTest {
               cache,
               MoreExecutors.newDirectExecutorService());
 
-      for (NonBlockingListenableFuture<CachedLayer> applicationLayerFuture :
+      for (ListenableFuture<CachedLayer> applicationLayerFuture :
           buildAndCacheApplicationLayersStep.call()) {
-        applicationLayerFuture.allowBlocking();
         applicationLayers.add(applicationLayerFuture.get());
       }
 

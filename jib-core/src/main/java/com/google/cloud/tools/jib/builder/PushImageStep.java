@@ -28,6 +28,7 @@ import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryException;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -43,28 +44,25 @@ class PushImageStep implements Callable<Void> {
 
   private final BuildConfiguration buildConfiguration;
   private final ListeningExecutorService listeningExecutorService;
-  private final NonBlockingListenableFuture<Authorization> pushAuthorizationFuture;
-  private final NonBlockingListenableFuture<List<NonBlockingListenableFuture<CachedLayer>>>
+  private final ListenableFuture<Authorization> pushAuthorizationFuture;
+  private final ListenableFuture<List<ListenableFuture<CachedLayer>>>
       pullBaseImageLayerFuturesFuture;
-  private final List<NonBlockingListenableFuture<CachedLayer>> buildApplicationLayerFutures;
+  private final List<ListenableFuture<CachedLayer>> buildApplicationLayerFutures;
 
-  private final NonBlockingListenableFuture<List<NonBlockingListenableFuture<Void>>>
-      pushBaseImageLayerFuturesFuture;
-  private final List<NonBlockingListenableFuture<Void>> pushApplicationLayerFutures;
-  private final NonBlockingListenableFuture<NonBlockingListenableFuture<BlobDescriptor>>
+  private final ListenableFuture<List<ListenableFuture<Void>>> pushBaseImageLayerFuturesFuture;
+  private final List<ListenableFuture<Void>> pushApplicationLayerFutures;
+  private final ListenableFuture<ListenableFuture<BlobDescriptor>>
       containerConfigurationBlobDescriptorFutureFuture;
 
   PushImageStep(
       BuildConfiguration buildConfiguration,
       ListeningExecutorService listeningExecutorService,
-      NonBlockingListenableFuture<Authorization> pushAuthorizationFuture,
-      NonBlockingListenableFuture<List<NonBlockingListenableFuture<CachedLayer>>>
-          pullBaseImageLayerFuturesFuture,
-      List<NonBlockingListenableFuture<CachedLayer>> buildApplicationLayerFutures,
-      NonBlockingListenableFuture<List<NonBlockingListenableFuture<Void>>>
-          pushBaseImageLayerFuturesFuture,
-      List<NonBlockingListenableFuture<Void>> pushApplicationLayerFutures,
-      NonBlockingListenableFuture<NonBlockingListenableFuture<BlobDescriptor>>
+      ListenableFuture<Authorization> pushAuthorizationFuture,
+      ListenableFuture<List<ListenableFuture<CachedLayer>>> pullBaseImageLayerFuturesFuture,
+      List<ListenableFuture<CachedLayer>> buildApplicationLayerFutures,
+      ListenableFuture<List<ListenableFuture<Void>>> pushBaseImageLayerFuturesFuture,
+      List<ListenableFuture<Void>> pushApplicationLayerFutures,
+      ListenableFuture<ListenableFuture<BlobDescriptor>>
           containerConfigurationBlobDescriptorFutureFuture) {
     this.buildConfiguration = buildConfiguration;
     this.listeningExecutorService = listeningExecutorService;
@@ -74,7 +72,8 @@ class PushImageStep implements Callable<Void> {
 
     this.pushBaseImageLayerFuturesFuture = pushBaseImageLayerFuturesFuture;
     this.pushApplicationLayerFutures = pushApplicationLayerFutures;
-    this.containerConfigurationBlobDescriptorFutureFuture = containerConfigurationBlobDescriptorFutureFuture;
+    this.containerConfigurationBlobDescriptorFutureFuture =
+        containerConfigurationBlobDescriptorFutureFuture;
   }
 
   /**
@@ -83,11 +82,11 @@ class PushImageStep implements Callable<Void> {
    */
   @Override
   public Void call() throws ExecutionException, InterruptedException {
-    List<NonBlockingListenableFuture<?>> dependencies = new ArrayList<>();
+    List<ListenableFuture<?>> dependencies = new ArrayList<>();
     dependencies.add(pushAuthorizationFuture);
-    dependencies.addAll(pushBaseImageLayerFuturesFuture.get());
+    dependencies.addAll(NonBlockingFutures.get(pushBaseImageLayerFuturesFuture));
     dependencies.addAll(pushApplicationLayerFutures);
-    dependencies.add(containerConfigurationBlobDescriptorFutureFuture.get());
+    dependencies.add(NonBlockingFutures.get(containerConfigurationBlobDescriptorFutureFuture));
     return Futures.whenAllComplete(dependencies)
         .call(this::afterPushBaseImageLayerFuturesFuture, listeningExecutorService)
         .get();
@@ -95,7 +94,8 @@ class PushImageStep implements Callable<Void> {
 
   /**
    * Depends on {@code pushAuthorizationFuture}, {@code pushBaseImageLayerFuturesFuture.get()},
-   * {@code pushApplicationLayerFutures}, and (@code containerConfigurationBlobDescriptorFutureFuture}.
+   * {@code pushApplicationLayerFutures}, and (@code
+   * containerConfigurationBlobDescriptorFutureFuture.get()}.
    */
   private Void afterPushBaseImageLayerFuturesFuture()
       throws IOException, RegistryException, ExecutionException, InterruptedException,
@@ -103,25 +103,27 @@ class PushImageStep implements Callable<Void> {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       RegistryClient registryClient =
           new RegistryClient(
-              pushAuthorizationFuture.get(),
+              NonBlockingFutures.get(pushAuthorizationFuture),
               buildConfiguration.getTargetServerUrl(),
               buildConfiguration.getTargetImageName());
 
       // TODO: Consolidate with BuildAndPushContainerConfigurationStep.
       // Constructs the image.
       Image image = new Image();
-      for (Future<CachedLayer> cachedLayerFuture : pullBaseImageLayerFuturesFuture.get()) {
-        image.addLayer(cachedLayerFuture.get());
+      for (Future<CachedLayer> cachedLayerFuture :
+          NonBlockingFutures.get(pullBaseImageLayerFuturesFuture)) {
+        image.addLayer(NonBlockingFutures.get(cachedLayerFuture));
       }
       for (Future<CachedLayer> cachedLayerFuture : buildApplicationLayerFutures) {
-        image.addLayer(cachedLayerFuture.get());
+        image.addLayer(NonBlockingFutures.get(cachedLayerFuture));
       }
       ImageToJsonTranslator imageToJsonTranslator = new ImageToJsonTranslator(image);
 
       // Pushes the image manifest.
       V22ManifestTemplate manifestTemplate =
           imageToJsonTranslator.getManifestTemplate(
-              containerConfigurationBlobDescriptorFutureFuture.get().get());
+              NonBlockingFutures.get(
+                  NonBlockingFutures.get(containerConfigurationBlobDescriptorFutureFuture)));
       registryClient.pushManifest(manifestTemplate, buildConfiguration.getTargetTag());
     }
 

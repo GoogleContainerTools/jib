@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.cache.CacheWriter;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.cache.CachedLayerType;
 import com.google.cloud.tools.jib.image.LayerBuilder;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -30,8 +31,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 /** Builds and caches application layers. */
-class BuildAndCacheApplicationLayersStep
-    implements Callable<List<NonBlockingListenableFuture<CachedLayer>>> {
+class BuildAndCacheApplicationLayersStep implements Callable<List<ListenableFuture<CachedLayer>>> {
 
   private static final String DESCRIPTION = "Building application layers";
 
@@ -53,9 +53,9 @@ class BuildAndCacheApplicationLayersStep
 
   /** Depends on nothing. */
   @Override
-  public List<NonBlockingListenableFuture<CachedLayer>> call() {
+  public List<ListenableFuture<CachedLayer>> call() {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
-      List<NonBlockingListenableFuture<CachedLayer>> applicationLayerFutures = new ArrayList<>(3);
+      List<ListenableFuture<CachedLayer>> applicationLayerFutures = new ArrayList<>(3);
       applicationLayerFutures.add(
           buildAndCacheLayerAsync(
               CachedLayerType.DEPENDENCIES,
@@ -76,7 +76,7 @@ class BuildAndCacheApplicationLayersStep
     }
   }
 
-  private NonBlockingListenableFuture<CachedLayer> buildAndCacheLayerAsync(
+  private ListenableFuture<CachedLayer> buildAndCacheLayerAsync(
       CachedLayerType layerType, List<Path> sourceFiles, Path extractionPath) {
     String description =
         String.format(
@@ -85,26 +85,25 @@ class BuildAndCacheApplicationLayersStep
                 ? "dependencies"
                 : layerType == CachedLayerType.RESOURCES ? "resources" : "classes");
 
-    return new NonBlockingListenableFuture<>(
-        listeningExecutorService.submit(
-            () -> {
-              try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), description)) {
-                // Don't build the layer if it exists already.
-                CachedLayer cachedLayer =
-                    new CacheChecker(cache).getUpToDateLayerBySourceFiles(sourceFiles);
-                if (cachedLayer != null) {
-                  return cachedLayer;
-                }
+    return listeningExecutorService.submit(
+        () -> {
+          try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), description)) {
+            // Don't build the layer if it exists already.
+            CachedLayer cachedLayer =
+                new CacheChecker(cache).getUpToDateLayerBySourceFiles(sourceFiles);
+            if (cachedLayer != null) {
+              return cachedLayer;
+            }
 
-                LayerBuilder layerBuilder = new LayerBuilder(sourceFiles, extractionPath);
+            LayerBuilder layerBuilder = new LayerBuilder(sourceFiles, extractionPath);
 
-                cachedLayer = new CacheWriter(cache).writeLayer(layerBuilder, layerType);
-                // TODO: Remove
-                buildConfiguration
-                    .getBuildLogger()
-                    .debug(description + " built " + cachedLayer.getBlobDescriptor().getDigest());
-                return cachedLayer;
-              }
-            }));
+            cachedLayer = new CacheWriter(cache).writeLayer(layerBuilder, layerType);
+            // TODO: Remove
+            buildConfiguration
+                .getBuildLogger()
+                .debug(description + " built " + cachedLayer.getBlobDescriptor().getDigest());
+            return cachedLayer;
+          }
+        });
   }
 }

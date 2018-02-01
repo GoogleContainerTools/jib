@@ -33,7 +33,7 @@ public class BuildImageStepsIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(TestBuildLogger.class);
+  private static final Logger logger = LoggerFactory.getLogger(TestBuildLogger.class);
 
   @Rule public TemporaryFolder temporaryCacheDirectory = new TemporaryFolder();
 
@@ -60,10 +60,10 @@ public class BuildImageStepsIntegrationTest {
 
     long lastTime = System.nanoTime();
     buildImageSteps.runAsync();
-    LOGGER.info("Initial build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
+    logger.info("Initial build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
     lastTime = System.nanoTime();
     buildImageSteps.runAsync();
-    LOGGER.info("Secondary build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
+    logger.info("Secondary build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
 
     // TODO: Put this in a utility function.
     Runtime.getRuntime().exec("docker pull localhost:5000/testimage:testtag").waitFor();
