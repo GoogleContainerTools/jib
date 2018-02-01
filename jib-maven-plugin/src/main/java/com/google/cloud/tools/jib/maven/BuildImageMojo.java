@@ -20,6 +20,7 @@ import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.BuildImageSteps;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
+import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -46,6 +47,9 @@ public class BuildImageMojo extends AbstractMojo {
 
   /** Directory name for the cache. The directory will be relative to the build output directory. */
   private static final String CACHE_DIRECTORY_NAME = "jib-cache";
+
+  /** {@code User-Agent} header suffix to send to the registry. */
+  private static final String USER_AGENT_SUFFIX = "jib-maven-plugin";
 
   @Parameter(defaultValue = "${project}", readonly = true)
   private MavenProject project;
@@ -135,6 +139,7 @@ public class BuildImageMojo extends AbstractMojo {
           "org.apache.commons.logging.Log", "org.apache.commons.logging.impl.SimpleLog");
       System.setProperty("org.apache.commons.logging.simplelog.defaultlog", "error");
 
+      RegistryClient.setUserAgentSuffix(USER_AGENT_SUFFIX);
       BuildImageSteps buildImageSteps =
           new BuildImageSteps(buildConfiguration, sourceFilesConfiguration, cacheDirectory);
       buildImageSteps.runAsync();

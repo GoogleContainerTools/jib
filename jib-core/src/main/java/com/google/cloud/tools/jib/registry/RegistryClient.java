@@ -34,6 +34,7 @@ import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.json.ErrorEntryTemplate;
 import com.google.cloud.tools.jib.registry.json.ErrorResponseTemplate;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URL;
@@ -68,6 +69,29 @@ public class RegistryClient {
   }
 
   private static final String PROTOCOL = "https";
+
+  @Nullable private static String userAgentSuffix;
+
+  // TODO: Inject via a RegistryClientFactory.
+  /** Sets a suffix to append to {@code User-Agent} headers. */
+  public static void setUserAgentSuffix(@Nullable String userAgentSuffix) {
+    RegistryClient.userAgentSuffix = userAgentSuffix;
+  }
+
+  /** Gets the {@code User-Agent} header to send. */
+  @VisibleForTesting
+  static String getUserAgent() {
+    String version = RegistryClient.class.getPackage().getImplementationVersion();
+    StringBuilder userAgentBuilder = new StringBuilder();
+    userAgentBuilder.append("jib");
+    if (version != null) {
+      userAgentBuilder.append(" ").append(version);
+    }
+    if (userAgentSuffix != null) {
+      userAgentBuilder.append(" ").append(userAgentSuffix);
+    }
+    return userAgentBuilder.toString();
+  }
 
   @Nullable private final Authorization authorization;
   private final RegistryEndpointProperties registryEndpointProperties;
@@ -175,7 +199,9 @@ public class RegistryClient {
     }
   }
 
-  private String getApiRouteBase() {
+  /** @return the registry endpoint's API root URL */
+  @VisibleForTesting
+  String getApiRouteBase() {
     return PROTOCOL + "://" + registryEndpointProperties.getServerUrl() + "/v2/";
   }
 
@@ -207,6 +233,7 @@ public class RegistryClient {
       Request request =
           Request.builder()
               .setAuthorization(authorization)
+              .setUserAgent(getUserAgent())
               .setAccept(registryEndpointProvider.getAccept())
               .setBody(registryEndpointProvider.getContent())
               .build();
