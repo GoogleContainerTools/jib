@@ -1,4 +1,4 @@
-## Important: This project is in an early alpha stage.
+## Important: This project is in an early alpha stage and NOT ready for use yet.
 
 *TODO: Add a logo and badges.*
 
