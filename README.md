@@ -108,3 +108,31 @@ See also [rules_docker](https://github.com/bazelbuild/rules_docker) for a simila
 ### But, I'm not a Java developer.
 
 [bazelbuild/rules_docker](https://github.com/bazelbuild/rules_docker)
+
+### How do I enable debugging?
+
+*TODO: Answer this.*
+
+### I would like to run my application with a javaagent.
+
+*TODO: Answer this.*
+
+### How can I tag my image with a timestamp?
+
+*TODO: Answer this.*
+
+### Can I define a custom entrypoint?
+
+*TODO: Answer this.*
+
+### I need to RUN commands like `apt-get`.
+
+*TODO: Answer this.*
+
+### Can I ADD a custom directory to the image?
+
+*TODO: Answer this.*
+
+### Can I build to a local Docker daemon?
+
+*TODO: Answer this.*
