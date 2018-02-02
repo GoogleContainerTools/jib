@@ -157,7 +157,7 @@ See [Define a Command and Arguments for a Container](https://kubernetes.io/docs/
 
 ### Where is the application in the container filesystem?
 
-The application gets into the following paths in the image:
+The application gets packaged into the following paths in the image:
 
 * `/app/libs/` contains all the dependency artifacts
 * `/app/resources/` contains all the resource files
