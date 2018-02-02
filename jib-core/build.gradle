@@ -78,6 +78,9 @@ tasks.withType(Test) {
 }
 
 /* GOOGLE JAVA FORMAT */
+googleJavaFormat {
+    toolVersion = '1.5'
+}
 check.dependsOn verifyGoogleJavaFormat
 /* GOOGLE JAVA FORMAT */
 
