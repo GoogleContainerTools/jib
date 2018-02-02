@@ -103,7 +103,8 @@ public class RegistryClient {
 
   /** Gets the {@link RegistryAuthenticator} to authenticate pulls from the registry. */
   public RegistryAuthenticator getRegistryAuthenticator() throws IOException, RegistryException {
-    // Gets the WWW-Authenticate header (eg. 'WWW-Authenticate: Bearer realm="https://gcr.io/v2/token",service="gcr.io"')
+    // Gets the WWW-Authenticate header (eg. 'WWW-Authenticate: Bearer
+    // realm="https://gcr.io/v2/token",service="gcr.io"')
     AuthenticationMethodRetriever authenticationMethodRetriever =
         new AuthenticationMethodRetriever(registryEndpointProperties);
     return callRegistryEndpoint(authenticationMethodRetriever);

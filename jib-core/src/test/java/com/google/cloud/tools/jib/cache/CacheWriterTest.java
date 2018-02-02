@@ -101,7 +101,7 @@ public class CacheWriterTest {
     Assert.assertEquals(CachedLayerType.DEPENDENCIES, layerInMetadata.getType());
     Assert.assertNotNull(layerInMetadata.getMetadata());
     Assert.assertEquals(
-        Collections.singletonList("some/source/file"),
+        Collections.singletonList(Paths.get("some", "source", "file").toString()),
         layerInMetadata.getMetadata().getSourceFiles());
 
     verifyCachedLayerIsExpected(expectedLayer, cachedLayer);
