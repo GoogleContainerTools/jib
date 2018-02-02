@@ -103,7 +103,8 @@ public class CacheCheckerTest {
   @Test
   public void testAreSourceFilesModified()
       throws URISyntaxException, IOException, CacheMetadataCorruptedException {
-    // The two last modified times to use. Must be in thousands as most file time granularity is in seconds.
+    // The two last modified times to use. Must be in thousands as most file time granularity is in
+    // seconds.
     FileTime olderLastModifiedTime = FileTime.fromMillis(1000);
     FileTime newerLastModifiedTime = FileTime.fromMillis(2000);
 
@@ -124,7 +125,8 @@ public class CacheCheckerTest {
               }
             });
 
-    // The files are in reverse order so that the subfiles are changed before the parent directories are.
+    // The files are in reverse order so that the subfiles are changed before the parent directories
+    // are.
     Files.walk(testSourceFiles)
         .sorted(Comparator.reverseOrder())
         .forEach(

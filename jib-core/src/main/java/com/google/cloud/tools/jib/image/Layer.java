@@ -30,26 +30,22 @@ import com.google.cloud.tools.jib.blob.BlobDescriptor;
  *       <ul>
  *         <li>The compressed archive (tarball gzip) of the partial filesystem changeset.
  *       </ul>
- *
  *   <li>Content Digest
  *   <li>
  *       <ul>
  *         <li>The SHA-256 hash of the content BLOB.
  *       </ul>
- *
  *   <li>Content Size
  *   <li>
  *       <ul>
  *         <li>The size (in bytes) of the content BLOB.
  *       </ul>
- *
  *   <li>Diff ID
  *   <li>
  *       <ul>
  *         <li>The SHA-256 hash of the uncompressed archive (tarball) of the partial filesystem
  *             changeset.
  *       </ul>
- *
  * </ul>
  */
 public interface Layer {
