@@ -81,17 +81,22 @@ Subsequent builds would usually be much faster than the initial build.
 
 ### Bind to a lifecycle
 
-You can also bind `jib:build` to a Maven lifecycle such as `package` by adding the following execution to your `pom.xml`:
+You can also bind `jib:build` to a Maven lifecycle such as `package` by adding the following execution to your `jib-maven-plugin` definition:
 
 ```xml
-<executions>
-  <execution>
-    <phase>package</phase>
-    <goals>
-      <goal>build</goal>
-    </goals>
-  </execution>
-</executions>
+<plugin>
+    <groupId>com.google.com.tools</groupId>
+    <artifactId>jib-maven-plugin</artifactId>
+    ...
+    <executions>
+      <execution>
+        <phase>package</phase>
+        <goals>
+          <goal>build</goal>
+        </goals>
+      </execution>
+    </executions>
+</plugin>
 ```
 
 Then, you can build your container image with just:
@@ -106,7 +111,7 @@ Extended configuration options provide additional options for customizing the im
 
 Field | Default | Description
 --- | --- | ---
-from|`gcr.io/distroless/java`|The base image to build your application on top of.
+from|[`gcr.io/distroless/java`](https://github.com/GoogleCloudPlatform/distroless)|The base image to build your application on top of.
 baseImageRegistry|`gcr.io`|The registry for the base image
 baseImageRepository|`distroless/java`|The image name/repository of the base image
 baseImageTag|`latest`|The tag for the base image
@@ -149,6 +154,14 @@ When running the image, you can override this default entrypoint with your own c
 See [`docker run --entrypoint` reference](https://docs.docker.com/engine/reference/run/#entrypoint-default-command-to-execute-at-runtime) for running the image with Docker.
 
 See [Define a Command and Arguments for a Container](https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/) for running the image in a [Kubernetes](https://kubernetes.io/) Pod.
+
+### Where is the application in the container filesystem?
+
+The application gets into the following paths in the image:
+
+* `/app/libs/` contains all the dependency artifacts
+* `/app/resources/` contains all the resource files
+* `/app/classes/` contains all the classes files
 
 ### I need to RUN commands like `apt-get`.
 
