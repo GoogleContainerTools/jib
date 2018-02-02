@@ -81,7 +81,7 @@ Subsequent builds would usually be much faster than the initial build.
 
 ### Bind to a lifecycle
 
-You can also bind `jib:build` to a Maven lifecycle such as `package` by adding the following execution:
+You can also bind `jib:build` to a Maven lifecycle such as `package` by adding the following execution to your `pom.xml`:
 
 ```xml
 <executions>
