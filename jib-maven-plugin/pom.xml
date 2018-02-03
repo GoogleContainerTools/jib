@@ -159,12 +159,14 @@
 
   <build>
     <plugins>
-      <!-- Imports jib-core source -->
+      <!-- Imports jib-core sources -->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
+        <version>3.0.0</version>
         <executions>
           <execution>
+            <id>add-jib-core-sources</id>
             <phase>generate-sources</phase>
             <goals>
               <goal>add-source</goal>
@@ -173,6 +175,32 @@
               <sources>
                 <source>../jib-core/src/main/java</source>
               </sources>
+            </configuration>
+          </execution>
+          <execution>
+            <id>add-jib-core-test-sources</id>
+            <phase>generate-test-sources</phase>
+            <goals>
+              <goal>add-test-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>../jib-core/src/test/java</source>
+              </sources>
+            </configuration>
+          </execution>
+          <execution>
+            <id>add-jib-core-test-resources</id>
+            <phase>generate-test-sources</phase>
+            <goals>
+              <goal>add-test-resource</goal>
+            </goals>
+            <configuration>
+              <resources>
+                <resource>
+                  <directory>../jib-core/src/test/resources</directory>
+                </resource>
+              </resources>
             </configuration>
           </execution>
         </executions>
