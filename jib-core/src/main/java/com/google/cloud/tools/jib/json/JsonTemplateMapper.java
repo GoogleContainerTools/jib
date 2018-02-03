@@ -33,13 +33,13 @@ import java.nio.file.Path;
  * <p>{@code @JsonInclude(JsonInclude.Include.NON_NULL)}
  *
  * <ul>
- *   <li> Does not serialize fields that are {@code null}.
+ *   <li>Does not serialize fields that are {@code null}.
  * </ul>
  *
  * {@code @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)}
  *
  * <ul>
- *   <li> Fields that are private are also accessible for serialization/deserialization.
+ *   <li>Fields that are private are also accessible for serialization/deserialization.
  * </ul>
  *
  * @see <a href="https://github.com/FasterXML/jackson">https://github.com/FasterXML/jackson</a>

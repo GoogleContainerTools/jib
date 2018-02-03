@@ -81,8 +81,7 @@ public class CacheMetadataTranslatorTest {
     Path fakePath = Paths.get("fake/path");
 
     // Loads the expected JSON string.
-    Path jsonFile =
-        Paths.get(getClass().getClassLoader().getResource("json/metadata.json").toURI());
+    Path jsonFile = PlatformSpecificMetadataJson.getMetadataJsonFile();
 
     // Deserializes into a metadata JSON object.
     CacheMetadataTemplate metadataTemplate =
@@ -119,9 +118,7 @@ public class CacheMetadataTranslatorTest {
   public void testToTemplate()
       throws LayerPropertyNotFoundException, DuplicateLayerException, URISyntaxException,
           IOException {
-    // Loads the expected JSON string.
-    Path jsonFile =
-        Paths.get(getClass().getClassLoader().getResource("json/metadata.json").toURI());
+    Path jsonFile = PlatformSpecificMetadataJson.getMetadataJsonFile();
     String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
 
     CacheMetadata cacheMetadata = new CacheMetadata();
