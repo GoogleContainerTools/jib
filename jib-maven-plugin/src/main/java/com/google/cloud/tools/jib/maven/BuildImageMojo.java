@@ -20,6 +20,7 @@ import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.BuildImageSteps;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
+import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import java.io.IOException;
@@ -148,32 +149,47 @@ public class BuildImageMojo extends AbstractMojo {
       getLog().info("Built and pushed image as " + registry + "/" + repository + ":" + tag);
       getLog().info("");
 
-    } catch (RegistryUnauthorizedException registryUnauthorizedException) {
-      if (registryUnauthorizedException.getHttpResponseException().getStatusCode()
-          == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
-        // No permissions to push to target image.
-        String targetImage = registry + "/" + repository + ":" + tag;
-        provideSuggestionForException(
-            registryUnauthorizedException, "make sure your have permission to push to " + targetImage);
-
-      } else if (credentialHelperName == null) {
-        // Credential helper not defined.
-        provideSuggestionForException(registryUnauthorizedException, "set the configuration 'credentialHelperName'");
-
-      } else {
-        // Credential helper probably was not configured correctly or did not have the necessary
-        // credentials.
-        provideSuggestionForException(registryUnauthorizedException, "make sure your credential helper is set up correctly");
-      }
+    } catch (CacheMetadataCorruptedException cacheMetadataCorruptedException) {
+      provideSuggestionForException(
+          cacheMetadataCorruptedException, "run 'mvn clean' to clear the cache");
 
     } catch (ExecutionException executionException) {
       if (executionException.getCause() instanceof HttpHostConnectException) {
         // Failed to connect to registry.
         provideSuggestionForException(
-            executionException, "make sure your Internet is up and that the registry you are pushing to exists");
+            executionException,
+            "make sure your Internet is up and that the registry you are pushing to exists");
+
+      } else if (executionException.getCause() instanceof RegistryUnauthorizedException) {
+        RegistryUnauthorizedException registryUnauthorizedException =
+            (RegistryUnauthorizedException) executionException.getCause();
+        if (registryUnauthorizedException.getHttpResponseException().getStatusCode()
+            == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
+          // No permissions to push to target image.
+          String targetImage = registry + "/" + repository + ":" + tag;
+          provideSuggestionForException(
+              registryUnauthorizedException,
+              "make sure your have permission to push to " + targetImage);
+
+        } else if (credentialHelperName == null) {
+          // Credential helper not defined.
+          provideSuggestionForException(
+              registryUnauthorizedException, "set the configuration 'credentialHelperName'");
+
+        } else {
+          // Credential helper probably was not configured correctly or did not have the necessary
+          // credentials.
+          provideSuggestionForException(
+              registryUnauthorizedException,
+              "make sure your credential helper is set up correctly");
+        }
+
+      } else {
+        provideSuggestionForException(executionException.getCause(), null);
       }
 
     } catch (Exception ex) {
+      getLog().error(ex);
       // TODO: Add more suggestions for various build failures.
       provideSuggestionForException(ex, null);
     }
@@ -239,7 +255,11 @@ public class BuildImageMojo extends AbstractMojo {
     return mainClassObject.getValue();
   }
 
-  private <T extends Exception> void provideSuggestionForException(
+  /**
+   * Wraps an exception in a {@link MojoExecutionException} and provides a suggestion on how to fix
+   * the error.
+   */
+  private <T extends Throwable> void provideSuggestionForException(
       T ex, @Nullable String suggestion) throws MojoExecutionException {
     StringBuilder message = new StringBuilder("Build image failed");
     if (suggestion != null) {
