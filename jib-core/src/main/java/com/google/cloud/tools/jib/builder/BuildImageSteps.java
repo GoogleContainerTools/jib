@@ -52,7 +52,11 @@ public class BuildImageSteps {
     this.cacheDirectory = cacheDirectory;
   }
 
-  public void runAsync()
+  public BuildConfiguration getBuildConfiguration() {
+    return buildConfiguration;
+  }
+
+  public void run()
       throws InterruptedException, ExecutionException, CacheMetadataCorruptedException,
           IOException {
     try (Timer timer = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {

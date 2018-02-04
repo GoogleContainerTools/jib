@@ -59,10 +59,10 @@ public class BuildImageStepsIntegrationTest {
             temporaryCacheDirectory.getRoot().toPath());
 
     long lastTime = System.nanoTime();
-    buildImageSteps.runAsync();
+    buildImageSteps.run();
     logger.info("Initial build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
     lastTime = System.nanoTime();
-    buildImageSteps.runAsync();
+    buildImageSteps.run();
     logger.info("Secondary build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
 
     // TODO: Put this in a utility function.

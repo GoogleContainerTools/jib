@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -88,6 +89,7 @@ public class BuildImageMojo extends AbstractMojo {
 
   @Override
   public void execute() throws MojoExecutionException {
+    // Extracts main class from 'maven-jar-plugin' configuration if available.
     if (mainClass == null) {
       Plugin mavenJarPlugin = project.getPlugin("org.apache.maven.plugins:maven-jar-plugin");
       if (mavenJarPlugin != null) {
@@ -119,6 +121,7 @@ public class BuildImageMojo extends AbstractMojo {
             .setEnvironment(environment)
             .build();
 
+    // Uses a directory in the Maven build cache as the Jib cache.
     Path cacheDirectory = Paths.get(project.getBuild().getDirectory(), CACHE_DIRECTORY_NAME);
     if (!Files.exists(cacheDirectory)) {
       try {
@@ -133,21 +136,30 @@ public class BuildImageMojo extends AbstractMojo {
     getLog().info("Pushing image as " + registry + "/" + repository + ":" + tag);
     getLog().info("");
 
+    // TODO: Instead of disabling logging, have authentication credentials be provided
+    // Disables annoying Apache HTTP client logging.
+    System.setProperty(
+        "org.apache.commons.logging.Log", "org.apache.commons.logging.impl.SimpleLog");
+    System.setProperty("org.apache.commons.logging.simplelog.defaultlog", "error");
+
+    RegistryClient.setUserAgentSuffix(USER_AGENT_SUFFIX);
+
+    buildImage(new BuildImageSteps(buildConfiguration, sourceFilesConfiguration, cacheDirectory));
+
+    getLog().info("");
+    getLog().info("Built and pushed image as " + registry + "/" + repository + ":" + tag);
+    getLog().info("");
+  }
+
+  @VisibleForTesting
+  void setCredentialHelperName(String credentialHelperName) {
+    this.credentialHelperName = credentialHelperName;
+  }
+
+  @VisibleForTesting
+  void buildImage(BuildImageSteps buildImageSteps) throws MojoExecutionException {
     try {
-      // TODO: Instead of disabling logging, have authentication credentials be provided
-      // Disables annoying Apache HTTP client logging.
-      System.setProperty(
-          "org.apache.commons.logging.Log", "org.apache.commons.logging.impl.SimpleLog");
-      System.setProperty("org.apache.commons.logging.simplelog.defaultlog", "error");
-
-      RegistryClient.setUserAgentSuffix(USER_AGENT_SUFFIX);
-      BuildImageSteps buildImageSteps =
-          new BuildImageSteps(buildConfiguration, sourceFilesConfiguration, cacheDirectory);
-      buildImageSteps.runAsync();
-
-      getLog().info("");
-      getLog().info("Built and pushed image as " + registry + "/" + repository + ":" + tag);
-      getLog().info("");
+      buildImageSteps.run();
 
     } catch (CacheMetadataCorruptedException cacheMetadataCorruptedException) {
       provideSuggestionForException(
@@ -157,7 +169,7 @@ public class BuildImageMojo extends AbstractMojo {
       if (executionException.getCause() instanceof HttpHostConnectException) {
         // Failed to connect to registry.
         provideSuggestionForException(
-            executionException,
+            executionException.getCause(),
             "make sure your Internet is up and that the registry you are pushing to exists");
 
       } else if (executionException.getCause() instanceof RegistryUnauthorizedException) {
@@ -166,7 +178,13 @@ public class BuildImageMojo extends AbstractMojo {
         if (registryUnauthorizedException.getHttpResponseException().getStatusCode()
             == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
           // No permissions to push to target image.
-          String targetImage = registry + "/" + repository + ":" + tag;
+          BuildConfiguration buildConfiguration = buildImageSteps.getBuildConfiguration();
+          String targetImage =
+              buildConfiguration.getTargetServerUrl()
+                  + "/"
+                  + buildConfiguration.getTargetImageName()
+                  + ":"
+                  + buildConfiguration.getTargetTag();
           provideSuggestionForException(
               registryUnauthorizedException,
               "make sure your have permission to push to " + targetImage);
@@ -181,14 +199,16 @@ public class BuildImageMojo extends AbstractMojo {
           // credentials.
           provideSuggestionForException(
               registryUnauthorizedException,
-              "make sure your credential helper is set up correctly");
+              "make sure your credential helper 'docker-credential-"
+                  + credentialHelperName
+                  + "' is set up correctly");
         }
 
       } else {
         provideSuggestionForException(executionException.getCause(), null);
       }
 
-    } catch (Exception ex) {
+    } catch (InterruptedException | IOException ex) {
       getLog().error(ex);
       // TODO: Add more suggestions for various build failures.
       provideSuggestionForException(ex, null);
