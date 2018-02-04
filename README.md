@@ -2,7 +2,7 @@
 
 # Jib
 
-<image src="https://github.com/google/jib/raw/master/logo/jib-build-docker-java-container-image.png" alt="Jib - Containerize your Java applications." width="680px" />
+<image src="https://github.com/google/jib/raw/master/logo/jib-build-docker-java-container-image.png" alt="Jib - Containerize your Java applications." width="650px" />
 
 *TODO: Add badges.*
 
