@@ -10,11 +10,11 @@ Jib is a tool for building container images for your Java applications.
 
 ## Goals
 
-* Fast - Your Java application gets broken down into multiple layers, separating dependencies from classes. Deploy your changes faster - don’t wait for Docker to rebuild your entire Java application.
+* **Fast** - Your Java application gets broken down into multiple layers, separating dependencies from classes. Deploy your changes faster - don’t wait for Docker to rebuild your entire Java application.
 
 <!--* Reproducible - Rebuilding your container image with the same contents always generates the same image. Never trigger an unnecessary update again.-->
 
-* Native - Reduce your CLI dependencies. Build your Docker image from within Maven or Gradle and push to any registry of your choice. No more writing Dockerfiles and calling docker build/push.
+* **Native** - Reduce your CLI dependencies. Build your Docker image from within Maven <!--or Gradle--> and push to any registry of your choice. No more writing Dockerfiles and calling docker build/push.
 
 ## Quickstart
 
@@ -123,7 +123,7 @@ credentialHelperName|*Required*|The credential helper suffix (following `docker-
 
 ## How Jib Works
 
-Whereas traditionally a Java application is built as a single image layer with the application JAR, the build strategy here breaks the Java application into multiple layers for more granular incremental builds. When you change your code, only your changes are rebuilt, not your entire application. These layers, by default, are layered on top of a [distroless](https://github.com/GoogleCloudPlatform/distroless) base image. 
+Whereas traditionally a Java application is built as a single image layer with the application JAR, Jib's build strategy breaks the Java application into multiple layers for more granular incremental builds. When you change your code, only your changes are rebuilt, not your entire application. These layers, by default, are layered on top of a [distroless](https://github.com/GoogleCloudPlatform/distroless) base image. 
 
 See also [rules_docker](https://github.com/bazelbuild/rules_docker) for a similar existing container image build tool for the [Bazel build system](https://github.com/bazelbuild/bazel).
 
@@ -131,8 +131,8 @@ See also [rules_docker](https://github.com/bazelbuild/rules_docker) for a simila
 
 These limitations will be fixed in the future.
 
-* Does not build OCI images
-* Pushing to Docker Hub does not seem to work
+* Does not build OCI images.
+* Pushing to Docker Hub does not seem to work.
 * Cannot build directly to a Docker daemon.
 
 ## Frequently Asked Questions (FAQ)
