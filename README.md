@@ -4,7 +4,7 @@
 
 # Jib
 
-![Jib - Containerize your Java applications.](https://github.com/google/jib/raw/jib-logo/logo/jib-build-docker-container-image.png = 600x)
+<image src="https://github.com/google/jib/raw/jib-logo/logo/jib-build-docker-container" alt="Jib - Containerize your Java applications." height="300px" />
 
 ## What is Jib?
 
