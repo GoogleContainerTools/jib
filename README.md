@@ -157,7 +157,7 @@ See [Define a Command and Arguments for a Container](https://kubernetes.io/docs/
 
 ### Where is the application in the container filesystem?
 
-The application gets packaged into the following paths on the image:
+Jib packages your Java application into the following paths on the image:
 
 * `/app/libs/` contains all the dependency artifacts
 * `/app/resources/` contains all the resource files
@@ -165,7 +165,7 @@ The application gets packaged into the following paths on the image:
 
 ### I need to RUN commands like `apt-get`.
 
-Running commands like `apt-get` slows down the container build process. We recommend and **do not support** running commands as part of the build. 
+Running commands like `apt-get` slows down the container build process. We **do not recommend or support** running commands as part of the build. 
 
 However, if you need to run commands, you can build a custom base image. You can then use this custom base image in the `jib-maven-plugin` by adding the following configuration:
 
