@@ -41,7 +41,7 @@ public class DescriptorDigest {
   private static final String DIGEST_PREFIX = "sha256:";
 
   /** Pattern matches a SHA-256 digest - a SHA-256 hash prefixed with "sha256:". */
-  private static final String DIGEST_REGEX = DIGEST_PREFIX + HASH_REGEX;
+  static final String DIGEST_REGEX = DIGEST_PREFIX + HASH_REGEX;
 
   private final String hash;
 
