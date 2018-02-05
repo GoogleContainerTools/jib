@@ -3,6 +3,7 @@ plugins {
     id 'checkstyle'
     id 'com.github.sherter.google-java-format' version '0.6'
     id 'maven-publish'
+    id 'maven'
 }
 
 group 'com.google.cloud.tools'
@@ -31,7 +32,6 @@ configurations {
 }
 
 dependencies {
-    compile gradleApi()
     compile 'com.google.http-client:google-http-client:1.23.0'
     compile 'org.apache.commons:commons-compress:1.15'
     compile 'com.google.guava:guava:23.5-jre'
@@ -101,3 +101,10 @@ checkstyle {
     maxWarnings = 0
 }
 /* CHECKSTYLE */
+
+// Writes a pom.xml for adding the corresponding dependencies to jib-maven-plugin.
+task writePom {
+    doLast {
+        pom {}.writeTo("$buildDir/pom.xml")
+    }
+}
