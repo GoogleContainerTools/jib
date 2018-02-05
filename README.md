@@ -1,6 +1,6 @@
-## Important: This project is in an early alpha stage and NOT ready for use yet.
+## Important: This project is in an early alpha stage.
 
-*TODO: Add a logo and badges.*
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/jib-maven-plugin/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/jib-maven-plugin)
 
 # Jib
 
