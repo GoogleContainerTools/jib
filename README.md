@@ -78,6 +78,8 @@ mvn compile jib:build
 
 Subsequent builds would usually be much faster than the initial build.
 
+*Having trouble? Let us know by [submitting an issue](/../../issues/new).*
+
 ### Bind to a lifecycle
 
 You can also bind `jib:build` to a Maven lifecycle such as `package` by adding the following execution to your `jib-maven-plugin` definition:
