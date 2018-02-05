@@ -4,6 +4,8 @@
 
 # Jib
 
+<image src="https://github.com/google/jib/raw/master/logo/jib-build-docker-java-container-image.png" alt="Jib - Containerize your Java applications." width="650px" />
+
 ## What is Jib?
 
 Jib is a tool for building container images for your Java applications.
@@ -78,6 +80,8 @@ mvn compile jib:build
 
 Subsequent builds would usually be much faster than the initial build.
 
+*Having trouble? Let us know by [submitting an issue](/../../issues/new).*
+
 ### Bind to a lifecycle
 
 You can also bind `jib:build` to a Maven lifecycle such as `package` by adding the following execution to your `jib-maven-plugin` definition:
@@ -110,7 +114,7 @@ Extended configuration options provide additional options for customizing the im
 
 Field | Default | Description
 --- | --- | ---
-from|[`gcr.io/distroless/java`](https://github.com/GoogleCloudPlatform/distroless)|The base image to build your application on top of.
+`from`|[`gcr.io/distroless/java`](https://github.com/GoogleCloudPlatform/distroless)|The base image to build your application on top of.
 `registry`|*Required*|The registry server to push the built image to.
 `repository`|*Required*|The image name/repository of the built image.
 `tag`|`latest`|The image tag of the built image (the part after the colon).
