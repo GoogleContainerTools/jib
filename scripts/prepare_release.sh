@@ -70,7 +70,7 @@ git commit -am "${NEXT_SNAPSHOT}"
 
 # Pushes the tag and release branch to Github.
 git push origin v${VERSION}
-git push --set-upstream origin ${VERSION}
+git push origin ${VERSION}
 
 # File a PR on Github for the new branch. Have someone LGTM it, which gives you permission to continue.
 EchoGreen 'File a PR for the new release branch:'
