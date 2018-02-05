@@ -110,7 +110,7 @@ Extended configuration options provide additional options for customizing the im
 
 Field | Default | Description
 --- | --- | ---
-from|[`gcr.io/distroless/java`](https://github.com/GoogleCloudPlatform/distroless)|The base image to build your application on top of.
+`from`|[`gcr.io/distroless/java`](https://github.com/GoogleCloudPlatform/distroless)|The base image to build your application on top of.
 `registry`|*Required*|The registry server to push the built image to.
 `repository`|*Required*|The image name/repository of the built image.
 `tag`|`latest`|The image tag of the built image (the part after the colon).
