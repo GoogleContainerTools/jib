@@ -24,14 +24,14 @@ In your Maven Java project, add the plugin to your `pom.xml`:
 
 ```xml
 <plugin>
-    <groupId>com.google.com.tools</groupId>
-    <artifactId>jib-maven-plugin</artifactId>
-    <version>0.1.0</version>
-    <configuration>
-        <registry></registry>
-        <repository></repository>
-        <credentialHelperName></credentialHelperName>
-    </configuration>
+  <groupId>com.google.com.tools</groupId>
+  <artifactId>jib-maven-plugin</artifactId>
+  <version>0.1.0</version>
+  <configuration>
+    <registry></registry>
+    <repository></repository>
+    <credentialHelperName></credentialHelperName>
+  </configuration>
 </plugin>
 ```
 
@@ -47,9 +47,9 @@ For example, to build the image `gcr.io/my-gcp-project/my-app`, the configuratio
 
 ```xml
 <configuration>
-    <registry>gcr.io</registry>
-    <repository>my-gcp-project/my-app</repository>
-    <credentialHelperName>gcr</credentialHelperName>
+  <registry>gcr.io</registry>
+  <repository>my-gcp-project/my-app</repository>
+  <credentialHelperName>gcr</credentialHelperName>
 </configuration>
 ```
 
@@ -61,9 +61,9 @@ For example, to build the image `aws_account_id.dkr.ecr.region.amazonaws.com/my-
 
 ```xml
 <configuration>
-    <registry>aws_account_id.dkr.ecr.region.amazonaws.com</registry>
-    <repository>my-app</repository>
-    <credentialHelperName>ecr-login</credentialHelperName>
+  <registry>aws_account_id.dkr.ecr.region.amazonaws.com</registry>
+  <repository>my-app</repository>
+  <credentialHelperName>ecr-login</credentialHelperName>
 </configuration>
 ```
 
@@ -85,17 +85,17 @@ You can also bind `jib:build` to a Maven lifecycle such as `package` by adding t
 
 ```xml
 <plugin>
-    <groupId>com.google.com.tools</groupId>
-    <artifactId>jib-maven-plugin</artifactId>
-    ...
-    <executions>
-      <execution>
-        <phase>package</phase>
-        <goals>
-          <goal>build</goal>
-        </goals>
-      </execution>
-    </executions>
+  <groupId>com.google.com.tools</groupId>
+  <artifactId>jib-maven-plugin</artifactId>
+  ...
+  <executions>
+    <execution>
+      <phase>package</phase>
+      <goals>
+        <goal>build</goal>
+      </goals>
+    </execution>
+  </executions>
 </plugin>
 ```
 
@@ -172,7 +172,7 @@ However, if you need to run commands, you can build a custom base image. You can
 
 ```xml
 <configuration>
-    <from>custom-base-image</from>
+  <from>custom-base-image</from>
 </configuration>
 ```
 
@@ -200,7 +200,7 @@ To tag the image with a simple timestamp, add the following to your `pom.xml`:
 
 ```xml
 <properties>
-    <maven.build.timestamp.format>yyyyMMdd-HHmmssSSS</maven.build.timestamp.format>
+  <maven.build.timestamp.format>yyyyMMdd-HHmmssSSS</maven.build.timestamp.format>
 </properties>
 ```
 
@@ -208,7 +208,7 @@ Then in the `jib-maven-plugin` configuration, set the `tag` to:
 
 ```xml
 <configuration>
-    <tag>${maven.build.timestamp}</tag>
+  <tag>${maven.build.timestamp}</tag>
 </configuration>
 ```
 
