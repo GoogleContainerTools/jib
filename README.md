@@ -40,7 +40,7 @@ Configure the plugin by changing `registry`, `repository`, and `credentialHelper
 
 #### I am using Google Container Registry (GCR)
 
-*TODO: Add reference for how to get the credential helper.*
+*Make sure you have the [`docker-credential-gcr` command line tool](https://cloud.google.com/container-registry/docs/advanced-authentication#docker_credential_helper).*
 
 For example, to build the image `gcr.io/my-gcp-project/my-app`, the configuration would be:
 
@@ -54,7 +54,7 @@ For example, to build the image `gcr.io/my-gcp-project/my-app`, the configuratio
 
 #### I am using Amazon Elastic Container Registry (ECR)
 
-*TODO: Add reference for how to get the credential helper.*
+*Make sure you have the [`docker-credential-ecr-login` command line tool](https://github.com/awslabs/amazon-ecr-credential-helper).*
 
 For example, to build the image `aws_account_id.dkr.ecr.region.amazonaws.com/my-app`, the configuration would be:
 
@@ -111,14 +111,34 @@ Extended configuration options provide additional options for customizing the im
 Field | Default | Description
 --- | --- | ---
 from|[`gcr.io/distroless/java`](https://github.com/GoogleCloudPlatform/distroless)|The base image to build your application on top of.
-baseImageRegistry|`gcr.io`|The registry for the base image
-baseImageRepository|`distroless/java`|The image name/repository of the base image
-baseImageTag|`latest`|The tag for the base image
-registry|*Required*|The registry server to push the built image to.
-repository|*Required*|The image name/repository of the built image.
-tag|`latest`|The image tag of the built image (the part after the colon).
-jvmFlags|*None*|Additional flags to pass into the JVM when running your application.
-credentialHelperName|*Required*|The credential helper suffix (following `docker-credential-`)
+`registry`|*Required*|The registry server to push the built image to.
+`repository`|*Required*|The image name/repository of the built image.
+`tag`|`latest`|The image tag of the built image (the part after the colon).
+`jvmFlags`|*None*|Additional flags to pass into the JVM when running your application.
+`credentialHelperName`|*Required*|The credential helper suffix (following `docker-credential-`)
+`mainClass`|Uses `mainClass` from `maven-jar-plugin`|The main class to launch the application from.
+
+### Example
+
+In this configuration, the image is:
+* Built from a base of `openjdk:alpine` (pulled from Docker Hub)
+* Pushed to `localhost:5000/my-image:built-with-jib`
+* Runs by calling `java -Xms512m -Xdebug -Xmy:flag=jib-rules -cp app/libs/*:app/resources:app/classes mypackage.MyApp`
+
+```
+<configuration>
+    <from>openjdk:alpine</from>
+    <registry>localhost:5000</registry>
+    <repository>my-image</repository>
+    <tag>built-with-jib</tag>
+    <jvmFlags>
+        <jvmFlag>-Xms512m</jvmFlag>
+        <jvmFlag>-Xdebug</jvmFlag>
+        <jvmFlag>-Xmy:flag=jib-rules</jvmFlag>
+    </jvmFlags>
+    <mainClass>mypackage.MyApp</mainClass>
+</configuration>
+```
 
 ## How Jib Works
 
@@ -136,6 +156,8 @@ These limitations will be fixed in the future.
 * Cannot use a private image as a base image.
 
 ## Frequently Asked Questions (FAQ)
+
+If a question you have is not answered before, please [submit an issue](/../../issues/new).
 
 ### But, I'm not a Java developer.
 
