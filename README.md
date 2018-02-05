@@ -28,9 +28,8 @@ In your Maven Java project, add the plugin to your `pom.xml`:
   <artifactId>jib-maven-plugin</artifactId>
   <version>0.1.0</version>
   <configuration>
-    <registry></registry>
-    <repository></repository>
-    <credentialHelperName></credentialHelperName>
+    <registry>myregistry</registry>
+    <repository>myapp</repository>
   </configuration>
 </plugin>
 ```
