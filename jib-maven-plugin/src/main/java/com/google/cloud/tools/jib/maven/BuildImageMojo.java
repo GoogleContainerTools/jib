@@ -87,7 +87,7 @@ public class BuildImageMojo extends AbstractMojo {
       if (mavenJarPlugin != null) {
         mainClass = getMainClassFromMavenJarPlugin(mavenJarPlugin);
         if (mainClass == null) {
-          provideSuggestionForException(
+          throwMojoExecutionExceptionWithHelpMessage(
               new MojoFailureException("Could not find main class specified in maven-jar-plugin"),
               "add a `mainClass` configuration to jib-maven-plugin");
         }
@@ -157,13 +157,13 @@ public class BuildImageMojo extends AbstractMojo {
       buildImageSteps.run();
 
     } catch (CacheMetadataCorruptedException cacheMetadataCorruptedException) {
-      provideSuggestionForException(
+      throwMojoExecutionExceptionWithHelpMessage(
           cacheMetadataCorruptedException, "run 'mvn clean' to clear the cache");
 
     } catch (ExecutionException executionException) {
       if (executionException.getCause() instanceof HttpHostConnectException) {
         // Failed to connect to registry.
-        provideSuggestionForException(
+        throwMojoExecutionExceptionWithHelpMessage(
             executionException.getCause(),
             "make sure your Internet is up and that the registry you are pushing to exists");
 
@@ -180,19 +180,19 @@ public class BuildImageMojo extends AbstractMojo {
                   + buildConfiguration.getTargetImageName()
                   + ":"
                   + buildConfiguration.getTargetTag();
-          provideSuggestionForException(
+          throwMojoExecutionExceptionWithHelpMessage(
               registryUnauthorizedException,
               "make sure your have permission to push to " + targetImage);
 
         } else if (credentialHelperName == null) {
           // Credential helper not defined.
-          provideSuggestionForException(
+          throwMojoExecutionExceptionWithHelpMessage(
               registryUnauthorizedException, "set the configuration 'credentialHelperName'");
 
         } else {
           // Credential helper probably was not configured correctly or did not have the necessary
           // credentials.
-          provideSuggestionForException(
+          throwMojoExecutionExceptionWithHelpMessage(
               registryUnauthorizedException,
               "make sure your credential helper 'docker-credential-"
                   + credentialHelperName
@@ -200,13 +200,13 @@ public class BuildImageMojo extends AbstractMojo {
         }
 
       } else {
-        provideSuggestionForException(executionException.getCause(), null);
+        throwMojoExecutionExceptionWithHelpMessage(executionException.getCause(), null);
       }
 
     } catch (InterruptedException | IOException ex) {
       getLog().error(ex);
       // TODO: Add more suggestions for various build failures.
-      provideSuggestionForException(ex, null);
+      throwMojoExecutionExceptionWithHelpMessage(ex, null);
     }
   }
 
@@ -283,7 +283,7 @@ public class BuildImageMojo extends AbstractMojo {
    * Wraps an exception in a {@link MojoExecutionException} and provides a suggestion on how to fix
    * the error.
    */
-  private <T extends Throwable> void provideSuggestionForException(
+  private <T extends Throwable> void throwMojoExecutionExceptionWithHelpMessage(
       T ex, @Nullable String suggestion) throws MojoExecutionException {
     StringBuilder message = new StringBuilder("Build image failed");
     if (suggestion != null) {
