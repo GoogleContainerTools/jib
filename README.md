@@ -1,8 +1,10 @@
 ## Important: This project is in an early alpha stage and NOT ready for use yet.
 
-*TODO: Add a logo and badges.*
-
 # Jib
+
+<image src="https://github.com/google/jib/raw/master/logo/jib-build-docker-java-container-image.png" alt="Jib - Containerize your Java applications." width="650px" />
+
+*TODO: Add badges.*
 
 ## What is Jib?
 
