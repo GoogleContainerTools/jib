@@ -21,6 +21,8 @@ import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.BuildImageSteps;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
+import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import com.google.common.annotations.VisibleForTesting;
@@ -60,16 +62,6 @@ public class BuildImageMojo extends AbstractMojo {
   @Parameter(defaultValue = "gcr.io/distroless/java", required = true)
   private String from;
 
-  // TODO: Remove these in favor of "from".
-  @Parameter(defaultValue = "gcr.io", required = true)
-  private String baseImageRegistry;
-
-  @Parameter(defaultValue = "distroless/java", required = true)
-  private String baseImageRepository;
-
-  @Parameter(defaultValue = "latest", required = true)
-  private String baseImageTag;
-
   @Parameter(required = true)
   private String registry;
 
@@ -88,7 +80,7 @@ public class BuildImageMojo extends AbstractMojo {
   @Parameter private String mainClass;
 
   @Override
-  public void execute() throws MojoExecutionException {
+  public void execute() throws MojoExecutionException, MojoFailureException {
     // Extracts main class from 'maven-jar-plugin' configuration if available.
     if (mainClass == null) {
       Plugin mavenJarPlugin = project.getPlugin("org.apache.maven.plugins:maven-jar-plugin");
@@ -106,12 +98,15 @@ public class BuildImageMojo extends AbstractMojo {
 
     SourceFilesConfiguration sourceFilesConfiguration = getSourceFilesConfiguration();
 
+    // Parse 'from' into image reference.
+    ImageReference baseImage = getImageReference();
+
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder()
             .setBuildLogger(new MavenBuildLogger(getLog()))
-            .setBaseImageServerUrl(baseImageRegistry)
-            .setBaseImageName(baseImageRepository)
-            .setBaseImageTag(baseImageTag)
+            .setBaseImageServerUrl(baseImage.getRegistry())
+            .setBaseImageName(baseImage.getRepository())
+            .setBaseImageTag(baseImage.getTag())
             .setTargetServerUrl(registry)
             .setTargetImageName(repository)
             .setTargetTag(tag)
@@ -273,6 +268,15 @@ public class BuildImageMojo extends AbstractMojo {
       return null;
     }
     return mainClassObject.getValue();
+  }
+
+  private ImageReference getImageReference() throws MojoFailureException {
+    try {
+      return ImageReference.parse(from);
+
+    } catch (InvalidImageReferenceException ex) {
+      throw new MojoFailureException("Parameter 'from' is invalid", ex);
+    }
   }
 
   /**
