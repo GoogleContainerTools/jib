@@ -37,7 +37,7 @@
         <configuration>
           <credentialHelperName>gcr</credentialHelperName>
           <registry>gcr.io</registry>
-          <repository>qingyangc-sandbox/jibtestimage</repository>
+          <repository>REPLACE-WITH-YOUR-GCP-PROJECT/image-built-with-jib</repository>
           <mainClass>${mainClass}</mainClass>
         </configuration>
         <executions>
