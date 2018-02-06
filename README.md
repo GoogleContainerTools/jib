@@ -42,7 +42,7 @@ Configure the plugin by changing `registry`, `repository`, and `credentialHelper
 
 #### I am using Google Container Registry (GCR)
 
-*Make sure you have the [`docker-credential-gcr` command line tool](https://cloud.google.com/container-registry/docs/advanced-authentication#docker_credential_helper).*
+*Make sure you have the [`docker-credential-gcr` command line tool](https://cloud.google.com/container-registry/docs/advanced-authentication#docker_credential_helper). Jib automatically uses `docker-credential-gcr` for obtaining credentials.*
 
 For example, to build the image `gcr.io/my-gcp-project/my-app`, the configuration would be:
 
@@ -50,13 +50,12 @@ For example, to build the image `gcr.io/my-gcp-project/my-app`, the configuratio
 <configuration>
   <registry>gcr.io</registry>
   <repository>my-gcp-project/my-app</repository>
-  <credentialHelperName>gcr</credentialHelperName>
 </configuration>
 ```
 
 #### I am using Amazon Elastic Container Registry (ECR)
 
-*Make sure you have the [`docker-credential-ecr-login` command line tool](https://github.com/awslabs/amazon-ecr-credential-helper).*
+*Make sure you have the [`docker-credential-ecr-login` command line tool](https://github.com/awslabs/amazon-ecr-credential-helper). Jib automatically uses `docker-credential-ecr-login` for obtaining credentials.*
 
 For example, to build the image `aws_account_id.dkr.ecr.region.amazonaws.com/my-app`, the configuration would be:
 
@@ -64,7 +63,6 @@ For example, to build the image `aws_account_id.dkr.ecr.region.amazonaws.com/my-
 <configuration>
   <registry>aws_account_id.dkr.ecr.region.amazonaws.com</registry>
   <repository>my-app</repository>
-  <credentialHelperName>ecr-login</credentialHelperName>
 </configuration>
 ```
 
