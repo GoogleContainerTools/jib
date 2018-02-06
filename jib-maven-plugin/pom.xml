@@ -17,6 +17,27 @@
     </license>
   </licenses>
 
+  <developers>
+    <developer>
+      <id>loosebazooka</id>
+      <name>Appu Goundan</name>
+      <email>appu@google.com</email>
+    </developer>
+    <developer>
+      <id>coollog</id>
+      <name>Qingyang Chen</name>
+      <email>qingyangc@google.com</email>
+    </developer>
+  </developers>
+
+  <scm>
+    <connection>scm:git:https://github.com/google/jib.git
+    </connection>
+    <developerConnection>scm:git:https://github.com/google/jib.git
+    </developerConnection>
+    <url>https://github.com/google/jib</url>
+  </scm>
+
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>1.8</maven.compiler.source>
