@@ -101,6 +101,21 @@ public class BuildImageMojo extends AbstractMojo {
     // Parse 'from' into image reference.
     ImageReference baseImage = getImageReference();
 
+    // Infer common credential helper names if credentialHelperName is not set.
+    if (credentialHelperName == null) {
+      if (registry.endsWith("gcr.io")) {
+        credentialHelperName = "gcr";
+
+      } else if (registry.endsWith("amazonaws.com")) {
+        credentialHelperName = "ecr-login";
+      }
+      // TODO: Add more common credential helpers.
+
+      if (credentialHelperName != null) {
+        getLog().info("Using docker-credential-" + credentialHelperName + " for authentication - specify a 'credentialHelperName' to override");
+      }
+    }
+
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder()
             .setBuildLogger(new MavenBuildLogger(getLog()))
