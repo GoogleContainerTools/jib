@@ -1,4 +1,4 @@
-## Important: This project is in an early alpha stage and NOT ready for use yet.
+[![experimental](http://badges.github.io/stability-badges/dist/experimental.svg)](http://github.com/badges/stability-badges)
 
 # Jib
 
