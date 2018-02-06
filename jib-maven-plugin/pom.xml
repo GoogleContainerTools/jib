@@ -19,14 +19,14 @@
 
   <developers>
     <developer>
-      <id>loosebazooka</id>
-      <name>Appu Goundan</name>
-      <email>appu@google.com</email>
-    </developer>
-    <developer>
       <id>coollog</id>
       <name>Qingyang Chen</name>
       <email>qingyangc@google.com</email>
+    </developer>
+    <developer>
+      <id>loosebazooka</id>
+      <name>Appu Goundan</name>
+      <email>appu@google.com</email>
     </developer>
   </developers>
 
