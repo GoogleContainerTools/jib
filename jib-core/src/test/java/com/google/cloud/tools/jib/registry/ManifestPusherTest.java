@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.registry;
 
+import com.google.api.client.http.HttpResponseException;
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
@@ -30,6 +32,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -76,6 +79,24 @@ public class ManifestPusherTest {
   @Test
   public void testHandleResponse() {
     Assert.assertNull(testManifestPusher.handleResponse(Mockito.mock(Response.class)));
+  }
+
+  @Test
+  public void testHandleHttpResponseException() throws HttpResponseException {
+    HttpResponseException mockHttpResponseException = Mockito.mock(HttpResponseException.class);
+    Mockito.when(mockHttpResponseException.getStatusCode())
+        .thenReturn(HttpStatusCodes.STATUS_CODE_NOT_FOUND);
+
+    try {
+      testManifestPusher.handleHttpResponseException(mockHttpResponseException);
+      Assert.fail("Expected RegistryErrorException to be thrown");
+
+    } catch (RegistryErrorException ex) {
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.containsString(
+              "repository name not known to registry (make sure that you are using a valid tag - tags cannot contain backslashes)"));
+    }
   }
 
   @Test

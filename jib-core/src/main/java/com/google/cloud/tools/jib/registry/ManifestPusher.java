@@ -17,6 +17,8 @@
 package com.google.cloud.tools.jib.registry;
 
 import com.google.api.client.http.HttpMethods;
+import com.google.api.client.http.HttpResponseException;
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
@@ -56,6 +58,24 @@ class ManifestPusher implements RegistryEndpointProvider<Void> {
   @Override
   public Void handleResponse(Response response) {
     return null;
+  }
+
+  @Override
+  public Void handleHttpResponseException(HttpResponseException httpResponseException)
+      throws HttpResponseException, RegistryErrorException {
+    if (httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_NOT_FOUND) {
+      /*
+       * This error could happen if the repository doesn't exist (which should fail at BLOB-push).
+       * The more likely reason is that the image is pushing to a tag with backslashes in it, in
+       * which part of the tag becomes part of the repository.
+       */
+      throw new RegistryErrorExceptionBuilder(getActionDescription(), httpResponseException)
+          .addReason(
+              "repository name not known to registry (make sure that you are using a valid tag - tags cannot contain backslashes)")
+          .build();
+    }
+
+    throw httpResponseException;
   }
 
   @Override

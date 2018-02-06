@@ -50,7 +50,7 @@ public class RegistryErrorExceptionBuilderTest {
       throw builder.build();
     } catch (RegistryErrorException ex) {
       Assert.assertEquals(
-          "Tried to do something but failed because: some error happened, other: some other error happened, unknown: some unknown error happened",
+          "Tried to do something but failed because: some error happened, other: some other error happened, unknown: some unknown error happened | If this is a bug, please file an issue at https://github.com/google/jib/issues/new",
           ex.getMessage());
     }
   }

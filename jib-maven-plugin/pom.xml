@@ -173,7 +173,7 @@
             </goals>
             <configuration>
               <sources>
-                <source>../jib-core/src/main/java</source>
+                <source>${basedir}/../jib-core/src/main/java</source>
               </sources>
             </configuration>
           </execution>
@@ -185,7 +185,7 @@
             </goals>
             <configuration>
               <sources>
-                <source>../jib-core/src/test/java</source>
+                <source>${basedir}/../jib-core/src/test/java</source>
               </sources>
             </configuration>
           </execution>
@@ -198,7 +198,7 @@
             <configuration>
               <resources>
                 <resource>
-                  <directory>../jib-core/src/test/resources</directory>
+                  <directory>${basedir}/../jib-core/src/test/resources</directory>
                 </resource>
               </resources>
             </configuration>
