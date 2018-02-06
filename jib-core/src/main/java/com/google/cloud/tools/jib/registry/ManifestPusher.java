@@ -71,7 +71,7 @@ class ManifestPusher implements RegistryEndpointProvider<Void> {
        */
       throw new RegistryErrorExceptionBuilder(getActionDescription(), httpResponseException)
           .addReason(
-              "repository name not known to registry (make sure that you are using a valid tag - tags cannot contain backslashes)")
+              "repository name not known to registry (perhaps you are using an invalid tag - tags cannot contain backslashes)")
           .build();
     }
 
