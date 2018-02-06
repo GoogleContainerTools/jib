@@ -8,11 +8,11 @@
 
 ## What is Jib?
 
-Jib is a tool for building container images for your Java applications.
+Jib is a tool for building container images for your Maven-based Java applications.
 
 ## Goals
 
-* **Fast** - Your Java application gets broken down into multiple layers, separating dependencies from classes. Deploy your changes faster - don’t wait for Docker to rebuild your entire Java application.
+* **Fast** - Deploy your changes fast. Jib separates your application into multiple layers, splitting dependencies from classes. Now you don’t have to wait for Docker to rebuild your entire Java application - just deploy the layers that changed.
 
 <!--* Reproducible - Rebuilding your container image with the same contents always generates the same image. Never trigger an unnecessary update again.-->
 
@@ -38,9 +38,9 @@ In your Maven Java project, add the plugin to your `pom.xml`:
 
 ### Configuration
 
-Configure the plugin by changing `registry`, `repository`, and `credentialHelperName` accordingly.
+Configure the plugin by changing `registry`, `repository`, and `credentialHelperName` in the registry of your choice. For example:
 
-#### I am using Google Container Registry (GCR)
+Using Google Container Registry (GCR)...
 
 *Make sure you have the [`docker-credential-gcr` command line tool](https://cloud.google.com/container-registry/docs/advanced-authentication#docker_credential_helper).*
 
@@ -54,7 +54,7 @@ For example, to build the image `gcr.io/my-gcp-project/my-app`, the configuratio
 </configuration>
 ```
 
-#### I am using Amazon Elastic Container Registry (ECR)
+Using Amazon Elastic Container Registry (ECR)...
 
 *Make sure you have the [`docker-credential-ecr-login` command line tool](https://github.com/awslabs/amazon-ecr-credential-helper).*
 
@@ -78,13 +78,13 @@ Build your container image with:
 mvn compile jib:build
 ```
 
-Subsequent builds would usually be much faster than the initial build.
+Subsequent builds are much faster than the initial build.
 
 *Having trouble? Let us know by [submitting an issue](/../../issues/new).*
 
 ### Bind to a lifecycle
 
-You can also bind `jib:build` to a Maven lifecycle such as `package` by adding the following execution to your `jib-maven-plugin` definition:
+You can also bind `jib:build` to a Maven lifecycle, such as `package`, by adding the following execution to your `jib-maven-plugin` definition:
 
 ```xml
 <plugin>
@@ -102,7 +102,7 @@ You can also bind `jib:build` to a Maven lifecycle such as `package` by adding t
 </plugin>
 ```
 
-Then, you can build your container image with just:
+Then, you can build your container image by running:
 
 ```commandline
 mvn package
@@ -146,16 +146,17 @@ In this configuration, the image is:
 
 ## How Jib Works
 
-Whereas traditionally a Java application is built as a single image layer with the application JAR, Jib's build strategy breaks the Java application into multiple layers for more granular incremental builds. When you change your code, only your changes are rebuilt, not your entire application. These layers, by default, are layered on top of a [distroless](https://github.com/GoogleCloudPlatform/distroless) base image. 
+Whereas traditionally a Java application is built as a single image layer with the application JAR, Jib's build strategy separates the Java application into multiple layers for more granular incremental builds. When you change your code, only your changes are rebuilt, not your entire application. These layers, by default, are layered on top of a [distroless](https://github.com/GoogleCloudPlatform/distroless) base image. 
 
 See also [rules_docker](https://github.com/bazelbuild/rules_docker) for a similar existing container image build tool for the [Bazel build system](https://github.com/bazelbuild/bazel).
 
 ## Known Limitations
 
-These limitations will be fixed in the future.
+These limitations will be fixed in later releases.
 
+* Only supports Maven projects.
 * Does not build OCI images.
-* Pushing to Docker Hub does not seem to work.
+* Pushing to Docker Hub is currently not supported.
 * Cannot build directly to a Docker daemon.
 * Cannot use a private image as a base image.
 
@@ -169,7 +170,7 @@ See [rules_docker](https://github.com/bazelbuild/rules_docker) for a similar exi
 
 ### Can I use other authentication methods besides a Docker credential helper?
 
-Other authentication methods will be added in our next release (`v0.2.0`).
+Other authentication methods will be added in a later release.
 
 ### Can I define a custom entrypoint?
 
