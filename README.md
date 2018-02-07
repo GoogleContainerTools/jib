@@ -37,7 +37,7 @@ In your Maven Java project, add the plugin to your `pom.xml`:
 
 ### Configuration
 
-Configure the plugin by changing `registry`, `repository`, and `credentialHelperName` accordingly.
+Configure the plugin by changing `registry`, `repository`, and `credentialHelperNames` accordingly.
 
 #### I am using Google Container Registry (GCR)
 
@@ -49,7 +49,9 @@ For example, to build the image `gcr.io/my-gcp-project/my-app`, the configuratio
 <configuration>
   <registry>gcr.io</registry>
   <repository>my-gcp-project/my-app</repository>
-  <credentialHelperName>gcr</credentialHelperName>
+  <credentialHelperNames>
+    <credentialHelperName>gcr</credentialHelperName>
+</credentialHelperNames>
 </configuration>
 ```
 
@@ -63,7 +65,9 @@ For example, to build the image `aws_account_id.dkr.ecr.region.amazonaws.com/my-
 <configuration>
   <registry>aws_account_id.dkr.ecr.region.amazonaws.com</registry>
   <repository>my-app</repository>
-  <credentialHelperName>ecr-login</credentialHelperName>
+  <credentialHelperNames>
+    <credentialHelperName>ecr-login</credentialHelperName>
+</credentialHelperName>
 </configuration>
 ```
 
@@ -117,8 +121,8 @@ Field | Default | Description
 `registry`|*Required*|The registry server to push the built image to.
 `repository`|*Required*|The image name/repository of the built image.
 `tag`|`latest`|The image tag of the built image (the part after the colon).
+`credentialHelperNames`|*Required*|Suffixes for credential helpers (following `docker-credential-`)
 `jvmFlags`|*None*|Additional flags to pass into the JVM when running your application.
-`credentialHelperName`|*Required*|The credential helper suffix (following `docker-credential-`)
 `mainClass`|Uses `mainClass` from `maven-jar-plugin`|The main class to launch the application from.
 
 ### Example
@@ -130,16 +134,19 @@ In this configuration, the image is:
 
 ```xml
 <configuration>
-    <from>openjdk:alpine</from>
-    <registry>localhost:5000</registry>
-    <repository>my-image</repository>
-    <tag>built-with-jib</tag>
-    <jvmFlags>
-        <jvmFlag>-Xms512m</jvmFlag>
-        <jvmFlag>-Xdebug</jvmFlag>
-        <jvmFlag>-Xmy:flag=jib-rules</jvmFlag>
-    </jvmFlags>
-    <mainClass>mypackage.MyApp</mainClass>
+  <from>openjdk:alpine</from>
+  <registry>localhost:5000</registry>
+  <repository>my-image</repository>
+  <tag>built-with-jib</tag>
+  <credentialHelperNames>
+    <credentialHelperName>osxkeychain</credentialHelperName>
+</credentialHelperNames>
+  <jvmFlags>
+    <jvmFlag>-Xms512m</jvmFlag>
+    <jvmFlag>-Xdebug</jvmFlag>
+    <jvmFlag>-Xmy:flag=jib-rules</jvmFlag>
+  </jvmFlags>
+  <mainClass>mypackage.MyApp</mainClass>
 </configuration>
 ```
 
