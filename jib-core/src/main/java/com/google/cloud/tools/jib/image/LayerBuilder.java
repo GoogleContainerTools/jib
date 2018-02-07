@@ -37,10 +37,10 @@ public class LayerBuilder {
    */
   private final List<Path> sourceFiles;
 
-  /** The path of the file in the partial filesystem changeset. */
-  private final Path extractionPath;
+  /** The Unix-style path of the file in the partial filesystem changeset. */
+  private final String extractionPath;
 
-  public LayerBuilder(List<Path> sourceFiles, Path extractionPath) {
+  public LayerBuilder(List<Path> sourceFiles, String extractionPath) {
     this.sourceFiles = new ArrayList<>(sourceFiles);
     this.extractionPath = extractionPath;
   }
@@ -55,8 +55,15 @@ public class LayerBuilder {
             .filter(path -> !path.equals(sourceFile))
             .forEach(
                 path -> {
-                  Path subExtractionPath =
-                      extractionPath.resolve(sourceFile.getParent().relativize(path));
+                  /*
+                   * Builds the same file path as in the source file for extraction. The iteration
+                   * is necessary because the path needs to be in Unix-style.
+                   */
+                  StringBuilder subExtractionPath = new StringBuilder(extractionPath);
+                  Path sourceFileRelativePath = sourceFile.getParent().relativize(path);
+                  for (Path sourceFileRelativePathComponent : sourceFileRelativePath) {
+                    subExtractionPath.append('/').append(sourceFileRelativePathComponent);
+                  }
                   filesystemEntries.add(
                       new TarArchiveEntry(path.toFile(), subExtractionPath.toString()));
                 });
@@ -64,8 +71,7 @@ public class LayerBuilder {
       }
 
       TarArchiveEntry tarArchiveEntry =
-          new TarArchiveEntry(
-              sourceFile.toFile(), extractionPath.resolve(sourceFile.getFileName()).toString());
+          new TarArchiveEntry(sourceFile.toFile(), extractionPath + "/" + sourceFile.getFileName());
       tarArchiveEntry.setModTime(0);
       filesystemEntries.add(tarArchiveEntry);
     }

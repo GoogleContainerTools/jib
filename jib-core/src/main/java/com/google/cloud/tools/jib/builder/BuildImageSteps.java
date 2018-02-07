@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.Image;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -170,11 +171,12 @@ public class BuildImageSteps {
    *
    * <p>The entrypoint is {@code java -cp [classpaths] [main class]}.
    */
-  private List<String> getEntrypoint() {
+  @VisibleForTesting
+  List<String> getEntrypoint() {
     List<String> classPaths = new ArrayList<>();
-    classPaths.add(sourceFilesConfiguration.getDependenciesPathOnImage().resolve("*").toString());
-    classPaths.add(sourceFilesConfiguration.getResourcesPathOnImage().toString());
-    classPaths.add(sourceFilesConfiguration.getClassesPathOnImage().toString());
+    classPaths.add(sourceFilesConfiguration.getDependenciesPathOnImage() + "*");
+    classPaths.add(sourceFilesConfiguration.getResourcesPathOnImage());
+    classPaths.add(sourceFilesConfiguration.getClassesPathOnImage());
 
     String classPathsString = String.join(":", classPaths);
 

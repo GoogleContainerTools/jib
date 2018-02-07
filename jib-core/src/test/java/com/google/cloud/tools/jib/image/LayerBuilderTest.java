@@ -49,7 +49,7 @@ public class LayerBuilderTest {
     Path layerDirectory = Paths.get(Resources.getResource("layer").toURI());
     Path blobA = Paths.get(Resources.getResource("blobA").toURI());
 
-    Path extractionPathBase = Paths.get("extract", "here");
+    String extractionPathBase = "extract/here";
     LayerBuilder layerBuilder =
         new LayerBuilder(new ArrayList<>(Arrays.asList(layerDirectory, blobA)), extractionPathBase);
 
@@ -72,10 +72,14 @@ public class LayerBuilderTest {
                 try {
                   TarArchiveEntry header = tarArchiveInputStream.getNextTarEntry();
 
-                  Path expectedExtractionPath =
-                      Paths.get("extract", "here")
-                          .resolve(layerDirectory.getParent().relativize(path));
-                  Assert.assertEquals(expectedExtractionPath, Paths.get(header.getName()));
+                  StringBuilder expectedExtractionPath = new StringBuilder("extract/here");
+                  for (Path pathComponent : layerDirectory.getParent().relativize(path)) {
+                    expectedExtractionPath.append("/").append(pathComponent);
+                  }
+                  // Check path-equality because there might be an appended backslash in the header
+                  // filename.
+                  Assert.assertEquals(
+                      Paths.get(expectedExtractionPath.toString()), Paths.get(header.getName()));
 
                   // If is a normal file, checks that the file contents match.
                   if (Files.isRegularFile(path)) {
@@ -95,8 +99,8 @@ public class LayerBuilderTest {
 
       // Verifies that blobA was added.
       TarArchiveEntry header = tarArchiveInputStream.getNextTarEntry();
-      Path expectedExtractionPath = Paths.get("extract", "here", "blobA");
-      Assert.assertEquals(expectedExtractionPath, Paths.get(header.getName()));
+      String expectedExtractionPath = "extract/here/blobA";
+      Assert.assertEquals(expectedExtractionPath, header.getName());
 
       String expectedFileString = new String(Files.readAllBytes(blobA), StandardCharsets.UTF_8);
 
