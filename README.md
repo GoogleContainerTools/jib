@@ -156,7 +156,7 @@ These limitations will be fixed in the future.
 * Does not build OCI images.
 * Pushing to Docker Hub does not seem to work.
 * Cannot build directly to a Docker daemon.
-* Cannot use a private image as a base image.w
+* Cannot use a private image as a base image.
 
 ## Frequently Asked Questions (FAQ)
 
