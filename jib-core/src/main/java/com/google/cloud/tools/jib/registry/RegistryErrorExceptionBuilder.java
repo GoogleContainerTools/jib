@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.registry;
 
+import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.registry.json.ErrorEntryTemplate;
 
 /** Builds a {@link RegistryErrorException} with multiple causes. */
@@ -94,7 +95,7 @@ class RegistryErrorExceptionBuilder {
   RegistryErrorException build() {
     // Provides a feedback channel.
     errorMessageBuilder.append(
-        " | If this is a bug, please file an issue at https://github.com/google/jib/issues/new");
+        " | If this is a bug, please file an issue at " + ProjectInfo.GITHUB_NEW_ISSUE_URL);
     return new RegistryErrorException(errorMessageBuilder.toString(), cause);
   }
 }
