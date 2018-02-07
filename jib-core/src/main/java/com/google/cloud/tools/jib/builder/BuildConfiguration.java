@@ -95,6 +95,7 @@ public class BuildConfiguration {
 
     private Builder() {
       // Sets default empty values.
+      values.put(Fields.CREDENTIAL_HELPER_NAMES, Collections.emptyList());
       values.put(Fields.JVM_FLAGS, Collections.emptyList());
       values.put(Fields.ENVIRONMENT, Collections.emptyMap());
     }
