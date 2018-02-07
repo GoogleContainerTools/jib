@@ -65,10 +65,16 @@ public class BuildImageSteps {
             MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
 
         try (Cache cache = Cache.init(cacheDirectory)) {
+          timer2.lap("Setting up image push authentication");
+          // Authenticates push.
+          ListenableFuture<Authorization> authenticatePushFuture =
+              listeningExecutorService.submit(new AuthenticatePushStep(buildConfiguration));
+
           timer2.lap("Setting up image pull authentication");
           // Authenticates base image pull.
           ListenableFuture<Authorization> authenticatePullFuture =
               listeningExecutorService.submit(new AuthenticatePullStep(buildConfiguration));
+
           timer2.lap("Setting up base image pull");
           // Pulls the base image.
           ListenableFuture<Image> pullBaseImageFuture =
@@ -89,10 +95,6 @@ public class BuildImageSteps {
                           pullBaseImageFuture),
                       listeningExecutorService);
 
-          timer2.lap("Setting up image push authentication");
-          // Authenticates push.
-          ListenableFuture<Authorization> authenticatePushFuture =
-              listeningExecutorService.submit(new AuthenticatePushStep(buildConfiguration));
           timer2.lap("Setting up base image layer push");
           // Pushes the base image layers.
           ListenableFuture<List<ListenableFuture<Void>>> pushBaseImageLayerFuturesFuture =

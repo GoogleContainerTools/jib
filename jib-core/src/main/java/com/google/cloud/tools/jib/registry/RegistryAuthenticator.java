@@ -26,6 +26,8 @@ import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
+
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -39,8 +41,6 @@ import java.util.regex.Pattern;
  *     href="https://docs.docker.com/registry/spec/auth/token/">https://docs.docker.com/registry/spec/auth/token/</a>
  */
 public class RegistryAuthenticator {
-
-  private final URL authenticationUrl;
 
   // TODO: Replace with a WWW-Authenticate header parser.
   /**
@@ -92,21 +92,36 @@ public class RegistryAuthenticator {
     private String token;
   }
 
+  private final URL authenticationUrl;
+  @Nullable
+  private Authorization authorization;
+
   RegistryAuthenticator(String realm, String service, String repository)
       throws MalformedURLException {
     authenticationUrl =
         new URL(realm + "?service=" + service + "&scope=repository:" + repository + ":pull");
   }
 
+  /** Sets an {@code Authorization} header to authenticate with. */
+  public RegistryAuthenticator setAuthorization(@Nullable Authorization authorization) {
+    this.authorization = authorization;
+    return this;
+  }
+
   /** Sends the authentication request and retrieves the Bearer authorization token. */
   public Authorization authenticate() throws RegistryAuthenticationFailedException {
     try (Connection connection = new Connection(authenticationUrl)) {
-      Response response = connection.get(Request.builder().build());
+      Request.Builder requestBuilder = Request.builder();
+      if (authorization != null) {
+        requestBuilder.setAuthorization(authorization);
+      }
+      Response response = connection.get(requestBuilder.build());
       String responseString = Blobs.writeToString(response.getBody());
 
       AuthenticationResponseTemplate responseJson =
           JsonTemplateMapper.readJson(responseString, AuthenticationResponseTemplate.class);
       return Authorizations.withBearerToken(responseJson.token);
+
     } catch (IOException ex) {
       throw new RegistryAuthenticationFailedException(ex);
     }

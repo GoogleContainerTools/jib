@@ -18,9 +18,14 @@ package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.http.Authorization;
+import com.google.cloud.tools.jib.registry.DockerCredentialRetriever;
+import com.google.cloud.tools.jib.registry.NonexistentDockerCredentialHelperException;
+import com.google.cloud.tools.jib.registry.NonexistentServerUrlDockerCredentialHelperException;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticators;
 import com.google.cloud.tools.jib.registry.RegistryException;
+
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
@@ -38,11 +43,29 @@ class AuthenticatePullStep implements Callable<Authorization> {
   /** Depends on nothing. */
   @Override
   public Authorization call()
-      throws RegistryAuthenticationFailedException, IOException, RegistryException {
+      throws RegistryAuthenticationFailedException, IOException, RegistryException, NonexistentDockerCredentialHelperException {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       return RegistryAuthenticators.forOther(
-              buildConfiguration.getBaseImageServerUrl(), buildConfiguration.getBaseImageName())
+          buildConfiguration.getBaseImageServerUrl(), buildConfiguration.getBaseImageName())
+          .setAuthorization(getBaseImageAuthorization())
           .authenticate();
+    }
+  }
+
+  /** Attempts to retrieve authorization for pulling the base image. */
+  @Nullable
+  private Authorization getBaseImageAuthorization() throws IOException, NonexistentDockerCredentialHelperException {
+    try {
+      DockerCredentialRetriever dockerCredentialRetriever =
+          new DockerCredentialRetriever(
+              buildConfiguration.getBaseImageServerUrl(),
+              buildConfiguration.getCredentialHelperName());
+
+      return dockerCredentialRetriever.retrieve();
+
+    } catch (NonexistentServerUrlDockerCredentialHelperException ex) {
+      // Returns null if no authorization is found.
+      return null;
     }
   }
 }
