@@ -126,7 +126,7 @@ In this configuration, the image is:
 * Pushed to `localhost:5000/my-image:built-with-jib`
 * Runs by calling `java -Xms512m -Xdebug -Xmy:flag=jib-rules -cp app/libs/*:app/resources:app/classes mypackage.MyApp`
 
-```
+```xml
 <configuration>
     <from>openjdk:alpine</from>
     <registry>localhost:5000</registry>
