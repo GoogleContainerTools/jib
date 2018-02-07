@@ -63,7 +63,15 @@ class AuthenticatePullStep implements Callable<Authorization> {
       throws ExecutionException, InterruptedException {
     try {
       RegistryCredentials registryCredentials = NonBlockingFutures.get(registryCredentialsFuture);
-      return registryCredentials.get(buildConfiguration.getBaseImageServerUrl());
+      String registry = buildConfiguration.getBaseImageServerUrl();
+      buildConfiguration
+          .getBuildLogger()
+          .info(
+              "Using docker-credential-"
+                  + registryCredentials.getCredentialHelperUsed(registry)
+                  + " for pulling from "
+                  + registry);
+      return registryCredentials.getAuthorization(registry);
 
     } catch (NoRegistryCredentialsException ex) {
       /*

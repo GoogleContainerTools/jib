@@ -49,7 +49,15 @@ class AuthenticatePushStep implements Callable<Authorization> {
             buildConfiguration.getBuildLogger(),
             String.format(DESCRIPTION, buildConfiguration.getTargetServerUrl()))) {
       RegistryCredentials registryCredentials = NonBlockingFutures.get(registryCredentialsFuture);
-      return registryCredentials.get(buildConfiguration.getTargetServerUrl());
+      String registry = buildConfiguration.getTargetServerUrl();
+      buildConfiguration
+          .getBuildLogger()
+          .info(
+              "Using docker-credential-"
+                  + registryCredentials.getCredentialHelperUsed(registry)
+                  + " for pushing to "
+                  + registry);
+      return registryCredentials.getAuthorization(registry);
 
     } catch (NoRegistryCredentialsException ex) {
       // If no credentials found, give a warning and return null.

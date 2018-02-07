@@ -50,7 +50,8 @@ public class RegistryCredentials {
       for (String credentialHelperSuffix : credentialHelperSuffixes) {
         Authorization authorization = retrieveCredentials(registry, credentialHelperSuffix);
         if (authorization != null) {
-          registryCredentials.store(registry, authorization);
+
+          registryCredentials.store(registry, credentialHelperSuffix, authorization);
           break;
         }
       }
@@ -79,20 +80,46 @@ public class RegistryCredentials {
     }
   }
 
+  /** Pair of (Docker credential helper name, {@link Authorization}). */
+  private static class CredentialHelperAuthorizationPair {
+
+    private final String credentialHelperSuffix;
+    private final Authorization authorization;
+
+    private CredentialHelperAuthorizationPair(
+        String credentialHelperSuffix, Authorization authorization) {
+      this.credentialHelperSuffix = credentialHelperSuffix;
+      this.authorization = authorization;
+    }
+  }
+
   /** Maps from registry to the credentials for that registry. */
-  private final Map<String, Authorization> credentials = new HashMap<>();
+  private final Map<String, CredentialHelperAuthorizationPair> credentials = new HashMap<>();
 
   /** Instantiate using {@link #from}. */
   private RegistryCredentials() {};
 
-  private void store(String registry, Authorization authorization) {
-    credentials.put(registry, authorization);
+  private void store(String registry, String credentialHelperSuffix, Authorization authorization) {
+    credentials.put(
+        registry, new CredentialHelperAuthorizationPair(credentialHelperSuffix, authorization));
   }
 
-  public Authorization get(String registry) throws NoRegistryCredentialsException {
+  /** @return the {@code Authorization} retrieved for the {@code registry} */
+  public Authorization getAuthorization(String registry) throws NoRegistryCredentialsException {
     if (!credentials.containsKey(registry)) {
       throw new NoRegistryCredentialsException(registry);
     }
-    return credentials.get(registry);
+    return credentials.get(registry).authorization;
+  }
+
+  /**
+   * @return the name of the credential helper used to retrieve authorization for the {@code
+   *     registry}
+   */
+  public String getCredentialHelperUsed(String registry) throws NoRegistryCredentialsException {
+    if (!credentials.containsKey(registry)) {
+      throw new NoRegistryCredentialsException(registry);
+    }
+    return credentials.get(registry).credentialHelperSuffix;
   }
 }
