@@ -147,7 +147,7 @@ public class BuildImageMojo extends AbstractMojo {
   }
 
   @VisibleForTesting
-  void setCredentialHelperNames(List<String> credentialHelperNames) {
+  void setCredentiaHelperNames(List<String> credentialHelperNames) {
     this.credentialHelperNames = credentialHelperNames;
   }
 
@@ -168,36 +168,30 @@ public class BuildImageMojo extends AbstractMojo {
             "make sure your Internet is up and that the registry you are pushing to exists");
 
       } else if (executionException.getCause() instanceof RegistryUnauthorizedException) {
-        BuildConfiguration buildConfiguration = buildImageSteps.getBuildConfiguration();
-
         RegistryUnauthorizedException registryUnauthorizedException =
             (RegistryUnauthorizedException) executionException.getCause();
         if (registryUnauthorizedException.getHttpResponseException().getStatusCode()
             == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
-          // No permissions to push to target image.
-          String targetImage =
-              buildConfiguration.getTargetServerUrl()
-                  + "/"
-                  + buildConfiguration.getTargetImageName()
-                  + ":"
-                  + buildConfiguration.getTargetTag();
+          // No permissions for registry/repository.
           throwMojoExecutionExceptionWithHelpMessage(
               registryUnauthorizedException,
-              "make sure your have permission to push to " + targetImage);
+              "make sure your have permissions for "
+                  + registryUnauthorizedException.getImageReference());
 
-        } else if (credentialHelperNames.isEmpty()) {
+        } else if (credentialHelperNames == null || credentialHelperNames.isEmpty()) {
           // No credential helpers not defined.
           throwMojoExecutionExceptionWithHelpMessage(
-              registryUnauthorizedException, "set the configuration 'credentialHelperNames'");
+              registryUnauthorizedException,
+              "set a credential helper name with the configuration 'credentialHelperNames'");
 
         } else {
           // Credential helper probably was not configured correctly or did not have the necessary
           // credentials.
           throwMojoExecutionExceptionWithHelpMessage(
               registryUnauthorizedException,
-              "make sure your credential helper for "
-                  + buildConfiguration.getTargetServerUrl()
-                  + " is set up correctly");
+              "make sure your credential helper for '"
+                  + registryUnauthorizedException.getImageReference()
+                  + "' is set up correctly");
         }
 
       } else {

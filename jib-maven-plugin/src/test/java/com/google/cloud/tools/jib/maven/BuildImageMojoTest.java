@@ -18,11 +18,11 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.BuildImageSteps;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import org.apache.http.conn.HttpHostConnectException;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -98,6 +98,8 @@ public class BuildImageMojoTest {
     HttpResponseException mockHttpResponseException = Mockito.mock(HttpResponseException.class);
     Mockito.when(mockRegistryUnauthorizedException.getHttpResponseException())
         .thenReturn(mockHttpResponseException);
+    Mockito.when(mockRegistryUnauthorizedException.getImageReference())
+        .thenReturn("someregistry/somerepository");
     Mockito.when(mockHttpResponseException.getStatusCode())
         .thenReturn(HttpStatusCodes.STATUS_CODE_FORBIDDEN);
 
@@ -105,19 +107,13 @@ public class BuildImageMojoTest {
     Mockito.when(mockExecutionException.getCause()).thenReturn(mockRegistryUnauthorizedException);
     Mockito.doThrow(mockExecutionException).when(mockBuildImageSteps).run();
 
-    BuildConfiguration mockBuildConfiguration = Mockito.mock(BuildConfiguration.class);
-    Mockito.when(mockBuildImageSteps.getBuildConfiguration()).thenReturn(mockBuildConfiguration);
-    Mockito.when(mockBuildConfiguration.getTargetServerUrl()).thenReturn("registry");
-    Mockito.when(mockBuildConfiguration.getTargetImageName()).thenReturn("repository");
-    Mockito.when(mockBuildConfiguration.getTargetTag()).thenReturn("tag");
-
     try {
       testBuildImageMojo.buildImage(mockBuildImageSteps);
       Assert.fail("buildImage should have thrown an exception");
 
     } catch (MojoExecutionException ex) {
       Assert.assertEquals(
-          "Build image failed, perhaps you should make sure your have permission to push to registry/repository:tag",
+          "Build image failed, perhaps you should make sure your have permissions for someregistry/somerepository",
           ex.getMessage());
       Assert.assertEquals(mockRegistryUnauthorizedException, ex.getCause());
     }
@@ -138,13 +134,15 @@ public class BuildImageMojoTest {
     Mockito.when(mockExecutionException.getCause()).thenReturn(mockRegistryUnauthorizedException);
     Mockito.doThrow(mockExecutionException).when(mockBuildImageSteps).run();
 
+    testBuildImageMojo.setCredentiaHelperNames(Collections.emptyList());
+
     try {
       testBuildImageMojo.buildImage(mockBuildImageSteps);
       Assert.fail("buildImage should have thrown an exception");
 
     } catch (MojoExecutionException ex) {
       Assert.assertEquals(
-          "Build image failed, perhaps you should set the configuration 'credentialHelperName'",
+          "Build image failed, perhaps you should set a credential helper name with the configuration 'credentialHelperNames'",
           ex.getMessage());
       Assert.assertEquals(mockRegistryUnauthorizedException, ex.getCause());
     }
@@ -159,13 +157,15 @@ public class BuildImageMojoTest {
     HttpResponseException mockHttpResponseException = Mockito.mock(HttpResponseException.class);
     Mockito.when(mockRegistryUnauthorizedException.getHttpResponseException())
         .thenReturn(mockHttpResponseException);
+    Mockito.when(mockRegistryUnauthorizedException.getImageReference())
+        .thenReturn("someregistry/somerepository");
     Mockito.when(mockHttpResponseException.getStatusCode()).thenReturn(-1); // Unknown
 
     ExecutionException mockExecutionException = Mockito.mock(ExecutionException.class);
     Mockito.when(mockExecutionException.getCause()).thenReturn(mockRegistryUnauthorizedException);
     Mockito.doThrow(mockExecutionException).when(mockBuildImageSteps).run();
 
-    testBuildImageMojo.setCredentialHelperName("credentialhelper");
+    testBuildImageMojo.setCredentiaHelperNames(Collections.singletonList("some-credential-helper"));
 
     try {
       testBuildImageMojo.buildImage(mockBuildImageSteps);
@@ -173,7 +173,7 @@ public class BuildImageMojoTest {
 
     } catch (MojoExecutionException ex) {
       Assert.assertEquals(
-          "Build image failed, perhaps you should make sure your credential helper 'docker-credential-credentialhelper' is set up correctly",
+          "Build image failed, perhaps you should make sure your credential helper for 'someregistry/somerepository' is set up correctly",
           ex.getMessage());
       Assert.assertEquals(mockRegistryUnauthorizedException, ex.getCause());
     }

@@ -135,7 +135,9 @@ public class BuildConfiguration {
     }
 
     public Builder setCredentialHelperNames(List<String> credentialHelperNames) {
-      values.put(Fields.CREDENTIAL_HELPER_NAMES, credentialHelperNames);
+      if (credentialHelperNames != null) {
+        values.put(Fields.CREDENTIAL_HELPER_NAMES, credentialHelperNames);
+      }
       return this;
     }
 
