@@ -8,7 +8,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-## 0.1.1
+## 0.1.2
 ### Changed
 - Configure multiple credential helpers with `credentialHelperNames` ([#68](https://github.com/google/jib/pull/68))
 - Removed configuration `credentialHelperName` ([#68](https://github.com/google/jib/pull/68))
