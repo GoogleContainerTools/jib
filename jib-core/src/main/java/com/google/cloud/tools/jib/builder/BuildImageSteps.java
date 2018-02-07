@@ -74,14 +74,20 @@ public class BuildImageSteps {
           timer2.lap("Setting up image push authentication");
           // Authenticates push.
           ListenableFuture<Authorization> authenticatePushFuture =
-              listeningExecutorService.submit(
-                  new AuthenticatePushStep(buildConfiguration, retrieveRegistryCredentialsFuture));
+              Futures.whenAllSucceed(retrieveRegistryCredentialsFuture)
+                  .call(
+                      new AuthenticatePushStep(
+                          buildConfiguration, retrieveRegistryCredentialsFuture),
+                      listeningExecutorService);
 
           timer2.lap("Setting up image pull authentication");
           // Authenticates base image pull.
           ListenableFuture<Authorization> authenticatePullFuture =
-              listeningExecutorService.submit(
-                  new AuthenticatePullStep(buildConfiguration, retrieveRegistryCredentialsFuture));
+              Futures.whenAllSucceed(retrieveRegistryCredentialsFuture)
+                  .call(
+                      new AuthenticatePullStep(
+                          buildConfiguration, retrieveRegistryCredentialsFuture),
+                      listeningExecutorService);
 
           timer2.lap("Setting up base image pull");
           // Pulls the base image.
