@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.Image;
+import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -65,15 +66,22 @@ public class BuildImageSteps {
             MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
 
         try (Cache cache = Cache.init(cacheDirectory)) {
+          timer2.lap("Setting up credential retrieval");
+          ListenableFuture<RegistryCredentials> retrieveRegistryCredentialsFuture =
+              listeningExecutorService.submit(
+                  new RetrieveRegistryCredentialsStep(buildConfiguration));
+
           timer2.lap("Setting up image push authentication");
           // Authenticates push.
           ListenableFuture<Authorization> authenticatePushFuture =
-              listeningExecutorService.submit(new AuthenticatePushStep(buildConfiguration));
+              listeningExecutorService.submit(
+                  new AuthenticatePushStep(buildConfiguration, retrieveRegistryCredentialsFuture));
 
           timer2.lap("Setting up image pull authentication");
           // Authenticates base image pull.
           ListenableFuture<Authorization> authenticatePullFuture =
-              listeningExecutorService.submit(new AuthenticatePullStep(buildConfiguration));
+              listeningExecutorService.submit(
+                  new AuthenticatePullStep(buildConfiguration, retrieveRegistryCredentialsFuture));
 
           timer2.lap("Setting up base image pull");
           // Pulls the base image.

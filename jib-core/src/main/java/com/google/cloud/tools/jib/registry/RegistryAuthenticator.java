@@ -26,13 +26,12 @@ import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
-
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.annotation.Nullable;
 
 /**
  * Authenticates pull access with a registry service.
@@ -93,8 +92,7 @@ public class RegistryAuthenticator {
   }
 
   private final URL authenticationUrl;
-  @Nullable
-  private Authorization authorization;
+  @Nullable private Authorization authorization;
 
   RegistryAuthenticator(String realm, String service, String repository)
       throws MalformedURLException {

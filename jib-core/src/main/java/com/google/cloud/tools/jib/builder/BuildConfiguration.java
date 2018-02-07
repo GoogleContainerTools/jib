@@ -16,14 +16,13 @@
 
 package com.google.cloud.tools.jib.builder;
 
-import com.google.cloud.tools.jib.registry.DockerCredentialRetriever;
+import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /** Immutable configuration options for the builder process. */
 public class BuildConfiguration {
@@ -45,8 +44,8 @@ public class BuildConfiguration {
     /** The image tag of the built image (the part after the colon). */
     TARGET_TAG(true),
 
-    /** The credential helper name used by {@link DockerCredentialRetriever}. */
-    CREDENTIAL_HELPER_NAME(false),
+    /** The credential helper names used by {@link RegistryCredentials}. */
+    CREDENTIAL_HELPER_NAMES(false),
 
     /** The main class to use when running the application. */
     MAIN_CLASS(true),
@@ -81,7 +80,7 @@ public class BuildConfiguration {
             put(Fields.TARGET_SERVER_URL, "target registry server URL");
             put(Fields.TARGET_IMAGE_NAME, "target image name");
             put(Fields.TARGET_TAG, "target image tag");
-            put(Fields.CREDENTIAL_HELPER_NAME, "credential helper name");
+            put(Fields.CREDENTIAL_HELPER_NAMES, "credential helper names");
             put(Fields.MAIN_CLASS, "main class");
             put(Fields.JVM_FLAGS, "JVM flags");
             put(Fields.ENVIRONMENT, "environment variables");
@@ -135,8 +134,8 @@ public class BuildConfiguration {
       return this;
     }
 
-    public Builder setCredentialHelperName(@Nullable String credentialHelperName) {
-      values.put(Fields.CREDENTIAL_HELPER_NAME, credentialHelperName);
+    public Builder setCredentialHelperNames(List<String> credentialHelperNames) {
+      values.put(Fields.CREDENTIAL_HELPER_NAMES, credentialHelperNames);
       return this;
     }
 
@@ -242,9 +241,8 @@ public class BuildConfiguration {
     return getFieldValue(Fields.TARGET_TAG);
   }
 
-  @Nullable
-  public String getCredentialHelperName() {
-    return getFieldValue(Fields.CREDENTIAL_HELPER_NAME);
+  public List<String> getCredentialHelperNames() {
+    return getFieldValue(Fields.CREDENTIAL_HELPER_NAMES);
   }
 
   public String getMainClass() {

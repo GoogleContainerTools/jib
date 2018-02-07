@@ -17,8 +17,14 @@
 package com.google.cloud.tools.jib.registry.credentials;
 
 import com.google.cloud.tools.jib.http.Authorization;
+import com.google.cloud.tools.jib.registry.DockerCredentialRetriever;
+import com.google.cloud.tools.jib.registry.NonexistentDockerCredentialHelperException;
+import com.google.cloud.tools.jib.registry.NonexistentServerUrlDockerCredentialHelperException;
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Stores retrieved registry credentials.
@@ -27,10 +33,59 @@ import java.util.Map;
  */
 public class RegistryCredentials {
 
+  /**
+   * Retrieves credentials for {@code registries} using the credential helpers referred to by {@code
+   * credentialHelperSuffixes}.
+   *
+   * <p>This obtains the registry credentials, not the <a
+   * href="https://docs.docker.com/registry/spec/auth/token/">Docker authentication token</a>.
+   */
+  public static RegistryCredentials from(
+      List<String> credentialHelperSuffixes, List<String> registries)
+      throws IOException, NonexistentDockerCredentialHelperException {
+    RegistryCredentials registryCredentials = new RegistryCredentials();
+
+    // TODO: These can be done in parallel.
+    for (String registry : registries) {
+      for (String credentialHelperSuffix : credentialHelperSuffixes) {
+        Authorization authorization = retrieveCredentials(registry, credentialHelperSuffix);
+        if (authorization != null) {
+          registryCredentials.store(registry, authorization);
+          break;
+        }
+      }
+    }
+    return registryCredentials;
+  }
+
+  /**
+   * Attempts to retrieve authorization for {@code registry} using docker-credential-{@code
+   * credentialHelperSuffix}.
+   *
+   * @return the retrieved credentials, or {@code null} if not found
+   */
+  @Nullable
+  private static Authorization retrieveCredentials(String registry, String credentialHelperSuffix)
+      throws IOException, NonexistentDockerCredentialHelperException {
+    try {
+      DockerCredentialRetriever dockerCredentialRetriever =
+          new DockerCredentialRetriever(registry, credentialHelperSuffix);
+
+      return dockerCredentialRetriever.retrieve();
+
+    } catch (NonexistentServerUrlDockerCredentialHelperException ex) {
+      // Returns null if no authorization is found.
+      return null;
+    }
+  }
+
   /** Maps from registry to the credentials for that registry. */
   private final Map<String, Authorization> credentials = new HashMap<>();
 
-  public void store(String registry, Authorization authorization) {
+  /** Instantiate using {@link #from}. */
+  private RegistryCredentials() {};
+
+  private void store(String registry, Authorization authorization) {
     credentials.put(registry, authorization);
   }
 
