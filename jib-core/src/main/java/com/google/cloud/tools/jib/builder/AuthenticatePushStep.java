@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.registry.credentials.NoRegistryCredentialsException;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.util.concurrent.Callable;
@@ -50,19 +49,21 @@ class AuthenticatePushStep implements Callable<Authorization> {
             String.format(DESCRIPTION, buildConfiguration.getTargetServerUrl()))) {
       RegistryCredentials registryCredentials = NonBlockingFutures.get(registryCredentialsFuture);
       String registry = buildConfiguration.getTargetServerUrl();
+
+      String credentialHelperSuffix = registryCredentials.getCredentialHelperUsed(registry);
+      Authorization authorization = registryCredentials.getAuthorization(registry);
+      if (credentialHelperSuffix == null || authorization == null) {
+        // If no credentials found, give a warning and return null.
+        buildConfiguration
+            .getBuildLogger()
+            .warn("No credentials could be retrieved for registry " + registry);
+        return null;
+      }
       buildConfiguration
           .getBuildLogger()
           .info(
-              "Using docker-credential-"
-                  + registryCredentials.getCredentialHelperUsed(registry)
-                  + " for pushing to "
-                  + registry);
-      return registryCredentials.getAuthorization(registry);
-
-    } catch (NoRegistryCredentialsException ex) {
-      // If no credentials found, give a warning and return null.
-      buildConfiguration.getBuildLogger().warn(ex.getMessage());
-      return null;
+              "Using docker-credential-" + credentialHelperSuffix + " for pushing to " + registry);
+      return authorization;
     }
   }
 }

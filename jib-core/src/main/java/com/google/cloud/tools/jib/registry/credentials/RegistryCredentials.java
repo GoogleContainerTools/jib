@@ -104,21 +104,26 @@ public class RegistryCredentials {
         registry, new CredentialHelperAuthorizationPair(credentialHelperSuffix, authorization));
   }
 
-  /** @return the {@code Authorization} retrieved for the {@code registry} */
-  public Authorization getAuthorization(String registry) throws NoRegistryCredentialsException {
+  /**
+   * @return the {@code Authorization} retrieved for the {@code registry}, or {@code null} if none
+   *     exists
+   */
+  @Nullable
+  public Authorization getAuthorization(String registry) {
     if (!credentials.containsKey(registry)) {
-      throw new NoRegistryCredentialsException(registry);
+      return null;
     }
     return credentials.get(registry).authorization;
   }
 
   /**
    * @return the name of the credential helper used to retrieve authorization for the {@code
-   *     registry}
+   *     registry}, or {@code null} if none exists
    */
-  public String getCredentialHelperUsed(String registry) throws NoRegistryCredentialsException {
+  @Nullable
+  public String getCredentialHelperUsed(String registry) {
     if (!credentials.containsKey(registry)) {
-      throw new NoRegistryCredentialsException(registry);
+      return null;
     }
     return credentials.get(registry).credentialHelperSuffix;
   }
