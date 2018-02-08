@@ -145,6 +145,9 @@ public class BuildImageMojoTest {
         .thenReturn(mockHttpResponseException);
     Mockito.when(mockHttpResponseException.getStatusCode()).thenReturn(-1); // Unknown
 
+    Mockito.when(mockBuildImageSteps.getBuildConfiguration())
+        .thenReturn(Mockito.mock(BuildConfiguration.class));
+
     ExecutionException mockExecutionException = Mockito.mock(ExecutionException.class);
     Mockito.when(mockExecutionException.getCause()).thenReturn(mockRegistryUnauthorizedException);
     Mockito.doThrow(mockExecutionException).when(mockBuildImageSteps).run();
