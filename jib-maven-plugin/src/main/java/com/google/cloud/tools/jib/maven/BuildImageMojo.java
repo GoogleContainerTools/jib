@@ -65,7 +65,6 @@ public class BuildImageMojo extends AbstractMojo {
     } else if (registry.endsWith("amazonaws.com")) {
       return "ecr-login";
     }
-    // TODO: Add more common credential helpers.
     return null;
   }
 
