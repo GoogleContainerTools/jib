@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 import org.apache.http.conn.HttpHostConnectException;
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -57,6 +58,9 @@ public class BuildImageMojo extends AbstractMojo {
 
   @Parameter(defaultValue = "${project}", readonly = true)
   private MavenProject project;
+
+  @Parameter(defaultValue = "${session}", readonly = true)
+  private MavenSession session;
 
   // TODO: Replace the separate base image parameters with this.
   @Parameter(defaultValue = "gcr.io/distroless/java", required = true)
@@ -100,6 +104,10 @@ public class BuildImageMojo extends AbstractMojo {
 
     // Parse 'from' into image reference.
     ImageReference baseImage = getImageReference();
+
+    // Check Maven settings for registry credentials.
+    session.getSettings().getServer(registry);
+    session.getSettings().getServer(baseImage.getRegistry());
 
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder()
