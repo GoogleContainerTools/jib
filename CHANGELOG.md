@@ -11,6 +11,8 @@ All notable changes to this project will be documented in this file.
 ## 0.1.1
 ### Added
 - Simple example `helloworld` project under `examples/` ([#62](https://github.com/google/jib/pull/62))
+- Better error messages when pushing an image manifest ([#63](https://github.com/google/jib/pull/63))
+- Validates target image configuration ([#63](https://github.com/google/jib/pull/63))
 
 ### Fixed
 - Build failure on Windows ([#74](https://github.com/google/jib/issues/74))
