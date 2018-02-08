@@ -25,7 +25,7 @@ In your Maven Java project, add the plugin to your `pom.xml`:
 
 ```xml
 <plugin>
-  <groupId>com.google.com.tools</groupId>
+  <groupId>com.google.cloud.tools</groupId>
   <artifactId>jib-maven-plugin</artifactId>
   <version>0.1.0</version>
   <configuration>
