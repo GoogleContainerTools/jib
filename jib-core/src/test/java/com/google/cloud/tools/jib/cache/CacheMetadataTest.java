@@ -23,7 +23,6 @@ import com.google.cloud.tools.jib.image.ImageLayers;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -98,7 +97,7 @@ public class CacheMetadataTest {
       throws LayerPropertyNotFoundException, DuplicateLayerException,
           CacheMetadataCorruptedException {
     List<CachedLayer> mockLayers =
-        Stream.generate(CacheMetadataTest::mockCachedLayer).limit(5).collect(Collectors.toList());
+        Stream.generate(CacheMetadataTest::mockCachedLayer).limit(6).collect(Collectors.toList());
 
     LayerMetadata fakeExpectedSourceFilesClassesLayerMetadata =
         new LayerMetadata(
@@ -109,6 +108,8 @@ public class CacheMetadataTest {
     LayerMetadata fakeOtherSourceFilesLayerMetadata =
         new LayerMetadata(
             Collections.singletonList("not/the/same/source/file"), FileTime.fromMillis(0));
+    LayerMetadata fakeEmptySourceFilesLayerMetadata =
+        new LayerMetadata(Collections.emptyList(), FileTime.fromMillis(0));
 
     List<CachedLayerWithMetadata> cachedLayers =
         Arrays.asList(
@@ -121,11 +122,13 @@ public class CacheMetadataTest {
             new CachedLayerWithMetadata(
                 mockLayers.get(2), CachedLayerType.CLASSES, fakeOtherSourceFilesLayerMetadata),
             new CachedLayerWithMetadata(
-                mockLayers.get(3),
+                mockLayers.get(3), CachedLayerType.DEPENDENCIES, fakeEmptySourceFilesLayerMetadata),
+            new CachedLayerWithMetadata(
+                mockLayers.get(4),
                 CachedLayerType.CLASSES,
                 fakeExpectedSourceFilesClassesLayerMetadata),
             new CachedLayerWithMetadata(
-                mockLayers.get(4),
+                mockLayers.get(5),
                 CachedLayerType.RESOURCES,
                 fakeExpectedSourceFilesResourcesLayerMetadata));
 
@@ -138,10 +141,8 @@ public class CacheMetadataTest {
         cacheMetadata
             .filterLayers()
             .bySourceFiles(
-                new ArrayList<>(
-                    Arrays.asList(
-                        Paths.get("some", "source", "file"),
-                        Paths.get("some", "source", "directory"))))
+                Arrays.asList(
+                    Paths.get("some", "source", "file"), Paths.get("some", "source", "directory")))
             .filter();
 
     Assert.assertEquals(3, filteredLayers.size());
@@ -151,5 +152,37 @@ public class CacheMetadataTest {
         fakeExpectedSourceFilesClassesLayerMetadata, filteredLayers.get(1).getMetadata());
     Assert.assertEquals(
         fakeExpectedSourceFilesResourcesLayerMetadata, filteredLayers.get(2).getMetadata());
+  }
+
+  @Test
+  public void testFilter_byEmptySourceFiles()
+      throws LayerPropertyNotFoundException, DuplicateLayerException,
+          CacheMetadataCorruptedException {
+    List<CachedLayer> mockLayers =
+        Stream.generate(CacheMetadataTest::mockCachedLayer).limit(2).collect(Collectors.toList());
+
+    LayerMetadata fakeSourceFilesLayerMetadata =
+        new LayerMetadata(
+            Arrays.asList("some/source/file", "some/source/directory"), FileTime.fromMillis(0));
+    LayerMetadata fakeEmptySourceFilesLayerMetadata =
+        new LayerMetadata(Collections.emptyList(), FileTime.fromMillis(0));
+
+    List<CachedLayerWithMetadata> cachedLayers =
+        Arrays.asList(
+            new CachedLayerWithMetadata(
+                mockLayers.get(0), CachedLayerType.CLASSES, fakeSourceFilesLayerMetadata),
+            new CachedLayerWithMetadata(
+                mockLayers.get(1), CachedLayerType.CLASSES, fakeEmptySourceFilesLayerMetadata));
+
+    CacheMetadata cacheMetadata = new CacheMetadata();
+    for (CachedLayerWithMetadata cachedLayer : cachedLayers) {
+      cacheMetadata.addLayer(cachedLayer);
+    }
+
+    ImageLayers<CachedLayerWithMetadata> filteredLayers =
+        cacheMetadata.filterLayers().bySourceFiles(Collections.emptyList()).filter();
+
+    Assert.assertEquals(1, filteredLayers.size());
+    Assert.assertEquals(fakeEmptySourceFilesLayerMetadata, filteredLayers.get(0).getMetadata());
   }
 }
