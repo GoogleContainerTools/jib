@@ -55,6 +55,19 @@ public class BuildImageMojo extends AbstractMojo {
   /** {@code User-Agent} header suffix to send to the registry. */
   private static final String USER_AGENT_SUFFIX = "jib-maven-plugin";
 
+  /** Attempts to infer a known credential helper name from a specified registry. */
+  @VisibleForTesting
+  @Nullable
+  static String inferCredentialHelperName(String registry) {
+    if (registry.endsWith("gcr.io")) {
+      return "gcr";
+
+    } else if (registry.endsWith("amazonaws.com")) {
+      return "ecr-login";
+    }
+    return null;
+  }
+
   @Parameter(defaultValue = "${project}", readonly = true)
   private MavenProject project;
 
@@ -100,6 +113,18 @@ public class BuildImageMojo extends AbstractMojo {
 
     // Parse 'from' into image reference.
     ImageReference baseImage = getImageReference();
+
+    // Infer common credential helper names if credentialHelperName is not set.
+    if (credentialHelperName == null) {
+      credentialHelperName = inferCredentialHelperName(registry);
+      if (credentialHelperName != null) {
+        getLog()
+            .info(
+                "Using docker-credential-"
+                    + credentialHelperName
+                    + " for authentication - specify a 'credentialHelperName' to override");
+      }
+    }
 
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder()
