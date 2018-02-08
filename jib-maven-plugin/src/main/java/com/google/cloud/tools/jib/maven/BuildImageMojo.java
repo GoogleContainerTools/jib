@@ -81,6 +81,8 @@ public class BuildImageMojo extends AbstractMojo {
 
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
+    validateParameters();
+
     // Extracts main class from 'maven-jar-plugin' configuration if available.
     if (mainClass == null) {
       Plugin mavenJarPlugin = project.getPlugin("org.apache.maven.plugins:maven-jar-plugin");
@@ -147,11 +149,6 @@ public class BuildImageMojo extends AbstractMojo {
   }
 
   @VisibleForTesting
-  void setCredentialHelperName(String credentialHelperName) {
-    this.credentialHelperName = credentialHelperName;
-  }
-
-  @VisibleForTesting
   void buildImage(BuildImageSteps buildImageSteps) throws MojoExecutionException {
     try {
       buildImageSteps.run();
@@ -168,12 +165,13 @@ public class BuildImageMojo extends AbstractMojo {
             "make sure your Internet is up and that the registry you are pushing to exists");
 
       } else if (executionException.getCause() instanceof RegistryUnauthorizedException) {
+        BuildConfiguration buildConfiguration = buildImageSteps.getBuildConfiguration();
+
         RegistryUnauthorizedException registryUnauthorizedException =
             (RegistryUnauthorizedException) executionException.getCause();
         if (registryUnauthorizedException.getHttpResponseException().getStatusCode()
             == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
           // No permissions to push to target image.
-          BuildConfiguration buildConfiguration = buildImageSteps.getBuildConfiguration();
           String targetImage =
               buildConfiguration.getTargetServerUrl()
                   + "/"
@@ -184,7 +182,7 @@ public class BuildImageMojo extends AbstractMojo {
               registryUnauthorizedException,
               "make sure your have permission to push to " + targetImage);
 
-        } else if (credentialHelperName == null) {
+        } else if (buildConfiguration.getCredentialHelperName() == null) {
           // Credential helper not defined.
           throwMojoExecutionExceptionWithHelpMessage(
               registryUnauthorizedException, "set the configuration 'credentialHelperName'");
@@ -195,7 +193,7 @@ public class BuildImageMojo extends AbstractMojo {
           throwMojoExecutionExceptionWithHelpMessage(
               registryUnauthorizedException,
               "make sure your credential helper 'docker-credential-"
-                  + credentialHelperName
+                  + buildConfiguration.getCredentialHelperName()
                   + "' is set up correctly");
         }
 
@@ -207,6 +205,14 @@ public class BuildImageMojo extends AbstractMojo {
       getLog().error(ex);
       // TODO: Add more suggestions for various build failures.
       throwMojoExecutionExceptionWithHelpMessage(ex, null);
+    }
+  }
+
+  /** Checks validity of plugin parameters. */
+  private void validateParameters() {
+    // 'tag' must not contain backslashes.
+    if (tag.indexOf('/') >= 0) {
+      getLog().error("'tag' cannot contain backslashes");
     }
   }
 

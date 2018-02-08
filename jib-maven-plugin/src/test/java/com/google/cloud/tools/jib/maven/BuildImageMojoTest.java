@@ -165,7 +165,9 @@ public class BuildImageMojoTest {
     Mockito.when(mockExecutionException.getCause()).thenReturn(mockRegistryUnauthorizedException);
     Mockito.doThrow(mockExecutionException).when(mockBuildImageSteps).run();
 
-    testBuildImageMojo.setCredentialHelperName("credentialhelper");
+    BuildConfiguration mockBuildConfiguration = Mockito.mock(BuildConfiguration.class);
+    Mockito.when(mockBuildConfiguration.getCredentialHelperName()).thenReturn("credentialhelper");
+    Mockito.when(mockBuildImageSteps.getBuildConfiguration()).thenReturn(mockBuildConfiguration);
 
     try {
       testBuildImageMojo.buildImage(mockBuildImageSteps);
