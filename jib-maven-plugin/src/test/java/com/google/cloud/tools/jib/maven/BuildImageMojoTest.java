@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
+import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.BuildImageSteps;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
@@ -141,11 +142,12 @@ public class BuildImageMojoTest {
         .thenReturn(mockHttpResponseException);
     Mockito.when(mockHttpResponseException.getStatusCode()).thenReturn(-1); // Unknown
 
+    Mockito.when(mockBuildImageSteps.getBuildConfiguration())
+        .thenReturn(Mockito.mock(BuildConfiguration.class));
+
     ExecutionException mockExecutionException = Mockito.mock(ExecutionException.class);
     Mockito.when(mockExecutionException.getCause()).thenReturn(mockRegistryUnauthorizedException);
     Mockito.doThrow(mockExecutionException).when(mockBuildImageSteps).run();
-
-    testBuildImageMojo.setCredentiaHelperNames(Collections.emptyList());
 
     try {
       testBuildImageMojo.buildImage(mockBuildImageSteps);
@@ -176,7 +178,10 @@ public class BuildImageMojoTest {
     Mockito.when(mockExecutionException.getCause()).thenReturn(mockRegistryUnauthorizedException);
     Mockito.doThrow(mockExecutionException).when(mockBuildImageSteps).run();
 
-    testBuildImageMojo.setCredentiaHelperNames(Collections.singletonList("some-credential-helper"));
+    BuildConfiguration mockBuildConfiguration = Mockito.mock(BuildConfiguration.class);
+    Mockito.when(mockBuildConfiguration.getCredentialHelperNames())
+        .thenReturn(Collections.singletonList("some-credential-helper"));
+    Mockito.when(mockBuildImageSteps.getBuildConfiguration()).thenReturn(mockBuildConfiguration);
 
     try {
       testBuildImageMojo.buildImage(mockBuildImageSteps);

@@ -67,7 +67,6 @@ public class BuildImageMojo extends AbstractMojo {
   @Parameter(defaultValue = "${project}", readonly = true)
   private MavenProject project;
 
-  // TODO: Replace the separate base image parameters with this.
   @Parameter(defaultValue = "gcr.io/distroless/java", required = true)
   private String from;
 
@@ -91,6 +90,8 @@ public class BuildImageMojo extends AbstractMojo {
 
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
+    validateParameters();
+
     // Extracts main class from 'maven-jar-plugin' configuration if available.
     if (mainClass == null) {
       Plugin mavenJarPlugin = project.getPlugin("org.apache.maven.plugins:maven-jar-plugin");
@@ -109,7 +110,7 @@ public class BuildImageMojo extends AbstractMojo {
     SourceFilesConfiguration sourceFilesConfiguration = getSourceFilesConfiguration();
 
     // Parse 'from' into image reference.
-    ImageReference baseImage = getImageReference();
+    ImageReference baseImage = getBaseImageReference();
 
     // Infer common credential helper names if credHelpers is not set.
     if (credHelpers == null) {
@@ -170,11 +171,6 @@ public class BuildImageMojo extends AbstractMojo {
   }
 
   @VisibleForTesting
-  void setCredentiaHelperNames(List<String> credentialHelperNames) {
-    this.credHelpers = credentialHelperNames;
-  }
-
-  @VisibleForTesting
   void buildImage(BuildImageSteps buildImageSteps) throws MojoExecutionException {
     try {
       buildImageSteps.run();
@@ -191,6 +187,8 @@ public class BuildImageMojo extends AbstractMojo {
             "make sure your Internet is up and that the registry you are pushing to exists");
 
       } else if (executionException.getCause() instanceof RegistryUnauthorizedException) {
+        BuildConfiguration buildConfiguration = buildImageSteps.getBuildConfiguration();
+
         RegistryUnauthorizedException registryUnauthorizedException =
             (RegistryUnauthorizedException) executionException.getCause();
         if (registryUnauthorizedException.getHttpResponseException().getStatusCode()
@@ -201,7 +199,8 @@ public class BuildImageMojo extends AbstractMojo {
               "make sure your have permissions for "
                   + registryUnauthorizedException.getImageReference());
 
-        } else if (credHelpers == null || credHelpers.isEmpty()) {
+        } else if (buildConfiguration.getCredentialHelperNames() == null
+            || buildConfiguration.getCredentialHelperNames().isEmpty()) {
           // No credential helpers not defined.
           throwMojoExecutionExceptionWithHelpMessage(
               registryUnauthorizedException,
@@ -246,6 +245,28 @@ public class BuildImageMojo extends AbstractMojo {
       }
     }
     return null;
+  }
+
+  /** Checks validity of plugin parameters. */
+  private void validateParameters() throws MojoFailureException {
+    // Validates 'registry'.
+    if (!ImageReference.isValidRegistry(registry)) {
+      getLog().error("Invalid format for 'registry'");
+    }
+    // Validates 'repository'.
+    if (!ImageReference.isValidRepository(repository)) {
+      getLog().error("Invalid format for 'repository'");
+    }
+    // Validates 'tag'.
+    if (!ImageReference.isValidTag(tag)) {
+      getLog().error("Invalid format for 'tag'");
+    }
+
+    // 'tag' must not contain backslashes.
+    if (tag.indexOf('/') >= 0) {
+      getLog().error("'tag' cannot contain backslashes");
+      throw new MojoFailureException("Invalid configuration parameters");
+    }
   }
 
   /** @return the {@link SourceFilesConfiguration} based on the current project */
@@ -308,7 +329,8 @@ public class BuildImageMojo extends AbstractMojo {
     return mainClassObject.getValue();
   }
 
-  private ImageReference getImageReference() throws MojoFailureException {
+  /** @return the {@link ImageReference} parsed from {@link #from}. */
+  private ImageReference getBaseImageReference() throws MojoFailureException {
     try {
       return ImageReference.parse(from);
 

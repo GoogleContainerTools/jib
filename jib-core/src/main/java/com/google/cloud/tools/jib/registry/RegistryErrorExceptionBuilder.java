@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.registry;
 
+import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.registry.json.ErrorEntryTemplate;
 
 /** Builds a {@link RegistryErrorException} with multiple causes. */
@@ -37,14 +38,16 @@ class RegistryErrorExceptionBuilder {
     try {
       ErrorCodes errorCode = ErrorCodes.valueOf(errorCodeString);
 
-      switch (errorCode) {
-        case MANIFEST_UNKNOWN:
-          return message;
+      if (errorCode == ErrorCodes.MANIFEST_INVALID || errorCode == ErrorCodes.BLOB_UNKNOWN) {
+        return message + " (something went wrong)";
 
-          // TODO: Include more reasons.
+      } else if (errorCode == ErrorCodes.MANIFEST_UNKNOWN
+          || errorCode == ErrorCodes.TAG_INVALID
+          || errorCode == ErrorCodes.MANIFEST_UNVERIFIED) {
+        return message;
 
-        default:
-          return "other: " + message;
+      } else {
+        return "other: " + message;
       }
 
     } catch (IllegalArgumentException ex) {
@@ -90,6 +93,9 @@ class RegistryErrorExceptionBuilder {
   }
 
   RegistryErrorException build() {
+    // Provides a feedback channel.
+    errorMessageBuilder.append(
+        " | If this is a bug, please file an issue at " + ProjectInfo.GITHUB_NEW_ISSUE_URL);
     return new RegistryErrorException(errorMessageBuilder.toString(), cause);
   }
 }

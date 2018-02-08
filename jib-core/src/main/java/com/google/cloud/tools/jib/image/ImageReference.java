@@ -129,6 +129,21 @@ public class ImageReference {
     return new ImageReference(registry, repository, tag);
   }
 
+  /** @return {@code true} if is a valid registry; {@code false} otherwise */
+  public static boolean isValidRegistry(String registry) {
+    return registry.matches(REGISTRY_REGEX);
+  }
+
+  /** @return {@code true} if is a valid repository; {@code false} otherwise */
+  public static boolean isValidRepository(String repository) {
+    return repository.matches(REPOSITORY_REGEX);
+  }
+
+  /** @return {@code true} if is a valid tag; {@code false} otherwise */
+  public static boolean isValidTag(String tag) {
+    return tag.matches(TAG_REGEX);
+  }
+
   private final String registry;
   private final String repository;
   private final String tag;
