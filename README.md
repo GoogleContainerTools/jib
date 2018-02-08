@@ -1,10 +1,9 @@
 [![experimental](http://badges.github.io/stability-badges/dist/experimental.svg)](http://github.com/badges/stability-badges)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/jib-maven-plugin/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/jib-maven-plugin)
 
 # Jib
 
 <image src="https://github.com/google/jib/raw/master/logo/jib-build-docker-java-container-image.png" alt="Jib - Containerize your Java applications." width="650px" />
-
-*TODO: Add badges.*
 
 ## What is Jib?
 
@@ -26,7 +25,7 @@ In your Maven Java project, add the plugin to your `pom.xml`:
 
 ```xml
 <plugin>
-  <groupId>com.google.com.tools</groupId>
+  <groupId>com.google.cloud.tools</groupId>
   <artifactId>jib-maven-plugin</artifactId>
   <version>0.1.0</version>
   <configuration>
@@ -129,7 +128,7 @@ In this configuration, the image is:
 * Pushed to `localhost:5000/my-image:built-with-jib`
 * Runs by calling `java -Xms512m -Xdebug -Xmy:flag=jib-rules -cp app/libs/*:app/resources:app/classes mypackage.MyApp`
 
-```
+```xml
 <configuration>
     <from>openjdk:alpine</from>
     <registry>localhost:5000</registry>
