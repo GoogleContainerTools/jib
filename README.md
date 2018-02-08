@@ -159,11 +159,15 @@ These limitations will be fixed in later releases.
 
 ## Frequently Asked Questions (FAQ)
 
-If a question you have is not answered before, please [submit an issue](/../../issues/new).
+If a question you have is not answered below, please [submit an issue](/../../issues/new).
 
 ### But, I'm not a Java developer.
 
 See [rules_docker](https://github.com/bazelbuild/rules_docker) for a similar existing container image build tool for the [Bazel build system](https://github.com/bazelbuild/bazel). The tool can build images for languages such as Python, NodeJS, Java, Scala, Groovy, C, Go, Rust, and D.
+
+### What image format does Jib use?
+
+Jib currently builds into the [Docker V2.2](https://docs.docker.com/registry/spec/manifest-v2-2/) image format. [OCI image format](https://github.com/opencontainers/image-spec) support will be added a future release.
 
 ### Can I use other authentication methods besides a Docker credential helper?
 

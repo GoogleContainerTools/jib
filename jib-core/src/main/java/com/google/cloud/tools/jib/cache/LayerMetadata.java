@@ -43,10 +43,6 @@ class LayerMetadata {
   private final FileTime lastModifiedTime;
 
   LayerMetadata(List<String> sourceFiles, FileTime lastModifiedTime) {
-    if (sourceFiles.isEmpty()) {
-      throw new IllegalArgumentException("Source files for application layer cannot be empty");
-    }
-
     this.sourceFiles = sourceFiles;
     this.lastModifiedTime = lastModifiedTime;
   }
