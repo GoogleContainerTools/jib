@@ -43,14 +43,14 @@ public class BuildImageMojoTest {
   private final BuildImageMojo testBuildImageMojo = new BuildImageMojo();
 
   @Test
-  public void testInferCredentialHelperName() {
-    Assert.assertEquals("gcr", BuildImageMojo.inferCredentialHelperName("gcr.io"));
-    Assert.assertEquals("gcr", BuildImageMojo.inferCredentialHelperName("asia.gcr.io"));
-    Assert.assertEquals("ecr-login", BuildImageMojo.inferCredentialHelperName("amazonaws.com"));
+  public void testInferCredHelper() {
+    Assert.assertEquals("gcr", testBuildImageMojo.inferCredHelper("gcr.io"));
+    Assert.assertEquals("gcr", testBuildImageMojo.inferCredHelper("asia.gcr.io"));
+    Assert.assertEquals("ecr-login", testBuildImageMojo.inferCredHelper("amazonaws.com"));
     Assert.assertEquals(
         "ecr-login",
-        BuildImageMojo.inferCredentialHelperName("aws_account_id.dkr.ecr.region.amazonaws.com"));
-    Assert.assertNull(BuildImageMojo.inferCredentialHelperName("localhost"));
+        testBuildImageMojo.inferCredHelper("aws_account_id.dkr.ecr.region.amazonaws.com"));
+    Assert.assertNull(testBuildImageMojo.inferCredHelper("localhost"));
   }
 
   @Test
@@ -153,7 +153,7 @@ public class BuildImageMojoTest {
 
     } catch (MojoExecutionException ex) {
       Assert.assertEquals(
-          "Build image failed, perhaps you should set a credential helper name with the configuration 'credentialHelperNames'",
+          "Build image failed, perhaps you should set a credential helper name with the configuration 'credHelpers'",
           ex.getMessage());
       Assert.assertEquals(mockRegistryUnauthorizedException, ex.getCause());
     }

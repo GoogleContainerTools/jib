@@ -26,10 +26,12 @@ import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -55,18 +57,12 @@ public class BuildImageMojo extends AbstractMojo {
   /** {@code User-Agent} header suffix to send to the registry. */
   private static final String USER_AGENT_SUFFIX = "jib-maven-plugin";
 
-  /** Attempts to infer a known credential helper name from a specified registry. */
-  @VisibleForTesting
-  @Nullable
-  static String inferCredentialHelperName(String registry) {
-    if (registry.endsWith("gcr.io")) {
-      return "gcr";
-
-    } else if (registry.endsWith("amazonaws.com")) {
-      return "ecr-login";
-    }
-    return null;
-  }
+  /**
+   * Defines common credential helpers to use as defaults. Maps from registry suffix to credential
+   * helper suffix.
+   */
+  private static final ImmutableMap<String, String> COMMON_CRED_HELPERS =
+      ImmutableMap.of("gcr.io", "gcr", "amazonaws.com", "ecr-login");
 
   @Parameter(defaultValue = "${project}", readonly = true)
   private MavenProject project;
@@ -85,7 +81,7 @@ public class BuildImageMojo extends AbstractMojo {
   private String tag;
 
   @Parameter(required = true)
-  private List<String> credentialHelperNames;
+  private List<String> credHelpers;
 
   @Parameter private List<String> jvmFlags;
 
@@ -115,15 +111,16 @@ public class BuildImageMojo extends AbstractMojo {
     // Parse 'from' into image reference.
     ImageReference baseImage = getImageReference();
 
-    // Infer common credential helper names if credentialHelperName is not set.
-    if (credentialHelperName == null) {
-      credentialHelperName = inferCredentialHelperName(registry);
-      if (credentialHelperName != null) {
-        getLog()
-            .info(
-                "Using docker-credential-"
-                    + credentialHelperName
-                    + " for authentication - specify a 'credentialHelperName' to override");
+    // Infer common credential helper names if credHelpers is not set.
+    if (credHelpers == null) {
+      credHelpers = new ArrayList<>(2);
+      String baseImageRegistryCredHelper = inferCredHelper(baseImage.getRegistry());
+      String targetRegistryCredHelper = inferCredHelper(registry);
+      if (baseImageRegistryCredHelper != null) {
+        credHelpers.add(baseImageRegistryCredHelper);
+      }
+      if (targetRegistryCredHelper != null) {
+        credHelpers.add(targetRegistryCredHelper);
       }
     }
 
@@ -136,7 +133,7 @@ public class BuildImageMojo extends AbstractMojo {
             .setTargetServerUrl(registry)
             .setTargetImageName(repository)
             .setTargetTag(tag)
-            .setCredentialHelperNames(credentialHelperNames)
+            .setCredentialHelperNames(credHelpers)
             .setMainClass(mainClass)
             .setJvmFlags(jvmFlags)
             .setEnvironment(environment)
@@ -174,7 +171,7 @@ public class BuildImageMojo extends AbstractMojo {
 
   @VisibleForTesting
   void setCredentiaHelperNames(List<String> credentialHelperNames) {
-    this.credentialHelperNames = credentialHelperNames;
+    this.credHelpers = credentialHelperNames;
   }
 
   @VisibleForTesting
@@ -204,11 +201,11 @@ public class BuildImageMojo extends AbstractMojo {
               "make sure your have permissions for "
                   + registryUnauthorizedException.getImageReference());
 
-        } else if (credentialHelperNames == null || credentialHelperNames.isEmpty()) {
+        } else if (credHelpers == null || credHelpers.isEmpty()) {
           // No credential helpers not defined.
           throwMojoExecutionExceptionWithHelpMessage(
               registryUnauthorizedException,
-              "set a credential helper name with the configuration 'credentialHelperNames'");
+              "set a credential helper name with the configuration 'credHelpers'");
 
         } else {
           // Credential helper probably was not configured correctly or did not have the necessary
@@ -229,6 +226,26 @@ public class BuildImageMojo extends AbstractMojo {
       // TODO: Add more suggestions for various build failures.
       throwMojoExecutionExceptionWithHelpMessage(ex, null);
     }
+  }
+
+  /** Attempts to infer a known credential helper name from a specified registry. */
+  @VisibleForTesting
+  @Nullable
+  String inferCredHelper(String registry) {
+    for (String registrySuffix : COMMON_CRED_HELPERS.keySet()) {
+      if (registry.endsWith(registrySuffix)) {
+        String credHelper = COMMON_CRED_HELPERS.get(registrySuffix);
+        getLog()
+            .info(
+                "Using docker-credential-"
+                    + credHelper
+                    + " for authenticating '"
+                    + registry
+                    + "' - configure 'credHelpers' to override");
+        return credHelper;
+      }
+    }
+    return null;
   }
 
   /** @return the {@link SourceFilesConfiguration} based on the current project */
