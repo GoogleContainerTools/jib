@@ -21,28 +21,65 @@ import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticators;
 import com.google.cloud.tools.jib.registry.RegistryException;
+import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
+import com.google.common.util.concurrent.ListenableFuture;
 import java.io.IOException;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import javax.annotation.Nullable;
 
-/** Retrieves credentials to push from the base image registry. */
+/** Retrieves credentials to pull from the base image registry. */
 class AuthenticatePullStep implements Callable<Authorization> {
 
   private static final String DESCRIPTION = "Authenticating with base image registry";
 
   private final BuildConfiguration buildConfiguration;
+  private final ListenableFuture<RegistryCredentials> registryCredentialsFuture;
 
-  AuthenticatePullStep(BuildConfiguration buildConfiguration) {
+  AuthenticatePullStep(
+      BuildConfiguration buildConfiguration,
+      ListenableFuture<RegistryCredentials> registryCredentialsFuture) {
     this.buildConfiguration = buildConfiguration;
+    this.registryCredentialsFuture = registryCredentialsFuture;
   }
 
   /** Depends on nothing. */
   @Override
   public Authorization call()
-      throws RegistryAuthenticationFailedException, IOException, RegistryException {
+      throws RegistryAuthenticationFailedException, IOException, RegistryException,
+          ExecutionException, InterruptedException {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       return RegistryAuthenticators.forOther(
               buildConfiguration.getBaseImageServerUrl(), buildConfiguration.getBaseImageName())
+          .setAuthorization(getBaseImageAuthorization())
           .authenticate();
     }
+  }
+
+  /** Attempts to retrieve authorization for pulling the base image. */
+  @Nullable
+  private Authorization getBaseImageAuthorization()
+      throws ExecutionException, InterruptedException {
+    RegistryCredentials registryCredentials = NonBlockingFutures.get(registryCredentialsFuture);
+    String registry = buildConfiguration.getBaseImageServerUrl();
+
+    String credentialHelperSuffix = registryCredentials.getCredentialHelperUsed(registry);
+    Authorization authorization = registryCredentials.getAuthorization(registry);
+    if (credentialHelperSuffix == null || authorization == null) {
+      /*
+       * If no credentials found, give an info (not warning because in most cases, the base image is
+       * public and does not need extra credentials) and return null.
+       */
+      buildConfiguration
+          .getBuildLogger()
+          .info("No credentials could be retrieved for registry " + registry);
+      return null;
+    }
+
+    buildConfiguration
+        .getBuildLogger()
+        .info(
+            "Using docker-credential-" + credentialHelperSuffix + " for pulling from " + registry);
+    return authorization;
   }
 }
