@@ -17,8 +17,6 @@
 package com.google.cloud.tools.jib.registry;
 
 import com.google.api.client.http.HttpMethods;
-import com.google.api.client.http.HttpResponseException;
-import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
