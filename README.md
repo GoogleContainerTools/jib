@@ -7,7 +7,7 @@
 
 ## What is Jib?
 
-Jib is a tool for building container images for your Maven-based Java applications.
+Jib is a Maven plugin for building container images for your Java applications.
 
 ## Goals
 
@@ -37,9 +37,9 @@ In your Maven Java project, add the plugin to your `pom.xml`:
 
 ### Configuration
 
-Configure the plugin by changing `registry`, `repository`, and `credentialHelperName` in the registry of your choice. For example:
+Configure the plugin by changing `registry`, `repository`, and `credentialHelperName` accordingly.
 
-Using Google Container Registry (GCR)...
+#### Using Google Container Registry (GCR)...
 
 *Make sure you have the [`docker-credential-gcr` command line tool](https://cloud.google.com/container-registry/docs/advanced-authentication#docker_credential_helper).*
 
@@ -53,7 +53,7 @@ For example, to build the image `gcr.io/my-gcp-project/my-app`, the configuratio
 </configuration>
 ```
 
-Using Amazon Elastic Container Registry (ECR)...
+#### Using Amazon Elastic Container Registry (ECR)...
 
 *Make sure you have the [`docker-credential-ecr-login` command line tool](https://github.com/awslabs/amazon-ecr-credential-helper).*
 
