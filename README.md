@@ -51,7 +51,7 @@ For example, to build the image `gcr.io/my-gcp-project/my-app`, the configuratio
   <repository>my-gcp-project/my-app</repository>
   <credentialHelperNames>
     <credentialHelperName>gcr</credentialHelperName>
-</credentialHelperNames>
+  </credentialHelperNames>
 </configuration>
 ```
 
@@ -67,7 +67,7 @@ For example, to build the image `aws_account_id.dkr.ecr.region.amazonaws.com/my-
   <repository>my-app</repository>
   <credentialHelperNames>
     <credentialHelperName>ecr-login</credentialHelperName>
-</credentialHelperName>
+  </credentialHelperName>
 </configuration>
 ```
 
@@ -140,7 +140,7 @@ In this configuration, the image is:
   <tag>built-with-jib</tag>
   <credentialHelperNames>
     <credentialHelperName>osxkeychain</credentialHelperName>
-</credentialHelperNames>
+  </credentialHelperNames>
   <jvmFlags>
     <jvmFlag>-Xms512m</jvmFlag>
     <jvmFlag>-Xdebug</jvmFlag>
