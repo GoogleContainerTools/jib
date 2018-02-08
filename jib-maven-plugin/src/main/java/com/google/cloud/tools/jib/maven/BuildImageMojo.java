@@ -58,7 +58,6 @@ public class BuildImageMojo extends AbstractMojo {
   @Parameter(defaultValue = "${project}", readonly = true)
   private MavenProject project;
 
-  // TODO: Replace the separate base image parameters with this.
   @Parameter(defaultValue = "gcr.io/distroless/java", required = true)
   private String from;
 
@@ -101,7 +100,7 @@ public class BuildImageMojo extends AbstractMojo {
     SourceFilesConfiguration sourceFilesConfiguration = getSourceFilesConfiguration();
 
     // Parse 'from' into image reference.
-    ImageReference baseImage = getImageReference();
+    ImageReference baseImage = getBaseImageReference();
 
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder()
@@ -214,6 +213,19 @@ public class BuildImageMojo extends AbstractMojo {
     if (tag.indexOf('/') >= 0) {
       getLog().error("'tag' cannot contain backslashes");
     }
+
+    // Validates 'registry'.
+    if (!ImageReference.isValidRegistry(registry)) {
+      getLog().error("Invalid format for 'registry'");
+    }
+    // Validates 'repository'.
+    if (!ImageReference.isValidRegistry(repository)) {
+      getLog().error("Invalid format for 'repository'");
+    }
+    // Validates 'tag'.
+    if (!ImageReference.isValidRegistry(tag)) {
+      getLog().error("Invalid format for 'tag'");
+    }
   }
 
   /** @return the {@link SourceFilesConfiguration} based on the current project */
@@ -276,7 +288,8 @@ public class BuildImageMojo extends AbstractMojo {
     return mainClassObject.getValue();
   }
 
-  private ImageReference getImageReference() throws MojoFailureException {
+  /** @return the {@link ImageReference} parsed from {@link #from}. */
+  private ImageReference getBaseImageReference() throws MojoFailureException {
     try {
       return ImageReference.parse(from);
 
