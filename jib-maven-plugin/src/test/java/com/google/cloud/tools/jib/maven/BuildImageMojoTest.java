@@ -43,6 +43,17 @@ public class BuildImageMojoTest {
   private final BuildImageMojo testBuildImageMojo = new BuildImageMojo();
 
   @Test
+  public void testInferCredentialHelperName() {
+    Assert.assertEquals("gcr", BuildImageMojo.inferCredentialHelperName("gcr.io"));
+    Assert.assertEquals("gcr", BuildImageMojo.inferCredentialHelperName("asia.gcr.io"));
+    Assert.assertEquals("ecr-login", BuildImageMojo.inferCredentialHelperName("amazonaws.com"));
+    Assert.assertEquals(
+        "ecr-login",
+        BuildImageMojo.inferCredentialHelperName("aws_account_id.dkr.ecr.region.amazonaws.com"));
+    Assert.assertNull(BuildImageMojo.inferCredentialHelperName("localhost"));
+  }
+
+  @Test
   public void testBuildImage_pass() throws MojoExecutionException {
     testBuildImageMojo.buildImage(mockBuildImageSteps);
   }
