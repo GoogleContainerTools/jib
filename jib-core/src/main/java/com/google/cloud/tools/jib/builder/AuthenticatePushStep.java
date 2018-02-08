@@ -18,47 +18,51 @@ package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.registry.DockerCredentialRetriever;
-import com.google.cloud.tools.jib.registry.NonexistentDockerCredentialHelperException;
-import com.google.cloud.tools.jib.registry.NonexistentServerUrlDockerCredentialHelperException;
-import java.io.IOException;
+import com.google.cloud.tools.jib.registry.credentials.NoRegistryCredentialsException;
+import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
+import com.google.common.util.concurrent.ListenableFuture;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
 /** Retrieves credentials to push to a target registry. */
 class AuthenticatePushStep implements Callable<Authorization> {
 
-  private static final String DESCRIPTION = "Authenticating with %s using docker-credential-%s";
+  private static final String DESCRIPTION = "Authenticating with push to %s";
 
   private final BuildConfiguration buildConfiguration;
+  private final ListenableFuture<RegistryCredentials> registryCredentialsFuture;
 
-  AuthenticatePushStep(BuildConfiguration buildConfiguration) {
+  AuthenticatePushStep(
+      BuildConfiguration buildConfiguration,
+      ListenableFuture<RegistryCredentials> registryCredentialsFuture) {
     this.buildConfiguration = buildConfiguration;
+    this.registryCredentialsFuture = registryCredentialsFuture;
   }
 
   /** Depends on nothing. */
   @Override
   @Nullable
-  public Authorization call()
-      throws NonexistentServerUrlDockerCredentialHelperException,
-          NonexistentDockerCredentialHelperException, IOException {
+  public Authorization call() throws ExecutionException, InterruptedException {
     try (Timer ignored =
         new Timer(
             buildConfiguration.getBuildLogger(),
-            String.format(
-                DESCRIPTION,
-                buildConfiguration.getTargetServerUrl(),
-                buildConfiguration.getCredentialHelperName()))) {
-      if (buildConfiguration.getCredentialHelperName() == null) {
-        return null;
-      }
+            String.format(DESCRIPTION, buildConfiguration.getTargetServerUrl()))) {
+      RegistryCredentials registryCredentials = NonBlockingFutures.get(registryCredentialsFuture);
+      String registry = buildConfiguration.getTargetServerUrl();
+      buildConfiguration
+          .getBuildLogger()
+          .info(
+              "Using docker-credential-"
+                  + registryCredentials.getCredentialHelperUsed(registry)
+                  + " for pushing to "
+                  + registry);
+      return registryCredentials.getAuthorization(registry);
 
-      DockerCredentialRetriever dockerCredentialRetriever =
-          new DockerCredentialRetriever(
-              buildConfiguration.getTargetServerUrl(),
-              buildConfiguration.getCredentialHelperName());
-
-      return dockerCredentialRetriever.retrieve();
+    } catch (NoRegistryCredentialsException ex) {
+      // If no credentials found, give a warning and return null.
+      buildConfiguration.getBuildLogger().warn(ex.getMessage());
+      return null;
     }
   }
 }

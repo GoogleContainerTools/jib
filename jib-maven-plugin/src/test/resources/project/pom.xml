@@ -41,11 +41,12 @@
           <registry>gcr.io</registry>
           <repository>qingyangc-sandbox/jibtestimage</repository>
           <tag>built-with-jib</tag>
-          <credentialHelperName>gcr</credentialHelperName>
+          <credentialHelperNames>
+            <credentialHelperName>gcr</credentialHelperName>
+          </credentialHelperNames>
           <mainClass>com.test.HelloWorld</mainClass>
         </configuration>
       </plugin>
     </plugins>
   </build>
-
 </project>
