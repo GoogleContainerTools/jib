@@ -82,24 +82,6 @@ public class ManifestPusherTest {
   }
 
   @Test
-  public void testHandleHttpResponseException() throws HttpResponseException {
-    HttpResponseException mockHttpResponseException = Mockito.mock(HttpResponseException.class);
-    Mockito.when(mockHttpResponseException.getStatusCode())
-        .thenReturn(HttpStatusCodes.STATUS_CODE_NOT_FOUND);
-
-    try {
-      testManifestPusher.handleHttpResponseException(mockHttpResponseException);
-      Assert.fail("Expected RegistryErrorException to be thrown");
-
-    } catch (RegistryErrorException ex) {
-      Assert.assertThat(
-          ex.getMessage(),
-          CoreMatchers.containsString(
-              "repository name not known to registry (perhaps you are using an invalid tag - tags cannot contain backslashes)"));
-    }
-  }
-
-  @Test
   public void testApiRoute() throws MalformedURLException {
     Assert.assertEquals(
         new URL("http://someApiBase/someImageName/manifests/test-image-tag"),

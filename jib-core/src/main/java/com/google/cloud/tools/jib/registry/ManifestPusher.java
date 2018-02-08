@@ -61,24 +61,6 @@ class ManifestPusher implements RegistryEndpointProvider<Void> {
   }
 
   @Override
-  public Void handleHttpResponseException(HttpResponseException httpResponseException)
-      throws HttpResponseException, RegistryErrorException {
-    if (httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_NOT_FOUND) {
-      /*
-       * This error could happen if the repository doesn't exist (which should fail at BLOB-push).
-       * The more likely reason is that the image is pushing to a tag with backslashes in it, in
-       * which part of the tag becomes part of the repository.
-       */
-      throw new RegistryErrorExceptionBuilder(getActionDescription(), httpResponseException)
-          .addReason(
-              "repository name not known to registry (perhaps you are using an invalid tag - tags cannot contain backslashes)")
-          .build();
-    }
-
-    throw httpResponseException;
-  }
-
-  @Override
   public URL getApiRoute(String apiRouteBase) throws MalformedURLException {
     return new URL(
         apiRouteBase + registryEndpointProperties.getImageName() + "/manifests/" + imageTag);

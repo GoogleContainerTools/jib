@@ -233,10 +233,13 @@ public class BuildImageMojo extends AbstractMojo {
   }
 
   /** Checks validity of plugin parameters. */
-  private void validateParameters() {
+  private void validateParameters() throws MojoFailureException {
+    boolean shouldFail = false;
+
     // 'tag' must not contain backslashes.
     if (tag.indexOf('/') >= 0) {
       getLog().error("'tag' cannot contain backslashes");
+      shouldFail = true;
     }
 
     // Validates 'registry'.
@@ -244,12 +247,16 @@ public class BuildImageMojo extends AbstractMojo {
       getLog().error("Invalid format for 'registry'");
     }
     // Validates 'repository'.
-    if (!ImageReference.isValidRegistry(repository)) {
+    if (!ImageReference.isValidRepository(repository)) {
       getLog().error("Invalid format for 'repository'");
     }
     // Validates 'tag'.
-    if (!ImageReference.isValidRegistry(tag)) {
+    if (!ImageReference.isValidTag(tag)) {
       getLog().error("Invalid format for 'tag'");
+    }
+
+    if (shouldFail) {
+      throw new MojoFailureException("Invalid configuration parameters");
     }
   }
 
