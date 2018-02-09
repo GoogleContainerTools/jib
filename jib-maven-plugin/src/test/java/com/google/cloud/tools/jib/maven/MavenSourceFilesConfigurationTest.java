@@ -92,11 +92,10 @@ public class MavenSourceFilesConfigurationTest {
   @Test
   public void test_correctPathsOnImage() {
     Assert.assertEquals(
-        Paths.get("app", "libs"), testMavenSourceFilesConfiguration.getDependenciesPathOnImage());
+        "/app/libs/", testMavenSourceFilesConfiguration.getDependenciesPathOnImage());
     Assert.assertEquals(
-        Paths.get("app", "resources"), testMavenSourceFilesConfiguration.getResourcesPathOnImage());
-    Assert.assertEquals(
-        Paths.get("app", "classes"), testMavenSourceFilesConfiguration.getClassesPathOnImage());
+        "/app/resources/", testMavenSourceFilesConfiguration.getResourcesPathOnImage());
+    Assert.assertEquals("/app/classes/", testMavenSourceFilesConfiguration.getClassesPathOnImage());
   }
 
   private Artifact makeArtifact(Path path) {

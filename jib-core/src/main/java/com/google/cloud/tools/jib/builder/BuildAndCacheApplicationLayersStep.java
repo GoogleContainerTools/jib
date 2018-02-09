@@ -77,7 +77,7 @@ class BuildAndCacheApplicationLayersStep implements Callable<List<ListenableFutu
   }
 
   private ListenableFuture<CachedLayer> buildAndCacheLayerAsync(
-      CachedLayerType layerType, List<Path> sourceFiles, Path extractionPath) {
+      CachedLayerType layerType, List<Path> sourceFiles, String extractionPath) {
     String description =
         String.format(
             "Building %s layer",
