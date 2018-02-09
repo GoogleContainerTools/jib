@@ -37,11 +37,11 @@ In your Maven Java project, add the plugin to your `pom.xml`:
 
 ### Configuration
 
-Configure the plugin by changing `registry`, `repository`, and `credentialHelperName` accordingly.
+Configure the plugin by changing `registry`, `repository`, and `credHelpers` accordingly.
 
 #### Using Google Container Registry (GCR)...
 
-*Make sure you have the [`docker-credential-gcr` command line tool](https://cloud.google.com/container-registry/docs/advanced-authentication#docker_credential_helper). Jib automatically uses `docker-credential-gcr` for obtaining credentials. To use a different credential helper, set the [`credentialHelperName`](#extended-usage) configuration.*
+*Make sure you have the [`docker-credential-gcr` command line tool](https://cloud.google.com/container-registry/docs/advanced-authentication#docker_credential_helper). Jib automatically uses `docker-credential-gcr` for obtaining credentials. To use a different credential helper, set the [`credHelpers`](#extended-usage) configuration.*
 
 For example, to build the image `gcr.io/my-gcp-project/my-app`, the configuration would be:
 
@@ -54,7 +54,7 @@ For example, to build the image `gcr.io/my-gcp-project/my-app`, the configuratio
 
 #### Using Amazon Elastic Container Registry (ECR)...
 
-*Make sure you have the [`docker-credential-ecr-login` command line tool](https://github.com/awslabs/amazon-ecr-credential-helper). Jib automatically uses `docker-credential-ecr-login` for obtaining credentials. To use a different credential helper, set the [`credentialHelperName`](#extended-usage) configuration.*
+*Make sure you have the [`docker-credential-ecr-login` command line tool](https://github.com/awslabs/amazon-ecr-credential-helper). Jib automatically uses `docker-credential-ecr-login` for obtaining credentials. To use a different credential helper, set the [`credHelpers`](#extended-usage) configuration.*
 
 For example, to build the image `aws_account_id.dkr.ecr.region.amazonaws.com/my-app`, the configuration would be:
 
@@ -115,8 +115,8 @@ Field | Default | Description
 `registry`|*Required*|The registry server to push the built image to.
 `repository`|*Required*|The image name/repository of the built image.
 `tag`|`latest`|The image tag of the built image (the part after the colon).
+`credHelpers`|*Required*|Suffixes for credential helpers (following `docker-credential-`)
 `jvmFlags`|*None*|Additional flags to pass into the JVM when running your application.
-`credentialHelperName`|*Required*|The credential helper suffix (following `docker-credential-`)
 `mainClass`|Uses `mainClass` from `maven-jar-plugin`|The main class to launch the application from.
 
 ### Example
@@ -128,16 +128,19 @@ In this configuration, the image is:
 
 ```xml
 <configuration>
-    <from>openjdk:alpine</from>
-    <registry>localhost:5000</registry>
-    <repository>my-image</repository>
-    <tag>built-with-jib</tag>
-    <jvmFlags>
-        <jvmFlag>-Xms512m</jvmFlag>
-        <jvmFlag>-Xdebug</jvmFlag>
-        <jvmFlag>-Xmy:flag=jib-rules</jvmFlag>
-    </jvmFlags>
-    <mainClass>mypackage.MyApp</mainClass>
+  <from>openjdk:alpine</from>
+  <registry>localhost:5000</registry>
+  <repository>my-image</repository>
+  <tag>built-with-jib</tag>
+  <credHelpers>
+    <credHelper>osxkeychain</credHelper>
+  </credHelpers>
+  <jvmFlags>
+    <jvmFlag>-Xms512m</jvmFlag>
+    <jvmFlag>-Xdebug</jvmFlag>
+    <jvmFlag>-Xmy:flag=jib-rules</jvmFlag>
+  </jvmFlags>
+  <mainClass>mypackage.MyApp</mainClass>
 </configuration>
 ```
 
@@ -155,7 +158,6 @@ These limitations will be fixed in later releases.
 * Does not build OCI images.
 * Pushing to Docker Hub is currently not supported.
 * Cannot build directly to a Docker daemon.
-* Cannot use a private image as a base image.
 
 ## Frequently Asked Questions (FAQ)
 

@@ -267,7 +267,11 @@ public class RegistryClient {
 
         } else if (httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_UNAUTHORIZED
             || httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
-          throw new RegistryUnauthorizedException(httpResponseException);
+          throw new RegistryUnauthorizedException(
+              registryEndpointProperties.getServerUrl()
+                  + "/"
+                  + registryEndpointProperties.getImageName(),
+              httpResponseException);
 
         } else if (httpResponseException.getStatusCode()
             == HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT) {

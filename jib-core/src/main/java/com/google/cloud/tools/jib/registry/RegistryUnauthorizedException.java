@@ -21,8 +21,16 @@ import com.google.api.client.http.HttpResponseException;
 /** Thrown when a registry request was unauthorized and therefore authentication is needed. */
 public class RegistryUnauthorizedException extends RegistryException {
 
-  RegistryUnauthorizedException(HttpResponseException cause) {
+  private final String imageReference;
+
+  /** @param imageReference identifies the image registry and repository that denied access */
+  RegistryUnauthorizedException(String imageReference, HttpResponseException cause) {
     super(cause);
+    this.imageReference = imageReference;
+  }
+
+  public String getImageReference() {
+    return imageReference;
   }
 
   public HttpResponseException getHttpResponseException() {
