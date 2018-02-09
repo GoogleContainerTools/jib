@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.BuildImageSteps;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
+import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.concurrent.ExecutionException;
@@ -140,6 +141,8 @@ public class BuildImageMojoTest {
     HttpResponseException mockHttpResponseException = Mockito.mock(HttpResponseException.class);
     Mockito.when(mockRegistryUnauthorizedException.getHttpResponseException())
         .thenReturn(mockHttpResponseException);
+    Mockito.when(mockRegistryUnauthorizedException.getImageReference())
+        .thenReturn("someregistry/somerepository");
     Mockito.when(mockHttpResponseException.getStatusCode()).thenReturn(-1); // Unknown
 
     Mockito.when(mockBuildImageSteps.getBuildConfiguration())
@@ -155,7 +158,7 @@ public class BuildImageMojoTest {
 
     } catch (MojoExecutionException ex) {
       Assert.assertEquals(
-          "Build image failed, perhaps you should set a credential helper name with the configuration 'credHelpers'",
+          "Build image failed, perhaps you should set a credential helper name with the configuration 'credHelpers' or set credentials for 'someregistry/somerepository' in your Maven settings",
           ex.getMessage());
       Assert.assertEquals(mockRegistryUnauthorizedException, ex.getCause());
     }
@@ -181,6 +184,8 @@ public class BuildImageMojoTest {
     BuildConfiguration mockBuildConfiguration = Mockito.mock(BuildConfiguration.class);
     Mockito.when(mockBuildConfiguration.getCredentialHelperNames())
         .thenReturn(Collections.singletonList("some-credential-helper"));
+    Mockito.when(mockBuildConfiguration.getKnownRegistryCredentials())
+        .thenReturn(Mockito.mock(RegistryCredentials.class));
     Mockito.when(mockBuildImageSteps.getBuildConfiguration()).thenReturn(mockBuildConfiguration);
 
     try {
@@ -189,7 +194,7 @@ public class BuildImageMojoTest {
 
     } catch (MojoExecutionException ex) {
       Assert.assertEquals(
-          "Build image failed, perhaps you should make sure your credential helper for 'someregistry/somerepository' is set up correctly",
+          "Build image failed, perhaps you should make sure your credentials for 'someregistry/somerepository' is set up correctly",
           ex.getMessage());
       Assert.assertEquals(mockRegistryUnauthorizedException, ex.getCause());
     }

@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.BuildImageSteps;
@@ -25,6 +26,7 @@ import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
@@ -207,6 +209,8 @@ public class BuildImageMojo extends AbstractMojo {
           cacheMetadataCorruptedException, "run 'mvn clean' to clear the cache");
 
     } catch (ExecutionException executionException) {
+      BuildConfiguration buildConfiguration = buildImageSteps.getBuildConfiguration();
+
       if (executionException.getCause() instanceof HttpHostConnectException) {
         // Failed to connect to registry.
         throwMojoExecutionExceptionWithHelpMessage(
@@ -214,34 +218,18 @@ public class BuildImageMojo extends AbstractMojo {
             "make sure your Internet is up and that the registry you are pushing to exists");
 
       } else if (executionException.getCause() instanceof RegistryUnauthorizedException) {
-        BuildConfiguration buildConfiguration = buildImageSteps.getBuildConfiguration();
+        handleRegistryUnauthorizedException(
+            (RegistryUnauthorizedException) executionException.getCause(), buildConfiguration);
 
-        RegistryUnauthorizedException registryUnauthorizedException =
-            (RegistryUnauthorizedException) executionException.getCause();
-        if (registryUnauthorizedException.getHttpResponseException().getStatusCode()
-            == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
-          // No permissions for registry/repository.
-          throwMojoExecutionExceptionWithHelpMessage(
-              registryUnauthorizedException,
-              "make sure your have permissions for "
-                  + registryUnauthorizedException.getImageReference());
-
-        } else if (buildConfiguration.getCredentialHelperNames() == null
-            || buildConfiguration.getCredentialHelperNames().isEmpty()) {
-          // No credential helpers not defined.
-          throwMojoExecutionExceptionWithHelpMessage(
-              registryUnauthorizedException,
-              "set a credential helper name with the configuration 'credHelpers'");
-
-        } else {
-          // Credential helper probably was not configured correctly or did not have the necessary
-          // credentials.
-          throwMojoExecutionExceptionWithHelpMessage(
-              registryUnauthorizedException,
-              "make sure your credential helper for '"
-                  + registryUnauthorizedException.getImageReference()
-                  + "' is set up correctly");
-        }
+      } else if (executionException.getCause() instanceof RegistryAuthenticationFailedException
+          && executionException.getCause().getCause() instanceof HttpResponseException) {
+        handleRegistryUnauthorizedException(
+            new RegistryUnauthorizedException(
+                buildConfiguration.getTargetRegistry()
+                    + "/"
+                    + buildConfiguration.getTargetRepository(),
+                (HttpResponseException) executionException.getCause().getCause()),
+            buildConfiguration);
 
       } else {
         throwMojoExecutionExceptionWithHelpMessage(executionException.getCause(), null);
@@ -276,7 +264,7 @@ public class BuildImageMojo extends AbstractMojo {
 
   /** Attempts to retrieve credentials for {@code registry} from Maven settings. */
   @Nullable
-  Authorization getRegistryCredentialsFromSettings(String registry) {
+  private Authorization getRegistryCredentialsFromSettings(String registry) {
     Server registryServerSettings = session.getSettings().getServer(registry);
     if (registryServerSettings == null) {
       return null;
@@ -374,6 +362,40 @@ public class BuildImageMojo extends AbstractMojo {
 
     } catch (InvalidImageReferenceException ex) {
       throw new MojoFailureException("Parameter 'from' is invalid", ex);
+    }
+  }
+
+  private void handleRegistryUnauthorizedException(
+      RegistryUnauthorizedException registryUnauthorizedException,
+      BuildConfiguration buildConfiguration)
+      throws MojoExecutionException {
+    if (registryUnauthorizedException.getHttpResponseException().getStatusCode()
+        == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
+      // No permissions for registry/repository.
+      throwMojoExecutionExceptionWithHelpMessage(
+          registryUnauthorizedException,
+          "make sure your have permissions for "
+              + registryUnauthorizedException.getImageReference());
+
+    } else if (buildConfiguration.getCredentialHelperNames() == null
+        || buildConfiguration.getCredentialHelperNames().isEmpty()
+        || buildConfiguration.getKnownRegistryCredentials() == null) {
+      // No credential helpers not defined.
+      throwMojoExecutionExceptionWithHelpMessage(
+          registryUnauthorizedException,
+          "set a credential helper name with the configuration 'credHelpers' or "
+              + "set credentials for '"
+              + registryUnauthorizedException.getImageReference()
+              + "' in your Maven settings");
+
+    } else {
+      // Credential helper probably was not configured correctly or did not have the necessary
+      // credentials.
+      throwMojoExecutionExceptionWithHelpMessage(
+          registryUnauthorizedException,
+          "make sure your credentials for '"
+              + registryUnauthorizedException.getImageReference()
+              + "' is set up correctly");
     }
   }
 
