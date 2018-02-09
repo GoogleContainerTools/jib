@@ -31,12 +31,10 @@ import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,13 +62,6 @@ public class BuildImageMojo extends AbstractMojo {
 
   /** {@code User-Agent} header suffix to send to the registry. */
   private static final String USER_AGENT_SUFFIX = "jib-maven-plugin";
-
-  /**
-   * Defines common credential helpers to use as defaults. Maps from registry suffix to credential
-   * helper suffix.
-   */
-  private static final ImmutableMap<String, String> COMMON_CRED_HELPERS =
-      ImmutableMap.of("gcr.io", "gcr", "amazonaws.com", "ecr-login");
 
   @Parameter(defaultValue = "${project}", readonly = true)
   private MavenProject project;
@@ -138,19 +129,6 @@ public class BuildImageMojo extends AbstractMojo {
     }
     RegistryCredentials mavenSettingsCredentials =
         RegistryCredentials.from("Maven settings", registryCredentials);
-
-    // Infers common credential helper names if credHelpers is not set.
-    if (credHelpers == null) {
-      credHelpers = new ArrayList<>(2);
-      String baseImageRegistryCredHelper = inferCredHelper(baseImage.getRegistry());
-      String targetRegistryCredHelper = inferCredHelper(registry);
-      if (baseImageRegistryCredHelper != null) {
-        credHelpers.add(baseImageRegistryCredHelper);
-      }
-      if (targetRegistryCredHelper != null) {
-        credHelpers.add(targetRegistryCredHelper);
-      }
-    }
 
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder()
@@ -239,26 +217,6 @@ public class BuildImageMojo extends AbstractMojo {
       // TODO: Add more suggestions for various build failures.
       throwMojoExecutionExceptionWithHelpMessage(ex, null);
     }
-  }
-
-  /** Attempts to infer a known credential helper name from a specified registry. */
-  @VisibleForTesting
-  @Nullable
-  String inferCredHelper(String registry) {
-    for (String registrySuffix : COMMON_CRED_HELPERS.keySet()) {
-      if (registry.endsWith(registrySuffix)) {
-        String credHelper = COMMON_CRED_HELPERS.get(registrySuffix);
-        getLog()
-            .info(
-                "Using docker-credential-"
-                    + credHelper
-                    + " for authenticating '"
-                    + registry
-                    + "' - configure 'credHelpers' to override");
-        return credHelper;
-      }
-    }
-    return null;
   }
 
   /** Attempts to retrieve credentials for {@code registry} from Maven settings. */
@@ -376,9 +334,9 @@ public class BuildImageMojo extends AbstractMojo {
           "make sure your have permissions for "
               + registryUnauthorizedException.getImageReference());
 
-    } else if (buildConfiguration.getCredentialHelperNames() == null
-        || buildConfiguration.getCredentialHelperNames().isEmpty()
-        || buildConfiguration.getKnownRegistryCredentials() == null) {
+    } else if ((buildConfiguration.getCredentialHelperNames() == null
+            || buildConfiguration.getCredentialHelperNames().isEmpty())
+        && buildConfiguration.getKnownRegistryCredentials() == null) {
       // No credential helpers not defined.
       throwMojoExecutionExceptionWithHelpMessage(
           registryUnauthorizedException,

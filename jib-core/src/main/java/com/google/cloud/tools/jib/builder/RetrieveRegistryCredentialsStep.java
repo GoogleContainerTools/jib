@@ -20,6 +20,8 @@ import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.registry.DockerCredentialRetriever;
 import com.google.cloud.tools.jib.registry.NonexistentDockerCredentialHelperException;
 import com.google.cloud.tools.jib.registry.NonexistentServerUrlDockerCredentialHelperException;
+import com.google.common.collect.ImmutableMap;
+
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
@@ -27,6 +29,13 @@ import java.util.concurrent.Callable;
 class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
 
   private static final String DESCRIPTION = "Retrieving registry credentials";
+
+  /**
+   * Defines common credential helpers to use as defaults. Maps from registry suffix to credential
+   * helper suffix.
+   */
+  private static final ImmutableMap<String, String> COMMON_CREDENTIAL_HELPERS =
+      ImmutableMap.of("gcr.io", "gcr", "amazonaws.com", "ecr-login");
 
   private final BuildConfiguration buildConfiguration;
   private final String registry;
@@ -40,16 +49,9 @@ class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
   public Authorization call() throws IOException, NonexistentDockerCredentialHelperException {
     // Tries to get registry credentials from Docker credential helpers.
     for (String credentialHelperSuffix : buildConfiguration.getCredentialHelperNames()) {
-      // Attempts to retrieve authorization for the registry using
-      // docker-credential-[credentialSource].
-      try {
-        Authorization authorization =
-            new DockerCredentialRetriever(registry, credentialHelperSuffix).retrieve();
-        logGotCredentialsFrom("docker-credential-" + credentialHelperSuffix);
+      Authorization authorization = retrieveFromCredentialHelper(credentialHelperSuffix);
+      if (authorization != null) {
         return authorization;
-
-      } catch (NonexistentServerUrlDockerCredentialHelperException ex) {
-        // No authorization is found, so continues on to the next credential helper.
       }
     }
 
@@ -58,6 +60,22 @@ class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
       logGotCredentialsFrom(
           buildConfiguration.getKnownRegistryCredentials().getCredentialSource(registry));
       return buildConfiguration.getKnownRegistryCredentials().getAuthorization(registry);
+    }
+
+    // Tries to infer common credential helpers for known registries.
+    for (String registrySuffix : COMMON_CREDENTIAL_HELPERS.keySet()) {
+      if (registry.endsWith(registrySuffix)) {
+        try {
+          Authorization authorization = retrieveFromCredentialHelper(COMMON_CREDENTIAL_HELPERS.get(registrySuffix));
+          if (authorization != null) {
+            return authorization;
+          }
+
+        } catch (NonexistentDockerCredentialHelperException ex) {
+          // Warns the user that the specified (or inferred) credential helper is not on the system.
+          buildConfiguration.getBuildLogger().warn(ex.getMessage());
+        }
+      }
     }
 
     /*
@@ -70,9 +88,22 @@ class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
     return null;
   }
 
+  /** Attempts to retrieve authorization for the registry using {@code docker-credential-[credentialHelperSuffix]}. */
+  private Authorization retrieveFromCredentialHelper(String credentialHelperSuffix) throws IOException, NonexistentDockerCredentialHelperException {
+    try {
+      Authorization authorization =
+          new DockerCredentialRetriever(registry, credentialHelperSuffix).retrieve();
+      logGotCredentialsFrom("docker-credential-" + credentialHelperSuffix);
+      return authorization;
+
+    } catch (NonexistentServerUrlDockerCredentialHelperException ex) {
+      return null;
+    }
+  }
+
   private void logGotCredentialsFrom(String credentialSource) {
     buildConfiguration
         .getBuildLogger()
-        .info("Using " + credentialSource + " for pulling from " + registry);
+        .info("Using " + credentialSource + " for " + registry);
   }
 }
