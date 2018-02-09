@@ -34,12 +34,21 @@ public interface SourceFilesConfiguration {
   /** @return the source files for the classes layer. */
   List<Path> getClassesFiles();
 
-  /** @return the path where the dependencies source files are placed in the container filesystem */
-  Path getDependenciesPathOnImage();
+  /**
+   * @return the Unix-style path where the dependencies source files are placed in the container
+   *     filesystem. Must end with backslash.
+   */
+  String getDependenciesPathOnImage();
 
-  /** @return the path where the resources source files are placed in the container filesystem */
-  Path getResourcesPathOnImage();
+  /**
+   * @return the Unix-style path where the resources source files are placed in the container
+   *     filesystem. Must end with backslash.
+   */
+  String getResourcesPathOnImage();
 
-  /** @return the path where the classes source files are placed in the container filesystem */
-  Path getClassesPathOnImage();
+  /**
+   * @return the Unix-style path where the classes source files are placed in the container
+   *     filesystem. Must end with backslash.
+   */
+  String getClassesPathOnImage();
 }

@@ -31,9 +31,9 @@ import org.apache.maven.project.MavenProject;
 /** {@link SourceFilesConfiguration} implementation based on inputs from a {@link MavenProject}. */
 class MavenSourceFilesConfiguration implements SourceFilesConfiguration {
 
-  private static Path DEPENDENCIES_PATH_ON_IMAGE = Paths.get("app", "libs");
-  private static Path RESOURCES_PATH_ON_IMAGE = Paths.get("app", "resources");
-  private static Path CLASSES_PATH_ON_IMAGE = Paths.get("app", "classes");
+  private static String DEPENDENCIES_PATH_ON_IMAGE = "/app/libs/";
+  private static String RESOURCES_PATH_ON_IMAGE = "/app/resources/";
+  private static String CLASSES_PATH_ON_IMAGE = "/app/classes/";
 
   /** If the {@code path} has extension {@code .class}, replace the extension with {@code .java}. */
   private static Path replaceClassExtensionWithJava(Path path) {
@@ -99,17 +99,17 @@ class MavenSourceFilesConfiguration implements SourceFilesConfiguration {
   }
 
   @Override
-  public Path getDependenciesPathOnImage() {
+  public String getDependenciesPathOnImage() {
     return DEPENDENCIES_PATH_ON_IMAGE;
   }
 
   @Override
-  public Path getResourcesPathOnImage() {
+  public String getResourcesPathOnImage() {
     return RESOURCES_PATH_ON_IMAGE;
   }
 
   @Override
-  public Path getClassesPathOnImage() {
+  public String getClassesPathOnImage() {
     return CLASSES_PATH_ON_IMAGE;
   }
 }

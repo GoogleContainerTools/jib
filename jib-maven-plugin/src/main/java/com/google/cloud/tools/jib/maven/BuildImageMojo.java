@@ -90,8 +90,7 @@ public class BuildImageMojo extends AbstractMojo {
   @Parameter(defaultValue = "latest", required = true)
   private String tag;
 
-  @Parameter(required = true)
-  private List<String> credHelpers;
+  @Parameter private List<String> credHelpers;
 
   @Parameter private List<String> jvmFlags;
 
