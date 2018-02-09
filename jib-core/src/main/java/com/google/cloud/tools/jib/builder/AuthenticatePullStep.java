@@ -19,26 +19,30 @@ package com.google.cloud.tools.jib.builder;
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
+import com.google.cloud.tools.jib.registry.RegistryAuthenticator;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticators;
 import com.google.cloud.tools.jib.registry.RegistryException;
-import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import javax.annotation.Nullable;
 
-/** Retrieves credentials to pull from the base image registry. */
+/**
+ * Authenticates pull from the base image registry using Docker Token Authentication.
+ *
+ * @see <a
+ *     href="https://docs.docker.com/registry/spec/auth/token/">https://docs.docker.com/registry/spec/auth/token/</a>
+ */
 class AuthenticatePullStep implements Callable<Authorization> {
 
-  private static final String DESCRIPTION = "Authenticating with base image registry";
+  private static final String DESCRIPTION = "Authenticating pull from %s";
 
   private final BuildConfiguration buildConfiguration;
-  private final ListenableFuture<RegistryCredentials> registryCredentialsFuture;
+  private final ListenableFuture<Authorization> registryCredentialsFuture;
 
   AuthenticatePullStep(
       BuildConfiguration buildConfiguration,
-      ListenableFuture<RegistryCredentials> registryCredentialsFuture) {
+      ListenableFuture<Authorization> registryCredentialsFuture) {
     this.buildConfiguration = buildConfiguration;
     this.registryCredentialsFuture = registryCredentialsFuture;
   }
@@ -48,38 +52,20 @@ class AuthenticatePullStep implements Callable<Authorization> {
   public Authorization call()
       throws RegistryAuthenticationFailedException, IOException, RegistryException,
           ExecutionException, InterruptedException {
-    try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
-      return RegistryAuthenticators.forOther(
-              buildConfiguration.getBaseImageServerUrl(), buildConfiguration.getBaseImageName())
-          .setAuthorization(getBaseImageAuthorization())
-          .authenticate();
+    try (Timer ignored =
+        new Timer(
+            buildConfiguration.getBuildLogger(),
+            String.format(DESCRIPTION, buildConfiguration.getBaseImageRegistry()))) {
+      RegistryAuthenticator registryAuthenticator =
+          RegistryAuthenticators.forOther(
+              buildConfiguration.getBaseImageRegistry(),
+              buildConfiguration.getBaseImageRepository());
+      if (registryAuthenticator == null) {
+        return null;
+      }
+      return registryAuthenticator
+          .setAuthorization(NonBlockingFutures.get(registryCredentialsFuture))
+          .authenticatePull();
     }
-  }
-
-  /** Attempts to retrieve authorization for pulling the base image. */
-  @Nullable
-  private Authorization getBaseImageAuthorization()
-      throws ExecutionException, InterruptedException {
-    RegistryCredentials registryCredentials = NonBlockingFutures.get(registryCredentialsFuture);
-    String registry = buildConfiguration.getBaseImageServerUrl();
-
-    String credentialHelperSuffix = registryCredentials.getCredentialHelperUsed(registry);
-    Authorization authorization = registryCredentials.getAuthorization(registry);
-    if (credentialHelperSuffix == null || authorization == null) {
-      /*
-       * If no credentials found, give an info (not warning because in most cases, the base image is
-       * public and does not need extra credentials) and return null.
-       */
-      buildConfiguration
-          .getBuildLogger()
-          .info("No credentials could be retrieved for registry " + registry);
-      return null;
-    }
-
-    buildConfiguration
-        .getBuildLogger()
-        .info(
-            "Using docker-credential-" + credentialHelperSuffix + " for pulling from " + registry);
-    return authorization;
   }
 }

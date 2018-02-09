@@ -49,6 +49,7 @@ interface RegistryEndpointProvider<T> {
   List<String> getAccept();
 
   /** Handles the response specific to the registry action. */
+  @Nullable
   T handleResponse(Response response) throws IOException, RegistryException;
 
   /**

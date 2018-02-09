@@ -32,8 +32,8 @@ public class RegistryAuthenticatorTest {
             "Bearer realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
             "someimage");
     Assert.assertEquals(
-        new URL("https://somerealm?service=someservice&scope=repository:someimage:pull"),
-        registryAuthenticator.getAuthenticationUrl());
+        new URL("https://somerealm?service=someservice&scope=repository:someimage:scope"),
+        registryAuthenticator.getAuthenticationUrl("scope"));
   }
 
   @Test

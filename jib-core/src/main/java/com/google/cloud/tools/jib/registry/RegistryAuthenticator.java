@@ -91,13 +91,12 @@ public class RegistryAuthenticator {
     private String token;
   }
 
-  private final URL authenticationUrl;
+  private final String authenticationUrlBase;
   @Nullable private Authorization authorization;
 
   RegistryAuthenticator(String realm, String service, String repository)
       throws MalformedURLException {
-    authenticationUrl =
-        new URL(realm + "?service=" + service + "&scope=repository:" + repository + ":pull");
+    authenticationUrlBase = realm + "?service=" + service + "&scope=repository:" + repository + ":";
   }
 
   /** Sets an {@code Authorization} header to authenticate with. */
@@ -106,9 +105,30 @@ public class RegistryAuthenticator {
     return this;
   }
 
-  /** Sends the authentication request and retrieves the Bearer authorization token. */
-  public Authorization authenticate() throws RegistryAuthenticationFailedException {
-    try (Connection connection = new Connection(authenticationUrl)) {
+  /** Authenticates permissions to pull. */
+  public Authorization authenticatePull() throws RegistryAuthenticationFailedException {
+    return authenticate("pull");
+  }
+
+  /** Authenticates permission to pull and push. */
+  public Authorization authenticatePush() throws RegistryAuthenticationFailedException {
+    return authenticate("pull,push");
+  }
+
+  @VisibleForTesting
+  URL getAuthenticationUrl(String scope) throws MalformedURLException {
+    return new URL(authenticationUrlBase + scope);
+  }
+
+  /**
+   * Sends the authentication request and retrieves the Bearer authorization token.
+   *
+   * @param scope the scope of permissions to authenticate for
+   * @see <a
+   *     href="https://docs.docker.com/registry/spec/auth/token/#how-to-authenticate">https://docs.docker.com/registry/spec/auth/token/#how-to-authenticate</a>
+   */
+  private Authorization authenticate(String scope) throws RegistryAuthenticationFailedException {
+    try (Connection connection = new Connection(getAuthenticationUrl(scope))) {
       Request.Builder requestBuilder = Request.builder();
       if (authorization != null) {
         requestBuilder.setAuthorization(authorization);
@@ -123,10 +143,5 @@ public class RegistryAuthenticator {
     } catch (IOException ex) {
       throw new RegistryAuthenticationFailedException(ex);
     }
-  }
-
-  @VisibleForTesting
-  URL getAuthenticationUrl() {
-    return authenticationUrl;
   }
 }

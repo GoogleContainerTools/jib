@@ -72,7 +72,7 @@ public class BuildImageMojo extends AbstractMojo {
 
   @Parameter(defaultValue = "${project}", readonly = true)
   private MavenProject project;
-  
+
   @Parameter(defaultValue = "${session}", readonly = true)
   private MavenSession session;
 
@@ -118,22 +118,27 @@ public class BuildImageMojo extends AbstractMojo {
 
     SourceFilesConfiguration sourceFilesConfiguration = getSourceFilesConfiguration();
 
-    // Parse 'from' into image reference.
+    // Parses 'from' into image reference.
     ImageReference baseImage = getBaseImageReference();
 
-    // Check Maven settings for registry credentials.
+    // Checks Maven settings for registry credentials.
     session.getSettings().getServer(baseImage.getRegistry());
     Map<String, Authorization> registryCredentials = new HashMap<>(2);
-    Authorization baseImageRegistryCredentials = getRegistryCredentialsFromSettings(baseImage.getRegistry());
+    // Retrieves credentials for the base image registry.
+    Authorization baseImageRegistryCredentials =
+        getRegistryCredentialsFromSettings(baseImage.getRegistry());
     if (baseImageRegistryCredentials != null) {
       registryCredentials.put(baseImage.getRegistry(), baseImageRegistryCredentials);
     }
-    Authorization targetImageRegistryCredentials = getRegistryCredentialsFromSettings(registry);
-    if (targetImageRegistryCredentials != null) {
-      registryCredentials.put(registry, targetImageRegistryCredentials);
+    // Retrieves credentials for the target registry.
+    Authorization targetRegistryCredentials = getRegistryCredentialsFromSettings(registry);
+    if (targetRegistryCredentials != null) {
+      registryCredentials.put(registry, targetRegistryCredentials);
     }
+    RegistryCredentials mavenSettingsCredentials =
+        RegistryCredentials.from("Maven settings", registryCredentials);
 
-    // Infer common credential helper names if credHelpers is not set.
+    // Infers common credential helper names if credHelpers is not set.
     if (credHelpers == null) {
       credHelpers = new ArrayList<>(2);
       String baseImageRegistryCredHelper = inferCredHelper(baseImage.getRegistry());
@@ -149,13 +154,14 @@ public class BuildImageMojo extends AbstractMojo {
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder()
             .setBuildLogger(new MavenBuildLogger(getLog()))
-            .setBaseImageServerUrl(baseImage.getRegistry())
-            .setBaseImageName(baseImage.getRepository())
+            .setBaseImageRegistry(baseImage.getRegistry())
+            .setBaseImageRepository(baseImage.getRepository())
             .setBaseImageTag(baseImage.getTag())
-            .setTargetServerUrl(registry)
-            .setTargetImageName(repository)
+            .setTargetRegistry(registry)
+            .setTargetRepository(repository)
             .setTargetTag(tag)
             .setCredentialHelperNames(credHelpers)
+            .setKnownRegistryCredentials(mavenSettingsCredentials)
             .setMainClass(mainClass)
             .setJvmFlags(jvmFlags)
             .setEnvironment(environment)
@@ -275,7 +281,8 @@ public class BuildImageMojo extends AbstractMojo {
     if (registryServerSettings == null) {
       return null;
     }
-    return Authorizations.withBasicCredentials(registryServerSettings.getUsername(), registryServerSettings.getPassword());
+    return Authorizations.withBasicCredentials(
+        registryServerSettings.getUsername(), registryServerSettings.getPassword());
   }
 
   /** Checks validity of plugin parameters. */

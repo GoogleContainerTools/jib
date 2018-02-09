@@ -23,7 +23,6 @@ import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.Image;
-import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -67,26 +66,31 @@ public class BuildImageSteps {
 
         try (Cache cache = Cache.init(cacheDirectory)) {
           timer2.lap("Setting up credential retrieval");
-          ListenableFuture<RegistryCredentials> retrieveRegistryCredentialsFuture =
+          ListenableFuture<Authorization> retrieveTargetRegistryCredentialsFuture =
               listeningExecutorService.submit(
-                  new RetrieveRegistryCredentialsStep(buildConfiguration));
+                  new RetrieveRegistryCredentialsStep(
+                      buildConfiguration, buildConfiguration.getTargetRegistry()));
+          ListenableFuture<Authorization> retrieveBaseImageRegistryCredentialsFuture =
+              listeningExecutorService.submit(
+                  new RetrieveRegistryCredentialsStep(
+                      buildConfiguration, buildConfiguration.getBaseImageRegistry()));
 
           timer2.lap("Setting up image push authentication");
           // Authenticates push.
           ListenableFuture<Authorization> authenticatePushFuture =
-              Futures.whenAllSucceed(retrieveRegistryCredentialsFuture)
+              Futures.whenAllSucceed(retrieveTargetRegistryCredentialsFuture)
                   .call(
                       new AuthenticatePushStep(
-                          buildConfiguration, retrieveRegistryCredentialsFuture),
+                          buildConfiguration, retrieveTargetRegistryCredentialsFuture),
                       listeningExecutorService);
 
           timer2.lap("Setting up image pull authentication");
           // Authenticates base image pull.
           ListenableFuture<Authorization> authenticatePullFuture =
-              Futures.whenAllSucceed(retrieveRegistryCredentialsFuture)
+              Futures.whenAllSucceed(retrieveBaseImageRegistryCredentialsFuture)
                   .call(
                       new AuthenticatePullStep(
-                          buildConfiguration, retrieveRegistryCredentialsFuture),
+                          buildConfiguration, retrieveBaseImageRegistryCredentialsFuture),
                       listeningExecutorService);
 
           timer2.lap("Setting up base image pull");
