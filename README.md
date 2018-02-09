@@ -155,10 +155,10 @@ Docker credential helpers are CLI tools that handle authentication with various 
 Some common credential helpers include:
 
 * Google Container Registry: [`docker-credential-gcr`](https://cloud.google.com/container-registry/docs/advanced-authentication#docker_credential_helper)
-* AWS Elastic Container Registry: [`docker-credential-ecr-login`](https://github.com/awslabs/amazon-ecr-credential-helper)<!--
-* Azure Container Registry: [`docker-credential-acr-*`](https://github.com/Azure/acr-docker-credential-helper)
--->
+* AWS Elastic Container Registry: [`docker-credential-ecr-login`](https://github.com/awslabs/amazon-ecr-credential-helper)
 * Docker Hub Registry: [`docker-credential-*`](https://github.com/docker/docker-credential-helpers)
+<!--* Azure Container Registry: [`docker-credential-acr-*`](https://github.com/Azure/acr-docker-credential-helper)
+-->
 
 Configure credential helpers to use by specifying them in the `credHelpers` configuration.
 
