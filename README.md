@@ -41,7 +41,7 @@ Configure the plugin by changing `registry`, `repository`, and `credHelpers` acc
 
 #### Using Google Container Registry (GCR)...
 
-*Make sure you have the [`docker-credential-gcr` command line tool](https://cloud.google.com/container-registry/docs/advanced-authentication#docker_credential_helper). Jib automatically uses `docker-credential-gcr` for obtaining credentials. To use a different credential helper, set the [`credHelpers`](#extended-usage) configuration.*
+*Make sure you have the [`docker-credential-gcr` command line tool](https://cloud.google.com/container-registry/docs/advanced-authentication#docker_credential_helper). Jib automatically uses `docker-credential-gcr` for obtaining credentials. See [Authentication Methods](#authentication-methods) for other ways of authenticating.*
 
 For example, to build the image `gcr.io/my-gcp-project/my-app`, the configuration would be:
 
@@ -54,7 +54,7 @@ For example, to build the image `gcr.io/my-gcp-project/my-app`, the configuratio
 
 #### Using Amazon Elastic Container Registry (ECR)...
 
-*Make sure you have the [`docker-credential-ecr-login` command line tool](https://github.com/awslabs/amazon-ecr-credential-helper). Jib automatically uses `docker-credential-ecr-login` for obtaining credentials. To use a different credential helper, set the [`credHelpers`](#extended-usage) configuration.*
+*Make sure you have the [`docker-credential-ecr-login` command line tool](https://github.com/awslabs/amazon-ecr-credential-helper). Jib automatically uses `docker-credential-ecr-login` for obtaining credentials. To use a different credential helper, set the [`credHelpers`](#extended-usage) configuration. See [Authentication Methods](#authentication-methods) for other ways of authenticating.*
 
 For example, to build the image `aws_account_id.dkr.ecr.region.amazonaws.com/my-app`, the configuration would be:
 
@@ -146,7 +146,7 @@ In this configuration, the image is:
 
 ### Authentication Methods
 
-Pushing/pulling from private registries require authorization credentials. These can [retrieved using Docker credential helpers]() or [defined in your Maven settings]().
+Pushing/pulling from private registries require authorization credentials. These can [retrieved using Docker credential helpers](#using-docker-credential-helpers) or [defined in your Maven settings](#using-maven-settings).
 
 #### Using Docker Credential Helpers
 
@@ -155,8 +155,9 @@ Docker credential helpers are CLI tools that handle authentication with various 
 Some common credential helpers include:
 
 * Google Container Registry: [`docker-credential-gcr`](https://cloud.google.com/container-registry/docs/advanced-authentication#docker_credential_helper)
-* AWS Elastic Container Registry: [`docker-credential-ecr-login`](https://github.com/awslabs/amazon-ecr-credential-helper)
-<!--* Azure Container Registry: [`docker-credential-acr-*`](https://github.com/Azure/acr-docker-credential-helper)-->
+* AWS Elastic Container Registry: [`docker-credential-ecr-login`](https://github.com/awslabs/amazon-ecr-credential-helper)<!--
+* Azure Container Registry: [`docker-credential-acr-*`](https://github.com/Azure/acr-docker-credential-helper)
+-->
 * Docker Hub Registry: [`docker-credential-*`](https://github.com/docker/docker-credential-helpers)
 
 Configure credential helpers to use by specifying them in the `credHelpers` configuration.
