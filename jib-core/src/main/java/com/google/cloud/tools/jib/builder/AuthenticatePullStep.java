@@ -21,7 +21,6 @@ import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticators;
 import com.google.cloud.tools.jib.registry.RegistryException;
-import com.google.cloud.tools.jib.registry.credentials.NoRegistryCredentialsException;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.io.IOException;
@@ -29,7 +28,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
-/** Retrieves credentials to push from the base image registry. */
+/** Retrieves credentials to pull from the base image registry. */
 class AuthenticatePullStep implements Callable<Authorization> {
 
   private static final String DESCRIPTION = "Authenticating with base image registry";
@@ -61,25 +60,26 @@ class AuthenticatePullStep implements Callable<Authorization> {
   @Nullable
   private Authorization getBaseImageAuthorization()
       throws ExecutionException, InterruptedException {
-    try {
-      RegistryCredentials registryCredentials = NonBlockingFutures.get(registryCredentialsFuture);
-      String registry = buildConfiguration.getBaseImageServerUrl();
-      buildConfiguration
-          .getBuildLogger()
-          .info(
-              "Using docker-credential-"
-                  + registryCredentials.getCredentialHelperUsed(registry)
-                  + " for pulling from "
-                  + registry);
-      return registryCredentials.getAuthorization(registry);
+    RegistryCredentials registryCredentials = NonBlockingFutures.get(registryCredentialsFuture);
+    String registry = buildConfiguration.getBaseImageServerUrl();
 
-    } catch (NoRegistryCredentialsException ex) {
+    String credentialHelperSuffix = registryCredentials.getCredentialHelperUsed(registry);
+    Authorization authorization = registryCredentials.getAuthorization(registry);
+    if (credentialHelperSuffix == null || authorization == null) {
       /*
        * If no credentials found, give an info (not warning because in most cases, the base image is
        * public and does not need extra credentials) and return null.
        */
-      buildConfiguration.getBuildLogger().info(ex.getMessage());
+      buildConfiguration
+          .getBuildLogger()
+          .info("No credentials could be retrieved for registry " + registry);
       return null;
     }
+
+    buildConfiguration
+        .getBuildLogger()
+        .info(
+            "Using docker-credential-" + credentialHelperSuffix + " for pulling from " + registry);
+    return authorization;
   }
 }

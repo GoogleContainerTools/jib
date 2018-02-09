@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2018 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,12 +14,16 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.registry.credentials;
+package com.google.cloud.tools.jib;
 
-/** Thrown because the requested credentials do not exist. */
-public class NoRegistryCredentialsException extends Exception {
+/** Constants relating to the Jib project. */
+public class ProjectInfo {
 
-  NoRegistryCredentialsException(String registry) {
-    super("No credentials could be retrieved for registry " + registry);
-  }
+  /** Link to the GitHub repository. */
+  public static final String GITHUB_URL = "https://github.com/google/jib";
+
+  /** Link to file an issue against the GitHub repository. */
+  public static final String GITHUB_NEW_ISSUE_URL = GITHUB_URL + "/issues/new";
+
+  private ProjectInfo() {}
 }
