@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 /** Implementation of {@link SourceFilesConfiguration} that uses test resources. */
 class TestSourceFilesConfiguration implements SourceFilesConfiguration {
 
-  private static final String EXTRACTION_PATH = "some/extraction/path/";
+  private static final String EXTRACTION_PATH = "/some/extraction/path/";
 
   private final List<Path> dependenciesSourceFiles;
   private final List<Path> resourcesSourceFiles;
@@ -65,16 +65,16 @@ class TestSourceFilesConfiguration implements SourceFilesConfiguration {
 
   @Override
   public String getDependenciesPathOnImage() {
-    return EXTRACTION_PATH + "libs";
+    return EXTRACTION_PATH + "libs/";
   }
 
   @Override
   public String getResourcesPathOnImage() {
-    return EXTRACTION_PATH + "resources";
+    return EXTRACTION_PATH + "resources/";
   }
 
   @Override
   public String getClassesPathOnImage() {
-    return EXTRACTION_PATH + "classes";
+    return EXTRACTION_PATH + "classes/";
   }
 }

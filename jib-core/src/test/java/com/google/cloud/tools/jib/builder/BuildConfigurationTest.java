@@ -34,7 +34,8 @@ public class BuildConfigurationTest {
     String expectedTargetServerUrl = "someotherserver";
     String expectedTargetImageName = "targetimage";
     String expectedTargetTag = "targettag";
-    String expectedCredentialHelperName = "credentialhelper";
+    List<String> expectedCredentialHelperNames =
+        Arrays.asList("credentialhelper", "anotherCredentialHelper");
     String expectedMainClass = "mainclass";
     List<String> expectedJvmFlags = Arrays.asList("some", "jvm", "flags");
 
@@ -46,7 +47,7 @@ public class BuildConfigurationTest {
             .setTargetServerUrl(expectedTargetServerUrl)
             .setTargetImageName(expectedTargetImageName)
             .setTargetTag(expectedTargetTag)
-            .setCredentialHelperName(expectedCredentialHelperName)
+            .setCredentialHelperNames(expectedCredentialHelperNames)
             .setMainClass(expectedMainClass)
             .setJvmFlags(expectedJvmFlags)
             .build();
@@ -56,7 +57,8 @@ public class BuildConfigurationTest {
     Assert.assertEquals(expectedTargetServerUrl, buildConfiguration.getTargetServerUrl());
     Assert.assertEquals(expectedTargetImageName, buildConfiguration.getTargetImageName());
     Assert.assertEquals(expectedTargetTag, buildConfiguration.getTargetTag());
-    Assert.assertEquals(expectedCredentialHelperName, buildConfiguration.getCredentialHelperName());
+    Assert.assertEquals(
+        expectedCredentialHelperNames, buildConfiguration.getCredentialHelperNames());
     Assert.assertEquals(expectedMainClass, buildConfiguration.getMainClass());
     Assert.assertEquals(expectedJvmFlags, buildConfiguration.getJvmFlags());
   }
