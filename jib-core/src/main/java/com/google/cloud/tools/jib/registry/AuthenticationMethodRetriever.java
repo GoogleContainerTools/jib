@@ -66,6 +66,7 @@ class AuthenticationMethodRetriever implements RegistryEndpointProvider<Registry
   }
 
   @Override
+  @Nullable
   public RegistryAuthenticator handleHttpResponseException(
       HttpResponseException httpResponseException)
       throws HttpResponseException, RegistryErrorException {

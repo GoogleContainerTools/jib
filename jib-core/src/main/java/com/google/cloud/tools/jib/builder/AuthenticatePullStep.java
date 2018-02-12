@@ -47,7 +47,7 @@ class AuthenticatePullStep implements Callable<Authorization> {
     this.registryCredentialsFuture = registryCredentialsFuture;
   }
 
-  /** Depends on nothing. */
+  /** Depends on {@link RetrieveRegistryCredentialsStep}. */
   @Override
   public Authorization call()
       throws RegistryAuthenticationFailedException, IOException, RegistryException,
@@ -56,16 +56,15 @@ class AuthenticatePullStep implements Callable<Authorization> {
         new Timer(
             buildConfiguration.getBuildLogger(),
             String.format(DESCRIPTION, buildConfiguration.getBaseImageRegistry()))) {
+      Authorization registryCredentials = NonBlockingFutures.get(registryCredentialsFuture);
       RegistryAuthenticator registryAuthenticator =
           RegistryAuthenticators.forOther(
               buildConfiguration.getBaseImageRegistry(),
               buildConfiguration.getBaseImageRepository());
       if (registryAuthenticator == null) {
-        return null;
+        return registryCredentials;
       }
-      return registryAuthenticator
-          .setAuthorization(NonBlockingFutures.get(registryCredentialsFuture))
-          .authenticatePull();
+      return registryAuthenticator.setAuthorization(registryCredentials).authenticatePull();
     }
   }
 }
