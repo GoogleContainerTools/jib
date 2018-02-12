@@ -4,7 +4,14 @@ set -e
 set -x
 
 # For MacOS builds, link Docker to run as 'docker'.
-sudo ln -s /Applications/Docker.app/Contents/Resources/bin/docker /usr/local/bin/docker
+export PATH=$PATH:/Applications/Docker.app/Contents/Resources/bin
+
+# Runs docker daemon.
+sudo service docker start
+
+docker-machine ls
+eval "$(docker-machine env default)"
+docker ps
 
 # Stops any left-over containers.
 docker stop $(docker container ls --quiet) || true
