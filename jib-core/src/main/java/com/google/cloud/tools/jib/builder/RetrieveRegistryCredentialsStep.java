@@ -21,7 +21,6 @@ import com.google.cloud.tools.jib.registry.DockerCredentialRetriever;
 import com.google.cloud.tools.jib.registry.NonexistentDockerCredentialHelperException;
 import com.google.cloud.tools.jib.registry.NonexistentServerUrlDockerCredentialHelperException;
 import com.google.common.collect.ImmutableMap;
-
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
@@ -66,7 +65,8 @@ class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
     for (String registrySuffix : COMMON_CREDENTIAL_HELPERS.keySet()) {
       if (registry.endsWith(registrySuffix)) {
         try {
-          Authorization authorization = retrieveFromCredentialHelper(COMMON_CREDENTIAL_HELPERS.get(registrySuffix));
+          Authorization authorization =
+              retrieveFromCredentialHelper(COMMON_CREDENTIAL_HELPERS.get(registrySuffix));
           if (authorization != null) {
             return authorization;
           }
@@ -88,8 +88,12 @@ class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
     return null;
   }
 
-  /** Attempts to retrieve authorization for the registry using {@code docker-credential-[credentialHelperSuffix]}. */
-  private Authorization retrieveFromCredentialHelper(String credentialHelperSuffix) throws IOException, NonexistentDockerCredentialHelperException {
+  /**
+   * Attempts to retrieve authorization for the registry using {@code
+   * docker-credential-[credentialHelperSuffix]}.
+   */
+  private Authorization retrieveFromCredentialHelper(String credentialHelperSuffix)
+      throws IOException, NonexistentDockerCredentialHelperException {
     try {
       Authorization authorization =
           new DockerCredentialRetriever(registry, credentialHelperSuffix).retrieve();
@@ -102,8 +106,6 @@ class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
   }
 
   private void logGotCredentialsFrom(String credentialSource) {
-    buildConfiguration
-        .getBuildLogger()
-        .info("Using " + credentialSource + " for " + registry);
+    buildConfiguration.getBuildLogger().info("Using " + credentialSource + " for " + registry);
   }
 }

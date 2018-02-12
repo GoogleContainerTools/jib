@@ -352,7 +352,7 @@ public class BuildImageMojo extends AbstractMojo {
           registryUnauthorizedException,
           "make sure your credentials for '"
               + registryUnauthorizedException.getImageReference()
-              + "' is set up correctly");
+              + "' are set up correctly");
     }
   }
 
