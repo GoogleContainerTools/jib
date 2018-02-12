@@ -9,9 +9,7 @@ export PATH=$PATH:/Applications/Docker.app/Contents/Resources/bin
 # Runs docker daemon.
 sudo service docker start || true
 
-docker-machine ls
-eval "$(docker-machine env default)"
-docker ps
+dockerd
 
 # Stops any left-over containers.
 docker stop $(docker container ls --quiet) || true
