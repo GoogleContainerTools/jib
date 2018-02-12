@@ -25,3 +25,4 @@ All notable changes to this project will be documented in this file.
 - Cannot use private base image ([#68](https://github.com/google/jib/pull/68))
 - Building applications with no resources ([#73](https://github.com/google/jib/pull/73))
 - Pushing to registries like Docker Hub and ACR ([#75](https://github.com/google/jib/issues/75))
+- Cannot build with files having long file names (> 100 chars) ([#91](https://github.com/google/jib/issues/91)) 
