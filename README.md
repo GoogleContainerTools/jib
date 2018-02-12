@@ -17,6 +17,15 @@ Jib is a Maven plugin for building container images for your Java applications.
 
 * **Native** - Reduce your CLI dependencies. Build your Docker image from within Maven <!--or Gradle--> and push to any registry of your choice. No more writing Dockerfiles and calling docker build/push.
 
+## Upcoming Features
+
+These features will be added in later releases.
+
+* Gradle plugin
+* Building OCI images
+* WAR format
+* Reproducibility
+
 ## Quickstart
 
 ### Setup
@@ -154,8 +163,6 @@ See also [rules_docker](https://github.com/bazelbuild/rules_docker) for a simila
 
 These limitations will be fixed in later releases.
 
-* Only supports Maven projects.
-* Does not build OCI images.
 * Pushing to Docker Hub is currently not supported.
 * Cannot build directly to a Docker daemon.
 
