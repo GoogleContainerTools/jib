@@ -18,52 +18,56 @@ package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
+import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
+import com.google.cloud.tools.jib.registry.RegistryAuthenticator;
+import com.google.cloud.tools.jib.registry.RegistryAuthenticators;
+import com.google.cloud.tools.jib.registry.RegistryException;
 import com.google.common.util.concurrent.ListenableFuture;
+import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
-/** Retrieves credentials to push to a target registry. */
+/**
+ * Authenticates push to a target registry using Docker Token Authentication.
+ *
+ * @see <a
+ *     href="https://docs.docker.com/registry/spec/auth/token/">https://docs.docker.com/registry/spec/auth/token/</a>
+ */
 class AuthenticatePushStep implements Callable<Authorization> {
 
   private static final String DESCRIPTION = "Authenticating with push to %s";
 
   private final BuildConfiguration buildConfiguration;
-  private final ListenableFuture<RegistryCredentials> registryCredentialsFuture;
+  private final ListenableFuture<Authorization> registryCredentialsFuture;
 
   AuthenticatePushStep(
       BuildConfiguration buildConfiguration,
-      ListenableFuture<RegistryCredentials> registryCredentialsFuture) {
+      ListenableFuture<Authorization> registryCredentialsFuture) {
     this.buildConfiguration = buildConfiguration;
     this.registryCredentialsFuture = registryCredentialsFuture;
   }
 
-  /** Depends on nothing. */
+  /** Depends on {@link RetrieveRegistryCredentialsStep}. */
   @Override
   @Nullable
-  public Authorization call() throws ExecutionException, InterruptedException {
+  public Authorization call()
+      throws ExecutionException, InterruptedException, RegistryAuthenticationFailedException,
+          IOException, RegistryException {
     try (Timer ignored =
         new Timer(
             buildConfiguration.getBuildLogger(),
-            String.format(DESCRIPTION, buildConfiguration.getTargetServerUrl()))) {
-      RegistryCredentials registryCredentials = NonBlockingFutures.get(registryCredentialsFuture);
-      String registry = buildConfiguration.getTargetServerUrl();
-
-      String credentialHelperSuffix = registryCredentials.getCredentialHelperUsed(registry);
-      Authorization authorization = registryCredentials.getAuthorization(registry);
-      if (credentialHelperSuffix == null || authorization == null) {
-        // If no credentials found, give a warning and return null.
-        buildConfiguration
-            .getBuildLogger()
-            .warn("No credentials could be retrieved for registry " + registry);
-        return null;
+            String.format(DESCRIPTION, buildConfiguration.getTargetRegistry()))) {
+      Authorization registryCredentials = NonBlockingFutures.get(registryCredentialsFuture);
+      RegistryAuthenticator registryAuthenticator =
+          RegistryAuthenticators.forOther(
+              buildConfiguration.getTargetRegistry(), buildConfiguration.getTargetRepository());
+      if (registryAuthenticator == null) {
+        return registryCredentials;
       }
-      buildConfiguration
-          .getBuildLogger()
-          .info(
-              "Using docker-credential-" + credentialHelperSuffix + " for pushing to " + registry);
-      return authorization;
+      return registryAuthenticator
+          .setAuthorization(NonBlockingFutures.get(registryCredentialsFuture))
+          .authenticatePush();
     }
   }
 }

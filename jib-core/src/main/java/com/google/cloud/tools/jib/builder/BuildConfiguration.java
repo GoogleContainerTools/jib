@@ -31,21 +31,23 @@ public class BuildConfiguration {
   @VisibleForTesting
   enum Fields {
     /** The server URL of the registry to pull the base image from. */
-    BASE_IMAGE_SERVER_URL(true),
+    BASE_IMAGE_REGISTRY(true),
     /** The image name/repository of the base image (also known as the registry namespace). */
-    BASE_IMAGE_NAME(true),
+    BASE_IMAGE_REPOSITORY(true),
     /** The base image tag. */
     BASE_IMAGE_TAG(true),
 
     /** The server URL of the registry to push the built image to. */
-    TARGET_SERVER_URL(true),
+    TARGET_REGISTRY(true),
     /** The image name/repository of the built image (also known as the registry namespace). */
-    TARGET_IMAGE_NAME(true),
+    TARGET_REPOSITORY(true),
     /** The image tag of the built image (the part after the colon). */
     TARGET_TAG(true),
 
     /** The credential helper names used by {@link RegistryCredentials}. */
     CREDENTIAL_HELPER_NAMES(false),
+    /** Known registry credentials to fallback on. */
+    KNOWN_REGISTRY_CREDENTIALS(false),
 
     /** The main class to use when running the application. */
     MAIN_CLASS(true),
@@ -74,11 +76,11 @@ public class BuildConfiguration {
     static final Map<Fields, String> FIELD_DESCRIPTIONS =
         new EnumMap<Fields, String>(Fields.class) {
           {
-            put(Fields.BASE_IMAGE_SERVER_URL, "base image registry server URL");
-            put(Fields.BASE_IMAGE_NAME, "base image name");
+            put(Fields.BASE_IMAGE_REGISTRY, "base image registry server URL");
+            put(Fields.BASE_IMAGE_REPOSITORY, "base image name");
             put(Fields.BASE_IMAGE_TAG, "base image tag");
-            put(Fields.TARGET_SERVER_URL, "target registry server URL");
-            put(Fields.TARGET_IMAGE_NAME, "target image name");
+            put(Fields.TARGET_REGISTRY, "target registry server URL");
+            put(Fields.TARGET_REPOSITORY, "target image name");
             put(Fields.TARGET_TAG, "target image tag");
             put(Fields.CREDENTIAL_HELPER_NAMES, "credential helper names");
             put(Fields.MAIN_CLASS, "main class");
@@ -96,6 +98,7 @@ public class BuildConfiguration {
     private Builder() {
       // Sets default empty values.
       values.put(Fields.CREDENTIAL_HELPER_NAMES, Collections.emptyList());
+      values.put(Fields.KNOWN_REGISTRY_CREDENTIALS, RegistryCredentials.none());
       values.put(Fields.JVM_FLAGS, Collections.emptyList());
       values.put(Fields.ENVIRONMENT, Collections.emptyMap());
     }
@@ -105,13 +108,13 @@ public class BuildConfiguration {
       return this;
     }
 
-    public Builder setBaseImageServerUrl(String baseImageServerUrl) {
-      values.put(Fields.BASE_IMAGE_SERVER_URL, baseImageServerUrl);
+    public Builder setBaseImageRegistry(String baseImageServerUrl) {
+      values.put(Fields.BASE_IMAGE_REGISTRY, baseImageServerUrl);
       return this;
     }
 
-    public Builder setBaseImageName(String baseImageName) {
-      values.put(Fields.BASE_IMAGE_NAME, baseImageName);
+    public Builder setBaseImageRepository(String baseImageName) {
+      values.put(Fields.BASE_IMAGE_REPOSITORY, baseImageName);
       return this;
     }
 
@@ -120,13 +123,13 @@ public class BuildConfiguration {
       return this;
     }
 
-    public Builder setTargetServerUrl(String targetServerUrl) {
-      values.put(Fields.TARGET_SERVER_URL, targetServerUrl);
+    public Builder setTargetRegistry(String targetServerUrl) {
+      values.put(Fields.TARGET_REGISTRY, targetServerUrl);
       return this;
     }
 
-    public Builder setTargetImageName(String targetImageName) {
-      values.put(Fields.TARGET_IMAGE_NAME, targetImageName);
+    public Builder setTargetRepository(String targetImageName) {
+      values.put(Fields.TARGET_REPOSITORY, targetImageName);
       return this;
     }
 
@@ -138,6 +141,13 @@ public class BuildConfiguration {
     public Builder setCredentialHelperNames(List<String> credentialHelperNames) {
       if (credentialHelperNames != null) {
         values.put(Fields.CREDENTIAL_HELPER_NAMES, credentialHelperNames);
+      }
+      return this;
+    }
+
+    public Builder setKnownRegistryCredentials(RegistryCredentials knownRegistryCredentials) {
+      if (knownRegistryCredentials != null) {
+        values.put(Fields.KNOWN_REGISTRY_CREDENTIALS, knownRegistryCredentials);
       }
       return this;
     }
@@ -220,28 +230,32 @@ public class BuildConfiguration {
     return buildLogger;
   }
 
-  public String getBaseImageServerUrl() {
-    return getFieldValue(Fields.BASE_IMAGE_SERVER_URL);
+  public String getBaseImageRegistry() {
+    return getFieldValue(Fields.BASE_IMAGE_REGISTRY);
   }
 
-  public String getBaseImageName() {
-    return getFieldValue(Fields.BASE_IMAGE_NAME);
+  public String getBaseImageRepository() {
+    return getFieldValue(Fields.BASE_IMAGE_REPOSITORY);
   }
 
   public String getBaseImageTag() {
     return getFieldValue(Fields.BASE_IMAGE_TAG);
   }
 
-  public String getTargetServerUrl() {
-    return getFieldValue(Fields.TARGET_SERVER_URL);
+  public String getTargetRegistry() {
+    return getFieldValue(Fields.TARGET_REGISTRY);
   }
 
-  public String getTargetImageName() {
-    return getFieldValue(Fields.TARGET_IMAGE_NAME);
+  public String getTargetRepository() {
+    return getFieldValue(Fields.TARGET_REPOSITORY);
   }
 
   public String getTargetTag() {
     return getFieldValue(Fields.TARGET_TAG);
+  }
+
+  public RegistryCredentials getKnownRegistryCredentials() {
+    return getFieldValue(Fields.KNOWN_REGISTRY_CREDENTIALS);
   }
 
   public List<String> getCredentialHelperNames() {

@@ -29,6 +29,7 @@ import org.apache.http.conn.HttpHostConnectException;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -40,18 +41,16 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class BuildImageMojoTest {
 
   @Mock private BuildImageSteps mockBuildImageSteps;
+  @Mock private RegistryUnauthorizedException mockRegistryUnauthorizedException;
+  @Mock private HttpResponseException mockHttpResponseException;
+  @Mock private ExecutionException mockExecutionException;
+  @Mock private BuildConfiguration mockBuildConfiguration;
 
   private final BuildImageMojo testBuildImageMojo = new BuildImageMojo();
 
-  @Test
-  public void testInferCredHelper() {
-    Assert.assertEquals("gcr", testBuildImageMojo.inferCredHelper("gcr.io"));
-    Assert.assertEquals("gcr", testBuildImageMojo.inferCredHelper("asia.gcr.io"));
-    Assert.assertEquals("ecr-login", testBuildImageMojo.inferCredHelper("amazonaws.com"));
-    Assert.assertEquals(
-        "ecr-login",
-        testBuildImageMojo.inferCredHelper("aws_account_id.dkr.ecr.region.amazonaws.com"));
-    Assert.assertNull(testBuildImageMojo.inferCredHelper("localhost"));
+  @Before
+  public void setUpMocks() {
+    Mockito.when(mockBuildImageSteps.getBuildConfiguration()).thenReturn(mockBuildConfiguration);
   }
 
   @Test
@@ -85,7 +84,6 @@ public class BuildImageMojoTest {
           IOException {
     HttpHostConnectException mockHttpHostConnectException =
         Mockito.mock(HttpHostConnectException.class);
-    ExecutionException mockExecutionException = Mockito.mock(ExecutionException.class);
     Mockito.when(mockExecutionException.getCause()).thenReturn(mockHttpHostConnectException);
     Mockito.doThrow(mockExecutionException).when(mockBuildImageSteps).run();
 
@@ -105,9 +103,6 @@ public class BuildImageMojoTest {
   public void testBuildImage_executionException_registryUnauthorizedException_statusCodeForbidden()
       throws InterruptedException, ExecutionException, CacheMetadataCorruptedException,
           IOException {
-    RegistryUnauthorizedException mockRegistryUnauthorizedException =
-        Mockito.mock(RegistryUnauthorizedException.class);
-    HttpResponseException mockHttpResponseException = Mockito.mock(HttpResponseException.class);
     Mockito.when(mockRegistryUnauthorizedException.getHttpResponseException())
         .thenReturn(mockHttpResponseException);
     Mockito.when(mockRegistryUnauthorizedException.getImageReference())
@@ -115,7 +110,6 @@ public class BuildImageMojoTest {
     Mockito.when(mockHttpResponseException.getStatusCode())
         .thenReturn(HttpStatusCodes.STATUS_CODE_FORBIDDEN);
 
-    ExecutionException mockExecutionException = Mockito.mock(ExecutionException.class);
     Mockito.when(mockExecutionException.getCause()).thenReturn(mockRegistryUnauthorizedException);
     Mockito.doThrow(mockExecutionException).when(mockBuildImageSteps).run();
 
@@ -132,20 +126,14 @@ public class BuildImageMojoTest {
   }
 
   @Test
-  public void testBuildImage_executionException_registryUnauthorizedException_noCredentialHelper()
+  public void testBuildImage_executionException_registryUnauthorizedException_noCredentials()
       throws InterruptedException, ExecutionException, CacheMetadataCorruptedException,
           IOException {
-    RegistryUnauthorizedException mockRegistryUnauthorizedException =
-        Mockito.mock(RegistryUnauthorizedException.class);
-    HttpResponseException mockHttpResponseException = Mockito.mock(HttpResponseException.class);
     Mockito.when(mockRegistryUnauthorizedException.getHttpResponseException())
         .thenReturn(mockHttpResponseException);
+    Mockito.when(mockRegistryUnauthorizedException.getRegistry()).thenReturn("someregistry");
     Mockito.when(mockHttpResponseException.getStatusCode()).thenReturn(-1); // Unknown
 
-    Mockito.when(mockBuildImageSteps.getBuildConfiguration())
-        .thenReturn(Mockito.mock(BuildConfiguration.class));
-
-    ExecutionException mockExecutionException = Mockito.mock(ExecutionException.class);
     Mockito.when(mockExecutionException.getCause()).thenReturn(mockRegistryUnauthorizedException);
     Mockito.doThrow(mockExecutionException).when(mockBuildImageSteps).run();
 
@@ -155,7 +143,7 @@ public class BuildImageMojoTest {
 
     } catch (MojoExecutionException ex) {
       Assert.assertEquals(
-          "Build image failed, perhaps you should set a credential helper name with the configuration 'credHelpers'",
+          "Build image failed, perhaps you should set a credential helper name with the configuration 'credHelpers' or set credentials for 'someregistry' in your Maven settings",
           ex.getMessage());
       Assert.assertEquals(mockRegistryUnauthorizedException, ex.getCause());
     }
@@ -165,23 +153,16 @@ public class BuildImageMojoTest {
   public void testBuildImage_executionException_registryUnauthorizedException_other()
       throws InterruptedException, ExecutionException, CacheMetadataCorruptedException,
           IOException {
-    RegistryUnauthorizedException mockRegistryUnauthorizedException =
-        Mockito.mock(RegistryUnauthorizedException.class);
-    HttpResponseException mockHttpResponseException = Mockito.mock(HttpResponseException.class);
     Mockito.when(mockRegistryUnauthorizedException.getHttpResponseException())
         .thenReturn(mockHttpResponseException);
-    Mockito.when(mockRegistryUnauthorizedException.getImageReference())
-        .thenReturn("someregistry/somerepository");
+    Mockito.when(mockRegistryUnauthorizedException.getRegistry()).thenReturn("someregistry");
     Mockito.when(mockHttpResponseException.getStatusCode()).thenReturn(-1); // Unknown
 
-    ExecutionException mockExecutionException = Mockito.mock(ExecutionException.class);
     Mockito.when(mockExecutionException.getCause()).thenReturn(mockRegistryUnauthorizedException);
     Mockito.doThrow(mockExecutionException).when(mockBuildImageSteps).run();
 
-    BuildConfiguration mockBuildConfiguration = Mockito.mock(BuildConfiguration.class);
     Mockito.when(mockBuildConfiguration.getCredentialHelperNames())
         .thenReturn(Collections.singletonList("some-credential-helper"));
-    Mockito.when(mockBuildImageSteps.getBuildConfiguration()).thenReturn(mockBuildConfiguration);
 
     try {
       testBuildImageMojo.buildImage(mockBuildImageSteps);
@@ -189,7 +170,7 @@ public class BuildImageMojoTest {
 
     } catch (MojoExecutionException ex) {
       Assert.assertEquals(
-          "Build image failed, perhaps you should make sure your credential helper for 'someregistry/somerepository' is set up correctly",
+          "Build image failed, perhaps you should make sure your credentials for 'someregistry' are set up correctly",
           ex.getMessage());
       Assert.assertEquals(mockRegistryUnauthorizedException, ex.getCause());
     }
@@ -200,7 +181,6 @@ public class BuildImageMojoTest {
       throws InterruptedException, ExecutionException, CacheMetadataCorruptedException,
           IOException {
     Throwable throwable = new Throwable();
-    ExecutionException mockExecutionException = Mockito.mock(ExecutionException.class);
     Mockito.when(mockExecutionException.getCause()).thenReturn(throwable);
     Mockito.doThrow(mockExecutionException).when(mockBuildImageSteps).run();
 

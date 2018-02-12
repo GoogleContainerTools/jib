@@ -64,8 +64,8 @@ class PullAndCacheBaseImageLayerStep implements Callable<CachedLayer> {
       RegistryClient registryClient =
           new RegistryClient(
               pullAuthorizationFuture.get(),
-              buildConfiguration.getBaseImageServerUrl(),
-              buildConfiguration.getBaseImageName());
+              buildConfiguration.getBaseImageRegistry(),
+              buildConfiguration.getBaseImageRepository());
 
       // Checks if the layer already exists in the cache.
       CachedLayer cachedLayer = new CacheChecker(cache).getLayer(layerDigest);
