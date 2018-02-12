@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder;
 
+import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.registry.DockerCredentialRetriever;
 import com.google.cloud.tools.jib.registry.NonexistentDockerCredentialHelperException;
@@ -23,10 +24,10 @@ import com.google.cloud.tools.jib.registry.NonexistentServerUrlDockerCredentialH
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
-/** Attempts to retrieve registry credentials for a registry. */
+/** Attempts to retrieve registry credentials. */
 class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
 
-  private static final String DESCRIPTION = "Retrieving registry credentials";
+  private static final String DESCRIPTION = "Retrieving registry credentials for %s";
 
   private final BuildConfiguration buildConfiguration;
   private final String registry;
@@ -38,36 +39,41 @@ class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
 
   @Override
   public Authorization call() throws IOException, NonexistentDockerCredentialHelperException {
-    // Tries to get registry credentials from Docker credential helpers.
-    for (String credentialHelperSuffix : buildConfiguration.getCredentialHelperNames()) {
-      // Attempts to retrieve authorization for the registry using
-      // docker-credential-[credentialSource].
-      try {
-        Authorization authorization =
-            new DockerCredentialRetriever(registry, credentialHelperSuffix).retrieve();
-        logGotCredentialsFrom("docker-credential-" + credentialHelperSuffix);
-        return authorization;
+    try (Timer ignored =
+             new Timer(
+                 buildConfiguration.getBuildLogger(),
+                 String.format(DESCRIPTION, buildConfiguration.getTargetRegistry()))) {
+      // Tries to get registry credentials from Docker credential helpers.
+      for (String credentialHelperSuffix : buildConfiguration.getCredentialHelperNames()) {
+        // Attempts to retrieve authorization for the registry using
+        // docker-credential-[credentialSource].
+        try {
+          Authorization authorization =
+              new DockerCredentialRetriever(registry, credentialHelperSuffix).retrieve();
+          logGotCredentialsFrom("docker-credential-" + credentialHelperSuffix);
+          return authorization;
 
-      } catch (NonexistentServerUrlDockerCredentialHelperException ex) {
-        // No authorization is found, so continues on to the next credential helper.
+        } catch (NonexistentServerUrlDockerCredentialHelperException ex) {
+          // No authorization is found, so continues on to the next credential helper.
+        }
       }
-    }
 
-    // Tries to get registry credentials from known registry credentials.
-    if (buildConfiguration.getKnownRegistryCredentials().has(registry)) {
-      logGotCredentialsFrom(
-          buildConfiguration.getKnownRegistryCredentials().getCredentialSource(registry));
-      return buildConfiguration.getKnownRegistryCredentials().getAuthorization(registry);
-    }
+      // Tries to get registry credentials from known registry credentials.
+      if (buildConfiguration.getKnownRegistryCredentials().has(registry)) {
+        logGotCredentialsFrom(
+            buildConfiguration.getKnownRegistryCredentials().getCredentialSource(registry));
+        return buildConfiguration.getKnownRegistryCredentials().getAuthorization(registry);
+      }
 
-    /*
-     * If no credentials found, give an info (not warning because in most cases, the base image is
-     * public and does not need extra credentials) and return null.
-     */
-    buildConfiguration
-        .getBuildLogger()
-        .info("No credentials could be retrieved for registry " + registry);
-    return null;
+      /*
+       * If no credentials found, give an info (not warning because in most cases, the base image is
+       * public and does not need extra credentials) and return null.
+       */
+      buildConfiguration
+          .getBuildLogger()
+          .info("No credentials could be retrieved for registry " + registry);
+      return null;
+    }
   }
 
   private void logGotCredentialsFrom(String credentialSource) {
