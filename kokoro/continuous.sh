@@ -6,10 +6,13 @@ set -x
 # For MacOS builds, link Docker to run as 'docker'.
 export PATH=$PATH:/Applications/Docker.app/Contents/Resources/bin
 
+ls /Applications/Docker.app/Contents/Resources/bin || true
+
 # Runs docker daemon.
 sudo service docker start || true
 
-dockerd
+sudo dockerd || true
+
 
 # Stops any left-over containers.
 docker stop $(docker container ls --quiet) || true
