@@ -33,6 +33,17 @@ import javax.annotation.Nullable;
  */
 public class RegistryCredentials {
 
+  /** Instantiates with no credentials. */
+  public static RegistryCredentials none() {
+    return new RegistryCredentials();
+  }
+
+  /** Instantiates with credentials for a single registry. */
+  public static RegistryCredentials of(
+      String registry, String credentialSource, Authorization authorization) {
+    return new RegistryCredentials().store(registry, credentialSource, authorization);
+  }
+
   /**
    * Retrieves credentials for {@code registries} using the credential helpers referred to by {@code
    * credentialHelperSuffixes}.
@@ -48,11 +59,16 @@ public class RegistryCredentials {
     // TODO: These can be done in parallel.
     for (String registry : registries) {
       for (String credentialHelperSuffix : credentialHelperSuffixes) {
-        Authorization authorization = retrieveCredentials(registry, credentialHelperSuffix);
-        if (authorization != null) {
+        // Attempts to retrieve authorization for the registry using
+        // docker-credential-[credentialSource].
+        try {
+          registryCredentials.store(
+              registry,
+              "docker-credential-" + credentialHelperSuffix,
+              new DockerCredentialRetriever(registry, credentialHelperSuffix).retrieve());
 
-          registryCredentials.store(registry, credentialHelperSuffix, authorization);
-          break;
+        } catch (NonexistentServerUrlDockerCredentialHelperException ex) {
+          // No authorization is found, so continues on to the next credential helper.
         }
       }
     }
@@ -60,48 +76,54 @@ public class RegistryCredentials {
   }
 
   /**
-   * Attempts to retrieve authorization for {@code registry} using docker-credential-{@code
-   * credentialHelperSuffix}.
+   * Instantiates from a credential source and a map of registry credentials.
    *
-   * @return the retrieved credentials, or {@code null} if not found
+   * @param credentialSource the source of the credentials, useful for informing users where the
+   *     credentials came from
+   * @param registryCredentialMap a map from registries to their respective credentials
    */
-  @Nullable
-  private static Authorization retrieveCredentials(String registry, String credentialHelperSuffix)
-      throws IOException, NonexistentDockerCredentialHelperException {
-    try {
-      DockerCredentialRetriever dockerCredentialRetriever =
-          new DockerCredentialRetriever(registry, credentialHelperSuffix);
-
-      return dockerCredentialRetriever.retrieve();
-
-    } catch (NonexistentServerUrlDockerCredentialHelperException ex) {
-      // Returns null if no authorization is found.
-      return null;
+  public static RegistryCredentials from(
+      String credentialSource, Map<String, Authorization> registryCredentialMap) {
+    RegistryCredentials registryCredentials = new RegistryCredentials();
+    for (Map.Entry<String, Authorization> registryCredential : registryCredentialMap.entrySet()) {
+      registryCredentials.store(
+          registryCredential.getKey(), credentialSource, registryCredential.getValue());
     }
+    return registryCredentials;
   }
 
-  /** Pair of (Docker credential helper name, {@link Authorization}). */
-  private static class CredentialHelperAuthorizationPair {
+  /** Pair of (source of credentials, {@link Authorization}). */
+  private static class AuthorizationSourcePair {
 
-    private final String credentialHelperSuffix;
+    /**
+     * A string representation of where the credentials were retrieved from. This is useful for
+     * letting the user know which credentials were used.
+     */
+    private final String credentialSource;
+
     private final Authorization authorization;
 
-    private CredentialHelperAuthorizationPair(
-        String credentialHelperSuffix, Authorization authorization) {
-      this.credentialHelperSuffix = credentialHelperSuffix;
+    private AuthorizationSourcePair(String credentialSource, Authorization authorization) {
+      this.credentialSource = credentialSource;
       this.authorization = authorization;
     }
   }
 
   /** Maps from registry to the credentials for that registry. */
-  private final Map<String, CredentialHelperAuthorizationPair> credentials = new HashMap<>();
+  private final Map<String, AuthorizationSourcePair> credentials = new HashMap<>();
 
   /** Instantiate using {@link #from}. */
   private RegistryCredentials() {};
 
-  private void store(String registry, String credentialHelperSuffix, Authorization authorization) {
-    credentials.put(
-        registry, new CredentialHelperAuthorizationPair(credentialHelperSuffix, authorization));
+  private RegistryCredentials store(
+      String registry, String credentialSource, Authorization authorization) {
+    credentials.put(registry, new AuthorizationSourcePair(credentialSource, authorization));
+    return this;
+  }
+
+  /** @return {@code true} if there are credentials for {@code registry}; {@code false} otherwise */
+  public boolean has(String registry) {
+    return credentials.containsKey(registry);
   }
 
   /**
@@ -110,7 +132,7 @@ public class RegistryCredentials {
    */
   @Nullable
   public Authorization getAuthorization(String registry) {
-    if (!credentials.containsKey(registry)) {
+    if (!has(registry)) {
       return null;
     }
     return credentials.get(registry).authorization;
@@ -121,10 +143,10 @@ public class RegistryCredentials {
    *     registry}, or {@code null} if none exists
    */
   @Nullable
-  public String getCredentialHelperUsed(String registry) {
-    if (!credentials.containsKey(registry)) {
+  public String getCredentialSource(String registry) {
+    if (!has(registry)) {
       return null;
     }
-    return credentials.get(registry).credentialHelperSuffix;
+    return credentials.get(registry).credentialSource;
   }
 }

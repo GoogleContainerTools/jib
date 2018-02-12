@@ -24,7 +24,7 @@ public class RegistryUnauthorizedException extends RegistryException {
   private final String imageReference;
 
   /** @param imageReference identifies the image registry and repository that denied access */
-  RegistryUnauthorizedException(String imageReference, HttpResponseException cause) {
+  public RegistryUnauthorizedException(String imageReference, HttpResponseException cause) {
     super(cause);
     this.imageReference = imageReference;
   }

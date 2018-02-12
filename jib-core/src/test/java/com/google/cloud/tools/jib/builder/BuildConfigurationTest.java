@@ -41,21 +41,21 @@ public class BuildConfigurationTest {
 
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder()
-            .setBaseImageServerUrl(expectedBaseImageServerUrl)
-            .setBaseImageName(expectedBaseImageName)
+            .setBaseImageRegistry(expectedBaseImageServerUrl)
+            .setBaseImageRepository(expectedBaseImageName)
             .setBaseImageTag(expectedBaseImageTag)
-            .setTargetServerUrl(expectedTargetServerUrl)
-            .setTargetImageName(expectedTargetImageName)
+            .setTargetRegistry(expectedTargetServerUrl)
+            .setTargetRepository(expectedTargetImageName)
             .setTargetTag(expectedTargetTag)
             .setCredentialHelperNames(expectedCredentialHelperNames)
             .setMainClass(expectedMainClass)
             .setJvmFlags(expectedJvmFlags)
             .build();
-    Assert.assertEquals(expectedBaseImageServerUrl, buildConfiguration.getBaseImageServerUrl());
-    Assert.assertEquals(expectedBaseImageName, buildConfiguration.getBaseImageName());
+    Assert.assertEquals(expectedBaseImageServerUrl, buildConfiguration.getBaseImageRegistry());
+    Assert.assertEquals(expectedBaseImageName, buildConfiguration.getBaseImageRepository());
     Assert.assertEquals(expectedBaseImageTag, buildConfiguration.getBaseImageTag());
-    Assert.assertEquals(expectedTargetServerUrl, buildConfiguration.getTargetServerUrl());
-    Assert.assertEquals(expectedTargetImageName, buildConfiguration.getTargetImageName());
+    Assert.assertEquals(expectedTargetServerUrl, buildConfiguration.getTargetRegistry());
+    Assert.assertEquals(expectedTargetImageName, buildConfiguration.getTargetRepository());
     Assert.assertEquals(expectedTargetTag, buildConfiguration.getTargetTag());
     Assert.assertEquals(
         expectedCredentialHelperNames, buildConfiguration.getCredentialHelperNames());

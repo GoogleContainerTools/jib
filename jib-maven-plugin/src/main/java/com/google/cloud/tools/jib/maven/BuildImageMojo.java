@@ -16,15 +16,20 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.BuildImageSteps;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
+import com.google.cloud.tools.jib.http.Authorization;
+import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
+import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
@@ -32,11 +37,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 import org.apache.http.conn.HttpHostConnectException;
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -45,6 +52,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.settings.Server;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 
 /** Builds a container image. */
@@ -66,6 +74,9 @@ public class BuildImageMojo extends AbstractMojo {
 
   @Parameter(defaultValue = "${project}", readonly = true)
   private MavenProject project;
+
+  @Parameter(defaultValue = "${session}", readonly = true)
+  private MavenSession session;
 
   @Parameter(defaultValue = "gcr.io/distroless/java", required = true)
   private String from;
@@ -108,10 +119,27 @@ public class BuildImageMojo extends AbstractMojo {
 
     SourceFilesConfiguration sourceFilesConfiguration = getSourceFilesConfiguration();
 
-    // Parse 'from' into image reference.
+    // Parses 'from' into image reference.
     ImageReference baseImage = getBaseImageReference();
 
-    // Infer common credential helper names if credHelpers is not set.
+    // Checks Maven settings for registry credentials.
+    session.getSettings().getServer(baseImage.getRegistry());
+    Map<String, Authorization> registryCredentials = new HashMap<>(2);
+    // Retrieves credentials for the base image registry.
+    Authorization baseImageRegistryCredentials =
+        getRegistryCredentialsFromSettings(baseImage.getRegistry());
+    if (baseImageRegistryCredentials != null) {
+      registryCredentials.put(baseImage.getRegistry(), baseImageRegistryCredentials);
+    }
+    // Retrieves credentials for the target registry.
+    Authorization targetRegistryCredentials = getRegistryCredentialsFromSettings(registry);
+    if (targetRegistryCredentials != null) {
+      registryCredentials.put(registry, targetRegistryCredentials);
+    }
+    RegistryCredentials mavenSettingsCredentials =
+        RegistryCredentials.from("Maven settings", registryCredentials);
+
+    // Infers common credential helper names if credHelpers is not set.
     if (credHelpers == null) {
       credHelpers = new ArrayList<>(2);
       String baseImageRegistryCredHelper = inferCredHelper(baseImage.getRegistry());
@@ -127,13 +155,14 @@ public class BuildImageMojo extends AbstractMojo {
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder()
             .setBuildLogger(new MavenBuildLogger(getLog()))
-            .setBaseImageServerUrl(baseImage.getRegistry())
-            .setBaseImageName(baseImage.getRepository())
+            .setBaseImageRegistry(baseImage.getRegistry())
+            .setBaseImageRepository(baseImage.getRepository())
             .setBaseImageTag(baseImage.getTag())
-            .setTargetServerUrl(registry)
-            .setTargetImageName(repository)
+            .setTargetRegistry(registry)
+            .setTargetRepository(repository)
             .setTargetTag(tag)
             .setCredentialHelperNames(credHelpers)
+            .setKnownRegistryCredentials(mavenSettingsCredentials)
             .setMainClass(mainClass)
             .setJvmFlags(jvmFlags)
             .setEnvironment(environment)
@@ -179,6 +208,8 @@ public class BuildImageMojo extends AbstractMojo {
           cacheMetadataCorruptedException, "run 'mvn clean' to clear the cache");
 
     } catch (ExecutionException executionException) {
+      BuildConfiguration buildConfiguration = buildImageSteps.getBuildConfiguration();
+
       if (executionException.getCause() instanceof HttpHostConnectException) {
         // Failed to connect to registry.
         throwMojoExecutionExceptionWithHelpMessage(
@@ -186,34 +217,18 @@ public class BuildImageMojo extends AbstractMojo {
             "make sure your Internet is up and that the registry you are pushing to exists");
 
       } else if (executionException.getCause() instanceof RegistryUnauthorizedException) {
-        BuildConfiguration buildConfiguration = buildImageSteps.getBuildConfiguration();
+        handleRegistryUnauthorizedException(
+            (RegistryUnauthorizedException) executionException.getCause(), buildConfiguration);
 
-        RegistryUnauthorizedException registryUnauthorizedException =
-            (RegistryUnauthorizedException) executionException.getCause();
-        if (registryUnauthorizedException.getHttpResponseException().getStatusCode()
-            == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
-          // No permissions for registry/repository.
-          throwMojoExecutionExceptionWithHelpMessage(
-              registryUnauthorizedException,
-              "make sure your have permissions for "
-                  + registryUnauthorizedException.getImageReference());
-
-        } else if (buildConfiguration.getCredentialHelperNames() == null
-            || buildConfiguration.getCredentialHelperNames().isEmpty()) {
-          // No credential helpers not defined.
-          throwMojoExecutionExceptionWithHelpMessage(
-              registryUnauthorizedException,
-              "set a credential helper name with the configuration 'credHelpers'");
-
-        } else {
-          // Credential helper probably was not configured correctly or did not have the necessary
-          // credentials.
-          throwMojoExecutionExceptionWithHelpMessage(
-              registryUnauthorizedException,
-              "make sure your credential helper for '"
-                  + registryUnauthorizedException.getImageReference()
-                  + "' is set up correctly");
-        }
+      } else if (executionException.getCause() instanceof RegistryAuthenticationFailedException
+          && executionException.getCause().getCause() instanceof HttpResponseException) {
+        handleRegistryUnauthorizedException(
+            new RegistryUnauthorizedException(
+                buildConfiguration.getTargetRegistry()
+                    + "/"
+                    + buildConfiguration.getTargetRepository(),
+                (HttpResponseException) executionException.getCause().getCause()),
+            buildConfiguration);
 
       } else {
         throwMojoExecutionExceptionWithHelpMessage(executionException.getCause(), null);
@@ -244,6 +259,17 @@ public class BuildImageMojo extends AbstractMojo {
       }
     }
     return null;
+  }
+
+  /** Attempts to retrieve credentials for {@code registry} from Maven settings. */
+  @Nullable
+  private Authorization getRegistryCredentialsFromSettings(String registry) {
+    Server registryServerSettings = session.getSettings().getServer(registry);
+    if (registryServerSettings == null) {
+      return null;
+    }
+    return Authorizations.withBasicCredentials(
+        registryServerSettings.getUsername(), registryServerSettings.getPassword());
   }
 
   /** Checks validity of plugin parameters. */
@@ -335,6 +361,40 @@ public class BuildImageMojo extends AbstractMojo {
 
     } catch (InvalidImageReferenceException ex) {
       throw new MojoFailureException("Parameter 'from' is invalid", ex);
+    }
+  }
+
+  private void handleRegistryUnauthorizedException(
+      RegistryUnauthorizedException registryUnauthorizedException,
+      BuildConfiguration buildConfiguration)
+      throws MojoExecutionException {
+    if (registryUnauthorizedException.getHttpResponseException().getStatusCode()
+        == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
+      // No permissions for registry/repository.
+      throwMojoExecutionExceptionWithHelpMessage(
+          registryUnauthorizedException,
+          "make sure your have permissions for "
+              + registryUnauthorizedException.getImageReference());
+
+    } else if (buildConfiguration.getCredentialHelperNames() == null
+        || buildConfiguration.getCredentialHelperNames().isEmpty()
+        || buildConfiguration.getKnownRegistryCredentials() == null) {
+      // No credential helpers not defined.
+      throwMojoExecutionExceptionWithHelpMessage(
+          registryUnauthorizedException,
+          "set a credential helper name with the configuration 'credHelpers' or "
+              + "set credentials for '"
+              + registryUnauthorizedException.getImageReference()
+              + "' in your Maven settings");
+
+    } else {
+      // Credential helper probably was not configured correctly or did not have the necessary
+      // credentials.
+      throwMojoExecutionExceptionWithHelpMessage(
+          registryUnauthorizedException,
+          "make sure your credentials for '"
+              + registryUnauthorizedException.getImageReference()
+              + "' is set up correctly");
     }
   }
 

@@ -44,10 +44,10 @@ class AuthenticationMethodRetriever implements RegistryEndpointProvider<Registry
   }
 
   @Override
-  public RegistryAuthenticator handleResponse(Response response) throws RegistryErrorException {
-    throw new RegistryErrorExceptionBuilder(getActionDescription())
-        .addReason("Did not receive '401 Unauthorized' response")
-        .build();
+  @Nullable
+  public RegistryAuthenticator handleResponse(Response response) {
+    // The registry does not require authentication.
+    return null;
   }
 
   @Override
@@ -66,6 +66,7 @@ class AuthenticationMethodRetriever implements RegistryEndpointProvider<Registry
   }
 
   @Override
+  @Nullable
   public RegistryAuthenticator handleHttpResponseException(
       HttpResponseException httpResponseException)
       throws HttpResponseException, RegistryErrorException {
