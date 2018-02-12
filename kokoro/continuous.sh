@@ -4,7 +4,6 @@ set -e
 set -x
 
 which docker
-which docker-ce
 gcloud components install docker-credential-gcr
 
 cd github/jib

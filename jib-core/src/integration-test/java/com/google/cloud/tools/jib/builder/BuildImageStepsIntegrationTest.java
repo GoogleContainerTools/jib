@@ -68,8 +68,8 @@ public class BuildImageStepsIntegrationTest {
     logger.info("Secondary build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
 
     // TODO: Put this in a utility function.
-    Runtime.getRuntime().exec("docker-ce pull localhost:5000/testimage:testtag").waitFor();
-    Process process = Runtime.getRuntime().exec("docker-ce run localhost:5000/testimage:testtag");
+    Runtime.getRuntime().exec("docker pull localhost:5000/testimage:testtag").waitFor();
+    Process process = Runtime.getRuntime().exec("docker run localhost:5000/testimage:testtag");
     try (InputStreamReader inputStreamReader =
         new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)) {
       String output = CharStreams.toString(inputStreamReader);
