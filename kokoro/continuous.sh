@@ -7,7 +7,7 @@ set -x
 export PATH=$PATH:/Applications/Docker.app/Contents/Resources/bin
 
 # Runs docker daemon.
-sudo service docker start
+sudo service docker start || true
 
 docker-machine ls
 eval "$(docker-machine env default)"
