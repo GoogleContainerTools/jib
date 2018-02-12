@@ -186,13 +186,14 @@ Registry credentials can be added to your [Maven settings](https://maven.apache.
     <server>
       <id>MY_REGISTRY</id>
       <username>MY_USERNAME</username>
-      <username>MY_PASSWORD</username>
+      <password>MY_SECRET</password>
     </server>
   </servers>
 </settings>
 ```
 
-The `id` field should be the registry server these credentials are for. 
+* The `id` field should be the registry server these credentials are for. 
+* We *do not* recommend putting your raw password in `settings.xml`.
 
 ## How Jib Works
 
