@@ -7,7 +7,7 @@ set -x
 sudo ln -s /Applications/Docker.app/Contents/Resources/bin/docker /usr/local/bin/docker
 
 # Stops any left-over containers.
-docker stop $(docker container ls -q)
+docker stop $(docker container ls --quiet)
 
 cd github/jib
 
