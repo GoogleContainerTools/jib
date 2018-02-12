@@ -53,13 +53,13 @@ public class LocalRegistry extends ExternalResource {
         "registry:2");
 
     // Pulls 'busybox'.
-    runCommand("docker", "pull", "busybox");
+    runCommand("docker-ce", "pull", "busybox");
 
     // Tags 'busybox' to push to our local registry.
-    runCommand("docker", "tag", "busybox", "localhost:" + port + "/busybox");
+    runCommand("docker-ce", "tag", "busybox", "localhost:" + port + "/busybox");
 
     // Pushes 'busybox' to our local registry.
-    runCommand("docker", "push", "localhost:" + port + "/busybox");
+    runCommand("docker-ce", "push", "localhost:" + port + "/busybox");
   }
 
   /** Stops the local registry. */
@@ -67,10 +67,10 @@ public class LocalRegistry extends ExternalResource {
   protected void after() {
     try {
       // Stops the registry.
-      runCommand("docker", "stop", containerName);
+      runCommand("docker-ce", "stop", containerName);
 
       // Removes the container.
-      runCommand("docker", "rm", "-v", containerName);
+      runCommand("docker-ce", "rm", "-v", containerName);
 
     } catch (InterruptedException | IOException ex) {
       throw new RuntimeException("Could not stop local registry fully: " + containerName, ex);
@@ -85,7 +85,7 @@ public class LocalRegistry extends ExternalResource {
   }
 
   private void printLogs() throws IOException, InterruptedException {
-    Process process = Runtime.getRuntime().exec("docker logs " + containerName);
+    Process process = Runtime.getRuntime().exec("docker-ce logs " + containerName);
     try (InputStreamReader inputStreamReader =
         new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)) {
       System.out.println(CharStreams.toString(inputStreamReader));
