@@ -3,6 +3,9 @@
 set -e
 set -x
 
+# For MacOS builds, link Docker to run as 'docker'.
+ln -s /Applications/Docker.app/Contents/MacOS/Docker /usr/local/bin/docker
+
 cd github/jib
 
 (cd jib-core; ./gradlew clean build integrationTest publishToMavenLocal --info)
