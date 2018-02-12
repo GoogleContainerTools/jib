@@ -41,6 +41,9 @@ public class TarStreamBuilder {
       List<TarArchiveEntry> entries, OutputStream tarByteStream) throws IOException {
     try (TarArchiveOutputStream tarArchiveOutputStream =
         new TarArchiveOutputStream(tarByteStream)) {
+      // Enables PAX extended headers to support long file names.
+      tarArchiveOutputStream.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
+
       for (TarArchiveEntry entry : entries) {
         tarArchiveOutputStream.putArchiveEntry(entry);
         if (entry.isFile()) {
