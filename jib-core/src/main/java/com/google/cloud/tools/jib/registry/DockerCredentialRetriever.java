@@ -109,7 +109,8 @@ public class DockerCredentialRetriever {
 
     } catch (IOException ex) {
       // Checks if the failure is due to a nonexistent credential helper CLI.
-      if (ex.getMessage().contains("No such file or directory")) {
+      if (ex.getMessage().contains("No such file or directory")
+          || ex.getMessage().contains("cannot find the file")) {
         throw new NonexistentDockerCredentialHelperException(credentialHelperSuffix, ex);
       }
       throw ex;
