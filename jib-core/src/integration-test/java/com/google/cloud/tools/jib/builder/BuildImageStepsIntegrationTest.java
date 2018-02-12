@@ -44,11 +44,11 @@ public class BuildImageStepsIntegrationTest {
     SourceFilesConfiguration sourceFilesConfiguration = new TestSourceFilesConfiguration();
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder()
-            .setBaseImageServerUrl("gcr.io")
-            .setBaseImageName("distroless/java")
+            .setBaseImageRegistry("gcr.io")
+            .setBaseImageRepository("distroless/java")
             .setBaseImageTag("latest")
-            .setTargetServerUrl("localhost:5000")
-            .setTargetImageName("testimage")
+            .setTargetRegistry("localhost:5000")
+            .setTargetRepository("testimage")
             .setTargetTag("testtag")
             .setMainClass("HelloWorld")
             .setBuildLogger(new TestBuildLogger())
