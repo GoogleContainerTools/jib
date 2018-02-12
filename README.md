@@ -265,6 +265,8 @@ We currently do not support building to a local Docker daemon. However, this fea
 
 You can still [`docker pull`](https://docs.docker.com/engine/reference/commandline/pull/) the image built with `jib-maven-plugin` to have it available in your local Docker daemon.
 
+You can also [run a local Docker registry](https://docs.docker.com/registry/deploying/) and point Jib to push to the local registry.
+
 ### How do I enable debugging?
 
 *TODO: Provide solution.*
