@@ -42,7 +42,7 @@ public class LocalRegistry extends ExternalResource {
   protected void before() throws Throwable {
     // Runs the Docker registry.
     runCommand(
-        "docker",
+        "docker-ce",
         "run",
         "-d",
         "-p",
