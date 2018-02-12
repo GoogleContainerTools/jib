@@ -35,7 +35,7 @@ public class BuildImageStepsIntegrationTest {
 
   private static final Logger logger = LoggerFactory.getLogger(TestBuildLogger.class);
 
-  private static void assertImage
+  //  private static void assertImage
 
   @Rule public TemporaryFolder temporaryCacheDirectory = new TemporaryFolder();
 
