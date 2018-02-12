@@ -6,7 +6,8 @@ set PATH=%JAVA_HOME%\bin;%PATH%
 
 cd github/jib
 
-docker stop $(docker ps -aq)
+REM Stops any left-over containers.
+call docker stop ('call docker container ls -q')
 
 cd jib-core && call gradlew.bat clean build integrationTest publishToMavenLocal --info && ^
 cd ../jib-maven-plugin && call mvnw.cmd clean install cobertura:cobertura -B -U -X
