@@ -34,7 +34,7 @@ import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 /**
- * Authenticates pull access with a registry service.
+ * Authenticates push/pull access with a registry service.
  *
  * @see <a
  *     href="https://docs.docker.com/registry/spec/auth/token/">https://docs.docker.com/registry/spec/auth/token/</a>
@@ -50,9 +50,15 @@ public class RegistryAuthenticator {
    * @see <a
    *     href="https://docs.docker.com/registry/spec/auth/token/#how-to-authenticate">https://docs.docker.com/registry/spec/auth/token/#how-to-authenticate</a>
    */
+  @Nullable
   static RegistryAuthenticator fromAuthenticationMethod(
       String authenticationMethod, String repository)
       throws RegistryAuthenticationFailedException, MalformedURLException {
+    // If the authentication method starts with 'Basic ', no registry authentication is needed.
+    if (authenticationMethod.matches("^Basic .*")) {
+      return null;
+    }
+
     // Checks that the authentication method starts with 'Bearer '.
     if (!authenticationMethod.matches("^Bearer .*")) {
       throw newRegistryAuthenticationFailedException(authenticationMethod, "Bearer");

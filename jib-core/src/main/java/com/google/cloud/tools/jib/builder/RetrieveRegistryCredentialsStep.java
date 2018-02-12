@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder;
 
+import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.registry.DockerCredentialRetriever;
 import com.google.cloud.tools.jib.registry.NonexistentDockerCredentialHelperException;
@@ -24,10 +25,10 @@ import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
-/** Attempts to retrieve registry credentials for a registry. */
+/** Attempts to retrieve registry credentials. */
 class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
 
-  private static final String DESCRIPTION = "Retrieving registry credentials";
+  private static final String DESCRIPTION = "Retrieving registry credentials for %s";
 
   /**
    * Defines common credential helpers to use as defaults. Maps from registry suffix to credential
@@ -46,46 +47,51 @@ class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
 
   @Override
   public Authorization call() throws IOException, NonexistentDockerCredentialHelperException {
-    // Tries to get registry credentials from Docker credential helpers.
-    for (String credentialHelperSuffix : buildConfiguration.getCredentialHelperNames()) {
-      Authorization authorization = retrieveFromCredentialHelper(credentialHelperSuffix);
-      if (authorization != null) {
-        return authorization;
-      }
-    }
-
-    // Tries to get registry credentials from known registry credentials.
-    if (buildConfiguration.getKnownRegistryCredentials().has(registry)) {
-      logGotCredentialsFrom(
-          buildConfiguration.getKnownRegistryCredentials().getCredentialSource(registry));
-      return buildConfiguration.getKnownRegistryCredentials().getAuthorization(registry);
-    }
-
-    // Tries to infer common credential helpers for known registries.
-    for (String registrySuffix : COMMON_CREDENTIAL_HELPERS.keySet()) {
-      if (registry.endsWith(registrySuffix)) {
-        try {
-          Authorization authorization =
-              retrieveFromCredentialHelper(COMMON_CREDENTIAL_HELPERS.get(registrySuffix));
-          if (authorization != null) {
-            return authorization;
-          }
-
-        } catch (NonexistentDockerCredentialHelperException ex) {
-          // Warns the user that the specified (or inferred) credential helper is not on the system.
-          buildConfiguration.getBuildLogger().warn(ex.getMessage());
+    try (Timer ignored =
+             new Timer(
+                 buildConfiguration.getBuildLogger(),
+                 String.format(DESCRIPTION, buildConfiguration.getTargetRegistry()))) {
+      // Tries to get registry credentials from Docker credential helpers.
+      for (String credentialHelperSuffix : buildConfiguration.getCredentialHelperNames()) {
+        Authorization authorization = retrieveFromCredentialHelper(credentialHelperSuffix);
+        if (authorization != null) {
+          return authorization;
         }
       }
-    }
 
-    /*
-     * If no credentials found, give an info (not warning because in most cases, the base image is
-     * public and does not need extra credentials) and return null.
-     */
-    buildConfiguration
-        .getBuildLogger()
-        .info("No credentials could be retrieved for registry " + registry);
-    return null;
+      // Tries to get registry credentials from known registry credentials.
+      if (buildConfiguration.getKnownRegistryCredentials().has(registry)) {
+        logGotCredentialsFrom(
+            buildConfiguration.getKnownRegistryCredentials().getCredentialSource(registry));
+        return buildConfiguration.getKnownRegistryCredentials().getAuthorization(registry);
+      }
+
+      // Tries to infer common credential helpers for known registries.
+      for (String registrySuffix : COMMON_CREDENTIAL_HELPERS.keySet()) {
+        if (registry.endsWith(registrySuffix)) {
+          try {
+            Authorization authorization =
+                retrieveFromCredentialHelper(COMMON_CREDENTIAL_HELPERS.get(registrySuffix));
+            if (authorization != null) {
+              return authorization;
+            }
+
+          } catch (NonexistentDockerCredentialHelperException ex) {
+            // Warns the user that the specified (or inferred) credential helper is not on the system.
+            buildConfiguration.getBuildLogger().warn(ex.getMessage());
+          }
+        }
+      }
+
+      /*
+       * If no credentials found, give an info (not warning because in most cases, the base image is
+       * public and does not need extra credentials) and return null.
+       */
+      buildConfiguration
+          .getBuildLogger()
+          .info("No credentials could be retrieved for registry " + registry);
+      return null;
+    }
   }
 
   /**

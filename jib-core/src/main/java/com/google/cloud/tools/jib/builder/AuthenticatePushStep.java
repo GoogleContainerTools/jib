@@ -48,7 +48,7 @@ class AuthenticatePushStep implements Callable<Authorization> {
     this.registryCredentialsFuture = registryCredentialsFuture;
   }
 
-  /** Depends on nothing. */
+  /** Depends on {@link RetrieveRegistryCredentialsStep}. */
   @Override
   @Nullable
   public Authorization call()
@@ -58,11 +58,12 @@ class AuthenticatePushStep implements Callable<Authorization> {
         new Timer(
             buildConfiguration.getBuildLogger(),
             String.format(DESCRIPTION, buildConfiguration.getTargetRegistry()))) {
+      Authorization registryCredentials = NonBlockingFutures.get(registryCredentialsFuture);
       RegistryAuthenticator registryAuthenticator =
           RegistryAuthenticators.forOther(
               buildConfiguration.getTargetRegistry(), buildConfiguration.getTargetRepository());
       if (registryAuthenticator == null) {
-        return null;
+        return registryCredentials;
       }
       return registryAuthenticator
           .setAuthorization(NonBlockingFutures.get(registryCredentialsFuture))
