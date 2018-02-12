@@ -202,9 +202,8 @@ public class BuildImageMojo extends AbstractMojo {
           && executionException.getCause().getCause() instanceof HttpResponseException) {
         handleRegistryUnauthorizedException(
             new RegistryUnauthorizedException(
-                buildConfiguration.getTargetRegistry()
-                    + "/"
-                    + buildConfiguration.getTargetRepository(),
+                buildConfiguration.getTargetRegistry(),
+                buildConfiguration.getTargetRepository(),
                 (HttpResponseException) executionException.getCause().getCause()),
             buildConfiguration);
 
@@ -336,13 +335,16 @@ public class BuildImageMojo extends AbstractMojo {
 
     } else if ((buildConfiguration.getCredentialHelperNames() == null
             || buildConfiguration.getCredentialHelperNames().isEmpty())
-        && buildConfiguration.getKnownRegistryCredentials() == null) {
+        && (buildConfiguration.getKnownRegistryCredentials() == null
+            || !buildConfiguration
+                .getKnownRegistryCredentials()
+                .has(registryUnauthorizedException.getRegistry()))) {
       // No credential helpers not defined.
       throwMojoExecutionExceptionWithHelpMessage(
           registryUnauthorizedException,
           "set a credential helper name with the configuration 'credHelpers' or "
               + "set credentials for '"
-              + registryUnauthorizedException.getImageReference()
+              + registryUnauthorizedException.getRegistry()
               + "' in your Maven settings");
 
     } else {
@@ -351,7 +353,7 @@ public class BuildImageMojo extends AbstractMojo {
       throwMojoExecutionExceptionWithHelpMessage(
           registryUnauthorizedException,
           "make sure your credentials for '"
-              + registryUnauthorizedException.getImageReference()
+              + registryUnauthorizedException.getRegistry()
               + "' are set up correctly");
     }
   }

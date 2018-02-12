@@ -131,8 +131,7 @@ public class BuildImageMojoTest {
           IOException {
     Mockito.when(mockRegistryUnauthorizedException.getHttpResponseException())
         .thenReturn(mockHttpResponseException);
-    Mockito.when(mockRegistryUnauthorizedException.getImageReference())
-        .thenReturn("someregistry/somerepository");
+    Mockito.when(mockRegistryUnauthorizedException.getRegistry()).thenReturn("someregistry");
     Mockito.when(mockHttpResponseException.getStatusCode()).thenReturn(-1); // Unknown
 
     Mockito.when(mockExecutionException.getCause()).thenReturn(mockRegistryUnauthorizedException);
@@ -144,7 +143,7 @@ public class BuildImageMojoTest {
 
     } catch (MojoExecutionException ex) {
       Assert.assertEquals(
-          "Build image failed, perhaps you should set a credential helper name with the configuration 'credHelpers' or set credentials for 'someregistry/somerepository' in your Maven settings",
+          "Build image failed, perhaps you should set a credential helper name with the configuration 'credHelpers' or set credentials for 'someregistry' in your Maven settings",
           ex.getMessage());
       Assert.assertEquals(mockRegistryUnauthorizedException, ex.getCause());
     }
@@ -156,8 +155,7 @@ public class BuildImageMojoTest {
           IOException {
     Mockito.when(mockRegistryUnauthorizedException.getHttpResponseException())
         .thenReturn(mockHttpResponseException);
-    Mockito.when(mockRegistryUnauthorizedException.getImageReference())
-        .thenReturn("someregistry/somerepository");
+    Mockito.when(mockRegistryUnauthorizedException.getRegistry()).thenReturn("someregistry");
     Mockito.when(mockHttpResponseException.getStatusCode()).thenReturn(-1); // Unknown
 
     Mockito.when(mockExecutionException.getCause()).thenReturn(mockRegistryUnauthorizedException);
@@ -172,7 +170,7 @@ public class BuildImageMojoTest {
 
     } catch (MojoExecutionException ex) {
       Assert.assertEquals(
-          "Build image failed, perhaps you should make sure your credentials for 'someregistry/somerepository' are set up correctly",
+          "Build image failed, perhaps you should make sure your credentials for 'someregistry' are set up correctly",
           ex.getMessage());
       Assert.assertEquals(mockRegistryUnauthorizedException, ex.getCause());
     }
