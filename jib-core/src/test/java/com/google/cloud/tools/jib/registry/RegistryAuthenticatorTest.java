@@ -25,15 +25,24 @@ import org.junit.Test;
 public class RegistryAuthenticatorTest {
 
   @Test
-  public void testFromAuthenticationMethod()
+  public void testFromAuthenticationMethod_bearer()
       throws MalformedURLException, RegistryAuthenticationFailedException {
     RegistryAuthenticator registryAuthenticator =
         RegistryAuthenticator.fromAuthenticationMethod(
             "Bearer realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
             "someimage");
     Assert.assertEquals(
-        new URL("https://somerealm?service=someservice&scope=repository:someimage:pull"),
-        registryAuthenticator.getAuthenticationUrl());
+        new URL("https://somerealm?service=someservice&scope=repository:someimage:scope"),
+        registryAuthenticator.getAuthenticationUrl("scope"));
+  }
+
+  @Test
+  public void testFromAuthenticationMethod_basic()
+      throws MalformedURLException, RegistryAuthenticationFailedException {
+    Assert.assertNull(
+        RegistryAuthenticator.fromAuthenticationMethod(
+            "Basic realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
+            "someimage"));
   }
 
   @Test
@@ -41,7 +50,7 @@ public class RegistryAuthenticatorTest {
     try {
       RegistryAuthenticator.fromAuthenticationMethod(
           "realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"", "someimage");
-      Assert.fail("Authentication method without 'Bearer ' should fail");
+      Assert.fail("Authentication method without 'Bearer ' or 'Basic ' should fail");
 
     } catch (RegistryAuthenticationFailedException ex) {
       Assert.assertEquals(

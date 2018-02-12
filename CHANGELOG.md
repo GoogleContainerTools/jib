@@ -13,9 +13,10 @@ All notable changes to this project will be documented in this file.
 - Simple example `helloworld` project under `examples/` ([#62](https://github.com/google/jib/pull/62))
 - Better error messages when pushing an image manifest ([#63](https://github.com/google/jib/pull/63))
 - Validates target image configuration ([#63](https://github.com/google/jib/pull/63))
+- Configure multiple credential helpers with `credHelpers` ([#68](https://github.com/google/jib/pull/68))
+- Configure registry credentials with Maven settings ([#81](https://github.com/google/jib/pull/81))
 
 ### Changed
-- Configure multiple credential helpers with `credHelpers` ([#68](https://github.com/google/jib/pull/68))
 - Removed configuration `credentialHelperName` ([#68](https://github.com/google/jib/pull/68))
 
 ### Fixed
@@ -23,3 +24,4 @@ All notable changes to this project will be documented in this file.
 - Infers common credential helper names (for GCR and ECR) ([#64](https://github.com/google/jib/pull/64))
 - Cannot use private base image ([#68](https://github.com/google/jib/pull/68))
 - Building applications with no resources ([#73](https://github.com/google/jib/pull/73))
+- Pushing to registries like Docker Hub and ACR ([#75](https://github.com/google/jib/issues/75))

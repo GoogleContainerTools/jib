@@ -49,6 +49,7 @@ interface RegistryEndpointProvider<T> {
   List<String> getAccept();
 
   /** Handles the response specific to the registry action. */
+  @Nullable
   T handleResponse(Response response) throws IOException, RegistryException;
 
   /**
@@ -58,6 +59,7 @@ interface RegistryEndpointProvider<T> {
    * @throws HttpResponseException {@code httpResponseException} if {@code httpResponseException}
    *     could not be handled
    */
+  @Nullable
   default T handleHttpResponseException(HttpResponseException httpResponseException)
       throws HttpResponseException, RegistryErrorException {
     throw httpResponseException;
