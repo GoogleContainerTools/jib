@@ -90,8 +90,8 @@ class BuildAndPushContainerConfigurationStep implements Callable<ListenableFutur
       RegistryClient registryClient =
           new RegistryClient(
                   NonBlockingFutures.get(pushAuthorizationFuture),
-                  buildConfiguration.getTargetServerUrl(),
-                  buildConfiguration.getTargetImageName())
+                  buildConfiguration.getTargetRegistry(),
+                  buildConfiguration.getTargetRepository())
               .setTimer(timer);
 
       // Constructs the image.

@@ -55,15 +55,8 @@ public class AuthenticationMethodRetrieverTest {
 
   @Test
   public void testHandleResponse() {
-    try {
-      testAuthenticationMethodRetriever.handleResponse(Mockito.mock(Response.class));
-      Assert.fail("Authentication method retriever should only handle HTTP error responses");
-
-    } catch (RegistryErrorException ex) {
-      Assert.assertThat(
-          ex.getMessage(),
-          CoreMatchers.containsString("Did not receive '401 Unauthorized' response"));
-    }
+    Assert.assertNull(
+        testAuthenticationMethodRetriever.handleResponse(Mockito.mock(Response.class)));
   }
 
   @Test
@@ -155,7 +148,7 @@ public class AuthenticationMethodRetrieverTest {
         testAuthenticationMethodRetriever.handleHttpResponseException(mockHttpResponseException);
 
     Assert.assertEquals(
-        new URL("https://somerealm?service=someservice&scope=repository:someImageName:pull"),
-        registryAuthenticator.getAuthenticationUrl());
+        new URL("https://somerealm?service=someservice&scope=repository:someImageName:someScope"),
+        registryAuthenticator.getAuthenticationUrl("someScope"));
   }
 }

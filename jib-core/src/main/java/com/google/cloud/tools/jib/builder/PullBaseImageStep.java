@@ -61,8 +61,8 @@ class PullBaseImageStep implements Callable<Image> {
       RegistryClient registryClient =
           new RegistryClient(
               NonBlockingFutures.get(pullAuthorizationFuture),
-              buildConfiguration.getBaseImageServerUrl(),
-              buildConfiguration.getBaseImageName());
+              buildConfiguration.getBaseImageRegistry(),
+              buildConfiguration.getBaseImageRepository());
 
       ManifestTemplate manifestTemplate =
           registryClient.pullManifest(buildConfiguration.getBaseImageTag());

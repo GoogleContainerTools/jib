@@ -101,13 +101,15 @@ public class RegistryClient {
     this.registryEndpointProperties = new RegistryEndpointProperties(serverUrl, imageName);
   }
 
-  /** Gets the {@link RegistryAuthenticator} to authenticate pulls from the registry. */
+  /**
+   * @return the {@link RegistryAuthenticator} to authenticate pulls/pushes with the registry, or
+   *     {@code null} if no token authentication is necessary
+   */
+  @Nullable
   public RegistryAuthenticator getRegistryAuthenticator() throws IOException, RegistryException {
     // Gets the WWW-Authenticate header (eg. 'WWW-Authenticate: Bearer
     // realm="https://gcr.io/v2/token",service="gcr.io"')
-    AuthenticationMethodRetriever authenticationMethodRetriever =
-        new AuthenticationMethodRetriever(registryEndpointProperties);
-    return callRegistryEndpoint(authenticationMethodRetriever);
+    return callRegistryEndpoint(new AuthenticationMethodRetriever(registryEndpointProperties));
   }
 
   /**
@@ -268,9 +270,8 @@ public class RegistryClient {
         } else if (httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_UNAUTHORIZED
             || httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
           throw new RegistryUnauthorizedException(
-              registryEndpointProperties.getServerUrl()
-                  + "/"
-                  + registryEndpointProperties.getImageName(),
+              registryEndpointProperties.getServerUrl(),
+              registryEndpointProperties.getImageName(),
               httpResponseException);
 
         } else if (httpResponseException.getStatusCode()

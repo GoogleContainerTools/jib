@@ -56,8 +56,8 @@ class PushBlobStep implements Callable<Void> {
       RegistryClient registryClient =
           new RegistryClient(
                   pushAuthorizationFuture.get(),
-                  buildConfiguration.getTargetServerUrl(),
-                  buildConfiguration.getTargetImageName())
+                  buildConfiguration.getTargetRegistry(),
+                  buildConfiguration.getTargetRepository())
               .setTimer(timer);
 
       if (registryClient.checkBlob(layerDigest) != null) {

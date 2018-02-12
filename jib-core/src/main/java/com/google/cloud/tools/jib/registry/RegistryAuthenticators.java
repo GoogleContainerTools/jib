@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.registry;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import javax.annotation.Nullable;
 
 /** Static initializers for {@link RegistryAuthenticator}. */
 public abstract class RegistryAuthenticators {
@@ -33,6 +34,7 @@ public abstract class RegistryAuthenticators {
     }
   }
 
+  @Nullable
   public static RegistryAuthenticator forOther(String serverUrl, String repository)
       throws RegistryAuthenticationFailedException, IOException, RegistryException {
     try {
