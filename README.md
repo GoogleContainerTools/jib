@@ -15,7 +15,7 @@ Jib is a Maven plugin for building container images for your Java applications.
 
 <!--* Reproducible - Rebuilding your container image with the same contents always generates the same image. Never trigger an unnecessary update again.-->
 
-* **Native** - Reduce your CLI dependencies. Build your Docker image from within Maven <!--or Gradle--> and push to any registry of your choice. No more writing Dockerfiles and calling docker build/push.
+* **Native** - Reduce your CLI dependencies. Build your Docker image from within Maven <!--or Gradle--> and push to any registry of your choice. *No more writing Dockerfiles and calling docker build/push.*
 
 ## Quickstart
 
@@ -27,7 +27,7 @@ In your Maven Java project, add the plugin to your `pom.xml`:
 <plugin>
   <groupId>com.google.cloud.tools</groupId>
   <artifactId>jib-maven-plugin</artifactId>
-  <version>0.1.0</version>
+  <version>0.1.1</version>
   <configuration>
     <registry>myregistry</registry>
     <repository>myapp</repository>
@@ -41,7 +41,7 @@ Configure the plugin by changing `registry`, `repository`, and `credHelpers` acc
 
 #### Using Google Container Registry (GCR)...
 
-*Make sure you have the [`docker-credential-gcr` command line tool](https://cloud.google.com/container-registry/docs/advanced-authentication#docker_credential_helper). Jib automatically uses `docker-credential-gcr` for obtaining credentials. To use a different credential helper, set the [`credHelpers`](#extended-usage) configuration.*
+*Make sure you have the [`docker-credential-gcr` command line tool](https://cloud.google.com/container-registry/docs/advanced-authentication#docker_credential_helper). Jib automatically uses `docker-credential-gcr` for obtaining credentials. See [Authentication Methods](#authentication-methods) for other ways of authenticating.*
 
 For example, to build the image `gcr.io/my-gcp-project/my-app`, the configuration would be:
 
@@ -54,7 +54,7 @@ For example, to build the image `gcr.io/my-gcp-project/my-app`, the configuratio
 
 #### Using Amazon Elastic Container Registry (ECR)...
 
-*Make sure you have the [`docker-credential-ecr-login` command line tool](https://github.com/awslabs/amazon-ecr-credential-helper). Jib automatically uses `docker-credential-ecr-login` for obtaining credentials. To use a different credential helper, set the [`credHelpers`](#extended-usage) configuration.*
+*Make sure you have the [`docker-credential-ecr-login` command line tool](https://github.com/awslabs/amazon-ecr-credential-helper). Jib automatically uses `docker-credential-ecr-login` for obtaining credentials. To use a different credential helper, set the [`credHelpers`](#extended-usage) configuration. See [Authentication Methods](#authentication-methods) for other ways of authenticating.*
 
 For example, to build the image `aws_account_id.dkr.ecr.region.amazonaws.com/my-app`, the configuration would be:
 
@@ -144,6 +144,57 @@ In this configuration, the image is:
 </configuration>
 ```
 
+### Authentication Methods
+
+Pushing/pulling from private registries require authorization credentials. These can [retrieved using Docker credential helpers](#using-docker-credential-helpers) or [defined in your Maven settings](#using-maven-settings).
+
+#### Using Docker Credential Helpers
+
+Docker credential helpers are CLI tools that handle authentication with various registries.
+
+Some common credential helpers include:
+
+* Google Container Registry: [`docker-credential-gcr`](https://cloud.google.com/container-registry/docs/advanced-authentication#docker_credential_helper)
+* AWS Elastic Container Registry: [`docker-credential-ecr-login`](https://github.com/awslabs/amazon-ecr-credential-helper)
+* Docker Hub Registry: [`docker-credential-*`](https://github.com/docker/docker-credential-helpers)
+<!--* Azure Container Registry: [`docker-credential-acr-*`](https://github.com/Azure/acr-docker-credential-helper)
+-->
+
+Configure credential helpers to use by specifying them in the `credHelpers` configuration.
+
+*Example configuration:* 
+```xml
+<configuration>
+  ...
+  <credHelpers>
+    <credHelper>osxkeychain</credHelper>
+  </credHelpers>
+  ...
+</configuration>
+```
+
+#### Using Maven Settings
+
+Registry credentials can be added to your [Maven settings](https://maven.apache.org/settings.html). These credentials will be used if credentials could not be found in any specified Docker credential helpers. 
+
+*Example `settings.xml`:*
+```xml
+<settings>
+  ...
+  <servers>
+    ...
+    <server>
+      <id>MY_REGISTRY</id>
+      <username>MY_USERNAME</username>
+      <password>MY_SECRET</password>
+    </server>
+  </servers>
+</settings>
+```
+
+* The `id` field should be the registry server these credentials are for. 
+* We *do not* recommend putting your raw password in `settings.xml`.
+
 ## How Jib Works
 
 Whereas traditionally a Java application is built as a single image layer with the application JAR, Jib's build strategy separates the Java application into multiple layers for more granular incremental builds. When you change your code, only your changes are rebuilt, not your entire application. These layers, by default, are layered on top of a [distroless](https://github.com/GoogleCloudPlatform/distroless) base image. 
@@ -156,8 +207,8 @@ These limitations will be fixed in later releases.
 
 * Only supports Maven projects.
 * Does not build OCI images.
-* Pushing to Docker Hub is currently not supported.
 * Cannot build directly to a Docker daemon.
+* Pushing to Azure Container Registry is not currently supported.
 
 ## Frequently Asked Questions (FAQ)
 
