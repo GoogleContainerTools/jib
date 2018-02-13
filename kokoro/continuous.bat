@@ -7,7 +7,7 @@ set PATH=%JAVA_HOME%\bin;%PATH%
 cd github/jib
 
 REM Stops any left-over containers.
-call docker stop ('call docker container ls -q')
+REM call docker stop ('call docker container ls -q')
 
 cd jib-core && call gradlew.bat clean build integrationTest publishToMavenLocal --info && ^
 cd ../jib-maven-plugin && call mvnw.cmd clean install cobertura:cobertura -B -U -X
