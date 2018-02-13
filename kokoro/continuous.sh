@@ -7,7 +7,7 @@ set -x
 export PATH=$PATH:/Applications/Docker.app/Contents/Resources/bin
 
 # Stops any left-over containers.
-#docker stop $(docker container ls --quiet) || true
+docker stop $(docker container ls --quiet) || true
 
 cd github/jib
 
