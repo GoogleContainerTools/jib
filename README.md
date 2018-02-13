@@ -19,7 +19,7 @@ Jib is a Maven plugin for building container images for your Java applications.
 
 ## Upcoming Features
 
-These features will be added in later releases.
+These features are not currently supported but will be added in later releases.
 
 * Gradle plugin
 * Building OCI images
