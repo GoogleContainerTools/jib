@@ -60,6 +60,10 @@ public class TarStreamBuilderTest {
         new TarArchiveEntry(fileA.toFile(), "some/path/to/resourceFileA"));
     testTarStreamBuilder.addEntry(new TarArchiveEntry(fileB.toFile(), "crepecake"));
     testTarStreamBuilder.addEntry(new TarArchiveEntry(directoryA.toFile(), "some/path/to"));
+    testTarStreamBuilder.addEntry(
+        new TarArchiveEntry(
+            fileA.toFile(),
+            "some/really/long/path/that/exceeds/100/characters/abcdefghijklmnopqrstuvwxyz0123456789012345678901234567890"));
   }
 
   @Test
@@ -118,6 +122,15 @@ public class TarStreamBuilderTest {
     // Verifies directoryA was archived correctly.
     TarArchiveEntry headerDirectoryA = tarArchiveInputStream.getNextTarEntry();
     Assert.assertEquals("some/path/to/", headerDirectoryA.getName());
+
+    // Verifies the long file was archived correctly.
+    TarArchiveEntry headerFileALong = tarArchiveInputStream.getNextTarEntry();
+    Assert.assertEquals(
+        "some/really/long/path/that/exceeds/100/characters/abcdefghijklmnopqrstuvwxyz0123456789012345678901234567890",
+        headerFileALong.getName());
+    String fileALongString =
+        CharStreams.toString(new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
+    Assert.assertEquals(expectedFileAString, fileALongString);
 
     Assert.assertNull(tarArchiveInputStream.getNextTarEntry());
   }
