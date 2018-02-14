@@ -6,7 +6,6 @@ set PATH=%JAVA_HOME%\bin;%PATH%
 
 cd github/jib
 
-
 REM Stops any left-over containers.
 REM FOR /f "tokens=*" %%i IN ('docker ps -q') DO docker rm -vf %%i
 
