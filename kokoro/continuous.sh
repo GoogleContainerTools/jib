@@ -7,6 +7,7 @@ set -x
 export PATH=$PATH:/Applications/Docker.app/Contents/Resources/bin
 
 which gcloud && false
+which docker
 #gcloud components install docker-credential-gcr
 
 # Stops any left-over containers.
