@@ -84,7 +84,13 @@ Build your container image with:
 mvn compile jib:build
 ```
 
-Subsequent builds are much faster than the initial build.
+Subsequent builds are much faster than the initial build. 
+
+If you want to clear Jib's build cache and force it to re-pull the base image and re-build the application layers, run:
+
+```commandline
+mvn clean compile jib:build
+```
 
 *Having trouble? Let us know by [submitting an issue](/../../issues/new).*
 
