@@ -7,12 +7,10 @@ set PATH=%JAVA_HOME%\bin;%PATH%
 cd github/jib
 
 REM Stops any left-over containers.
-REM (& docker ps -q) | ForEach-Object { docker rm -vf $_ }
-FOR /f "tokens=*" %%i IN ('docker ps -q') DO docker rm -vf %%i
+REM FOR /f "tokens=*" %%i IN ('docker ps -q') DO docker rm -vf %%i
 
-docker run -d -p 5000:5000 --restart=always --name registry-00406c83-8786-40ab-8296-c2721511b50b registry:2
-
-cd jib-core && call gradlew.bat clean build integrationTest publishToMavenLocal --info && ^
+REM TODO: Enable integration tests once docker works.
+cd jib-core && call gradlew.bat clean build publishToMavenLocal --info && ^
 cd ../jib-maven-plugin && call mvnw.cmd clean install cobertura:cobertura -B -U -X
 
 exit /b %ERRORLEVEL%
