@@ -7,7 +7,7 @@ set PATH=%JAVA_HOME%\bin;%PATH%
 cd github/jib
 
 REM Stops any left-over containers.
-(& docker ps -q) | ForEach-Object { docker rm -vf $_ }
+REM (& docker ps -q) | ForEach-Object { docker rm -vf $_ }
 FOR /f "tokens=*" %i IN ('docker ps -q') DO docker rm -vf %i
 
 cd jib-core && call gradlew.bat clean build integrationTest publishToMavenLocal --info && ^
