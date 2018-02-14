@@ -8,6 +8,7 @@ export PATH=$PATH:/Applications/Docker.app/Contents/Resources/bin
 
 which docker
 ls -l /usr/local/bin/gcloud
+ls /usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/bin/
 which gcloud && false
 #gcloud components install docker-credential-gcr
 
