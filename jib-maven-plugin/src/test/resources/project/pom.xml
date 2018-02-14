@@ -39,7 +39,7 @@
         <version>${jib-maven-plugin.version}</version>
         <configuration>
           <registry>gcr.io</registry>
-          <repository>qingyangc-sandbox/jibtestimage</repository>
+          <repository>jib-integration-testing/jibtestimage</repository>
           <tag>built-with-jib</tag>
           <credHelpers>
             <credHelper>gcr</credHelper>
