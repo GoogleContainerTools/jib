@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.cache.Cache;
-import com.google.cloud.tools.jib.cache.CacheChecker;
+import com.google.cloud.tools.jib.cache.CacheReader;
 import com.google.cloud.tools.jib.cache.CacheWriter;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.cache.CachedLayerType;
@@ -90,7 +90,7 @@ class BuildAndCacheApplicationLayersStep implements Callable<List<ListenableFutu
           try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), description)) {
             // Don't build the layer if it exists already.
             CachedLayer cachedLayer =
-                new CacheChecker(cache).getUpToDateLayerBySourceFiles(sourceFiles);
+                new CacheReader(cache).getUpToDateLayerBySourceFiles(sourceFiles);
             if (cachedLayer != null) {
               return cachedLayer;
             }
