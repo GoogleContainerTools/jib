@@ -3,9 +3,6 @@
 set -e
 set -x
 
-# For MacOS builds, link Docker to run as 'docker'.
-# export PATH=$PATH:/Applications/Docker.app/Contents/Resources/bin
-
 gcloud components install docker-credential-gcr
 export PATH=$PATH:/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/bin/
 
