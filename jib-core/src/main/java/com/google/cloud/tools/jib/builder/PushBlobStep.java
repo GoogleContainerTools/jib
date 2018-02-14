@@ -61,6 +61,9 @@ class PushBlobStep implements Callable<Void> {
               .setTimer(timer);
 
       if (registryClient.checkBlob(layerDigest) != null) {
+        buildConfiguration
+            .getBuildLogger()
+            .info("BLOB : " + layerDigest + " already exists on registry");
         return null;
       }
 

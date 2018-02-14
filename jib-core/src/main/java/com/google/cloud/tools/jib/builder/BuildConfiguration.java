@@ -49,6 +49,9 @@ public class BuildConfiguration {
     /** Known registry credentials to fallback on. */
     KNOWN_REGISTRY_CREDENTIALS(false),
 
+    /** Tell the layer build to use reproducibility features. */
+    ENABLE_REPRODUCIBLE_BUILDS(false),
+
     /** The main class to use when running the application. */
     MAIN_CLASS(true),
 
@@ -83,6 +86,7 @@ public class BuildConfiguration {
             put(Fields.TARGET_REPOSITORY, "target image name");
             put(Fields.TARGET_TAG, "target image tag");
             put(Fields.CREDENTIAL_HELPER_NAMES, "credential helper names");
+            put(Fields.ENABLE_REPRODUCIBLE_BUILDS, "enable reproducible layer builds");
             put(Fields.MAIN_CLASS, "main class");
             put(Fields.JVM_FLAGS, "JVM flags");
             put(Fields.ENVIRONMENT, "environment variables");
@@ -101,6 +105,7 @@ public class BuildConfiguration {
       values.put(Fields.KNOWN_REGISTRY_CREDENTIALS, RegistryCredentials.none());
       values.put(Fields.JVM_FLAGS, Collections.emptyList());
       values.put(Fields.ENVIRONMENT, Collections.emptyMap());
+      values.put(Fields.ENABLE_REPRODUCIBLE_BUILDS, false);
     }
 
     public Builder setBuildLogger(BuildLogger buildLogger) {
@@ -149,6 +154,11 @@ public class BuildConfiguration {
       if (knownRegistryCredentials != null) {
         values.put(Fields.KNOWN_REGISTRY_CREDENTIALS, knownRegistryCredentials);
       }
+      return this;
+    }
+
+    public Builder setEnableReproducibleBuilds(boolean enable) {
+      values.put(Fields.ENABLE_REPRODUCIBLE_BUILDS, enable);
       return this;
     }
 
@@ -260,6 +270,10 @@ public class BuildConfiguration {
 
   public List<String> getCredentialHelperNames() {
     return getFieldValue(Fields.CREDENTIAL_HELPER_NAMES);
+  }
+
+  public boolean getEnableReproducibleBuilds() {
+    return getFieldValue(Fields.ENABLE_REPRODUCIBLE_BUILDS);
   }
 
   public String getMainClass() {
