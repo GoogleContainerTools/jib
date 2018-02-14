@@ -6,8 +6,8 @@ set -x
 # For MacOS builds, link Docker to run as 'docker'.
 export PATH=$PATH:/Applications/Docker.app/Contents/Resources/bin
 
-which gcloud && false
 which docker
+which gcloud && false
 #gcloud components install docker-credential-gcr
 
 # Stops any left-over containers.
