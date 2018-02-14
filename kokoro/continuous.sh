@@ -7,6 +7,7 @@ set -x
 export PATH=$PATH:/Applications/Docker.app/Contents/Resources/bin
 
 which docker
+ls -l /usr/local/bin/gcloud
 which gcloud && false
 #gcloud components install docker-credential-gcr
 
