@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.cache.Cache;
-import com.google.cloud.tools.jib.cache.CacheChecker;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.CacheReader;
 import com.google.cloud.tools.jib.cache.CachedLayer;
@@ -79,16 +78,24 @@ public class BuildAndCacheApplicationLayersStepTest {
     Cache cache = Cache.init(temporaryCacheDirectory);
 
     // Verifies that the cached layers are up-to-date.
-    CacheChecker cacheChecker = new CacheChecker(cache);
-    Assert.assertFalse(
-        cacheChecker.areSourceFilesModified(testSourceFilesConfiguration.getDependenciesFiles()));
-    Assert.assertFalse(
-        cacheChecker.areSourceFilesModified(testSourceFilesConfiguration.getResourcesFiles()));
-    Assert.assertFalse(
-        cacheChecker.areSourceFilesModified(testSourceFilesConfiguration.getClassesFiles()));
+    CacheReader cacheReader = new CacheReader(cache);
+    Assert.assertEquals(
+        applicationLayers.get(0).getBlobDescriptor(),
+        cacheReader
+            .getUpToDateLayerBySourceFiles(testSourceFilesConfiguration.getDependenciesFiles())
+            .getBlobDescriptor());
+    Assert.assertEquals(
+        applicationLayers.get(1).getBlobDescriptor(),
+        cacheReader
+            .getUpToDateLayerBySourceFiles(testSourceFilesConfiguration.getResourcesFiles())
+            .getBlobDescriptor());
+    Assert.assertEquals(
+        applicationLayers.get(2).getBlobDescriptor(),
+        cacheReader
+            .getUpToDateLayerBySourceFiles(testSourceFilesConfiguration.getClassesFiles())
+            .getBlobDescriptor());
 
     // Verifies that the cache reader gets the same layers as the newest application layers.
-    CacheReader cacheReader = new CacheReader(cache);
     Assert.assertEquals(
         applicationLayers.get(0).getContentFile(),
         cacheReader.getLayerFile(
