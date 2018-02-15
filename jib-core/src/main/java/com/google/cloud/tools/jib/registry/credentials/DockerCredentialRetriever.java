@@ -17,7 +17,7 @@
 package com.google.cloud.tools.jib.registry.credentials;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.json.JsonTemplate;
@@ -100,7 +100,7 @@ public class DockerCredentialRetriever {
           return Authorizations.withBasicCredentials(
               dockerCredentials.Username, dockerCredentials.Secret);
 
-        } catch (JsonMappingException ex) {
+        } catch (JsonProcessingException ex) {
           throw new NonexistentServerUrlDockerCredentialHelperException(
               credentialHelper, serverUrl, output);
         }
@@ -108,7 +108,8 @@ public class DockerCredentialRetriever {
 
     } catch (IOException ex) {
       // Checks if the failure is due to a nonexistent credential helper CLI.
-      if (ex.getMessage().contains("No such file or directory")) {
+      if (ex.getMessage().contains("No such file or directory")
+          || ex.getMessage().contains("cannot find the file")) {
         throw new NonexistentDockerCredentialHelperException(credentialHelperSuffix, ex);
       }
       throw ex;

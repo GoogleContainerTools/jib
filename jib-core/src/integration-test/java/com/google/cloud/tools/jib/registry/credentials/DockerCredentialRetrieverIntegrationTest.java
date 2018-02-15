@@ -17,7 +17,12 @@
 package com.google.cloud.tools.jib.registry.credentials;
 
 import com.google.cloud.tools.jib.http.Authorization;
+import com.google.common.io.Resources;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Test;
@@ -29,14 +34,22 @@ public class DockerCredentialRetrieverIntegrationTest {
   @Test
   public void testRetrieveGCR()
       throws IOException, NonexistentServerUrlDockerCredentialHelperException,
-          NonexistentDockerCredentialHelperException {
+          NonexistentDockerCredentialHelperException, URISyntaxException, InterruptedException {
+    // TODO: Refactor
+    Process process = Runtime.getRuntime().exec("docker-credential-gcr store");
+    try (OutputStream outputStream = process.getOutputStream()) {
+      outputStream.write(
+          Files.readAllBytes(Paths.get(Resources.getResource("credentials.json").toURI())));
+    }
+    process.waitFor();
+
     DockerCredentialRetriever dockerCredentialRetriever =
-        new DockerCredentialRetriever("gcr.io", "gcr");
+        new DockerCredentialRetriever("myregistry", "gcr");
 
     Authorization authorization = dockerCredentialRetriever.retrieve();
 
-    // Checks that some token was received.
-    Assert.assertTrue(0 < authorization.getToken().length());
+    // Checks that token received was base64 encoding of "myusername:mysecret".
+    Assert.assertEquals("bXl1c2VybmFtZTpteXNlY3JldA==", authorization.getToken());
   }
 
   @Test

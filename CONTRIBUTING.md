@@ -25,6 +25,8 @@ again.
    use your corporate email address here, not your personal address.
 2. Fork the repository into your own Github account.
 3. Please include unit tests (and integration tests if applicable) for all new code.
-4. Make sure all existing tests pass. (./gradlew goJF build integrationTest)
+4. Make sure all existing tests pass. 
+  a. In `jib-core`, run `./gradlew clean goJF build integrationTest`
+  b. In `jib-maven-plugin`, run `./mvnw clean verify`
 5. Associate the change with an existing issue or file a [new issue](../../issues)
 6. Create a pull request!
