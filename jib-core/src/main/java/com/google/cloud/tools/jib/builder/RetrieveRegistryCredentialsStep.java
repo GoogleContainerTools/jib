@@ -100,7 +100,7 @@ class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
    * docker-credential-[credentialHelperSuffix]}.
    */
   private Authorization retrieveFromCredentialHelper(String credentialHelperSuffix)
-      throws IOException, NonexistentDockerCredentialHelperException {
+      throws NonexistentDockerCredentialHelperException, IOException {
     try {
       Authorization authorization =
           new DockerCredentialRetriever(registry, credentialHelperSuffix).retrieve();
