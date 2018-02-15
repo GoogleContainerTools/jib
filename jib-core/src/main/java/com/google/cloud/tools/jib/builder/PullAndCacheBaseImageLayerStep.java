@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.cache.Cache;
-import com.google.cloud.tools.jib.cache.CacheChecker;
+import com.google.cloud.tools.jib.cache.CacheReader;
 import com.google.cloud.tools.jib.cache.CacheWriter;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.http.Authorization;
@@ -68,7 +68,7 @@ class PullAndCacheBaseImageLayerStep implements Callable<CachedLayer> {
               buildConfiguration.getBaseImageRepository());
 
       // Checks if the layer already exists in the cache.
-      CachedLayer cachedLayer = new CacheChecker(cache).getLayer(layerDigest);
+      CachedLayer cachedLayer = new CacheReader(cache).getLayer(layerDigest);
       if (cachedLayer != null) {
         return cachedLayer;
       }
