@@ -22,16 +22,23 @@ import java.nio.charset.StandardCharsets;
 /** Static initializers for {@link Authorization}. */
 public class Authorizations {
 
+  /** Creates an {@link Authorization} with a {@code Bearer} token. */
   public static Authorization withBearerToken(String token) {
     return new Authorization("Bearer", token);
   }
 
+  /** Creates an {@link Authorization} with a {@code Basic} credentials. */
   public static Authorization withBasicCredentials(String username, String secret) {
     String credentials = username + ":" + secret;
     String token =
         new String(
             Base64.encodeBase64(credentials.getBytes(StandardCharsets.US_ASCII)),
             StandardCharsets.UTF_8);
+    return new Authorization("Basic", token);
+  }
+
+  /** Creates an {@link Authorization} with a base64-encoded {@code username:password} string. */
+  public static Authorization withBasicToken(String token) {
     return new Authorization("Basic", token);
   }
 

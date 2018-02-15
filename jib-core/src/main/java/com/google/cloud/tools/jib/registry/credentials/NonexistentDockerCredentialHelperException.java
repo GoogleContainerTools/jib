@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.registry;
+package com.google.cloud.tools.jib.registry.credentials;
 
 /** Thrown because the requested credential helper CLI does not exist. */
 public class NonexistentDockerCredentialHelperException extends Exception {

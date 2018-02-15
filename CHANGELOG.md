@@ -8,6 +8,10 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+## 0.1.2
+### Added
+- Use credentials from Docker config if none can be found otherwise ([]())
+
 ## 0.1.1
 ### Added
 - Simple example `helloworld` project under `examples/` ([#62](https://github.com/google/jib/pull/62))

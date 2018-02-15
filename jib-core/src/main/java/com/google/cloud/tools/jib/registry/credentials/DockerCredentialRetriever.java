@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.registry;
+package com.google.cloud.tools.jib.registry.credentials;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
-// TODO: Replace with non-CLI method.
 /**
  * Retrieves Docker credentials with a Docker credential helper.
  *
