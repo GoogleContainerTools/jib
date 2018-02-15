@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.registry;
+package com.google.cloud.tools.jib.registry.credentials;
 
 import com.google.cloud.tools.jib.http.Authorization;
 import java.io.IOException;

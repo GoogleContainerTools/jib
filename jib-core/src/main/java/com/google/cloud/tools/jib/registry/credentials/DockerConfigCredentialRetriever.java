@@ -20,29 +20,30 @@ import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.credentials.json.DockerConfigTemplate;
-
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import javax.annotation.Nullable;
 
 /**
  * Retrieves registry credentials from the Docker config.
  *
- * The credentials are searched in the following order (stopping when credentials are found):
+ * <p>The credentials are searched in the following order (stopping when credentials are found):
  *
  * <ol>
- *   <li>If there is an {@code auth} defined for a registry.</li>
- *   <li>Using the {@code credsStore} credential helper, if available.</li>
- *   <li>Using the credential helper from {@code credHelpers}, if available.</li>
+ *   <li>If there is an {@code auth} defined for a registry.
+ *   <li>Using the {@code credsStore} credential helper, if available.
+ *   <li>Using the credential helper from {@code credHelpers}, if available.
  * </ol>
  *
- * @see <a href="https://docs.docker.com/engine/reference/commandline/login/">https://docs.docker.com/engine/reference/commandline/login/</a>
+ * @see <a
+ *     href="https://docs.docker.com/engine/reference/commandline/login/">https://docs.docker.com/engine/reference/commandline/login/</a>
  */
 public class DockerConfigCredentialRetriever {
 
-  private static final Path dockerConfigFile = Paths.get(System.getProperty("user.home")).resolve(".docker").resolve("config.json");
+  private static final Path dockerConfigFile =
+      Paths.get(System.getProperty("user.home")).resolve(".docker").resolve("config.json");
 
   private static DockerConfigTemplate dockerConfigTemplate;
 
@@ -54,7 +55,8 @@ public class DockerConfigCredentialRetriever {
       if (!Files.exists(dockerConfigFile)) {
         return null;
       }
-      dockerConfigTemplate = JsonTemplateMapper.readJsonFromFile(dockerConfigFile, DockerConfigTemplate.class);
+      dockerConfigTemplate =
+          JsonTemplateMapper.readJsonFromFile(dockerConfigFile, DockerConfigTemplate.class);
     }
 
     String auth = dockerConfigTemplate.getAuthFor(registry);
@@ -65,10 +67,12 @@ public class DockerConfigCredentialRetriever {
     String credentialHelperSuffix = dockerConfigTemplate.getCredentialHelperFor(registry);
     if (credentialHelperSuffix != null) {
       try {
-        DockerCredentialRetriever dockerCredentialRetriever = new DockerCredentialRetriever(registry, credentialHelperSuffix);
+        DockerCredentialRetriever dockerCredentialRetriever =
+            new DockerCredentialRetriever(registry, credentialHelperSuffix);
         return dockerCredentialRetriever.retrieve();
 
-      } catch (NonexistentServerUrlDockerCredentialHelperException | NonexistentDockerCredentialHelperException ex) {
+      } catch (NonexistentServerUrlDockerCredentialHelperException
+          | NonexistentDockerCredentialHelperException ex) {
         // Ignores credential helper retrieval exceptions.
       }
     }
