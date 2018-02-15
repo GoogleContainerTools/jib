@@ -32,7 +32,7 @@ public class DockerImageRunner {
     try (InputStreamReader inputStreamReader =
         new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)) {
       String output = CharStreams.toString(inputStreamReader);
-g
+
       if (process.waitFor() != 0) {
         throw new RuntimeException("Command '" + String.join(" ", command) + "' failed");
       }
