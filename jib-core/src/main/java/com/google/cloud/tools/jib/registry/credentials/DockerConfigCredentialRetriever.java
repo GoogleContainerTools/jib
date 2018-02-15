@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.credentials.json.DockerConfigTemplate;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -42,21 +43,56 @@ import javax.annotation.Nullable;
  */
 public class DockerConfigCredentialRetriever {
 
-  private static final Path dockerConfigFile =
+  private static final Path DOCKER_CONFIG_FILE =
       Paths.get(System.getProperty("user.home")).resolve(".docker").resolve("config.json");
 
-  private static DockerConfigTemplate dockerConfigTemplate;
+  /** Factory class for constructing {@link DockerCredentialRetriever}. */
+  @VisibleForTesting
+  static class DockerCredentialRetrieverFactory {
+
+    private final String registry;
+
+    private DockerCredentialRetrieverFactory(String registry) {
+      this.registry = registry;
+    }
+
+    @VisibleForTesting
+    DockerCredentialRetriever withSuffix(String credentialHelperSuffix) {
+      return new DockerCredentialRetriever(registry, credentialHelperSuffix);
+    }
+  }
+
+  private final String registry;
+  private final Path dockerConfigFile;
+  private final DockerCredentialRetrieverFactory dockerCredentialRetrieverFactory;
+
+  public DockerConfigCredentialRetriever(String registry) {
+    this(registry, DOCKER_CONFIG_FILE);
+  }
+
+  @VisibleForTesting
+  DockerConfigCredentialRetriever(String registry, Path dockerConfigFile) {
+    this.registry = registry;
+    this.dockerConfigFile = dockerConfigFile;
+    this.dockerCredentialRetrieverFactory = new DockerCredentialRetrieverFactory(registry);
+  }
+
+  @VisibleForTesting
+  DockerConfigCredentialRetriever(
+      String registry,
+      Path dockerConfigFile,
+      DockerCredentialRetrieverFactory dockerCredentialRetrieverFactory) {
+    this.registry = registry;
+    this.dockerConfigFile = dockerConfigFile;
+    this.dockerCredentialRetrieverFactory = dockerCredentialRetrieverFactory;
+  }
 
   /** @return {@link Authorization} found for {@code registry}, or {@code null} if not found */
   @Nullable
-  private static Authorization retrieve(String registry) throws IOException {
+  public Authorization retrieve() {
+    DockerConfigTemplate dockerConfigTemplate = loadDockerConfigTemplate();
     if (dockerConfigTemplate == null) {
-      // Loads the Docker config if it has not yet been loaded.
-      if (!Files.exists(dockerConfigFile)) {
-        return null;
-      }
-      dockerConfigTemplate =
-          JsonTemplateMapper.readJsonFromFile(dockerConfigFile, DockerConfigTemplate.class);
+      return null;
     }
 
     String auth = dockerConfigTemplate.getAuthFor(registry);
@@ -67,16 +103,31 @@ public class DockerConfigCredentialRetriever {
     String credentialHelperSuffix = dockerConfigTemplate.getCredentialHelperFor(registry);
     if (credentialHelperSuffix != null) {
       try {
-        DockerCredentialRetriever dockerCredentialRetriever =
-            new DockerCredentialRetriever(registry, credentialHelperSuffix);
-        return dockerCredentialRetriever.retrieve();
+        return dockerCredentialRetrieverFactory.withSuffix(credentialHelperSuffix).retrieve();
 
-      } catch (NonexistentServerUrlDockerCredentialHelperException
+      } catch (IOException
+          | NonexistentServerUrlDockerCredentialHelperException
           | NonexistentDockerCredentialHelperException ex) {
         // Ignores credential helper retrieval exceptions.
       }
     }
 
     return null;
+  }
+
+  /** Loads the Docker config JSON and caches it. */
+  @Nullable
+  private DockerConfigTemplate loadDockerConfigTemplate() {
+    // Loads the Docker config.
+    if (!Files.exists(dockerConfigFile)) {
+      return null;
+    }
+    try {
+      return JsonTemplateMapper.readJsonFromFile(dockerConfigFile, DockerConfigTemplate.class);
+
+    } catch (IOException ex) {
+      // TODO: Throw some exception about not being able to parse Docker config.
+      return null;
+    }
   }
 }
