@@ -161,7 +161,7 @@ In this configuration, the image is:
 
 ### Authentication Methods
 
-Pushing/pulling from private registries require authorization credentials. These can [retrieved using Docker credential helpers](#using-docker-credential-helpers) or [defined in your Maven settings](#using-maven-settings).
+Pushing/pulling from private registries require authorization credentials. These can be [retrieved using Docker credential helpers](#using-docker-credential-helpers) or [defined in your Maven settings](#using-maven-settings). If you do not define credentials explicitly, Jib will try to [use credentials defined in your Docker config](/../../issues/101) or infer common credential helpers.
 
 #### Using Docker Credential Helpers
 
