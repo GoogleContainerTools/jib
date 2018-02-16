@@ -47,10 +47,12 @@ public class DockerCredentialRetriever {
   }
 
   /**
+   * Construct with {@link DockerCredentialRetrieverFactory}.
+   *
    * @param serverUrl the server URL to pass into the credential helper
    * @param credentialHelperSuffix the credential helper CLI suffix
    */
-  public DockerCredentialRetriever(String serverUrl, String credentialHelperSuffix) {
+  DockerCredentialRetriever(String serverUrl, String credentialHelperSuffix) {
     this.serverUrl = serverUrl;
     this.credentialHelperSuffix = credentialHelperSuffix;
   }
