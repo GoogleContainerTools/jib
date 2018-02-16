@@ -27,7 +27,7 @@ import javax.annotation.Nullable;
  *
  * <p>Example:
  *
- * <pre{@code
+ * <pre>{@code
  * {
  *   "auths": {
  *     "registry": {
