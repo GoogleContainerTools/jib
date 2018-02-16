@@ -224,6 +224,18 @@
               </resources>
             </configuration>
           </execution>
+          <execution>
+            <id>add-jib-core-integration-test-sources</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-test-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>${basedir}/../jib-core/src/integration-test/java</source>
+              </sources>
+            </configuration>
+          </execution>
         </executions>
       </plugin>
 
@@ -232,6 +244,11 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>2.20.1</version>
+        <configuration>
+          <excludes>
+            <exclude>**/*IntegrationTest.java</exclude>
+          </excludes>
+        </configuration>
       </plugin>
 
       <plugin>

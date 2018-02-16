@@ -16,11 +16,8 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.common.io.CharStreams;
+import com.google.cloud.tools.jib.builder.DockerImageRunner;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
 import org.junit.Assert;
@@ -54,25 +51,8 @@ public class BuildImageMojoIT {
 
     Assert.assertTrue(timeOne > timeTwo);
 
-    // Checks that the built image outputs what was intended.
-    runCommand("docker", "pull", "gcr.io/qingyangc-sandbox/jibtestimage:built-with-jib");
-
-    // TODO: Put this in a utility function.
-    Process process =
-        Runtime.getRuntime()
-            .exec("docker run gcr.io/qingyangc-sandbox/jibtestimage:built-with-jib");
-    try (InputStreamReader inputStreamReader =
-        new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)) {
-      String output = CharStreams.toString(inputStreamReader);
-      Assert.assertEquals("Hello, world\n", output);
-    }
-    process.waitFor();
-  }
-
-  /** Runs a command with naive tokenization by whitespace. */
-  private void runCommand(String... command) throws IOException, InterruptedException {
-    if (new ProcessBuilder(Arrays.asList(command)).start().waitFor() != 0) {
-      throw new IOException("Command '" + String.join(" ", command) + "' failed");
-    }
+    Assert.assertEquals(
+        "Hello, world\n",
+        new DockerImageRunner("gcr.io/jib-integration-testing/jibtestimage:built-with-jib").run());
   }
 }
