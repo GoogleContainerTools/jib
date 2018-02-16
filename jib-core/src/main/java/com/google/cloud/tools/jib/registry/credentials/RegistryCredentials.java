@@ -17,9 +17,6 @@
 package com.google.cloud.tools.jib.registry.credentials;
 
 import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.registry.DockerCredentialRetriever;
-import com.google.cloud.tools.jib.registry.NonexistentDockerCredentialHelperException;
-import com.google.cloud.tools.jib.registry.NonexistentServerUrlDockerCredentialHelperException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;

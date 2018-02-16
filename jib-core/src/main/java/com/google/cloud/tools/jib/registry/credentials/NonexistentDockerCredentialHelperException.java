@@ -14,19 +14,12 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.registry;
+package com.google.cloud.tools.jib.registry.credentials;
 
-/** Thrown because the credential helper does not have credentials for the specified server URL. */
-public class NonexistentServerUrlDockerCredentialHelperException extends Exception {
+/** Thrown because the requested credential helper CLI does not exist. */
+public class NonexistentDockerCredentialHelperException extends Exception {
 
-  NonexistentServerUrlDockerCredentialHelperException(
-      String credentialHelper, String serverUrl, String credentialHelperOutput) {
-    super(
-        "The credential helper ("
-            + credentialHelper
-            + ") has nothing for server URL: "
-            + serverUrl
-            + "\n\nGot output:\n\n"
-            + credentialHelperOutput);
+  NonexistentDockerCredentialHelperException(String credentialHelperSuffix, Throwable cause) {
+    super("The system does not have docker-credential-" + credentialHelperSuffix + " CLI", cause);
   }
 }
