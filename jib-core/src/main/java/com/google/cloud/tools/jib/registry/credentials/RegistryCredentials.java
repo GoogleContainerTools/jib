@@ -17,7 +17,9 @@
 package com.google.cloud.tools.jib.registry.credentials;
 
 import com.google.cloud.tools.jib.http.Authorization;
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -37,6 +39,54 @@ public class RegistryCredentials {
   public static RegistryCredentials of(
       String registry, String credentialSource, Authorization authorization) {
     return new RegistryCredentials().store(registry, credentialSource, authorization);
+  }
+
+  /**
+   * Retrieves credentials for {@code registries} using the credential helpers referred to by {@code
+   * credentialHelperSuffixes}.
+   *
+   * <p>This obtains the registry credentials, not the <a
+   * href="https://docs.docker.com/registry/spec/auth/token/">Docker authentication token</a>.
+   */
+  public static RegistryCredentials from(
+      List<String> credentialHelperSuffixes, List<String> registries)
+      throws IOException, NonexistentDockerCredentialHelperException {
+    RegistryCredentials registryCredentials = new RegistryCredentials();
+
+    // TODO: These can be done in parallel.
+    for (String registry : registries) {
+      for (String credentialHelperSuffix : credentialHelperSuffixes) {
+        // Attempts to retrieve authorization for the registry using
+        // docker-credential-[credentialSource].
+        try {
+          registryCredentials.store(
+              registry,
+              "docker-credential-" + credentialHelperSuffix,
+              new DockerCredentialRetriever(registry, credentialHelperSuffix).retrieve());
+
+        } catch (NonexistentServerUrlDockerCredentialHelperException ex) {
+          // No authorization is found, so continues on to the next credential helper.
+        }
+      }
+    }
+    return registryCredentials;
+  }
+
+  /**
+   * Instantiates from a credential source and a map of registry credentials.
+   *
+   * @param credentialSource the source of the credentials, useful for informing users where the
+   *     credentials came from
+   * @param registryCredentialMap a map from registries to their respective credentials
+   */
+  public static RegistryCredentials from(
+      String credentialSource, Map<String, Authorization> registryCredentialMap) {
+    RegistryCredentials registryCredentials = new RegistryCredentials();
+    for (Map.Entry<String, Authorization> registryCredential : registryCredentialMap.entrySet()) {
+      registryCredentials.store(
+          registryCredential.getKey(), credentialSource, registryCredential.getValue());
+    }
+    return registryCredentials;
   }
 
   /** Pair of (source of credentials, {@link Authorization}). */
