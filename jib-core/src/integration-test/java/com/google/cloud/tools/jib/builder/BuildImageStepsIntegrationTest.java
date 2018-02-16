@@ -17,9 +17,6 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.registry.LocalRegistry;
-import com.google.common.io.CharStreams;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -65,14 +62,7 @@ public class BuildImageStepsIntegrationTest {
     buildImageSteps.run();
     logger.info("Secondary build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
 
-    // TODO: Put this in a utility function.
-    Runtime.getRuntime().exec("docker pull localhost:5000/testimage:testtag").waitFor();
-    Process process = Runtime.getRuntime().exec("docker run localhost:5000/testimage:testtag");
-    try (InputStreamReader inputStreamReader =
-        new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)) {
-      String output = CharStreams.toString(inputStreamReader);
-      Assert.assertEquals("Hello world\n", output);
-    }
-    process.waitFor();
+    Assert.assertEquals(
+        "Hello world\n", new DockerImageRunner("localhost:5000/testimage:testtag").run());
   }
 }
