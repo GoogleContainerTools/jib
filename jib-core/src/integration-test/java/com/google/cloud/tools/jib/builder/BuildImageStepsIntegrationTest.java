@@ -63,6 +63,6 @@ public class BuildImageStepsIntegrationTest {
     logger.info("Secondary build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
 
     Assert.assertEquals(
-        "Hello, world\n", new DockerImageRunner("localhost:5000/testimage:testtag").run());
+        "Hello world\n", new DockerImageRunner("localhost:5000/testimage:testtag").run());
   }
 }
