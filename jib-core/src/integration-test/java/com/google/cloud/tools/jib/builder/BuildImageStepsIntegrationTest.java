@@ -39,7 +39,7 @@ public class BuildImageStepsIntegrationTest {
 
   @Test
   public void testSteps() throws Exception {
-    SourceFilesConfiguration sourceFilesConfiguration = new TestDockerSourceFilesConfiguration();
+    SourceFilesConfiguration sourceFilesConfiguration = new TestSourceFilesConfiguration();
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder()
             .setBaseImageRegistry("gcr.io")
