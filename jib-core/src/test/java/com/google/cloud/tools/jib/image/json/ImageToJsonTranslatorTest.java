@@ -82,18 +82,31 @@ public class ImageToJsonTranslatorTest {
   }
 
   @Test
-  public void testGetManifest()
+  public void testGetManifest_v22()
+      throws URISyntaxException, IOException, LayerPropertyNotFoundException {
+    testGetManifest(V22ManifestTemplate.class, "json/translated_v22manifest.json");
+  }
+
+  @Test
+  public void testGetManifest_oci()
+      throws URISyntaxException, IOException, LayerPropertyNotFoundException {
+    testGetManifest(OCIManifestTemplate.class, "json/translated_ocimanifest.json");
+  }
+
+  /** Tests translation of image to {@link BuildableManifestTemplate}. */
+  private <T extends BuildableManifestTemplate> void testGetManifest(
+      Class<T> manifestTemplateClass, String translatedJsonFilename)
       throws URISyntaxException, IOException, LayerPropertyNotFoundException {
     // Loads the expected JSON string.
-    Path jsonFile = Paths.get(Resources.getResource("json/translatedmanifest.json").toURI());
+    Path jsonFile = Paths.get(Resources.getResource(translatedJsonFilename).toURI());
     String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
 
     // Translates the image to the manifest and writes the JSON string.
     Blob containerConfigurationBlob = imageToJsonTranslator.getContainerConfigurationBlob();
     BlobDescriptor blobDescriptor =
         containerConfigurationBlob.writeTo(ByteStreams.nullOutputStream());
-    V22ManifestTemplate manifestTemplate =
-        imageToJsonTranslator.getManifestTemplate(V22ManifestTemplate.class, blobDescriptor);
+    T manifestTemplate =
+        imageToJsonTranslator.getManifestTemplate(manifestTemplateClass, blobDescriptor);
 
     ByteArrayOutputStream jsonStream = new ByteArrayOutputStream();
     JsonTemplateMapper.toBlob(manifestTemplate).writeTo(jsonStream);
