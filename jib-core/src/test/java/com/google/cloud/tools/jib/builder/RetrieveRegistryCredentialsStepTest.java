@@ -18,8 +18,8 @@ package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.registry.credentials.DockerConfigCredentialRetriever;
-import com.google.cloud.tools.jib.registry.credentials.DockerCredentialRetriever;
-import com.google.cloud.tools.jib.registry.credentials.DockerCredentialRetrieverFactory;
+import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelper;
+import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelperFactory;
 import com.google.cloud.tools.jib.registry.credentials.NonexistentDockerCredentialHelperException;
 import com.google.cloud.tools.jib.registry.credentials.NonexistentServerUrlDockerCredentialHelperException;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
@@ -41,18 +41,18 @@ public class RetrieveRegistryCredentialsStepTest {
   @Mock private BuildConfiguration mockBuildConfiguration;
   @Mock private BuildLogger mockBuildLogger;
 
-  @Mock private DockerCredentialRetrieverFactory mockDockerCredentialRetrieverFactory;
-  @Mock private DockerCredentialRetriever mockDockerCredentialRetriever;
+  @Mock private DockerCredentialHelperFactory mockDockerCredentialHelperFactory;
+  @Mock private DockerCredentialHelper mockDockerCredentialHelper;
   /**
-   * A {@link DockerCredentialRetriever} that throws {@link
+   * A {@link DockerCredentialHelper} that throws {@link
    * NonexistentServerUrlDockerCredentialHelperException}.
    */
-  @Mock private DockerCredentialRetriever mockNonexistentServerUrlDockerCredentialRetriever;
+  @Mock private DockerCredentialHelper mockNonexistentServerUrlDockerCredentialHelper;
   /**
-   * A {@link DockerCredentialRetriever} that throws {@link
+   * A {@link DockerCredentialHelper} that throws {@link
    * NonexistentDockerCredentialHelperException}.
    */
-  @Mock private DockerCredentialRetriever mockNonexistentDockerCredentialRetriever;
+  @Mock private DockerCredentialHelper mockNonexistentDockerCredentialHelper;
 
   @Mock private Authorization mockAuthorization;
 
@@ -73,10 +73,10 @@ public class RetrieveRegistryCredentialsStepTest {
           NonexistentDockerCredentialHelperException, IOException {
     Mockito.when(mockBuildConfiguration.getBuildLogger()).thenReturn(mockBuildLogger);
 
-    Mockito.when(mockDockerCredentialRetriever.retrieve()).thenReturn(mockAuthorization);
-    Mockito.when(mockNonexistentServerUrlDockerCredentialRetriever.retrieve())
+    Mockito.when(mockDockerCredentialHelper.retrieve()).thenReturn(mockAuthorization);
+    Mockito.when(mockNonexistentServerUrlDockerCredentialHelper.retrieve())
         .thenThrow(mockNonexistentServerUrlDockerCredentialHelperException);
-    Mockito.when(mockNonexistentDockerCredentialRetriever.retrieve())
+    Mockito.when(mockNonexistentDockerCredentialHelper.retrieve())
         .thenThrow(mockNonexistentDockerCredentialHelperException);
   }
 
@@ -86,10 +86,13 @@ public class RetrieveRegistryCredentialsStepTest {
           NonexistentServerUrlDockerCredentialHelperException {
     Mockito.when(mockBuildConfiguration.getCredentialHelperNames())
         .thenReturn(Arrays.asList("someCredentialHelper", "someOtherCredentialHelper"));
-    Mockito.when(mockDockerCredentialRetrieverFactory.withSuffix("someCredentialHelper"))
-        .thenReturn(mockNonexistentServerUrlDockerCredentialRetriever);
-    Mockito.when(mockDockerCredentialRetrieverFactory.withSuffix("someOtherCredentialHelper"))
-        .thenReturn(mockDockerCredentialRetriever);
+    Mockito.when(
+            mockDockerCredentialHelperFactory.withCredentialHelperSuffix("someCredentialHelper"))
+        .thenReturn(mockNonexistentServerUrlDockerCredentialHelper);
+    Mockito.when(
+            mockDockerCredentialHelperFactory.withCredentialHelperSuffix(
+                "someOtherCredentialHelper"))
+        .thenReturn(mockDockerCredentialHelper);
 
     Assert.assertEquals(
         mockAuthorization, makeRetrieveRegistryCredentialsStep(fakeTargetRegistry).call());
@@ -149,10 +152,10 @@ public class RetrieveRegistryCredentialsStepTest {
     // Has no Docker config.
     Mockito.when(mockDockerConfigCredentialRetriever.retrieve()).thenReturn(null);
 
-    Mockito.when(mockDockerCredentialRetrieverFactory.withSuffix("gcr"))
-        .thenReturn(mockDockerCredentialRetriever);
-    Mockito.when(mockDockerCredentialRetrieverFactory.withSuffix("ecr-login"))
-        .thenReturn(mockNonexistentDockerCredentialRetriever);
+    Mockito.when(mockDockerCredentialHelperFactory.withCredentialHelperSuffix("gcr"))
+        .thenReturn(mockDockerCredentialHelper);
+    Mockito.when(mockDockerCredentialHelperFactory.withCredentialHelperSuffix("ecr-login"))
+        .thenReturn(mockNonexistentDockerCredentialHelper);
 
     Assert.assertEquals(
         mockAuthorization, makeRetrieveRegistryCredentialsStep("something.gcr.io").call());
@@ -171,7 +174,7 @@ public class RetrieveRegistryCredentialsStepTest {
     return new RetrieveRegistryCredentialsStep(
         mockBuildConfiguration,
         registry,
-        mockDockerCredentialRetrieverFactory,
+        mockDockerCredentialHelperFactory,
         mockDockerConfigCredentialRetriever);
   }
 }

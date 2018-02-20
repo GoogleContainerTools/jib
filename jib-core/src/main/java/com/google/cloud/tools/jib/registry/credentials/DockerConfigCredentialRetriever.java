@@ -52,7 +52,7 @@ public class DockerConfigCredentialRetriever {
 
   private final String registry;
   private final Path dockerConfigFile;
-  private final DockerCredentialRetrieverFactory dockerCredentialRetrieverFactory;
+  private final DockerCredentialHelperFactory dockerCredentialHelperFactory;
 
   public DockerConfigCredentialRetriever(String registry) {
     this(registry, DOCKER_CONFIG_FILE);
@@ -62,17 +62,17 @@ public class DockerConfigCredentialRetriever {
   DockerConfigCredentialRetriever(String registry, Path dockerConfigFile) {
     this.registry = registry;
     this.dockerConfigFile = dockerConfigFile;
-    this.dockerCredentialRetrieverFactory = new DockerCredentialRetrieverFactory(registry);
+    this.dockerCredentialHelperFactory = new DockerCredentialHelperFactory(registry);
   }
 
   @VisibleForTesting
   DockerConfigCredentialRetriever(
       String registry,
       Path dockerConfigFile,
-      DockerCredentialRetrieverFactory dockerCredentialRetrieverFactory) {
+      DockerCredentialHelperFactory dockerCredentialHelperFactory) {
     this.registry = registry;
     this.dockerConfigFile = dockerConfigFile;
-    this.dockerCredentialRetrieverFactory = dockerCredentialRetrieverFactory;
+    this.dockerCredentialHelperFactory = dockerCredentialHelperFactory;
   }
 
   /** @return {@link Authorization} found for {@code registry}, or {@code null} if not found */
@@ -91,7 +91,9 @@ public class DockerConfigCredentialRetriever {
     String credentialHelperSuffix = dockerConfigTemplate.getCredentialHelperFor(registry);
     if (credentialHelperSuffix != null) {
       try {
-        return dockerCredentialRetrieverFactory.withSuffix(credentialHelperSuffix).retrieve();
+        return dockerCredentialHelperFactory
+            .withCredentialHelperSuffix(credentialHelperSuffix)
+            .retrieve();
 
       } catch (IOException
           | NonexistentServerUrlDockerCredentialHelperException
