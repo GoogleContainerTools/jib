@@ -27,8 +27,8 @@ import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** Integration tests for {@link DockerCredentialRetriever}. */
-public class DockerCredentialRetrieverIntegrationTest {
+/** Integration tests for {@link DockerCredentialHelper}. */
+public class DockerCredentialHelperIntegrationTest {
 
   /** Tests retrieval via {@code docker-credential-gcr} CLI. */
   @Test
@@ -43,10 +43,10 @@ public class DockerCredentialRetrieverIntegrationTest {
     }
     process.waitFor();
 
-    DockerCredentialRetriever dockerCredentialRetriever =
-        new DockerCredentialRetrieverFactory("myregistry").withSuffix("gcr");
+    DockerCredentialHelper dockerCredentialHelper =
+        new DockerCredentialHelperFactory("myregistry").withCredentialHelperSuffix("gcr");
 
-    Authorization authorization = dockerCredentialRetriever.retrieve();
+    Authorization authorization = dockerCredentialHelper.retrieve();
 
     // Checks that token received was base64 encoding of "myusername:mysecret".
     Assert.assertEquals("bXl1c2VybmFtZTpteXNlY3JldA==", authorization.getToken());
@@ -56,10 +56,10 @@ public class DockerCredentialRetrieverIntegrationTest {
   public void testRetrieve_nonexistentCredentialHelper()
       throws IOException, NonexistentServerUrlDockerCredentialHelperException {
     try {
-      DockerCredentialRetriever fakeDockerCredentialRetriever =
-          new DockerCredentialRetrieverFactory("").withSuffix("fake-cloud-provider");
+      DockerCredentialHelper fakeDockerCredentialHelper =
+          new DockerCredentialHelperFactory("").withCredentialHelperSuffix("fake-cloud-provider");
 
-      fakeDockerCredentialRetriever.retrieve();
+      fakeDockerCredentialHelper.retrieve();
 
       Assert.fail("Retrieve should have failed for nonexistent credential helper");
 
@@ -73,10 +73,10 @@ public class DockerCredentialRetrieverIntegrationTest {
   public void testRetrieve_nonexistentServerUrl()
       throws IOException, NonexistentDockerCredentialHelperException {
     try {
-      DockerCredentialRetriever fakeDockerCredentialRetriever =
-          new DockerCredentialRetrieverFactory("fake.server.url").withSuffix("gcr");
+      DockerCredentialHelper fakeDockerCredentialHelper =
+          new DockerCredentialHelperFactory("fake.server.url").withCredentialHelperSuffix("gcr");
 
-      fakeDockerCredentialRetriever.retrieve();
+      fakeDockerCredentialHelper.retrieve();
 
       Assert.fail("Retrieve should have failed for nonexistent server URL");
 

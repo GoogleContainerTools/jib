@@ -62,7 +62,7 @@ public class RegistryCredentials {
           registryCredentials.store(
               registry,
               "docker-credential-" + credentialHelperSuffix,
-              new DockerCredentialRetriever(registry, credentialHelperSuffix).retrieve());
+              new DockerCredentialHelper(registry, credentialHelperSuffix).retrieve());
 
         } catch (NonexistentServerUrlDockerCredentialHelperException ex) {
           // No authorization is found, so continues on to the next credential helper.
