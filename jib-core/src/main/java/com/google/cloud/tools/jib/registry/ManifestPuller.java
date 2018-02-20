@@ -70,7 +70,10 @@ class ManifestPuller<T extends ManifestTemplate> implements RegistryEndpointProv
       return Collections.singletonList(OCIManifestTemplate.MEDIA_TYPE);
     }
 
-    return Arrays.asList(OCIManifestTemplate.MEDIA_TYPE, V22ManifestTemplate.MEDIA_TYPE, V21ManifestTemplate.MEDIA_TYPE);
+    return Arrays.asList(
+        OCIManifestTemplate.MEDIA_TYPE,
+        V22ManifestTemplate.MEDIA_TYPE,
+        V21ManifestTemplate.MEDIA_TYPE);
   }
 
   /** Parses the response body into a {@link ManifestTemplate}. */
@@ -135,8 +138,7 @@ class ManifestPuller<T extends ManifestTemplate> implements RegistryEndpointProv
         return manifestTemplateClass.cast(
             JsonTemplateMapper.readJson(jsonString, OCIManifestTemplate.class));
       }
-      throw new UnknownManifestFormatException(
-          "Unknown mediaType: " + mediaType);
+      throw new UnknownManifestFormatException("Unknown mediaType: " + mediaType);
     }
     throw new UnknownManifestFormatException(
         "Unknown schemaVersion: " + schemaVersion + " - only 1 and 2 are supported");

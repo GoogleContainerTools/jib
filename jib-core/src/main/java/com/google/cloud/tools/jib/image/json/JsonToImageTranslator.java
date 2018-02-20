@@ -46,41 +46,22 @@ public class JsonToImageTranslator {
   }
 
   /**
-   * Translates {@link V22ManifestTemplate} to {@link Image}. Uses the corresponding {@link
+   * Translates {@link BuildableManifestTemplate} to {@link Image}. Uses the corresponding {@link
    * ContainerConfigurationTemplate} to get the layer diff IDs.
    */
   public static Image toImage(
-      V22ManifestTemplate manifestTemplate,
+      BuildableManifestTemplate manifestTemplate,
       ContainerConfigurationTemplate containerConfigurationTemplate)
       throws LayerCountMismatchException, LayerPropertyNotFoundException, DuplicateLayerException {
-    List<ReferenceNoDiffIdLayer> layers = new ArrayList<>();
-    for (V22ManifestTemplate.LayerObjectTemplate layerObjectTemplate :
-        manifestTemplate.getLayers()) {
-      layers.add(new ReferenceNoDiffIdLayer(new BlobDescriptor(layerObjectTemplate.getSize(), layerObjectTemplate.getDigest())));
-    }
-
-    return toImage(containerConfigurationTemplate, layers);
-  }
-
-  /**
-   * Translates {@link OCIManifestTemplate} to {@link Image}. Uses the corresponding {@link
-   * ContainerConfigurationTemplate} to get the layer diff IDs.
-   */
-  public static Image toImage(
-      OCIManifestTemplate manifestTemplate,
-      ContainerConfigurationTemplate containerConfigurationTemplate) throws LayerPropertyNotFoundException, DuplicateLayerException, LayerCountMismatchException {
-    List<ReferenceNoDiffIdLayer> layers = new ArrayList<>();
-    for (OCIManifestTemplate.ContentDescriptorTemplate contentDescriptorTemplate :
-        manifestTemplate.getLayers()) {
-      layers.add(new ReferenceNoDiffIdLayer(new BlobDescriptor(contentDescriptorTemplate.getSize(), contentDescriptorTemplate.getDigest())));
-    }
-
-    return toImage(containerConfigurationTemplate, layers);
-  }
-
-  /** Helper method for creating an image from a container configuration and layers. */
-  private static Image toImage(ContainerConfigurationTemplate containerConfigurationTemplate, List<ReferenceNoDiffIdLayer> layers) throws LayerCountMismatchException, LayerPropertyNotFoundException, DuplicateLayerException {
     Image image = new Image();
+
+    List<ReferenceNoDiffIdLayer> layers = new ArrayList<>();
+    for (BuildableManifestTemplate.ContentDescriptorTemplate layerObjectTemplate :
+        manifestTemplate.getLayers()) {
+      layers.add(
+          new ReferenceNoDiffIdLayer(
+              new BlobDescriptor(layerObjectTemplate.getSize(), layerObjectTemplate.getDigest())));
+    }
 
     List<DescriptorDigest> diffIds = containerConfigurationTemplate.getDiffIds();
 

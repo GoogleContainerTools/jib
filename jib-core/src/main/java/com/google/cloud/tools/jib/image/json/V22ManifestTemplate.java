@@ -16,13 +16,6 @@
 
 package com.google.cloud.tools.jib.image.json;
 
-import com.google.cloud.tools.jib.image.DescriptorDigest;
-import com.google.cloud.tools.jib.json.JsonTemplate;
-import com.google.common.annotations.VisibleForTesting;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 /**
  * JSON Template for Docker Manifest Schema V2.2
  *
@@ -55,86 +48,22 @@ import java.util.List;
  * @see <a href="https://docs.docker.com/registry/spec/manifest-v2-2/">Image Manifest Version 2,
  *     Schema 2</a>
  */
-public class V22ManifestTemplate extends ManifestTemplate {
+public class V22ManifestTemplate extends BuildableManifestTemplate {
 
   public static final String MEDIA_TYPE = "application/vnd.docker.distribution.manifest.v2+json";
 
-  private final int schemaVersion = 2;
-  private final String mediaType = MEDIA_TYPE;
-
-  /** The container configuration reference. */
-  private final ContainerConfigurationObjectTemplate config =
-      new ContainerConfigurationObjectTemplate();
-
-  /** The list of layer references. */
-  private final List<LayerObjectTemplate> layers = new ArrayList<>();
-
-  /** Template for inner JSON object representing the container configuration reference. */
-  private static class ContainerConfigurationObjectTemplate extends JsonTemplate {
-
-    private final String mediaType = "application/vnd.docker.container.image.v1+json";
-
-    private DescriptorDigest digest;
-    private long size;
-  }
-
-  /**
-   * Template for inner JSON object representing a layer as part of the list of layer references.
-   */
-  static class LayerObjectTemplate extends JsonTemplate {
-
-    private final String mediaType = "application/vnd.docker.image.rootfs.diff.tar.gzip";
-
-    private DescriptorDigest digest;
-    private long size;
-
-    long getSize() {
-      return size;
-    }
-
-    DescriptorDigest getDigest() {
-      return digest;
-    }
+  @Override
+  public String getManifestMediaType() {
+    return MEDIA_TYPE;
   }
 
   @Override
-  public int getSchemaVersion() {
-    return schemaVersion;
+  String getContainerConfigurationMediaType() {
+    return "application/vnd.docker.container.image.v1+json";
   }
 
-  public List<LayerObjectTemplate> getLayers() {
-    return Collections.unmodifiableList(layers);
-  }
-
-  public void setContainerConfiguration(long size, DescriptorDigest digest) {
-    config.size = size;
-    config.digest = digest;
-  }
-
-  public void addLayer(long size, DescriptorDigest digest) {
-    LayerObjectTemplate layerObjectTemplate = new LayerObjectTemplate();
-    layerObjectTemplate.size = size;
-    layerObjectTemplate.digest = digest;
-    layers.add(layerObjectTemplate);
-  }
-
-  @VisibleForTesting
-  public DescriptorDigest getContainerConfigurationDigest() {
-    return config.digest;
-  }
-
-  @VisibleForTesting
-  long getContainerConfigurationSize() {
-    return config.size;
-  }
-
-  @VisibleForTesting
-  public DescriptorDigest getLayerDigest(int index) {
-    return layers.get(index).digest;
-  }
-
-  @VisibleForTesting
-  long getLayerSize(int index) {
-    return layers.get(index).size;
+  @Override
+  String getContentDescriptorMediaType() {
+    return "application/vnd.docker.image.rootfs.diff.tar.gzip";
   }
 }

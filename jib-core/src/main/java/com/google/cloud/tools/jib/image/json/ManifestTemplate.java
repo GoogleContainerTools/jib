@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.image.json;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 
 /** Parent class for image manifest JSON templates. */
@@ -25,8 +24,4 @@ import com.google.cloud.tools.jib.json.JsonTemplate;
 public abstract class ManifestTemplate extends JsonTemplate {
 
   public abstract int getSchemaVersion();
-
-  public abstract void setContainerConfiguration(long size, DescriptorDigest digest);
-
-  public abstract void addLayer(long size, DescriptorDigest digest);
 }

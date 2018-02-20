@@ -122,6 +122,7 @@ class PushImageStep implements Callable<Void> {
       // Pushes the image manifest.
       V22ManifestTemplate manifestTemplate =
           imageToJsonTranslator.getManifestTemplate(
+              V22ManifestTemplate.class,
               NonBlockingFutures.get(
                   NonBlockingFutures.get(containerConfigurationBlobDescriptorFutureFuture)));
       registryClient.pushManifest(manifestTemplate, buildConfiguration.getTargetTag());

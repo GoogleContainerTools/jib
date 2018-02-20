@@ -70,9 +70,9 @@ public class ImageToJsonTranslator {
    * the [@link BlobDescriptor} obtained by writing out the container configuration {@link Blob}
    * returned from {@link #getContainerConfigurationBlob()}.
    */
-  public <T extends ManifestTemplate> T getManifestTemplate(
-      Class<T> manifestTemplateClass,
-      BlobDescriptor containerConfigurationBlobDescriptor) throws LayerPropertyNotFoundException {
+  public <T extends BuildableManifestTemplate> T getManifestTemplate(
+      Class<T> manifestTemplateClass, BlobDescriptor containerConfigurationBlobDescriptor)
+      throws LayerPropertyNotFoundException {
     try {
       // Set up the JSON template.
       T template = manifestTemplateClass.newInstance();
@@ -85,7 +85,8 @@ public class ImageToJsonTranslator {
 
       // Adds the layers.
       for (Layer layer : image.getLayers()) {
-        template.addLayer(layer.getBlobDescriptor().getSize(), layer.getBlobDescriptor().getDigest());
+        template.addLayer(
+            layer.getBlobDescriptor().getSize(), layer.getBlobDescriptor().getDigest());
       }
 
       // Serializes into JSON.

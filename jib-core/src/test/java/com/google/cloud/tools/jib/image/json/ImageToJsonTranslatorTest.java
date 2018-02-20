@@ -93,7 +93,7 @@ public class ImageToJsonTranslatorTest {
     BlobDescriptor blobDescriptor =
         containerConfigurationBlob.writeTo(ByteStreams.nullOutputStream());
     V22ManifestTemplate manifestTemplate =
-        imageToJsonTranslator.getManifestTemplate(blobDescriptor);
+        imageToJsonTranslator.getManifestTemplate(V22ManifestTemplate.class, blobDescriptor);
 
     ByteArrayOutputStream jsonStream = new ByteArrayOutputStream();
     JsonTemplateMapper.toBlob(manifestTemplate).writeTo(jsonStream);

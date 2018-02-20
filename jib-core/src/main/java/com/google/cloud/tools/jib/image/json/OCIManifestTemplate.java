@@ -16,14 +16,6 @@
 
 package com.google.cloud.tools.jib.image.json;
 
-import com.google.cloud.tools.jib.image.DescriptorDigest;
-import com.google.cloud.tools.jib.json.JsonTemplate;
-import com.google.common.annotations.VisibleForTesting;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 /**
  * JSON Template for OCI Manifest Schema
  *
@@ -53,92 +45,25 @@ import java.util.List;
  * }
  * }</pre>
  *
- * @see <a href="https://github.com/opencontainers/image-spec/blob/master/manifest.md">OCI Image Manifest Specification</a>
+ * @see <a href="https://github.com/opencontainers/image-spec/blob/master/manifest.md">OCI Image
+ *     Manifest Specification</a>
  */
-public class OCIManifestTemplate extends ManifestTemplate {
+public class OCIManifestTemplate extends BuildableManifestTemplate {
 
-  public static final String MEDIA_TYPE = "application/vnd.docker.distribution.manifest.v2+json";
+  public static final String MEDIA_TYPE = "application/vnd.oci.image.manifest.v1+json";
 
-  private final int schemaVersion = 2;
-  private final String mediaType = MEDIA_TYPE;
-
-  /** The container configuration reference. */
-  private final ContainerConfigurationObjectTemplate config =
-      new ContainerConfigurationObjectTemplate();
-
-  /** The list of layer references. */
-  private final List<ContentDescriptorTemplate> layers = new ArrayList<>();
-
-  /** Template for inner JSON object representing the container configuration reference. */
-  private static class ContainerConfigurationObjectTemplate extends JsonTemplate {
-
-    private final String mediaType = "application/vnd.docker.container.image.v1+json";
-
-    private DescriptorDigest digest;
-    private long size;
-  }
-
-  /**
-   * Template for inner JSON object representing a layer as part of the list of layer references.
-   *
-   * @see <a href="https://github.com/opencontainers/image-spec/blob/master/descriptor.md">OCI Content Descriptors</a>
-   */
-  static class ContentDescriptorTemplate extends JsonTemplate {
-
-    private final String mediaType = "application/vnd.docker.image.rootfs.diff.tar.gzip";
-
-    private DescriptorDigest digest;
-    private long size;
-
-    long getSize() {
-      return size;
-    }
-
-    DescriptorDigest getDigest() {
-      return digest;
-    }
+  @Override
+  public String getManifestMediaType() {
+    return MEDIA_TYPE;
   }
 
   @Override
-  public int getSchemaVersion() {
-    return schemaVersion;
-  }
-
-  public List<ContentDescriptorTemplate> getLayers() {
-    return Collections.unmodifiableList(layers);
+  String getContainerConfigurationMediaType() {
+    return "application/vnd.oci.image.config.v1+json";
   }
 
   @Override
-  public void setContainerConfiguration(long size, DescriptorDigest digest) {
-    config.size = size;
-    config.digest = digest;
-  }
-
-  @Override
-  public void addLayer(long size, DescriptorDigest digest) {
-    ContentDescriptorTemplate contentDescriptorTemplate = new ContentDescriptorTemplate();
-    contentDescriptorTemplate.size = size;
-    contentDescriptorTemplate.digest = digest;
-    layers.add(contentDescriptorTemplate);
-  }
-
-  @VisibleForTesting
-  public DescriptorDigest getContainerConfigurationDigest() {
-    return config.digest;
-  }
-
-  @VisibleForTesting
-  long getContainerConfigurationSize() {
-    return config.size;
-  }
-
-  @VisibleForTesting
-  public DescriptorDigest getLayerDigest(int index) {
-    return layers.get(index).digest;
-  }
-
-  @VisibleForTesting
-  long getLayerSize(int index) {
-    return layers.get(index).size;
+  String getContentDescriptorMediaType() {
+    return "application/vnd.oci.image.layer.v1.tar+gzip";
   }
 }
