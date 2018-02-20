@@ -122,8 +122,7 @@ public class CacheReaderTest {
   }
 
   @Test
-  public void testGetLayerFile()
-      throws CacheMetadataCorruptedException, IOException {
+  public void testGetLayerFile() throws CacheMetadataCorruptedException, IOException {
     Path expectedFile =
         testCacheFolder.resolve(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.tar.gz");
