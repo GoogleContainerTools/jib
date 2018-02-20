@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.image;
 
+import com.google.cloud.tools.jib.blob.Blob;
+import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Resources;
 import java.io.BufferedOutputStream;
@@ -27,10 +29,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -51,7 +56,8 @@ public class LayerBuilderTest {
 
     String extractionPathBase = "extract/here";
     LayerBuilder layerBuilder =
-        new LayerBuilder(new ArrayList<>(Arrays.asList(layerDirectory, blobA)), extractionPathBase);
+        new LayerBuilder(
+            new ArrayList<>(Arrays.asList(layerDirectory, blobA)), extractionPathBase, false);
 
     // Writes the layer tar to a temporary file.
     UnwrittenLayer unwrittenLayer = layerBuilder.build();
@@ -110,5 +116,56 @@ public class LayerBuilderTest {
 
       Assert.assertEquals(expectedFileString, extractedFileString);
     }
+  }
+
+  @Test
+  public void testToBlob_reproducibility() throws IOException {
+    Path testRoot = temporaryFolder.getRoot().toPath();
+    Path root1 = Files.createDirectories(testRoot.resolve("files1"));
+    Path root2 = Files.createDirectories(testRoot.resolve("files2"));
+
+    String extractionPath = "/somewhere";
+
+    // TODO: Currently this test only covers variation in order and modified time, even though
+    // TODO: the code is designed to clean up userid/groupid, this test does not check that yet.
+    String contentA = "abcabc";
+    Path fileA1 = createFile(root1, "fileA", contentA, 10000);
+    Path fileA2 = createFile(root2, "fileA", contentA, 20000);
+    String contentB = "yumyum";
+    Path fileB1 = createFile(root1, "fileB", contentB, 10000);
+    Path fileB2 = createFile(root2, "fileB", contentB, 20000);
+
+    // check if modified times are off
+    Assert.assertNotEquals(Files.getLastModifiedTime(fileA1), Files.getLastModifiedTime(fileA2));
+    Assert.assertNotEquals(Files.getLastModifiedTime(fileB1), Files.getLastModifiedTime(fileB2));
+
+    // create layers of exact same content but ordered differently and with different timestamps
+    Blob layer =
+        new LayerBuilder(Arrays.asList(fileA1, fileB1), extractionPath, true).build().getBlob();
+    Blob reproduced =
+        new LayerBuilder(Arrays.asList(fileB2, fileA2), extractionPath, true).build().getBlob();
+
+    // this is a control layer that is the same as 'layerReproduced' without reproducibility on
+    Blob notReproduced =
+        new LayerBuilder(Arrays.asList(fileB2, fileA2), extractionPath, false).build().getBlob();
+
+    byte[] layerContent = Blobs.writeToByteArray(layer);
+    byte[] reproducedLayerContent = Blobs.writeToByteArray(reproduced);
+    byte[] notReproducedLayerContent = Blobs.writeToByteArray(notReproduced);
+
+    Assert.assertThat(layerContent, CoreMatchers.is(reproducedLayerContent));
+    Assert.assertThat(layerContent, CoreMatchers.not(notReproducedLayerContent));
+  }
+
+  private Path createFile(Path root, String filename, String content, long lastModifiedTime)
+      throws IOException {
+
+    Path newFile =
+        Files.write(
+            root.resolve(filename),
+            content.getBytes(StandardCharsets.UTF_8),
+            StandardOpenOption.CREATE_NEW);
+    Files.setLastModifiedTime(newFile, FileTime.fromMillis(lastModifiedTime));
+    return newFile;
   }
 }
