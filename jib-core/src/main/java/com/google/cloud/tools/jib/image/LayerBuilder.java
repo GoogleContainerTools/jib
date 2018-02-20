@@ -98,13 +98,11 @@ public class LayerBuilder {
   private void makeListReproducible(List<TarArchiveEntry> entries) {
     entries.sort(Comparator.comparing(TarArchiveEntry::getName));
     for (TarArchiveEntry entry : entries) {
-      if (enableReproducibleBuilds) {
-        entry.setModTime(0);
-        entry.setGroupId(0);
-        entry.setUserId(0);
-        entry.setUserName("");
-        entry.setGroupName("");
-      }
+      entry.setModTime(0);
+      entry.setGroupId(0);
+      entry.setUserId(0);
+      entry.setUserName("");
+      entry.setGroupName("");
     }
   }
 
