@@ -43,9 +43,14 @@ public class Blobs {
 
   /** Writes the BLOB to a string. */
   public static String writeToString(Blob blob) throws IOException {
+    return new String(writeToByteArray(blob), StandardCharsets.UTF_8);
+  }
+
+  /** Writes the BLOB to a byte array. */
+  public static byte[] writeToByteArray(Blob blob) throws IOException {
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     blob.writeTo(byteArrayOutputStream);
-    return new String(byteArrayOutputStream.toByteArray(), StandardCharsets.UTF_8);
+    return byteArrayOutputStream.toByteArray();
   }
 
   private Blobs() {}

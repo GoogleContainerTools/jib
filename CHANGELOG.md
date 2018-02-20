@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file.
 
 ## 0.1.2
 ### Added
-- Use credentials from Docker config if none can be found otherwise ([]())
+- Use credentials from Docker config if none can be found otherwise ([#101](https://github.com/google/jib/issues/101))
 
 ## 0.1.1
 ### Added

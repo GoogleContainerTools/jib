@@ -37,6 +37,7 @@ public class BuildConfigurationTest {
     List<String> expectedCredentialHelperNames =
         Arrays.asList("credentialhelper", "anotherCredentialHelper");
     String expectedMainClass = "mainclass";
+    boolean expectedEnableReproducibleBuilds = true;
     List<String> expectedJvmFlags = Arrays.asList("some", "jvm", "flags");
 
     BuildConfiguration buildConfiguration =
@@ -50,6 +51,7 @@ public class BuildConfigurationTest {
             .setCredentialHelperNames(expectedCredentialHelperNames)
             .setMainClass(expectedMainClass)
             .setJvmFlags(expectedJvmFlags)
+            .setEnableReproducibleBuilds(true)
             .build();
     Assert.assertEquals(expectedBaseImageServerUrl, buildConfiguration.getBaseImageRegistry());
     Assert.assertEquals(expectedBaseImageName, buildConfiguration.getBaseImageRepository());
@@ -61,6 +63,8 @@ public class BuildConfigurationTest {
         expectedCredentialHelperNames, buildConfiguration.getCredentialHelperNames());
     Assert.assertEquals(expectedMainClass, buildConfiguration.getMainClass());
     Assert.assertEquals(expectedJvmFlags, buildConfiguration.getJvmFlags());
+    Assert.assertEquals(
+        expectedEnableReproducibleBuilds, buildConfiguration.getEnableReproducibleBuilds());
   }
 
   @Test

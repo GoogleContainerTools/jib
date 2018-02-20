@@ -18,12 +18,15 @@ package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.registry.credentials.DockerCredentialRetriever;
+import com.google.cloud.tools.jib.registry.credentials.DockerConfigCredentialRetriever;
+import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelperFactory;
 import com.google.cloud.tools.jib.registry.credentials.NonexistentDockerCredentialHelperException;
 import com.google.cloud.tools.jib.registry.credentials.NonexistentServerUrlDockerCredentialHelperException;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.util.concurrent.Callable;
+import javax.annotation.Nullable;
 
 /** Attempts to retrieve registry credentials. */
 class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
@@ -39,10 +42,27 @@ class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
 
   private final BuildConfiguration buildConfiguration;
   private final String registry;
+  private final DockerCredentialHelperFactory dockerCredentialHelperFactory;
+  private final DockerConfigCredentialRetriever dockerConfigCredentialRetriever;
 
   RetrieveRegistryCredentialsStep(BuildConfiguration buildConfiguration, String registry) {
+    this(
+        buildConfiguration,
+        registry,
+        new DockerCredentialHelperFactory(registry),
+        new DockerConfigCredentialRetriever(registry));
+  }
+
+  @VisibleForTesting
+  RetrieveRegistryCredentialsStep(
+      BuildConfiguration buildConfiguration,
+      String registry,
+      DockerCredentialHelperFactory dockerCredentialHelperFactory,
+      DockerConfigCredentialRetriever dockerConfigCredentialRetriever) {
     this.buildConfiguration = buildConfiguration;
     this.registry = registry;
+    this.dockerCredentialHelperFactory = dockerCredentialHelperFactory;
+    this.dockerConfigCredentialRetriever = dockerConfigCredentialRetriever;
   }
 
   @Override
@@ -64,6 +84,15 @@ class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
         logGotCredentialsFrom(
             buildConfiguration.getKnownRegistryCredentials().getCredentialSource(registry));
         return buildConfiguration.getKnownRegistryCredentials().getAuthorization(registry);
+      }
+
+      // Tries to get registry credentials from the Docker config.
+      Authorization dockerConfigAuthorization = dockerConfigCredentialRetriever.retrieve();
+      if (dockerConfigAuthorization != null) {
+        buildConfiguration
+            .getBuildLogger()
+            .info("Using credentials from Docker config for " + registry);
+        return dockerConfigAuthorization;
       }
 
       // Tries to infer common credential helpers for known registries.
@@ -99,11 +128,15 @@ class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
    * Attempts to retrieve authorization for the registry using {@code
    * docker-credential-[credentialHelperSuffix]}.
    */
-  private Authorization retrieveFromCredentialHelper(String credentialHelperSuffix)
+  @VisibleForTesting
+  @Nullable
+  Authorization retrieveFromCredentialHelper(String credentialHelperSuffix)
       throws NonexistentDockerCredentialHelperException, IOException {
     try {
       Authorization authorization =
-          new DockerCredentialRetriever(registry, credentialHelperSuffix).retrieve();
+          dockerCredentialHelperFactory
+              .withCredentialHelperSuffix(credentialHelperSuffix)
+              .retrieve();
       logGotCredentialsFrom("docker-credential-" + credentialHelperSuffix);
       return authorization;
 

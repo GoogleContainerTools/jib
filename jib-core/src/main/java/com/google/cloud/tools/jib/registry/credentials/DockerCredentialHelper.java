@@ -33,7 +33,7 @@ import java.nio.charset.StandardCharsets;
  * @see <a
  *     href="https://github.com/docker/docker-credential-helpers">https://github.com/docker/docker-credential-helpers</a>
  */
-public class DockerCredentialRetriever {
+public class DockerCredentialHelper {
 
   private final String serverUrl;
   private final String credentialHelperSuffix;
@@ -47,10 +47,12 @@ public class DockerCredentialRetriever {
   }
 
   /**
+   * Construct with {@link DockerCredentialHelperFactory}.
+   *
    * @param serverUrl the server URL to pass into the credential helper
    * @param credentialHelperSuffix the credential helper CLI suffix
    */
-  public DockerCredentialRetriever(String serverUrl, String credentialHelperSuffix) {
+  DockerCredentialHelper(String serverUrl, String credentialHelperSuffix) {
     this.serverUrl = serverUrl;
     this.credentialHelperSuffix = credentialHelperSuffix;
   }
