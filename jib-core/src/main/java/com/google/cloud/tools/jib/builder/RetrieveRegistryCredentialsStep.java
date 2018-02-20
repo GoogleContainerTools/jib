@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.builder;
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.registry.credentials.DockerConfigCredentialRetriever;
-import com.google.cloud.tools.jib.registry.credentials.DockerCredentialRetrieverFactory;
+import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelperFactory;
 import com.google.cloud.tools.jib.registry.credentials.NonexistentDockerCredentialHelperException;
 import com.google.cloud.tools.jib.registry.credentials.NonexistentServerUrlDockerCredentialHelperException;
 import com.google.common.annotations.VisibleForTesting;
@@ -42,14 +42,14 @@ class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
 
   private final BuildConfiguration buildConfiguration;
   private final String registry;
-  private final DockerCredentialRetrieverFactory dockerCredentialRetrieverFactory;
+  private final DockerCredentialHelperFactory dockerCredentialHelperFactory;
   private final DockerConfigCredentialRetriever dockerConfigCredentialRetriever;
 
   RetrieveRegistryCredentialsStep(BuildConfiguration buildConfiguration, String registry) {
     this(
         buildConfiguration,
         registry,
-        new DockerCredentialRetrieverFactory(registry),
+        new DockerCredentialHelperFactory(registry),
         new DockerConfigCredentialRetriever(registry));
   }
 
@@ -57,11 +57,11 @@ class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
   RetrieveRegistryCredentialsStep(
       BuildConfiguration buildConfiguration,
       String registry,
-      DockerCredentialRetrieverFactory dockerCredentialRetrieverFactory,
+      DockerCredentialHelperFactory dockerCredentialHelperFactory,
       DockerConfigCredentialRetriever dockerConfigCredentialRetriever) {
     this.buildConfiguration = buildConfiguration;
     this.registry = registry;
-    this.dockerCredentialRetrieverFactory = dockerCredentialRetrieverFactory;
+    this.dockerCredentialHelperFactory = dockerCredentialHelperFactory;
     this.dockerConfigCredentialRetriever = dockerConfigCredentialRetriever;
   }
 
@@ -134,7 +134,9 @@ class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
       throws NonexistentDockerCredentialHelperException, IOException {
     try {
       Authorization authorization =
-          dockerCredentialRetrieverFactory.withSuffix(credentialHelperSuffix).retrieve();
+          dockerCredentialHelperFactory
+              .withCredentialHelperSuffix(credentialHelperSuffix)
+              .retrieve();
       logGotCredentialsFrom("docker-credential-" + credentialHelperSuffix);
       return authorization;
 
