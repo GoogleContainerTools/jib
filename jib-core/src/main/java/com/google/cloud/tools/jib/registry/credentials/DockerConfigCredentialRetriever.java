@@ -50,22 +50,6 @@ public class DockerConfigCredentialRetriever {
   private static final Path DOCKER_CONFIG_FILE =
       Paths.get(System.getProperty("user.home")).resolve(".docker").resolve("config.json");
 
-  /** Factory class for constructing {@link DockerCredentialRetriever}. */
-  @VisibleForTesting
-  static class DockerCredentialRetrieverFactory {
-
-    private final String registry;
-
-    private DockerCredentialRetrieverFactory(String registry) {
-      this.registry = registry;
-    }
-
-    @VisibleForTesting
-    DockerCredentialRetriever withSuffix(String credentialHelperSuffix) {
-      return new DockerCredentialRetriever(registry, credentialHelperSuffix);
-    }
-  }
-
   private final String registry;
   private final Path dockerConfigFile;
   private final DockerCredentialRetrieverFactory dockerCredentialRetrieverFactory;

@@ -44,7 +44,7 @@ public class DockerCredentialRetrieverIntegrationTest {
     process.waitFor();
 
     DockerCredentialRetriever dockerCredentialRetriever =
-        new DockerCredentialRetriever("myregistry", "gcr");
+        new DockerCredentialRetrieverFactory("myregistry").withSuffix("gcr");
 
     Authorization authorization = dockerCredentialRetriever.retrieve();
 
@@ -57,7 +57,7 @@ public class DockerCredentialRetrieverIntegrationTest {
       throws IOException, NonexistentServerUrlDockerCredentialHelperException {
     try {
       DockerCredentialRetriever fakeDockerCredentialRetriever =
-          new DockerCredentialRetriever("", "fake-cloud-provider");
+          new DockerCredentialRetrieverFactory("").withSuffix("fake-cloud-provider");
 
       fakeDockerCredentialRetriever.retrieve();
 
@@ -74,7 +74,7 @@ public class DockerCredentialRetrieverIntegrationTest {
       throws IOException, NonexistentDockerCredentialHelperException {
     try {
       DockerCredentialRetriever fakeDockerCredentialRetriever =
-          new DockerCredentialRetriever("fake.server.url", "gcr");
+          new DockerCredentialRetrieverFactory("fake.server.url").withSuffix("gcr");
 
       fakeDockerCredentialRetriever.retrieve();
 

@@ -37,9 +37,7 @@ public class DockerConfigCredentialRetrieverTest {
   @Mock private Authorization mockAuthorization;
   @Mock private DockerCredentialRetriever mockDockerCredentialRetriever;
 
-  @Mock
-  private DockerConfigCredentialRetriever.DockerCredentialRetrieverFactory
-      mockDockerCredentialRetrieverFactory;
+  @Mock private DockerCredentialRetrieverFactory mockDockerCredentialRetrieverFactory;
 
   private Path dockerConfigFile;
 
@@ -53,7 +51,7 @@ public class DockerConfigCredentialRetrieverTest {
   }
 
   @Test
-  public void testRetrieve_nonexistentDockerConfigFile() throws URISyntaxException {
+  public void testRetrieve_nonexistentDockerConfigFile() {
     DockerConfigCredentialRetriever dockerConfigCredentialRetriever =
         new DockerConfigCredentialRetriever("some registry", Paths.get("fake/path"));
 
