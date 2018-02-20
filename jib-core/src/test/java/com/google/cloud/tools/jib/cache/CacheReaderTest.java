@@ -43,13 +43,34 @@ import org.junit.rules.TemporaryFolder;
 /** Tests for {@link CacheReader}. */
 public class CacheReaderTest {
 
+  private static void copyDirectory(Path source, Path destination) throws IOException {
+    Files.walk(source)
+        .forEach(
+            path -> {
+              try {
+                if (path.equals(source)) {
+                  return;
+                }
+                Path newPath = destination.resolve(source.relativize(path));
+                Files.copy(path, newPath);
+
+              } catch (IOException ex) {
+                throw new UncheckedIOException(ex);
+              }
+            });
+  }
+
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   private Path testCacheFolder;
 
   @Before
-  public void setUp() throws URISyntaxException {
-    testCacheFolder = Paths.get(Resources.getResource("cache").toURI());
+  public void setUp() throws IOException, URISyntaxException {
+    testCacheFolder = temporaryFolder.newFolder().toPath();
+
+    // Copies the test resource cache to the temporary test cache folder.
+    Path resourceCache = Paths.get(Resources.getResource("cache").toURI());
+    copyDirectory(resourceCache, testCacheFolder);
   }
 
   @Test
@@ -101,13 +122,10 @@ public class CacheReaderTest {
   }
 
   @Test
-  public void testGetLayerFile()
-      throws URISyntaxException, CacheMetadataCorruptedException, IOException {
+  public void testGetLayerFile() throws CacheMetadataCorruptedException, IOException {
     Path expectedFile =
-        Paths.get(
-            Resources.getResource(
-                    "cache/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.tar.gz")
-                .toURI());
+        testCacheFolder.resolve(
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.tar.gz");
 
     try (Cache cache = Cache.init(testCacheFolder)) {
       CacheReader cacheReader = new CacheReader(cache);
@@ -141,20 +159,7 @@ public class CacheReaderTest {
     // Copies test files to a modifiable temporary folder.
     Path resourceSourceFiles = Paths.get(Resources.getResource("layer").toURI());
     Path testSourceFiles = temporaryFolder.newFolder().toPath();
-    Files.walk(resourceSourceFiles)
-        .forEach(
-            path -> {
-              try {
-                if (path.equals(resourceSourceFiles)) {
-                  return;
-                }
-                Path newPath = testSourceFiles.resolve(resourceSourceFiles.relativize(path));
-                Files.copy(path, newPath);
-
-              } catch (IOException ex) {
-                throw new UncheckedIOException(ex);
-              }
-            });
+    copyDirectory(resourceSourceFiles, testSourceFiles);
 
     // Walk the files in reverse order so that the subfiles are changed before the parent
     // directories are.
