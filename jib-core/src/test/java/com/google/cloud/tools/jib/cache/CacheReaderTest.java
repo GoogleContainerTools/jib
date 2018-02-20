@@ -123,7 +123,7 @@ public class CacheReaderTest {
 
   @Test
   public void testGetLayerFile()
-      throws URISyntaxException, CacheMetadataCorruptedException, IOException {
+      throws CacheMetadataCorruptedException, IOException {
     Path expectedFile =
         testCacheFolder.resolve(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.tar.gz");
