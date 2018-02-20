@@ -19,6 +19,8 @@ package com.google.cloud.tools.jib.registry;
 import com.google.api.client.http.HttpMethods;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
+import com.google.cloud.tools.jib.image.json.ManifestTemplate;
+import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import java.net.MalformedURLException;
@@ -30,9 +32,11 @@ import java.util.List;
 class ManifestPusher implements RegistryEndpointProvider<Void> {
 
   private final RegistryEndpointProperties registryEndpointProperties;
-  private final V22ManifestTemplate manifestTemplate;
+  private final ManifestTemplate manifestTemplate;
   private final String imageTag;
+  private final String mediaType;
 
+  /** Pushes a {@link V22ManifestTemplate}. */
   ManifestPusher(
       RegistryEndpointProperties registryEndpointProperties,
       V22ManifestTemplate manifestTemplate,
@@ -40,6 +44,17 @@ class ManifestPusher implements RegistryEndpointProvider<Void> {
     this.registryEndpointProperties = registryEndpointProperties;
     this.manifestTemplate = manifestTemplate;
     this.imageTag = imageTag;
+    this.mediaType = V22ManifestTemplate.MEDIA_TYPE;
+  }
+
+  /** Pushes an {@link OCIManifestTemplate}. */
+  ManifestPusher(RegistryEndpointProperties registryEndpointProperties,
+                 OCIManifestTemplate manifestTemplate,
+                 String imageTag) {
+    this.registryEndpointProperties = registryEndpointProperties;
+    this.manifestTemplate = manifestTemplate;
+    this.imageTag = imageTag;
+    this.mediaType = OCIManifestTemplate.MEDIA_TYPE;
   }
 
   @Override
