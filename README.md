@@ -7,7 +7,7 @@
 
 ## What is Jib?
 
-Jib is a Maven plugin for building container images for your Java applications.
+Jib is a Maven plugin for building Docker<!-- and OCI--> images for your Java applications.
 
 ## Goals
 
