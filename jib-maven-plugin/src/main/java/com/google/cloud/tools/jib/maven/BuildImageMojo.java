@@ -18,9 +18,9 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.cloud.tools.jib.builder.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.BuildImageSteps;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
+import com.google.cloud.tools.jib.builder.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
@@ -72,14 +72,12 @@ public class BuildImageMojo extends AbstractMojo {
   @Parameter(defaultValue = "gcr.io/distroless/java", required = true)
   private String from;
 
-  @Parameter(required = true)
-  private String registry;
+  @Parameter private String registry;
 
   @Parameter(required = true)
   private String repository;
 
-  @Parameter(defaultValue = "latest", required = true)
-  private String tag;
+  @Parameter private String tag;
 
   @Parameter private List<String> credHelpers;
 
@@ -134,20 +132,15 @@ public class BuildImageMojo extends AbstractMojo {
         RegistryCredentials.from("Maven settings", registryCredentials);
 
     BuildConfiguration buildConfiguration =
-        BuildConfiguration.builder()
-            .setBuildLogger(new MavenBuildLogger(getLog()))
-            .setBaseImageRegistry(baseImage.getRegistry())
-            .setBaseImageRepository(baseImage.getRepository())
-            .setBaseImageTag(baseImage.getTag())
-            .setTargetRegistry(registry)
-            .setTargetRepository(repository)
-            .setTargetTag(tag)
+        BuildConfiguration.builder(new MavenBuildLogger(getLog()))
+            .setBaseImage(baseImage)
+            .setTargetImage(ImageReference.of(registry, repository, tag))
             .setCredentialHelperNames(credHelpers)
             .setKnownRegistryCredentials(mavenSettingsCredentials)
             .setMainClass(mainClass)
+            .setEnableReproducibleBuilds(enableReproducibleBuilds)
             .setJvmFlags(jvmFlags)
             .setEnvironment(environment)
-            .setEnableReproducibleBuilds(enableReproducibleBuilds)
             .build();
 
     // Uses a directory in the Maven build cache as the Jib cache.
