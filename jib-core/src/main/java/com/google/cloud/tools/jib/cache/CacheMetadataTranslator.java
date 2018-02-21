@@ -58,7 +58,7 @@ public class CacheMetadataTranslator {
                 layerObjectTemplate.getDiffId());
 
         CachedLayerWithMetadata cachedLayerWithMetadata =
-            new CachedLayerWithMetadata(cachedLayer, layerObjectTemplate.getType(), layerMetadata);
+            new CachedLayerWithMetadata(cachedLayer, layerMetadata);
         cacheMetadata.addLayer(cachedLayerWithMetadata);
       }
 
@@ -76,24 +76,15 @@ public class CacheMetadataTranslator {
     for (CachedLayerWithMetadata cachedLayerWithMetadata : cacheMetadata.getLayers()) {
       CacheMetadataLayerObjectTemplate layerObjectTemplate =
           new CacheMetadataLayerObjectTemplate()
-              .setType(cachedLayerWithMetadata.getType())
               .setSize(cachedLayerWithMetadata.getBlobDescriptor().getSize())
               .setDigest(cachedLayerWithMetadata.getBlobDescriptor().getDigest())
               .setDiffId(cachedLayerWithMetadata.getDiffId());
 
-      switch (cachedLayerWithMetadata.getType()) {
-        case DEPENDENCIES:
-        case RESOURCES:
-        case CLASSES:
-          if (cachedLayerWithMetadata.getMetadata() == null) {
-            throw new IllegalStateException("Layer metadata cannot be null for application layers");
-          }
-          layerObjectTemplate.setProperties(
-              new CacheMetadataLayerPropertiesObjectTemplate()
-                  .setSourceFiles(cachedLayerWithMetadata.getMetadata().getSourceFiles())
-                  .setLastModifiedTime(
-                      cachedLayerWithMetadata.getMetadata().getLastModifiedTime()));
-          break;
+      if (cachedLayerWithMetadata.getMetadata() != null) {
+        layerObjectTemplate.setProperties(
+            new CacheMetadataLayerPropertiesObjectTemplate()
+                .setSourceFiles(cachedLayerWithMetadata.getMetadata().getSourceFiles())
+                .setLastModifiedTime(cachedLayerWithMetadata.getMetadata().getLastModifiedTime()));
       }
 
       template.addLayer(layerObjectTemplate);

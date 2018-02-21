@@ -27,10 +27,7 @@ public class CachedLayerWithMetadataTest {
   public void testNew() {
     LayerMetadata mockLayerMetadata = Mockito.mock(LayerMetadata.class);
     CachedLayerWithMetadata cachedLayerWithMetadata =
-        new CachedLayerWithMetadata(
-            Mockito.mock(CachedLayer.class),
-            Mockito.mock(CachedLayerType.class),
-            mockLayerMetadata);
+        new CachedLayerWithMetadata(Mockito.mock(CachedLayer.class), mockLayerMetadata);
     Assert.assertEquals(mockLayerMetadata, cachedLayerWithMetadata.getMetadata());
   }
 }

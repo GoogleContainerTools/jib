@@ -38,17 +38,10 @@ class CacheMetadata {
 
     private final ImageLayers<CachedLayerWithMetadata> layers;
 
-    @Nullable private CachedLayerType type;
     @Nullable private List<Path> sourceFiles;
 
     private LayerFilter(ImageLayers<CachedLayerWithMetadata> layers) {
       this.layers = layers;
-    }
-
-    /** Filters to a certain layer type. */
-    LayerFilter byType(CachedLayerType type) {
-      this.type = type;
-      return this;
     }
 
     /** Filters to a certain list of source files. */
@@ -63,12 +56,6 @@ class CacheMetadata {
         ImageLayers<CachedLayerWithMetadata> filteredLayers = new ImageLayers<>();
 
         for (CachedLayerWithMetadata layer : layers) {
-          if (type != null) {
-            if (type != layer.getType()) {
-              continue;
-            }
-          }
-
           if (sourceFiles != null) {
             if (layer.getMetadata() == null) {
               continue;

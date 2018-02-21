@@ -94,11 +94,9 @@ public class CacheWriterTest {
     Mockito.when(mockLayerBuilder.build()).thenReturn(unwrittenLayer);
     Mockito.when(mockLayerBuilder.getSourceFiles()).thenReturn(fakeSourceFiles);
 
-    CachedLayer cachedLayer =
-        cacheWriter.writeLayer(mockLayerBuilder, CachedLayerType.DEPENDENCIES);
+    CachedLayer cachedLayer = cacheWriter.writeLayer(mockLayerBuilder);
 
     CachedLayerWithMetadata layerInMetadata = testCache.getMetadata().getLayers().get(0);
-    Assert.assertEquals(CachedLayerType.DEPENDENCIES, layerInMetadata.getType());
     Assert.assertNotNull(layerInMetadata.getMetadata());
     Assert.assertEquals(
         Collections.singletonList(Paths.get("some", "source", "file").toString()),
@@ -122,7 +120,6 @@ public class CacheWriterTest {
         cacheWriter.getCachedLayer(expectedLayer.blobDescriptor.getDigest(), layerOutputStream);
 
     CachedLayerWithMetadata layerInMetadata = testCache.getMetadata().getLayers().get(0);
-    Assert.assertEquals(CachedLayerType.BASE, layerInMetadata.getType());
     Assert.assertNull(layerInMetadata.getMetadata());
 
     verifyCachedLayerIsExpected(expectedLayer, cachedLayer);

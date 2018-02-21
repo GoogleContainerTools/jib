@@ -83,37 +83,27 @@ public class CacheReader {
   /**
    * Finds the file that stores the content BLOB for an application layer.
    *
-   * @param layerType the type of layer
    * @param sourceFiles the source files the layer must be built from
    * @return the newest cached layer file that matches the {@code layerType} and {@code sourceFiles}
    */
-  public Path getLayerFile(CachedLayerType layerType, List<Path> sourceFiles)
-      throws CacheMetadataCorruptedException {
-    switch (layerType) {
-      case DEPENDENCIES:
-      case RESOURCES:
-      case CLASSES:
-        CacheMetadata cacheMetadata = cache.getMetadata();
-        ImageLayers<CachedLayerWithMetadata> cachedLayers =
-            cacheMetadata.filterLayers().byType(layerType).bySourceFiles(sourceFiles).filter();
+  public Path getLayerFile(List<Path> sourceFiles) throws CacheMetadataCorruptedException {
+    CacheMetadata cacheMetadata = cache.getMetadata();
+    ImageLayers<CachedLayerWithMetadata> cachedLayers =
+        cacheMetadata.filterLayers().bySourceFiles(sourceFiles).filter();
 
-        // Finds the newest cached layer for the layer type.
-        FileTime newestLastModifiedTime = FileTime.from(Instant.MIN);
+    // Finds the newest cached layer for the layer type.
+    FileTime newestLastModifiedTime = FileTime.from(Instant.MIN);
 
-        Path newestLayerFile = null;
-        for (CachedLayerWithMetadata cachedLayer : cachedLayers) {
-          FileTime cachedLayerLastModifiedTime = cachedLayer.getMetadata().getLastModifiedTime();
-          if (cachedLayerLastModifiedTime.compareTo(newestLastModifiedTime) > 0) {
-            newestLastModifiedTime = cachedLayerLastModifiedTime;
-            newestLayerFile = cachedLayer.getContentFile();
-          }
-        }
-
-        return newestLayerFile;
-
-      default:
-        throw new UnsupportedOperationException("Can only find layer files for application layers");
+    Path newestLayerFile = null;
+    for (CachedLayerWithMetadata cachedLayer : cachedLayers) {
+      FileTime cachedLayerLastModifiedTime = cachedLayer.getMetadata().getLastModifiedTime();
+      if (cachedLayerLastModifiedTime.compareTo(newestLastModifiedTime) > 0) {
+        newestLastModifiedTime = cachedLayerLastModifiedTime;
+        newestLayerFile = cachedLayer.getContentFile();
+      }
     }
+
+    return newestLayerFile;
   }
 
   /**
