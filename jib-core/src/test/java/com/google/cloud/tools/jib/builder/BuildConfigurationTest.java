@@ -19,6 +19,8 @@ package com.google.cloud.tools.jib.builder;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+
+import com.google.cloud.tools.jib.builder.configuration.BuildConfiguration;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Test;

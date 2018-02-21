@@ -19,6 +19,8 @@ package com.google.cloud.tools.jib.builder;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+
+import com.google.cloud.tools.jib.builder.configuration.BuildConfiguration;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;

@@ -14,10 +14,12 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.builder;
+package com.google.cloud.tools.jib.builder.configuration;
 
+import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.annotations.VisibleForTesting;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -25,7 +27,8 @@ import java.util.List;
 import java.util.Map;
 
 /** Immutable configuration options for the builder process. */
-public class BuildConfiguration {
+@Deprecated
+public class BuildConfigurationOld {
 
   /** Enumerates the fields in the configuration. */
   @VisibleForTesting
@@ -73,6 +76,8 @@ public class BuildConfiguration {
   }
 
   public static class Builder {
+
+    BaseImageParameter baseImageParameter = new BaseImageParameter();
 
     /** Textual descriptions of the configuration fields. */
     @VisibleForTesting
@@ -185,7 +190,7 @@ public class BuildConfiguration {
      * @return the corresponding build configuration
      * @throws IllegalStateException if required fields were not set
      */
-    public BuildConfiguration build() {
+    public BuildConfigurationOld build() {
       List<String> descriptions = new ArrayList<>();
       for (Fields field : Fields.values()) {
         if (field.isRequired() && (!values.containsKey(field) || values.get(field) == null)) {
@@ -196,7 +201,7 @@ public class BuildConfiguration {
       switch (descriptions.size()) {
         case 0:
           values = Collections.unmodifiableMap(values);
-          return new BuildConfiguration(buildLogger, values);
+          return new BuildConfigurationOld(buildLogger, values);
 
         case 1:
           throw new IllegalStateException(descriptions.get(0) + MISSING_FIELD_MESSAGE_SUFFIX);
@@ -231,7 +236,7 @@ public class BuildConfiguration {
     return new Builder();
   }
 
-  private BuildConfiguration(BuildLogger buildLogger, Map<Fields, Object> values) {
+  private BuildConfigurationOld(BuildLogger buildLogger, Map<Fields, Object> values) {
     this.buildLogger = buildLogger;
     this.values = values;
   }

@@ -149,8 +149,7 @@ public class ImageReference {
   private final String tag;
 
   /** Use {@link #parse} to construct. */
-  @VisibleForTesting
-  ImageReference(String registry, String repository, String tag) {
+  private ImageReference(String registry, String repository, String tag) {
     this.registry = registry;
     this.repository = repository;
     this.tag = tag;
