@@ -94,6 +94,32 @@ public class ImageReferenceTest {
     }
   }
 
+  @Test
+  public void testOf_smoke() {
+    String expectedRegistry = "someregistry";
+    String expectedRepository = "somerepository";
+    String expectedTag = "sometag";
+
+    Assert.assertEquals(
+        expectedRegistry,
+        ImageReference.of(expectedRegistry, expectedRepository, expectedTag).getRegistry());
+    Assert.assertEquals(
+        expectedRepository,
+        ImageReference.of(expectedRegistry, expectedRepository, expectedTag).getRepository());
+    Assert.assertEquals(
+        expectedTag, ImageReference.of(expectedRegistry, expectedRepository, expectedTag).getTag());
+    Assert.assertEquals(
+        "registry.hub.docker.com",
+        ImageReference.of(null, expectedRepository, expectedTag).getRegistry());
+    Assert.assertEquals(
+        "registry.hub.docker.com", ImageReference.of(null, expectedRepository, null).getRegistry());
+    Assert.assertEquals(
+        "latest", ImageReference.of(expectedRegistry, expectedRepository, null).getTag());
+    Assert.assertEquals("latest", ImageReference.of(null, expectedRepository, null).getTag());
+    Assert.assertEquals(
+        expectedRepository, ImageReference.of(null, expectedRepository, null).getRepository());
+  }
+
   private void verifyParse(String registry, String repository, String tagSeparator, String tag)
       throws InvalidImageReferenceException {
     // Gets the expected parsed components.
