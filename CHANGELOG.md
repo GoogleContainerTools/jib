@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 ## 0.1.2
 ### Added
 - Use credentials from Docker config if none can be found otherwise ([#101](https://github.com/google/jib/issues/101))
+- Reproducible image building ([#7](https://github.com/google/jib/issues/7))
 
 ## 0.1.1
 ### Added
