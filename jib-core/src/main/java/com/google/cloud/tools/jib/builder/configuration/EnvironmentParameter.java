@@ -25,11 +25,6 @@ class EnvironmentParameter implements ConfigurationParameter<Map<String, String>
   private Map<String, String> environmentMap = Collections.emptyMap();
 
   @Override
-  public String getDescription() {
-    return "environment";
-  }
-
-  @Override
   public ConfigurationParameter<Map<String, String>> set(Map<String, String> environmentMap) {
     this.environmentMap = environmentMap;
     return this;

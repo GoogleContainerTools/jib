@@ -25,11 +25,6 @@ class CredentialHelpersParameter implements ConfigurationParameter<List<String>>
   private List<String> credentialHelperNames = Collections.emptyList();
 
   @Override
-  public String getDescription() {
-    return "credential helper names";
-  }
-
-  @Override
   public ConfigurationParameter<List<String>> set(List<String> credentialHelperNames) {
     this.credentialHelperNames = credentialHelperNames;
     return this;

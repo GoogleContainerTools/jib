@@ -24,11 +24,6 @@ class TargetImageParameter implements ConfigurationParameter<ImageReference> {
   private ImageReference targetImageReference;
 
   @Override
-  public String getDescription() {
-    return "target image";
-  }
-
-  @Override
   public ConfigurationParameter<ImageReference> set(ImageReference imageReference) {
     targetImageReference = imageReference;
     return this;

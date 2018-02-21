@@ -24,11 +24,6 @@ class BaseImageParameter implements ConfigurationParameter<ImageReference> {
   private ImageReference baseImageReference;
 
   @Override
-  public String getDescription() {
-    return "base image";
-  }
-
-  @Override
   public ConfigurationParameter<ImageReference> set(ImageReference imageReference) {
     baseImageReference = imageReference;
     return this;

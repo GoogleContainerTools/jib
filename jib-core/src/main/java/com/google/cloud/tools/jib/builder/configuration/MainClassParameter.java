@@ -22,11 +22,6 @@ class MainClassParameter implements ConfigurationParameter<String> {
   private String mainClass;
 
   @Override
-  public String getDescription() {
-    return "main class";
-  }
-
-  @Override
   public ConfigurationParameter<String> set(String mainClass) {
     this.mainClass = mainClass;
     return this;

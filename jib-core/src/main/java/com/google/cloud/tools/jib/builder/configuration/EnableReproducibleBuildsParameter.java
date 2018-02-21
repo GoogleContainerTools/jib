@@ -22,11 +22,6 @@ class EnableReproducibleBuildsParameter implements ConfigurationParameter<Boolea
   private boolean enableReproducibleBuilds = true;
 
   @Override
-  public String getDescription() {
-    return "enable reproducible builds";
-  }
-
-  @Override
   public ConfigurationParameter<Boolean> set(Boolean enableReproducibleBuilds) {
     this.enableReproducibleBuilds = enableReproducibleBuilds;
     return this;

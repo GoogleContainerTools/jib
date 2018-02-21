@@ -50,8 +50,8 @@ class ConfigurationParameterValidator {
 
       default:
         // Appends the descriptions in correct grammar.
-        StringBuilder errorMessage = new StringBuilder();
-        for (int errorMessageIndex = 0;
+        StringBuilder errorMessage = new StringBuilder(errorMessages.get(0));
+        for (int errorMessageIndex = 1;
             errorMessageIndex < errorMessages.size();
             errorMessageIndex++) {
           if (errorMessageIndex == errorMessages.size() - 1) {

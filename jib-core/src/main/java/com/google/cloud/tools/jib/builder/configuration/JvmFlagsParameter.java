@@ -25,11 +25,6 @@ class JvmFlagsParameter implements ConfigurationParameter<List<String>> {
   private List<String> jvmFlags = Collections.emptyList();
 
   @Override
-  public String getDescription() {
-    return "JVM flags";
-  }
-
-  @Override
   public ConfigurationParameter<List<String>> set(List<String> jvmFlags) {
     this.jvmFlags = jvmFlags;
     return this;

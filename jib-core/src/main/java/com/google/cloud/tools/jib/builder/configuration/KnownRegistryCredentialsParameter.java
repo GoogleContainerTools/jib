@@ -24,11 +24,6 @@ class KnownRegistryCredentialsParameter implements ConfigurationParameter<Regist
   private RegistryCredentials knownRegistryCredentials = RegistryCredentials.none();
 
   @Override
-  public String getDescription() {
-    return "known registry credentials";
-  }
-
-  @Override
   public ConfigurationParameter<RegistryCredentials> set(RegistryCredentials registryCredentials) {
     knownRegistryCredentials = registryCredentials;
     return this;

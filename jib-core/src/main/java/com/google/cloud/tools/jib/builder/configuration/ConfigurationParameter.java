@@ -46,12 +46,12 @@ interface ConfigurationParameter<T> {
     }
   }
 
-  /** A user-facing description of the parameter. */
-  String getDescription();
-
+  /** Sets the value for the parameter. */
   ConfigurationParameter<T> set(T value);
 
+  /** Gets the value of this parameter. */
   T get();
 
+  /** Validates the value of this parameter. */
   ValidationResult validate();
 }
