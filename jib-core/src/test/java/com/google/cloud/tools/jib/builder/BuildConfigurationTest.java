@@ -16,16 +16,18 @@
 
 package com.google.cloud.tools.jib.builder;
 
+import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
+import com.google.common.collect.ImmutableMap;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 public class BuildConfigurationTest {
 
-  // TODO: Should test also if value is set but null
   @Test
   public void testBuilder() {
     String expectedBaseImageServerUrl = "someserver";
@@ -37,21 +39,25 @@ public class BuildConfigurationTest {
     List<String> expectedCredentialHelperNames =
         Arrays.asList("credentialhelper", "anotherCredentialHelper");
     String expectedMainClass = "mainclass";
+    RegistryCredentials expectedKnownRegistryCredentials = Mockito.mock(RegistryCredentials.class);
     boolean expectedEnableReproducibleBuilds = true;
     List<String> expectedJvmFlags = Arrays.asList("some", "jvm", "flags");
+    Map<String, String> expectedEnvironment = ImmutableMap.of("key", "value");
 
     BuildConfiguration buildConfiguration =
-        BuildConfiguration.builder()
-            .setBaseImageRegistry(expectedBaseImageServerUrl)
-            .setBaseImageRepository(expectedBaseImageName)
-            .setBaseImageTag(expectedBaseImageTag)
-            .setTargetRegistry(expectedTargetServerUrl)
-            .setTargetRepository(expectedTargetImageName)
-            .setTargetTag(expectedTargetTag)
+        BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
+            .setBaseImage(
+                ImageReference.of(
+                    expectedBaseImageServerUrl, expectedBaseImageName, expectedBaseImageTag))
+            .setTargetImage(
+                ImageReference.of(
+                    expectedTargetServerUrl, expectedTargetImageName, expectedTargetTag))
             .setCredentialHelperNames(expectedCredentialHelperNames)
+            .setKnownRegistryCredentials(expectedKnownRegistryCredentials)
+            .setEnableReproducibleBuilds(true)
             .setMainClass(expectedMainClass)
             .setJvmFlags(expectedJvmFlags)
-            .setEnableReproducibleBuilds(true)
+            .setEnvironment(expectedEnvironment)
             .build();
     Assert.assertEquals(expectedBaseImageServerUrl, buildConfiguration.getBaseImageRegistry());
     Assert.assertEquals(expectedBaseImageName, buildConfiguration.getBaseImageRepository());
@@ -61,26 +67,51 @@ public class BuildConfigurationTest {
     Assert.assertEquals(expectedTargetTag, buildConfiguration.getTargetTag());
     Assert.assertEquals(
         expectedCredentialHelperNames, buildConfiguration.getCredentialHelperNames());
-    Assert.assertEquals(expectedMainClass, buildConfiguration.getMainClass());
-    Assert.assertEquals(expectedJvmFlags, buildConfiguration.getJvmFlags());
+    Assert.assertEquals(
+        expectedKnownRegistryCredentials, buildConfiguration.getKnownRegistryCredentials());
     Assert.assertEquals(
         expectedEnableReproducibleBuilds, buildConfiguration.getEnableReproducibleBuilds());
+    Assert.assertEquals(expectedMainClass, buildConfiguration.getMainClass());
+    Assert.assertEquals(expectedJvmFlags, buildConfiguration.getJvmFlags());
+    Assert.assertEquals(expectedEnvironment, buildConfiguration.getEnvironment());
   }
 
   @Test
   public void testBuilder_missingValues() {
+    // Main class is missing
     try {
-      BuildConfiguration.builder().build();
+      BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
+          .setBaseImage(Mockito.mock(ImageReference.class))
+          .setTargetImage(Mockito.mock(ImageReference.class))
+          .build();
       Assert.fail("Build configuration should not be built with missing values");
 
     } catch (IllegalStateException ex) {
-      for (Map.Entry<BuildConfiguration.Fields, String> description :
-          BuildConfiguration.Builder.FIELD_DESCRIPTIONS.entrySet()) {
-        if (!description.getKey().isRequired()) {
-          continue;
-        }
-        Assert.assertThat(ex.getMessage(), CoreMatchers.containsString(description.getValue()));
-      }
+      Assert.assertEquals("main class is required but not set", ex.getMessage());
+    }
+
+    // Main class and target image are missing
+    try {
+      BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
+          .setBaseImage(Mockito.mock(ImageReference.class))
+          .build();
+      Assert.fail("Build configuration should not be built with missing values");
+
+    } catch (IllegalStateException ex) {
+      Assert.assertEquals(
+          "target image is required but not set and main class is required but not set",
+          ex.getMessage());
+    }
+
+    // All required fields missing
+    try {
+      BuildConfiguration.builder(Mockito.mock(BuildLogger.class)).build();
+      Assert.fail("Build configuration should not be built with missing values");
+
+    } catch (IllegalStateException ex) {
+      Assert.assertEquals(
+          "base image is required but not set, target image is required but not set, and main class is required but not set",
+          ex.getMessage());
     }
   }
 }

@@ -16,224 +16,169 @@
 
 package com.google.cloud.tools.jib.builder;
 
+import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
-import com.google.common.annotations.VisibleForTesting;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /** Immutable configuration options for the builder process. */
 public class BuildConfiguration {
 
-  /** Enumerates the fields in the configuration. */
-  @VisibleForTesting
-  enum Fields {
-    /** The server URL of the registry to pull the base image from. */
-    BASE_IMAGE_REGISTRY(true),
-    /** The image name/repository of the base image (also known as the registry namespace). */
-    BASE_IMAGE_REPOSITORY(true),
-    /** The base image tag. */
-    BASE_IMAGE_TAG(true),
-
-    /** The server URL of the registry to push the built image to. */
-    TARGET_REGISTRY(true),
-    /** The image name/repository of the built image (also known as the registry namespace). */
-    TARGET_REPOSITORY(true),
-    /** The image tag of the built image (the part after the colon). */
-    TARGET_TAG(true),
-
-    /** The credential helper names used by {@link RegistryCredentials}. */
-    CREDENTIAL_HELPER_NAMES(false),
-    /** Known registry credentials to fallback on. */
-    KNOWN_REGISTRY_CREDENTIALS(false),
-
-    /** Tell the layer build to use reproducibility features. */
-    ENABLE_REPRODUCIBLE_BUILDS(false),
-
-    /** The main class to use when running the application. */
-    MAIN_CLASS(true),
-
-    /** Additional JVM flags to use when running the application. */
-    JVM_FLAGS(false),
-    /** Environment variables to set when running the application. */
-    ENVIRONMENT(false);
-
-    private final boolean required;
-
-    Fields(boolean required) {
-      this.required = required;
-    }
-
-    @VisibleForTesting
-    boolean isRequired() {
-      return required;
-    }
-  }
-
   public static class Builder {
 
-    /** Textual descriptions of the configuration fields. */
-    @VisibleForTesting
-    static final Map<Fields, String> FIELD_DESCRIPTIONS =
-        new EnumMap<Fields, String>(Fields.class) {
-          {
-            put(Fields.BASE_IMAGE_REGISTRY, "base image registry server URL");
-            put(Fields.BASE_IMAGE_REPOSITORY, "base image name");
-            put(Fields.BASE_IMAGE_TAG, "base image tag");
-            put(Fields.TARGET_REGISTRY, "target registry server URL");
-            put(Fields.TARGET_REPOSITORY, "target image name");
-            put(Fields.TARGET_TAG, "target image tag");
-            put(Fields.CREDENTIAL_HELPER_NAMES, "credential helper names");
-            put(Fields.ENABLE_REPRODUCIBLE_BUILDS, "enable reproducible layer builds");
-            put(Fields.MAIN_CLASS, "main class");
-            put(Fields.JVM_FLAGS, "JVM flags");
-            put(Fields.ENVIRONMENT, "environment variables");
-          }
-        };
-
-    private static final String MISSING_FIELD_MESSAGE_SUFFIX =
-        " required but not set in build configuration";
+    private ImageReference baseImageReference;
+    private ImageReference targetImageReference;
+    private List<String> credentialHelperNames = new ArrayList<>();
+    private RegistryCredentials knownRegistryCredentials = RegistryCredentials.none();
+    private boolean enableReproducibleBuilds = true;
+    private String mainClass;
+    private List<String> jvmFlags = new ArrayList<>();
+    private Map<String, String> environmentMap = new HashMap<>();
 
     private BuildLogger buildLogger;
-    private Map<Fields, Object> values = new EnumMap<>(Fields.class);
 
-    private Builder() {
-      // Sets default empty values.
-      values.put(Fields.CREDENTIAL_HELPER_NAMES, Collections.emptyList());
-      values.put(Fields.KNOWN_REGISTRY_CREDENTIALS, RegistryCredentials.none());
-      values.put(Fields.JVM_FLAGS, Collections.emptyList());
-      values.put(Fields.ENVIRONMENT, Collections.emptyMap());
-      values.put(Fields.ENABLE_REPRODUCIBLE_BUILDS, false);
-    }
-
-    public Builder setBuildLogger(BuildLogger buildLogger) {
+    private Builder(BuildLogger buildLogger) {
       this.buildLogger = buildLogger;
+    }
+
+    public Builder setBaseImage(@Nullable ImageReference imageReference) {
+      baseImageReference = imageReference;
       return this;
     }
 
-    public Builder setBaseImageRegistry(String baseImageServerUrl) {
-      values.put(Fields.BASE_IMAGE_REGISTRY, baseImageServerUrl);
+    public Builder setTargetImage(@Nullable ImageReference imageReference) {
+      targetImageReference = imageReference;
       return this;
     }
 
-    public Builder setBaseImageRepository(String baseImageName) {
-      values.put(Fields.BASE_IMAGE_REPOSITORY, baseImageName);
-      return this;
-    }
-
-    public Builder setBaseImageTag(String baseImageTag) {
-      values.put(Fields.BASE_IMAGE_TAG, baseImageTag);
-      return this;
-    }
-
-    public Builder setTargetRegistry(String targetServerUrl) {
-      values.put(Fields.TARGET_REGISTRY, targetServerUrl);
-      return this;
-    }
-
-    public Builder setTargetRepository(String targetImageName) {
-      values.put(Fields.TARGET_REPOSITORY, targetImageName);
-      return this;
-    }
-
-    public Builder setTargetTag(String targetTag) {
-      values.put(Fields.TARGET_TAG, targetTag);
-      return this;
-    }
-
-    public Builder setCredentialHelperNames(List<String> credentialHelperNames) {
+    public Builder setCredentialHelperNames(@Nullable List<String> credentialHelperNames) {
       if (credentialHelperNames != null) {
-        values.put(Fields.CREDENTIAL_HELPER_NAMES, credentialHelperNames);
+        this.credentialHelperNames = credentialHelperNames;
       }
       return this;
     }
 
-    public Builder setKnownRegistryCredentials(RegistryCredentials knownRegistryCredentials) {
+    public Builder setKnownRegistryCredentials(
+        @Nullable RegistryCredentials knownRegistryCredentials) {
       if (knownRegistryCredentials != null) {
-        values.put(Fields.KNOWN_REGISTRY_CREDENTIALS, knownRegistryCredentials);
+        this.knownRegistryCredentials = knownRegistryCredentials;
       }
       return this;
     }
 
-    public Builder setEnableReproducibleBuilds(boolean enable) {
-      values.put(Fields.ENABLE_REPRODUCIBLE_BUILDS, enable);
+    public Builder setEnableReproducibleBuilds(boolean isEnabled) {
+      enableReproducibleBuilds = isEnabled;
       return this;
     }
 
-    public Builder setMainClass(String mainClass) {
-      values.put(Fields.MAIN_CLASS, mainClass);
+    public Builder setMainClass(@Nullable String mainClass) {
+      this.mainClass = mainClass;
       return this;
     }
 
-    public Builder setJvmFlags(List<String> jvmFlags) {
+    public Builder setJvmFlags(@Nullable List<String> jvmFlags) {
       if (jvmFlags != null) {
-        values.put(Fields.JVM_FLAGS, jvmFlags);
+        this.jvmFlags = jvmFlags;
       }
       return this;
     }
 
-    public Builder setEnvironment(Map<String, String> environment) {
-      if (environment != null) {
-        values.put(Fields.ENVIRONMENT, environment);
+    public Builder setEnvironment(@Nullable Map<String, String> environmentMap) {
+      if (environmentMap != null) {
+        this.environmentMap = environmentMap;
       }
       return this;
     }
 
-    /**
-     * @return the corresponding build configuration
-     * @throws IllegalStateException if required fields were not set
-     */
+    /** @return the corresponding build configuration */
     public BuildConfiguration build() {
-      List<String> descriptions = new ArrayList<>();
-      for (Fields field : Fields.values()) {
-        if (field.isRequired() && (!values.containsKey(field) || values.get(field) == null)) {
-          descriptions.add(FIELD_DESCRIPTIONS.get(field));
-        }
+      // Validates the parameters.
+      List<String> errorMessages = new ArrayList<>();
+      if (baseImageReference == null) {
+        errorMessages.add("base image is required but not set");
       }
-      // TODO: Find and replace with utility method for generating lists in English grammar.
-      switch (descriptions.size()) {
-        case 0:
-          values = Collections.unmodifiableMap(values);
-          return new BuildConfiguration(buildLogger, values);
+      if (targetImageReference == null) {
+        errorMessages.add("target image is required but not set");
+      }
+      if (mainClass == null) {
+        errorMessages.add("main class is required but not set");
+      }
+
+      switch (errorMessages.size()) {
+        case 0: // No errors
+          return new BuildConfiguration(
+              buildLogger,
+              baseImageReference,
+              targetImageReference,
+              credentialHelperNames,
+              knownRegistryCredentials,
+              enableReproducibleBuilds,
+              mainClass,
+              jvmFlags,
+              environmentMap);
 
         case 1:
-          throw new IllegalStateException(descriptions.get(0) + MISSING_FIELD_MESSAGE_SUFFIX);
+          throw new IllegalStateException(errorMessages.get(0));
 
         case 2:
-          throw new IllegalStateException(
-              descriptions.get(0) + " and " + descriptions.get(1) + MISSING_FIELD_MESSAGE_SUFFIX);
+          throw new IllegalStateException(errorMessages.get(0) + " and " + errorMessages.get(1));
 
         default:
           // Appends the descriptions in correct grammar.
-          StringBuilder stringBuilder = new StringBuilder();
-          for (int descriptionsIndex = 0;
-              descriptionsIndex < descriptions.size();
-              descriptionsIndex++) {
-            if (descriptionsIndex == descriptions.size() - 1) {
-              stringBuilder.append(", and ");
+          StringBuilder errorMessage = new StringBuilder(errorMessages.get(0));
+          for (int errorMessageIndex = 1;
+              errorMessageIndex < errorMessages.size();
+              errorMessageIndex++) {
+            if (errorMessageIndex == errorMessages.size() - 1) {
+              errorMessage.append(", and ");
             } else {
-              stringBuilder.append(", ");
+              errorMessage.append(", ");
             }
-            stringBuilder.append(descriptions.get(descriptionsIndex));
+            errorMessage.append(errorMessages.get(errorMessageIndex));
           }
-          throw new IllegalStateException(
-              stringBuilder.append(MISSING_FIELD_MESSAGE_SUFFIX).toString());
+          throw new IllegalStateException(errorMessage.toString());
       }
     }
   }
 
   private final BuildLogger buildLogger;
-  private final Map<Fields, Object> values;
+  private ImageReference baseImageReference;
+  private ImageReference targetImageReference;
+  private List<String> credentialHelperNames;
+  private RegistryCredentials knownRegistryCredentials;
+  private boolean enableReproducibleBuilds;
+  private String mainClass;
+  private List<String> jvmFlags;
+  private Map<String, String> environmentMap;
 
-  public static Builder builder() {
-    return new Builder();
+  public static Builder builder(BuildLogger buildLogger) {
+    return new Builder(buildLogger);
   }
 
-  private BuildConfiguration(BuildLogger buildLogger, Map<Fields, Object> values) {
+  /** Instantiate with {@link Builder#build}. */
+  private BuildConfiguration(
+      BuildLogger buildLogger,
+      ImageReference baseImageReference,
+      ImageReference targetImageReference,
+      List<String> credentialHelperNames,
+      RegistryCredentials knownRegistryCredentials,
+      boolean enableReproducibleBuilds,
+      String mainClass,
+      List<String> jvmFlags,
+      Map<String, String> environmentMap) {
     this.buildLogger = buildLogger;
-    this.values = values;
+    this.baseImageReference = baseImageReference;
+    this.targetImageReference = targetImageReference;
+    this.credentialHelperNames = Collections.unmodifiableList(credentialHelperNames);
+    this.knownRegistryCredentials = knownRegistryCredentials;
+    this.enableReproducibleBuilds = enableReproducibleBuilds;
+    this.mainClass = mainClass;
+    this.jvmFlags = Collections.unmodifiableList(jvmFlags);
+    this.environmentMap = Collections.unmodifiableMap(environmentMap);
   }
 
   public BuildLogger getBuildLogger() {
@@ -241,55 +186,50 @@ public class BuildConfiguration {
   }
 
   public String getBaseImageRegistry() {
-    return getFieldValue(Fields.BASE_IMAGE_REGISTRY);
+    return baseImageReference.getRegistry();
   }
 
   public String getBaseImageRepository() {
-    return getFieldValue(Fields.BASE_IMAGE_REPOSITORY);
+    return baseImageReference.getRepository();
   }
 
   public String getBaseImageTag() {
-    return getFieldValue(Fields.BASE_IMAGE_TAG);
+    return baseImageReference.getTag();
   }
 
   public String getTargetRegistry() {
-    return getFieldValue(Fields.TARGET_REGISTRY);
+    return targetImageReference.getRegistry();
   }
 
   public String getTargetRepository() {
-    return getFieldValue(Fields.TARGET_REPOSITORY);
+    return targetImageReference.getRepository();
   }
 
   public String getTargetTag() {
-    return getFieldValue(Fields.TARGET_TAG);
+    return targetImageReference.getTag();
   }
 
   public RegistryCredentials getKnownRegistryCredentials() {
-    return getFieldValue(Fields.KNOWN_REGISTRY_CREDENTIALS);
+    return knownRegistryCredentials;
   }
 
   public List<String> getCredentialHelperNames() {
-    return getFieldValue(Fields.CREDENTIAL_HELPER_NAMES);
+    return credentialHelperNames;
   }
 
   public boolean getEnableReproducibleBuilds() {
-    return getFieldValue(Fields.ENABLE_REPRODUCIBLE_BUILDS);
+    return enableReproducibleBuilds;
   }
 
   public String getMainClass() {
-    return getFieldValue(Fields.MAIN_CLASS);
+    return mainClass;
   }
 
   public List<String> getJvmFlags() {
-    return Collections.unmodifiableList(getFieldValue(Fields.JVM_FLAGS));
+    return jvmFlags;
   }
 
   public Map<String, String> getEnvironment() {
-    return Collections.unmodifiableMap(getFieldValue(Fields.ENVIRONMENT));
-  }
-
-  @SuppressWarnings("unchecked")
-  private <T> T getFieldValue(Fields field) {
-    return (T) values.get(field);
+    return environmentMap;
   }
 }

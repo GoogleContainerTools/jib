@@ -16,21 +16,20 @@
 
 package com.google.cloud.tools.jib.builder;
 
+import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /** Integration tests for {@link BuildImageSteps}. */
 public class BuildImageStepsIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
 
-  private static final Logger logger = LoggerFactory.getLogger(TestBuildLogger.class);
+  private static final TestBuildLogger logger = new TestBuildLogger();
 
   @Rule public TemporaryFolder temporaryCacheDirectory = new TemporaryFolder();
 
@@ -38,15 +37,10 @@ public class BuildImageStepsIntegrationTest {
   public void testSteps() throws Exception {
     SourceFilesConfiguration sourceFilesConfiguration = new TestSourceFilesConfiguration();
     BuildConfiguration buildConfiguration =
-        BuildConfiguration.builder()
-            .setBaseImageRegistry("gcr.io")
-            .setBaseImageRepository("distroless/java")
-            .setBaseImageTag("latest")
-            .setTargetRegistry("localhost:5000")
-            .setTargetRepository("testimage")
-            .setTargetTag("testtag")
+        BuildConfiguration.builder(logger)
+            .setBaseImage(ImageReference.of("gcr.io", "distroless/java", "latest"))
+            .setTargetImage(ImageReference.of("localhost:5000", "testimage", "testtag"))
             .setMainClass("HelloWorld")
-            .setBuildLogger(new TestBuildLogger())
             .build();
 
     BuildImageSteps buildImageSteps =

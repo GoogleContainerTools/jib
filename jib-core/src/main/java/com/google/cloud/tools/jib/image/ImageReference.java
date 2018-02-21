@@ -16,10 +16,10 @@
 
 package com.google.cloud.tools.jib.image;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.annotation.Nullable;
 
 /**
  * Represents an image reference.
@@ -129,6 +129,18 @@ public class ImageReference {
     return new ImageReference(registry, repository, tag);
   }
 
+  /** Builds an image reference from a registry, repository, and tag. */
+  public static ImageReference of(
+      @Nullable String registry, String repository, @Nullable String tag) {
+    if (registry == null) {
+      registry = DOCKER_HUB_REGISTRY;
+    }
+    if (tag == null) {
+      tag = DEFAULT_TAG;
+    }
+    return new ImageReference(registry, repository, tag);
+  }
+
   /** @return {@code true} if is a valid registry; {@code false} otherwise */
   public static boolean isValidRegistry(String registry) {
     return registry.matches(REGISTRY_REGEX);
@@ -149,8 +161,7 @@ public class ImageReference {
   private final String tag;
 
   /** Use {@link #parse} to construct. */
-  @VisibleForTesting
-  ImageReference(String registry, String repository, String tag) {
+  private ImageReference(String registry, String repository, String tag) {
     this.registry = registry;
     this.repository = repository;
     this.tag = tag;
