@@ -39,6 +39,7 @@ public class TarStreamBuilder {
   /** Writes each entry in the filesystem to the tarball archive stream. */
   private static void writeEntriesAsTarArchive(
       List<TarArchiveEntry> entries, OutputStream tarByteStream) throws IOException {
+
     try (TarArchiveOutputStream tarArchiveOutputStream =
         new TarArchiveOutputStream(tarByteStream)) {
       // Enables PAX extended headers to support long file names.

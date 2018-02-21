@@ -22,6 +22,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 
@@ -40,9 +41,14 @@ public class LayerBuilder {
   /** The Unix-style path of the file in the partial filesystem changeset. */
   private final String extractionPath;
 
-  public LayerBuilder(List<Path> sourceFiles, String extractionPath) {
+  /** Enable reproducible features when building the tar */
+  private final boolean enableReproducibleBuilds;
+
+  public LayerBuilder(
+      List<Path> sourceFiles, String extractionPath, boolean enableReproducibleBuilds) {
     this.sourceFiles = new ArrayList<>(sourceFiles);
     this.extractionPath = extractionPath;
+    this.enableReproducibleBuilds = enableReproducibleBuilds;
   }
 
   /** Builds and returns the layer. */
@@ -72,18 +78,32 @@ public class LayerBuilder {
 
       TarArchiveEntry tarArchiveEntry =
           new TarArchiveEntry(sourceFile.toFile(), extractionPath + "/" + sourceFile.getFileName());
-      tarArchiveEntry.setModTime(0);
       filesystemEntries.add(tarArchiveEntry);
     }
 
-    TarStreamBuilder tarStreamBuilder = new TarStreamBuilder();
+    if (enableReproducibleBuilds) {
+      makeListReproducible(filesystemEntries);
+    }
 
     // Adds all the files to a tar stream.
+    TarStreamBuilder tarStreamBuilder = new TarStreamBuilder();
     for (TarArchiveEntry entry : filesystemEntries) {
       tarStreamBuilder.addEntry(entry);
     }
 
     return new UnwrittenLayer(tarStreamBuilder.toBlob());
+  }
+
+  // Sort list and strip out all non-reproducible elements from tar archive entries.
+  private void makeListReproducible(List<TarArchiveEntry> entries) {
+    entries.sort(Comparator.comparing(TarArchiveEntry::getName));
+    for (TarArchiveEntry entry : entries) {
+      entry.setModTime(0);
+      entry.setGroupId(0);
+      entry.setUserId(0);
+      entry.setUserName("");
+      entry.setGroupName("");
+    }
   }
 
   public List<Path> getSourceFiles() {

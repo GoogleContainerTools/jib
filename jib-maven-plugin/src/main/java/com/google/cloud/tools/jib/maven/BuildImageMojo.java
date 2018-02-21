@@ -89,6 +89,9 @@ public class BuildImageMojo extends AbstractMojo {
 
   @Parameter private String mainClass;
 
+  @Parameter(defaultValue = "true", required = true)
+  private boolean enableReproducibleBuilds;
+
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
     validateParameters();
@@ -144,6 +147,7 @@ public class BuildImageMojo extends AbstractMojo {
             .setMainClass(mainClass)
             .setJvmFlags(jvmFlags)
             .setEnvironment(environment)
+            .setEnableReproducibleBuilds(enableReproducibleBuilds)
             .build();
 
     // Uses a directory in the Maven build cache as the Jib cache.
