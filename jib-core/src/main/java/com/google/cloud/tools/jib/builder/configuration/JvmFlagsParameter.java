@@ -16,9 +16,9 @@
 
 package com.google.cloud.tools.jib.builder.configuration;
 
-import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /** Additional JVM flags to use when running the application. */
 class JvmFlagsParameter implements ConfigurationParameter<List<String>> {

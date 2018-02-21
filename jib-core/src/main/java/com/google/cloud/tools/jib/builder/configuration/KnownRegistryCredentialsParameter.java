@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.builder.configuration;
 
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
-
 import javax.annotation.Nullable;
 
 /** Known registry credentials to fallback on. */
@@ -26,7 +25,8 @@ class KnownRegistryCredentialsParameter implements ConfigurationParameter<Regist
   private RegistryCredentials knownRegistryCredentials = RegistryCredentials.none();
 
   @Override
-  public ConfigurationParameter<RegistryCredentials> set(@Nullable RegistryCredentials registryCredentials) {
+  public ConfigurationParameter<RegistryCredentials> set(
+      @Nullable RegistryCredentials registryCredentials) {
     if (registryCredentials != null) {
       knownRegistryCredentials = registryCredentials;
     }

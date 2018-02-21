@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.builder.configuration;
 
 import com.google.cloud.tools.jib.image.ImageReference;
-
 import javax.annotation.Nullable;
 
 /** The base image. */

@@ -16,9 +16,9 @@
 
 package com.google.cloud.tools.jib.builder.configuration;
 
-import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /** Environment variables to set when running the application. */
 class EnvironmentParameter implements ConfigurationParameter<Map<String, String>> {
@@ -26,7 +26,8 @@ class EnvironmentParameter implements ConfigurationParameter<Map<String, String>
   private Map<String, String> environmentMap = Collections.emptyMap();
 
   @Override
-  public ConfigurationParameter<Map<String, String>> set(@Nullable Map<String, String> environmentMap) {
+  public ConfigurationParameter<Map<String, String>> set(
+      @Nullable Map<String, String> environmentMap) {
     if (environmentMap != null) {
       this.environmentMap = environmentMap;
     }

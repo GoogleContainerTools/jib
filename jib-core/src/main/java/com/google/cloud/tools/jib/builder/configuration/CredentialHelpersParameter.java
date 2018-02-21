@@ -16,9 +16,9 @@
 
 package com.google.cloud.tools.jib.builder.configuration;
 
-import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /** Names of credential helpers to possibly use. */
 class CredentialHelpersParameter implements ConfigurationParameter<List<String>> {
