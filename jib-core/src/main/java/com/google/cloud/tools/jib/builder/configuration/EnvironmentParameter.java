@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder.configuration;
 
+import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.Map;
 
@@ -25,8 +26,10 @@ class EnvironmentParameter implements ConfigurationParameter<Map<String, String>
   private Map<String, String> environmentMap = Collections.emptyMap();
 
   @Override
-  public ConfigurationParameter<Map<String, String>> set(Map<String, String> environmentMap) {
-    this.environmentMap = environmentMap;
+  public ConfigurationParameter<Map<String, String>> set(@Nullable Map<String, String> environmentMap) {
+    if (environmentMap != null) {
+      this.environmentMap = environmentMap;
+    }
     return this;
   }
 

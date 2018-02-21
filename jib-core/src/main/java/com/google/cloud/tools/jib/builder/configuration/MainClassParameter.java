@@ -16,13 +16,15 @@
 
 package com.google.cloud.tools.jib.builder.configuration;
 
+import javax.annotation.Nullable;
+
 /** The main class to use when running the application. */
 class MainClassParameter implements ConfigurationParameter<String> {
 
   private String mainClass;
 
   @Override
-  public ConfigurationParameter<String> set(String mainClass) {
+  public ConfigurationParameter<String> set(@Nullable String mainClass) {
     this.mainClass = mainClass;
     return this;
   }

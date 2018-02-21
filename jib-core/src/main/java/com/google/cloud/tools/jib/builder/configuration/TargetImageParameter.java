@@ -18,13 +18,15 @@ package com.google.cloud.tools.jib.builder.configuration;
 
 import com.google.cloud.tools.jib.image.ImageReference;
 
+import javax.annotation.Nullable;
+
 /** The target image to build and push as. */
 class TargetImageParameter implements ConfigurationParameter<ImageReference> {
 
   private ImageReference targetImageReference;
 
   @Override
-  public ConfigurationParameter<ImageReference> set(ImageReference imageReference) {
+  public ConfigurationParameter<ImageReference> set(@Nullable ImageReference imageReference) {
     targetImageReference = imageReference;
     return this;
   }

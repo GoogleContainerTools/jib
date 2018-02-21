@@ -16,14 +16,18 @@
 
 package com.google.cloud.tools.jib.builder.configuration;
 
+import javax.annotation.Nullable;
+
 /** Enables reproducible builds. */
 class EnableReproducibleBuildsParameter implements ConfigurationParameter<Boolean> {
 
   private boolean enableReproducibleBuilds = true;
 
   @Override
-  public ConfigurationParameter<Boolean> set(Boolean enableReproducibleBuilds) {
-    this.enableReproducibleBuilds = enableReproducibleBuilds;
+  public ConfigurationParameter<Boolean> set(@Nullable Boolean enableReproducibleBuilds) {
+    if (enableReproducibleBuilds != null) {
+      this.enableReproducibleBuilds = enableReproducibleBuilds;
+    }
     return this;
   }
 

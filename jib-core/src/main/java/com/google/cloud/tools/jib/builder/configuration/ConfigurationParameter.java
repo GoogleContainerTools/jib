@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.builder.configuration;
 
+import javax.annotation.Nullable;
+
 /** A parameter in the {@link BuildConfiguration}. */
 interface ConfigurationParameter<T> {
 
@@ -47,7 +49,7 @@ interface ConfigurationParameter<T> {
   }
 
   /** Sets the value for the parameter. */
-  ConfigurationParameter<T> set(T value);
+  ConfigurationParameter<T> set(@Nullable T value);
 
   /** Gets the value of this parameter. */
   T get();

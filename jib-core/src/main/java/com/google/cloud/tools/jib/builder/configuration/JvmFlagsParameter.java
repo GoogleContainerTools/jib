@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder.configuration;
 
+import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
 
@@ -25,8 +26,10 @@ class JvmFlagsParameter implements ConfigurationParameter<List<String>> {
   private List<String> jvmFlags = Collections.emptyList();
 
   @Override
-  public ConfigurationParameter<List<String>> set(List<String> jvmFlags) {
-    this.jvmFlags = jvmFlags;
+  public ConfigurationParameter<List<String>> set(@Nullable List<String> jvmFlags) {
+    if (jvmFlags != null) {
+      this.jvmFlags = jvmFlags;
+    }
     return this;
   }
 

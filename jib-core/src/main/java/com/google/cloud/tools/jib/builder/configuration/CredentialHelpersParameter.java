@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder.configuration;
 
+import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
 
@@ -25,8 +26,10 @@ class CredentialHelpersParameter implements ConfigurationParameter<List<String>>
   private List<String> credentialHelperNames = Collections.emptyList();
 
   @Override
-  public ConfigurationParameter<List<String>> set(List<String> credentialHelperNames) {
-    this.credentialHelperNames = credentialHelperNames;
+  public ConfigurationParameter<List<String>> set(@Nullable List<String> credentialHelperNames) {
+    if (credentialHelperNames != null) {
+      this.credentialHelperNames = credentialHelperNames;
+    }
     return this;
   }
 
