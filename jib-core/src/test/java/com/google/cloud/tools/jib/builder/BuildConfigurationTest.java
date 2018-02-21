@@ -14,9 +14,8 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.builder.configuration;
+package com.google.cloud.tools.jib.builder;
 
-import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.collect.ImmutableMap;
@@ -29,7 +28,6 @@ import org.mockito.Mockito;
 
 public class BuildConfigurationTest {
 
-  // TODO: Should test also if value is set but null
   @Test
   public void testBuilder() {
     String expectedBaseImageServerUrl = "someserver";
@@ -80,12 +78,40 @@ public class BuildConfigurationTest {
 
   @Test
   public void testBuilder_missingValues() {
+    // Main class is missing
+    try {
+      BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
+          .setBaseImage(Mockito.mock(ImageReference.class))
+          .setTargetImage(Mockito.mock(ImageReference.class))
+          .build();
+      Assert.fail("Build configuration should not be built with missing values");
+
+    } catch (IllegalStateException ex) {
+      Assert.assertEquals("main class is required but not set", ex.getMessage());
+    }
+
+    // Main class and target image are missing
+    try {
+      BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
+          .setBaseImage(Mockito.mock(ImageReference.class))
+          .build();
+      Assert.fail("Build configuration should not be built with missing values");
+
+    } catch (IllegalStateException ex) {
+      Assert.assertEquals(
+          "target image is required but not set and main class is required but not set",
+          ex.getMessage());
+    }
+
+    // All required fields missing
     try {
       BuildConfiguration.builder(Mockito.mock(BuildLogger.class)).build();
       Assert.fail("Build configuration should not be built with missing values");
 
     } catch (IllegalStateException ex) {
-      // pass
+      Assert.assertEquals(
+          "base image is required but not set, target image is required but not set, and main class is required but not set",
+          ex.getMessage());
     }
   }
 }
