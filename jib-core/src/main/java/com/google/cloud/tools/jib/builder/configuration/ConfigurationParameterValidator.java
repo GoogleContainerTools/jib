@@ -52,8 +52,8 @@ class ConfigurationParameterValidator {
         // Appends the descriptions in correct grammar.
         StringBuilder errorMessage = new StringBuilder();
         for (int errorMessageIndex = 0;
-             errorMessageIndex < errorMessages.size();
-             errorMessageIndex++) {
+            errorMessageIndex < errorMessages.size();
+            errorMessageIndex++) {
           if (errorMessageIndex == errorMessages.size() - 1) {
             errorMessage.append(", and ");
           } else {
@@ -63,6 +63,5 @@ class ConfigurationParameterValidator {
         }
         return errorMessage.toString();
     }
-  }
   }
 }

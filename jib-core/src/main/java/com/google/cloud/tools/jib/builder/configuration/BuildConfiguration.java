@@ -20,9 +20,6 @@ import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.collect.ImmutableSet;
-import sun.applet.Main;
-
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,27 +32,28 @@ public class BuildConfiguration {
     /**
      * The set of {@link ConfigurationParameter}s that constitute the configuration.
      *
-     * When adding new configuration parameters,
+     * <p>When adding new configuration parameters,
      *
      * <ol>
-     *   <li>Create a new {@link ConfigurationParameter} subclass.</li>
-     *   <li>Add the new subclass to this set.</li>
-     *   <li>Add the appropriate setter to {@link Builder}.</li>
-     *   <li>Add the appropriate getter to {@link BuildConfiguration}.</li>
+     *   <li>Create a new {@link ConfigurationParameter} subclass.
+     *   <li>Add the new subclass to this set.
+     *   <li>Add the appropriate setter to {@link Builder}.
+     *   <li>Add the appropriate getter to {@link BuildConfiguration}.
      * </ol>
      */
-    private static final ImmutableSet<Class<? extends ConfigurationParameter<?>>> PARAMETER_SET = ImmutableSet.of(
-        BaseImageParameter.class,
-        TargetImageParameter.class,
-        CredentialHelpersParameter.class,
-        KnownRegistryCredentialsParameter.class,
-        EnableReproducibleBuildsParameter.class,
-        MainClassParameter.class,
-        JvmFlagsParameter.class,
-        EnvironmentParameter.class
-    );
+    private static final ImmutableSet<Class<? extends ConfigurationParameter<?>>> PARAMETER_SET =
+        ImmutableSet.of(
+            BaseImageParameter.class,
+            TargetImageParameter.class,
+            CredentialHelpersParameter.class,
+            KnownRegistryCredentialsParameter.class,
+            EnableReproducibleBuildsParameter.class,
+            MainClassParameter.class,
+            JvmFlagsParameter.class,
+            EnvironmentParameter.class);
 
-    private final Map<Class<? extends ConfigurationParameter<?>>, ConfigurationParameter<?>> parameterMap = new HashMap<>();
+    private final Map<Class<? extends ConfigurationParameter<?>>, ConfigurationParameter<?>>
+        parameterMap = new HashMap<>();
 
     private Parameters() {
       try {
@@ -79,7 +77,8 @@ public class BuildConfiguration {
      * @throws IllegalStateException if any parameter is invalid
      */
     private void validate() {
-      ConfigurationParameterValidator configurationParameterValidator = new ConfigurationParameterValidator();
+      ConfigurationParameterValidator configurationParameterValidator =
+          new ConfigurationParameterValidator();
       for (Class<? extends ConfigurationParameter<?>> parameterClass : PARAMETER_SET) {
         configurationParameterValidator.validate(get(parameterClass));
       }

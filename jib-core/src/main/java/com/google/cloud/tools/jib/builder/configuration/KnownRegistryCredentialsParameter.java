@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.builder.configuration;
 
-
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 
 /** Known registry credentials to fallback on. */
