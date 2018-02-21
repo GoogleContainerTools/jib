@@ -24,7 +24,6 @@ These features are not currently supported but will be added in later releases.
 * Gradle plugin
 * Building OCI images
 * Support for WAR format
-* Reproducibility
 
 ## Quickstart
 
