@@ -13,7 +13,7 @@ Jib is a Maven plugin for building Docker<!-- and OCI--> images for your Java ap
 
 * **Fast** - Deploy your changes fast. Jib separates your application into multiple layers, splitting dependencies from classes. Now you don’t have to wait for Docker to rebuild your entire Java application - just deploy the layers that changed.
 
-<!--* Reproducible - Rebuilding your container image with the same contents always generates the same image. Never trigger an unnecessary update again.-->
+* **Reproducible** - Rebuilding your container image with the same contents always generates the same image. Never trigger an unnecessary update again.
 
 * **Native** - Reduce your CLI dependencies. Build your Docker image from within Maven <!--or Gradle--> and push to any registry of your choice. *No more writing Dockerfiles and calling docker build/push.*
 
@@ -36,7 +36,7 @@ In your Maven Java project, add the plugin to your `pom.xml`:
 <plugin>
   <groupId>com.google.cloud.tools</groupId>
   <artifactId>jib-maven-plugin</artifactId>
-  <version>0.1.1</version>
+  <version>0.1.2</version>
   <configuration>
     <registry>myregistry</registry>
     <repository>myapp</repository>
@@ -133,6 +133,7 @@ Field | Default | Description
 `credHelpers`|*Required*|Suffixes for credential helpers (following `docker-credential-`)
 `jvmFlags`|*None*|Additional flags to pass into the JVM when running your application.
 `mainClass`|Uses `mainClass` from `maven-jar-plugin`|The main class to launch the application from.
+`enableReproducibleBuilds`|`true`|Building with the same application contents always generates the same image. Note that this does *not* preserve file timestamps and ownership. 
 
 ### Example
 
@@ -156,12 +157,13 @@ In this configuration, the image is:
     <jvmFlag>-Xmy:flag=jib-rules</jvmFlag>
   </jvmFlags>
   <mainClass>mypackage.MyApp</mainClass>
+  <enableReproducibleBuilds>false</enableReproducibleBuilds>
 </configuration>
 ```
 
 ### Authentication Methods
 
-Pushing/pulling from private registries require authorization credentials. These can [retrieved using Docker credential helpers](#using-docker-credential-helpers) or [defined in your Maven settings](#using-maven-settings).
+Pushing/pulling from private registries require authorization credentials. These can be [retrieved using Docker credential helpers](#using-docker-credential-helpers) or [defined in your Maven settings](#using-maven-settings). If you do not define credentials explicitly, Jib will try to [use credentials defined in your Docker config](/../../issues/101) or infer common credential helpers.
 
 #### Using Docker Credential Helpers
 
