@@ -90,6 +90,9 @@ public class BuildImageMojo extends AbstractMojo {
   @Parameter(defaultValue = "true", required = true)
   private boolean enableReproducibleBuilds;
 
+  @Parameter(defaultValue = "Docker", required = true)
+  private String imageFormat;
+
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
     validateParameters();
@@ -141,6 +144,7 @@ public class BuildImageMojo extends AbstractMojo {
             .setEnableReproducibleBuilds(enableReproducibleBuilds)
             .setJvmFlags(jvmFlags)
             .setEnvironment(environment)
+            .setTargetFormat(imageFormat)
             .build();
 
     // Uses a directory in the Maven build cache as the Jib cache.
