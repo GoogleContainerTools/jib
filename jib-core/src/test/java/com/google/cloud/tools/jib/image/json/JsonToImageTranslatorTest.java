@@ -63,6 +63,20 @@ public class JsonToImageTranslatorTest {
   public void testToImage_v22()
       throws IOException, LayerPropertyNotFoundException, DuplicateLayerException,
           LayerCountMismatchException, DigestException, URISyntaxException {
+    testToImage_buildable("json/v22manifest.json", V22ManifestTemplate.class);
+  }
+
+  @Test
+  public void testToImage_oci()
+      throws IOException, LayerPropertyNotFoundException, DuplicateLayerException,
+          LayerCountMismatchException, DigestException, URISyntaxException {
+    testToImage_buildable("json/ocimanifest.json", OCIManifestTemplate.class);
+  }
+
+  private <T extends BuildableManifestTemplate> void testToImage_buildable(
+      String jsonFilename, Class<T> manifestTemplateClass)
+      throws IOException, LayerPropertyNotFoundException, DuplicateLayerException,
+          LayerCountMismatchException, DigestException, URISyntaxException {
     // Loads the container configuration JSON.
     Path containerConfigurationJsonFile =
         Paths.get(getClass().getClassLoader().getResource("json/containerconfig.json").toURI());
@@ -72,9 +86,9 @@ public class JsonToImageTranslatorTest {
 
     // Loads the manifest JSON.
     Path manifestJsonFile =
-        Paths.get(getClass().getClassLoader().getResource("json/v22manifest.json").toURI());
-    V22ManifestTemplate manifestTemplate =
-        JsonTemplateMapper.readJsonFromFile(manifestJsonFile, V22ManifestTemplate.class);
+        Paths.get(getClass().getClassLoader().getResource(jsonFilename).toURI());
+    T manifestTemplate =
+        JsonTemplateMapper.readJsonFromFile(manifestJsonFile, manifestTemplateClass);
 
     Image image = JsonToImageTranslator.toImage(manifestTemplate, containerConfigurationTemplate);
 

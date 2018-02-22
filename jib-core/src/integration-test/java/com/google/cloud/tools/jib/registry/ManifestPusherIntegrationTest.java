@@ -83,8 +83,9 @@ public class ManifestPusherIntegrationTest {
     V22ManifestTemplate manifestTemplate =
         registryClient.pullManifest("latest", V22ManifestTemplate.class);
     Assert.assertEquals(1, manifestTemplate.getLayers().size());
-    Assert.assertEquals(testLayerBlobDigest, manifestTemplate.getLayerDigest(0));
+    Assert.assertEquals(testLayerBlobDigest, manifestTemplate.getLayers().get(0).getDigest());
     Assert.assertEquals(
-        testContainerConfigurationBlobDigest, manifestTemplate.getContainerConfigurationDigest());
+        testContainerConfigurationBlobDigest,
+        manifestTemplate.getContainerConfiguration().getDigest());
   }
 }

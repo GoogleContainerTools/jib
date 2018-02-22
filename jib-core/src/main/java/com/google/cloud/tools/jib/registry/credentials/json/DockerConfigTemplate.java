@@ -57,10 +57,10 @@ import javax.annotation.Nullable;
  * @see <a
  *     href="https://www.projectatomic.io/blog/2016/03/docker-credentials-store/">https://www.projectatomic.io/blog/2016/03/docker-credentials-store/</a>
  */
-public class DockerConfigTemplate extends JsonTemplate {
+public class DockerConfigTemplate implements JsonTemplate {
 
   /** Template for an {@code auth} defined for a registry under {@code auths}. */
-  private static class AuthTemplate extends JsonTemplate {
+  private static class AuthTemplate implements JsonTemplate {
 
     private String auth;
   }

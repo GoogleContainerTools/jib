@@ -39,7 +39,7 @@ import java.util.List;
  * }
  * }</pre>
  */
-public class ErrorResponseTemplate extends JsonTemplate {
+public class ErrorResponseTemplate implements JsonTemplate {
 
   private final List<ErrorEntryTemplate> errors = new ArrayList<>();
 

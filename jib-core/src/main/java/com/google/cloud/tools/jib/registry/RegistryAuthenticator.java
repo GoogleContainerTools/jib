@@ -92,7 +92,7 @@ public class RegistryAuthenticator {
 
   /** Template for the authentication response JSON. */
   @JsonIgnoreProperties(ignoreUnknown = true)
-  private static class AuthenticationResponseTemplate extends JsonTemplate {
+  private static class AuthenticationResponseTemplate implements JsonTemplate {
 
     private String token;
   }

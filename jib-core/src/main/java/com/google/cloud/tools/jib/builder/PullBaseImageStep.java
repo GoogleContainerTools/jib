@@ -78,7 +78,7 @@ class PullBaseImageStep implements Callable<Image> {
 
           ByteArrayOutputStream containerConfigurationOutputStream = new ByteArrayOutputStream();
           registryClient.pullBlob(
-              v22ManifestTemplate.getContainerConfigurationDigest(),
+              v22ManifestTemplate.getContainerConfiguration().getDigest(),
               containerConfigurationOutputStream);
           String containerConfigurationString =
               new String(containerConfigurationOutputStream.toByteArray(), StandardCharsets.UTF_8);

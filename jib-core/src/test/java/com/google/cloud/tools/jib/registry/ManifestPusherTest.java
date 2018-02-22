@@ -63,7 +63,7 @@ public class ManifestPusherTest {
     BlobHttpContent body = testManifestPusher.getContent();
 
     Assert.assertNotNull(body);
-    Assert.assertEquals(V22ManifestTemplate.MEDIA_TYPE, body.getType());
+    Assert.assertEquals(V22ManifestTemplate.MANIFEST_MEDIA_TYPE, body.getType());
 
     ByteArrayOutputStream bodyCaptureStream = new ByteArrayOutputStream();
     body.writeTo(bodyCaptureStream);

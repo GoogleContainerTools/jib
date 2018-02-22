@@ -70,23 +70,30 @@ public class ImageToJsonTranslator {
    * the [@link BlobDescriptor} obtained by writing out the container configuration {@link Blob}
    * returned from {@link #getContainerConfigurationBlob()}.
    */
-  public V22ManifestTemplate getManifestTemplate(
-      BlobDescriptor containerConfigurationBlobDescriptor) throws LayerPropertyNotFoundException {
-    // Set up the JSON template.
-    V22ManifestTemplate template = new V22ManifestTemplate();
+  public <T extends BuildableManifestTemplate> T getManifestTemplate(
+      Class<T> manifestTemplateClass, BlobDescriptor containerConfigurationBlobDescriptor)
+      throws LayerPropertyNotFoundException {
+    try {
+      // Set up the JSON template.
+      T template = manifestTemplateClass.newInstance();
 
-    // Adds the container configuration reference.
-    DescriptorDigest containerConfigurationDigest =
-        containerConfigurationBlobDescriptor.getDigest();
-    long containerConfigurationSize = containerConfigurationBlobDescriptor.getSize();
-    template.setContainerConfiguration(containerConfigurationSize, containerConfigurationDigest);
+      // Adds the container configuration reference.
+      DescriptorDigest containerConfigurationDigest =
+          containerConfigurationBlobDescriptor.getDigest();
+      long containerConfigurationSize = containerConfigurationBlobDescriptor.getSize();
+      template.setContainerConfiguration(containerConfigurationSize, containerConfigurationDigest);
 
-    // Adds the layers.
-    for (Layer layer : image.getLayers()) {
-      template.addLayer(layer.getBlobDescriptor().getSize(), layer.getBlobDescriptor().getDigest());
+      // Adds the layers.
+      for (Layer layer : image.getLayers()) {
+        template.addLayer(
+            layer.getBlobDescriptor().getSize(), layer.getBlobDescriptor().getDigest());
+      }
+
+      // Serializes into JSON.
+      return template;
+
+    } catch (InstantiationException | IllegalAccessException ex) {
+      throw new IllegalArgumentException(manifestTemplateClass + " cannot be instantiated");
     }
-
-    // Serializes into JSON.
-    return template;
   }
 }
