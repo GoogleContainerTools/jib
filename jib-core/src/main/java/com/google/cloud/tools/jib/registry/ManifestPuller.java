@@ -64,15 +64,15 @@ class ManifestPuller<T extends ManifestTemplate> implements RegistryEndpointProv
       return Collections.singletonList(V21ManifestTemplate.MEDIA_TYPE);
     }
     if (manifestTemplateClass.equals(V22ManifestTemplate.class)) {
-      return Collections.singletonList(V22ManifestTemplate.MEDIA_TYPE);
+      return Collections.singletonList(V22ManifestTemplate.MANIFEST_MEDIA_TYPE);
     }
     if (manifestTemplateClass.equals(OCIManifestTemplate.class)) {
-      return Collections.singletonList(OCIManifestTemplate.MEDIA_TYPE);
+      return Collections.singletonList(OCIManifestTemplate.MANIFEST_MEDIA_TYPE);
     }
 
     return Arrays.asList(
-        OCIManifestTemplate.MEDIA_TYPE,
-        V22ManifestTemplate.MEDIA_TYPE,
+        OCIManifestTemplate.MANIFEST_MEDIA_TYPE,
+        V22ManifestTemplate.MANIFEST_MEDIA_TYPE,
         V21ManifestTemplate.MEDIA_TYPE);
   }
 
@@ -130,11 +130,11 @@ class ManifestPuller<T extends ManifestTemplate> implements RegistryEndpointProv
     if (schemaVersion == 2) {
       // 'schemaVersion' of 2 can be either Docker V2.2 or OCI.
       String mediaType = node.get("mediaType").asText();
-      if (V22ManifestTemplate.MEDIA_TYPE.equals(mediaType)) {
+      if (V22ManifestTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
         return manifestTemplateClass.cast(
             JsonTemplateMapper.readJson(jsonString, V22ManifestTemplate.class));
       }
-      if (OCIManifestTemplate.MEDIA_TYPE.equals(mediaType)) {
+      if (OCIManifestTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
         return manifestTemplateClass.cast(
             JsonTemplateMapper.readJson(jsonString, OCIManifestTemplate.class));
       }

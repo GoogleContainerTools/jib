@@ -71,15 +71,15 @@ public class OCIManifestTemplateTest {
     Assert.assertEquals(
         DescriptorDigest.fromDigest(
             "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad"),
-        manifestJson.getContainerConfigurationDigest());
+        manifestJson.getContainerConfiguration().getDigest());
 
-    Assert.assertEquals(1000, manifestJson.getContainerConfigurationSize());
+    Assert.assertEquals(1000, manifestJson.getContainerConfiguration().getSize());
 
     Assert.assertEquals(
         DescriptorDigest.fromHash(
             "4945ba5011739b0b98c4a41afe224e417f47c7c99b2ce76830999c9a0861b236"),
-        manifestJson.getLayerDigest(0));
+        manifestJson.getLayers().get(0).getDigest());
 
-    Assert.assertEquals(1000_000, manifestJson.getLayerSize(0));
+    Assert.assertEquals(1000_000, manifestJson.getLayers().get(0).getSize());
   }
 }
