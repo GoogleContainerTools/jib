@@ -271,10 +271,9 @@
         </dependencies>
         <executions>
           <execution>
-            <id>default-cli</id>
             <phase>validate</phase>
             <goals>
-              <goal>format</goal>
+              <goal>check</goal>
             </goals>
           </execution>
         </executions>
