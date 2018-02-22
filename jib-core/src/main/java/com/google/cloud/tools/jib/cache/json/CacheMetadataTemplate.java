@@ -54,7 +54,7 @@ import java.util.List;
  * }
  * }</pre>
  */
-public class CacheMetadataTemplate extends JsonTemplate {
+public class CacheMetadataTemplate implements JsonTemplate {
 
   private final List<CacheMetadataLayerObjectTemplate> layers = new ArrayList<>();
 

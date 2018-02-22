@@ -146,7 +146,7 @@ public class ManifestPullerTest {
     Assert.assertEquals(
         Arrays.asList(
             OCIManifestTemplate.MANIFEST_MEDIA_TYPE,
-            V22ManifestTemplate.MEDIA_TYPE,
+            V22ManifestTemplate.MANIFEST_MEDIA_TYPE,
             V21ManifestTemplate.MEDIA_TYPE),
         testManifestPuller.getAccept());
 
@@ -156,7 +156,7 @@ public class ManifestPullerTest {
                 fakeRegistryEndpointProperties, "test-image-tag", OCIManifestTemplate.class)
             .getAccept());
     Assert.assertEquals(
-        Collections.singletonList(V22ManifestTemplate.MEDIA_TYPE),
+        Collections.singletonList(V22ManifestTemplate.MANIFEST_MEDIA_TYPE),
         new ManifestPuller<>(
                 fakeRegistryEndpointProperties, "test-image-tag", V22ManifestTemplate.class)
             .getAccept());

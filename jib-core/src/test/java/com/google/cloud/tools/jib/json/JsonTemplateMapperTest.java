@@ -35,14 +35,14 @@ import org.junit.Test;
 /** Tests for {@link JsonTemplateMapper}. */
 public class JsonTemplateMapperTest {
 
-  private static class TestJson extends JsonTemplate {
+  private static class TestJson implements JsonTemplate {
     private int number;
     private String text;
     private DescriptorDigest digest;
     private InnerObject innerObject;
     private List<InnerObject> list;
 
-    private static class InnerObject extends JsonTemplate {
+    private static class InnerObject implements JsonTemplate {
       // This field has the same name as a field in the outer class, but either NOT interfere with
       // the other.
       private int number;

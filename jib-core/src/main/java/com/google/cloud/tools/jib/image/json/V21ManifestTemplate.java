@@ -55,7 +55,7 @@ import java.util.List;
  * @see <a href="https://docs.docker.com/registry/spec/manifest-v2-1/">Image Manifest Version 2,
  *     Schema 1</a>
  */
-public class V21ManifestTemplate extends ManifestTemplate {
+public class V21ManifestTemplate implements ManifestTemplate {
 
   public static final String MEDIA_TYPE = "application/vnd.docker.distribution.manifest.v1+json";
 
@@ -69,7 +69,7 @@ public class V21ManifestTemplate extends ManifestTemplate {
   /**
    * Template for inner JSON object representing a layer as part of the list of layer references.
    */
-  static class LayerObjectTemplate extends JsonTemplate {
+  static class LayerObjectTemplate implements JsonTemplate {
 
     private DescriptorDigest blobSum;
 
@@ -79,7 +79,7 @@ public class V21ManifestTemplate extends ManifestTemplate {
   }
 
   /** Template for inner JSON object representing the V1-compatible format for a layer. */
-  private static class V1CompatibilityTemplate extends JsonTemplate {
+  private static class V1CompatibilityTemplate implements JsonTemplate {
 
     // TODO: Change to its own JSON template that can extract the layer diff ID.
     private String v1Compatibility;

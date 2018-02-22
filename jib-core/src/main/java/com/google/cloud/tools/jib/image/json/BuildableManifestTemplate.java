@@ -39,7 +39,7 @@ public interface BuildableManifestTemplate extends ManifestTemplate {
   @VisibleForTesting
   class ContentDescriptorTemplate implements JsonTemplate {
 
-    private final String mediaType;
+    private String mediaType;
     private DescriptorDigest digest;
     private long size;
 
@@ -48,6 +48,9 @@ public interface BuildableManifestTemplate extends ManifestTemplate {
       this.size = size;
       this.digest = digest;
     }
+
+    /** Necessary for Jackson to create from JSON. */
+    private ContentDescriptorTemplate() {}
 
     @VisibleForTesting
     public long getSize() {
