@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.cache.json;
 
-import com.google.cloud.tools.jib.cache.CachedLayerType;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.json.JsonTemplate;
@@ -29,9 +28,6 @@ import javax.annotation.Nullable;
  * @see CacheMetadataTemplate for example
  */
 public class CacheMetadataLayerObjectTemplate implements JsonTemplate {
-
-  /** The type of layer. */
-  private CachedLayerType type;
 
   /** The reference to the layer. */
   private final ReferenceObject reference = new ReferenceObject();
@@ -51,10 +47,6 @@ public class CacheMetadataLayerObjectTemplate implements JsonTemplate {
     private DescriptorDigest diffId;
   }
 
-  public CachedLayerType getType() {
-    return type;
-  }
-
   public long getSize() {
     return reference.size;
   }
@@ -69,11 +61,6 @@ public class CacheMetadataLayerObjectTemplate implements JsonTemplate {
 
   public CacheMetadataLayerPropertiesObjectTemplate getProperties() {
     return properties;
-  }
-
-  public CacheMetadataLayerObjectTemplate setType(CachedLayerType type) {
-    this.type = type;
-    return this;
   }
 
   public CacheMetadataLayerObjectTemplate setSize(long size) {

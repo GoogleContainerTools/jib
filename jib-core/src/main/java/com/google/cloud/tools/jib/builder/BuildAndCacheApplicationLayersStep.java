@@ -21,7 +21,6 @@ import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheReader;
 import com.google.cloud.tools.jib.cache.CacheWriter;
 import com.google.cloud.tools.jib.cache.CachedLayer;
-import com.google.cloud.tools.jib.cache.CachedLayerType;
 import com.google.cloud.tools.jib.image.LayerBuilder;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -58,17 +57,17 @@ class BuildAndCacheApplicationLayersStep implements Callable<List<ListenableFutu
       List<ListenableFuture<CachedLayer>> applicationLayerFutures = new ArrayList<>(3);
       applicationLayerFutures.add(
           buildAndCacheLayerAsync(
-              CachedLayerType.DEPENDENCIES,
+              "dependencies",
               sourceFilesConfiguration.getDependenciesFiles(),
               sourceFilesConfiguration.getDependenciesPathOnImage()));
       applicationLayerFutures.add(
           buildAndCacheLayerAsync(
-              CachedLayerType.RESOURCES,
+              "resources",
               sourceFilesConfiguration.getResourcesFiles(),
               sourceFilesConfiguration.getResourcesPathOnImage()));
       applicationLayerFutures.add(
           buildAndCacheLayerAsync(
-              CachedLayerType.CLASSES,
+              "classes",
               sourceFilesConfiguration.getClassesFiles(),
               sourceFilesConfiguration.getClassesPathOnImage()));
 
@@ -77,13 +76,8 @@ class BuildAndCacheApplicationLayersStep implements Callable<List<ListenableFutu
   }
 
   private ListenableFuture<CachedLayer> buildAndCacheLayerAsync(
-      CachedLayerType layerType, List<Path> sourceFiles, String extractionPath) {
-    String description =
-        String.format(
-            "Building %s layer",
-            layerType == CachedLayerType.DEPENDENCIES
-                ? "dependencies"
-                : layerType == CachedLayerType.RESOURCES ? "resources" : "classes");
+      String layerType, List<Path> sourceFiles, String extractionPath) {
+    String description = "Building " + layerType + " layer";
 
     return listeningExecutorService.submit(
         () -> {
@@ -99,7 +93,7 @@ class BuildAndCacheApplicationLayersStep implements Callable<List<ListenableFutu
                 new LayerBuilder(
                     sourceFiles, extractionPath, buildConfiguration.getEnableReproducibleBuilds());
 
-            cachedLayer = new CacheWriter(cache).writeLayer(layerBuilder, layerType);
+            cachedLayer = new CacheWriter(cache).writeLayer(layerBuilder);
             // TODO: Remove
             buildConfiguration
                 .getBuildLogger()

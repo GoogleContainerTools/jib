@@ -31,7 +31,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.security.DigestException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import org.junit.Assert;
@@ -133,18 +132,8 @@ public class CacheReaderTest {
       Assert.assertEquals(
           expectedFile,
           cacheReader.getLayerFile(
-              CachedLayerType.CLASSES,
               Collections.singletonList(Paths.get("some", "source", "directory"))));
-      Assert.assertNull(cacheReader.getLayerFile(CachedLayerType.RESOURCES, new ArrayList<>()));
-      Assert.assertNull(cacheReader.getLayerFile(CachedLayerType.DEPENDENCIES, new ArrayList<>()));
-
-      try {
-        cacheReader.getLayerFile(CachedLayerType.BASE, new ArrayList<>());
-        Assert.fail("Should not be able to get layer file for base image layer");
-
-      } catch (UnsupportedOperationException ex) {
-        Assert.assertEquals("Can only find layer files for application layers", ex.getMessage());
-      }
+      Assert.assertNull(cacheReader.getLayerFile(Collections.emptyList()));
     }
   }
 
@@ -179,10 +168,10 @@ public class CacheReaderTest {
     CachedLayerWithMetadata classesCachedLayer;
     try (Cache cache = Cache.init(testCacheFolder)) {
       ImageLayers<CachedLayerWithMetadata> cachedLayers =
-          cache.getMetadata().filterLayers().byType(CachedLayerType.CLASSES).filter();
+          cache.getMetadata().filterLayers().filter();
 
-      Assert.assertEquals(1, cachedLayers.size());
-      classesCachedLayer = cachedLayers.get(0);
+      Assert.assertEquals(3, cachedLayers.size());
+      classesCachedLayer = cachedLayers.get(2);
 
       classesCachedLayer
           .getMetadata()

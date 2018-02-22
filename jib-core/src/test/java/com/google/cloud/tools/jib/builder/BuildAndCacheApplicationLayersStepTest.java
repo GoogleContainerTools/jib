@@ -20,7 +20,6 @@ import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.CacheReader;
 import com.google.cloud.tools.jib.cache.CachedLayer;
-import com.google.cloud.tools.jib.cache.CachedLayerType;
 import com.google.cloud.tools.jib.image.DuplicateLayerException;
 import com.google.cloud.tools.jib.image.ImageLayers;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
@@ -98,15 +97,12 @@ public class BuildAndCacheApplicationLayersStepTest {
     // Verifies that the cache reader gets the same layers as the newest application layers.
     Assert.assertEquals(
         applicationLayers.get(0).getContentFile(),
-        cacheReader.getLayerFile(
-            CachedLayerType.DEPENDENCIES, testSourceFilesConfiguration.getDependenciesFiles()));
+        cacheReader.getLayerFile(testSourceFilesConfiguration.getDependenciesFiles()));
     Assert.assertEquals(
         applicationLayers.get(1).getContentFile(),
-        cacheReader.getLayerFile(
-            CachedLayerType.RESOURCES, testSourceFilesConfiguration.getResourcesFiles()));
+        cacheReader.getLayerFile(testSourceFilesConfiguration.getResourcesFiles()));
     Assert.assertEquals(
         applicationLayers.get(2).getContentFile(),
-        cacheReader.getLayerFile(
-            CachedLayerType.CLASSES, testSourceFilesConfiguration.getClassesFiles()));
+        cacheReader.getLayerFile(testSourceFilesConfiguration.getClassesFiles()));
   }
 }

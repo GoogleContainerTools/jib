@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.cache.json;
 
-import com.google.cloud.tools.jib.cache.CachedLayerType;
 import com.google.cloud.tools.jib.cache.PlatformSpecificMetadataJson;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
@@ -48,7 +47,6 @@ public class CacheMetadataTemplateTest {
     // Adds a base layer.
     CacheMetadataLayerObjectTemplate baseLayerTemplate =
         new CacheMetadataLayerObjectTemplate()
-            .setType(CachedLayerType.BASE)
             .setSize(631)
             .setDigest(
                 DescriptorDigest.fromDigest(
@@ -65,7 +63,6 @@ public class CacheMetadataTemplateTest {
             .setLastModifiedTime(FileTime.fromMillis(255073580723571L));
     CacheMetadataLayerObjectTemplate classesLayerTemplate =
         new CacheMetadataLayerObjectTemplate()
-            .setType(CachedLayerType.CLASSES)
             .setSize(223)
             .setDigest(
                 DescriptorDigest.fromDigest(
@@ -99,7 +96,6 @@ public class CacheMetadataTemplateTest {
 
     // Checks the first layer is correct.
     CacheMetadataLayerObjectTemplate baseLayerTemplate = layers.get(0);
-    Assert.assertEquals(CachedLayerType.BASE, baseLayerTemplate.getType());
     Assert.assertEquals(631, baseLayerTemplate.getSize());
     Assert.assertEquals(
         DescriptorDigest.fromDigest(
@@ -113,7 +109,6 @@ public class CacheMetadataTemplateTest {
 
     // Checks the second layer is correct.
     CacheMetadataLayerObjectTemplate classesLayerTemplate = layers.get(1);
-    Assert.assertEquals(CachedLayerType.CLASSES, classesLayerTemplate.getType());
     Assert.assertEquals(223, classesLayerTemplate.getSize());
     Assert.assertEquals(
         DescriptorDigest.fromDigest(

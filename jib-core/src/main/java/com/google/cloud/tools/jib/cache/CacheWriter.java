@@ -50,10 +50,9 @@ public class CacheWriter {
    * {@link UnwrittenLayer}'s uncompressed layer content BLOB to cache.
    *
    * @param layerBuilder the layer builder
-   * @param layerType the type of layer that is being built
    * @return the cached layer
    */
-  public CachedLayer writeLayer(LayerBuilder layerBuilder, CachedLayerType layerType)
+  public CachedLayer writeLayer(LayerBuilder layerBuilder)
       throws IOException, LayerPropertyNotFoundException, DuplicateLayerException {
     UnwrittenLayer unwrittenLayer = layerBuilder.build();
 
@@ -88,7 +87,7 @@ public class CacheWriter {
       CachedLayer cachedLayer = new CachedLayer(layerFile, compressedBlobDescriptor, diffId);
       LayerMetadata layerMetadata =
           LayerMetadata.from(layerBuilder.getSourceFiles(), FileTime.from(Instant.now()));
-      cache.addLayerToMetadata(layerType, cachedLayer, layerMetadata);
+      cache.addLayerToMetadata(cachedLayer, layerMetadata);
       return cachedLayer;
     }
   }
@@ -118,7 +117,7 @@ public class CacheWriter {
             layerFile,
             new BlobDescriptor(countingOutputStream.getCount(), layerDigest),
             getDiffId(layerFile));
-    cache.addLayerToMetadata(CachedLayerType.BASE, cachedLayer, null);
+    cache.addLayerToMetadata(cachedLayer, null);
     return cachedLayer;
   }
 

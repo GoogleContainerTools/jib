@@ -29,7 +29,7 @@ import java.util.List;
  * {
  *   "layers": [
  *     {
- *       "type": "BASE",
+ *       // This is a base image layer.
  *       "reference": {
  *         "size": 631,
  *         "digest": "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
@@ -38,7 +38,7 @@ import java.util.List;
  *     },
  *     ...
  *     {
- *       "type": "CLASSES",
+ *       // This is an application layer (it has properties).
  *       "reference": {
  *         "size": 223,
  *         "digest": "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad",

@@ -93,7 +93,6 @@ public class CacheMetadataTranslatorTest {
 
     // Checks that the base layer was translated correctly.
     CachedLayerWithMetadata baseLayer = layers.get(0);
-    Assert.assertEquals(CachedLayerType.BASE, baseLayer.getType());
     Assert.assertEquals(
         CacheFiles.getLayerFile(fakePath, baseLayerBlobDescriptor.getDigest()),
         baseLayer.getContentFile());
@@ -102,7 +101,6 @@ public class CacheMetadataTranslatorTest {
 
     // Checks that the classses layer was translated correctly.
     CachedLayerWithMetadata classesLayer = layers.get(1);
-    Assert.assertEquals(CachedLayerType.CLASSES, classesLayer.getType());
     Assert.assertEquals(
         CacheFiles.getLayerFile(fakePath, classesLayerBlobDescriptor.getDigest()),
         classesLayer.getContentFile());
@@ -125,16 +123,14 @@ public class CacheMetadataTranslatorTest {
 
     CachedLayer baseCachedLayer =
         new CachedLayer(mockPath, baseLayerBlobDescriptor, baseLayerDiffId);
-    CachedLayerWithMetadata baseLayer =
-        new CachedLayerWithMetadata(baseCachedLayer, CachedLayerType.BASE, null);
+    CachedLayerWithMetadata baseLayer = new CachedLayerWithMetadata(baseCachedLayer, null);
 
     CachedLayer classesCachedLayer =
         new CachedLayer(mockPath, classesLayerBlobDescriptor, classesLayerDiffId);
     LayerMetadata classesLayerMetadata =
         new LayerMetadata(classesLayerSourceFiles, classesLayerLastModifiedTime);
     CachedLayerWithMetadata classesLayer =
-        new CachedLayerWithMetadata(
-            classesCachedLayer, CachedLayerType.CLASSES, classesLayerMetadata);
+        new CachedLayerWithMetadata(classesCachedLayer, classesLayerMetadata);
 
     cacheMetadata.addLayer(baseLayer);
     cacheMetadata.addLayer(classesLayer);
