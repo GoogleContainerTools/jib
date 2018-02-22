@@ -27,7 +27,7 @@ import javax.annotation.Nullable;
  *
  * @see CacheMetadataTemplate for example
  */
-public class CacheMetadataLayerObjectTemplate extends JsonTemplate {
+public class CacheMetadataLayerObjectTemplate implements JsonTemplate {
 
   /** The reference to the layer. */
   private final ReferenceObject reference = new ReferenceObject();
@@ -40,7 +40,7 @@ public class CacheMetadataLayerObjectTemplate extends JsonTemplate {
    *
    * @see Layer for details
    */
-  private static class ReferenceObject extends JsonTemplate {
+  private static class ReferenceObject implements JsonTemplate {
 
     private long size;
     private DescriptorDigest digest;

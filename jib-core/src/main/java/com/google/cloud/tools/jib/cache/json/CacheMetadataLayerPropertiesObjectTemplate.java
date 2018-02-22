@@ -25,7 +25,7 @@ import java.util.List;
  * Inner JSON template for extra properties for an application layer, as part of {@link
  * CacheMetadataLayerObjectTemplate}.
  */
-public class CacheMetadataLayerPropertiesObjectTemplate extends JsonTemplate {
+public class CacheMetadataLayerPropertiesObjectTemplate implements JsonTemplate {
 
   /** The paths to the source files that the layer was constructed from. */
   private List<String> sourceFiles = new ArrayList<>();

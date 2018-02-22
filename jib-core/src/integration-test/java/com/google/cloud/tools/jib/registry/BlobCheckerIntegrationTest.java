@@ -34,7 +34,7 @@ public class BlobCheckerIntegrationTest {
     RegistryClient registryClient = new RegistryClient(null, "localhost:5000", "busybox");
     V22ManifestTemplate manifestTemplate =
         registryClient.pullManifest("latest", V22ManifestTemplate.class);
-    DescriptorDigest blobDigest = manifestTemplate.getLayerDigest(0);
+    DescriptorDigest blobDigest = manifestTemplate.getLayers().get(0).getDigest();
 
     Assert.assertEquals(blobDigest, registryClient.checkBlob(blobDigest).getDigest());
   }

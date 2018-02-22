@@ -40,7 +40,7 @@ public class DockerCredentialHelper {
 
   /** Template for a Docker credential helper output. */
   @JsonIgnoreProperties(ignoreUnknown = true)
-  private static class DockerCredentialsTemplate extends JsonTemplate {
+  private static class DockerCredentialsTemplate implements JsonTemplate {
 
     private String Username;
     private String Secret;

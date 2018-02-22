@@ -46,22 +46,23 @@ public class JsonToImageTranslator {
   }
 
   /**
-   * Translates {@link V22ManifestTemplate} to {@link Image}. Uses the corresponding {@link
+   * Translates {@link BuildableManifestTemplate} to {@link Image}. Uses the corresponding {@link
    * ContainerConfigurationTemplate} to get the layer diff IDs.
    */
   public static Image toImage(
-      V22ManifestTemplate manifestTemplate,
+      BuildableManifestTemplate manifestTemplate,
       ContainerConfigurationTemplate containerConfigurationTemplate)
       throws LayerCountMismatchException, LayerPropertyNotFoundException, DuplicateLayerException {
     Image image = new Image();
 
     List<ReferenceNoDiffIdLayer> layers = new ArrayList<>();
-    for (V22ManifestTemplate.LayerObjectTemplate layerObjectTemplate :
+    for (BuildableManifestTemplate.ContentDescriptorTemplate layerObjectTemplate :
         manifestTemplate.getLayers()) {
-      BlobDescriptor blobDescriptor =
-          new BlobDescriptor(layerObjectTemplate.getSize(), layerObjectTemplate.getDigest());
-      layers.add(new ReferenceNoDiffIdLayer(blobDescriptor));
+      layers.add(
+          new ReferenceNoDiffIdLayer(
+              new BlobDescriptor(layerObjectTemplate.getSize(), layerObjectTemplate.getDigest())));
     }
+
     List<DescriptorDigest> diffIds = containerConfigurationTemplate.getDiffIds();
 
     if (layers.size() != diffIds.size()) {

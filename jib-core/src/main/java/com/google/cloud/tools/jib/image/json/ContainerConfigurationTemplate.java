@@ -50,7 +50,7 @@ import java.util.List;
  *     Schema 2</a>
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ContainerConfigurationTemplate extends JsonTemplate {
+public class ContainerConfigurationTemplate implements JsonTemplate {
 
   /** The CPU architecture to run the binaries in this container. */
   private String architecture = "amd64";
@@ -66,7 +66,7 @@ public class ContainerConfigurationTemplate extends JsonTemplate {
 
   /** Template for inner JSON object representing the configuration for running the container. */
   @JsonIgnoreProperties(ignoreUnknown = true)
-  private static class ConfigurationObjectTemplate extends JsonTemplate {
+  private static class ConfigurationObjectTemplate implements JsonTemplate {
 
     /** Environment variables in the format {@code VARNAME=VARVALUE}. */
     private List<String> Env;
@@ -79,7 +79,7 @@ public class ContainerConfigurationTemplate extends JsonTemplate {
    * Template for inner JSON object representing the filesystem changesets used to build the
    * container filesystem.
    */
-  private static class RootFilesystemObjectTemplate extends JsonTemplate {
+  private static class RootFilesystemObjectTemplate implements JsonTemplate {
 
     /** The type must always be {@code "layers"}. */
     private final String type = "layers";

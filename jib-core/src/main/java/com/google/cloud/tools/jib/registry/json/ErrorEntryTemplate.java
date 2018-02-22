@@ -21,7 +21,7 @@ import com.google.cloud.tools.jib.json.JsonTemplate;
 
 // TODO: Should include detail field as well - need to have custom parser
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ErrorEntryTemplate extends JsonTemplate {
+public class ErrorEntryTemplate implements JsonTemplate {
 
   private String code;
   private String message;

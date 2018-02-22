@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.registry;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
+import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
 import com.google.cloud.tools.jib.image.json.UnknownManifestFormatException;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
@@ -143,11 +144,19 @@ public class ManifestPullerTest {
   @Test
   public void testGetAccept() {
     Assert.assertEquals(
-        Arrays.asList(V22ManifestTemplate.MEDIA_TYPE, V21ManifestTemplate.MEDIA_TYPE),
+        Arrays.asList(
+            OCIManifestTemplate.MANIFEST_MEDIA_TYPE,
+            V22ManifestTemplate.MANIFEST_MEDIA_TYPE,
+            V21ManifestTemplate.MEDIA_TYPE),
         testManifestPuller.getAccept());
 
     Assert.assertEquals(
-        Collections.singletonList(V22ManifestTemplate.MEDIA_TYPE),
+        Collections.singletonList(OCIManifestTemplate.MANIFEST_MEDIA_TYPE),
+        new ManifestPuller<>(
+                fakeRegistryEndpointProperties, "test-image-tag", OCIManifestTemplate.class)
+            .getAccept());
+    Assert.assertEquals(
+        Collections.singletonList(V22ManifestTemplate.MANIFEST_MEDIA_TYPE),
         new ManifestPuller<>(
                 fakeRegistryEndpointProperties, "test-image-tag", V22ManifestTemplate.class)
             .getAccept());

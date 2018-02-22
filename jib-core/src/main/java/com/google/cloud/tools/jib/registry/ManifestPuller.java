@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
+import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
 import com.google.cloud.tools.jib.image.json.UnknownManifestFormatException;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
@@ -63,10 +64,16 @@ class ManifestPuller<T extends ManifestTemplate> implements RegistryEndpointProv
       return Collections.singletonList(V21ManifestTemplate.MEDIA_TYPE);
     }
     if (manifestTemplateClass.equals(V22ManifestTemplate.class)) {
-      return Collections.singletonList(V22ManifestTemplate.MEDIA_TYPE);
+      return Collections.singletonList(V22ManifestTemplate.MANIFEST_MEDIA_TYPE);
+    }
+    if (manifestTemplateClass.equals(OCIManifestTemplate.class)) {
+      return Collections.singletonList(OCIManifestTemplate.MANIFEST_MEDIA_TYPE);
     }
 
-    return Arrays.asList(V22ManifestTemplate.MEDIA_TYPE, V21ManifestTemplate.MEDIA_TYPE);
+    return Arrays.asList(
+        OCIManifestTemplate.MANIFEST_MEDIA_TYPE,
+        V22ManifestTemplate.MANIFEST_MEDIA_TYPE,
+        V21ManifestTemplate.MEDIA_TYPE);
   }
 
   /** Parses the response body into a {@link ManifestTemplate}. */
@@ -121,8 +128,17 @@ class ManifestPuller<T extends ManifestTemplate> implements RegistryEndpointProv
           JsonTemplateMapper.readJson(jsonString, V21ManifestTemplate.class));
     }
     if (schemaVersion == 2) {
-      return manifestTemplateClass.cast(
-          JsonTemplateMapper.readJson(jsonString, V22ManifestTemplate.class));
+      // 'schemaVersion' of 2 can be either Docker V2.2 or OCI.
+      String mediaType = node.get("mediaType").asText();
+      if (V22ManifestTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
+        return manifestTemplateClass.cast(
+            JsonTemplateMapper.readJson(jsonString, V22ManifestTemplate.class));
+      }
+      if (OCIManifestTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
+        return manifestTemplateClass.cast(
+            JsonTemplateMapper.readJson(jsonString, OCIManifestTemplate.class));
+      }
+      throw new UnknownManifestFormatException("Unknown mediaType: " + mediaType);
     }
     throw new UnknownManifestFormatException(
         "Unknown schemaVersion: " + schemaVersion + " - only 1 and 2 are supported");

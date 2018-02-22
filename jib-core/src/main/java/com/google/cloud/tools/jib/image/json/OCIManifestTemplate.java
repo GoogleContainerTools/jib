@@ -22,27 +22,27 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * JSON Template for Docker Manifest Schema V2.2
+ * JSON Template for OCI Manifest Schema
  *
  * <p>Example manifest JSON:
  *
  * <pre>{@code
  * {
  *   "schemaVersion": 2,
- *   "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+ *   "mediaType": "application/vnd.oci.image.manifest.v1+json",
  *   "config": {
- *     "mediaType": "application/vnd.docker.container.image.v1+json",
+ *     "mediaType": "application/vnd.oci.image.config.v1+json",
  *     "size": 631,
  *     "digest": "sha256:26b84ca5b9050d32e68f66ad0f3e2bbcd247198a6e6e09a7effddf126eb8d873"
  *   },
  *   "layers": [
  *     {
- *       "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
+ *       "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
  *       "size": 1991435,
  *       "digest": "sha256:b56ae66c29370df48e7377c8f9baa744a3958058a766793f821dadcb144a4647"
  *     },
  *     {
- *       "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
+ *       "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
  *       "size": 32,
  *       "digest": "sha256:a3ed95caeb02ffe68cdd9fd84406680ae93d633cb16422d00e8a7c22955b46d4"
  *     }
@@ -50,22 +50,20 @@ import java.util.List;
  * }
  * }</pre>
  *
- * @see <a href="https://docs.docker.com/registry/spec/manifest-v2-2/">Image Manifest Version 2,
- *     Schema 2</a>
+ * @see <a href="https://github.com/opencontainers/image-spec/blob/master/manifest.md">OCI Image
+ *     Manifest Specification</a>
  */
-public class V22ManifestTemplate implements BuildableManifestTemplate {
+public class OCIManifestTemplate implements BuildableManifestTemplate {
 
-  /** The Docker V2.2 manifest media type. */
-  public static final String MANIFEST_MEDIA_TYPE =
-      "application/vnd.docker.distribution.manifest.v2+json";
+  /** The OCI manifest media type. */
+  public static final String MANIFEST_MEDIA_TYPE = "application/vnd.oci.image.manifest.v1+json";
 
-  /** The Docker V2.2 container configuration media type. */
+  /** The OCI container configuration media type. */
   private static final String CONTAINER_CONFIGURATION_MEDIA_TYPE =
-      "application/vnd.docker.container.image.v1+json";
+      "application/vnd.oci.image.config.v1+json";
 
-  /** The Docker V2.2 layer media type. */
-  private static final String LAYER_MEDIA_TYPE =
-      "application/vnd.docker.image.rootfs.diff.tar.gzip";
+  /** The OCI layer media type. */
+  private static final String LAYER_MEDIA_TYPE = "application/vnd.oci.image.layer.v1.tar+gzip";
 
   private final int schemaVersion = 2;
   private final String mediaType = MANIFEST_MEDIA_TYPE;

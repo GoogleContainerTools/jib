@@ -21,7 +21,7 @@ import com.google.cloud.tools.jib.json.JsonTemplate;
 
 /** Parent class for image manifest JSON templates. */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public abstract class ManifestTemplate extends JsonTemplate {
+public interface ManifestTemplate extends JsonTemplate {
 
-  public abstract int getSchemaVersion();
+  int getSchemaVersion();
 }

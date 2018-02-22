@@ -31,4 +31,4 @@ import com.fasterxml.jackson.annotation.JsonInclude;
   setterVisibility = JsonAutoDetect.Visibility.NONE,
   creatorVisibility = JsonAutoDetect.Visibility.NONE
 )
-public abstract class JsonTemplate {}
+public interface JsonTemplate {}

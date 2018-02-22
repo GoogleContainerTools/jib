@@ -30,17 +30,17 @@ import java.security.DigestException;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** Tests for {@link V22ManifestTemplate}. */
-public class V22ManifestTemplateTest {
+/** Tests for {@link OCIManifestTemplate}. */
+public class OCIManifestTemplateTest {
 
   @Test
   public void testToJson() throws DigestException, IOException, URISyntaxException {
     // Loads the expected JSON string.
-    Path jsonFile = Paths.get(Resources.getResource("json/v22manifest.json").toURI());
+    Path jsonFile = Paths.get(Resources.getResource("json/ocimanifest.json").toURI());
     String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
 
     // Creates the JSON object to serialize.
-    V22ManifestTemplate manifestJson = new V22ManifestTemplate();
+    OCIManifestTemplate manifestJson = new OCIManifestTemplate();
 
     manifestJson.setContainerConfiguration(
         1000,
@@ -62,11 +62,11 @@ public class V22ManifestTemplateTest {
   @Test
   public void testFromJson() throws IOException, URISyntaxException, DigestException {
     // Loads the JSON string.
-    Path jsonFile = Paths.get(Resources.getResource("json/v22manifest.json").toURI());
+    Path jsonFile = Paths.get(Resources.getResource("json/ocimanifest.json").toURI());
 
     // Deserializes into a manifest JSON object.
-    V22ManifestTemplate manifestJson =
-        JsonTemplateMapper.readJsonFromFile(jsonFile, V22ManifestTemplate.class);
+    OCIManifestTemplate manifestJson =
+        JsonTemplateMapper.readJsonFromFile(jsonFile, OCIManifestTemplate.class);
 
     Assert.assertEquals(
         DescriptorDigest.fromDigest(

@@ -28,6 +28,7 @@ import com.google.cloud.tools.jib.http.Connection;
 import com.google.cloud.tools.jib.http.Request;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
@@ -131,11 +132,10 @@ public class RegistryClient {
   }
 
   /** Pushes the image manifest for a specific tag. */
-  public void pushManifest(V22ManifestTemplate manifestTemplate, String imageTag)
+  public void pushManifest(BuildableManifestTemplate manifestTemplate, String imageTag)
       throws IOException, RegistryException {
-    ManifestPusher manifestPusher =
-        new ManifestPusher(registryEndpointProperties, manifestTemplate, imageTag);
-    callRegistryEndpoint(manifestPusher);
+    callRegistryEndpoint(
+        new ManifestPusher(registryEndpointProperties, manifestTemplate, imageTag));
   }
 
   /**
