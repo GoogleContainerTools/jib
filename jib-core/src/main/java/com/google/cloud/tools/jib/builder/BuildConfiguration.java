@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
-import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import java.util.ArrayList;
@@ -33,9 +32,8 @@ public class BuildConfiguration {
 
   public static class Builder {
 
-    /** All the parameters set to their default values. */
+    // All the parameters below are set to their default values.
     private ImageReference baseImageReference;
-
     private ImageReference targetImageReference;
     private List<String> credentialHelperNames = new ArrayList<>();
     private RegistryCredentials knownRegistryCredentials = RegistryCredentials.none();
@@ -100,20 +98,8 @@ public class BuildConfiguration {
       return this;
     }
 
-    /**
-     * Use {@code Docker} for {@link V22ManifestTemplate}. Use {@code OCI} for {@link
-     * OCIManifestTemplate}.
-     */
-    public Builder setTargetFormat(String format) {
-      if ("Docker".equals(format)) {
-        targetFormat = V22ManifestTemplate.class;
-
-      } else if ("OCI".equals(format)) {
-        targetFormat = OCIManifestTemplate.class;
-
-      } else {
-        throw new IllegalArgumentException(format + " is not an acceptable target format");
-      }
+    public Builder setTargetFormat(Class<? extends BuildableManifestTemplate> targetFormat) {
+      this.targetFormat = targetFormat;
       return this;
     }
 

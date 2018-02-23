@@ -63,7 +63,7 @@ public class BuildConfigurationTest {
             .setMainClass(expectedMainClass)
             .setJvmFlags(expectedJvmFlags)
             .setEnvironment(expectedEnvironment)
-            .setTargetFormat("OCI");
+            .setTargetFormat(OCIManifestTemplate.class);
     BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
 
     Assert.assertEquals(expectedBaseImageServerUrl, buildConfiguration.getBaseImageRegistry());
