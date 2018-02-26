@@ -30,9 +30,11 @@ import javax.annotation.Nullable;
  */
 public class RegistryCredentials {
 
+  private static final RegistryCredentials EMPTY = new RegistryCredentials();
+
   /** Instantiates with no credentials. */
   public static RegistryCredentials none() {
-    return new RegistryCredentials();
+    return EMPTY;
   }
 
   /** Instantiates with credentials for a single registry. */
@@ -109,14 +111,8 @@ public class RegistryCredentials {
   /** Maps from registry to the credentials for that registry. */
   private final Map<String, AuthorizationSourcePair> credentials = new HashMap<>();
 
-  /** Instantiate using {@link #from}. */
+  /** Instantiate using {@link #from}. Immutable after instantiation. */
   private RegistryCredentials() {};
-
-  private RegistryCredentials store(
-      String registry, String credentialSource, Authorization authorization) {
-    credentials.put(registry, new AuthorizationSourcePair(credentialSource, authorization));
-    return this;
-  }
 
   /** @return {@code true} if there are credentials for {@code registry}; {@code false} otherwise */
   public boolean has(String registry) {
@@ -145,5 +141,12 @@ public class RegistryCredentials {
       return null;
     }
     return credentials.get(registry).credentialSource;
+  }
+
+  /** Only to be called in static initializers. */
+  private RegistryCredentials store(
+      String registry, String credentialSource, Authorization authorization) {
+    credentials.put(registry, new AuthorizationSourcePair(credentialSource, authorization));
+    return this;
   }
 }

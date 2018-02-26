@@ -133,6 +133,7 @@ Field | Default | Description
 `jvmFlags`|*None*|Additional flags to pass into the JVM when running your application.
 `mainClass`|Uses `mainClass` from `maven-jar-plugin`|The main class to launch the application from.
 `enableReproducibleBuilds`|`true`|Building with the same application contents always generates the same image. Note that this does *not* preserve file timestamps and ownership. 
+<!--`imageFormat`|`Docker`|Use `OCI` to build an [OCI container image](https://www.opencontainers.org/).-->
 
 ### Example
 
