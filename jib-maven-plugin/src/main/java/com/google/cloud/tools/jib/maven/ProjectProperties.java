@@ -109,4 +109,9 @@ class ProjectProperties {
     }
     return mainClassObject.getValue();
   }
+
+  /** Returns the Maven logger. */
+  Log getLog() {
+    return log;
+  }
 }

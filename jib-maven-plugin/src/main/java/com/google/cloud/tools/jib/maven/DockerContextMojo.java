@@ -16,12 +16,14 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.cloud.tools.jib.builder.EntrypointBuilder;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.common.io.MoreFiles;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -31,6 +33,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
+import javax.xml.transform.Source;
+
+import com.google.common.io.Resources;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -75,8 +80,13 @@ public class DockerContextMojo extends AbstractMojo {
       }
     }
 
-    SourceFilesConfiguration sourceFilesConfiguration =
-        projectProperties.getSourceFilesConfiguration();
+    createDockerContext(projectProperties);
+  }
+
+  // TODO: Move most of this to jib-core.
+  /** Creates the Docker context in {@link #targetDir}. */
+  private void createDockerContext(ProjectProperties projectProperties) throws MojoExecutionException, MojoFailureException {
+    SourceFilesConfiguration sourceFilesConfiguration = projectProperties.getSourceFilesConfiguration();
 
     try {
       Path targetDirPath = Paths.get(targetDir);
@@ -102,47 +112,35 @@ public class DockerContextMojo extends AbstractMojo {
       copyFiles(sourceFilesConfiguration.getClassesFiles(), classesDir);
 
       // Creates the Dockerfile.
-      StringBuilder dockerfileString = new StringBuilder();
-      dockerfileString
-          .append("FROM ")
-          .append(from)
-          .append("\n\nCOPY libs ")
-          .append(sourceFilesConfiguration.getDependenciesPathOnImage())
-          .append("\nCOPY resources ")
-          .append(sourceFilesConfiguration.getResourcesPathOnImage())
-          .append("\nCOPY classes ")
-          .append(sourceFilesConfiguration.getClassesPathOnImage())
-          .append("\n\nENTRYPOINT ")
-          .append(getEntrypoint(sourceFilesConfiguration))
-          .append('\n');
+      Path dockerfileTemplate = Paths.get(Resources.getResource("DockerfileTemplate").toURI());
+      String dockerfile = new String(Files.readAllBytes(dockerfileTemplate), StandardCharsets.UTF_8);
+      dockerfile = dockerfile
+          .replace("@@BASE_IMAGE@@", from)
+          .replace("@@DEPENDENCIES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getDependenciesPathOnImage())
+          .replace("@@RESOURCES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getResourcesPathOnImage())
+          .replace("@@CLASSES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getClassesPathOnImage())
+          .replace("@@ENTRYPOINT@@", getEntrypoint(sourceFilesConfiguration));
       Files.write(
           targetDirPath.resolve("Dockerfile"),
-          dockerfileString.toString().getBytes(StandardCharsets.UTF_8));
+          dockerfile.getBytes(StandardCharsets.UTF_8));
+
+      projectProperties.getLog().info("Created Docker context at " + targetDir);
 
     } catch (IOException ex) {
       throwMojoExecutionExceptionWithHelpMessage(ex, "check if `targetDir` is set correctly");
+
+    } catch (URISyntaxException ex) {
+      throw new MojoFailureException("Unexpected URISyntaxException", ex);
     }
   }
 
   /**
-   * Gets the container entrypoint.
+   * Gets the Dockerfile ENTRYPOINT in exec-form.
    *
-   * <p>The entrypoint is {@code java -cp [classpaths] [main class]}.
+   * @see <a href="https://docs.docker.com/engine/reference/builder/#exec-form-entrypoint-example">https://docs.docker.com/engine/reference/builder/#exec-form-entrypoint-example</a>
    */
   private String getEntrypoint(SourceFilesConfiguration sourceFilesConfiguration) {
-    List<String> classPaths = new ArrayList<>();
-    classPaths.add(sourceFilesConfiguration.getDependenciesPathOnImage() + "*");
-    classPaths.add(sourceFilesConfiguration.getResourcesPathOnImage());
-    classPaths.add(sourceFilesConfiguration.getClassesPathOnImage());
-
-    String classPathsString = String.join(":", classPaths);
-
-    List<String> entrypoint = new ArrayList<>(4 + jvmFlags.size());
-    entrypoint.add("java");
-    entrypoint.addAll(jvmFlags);
-    entrypoint.add("-cp");
-    entrypoint.add(classPathsString);
-    entrypoint.add(mainClass);
+    List<String> entrypoint = EntrypointBuilder.makeEntrypoint(sourceFilesConfiguration, jvmFlags, mainClass);
 
     StringBuilder entrypointString = new StringBuilder("[");
     boolean firstComponent = true;
@@ -150,7 +148,10 @@ public class DockerContextMojo extends AbstractMojo {
       if (!firstComponent) {
         entrypointString.append(',');
       }
-      // TODO: Escape quotes.
+
+      // Escapes quotes.
+      entrypointComponent = entrypointComponent.replaceAll("\"", "\\\"");
+
       entrypointString.append('"').append(entrypointComponent).append('"');
       firstComponent = false;
     }
@@ -159,13 +160,18 @@ public class DockerContextMojo extends AbstractMojo {
     return entrypointString.toString();
   }
 
+  /** Copies {@code sourceFiles} to the {@code destDir} directory. */
   private void copyFiles(List<Path> sourceFiles, Path destDir) throws IOException {
     for (Path sourceFile : sourceFiles) {
       copyFile(sourceFile, destDir);
     }
   }
 
+  /** Copies {@code sourceFile} to {@code destDir}. Copies all contents of {@code sourceFile} if it is a directory. */
   private void copyFile(Path sourceFile, Path destDir) throws IOException {
+    if (!Files.isDirectory(destDir)) {
+      throw new IllegalArgumentException("destDir must be a directory");
+    }
     if (Files.isDirectory(sourceFile)) {
       Path destDirForSourceFile = destDir.resolve(sourceFile.getFileName());
       Files.createDirectory(destDirForSourceFile);
