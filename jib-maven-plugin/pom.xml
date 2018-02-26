@@ -269,15 +269,6 @@
             <version>1.5</version>
           </dependency>
         </dependencies>
-        <executions>
-          <execution>
-            <id>default-cli</id>
-            <phase>validate</phase>
-            <goals>
-              <goal>format</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
 
       <!-- Checkstyle -->
