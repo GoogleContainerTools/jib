@@ -26,6 +26,9 @@ import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
+import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
+import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
@@ -54,6 +57,22 @@ import org.apache.maven.settings.Server;
 /** Builds a container image. */
 @Mojo(name = "build", requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM)
 public class BuildImageMojo extends AbstractMojo {
+
+  /** Enumeration of {@link BuildableManifestTemplate}s. */
+  public enum ImageFormat {
+    Docker(V22ManifestTemplate.class),
+    OCI(OCIManifestTemplate.class);
+
+    private final Class<? extends BuildableManifestTemplate> manifestTemplateClass;
+
+    ImageFormat(Class<? extends BuildableManifestTemplate> manifestTemplateClass) {
+      this.manifestTemplateClass = manifestTemplateClass;
+    }
+
+    private Class<? extends BuildableManifestTemplate> getManifestTemplateClass() {
+      return manifestTemplateClass;
+    }
+  }
 
   /** Directory name for the cache. The directory will be relative to the build output directory. */
   private static final String CACHE_DIRECTORY_NAME = "jib-cache";
@@ -87,6 +106,9 @@ public class BuildImageMojo extends AbstractMojo {
 
   @Parameter(defaultValue = "true", required = true)
   private boolean enableReproducibleBuilds;
+
+  @Parameter(defaultValue = "Docker", required = true)
+  private ImageFormat imageFormat;
 
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
@@ -136,6 +158,7 @@ public class BuildImageMojo extends AbstractMojo {
             .setEnableReproducibleBuilds(enableReproducibleBuilds)
             .setJvmFlags(jvmFlags)
             .setEnvironment(environment)
+            .setTargetFormat(imageFormat.getManifestTemplateClass())
             .build();
 
     // Uses a directory in the Maven build cache as the Jib cache.

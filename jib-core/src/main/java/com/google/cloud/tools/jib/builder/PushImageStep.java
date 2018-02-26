@@ -23,8 +23,8 @@ import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.DuplicateLayerException;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
+import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
-import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryException;
 import com.google.common.util.concurrent.Futures;
@@ -120,9 +120,9 @@ class PushImageStep implements Callable<Void> {
       ImageToJsonTranslator imageToJsonTranslator = new ImageToJsonTranslator(image);
 
       // Pushes the image manifest.
-      V22ManifestTemplate manifestTemplate =
+      BuildableManifestTemplate manifestTemplate =
           imageToJsonTranslator.getManifestTemplate(
-              V22ManifestTemplate.class,
+              buildConfiguration.getTargetFormat(),
               NonBlockingFutures.get(
                   NonBlockingFutures.get(containerConfigurationBlobDescriptorFutureFuture)));
       registryClient.pushManifest(manifestTemplate, buildConfiguration.getTargetTag());

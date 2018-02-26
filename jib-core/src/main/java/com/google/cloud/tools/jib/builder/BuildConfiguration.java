@@ -17,6 +17,8 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
+import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,6 +32,7 @@ public class BuildConfiguration {
 
   public static class Builder {
 
+    // All the parameters below are set to their default values.
     private ImageReference baseImageReference;
     private ImageReference targetImageReference;
     private List<String> credentialHelperNames = new ArrayList<>();
@@ -38,6 +41,7 @@ public class BuildConfiguration {
     private String mainClass;
     private List<String> jvmFlags = new ArrayList<>();
     private Map<String, String> environmentMap = new HashMap<>();
+    private Class<? extends BuildableManifestTemplate> targetFormat = V22ManifestTemplate.class;
 
     private BuildLogger buildLogger;
 
@@ -94,6 +98,11 @@ public class BuildConfiguration {
       return this;
     }
 
+    public Builder setTargetFormat(Class<? extends BuildableManifestTemplate> targetFormat) {
+      this.targetFormat = targetFormat;
+      return this;
+    }
+
     /** @return the corresponding build configuration */
     public BuildConfiguration build() {
       // Validates the parameters.
@@ -119,7 +128,8 @@ public class BuildConfiguration {
               enableReproducibleBuilds,
               mainClass,
               jvmFlags,
-              environmentMap);
+              environmentMap,
+              targetFormat);
 
         case 1:
           throw new IllegalStateException(errorMessages.get(0));
@@ -154,6 +164,7 @@ public class BuildConfiguration {
   private String mainClass;
   private List<String> jvmFlags;
   private Map<String, String> environmentMap;
+  private Class<? extends BuildableManifestTemplate> targetFormat;
 
   public static Builder builder(BuildLogger buildLogger) {
     return new Builder(buildLogger);
@@ -169,7 +180,8 @@ public class BuildConfiguration {
       boolean enableReproducibleBuilds,
       String mainClass,
       List<String> jvmFlags,
-      Map<String, String> environmentMap) {
+      Map<String, String> environmentMap,
+      Class<? extends BuildableManifestTemplate> targetFormat) {
     this.buildLogger = buildLogger;
     this.baseImageReference = baseImageReference;
     this.targetImageReference = targetImageReference;
@@ -179,6 +191,7 @@ public class BuildConfiguration {
     this.mainClass = mainClass;
     this.jvmFlags = Collections.unmodifiableList(jvmFlags);
     this.environmentMap = Collections.unmodifiableMap(environmentMap);
+    this.targetFormat = targetFormat;
   }
 
   public BuildLogger getBuildLogger() {
@@ -231,5 +244,9 @@ public class BuildConfiguration {
 
   public Map<String, String> getEnvironment() {
     return environmentMap;
+  }
+
+  public Class<? extends BuildableManifestTemplate> getTargetFormat() {
+    return targetFormat;
   }
 }

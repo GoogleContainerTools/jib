@@ -8,6 +8,10 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+## 0.1.3
+### Added
+- Build and push OCI container image ([#96](https://github.com/google/jib/issues/96))
+
 ## 0.1.2
 ### Added
 - Use credentials from Docker config if none can be found otherwise ([#101](https://github.com/google/jib/issues/101))
