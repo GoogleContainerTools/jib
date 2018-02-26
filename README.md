@@ -7,7 +7,7 @@
 
 ## What is Jib?
 
-Jib is a Maven plugin for building Docker<!-- and OCI--> images for your Java applications.
+Jib is a Maven plugin for building Docker and OCI images for your Java applications.
 
 ## Goals
 
@@ -22,7 +22,6 @@ Jib is a Maven plugin for building Docker<!-- and OCI--> images for your Java ap
 These features are not currently supported but will be added in later releases.
 
 * Gradle plugin
-* Building OCI images
 * Support for WAR format
 
 ## Quickstart
@@ -35,7 +34,7 @@ In your Maven Java project, add the plugin to your `pom.xml`:
 <plugin>
   <groupId>com.google.cloud.tools</groupId>
   <artifactId>jib-maven-plugin</artifactId>
-  <version>0.1.2</version>
+  <version>0.1.3</version>
   <configuration>
     <registry>myregistry</registry>
     <repository>myapp</repository>
@@ -133,7 +132,7 @@ Field | Default | Description
 `jvmFlags`|*None*|Additional flags to pass into the JVM when running your application.
 `mainClass`|Uses `mainClass` from `maven-jar-plugin`|The main class to launch the application from.
 `enableReproducibleBuilds`|`true`|Building with the same application contents always generates the same image. Note that this does *not* preserve file timestamps and ownership. 
-<!--`imageFormat`|`Docker`|Use `OCI` to build an [OCI container image](https://www.opencontainers.org/).-->
+`imageFormat`|`Docker`|Use `OCI` to build an [OCI container image](https://www.opencontainers.org/).
 
 ### Example
 
@@ -141,6 +140,8 @@ In this configuration, the image is:
 * Built from a base of `openjdk:alpine` (pulled from Docker Hub)
 * Pushed to `localhost:5000/my-image:built-with-jib`
 * Runs by calling `java -Xms512m -Xdebug -Xmy:flag=jib-rules -cp app/libs/*:app/resources:app/classes mypackage.MyApp`
+* Reproducible
+* Built as OCI format
 
 ```xml
 <configuration>
@@ -157,7 +158,8 @@ In this configuration, the image is:
     <jvmFlag>-Xmy:flag=jib-rules</jvmFlag>
   </jvmFlags>
   <mainClass>mypackage.MyApp</mainClass>
-  <enableReproducibleBuilds>false</enableReproducibleBuilds>
+  <enableReproducibleBuilds>true</enableReproducibleBuilds>
+  <imageFormat>OCI</imageFormat>
 </configuration>
 ```
 
@@ -235,7 +237,7 @@ See [rules_docker](https://github.com/bazelbuild/rules_docker) for a similar exi
 
 ### What image format does Jib use?
 
-Jib currently builds into the [Docker V2.2](https://docs.docker.com/registry/spec/manifest-v2-2/) image format. [OCI image format](https://github.com/opencontainers/image-spec) support will be added a future release.
+Jib currently builds into the [Docker V2.2](https://docs.docker.com/registry/spec/manifest-v2-2/) image format or [OCI image format](https://github.com/opencontainers/image-spec). See [Extended Usage](#extended-usage) for the `imageFormat` configuration.
 
 ### Can I use other authentication methods besides a Docker credential helper?
 
