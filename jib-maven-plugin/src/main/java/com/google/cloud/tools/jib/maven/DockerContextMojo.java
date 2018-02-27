@@ -197,16 +197,6 @@ public class DockerContextMojo extends AbstractMojo {
     }
   }
 
-  /** @return the {@link ImageReference} parsed from {@link #from}. */
-  private ImageReference getBaseImageReference() throws MojoFailureException {
-    try {
-      return ImageReference.parse(from);
-
-    } catch (InvalidImageReferenceException ex) {
-      throw new MojoFailureException("Parameter 'from' is invalid", ex);
-    }
-  }
-
   /**
    * Wraps an exception in a {@link MojoExecutionException} and provides a suggestion on how to fix
    * the error.
