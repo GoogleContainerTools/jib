@@ -10,7 +10,6 @@ set -x
 export PATH=$PATH:/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/bin/
 
 docker-credential-gcr list
-echo -n gcr.io | docker-credential-gcr get
 cat $HOME/.docker/config.json
 
 # Stops any left-over containers.
