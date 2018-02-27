@@ -185,14 +185,20 @@ public class ImageReference {
   public String toString() {
     StringBuilder referenceString = new StringBuilder();
 
-    String repositoryWithoutLibraryPrefix = repository;
     if (!DOCKER_HUB_REGISTRY.equals(registry)) {
-      referenceString.append(registry).append('/');
-    } else if (repositoryWithoutLibraryPrefix.startsWith(LIBRARY_REPOSITORY_PREFIX)) {
-      repositoryWithoutLibraryPrefix =
-          repositoryWithoutLibraryPrefix.substring(LIBRARY_REPOSITORY_PREFIX.length());
+      // Use registry and repository if not Docker Hub.
+      referenceString.append(registry).append('/').append(repository);
+
+    } else if (repository.startsWith(LIBRARY_REPOSITORY_PREFIX)) {
+      // If Docker Hub and repository has 'library/' prefix, remove the 'library/' prefix.
+      referenceString.append(repository.substring(LIBRARY_REPOSITORY_PREFIX.length()));
+
+    } else {
+      // Use just repository if Docker Hub.
+      referenceString.append(repository);
     }
-    referenceString.append(repositoryWithoutLibraryPrefix);
+
+    // Use tag if not the default tag.
     if (!DEFAULT_TAG.equals(tag)) {
       referenceString.append(':').append(tag);
     }
