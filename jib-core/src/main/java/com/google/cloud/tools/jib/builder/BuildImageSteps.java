@@ -23,14 +23,12 @@ import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.Image;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -60,7 +58,11 @@ public class BuildImageSteps {
   public void run()
       throws InterruptedException, ExecutionException, CacheMetadataCorruptedException,
           IOException {
-    List<String> entrypoint = new EntrypointBuilder(sourceFilesConfiguration, buildConfiguration).build();
+    List<String> entrypoint =
+        EntrypointBuilder.makeEntrypoint(
+            sourceFilesConfiguration,
+            buildConfiguration.getJvmFlags(),
+            buildConfiguration.getMainClass());
 
     try (Timer timer = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       try (Timer timer2 = timer.subTimer("Initializing cache")) {

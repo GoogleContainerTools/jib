@@ -16,8 +16,39 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
+import java.util.Arrays;
+import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
+import org.mockito.Mockito;
+
 /** Tests for {@link DockerContextMojo}. */
 public class DockerContextMojoTest {
 
+  @Test
+  public void testGetEntrypoint() {
+    String expectedDependenciesPath = "/app/libs/";
+    String expectedResourcesPath = "/app/resources/";
+    String expectedClassesPath = "/app/classes/";
+    List<String> expectedJvmFlags = Arrays.asList("-flag", "another\"Flag");
+    String expectedMainClass = "SomeMainClass";
 
+    SourceFilesConfiguration mockSourceFilesConfiguration =
+        Mockito.mock(SourceFilesConfiguration.class);
+
+    Mockito.when(mockSourceFilesConfiguration.getDependenciesPathOnImage())
+        .thenReturn(expectedDependenciesPath);
+    Mockito.when(mockSourceFilesConfiguration.getResourcesPathOnImage())
+        .thenReturn(expectedResourcesPath);
+    Mockito.when(mockSourceFilesConfiguration.getClassesPathOnImage())
+        .thenReturn(expectedClassesPath);
+
+    DockerContextMojo dockerContextMojo =
+        new DockerContextMojo().setJvmFlags(expectedJvmFlags).setMainClass(expectedMainClass);
+
+    Assert.assertEquals(
+        "[\"java\",\"-flag\",\"another\\\"Flag\",\"-cp\",\"/app/libs/*:/app/resources/:/app/classes/\",\"SomeMainClass\"]",
+        dockerContextMojo.getEntrypoint(mockSourceFilesConfiguration));
+  }
 }

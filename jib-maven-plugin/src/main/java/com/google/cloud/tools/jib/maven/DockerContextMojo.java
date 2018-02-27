@@ -18,24 +18,21 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.builder.EntrypointBuilder;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
-import com.google.cloud.tools.jib.image.ImageReference;
-import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
+import com.google.cloud.tools.jib.filesystem.PathConsumer;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.MoreFiles;
+import com.google.common.io.Resources;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
-import javax.xml.transform.Source;
-
-import com.google.common.io.Resources;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -83,10 +80,53 @@ public class DockerContextMojo extends AbstractMojo {
     createDockerContext(projectProperties);
   }
 
+  @VisibleForTesting
+  DockerContextMojo setJvmFlags(List<String> jvmFlags) {
+    this.jvmFlags = jvmFlags;
+    return this;
+  }
+
+  @VisibleForTesting
+  DockerContextMojo setMainClass(String mainClass) {
+    this.mainClass = mainClass;
+    return this;
+  }
+
+  /**
+   * Gets the Dockerfile ENTRYPOINT in exec-form.
+   *
+   * @see <a
+   *     href="https://docs.docker.com/engine/reference/builder/#exec-form-entrypoint-example">https://docs.docker.com/engine/reference/builder/#exec-form-entrypoint-example</a>
+   */
+  @VisibleForTesting
+  String getEntrypoint(SourceFilesConfiguration sourceFilesConfiguration) {
+    List<String> entrypoint =
+        EntrypointBuilder.makeEntrypoint(sourceFilesConfiguration, jvmFlags, mainClass);
+
+    StringBuilder entrypointString = new StringBuilder("[");
+    boolean firstComponent = true;
+    for (String entrypointComponent : entrypoint) {
+      if (!firstComponent) {
+        entrypointString.append(',');
+      }
+
+      // Escapes quotes.
+      entrypointComponent = entrypointComponent.replaceAll("\"", "\\\"");
+
+      entrypointString.append('"').append(entrypointComponent).append('"');
+      firstComponent = false;
+    }
+    entrypointString.append(']');
+
+    return entrypointString.toString();
+  }
+
   // TODO: Move most of this to jib-core.
   /** Creates the Docker context in {@link #targetDir}. */
-  private void createDockerContext(ProjectProperties projectProperties) throws MojoExecutionException, MojoFailureException {
-    SourceFilesConfiguration sourceFilesConfiguration = projectProperties.getSourceFilesConfiguration();
+  private void createDockerContext(ProjectProperties projectProperties)
+      throws MojoExecutionException, MojoFailureException {
+    SourceFilesConfiguration sourceFilesConfiguration =
+        projectProperties.getSourceFilesConfiguration();
 
     try {
       Path targetDirPath = Paths.get(targetDir);
@@ -113,16 +153,20 @@ public class DockerContextMojo extends AbstractMojo {
 
       // Creates the Dockerfile.
       Path dockerfileTemplate = Paths.get(Resources.getResource("DockerfileTemplate").toURI());
-      String dockerfile = new String(Files.readAllBytes(dockerfileTemplate), StandardCharsets.UTF_8);
-      dockerfile = dockerfile
-          .replace("@@BASE_IMAGE@@", from)
-          .replace("@@DEPENDENCIES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getDependenciesPathOnImage())
-          .replace("@@RESOURCES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getResourcesPathOnImage())
-          .replace("@@CLASSES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getClassesPathOnImage())
-          .replace("@@ENTRYPOINT@@", getEntrypoint(sourceFilesConfiguration));
-      Files.write(
-          targetDirPath.resolve("Dockerfile"),
-          dockerfile.getBytes(StandardCharsets.UTF_8));
+      String dockerfile =
+          new String(Files.readAllBytes(dockerfileTemplate), StandardCharsets.UTF_8);
+      dockerfile =
+          dockerfile
+              .replace("@@BASE_IMAGE@@", from)
+              .replace(
+                  "@@DEPENDENCIES_PATH_ON_IMAGE@@",
+                  sourceFilesConfiguration.getDependenciesPathOnImage())
+              .replace(
+                  "@@RESOURCES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getResourcesPathOnImage())
+              .replace(
+                  "@@CLASSES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getClassesPathOnImage())
+              .replace("@@ENTRYPOINT@@", getEntrypoint(sourceFilesConfiguration));
+      Files.write(targetDirPath.resolve("Dockerfile"), dockerfile.getBytes(StandardCharsets.UTF_8));
 
       projectProperties.getLog().info("Created Docker context at " + targetDir);
 
@@ -134,66 +178,25 @@ public class DockerContextMojo extends AbstractMojo {
     }
   }
 
-  /**
-   * Gets the Dockerfile ENTRYPOINT in exec-form.
-   *
-   * @see <a href="https://docs.docker.com/engine/reference/builder/#exec-form-entrypoint-example">https://docs.docker.com/engine/reference/builder/#exec-form-entrypoint-example</a>
-   */
-  private String getEntrypoint(SourceFilesConfiguration sourceFilesConfiguration) {
-    List<String> entrypoint = EntrypointBuilder.makeEntrypoint(sourceFilesConfiguration, jvmFlags, mainClass);
-
-    StringBuilder entrypointString = new StringBuilder("[");
-    boolean firstComponent = true;
-    for (String entrypointComponent : entrypoint) {
-      if (!firstComponent) {
-        entrypointString.append(',');
-      }
-
-      // Escapes quotes.
-      entrypointComponent = entrypointComponent.replaceAll("\"", "\\\"");
-
-      entrypointString.append('"').append(entrypointComponent).append('"');
-      firstComponent = false;
-    }
-    entrypointString.append(']');
-
-    return entrypointString.toString();
-  }
-
   /** Copies {@code sourceFiles} to the {@code destDir} directory. */
   private void copyFiles(List<Path> sourceFiles, Path destDir) throws IOException {
     for (Path sourceFile : sourceFiles) {
-      copyFile(sourceFile, destDir);
-    }
-  }
+      PathConsumer copyPathConsumer =
+          path -> {
+            // Creates the same path in the destDir.
+            Path destPath = destDir.resolve(sourceFile.getParent().relativize(path));
+            if (Files.isDirectory(path)) {
+              Files.createDirectory(destPath);
+            } else {
+              Files.copy(path, destPath);
+            }
+          };
 
-  /** Copies {@code sourceFile} to {@code destDir}. Copies all contents of {@code sourceFile} if it is a directory. */
-  private void copyFile(Path sourceFile, Path destDir) throws IOException {
-    if (!Files.isDirectory(destDir)) {
-      throw new IllegalArgumentException("destDir must be a directory");
-    }
-    if (Files.isDirectory(sourceFile)) {
-      Path destDirForSourceFile = destDir.resolve(sourceFile.getFileName());
-      Files.createDirectory(destDirForSourceFile);
-      try {
-        Files.walk(sourceFile)
-            .filter(path -> !path.equals(sourceFile))
-            .forEach(
-                path -> {
-                  try {
-                    copyFile(path, destDirForSourceFile);
-
-                  } catch (IOException ex) {
-                    throw new UncheckedIOException(ex);
-                  }
-                });
-
-      } catch (UncheckedIOException ex) {
-        throw ex.getCause();
+      if (Files.isDirectory(sourceFile)) {
+        new DirectoryWalker(sourceFile).walk(copyPathConsumer);
+      } else {
+        copyPathConsumer.accept(sourceFile);
       }
-
-    } else {
-      Files.copy(sourceFile, destDir.resolve(sourceFile.getFileName()));
     }
   }
 

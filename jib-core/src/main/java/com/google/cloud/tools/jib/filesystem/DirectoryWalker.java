@@ -20,13 +20,13 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.function.Consumer;
 
+/** Recursively applies a function to each file in a directory. */
 public class DirectoryWalker {
 
   private final Path rootDir;
 
-  /** Initialize with a {@link }
+  /** Initialize with a root directory to walk. */
   public DirectoryWalker(Path rootDir) {
     if (!Files.isDirectory(rootDir)) {
       throw new IllegalArgumentException("rootDir must be a directory");

@@ -27,7 +27,8 @@ public class EntrypointBuilder {
    *
    * <p>The entrypoint is {@code java [jvm flags] -cp [classpaths] [main class]}.
    */
-  public static List<String> makeEntrypoint(SourceFilesConfiguration sourceFilesConfiguration, List<String> jvmFlags, String mainClass) {
+  public static List<String> makeEntrypoint(
+      SourceFilesConfiguration sourceFilesConfiguration, List<String> jvmFlags, String mainClass) {
     List<String> classPaths = new ArrayList<>();
     classPaths.add(sourceFilesConfiguration.getDependenciesPathOnImage() + "*");
     classPaths.add(sourceFilesConfiguration.getResourcesPathOnImage());
@@ -44,7 +45,5 @@ public class EntrypointBuilder {
     return entrypoint;
   }
 
-  private EntrypointBuilder() {
-
-  }
+  private EntrypointBuilder() {}
 }
