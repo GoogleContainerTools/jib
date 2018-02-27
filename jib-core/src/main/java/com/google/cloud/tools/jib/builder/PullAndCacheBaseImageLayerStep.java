@@ -23,7 +23,6 @@ import com.google.cloud.tools.jib.cache.CacheWriter;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
-import com.google.cloud.tools.jib.image.DuplicateLayerException;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryException;
@@ -57,8 +56,8 @@ class PullAndCacheBaseImageLayerStep implements Callable<CachedLayer> {
   /** Depends on {@code pullAuthorizationFuture}. */
   @Override
   public CachedLayer call()
-      throws IOException, RegistryException, LayerPropertyNotFoundException,
-          DuplicateLayerException, ExecutionException, InterruptedException {
+      throws IOException, RegistryException, LayerPropertyNotFoundException, ExecutionException,
+          InterruptedException {
     try (Timer ignored =
         new Timer(buildConfiguration.getBuildLogger(), String.format(DESCRIPTION, layerDigest))) {
       RegistryClient registryClient =

@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.cache;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
-import com.google.cloud.tools.jib.image.DuplicateLayerException;
 import com.google.cloud.tools.jib.image.LayerBuilder;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.UnwrittenLayer;
@@ -53,7 +52,7 @@ public class CacheWriter {
    * @return the cached layer
    */
   public CachedLayer writeLayer(LayerBuilder layerBuilder)
-      throws IOException, LayerPropertyNotFoundException, DuplicateLayerException {
+      throws IOException, LayerPropertyNotFoundException {
     UnwrittenLayer unwrittenLayer = layerBuilder.build();
 
     // Writes to a temporary file first because the UnwrittenLayer needs to be written first to
@@ -108,7 +107,7 @@ public class CacheWriter {
    */
   public CachedLayer getCachedLayer(
       DescriptorDigest layerDigest, CountingOutputStream countingOutputStream)
-      throws IOException, LayerPropertyNotFoundException, DuplicateLayerException {
+      throws IOException, LayerPropertyNotFoundException {
     Path layerFile = getLayerFile(layerDigest);
     countingOutputStream.close();
 

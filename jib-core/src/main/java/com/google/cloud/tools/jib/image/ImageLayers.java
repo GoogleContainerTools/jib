@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.image;
 
+import com.google.common.collect.Iterables;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -73,23 +74,21 @@ public class ImageLayers<T extends Layer> implements Iterable<T> {
    * Adds a layer.
    *
    * @param layer the layer to add
-   * @throws DuplicateLayerException if the layer has already been added
    */
-  public ImageLayers<T> add(T layer)
-      throws DuplicateLayerException, LayerPropertyNotFoundException {
-    if (layerDigests.contains(layer.getBlobDescriptor().getDigest())) {
-      throw new DuplicateLayerException("Cannot add the same layer more than once");
+  // TODO: Add tests.
+  public ImageLayers<T> add(T layer) throws LayerPropertyNotFoundException {
+    // Doesn't add the layer if the last layer is the same.
+    if (!isSameAsLastLayer(layer)) {
+      layerDigests.add(layer.getBlobDescriptor().getDigest());
+      layers.add(layer);
     }
-
-    layerDigests.add(layer.getBlobDescriptor().getDigest());
-    layers.add(layer);
 
     return this;
   }
 
   /** Adds all layers in {@code layers}. */
   public <U extends T> ImageLayers<T> addAll(ImageLayers<U> layers)
-      throws LayerPropertyNotFoundException, DuplicateLayerException {
+      throws LayerPropertyNotFoundException {
     for (U layer : layers) {
       add(layer);
     }
@@ -99,5 +98,14 @@ public class ImageLayers<T extends Layer> implements Iterable<T> {
   @Override
   public Iterator<T> iterator() {
     return getLayers().iterator();
+  }
+
+  /** @return {@code true} if {@code layer} is the same as the last layer in {@link #layers} */
+  private boolean isSameAsLastLayer(T layer) throws LayerPropertyNotFoundException {
+    if (layers.size() == 0) {
+      return false;
+    }
+    T lastLayer = Iterables.getLast(layers);
+    return layer.getBlobDescriptor().getDigest().equals(lastLayer.getBlobDescriptor().getDigest());
   }
 }

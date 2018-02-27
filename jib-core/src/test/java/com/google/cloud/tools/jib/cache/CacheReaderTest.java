@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.cache;
 
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
-import com.google.cloud.tools.jib.image.DuplicateLayerException;
 import com.google.cloud.tools.jib.image.ImageLayers;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.ReferenceLayer;
@@ -74,8 +73,8 @@ public class CacheReaderTest {
 
   @Test
   public void testAreBaseImageLayersCached()
-      throws DigestException, LayerPropertyNotFoundException, DuplicateLayerException,
-          CacheMetadataCorruptedException, IOException {
+      throws DigestException, LayerPropertyNotFoundException, CacheMetadataCorruptedException,
+          IOException {
     ImageLayers<ReferenceLayer> layers = new ImageLayers<>();
     layers
         .add(
