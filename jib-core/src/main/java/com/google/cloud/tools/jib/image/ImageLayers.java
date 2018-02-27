@@ -75,7 +75,6 @@ public class ImageLayers<T extends Layer> implements Iterable<T> {
    *
    * @param layer the layer to add
    */
-  // TODO: Add tests.
   public ImageLayers<T> add(T layer) throws LayerPropertyNotFoundException {
     // Doesn't add the layer if the last layer is the same.
     if (!isSameAsLastLayer(layer)) {
