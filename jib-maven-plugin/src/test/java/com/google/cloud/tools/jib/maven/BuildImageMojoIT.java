@@ -18,6 +18,8 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.builder.DockerImageRunner;
 import java.io.IOException;
+import java.nio.file.Path;
+
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
 import org.junit.Assert;
@@ -30,11 +32,21 @@ public class BuildImageMojoIT {
 
   @ClassRule public static final TestPlugin testPlugin = new TestPlugin();
 
-  @Rule public final TestProject testProject = new TestProject(testPlugin);
+  @ClassRule public static final TestProject simpleTestProject = new TestProject(testPlugin, "simple");
+  @ClassRule public static final TestProject emptyTestProject = new TestProject(testPlugin, "empty");
 
   @Test
-  public void testExecute() throws VerificationException, IOException, InterruptedException {
-    Verifier verifier = new Verifier(testProject.getProjectRoot().toString());
+  public void testExecute_simple() throws VerificationException, IOException, InterruptedException {
+    Assert.assertEquals("Hello, world\n", buildAndRun(simpleTestProject.getProjectRoot(), "gcr.io/jib-integration-testing/jibtestimage:built-with-jib"));
+  }
+
+  @Test
+  public void testExecute_empty() throws InterruptedException, IOException, VerificationException {
+    Assert.assertEquals("", buildAndRun(emptyTestProject.getProjectRoot(), "gcr.io/jib-integration-testing/emptyimage"));
+  }
+
+  private String buildAndRun(Path projectRoot, String imageReference) throws VerificationException, IOException, InterruptedException {
+    Verifier verifier = new Verifier(projectRoot.toString());
     verifier.setAutoclean(false);
     verifier.executeGoal("package");
 
@@ -51,8 +63,6 @@ public class BuildImageMojoIT {
 
     Assert.assertTrue(timeOne > timeTwo);
 
-    Assert.assertEquals(
-        "Hello, world\n",
-        new DockerImageRunner("gcr.io/jib-integration-testing/jibtestimage:built-with-jib").run());
+    return new DockerImageRunner(imageReference).run();
   }
 }
