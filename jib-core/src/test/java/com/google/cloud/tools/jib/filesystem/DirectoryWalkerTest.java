@@ -42,6 +42,7 @@ public class DirectoryWalkerTest {
     Set<Path> expectedPaths =
         new HashSet<>(
             Arrays.asList(
+                testDir,
                 testDir.resolve("a"),
                 testDir.resolve("a").resolve("b"),
                 testDir.resolve("a").resolve("b").resolve("bar"),

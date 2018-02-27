@@ -32,6 +32,7 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
 import javax.annotation.Nullable;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -44,6 +45,29 @@ import org.apache.maven.project.MavenProject;
 /** Exports to a Docker context. */
 @Mojo(name = "dockercontext", requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM)
 public class DockerContextMojo extends AbstractMojo {
+
+  /** Copies {@code sourceFiles} to the {@code destDir} directory. */
+  @VisibleForTesting
+  static void copyFiles(List<Path> sourceFiles, Path destDir) throws IOException {
+    for (Path sourceFile : sourceFiles) {
+      PathConsumer copyPathConsumer =
+          path -> {
+            // Creates the same path in the destDir.
+            Path destPath = destDir.resolve(sourceFile.getParent().relativize(path));
+            if (Files.isDirectory(path)) {
+              Files.createDirectory(destPath);
+            } else {
+              Files.copy(path, destPath);
+            }
+          };
+
+      if (Files.isDirectory(sourceFile)) {
+        new DirectoryWalker(sourceFile).walk(copyPathConsumer);
+      } else {
+        copyPathConsumer.accept(sourceFile);
+      }
+    }
+  }
 
   @Parameter(defaultValue = "${project}", readonly = true)
   private MavenProject project;
@@ -92,6 +116,38 @@ public class DockerContextMojo extends AbstractMojo {
     return this;
   }
 
+  @VisibleForTesting
+  DockerContextMojo setTargetDir(String targetDir) {
+    this.targetDir = targetDir;
+    return this;
+  }
+
+  @VisibleForTesting
+  DockerContextMojo setFrom(String baseImage) {
+    from = baseImage;
+    return this;
+  }
+
+  @VisibleForTesting
+  /** Makes a {@code Dockerfile} from the {@code DockerfileTemplate}. */
+  String makeDockerfile(SourceFilesConfiguration sourceFilesConfiguration)
+      throws IOException, URISyntaxException {
+    Path dockerfileTemplate = Paths.get(Resources.getResource("DockerfileTemplate").toURI());
+
+    String dockerfile = new String(Files.readAllBytes(dockerfileTemplate), StandardCharsets.UTF_8);
+    dockerfile =
+        dockerfile
+            .replace("@@BASE_IMAGE@@", from)
+            .replace(
+                "@@DEPENDENCIES_PATH_ON_IMAGE@@",
+                sourceFilesConfiguration.getDependenciesPathOnImage())
+            .replace(
+                "@@RESOURCES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getResourcesPathOnImage())
+            .replace("@@CLASSES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getClassesPathOnImage())
+            .replace("@@ENTRYPOINT@@", getEntrypoint(sourceFilesConfiguration));
+    return dockerfile;
+  }
+
   /**
    * Gets the Dockerfile ENTRYPOINT in exec-form.
    *
@@ -111,7 +167,7 @@ public class DockerContextMojo extends AbstractMojo {
       }
 
       // Escapes quotes.
-      entrypointComponent = entrypointComponent.replaceAll("\"", "\\\"");
+      entrypointComponent = entrypointComponent.replaceAll("\"", Matcher.quoteReplacement("\\\""));
 
       entrypointString.append('"').append(entrypointComponent).append('"');
       firstComponent = false;
@@ -152,21 +208,9 @@ public class DockerContextMojo extends AbstractMojo {
       copyFiles(sourceFilesConfiguration.getClassesFiles(), classesDir);
 
       // Creates the Dockerfile.
-      Path dockerfileTemplate = Paths.get(Resources.getResource("DockerfileTemplate").toURI());
-      String dockerfile =
-          new String(Files.readAllBytes(dockerfileTemplate), StandardCharsets.UTF_8);
-      dockerfile =
-          dockerfile
-              .replace("@@BASE_IMAGE@@", from)
-              .replace(
-                  "@@DEPENDENCIES_PATH_ON_IMAGE@@",
-                  sourceFilesConfiguration.getDependenciesPathOnImage())
-              .replace(
-                  "@@RESOURCES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getResourcesPathOnImage())
-              .replace(
-                  "@@CLASSES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getClassesPathOnImage())
-              .replace("@@ENTRYPOINT@@", getEntrypoint(sourceFilesConfiguration));
-      Files.write(targetDirPath.resolve("Dockerfile"), dockerfile.getBytes(StandardCharsets.UTF_8));
+      Files.write(
+          targetDirPath.resolve("Dockerfile"),
+          makeDockerfile(sourceFilesConfiguration).getBytes(StandardCharsets.UTF_8));
 
       projectProperties.getLog().info("Created Docker context at " + targetDir);
 
@@ -175,28 +219,6 @@ public class DockerContextMojo extends AbstractMojo {
 
     } catch (URISyntaxException ex) {
       throw new MojoFailureException("Unexpected URISyntaxException", ex);
-    }
-  }
-
-  /** Copies {@code sourceFiles} to the {@code destDir} directory. */
-  private void copyFiles(List<Path> sourceFiles, Path destDir) throws IOException {
-    for (Path sourceFile : sourceFiles) {
-      PathConsumer copyPathConsumer =
-          path -> {
-            // Creates the same path in the destDir.
-            Path destPath = destDir.resolve(sourceFile.getParent().relativize(path));
-            if (Files.isDirectory(path)) {
-              Files.createDirectory(destPath);
-            } else {
-              Files.copy(path, destPath);
-            }
-          };
-
-      if (Files.isDirectory(sourceFile)) {
-        new DirectoryWalker(sourceFile).walk(copyPathConsumer);
-      } else {
-        copyPathConsumer.accept(sourceFile);
-      }
     }
   }
 

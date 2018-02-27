@@ -34,11 +34,10 @@ public class DirectoryWalker {
     this.rootDir = rootDir;
   }
 
-  /** Walks {@link #rootDir} and applies {@code pathConsumer} to each file. */
+  /** Walks {@link #rootDir} and applies {@code pathConsumer} to each file. Note that {@link #rootDir} itself is visited as well. */
   public void walk(PathConsumer pathConsumer) throws IOException {
     try {
       Files.walk(rootDir)
-          .filter(path -> !path.equals(rootDir))
           .forEach(
               path -> {
                 try {
