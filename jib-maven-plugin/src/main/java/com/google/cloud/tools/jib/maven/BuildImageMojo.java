@@ -34,6 +34,7 @@ import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -153,10 +154,11 @@ public class BuildImageMojo extends AbstractMojo {
     RegistryCredentials mavenSettingsCredentials =
         RegistryCredentials.from("Maven settings", registryCredentials);
 
+    ImageReference targetImageReference = ImageReference.of(registry, repository, tag);
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder(new MavenBuildLogger(getLog()))
             .setBaseImage(baseImage)
-            .setTargetImage(ImageReference.of(registry, repository, tag))
+            .setTargetImage(targetImageReference)
             .setCredentialHelperNames(credHelpers)
             .setKnownRegistryCredentials(mavenSettingsCredentials)
             .setMainClass(mainClass)
@@ -178,7 +180,7 @@ public class BuildImageMojo extends AbstractMojo {
     }
 
     getLog().info("");
-    getLog().info("Pushing image as " + registry + "/" + repository + ":" + tag);
+    getLog().info("Pushing image as " + targetImageReference);
     getLog().info("");
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
@@ -192,7 +194,7 @@ public class BuildImageMojo extends AbstractMojo {
     buildImage(new BuildImageSteps(buildConfiguration, sourceFilesConfiguration, cacheDirectory));
 
     getLog().info("");
-    getLog().info("Built and pushed image as " + registry + "/" + repository + ":" + tag);
+    getLog().info("Built and pushed image as " + targetImageReference);
     getLog().info("");
   }
 
@@ -252,7 +254,7 @@ public class BuildImageMojo extends AbstractMojo {
   /** Checks validity of plugin parameters. */
   private void validateParameters() throws MojoFailureException {
     // Validates 'registry'.
-    if (!ImageReference.isValidRegistry(registry)) {
+    if (!Strings.isNullOrEmpty(registry) && !ImageReference.isValidRegistry(registry)) {
       getLog().error("Invalid format for 'registry'");
     }
     // Validates 'repository'.
@@ -260,14 +262,16 @@ public class BuildImageMojo extends AbstractMojo {
       getLog().error("Invalid format for 'repository'");
     }
     // Validates 'tag'.
-    if (!ImageReference.isValidTag(tag)) {
-      getLog().error("Invalid format for 'tag'");
-    }
+    if (!Strings.isNullOrEmpty(tag)) {
+      if (!ImageReference.isValidTag(tag)) {
+        getLog().error("Invalid format for 'tag'");
+      }
 
-    // 'tag' must not contain backslashes.
-    if (tag.indexOf('/') >= 0) {
-      getLog().error("'tag' cannot contain backslashes");
-      throw new MojoFailureException("Invalid configuration parameters");
+      // 'tag' must not contain backslashes.
+      if (tag.indexOf('/') >= 0) {
+        getLog().error("'tag' cannot contain backslashes");
+        throw new MojoFailureException("Invalid configuration parameters");
+      }
     }
   }
 
