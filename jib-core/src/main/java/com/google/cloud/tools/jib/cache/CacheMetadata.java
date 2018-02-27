@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.cache;
 
-import com.google.cloud.tools.jib.image.DuplicateLayerException;
 import com.google.cloud.tools.jib.image.ImageLayers;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import java.nio.file.Path;
@@ -77,7 +76,7 @@ class CacheMetadata {
 
         return filteredLayers;
 
-      } catch (DuplicateLayerException | LayerPropertyNotFoundException ex) {
+      } catch (LayerPropertyNotFoundException ex) {
         throw new CacheMetadataCorruptedException(ex);
       }
     }
@@ -87,8 +86,7 @@ class CacheMetadata {
     return layers;
   }
 
-  synchronized void addLayer(CachedLayerWithMetadata layer)
-      throws LayerPropertyNotFoundException, DuplicateLayerException {
+  synchronized void addLayer(CachedLayerWithMetadata layer) throws LayerPropertyNotFoundException {
     layers.add(layer);
   }
 

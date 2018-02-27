@@ -69,14 +69,13 @@ public class Image {
     return layers.getLayers();
   }
 
-  public Image addLayer(Layer layer)
-      throws DuplicateLayerException, LayerPropertyNotFoundException {
+  public Image addLayer(Layer layer) throws LayerPropertyNotFoundException {
     layers.add(layer);
     return this;
   }
 
   public <T extends Layer> Image addLayers(ImageLayers<T> layers)
-      throws LayerPropertyNotFoundException, DuplicateLayerException {
+      throws LayerPropertyNotFoundException {
     this.layers.addAll(layers);
     return this;
   }

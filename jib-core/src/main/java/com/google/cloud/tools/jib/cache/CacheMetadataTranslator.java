@@ -20,7 +20,6 @@ import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.cache.json.CacheMetadataLayerObjectTemplate;
 import com.google.cloud.tools.jib.cache.json.CacheMetadataLayerPropertiesObjectTemplate;
 import com.google.cloud.tools.jib.cache.json.CacheMetadataTemplate;
-import com.google.cloud.tools.jib.image.DuplicateLayerException;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import java.nio.file.Path;
 
@@ -64,7 +63,7 @@ public class CacheMetadataTranslator {
 
       return cacheMetadata;
 
-    } catch (DuplicateLayerException | LayerPropertyNotFoundException ex) {
+    } catch (LayerPropertyNotFoundException ex) {
       throw new CacheMetadataCorruptedException(ex);
     }
   }

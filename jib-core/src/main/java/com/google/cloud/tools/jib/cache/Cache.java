@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.cache;
 
 import com.google.cloud.tools.jib.cache.json.CacheMetadataTemplate;
-import com.google.cloud.tools.jib.image.DuplicateLayerException;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
@@ -85,7 +84,7 @@ public class Cache implements Closeable {
 
   /** Adds the cached layer to the cache metadata. */
   void addLayerToMetadata(CachedLayer cachedLayer, @Nullable LayerMetadata layerMetadata)
-      throws LayerPropertyNotFoundException, DuplicateLayerException {
+      throws LayerPropertyNotFoundException {
     cacheMetadata.addLayer(new CachedLayerWithMetadata(cachedLayer, layerMetadata));
   }
 
