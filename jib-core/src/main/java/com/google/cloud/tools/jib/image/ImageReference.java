@@ -33,6 +33,7 @@ public class ImageReference {
 
   private static final String DOCKER_HUB_REGISTRY = "registry.hub.docker.com";
   private static final String DEFAULT_TAG = "latest";
+  private static final String LIBRARY_REPOSITORY_PREFIX = "library/";
 
   /**
    * Matches all sequences of alphanumeric characters possibly separated by any number of dashes in
@@ -112,7 +113,7 @@ public class ImageReference {
      * See https://docs.docker.com/engine/reference/commandline/pull/#pull-an-image-from-docker-hub
      */
     if (DOCKER_HUB_REGISTRY.equals(registry) && repository.indexOf('/') < 0) {
-      repository = "library/" + repository;
+      repository = LIBRARY_REPOSITORY_PREFIX + repository;
     }
 
     if (!Strings.isNullOrEmpty(tag)) {
@@ -177,5 +178,25 @@ public class ImageReference {
 
   public String getTag() {
     return tag;
+  }
+
+  /** @return the image reference in Docker-readable format (inverse of {@link #parse}) */
+  @Override
+  public String toString() {
+    StringBuilder referenceString = new StringBuilder();
+
+    String repositoryWithoutLibraryPrefix = repository;
+    if (!DOCKER_HUB_REGISTRY.equals(registry)) {
+      referenceString.append(registry).append('/');
+    } else if (repositoryWithoutLibraryPrefix.startsWith(LIBRARY_REPOSITORY_PREFIX)) {
+      repositoryWithoutLibraryPrefix =
+          repositoryWithoutLibraryPrefix.substring(LIBRARY_REPOSITORY_PREFIX.length());
+    }
+    referenceString.append(repositoryWithoutLibraryPrefix);
+    if (!DEFAULT_TAG.equals(tag)) {
+      referenceString.append(':').append(tag);
+    }
+
+    return referenceString.toString();
   }
 }

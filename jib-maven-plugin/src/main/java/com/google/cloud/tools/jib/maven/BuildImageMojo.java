@@ -154,10 +154,11 @@ public class BuildImageMojo extends AbstractMojo {
     RegistryCredentials mavenSettingsCredentials =
         RegistryCredentials.from("Maven settings", registryCredentials);
 
+    ImageReference targetImageReference = ImageReference.of(registry, repository, tag);
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder(new MavenBuildLogger(getLog()))
             .setBaseImage(baseImage)
-            .setTargetImage(ImageReference.of(registry, repository, tag))
+            .setTargetImage(targetImageReference)
             .setCredentialHelperNames(credHelpers)
             .setKnownRegistryCredentials(mavenSettingsCredentials)
             .setMainClass(mainClass)
@@ -179,7 +180,7 @@ public class BuildImageMojo extends AbstractMojo {
     }
 
     getLog().info("");
-    getLog().info("Pushing image as " + registry + "/" + repository + ":" + tag);
+    getLog().info("Pushing image as " + targetImageReference);
     getLog().info("");
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
@@ -193,7 +194,7 @@ public class BuildImageMojo extends AbstractMojo {
     buildImage(new BuildImageSteps(buildConfiguration, sourceFilesConfiguration, cacheDirectory));
 
     getLog().info("");
-    getLog().info("Built and pushed image as " + registry + "/" + repository + ":" + tag);
+    getLog().info("Built and pushed image as " + targetImageReference);
     getLog().info("");
   }
 

@@ -8,6 +8,10 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+## 0.1.4
+### Fixed
+- Null tag validation generating NullPointerException ([])
+
 ## 0.1.3
 ### Added
 - Build and push OCI container image ([#96](https://github.com/google/jib/issues/96))
