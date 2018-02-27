@@ -2,12 +2,14 @@
 
 set -e
 
+gcloud components install docker-credential-gcr
 docker login -u _json_key -p "${JIB_INTEGRATION_TESTING_KEY}" https://gcr.io
 
 set -x
 
-gcloud components install docker-credential-gcr
 export PATH=$PATH:/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/bin/
+
+docker-credential-gcr list
 
 # Stops any left-over containers.
 docker stop $(docker container ls --quiet) || true
