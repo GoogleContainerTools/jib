@@ -132,10 +132,10 @@ public class ImageReference {
   /** Builds an image reference from a registry, repository, and tag. */
   public static ImageReference of(
       @Nullable String registry, String repository, @Nullable String tag) {
-    if (registry == null) {
+    if (Strings.isNullOrEmpty(registry)) {
       registry = DOCKER_HUB_REGISTRY;
     }
-    if (tag == null) {
+    if (Strings.isNullOrEmpty(tag)) {
       tag = DEFAULT_TAG;
     }
     return new ImageReference(registry, repository, tag);
