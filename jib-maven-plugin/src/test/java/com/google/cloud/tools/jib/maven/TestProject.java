@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -24,16 +25,19 @@ import org.apache.maven.it.util.ResourceExtractor;
 import org.junit.rules.TemporaryFolder;
 
 /** Works with the test Maven project in the {@code resources/project} directory. */
-class TestProject extends TemporaryFolder {
+class TestProject extends TemporaryFolder implements Closeable {
 
-  private static final String PROJECT_PATH_IN_RESOURCES = "/project";
+  private static final String PROJECTS_PATH_IN_RESOURCES = "/projects/";
 
   private final TestPlugin testPlugin;
+  private final String projectDir;
 
   private Path projectRoot;
 
-  TestProject(TestPlugin testPlugin) {
+  /** Initialize to a specific project directory. */
+  TestProject(TestPlugin testPlugin, String projectDir) {
     this.testPlugin = testPlugin;
+    this.projectDir = projectDir;
   }
 
   Path getProjectRoot() {
@@ -50,7 +54,7 @@ class TestProject extends TemporaryFolder {
   private void copyProject() throws IOException {
     projectRoot =
         ResourceExtractor.extractResourcePath(
-                TestProject.class, PROJECT_PATH_IN_RESOURCES, newFolder(), true)
+                TestProject.class, PROJECTS_PATH_IN_RESOURCES + projectDir, newFolder(), true)
             .toPath();
 
     // Puts the correct plugin version into the test project pom.xml.
@@ -60,5 +64,10 @@ class TestProject extends TemporaryFolder {
         new String(Files.readAllBytes(pomXml), StandardCharsets.UTF_8)
             .replace("@@PluginVersion@@", testPlugin.getVersion())
             .getBytes(StandardCharsets.UTF_8));
+  }
+
+  @Override
+  public void close() {
+    after();
   }
 }

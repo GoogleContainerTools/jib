@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.image.json;
 
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
-import com.google.cloud.tools.jib.image.DuplicateLayerException;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerCountMismatchException;
@@ -39,8 +38,7 @@ public class JsonToImageTranslatorTest {
 
   @Test
   public void testToImage_v21()
-      throws IOException, LayerPropertyNotFoundException, DuplicateLayerException, DigestException,
-          URISyntaxException {
+      throws IOException, LayerPropertyNotFoundException, DigestException, URISyntaxException {
     // Loads the JSON string.
     Path jsonFile =
         Paths.get(getClass().getClassLoader().getResource("json/v21manifest.json").toURI());
@@ -61,22 +59,22 @@ public class JsonToImageTranslatorTest {
 
   @Test
   public void testToImage_v22()
-      throws IOException, LayerPropertyNotFoundException, DuplicateLayerException,
-          LayerCountMismatchException, DigestException, URISyntaxException {
+      throws IOException, LayerPropertyNotFoundException, LayerCountMismatchException,
+          DigestException, URISyntaxException {
     testToImage_buildable("json/v22manifest.json", V22ManifestTemplate.class);
   }
 
   @Test
   public void testToImage_oci()
-      throws IOException, LayerPropertyNotFoundException, DuplicateLayerException,
-          LayerCountMismatchException, DigestException, URISyntaxException {
+      throws IOException, LayerPropertyNotFoundException, LayerCountMismatchException,
+          DigestException, URISyntaxException {
     testToImage_buildable("json/ocimanifest.json", OCIManifestTemplate.class);
   }
 
   private <T extends BuildableManifestTemplate> void testToImage_buildable(
       String jsonFilename, Class<T> manifestTemplateClass)
-      throws IOException, LayerPropertyNotFoundException, DuplicateLayerException,
-          LayerCountMismatchException, DigestException, URISyntaxException {
+      throws IOException, LayerPropertyNotFoundException, LayerCountMismatchException,
+          DigestException, URISyntaxException {
     // Loads the container configuration JSON.
     Path containerConfigurationJsonFile =
         Paths.get(getClass().getClassLoader().getResource("json/containerconfig.json").toURI());

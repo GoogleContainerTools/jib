@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.cache;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.cache.json.CacheMetadataTemplate;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
-import com.google.cloud.tools.jib.image.DuplicateLayerException;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import java.io.ByteArrayOutputStream;
@@ -114,8 +113,7 @@ public class CacheMetadataTranslatorTest {
 
   @Test
   public void testToTemplate()
-      throws LayerPropertyNotFoundException, DuplicateLayerException, URISyntaxException,
-          IOException {
+      throws LayerPropertyNotFoundException, URISyntaxException, IOException {
     Path jsonFile = PlatformSpecificMetadataJson.getMetadataJsonFile();
     String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
 

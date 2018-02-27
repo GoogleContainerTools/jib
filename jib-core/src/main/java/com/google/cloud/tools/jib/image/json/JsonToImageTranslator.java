@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.image.json;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.DigestOnlyLayer;
-import com.google.cloud.tools.jib.image.DuplicateLayerException;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerCountMismatchException;
@@ -34,7 +33,7 @@ public class JsonToImageTranslator {
 
   /** Translates {@link V21ManifestTemplate} to {@link Image}. */
   public static Image toImage(V21ManifestTemplate manifestTemplate)
-      throws LayerPropertyNotFoundException, DuplicateLayerException {
+      throws LayerPropertyNotFoundException {
     Image image = new Image();
 
     for (DescriptorDigest digest : manifestTemplate.getLayerDigests()) {
@@ -52,7 +51,7 @@ public class JsonToImageTranslator {
   public static Image toImage(
       BuildableManifestTemplate manifestTemplate,
       ContainerConfigurationTemplate containerConfigurationTemplate)
-      throws LayerCountMismatchException, LayerPropertyNotFoundException, DuplicateLayerException {
+      throws LayerCountMismatchException, LayerPropertyNotFoundException {
     Image image = new Image();
 
     List<ReferenceNoDiffIdLayer> layers = new ArrayList<>();

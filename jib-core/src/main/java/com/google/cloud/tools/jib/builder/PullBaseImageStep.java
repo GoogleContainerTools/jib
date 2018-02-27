@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.image.DuplicateLayerException;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.LayerCountMismatchException;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
@@ -55,8 +54,7 @@ class PullBaseImageStep implements Callable<Image> {
   @Override
   public Image call()
       throws IOException, RegistryException, LayerPropertyNotFoundException,
-          DuplicateLayerException, LayerCountMismatchException, ExecutionException,
-          InterruptedException {
+          LayerCountMismatchException, ExecutionException, InterruptedException {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       RegistryClient registryClient =
           new RegistryClient(

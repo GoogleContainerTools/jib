@@ -36,7 +36,7 @@ public class ImageTest {
   @InjectMocks private Image image;
 
   @Test
-  public void test_smokeTest() throws DuplicateLayerException, LayerPropertyNotFoundException {
+  public void test_smokeTest() throws LayerPropertyNotFoundException {
     ImmutableList<String> expectedEnvironment =
         ImmutableList.of("crepecake=is great", "VARIABLE=VALUE");
 

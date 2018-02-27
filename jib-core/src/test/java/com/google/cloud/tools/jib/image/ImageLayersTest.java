@@ -59,8 +59,7 @@ public class ImageLayersTest {
   }
 
   @Test
-  public void testAddLayer_success()
-      throws DuplicateLayerException, LayerPropertyNotFoundException {
+  public void testAddLayer_success() throws LayerPropertyNotFoundException {
     List<Layer> expectedLayers =
         Arrays.asList(mockCachedLayer, mockReferenceLayer, mockDigestOnlyLayer);
 
@@ -73,18 +72,17 @@ public class ImageLayersTest {
   }
 
   @Test
-  public void testAddLayer_duplicate()
-      throws DuplicateLayerException, LayerPropertyNotFoundException {
+  public void testAddLayer_sameAsLastLayer() throws LayerPropertyNotFoundException {
+    List<Layer> expectedLayers =
+        Arrays.asList(mockCachedLayer, mockReferenceLayer, mockDigestOnlyLayer, mockUnwrittenLayer);
+
     ImageLayers<Layer> imageLayers = new ImageLayers<>();
     imageLayers.add(mockCachedLayer);
     imageLayers.add(mockReferenceLayer);
     imageLayers.add(mockDigestOnlyLayer);
+    imageLayers.add(mockUnwrittenLayer);
+    imageLayers.add(mockCachedLayer);
 
-    try {
-      imageLayers.add(mockUnwrittenLayer);
-      Assert.fail("Adding duplicate layer should throw DuplicateLayerException");
-    } catch (DuplicateLayerException ex) {
-      Assert.assertEquals("Cannot add the same layer more than once", ex.getMessage());
-    }
+    Assert.assertEquals(expectedLayers, imageLayers.getLayers());
   }
 }
