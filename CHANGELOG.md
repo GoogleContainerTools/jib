@@ -7,7 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
-- Null tag validation generating NullPointerException ([])
+- Null tag validation generating NullPointerException ([#125](https://github.com/google/jib/issues/125))
 
 ## 0.1.3
 ### Added
