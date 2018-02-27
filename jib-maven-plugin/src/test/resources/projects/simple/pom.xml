@@ -41,9 +41,6 @@
           <registry>gcr.io</registry>
           <repository>jib-integration-testing/jibtestimage</repository>
           <tag>built-with-jib</tag>
-          <credHelpers>
-            <credHelper>gcr</credHelper>
-          </credHelpers>
           <mainClass>com.test.HelloWorld</mainClass>
         </configuration>
       </plugin>
