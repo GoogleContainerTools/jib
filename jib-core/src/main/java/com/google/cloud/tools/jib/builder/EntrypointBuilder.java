@@ -25,7 +25,7 @@ public class EntrypointBuilder {
   /**
    * Builds the container entrypoint.
    *
-   * <p>The entrypoint is {@code java -cp [classpaths] [main class]}.
+   * <p>The entrypoint is {@code java [jvm flags] -cp [classpaths] [main class]}.
    */
   public static List<String> makeEntrypoint(SourceFilesConfiguration sourceFilesConfiguration, List<String> jvmFlags, String mainClass) {
     List<String> classPaths = new ArrayList<>();
