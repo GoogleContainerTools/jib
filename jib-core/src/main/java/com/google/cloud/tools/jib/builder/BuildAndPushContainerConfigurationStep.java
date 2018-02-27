@@ -22,7 +22,6 @@ import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.image.DuplicateLayerException;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
@@ -84,8 +83,8 @@ class BuildAndPushContainerConfigurationStep implements Callable<ListenableFutur
    * {@code buildApplicationLayerFutures}.
    */
   private BlobDescriptor afterBaseImageLayerFuturesFuture()
-      throws ExecutionException, InterruptedException, LayerPropertyNotFoundException,
-          DuplicateLayerException, IOException, RegistryException {
+      throws ExecutionException, InterruptedException, LayerPropertyNotFoundException, IOException,
+          RegistryException {
     try (Timer timer = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       RegistryClient registryClient =
           new RegistryClient(

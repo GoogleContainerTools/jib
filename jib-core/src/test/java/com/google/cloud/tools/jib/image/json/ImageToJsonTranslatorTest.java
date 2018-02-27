@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.image.json;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
-import com.google.cloud.tools.jib.image.DuplicateLayerException;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
@@ -46,8 +45,7 @@ public class ImageToJsonTranslatorTest {
   private ImageToJsonTranslator imageToJsonTranslator;
 
   @Before
-  public void setUp()
-      throws DigestException, LayerPropertyNotFoundException, DuplicateLayerException {
+  public void setUp() throws DigestException, LayerPropertyNotFoundException {
     Image testImage = new Image();
 
     testImage.setEnvironmentVariable("VAR1", "VAL1");

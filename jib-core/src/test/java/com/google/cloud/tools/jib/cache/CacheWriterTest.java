@@ -21,7 +21,6 @@ import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
-import com.google.cloud.tools.jib.image.DuplicateLayerException;
 import com.google.cloud.tools.jib.image.LayerBuilder;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.UnwrittenLayer;
@@ -80,8 +79,7 @@ public class CacheWriterTest {
   }
 
   @Test
-  public void testWriteLayer_unwritten()
-      throws IOException, LayerPropertyNotFoundException, DuplicateLayerException {
+  public void testWriteLayer_unwritten() throws IOException, LayerPropertyNotFoundException {
     ExpectedLayer expectedLayer = getExpectedLayer();
 
     // Writes resourceBlob as a layer to the cache.
@@ -106,8 +104,7 @@ public class CacheWriterTest {
   }
 
   @Test
-  public void testGetLayerOutputStream()
-      throws IOException, LayerPropertyNotFoundException, DuplicateLayerException {
+  public void testGetLayerOutputStream() throws IOException, LayerPropertyNotFoundException {
     ExpectedLayer expectedLayer = getExpectedLayer();
 
     // Writes resourceBlob as a layer to the cache.

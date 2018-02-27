@@ -20,7 +20,6 @@ import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.CacheReader;
 import com.google.cloud.tools.jib.cache.CachedLayer;
-import com.google.cloud.tools.jib.image.DuplicateLayerException;
 import com.google.cloud.tools.jib.image.ImageLayers;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -48,9 +47,8 @@ public class BuildAndCacheApplicationLayersStepTest {
 
   @Test
   public void testRun()
-      throws LayerPropertyNotFoundException, DuplicateLayerException, IOException,
-          CacheMetadataCorruptedException, URISyntaxException, ExecutionException,
-          InterruptedException {
+      throws LayerPropertyNotFoundException, IOException, CacheMetadataCorruptedException,
+          URISyntaxException, ExecutionException, InterruptedException {
     Mockito.when(mockBuildConfiguration.getBuildLogger()).thenReturn(new TestBuildLogger());
     TestSourceFilesConfiguration testSourceFilesConfiguration = new TestSourceFilesConfiguration();
     Path temporaryCacheDirectory = temporaryFolder.newFolder().toPath();
