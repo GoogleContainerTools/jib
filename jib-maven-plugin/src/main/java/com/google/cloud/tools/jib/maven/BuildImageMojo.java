@@ -252,9 +252,9 @@ public class BuildImageMojo extends AbstractMojo {
     } catch (CacheDirectoryNotOwnedException ex) {
       throwMojoExecutionExceptionWithHelpMessage(
           ex,
-          "check that "
+          "check that '"
               + ex.getCacheDirectory()
-              + " is not used by another application or set the `useOnlyProjectCache` "
+              + "' is not used by another application or set the `useOnlyProjectCache` "
               + "configuration");
     }
   }

@@ -222,7 +222,7 @@ public class BuildImageMojoTest {
   @Test
   public void testBuildImage_cacheDirectoryNotOwnedException()
       throws InterruptedException, ExecutionException, CacheDirectoryNotOwnedException,
-      CacheMetadataCorruptedException, IOException {
+          CacheMetadataCorruptedException, IOException {
     Path expectedCacheDirectory = Paths.get("some/path");
 
     CacheDirectoryNotOwnedException mockCacheDirectoryNotOwnedException =
@@ -237,7 +237,7 @@ public class BuildImageMojoTest {
 
     } catch (MojoExecutionException ex) {
       Assert.assertEquals(
-          "Build image failed, perhaps you should check that \"some/path\" is not used by another application or set the `useOnlyProjectCache` configuration",
+          "Build image failed, perhaps you should check that 'some/path' is not used by another application or set the `useOnlyProjectCache` configuration",
           ex.getMessage());
       Assert.assertEquals(mockCacheDirectoryNotOwnedException, ex.getCause());
     }
