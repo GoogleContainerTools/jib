@@ -12,6 +12,7 @@ gcloud components install docker-credential-gcr
 export GOOGLE_APPLICATION_CREDENTIALS=./keyfile.json
 docker-credential-gcr configure-docker
 
+which docker-credential-gcr
 echo gcr.io | docker-credential-gcr get
 echo -n gcr.io | docker-credential-gcr get
 
@@ -24,6 +25,7 @@ cd github/jib
 
 (cd jib-core; ./gradlew clean build integrationTest publishToMavenLocal --info)
 
+which docker-credential-gcr
 echo gcr.io | docker-credential-gcr get
 echo -n gcr.io | docker-credential-gcr get
 
