@@ -75,13 +75,18 @@ public class DockerCredentialHelper {
       String[] credentialHelperCommand = {credentialHelper, "get"};
 
       // TODO: DELETEME
-      System.err.println("WRITING SERVERURL : " + serverUrl);
-      Process p = Runtime.getRuntime().exec("docker-credential-gcr get");
-      p.getOutputStream().write(serverUrl.getBytes(StandardCharsets.UTF_8));
-      p.getOutputStream().close();
-      try (InputStreamReader inputStreamReader =
-          new InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8)) {
-        System.err.println("WAHTTTTT : " + CharStreams.toString(inputStreamReader));
+      try {
+        System.err.println("WRITING SERVERURL : " + serverUrl);
+        Process p = new ProcessBuilder(new String[] {"docker-credential-gcr", "get"}).start();
+        p.getOutputStream().write(serverUrl.getBytes(StandardCharsets.UTF_8));
+        p.getOutputStream().close();
+        try (InputStreamReader inputStreamReader =
+                 new InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8)) {
+          System.err.println("WAHTTTTT : " + CharStreams.toString(inputStreamReader));
+        }
+        p.waitFor();
+      } catch (InterruptedException e) {
+        e.printStackTrace();
       }
 
       Process process = new ProcessBuilder(credentialHelperCommand).start();
