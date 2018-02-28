@@ -16,8 +16,10 @@
 
 package com.google.cloud.tools.jib.builder;
 
+import com.google.cloud.tools.jib.cache.Caches;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
+import java.nio.file.Path;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -43,11 +45,14 @@ public class BuildImageStepsIntegrationTest {
             .setMainClass("HelloWorld")
             .build();
 
+    Path cacheDirectory = temporaryCacheDirectory.newFolder().toPath();
     BuildImageSteps buildImageSteps =
         new BuildImageSteps(
             buildConfiguration,
             sourceFilesConfiguration,
-            temporaryCacheDirectory.getRoot().toPath());
+            Caches.initializer()
+                .setBaseCacheDirectory(cacheDirectory)
+                .setApplicationCacheDirectory(cacheDirectory));
 
     long lastTime = System.nanoTime();
     buildImageSteps.run();

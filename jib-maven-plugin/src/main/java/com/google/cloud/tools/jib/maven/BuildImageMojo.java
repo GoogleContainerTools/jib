@@ -21,7 +21,9 @@ import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.BuildImageSteps;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
+import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
+import com.google.cloud.tools.jib.cache.Caches;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.image.ImageReference;
@@ -113,6 +115,9 @@ public class BuildImageMojo extends AbstractMojo {
   @Parameter(defaultValue = "Docker", required = true)
   private ImageFormat imageFormat;
 
+  @Parameter(defaultValue = "false", required = true)
+  private boolean useOnlyProjectCache;
+
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
     validateParameters();
@@ -178,6 +183,11 @@ public class BuildImageMojo extends AbstractMojo {
         throw new MojoExecutionException("Could not create cache directory: " + cacheDirectory, ex);
       }
     }
+    Caches.Initializer cachesInitializer =
+        Caches.initializer().setApplicationCacheDirectory(cacheDirectory);
+    if (useOnlyProjectCache) {
+      cachesInitializer.setBaseCacheDirectory(cacheDirectory);
+    }
 
     getLog().info("");
     getLog().info("Pushing image as " + targetImageReference);
@@ -191,7 +201,8 @@ public class BuildImageMojo extends AbstractMojo {
 
     RegistryClient.setUserAgentSuffix(USER_AGENT_SUFFIX);
 
-    buildImage(new BuildImageSteps(buildConfiguration, sourceFilesConfiguration, cacheDirectory));
+    buildImage(
+        new BuildImageSteps(buildConfiguration, sourceFilesConfiguration, cachesInitializer));
 
     getLog().info("");
     getLog().info("Built and pushed image as " + targetImageReference);
@@ -237,6 +248,14 @@ public class BuildImageMojo extends AbstractMojo {
       getLog().error(ex);
       // TODO: Add more suggestions for various build failures.
       throwMojoExecutionExceptionWithHelpMessage(ex, null);
+
+    } catch (CacheDirectoryNotOwnedException ex) {
+      throwMojoExecutionExceptionWithHelpMessage(
+          ex,
+          "check that "
+              + ex.getCacheDirectory()
+              + " is not used by another application or set the `useOnlyProjectCache` "
+              + "configuration");
     }
   }
 

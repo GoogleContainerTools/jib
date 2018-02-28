@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.builder;
 
-import java.nio.file.Path;
+import com.google.cloud.tools.jib.cache.Caches;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.Assert;
@@ -57,7 +57,9 @@ public class BuildImageStepsTest {
             "/app/libs/*:/app/resources/:/app/classes/",
             "SomeMainClass"),
         new BuildImageSteps(
-                mockBuildConfiguration, mockSourceFilesConfiguration, Mockito.mock(Path.class))
+                mockBuildConfiguration,
+                mockSourceFilesConfiguration,
+                Mockito.mock(Caches.Initializer.class))
             .getEntrypoint());
   }
 }

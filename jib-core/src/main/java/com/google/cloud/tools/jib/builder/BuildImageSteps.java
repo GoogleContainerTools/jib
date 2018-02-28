@@ -19,8 +19,10 @@ package com.google.cloud.tools.jib.builder;
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.cache.Cache;
+import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.CachedLayer;
+import com.google.cloud.tools.jib.cache.Caches;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.common.annotations.VisibleForTesting;
@@ -29,7 +31,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -42,15 +43,15 @@ public class BuildImageSteps {
 
   private final BuildConfiguration buildConfiguration;
   private final SourceFilesConfiguration sourceFilesConfiguration;
-  private final Path cacheDirectory;
+  private final Caches.Initializer cachesInitializer;
 
   public BuildImageSteps(
       BuildConfiguration buildConfiguration,
       SourceFilesConfiguration sourceFilesConfiguration,
-      Path cacheDirectory) {
+      Caches.Initializer cachesInitializer) {
     this.buildConfiguration = buildConfiguration;
     this.sourceFilesConfiguration = sourceFilesConfiguration;
-    this.cacheDirectory = cacheDirectory;
+    this.cachesInitializer = cachesInitializer;
   }
 
   public BuildConfiguration getBuildConfiguration() {
@@ -58,14 +59,17 @@ public class BuildImageSteps {
   }
 
   public void run()
-      throws InterruptedException, ExecutionException, CacheMetadataCorruptedException,
-          IOException {
+      throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
+          CacheDirectoryNotOwnedException {
     try (Timer timer = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       try (Timer timer2 = timer.subTimer("Initializing cache")) {
         ListeningExecutorService listeningExecutorService =
             MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
 
-        try (Cache cache = Cache.init(cacheDirectory)) {
+        try (Caches caches = cachesInitializer.init()) {
+          // TODO: Use base image cache for base image layers.
+          Cache cache = caches.getApplicationCache();
+
           timer2.lap("Setting up credential retrieval");
           ListenableFuture<Authorization> retrieveTargetRegistryCredentialsFuture =
               listeningExecutorService.submit(

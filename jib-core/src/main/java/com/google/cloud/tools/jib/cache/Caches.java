@@ -20,7 +20,6 @@ import com.google.common.annotations.VisibleForTesting;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -104,22 +103,31 @@ public class Caches implements Closeable {
   private final Cache applicationCache;
 
   private Caches(Path baseCacheDirectory, Path applicationCacheDirectory)
-      throws CacheMetadataCorruptedException, NotDirectoryException {
-    baseCache = Cache.init(baseCacheDirectory);
+      throws CacheMetadataCorruptedException, IOException {
     applicationCache = Cache.init(applicationCacheDirectory);
+
+    // Ensures that only one Cache is initialized if using the same directory.
+    if (Files.isSameFile(baseCacheDirectory, applicationCacheDirectory)) {
+      baseCache = applicationCache;
+    } else {
+      baseCache = Cache.init(baseCacheDirectory);
+    }
+  }
+
+  public Cache getBaseCache() {
+    return baseCache;
+  }
+
+  public Cache getApplicationCache() {
+    return applicationCache;
   }
 
   @Override
   public void close() throws IOException {
-    baseCache.close();
     applicationCache.close();
-  }
 
-  Cache getBaseCache() {
-    return baseCache;
-  }
-
-  Cache getApplicationCache() {
-    return applicationCache;
+    if (baseCache != applicationCache) {
+      baseCache.close();
+    }
   }
 }
