@@ -16,8 +16,13 @@
 
 package com.google.cloud.tools.jib.cache;
 
+import com.google.common.annotations.VisibleForTesting;
+import java.io.Closeable;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Manages both the base image layers cache and the application image layers cache.
@@ -25,15 +30,43 @@ import java.nio.file.Path;
  * <p>In general, the cache for base image layers should be shared between projects, while the cache
  * for the application image layers should be specific to a single project.
  */
-public class Caches {
-
-  private final Cache baseCache;
-  private final Cache applicationCache;
+public class Caches implements Closeable {
 
   /** Initializes a {@link Caches} with directory paths. */
   public static class Initializer {
 
-    private Path baseCacheDirectory;
+    /** The default directory for caching the base image layers, in {@code $HOME/.jib-cache/}. */
+    private static final Path DEFAULT_BASE_CACHE_DIRECTORY =
+        Paths.get(System.getProperty("user.home")).resolve(".jib-cache");
+
+    /** A file to store in the default base image layers cache to check ownership by Jib. */
+    private static final String OWNERSHIP_FILE_NAME = ".jib";
+
+    @VisibleForTesting
+    /**
+     * Ensures ownership of {@code cacheDirectory} by checking for the existence of {@link
+     * #OWNERSHIP_FILE_NAME}.
+     *
+     * <p>This is a safety check to make sure we are not writing to a directory not created by Jib.
+     */
+    static void ensureOwnership(Path cacheDirectory)
+        throws CacheDirectoryNotOwnedException, IOException {
+      Path ownershipFile = cacheDirectory.resolve(OWNERSHIP_FILE_NAME);
+
+      if (Files.exists(cacheDirectory)) {
+        // Checks for the ownership file.
+        if (!Files.exists(ownershipFile)) {
+          throw new CacheDirectoryNotOwnedException();
+        }
+
+      } else {
+        // Creates the cache directory and ownership file.
+        Files.createDirectory(cacheDirectory);
+        Files.createFile(ownershipFile);
+      }
+    }
+
+    private Path baseCacheDirectory = DEFAULT_BASE_CACHE_DIRECTORY;
     private Path applicationCacheDirectory;
 
     private Initializer() {}
@@ -48,11 +81,17 @@ public class Caches {
       return this;
     }
 
-    public Caches init() throws CacheMetadataCorruptedException, NotDirectoryException {
-      if (baseCacheDirectory == null || applicationCacheDirectory == null) {
+    public Caches init()
+        throws CacheMetadataCorruptedException, IOException, CacheDirectoryNotOwnedException {
+      if (applicationCacheDirectory == null) {
         throw new IllegalStateException(
-            "Must initialize cache with both base image layer cache directory and application image layer cache directory");
+            "Must initialize cache with an application image layer cache directory");
       }
+
+      if (DEFAULT_BASE_CACHE_DIRECTORY.equals(baseCacheDirectory)) {
+        ensureOwnership(DEFAULT_BASE_CACHE_DIRECTORY);
+      }
+
       return new Caches(baseCacheDirectory, applicationCacheDirectory);
     }
   }
@@ -61,10 +100,19 @@ public class Caches {
     return new Initializer();
   }
 
+  private final Cache baseCache;
+  private final Cache applicationCache;
+
   private Caches(Path baseCacheDirectory, Path applicationCacheDirectory)
       throws CacheMetadataCorruptedException, NotDirectoryException {
     baseCache = Cache.init(baseCacheDirectory);
     applicationCache = Cache.init(applicationCacheDirectory);
+  }
+
+  @Override
+  public void close() throws IOException {
+    baseCache.close();
+    applicationCache.close();
   }
 
   Cache getBaseCache() {

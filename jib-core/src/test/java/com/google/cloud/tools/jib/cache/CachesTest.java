@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.cache;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -29,18 +30,45 @@ public class CachesTest {
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
-  public void testInitializer() throws CacheMetadataCorruptedException, IOException {
+  public void testInitializer()
+      throws CacheMetadataCorruptedException, IOException, CacheDirectoryNotOwnedException {
     Path tempBaseCacheDirectory = temporaryFolder.newFolder().toPath();
     Path tempApplicationCacheDirectory = temporaryFolder.newFolder().toPath();
 
-    Caches caches =
+    try (Caches caches =
         Caches.initializer()
             .setBaseCacheDirectory(tempBaseCacheDirectory)
             .setApplicationCacheDirectory(tempApplicationCacheDirectory)
-            .init();
+            .init()) {
+      Assert.assertEquals(tempBaseCacheDirectory, caches.getBaseCache().getCacheDirectory());
+      Assert.assertEquals(
+          tempApplicationCacheDirectory, caches.getApplicationCache().getCacheDirectory());
+    }
 
-    Assert.assertEquals(tempBaseCacheDirectory, caches.getBaseCache().getCacheDirectory());
-    Assert.assertEquals(
-        tempApplicationCacheDirectory, caches.getApplicationCache().getCacheDirectory());
+    // Checks that the caches were closed (metadata.json saved).
+    Assert.assertTrue(Files.exists(tempBaseCacheDirectory.resolve(CacheFiles.METADATA_FILENAME)));
+    Assert.assertTrue(
+        Files.exists(tempApplicationCacheDirectory.resolve(CacheFiles.METADATA_FILENAME)));
+  }
+
+  @Test
+  public void testEnsureOwnership_notOwned() throws IOException {
+    Path cacheDirectory = temporaryFolder.newFolder().toPath();
+
+    try {
+      Caches.Initializer.ensureOwnership(cacheDirectory);
+      Assert.fail("Expected CacheDirectoryNotOwnedException to be thrown");
+
+    } catch (CacheDirectoryNotOwnedException ex) {
+      // pass
+    }
+  }
+
+  @Test
+  public void testEnsureOwnership_create() throws IOException, CacheDirectoryNotOwnedException {
+    Path cacheDirectory = temporaryFolder.newFolder().toPath();
+    Path nonexistentDirectory = cacheDirectory.resolve("somefolder");
+
+    Caches.Initializer.ensureOwnership(nonexistentDirectory);
   }
 }
