@@ -3,6 +3,8 @@
 set -e
 
 gcloud components install docker-credential-gcr
+echo $JIB_INTEGRATION_TESTING_KEY > keyfile.json
+export GOOGLE_APPLICATION_CREDENTIALS=./keyfile.json
 docker-credential-gcr configure-docker
 docker login -u _json_key -p "${JIB_INTEGRATION_TESTING_KEY}" https://gcr.io
 
