@@ -79,12 +79,13 @@ public class DockerCredentialHelper {
       Process p = Runtime.getRuntime().exec("docker-credential-gcr get");
       p.getOutputStream().write(serverUrl.getBytes(StandardCharsets.UTF_8));
       p.getOutputStream().close();
-      try (InputStreamReader inputStreamReader = new InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8)) {
+      try (InputStreamReader inputStreamReader =
+          new InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8)) {
         System.err.println("WAHTTTTT : " + CharStreams.toString(inputStreamReader));
       }
 
       Process process = new ProcessBuilder(credentialHelperCommand).start();
-      try {OutputStream processStdin = process.getOutputStream()) {
+      try (OutputStream processStdin = process.getOutputStream()) {
         processStdin.write(serverUrl.getBytes(StandardCharsets.UTF_8));
       }
 
