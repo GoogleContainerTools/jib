@@ -74,21 +74,6 @@ public class DockerCredentialHelper {
       String credentialHelper = "docker-credential-" + credentialHelperSuffix;
       String[] credentialHelperCommand = {credentialHelper, "get"};
 
-      // TODO: DELETEME
-      try {
-        System.err.println("WRITING SERVERURL : " + serverUrl);
-        Process p = new ProcessBuilder(new String[] {"docker-credential-gcr", "get"}).start();
-        p.getOutputStream().write(serverUrl.getBytes(StandardCharsets.UTF_8));
-        p.getOutputStream().close();
-        try (InputStreamReader inputStreamReader =
-            new InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8)) {
-          System.err.println("WAHTTTTT : " + CharStreams.toString(inputStreamReader));
-        }
-        p.waitFor();
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-
       Process process = new ProcessBuilder(credentialHelperCommand).start();
       try (OutputStream processStdin = process.getOutputStream()) {
         processStdin.write(serverUrl.getBytes(StandardCharsets.UTF_8));
@@ -97,7 +82,6 @@ public class DockerCredentialHelper {
       try (InputStreamReader processStdoutReader =
           new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)) {
         String output = CharStreams.toString(processStdoutReader);
-        System.err.println("ASDFJKL; " + output); // TODO: DELETEME
 
         // Throws an exception if the credential store does not have credentials for serverUrl.
         if (output.contains("credentials not found in native keychain")) {

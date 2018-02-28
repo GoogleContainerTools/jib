@@ -16,11 +16,4 @@ docker-credential-gcr configure-docker
 docker stop $(docker container ls --quiet) || true
 
 (cd github/jib/jib-core; ./gradlew clean build integrationTest publishToMavenLocal --info)
-
-echo gcr.io | docker-credential-gcr get
-
-ls
-pwd
-
-
 (cd github/jib/jib-maven-plugin; ./mvnw clean install cobertura:cobertura -P integration-tests -B -U -X)
