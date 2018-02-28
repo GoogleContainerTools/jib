@@ -73,6 +73,9 @@ class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
             String.format(DESCRIPTION, buildConfiguration.getTargetRegistry()))) {
       // Tries to get registry credentials from Docker credential helpers.
       for (String credentialHelperSuffix : buildConfiguration.getCredentialHelperNames()) {
+        buildConfiguration
+            .getBuildLogger()
+            .info("Checking credentials from docker-credential-" + credentialHelperSuffix);
         Authorization authorization = retrieveFromCredentialHelper(credentialHelperSuffix);
         if (authorization != null) {
           return authorization;
