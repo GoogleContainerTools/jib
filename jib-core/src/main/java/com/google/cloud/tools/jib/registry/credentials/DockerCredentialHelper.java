@@ -81,7 +81,7 @@ public class DockerCredentialHelper {
         p.getOutputStream().write(serverUrl.getBytes(StandardCharsets.UTF_8));
         p.getOutputStream().close();
         try (InputStreamReader inputStreamReader =
-                 new InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8)) {
+            new InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8)) {
           System.err.println("WAHTTTTT : " + CharStreams.toString(inputStreamReader));
         }
         p.waitFor();
