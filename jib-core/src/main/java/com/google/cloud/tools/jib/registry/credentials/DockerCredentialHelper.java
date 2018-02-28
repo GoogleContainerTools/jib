@@ -80,6 +80,7 @@ public class DockerCredentialHelper {
       try (InputStreamReader processStdoutReader =
           new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)) {
         String output = CharStreams.toString(processStdoutReader);
+        System.err.println("ASDFJKL; " + output);
 
         // Throws an exception if the credential store does not have credentials for serverUrl.
         if (output.contains("credentials not found in native keychain")) {
