@@ -227,6 +227,10 @@ These limitations will be fixed in later releases.
 * Cannot build directly to a Docker daemon.
 * Pushing to Azure Container Registry is not currently supported.
 
+## Community
+
+* [jib-users forum](https://groups.google.com/forum/#!forum/jib-users)
+
 ## Frequently Asked Questions (FAQ)
 
 If a question you have is not answered below, please [submit an issue](/../../issues/new).
