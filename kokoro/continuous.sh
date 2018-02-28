@@ -20,4 +20,8 @@ docker stop $(docker container ls --quiet) || true
 cd github/jib
 
 (cd jib-core; ./gradlew clean build integrationTest publishToMavenLocal --info)
+
+echo gcr.io | docker-credential-gcr get
+echo -n gcr.io | docker-credential-gcr get
+
 (cd jib-maven-plugin; ./mvnw clean install cobertura:cobertura -P integration-tests -B -U -X)
