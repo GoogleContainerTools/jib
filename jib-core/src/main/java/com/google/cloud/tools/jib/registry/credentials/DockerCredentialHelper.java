@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.io.CharStreams;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -73,14 +74,24 @@ public class DockerCredentialHelper {
       String credentialHelper = "docker-credential-" + credentialHelperSuffix;
       String[] credentialHelperCommand = {credentialHelper, "get"};
 
+      // TODO: DELETEME
+      System.err.println("WRITING SERVERURL : " + serverUrl);
+      Process p = Runtime.getRuntime().exec("docker-credential-gcr get");
+      p.getOutputStream().write(serverUrl.getBytes(StandardCharsets.UTF_8));
+      p.getOutputStream().close();
+      try (InputStreamReader inputStreamReader = new InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8)) {
+        System.err.println("WAHTTTTT : " + CharStreams.toString(inputStreamReader));
+      }
+
       Process process = new ProcessBuilder(credentialHelperCommand).start();
-      process.getOutputStream().write(serverUrl.getBytes(StandardCharsets.UTF_8));
-      process.getOutputStream().close();
+      try {OutputStream processStdin = process.getOutputStream()) {
+        processStdin.write(serverUrl.getBytes(StandardCharsets.UTF_8));
+      }
 
       try (InputStreamReader processStdoutReader =
           new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)) {
         String output = CharStreams.toString(processStdoutReader);
-        System.err.println("ASDFJKL; " + output);
+        System.err.println("ASDFJKL; " + output); // TODO: DELETEME
 
         // Throws an exception if the credential store does not have credentials for serverUrl.
         if (output.contains("credentials not found in native keychain")) {
