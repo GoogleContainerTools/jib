@@ -16,13 +16,24 @@
 
 package com.google.cloud.tools.jib.cache;
 
+import java.nio.file.Path;
+
 /**
  * Thrown when trying to use a directory as {@link Cache}, but the directory might be used by other
  * applications.
  */
 public class CacheDirectoryNotOwnedException extends Exception {
 
-  CacheDirectoryNotOwnedException() {
+  private final Path cacheDirectory;
+
+  /** Initializes with the cache directory that was unsafe to use. */
+  CacheDirectoryNotOwnedException(Path cacheDirectory) {
     super();
+
+    this.cacheDirectory = cacheDirectory;
+  }
+
+  public Path getCacheDirectory() {
+    return cacheDirectory;
   }
 }

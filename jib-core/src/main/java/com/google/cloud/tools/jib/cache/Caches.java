@@ -56,7 +56,7 @@ public class Caches implements Closeable {
       if (Files.exists(cacheDirectory)) {
         // Checks for the ownership file.
         if (!Files.exists(ownershipFile)) {
-          throw new CacheDirectoryNotOwnedException();
+          throw new CacheDirectoryNotOwnedException(cacheDirectory);
         }
 
       } else {

@@ -60,7 +60,7 @@ public class CachesTest {
       Assert.fail("Expected CacheDirectoryNotOwnedException to be thrown");
 
     } catch (CacheDirectoryNotOwnedException ex) {
-      // pass
+      Assert.assertEquals(cacheDirectory, ex.getCacheDirectory());
     }
   }
 
