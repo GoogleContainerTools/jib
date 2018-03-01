@@ -1,5 +1,6 @@
 [![experimental](http://badges.github.io/stability-badges/dist/experimental.svg)](http://github.com/badges/stability-badges)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/jib-maven-plugin/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/jib-maven-plugin)
+[![Gitter version](https://img.shields.io/gitter/room/gitterHQ/gitter.svg)](https://gitter.im/google/jib)
 
 # Jib
 
@@ -229,7 +230,8 @@ These limitations will be fixed in later releases.
 
 ## Community
 
-* [jib-users forum](https://groups.google.com/forum/#!forum/jib-users)
+* Chat with us on [gitter](https://gitter.im/google/jib)
+* [jib-users mailing list](https://groups.google.com/forum/#!forum/jib-users)
 
 ## Frequently Asked Questions (FAQ)
 
