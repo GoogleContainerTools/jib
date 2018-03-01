@@ -68,6 +68,7 @@ class BlobPuller implements RegistryEndpointProvider<Void> {
     return null;
   }
 
+  @Override
   public BlobHttpContent getContent() {
     return null;
   }
@@ -88,6 +89,7 @@ class BlobPuller implements RegistryEndpointProvider<Void> {
     return HttpMethods.GET;
   }
 
+  @Override
   public String getActionDescription() {
     return "pull BLOB for "
         + registryEndpointProperties.getServerUrl()
