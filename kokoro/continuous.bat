@@ -11,6 +11,6 @@ REM FOR /f "tokens=*" %%i IN ('docker ps -q') DO docker rm -vf %%i
 
 REM TODO: Enable integration tests once docker works (b/73345382).
 cd jib-core && call gradlew.bat clean build publishToMavenLocal --info && ^
-cd ../jib-maven-plugin && call mvnw.cmd clean install cobertura:cobertura -B -U -X
+cd ../jib-maven-plugin && call mvnw.cmd clean install -B -U -X
 
 exit /b %ERRORLEVEL%
