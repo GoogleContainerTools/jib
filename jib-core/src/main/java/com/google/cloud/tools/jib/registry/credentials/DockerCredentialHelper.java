@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.io.CharStreams;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -74,8 +75,9 @@ public class DockerCredentialHelper {
       String[] credentialHelperCommand = {credentialHelper, "get"};
 
       Process process = new ProcessBuilder(credentialHelperCommand).start();
-      process.getOutputStream().write(serverUrl.getBytes(StandardCharsets.UTF_8));
-      process.getOutputStream().close();
+      try (OutputStream processStdin = process.getOutputStream()) {
+        processStdin.write(serverUrl.getBytes(StandardCharsets.UTF_8));
+      }
 
       try (InputStreamReader processStdoutReader =
           new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)) {

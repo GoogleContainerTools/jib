@@ -31,6 +31,9 @@
           <registry>gcr.io</registry>
           <repository>jib-integration-testing/emptyimage</repository>
           <mainClass>com.test.Empty</mainClass>
+          <credHelpers>
+            <credHelper>gcr</credHelper>
+          </credHelpers>
         </configuration>
       </plugin>
     </plugins>

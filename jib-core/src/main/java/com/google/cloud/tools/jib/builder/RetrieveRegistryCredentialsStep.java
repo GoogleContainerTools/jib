@@ -132,6 +132,10 @@ class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
   @Nullable
   Authorization retrieveFromCredentialHelper(String credentialHelperSuffix)
       throws NonexistentDockerCredentialHelperException, IOException {
+    buildConfiguration
+        .getBuildLogger()
+        .info("Checking credentials from docker-credential-" + credentialHelperSuffix);
+
     try {
       Authorization authorization =
           dockerCredentialHelperFactory
@@ -141,6 +145,10 @@ class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
       return authorization;
 
     } catch (NonexistentServerUrlDockerCredentialHelperException ex) {
+      buildConfiguration
+          .getBuildLogger()
+          .info(
+              "No credentials for " + registry + " in docker-credential-" + credentialHelperSuffix);
       return null;
     }
   }
