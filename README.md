@@ -307,11 +307,11 @@ For example, if you are using GCR, the commands would look like (see [Advanced A
 ```shell
 kubectl create secret docker-registry gcr-json-key \
   --docker-server=https://gcr.io \
-  --docker-username=_json_key\
-  --docker-password="$(cat keyfile.json)"\
+  --docker-username=_json_key \
+  --docker-password="$(cat keyfile.json)" \
   --docker-email=any@valid.com
 
-kubectl patch serviceaccount default \ 
+kubectl patch serviceaccount default \
   -p '{"imagePullSecrets":[{"name":"gcr-json-key"}]}'
 ```
 
