@@ -73,6 +73,7 @@ public class DescriptorDigest {
     return hash;
   }
 
+  @Override
   public String toString() {
     return "sha256:" + hash;
   }
