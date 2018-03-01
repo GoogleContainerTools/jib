@@ -22,9 +22,9 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /** Implementation of {@link SourceFilesConfiguration} that uses test resources. */
 class TestSourceFilesConfiguration implements SourceFilesConfiguration {
@@ -36,16 +36,9 @@ class TestSourceFilesConfiguration implements SourceFilesConfiguration {
   private final List<Path> classesSourceFiles;
 
   TestSourceFilesConfiguration() throws URISyntaxException, IOException {
-    dependenciesSourceFiles =
-        Collections.singletonList(
-            Paths.get(
-                Resources.getResource("application/dependencies/dependency-1.0.0.jar").toURI()));
-    resourcesSourceFiles =
-        Files.list(Paths.get(Resources.getResource("application/resources/").toURI()))
-            .collect(Collectors.toList());
-    classesSourceFiles =
-        Files.list(Paths.get(Resources.getResource("application/classes/").toURI()))
-            .collect(Collectors.toList());
+    dependenciesSourceFiles = getFilesList("application/dependencies");
+    resourcesSourceFiles = getFilesList("application/resources");
+    classesSourceFiles = getFilesList("application/classes");
   }
 
   @Override
@@ -76,5 +69,13 @@ class TestSourceFilesConfiguration implements SourceFilesConfiguration {
   @Override
   public String getClassesPathOnImage() {
     return EXTRACTION_PATH + "classes/";
+  }
+
+  /** Lists the files in the {@code resourcePath} resources directory. */
+  private List<Path> getFilesList(String resourcePath) throws URISyntaxException, IOException {
+    try (Stream<Path> fileStream =
+        Files.list(Paths.get(Resources.getResource(resourcePath).toURI()))) {
+      return fileStream.collect(Collectors.toList());
+    }
   }
 }
