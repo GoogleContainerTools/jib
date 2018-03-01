@@ -32,6 +32,7 @@ import java.nio.file.attribute.FileTime;
 import java.security.DigestException;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.stream.Stream;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -41,21 +42,23 @@ import org.junit.rules.TemporaryFolder;
 /** Tests for {@link CacheReader}. */
 public class CacheReaderTest {
 
+  // TODO: Replace with filesystem.DirectoryWalker.
   private static void copyDirectory(Path source, Path destination) throws IOException {
-    Files.walk(source)
-        .forEach(
-            path -> {
-              try {
-                if (path.equals(source)) {
-                  return;
-                }
-                Path newPath = destination.resolve(source.relativize(path));
-                Files.copy(path, newPath);
-
-              } catch (IOException ex) {
-                throw new UncheckedIOException(ex);
+    try (Stream<Path> fileStream = Files.walk(source)) {
+      fileStream.forEach(
+          path -> {
+            try {
+              if (path.equals(source)) {
+                return;
               }
-            });
+              Path newPath = destination.resolve(source.relativize(path));
+              Files.copy(path, newPath);
+
+            } catch (IOException ex) {
+              throw new UncheckedIOException(ex);
+            }
+          });
+    }
   }
 
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -151,17 +154,19 @@ public class CacheReaderTest {
 
     // Walk the files in reverse order so that the subfiles are changed before the parent
     // directories are.
-    Files.walk(testSourceFiles)
-        .sorted(Comparator.reverseOrder())
-        .forEach(
-            path -> {
-              try {
-                Files.setLastModifiedTime(path, olderLastModifiedTime);
+    try (Stream<Path> fileStream = Files.walk(testSourceFiles)) {
+      fileStream
+          .sorted(Comparator.reverseOrder())
+          .forEach(
+              path -> {
+                try {
+                  Files.setLastModifiedTime(path, olderLastModifiedTime);
 
-              } catch (IOException ex) {
-                throw new UncheckedIOException(ex);
-              }
-            });
+                } catch (IOException ex) {
+                  throw new UncheckedIOException(ex);
+                }
+              });
+    }
 
     // Sets the metadata source file to the new temporary folder.
     CachedLayerWithMetadata classesCachedLayer;

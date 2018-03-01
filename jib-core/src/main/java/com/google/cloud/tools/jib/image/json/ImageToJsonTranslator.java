@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * Translates an {@link Image} into a manifest or container configuration JSON BLOB.
@@ -75,7 +76,7 @@ public class ImageToJsonTranslator {
       throws LayerPropertyNotFoundException {
     try {
       // Set up the JSON template.
-      T template = manifestTemplateClass.newInstance();
+      T template = manifestTemplateClass.getDeclaredConstructor().newInstance();
 
       // Adds the container configuration reference.
       DescriptorDigest containerConfigurationDigest =
@@ -92,8 +93,11 @@ public class ImageToJsonTranslator {
       // Serializes into JSON.
       return template;
 
-    } catch (InstantiationException | IllegalAccessException ex) {
-      throw new IllegalArgumentException(manifestTemplateClass + " cannot be instantiated");
+    } catch (InstantiationException
+        | IllegalAccessException
+        | NoSuchMethodException
+        | InvocationTargetException ex) {
+      throw new IllegalArgumentException(manifestTemplateClass + " cannot be instantiated", ex);
     }
   }
 }
