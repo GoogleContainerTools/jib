@@ -1,5 +1,6 @@
 [![experimental](http://badges.github.io/stability-badges/dist/experimental.svg)](http://github.com/badges/stability-badges)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/jib-maven-plugin/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/jib-maven-plugin)
+[![Gitter version](https://img.shields.io/gitter/room/gitterHQ/gitter.svg)](https://gitter.im/google/jib)
 
 # Jib
 
@@ -46,7 +47,7 @@ In your Maven Java project, add the plugin to your `pom.xml`:
 
 Configure the plugin by changing `registry`, `repository`, and `credHelpers` accordingly.
 
-#### Using Google Container Registry (GCR)...
+#### Using [Google Container Registry (GCR)](https://cloud.google.com/container-registry/)...
 
 *Make sure you have the [`docker-credential-gcr` command line tool](https://cloud.google.com/container-registry/docs/advanced-authentication#docker_credential_helper). Jib automatically uses `docker-credential-gcr` for obtaining credentials. See [Authentication Methods](#authentication-methods) for other ways of authenticating.*
 
@@ -59,7 +60,7 @@ For example, to build the image `gcr.io/my-gcp-project/my-app`, the configuratio
 </configuration>
 ```
 
-#### Using Amazon Elastic Container Registry (ECR)...
+#### Using [Amazon Elastic Container Registry (ECR)](https://aws.amazon.com/ecr/)...
 
 *Make sure you have the [`docker-credential-ecr-login` command line tool](https://github.com/awslabs/amazon-ecr-credential-helper). Jib automatically uses `docker-credential-ecr-login` for obtaining credentials. To use a different credential helper, set the [`credHelpers`](#extended-usage) configuration. See [Authentication Methods](#authentication-methods) for other ways of authenticating.*
 
@@ -78,7 +79,7 @@ For example, to build the image `aws_account_id.dkr.ecr.region.amazonaws.com/my-
 
 Build your container image with:
 
-```commandline
+```shell
 mvn compile jib:build
 ```
 
@@ -86,7 +87,7 @@ Subsequent builds are much faster than the initial build.
 
 If you want to clear Jib's build cache and force it to re-pull the base image and re-build the application layers, run:
 
-```commandline
+```shell
 mvn clean compile jib:build
 ```
 
@@ -114,7 +115,7 @@ You can also bind `jib:build` to a Maven lifecycle, such as `package`, by adding
 
 Then, you can build your container image by running:
 
-```commandline
+```shell
 mvn package
 ```
 
@@ -227,6 +228,11 @@ These limitations will be fixed in later releases.
 * Cannot build directly to a Docker daemon.
 * Pushing to Azure Container Registry is not currently supported.
 
+## Community
+
+* Chat with us on [gitter](https://gitter.im/google/jib)
+* [jib-users mailing list](https://groups.google.com/forum/#!forum/jib-users)
+
 ## Frequently Asked Questions (FAQ)
 
 If a question you have is not answered below, please [submit an issue](/../../issues/new).
@@ -238,10 +244,6 @@ See [rules_docker](https://github.com/bazelbuild/rules_docker) for a similar exi
 ### What image format does Jib use?
 
 Jib currently builds into the [Docker V2.2](https://docs.docker.com/registry/spec/manifest-v2-2/) image format or [OCI image format](https://github.com/opencontainers/image-spec). See [Extended Usage](#extended-usage) for the `imageFormat` configuration.
-
-### Can I use other authentication methods besides a Docker credential helper?
-
-Other authentication methods will be added in a later release.
 
 ### Can I define a custom entrypoint?
 
@@ -284,6 +286,36 @@ We currently do not support building to a local Docker daemon. However, this fea
 You can still [`docker pull`](https://docs.docker.com/engine/reference/commandline/pull/) the image built with `jib-maven-plugin` to have it available in your local Docker daemon.
 
 You can also [run a local Docker registry](https://docs.docker.com/registry/deploying/) and point Jib to push to the local registry.
+
+### I am seeing `ImagePullBackoff` on my pods (in [minikube](https://github.com/kubernetes/minikube)).
+
+When you use your private image built with Jib in a [Kubernetes cluster](kubernetes.io), the cluster needs to be configured with credentials to pull the image. This involves 1) creating a [Secret](https://kubernetes.io/docs/concepts/configuration/secret/), and 2) using the Secret as [`imagePullSecrets`](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#add-imagepullsecrets-to-a-service-account).
+
+```shell
+kubectl create secret docker-registry gcr-json-key \
+  --docker-server=<registry> \
+  --docker-username=<username>\
+  --docker-password=<password>\
+  --docker-email=<any valid email address>
+
+kubectl patch serviceaccount default \ 
+  -p '{"imagePullSecrets":[{"name":"gcr-json-key"}]}'
+```
+
+For example, if you are using GCR, the commands would look like (see [Advanced Authentication Methods](https://cloud.google.com/container-registry/docs/advanced-authentication)):
+
+```shell
+kubectl create secret docker-registry gcr-json-key \
+  --docker-server=https://gcr.io \
+  --docker-username=_json_key\
+  --docker-password="$(cat keyfile.json)"\
+  --docker-email=any@valid.com
+
+kubectl patch serviceaccount default \ 
+  -p '{"imagePullSecrets":[{"name":"gcr-json-key"}]}'
+```
+
+See more at [Using Google Container Registry (GCR) with Minikube](https://ryaneschinger.com/blog/using-google-container-registry-gcr-with-minikube/).
 
 ### How do I enable debugging?
 
