@@ -298,6 +298,14 @@
             <version>1.5</version>
           </dependency>
         </dependencies>
+        <executions>
+          <execution>
+            <phase>validate</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
 
       <!-- Checkstyle -->
