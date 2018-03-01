@@ -4,6 +4,7 @@ plugins {
     id 'com.github.sherter.google-java-format' version '0.6'
     id 'maven-publish'
     id 'maven'
+    id 'net.ltgt.errorprone' version '0.0.13'
 }
 
 group 'com.google.cloud.tools'
