@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Stream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 
 /** Builds an {@link UnwrittenLayer} from files. */
@@ -57,28 +58,31 @@ public class LayerBuilder {
 
     for (Path sourceFile : sourceFiles) {
       if (Files.isDirectory(sourceFile)) {
-        Files.walk(sourceFile)
-            .filter(path -> !path.equals(sourceFile))
-            .forEach(
-                path -> {
-                  /*
-                   * Builds the same file path as in the source file for extraction. The iteration
-                   * is necessary because the path needs to be in Unix-style.
-                   */
-                  StringBuilder subExtractionPath = new StringBuilder(extractionPath);
-                  Path sourceFileRelativePath = sourceFile.getParent().relativize(path);
-                  for (Path sourceFileRelativePathComponent : sourceFileRelativePath) {
-                    subExtractionPath.append('/').append(sourceFileRelativePathComponent);
-                  }
-                  filesystemEntries.add(
-                      new TarArchiveEntry(path.toFile(), subExtractionPath.toString()));
-                });
-        continue;
-      }
+        try (Stream<Path> fileStream = Files.walk(sourceFile)) {
+          fileStream
+              .filter(path -> !path.equals(sourceFile))
+              .forEach(
+                  path -> {
+                    /*
+                     * Builds the same file path as in the source file for extraction. The iteration
+                     * is necessary because the path needs to be in Unix-style.
+                     */
+                    StringBuilder subExtractionPath = new StringBuilder(extractionPath);
+                    Path sourceFileRelativePath = sourceFile.getParent().relativize(path);
+                    for (Path sourceFileRelativePathComponent : sourceFileRelativePath) {
+                      subExtractionPath.append('/').append(sourceFileRelativePathComponent);
+                    }
+                    filesystemEntries.add(
+                        new TarArchiveEntry(path.toFile(), subExtractionPath.toString()));
+                  });
+        }
 
-      TarArchiveEntry tarArchiveEntry =
-          new TarArchiveEntry(sourceFile.toFile(), extractionPath + "/" + sourceFile.getFileName());
-      filesystemEntries.add(tarArchiveEntry);
+      } else {
+        TarArchiveEntry tarArchiveEntry =
+            new TarArchiveEntry(
+                sourceFile.toFile(), extractionPath + "/" + sourceFile.getFileName());
+        filesystemEntries.add(tarArchiveEntry);
+      }
     }
 
     if (enableReproducibleBuilds) {
