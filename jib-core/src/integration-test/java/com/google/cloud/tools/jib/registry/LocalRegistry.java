@@ -16,11 +16,11 @@
 
 package com.google.cloud.tools.jib.registry;
 
+import com.google.cloud.tools.jib.Command;
 import com.google.common.io.CharStreams;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.UUID;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.TestRule;
@@ -41,25 +41,26 @@ public class LocalRegistry extends ExternalResource {
   @Override
   protected void before() throws Throwable {
     // Runs the Docker registry.
-    runCommand(
-        "docker",
-        "run",
-        "-d",
-        "-p",
-        port + ":5000",
-        "--restart=always",
-        "--name",
-        containerName,
-        "registry:2");
+    new Command(
+            "docker",
+            "run",
+            "-d",
+            "-p",
+            port + ":5000",
+            "--restart=always",
+            "--name",
+            containerName,
+            "registry:2")
+        .run();
 
     // Pulls 'busybox'.
-    runCommand("docker", "pull", "busybox");
+    new Command("docker", "pull", "busybox").run();
 
     // Tags 'busybox' to push to our local registry.
-    runCommand("docker", "tag", "busybox", "localhost:" + port + "/busybox");
+    new Command("docker", "tag", "busybox", "localhost:" + port + "/busybox").run();
 
     // Pushes 'busybox' to our local registry.
-    runCommand("docker", "push", "localhost:" + port + "/busybox");
+    new Command("docker", "push", "localhost:" + port + "/busybox").run();
   }
 
   /** Stops the local registry. */
@@ -67,20 +68,13 @@ public class LocalRegistry extends ExternalResource {
   protected void after() {
     try {
       // Stops the registry.
-      runCommand("docker", "stop", containerName);
+      new Command("docker", "stop", containerName).run();
 
       // Removes the container.
-      runCommand("docker", "rm", "-v", containerName);
+      new Command("docker", "rm", "-v", containerName).run();
 
     } catch (InterruptedException | IOException ex) {
       throw new RuntimeException("Could not stop local registry fully: " + containerName, ex);
-    }
-  }
-
-  /** Runs a command with naive tokenization by whitespace. */
-  private void runCommand(String... command) throws IOException, InterruptedException {
-    if (new ProcessBuilder(Arrays.asList(command)).start().waitFor() != 0) {
-      throw new IOException("Command '" + String.join(" ", command) + "' failed");
     }
   }
 

@@ -14,21 +14,44 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.builder;
+package com.google.cloud.tools.jib;
 
 import com.google.common.io.CharStreams;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.List;
+import javax.annotation.Nullable;
 
-/** Test utility for running an image with Docker. */
-public class DockerImageRunner {
+/** Test utility to run shell commands for integration tests. */
+public class Command {
 
-  /** Runs a command with naive tokenization by whitespace. */
-  private static String runCommand(String... command) throws IOException, InterruptedException {
-    Process process = new ProcessBuilder(Arrays.asList(command)).start();
+  private final List<String> command;
 
+  /** Instantiate with a command. */
+  public Command(String... command) {
+    this.command = Arrays.asList(command);
+  }
+
+  /** Runs the command. */
+  public String run() throws IOException, InterruptedException {
+    return run(null);
+  }
+
+  /** Runs the command and pipes in {@code stdin}. */
+  public String run(@Nullable byte[] stdin) throws IOException, InterruptedException {
+    Process process = new ProcessBuilder(command).start();
+
+    if (stdin != null) {
+      // Write out stdin.
+      try (OutputStream outputStream = process.getOutputStream()) {
+        outputStream.write(stdin);
+      }
+    }
+
+    // Read in stdout.
     try (InputStreamReader inputStreamReader =
         new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)) {
       String output = CharStreams.toString(inputStreamReader);
@@ -39,17 +62,5 @@ public class DockerImageRunner {
 
       return output;
     }
-  }
-
-  private final String imageReference;
-
-  public DockerImageRunner(String imageReference) {
-    this.imageReference = imageReference;
-  }
-
-  /** Pulls and runs the image and returns the output. */
-  public String run() throws IOException, InterruptedException {
-    runCommand("docker", "pull", imageReference);
-    return runCommand("docker", "run", imageReference);
   }
 }
