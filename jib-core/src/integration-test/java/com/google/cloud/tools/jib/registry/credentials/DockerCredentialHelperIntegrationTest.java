@@ -16,10 +16,10 @@
 
 package com.google.cloud.tools.jib.registry.credentials;
 
+import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.common.io.Resources;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -35,13 +35,8 @@ public class DockerCredentialHelperIntegrationTest {
   public void testRetrieveGCR()
       throws IOException, NonexistentServerUrlDockerCredentialHelperException,
           NonexistentDockerCredentialHelperException, URISyntaxException, InterruptedException {
-    // TODO: Refactor
-    Process process = Runtime.getRuntime().exec("docker-credential-gcr store");
-    try (OutputStream outputStream = process.getOutputStream()) {
-      outputStream.write(
-          Files.readAllBytes(Paths.get(Resources.getResource("credentials.json").toURI())));
-    }
-    process.waitFor();
+    new Command("docker-credential-gcr", "store")
+        .run(Files.readAllBytes(Paths.get(Resources.getResource("credentials.json").toURI())));
 
     DockerCredentialHelper dockerCredentialHelper =
         new DockerCredentialHelperFactory("myregistry").withCredentialHelperSuffix("gcr");
