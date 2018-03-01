@@ -33,6 +33,7 @@ import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.stream.Stream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.hamcrest.CoreMatchers;
@@ -69,9 +70,10 @@ public class LayerBuilderTest {
 
     // Reads the file back.
     try (TarArchiveInputStream tarArchiveInputStream =
-        new TarArchiveInputStream(Files.newInputStream(temporaryFile))) {
+            new TarArchiveInputStream(Files.newInputStream(temporaryFile));
+        Stream<Path> layerDirectoryFiles = Files.walk(layerDirectory)) {
       // Verifies that all the files have been added to the tarball stream.
-      Files.walk(layerDirectory)
+      layerDirectoryFiles
           .filter(path -> !path.equals(layerDirectory))
           .forEach(
               path -> {
