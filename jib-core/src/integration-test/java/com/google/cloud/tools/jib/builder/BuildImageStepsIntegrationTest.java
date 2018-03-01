@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder;
 
+import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
 import org.junit.Assert;
@@ -56,7 +57,8 @@ public class BuildImageStepsIntegrationTest {
     buildImageSteps.run();
     logger.info("Secondary build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
 
-    Assert.assertEquals(
-        "Hello world\n", new DockerImageRunner("localhost:5000/testimage:testtag").run());
+    String imageReference = "localhost:5000/testimage:testtag";
+    new Command("docker", "pull", imageReference).run();
+    Assert.assertEquals("Hello world\n", new Command("docker", "run", imageReference).run());
   }
 }
