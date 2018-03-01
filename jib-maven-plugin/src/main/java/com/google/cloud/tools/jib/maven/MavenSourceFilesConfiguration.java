@@ -25,6 +25,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
+
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.project.MavenProject;
 
@@ -60,22 +62,23 @@ class MavenSourceFilesConfiguration implements SourceFilesConfiguration {
 
     // Gets the classes files in the 'classes' output directory. It finds the files that are classes
     // files by matching them against the .java source files. All other files are deemed resources.
-    Files.list(classesOutputDir)
-        .forEach(
-            classesOutputDirFile -> {
-              Path classesSourceDirFile = replaceClassExtensionWithJava(classesOutputDirFile);
+    try (Stream<Path> classesOutputDirFileStream = Files.list(classesOutputDir)) {
+      classesOutputDirFileStream.forEach(
+          classesOutputDirFile -> {
+            Path classesSourceDirFile = replaceClassExtensionWithJava(classesOutputDirFile);
 
-              // Resolves the file in the source directory.
-              Path correspondingSourceDirFile =
-                  classesSourceDir.resolve(classesOutputDir.relativize(classesSourceDirFile));
-              if (Files.exists(correspondingSourceDirFile)) {
-                // Adds the file as a classes file since it is in the source directory.
-                classesFiles.add(classesOutputDirFile);
-              } else {
-                // Adds the file as a resource since it is not in the source directory.
-                resourcesFiles.add(classesOutputDirFile);
-              }
-            });
+            // Resolves the file in the source directory.
+            Path correspondingSourceDirFile =
+                classesSourceDir.resolve(classesOutputDir.relativize(classesSourceDirFile));
+            if (Files.exists(correspondingSourceDirFile)) {
+              // Adds the file as a classes file since it is in the source directory.
+              classesFiles.add(classesOutputDirFile);
+            } else {
+              // Adds the file as a resource since it is not in the source directory.
+              resourcesFiles.add(classesOutputDirFile);
+            }
+          });
+    }
 
     // Sort all files by path for consistent ordering.
     Collections.sort(dependenciesFiles);
