@@ -16,10 +16,10 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.builder.DockerImageRunner;
 import java.io.IOException;
 import java.nio.file.Path;
 
+import com.google.cloud.tools.jib.Command;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
 import org.junit.Assert;
@@ -63,6 +63,7 @@ public class BuildImageMojoIT {
 
     Assert.assertTrue(timeOne > timeTwo);
 
-    return new DockerImageRunner(imageReference).run();
+    new Command("docker", "pull", imageReference).run();
+    return new Command("docker", "run", imageReference).run();
   }
 }
