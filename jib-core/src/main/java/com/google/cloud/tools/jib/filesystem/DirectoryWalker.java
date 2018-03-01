@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.stream.Stream;
 
 /** Recursively applies a function to each file in a directory. */
 public class DirectoryWalker {
@@ -39,17 +40,16 @@ public class DirectoryWalker {
    * #rootDir} itself is visited as well.
    */
   public void walk(PathConsumer pathConsumer) throws IOException {
-    try {
-      Files.walk(rootDir)
-          .forEach(
-              path -> {
-                try {
-                  pathConsumer.accept(path);
+    try (Stream<Path> fileStream = Files.walk(rootDir)) {
+      fileStream.forEach(
+          path -> {
+            try {
+              pathConsumer.accept(path);
 
-                } catch (IOException ex) {
-                  throw new UncheckedIOException(ex);
-                }
-              });
+            } catch (IOException ex) {
+              throw new UncheckedIOException(ex);
+            }
+          });
 
     } catch (UncheckedIOException ex) {
       throw ex.getCause();
