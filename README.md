@@ -309,6 +309,8 @@ kubectl patch serviceaccount default \
   -p '{"imagePullSecrets":[{"name":"gcr-json-key"}]}'
 ```
 
+See more at [Using Google Container Registry (GCR) with Minikube](https://ryaneschinger.com/blog/using-google-container-registry-gcr-with-minikube/).
+
 ### How do I enable debugging?
 
 *TODO: Provide solution.*
