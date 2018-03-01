@@ -27,6 +27,7 @@ import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 /** Reads image content from the cache. */
 public class CacheReader {
@@ -39,9 +40,9 @@ public class CacheReader {
     FileTime lastModifiedTime = Files.getLastModifiedTime(path);
 
     if (Files.isReadable(path)) {
-      try {
+      try (Stream<Path> fileStream = Files.walk(path)) {
         Optional<FileTime> maxLastModifiedTime =
-            Files.walk(path)
+            fileStream
                 .map(
                     subFilePath -> {
                       try {
