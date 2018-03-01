@@ -16,15 +16,13 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.cloud.tools.jib.Command;
 import java.io.IOException;
 import java.nio.file.Path;
-
-import com.google.cloud.tools.jib.Command;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
 import org.junit.Assert;
 import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
 
 /** Integration tests for {@link BuildImageMojo}. */
@@ -32,20 +30,31 @@ public class BuildImageMojoIT {
 
   @ClassRule public static final TestPlugin testPlugin = new TestPlugin();
 
-  @ClassRule public static final TestProject simpleTestProject = new TestProject(testPlugin, "simple");
-  @ClassRule public static final TestProject emptyTestProject = new TestProject(testPlugin, "empty");
+  @ClassRule
+  public static final TestProject simpleTestProject = new TestProject(testPlugin, "simple");
+
+  @ClassRule
+  public static final TestProject emptyTestProject = new TestProject(testPlugin, "empty");
 
   @Test
   public void testExecute_simple() throws VerificationException, IOException, InterruptedException {
-    Assert.assertEquals("Hello, world\n", buildAndRun(simpleTestProject.getProjectRoot(), "gcr.io/jib-integration-testing/jibtestimage:built-with-jib"));
+    Assert.assertEquals(
+        "Hello, world\n",
+        buildAndRun(
+            simpleTestProject.getProjectRoot(),
+            "gcr.io/jib-integration-testing/jibtestimage:built-with-jib"));
   }
 
   @Test
   public void testExecute_empty() throws InterruptedException, IOException, VerificationException {
-    Assert.assertEquals("", buildAndRun(emptyTestProject.getProjectRoot(), "gcr.io/jib-integration-testing/emptyimage"));
+    Assert.assertEquals(
+        "",
+        buildAndRun(
+            emptyTestProject.getProjectRoot(), "gcr.io/jib-integration-testing/emptyimage"));
   }
 
-  private String buildAndRun(Path projectRoot, String imageReference) throws VerificationException, IOException, InterruptedException {
+  private String buildAndRun(Path projectRoot, String imageReference)
+      throws VerificationException, IOException, InterruptedException {
     Verifier verifier = new Verifier(projectRoot.toString());
     verifier.setAutoclean(false);
     verifier.executeGoal("package");
