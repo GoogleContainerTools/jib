@@ -28,14 +28,16 @@ import java.util.logging.Logger;
 /**
  * Obtains an OS-specific user cache directory based on the XDG Base Directory Specification.
  *
+ * <p>Specifically, from the specification:
+ *
+ * <ul>
+ *   <li>This directory is defined by the environment variable {@code $XDG_CACHE_HOME}.
+ *   <li>If {@code $XDG_CACHE_HOME} is either not set or empty, a default equal to {@code
+ *       $HOME/.cache} should be used.
+ * </ul>
+ *
  * @see <a
  *     href="https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html">https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html</a>
- *     <p>Specifically, from the specification:
- *     <ul>
- *       <li>This directory is defined by the environment variable {@code $XDG_CACHE_HOME}.
- *       <li>If {@code $XDG_CACHE_HOME} is either not set or empty, a default equal to {@code
- *           $HOME/.cache} should be used.
- *     </ul>
  */
 public class UserCacheHome {
 
