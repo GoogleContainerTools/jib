@@ -51,8 +51,11 @@ public class UserCacheHome {
    * Returns {@code $XDG_CACHE_HOME}, if available, or resolves the OS-specific user cache home
    * based.
    *
-   * <p>For Linus, this is {@code $HOME/.cache/}. For Windows, this is {@code %LOCALAPPDATA%}. For
-   * macOS, this is {@code $HOME/Library/Application Support/}.
+   * <p>For Linus, this is {@code $HOME/.cache/}.
+   *
+   * <p>For Windows, this is {@code %LOCALAPPDATA%}.
+   *
+   * <p>For macOS, this is {@code $HOME/Library/Application Support/}.
    */
   @VisibleForTesting
   static Path getCacheHome(Properties properties, Map<String, String> environment) {
