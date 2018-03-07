@@ -46,7 +46,6 @@ import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 import org.apache.http.conn.HttpHostConnectException;
 import org.apache.maven.execution.MavenSession;
-import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -55,7 +54,6 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.settings.Server;
-import org.codehaus.plexus.util.xml.Xpp3Dom;
 
 /** Builds a container image. */
 @Mojo(name = "build", requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM)
@@ -117,22 +115,19 @@ public class BuildImageMojo extends AbstractMojo {
   public void execute() throws MojoExecutionException, MojoFailureException {
     validateParameters();
 
-    // Extracts main class from 'maven-jar-plugin' configuration if available.
-    if (mainClass == null) {
-      Plugin mavenJarPlugin = project.getPlugin("org.apache.maven.plugins:maven-jar-plugin");
-      if (mavenJarPlugin != null) {
-        mainClass = getMainClassFromMavenJarPlugin(mavenJarPlugin);
-        if (mainClass == null) {
-          throwMojoExecutionExceptionWithHelpMessage(
-              new MojoFailureException("Could not find main class specified in maven-jar-plugin"),
-              "add a `mainClass` configuration to jib-maven-plugin");
-        }
+    ProjectProperties projectProperties = new ProjectProperties(project, getLog());
 
-        getLog().info("Using main class from maven-jar-plugin: " + mainClass);
+    if (mainClass == null) {
+      mainClass = projectProperties.getMainClassFromMavenJarPlugin();
+      if (mainClass == null) {
+        throwMojoExecutionExceptionWithHelpMessage(
+            new MojoFailureException("Could not find main class specified in maven-jar-plugin"),
+            "add a `mainClass` configuration to jib-maven-plugin");
       }
     }
 
-    SourceFilesConfiguration sourceFilesConfiguration = getSourceFilesConfiguration();
+    SourceFilesConfiguration sourceFilesConfiguration =
+        projectProperties.getSourceFilesConfiguration();
 
     // Parses 'from' into image reference.
     ImageReference baseImage = getBaseImageReference();
@@ -273,66 +268,6 @@ public class BuildImageMojo extends AbstractMojo {
         throw new MojoFailureException("Invalid configuration parameters");
       }
     }
-  }
-
-  /** @return the {@link SourceFilesConfiguration} based on the current project */
-  private SourceFilesConfiguration getSourceFilesConfiguration() throws MojoExecutionException {
-    try {
-      SourceFilesConfiguration sourceFilesConfiguration =
-          new MavenSourceFilesConfiguration(project);
-
-      // Logs the different source files used.
-      getLog().info("");
-      getLog().info("Containerizing application with the following files:");
-      getLog().info("");
-
-      getLog().info("\tDependencies:");
-      getLog().info("");
-      sourceFilesConfiguration
-          .getDependenciesFiles()
-          .forEach(dependencyFile -> getLog().info("\t\t" + dependencyFile));
-
-      getLog().info("\tResources:");
-      getLog().info("");
-      sourceFilesConfiguration
-          .getResourcesFiles()
-          .forEach(resourceFile -> getLog().info("\t\t" + resourceFile));
-
-      getLog().info("\tClasses:");
-      getLog().info("");
-      sourceFilesConfiguration
-          .getClassesFiles()
-          .forEach(classesFile -> getLog().info("\t\t" + classesFile));
-
-      getLog().info("");
-
-      return sourceFilesConfiguration;
-
-    } catch (IOException ex) {
-      throw new MojoExecutionException("Obtaining project build output files failed", ex);
-    }
-  }
-
-  /** Gets the {@code mainClass} configuration from {@code maven-jar-plugin}. */
-  @Nullable
-  private String getMainClassFromMavenJarPlugin(Plugin mavenJarPlugin) {
-    Xpp3Dom jarConfiguration = (Xpp3Dom) mavenJarPlugin.getConfiguration();
-    if (jarConfiguration == null) {
-      return null;
-    }
-    Xpp3Dom archiveObject = jarConfiguration.getChild("archive");
-    if (archiveObject == null) {
-      return null;
-    }
-    Xpp3Dom manifestObject = archiveObject.getChild("manifest");
-    if (manifestObject == null) {
-      return null;
-    }
-    Xpp3Dom mainClassObject = manifestObject.getChild("mainClass");
-    if (mainClassObject == null) {
-      return null;
-    }
-    return mainClassObject.getValue();
   }
 
   /** @return the {@link ImageReference} parsed from {@link #from}. */
