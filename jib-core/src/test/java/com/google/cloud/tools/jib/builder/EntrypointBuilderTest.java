@@ -16,18 +16,17 @@
 
 package com.google.cloud.tools.jib.builder;
 
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-/** Tests for {@link BuildImageSteps}. More comprehensive tests are in the integration tests. */
-public class BuildImageStepsTest {
+/** Tests for {@link EntrypointBuilder}. */
+public class EntrypointBuilderTest {
 
   @Test
-  public void testGetEntrypoint() {
+  public void testMakeEntrypoint() {
     String expectedDependenciesPath = "/app/libs/";
     String expectedResourcesPath = "/app/resources/";
     String expectedClassesPath = "/app/classes/";
@@ -36,7 +35,6 @@ public class BuildImageStepsTest {
 
     SourceFilesConfiguration mockSourceFilesConfiguration =
         Mockito.mock(SourceFilesConfiguration.class);
-    BuildConfiguration mockBuildConfiguration = Mockito.mock(BuildConfiguration.class);
 
     Mockito.when(mockSourceFilesConfiguration.getDependenciesPathOnImage())
         .thenReturn(expectedDependenciesPath);
@@ -44,9 +42,6 @@ public class BuildImageStepsTest {
         .thenReturn(expectedResourcesPath);
     Mockito.when(mockSourceFilesConfiguration.getClassesPathOnImage())
         .thenReturn(expectedClassesPath);
-
-    Mockito.when(mockBuildConfiguration.getJvmFlags()).thenReturn(expectedJvmFlags);
-    Mockito.when(mockBuildConfiguration.getMainClass()).thenReturn(expectedMainClass);
 
     Assert.assertEquals(
         Arrays.asList(
@@ -56,8 +51,7 @@ public class BuildImageStepsTest {
             "-cp",
             "/app/libs/*:/app/resources/:/app/classes/",
             "SomeMainClass"),
-        new BuildImageSteps(
-                mockBuildConfiguration, mockSourceFilesConfiguration, Mockito.mock(Path.class))
-            .getEntrypoint());
+        EntrypointBuilder.makeEntrypoint(
+            mockSourceFilesConfiguration, expectedJvmFlags, expectedMainClass));
   }
 }

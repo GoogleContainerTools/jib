@@ -23,14 +23,12 @@ import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.Image;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -60,6 +58,12 @@ public class BuildImageSteps {
   public void run()
       throws InterruptedException, ExecutionException, CacheMetadataCorruptedException,
           IOException {
+    List<String> entrypoint =
+        EntrypointBuilder.makeEntrypoint(
+            sourceFilesConfiguration,
+            buildConfiguration.getJvmFlags(),
+            buildConfiguration.getMainClass());
+
     try (Timer timer = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       try (Timer timer2 = timer.subTimer("Initializing cache")) {
         ListeningExecutorService listeningExecutorService =
@@ -145,7 +149,7 @@ public class BuildImageSteps {
                               authenticatePushFuture,
                               pullBaseImageLayerFuturesFuture,
                               buildAndCacheApplicationLayerFutures,
-                              getEntrypoint()),
+                              entrypoint),
                           listeningExecutorService);
 
           timer2.lap("Setting up application layer push");
@@ -183,29 +187,6 @@ public class BuildImageSteps {
     }
 
     buildConfiguration.getBuildLogger().info("");
-    buildConfiguration.getBuildLogger().info("Container entrypoint set to " + getEntrypoint());
-  }
-
-  /**
-   * Gets the container entrypoint.
-   *
-   * <p>The entrypoint is {@code java -cp [classpaths] [main class]}.
-   */
-  @VisibleForTesting
-  List<String> getEntrypoint() {
-    List<String> classPaths = new ArrayList<>();
-    classPaths.add(sourceFilesConfiguration.getDependenciesPathOnImage() + "*");
-    classPaths.add(sourceFilesConfiguration.getResourcesPathOnImage());
-    classPaths.add(sourceFilesConfiguration.getClassesPathOnImage());
-
-    String classPathsString = String.join(":", classPaths);
-
-    List<String> entrypoint = new ArrayList<>(4 + buildConfiguration.getJvmFlags().size());
-    entrypoint.add("java");
-    entrypoint.addAll(buildConfiguration.getJvmFlags());
-    entrypoint.add("-cp");
-    entrypoint.add(classPathsString);
-    entrypoint.add(buildConfiguration.getMainClass());
-    return entrypoint;
+    buildConfiguration.getBuildLogger().info("Container entrypoint set to " + entrypoint);
   }
 }
