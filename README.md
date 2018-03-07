@@ -294,11 +294,11 @@ When you use your private image built with Jib in a [Kubernetes cluster](kuberne
 ```shell
 kubectl create secret docker-registry gcr-json-key \
   --docker-server=<registry> \
-  --docker-username=<username>\
-  --docker-password=<password>\
+  --docker-username=<username> \
+  --docker-password=<password> \
   --docker-email=<any valid email address>
 
-kubectl patch serviceaccount default \ 
+kubectl patch serviceaccount default \
   -p '{"imagePullSecrets":[{"name":"gcr-json-key"}]}'
 ```
 
