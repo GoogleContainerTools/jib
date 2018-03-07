@@ -32,7 +32,7 @@ import java.nio.file.Paths;
  */
 public class Caches implements Closeable {
 
-  /** Initializes a {@link Caches} with directory paths. */
+  /** Initializes a {@link Caches} with directory paths. Use {@link #initializer()} to construct. */
   public static class Initializer {
 
     /** The default directory for caching the base image layers, in {@code $HOME/.jib-cache/}. */
@@ -96,6 +96,7 @@ public class Caches implements Closeable {
     }
   }
 
+  /** @return a new {@link Initializer} to initialize the caches. */
   public static Initializer initializer() {
     return new Initializer();
   }
@@ -103,6 +104,7 @@ public class Caches implements Closeable {
   private final Cache baseCache;
   private final Cache applicationCache;
 
+  /** Instantiate with {@link Initializer#init}. */
   private Caches(Path baseCacheDirectory, Path applicationCacheDirectory)
       throws CacheMetadataCorruptedException, NotDirectoryException {
     baseCache = Cache.init(baseCacheDirectory);
