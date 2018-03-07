@@ -42,7 +42,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 
-/** Exports to a Docker context. */
+/** Exports to a Docker context. This is an <b>incubating</b> feature. */
 @Mojo(name = "dockercontext", requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM)
 public class DockerContextMojo extends AbstractMojo {
 
