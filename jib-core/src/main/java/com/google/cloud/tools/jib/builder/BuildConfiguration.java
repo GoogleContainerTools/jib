@@ -33,12 +33,12 @@ public class BuildConfiguration {
   public static class Builder {
 
     // All the parameters below are set to their default values.
-    private ImageReference baseImageReference;
-    private ImageReference targetImageReference;
+    @Nullable private ImageReference baseImageReference;
+    @Nullable private ImageReference targetImageReference;
     private List<String> credentialHelperNames = new ArrayList<>();
     private RegistryCredentials knownRegistryCredentials = RegistryCredentials.none();
     private boolean enableReproducibleBuilds = true;
-    private String mainClass;
+    @Nullable private String mainClass;
     private List<String> jvmFlags = new ArrayList<>();
     private Map<String, String> environmentMap = new HashMap<>();
     private Class<? extends BuildableManifestTemplate> targetFormat = V22ManifestTemplate.class;
@@ -119,6 +119,9 @@ public class BuildConfiguration {
 
       switch (errorMessages.size()) {
         case 0: // No errors
+          if (baseImageReference == null || targetImageReference == null || mainClass == null) {
+            throw new IllegalStateException("Required fields should not be null");
+          }
           return new BuildConfiguration(
               buildLogger,
               baseImageReference,

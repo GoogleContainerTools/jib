@@ -81,7 +81,9 @@ test {
 
 // Adds NullAway errorprone checks.
 tasks.withType(JavaCompile) {
-    options.compilerArgs += ["-Xep:NullAway:ERROR", "-XepOpt:NullAway:AnnotatedPackages=com.google.cloud.tools"]
+    if (!name.toLowerCase().contains("test")) {
+        options.compilerArgs += ["-Xep:NullAway:ERROR", "-XepOpt:NullAway:AnnotatedPackages=com.google.cloud.tools"]
+    }
 }
 
 tasks.withType(Test) {

@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.cache;
 
 import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
+import javax.annotation.Nullable;
 
 /**
  * Manages both the base image layers cache and the application image layers cache.
@@ -33,8 +34,8 @@ public class Caches {
   /** Initializes a {@link Caches} with directory paths. */
   public static class Initializer {
 
-    private Path baseCacheDirectory;
-    private Path applicationCacheDirectory;
+    @Nullable private Path baseCacheDirectory;
+    @Nullable private Path applicationCacheDirectory;
 
     private Initializer() {}
 
