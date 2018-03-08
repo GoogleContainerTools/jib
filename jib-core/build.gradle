@@ -4,6 +4,7 @@ plugins {
     id 'com.github.sherter.google-java-format' version '0.6'
     id 'maven-publish'
     id 'maven'
+    id 'net.ltgt.apt' version '0.13'
     id 'net.ltgt.errorprone' version '0.0.13'
 }
 
@@ -40,6 +41,10 @@ dependencies {
     compile 'org.slf4j:slf4j-api:1.7.25'
     testCompile 'junit:junit:4.12'
     testCompile 'org.mockito:mockito-core:2.12.0'
+
+    // NullAway errorprone plugin
+    apt 'com.uber.nullaway:nullaway:0.3.5'
+    errorprone 'com.google.errorprone:error_prone_core:2.2.0'
 }
 
 jar {
@@ -72,6 +77,11 @@ test {
         showStandardStreams = true
         exceptionFormat = 'full'
     }
+}
+
+// Adds NullAway errorprone checks.
+tasks.withType(JavaCompile) {
+    options.compilerArgs += ["-Xep:NullAway:ERROR", "-XepOpt:NullAway:AnnotatedPackages=com.google.cloud.tools"]
 }
 
 tasks.withType(Test) {
