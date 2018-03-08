@@ -292,14 +292,14 @@ You can also [run a local Docker registry](https://docs.docker.com/registry/depl
 When you use your private image built with Jib in a [Kubernetes cluster](kubernetes.io), the cluster needs to be configured with credentials to pull the image. This involves 1) creating a [Secret](https://kubernetes.io/docs/concepts/configuration/secret/), and 2) using the Secret as [`imagePullSecrets`](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#add-imagepullsecrets-to-a-service-account).
 
 ```shell
-kubectl create secret docker-registry gcr-json-key \
+kubectl create secret docker-registry registry-json-key \
   --docker-server=<registry> \
   --docker-username=<username> \
   --docker-password=<password> \
   --docker-email=<any valid email address>
 
 kubectl patch serviceaccount default \
-  -p '{"imagePullSecrets":[{"name":"gcr-json-key"}]}'
+  -p '{"imagePullSecrets":[{"name":"registry-json-key"}]}'
 ```
 
 For example, if you are using GCR, the commands would look like (see [Advanced Authentication Methods](https://cloud.google.com/container-registry/docs/advanced-authentication)):
