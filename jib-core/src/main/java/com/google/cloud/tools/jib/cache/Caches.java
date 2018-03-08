@@ -32,7 +32,7 @@ import java.nio.file.Paths;
  */
 public class Caches implements Closeable {
 
-  /** Initializes a {@link Caches} with directory paths. Use {@link #initializer()} to construct. */
+  /** Initializes a {@link Caches} with directory paths. Use {@link #initializer} to construct. */
   public static class Initializer {
 
     /** The default directory for caching the base image layers, in {@code $HOME/.jib-cache/}. */
@@ -69,7 +69,9 @@ public class Caches implements Closeable {
     private Path baseCacheDirectory = DEFAULT_BASE_CACHE_DIRECTORY;
     private Path applicationCacheDirectory;
 
-    private Initializer() {}
+    private Initializer(Path applicationCacheDirectory) {
+      this.applicationCacheDirectory = applicationCacheDirectory;
+    }
 
     public Initializer setBaseCacheDirectory(Path baseCacheDirectory) {
       this.baseCacheDirectory = baseCacheDirectory;
@@ -83,11 +85,6 @@ public class Caches implements Closeable {
 
     public Caches init()
         throws CacheMetadataCorruptedException, IOException, CacheDirectoryNotOwnedException {
-      if (applicationCacheDirectory == null) {
-        throw new IllegalStateException(
-            "Must initialize cache with an application image layer cache directory");
-      }
-
       if (DEFAULT_BASE_CACHE_DIRECTORY.equals(baseCacheDirectory)) {
         ensureOwnership(DEFAULT_BASE_CACHE_DIRECTORY);
       }
@@ -96,9 +93,13 @@ public class Caches implements Closeable {
     }
   }
 
-  /** @return a new {@link Initializer} to initialize the caches. */
-  public static Initializer initializer() {
-    return new Initializer();
+  /**
+   * @param applicationCacheDirectory Cache for the application image layers - should be local to
+   *     the application project
+   * @return a new {@link Initializer} to initialize the caches.
+   */
+  public static Initializer initializer(Path applicationCacheDirectory) {
+    return new Initializer(applicationCacheDirectory);
   }
 
   private final Cache baseCache;
