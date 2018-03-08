@@ -4,6 +4,7 @@ plugins {
     id 'com.github.sherter.google-java-format' version '0.6'
     id 'com.gradle.plugin-publish' version '0.9.10'
     id 'maven-publish'
+    id 'net.ltgt.errorprone' version '0.0.13'
 }
 
 group 'com.google.cloud.tools'
@@ -17,6 +18,10 @@ repositories {
 }
 
 sourceSets {
+    main.java.srcDir file('../jib-core/src/main/java')
+    test.java.srcDir file('../jib-core/src/test/java')
+    test.resources.srcDir file('../jib-core/src/test/resources')
+
     integrationTest {
         java {
             compileClasspath += main.output + test.output
@@ -33,6 +38,12 @@ configurations {
 }
 
 dependencies {
+    // These are copied over from jib-core and are necessary for the jib-core sourcesets.
+    compile 'com.google.http-client:google-http-client:1.23.0'
+    compile 'org.apache.commons:commons-compress:1.15'
+    compile 'com.google.guava:guava:23.5-jre'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.9.2'
+    compile 'org.slf4j:slf4j-api:1.7.25'
     testCompile 'junit:junit:4.12'
     testCompile 'org.mockito:mockito-core:2.12.0'
 }
