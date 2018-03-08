@@ -98,7 +98,7 @@ public class Caches implements Closeable {
    *     the application project
    * @return a new {@link Initializer} to initialize the caches.
    */
-  public static Initializer initializer(Path applicationCacheDirectory) {
+  public static Initializer newInitializer(Path applicationCacheDirectory) {
     return new Initializer(applicationCacheDirectory);
   }
 

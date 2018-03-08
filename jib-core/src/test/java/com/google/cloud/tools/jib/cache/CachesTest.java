@@ -36,7 +36,7 @@ public class CachesTest {
     Path tempApplicationCacheDirectory = temporaryFolder.newFolder().toPath();
 
     try (Caches caches =
-        Caches.initializer(tempApplicationCacheDirectory)
+        Caches.newInitializer(tempApplicationCacheDirectory)
             .setBaseCacheDirectory(tempBaseCacheDirectory)
             .init()) {
       Assert.assertEquals(tempBaseCacheDirectory, caches.getBaseCache().getCacheDirectory());
