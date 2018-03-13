@@ -26,8 +26,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
-
-import org.apache.maven.Maven;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.project.MavenProject;
 
