@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Set;
 import org.gradle.api.Project;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.internal.file.AbstractFileCollection;
 import org.gradle.api.plugins.Convention;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.SourceSet;
@@ -45,6 +46,26 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class GradleSourceFilesConfigurationTest {
 
+  /** Implementation of {@link FileCollection} that just holds a set of {@link File}s. */
+  private static class TestFileCollection extends AbstractFileCollection {
+
+    private final Set<File> files;
+
+    private TestFileCollection(Set<File> files) {
+      this.files = files;
+    }
+
+    @Override
+    public String getDisplayName() {
+      return null;
+    }
+
+    @Override
+    public Set<File> getFiles() {
+      return files;
+    }
+  }
+
   private GradleSourceFilesConfiguration testGradleSourceFilesConfiguration;
 
   @Before
@@ -55,23 +76,23 @@ public class GradleSourceFilesConfigurationTest {
     SourceSetContainer mockSourceSetContainer = Mockito.mock(SourceSetContainer.class);
     SourceSet mockMainSourceSet = Mockito.mock(SourceSet.class);
     SourceSetOutput mockMainSourceSetOutput = Mockito.mock(SourceSetOutput.class);
-    FileCollection mockClassesFileCollection = Mockito.mock(FileCollection.class);
-    FileCollection mockRuntimeFileCollection = Mockito.mock(FileCollection.class);
-    FileCollection mockDependenciesAndResourcesFileCollection = Mockito.mock(FileCollection.class);
 
-    Set<File> classesOutputDirs =
+    Set<File> classesFiles =
         ImmutableSet.of(Paths.get(Resources.getResource("application/classes").toURI()).toFile());
+    FileCollection classesFileCollection = new TestFileCollection(classesFiles);
     File resourcesOutputDir =
         Paths.get(Resources.getResource("application/resources").toURI()).toFile();
-    Set<File> dependenciesAndResourcesFiles = new HashSet<>();
-    dependenciesAndResourcesFiles.add(resourcesOutputDir);
-    dependenciesAndResourcesFiles.add(
+
+    Set<File> allFiles = new HashSet<>(classesFiles);
+    allFiles.add(resourcesOutputDir);
+    allFiles.add(
         Paths.get(Resources.getResource("application/dependencies/libraryB.jar").toURI()).toFile());
-    dependenciesAndResourcesFiles.add(
+    allFiles.add(
         Paths.get(Resources.getResource("application/dependencies/libraryA.jar").toURI()).toFile());
-    dependenciesAndResourcesFiles.add(
+    allFiles.add(
         Paths.get(Resources.getResource("application/dependencies/dependency-1.0.0.jar").toURI())
             .toFile());
+    FileCollection runtimeFileCollection = new TestFileCollection(allFiles);
 
     Mockito.when(mockProject.getConvention()).thenReturn(mockConvention);
     Mockito.when(mockConvention.getPlugin(JavaPluginConvention.class))
@@ -79,14 +100,9 @@ public class GradleSourceFilesConfigurationTest {
     Mockito.when(mockJavaPluginConvention.getSourceSets()).thenReturn(mockSourceSetContainer);
     Mockito.when(mockSourceSetContainer.getByName("main")).thenReturn(mockMainSourceSet);
     Mockito.when(mockMainSourceSet.getOutput()).thenReturn(mockMainSourceSetOutput);
-    Mockito.when(mockMainSourceSetOutput.getClassesDirs()).thenReturn(mockClassesFileCollection);
-    Mockito.when(mockClassesFileCollection.iterator()).thenReturn(classesOutputDirs.iterator());
+    Mockito.when(mockMainSourceSetOutput.getClassesDirs()).thenReturn(classesFileCollection);
     Mockito.when(mockMainSourceSetOutput.getResourcesDir()).thenReturn(resourcesOutputDir);
-    Mockito.when(mockMainSourceSet.getRuntimeClasspath()).thenReturn(mockRuntimeFileCollection);
-    Mockito.when(mockRuntimeFileCollection.minus(mockClassesFileCollection))
-        .thenReturn(mockDependenciesAndResourcesFileCollection);
-    Mockito.when(mockDependenciesAndResourcesFileCollection.iterator())
-        .thenReturn(dependenciesAndResourcesFiles.iterator());
+    Mockito.when(mockMainSourceSet.getRuntimeClasspath()).thenReturn(runtimeFileCollection);
 
     testGradleSourceFilesConfiguration = GradleSourceFilesConfiguration.getForProject(mockProject);
   }
