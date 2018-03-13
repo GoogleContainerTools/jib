@@ -16,15 +16,12 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
+import java.util.ArrayList;
 import org.gradle.api.Nullable;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.logging.Logger;
 import org.gradle.jvm.tasks.Jar;
-
-import java.util.ArrayList;
-import java.util.Set;
 
 /** Obtains information about a Gradle {@link Project}. */
 class ProjectProperties {
@@ -44,11 +41,10 @@ class ProjectProperties {
     if (jarTasks.size() != 1) {
       return null;
     }
-    return (String) ((Jar)jarTasks.get(0)).getManifest().getAttributes().get("Main-Class");
+    return (String) ((Jar) jarTasks.get(0)).getManifest().getAttributes().get("Main-Class");
   }
 
   Logger getLogger() {
     return logger;
   }
 }
-
