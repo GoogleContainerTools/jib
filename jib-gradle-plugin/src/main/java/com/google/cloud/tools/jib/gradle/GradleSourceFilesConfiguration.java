@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -26,12 +25,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
-
 import org.gradle.api.Project;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.SourceSet;
-import org.gradle.api.tasks.SourceSetOutput;
 
 /** {@link SourceFilesConfiguration} implementation based on inputs from a {@link Project}. */
 class GradleSourceFilesConfiguration implements SourceFilesConfiguration {
