@@ -3,7 +3,7 @@ plugins {
     id 'checkstyle'
     id 'com.github.sherter.google-java-format' version '0.6'
     id 'com.gradle.plugin-publish' version '0.9.10'
-    id 'maven-publish'
+    id 'maven'
     id 'net.ltgt.errorprone' version '0.0.13'
 }
 
@@ -46,6 +46,8 @@ dependencies {
     compile 'org.slf4j:slf4j-api:1.7.25'
     testCompile 'junit:junit:4.12'
     testCompile 'org.mockito:mockito-core:2.12.0'
+
+    compile gradleApi()
 }
 
 task wrapper(type: Wrapper) {
