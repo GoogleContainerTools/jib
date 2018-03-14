@@ -25,13 +25,21 @@ import java.util.List;
  */
 public interface SourceFilesConfiguration {
 
-  /** @return the source files for the dependencies layer. */
+  /**
+   * @return the source files for the dependencies layer. These files should be in a deterministic
+   *     order.
+   */
   List<Path> getDependenciesFiles();
 
-  /** @return the source files for the resources layer. */
+  /**
+   * @return the source files for the resources layer. These files should be in a deterministic
+   *     order.
+   */
   List<Path> getResourcesFiles();
 
-  /** @return the source files for the classes layer. */
+  /**
+   * @return the source files for the classes layer. These files should be in a deterministic order.
+   */
   List<Path> getClassesFiles();
 
   /**

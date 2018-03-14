@@ -32,9 +32,15 @@ import org.apache.maven.project.MavenProject;
 /** {@link SourceFilesConfiguration} implementation based on inputs from a {@link MavenProject}. */
 class MavenSourceFilesConfiguration implements SourceFilesConfiguration {
 
-  private static String DEPENDENCIES_PATH_ON_IMAGE = "/app/libs/";
-  private static String RESOURCES_PATH_ON_IMAGE = "/app/resources/";
-  private static String CLASSES_PATH_ON_IMAGE = "/app/classes/";
+  // TODO: This should be shared with GradleSourceFilesConfiguration.
+  private static final String DEPENDENCIES_PATH_ON_IMAGE = "/app/libs/";
+  private static final String RESOURCES_PATH_ON_IMAGE = "/app/resources/";
+  private static final String CLASSES_PATH_ON_IMAGE = "/app/classes/";
+
+  /** Resolves the source files configuration for a Maven {@link MavenProject}. */
+  static MavenSourceFilesConfiguration getForProject(MavenProject project) throws IOException {
+    return new MavenSourceFilesConfiguration(project);
+  }
 
   /** If the {@code path} has extension {@code .class}, replace the extension with {@code .java}. */
   private static Path replaceClassExtensionWithJava(Path path) {
@@ -50,7 +56,8 @@ class MavenSourceFilesConfiguration implements SourceFilesConfiguration {
   private final List<Path> resourcesFiles = new ArrayList<>();
   private final List<Path> classesFiles = new ArrayList<>();
 
-  MavenSourceFilesConfiguration(MavenProject project) throws IOException {
+  /** Instantiate with {@link #getForProject}. */
+  private MavenSourceFilesConfiguration(MavenProject project) throws IOException {
     Path classesSourceDirectory = Paths.get(project.getBuild().getSourceDirectory());
     Path classesOutputDirectory = Paths.get(project.getBuild().getOutputDirectory());
 
