@@ -34,6 +34,11 @@ public class CacheMetadataTranslator {
 
       // Converts each layer object in the template to a cache metadata layer.
       for (CacheMetadataLayerObjectTemplate layerObjectTemplate : template.getLayers()) {
+        if (layerObjectTemplate.getDigest() == null || layerObjectTemplate.getDiffId() == null) {
+          throw new IllegalStateException(
+              "Cannot translate cache metadata layer without a digest or diffId");
+        }
+
         Path layerContentFile =
             CacheFiles.getLayerFile(cacheDirectory, layerObjectTemplate.getDigest());
 

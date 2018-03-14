@@ -27,6 +27,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /** Pulls an image's BLOB (layer or container configuration). */
 class BlobPuller implements RegistryEndpointProvider<Void> {
@@ -69,6 +70,7 @@ class BlobPuller implements RegistryEndpointProvider<Void> {
   }
 
   @Override
+  @Nullable
   public BlobHttpContent getContent() {
     return null;
   }

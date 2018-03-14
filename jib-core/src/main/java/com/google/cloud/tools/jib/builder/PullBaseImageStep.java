@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Timer;
+import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.LayerCountMismatchException;
@@ -24,6 +25,7 @@ import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
 import com.google.cloud.tools.jib.image.json.JsonToImageTranslator;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
+import com.google.cloud.tools.jib.image.json.UnknownManifestFormatException;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
@@ -73,6 +75,12 @@ class PullBaseImageStep implements Callable<Image> {
 
         case 2:
           V22ManifestTemplate v22ManifestTemplate = (V22ManifestTemplate) manifestTemplate;
+          if (v22ManifestTemplate.getContainerConfiguration() == null
+              || v22ManifestTemplate.getContainerConfiguration().getDigest() == null) {
+            throw new UnknownManifestFormatException(
+                "Invalid container configuration in Docker V2.2 manifest: \n"
+                    + Blobs.writeToString(JsonTemplateMapper.toBlob(v22ManifestTemplate)));
+          }
 
           ByteArrayOutputStream containerConfigurationOutputStream = new ByteArrayOutputStream();
           registryClient.pullBlob(

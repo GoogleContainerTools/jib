@@ -110,8 +110,6 @@ public class DockerContextMojoTest {
             .setMainClass(expectedMainClass)
             .makeDockerfile(mockSourceFilesConfiguration);
 
-    System.out.println(dockerfile);
-
     Path sampleDockerfile = Paths.get(Resources.getResource("sampleDockerfile").toURI());
     Assert.assertArrayEquals(
         Files.readAllBytes(sampleDockerfile), dockerfile.getBytes(StandardCharsets.UTF_8));

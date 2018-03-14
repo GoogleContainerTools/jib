@@ -251,6 +251,18 @@
                only supports >=6 -->
           <source>${maven.compiler.source}</source>
           <target>${maven.compiler.target}</target>
+          <showWarnings>true</showWarnings>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>com.uber.nullaway</groupId>
+              <artifactId>nullaway</artifactId>
+              <version>0.3.5</version>
+            </path>
+          </annotationProcessorPaths>
+          <compilerArgs>
+            <arg>-Xep:NullAway:ERROR</arg>
+            <arg>-XepOpt:NullAway:AnnotatedPackages=com.uber</arg>
+          </compilerArgs>
         </configuration>
         <dependencies>
           <dependency>
