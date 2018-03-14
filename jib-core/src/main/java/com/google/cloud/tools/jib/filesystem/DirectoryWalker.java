@@ -17,9 +17,11 @@
 package com.google.cloud.tools.jib.filesystem;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
+import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /** Recursively applies a function to each file in a directory. */
@@ -28,9 +30,9 @@ public class DirectoryWalker {
   private final Path rootDir;
 
   /** Initialize with a root directory to walk. */
-  public DirectoryWalker(Path rootDir) {
+  public DirectoryWalker(Path rootDir) throws NotDirectoryException {
     if (!Files.isDirectory(rootDir)) {
-      throw new IllegalArgumentException("rootDir must be a directory");
+      throw new NotDirectoryException(rootDir + " is not a directory");
     }
     this.rootDir = rootDir;
   }
@@ -41,18 +43,10 @@ public class DirectoryWalker {
    */
   public void walk(PathConsumer pathConsumer) throws IOException {
     try (Stream<Path> fileStream = Files.walk(rootDir)) {
-      fileStream.forEach(
-          path -> {
-            try {
-              pathConsumer.accept(path);
-
-            } catch (IOException ex) {
-              throw new UncheckedIOException(ex);
-            }
-          });
-
-    } catch (UncheckedIOException ex) {
-      throw ex.getCause();
+      List<Path> files = fileStream.collect(Collectors.toList());
+      for (Path path : files) {
+        pathConsumer.accept(path);
+      }
     }
   }
 }
