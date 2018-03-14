@@ -178,8 +178,7 @@ public class BuildImageMojo extends AbstractMojo {
         throw new MojoExecutionException("Could not create cache directory: " + cacheDirectory, ex);
       }
     }
-    Caches.Initializer cachesInitializer =
-        Caches.initializer().setApplicationCacheDirectory(cacheDirectory);
+    Caches.Initializer cachesInitializer = Caches.newInitializer(cacheDirectory);
     if (useOnlyProjectCache) {
       cachesInitializer.setBaseCacheDirectory(cacheDirectory);
     }
