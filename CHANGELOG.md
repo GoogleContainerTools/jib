@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
+- jib:dockercontext not generating Dockerfile
 - Null tag validation generating NullPointerException ([#125](https://github.com/google/jib/issues/125))
 - Build failure on project with no dependencies ([#126](https://github.com/google/jib/issues/126))
 
