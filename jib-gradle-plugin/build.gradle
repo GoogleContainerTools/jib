@@ -51,7 +51,8 @@ dependencies {
     compile gradleApi()
 
     // NullAway errorprone plugin
-    apt 'com.uber.nullaway:nullaway:0.3.5'
+    // TODO: Update to latest version once https://github.com/uber/NullAway/issues/133 is fixed.
+    apt 'com.uber.nullaway:nullaway:0.3.2'
     errorprone 'com.google.errorprone:error_prone_core:2.2.0'
 }
 
