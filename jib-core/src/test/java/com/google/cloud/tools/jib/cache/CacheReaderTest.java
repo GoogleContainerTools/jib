@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google Inc.
+ * Copyright 2018 Google LLC. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,13 +17,13 @@
 package com.google.cloud.tools.jib.cache;
 
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
+import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.ImageLayers;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.ReferenceLayer;
 import com.google.common.io.Resources;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -32,7 +32,7 @@ import java.nio.file.attribute.FileTime;
 import java.security.DigestException;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.stream.Stream;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -44,21 +44,13 @@ public class CacheReaderTest {
 
   // TODO: Replace with filesystem.DirectoryWalker.
   private static void copyDirectory(Path source, Path destination) throws IOException {
-    try (Stream<Path> fileStream = Files.walk(source)) {
-      fileStream.forEach(
-          path -> {
-            try {
-              if (path.equals(source)) {
-                return;
-              }
+    new DirectoryWalker(source)
+        .filter(path -> !path.equals(source))
+        .walk(
+            path -> {
               Path newPath = destination.resolve(source.relativize(path));
               Files.copy(path, newPath);
-
-            } catch (IOException ex) {
-              throw new UncheckedIOException(ex);
-            }
-          });
-    }
+            });
   }
 
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -154,18 +146,10 @@ public class CacheReaderTest {
 
     // Walk the files in reverse order so that the subfiles are changed before the parent
     // directories are.
-    try (Stream<Path> fileStream = Files.walk(testSourceFiles)) {
-      fileStream
-          .sorted(Comparator.reverseOrder())
-          .forEach(
-              path -> {
-                try {
-                  Files.setLastModifiedTime(path, olderLastModifiedTime);
-
-                } catch (IOException ex) {
-                  throw new UncheckedIOException(ex);
-                }
-              });
+    List<Path> paths = new DirectoryWalker(testSourceFiles).walk();
+    paths.sort(Comparator.reverseOrder());
+    for (Path path : paths) {
+      Files.setLastModifiedTime(path, olderLastModifiedTime);
     }
 
     // Sets the metadata source file to the new temporary folder.

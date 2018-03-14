@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google Inc.
+ * Copyright 2018 Google LLC. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Resources;
 import java.io.BufferedOutputStream;
@@ -33,7 +34,6 @@ import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.stream.Stream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.hamcrest.CoreMatchers;
@@ -70,38 +70,33 @@ public class LayerBuilderTest {
 
     // Reads the file back.
     try (TarArchiveInputStream tarArchiveInputStream =
-            new TarArchiveInputStream(Files.newInputStream(temporaryFile));
-        Stream<Path> layerDirectoryFiles = Files.walk(layerDirectory)) {
+        new TarArchiveInputStream(Files.newInputStream(temporaryFile))) {
       // Verifies that all the files have been added to the tarball stream.
-      layerDirectoryFiles
+      new DirectoryWalker(layerDirectory)
           .filter(path -> !path.equals(layerDirectory))
-          .forEach(
+          .walk(
               path -> {
-                try {
-                  TarArchiveEntry header = tarArchiveInputStream.getNextTarEntry();
+                TarArchiveEntry header = tarArchiveInputStream.getNextTarEntry();
 
-                  StringBuilder expectedExtractionPath = new StringBuilder("extract/here");
-                  for (Path pathComponent : layerDirectory.getParent().relativize(path)) {
-                    expectedExtractionPath.append("/").append(pathComponent);
-                  }
-                  // Check path-equality because there might be an appended backslash in the header
-                  // filename.
-                  Assert.assertEquals(
-                      Paths.get(expectedExtractionPath.toString()), Paths.get(header.getName()));
+                StringBuilder expectedExtractionPath = new StringBuilder("extract/here");
+                for (Path pathComponent : layerDirectory.getParent().relativize(path)) {
+                  expectedExtractionPath.append("/").append(pathComponent);
+                }
+                // Check path-equality because there might be an appended backslash in the header
+                // filename.
+                Assert.assertEquals(
+                    Paths.get(expectedExtractionPath.toString()), Paths.get(header.getName()));
 
-                  // If is a normal file, checks that the file contents match.
-                  if (Files.isRegularFile(path)) {
-                    String expectedFileString =
-                        new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+                // If is a normal file, checks that the file contents match.
+                if (Files.isRegularFile(path)) {
+                  String expectedFileString =
+                      new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
 
-                    String extractedFileString =
-                        CharStreams.toString(
-                            new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
+                  String extractedFileString =
+                      CharStreams.toString(
+                          new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
 
-                    Assert.assertEquals(expectedFileString, extractedFileString);
-                  }
-                } catch (IOException ex) {
-                  throw new RuntimeException(ex);
+                  Assert.assertEquals(expectedFileString, extractedFileString);
                 }
               });
 

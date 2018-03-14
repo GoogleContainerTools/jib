@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2017 Google LLC. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.image;
 
+import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.tar.TarStreamBuilder;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -24,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Stream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 
 /** Builds an {@link UnwrittenLayer} from files. */
@@ -58,24 +58,22 @@ public class LayerBuilder {
 
     for (Path sourceFile : sourceFiles) {
       if (Files.isDirectory(sourceFile)) {
-        try (Stream<Path> fileStream = Files.walk(sourceFile)) {
-          fileStream
-              .filter(path -> !path.equals(sourceFile))
-              .forEach(
-                  path -> {
-                    /*
-                     * Builds the same file path as in the source file for extraction. The iteration
-                     * is necessary because the path needs to be in Unix-style.
-                     */
-                    StringBuilder subExtractionPath = new StringBuilder(extractionPath);
-                    Path sourceFileRelativePath = sourceFile.getParent().relativize(path);
-                    for (Path sourceFileRelativePathComponent : sourceFileRelativePath) {
-                      subExtractionPath.append('/').append(sourceFileRelativePathComponent);
-                    }
-                    filesystemEntries.add(
-                        new TarArchiveEntry(path.toFile(), subExtractionPath.toString()));
-                  });
-        }
+        new DirectoryWalker(sourceFile)
+            .filter(path -> !path.equals(sourceFile))
+            .walk(
+                path -> {
+                  /*
+                   * Builds the same file path as in the source file for extraction. The iteration
+                   * is necessary because the path needs to be in Unix-style.
+                   */
+                  StringBuilder subExtractionPath = new StringBuilder(extractionPath);
+                  Path sourceFileRelativePath = sourceFile.getParent().relativize(path);
+                  for (Path sourceFileRelativePathComponent : sourceFileRelativePath) {
+                    subExtractionPath.append('/').append(sourceFileRelativePathComponent);
+                  }
+                  filesystemEntries.add(
+                      new TarArchiveEntry(path.toFile(), subExtractionPath.toString()));
+                });
 
       } else {
         TarArchiveEntry tarArchiveEntry =

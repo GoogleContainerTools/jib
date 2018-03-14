@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google Inc.
+ * Copyright 2018 Google LLC. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -61,7 +61,8 @@ public class MavenSourceFilesConfigurationTest {
                 makeArtifact(Paths.get("application", "dependencies", "dependency-1.0.0.jar"))));
     Mockito.when(mockMavenProject.getArtifacts()).thenReturn(artifacts);
 
-    testMavenSourceFilesConfiguration = new MavenSourceFilesConfiguration(mockMavenProject);
+    testMavenSourceFilesConfiguration =
+        MavenSourceFilesConfiguration.getForProject(mockMavenProject);
   }
 
   @Test

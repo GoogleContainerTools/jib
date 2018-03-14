@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google Inc.
+ * Copyright 2018 Google LLC. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,13 +25,21 @@ import java.util.List;
  */
 public interface SourceFilesConfiguration {
 
-  /** @return the source files for the dependencies layer. */
+  /**
+   * @return the source files for the dependencies layer. These files should be in a deterministic
+   *     order.
+   */
   List<Path> getDependenciesFiles();
 
-  /** @return the source files for the resources layer. */
+  /**
+   * @return the source files for the resources layer. These files should be in a deterministic
+   *     order.
+   */
   List<Path> getResourcesFiles();
 
-  /** @return the source files for the classes layer. */
+  /**
+   * @return the source files for the classes layer. These files should be in a deterministic order.
+   */
   List<Path> getClassesFiles();
 
   /**
