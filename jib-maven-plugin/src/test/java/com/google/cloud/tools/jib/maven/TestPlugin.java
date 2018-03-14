@@ -16,8 +16,10 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import java.io.FileReader;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
 import org.apache.maven.model.Model;
@@ -44,7 +46,8 @@ class TestPlugin extends ExternalResource {
 
     // Reads the project version.
     MavenXpp3Reader reader = new MavenXpp3Reader();
-    Model model = reader.read(new FileReader("pom.xml"));
+    Model model =
+        reader.read(Files.newBufferedReader(Paths.get("pom.xml"), StandardCharsets.UTF_8));
     pluginVersion = model.getVersion();
   }
 }

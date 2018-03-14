@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /** Holds the layers for an image. Makes sure that each layer is only added once. */
 public class ImageLayers<T extends Layer> implements Iterable<T> {
@@ -52,7 +53,8 @@ public class ImageLayers<T extends Layer> implements Iterable<T> {
     return layers.get(index);
   }
 
-  /** @return the layer by digest */
+  /** @return the layer by digest, or {@code null} if not found */
+  @Nullable
   public T get(DescriptorDigest digest) throws LayerPropertyNotFoundException {
     if (!has(digest)) {
       return null;
