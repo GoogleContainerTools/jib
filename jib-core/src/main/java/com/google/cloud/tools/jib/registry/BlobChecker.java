@@ -61,6 +61,7 @@ class BlobChecker implements RegistryEndpointProvider<BlobDescriptor> {
   }
 
   @Override
+  @Nullable
   public BlobDescriptor handleHttpResponseException(HttpResponseException httpResponseException)
       throws RegistryErrorException, HttpResponseException {
     if (httpResponseException.getStatusCode() != HttpStatusCodes.STATUS_CODE_NOT_FOUND) {
@@ -73,13 +74,19 @@ class BlobChecker implements RegistryEndpointProvider<BlobDescriptor> {
       // TODO: The Google HTTP client gives null content for HEAD requests. Make the content never
       // be null, even for HEAD requests.
       return null;
+
     } else {
       try {
         ErrorResponseTemplate errorResponse =
             JsonTemplateMapper.readJson(errorContent, ErrorResponseTemplate.class);
         List<ErrorEntryTemplate> errors = errorResponse.getErrors();
         if (errors.size() == 1) {
-          ErrorCodes errorCode = ErrorCodes.valueOf(errors.get(0).getCode());
+          String errorCodeString = errors.get(0).getCode();
+          if (errorCodeString == null) {
+            // Did not get an error code back.
+            throw httpResponseException;
+          }
+          ErrorCodes errorCode = ErrorCodes.valueOf(errorCodeString);
           if (errorCode.equals(ErrorCodes.BLOB_UNKNOWN)) {
             return null;
           }

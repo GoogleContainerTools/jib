@@ -22,6 +22,7 @@ import com.google.common.annotations.VisibleForTesting;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * JSON template for Docker Manifest Schema V2.1
@@ -71,8 +72,9 @@ public class V21ManifestTemplate implements ManifestTemplate {
    */
   static class LayerObjectTemplate implements JsonTemplate {
 
-    private DescriptorDigest blobSum;
+    @Nullable private DescriptorDigest blobSum;
 
+    @Nullable
     DescriptorDigest getDigest() {
       return blobSum;
     }
@@ -82,7 +84,7 @@ public class V21ManifestTemplate implements ManifestTemplate {
   private static class V1CompatibilityTemplate implements JsonTemplate {
 
     // TODO: Change to its own JSON template that can extract the layer diff ID.
-    private String v1Compatibility;
+    @Nullable private String v1Compatibility;
   }
 
   public List<DescriptorDigest> getLayerDigests() {
@@ -105,11 +107,7 @@ public class V21ManifestTemplate implements ManifestTemplate {
   }
 
   @VisibleForTesting
-  DescriptorDigest getLayerDigest(int index) {
-    return fsLayers.get(index).blobSum;
-  }
-
-  @VisibleForTesting
+  @Nullable
   String getV1Compatibility(int index) {
     return history.get(index).v1Compatibility;
   }
