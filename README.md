@@ -35,7 +35,7 @@ In your Maven Java project, add the plugin to your `pom.xml`:
 <plugin>
   <groupId>com.google.cloud.tools</groupId>
   <artifactId>jib-maven-plugin</artifactId>
-  <version>0.1.4</version>
+  <version>0.1.5</version>
   <configuration>
     <registry>myregistry</registry>
     <repository>myapp</repository>
