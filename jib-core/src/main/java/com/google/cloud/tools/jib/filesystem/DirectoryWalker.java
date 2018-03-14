@@ -21,13 +21,17 @@ import java.nio.file.Files;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 
 /** Recursively applies a function to each file in a directory. */
 public class DirectoryWalker {
 
   private final Path rootDir;
+
+  @Nullable private Predicate<? super Path> pathFilter;
 
   /** Initialize with a root directory to walk. */
   public DirectoryWalker(Path rootDir) throws NotDirectoryException {
@@ -37,16 +41,32 @@ public class DirectoryWalker {
     this.rootDir = rootDir;
   }
 
+  /** Adds a filter to the walked paths. */
+  public DirectoryWalker filter(@Nullable Predicate<? super Path> pathFilter) {
+    this.pathFilter = pathFilter;
+    return this;
+  }
+
   /**
    * Walks {@link #rootDir} and applies {@code pathConsumer} to each file. Note that {@link
    * #rootDir} itself is visited as well.
    */
-  public void walk(PathConsumer pathConsumer) throws IOException {
+  public List<Path> walk(PathConsumer pathConsumer) throws IOException {
+    List<Path> files = walk();
+    for (Path path : files) {
+      pathConsumer.accept(path);
+    }
+    return files;
+  }
+
+  /** Walks {@link #rootDir} and returns the walked files. */
+  public List<Path> walk() throws IOException {
     try (Stream<Path> fileStream = Files.walk(rootDir)) {
-      List<Path> files = fileStream.collect(Collectors.toList());
-      for (Path path : files) {
-        pathConsumer.accept(path);
+      Stream<Path> filteredFileStream = fileStream;
+      if (pathFilter != null) {
+        filteredFileStream = fileStream.filter(pathFilter);
       }
+      return filteredFileStream.collect(Collectors.toList());
     }
   }
 }
