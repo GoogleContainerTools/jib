@@ -4,6 +4,7 @@ plugins {
     id 'com.github.sherter.google-java-format' version '0.6'
     id 'com.gradle.plugin-publish' version '0.9.10'
     id 'maven'
+    id 'net.ltgt.apt' version '0.13'
     id 'net.ltgt.errorprone' version '0.0.13'
 }
 
@@ -48,6 +49,10 @@ dependencies {
     testCompile 'org.mockito:mockito-core:2.12.0'
 
     compile gradleApi()
+
+    // NullAway errorprone plugin
+    apt 'com.uber.nullaway:nullaway:0.3.5'
+    errorprone 'com.google.errorprone:error_prone_core:2.2.0'
 }
 
 task wrapper(type: Wrapper) {
@@ -65,6 +70,13 @@ test {
     testLogging {
         showStandardStreams = true
         exceptionFormat = 'full'
+    }
+}
+
+// Adds NullAway errorprone checks.
+tasks.withType(JavaCompile) {
+    if (!name.toLowerCase().contains("test")) {
+        options.compilerArgs += ["-Xep:NullAway:ERROR", "-XepOpt:NullAway:AnnotatedPackages=com.google.cloud.tools"]
     }
 }
 

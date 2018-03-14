@@ -125,7 +125,7 @@ public class RegistryCredentials {
    */
   @Nullable
   public Authorization getAuthorization(String registry) {
-    if (!has(registry)) {
+    if (credentials.get(registry) == null) {
       return null;
     }
     return credentials.get(registry).authorization;
@@ -137,7 +137,7 @@ public class RegistryCredentials {
    */
   @Nullable
   public String getCredentialSource(String registry) {
-    if (!has(registry)) {
+    if (credentials.get(registry) == null) {
       return null;
     }
     return credentials.get(registry).credentialSource;
