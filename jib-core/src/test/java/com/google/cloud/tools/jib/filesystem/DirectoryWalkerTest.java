@@ -25,18 +25,24 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 /** Tests for {@link DirectoryWalker}. */
 public class DirectoryWalkerTest {
 
+  private final Set<Path> walkedPaths = new HashSet<>();
+  private final PathConsumer addToWalkedPaths = walkedPaths::add;
+
+  private Path testDir;
+
+  @Before
+  public void setUp() throws URISyntaxException {
+    testDir = Paths.get(Resources.getResource("layer").toURI());
+  }
+
   @Test
-  public void testWalk() throws URISyntaxException, IOException {
-    Path testDir = Paths.get(Resources.getResource("layer").toURI());
-
-    Set<Path> walkedPaths = new HashSet<>();
-    PathConsumer addToWalkedPaths = walkedPaths::add;
-
+  public void testWalk() throws IOException {
     new DirectoryWalker(testDir).walk(addToWalkedPaths);
 
     Set<Path> expectedPaths =
@@ -49,6 +55,19 @@ public class DirectoryWalkerTest {
                 testDir.resolve("c"),
                 testDir.resolve("c").resolve("cat"),
                 testDir.resolve("foo")));
+    Assert.assertEquals(expectedPaths, walkedPaths);
+  }
+
+  @Test
+  public void testWalk_withFilter() throws IOException {
+    // Filters to just immediate subdirectories of testDir.
+    new DirectoryWalker(testDir)
+        .filter(path -> path.getParent().equals(testDir))
+        .walk(addToWalkedPaths);
+
+    Set<Path> expectedPaths =
+        new HashSet<>(
+            Arrays.asList(testDir.resolve("a"), testDir.resolve("c"), testDir.resolve("foo")));
     Assert.assertEquals(expectedPaths, walkedPaths);
   }
 }

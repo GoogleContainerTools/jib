@@ -16,18 +16,16 @@
 
 package com.google.cloud.tools.jib.cache;
 
+import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.ImageLayers;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Stream;
 
 /** Reads image content from the cache. */
 public class CacheReader {
@@ -37,37 +35,22 @@ public class CacheReader {
    *     last modified time for all subfiles if the file is a directory.
    */
   private static FileTime getLastModifiedTime(Path path) throws IOException {
-    FileTime lastModifiedTime = Files.getLastModifiedTime(path);
+    if (Files.isDirectory(path)) {
+      List<Path> subFiles = new DirectoryWalker(path).walk();
+      FileTime maxLastModifiedTime = FileTime.from(Instant.MIN);
 
-    if (Files.isReadable(path)) {
-      try (Stream<Path> fileStream = Files.walk(path)) {
-        Optional<FileTime> maxLastModifiedTime =
-            fileStream
-                .map(
-                    subFilePath -> {
-                      try {
-                        return Files.getLastModifiedTime(subFilePath);
-
-                      } catch (IOException ex) {
-                        throw new UncheckedIOException(ex);
-                      }
-                    })
-                .max(FileTime::compareTo);
-
-        if (!maxLastModifiedTime.isPresent()) {
-          throw new IllegalStateException(
-              "Could not get last modified time for all files in directory '" + path + "'");
+      // Finds the max last modified time for the subfiles.
+      for (Path subFilePath : subFiles) {
+        FileTime subFileLastModifiedTime = Files.getLastModifiedTime(subFilePath);
+        if (subFileLastModifiedTime.compareTo(maxLastModifiedTime) > 0) {
+          maxLastModifiedTime = subFileLastModifiedTime;
         }
-        if (maxLastModifiedTime.get().compareTo(lastModifiedTime) > 0) {
-          lastModifiedTime = maxLastModifiedTime.get();
-        }
-
-      } catch (UncheckedIOException ex) {
-        throw ex.getCause();
       }
+
+      return maxLastModifiedTime;
     }
 
-    return lastModifiedTime;
+    return Files.getLastModifiedTime(path);
   }
 
   private final Cache cache;
