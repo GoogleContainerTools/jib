@@ -3,7 +3,7 @@ plugins {
     id 'checkstyle'
     id 'com.github.sherter.google-java-format' version '0.6'
     id 'com.gradle.plugin-publish' version '0.9.10'
-    id 'maven-publish'
+    id 'maven'
     id 'net.ltgt.apt' version '0.13'
     id 'net.ltgt.errorprone' version '0.0.13'
 }
