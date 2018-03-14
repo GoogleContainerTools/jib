@@ -94,7 +94,7 @@ public class RegistryAuthenticator {
   @JsonIgnoreProperties(ignoreUnknown = true)
   private static class AuthenticationResponseTemplate implements JsonTemplate {
 
-    private String token;
+    @Nullable private String token;
   }
 
   private final String authenticationUrlBase;
@@ -134,17 +134,25 @@ public class RegistryAuthenticator {
    *     href="https://docs.docker.com/registry/spec/auth/token/#how-to-authenticate">https://docs.docker.com/registry/spec/auth/token/#how-to-authenticate</a>
    */
   private Authorization authenticate(String scope) throws RegistryAuthenticationFailedException {
-    try (Connection connection = new Connection(getAuthenticationUrl(scope))) {
-      Request.Builder requestBuilder = Request.builder();
-      if (authorization != null) {
-        requestBuilder.setAuthorization(authorization);
-      }
-      Response response = connection.get(requestBuilder.build());
-      String responseString = Blobs.writeToString(response.getBody());
+    try {
+      URL authenticationUrl = getAuthenticationUrl(scope);
 
-      AuthenticationResponseTemplate responseJson =
-          JsonTemplateMapper.readJson(responseString, AuthenticationResponseTemplate.class);
-      return Authorizations.withBearerToken(responseJson.token);
+      try (Connection connection = new Connection(authenticationUrl)) {
+        Request.Builder requestBuilder = Request.builder();
+        if (authorization != null) {
+          requestBuilder.setAuthorization(authorization);
+        }
+        Response response = connection.get(requestBuilder.build());
+        String responseString = Blobs.writeToString(response.getBody());
+
+        AuthenticationResponseTemplate responseJson =
+            JsonTemplateMapper.readJson(responseString, AuthenticationResponseTemplate.class);
+        if (responseJson.token == null) {
+          throw new RegistryAuthenticationFailedException(
+              "Did not get token in authentication response from " + authenticationUrl);
+        }
+        return Authorizations.withBearerToken(responseJson.token);
+      }
 
     } catch (IOException ex) {
       throw new RegistryAuthenticationFailedException(ex);

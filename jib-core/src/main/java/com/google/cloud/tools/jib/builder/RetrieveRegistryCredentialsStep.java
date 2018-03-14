@@ -66,6 +66,7 @@ class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
   }
 
   @Override
+  @Nullable
   public Authorization call() throws IOException, NonexistentDockerCredentialHelperException {
     try (Timer ignored =
         new Timer(
@@ -80,9 +81,10 @@ class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
       }
 
       // Tries to get registry credentials from known registry credentials.
-      if (buildConfiguration.getKnownRegistryCredentials().has(registry)) {
-        logGotCredentialsFrom(
-            buildConfiguration.getKnownRegistryCredentials().getCredentialSource(registry));
+      String credentialSource =
+          buildConfiguration.getKnownRegistryCredentials().getCredentialSource(registry);
+      if (credentialSource != null) {
+        logGotCredentialsFrom(credentialSource);
         return buildConfiguration.getKnownRegistryCredentials().getAuthorization(registry);
       }
 
@@ -99,16 +101,21 @@ class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
       for (String registrySuffix : COMMON_CREDENTIAL_HELPERS.keySet()) {
         if (registry.endsWith(registrySuffix)) {
           try {
-            Authorization authorization =
-                retrieveFromCredentialHelper(COMMON_CREDENTIAL_HELPERS.get(registrySuffix));
+            String commonCredentialHelper = COMMON_CREDENTIAL_HELPERS.get(registrySuffix);
+            if (commonCredentialHelper == null) {
+              throw new IllegalStateException("No COMMON_CREDENTIAL_HELPERS should be null");
+            }
+            Authorization authorization = retrieveFromCredentialHelper(commonCredentialHelper);
             if (authorization != null) {
               return authorization;
             }
 
           } catch (NonexistentDockerCredentialHelperException ex) {
-            // Warns the user that the specified (or inferred) credential helper is not on the
-            // system.
-            buildConfiguration.getBuildLogger().warn(ex.getMessage());
+            if (ex.getMessage() != null) {
+              // Warns the user that the specified (or inferred) credential helper is not on the
+              // system.
+              buildConfiguration.getBuildLogger().warn(ex.getMessage());
+            }
           }
         }
       }

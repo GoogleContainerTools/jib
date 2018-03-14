@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Parent class for image manifest JSON templates that can be built.
@@ -39,8 +40,8 @@ public interface BuildableManifestTemplate extends ManifestTemplate {
   @VisibleForTesting
   class ContentDescriptorTemplate implements JsonTemplate {
 
-    private String mediaType;
-    private DescriptorDigest digest;
+    @Nullable private String mediaType;
+    @Nullable private DescriptorDigest digest;
     private long size;
 
     ContentDescriptorTemplate(String mediaType, long size, DescriptorDigest digest) {
@@ -62,6 +63,7 @@ public interface BuildableManifestTemplate extends ManifestTemplate {
     }
 
     @VisibleForTesting
+    @Nullable
     public DescriptorDigest getDigest() {
       return digest;
     }
@@ -75,6 +77,7 @@ public interface BuildableManifestTemplate extends ManifestTemplate {
   String getManifestMediaType();
 
   /** @return the content descriptor of the container configuration */
+  @Nullable
   ContentDescriptorTemplate getContainerConfiguration();
 
   /** @return an unmodifiable view of the layers */
