@@ -42,7 +42,7 @@ public class V21ManifestTemplateTest {
     Assert.assertEquals(
         DescriptorDigest.fromDigest(
             "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad"),
-        manifestJson.getLayerDigest(0));
+        manifestJson.getFsLayers().get(0).getDigest());
 
     Assert.assertEquals("some v1-compatible object", manifestJson.getV1Compatibility(0));
   }

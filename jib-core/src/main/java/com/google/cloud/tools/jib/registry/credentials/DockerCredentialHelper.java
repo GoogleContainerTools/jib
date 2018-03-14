@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import javax.annotation.Nullable;
 
 /**
  * Retrieves Docker credentials with a Docker credential helper.
@@ -43,8 +44,8 @@ public class DockerCredentialHelper {
   @JsonIgnoreProperties(ignoreUnknown = true)
   private static class DockerCredentialsTemplate implements JsonTemplate {
 
-    private String Username;
-    private String Secret;
+    @Nullable private String Username;
+    @Nullable private String Secret;
   }
 
   /**
@@ -100,6 +101,10 @@ public class DockerCredentialHelper {
         try {
           DockerCredentialsTemplate dockerCredentials =
               JsonTemplateMapper.readJson(output, DockerCredentialsTemplate.class);
+          if (dockerCredentials.Username == null || dockerCredentials.Secret == null) {
+            throw new NonexistentServerUrlDockerCredentialHelperException(
+                credentialHelper, serverUrl, output);
+          }
 
           return Authorizations.withBasicCredentials(
               dockerCredentials.Username, dockerCredentials.Secret);
@@ -111,11 +116,16 @@ public class DockerCredentialHelper {
       }
 
     } catch (IOException ex) {
+      if (ex.getMessage() == null) {
+        throw ex;
+      }
+
       // Checks if the failure is due to a nonexistent credential helper CLI.
       if (ex.getMessage().contains("No such file or directory")
           || ex.getMessage().contains("cannot find the file")) {
         throw new NonexistentDockerCredentialHelperException(credentialHelperSuffix, ex);
       }
+
       throw ex;
     }
   }

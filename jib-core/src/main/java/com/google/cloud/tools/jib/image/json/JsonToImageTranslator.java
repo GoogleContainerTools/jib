@@ -57,6 +57,11 @@ public class JsonToImageTranslator {
     List<ReferenceNoDiffIdLayer> layers = new ArrayList<>();
     for (BuildableManifestTemplate.ContentDescriptorTemplate layerObjectTemplate :
         manifestTemplate.getLayers()) {
+      if (layerObjectTemplate.getDigest() == null) {
+        throw new IllegalArgumentException(
+            "All layers in the manifest template must have digest set");
+      }
+
       layers.add(
           new ReferenceNoDiffIdLayer(
               new BlobDescriptor(layerObjectTemplate.getSize(), layerObjectTemplate.getDigest())));
@@ -77,6 +82,9 @@ public class JsonToImageTranslator {
       image.addLayer(layer);
     }
 
+    if (containerConfigurationTemplate.getContainerEntrypoint() == null) {
+      throw new IllegalArgumentException("containerConfigurationTemplate must have an entrypoint");
+    }
     image.setEntrypoint(containerConfigurationTemplate.getContainerEntrypoint());
 
     for (String environmentVariable : containerConfigurationTemplate.getContainerEnvironment()) {
