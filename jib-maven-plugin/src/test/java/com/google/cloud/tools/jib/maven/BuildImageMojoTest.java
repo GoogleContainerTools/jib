@@ -237,7 +237,9 @@ public class BuildImageMojoTest {
 
     } catch (MojoExecutionException ex) {
       Assert.assertEquals(
-          "Build image failed, perhaps you should check that '" + expectedCacheDirectory + "' is not used by another application or set the `useOnlyProjectCache` configuration",
+          "Build image failed, perhaps you should check that '"
+              + expectedCacheDirectory
+              + "' is not used by another application or set the `useOnlyProjectCache` configuration",
           ex.getMessage());
       Assert.assertEquals(mockCacheDirectoryNotOwnedException, ex.getCause());
     }
