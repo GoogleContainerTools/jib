@@ -40,7 +40,7 @@ class ProjectProperties {
   SourceFilesConfiguration getSourceFilesConfiguration() throws MojoExecutionException {
     try {
       SourceFilesConfiguration sourceFilesConfiguration =
-          new MavenSourceFilesConfiguration(project);
+          MavenSourceFilesConfiguration.getForProject(project);
 
       // Logs the different source files used.
       log.info("");

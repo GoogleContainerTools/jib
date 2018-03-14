@@ -61,7 +61,8 @@ public class MavenSourceFilesConfigurationTest {
                 makeArtifact(Paths.get("application", "dependencies", "dependency-1.0.0.jar"))));
     Mockito.when(mockMavenProject.getArtifacts()).thenReturn(artifacts);
 
-    testMavenSourceFilesConfiguration = new MavenSourceFilesConfiguration(mockMavenProject);
+    testMavenSourceFilesConfiguration =
+        MavenSourceFilesConfiguration.getForProject(mockMavenProject);
   }
 
   @Test
