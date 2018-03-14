@@ -248,11 +248,6 @@ These limitations will be fixed in later releases.
 * Cannot build directly to a Docker daemon.
 * Pushing to Azure Container Registry is not currently supported.
 
-## Community
-
-* Chat with us on [gitter](https://gitter.im/google/jib)
-* [jib-users mailing list](https://groups.google.com/forum/#!forum/jib-users)
-
 ## Frequently Asked Questions (FAQ)
 
 If a question you have is not answered below, please [submit an issue](/../../issues/new).
@@ -364,3 +359,8 @@ Then in the `jib-maven-plugin` configuration, set the `tag` to:
 ```
 
 You can then use the same timestamp to reference the image in other plugins.
+
+## Community
+
+* Chat with us on [gitter](https://gitter.im/google/jib)
+* [jib-users mailing list](https://groups.google.com/forum/#!forum/jib-users)
