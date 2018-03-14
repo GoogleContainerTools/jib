@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.builder;
 
-import com.google.cloud.tools.jib.cache.Caches;
 import com.google.cloud.tools.jib.Command;
+import com.google.cloud.tools.jib.cache.Caches;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
 import java.nio.file.Path;
@@ -51,9 +51,7 @@ public class BuildImageStepsIntegrationTest {
         new BuildImageSteps(
             buildConfiguration,
             sourceFilesConfiguration,
-            Caches.initializer()
-                .setBaseCacheDirectory(cacheDirectory)
-                .setApplicationCacheDirectory(cacheDirectory));
+            Caches.newInitializer(cacheDirectory).setBaseCacheDirectory(cacheDirectory));
 
     long lastTime = System.nanoTime();
     buildImageSteps.run();

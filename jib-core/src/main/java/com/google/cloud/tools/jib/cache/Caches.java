@@ -16,12 +16,12 @@
 
 package com.google.cloud.tools.jib.cache;
 
+import com.google.cloud.tools.jib.filesystem.UserCacheHome;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 /**
  * Manages both the base image layers cache and the application image layers cache.
@@ -31,23 +31,28 @@ import java.nio.file.Paths;
  */
 public class Caches implements Closeable {
 
-  /** Initializes a {@link Caches} with directory paths. */
+  /**
+   * Initializes a {@link Caches} with directory paths. Use {@link #newInitializer} to construct.
+   */
   public static class Initializer {
 
-    /** The default directory for caching the base image layers, in {@code $HOME/.jib-cache/}. */
+    /**
+     * The default directory for caching the base image layers, in {@code [user cache
+     * home]/google-cloud-tools-java/jib}.
+     */
     private static final Path DEFAULT_BASE_CACHE_DIRECTORY =
-        Paths.get(System.getProperty("user.home")).resolve(".jib-cache");
+        UserCacheHome.getCacheHome().resolve("google-cloud-tools-java").resolve("jib");
 
     /** A file to store in the default base image layers cache to check ownership by Jib. */
     private static final String OWNERSHIP_FILE_NAME = ".jib";
 
-    @VisibleForTesting
     /**
      * Ensures ownership of {@code cacheDirectory} by checking for the existence of {@link
      * #OWNERSHIP_FILE_NAME}.
      *
      * <p>This is a safety check to make sure we are not writing to a directory not created by Jib.
      */
+    @VisibleForTesting
     static void ensureOwnership(Path cacheDirectory)
         throws CacheDirectoryNotOwnedException, IOException {
       Path ownershipFile = cacheDirectory.resolve(OWNERSHIP_FILE_NAME);
@@ -60,33 +65,25 @@ public class Caches implements Closeable {
 
       } else {
         // Creates the cache directory and ownership file.
-        Files.createDirectory(cacheDirectory);
+        Files.createDirectories(cacheDirectory);
         Files.createFile(ownershipFile);
       }
     }
 
+    private final Path applicationCacheDirectory;
     private Path baseCacheDirectory = DEFAULT_BASE_CACHE_DIRECTORY;
-    private Path applicationCacheDirectory;
 
-    private Initializer() {}
+    private Initializer(Path applicationCacheDirectory) {
+      this.applicationCacheDirectory = applicationCacheDirectory;
+    }
 
     public Initializer setBaseCacheDirectory(Path baseCacheDirectory) {
       this.baseCacheDirectory = baseCacheDirectory;
       return this;
     }
 
-    public Initializer setApplicationCacheDirectory(Path applicationCacheDirectory) {
-      this.applicationCacheDirectory = applicationCacheDirectory;
-      return this;
-    }
-
     public Caches init()
         throws CacheMetadataCorruptedException, IOException, CacheDirectoryNotOwnedException {
-      if (applicationCacheDirectory == null) {
-        throw new IllegalStateException(
-            "Must initialize cache with an application image layer cache directory");
-      }
-
       if (DEFAULT_BASE_CACHE_DIRECTORY.equals(baseCacheDirectory)) {
         ensureOwnership(DEFAULT_BASE_CACHE_DIRECTORY);
       }
@@ -95,13 +92,19 @@ public class Caches implements Closeable {
     }
   }
 
-  public static Initializer initializer() {
-    return new Initializer();
+  /**
+   * @param applicationCacheDirectory Cache for the application image layers - should be local to
+   *     the application project
+   * @return a new {@link Initializer} to initialize the caches.
+   */
+  public static Initializer newInitializer(Path applicationCacheDirectory) {
+    return new Initializer(applicationCacheDirectory);
   }
 
   private final Cache baseCache;
   private final Cache applicationCache;
 
+  /** Instantiate with {@link Initializer#init}. */
   private Caches(Path baseCacheDirectory, Path applicationCacheDirectory)
       throws CacheMetadataCorruptedException, IOException {
     applicationCache = Cache.init(applicationCacheDirectory);

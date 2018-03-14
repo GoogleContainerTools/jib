@@ -25,13 +25,11 @@ import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.cache.Caches;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.Image;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -61,14 +59,20 @@ public class BuildImageSteps {
   public void run()
       throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
           CacheDirectoryNotOwnedException {
+    List<String> entrypoint =
+        EntrypointBuilder.makeEntrypoint(
+            sourceFilesConfiguration,
+            buildConfiguration.getJvmFlags(),
+            buildConfiguration.getMainClass());
+
     try (Timer timer = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       try (Timer timer2 = timer.subTimer("Initializing cache")) {
         ListeningExecutorService listeningExecutorService =
             MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
 
         try (Caches caches = cachesInitializer.init()) {
-          // TODO: Use base image cache for base image layers.
-          Cache cache = caches.getApplicationCache();
+          Cache baseLayersCache = caches.getBaseCache();
+          Cache applicationLayersCache = caches.getApplicationCache();
 
           timer2.lap("Setting up credential retrieval");
           ListenableFuture<Authorization> retrieveTargetRegistryCredentialsFuture =
@@ -112,7 +116,7 @@ public class BuildImageSteps {
                   .call(
                       new PullAndCacheBaseImageLayersStep(
                           buildConfiguration,
-                          cache,
+                          baseLayersCache,
                           listeningExecutorService,
                           authenticatePullFuture,
                           pullBaseImageFuture),
@@ -134,7 +138,10 @@ public class BuildImageSteps {
           // Builds the application layers.
           List<ListenableFuture<CachedLayer>> buildAndCacheApplicationLayerFutures =
               new BuildAndCacheApplicationLayersStep(
-                      buildConfiguration, sourceFilesConfiguration, cache, listeningExecutorService)
+                      buildConfiguration,
+                      sourceFilesConfiguration,
+                      applicationLayersCache,
+                      listeningExecutorService)
                   .call();
 
           timer2.lap("Setting up container configuration push");
@@ -149,7 +156,7 @@ public class BuildImageSteps {
                               authenticatePushFuture,
                               pullBaseImageLayerFuturesFuture,
                               buildAndCacheApplicationLayerFutures,
-                              getEntrypoint()),
+                              entrypoint),
                           listeningExecutorService);
 
           timer2.lap("Setting up application layer push");
@@ -187,29 +194,6 @@ public class BuildImageSteps {
     }
 
     buildConfiguration.getBuildLogger().info("");
-    buildConfiguration.getBuildLogger().info("Container entrypoint set to " + getEntrypoint());
-  }
-
-  /**
-   * Gets the container entrypoint.
-   *
-   * <p>The entrypoint is {@code java -cp [classpaths] [main class]}.
-   */
-  @VisibleForTesting
-  List<String> getEntrypoint() {
-    List<String> classPaths = new ArrayList<>();
-    classPaths.add(sourceFilesConfiguration.getDependenciesPathOnImage() + "*");
-    classPaths.add(sourceFilesConfiguration.getResourcesPathOnImage());
-    classPaths.add(sourceFilesConfiguration.getClassesPathOnImage());
-
-    String classPathsString = String.join(":", classPaths);
-
-    List<String> entrypoint = new ArrayList<>(4 + buildConfiguration.getJvmFlags().size());
-    entrypoint.add("java");
-    entrypoint.addAll(buildConfiguration.getJvmFlags());
-    entrypoint.add("-cp");
-    entrypoint.add(classPathsString);
-    entrypoint.add(buildConfiguration.getMainClass());
-    return entrypoint;
+    buildConfiguration.getBuildLogger().info("Container entrypoint set to " + entrypoint);
   }
 }
