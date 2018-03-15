@@ -43,7 +43,7 @@ public class DockerConfigTemplateTest {
             .addAuth("some registry", "some auth")
             .addAuth("some other registry", "some other auth")
             .addAuth("just registry", null)
-            .addAuth("http://with.protocol", null)
+            .addAuth("https://with.protocol", null)
             .setCredsStore("some credential store")
             .addCredHelper("some registry", "some credential helper")
             .addCredHelper("another registry", "another credential helper");
