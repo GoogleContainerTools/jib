@@ -83,6 +83,7 @@ For example, to build the image `my-docker-id/my-app`, the configuration would b
 <configuration>
   <registry>registry.hub.docker.com</registry>
   <repository>my-docker-id/my-app</repository>
+  <credHelpers><credHelper>osxkeychain</credHelper></credHelpers>
 </configuration>
 ```
 
