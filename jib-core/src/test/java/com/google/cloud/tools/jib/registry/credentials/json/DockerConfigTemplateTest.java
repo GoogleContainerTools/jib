@@ -43,6 +43,7 @@ public class DockerConfigTemplateTest {
             .addAuth("some registry", "some auth")
             .addAuth("some other registry", "some other auth")
             .addAuth("just registry", null)
+            .addAuth("http://with.protocol", null)
             .setCredsStore("some credential store")
             .addCredHelper("some registry", "some credential helper")
             .addCredHelper("another registry", "another credential helper");
@@ -74,6 +75,8 @@ public class DockerConfigTemplateTest {
         dockerConfigTemplate.getCredentialHelperFor("some other registry"));
     Assert.assertEquals(
         "some credential store", dockerConfigTemplate.getCredentialHelperFor("just registry"));
+    Assert.assertEquals(
+        "some credential store", dockerConfigTemplate.getCredentialHelperFor("with.protocol"));
     Assert.assertEquals(
         "another credential helper",
         dockerConfigTemplate.getCredentialHelperFor("another registry"));
