@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.registry.credentials.json;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.HashMap;
@@ -57,6 +58,7 @@ import javax.annotation.Nullable;
  * @see <a
  *     href="https://www.projectatomic.io/blog/2016/03/docker-credentials-store/">https://www.projectatomic.io/blog/2016/03/docker-credentials-store/</a>
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class DockerConfigTemplate implements JsonTemplate {
 
   /** Template for an {@code auth} defined for a registry under {@code auths}. */
@@ -91,8 +93,11 @@ public class DockerConfigTemplate implements JsonTemplate {
    */
   @Nullable
   public String getCredentialHelperFor(String registry) {
-    if (credsStore != null && auths.containsKey(registry)) {
-      return credsStore;
+    if (credsStore != null) {
+      // The registry could be prefixed with the HTTPS protocol.
+      if (auths.containsKey(registry) || auths.containsKey("https://" + registry)) {
+        return credsStore;
+      }
     }
     if (credHelpers.containsKey(registry)) {
       return credHelpers.get(registry);
