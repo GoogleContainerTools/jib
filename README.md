@@ -73,6 +73,19 @@ For example, to build the image `aws_account_id.dkr.ecr.region.amazonaws.com/my-
 </configuration>
 ```
 
+#### Using [Docker Hub Registry](https://hub.docker.com/)...
+
+*Make sure you have a [docker-credential-helper](https://github.com/docker/docker-credential-helpers#available-programs) set up. For example, on macOS, the credential helper would be `docker-credential-osxkeychain`. To use a different credential helper, set the [`credHelpers`](#extended-usage) configuration. See [Authentication Methods](#authentication-methods) for other ways of authenticating.*
+
+For example, to build the image `my-docker-id/my-app`, the configuration would be:
+
+```xml
+<configuration>
+  <registry>registry.hub.docker.com</registry>
+  <repository>my-docker-id/my-app</repository>
+</configuration>
+```
+
 #### *TODO: Add more examples for common registries.* 
 
 ### Build Your Image
