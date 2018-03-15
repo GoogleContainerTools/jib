@@ -18,11 +18,8 @@ package com.google.cloud.tools.jib.registry.credentials.json;
 
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.io.Resources;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.junit.Assert;
@@ -30,30 +27,6 @@ import org.junit.Test;
 
 /** Tests for {@link DockerConfigTemplate}. */
 public class DockerConfigTemplateTest {
-
-  @Test
-  public void test_toJson() throws URISyntaxException, IOException {
-    // Loads the expected JSON string.
-    Path jsonFile = Paths.get(Resources.getResource("json/dockerconfig.json").toURI());
-    String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
-
-    // Creates the JSON object to serialize.
-    DockerConfigTemplate dockerConfigTemplate =
-        new DockerConfigTemplate()
-            .addAuth("some registry", "some auth")
-            .addAuth("some other registry", "some other auth")
-            .addAuth("just registry", null)
-            .addAuth("https://with.protocol", null)
-            .setCredsStore("some credential store")
-            .addCredHelper("some registry", "some credential helper")
-            .addCredHelper("another registry", "another credential helper");
-
-    // Serializes the JSON object.
-    ByteArrayOutputStream jsonStream = new ByteArrayOutputStream();
-    JsonTemplateMapper.toBlob(dockerConfigTemplate).writeTo(jsonStream);
-
-    Assert.assertEquals(expectedJson, jsonStream.toString());
-  }
 
   @Test
   public void test_fromJson() throws URISyntaxException, IOException {
