@@ -19,8 +19,10 @@ package com.google.cloud.tools.jib.builder;
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.cache.Cache;
+import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.CachedLayer;
+import com.google.cloud.tools.jib.cache.Caches;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.common.util.concurrent.Futures;
@@ -28,7 +30,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -40,15 +41,15 @@ public class BuildImageSteps {
 
   private final BuildConfiguration buildConfiguration;
   private final SourceFilesConfiguration sourceFilesConfiguration;
-  private final Path cacheDirectory;
+  private final Caches.Initializer cachesInitializer;
 
   public BuildImageSteps(
       BuildConfiguration buildConfiguration,
       SourceFilesConfiguration sourceFilesConfiguration,
-      Path cacheDirectory) {
+      Caches.Initializer cachesInitializer) {
     this.buildConfiguration = buildConfiguration;
     this.sourceFilesConfiguration = sourceFilesConfiguration;
-    this.cacheDirectory = cacheDirectory;
+    this.cachesInitializer = cachesInitializer;
   }
 
   public BuildConfiguration getBuildConfiguration() {
@@ -56,8 +57,8 @@ public class BuildImageSteps {
   }
 
   public void run()
-      throws InterruptedException, ExecutionException, CacheMetadataCorruptedException,
-          IOException {
+      throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
+          CacheDirectoryNotOwnedException {
     List<String> entrypoint =
         EntrypointBuilder.makeEntrypoint(
             sourceFilesConfiguration,
@@ -69,7 +70,10 @@ public class BuildImageSteps {
         ListeningExecutorService listeningExecutorService =
             MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
 
-        try (Cache cache = Cache.init(cacheDirectory)) {
+        try (Caches caches = cachesInitializer.init()) {
+          Cache baseLayersCache = caches.getBaseCache();
+          Cache applicationLayersCache = caches.getApplicationCache();
+
           timer2.lap("Setting up credential retrieval");
           ListenableFuture<Authorization> retrieveTargetRegistryCredentialsFuture =
               listeningExecutorService.submit(
@@ -112,7 +116,7 @@ public class BuildImageSteps {
                   .call(
                       new PullAndCacheBaseImageLayersStep(
                           buildConfiguration,
-                          cache,
+                          baseLayersCache,
                           listeningExecutorService,
                           authenticatePullFuture,
                           pullBaseImageFuture),
@@ -134,7 +138,10 @@ public class BuildImageSteps {
           // Builds the application layers.
           List<ListenableFuture<CachedLayer>> buildAndCacheApplicationLayerFutures =
               new BuildAndCacheApplicationLayersStep(
-                      buildConfiguration, sourceFilesConfiguration, cache, listeningExecutorService)
+                      buildConfiguration,
+                      sourceFilesConfiguration,
+                      applicationLayersCache,
+                      listeningExecutorService)
                   .call();
 
           timer2.lap("Setting up container configuration push");
