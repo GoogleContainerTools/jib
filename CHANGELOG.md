@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - `jib:dockercontext` not building a `Dockerfile` ([#171](https://github.com/google/jib/pull/171))
+- Failure to parse Docker config with `HttpHeaders` field ([#175](https://github.com/google/jib/pull/175))
 
 ## 0.1.5
 ### Added
