@@ -20,3 +20,4 @@ docker stop $(docker container ls --quiet) || true
 
 (cd github/jib/jib-core; ./gradlew clean build integrationTest publishToMavenLocal --info)
 (cd github/jib/jib-maven-plugin; ./mvnw clean install -P integration-tests -B -U -X)
+(cd github/jib/jib-gradle-plugin; ./gradlew clean build integrationTest --info)
