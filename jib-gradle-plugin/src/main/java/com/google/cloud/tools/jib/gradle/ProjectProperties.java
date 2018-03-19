@@ -18,13 +18,11 @@ package com.google.cloud.tools.jib.gradle;
 
 import java.util.ArrayList;
 import java.util.List;
-
+import javax.annotation.Nullable;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.logging.Logger;
 import org.gradle.jvm.tasks.Jar;
-
-import javax.annotation.Nullable;
 
 /** Obtains information about a Gradle {@link Project}. */
 class ProjectProperties {
