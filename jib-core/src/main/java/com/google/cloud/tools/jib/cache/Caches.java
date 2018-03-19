@@ -21,7 +21,6 @@ import com.google.common.annotations.VisibleForTesting;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 
 /**
@@ -47,13 +46,13 @@ public class Caches implements Closeable {
     /** A file to store in the default base image layers cache to check ownership by Jib. */
     private static final String OWNERSHIP_FILE_NAME = ".jib";
 
-    @VisibleForTesting
     /**
      * Ensures ownership of {@code cacheDirectory} by checking for the existence of {@link
      * #OWNERSHIP_FILE_NAME}.
      *
      * <p>This is a safety check to make sure we are not writing to a directory not created by Jib.
      */
+    @VisibleForTesting
     static void ensureOwnership(Path cacheDirectory)
         throws CacheDirectoryNotOwnedException, IOException {
       Path ownershipFile = cacheDirectory.resolve(OWNERSHIP_FILE_NAME);
@@ -107,22 +106,31 @@ public class Caches implements Closeable {
 
   /** Instantiate with {@link Initializer#init}. */
   private Caches(Path baseCacheDirectory, Path applicationCacheDirectory)
-      throws CacheMetadataCorruptedException, NotDirectoryException {
-    baseCache = Cache.init(baseCacheDirectory);
+      throws CacheMetadataCorruptedException, IOException {
     applicationCache = Cache.init(applicationCacheDirectory);
+
+    // Ensures that only one Cache is initialized if using the same directory.
+    if (Files.isSameFile(baseCacheDirectory, applicationCacheDirectory)) {
+      baseCache = applicationCache;
+    } else {
+      baseCache = Cache.init(baseCacheDirectory);
+    }
+  }
+
+  public Cache getBaseCache() {
+    return baseCache;
+  }
+
+  public Cache getApplicationCache() {
+    return applicationCache;
   }
 
   @Override
   public void close() throws IOException {
-    baseCache.close();
     applicationCache.close();
-  }
 
-  Cache getBaseCache() {
-    return baseCache;
-  }
-
-  Cache getApplicationCache() {
-    return applicationCache;
+    if (baseCache != applicationCache) {
+      baseCache.close();
+    }
   }
 }
