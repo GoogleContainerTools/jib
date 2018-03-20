@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,13 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import org.gradle.api.Plugin;
-import org.gradle.api.Project;
-
-public class JibPlugin implements Plugin<Project> {
-
-  @Override
-  public void apply(Project project) {
-    project.getTasks().create("jib", BuildImageTask.class);
-  }
+public enum ImageFormat {
+  DOCKER,
+  OCI
 }
