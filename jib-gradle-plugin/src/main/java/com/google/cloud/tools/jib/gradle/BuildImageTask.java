@@ -172,11 +172,6 @@ public class BuildImageTask extends DefaultTask {
 
   @TaskAction
   public void buildImage() {
-    //    validateParameters();
     // TODO: Implement.
-  }
-
-  private void validateParameters() {
-    //    if (to.)
   }
 }
