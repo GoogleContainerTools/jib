@@ -28,22 +28,46 @@ import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.TaskValidationException;
-import org.gradle.util.Configurable;
 import org.gradle.util.ConfigureUtil;
 
+/**
+ * Builds a container image.
+ *
+ * <p>Example configuration:
+ *
+ * <pre>{@code
+ * jib {
+ *   from {
+ *     image = ‘gcr.io/my-gcp-project/my-base-image’
+ *     credHelper = ‘gcr’
+ *   }
+ *   to {
+ *     image = ‘gcr.io/gcp-project/my-app:built-with-jib’
+ *     credHelper = ‘ecr-login’
+ *   }
+ *   jvmFlags = [‘-Xms512m’, ‘-Xdebug’]
+ *   mainClass = ‘com.mycompany.myproject.Main’
+ *   reproducible = true
+ *   format = OCI
+ * }
+ * }</pre>
+ */
 public class BuildImageTask extends DefaultTask {
 
-  @VisibleForTesting
-  class ImageConfiguration implements Configurable<Void> {
+  /** Enumeration of supported image formats. */
+  private enum ImageFormat {
+    DOCKER,
+    OCI
+  }
 
-    private final String closureName;
+  /**
+   * Configures an image to be used in the build steps. This is configurable with Groovy closures.
+   */
+  @VisibleForTesting
+  class ImageConfiguration {
 
     @Nullable private String image;
     @Nullable private String credHelper;
-
-    private ImageConfiguration(String closureName) {
-      this.closureName = closureName;
-    }
 
     @VisibleForTesting
     @Nullable
@@ -57,34 +81,41 @@ public class BuildImageTask extends DefaultTask {
       return credHelper;
     }
 
-    @Override
-    public Void configure(Closure closure) {
+    /**
+     * @param closureName the name of the method the closure was passed to
+     * @param closure the closure to apply
+     */
+    private void configure(String closureName, Closure closure) {
       ConfigureUtil.configureSelf(closure, this);
+
+      // 'image' is a required property
       if (image == null) {
+        // The wrapping mimics Gradle's built-in task configuration validation.
         throw new TaskValidationException(
             "A problem was found with the configuration of task '" + getName() + "'",
             Collections.singletonList(
                 new InvalidUserDataException(
                     "'" + closureName + "' closure must define 'image' property")));
       }
-      return null;
     }
   }
 
-  private final ImageConfiguration from = new ImageConfiguration("from");
-  private final ImageConfiguration to = new ImageConfiguration("to");
+  private final ImageConfiguration from = new ImageConfiguration();
+  private final ImageConfiguration to = new ImageConfiguration();
 
   private List<String> jvmFlags = new ArrayList<>();
   @Nullable private String mainClass;
   private boolean reproducible = true;
   private ImageFormat format = ImageFormat.DOCKER;
 
+  /** Configures the base image. */
   public void from(Closure<?> closure) {
-    from.configure(closure);
+    from.configure("from", closure);
   }
 
+  /** Configures the target image. */
   public void to(Closure<?> closure) {
-    to.configure(closure);
+    to.configure("to", closure);
   }
 
   @VisibleForTesting
