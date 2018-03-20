@@ -85,7 +85,7 @@ public class BuildImageTask extends DefaultTask {
      * @param closureName the name of the method the closure was passed to
      * @param closure the closure to apply
      */
-    private void configure(String closureName, Closure closure) {
+    private ImageConfiguration configure(String closureName, Closure closure) {
       ConfigureUtil.configureSelf(closure, this);
 
       // 'image' is a required property
@@ -97,11 +97,12 @@ public class BuildImageTask extends DefaultTask {
                 new InvalidUserDataException(
                     "'" + closureName + "' closure must define 'image' property")));
       }
+      return this;
     }
   }
 
-  private final ImageConfiguration from = new ImageConfiguration();
-  private final ImageConfiguration to = new ImageConfiguration();
+  @Nullable private ImageConfiguration from;
+  @Nullable private ImageConfiguration to;
 
   private List<String> jvmFlags = new ArrayList<>();
   @Nullable private String mainClass;
@@ -110,21 +111,24 @@ public class BuildImageTask extends DefaultTask {
 
   /** Configures the base image. */
   public void from(Closure<?> closure) {
-    from.configure("from", closure);
+    from = new ImageConfiguration().configure("from", closure);
   }
 
   /** Configures the target image. */
   public void to(Closure<?> closure) {
-    to.configure("to", closure);
+    to = new ImageConfiguration().configure("to", closure);
   }
 
-  @VisibleForTesting
-  ImageConfiguration getFrom() {
+  @Nullable
+  @Input
+  @Optional
+  public ImageConfiguration getFrom() {
     return from;
   }
 
-  @VisibleForTesting
-  ImageConfiguration getTo() {
+  @Nullable
+  @Input
+  public ImageConfiguration getTo() {
     return to;
   }
 
@@ -168,6 +172,11 @@ public class BuildImageTask extends DefaultTask {
 
   @TaskAction
   public void buildImage() {
+    //    validateParameters();
     // TODO: Implement.
+  }
+
+  private void validateParameters() {
+    //    if (to.)
   }
 }
