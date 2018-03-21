@@ -34,6 +34,8 @@
           <credHelpers>
             <credHelper>gcr</credHelper>
           </credHelpers>
+          <!-- Does not have tests use user-level cache for base image layers. -->
+          <useOnlyProjectCache>true</useOnlyProjectCache>
         </configuration>
       </plugin>
     </plugins>
