@@ -35,7 +35,7 @@ In your Maven Java project, add the plugin to your `pom.xml`:
 <plugin>
   <groupId>com.google.cloud.tools</groupId>
   <artifactId>jib-maven-plugin</artifactId>
-  <version>0.1.5</version>
+  <version>0.1.6</version>
   <configuration>
     <registry>myregistry</registry>
     <repository>myapp</repository>
@@ -168,6 +168,7 @@ Field | Default | Description
 `mainClass`|Uses `mainClass` from `maven-jar-plugin`|The main class to launch the application from.
 `enableReproducibleBuilds`|`true`|Building with the same application contents always generates the same image. Note that this does *not* preserve file timestamps and ownership. 
 `imageFormat`|`Docker`|Use `OCI` to build an [OCI container image](https://www.opencontainers.org/).
+`useOnlyProjectCache`|`false`|If set to true, Jib does not share a cache between different Maven projects.
 
 ### Example
 
