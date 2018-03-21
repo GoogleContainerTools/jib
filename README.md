@@ -150,7 +150,7 @@ mvn compile jib:dockercontext -Djib.dockerDir=my/docker/context/
 You can then build your image with Docker:
 
 ```shell
-docker built -t myregistry/myapp my/docker/context/
+docker build -t myregistry/myapp my/docker/context/
 ``` 
 
 ## Extended Usage
