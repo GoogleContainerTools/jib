@@ -110,7 +110,7 @@ public class JibExtension {
   private final ListProperty<String> jvmFlags;
   private final Property<String> mainClass;
   private final Property<Boolean> reproducible;
-  private Property<ImageFormat> format;
+  private final Property<ImageFormat> format;
 
   @Inject
   public JibExtension(Project project) {
@@ -139,33 +139,16 @@ public class JibExtension {
     action.execute(to);
   }
 
-  List<String> getJvmFlags() {
-    return jvmFlags.get();
-  }
-
   public void setJvmFlags(List<String> jvmFlags) {
     this.jvmFlags.set(jvmFlags);
-  }
-
-  @Nullable
-  String getMainClass() {
-    return mainClass.getOrNull();
   }
 
   public void setMainClass(String mainClass) {
     this.mainClass.set(mainClass);
   }
 
-  boolean getReproducible() {
-    return reproducible.get();
-  }
-
   public void setReproducible(boolean isEnabled) {
     reproducible.set(isEnabled);
-  }
-
-  Class<? extends BuildableManifestTemplate> getFormat() {
-    return format.get().getManifestTemplateClass();
   }
 
   public void setFormat(ImageFormat format) {
@@ -178,5 +161,22 @@ public class JibExtension {
 
   ImageConfiguration getTo() {
     return to;
+  }
+
+  List<String> getJvmFlags() {
+    return jvmFlags.get();
+  }
+
+  @Nullable
+  String getMainClass() {
+    return mainClass.getOrNull();
+  }
+
+  boolean getReproducible() {
+    return reproducible.get();
+  }
+
+  Class<? extends BuildableManifestTemplate> getFormat() {
+    return format.get().getManifestTemplateClass();
   }
 }
