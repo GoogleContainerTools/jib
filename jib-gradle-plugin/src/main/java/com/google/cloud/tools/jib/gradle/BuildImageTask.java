@@ -24,7 +24,7 @@ import org.gradle.api.tasks.TaskAction;
 /** Builds a container image. */
 public class BuildImageTask extends DefaultTask {
 
-  /** Linked extension that configures this task. */
+  /** Linked extension that configures this task. Must be set before the task is executed. */
   @Nullable private JibExtension extension;
 
   @TaskAction

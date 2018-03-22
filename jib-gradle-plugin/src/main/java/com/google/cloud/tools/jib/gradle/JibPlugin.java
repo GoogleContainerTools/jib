@@ -29,8 +29,6 @@ public class JibPlugin implements Plugin<Project> {
         .create(
             "jib",
             BuildImageTask.class,
-            buildImageTask -> {
-              buildImageTask.setExtension(jibExtension);
-            });
+            buildImageTask -> buildImageTask.setExtension(jibExtension));
   }
 }

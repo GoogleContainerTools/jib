@@ -155,6 +155,7 @@ public class JibExtension {
   }
 
   public boolean getReproducible() {
+    System.out.println("ERERE " + reproducible.getOrNull());
     return reproducible.getOrElse(DEFAULT_REPRODUCIBLE);
   }
 
