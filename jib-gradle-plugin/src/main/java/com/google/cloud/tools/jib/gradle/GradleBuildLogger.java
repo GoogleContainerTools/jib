@@ -29,6 +29,11 @@ class GradleBuildLogger implements BuildLogger {
   }
 
   @Override
+  public void lifecycle(CharSequence message) {
+    logger.lifecycle(message.toString());
+  }
+
+  @Override
   public void debug(CharSequence message) {
     logger.debug(message.toString());
   }

@@ -152,9 +152,9 @@ public class BuildImageTask extends DefaultTask {
       cachesInitializer.setBaseCacheDirectory(cacheDirectory);
     }
 
-    getLogger().info("Pushing image as " + targetImageReference);
-    getLogger().info("");
-    getLogger().info("");
+    getLogger().lifecycle("Pushing image as " + targetImageReference);
+    getLogger().lifecycle("");
+    getLogger().lifecycle("");
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
     // Disables annoying Apache HTTP client logging.
@@ -167,9 +167,9 @@ public class BuildImageTask extends DefaultTask {
     doBuildImage(
         new BuildImageSteps(buildConfiguration, sourceFilesConfiguration, cachesInitializer));
 
-    getLogger().info("");
-    getLogger().info("Built and pushed image as " + targetImageReference);
-    getLogger().info("");
+    getLogger().lifecycle("");
+    getLogger().lifecycle("Built and pushed image as " + targetImageReference);
+    getLogger().lifecycle("");
   }
 
   void setExtension(JibExtension jibExtension) {
@@ -194,29 +194,29 @@ public class BuildImageTask extends DefaultTask {
           GradleSourceFilesConfiguration.getForProject(getProject());
 
       // Logs the different source files used.
-      getLogger().info("");
-      getLogger().info("Containerizing application with the following files:");
-      getLogger().info("");
+      getLogger().lifecycle("");
+      getLogger().lifecycle("Containerizing application with the following files:");
+      getLogger().lifecycle("");
 
-      getLogger().info("\tDependencies:");
-      getLogger().info("");
+      getLogger().lifecycle("\tDependencies:");
+      getLogger().lifecycle("");
       sourceFilesConfiguration
           .getDependenciesFiles()
-          .forEach(dependencyFile -> getLogger().info("\t\t" + dependencyFile));
+          .forEach(dependencyFile -> getLogger().lifecycle("\t\t" + dependencyFile));
 
-      getLogger().info("\tResources:");
-      getLogger().info("");
+      getLogger().lifecycle("\tResources:");
+      getLogger().lifecycle("");
       sourceFilesConfiguration
           .getResourcesFiles()
-          .forEach(resourceFile -> getLogger().info("\t\t" + resourceFile));
+          .forEach(resourceFile -> getLogger().lifecycle("\t\t" + resourceFile));
 
-      getLogger().info("\tClasses:");
-      getLogger().info("");
+      getLogger().lifecycle("\tClasses:");
+      getLogger().lifecycle("");
       sourceFilesConfiguration
           .getClassesFiles()
-          .forEach(classesFile -> getLogger().info("\t\t" + classesFile));
+          .forEach(classesFile -> getLogger().lifecycle("\t\t" + classesFile));
 
-      getLogger().info("");
+      getLogger().lifecycle("");
 
       return sourceFilesConfiguration;
 
