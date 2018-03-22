@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,38 +14,42 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.builder;
+package com.google.cloud.tools.jib.gradle;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.google.cloud.tools.jib.builder.BuildLogger;
+import org.gradle.api.logging.Logger;
 
-/** Implementation of {@link BuildLogger} for testing purposes. */
-public class TestBuildLogger implements BuildLogger {
+/** Implementation of {@link BuildLogger} for Gradle plugins. */
+class GradleBuildLogger implements BuildLogger {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(TestBuildLogger.class);
+  private final Logger logger;
 
-  @Override
-  public void debug(CharSequence message) {
-    LOGGER.debug(message.toString());
-  }
-
-  @Override
-  public void info(CharSequence message) {
-    LOGGER.info(message.toString());
-  }
-
-  @Override
-  public void warn(CharSequence message) {
-    LOGGER.warn(message.toString());
-  }
-
-  @Override
-  public void error(CharSequence message) {
-    LOGGER.error(message.toString());
+  GradleBuildLogger(Logger logger) {
+    this.logger = logger;
   }
 
   @Override
   public void lifecycle(CharSequence message) {
-    info(message);
+    logger.lifecycle(message.toString());
+  }
+
+  @Override
+  public void debug(CharSequence message) {
+    logger.debug(message.toString());
+  }
+
+  @Override
+  public void info(CharSequence message) {
+    logger.info(message.toString());
+  }
+
+  @Override
+  public void warn(CharSequence message) {
+    logger.warn(message.toString());
+  }
+
+  @Override
+  public void error(CharSequence message) {
+    logger.error(message.toString());
   }
 }
