@@ -82,16 +82,6 @@ public class BuildImageTask extends DefaultTask {
   @TaskAction
   public void buildImage() {
     // TODO: Implement.
-
-    System.out.println("from.image : " + getFromImage());
-    System.out.println("from.credHelper : " + getFromCredHelper());
-    System.out.println("to.image : " + getToImage());
-    System.out.println("to.credHelper : " + getToCredHelper());
-
-    System.out.println("jvmFlags: " + getJvmFlags());
-    System.out.println("mainClass: " + getMainClass());
-    System.out.println("reproducible: " + getReproducible());
-    System.out.println("format: " + getFormat());
   }
 
   void setExtension(JibExtension jibExtension) {

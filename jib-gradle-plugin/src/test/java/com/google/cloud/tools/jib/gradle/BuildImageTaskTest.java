@@ -16,68 +16,53 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
+import java.util.Arrays;
 import org.gradle.api.Project;
 import org.gradle.testfixtures.ProjectBuilder;
+import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Test;
 
 /** Tests for {@link BuildImageTask}. */
 public class BuildImageTaskTest {
 
   private BuildImageTask testBuildImageTask;
+  private JibExtension fakeJibExtension;
 
   @Before
   public void setUp() {
     Project fakeProject = ProjectBuilder.builder().build();
     testBuildImageTask = fakeProject.getTasks().create("task", BuildImageTask.class);
+    fakeJibExtension = fakeProject.getExtensions().create("jib", JibExtension.class, fakeProject);
   }
 
-  //  @Test
-  //  public void testConfigureFrom() {
-  //    testBuildImageTask.(
-  //        getClosureWithProperties(
-  //            ImmutableMap.of("image", "some image", "credHelper", "some credential helper")));
-  //
-  //    Assert.assertEquals("some image", testBuildImageTask.getFrom().getImage());
-  //    Assert.assertEquals("some credential helper", testBuildImageTask.getFrom().getCredHelper());
-  //  }
-  //
-  //  @Test
-  //  public void testConfigureFrom_nonexistentProperty() {
-  //    try {
-  //      testBuildImageTask.from(
-  //          getClosureWithProperties(ImmutableMap.of("nonexistent property", "invalid")));
-  //      Assert.fail("Should not be able to configure with nonexistent property");
-  //
-  //    } catch (MissingPropertyException ex) {
-  //      // pass
-  //    }
-  //  }
-  //
-  //  @Test
-  //  public void testConfigureTo() {
-  //    testBuildImageTask.to(
-  //        getClosureWithProperties(
-  //            ImmutableMap.of("image", "another image", "credHelper", "another credential
-  // helper")));
-  //
-  //    Assert.assertEquals("another image", testBuildImageTask.getTo().getImage());
-  //    Assert.assertEquals("another credential helper",
-  // testBuildImageTask.getTo().getCredHelper());
-  //  }
-  //
-  //  /**
-  //   * Generates a closure with the {@code properties} set.
-  //   *
-  //   * @param properties maps from property name to value
-  //   */
-  //  private Closure<Void> getClosureWithProperties(Map<String, String> properties) {
-  //    return new Closure<Void>(this) {
-  //
-  //      public void doCall() {
-  //        for (Map.Entry<String, String> property : properties.entrySet()) {
-  //          setProperty(property.getKey(), property.getValue());
-  //        }
-  //      }
-  //    };
-  //  }
+  @Test
+  public void testSetExtension() {
+    fakeJibExtension.from(
+        from -> {
+          from.setImage("some image");
+          from.setCredHelper("some cred helper");
+        });
+    fakeJibExtension.to(
+        to -> {
+          to.setImage("another image");
+          to.setCredHelper("another cred helper");
+        });
+    fakeJibExtension.setJvmFlags(Arrays.asList("flag1", "flag2"));
+    fakeJibExtension.setMainClass("some main class");
+    fakeJibExtension.setReproducible(false);
+    fakeJibExtension.setFormat(JibExtension.ImageFormat.Docker);
+
+    testBuildImageTask.setExtension(fakeJibExtension);
+
+    Assert.assertEquals("some image", testBuildImageTask.getFromImage());
+    Assert.assertEquals("some cred helper", testBuildImageTask.getFromCredHelper());
+    Assert.assertEquals("another image", testBuildImageTask.getToImage());
+    Assert.assertEquals("another cred helper", testBuildImageTask.getToCredHelper());
+    Assert.assertEquals(Arrays.asList("flag1", "flag2"), testBuildImageTask.getJvmFlags());
+    Assert.assertEquals("some main class", testBuildImageTask.getMainClass());
+    Assert.assertEquals(false, testBuildImageTask.getReproducible());
+    Assert.assertEquals(V22ManifestTemplate.class, testBuildImageTask.getFormat());
+  }
 }
