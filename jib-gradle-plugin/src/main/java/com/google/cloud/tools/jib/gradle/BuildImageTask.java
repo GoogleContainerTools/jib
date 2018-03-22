@@ -23,112 +23,23 @@ import com.google.cloud.tools.jib.cache.Caches;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
-import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
-import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.RegistryClient;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import groovy.lang.Closure;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
-import org.gradle.api.InvalidUserDataException;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.TaskAction;
-import org.gradle.api.tasks.TaskValidationException;
-import org.gradle.util.ConfigureUtil;
 
-/**
- * Builds a container image.
- *
- * <p>Example configuration:
- *
- * <pre>{@code
- * jib {
- *   from {
- *     image = ‘gcr.io/my-gcp-project/my-base-image’
- *     credHelper = ‘gcr’
- *   }
- *   to {
- *     image = ‘gcr.io/gcp-project/my-app:built-with-jib’
- *     credHelper = ‘ecr-login’
- *   }
- *   jvmFlags = [‘-Xms512m’, ‘-Xdebug’]
- *   mainClass = ‘com.mycompany.myproject.Main’
- *   reproducible = true
- *   format = OCI
- * }
- * }</pre>
- */
+/** Builds a container image. */
 public class BuildImageTask extends DefaultTask {
-
-  // TODO: Consolidate with BuildImageMojo's.
-  /** Enumeration of {@link BuildableManifestTemplate}s. */
-  private enum ImageFormat {
-    DOCKER(V22ManifestTemplate.class),
-    OCI(OCIManifestTemplate.class);
-
-    private final Class<? extends BuildableManifestTemplate> manifestTemplateClass;
-
-    ImageFormat(Class<? extends BuildableManifestTemplate> manifestTemplateClass) {
-      this.manifestTemplateClass = manifestTemplateClass;
-    }
-  }
-
-  /**
-   * Configures an image to be used in the build steps. This is configurable with Groovy closures.
-   */
-  @VisibleForTesting
-  class ImageConfiguration {
-
-    @Nullable private String image;
-    @Nullable private String credHelper;
-
-    private ImageConfiguration(String defaultImage) {
-      image = defaultImage;
-    }
-
-    private ImageConfiguration() {}
-
-    @VisibleForTesting
-    @Nullable
-    String getImage() {
-      return image;
-    }
-
-    @VisibleForTesting
-    @Nullable
-    String getCredHelper() {
-      return credHelper;
-    }
-
-    /**
-     * @param closureName the name of the method the closure was passed to
-     * @param closure the closure to apply
-     */
-    private ImageConfiguration configure(String closureName, Closure closure) {
-      ConfigureUtil.configureSelf(closure, this);
-
-      // 'image' is a required property
-      if (image == null) {
-        // The wrapping mimics Gradle's built-in task configuration validation.
-        throw new TaskValidationException(
-            "A problem was found with the configuration of task '" + getName() + "'",
-            Collections.singletonList(
-                new InvalidUserDataException(
-                    "'" + closureName + "' closure must define 'image' property")));
-      }
-
-      return this;
-    }
-  }
 
   /** Directory name for the cache. The directory will be relative to the build output directory. */
   private static final String CACHE_DIRECTORY_NAME = "jib-cache";
@@ -136,93 +47,72 @@ public class BuildImageTask extends DefaultTask {
   /** {@code User-Agent} header suffix to send to the registry. */
   private static final String USER_AGENT_SUFFIX = "jib-gradle-plugin";
 
-  private ImageConfiguration from = new ImageConfiguration("gcr.io/distroless/java");
-  @Nullable private ImageConfiguration to;
+  /** Linked extension that configures this task. Must be set before the task is executed. */
+  @Nullable private JibExtension extension;
 
-  private List<String> jvmFlags = new ArrayList<>();
-  @Nullable private String mainClass;
-  private boolean reproducible = true;
-  private ImageFormat format = ImageFormat.DOCKER;
-  private boolean useOnlyProjectCache = false;
-
-  /** Configures the base image. */
-  public void from(Closure<?> closure) {
-    from.configure("from", closure);
-  }
-
-  /** Configures the target image. */
-  public void to(Closure<?> closure) {
-    to = new ImageConfiguration().configure("to", closure);
-  }
-
-  @Nullable
   @Input
-  public ImageConfiguration getFrom() {
-    return from;
+  @Nullable
+  public String getFromImage() {
+    return Preconditions.checkNotNull(extension).getFrom().getImage();
   }
 
-  @Nullable
   @Input
-  public ImageConfiguration getTo() {
-    return to;
+  @Nullable
+  @Optional
+  public String getFromCredHelper() {
+    return Preconditions.checkNotNull(extension).getFrom().getCredHelper();
+  }
+
+  @Input
+  @Nullable
+  public String getToImage() {
+    return Preconditions.checkNotNull(extension).getTo().getImage();
+  }
+
+  @Input
+  @Nullable
+  @Optional
+  public String getToCredHelper() {
+    return Preconditions.checkNotNull(extension).getTo().getCredHelper();
   }
 
   @Input
   public List<String> getJvmFlags() {
-    return jvmFlags;
-  }
-
-  public void setJvmFlags(List<String> jvmFlags) {
-    this.jvmFlags = jvmFlags;
+    return Preconditions.checkNotNull(extension).getJvmFlags();
   }
 
   @Input
-  @Optional
   @Nullable
+  @Optional
   public String getMainClass() {
-    return mainClass;
-  }
-
-  public void setMainClass(@Nullable String mainClass) {
-    this.mainClass = mainClass;
+    return Preconditions.checkNotNull(extension).getMainClass();
   }
 
   @Input
   public boolean getReproducible() {
-    return reproducible;
-  }
-
-  public void setReproducible(boolean isEnabled) {
-    reproducible = isEnabled;
+    return Preconditions.checkNotNull(extension).getReproducible();
   }
 
   @Input
-  public ImageFormat getFormat() {
-    return format;
-  }
-
-  public void setFormat(ImageFormat format) {
-    this.format = format;
+  public Class<? extends BuildableManifestTemplate> getFormat() {
+    return Preconditions.checkNotNull(extension).getFormat();
   }
 
   @Input
   public boolean getUseOnlyProjectCache() {
-    return useOnlyProjectCache;
-  }
-
-  public void setUseOnlyProjectCache(boolean useOnlyProjectCache) {
-    this.useOnlyProjectCache = useOnlyProjectCache;
+    return Preconditions.checkNotNull(extension).getUseOnlyProjectCache();
   }
 
   @TaskAction
   public void buildImage() throws InvalidImageReferenceException, IOException {
     ImageReference baseImageReference =
-        ImageReference.parse(Preconditions.checkNotNull(from.image));
+        ImageReference.parse(Preconditions.checkNotNull(getFromImage()));
     ImageReference targetImageReference =
-        ImageReference.parse(Preconditions.checkNotNull(Preconditions.checkNotNull(to).image));
+        ImageReference.parse(Preconditions.checkNotNull(getToImage()));
 
     ProjectProperties projectProperties = new ProjectProperties(getProject(), getLogger());
 
+    String mainClass = getMainClass();
     if (mainClass == null) {
       mainClass = projectProperties.getMainClassFromJarTask();
       if (mainClass == null) {
@@ -234,11 +124,11 @@ public class BuildImageTask extends DefaultTask {
 
     // TODO: These should be passed separately - one for base image, one for target image.
     List<String> credHelpers = new ArrayList<>();
-    if (from.credHelper != null) {
-      credHelpers.add(from.credHelper);
+    if (getFromCredHelper() != null) {
+      credHelpers.add(getFromCredHelper());
     }
-    if (to.credHelper != null) {
-      credHelpers.add(to.credHelper);
+    if (getToCredHelper() != null) {
+      credHelpers.add(getToCredHelper());
     }
 
     BuildConfiguration buildConfiguration =
@@ -247,9 +137,9 @@ public class BuildImageTask extends DefaultTask {
             .setTargetImage(targetImageReference)
             .setCredentialHelperNames(credHelpers)
             .setMainClass(mainClass)
-            .setEnableReproducibleBuilds(reproducible)
-            .setJvmFlags(jvmFlags)
-            .setTargetFormat(format.manifestTemplateClass)
+            .setEnableReproducibleBuilds(getReproducible())
+            .setJvmFlags(getJvmFlags())
+            .setTargetFormat(getFormat())
             .build();
 
     // Uses a directory in the Gradle build cache as the Jib cache.
@@ -258,7 +148,7 @@ public class BuildImageTask extends DefaultTask {
       Files.createDirectory(cacheDirectory);
     }
     Caches.Initializer cachesInitializer = Caches.newInitializer(cacheDirectory);
-    if (useOnlyProjectCache) {
+    if (getUseOnlyProjectCache()) {
       cachesInitializer.setBaseCacheDirectory(cacheDirectory);
     }
 
@@ -282,6 +172,10 @@ public class BuildImageTask extends DefaultTask {
     getLogger().info("");
   }
 
+  void setExtension(JibExtension jibExtension) {
+    extension = jibExtension;
+  }
+
   private void doBuildImage(BuildImageSteps buildImageSteps) {
     try {
       buildImageSteps.run();
@@ -293,6 +187,7 @@ public class BuildImageTask extends DefaultTask {
   }
 
   /** @return the {@link SourceFilesConfiguration} based on the current project */
+  @Internal
   private SourceFilesConfiguration getSourceFilesConfiguration() {
     try {
       SourceFilesConfiguration sourceFilesConfiguration =

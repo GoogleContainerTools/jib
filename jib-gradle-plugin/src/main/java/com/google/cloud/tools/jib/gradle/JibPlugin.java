@@ -23,6 +23,12 @@ public class JibPlugin implements Plugin<Project> {
 
   @Override
   public void apply(Project project) {
-    project.getTasks().create("jib", BuildImageTask.class);
+    JibExtension jibExtension = project.getExtensions().create("jib", JibExtension.class, project);
+    project
+        .getTasks()
+        .create(
+            "jib",
+            BuildImageTask.class,
+            buildImageTask -> buildImageTask.setExtension(jibExtension));
   }
 }

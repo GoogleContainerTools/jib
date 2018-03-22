@@ -45,6 +45,8 @@
             <credHelper>gcr</credHelper>
           </credHelpers>
           <mainClass>com.test.HelloWorld</mainClass>
+          <!-- Does not have tests use user-level cache for base image layers. -->
+          <useOnlyProjectCache>true</useOnlyProjectCache>
         </configuration>
       </plugin>
     </plugins>
