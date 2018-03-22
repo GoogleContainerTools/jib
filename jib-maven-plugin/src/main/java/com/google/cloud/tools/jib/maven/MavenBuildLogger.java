@@ -47,4 +47,9 @@ class MavenBuildLogger implements BuildLogger {
   public void error(CharSequence charSequence) {
     log.error(charSequence);
   }
+
+  @Override
+  public void lifecycle(CharSequence message) {
+    info(message);
+  }
 }
