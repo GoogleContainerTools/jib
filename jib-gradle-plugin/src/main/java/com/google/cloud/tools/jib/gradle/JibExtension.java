@@ -16,6 +16,10 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
+import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
+import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
+import com.google.common.annotations.VisibleForTesting;
 import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -58,8 +62,6 @@ public class JibExtension {
     @Nullable private String image;
     @Nullable private String credHelper;
 
-    public ImageConfiguration() {}
-
     @Nullable
     public String getImage() {
       return image;
@@ -77,36 +79,30 @@ public class JibExtension {
     public void setCredHelper(String credHelper) {
       this.credHelper = credHelper;
     }
-
-    //    /**
-    //     * @param closureName the name of the method the closure was passed to
-    //     * @param closure the closure to apply
-    //     */
-    //    private ImageConfiguration configure(String closureName, Closure closure) {
-    //      ConfigureUtil.configureSelf(closure, this);
-    //
-    //      // 'image' is a required property
-    //      if (image == null) {
-    //        // The wrapping mimics Gradle's built-in task configuration validation.
-    //        throw new TaskValidationException(
-    //            "A problem was found with the configuration of task '" + getName() + "'",
-    //            Collections.singletonList(
-    //                new InvalidUserDataException(
-    //                    "'" + closureName + "' closure must define 'image' property")));
-    //      }
-    //      return this;
-    //    }
   }
 
-  /** Enumeration of supported image formats. */
-  private enum ImageFormat {
-    DOCKER,
-    OCI
+  // TODO: Consolidate with BuildImageMojo#ImageFormat.
+  /** Enumeration of {@link BuildableManifestTemplate}s. */
+  @VisibleForTesting
+  enum ImageFormat {
+    Docker(V22ManifestTemplate.class),
+    OCI(OCIManifestTemplate.class);
+
+    private final Class<? extends BuildableManifestTemplate> manifestTemplateClass;
+
+    ImageFormat(Class<? extends BuildableManifestTemplate> manifestTemplateClass) {
+      this.manifestTemplateClass = manifestTemplateClass;
+    }
+
+    private Class<? extends BuildableManifestTemplate> getManifestTemplateClass() {
+      return manifestTemplateClass;
+    }
   }
 
   // Defines default configuration values.
+  private static final String DEFAULT_FROM_IMAGE = "gcr.io/distroless/java";
   private static final List<String> DEFAULT_JVM_FLAGS = Collections.emptyList();
-  private static final ImageFormat DEFAULT_FORMAT = ImageFormat.DOCKER;
+  private static final ImageFormat DEFAULT_FORMAT = ImageFormat.Docker;
   private static final boolean DEFAULT_REPRODUCIBLE = true;
 
   private final ImageConfiguration from;
@@ -127,6 +123,12 @@ public class JibExtension {
     mainClass = objectFactory.property(String.class);
     reproducible = objectFactory.property(Boolean.class);
     format = objectFactory.property(ImageFormat.class);
+
+    // Sets defaults.
+    from.setImage(DEFAULT_FROM_IMAGE);
+    jvmFlags.set(DEFAULT_JVM_FLAGS);
+    reproducible.set(DEFAULT_REPRODUCIBLE);
+    format.set(DEFAULT_FORMAT);
   }
 
   public void from(Action<? super ImageConfiguration> action) {
@@ -137,8 +139,8 @@ public class JibExtension {
     action.execute(to);
   }
 
-  public List<String> getJvmFlags() {
-    return jvmFlags.getOrElse(DEFAULT_JVM_FLAGS);
+  List<String> getJvmFlags() {
+    return jvmFlags.get();
   }
 
   public void setJvmFlags(List<String> jvmFlags) {
@@ -146,7 +148,7 @@ public class JibExtension {
   }
 
   @Nullable
-  public String getMainClass() {
+  String getMainClass() {
     return mainClass.getOrNull();
   }
 
@@ -154,17 +156,16 @@ public class JibExtension {
     this.mainClass.set(mainClass);
   }
 
-  public boolean getReproducible() {
-    System.out.println("ERERE " + reproducible.getOrNull());
-    return reproducible.getOrElse(DEFAULT_REPRODUCIBLE);
+  boolean getReproducible() {
+    return reproducible.get();
   }
 
   public void setReproducible(boolean isEnabled) {
     reproducible.set(isEnabled);
   }
 
-  public ImageFormat getFormat() {
-    return format.getOrElse(DEFAULT_FORMAT);
+  Class<? extends BuildableManifestTemplate> getFormat() {
+    return format.get().getManifestTemplateClass();
   }
 
   public void setFormat(ImageFormat format) {
