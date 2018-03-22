@@ -133,6 +133,26 @@ Then, you can build your container image by running:
 mvn package
 ```
 
+### Export to a Docker context
+
+Jib can also export to a Docker context so that you can build with Docker, if needed:
+
+```shell
+mvn compile jib:dockercontext
+```
+
+The Docker context will be created at `target/jib-dockercontext` by default. You can change this directory with the `targetDir` configuration option or the `jib.dockerDir` parameter:
+
+```shell
+mvn compile jib:dockercontext -Djib.dockerDir=my/docker/context/
+```
+
+You can then build your image with Docker:
+
+```shell
+docker build -t myregistry/myapp my/docker/context/
+``` 
+
 ## Extended Usage
 
 Extended configuration options provide additional options for customizing the image build.
