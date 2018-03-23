@@ -54,7 +54,7 @@ public class BuildImageTaskTest {
     fakeJibExtension.setReproducible(false);
     fakeJibExtension.setFormat(JibExtension.ImageFormat.Docker);
 
-    testBuildImageTask.setExtension(fakeJibExtension);
+    testBuildImageTask.applyExtension(fakeJibExtension);
 
     Assert.assertEquals("some image", testBuildImageTask.getFromImage());
     Assert.assertEquals("some cred helper", testBuildImageTask.getFromCredHelper());

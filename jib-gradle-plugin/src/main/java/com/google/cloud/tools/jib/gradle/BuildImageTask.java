@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
-import com.google.common.base.Preconditions;
 import java.util.List;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
@@ -28,55 +27,63 @@ import org.gradle.api.tasks.TaskAction;
 /** Builds a container image. */
 public class BuildImageTask extends DefaultTask {
 
-  /** Linked extension that configures this task. Must be set before the task is executed. */
-  @Nullable private JibExtension extension;
+  @Nullable private String fromImage;
+  @Nullable private String fromCredHelper;
+  @Nullable private String toImage;
+  @Nullable private String toCredHelper;
+  @Nullable private List<String> jvmFlags;
+  @Nullable private String mainClass;
+  private boolean reproducible;
+  @Nullable private Class<? extends BuildableManifestTemplate> format;
 
   @Input
   @Nullable
   public String getFromImage() {
-    return Preconditions.checkNotNull(extension).getFrom().getImage();
+    return fromImage;
   }
 
   @Input
   @Nullable
   @Optional
   public String getFromCredHelper() {
-    return Preconditions.checkNotNull(extension).getFrom().getCredHelper();
+    return fromCredHelper;
   }
 
   @Input
   @Nullable
   public String getToImage() {
-    return Preconditions.checkNotNull(extension).getTo().getImage();
+    return toImage;
   }
 
   @Input
   @Nullable
   @Optional
   public String getToCredHelper() {
-    return Preconditions.checkNotNull(extension).getTo().getCredHelper();
+    return toCredHelper;
   }
 
   @Input
+  @Nullable
   public List<String> getJvmFlags() {
-    return Preconditions.checkNotNull(extension).getJvmFlags();
+    return jvmFlags;
   }
 
   @Input
   @Nullable
   @Optional
   public String getMainClass() {
-    return Preconditions.checkNotNull(extension).getMainClass();
+    return mainClass;
   }
 
   @Input
   public boolean getReproducible() {
-    return Preconditions.checkNotNull(extension).getReproducible();
+    return reproducible;
   }
 
   @Input
+  @Nullable
   public Class<? extends BuildableManifestTemplate> getFormat() {
-    return Preconditions.checkNotNull(extension).getFormat();
+    return format;
   }
 
   @TaskAction
@@ -84,7 +91,14 @@ public class BuildImageTask extends DefaultTask {
     // TODO: Implement.
   }
 
-  void setExtension(JibExtension jibExtension) {
-    extension = jibExtension;
+  void applyExtension(JibExtension jibExtension) {
+    fromImage = jibExtension.getFrom().getImage();
+    fromCredHelper = jibExtension.getFrom().getCredHelper();
+    toImage = jibExtension.getTo().getImage();
+    toCredHelper = jibExtension.getTo().getCredHelper();
+    jvmFlags = jibExtension.getJvmFlags();
+    mainClass = jibExtension.getMainClass();
+    reproducible = jibExtension.getReproducible();
+    format = jibExtension.getFormat();
   }
 }
