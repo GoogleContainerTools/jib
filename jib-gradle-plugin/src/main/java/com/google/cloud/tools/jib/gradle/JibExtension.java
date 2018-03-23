@@ -54,33 +54,6 @@ import org.gradle.api.provider.Property;
  */
 public class JibExtension {
 
-  /**
-   * Configures an image to be used in the build steps. This is configurable with Groovy closures.
-   */
-  public static class ImageConfiguration {
-
-    @Nullable private String image;
-    @Nullable private String credHelper;
-
-    @Nullable
-    public String getImage() {
-      return image;
-    }
-
-    public void setImage(String image) {
-      this.image = image;
-    }
-
-    @Nullable
-    public String getCredHelper() {
-      return credHelper;
-    }
-
-    public void setCredHelper(String credHelper) {
-      this.credHelper = credHelper;
-    }
-  }
-
   // TODO: Consolidate with BuildImageMojo#ImageFormat.
   /** Enumeration of {@link BuildableManifestTemplate}s. */
   @VisibleForTesting

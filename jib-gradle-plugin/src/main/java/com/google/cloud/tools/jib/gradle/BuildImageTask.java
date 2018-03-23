@@ -38,6 +38,7 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
+import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.TaskAction;
 
@@ -50,72 +51,71 @@ public class BuildImageTask extends DefaultTask {
   /** {@code User-Agent} header suffix to send to the registry. */
   private static final String USER_AGENT_SUFFIX = "jib-gradle-plugin";
 
-  /** Linked extension that configures this task. Must be set before the task is executed. */
-  @Nullable private JibExtension extension;
+  @Nullable private ImageConfiguration from;
+  @Nullable private ImageConfiguration to;
+  @Nullable private List<String> jvmFlags;
+  @Nullable private String mainClass;
+  private boolean reproducible;
+  @Nullable private Class<? extends BuildableManifestTemplate> format;
+  private boolean useOnlyProjectCache;
 
-  @Input
+  @Nested
   @Nullable
-  public String getFromImage() {
-    return Preconditions.checkNotNull(extension).getFrom().getImage();
+  public ImageConfiguration getFrom() {
+    return from;
+  }
+
+  @Nested
+  @Nullable
+  public ImageConfiguration getTo() {
+    return to;
   }
 
   @Input
   @Nullable
-  @Optional
-  public String getFromCredHelper() {
-    return Preconditions.checkNotNull(extension).getFrom().getCredHelper();
-  }
-
-  @Input
-  @Nullable
-  public String getToImage() {
-    return Preconditions.checkNotNull(extension).getTo().getImage();
-  }
-
-  @Input
-  @Nullable
-  @Optional
-  public String getToCredHelper() {
-    return Preconditions.checkNotNull(extension).getTo().getCredHelper();
-  }
-
-  @Input
   public List<String> getJvmFlags() {
-    return Preconditions.checkNotNull(extension).getJvmFlags();
+    return jvmFlags;
   }
 
   @Input
   @Nullable
   @Optional
   public String getMainClass() {
-    return Preconditions.checkNotNull(extension).getMainClass();
+    return mainClass;
   }
 
   @Input
   public boolean getReproducible() {
-    return Preconditions.checkNotNull(extension).getReproducible();
+    return reproducible;
   }
 
   @Input
+  @Nullable
   public Class<? extends BuildableManifestTemplate> getFormat() {
-    return Preconditions.checkNotNull(extension).getFormat();
+    return format;
   }
 
   @Input
   public boolean getUseOnlyProjectCache() {
-    return Preconditions.checkNotNull(extension).getUseOnlyProjectCache();
+    return useOnlyProjectCache;
   }
 
   @TaskAction
   public void buildImage() throws InvalidImageReferenceException, IOException {
+    // Asserts required inputs are not null.
+    Preconditions.checkNotNull(from);
+    Preconditions.checkNotNull(to);
+    Preconditions.checkNotNull(jvmFlags);
+    Preconditions.checkNotNull(format);
+
     ImageReference baseImageReference =
-        ImageReference.parse(Preconditions.checkNotNull(getFromImage()));
+        ImageReference.parse(Preconditions.checkNotNull(from.getImage()));
     ImageReference targetImageReference =
-        ImageReference.parse(Preconditions.checkNotNull(getToImage()));
+        ImageReference.parse(Preconditions.checkNotNull(to.getImage()));
 
     ProjectProperties projectProperties = new ProjectProperties(getProject(), getLogger());
 
-    String mainClass = getMainClass();
+    String mainClass = this.mainClass;
     if (mainClass == null) {
       mainClass = projectProperties.getMainClassFromJarTask();
       if (mainClass == null) {
@@ -127,11 +127,11 @@ public class BuildImageTask extends DefaultTask {
 
     // TODO: These should be passed separately - one for base image, one for target image.
     List<String> credHelpers = new ArrayList<>();
-    if (getFromCredHelper() != null) {
-      credHelpers.add(getFromCredHelper());
+    if (from.getCredHelper() != null) {
+      credHelpers.add(from.getCredHelper());
     }
-    if (getToCredHelper() != null) {
-      credHelpers.add(getToCredHelper());
+    if (to.getCredHelper() != null) {
+      credHelpers.add(to.getCredHelper());
     }
 
     BuildConfiguration buildConfiguration =
@@ -140,9 +140,9 @@ public class BuildImageTask extends DefaultTask {
             .setTargetImage(targetImageReference)
             .setCredentialHelperNames(credHelpers)
             .setMainClass(mainClass)
-            .setEnableReproducibleBuilds(getReproducible())
-            .setJvmFlags(getJvmFlags())
-            .setTargetFormat(getFormat())
+            .setEnableReproducibleBuilds(reproducible)
+            .setJvmFlags(jvmFlags)
+            .setTargetFormat(format)
             .build();
 
     // Uses a directory in the Gradle build cache as the Jib cache.
@@ -178,8 +178,13 @@ public class BuildImageTask extends DefaultTask {
     getLogger().lifecycle("");
   }
 
-  void setExtension(JibExtension jibExtension) {
-    extension = jibExtension;
+  void applyExtension(JibExtension jibExtension) {
+    from = jibExtension.getFrom();
+    to = jibExtension.getTo();
+    jvmFlags = jibExtension.getJvmFlags();
+    mainClass = jibExtension.getMainClass();
+    reproducible = jibExtension.getReproducible();
+    format = jibExtension.getFormat();
   }
 
   private void doBuildImage(BuildImageSteps buildImageSteps) {

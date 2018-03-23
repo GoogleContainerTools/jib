@@ -54,12 +54,14 @@ public class BuildImageTaskTest {
     fakeJibExtension.setReproducible(false);
     fakeJibExtension.setFormat(JibExtension.ImageFormat.Docker);
 
-    testBuildImageTask.setExtension(fakeJibExtension);
+    testBuildImageTask.applyExtension(fakeJibExtension);
 
-    Assert.assertEquals("some image", testBuildImageTask.getFromImage());
-    Assert.assertEquals("some cred helper", testBuildImageTask.getFromCredHelper());
-    Assert.assertEquals("another image", testBuildImageTask.getToImage());
-    Assert.assertEquals("another cred helper", testBuildImageTask.getToCredHelper());
+    Assert.assertNotNull(testBuildImageTask.getFrom());
+    Assert.assertEquals("some image", testBuildImageTask.getFrom().getImage());
+    Assert.assertEquals("some cred helper", testBuildImageTask.getFrom().getCredHelper());
+    Assert.assertNotNull(testBuildImageTask.getTo());
+    Assert.assertEquals("another image", testBuildImageTask.getTo().getImage());
+    Assert.assertEquals("another cred helper", testBuildImageTask.getTo().getCredHelper());
     Assert.assertEquals(Arrays.asList("flag1", "flag2"), testBuildImageTask.getJvmFlags());
     Assert.assertEquals("some main class", testBuildImageTask.getMainClass());
     Assert.assertEquals(false, testBuildImageTask.getReproducible());
