@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.api.client.http.HttpTransport;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.BuildImageSteps;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
@@ -30,6 +31,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -161,6 +164,9 @@ public class BuildImageTask extends DefaultTask {
     System.setProperty(
         "org.apache.commons.logging.Log", "org.apache.commons.logging.impl.SimpleLog");
     System.setProperty("org.apache.commons.logging.simplelog.defaultlog", "error");
+    // Disables Google HTTP client logging.
+    Logger logger = Logger.getLogger(HttpTransport.class.getName());
+    logger.setLevel(Level.OFF);
 
     RegistryClient.setUserAgentSuffix(USER_AGENT_SUFFIX);
 
