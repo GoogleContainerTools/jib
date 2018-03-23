@@ -28,13 +28,12 @@ import org.gradle.api.tasks.TaskAction;
 /** Builds a container image. */
 public class BuildImageTask extends DefaultTask {
 
+  @Nullable private ImageConfiguration from;
+  @Nullable private ImageConfiguration to;
   @Nullable private List<String> jvmFlags;
   @Nullable private String mainClass;
   private boolean reproducible;
   @Nullable private Class<? extends BuildableManifestTemplate> format;
-
-  @Nullable private ImageConfiguration from;
-  @Nullable private ImageConfiguration to;
 
   @Nested
   @Nullable
