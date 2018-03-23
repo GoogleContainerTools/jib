@@ -21,45 +21,31 @@ import java.util.List;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.TaskAction;
 
 /** Builds a container image. */
 public class BuildImageTask extends DefaultTask {
 
-  @Nullable private String fromImage;
-  @Nullable private String fromCredHelper;
-  @Nullable private String toImage;
-  @Nullable private String toCredHelper;
   @Nullable private List<String> jvmFlags;
   @Nullable private String mainClass;
   private boolean reproducible;
   @Nullable private Class<? extends BuildableManifestTemplate> format;
 
-  @Input
+  @Nullable private ImageConfiguration from;
+  @Nullable private ImageConfiguration to;
+
+  @Nested
   @Nullable
-  public String getFromImage() {
-    return fromImage;
+  public ImageConfiguration getFrom() {
+    return from;
   }
 
-  @Input
+  @Nested
   @Nullable
-  @Optional
-  public String getFromCredHelper() {
-    return fromCredHelper;
-  }
-
-  @Input
-  @Nullable
-  public String getToImage() {
-    return toImage;
-  }
-
-  @Input
-  @Nullable
-  @Optional
-  public String getToCredHelper() {
-    return toCredHelper;
+  public ImageConfiguration getTo() {
+    return to;
   }
 
   @Input
@@ -92,10 +78,8 @@ public class BuildImageTask extends DefaultTask {
   }
 
   void applyExtension(JibExtension jibExtension) {
-    fromImage = jibExtension.getFrom().getImage();
-    fromCredHelper = jibExtension.getFrom().getCredHelper();
-    toImage = jibExtension.getTo().getImage();
-    toCredHelper = jibExtension.getTo().getCredHelper();
+    from = jibExtension.getFrom();
+    to = jibExtension.getTo();
     jvmFlags = jibExtension.getJvmFlags();
     mainClass = jibExtension.getMainClass();
     reproducible = jibExtension.getReproducible();
