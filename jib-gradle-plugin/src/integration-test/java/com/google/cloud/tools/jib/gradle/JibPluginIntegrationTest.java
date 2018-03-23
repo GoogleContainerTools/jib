@@ -36,7 +36,8 @@ public class JibPluginIntegrationTest {
   private static String buildAndRun(TestProject testProject, String imageReference)
       throws IOException, InterruptedException {
     BuildResult buildResult = testProject.build();
-    BuildTask jibTask = buildResult.task("jib");
+
+    BuildTask jibTask = buildResult.task(":jib");
 
     Assert.assertNotNull(jibTask);
     Assert.assertEquals(TaskOutcome.SUCCESS, jibTask.getOutcome());

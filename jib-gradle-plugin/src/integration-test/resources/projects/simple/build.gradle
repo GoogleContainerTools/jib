@@ -11,7 +11,7 @@ repositories {
 }
 
 dependencies {
-    compile file('libs/dependency-1.0.0.jar')
+    compile files('libs/dependency-1.0.0.jar')
 }
 
 jib {
