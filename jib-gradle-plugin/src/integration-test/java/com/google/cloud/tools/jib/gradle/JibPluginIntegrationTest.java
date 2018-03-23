@@ -16,34 +16,48 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import org.gradle.api.Project;
-import org.gradle.api.internal.project.ProjectInternal;
-import org.gradle.testfixtures.ProjectBuilder;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
+import com.google.cloud.tools.jib.Command;
 import java.io.IOException;
+import org.gradle.testkit.runner.BuildResult;
+import org.gradle.testkit.runner.BuildTask;
+import org.gradle.testkit.runner.TaskOutcome;
+import org.hamcrest.CoreMatchers;
+import org.junit.Assert;
+import org.junit.ClassRule;
+import org.junit.Test;
 
 /** Integration tests for {@link JibPlugin}. */
 public class JibPluginIntegrationTest {
 
-  @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @ClassRule public static final TestProject emptyTestProject = new TestProject("empty");
 
-  @Before
-  public void setUp() throws IOException {
-    Project testProject = ProjectBuilder.builder().withProjectDir(temporaryFolder.newFolder()).build();
-    testProject.getPluginManager().apply(JibPlugin.class);
-    JibExtension ex = (JibExtension) testProject.getExtensions().getByName("jib");
-    ((ProjectInternal) testProject).evaluate();
+  @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
 
-    testProject.
+  private static String buildAndRun(TestProject testProject, String imageReference)
+      throws IOException, InterruptedException {
+    BuildResult buildResult = testProject.build();
+    BuildTask jibTask = buildResult.task("jib");
+
+    Assert.assertNotNull(jibTask);
+    Assert.assertEquals(TaskOutcome.SUCCESS, jibTask.getOutcome());
+    Assert.assertThat(
+        buildResult.getOutput(),
+        CoreMatchers.containsString("Built and pushed image as " + imageReference));
+
+    new Command("docker", "pull", imageReference).run();
+    return new Command("docker", "run", imageReference).run();
   }
 
   @Test
-  public void testExecute_simple() {
-    Assert.assertEquals("Hello, world\n", buildAndRun())
+  public void testBuild_empty() throws IOException, InterruptedException {
+    Assert.assertEquals(
+        "", buildAndRun(emptyTestProject, "gcr.io/jib-integration-testing/emptyimage:gradle"));
+  }
+
+  @Test
+  public void testBuild_simple() throws IOException, InterruptedException {
+    Assert.assertEquals(
+        "Hello, world\n",
+        buildAndRun(simpleTestProject, "gcr.io/jib-integration-testing/simpleimage:gradle"));
   }
 }

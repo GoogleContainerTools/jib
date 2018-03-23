@@ -39,8 +39,8 @@
         <version>${jib-maven-plugin.version}</version>
         <configuration>
           <registry>gcr.io</registry>
-          <repository>jib-integration-testing/simpleimage</repository>
-          <tag>maven</tag>
+          <repository>jib-integration-testing/jibtestimage</repository>
+          <tag>built-with-jib</tag>
           <credHelpers>
             <credHelper>gcr</credHelper>
           </credHelpers>

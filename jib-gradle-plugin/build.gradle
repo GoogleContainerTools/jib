@@ -22,6 +22,7 @@ sourceSets {
     main.java.srcDir file('../jib-core/src/main/java')
     test.java.srcDir file('../jib-core/src/test/java')
     test.resources.srcDir file('../jib-core/src/test/resources')
+    integrationTest.java.srcDir file('../jib-core/src/integration-test/java')
 
     integrationTest {
         java {

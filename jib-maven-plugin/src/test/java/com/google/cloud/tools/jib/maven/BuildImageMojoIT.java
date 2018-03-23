@@ -36,24 +36,8 @@ public class BuildImageMojoIT {
   @ClassRule
   public static final TestProject emptyTestProject = new TestProject(testPlugin, "empty");
 
-  @Test
-  public void testExecute_simple() throws VerificationException, IOException, InterruptedException {
-    Assert.assertEquals(
-        "Hello, world\n",
-        buildAndRun(
-            simpleTestProject.getProjectRoot(),
-            "gcr.io/jib-integration-testing/jibtestimage:built-with-jib"));
-  }
-
-  @Test
-  public void testExecute_empty() throws InterruptedException, IOException, VerificationException {
-    Assert.assertEquals(
-        "",
-        buildAndRun(
-            emptyTestProject.getProjectRoot(), "gcr.io/jib-integration-testing/emptyimage"));
-  }
-
-  private String buildAndRun(Path projectRoot, String imageReference)
+  /** Builds and runs jib:build on a project at {@code projectRoot} pushing to {@code imageReference}. */
+  private static String buildAndRun(Path projectRoot, String imageReference)
       throws VerificationException, IOException, InterruptedException {
     Verifier verifier = new Verifier(projectRoot.toString());
     verifier.setAutoclean(false);
@@ -80,5 +64,22 @@ public class BuildImageMojoIT {
 
     new Command("docker", "pull", imageReference).run();
     return new Command("docker", "run", imageReference).run();
+  }
+
+  @Test
+  public void testExecute_simple() throws VerificationException, IOException, InterruptedException {
+    Assert.assertEquals(
+        "Hello, world\n",
+        buildAndRun(
+            simpleTestProject.getProjectRoot(),
+            "gcr.io/jib-integration-testing/simpleimage:maven"));
+  }
+
+  @Test
+  public void testExecute_empty() throws InterruptedException, IOException, VerificationException {
+    Assert.assertEquals(
+        "",
+        buildAndRun(
+            emptyTestProject.getProjectRoot(), "gcr.io/jib-integration-testing/emptyimage:maven"));
   }
 }

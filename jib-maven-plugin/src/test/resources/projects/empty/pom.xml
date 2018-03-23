@@ -30,6 +30,7 @@
         <configuration>
           <registry>gcr.io</registry>
           <repository>jib-integration-testing/emptyimage</repository>
+          <tag>maven</tag>
           <mainClass>com.test.Empty</mainClass>
           <credHelpers>
             <credHelper>gcr</credHelper>
