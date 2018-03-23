@@ -102,16 +102,16 @@ public class BuildImageTask extends DefaultTask {
 
   @TaskAction
   public void buildImage() throws InvalidImageReferenceException, IOException {
-    // Asserts required inputs are not null.
+    // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(from);
+    Preconditions.checkNotNull(from.getImage());
     Preconditions.checkNotNull(to);
+    Preconditions.checkNotNull(to.getImage());
     Preconditions.checkNotNull(jvmFlags);
     Preconditions.checkNotNull(format);
 
-    ImageReference baseImageReference =
-        ImageReference.parse(Preconditions.checkNotNull(from.getImage()));
-    ImageReference targetImageReference =
-        ImageReference.parse(Preconditions.checkNotNull(to.getImage()));
+    ImageReference baseImageReference = ImageReference.parse(from.getImage());
+    ImageReference targetImageReference = ImageReference.parse(to.getImage());
 
     ProjectProperties projectProperties = new ProjectProperties(getProject(), getLogger());
 
@@ -178,6 +178,10 @@ public class BuildImageTask extends DefaultTask {
     getLogger().lifecycle("");
   }
 
+  /**
+   * Applies the configuration from {@code jibExtension}. This must be called before {@link
+   * #buildImage}.
+   */
   void applyExtension(JibExtension jibExtension) {
     from = jibExtension.getFrom();
     to = jibExtension.getTo();
