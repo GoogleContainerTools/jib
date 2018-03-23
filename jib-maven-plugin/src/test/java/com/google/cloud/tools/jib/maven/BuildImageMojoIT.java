@@ -36,7 +36,10 @@ public class BuildImageMojoIT {
   @ClassRule
   public static final TestProject emptyTestProject = new TestProject(testPlugin, "empty");
 
-  /** Builds and runs jib:build on a project at {@code projectRoot} pushing to {@code imageReference}. */
+  /**
+   * Builds and runs jib:build on a project at {@code projectRoot} pushing to {@code
+   * imageReference}.
+   */
   private static String buildAndRun(Path projectRoot, String imageReference)
       throws VerificationException, IOException, InterruptedException {
     Verifier verifier = new Verifier(projectRoot.toString());
