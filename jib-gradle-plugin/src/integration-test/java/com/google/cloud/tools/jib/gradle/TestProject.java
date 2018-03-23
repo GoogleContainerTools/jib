@@ -78,10 +78,10 @@ class TestProject extends TemporaryFolder implements Closeable {
         GradleRunner.create()
             .withProjectDir(projectRoot.toFile())
             .withPluginClasspath()
-            .withArguments("build", "jib", "--stacktrace", "--info");
+            .withArguments("build", "jib");
   }
 
-  BuildResult build() throws IOException {
+  BuildResult build() {
     return gradleRunner.build();
   }
 }

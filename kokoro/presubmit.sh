@@ -13,4 +13,4 @@ cd github/jib
 
 (cd jib-core; ./gradlew clean build integrationTest --info)
 (cd jib-maven-plugin; ./mvnw clean install -B -U -X)
-(cd jib-gradle-plugin; ./gradlew clean build integrationTest --info)
+(cd jib-gradle-plugin; ./gradlew clean build --info)
