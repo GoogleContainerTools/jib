@@ -18,11 +18,14 @@ package com.google.cloud.tools.jib.builder;
 
 public interface BuildLogger {
 
-  void debug(CharSequence message);
+  void error(CharSequence message);
 
-  void info(CharSequence message);
+  /** Logs messages as part of normal execution (default log level). */
+  void lifecycle(CharSequence message);
 
   void warn(CharSequence message);
 
-  void error(CharSequence message);
+  void info(CharSequence message);
+
+  void debug(CharSequence message);
 }

@@ -290,9 +290,9 @@ public class BuildImageMojo extends AbstractMojo {
         getLog().error("Invalid format for 'tag'");
       }
 
-      // 'tag' must not contain backslashes.
+      // 'tag' must not contain forward slashes.
       if (tag.indexOf('/') >= 0) {
-        getLog().error("'tag' cannot contain backslashes");
+        getLog().error("'tag' cannot contain '/'");
         throw new MojoFailureException("Invalid configuration parameters");
       }
     }
