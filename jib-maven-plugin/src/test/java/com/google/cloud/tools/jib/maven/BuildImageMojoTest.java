@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -99,6 +100,26 @@ public class BuildImageMojoTest {
           "Build image failed, perhaps you should make sure your Internet is up and that the registry you are pushing to exists",
           ex.getMessage());
       Assert.assertEquals(mockHttpHostConnectException, ex.getCause());
+    }
+  }
+
+  @Test
+  public void testBuildImage_executionException_unknownHostException()
+      throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
+          CacheDirectoryNotOwnedException {
+    UnknownHostException mockUnknownHostException = Mockito.mock(UnknownHostException.class);
+    Mockito.when(mockExecutionException.getCause()).thenReturn(mockUnknownHostException);
+    Mockito.doThrow(mockExecutionException).when(mockBuildImageSteps).run();
+
+    try {
+      testBuildImageMojo.buildImage(mockBuildImageSteps);
+      Assert.fail("buildImage should have thrown an exception");
+
+    } catch (MojoExecutionException ex) {
+      Assert.assertEquals(
+          "Build image failed, perhaps you should make sure that the registry you configured exists/is spelled properly",
+          ex.getMessage());
+      Assert.assertEquals(mockUnknownHostException, ex.getCause());
     }
   }
 

@@ -38,6 +38,7 @@ import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -111,7 +112,11 @@ public class BuildImageMojo extends AbstractMojo {
   private boolean enableReproducibleBuilds;
 
   @Parameter(defaultValue = "Docker", required = true)
-  private ImageFormat imageFormat;
+  private String imageFormat;
+
+  // This is the real <imageFormat> parameter; if <imageFormat> is misconfigured, we want to catch
+  // and handle the error ourselves, so we use a String @Parameter and pass the verified value here.
+  private ImageFormat imageFormatToEnum;
 
   @Parameter(defaultValue = "false", required = true)
   private boolean useOnlyProjectCache;
@@ -165,7 +170,7 @@ public class BuildImageMojo extends AbstractMojo {
             .setEnableReproducibleBuilds(enableReproducibleBuilds)
             .setJvmFlags(jvmFlags)
             .setEnvironment(environment)
-            .setTargetFormat(imageFormat.getManifestTemplateClass())
+            .setTargetFormat(imageFormatToEnum.getManifestTemplateClass())
             .build();
 
     // Uses a directory in the Maven build cache as the Jib cache.
@@ -234,6 +239,11 @@ public class BuildImageMojo extends AbstractMojo {
                 (HttpResponseException) executionException.getCause().getCause()),
             buildConfiguration);
 
+      } else if (executionException.getCause() instanceof UnknownHostException) {
+        throwMojoExecutionExceptionWithHelpMessage(
+            executionException.getCause(),
+            "make sure that the registry you configured exists/is spelled properly");
+
       } else {
         throwMojoExecutionExceptionWithHelpMessage(executionException.getCause(), null);
       }
@@ -285,6 +295,19 @@ public class BuildImageMojo extends AbstractMojo {
         getLog().error("'tag' cannot contain backslashes");
         throw new MojoFailureException("Invalid configuration parameters");
       }
+    }
+    // Validates 'imageFormat'
+    try {
+      imageFormatToEnum = ImageFormat.valueOf(imageFormat);
+    } catch (IllegalArgumentException ex) {
+      throw new MojoFailureException(
+          "<imageFormat> parameter is configured with value '"
+              + imageFormat
+              + "', but the only valid configuration options are '"
+              + ImageFormat.Docker
+              + "' and '"
+              + ImageFormat.OCI
+              + "'.");
     }
   }
 
