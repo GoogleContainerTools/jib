@@ -38,9 +38,11 @@ import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -119,6 +121,10 @@ public class BuildImageMojo extends AbstractMojo {
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
     validateParameters();
+
+    if (jvmFlags != null && !jvmFlags.isEmpty()) {
+      validateJvmFlags();
+    }
 
     ProjectProperties projectProperties = new ProjectProperties(project, getLog());
 
@@ -285,6 +291,38 @@ public class BuildImageMojo extends AbstractMojo {
         getLog().error("'tag' cannot contain '/'");
         throw new MojoFailureException("Invalid configuration parameters");
       }
+    }
+  }
+
+  /** Checks validity of JVM flags */
+  // TODO: We may also be able to modify this method to check if <mainClass> is valid
+  private void validateJvmFlags() throws MojoFailureException {
+    List<String> processArgs = new ArrayList<>();
+    processArgs.add(
+        Paths.get(System.getProperty("java.home")).resolve("bin").resolve("java").toString());
+    processArgs.addAll(jvmFlags);
+
+    try {
+      Process process = new ProcessBuilder(processArgs).start();
+
+      byte[] bytes = new byte[128];
+      if (process.getErrorStream().read(bytes) <= 0) {
+        getLog().warn("Failed to verify JVM flags.");
+        return;
+      }
+      String output = new String(bytes, Charset.defaultCharset());
+
+      String errorMessage = "Unrecognized option: ";
+      int unrecognizedIndex = output.indexOf(errorMessage);
+      if (unrecognizedIndex >= 0) {
+        String flag =
+            output.substring(
+                unrecognizedIndex + errorMessage.length(),
+                output.indexOf("\n", unrecognizedIndex + errorMessage.length()));
+        throw new MojoFailureException("'" + flag + "' is not a valid JVM flag.");
+      }
+    } catch (IOException ex) {
+      getLog().warn("Failed to verify JVM flags: " + ex.getMessage());
     }
   }
 
