@@ -143,7 +143,7 @@ public class BuildImageMojoTest {
 
     } catch (MojoExecutionException ex) {
       Assert.assertEquals(
-          "Build image failed, perhaps you should make sure your have permissions for someregistry/somerepository",
+          "Build image failed, perhaps you should make sure you have permissions for someregistry/somerepository",
           ex.getMessage());
       Assert.assertEquals(mockRegistryUnauthorizedException, ex.getCause());
     }
