@@ -45,7 +45,7 @@ In your Maven Java project, add the plugin to your `pom.xml`:
 
 ### Configuration
 
-Configure the plugin by changing `registry`, `repository`, and `credHelpers` accordingly.
+Configure the plugin by changing `registry` and `repository` to be the registry and repository to push the built image to.
 
 #### Using [Google Container Registry (GCR)](https://cloud.google.com/container-registry/)...
 
