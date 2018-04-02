@@ -38,6 +38,7 @@ import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -111,7 +112,7 @@ public class BuildImageMojo extends AbstractMojo {
   private boolean enableReproducibleBuilds;
 
   @Parameter(defaultValue = "Docker", required = true)
-  private ImageFormat imageFormat;
+  private String imageFormat;
 
   @Parameter(defaultValue = "false", required = true)
   private boolean useOnlyProjectCache;
@@ -155,6 +156,7 @@ public class BuildImageMojo extends AbstractMojo {
         RegistryCredentials.from("Maven settings", registryCredentials);
 
     ImageReference targetImageReference = ImageReference.of(registry, repository, tag);
+    ImageFormat imageFormatToEnum = ImageFormat.valueOf(imageFormat);
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder(new MavenBuildLogger(getLog()))
             .setBaseImage(baseImage)
@@ -165,7 +167,7 @@ public class BuildImageMojo extends AbstractMojo {
             .setEnableReproducibleBuilds(enableReproducibleBuilds)
             .setJvmFlags(jvmFlags)
             .setEnvironment(environment)
-            .setTargetFormat(imageFormat.getManifestTemplateClass())
+            .setTargetFormat(imageFormatToEnum.getManifestTemplateClass())
             .build();
 
     // Uses a directory in the Maven build cache as the Jib cache.
@@ -234,6 +236,11 @@ public class BuildImageMojo extends AbstractMojo {
                 (HttpResponseException) executionException.getCause().getCause()),
             buildConfiguration);
 
+      } else if (executionException.getCause() instanceof UnknownHostException) {
+        throwMojoExecutionExceptionWithHelpMessage(
+            executionException.getCause(),
+            "make sure that the registry you configured exists/is spelled properly");
+
       } else {
         throwMojoExecutionExceptionWithHelpMessage(executionException.getCause(), null);
       }
@@ -285,6 +292,24 @@ public class BuildImageMojo extends AbstractMojo {
         getLog().error("'tag' cannot contain '/'");
         throw new MojoFailureException("Invalid configuration parameters");
       }
+    }
+    // Validates 'imageFormat'
+    boolean validFormat = false;
+    for (ImageFormat format : ImageFormat.values()) {
+      if (imageFormat.equals(format.name())) {
+        validFormat = true;
+        break;
+      }
+    }
+    if (!validFormat) {
+      throw new MojoFailureException(
+          "<imageFormat> parameter is configured with value '"
+              + imageFormat
+              + "', but the only valid configuration options are '"
+              + ImageFormat.Docker
+              + "' and '"
+              + ImageFormat.OCI
+              + "'.");
     }
   }
 
