@@ -332,7 +332,7 @@ public class BuildImageMojo extends AbstractMojo {
       // No permissions for registry/repository.
       throwMojoExecutionExceptionWithHelpMessage(
           registryUnauthorizedException,
-          "make sure your have permissions for "
+          "make sure you have permissions for "
               + registryUnauthorizedException.getImageReference());
 
     } else if ((buildConfiguration.getCredentialHelperNames() == null
