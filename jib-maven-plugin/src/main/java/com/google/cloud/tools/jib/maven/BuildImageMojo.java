@@ -114,10 +114,6 @@ public class BuildImageMojo extends AbstractMojo {
   @Parameter(defaultValue = "Docker", required = true)
   private String imageFormat;
 
-  // This is the real <imageFormat> parameter; if <imageFormat> is misconfigured, we want to catch
-  // and handle the error ourselves, so we use a String @Parameter and pass the verified value here.
-  private ImageFormat imageFormatToEnum;
-
   @Parameter(defaultValue = "false", required = true)
   private boolean useOnlyProjectCache;
 
@@ -160,6 +156,7 @@ public class BuildImageMojo extends AbstractMojo {
         RegistryCredentials.from("Maven settings", registryCredentials);
 
     ImageReference targetImageReference = ImageReference.of(registry, repository, tag);
+    ImageFormat imageFormatToEnum = ImageFormat.valueOf(imageFormat);
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder(new MavenBuildLogger(getLog()))
             .setBaseImage(baseImage)
@@ -297,9 +294,14 @@ public class BuildImageMojo extends AbstractMojo {
       }
     }
     // Validates 'imageFormat'
-    try {
-      imageFormatToEnum = ImageFormat.valueOf(imageFormat);
-    } catch (IllegalArgumentException ex) {
+    boolean validFormat = false;
+    for (ImageFormat format : ImageFormat.values()) {
+      if (imageFormat.equals(format.name())) {
+        validFormat = true;
+        break;
+      }
+    }
+    if (!validFormat) {
       throw new MojoFailureException(
           "<imageFormat> parameter is configured with value '"
               + imageFormat

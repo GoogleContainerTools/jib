@@ -3,6 +3,7 @@ All notable changes to this project will be documented in this file.
 ## [unreleased]
 
 ### Added
+- Better feedback for build failures
 
 ### Changed
 
