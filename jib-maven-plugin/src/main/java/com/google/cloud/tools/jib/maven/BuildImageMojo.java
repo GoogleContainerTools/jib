@@ -341,7 +341,7 @@ public class BuildImageMojo extends AbstractMojo {
             || !buildConfiguration
                 .getKnownRegistryCredentials()
                 .has(registryUnauthorizedException.getRegistry()))) {
-      // No credential helpers not defined.
+      // No credential helpers defined.
       throwMojoExecutionExceptionWithHelpMessage(
           registryUnauthorizedException,
           "set a credential helper name with the configuration 'credHelpers' or "
