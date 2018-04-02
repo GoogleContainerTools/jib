@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google Inc.
+ * Copyright 2018 Google LLC. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,14 @@ package com.google.cloud.tools.jib.builder;
 
 public interface BuildLogger {
 
-  void debug(CharSequence message);
+  void error(CharSequence message);
 
-  void info(CharSequence message);
+  /** Logs messages as part of normal execution (default log level). */
+  void lifecycle(CharSequence message);
 
   void warn(CharSequence message);
 
-  void error(CharSequence message);
+  void info(CharSequence message);
+
+  void debug(CharSequence message);
 }

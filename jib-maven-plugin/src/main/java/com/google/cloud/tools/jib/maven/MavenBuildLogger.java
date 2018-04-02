@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google Inc.
+ * Copyright 2018 Google LLC. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -46,5 +46,10 @@ class MavenBuildLogger implements BuildLogger {
   @Override
   public void error(CharSequence charSequence) {
     log.error(charSequence);
+  }
+
+  @Override
+  public void lifecycle(CharSequence message) {
+    info(message);
   }
 }

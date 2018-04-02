@@ -19,6 +19,10 @@ repositories {
 }
 
 sourceSets {
+    main.java.srcDir file('../jib-core/src/main/java')
+    test.java.srcDir file('../jib-core/src/test/java')
+    test.resources.srcDir file('../jib-core/src/test/resources')
+
     integrationTest {
         java {
             compileClasspath += main.output + test.output
@@ -35,16 +39,24 @@ configurations {
 }
 
 dependencies {
+    // These are copied over from jib-core and are necessary for the jib-core sourcesets.
+    compile 'com.google.http-client:google-http-client:1.23.0'
+    compile 'org.apache.commons:commons-compress:1.15'
+    compile 'com.google.guava:guava:23.5-jre'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.9.2'
+    compile 'org.slf4j:slf4j-api:1.7.25'
     testCompile 'junit:junit:4.12'
     testCompile 'org.mockito:mockito-core:2.12.0'
 
+    compile gradleApi()
+
     // NullAway errorprone plugin
-    apt 'com.uber.nullaway:nullaway:0.3.5'
+    apt 'com.uber.nullaway:nullaway:0.3.7'
     errorprone 'com.google.errorprone:error_prone_core:2.2.0'
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = "4.3.1"
+    gradleVersion = '4.6'
 }
 
 // Integration tests must be run explicitly

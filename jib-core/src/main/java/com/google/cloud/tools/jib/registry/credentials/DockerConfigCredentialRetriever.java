@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google Inc.
+ * Copyright 2018 Google LLC. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -75,19 +75,24 @@ public class DockerConfigCredentialRetriever {
     this.dockerCredentialHelperFactory = dockerCredentialHelperFactory;
   }
 
-  /** @return {@link Authorization} found for {@code registry}, or {@code null} if not found */
+  /**
+   * @return {@link Authorization} found for {@code registry}, or {@code null} if not found
+   * @throws IOException if failed to parse the config JSON
+   */
   @Nullable
-  public Authorization retrieve() {
+  public Authorization retrieve() throws IOException {
     DockerConfigTemplate dockerConfigTemplate = loadDockerConfigTemplate();
     if (dockerConfigTemplate == null) {
       return null;
     }
 
+    // First, tries to find defined auth.
     String auth = dockerConfigTemplate.getAuthFor(registry);
     if (auth != null) {
       return Authorizations.withBasicToken(auth);
     }
 
+    // Then, tries to use a defined credHelpers credential helper.
     String credentialHelperSuffix = dockerConfigTemplate.getCredentialHelperFor(registry);
     if (credentialHelperSuffix != null) {
       try {
@@ -105,19 +110,18 @@ public class DockerConfigCredentialRetriever {
     return null;
   }
 
-  /** Loads the Docker config JSON and caches it. */
+  /**
+   * Loads the Docker config JSON and caches it.
+   *
+   * @throws IOException if failed to parse the config JSON
+   */
   @Nullable
-  private DockerConfigTemplate loadDockerConfigTemplate() {
+  private DockerConfigTemplate loadDockerConfigTemplate() throws IOException {
     // Loads the Docker config.
     if (!Files.exists(dockerConfigFile)) {
       return null;
     }
-    try {
-      return JsonTemplateMapper.readJsonFromFile(dockerConfigFile, DockerConfigTemplate.class);
 
-    } catch (IOException ex) {
-      // TODO: Throw some exception about not being able to parse Docker config.
-      return null;
-    }
+    return JsonTemplateMapper.readJsonFromFile(dockerConfigFile, DockerConfigTemplate.class);
   }
 }

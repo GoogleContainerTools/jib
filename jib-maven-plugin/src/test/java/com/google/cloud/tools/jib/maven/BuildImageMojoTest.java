@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google Inc.
+ * Copyright 2018 Google LLC. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,9 +20,12 @@ import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.BuildImageSteps;
+import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import org.apache.http.conn.HttpHostConnectException;
@@ -60,8 +63,8 @@ public class BuildImageMojoTest {
 
   @Test
   public void testBuildImage_cacheMetadataCorruptedException()
-      throws InterruptedException, ExecutionException, CacheMetadataCorruptedException,
-          IOException {
+      throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
+          CacheDirectoryNotOwnedException {
     CacheMetadataCorruptedException mockCacheMetadataCorruptedException =
         Mockito.mock(CacheMetadataCorruptedException.class);
     Mockito.doThrow(mockCacheMetadataCorruptedException).when(mockBuildImageSteps).run();
@@ -80,8 +83,8 @@ public class BuildImageMojoTest {
 
   @Test
   public void testBuildImage_executionException_httpHostConnectException()
-      throws InterruptedException, ExecutionException, CacheMetadataCorruptedException,
-          IOException {
+      throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
+          CacheDirectoryNotOwnedException {
     HttpHostConnectException mockHttpHostConnectException =
         Mockito.mock(HttpHostConnectException.class);
     Mockito.when(mockExecutionException.getCause()).thenReturn(mockHttpHostConnectException);
@@ -101,8 +104,8 @@ public class BuildImageMojoTest {
 
   @Test
   public void testBuildImage_executionException_registryUnauthorizedException_statusCodeForbidden()
-      throws InterruptedException, ExecutionException, CacheMetadataCorruptedException,
-          IOException {
+      throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
+          CacheDirectoryNotOwnedException {
     Mockito.when(mockRegistryUnauthorizedException.getHttpResponseException())
         .thenReturn(mockHttpResponseException);
     Mockito.when(mockRegistryUnauthorizedException.getImageReference())
@@ -127,8 +130,8 @@ public class BuildImageMojoTest {
 
   @Test
   public void testBuildImage_executionException_registryUnauthorizedException_noCredentials()
-      throws InterruptedException, ExecutionException, CacheMetadataCorruptedException,
-          IOException {
+      throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
+          CacheDirectoryNotOwnedException {
     Mockito.when(mockRegistryUnauthorizedException.getHttpResponseException())
         .thenReturn(mockHttpResponseException);
     Mockito.when(mockRegistryUnauthorizedException.getRegistry()).thenReturn("someregistry");
@@ -151,8 +154,8 @@ public class BuildImageMojoTest {
 
   @Test
   public void testBuildImage_executionException_registryUnauthorizedException_other()
-      throws InterruptedException, ExecutionException, CacheMetadataCorruptedException,
-          IOException {
+      throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
+          CacheDirectoryNotOwnedException {
     Mockito.when(mockRegistryUnauthorizedException.getHttpResponseException())
         .thenReturn(mockHttpResponseException);
     Mockito.when(mockRegistryUnauthorizedException.getRegistry()).thenReturn("someregistry");
@@ -178,8 +181,8 @@ public class BuildImageMojoTest {
 
   @Test
   public void testBuildImage_executionException_other()
-      throws InterruptedException, ExecutionException, CacheMetadataCorruptedException,
-          IOException {
+      throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
+          CacheDirectoryNotOwnedException {
     Throwable throwable = new Throwable();
     Mockito.when(mockExecutionException.getCause()).thenReturn(throwable);
     Mockito.doThrow(mockExecutionException).when(mockBuildImageSteps).run();
@@ -196,8 +199,8 @@ public class BuildImageMojoTest {
 
   @Test
   public void testBuildImage_otherException()
-      throws InterruptedException, ExecutionException, CacheMetadataCorruptedException,
-          IOException {
+      throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
+          CacheDirectoryNotOwnedException {
     IOException ioException = new IOException();
     Mockito.doThrow(ioException).when(mockBuildImageSteps).run();
 
@@ -213,6 +216,32 @@ public class BuildImageMojoTest {
       Assert.assertEquals(ioException, ex.getCause());
 
       Mockito.verify(mockLog).error(ioException);
+    }
+  }
+
+  @Test
+  public void testBuildImage_cacheDirectoryNotOwnedException()
+      throws InterruptedException, ExecutionException, CacheDirectoryNotOwnedException,
+          CacheMetadataCorruptedException, IOException {
+    Path expectedCacheDirectory = Paths.get("some/path");
+
+    CacheDirectoryNotOwnedException mockCacheDirectoryNotOwnedException =
+        Mockito.mock(CacheDirectoryNotOwnedException.class);
+    Mockito.when(mockCacheDirectoryNotOwnedException.getCacheDirectory())
+        .thenReturn(expectedCacheDirectory);
+    Mockito.doThrow(mockCacheDirectoryNotOwnedException).when(mockBuildImageSteps).run();
+
+    try {
+      testBuildImageMojo.buildImage(mockBuildImageSteps);
+      Assert.fail("buildImage should have thrown an exception");
+
+    } catch (MojoExecutionException ex) {
+      Assert.assertEquals(
+          "Build image failed, perhaps you should check that '"
+              + expectedCacheDirectory
+              + "' is not used by another application or set the `useOnlyProjectCache` configuration",
+          ex.getMessage());
+      Assert.assertEquals(mockCacheDirectoryNotOwnedException, ex.getCause());
     }
   }
 }

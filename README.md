@@ -35,7 +35,7 @@ In your Maven Java project, add the plugin to your `pom.xml`:
 <plugin>
   <groupId>com.google.cloud.tools</groupId>
   <artifactId>jib-maven-plugin</artifactId>
-  <version>0.1.5</version>
+  <version>0.1.6</version>
   <configuration>
     <registry>myregistry</registry>
     <repository>myapp</repository>
@@ -45,7 +45,7 @@ In your Maven Java project, add the plugin to your `pom.xml`:
 
 ### Configuration
 
-Configure the plugin by changing `registry`, `repository`, and `credHelpers` accordingly.
+Configure the plugin by changing `registry` and `repository` to be the registry and repository to push the built image to.
 
 #### Using [Google Container Registry (GCR)](https://cloud.google.com/container-registry/)...
 
@@ -70,6 +70,20 @@ For example, to build the image `aws_account_id.dkr.ecr.region.amazonaws.com/my-
 <configuration>
   <registry>aws_account_id.dkr.ecr.region.amazonaws.com</registry>
   <repository>my-app</repository>
+</configuration>
+```
+
+#### Using [Docker Hub Registry](https://hub.docker.com/)...
+
+*Make sure you have a [docker-credential-helper](https://github.com/docker/docker-credential-helpers#available-programs) set up. For example, on macOS, the credential helper would be `docker-credential-osxkeychain`. To use a different credential helper, set the [`credHelpers`](#extended-usage) configuration. See [Authentication Methods](#authentication-methods) for other ways of authenticating.*
+
+For example, to build the image `my-docker-id/my-app`, the configuration would be:
+
+```xml
+<configuration>
+  <registry>registry.hub.docker.com</registry>
+  <repository>my-docker-id/my-app</repository>
+  <credHelpers><credHelper>osxkeychain</credHelper></credHelpers>
 </configuration>
 ```
 
@@ -119,6 +133,26 @@ Then, you can build your container image by running:
 mvn package
 ```
 
+### Export to a Docker context
+
+Jib can also export to a Docker context so that you can build with Docker, if needed:
+
+```shell
+mvn compile jib:dockercontext
+```
+
+The Docker context will be created at `target/jib-dockercontext` by default. You can change this directory with the `targetDir` configuration option or the `jib.dockerDir` parameter:
+
+```shell
+mvn compile jib:dockercontext -Djib.dockerDir=my/docker/context/
+```
+
+You can then build your image with Docker:
+
+```shell
+docker build -t myregistry/myapp my/docker/context/
+``` 
+
 ## Extended Usage
 
 Extended configuration options provide additional options for customizing the image build.
@@ -134,6 +168,7 @@ Field | Default | Description
 `mainClass`|Uses `mainClass` from `maven-jar-plugin`|The main class to launch the application from.
 `enableReproducibleBuilds`|`true`|Building with the same application contents always generates the same image. Note that this does *not* preserve file timestamps and ownership. 
 `imageFormat`|`Docker`|Use `OCI` to build an [OCI container image](https://www.opencontainers.org/).
+`useOnlyProjectCache`|`false`|If set to true, Jib does not share a cache between different Maven projects.
 
 ### Example
 

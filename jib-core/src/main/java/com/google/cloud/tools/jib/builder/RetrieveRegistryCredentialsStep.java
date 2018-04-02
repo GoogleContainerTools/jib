@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google Inc.
+ * Copyright 2018 Google LLC. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -89,12 +89,17 @@ class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
       }
 
       // Tries to get registry credentials from the Docker config.
-      Authorization dockerConfigAuthorization = dockerConfigCredentialRetriever.retrieve();
-      if (dockerConfigAuthorization != null) {
-        buildConfiguration
-            .getBuildLogger()
-            .info("Using credentials from Docker config for " + registry);
-        return dockerConfigAuthorization;
+      try {
+        Authorization dockerConfigAuthorization = dockerConfigCredentialRetriever.retrieve();
+        if (dockerConfigAuthorization != null) {
+          buildConfiguration
+              .getBuildLogger()
+              .info("Using credentials from Docker config for " + registry);
+          return dockerConfigAuthorization;
+        }
+
+      } catch (IOException ex) {
+        buildConfiguration.getBuildLogger().info("Unable to parse Docker config");
       }
 
       // Tries to infer common credential helpers for known registries.

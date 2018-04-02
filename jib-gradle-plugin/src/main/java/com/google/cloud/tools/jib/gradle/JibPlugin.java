@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google Inc.
+ * Copyright 2018 Google LLC. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,5 +22,14 @@ import org.gradle.api.Project;
 public class JibPlugin implements Plugin<Project> {
 
   @Override
-  public void apply(Project project) {}
+  public void apply(Project project) {
+    JibExtension jibExtension = project.getExtensions().create("jib", JibExtension.class, project);
+    project
+        .getTasks()
+        .create(
+            "jib",
+            BuildImageTask.class,
+            buildImageTask ->
+                project.afterEvaluate(ignored -> buildImageTask.applyExtension(jibExtension)));
+  }
 }

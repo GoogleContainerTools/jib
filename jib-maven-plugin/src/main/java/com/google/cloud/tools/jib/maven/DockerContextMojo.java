@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google Inc.
+ * Copyright 2018 Google LLC. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,10 +21,10 @@ import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.filesystem.PathConsumer;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.io.InsecureRecursiveDeleteException;
 import com.google.common.io.MoreFiles;
 import com.google.common.io.Resources;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -130,22 +130,17 @@ public class DockerContextMojo extends AbstractMojo {
 
   @VisibleForTesting
   /** Makes a {@code Dockerfile} from the {@code DockerfileTemplate}. */
-  String makeDockerfile(SourceFilesConfiguration sourceFilesConfiguration)
-      throws IOException, URISyntaxException {
-    Path dockerfileTemplate = Paths.get(Resources.getResource("DockerfileTemplate").toURI());
+  String makeDockerfile(SourceFilesConfiguration sourceFilesConfiguration) throws IOException {
+    String dockerfileTemplate =
+        Resources.toString(Resources.getResource("DockerfileTemplate"), StandardCharsets.UTF_8);
 
-    String dockerfile = new String(Files.readAllBytes(dockerfileTemplate), StandardCharsets.UTF_8);
-    dockerfile =
-        dockerfile
-            .replace("@@BASE_IMAGE@@", from)
-            .replace(
-                "@@DEPENDENCIES_PATH_ON_IMAGE@@",
-                sourceFilesConfiguration.getDependenciesPathOnImage())
-            .replace(
-                "@@RESOURCES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getResourcesPathOnImage())
-            .replace("@@CLASSES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getClassesPathOnImage())
-            .replace("@@ENTRYPOINT@@", getEntrypoint(sourceFilesConfiguration));
-    return dockerfile;
+    return dockerfileTemplate
+        .replace("@@BASE_IMAGE@@", from)
+        .replace(
+            "@@DEPENDENCIES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getDependenciesPathOnImage())
+        .replace("@@RESOURCES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getResourcesPathOnImage())
+        .replace("@@CLASSES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getClassesPathOnImage())
+        .replace("@@ENTRYPOINT@@", getEntrypoint(sourceFilesConfiguration));
   }
 
   /**
@@ -214,11 +209,15 @@ public class DockerContextMojo extends AbstractMojo {
 
       projectProperties.getLog().info("Created Docker context at " + targetDir);
 
+    } catch (InsecureRecursiveDeleteException ex) {
+      throwMojoExecutionExceptionWithHelpMessage(
+          ex,
+          "cannot clear directory '"
+              + targetDir
+              + "' safely - clear it manually before creating the Docker context");
+
     } catch (IOException ex) {
       throwMojoExecutionExceptionWithHelpMessage(ex, "check if `targetDir` is set correctly");
-
-    } catch (URISyntaxException ex) {
-      throw new MojoFailureException("Unexpected URISyntaxException", ex);
     }
   }
 

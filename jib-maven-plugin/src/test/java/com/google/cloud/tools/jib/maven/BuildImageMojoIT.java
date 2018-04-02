@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google Inc.
+ * Copyright 2018 Google LLC. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -70,7 +70,13 @@ public class BuildImageMojoIT {
 
     verifier.verifyErrorFreeLog();
 
-    Assert.assertTrue(timeOne > timeTwo);
+    Assert.assertTrue(
+        "First build time ("
+            + timeOne
+            + ") is not greater than second build time ("
+            + timeTwo
+            + ")",
+        timeOne > timeTwo);
 
     new Command("docker", "pull", imageReference).run();
     return new Command("docker", "run", imageReference).run();

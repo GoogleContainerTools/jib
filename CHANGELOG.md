@@ -7,6 +7,23 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
+
+## 0.1.7
+
+## 0.1.6
+### Changed
+- Base image layers are now cached on a user-level rather than a project level - disable with `useOnlyProjectCache` configuration ([#29](https://github.com/google/jib/issues/29))
+
+### Fixed
+- `jib:dockercontext` not building a `Dockerfile` ([#171](https://github.com/google/jib/pull/171))
+- Failure to parse Docker config with `HttpHeaders` field ([#175](https://github.com/google/jib/pull/175))
+
+## 0.1.5
+### Added
+- Export a Docker context (including a Dockerfile) with `jib:dockercontext` ([#49](https://github.com/google/jib/issues/49))
+
+## 0.1.4
+### Fixed
 - Null tag validation generating NullPointerException ([#125](https://github.com/google/jib/issues/125))
 - Build failure on project with no dependencies ([#126](https://github.com/google/jib/issues/126))
 
