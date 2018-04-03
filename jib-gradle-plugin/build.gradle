@@ -22,6 +22,8 @@ sourceSets {
     main.java.srcDir file('../jib-core/src/main/java')
     test.java.srcDir file('../jib-core/src/test/java')
     test.resources.srcDir file('../jib-core/src/test/resources')
+    integrationTest.java.srcDir file('../jib-core/src/integration-test/java')
+    integrationTest.resources.srcDir file('../jib-core/src/integration-test/resources')
 
     integrationTest {
         java {
@@ -116,7 +118,7 @@ pluginBundle {
     vcsUrl = 'https://github.com/google/jib/'
 
     plugins {
-        minikubePlugin {
+        jibPlugin {
             id = 'com.google.cloud.tools'
             displayName = 'Jib'
             description = 'Containerize your Java application'

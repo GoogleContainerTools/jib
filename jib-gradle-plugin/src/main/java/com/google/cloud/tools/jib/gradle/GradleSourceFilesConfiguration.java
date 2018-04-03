@@ -67,8 +67,10 @@ class GradleSourceFilesConfiguration implements SourceFilesConfiguration {
 
     // Adds each file in the resources output directory to the resources files list.
     Path resourcesOutputDirectory = mainSourceSet.getOutput().getResourcesDir().toPath();
-    try (Stream<Path> resourceFileStream = Files.list(resourcesOutputDirectory)) {
-      resourceFileStream.forEach(resourcesFiles::add);
+    if (Files.exists(resourcesOutputDirectory)) {
+      try (Stream<Path> resourceFileStream = Files.list(resourcesOutputDirectory)) {
+        resourceFileStream.forEach(resourcesFiles::add);
+      }
     }
 
     // Adds all other files to the dependencies files list.

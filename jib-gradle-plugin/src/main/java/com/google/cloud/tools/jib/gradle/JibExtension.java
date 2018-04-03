@@ -77,6 +77,7 @@ public class JibExtension {
   private static final List<String> DEFAULT_JVM_FLAGS = Collections.emptyList();
   private static final ImageFormat DEFAULT_FORMAT = ImageFormat.Docker;
   private static final boolean DEFAULT_REPRODUCIBLE = true;
+  private static final boolean DEFAULT_USE_ONLY_PROJECT_CACHE = false;
 
   private final ImageConfiguration from;
   private final ImageConfiguration to;
@@ -84,6 +85,7 @@ public class JibExtension {
   private final Property<String> mainClass;
   private final Property<Boolean> reproducible;
   private final Property<ImageFormat> format;
+  private final Property<Boolean> useOnlyProjectCache;
 
   @Inject
   public JibExtension(Project project) {
@@ -96,12 +98,14 @@ public class JibExtension {
     mainClass = objectFactory.property(String.class);
     reproducible = objectFactory.property(Boolean.class);
     format = objectFactory.property(ImageFormat.class);
+    useOnlyProjectCache = objectFactory.property(Boolean.class);
 
     // Sets defaults.
     from.setImage(DEFAULT_FROM_IMAGE);
     jvmFlags.set(DEFAULT_JVM_FLAGS);
     reproducible.set(DEFAULT_REPRODUCIBLE);
     format.set(DEFAULT_FORMAT);
+    useOnlyProjectCache.set(DEFAULT_USE_ONLY_PROJECT_CACHE);
   }
 
   public void from(Action<? super ImageConfiguration> action) {
@@ -128,6 +132,10 @@ public class JibExtension {
     this.format.set(format);
   }
 
+  public void setUseOnlyProjectCache(boolean useOnlyProjectCache) {
+    this.useOnlyProjectCache.set(useOnlyProjectCache);
+  }
+
   ImageConfiguration getFrom() {
     return from;
   }
@@ -151,5 +159,9 @@ public class JibExtension {
 
   Class<? extends BuildableManifestTemplate> getFormat() {
     return format.get().getManifestTemplateClass();
+  }
+
+  boolean getUseOnlyProjectCache() {
+    return useOnlyProjectCache.get();
   }
 }

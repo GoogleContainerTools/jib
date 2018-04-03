@@ -1,0 +1,21 @@
+plugins {
+    id 'java'
+    id 'com.google.cloud.tools.jib'
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+jib {
+    to {
+        image = 'gcr.io/jib-integration-testing/emptyimage:gradle'
+        credHelper = 'gcr'
+    }
+    mainClass = 'com.test.Empty'
+    // Does not have tests use user-level cache for base image layers.
+    useOnlyProjectCache = true
+}

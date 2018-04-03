@@ -96,4 +96,12 @@ public class JibExtensionTest {
     testJibExtension.setFormat(JibExtension.ImageFormat.OCI);
     Assert.assertEquals(OCIManifestTemplate.class, testJibExtension.getFormat());
   }
+
+  @Test
+  public void testUseOnlyProjectCache() {
+    Assert.assertFalse(testJibExtension.getUseOnlyProjectCache());
+
+    testJibExtension.setUseOnlyProjectCache(true);
+    Assert.assertTrue(testJibExtension.getUseOnlyProjectCache());
+  }
 }
