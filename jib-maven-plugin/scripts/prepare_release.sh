@@ -1,5 +1,5 @@
 #!/bin/bash -
-# Usage: ./prepare_release.sh <release version>
+# Usage: ./scripts/prepare_release.sh <release version>
 
 set -e
 
@@ -20,7 +20,7 @@ Die() {
 }
 
 DieUsage() {
-    Die "Usage: ./prepare_release.sh <release version>"
+    Die "Usage: ./scripts/prepare_release.sh <release version>"
 }
 
 # Usage: CheckVersion <version>

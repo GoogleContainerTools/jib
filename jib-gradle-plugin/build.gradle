@@ -1,11 +1,24 @@
 plugins {
+    // Gradle API
     id 'java-gradle-plugin'
+
+    // Checkstyle
     id 'checkstyle'
+
+    // Google Java Formatter
     id 'com.github.sherter.google-java-format' version '0.6'
-    id 'com.gradle.plugin-publish' version '0.9.10'
+
+    // For local install
     id 'maven'
+
+    // Error-prone checker
     id 'net.ltgt.apt' version '0.13'
     id 'net.ltgt.errorprone' version '0.0.13'
+
+    // Prepare release
+    id 'net.researchgate.release' version '2.6.0'
+    // Gradle Plugin Portal publish
+    id 'com.gradle.plugin-publish' version '0.9.10'
 }
 
 group 'com.google.cloud.tools'
@@ -112,6 +125,13 @@ checkstyle {
 /* CHECKSTYLE */
 
 /* RELEASE */
+// Prepare release
+release {
+    tagTemplate = 'v$version-gradle'
+    git {
+        requireBranch = /^gradle_release_v\d+.*$/  //regex
+    }
+}
 // Gradle Plugin Portal releases
 pluginBundle {
     website = 'https://github.com/google/jib/'
