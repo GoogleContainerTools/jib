@@ -1,11 +1,6 @@
 plugins {
-    // Gradle API
     id 'java-gradle-plugin'
-
-    // Checkstyle
     id 'checkstyle'
-
-    // Google Java Formatter
     id 'com.github.sherter.google-java-format' version '0.6'
 
     // For local install
