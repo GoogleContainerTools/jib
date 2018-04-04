@@ -103,74 +103,44 @@ The plugin provides the `jib` extension for configuration with the following opt
 
 ```groovy
 jib {
-  /* 
-   * Configures the base image to build your application on top of.
-   * 
-   * OPTIONAL
-   */
+  // Configures the base image to build your application on top of.
+  // OPTIONAL
   from {
-    /* 
-     * The image reference for the base image.
-     * 
-     * OPTIONAL STRING, defaults to 'gcr.io/distroless/java'
-     */
+    // The image reference for the base image.
+    // OPTIONAL STRING, defaults to 'gcr.io/distroless/java'
     image =
-    /* 
-     * Suffix for the credential helper that can authenticate pulling the base image (following `docker-credential-`).
-     * 
-     * OPTIONAL STRING
-     */
+    // Suffix for the credential helper that can authenticate pulling the base image
+    // (following `docker-credential-`).
+    // OPTIONAL STRING
     credHelper =
   }
   
-  /* 
-   * Configures the target image to build your application to.
-   * 
-   * REQUIRED
-   */
+  // Configures the target image to build your application to.
+  // REQUIRED
   to {
-    /*
-     * The image reference for the target image.
-     * 
-     * REQUIRED STRING
-     */
+    // The image reference for the target image.
+    // REQUIRED STRING
     image =
-    /*
-     * Suffix for the credential helper that can authenticate pushing the target image (following `docker-credential-`).
-     * 
-     * OPTIONAL STRING
-     */
+    // Suffix for the credential helper that can authenticate pushing the target image
+    // (following `docker-credential-`).
+    // OPTIONAL STRING
     credHelper = 
   }
-  /*
-   * Additional flags to pass into the JVM when running your application.
-   * 
-   * OPTIONAL LIST of STRING, defaults to none
-   */
+  // Additional flags to pass into the JVM when running your application.
+  // OPTIONAL LIST of STRING, defaults to none
   jvmFlags = []
-  /*
-   * The main class to launch your application from.
-   * 
-   * OPTIONAL, defaults to use the main class defined in the 'jar' task
-   */
+  // The main class to launch your application from.
+  // OPTIONAL, defaults to use the main class defined in the 'jar' task
   mainClass =
-  /*
-   * Building with the same application contents always generates the same image. Note that this does *not* preserve file timestamps and ownership.
-   * 
-   * OPTIONAL, defaults to 'true'
-   */
+  // Building with the same application contents always generates the same image. 
+  // Note that this does *not* preserve file timestamps and ownership.
+  // OPTIONAL, defaults to 'true'
   reproducible =
-  /*
-   * Use 'OCI' to build an [OCI container image](https://www.opencontainers.org/).
-   * 
-   * OPTIONAL, defaults to 'Docker'
-   */
+  // Use 'OCI' to build an OCI container image (https://www.opencontainers.org/).
+  // OPTIONAL, defaults to 'Docker'
   format = 
-  /*
-   * If set to true, Jib does not share a cache between different Maven projects.
-   * 
-   * OPTIONAL, defaults to 'false'
-   */
+  // If set to true, Jib does not share a cache between different Maven projects.
+  // OPTIONAL, defaults to 'false'
   useProjectOnlyCache =
 }
 ```
@@ -191,6 +161,7 @@ jib {
   }
   to {
     image = 'localhost:5000/my-image/built-with-jib'
+    credHelper = 'osxkeychain'
   }
   jvmFlags = ['-Xms512m', '-Xdebug', '-Xmy:flag=jib-rules']
   mainClass = 'mypackage.MyApp'
