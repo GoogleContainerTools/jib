@@ -112,7 +112,19 @@ checkstyle {
 /* CHECKSTYLE */
 
 /* RELEASE */
-// gradle plugin portal releases
+// Creates the JAR
+jar {
+    manifest {
+        attributes 'Implementation-Title': project.name,
+                'Implementation-Version': version,
+                'Built-By': System.getProperty('user.name'),
+                'Built-Date': new Date(),
+                'Built-JDK': System.getProperty('java.version'),
+                'Built-Gradle': gradle.gradleVersion
+    }
+}
+
+// Gradle Plugin Portal releases
 pluginBundle {
     website = 'https://github.com/google/jib/'
     vcsUrl = 'https://github.com/google/jib/'
