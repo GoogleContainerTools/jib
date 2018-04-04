@@ -139,7 +139,7 @@ jib {
   mainClass =
   
   // Building with the same application contents always generates the same image. 
-  // Note that this does *not* preserve file timestamps and ownership.
+  // Note that this does NOT preserve file timestamps and ownership.
   // OPTIONAL, defaults to 'true'
   reproducible =
   
