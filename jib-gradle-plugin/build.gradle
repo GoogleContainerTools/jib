@@ -112,18 +112,6 @@ checkstyle {
 /* CHECKSTYLE */
 
 /* RELEASE */
-// Creates the JAR
-jar {
-    manifest {
-        attributes 'Implementation-Title': project.name,
-                'Implementation-Version': version,
-                'Built-By': System.getProperty('user.name'),
-                'Built-Date': new Date(),
-                'Built-JDK': System.getProperty('java.version'),
-                'Built-Gradle': gradle.gradleVersion
-    }
-}
-
 // Gradle Plugin Portal releases
 pluginBundle {
     website = 'https://github.com/google/jib/'
@@ -138,4 +126,5 @@ pluginBundle {
         }
     }
 }
+tasks.publishPlugins.dependsOn integrationTest
 /* RELEASE */
