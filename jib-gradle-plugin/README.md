@@ -103,12 +103,14 @@ The plugin provides the `jib` extension for configuration with the following opt
 
 ```groovy
 jib {
+
   // Configures the base image to build your application on top of.
   // OPTIONAL
   from {
     // The image reference for the base image.
     // OPTIONAL STRING, defaults to 'gcr.io/distroless/java'
     image =
+    
     // Suffix for the credential helper that can authenticate pulling the base image
     // (following `docker-credential-`).
     // OPTIONAL STRING
@@ -121,24 +123,30 @@ jib {
     // The image reference for the target image.
     // REQUIRED STRING
     image =
+    
     // Suffix for the credential helper that can authenticate pushing the target image
     // (following `docker-credential-`).
     // OPTIONAL STRING
     credHelper = 
   }
+  
   // Additional flags to pass into the JVM when running your application.
   // OPTIONAL LIST of STRING, defaults to none
   jvmFlags = []
+  
   // The main class to launch your application from.
   // OPTIONAL, defaults to use the main class defined in the 'jar' task
   mainClass =
+  
   // Building with the same application contents always generates the same image. 
   // Note that this does *not* preserve file timestamps and ownership.
   // OPTIONAL, defaults to 'true'
   reproducible =
+  
   // Use 'OCI' to build an OCI container image (https://www.opencontainers.org/).
   // OPTIONAL, defaults to 'Docker'
   format = 
+  
   // If set to true, Jib does not share a cache between different Maven projects.
   // OPTIONAL, defaults to 'false'
   useProjectOnlyCache =
