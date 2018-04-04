@@ -123,7 +123,6 @@ pluginBundle {
             displayName = 'Jib'
             description = 'Containerize your Java application'
             tags = ['google', 'java', 'containers', 'docker', 'kubernetes', 'microservices']
-            version = '0.1.0'
         }
     }
 }
