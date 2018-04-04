@@ -1,5 +1,5 @@
 [![experimental](http://badges.github.io/stability-badges/dist/experimental.svg)](http://github.com/badges/stability-badges)
-[![Gradle Plugin Portal](https://img.shields.io/badge/plugin%20portal-v0.1.0-blue.svg)](https://plugins.gradle.org/plugin/com.google.cloud.tools.jib)
+[![Gradle Plugin Portal](https://img.shields.io/badge/gradle%20plugin-v0.1.0-blue.svg)](https://plugins.gradle.org/plugin/com.google.cloud.tools.jib)
 
 # Jib - plugin for [Gradle](https://gradle.org/)
 
@@ -16,6 +16,8 @@ These features are not currently supported but will be added in later releases.
 ## Quickstart
 
 ### Setup
+
+*Make sure you are using Gradle version 4.6 or newer.*
 
 In your Gradle Java project, add the plugin to your `build.gradle`:
 
