@@ -119,7 +119,7 @@ pluginBundle {
 
     plugins {
         jibPlugin {
-            id = 'com.google.cloud.tools'
+            id = 'com.google.cloud.tools.jib'
             displayName = 'Jib'
             description = 'Containerize your Java application'
             tags = ['google', 'java', 'containers', 'docker', 'kubernetes', 'microservices']
