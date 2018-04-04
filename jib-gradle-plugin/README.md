@@ -3,7 +3,7 @@
 
 # Jib - plugin for [Gradle](https://gradle.org/)
 
-For information about the project, see the [Jih project README](/../../).
+For information about the project, see the [Jib project README](/../../).
 For the Maven plugin, see the [jib-maven-plugin project](/../../tree/master/jib-maven-plugin).
 
 ## Upcoming Features
@@ -216,7 +216,7 @@ jib {
 
 ## How Jib Works
 
-See the [Jih project README](/../../#how-jib-works).
+See the [Jib project README](/../../#how-jib-works).
 
 ## Known Limitations
 
@@ -227,8 +227,8 @@ These limitations will be fixed in later releases.
 
 ## Frequently Asked Questions (FAQ)
 
-See the [Jih project README](/../../#frequently-asked-questions-faq).
+See the [Jib project README](/../../#frequently-asked-questions-faq).
 
 ## Community
 
-See the [Jih project README](/../../#community).
+See the [Jib project README](/../../#community).
