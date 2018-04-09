@@ -12,12 +12,14 @@ These features are not currently supported but will be added in later releases.
 
 * Support for WAR format
 * Define credentials in configuration
+* Export to a Docker context
+* Run and debug the built container
 
 ## Quickstart
 
 ### Setup
 
-*Make sure you are using Gradle version 4.6 or newer.*
+*Make sure you are using Gradle version 4.6 or later.*
 
 In your Gradle Java project, add the plugin to your `build.gradle`:
 
