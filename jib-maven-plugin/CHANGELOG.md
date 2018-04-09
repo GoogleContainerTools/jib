@@ -3,13 +3,14 @@ All notable changes to this project will be documented in this file.
 ## [unreleased]
 
 ### Added
-- Better feedback for build failures
 
 ### Changed
 
 ### Fixed
 
 ## 0.1.7
+### Added
+- Better feedback for build failures ([#197](https://github.com/google/jib/pull/197))
 
 ## 0.1.6
 ### Changed
