@@ -281,9 +281,17 @@ The plugin attaches a default entrypoint that will run your application automati
 
 When running the image, you can override this default entrypoint with your own custom command.
 
-See [`docker run --entrypoint` reference](https://docs.docker.com/engine/reference/run/#entrypoint-default-command-to-execute-at-runtime) for running the image with Docker.
+See [`docker run --entrypoint` reference](https://docs.docker.com/engine/reference/run/#entrypoint-default-command-to-execute-at-runtime) for running the image with Docker and overriding the entrypoint command.
 
-See [Define a Command and Arguments for a Container](https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/) for running the image in a [Kubernetes](https://kubernetes.io/) Pod.
+See [Define a Command and Arguments for a Container](https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/) for running the image in a [Kubernetes](https://kubernetes.io/) Pod and overriding the entrypoint command.
+
+### But I just want to set some JVM flags when running the image?
+
+When running the image, you can pass in additional JVM flags via the [`JAVA_TOOL_OPTIONS` environment variable](https://docs.oracle.com/javase/8/docs/technotes/guides/troubleshoot/envvars002.html).
+
+See [`docker run -e` reference](https://docs.docker.com/engine/reference/run/#env-environment-variables) for running the image with Docker and setting environment variables.
+
+See [Define Environment Variables for a Container](https://kubernetes.io/docs/tasks/inject-data-application/define-environment-variable-container/) for running the image in a [Kubernetes](https://kubernetes.io/) Pod and setting environment variables.
 
 ### Where is the application in the container filesystem?
 
