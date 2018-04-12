@@ -106,7 +106,7 @@ The plugin provides the `jib` extension for configuration with the following opt
 Field | Type | Default | Description
 --- | --- | --- | ---
 `from` | [`from`](#from-closure) | See [`from`](#from-closure) | Configures the base image to build your application on top of.
-`to` | [`to`](#to-closure) (*required*) | | Configures the target image to build your application to.
+`to` | [`to`](#to-closure) | *Required* | Configures the target image to build your application to.
 `jvmFlags` | `List<String>` | *None* | Additional flags to pass into the JVM when running your application.
 `mainClass` | `String` | Uses the main class defined in the `jar` task | The main class to launch your application from.
 `reproducible` | `boolean` | `true` | Building with the same application contents always generates the same image.<br>Note that this does NOT preserve file timestamps and ownership.
