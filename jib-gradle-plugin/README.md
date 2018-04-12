@@ -103,57 +103,29 @@ Then, ```gradle build``` will build and containerize your application.
 
 The plugin provides the `jib` extension for configuration with the following options for customizing the image build:
 
-```groovy
-jib {
+Field | Type | Default | Description
+--- | --- | --- | ---
+`from` | [`from`](#from-closure) | See [`from`](#from-closure) | Configures the base image to build your application on top of.
+`to` | [`to`](#to-closure) | *Required* | Configures the target image to build your application to.
+`jvmFlags` | `List<String>` | *None* | Additional flags to pass into the JVM when running your application.
+`mainClass` | `String` | Uses the main class defined in the `jar` task | The main class to launch your application from.
+`reproducible` | `boolean` | `true` | Building with the same application contents always generates the same image.<br>Note that this does NOT preserve file timestamps and ownership.
+`format` | `String` | `Docker` | Use `OCI` to build an [OCI container image](https://www.opencontainers.org/).
+`useProjectOnlyCache` | `boolean` | `false` | If set to true, Jib does not share a cache between different Maven projects.
 
-  // Configures the base image to build your application on top of.
-  // OPTIONAL
-  from {
-    // The image reference for the base image.
-    // OPTIONAL STRING, defaults to 'gcr.io/distroless/java'
-    image =
-    
-    // Suffix for the credential helper that can authenticate pulling the base image
-    // (following `docker-credential-`).
-    // OPTIONAL STRING
-    credHelper =
-  }
-  
-  // Configures the target image to build your application to.
-  // REQUIRED
-  to {
-    // The image reference for the target image.
-    // REQUIRED STRING
-    image =
-    
-    // Suffix for the credential helper that can authenticate pushing the target image
-    // (following `docker-credential-`).
-    // OPTIONAL STRING
-    credHelper = 
-  }
-  
-  // Additional flags to pass into the JVM when running your application.
-  // OPTIONAL LIST of STRING, defaults to none
-  jvmFlags = []
-  
-  // The main class to launch your application from.
-  // OPTIONAL, defaults to use the main class defined in the 'jar' task
-  mainClass =
-  
-  // Building with the same application contents always generates the same image. 
-  // Note that this does NOT preserve file timestamps and ownership.
-  // OPTIONAL, defaults to 'true'
-  reproducible =
-  
-  // Use 'OCI' to build an OCI container image (https://www.opencontainers.org/).
-  // OPTIONAL, defaults to 'Docker'
-  format = 
-  
-  // If set to true, Jib does not share a cache between different Maven projects.
-  // OPTIONAL, defaults to 'false'
-  useProjectOnlyCache =
-}
-```
+<a name="from-closure"></a>`from` is a closure with the following properties:
+
+Property | Type | Default | Description
+--- | --- | --- | ---
+`image` | `String` | `gcr.io/distroless/java` | The image reference for the base image.
+`credHelper` | `String` | *None* | Suffix for the credential helper that can authenticate pulling the base image (following `docker-credential-`).
+
+<a name="to-closure"></a>`to` is a closure with the following properties:
+
+Property | Type | Default | Description
+--- | --- | --- | ---
+`image` | `String` | *Required* | The image reference for the target image.
+`credHelper` | `String` | *None* | Suffix for the credential helper that can authenticate pulling the base image (following `docker-credential-`).
 
 ### Example
 
