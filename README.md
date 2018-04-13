@@ -47,7 +47,15 @@ See [rules_docker](https://github.com/bazelbuild/rules_docker) for a similar exi
 
 ### What image format does Jib use?
 
-Jib currently builds into the [Docker V2.2](https://docs.docker.com/registry/spec/manifest-v2-2/) image format or [OCI image format](https://github.com/opencontainers/image-spec). See [Extended Usage](#extended-usage) for the `imageFormat` configuration.
+Jib currently builds into the [Docker V2.2](https://docs.docker.com/registry/spec/manifest-v2-2/) image format or [OCI image format](https://github.com/opencontainers/image-spec). 
+
+#### Maven
+
+See [Extended Usage](jib-maven-plugin#extended-usage) for the `imageFormat` configuration.
+
+#### Gradle
+
+See [Extended Usage](jib-gradle-plugin#extended-usage) for the `format` configuration.
 
 ### Can I define a custom entrypoint?
 
@@ -79,12 +87,24 @@ Jib packages your Java application into the following paths on the image:
 
 Running commands like `apt-get` slows down the container build process. We **do not recommend or support** running commands as part of the build. 
 
-However, if you need to run commands, you can build a custom base image. You can then use this custom base image in the `jib-maven-plugin` by adding the following configuration:
+However, if you need to run commands, you can build a custom base image. 
+
+#### Maven
+
+In [`jib-maven-plugin`](jib-maven-plugin), you can then use this custom base image by adding the following configuration:
 
 ```xml
 <configuration>
   <from>custom-base-image</from>
 </configuration>
+```
+
+#### Gradle
+
+In [`jib-gradle-plugin`](jib-gradle-plugin), you can then use this custom base image by adding the following configuration:
+
+```groovy
+jib.from.image = 'custom-base-image'
 ```
 
 ### Can I ADD a custom directory to the image?
@@ -93,7 +113,7 @@ We currently do not support adding a custom directory to the image. If your appl
 
 ### Can I build to a local Docker daemon?
 
-We currently do not support building to a local Docker daemon. However, this feature is in the pipeline and will be added in the future.
+We currently do not support building to a local Docker daemon. However, [this feature is in the pipeline and will be added in the future](/../../issues/48).
 
 You can still [`docker pull`](https://docs.docker.com/engine/reference/commandline/pull/) the image built with `jib-maven-plugin` to have it available in your local Docker daemon.
 
