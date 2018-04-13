@@ -22,7 +22,6 @@ Jib is a Maven plugin for building Docker and OCI images for your Java applicati
 
 These features are not currently supported but will be added in later releases.
 
-* Gradle plugin
 * Support for WAR format
 
 ## Quickstart
@@ -62,7 +61,7 @@ For example, to build the image `gcr.io/my-gcp-project/my-app`, the configuratio
 
 #### Using [Amazon Elastic Container Registry (ECR)](https://aws.amazon.com/ecr/)...
 
-*Make sure you have the [`docker-credential-ecr-login` command line tool](https://github.com/awslabs/amazon-ecr-credential-helper). Jib automatically uses `docker-credential-ecr-login` for obtaining credentials. To use a different credential helper, set the [`credHelpers`](#extended-usage) configuration. See [Authentication Methods](#authentication-methods) for other ways of authenticating.*
+*Make sure you have the [`docker-credential-ecr-login` command line tool](https://github.com/awslabs/amazon-ecr-credential-helper). Jib automatically uses `docker-credential-ecr-login` for obtaining credentials. See [Authentication Methods](#authentication-methods) for other ways of authenticating.*
 
 For example, to build the image `aws_account_id.dkr.ecr.region.amazonaws.com/my-app`, the configuration would be:
 
@@ -75,7 +74,7 @@ For example, to build the image `aws_account_id.dkr.ecr.region.amazonaws.com/my-
 
 #### Using [Docker Hub Registry](https://hub.docker.com/)...
 
-*Make sure you have a [docker-credential-helper](https://github.com/docker/docker-credential-helpers#available-programs) set up. For example, on macOS, the credential helper would be `docker-credential-osxkeychain`. To use a different credential helper, set the [`credHelpers`](#extended-usage) configuration. See [Authentication Methods](#authentication-methods) for other ways of authenticating.*
+*Make sure you have a [docker-credential-helper](https://github.com/docker/docker-credential-helpers#available-programs) set up. For example, on macOS, the credential helper would be `docker-credential-osxkeychain`. See [Authentication Methods](#authentication-methods) for other ways of authenticating.*
 
 For example, to build the image `my-docker-id/my-app`, the configuration would be:
 
@@ -105,7 +104,7 @@ If you want to clear Jib's build cache and force it to re-pull the base image an
 mvn clean compile jib:build
 ```
 
-*Having trouble? Let us know by [submitting an issue](/../../issues/new).*
+*Having trouble? Let us know by [submitting an issue](/../../issues/new), contacting us on [Gitter](https://gitter.im/google/jib), or posting to the [Jib users forum](https://groups.google.com/forum/#!forum/jib-users).*
 
 ### Bind to a lifecycle
 
