@@ -92,6 +92,7 @@ However, if you need to run commands, you can build a custom image and configure
 <details>
 <summary>Base image configuration examples</summary>
 <p>
+
 #### Maven
 
 In [`jib-maven-plugin`](jib-maven-plugin), you can then use this custom base image by adding the following configuration:
