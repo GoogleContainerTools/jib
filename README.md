@@ -87,8 +87,11 @@ Jib packages your Java application into the following paths on the image:
 
 Running commands like `apt-get` slows down the container build process. We **do not recommend or support** running commands as part of the build. 
 
-However, if you need to run commands, you can build a custom base image. 
+However, if you need to run commands, you can build a custom image and configure Jib to use it as the base image. 
 
+<details>
+<summary>Base image configuration examples</summary>
+<p>
 #### Maven
 
 In [`jib-maven-plugin`](jib-maven-plugin), you can then use this custom base image by adding the following configuration:
@@ -106,6 +109,8 @@ In [`jib-gradle-plugin`](jib-gradle-plugin), you can then use this custom base i
 ```groovy
 jib.from.image = 'custom-base-image'
 ```
+</p>
+</details>
 
 ### Can I ADD a custom directory to the image?
 
@@ -159,6 +164,8 @@ See more at [Using Google Container Registry (GCR) with Minikube](https://ryanes
 
 ### How can I tag my image with a timestamp?
 
+#### Maven
+
 To tag the image with a simple timestamp, add the following to your `pom.xml`:
 
 ```xml
@@ -176,6 +183,14 @@ Then in the `jib-maven-plugin` configuration, set the `tag` to:
 ```
 
 You can then use the same timestamp to reference the image in other plugins.
+
+#### Gradle
+
+To tag the image with a timestamp, simply set the timestamp as the tag for `to.image` in your `jib` configuration. For example:
+
+```groovy
+jib.to.image = 'gcr.io/my-gcp-project/my-app:' + System.nanoTime()
+```
 
 ## Community
 
