@@ -1,7 +1,10 @@
 [![experimental](http://badges.github.io/stability-badges/dist/experimental.svg)](http://github.com/badges/stability-badges)
 [![Gradle Plugin Portal](https://img.shields.io/badge/gradle%20plugin-v0.1.0-blue.svg)](https://plugins.gradle.org/plugin/com.google.cloud.tools.jib)
+[![Gitter version](https://img.shields.io/gitter/room/gitterHQ/gitter.svg)](https://gitter.im/google/jib)
 
-# Jib - plugin for [Gradle](https://gradle.org/)
+# Jib - Containerize your Gradle Java project
+
+Jib is [Gradle](https://gradle.org/) plugin for building Docker and OCI images for your Java applications.
 
 For information about the project, see the [Jib project README](/../../).
 For the Maven plugin, see the [jib-maven-plugin project](/../../tree/master/jib-maven-plugin).
