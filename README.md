@@ -247,7 +247,7 @@ Registry credentials can be added to your [Maven settings](https://maven.apache.
 ```
 
 * The `id` field should be the registry server these credentials are for. 
-* We *do not* recommend putting your raw password in `settings.xml`. `Maven 2.1` introduced a facility to encrypt passwords in a user's Maven Settings (`~/.m2/settings.xm`l). read more about it [here](https://maven.apache.org/guides/mini/guide-encryption.html)
+* We *do not* recommend putting your raw password in `settings.xml`. Maven 2.1 introduced a facility to encrypt passwords in a user's Maven settings (`~/.m2/settings.xml`). Read more about it [here](https://maven.apache.org/guides/mini/guide-encryption.html).
 
 ## How Jib Works
 
