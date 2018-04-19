@@ -1,0 +1,21 @@
+# Design Documents and Proposals
+
+This directory holds the approved design documents and proposals for changes and new features to Jib.
+
+## Contribute
+
+### Submit a Proposal
+
+Submit a proposal by filing a pull request that adds a `<proposal_name>.md` file to this directory.
+
+Follow the general layout of existing proposals. In general, make sure to include:
+
+- Description of the problem
+- Goals to achieve
+- Proposed solution to the problem
+
+### Review a Proposal
+
+Review pending proposals by commenting on [their pull requests](/../../issues?q=is%3Aissue+is%3Aopen+label%3Aproposal). Proposals in review are labelled with `proposal`.
+
+For approved proposals, you may open revision pull requests with your suggestions for revision, or provide your comments in a new [issue](/../../issues/new?body=<!-- Please provide the link to the approved proposal you are commenting on. -->) or messaging the [community](/../../#community). 
