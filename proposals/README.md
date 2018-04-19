@@ -16,6 +16,6 @@ Follow the general layout of existing proposals. In general, make sure to includ
 
 ### Review a Proposal
 
-Review pending proposals by commenting on [their pull requests](/../../issues?q=is%3Aissue+is%3Aopen+label%3Aproposal). Proposals in review are labelled with `proposal`.
+Review pending proposals by commenting on [their pull requests](/../../pulls?q=is%3Aopen+is%3Apr+label%3Aproposal). Proposals in review are labelled with `proposal`.
 
 For approved proposals, you may open revision pull requests with your suggestions for revision, or provide your comments in a new [issue](/../../issues/new?body=<!-- Please provide the link to the approved proposal you are commenting on. -->) or messaging the [community](/../../#community). 
