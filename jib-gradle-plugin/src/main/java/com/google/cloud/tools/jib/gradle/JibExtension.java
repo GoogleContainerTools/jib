@@ -23,7 +23,6 @@ import com.google.common.annotations.VisibleForTesting;
 import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
-import javax.inject.Inject;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.model.ObjectFactory;
@@ -79,20 +78,16 @@ public class JibExtension {
   private static final boolean DEFAULT_REPRODUCIBLE = true;
   private static final boolean DEFAULT_USE_ONLY_PROJECT_CACHE = false;
 
-  private final ImageConfiguration from;
-  private final ImageConfiguration to;
+  private final ImageConfiguration from = new ImageConfiguration();
+  private final ImageConfiguration to = new ImageConfiguration();
   private final ListProperty<String> jvmFlags;
   private final Property<String> mainClass;
   private final Property<Boolean> reproducible;
   private final Property<ImageFormat> format;
   private final Property<Boolean> useOnlyProjectCache;
 
-  @Inject
   public JibExtension(Project project) {
     ObjectFactory objectFactory = project.getObjects();
-
-    from = objectFactory.newInstance(ImageConfiguration.class);
-    to = objectFactory.newInstance(ImageConfiguration.class);
 
     jvmFlags = objectFactory.listProperty(String.class);
     mainClass = objectFactory.property(String.class);

@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.gradle;
 
 import javax.annotation.Nullable;
+import org.gradle.api.Action;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Optional;
 
@@ -28,6 +29,8 @@ import org.gradle.api.tasks.Optional;
  * (after {@code docker-credential} of the credential helper for accessing the {@code image}.
  */
 public class ImageConfiguration {
+
+  private final AuthConfiguration auth = new AuthConfiguration();
 
   @Nullable private String image;
   @Nullable private String credHelper;
@@ -51,5 +54,13 @@ public class ImageConfiguration {
 
   public void setCredHelper(String credHelper) {
     this.credHelper = credHelper;
+  }
+
+  AuthConfiguration getAuth() {
+    return auth;
+  }
+
+  public void auth(Action<? super AuthConfiguration> action) {
+    action.execute(auth);
   }
 }
