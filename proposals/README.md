@@ -14,6 +14,8 @@ Follow the general layout of existing proposals. In general, make sure to includ
 - Goals to achieve
 - Proposed solution to the problem
 
+Proposals are approved upon merge.
+
 ### Review a Proposal
 
 Review pending proposals by commenting on [their pull requests](/../../pulls?q=is%3Aopen+is%3Apr+label%3Aproposal). Proposals in review are labelled with `proposal`.
