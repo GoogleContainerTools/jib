@@ -6,8 +6,8 @@
 
 Jib is a [Maven](https://maven.apache.org/) plugin for building Docker and OCI images for your Java applications.
 
-For information about the project, see the [Jib project README](/../../).
-For the Gradle plugin, see the [jib-gradle-plugin project](/../../tree/master/jib-gradle-plugin).
+For information about the project, see the [Jib project README](..).
+For the Gradle plugin, see the [jib-gradle-plugin project](../jib-gradle-plugin).
 
 ## Upcoming Features
 
@@ -222,6 +222,8 @@ Configure credential helpers to use by specifying them in the `credHelpers` conf
 
 Registry credentials can be added to your [Maven settings](https://maven.apache.org/settings.html). These credentials will be used if credentials could not be found in any specified Docker credential helpers. 
 
+If you're considering putting credentials in Maven, we highly *recommend* using [maven password encryption](https://maven.apache.org/guides/mini/guide-encryption.html).
+
 *Example `settings.xml`:*
 ```xml
 <settings>
@@ -231,7 +233,7 @@ Registry credentials can be added to your [Maven settings](https://maven.apache.
     <server>
       <id>MY_REGISTRY</id>
       <username>MY_USERNAME</username>
-      <password>MY_SECRET</password>
+      <password>{MY_SECRET}</password>
     </server>
   </servers>
 </settings>
