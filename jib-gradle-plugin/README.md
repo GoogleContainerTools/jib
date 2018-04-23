@@ -1,5 +1,5 @@
 [![experimental](http://badges.github.io/stability-badges/dist/experimental.svg)](http://github.com/badges/stability-badges)
-[![Gradle Plugin Portal](https://img.shields.io/badge/gradle%20plugin-v0.1.0-blue.svg)](https://plugins.gradle.org/plugin/com.google.cloud.tools.jib)
+[![Gradle Plugin Portal](https://img.shields.io/badge/gradle%20plugin-v0.1.1-blue.svg)](https://plugins.gradle.org/plugin/com.google.cloud.tools.jib)
 [![Gitter version](https://img.shields.io/gitter/room/gitterHQ/gitter.svg)](https://gitter.im/google/jib)
 
 # Jib - Containerize your Gradle Java project
@@ -14,7 +14,6 @@ For the Maven plugin, see the [jib-maven-plugin project](../jib-maven-plugin).
 These features are not currently supported but will be added in later releases.
 
 * Support for WAR format
-* Define credentials in configuration
 * Export to a Docker context
 * Run and debug the built container
 
@@ -28,7 +27,7 @@ In your Gradle Java project, add the plugin to your `build.gradle`:
 
 ```groovy
 plugins {
-  id 'com.google.cloud.tools.jib' version '0.1.0'
+  id 'com.google.cloud.tools.jib' version '0.1.1'
 }
 ```
 
@@ -122,6 +121,7 @@ Property | Type | Default | Description
 --- | --- | --- | ---
 `image` | `String` | `gcr.io/distroless/java` | The image reference for the base image.
 `credHelper` | `String` | *None* | Suffix for the credential helper that can authenticate pulling the base image (following `docker-credential-`).
+`auth` | ['auth`](#auth-closure) | *None* | Specify credentials directly (alternative to `credHelper`).
 
 <a name="to-closure"></a>`to` is a closure with the following properties:
 
@@ -129,6 +129,14 @@ Property | Type | Default | Description
 --- | --- | --- | ---
 `image` | `String` | *Required* | The image reference for the target image.
 `credHelper` | `String` | *None* | Suffix for the credential helper that can authenticate pulling the base image (following `docker-credential-`).
+`auth` | ['auth`](#auth-closure) | *None* | Specify credentials directly (alternative to `credHelper`).
+
+<a name="auth-closure"></a>`auth` is a closure with the following properties:
+
+Property | Type
+--- | ---
+`username` | `String`
+`password` | `String`
 
 ### Example
 
@@ -189,7 +197,42 @@ jib {
 
 #### Using Specific Credentials
 
-*Not yet supported*
+You can specify credentials directly in the extension for the `from` and/or `to` images.
+
+```xml
+jib {
+  from {
+    image = 'aws_account_id.dkr.ecr.region.amazonaws.com/my-base-image'
+    auth {
+      username = USERNAME // Defined in 'gradle.properties'.
+      password = PASSWORD
+    }
+  }
+  to {
+    image = 'gcr.io/my-gcp-project/my-app'
+    auth {
+      username = 'oauth2accesstoken'
+      password = 'gcloud auth print-access-token'.execute().text.trim()
+    }
+  }
+}
+```
+
+These credentials can be stored in `gradle.properties`, retrieved from a command (like `gcloud auth print-access-token`), or read in from a file. 
+
+For example, you can use a key file for authentication (for GCR, see [Using a JSON key file](https://cloud.google.com/container-registry/docs/advanced-authentication#using_a_json_key_file)):
+
+```xml
+jib {
+  to {
+    image = 'gcr.io/my-gcp-project/my-app'
+    auth {
+      username = '_json_key'
+      password = file('keyfile.json').text
+    }
+  }
+}
+```
 
 ## How Jib Works
 
