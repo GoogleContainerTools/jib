@@ -46,9 +46,16 @@ public class JibExtensionTest {
         from -> {
           from.setImage("some image");
           from.setCredHelper("some cred helper");
+          from.auth(
+              auth -> {
+                auth.setUsername("some username");
+                auth.setPassword("some password");
+              });
         });
     Assert.assertEquals("some image", testJibExtension.getFrom().getImage());
     Assert.assertEquals("some cred helper", testJibExtension.getFrom().getCredHelper());
+    Assert.assertEquals("some username", testJibExtension.getFrom().getAuth().getUsername());
+    Assert.assertEquals("some password", testJibExtension.getFrom().getAuth().getPassword());
   }
 
   @Test
@@ -60,9 +67,16 @@ public class JibExtensionTest {
         to -> {
           to.setImage("some image");
           to.setCredHelper("some cred helper");
+          to.auth(
+              auth -> {
+                auth.setUsername("some username");
+                auth.setPassword("some password");
+              });
         });
     Assert.assertEquals("some image", testJibExtension.getTo().getImage());
     Assert.assertEquals("some cred helper", testJibExtension.getTo().getCredHelper());
+    Assert.assertEquals("some username", testJibExtension.getTo().getAuth().getUsername());
+    Assert.assertEquals("some password", testJibExtension.getTo().getAuth().getPassword());
   }
 
   @Test
