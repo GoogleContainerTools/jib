@@ -131,7 +131,7 @@ Property | Type | Default | Description
 `credHelper` | `String` | *None* | Suffix for the credential helper that can authenticate pulling the base image (following `docker-credential-`).
 `auth` | [`auth`](#auth-closure) | *None* | Specify credentials directly (alternative to `credHelper`).
 
-<a name="auth-closure"></a>`auth` is a closure with the following properties:
+<a name="auth-closure"></a>`auth` is a closure with the following properties (see [Using Specific Credentials](#using-specific-credentials)):
 
 Property | Type
 --- | ---
