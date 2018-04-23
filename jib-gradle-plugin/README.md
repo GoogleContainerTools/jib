@@ -1,5 +1,5 @@
 [![experimental](http://badges.github.io/stability-badges/dist/experimental.svg)](http://github.com/badges/stability-badges)
-[![Gradle Plugin Portal](https://img.shields.io/badge/gradle%20plugin-v0.1.0-blue.svg)](https://plugins.gradle.org/plugin/com.google.cloud.tools.jib)
+[![Gradle Plugin Portal](https://img.shields.io/badge/gradle%20plugin-v0.1.1-blue.svg)](https://plugins.gradle.org/plugin/com.google.cloud.tools.jib)
 [![Gitter version](https://img.shields.io/gitter/room/gitterHQ/gitter.svg)](https://gitter.im/google/jib)
 
 # Jib - Containerize your Gradle Java project
@@ -27,7 +27,7 @@ In your Gradle Java project, add the plugin to your `build.gradle`:
 
 ```groovy
 plugins {
-  id 'com.google.cloud.tools.jib' version '0.1.0'
+  id 'com.google.cloud.tools.jib' version '0.1.1'
 }
 ```
 
@@ -195,13 +195,32 @@ jib {
   from {
     image = 'aws_account_id.dkr.ecr.region.amazonaws.com/my-base-image'
     auth {
-      username = 'myusername'
-      password = 'mysecret'
+      username = USERNAME // Defined in 'gradle.properties'.
+      password = PASSWORD
     }
   }
   to {
     image = 'gcr.io/my-gcp-project/my-app'
-    credHelper = 'gcr'
+    auth {
+      username = 'oauth2accesstoken'
+      password = 'gcloud auth print-access-token'.execute().text.trim()
+    }
+  }
+}
+```
+
+These credentials can be stored in `gradle.properties`, retrieved from a command (like `gcloud auth print-access-token`), or read in from a file. 
+
+For example, you can use a key file for authentication (for GCR, see [Using a JSON key file](https://cloud.google.com/container-registry/docs/advanced-authentication#using_a_json_key_file)):
+
+```xml
+jib {
+  to {
+    image = 'gcr.io/my-gcp-project/my-app'
+    auth {
+      username = '_json_key'
+      password = file('keyfile.json').text
+    }
   }
 }
 ```
