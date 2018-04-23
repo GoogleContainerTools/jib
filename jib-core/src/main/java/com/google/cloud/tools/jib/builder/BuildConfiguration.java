@@ -30,6 +30,8 @@ import javax.annotation.Nullable;
 /** Immutable configuration options for the builder process. */
 public class BuildConfiguration {
 
+  public static final String VALID_JAVA_CLASS_REGEX = "([\\p{L}_$][\\p{L}\\p{N}_$]*\\.)*[\\p{L}_$][\\p{L}\\p{N}_$]*";
+
   public static class Builder {
 
     // All the parameters below are set to their default values.

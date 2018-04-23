@@ -153,4 +153,14 @@ public class BuildConfigurationTest {
           ex.getMessage());
     }
   }
+
+  @Test
+  public void testValidJavaClassRegex() {
+    Assert.assertTrue("my.Class".matches(BuildConfiguration.VALID_JAVA_CLASS_REGEX));
+    Assert.assertTrue("my.java_Class$valid".matches(BuildConfiguration.VALID_JAVA_CLASS_REGEX));
+    Assert.assertFalse("${start-class}".matches(BuildConfiguration.VALID_JAVA_CLASS_REGEX));
+    Assert.assertFalse("123not.Valid".matches(BuildConfiguration.VALID_JAVA_CLASS_REGEX));
+    Assert.assertFalse("{class}".matches(BuildConfiguration.VALID_JAVA_CLASS_REGEX));
+    Assert.assertFalse("not valid".matches(BuildConfiguration.VALID_JAVA_CLASS_REGEX));
+  }
 }
