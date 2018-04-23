@@ -14,7 +14,6 @@ For the Maven plugin, see the [jib-maven-plugin project](../jib-maven-plugin).
 These features are not currently supported but will be added in later releases.
 
 * Support for WAR format
-* Define credentials in configuration
 * Export to a Docker context
 * Run and debug the built container
 
@@ -189,7 +188,23 @@ jib {
 
 #### Using Specific Credentials
 
-*Not yet supported*
+You can specify credentials directly in the extension for the `from` and/or `to` images.
+
+```xml
+jib {
+  from {
+    image = 'aws_account_id.dkr.ecr.region.amazonaws.com/my-base-image'
+    auth {
+      username = 'myusername'
+      password = 'mysecret'
+    }
+  }
+  to {
+    image = 'gcr.io/my-gcp-project/my-app'
+    credHelper = 'gcr'
+  }
+}
+```
 
 ## How Jib Works
 
