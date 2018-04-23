@@ -160,7 +160,9 @@ public class BuildConfiguration {
     }
   }
 
-  /** @return {@code true} if {@code className} is a valid Java class name; {@code false} otherwise */
+  /**
+   * @return {@code true} if {@code className} is a valid Java class name; {@code false} otherwise
+   */
   public static boolean isValidJavaClass(String className) {
     for (String part : Splitter.on('.').split(className)) {
       if (!SourceVersion.isIdentifier(part)) {

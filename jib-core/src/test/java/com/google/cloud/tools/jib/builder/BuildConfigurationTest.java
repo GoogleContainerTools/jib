@@ -26,7 +26,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import javax.lang.model.SourceVersion;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
