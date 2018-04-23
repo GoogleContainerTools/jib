@@ -144,6 +144,10 @@ public class BuildImageTask extends DefaultTask {
     if (fromAuthorization != null) {
       registryCredentials.put(baseImageReference.getRegistry(), fromAuthorization);
     }
+    Authorization toAuthorization = getImageAuthorization(to);
+    if (toAuthorization != null) {
+      registryCredentials.put(targetImageReference.getRegistry(), toAuthorization);
+    }
     RegistryCredentials configuredRegistryCredentials =
         RegistryCredentials.from("jib extension", registryCredentials);
 
@@ -257,10 +261,12 @@ public class BuildImageTask extends DefaultTask {
   @Internal
   @Nullable
   private Authorization getImageAuthorization(ImageConfiguration imageConfiguration) {
-    if (imageConfiguration.getAuth().getUsername() == null || imageConfiguration.getAuth().getPassword() == null) {
+    if (imageConfiguration.getAuth().getUsername() == null
+        || imageConfiguration.getAuth().getPassword() == null) {
       return null;
     }
 
-    return Authorizations.withBasicCredentials(imageConfiguration.getAuth().getUsername(), imageConfiguration.getAuth().getPassword());
+    return Authorizations.withBasicCredentials(
+        imageConfiguration.getAuth().getUsername(), imageConfiguration.getAuth().getPassword());
   }
 }
