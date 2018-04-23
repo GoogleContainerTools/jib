@@ -1,6 +1,5 @@
 [![experimental](http://badges.github.io/stability-badges/dist/experimental.svg)](http://github.com/badges/stability-badges)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/jib-maven-plugin/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/jib-maven-plugin)
-[![Gradle Plugin Portal](https://img.shields.io/badge/gradle%20plugin-v0.1.1-blue.svg)](https://plugins.gradle.org/plugin/com.google.cloud.tools.jib)
 [![Gitter version](https://img.shields.io/gitter/room/gitterHQ/gitter.svg)](https://gitter.im/google/jib)
 
 # Jib - Containerize your Maven project
