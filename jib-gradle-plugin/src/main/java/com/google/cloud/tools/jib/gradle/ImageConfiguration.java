@@ -17,6 +17,9 @@
 package com.google.cloud.tools.jib.gradle;
 
 import javax.annotation.Nullable;
+import javax.inject.Inject;
+import org.gradle.api.Action;
+import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Optional;
 
@@ -29,8 +32,15 @@ import org.gradle.api.tasks.Optional;
  */
 public class ImageConfiguration {
 
+  private AuthConfiguration auth;
+
   @Nullable private String image;
   @Nullable private String credHelper;
+
+  @Inject
+  public ImageConfiguration(ObjectFactory objectFactory) {
+    auth = objectFactory.newInstance(AuthConfiguration.class);
+  }
 
   @Input
   @Nullable
@@ -51,5 +61,15 @@ public class ImageConfiguration {
 
   public void setCredHelper(String credHelper) {
     this.credHelper = credHelper;
+  }
+
+  @Input
+  @Optional
+  AuthConfiguration getAuth() {
+    return auth;
+  }
+
+  public void auth(Action<? super AuthConfiguration> action) {
+    action.execute(auth);
   }
 }
