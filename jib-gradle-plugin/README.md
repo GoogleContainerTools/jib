@@ -121,6 +121,7 @@ Property | Type | Default | Description
 --- | --- | --- | ---
 `image` | `String` | `gcr.io/distroless/java` | The image reference for the base image.
 `credHelper` | `String` | *None* | Suffix for the credential helper that can authenticate pulling the base image (following `docker-credential-`).
+`auth` | ['auth`](#auth-closure) | *None* | Specify credentials directly (alternative to `credHelper`).
 
 <a name="to-closure"></a>`to` is a closure with the following properties:
 
@@ -128,6 +129,14 @@ Property | Type | Default | Description
 --- | --- | --- | ---
 `image` | `String` | *Required* | The image reference for the target image.
 `credHelper` | `String` | *None* | Suffix for the credential helper that can authenticate pulling the base image (following `docker-credential-`).
+`auth` | ['auth`](#auth-closure) | *None* | Specify credentials directly (alternative to `credHelper`).
+
+<a name="auth-closure"></a>`auth` is a closure with the following properties:
+
+Property | Type
+--- | ---
+`username` | `String`
+`password` | `String`
 
 ### Example
 
