@@ -47,6 +47,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
+import javax.lang.model.SourceVersion;
 import org.apache.http.conn.HttpHostConnectException;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
@@ -131,7 +132,7 @@ public class BuildImageMojo extends AbstractMojo {
             "add a `mainClass` configuration to jib-maven-plugin");
       }
     }
-    if (!mainClass.matches(BuildConfiguration.VALID_JAVA_CLASS_REGEX)) {
+    if (!SourceVersion.isIdentifier(mainClass)) {
       getLog().warn("'mainClass' is not a valid Java class : " + mainClass);
     }
 

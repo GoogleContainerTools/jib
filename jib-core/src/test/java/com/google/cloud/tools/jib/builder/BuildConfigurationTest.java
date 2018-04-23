@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import javax.lang.model.SourceVersion;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -156,11 +157,13 @@ public class BuildConfigurationTest {
 
   @Test
   public void testValidJavaClassRegex() {
-    Assert.assertTrue("my.Class".matches(BuildConfiguration.VALID_JAVA_CLASS_REGEX));
-    Assert.assertTrue("my.java_Class$valid".matches(BuildConfiguration.VALID_JAVA_CLASS_REGEX));
-    Assert.assertFalse("${start-class}".matches(BuildConfiguration.VALID_JAVA_CLASS_REGEX));
-    Assert.assertFalse("123not.Valid".matches(BuildConfiguration.VALID_JAVA_CLASS_REGEX));
-    Assert.assertFalse("{class}".matches(BuildConfiguration.VALID_JAVA_CLASS_REGEX));
-    Assert.assertFalse("not valid".matches(BuildConfiguration.VALID_JAVA_CLASS_REGEX));
+    Assert.assertTrue(BuildConfiguration.isValidJavaClass("my.Class"));
+    Assert.assertTrue(BuildConfiguration.isValidJavaClass("my.java_Class$valid"));
+    Assert.assertTrue(BuildConfiguration.isValidJavaClass("multiple.package.items"));
+    Assert.assertTrue(BuildConfiguration.isValidJavaClass("is123.valid"));
+    Assert.assertFalse(BuildConfiguration.isValidJavaClass("${start-class}"));
+    Assert.assertFalse(BuildConfiguration.isValidJavaClass("123not.Valid"));
+    Assert.assertFalse(BuildConfiguration.isValidJavaClass("{class}"));
+    Assert.assertFalse(BuildConfiguration.isValidJavaClass("not valid"));
   }
 }
