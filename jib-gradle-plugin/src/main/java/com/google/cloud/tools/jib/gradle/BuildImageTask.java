@@ -123,7 +123,7 @@ public class BuildImageTask extends DefaultTask {
         throw new GradleException("Could not find main class specified in a 'jar' task");
       }
     }
-    if (!SourceVersion.isIdentifier(mainClass)) {
+    if (!BuildConfiguration.isValidJavaClass(mainClass)) {
       getLogger().warn("'mainClass' is not a valid Java class : " + mainClass);
     }
 

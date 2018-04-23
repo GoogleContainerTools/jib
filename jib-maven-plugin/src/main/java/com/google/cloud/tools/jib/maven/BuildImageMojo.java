@@ -132,7 +132,7 @@ public class BuildImageMojo extends AbstractMojo {
             "add a `mainClass` configuration to jib-maven-plugin");
       }
     }
-    if (!SourceVersion.isIdentifier(mainClass)) {
+    if (!BuildConfiguration.isValidJavaClass(mainClass)) {
       getLog().warn("'mainClass' is not a valid Java class : " + mainClass);
     }
 
