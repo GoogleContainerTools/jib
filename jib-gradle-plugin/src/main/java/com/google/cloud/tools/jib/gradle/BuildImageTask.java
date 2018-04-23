@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.Nullable;
+import javax.lang.model.SourceVersion;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.tasks.Input;
@@ -122,7 +123,7 @@ public class BuildImageTask extends DefaultTask {
         throw new GradleException("Could not find main class specified in a 'jar' task");
       }
     }
-    if (!mainClass.matches(BuildConfiguration.VALID_JAVA_CLASS_REGEX)) {
+    if (!SourceVersion.isIdentifier(mainClass)) {
       getLogger().warn("'mainClass' is not a valid Java class : " + mainClass);
     }
 
