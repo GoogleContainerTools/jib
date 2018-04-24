@@ -24,14 +24,13 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.Nullable;
 
 /** Recursively applies a function to each file in a directory. */
 public class DirectoryWalker {
 
   private final Path rootDir;
 
-  @Nullable private Predicate<? super Path> pathFilter;
+  private Predicate<Path> pathFilter = path -> true;
 
   /** Initialize with a root directory to walk. */
   public DirectoryWalker(Path rootDir) throws NotDirectoryException {
@@ -42,8 +41,14 @@ public class DirectoryWalker {
   }
 
   /** Adds a filter to the walked paths. */
-  public DirectoryWalker filter(@Nullable Predicate<? super Path> pathFilter) {
-    this.pathFilter = pathFilter;
+  public DirectoryWalker filter(Predicate<Path> pathFilter) {
+    this.pathFilter = this.pathFilter.and(pathFilter);
+    return this;
+  }
+
+  /** Filters away the {@code rootDir}. */
+  public DirectoryWalker filterRoot() {
+    filter(path -> !path.equals(rootDir));
     return this;
   }
 
