@@ -93,6 +93,12 @@ public class DockerContextGeneratorTest {
 
     Path targetDirectory = temporaryFolder.newFolder().toPath();
 
+    /*
+     * Deletes the directory so that DockerContextGenerator#generate does not throw
+     * InsecureRecursiveDeleteException.
+     */
+    Files.delete(targetDirectory);
+
     new DockerContextGenerator(mockSourceFilesConfiguration)
         .setBaseImage("somebaseimage")
         .generate(targetDirectory);
