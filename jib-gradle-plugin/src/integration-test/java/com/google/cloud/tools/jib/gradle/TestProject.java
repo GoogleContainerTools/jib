@@ -57,6 +57,8 @@ class TestProject extends TemporaryFolder implements Closeable {
   private final String testProjectName;
   private GradleRunner gradleRunner;
 
+  private Path projectRoot;
+
   /** Initialize with a specific project directory. */
   TestProject(String testProjectName) {
     this.testProjectName = testProjectName;
@@ -71,17 +73,17 @@ class TestProject extends TemporaryFolder implements Closeable {
   protected void before() throws Throwable {
     super.before();
 
-    Path projectRoot = newFolder().toPath();
+    projectRoot = newFolder().toPath();
     copyProject(testProjectName, projectRoot);
 
-    gradleRunner =
-        GradleRunner.create()
-            .withProjectDir(projectRoot.toFile())
-            .withPluginClasspath()
-            .withArguments("build", "jib");
+    gradleRunner = GradleRunner.create().withProjectDir(projectRoot.toFile()).withPluginClasspath();
   }
 
-  BuildResult build() {
-    return gradleRunner.build();
+  BuildResult build(String... gradleArguments) {
+    return gradleRunner.withArguments(gradleArguments).build();
+  }
+
+  Path getProjectRoot() {
+    return projectRoot;
   }
 }

@@ -27,20 +27,25 @@ repositories {
 }
 
 sourceSets {
-    main.java.srcDir file('../jib-core/src/main/java')
-    main.resources.srcDir file('../jib-core/src/main/resources')
-    test.java.srcDir file('../jib-core/src/test/java')
-    test.resources.srcDir file('../jib-core/src/test/resources')
-    integrationTest.java.srcDir file('../jib-core/src/integration-test/java')
-    integrationTest.resources.srcDir file('../jib-core/src/integration-test/resources')
-
+    main {
+        java.srcDir file('../jib-core/src/main/java')
+        resources.srcDir file('../jib-core/src/main/resources')
+    }
+    test {
+        java.srcDir file('../jib-core/src/test/java')
+        resources.srcDir file('../jib-core/src/test/resources')
+    }
     integrationTest {
         java {
             compileClasspath += main.output + test.output
             runtimeClasspath += main.output + test.output
             srcDir file('src/integration-test/java')
+            srcDir file('../jib-core/src/integration-test/java')
         }
-        resources.srcDir file('src/integration-test/resources')
+        resources {
+            srcDir file('src/integration-test/resources')
+            srcDir file('../jib-core/src/integration-test/resources')
+        }
     }
 }
 
