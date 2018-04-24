@@ -17,9 +17,7 @@ Currently, Jib builds and pushes container images to a Docker registry without t
 
 ## Intended Workflow
 
-Building to a Docker daemon should be as simple as calling the build task/goal (`jib:build` for Maven and `jib` for Gradle) with an additional parameter called `buildToDockerDaemon` enabled.
-
-This can also be enabled with a command-line property - `-Ddocker` for Maven and `-Pdocker` for Gradle.
+Building to a Docker daemon should be as simple as calling a new task/goal (`jib:buildDocker` for Maven and `jibBuildDocker` for Gradle).
 
 ## Implementation
 
