@@ -45,4 +45,6 @@ public class FileOperations {
       }
     }
   }
+
+  private FileOperations() {}
 }
