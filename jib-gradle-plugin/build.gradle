@@ -28,6 +28,7 @@ repositories {
 
 sourceSets {
     main.java.srcDir file('../jib-core/src/main/java')
+    main.resources.srcDir file('../jib-core/src/main/resources')
     test.java.srcDir file('../jib-core/src/test/java')
     test.resources.srcDir file('../jib-core/src/test/resources')
     integrationTest.java.srcDir file('../jib-core/src/integration-test/java')
