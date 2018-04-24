@@ -60,14 +60,30 @@ public class DirectoryWalkerTest {
 
   @Test
   public void testWalk_withFilter() throws IOException {
-    // Filters to just immediate subdirectories of testDir.
+    // Filters to immediate subdirectories of testDir, and foo.
     new DirectoryWalker(testDir)
         .filter(path -> path.getParent().equals(testDir))
+        .filter(path -> !path.endsWith("foo"))
         .walk(addToWalkedPaths);
 
     Set<Path> expectedPaths =
+        new HashSet<>(Arrays.asList(testDir.resolve("a"), testDir.resolve("c")));
+    Assert.assertEquals(expectedPaths, walkedPaths);
+  }
+
+  @Test
+  public void testWalk_withFilterRoot() throws IOException {
+    new DirectoryWalker(testDir).filterRoot().walk(addToWalkedPaths);
+
+    Set<Path> expectedPaths =
         new HashSet<>(
-            Arrays.asList(testDir.resolve("a"), testDir.resolve("c"), testDir.resolve("foo")));
+            Arrays.asList(
+                testDir.resolve("a"),
+                testDir.resolve("a").resolve("b"),
+                testDir.resolve("a").resolve("b").resolve("bar"),
+                testDir.resolve("c"),
+                testDir.resolve("c").resolve("cat"),
+                testDir.resolve("foo")));
     Assert.assertEquals(expectedPaths, walkedPaths);
   }
 }
