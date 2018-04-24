@@ -41,7 +41,7 @@ class TestProject extends TemporaryFolder implements Closeable {
         Paths.get(Resources.getResource(PROJECTS_PATH_IN_RESOURCES + projectName).toURI());
     // TODO: Consolidate with DockerContextMojo#copyFiles.
     new DirectoryWalker(projectPathInResources)
-        .filter(path -> !path.equals(projectPathInResources))
+        .filterRoot()
         .walk(
             path -> {
               // Creates the same path in the destDir.
