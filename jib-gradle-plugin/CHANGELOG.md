@@ -8,6 +8,12 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+## 0.1.2
+
+### Added
+
+- Export a Docker context (including a Dockerfile) with `jibDockerContext` ([#204](https://github.com/google/jib/issues/204))
+
 ## 0.1.1
 
 ### Added
