@@ -270,12 +270,12 @@
             <path>
               <groupId>com.uber.nullaway</groupId>
               <artifactId>nullaway</artifactId>
-              <version>0.3.5</version>
+              <version>0.4.2</version>
             </path>
           </annotationProcessorPaths>
           <compilerArgs>
             <arg>-Xep:NullAway:ERROR</arg>
-            <arg>-XepOpt:NullAway:AnnotatedPackages=com.uber</arg>
+            <arg>-XepOpt:NullAway:AnnotatedPackages=com.google.cloud.tools</arg>
           </compilerArgs>
         </configuration>
         <dependencies>
