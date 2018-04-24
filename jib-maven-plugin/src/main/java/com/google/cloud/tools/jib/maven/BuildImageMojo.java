@@ -131,6 +131,9 @@ public class BuildImageMojo extends AbstractMojo {
             "add a `mainClass` configuration to jib-maven-plugin");
       }
     }
+    if (!BuildConfiguration.isValidJavaClass(mainClass)) {
+      getLog().warn("'mainClass' is not a valid Java class : " + mainClass);
+    }
 
     SourceFilesConfiguration sourceFilesConfiguration =
         projectProperties.getSourceFilesConfiguration();
@@ -293,7 +296,7 @@ public class BuildImageMojo extends AbstractMojo {
         throw new MojoFailureException("Invalid configuration parameters");
       }
     }
-    // Validates 'imageFormat'
+    // Validates 'imageFormat'.
     boolean validFormat = false;
     for (ImageFormat format : ImageFormat.values()) {
       if (imageFormat.equals(format.name())) {

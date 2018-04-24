@@ -66,7 +66,7 @@ public class DirectoryWalker {
       if (pathFilter != null) {
         filteredFileStream = fileStream.filter(pathFilter);
       }
-      return filteredFileStream.collect(Collectors.toList());
+      return filteredFileStream.sorted().collect(Collectors.toList());
     }
   }
 }
