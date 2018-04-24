@@ -199,6 +199,20 @@
             </configuration>
           </execution>
           <execution>
+            <id>add-jib-core-resources</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-resource</goal>
+            </goals>
+            <configuration>
+              <resources>
+                <resource>
+                  <directory>${basedir}/../jib-core/src/main/resources</directory>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+          <execution>
             <id>add-jib-core-test-sources</id>
             <phase>generate-test-sources</phase>
             <goals>

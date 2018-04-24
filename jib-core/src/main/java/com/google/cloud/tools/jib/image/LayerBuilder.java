@@ -59,7 +59,7 @@ public class LayerBuilder {
     for (Path sourceFile : sourceFiles) {
       if (Files.isDirectory(sourceFile)) {
         new DirectoryWalker(sourceFile)
-            .filter(path -> !path.equals(sourceFile))
+            .filterRoot()
             .walk(
                 path -> {
                   /*
