@@ -258,26 +258,35 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.7.0</version>
-        <configuration>
-          <compilerId>javac-with-errorprone</compilerId>
-          <forceJavacCompilerUse>true</forceJavacCompilerUse>
-          <!-- maven-compiler-plugin defaults to targeting Java 5, but our javac
-               only supports >=6 -->
-          <source>${maven.compiler.source}</source>
-          <target>${maven.compiler.target}</target>
-          <showWarnings>true</showWarnings>
-          <annotationProcessorPaths>
-            <path>
-              <groupId>com.uber.nullaway</groupId>
-              <artifactId>nullaway</artifactId>
-              <version>0.4.2</version>
-            </path>
-          </annotationProcessorPaths>
-          <compilerArgs>
-            <arg>-Xep:NullAway:ERROR</arg>
-            <arg>-XepOpt:NullAway:AnnotatedPackages=com.google.cloud.tools</arg>
-          </compilerArgs>
-        </configuration>
+        <executions>
+          <execution>
+            <id>compile-with-nullaway</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>compile</goal>
+            </goals>
+            <configuration>
+              <compilerId>javac-with-errorprone</compilerId>
+              <forceJavacCompilerUse>true</forceJavacCompilerUse>
+              <!-- maven-compiler-plugin defaults to targeting Java 5, but our javac
+                   only supports >=6 -->
+              <source>${maven.compiler.source}</source>
+              <target>${maven.compiler.target}</target>
+              <showWarnings>true</showWarnings>
+              <annotationProcessorPaths>
+                <path>
+                  <groupId>com.uber.nullaway</groupId>
+                  <artifactId>nullaway</artifactId>
+                  <version>0.4.2</version>
+                </path>
+              </annotationProcessorPaths>
+              <compilerArgs>
+                <arg>-Xep:NullAway:ERROR</arg>
+                <arg>-XepOpt:NullAway:AnnotatedPackages=com.google.cloud.tools</arg>
+              </compilerArgs>
+            </configuration>
+          </execution>
+        </executions>
         <dependencies>
           <dependency>
             <groupId>org.codehaus.plexus</groupId>
