@@ -21,16 +21,21 @@ import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.BuildImageSteps;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.cache.Caches;
+import com.google.cloud.tools.jib.http.Authorization;
+import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.registry.RegistryClient;
+import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.Nullable;
@@ -122,6 +127,9 @@ public class BuildImageTask extends DefaultTask {
         throw new GradleException("Could not find main class specified in a 'jar' task");
       }
     }
+    if (!BuildConfiguration.isValidJavaClass(mainClass)) {
+      getLogger().warn("'mainClass' is not a valid Java class : " + mainClass);
+    }
 
     SourceFilesConfiguration sourceFilesConfiguration = getSourceFilesConfiguration();
 
@@ -134,11 +142,24 @@ public class BuildImageTask extends DefaultTask {
       credHelpers.add(to.getCredHelper());
     }
 
+    Map<String, Authorization> registryCredentials = new HashMap<>(2);
+    Authorization fromAuthorization = getImageAuthorization(from);
+    if (fromAuthorization != null) {
+      registryCredentials.put(baseImageReference.getRegistry(), fromAuthorization);
+    }
+    Authorization toAuthorization = getImageAuthorization(to);
+    if (toAuthorization != null) {
+      registryCredentials.put(targetImageReference.getRegistry(), toAuthorization);
+    }
+    RegistryCredentials configuredRegistryCredentials =
+        RegistryCredentials.from("jib extension", registryCredentials);
+
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder(new GradleBuildLogger(getLogger()))
             .setBaseImage(baseImageReference)
             .setTargetImage(targetImageReference)
             .setCredentialHelperNames(credHelpers)
+            .setKnownRegistryCredentials(configuredRegistryCredentials)
             .setMainClass(mainClass)
             .setEnableReproducibleBuilds(reproducible)
             .setJvmFlags(jvmFlags)
@@ -238,5 +259,17 @@ public class BuildImageTask extends DefaultTask {
     } catch (IOException ex) {
       throw new GradleException("Obtaining project build output files failed", ex);
     }
+  }
+
+  @Internal
+  @Nullable
+  private Authorization getImageAuthorization(ImageConfiguration imageConfiguration) {
+    if (imageConfiguration.getAuth().getUsername() == null
+        || imageConfiguration.getAuth().getPassword() == null) {
+      return null;
+    }
+
+    return Authorizations.withBasicCredentials(
+        imageConfiguration.getAuth().getUsername(), imageConfiguration.getAuth().getPassword());
   }
 }

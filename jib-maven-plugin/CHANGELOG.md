@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 ## 0.1.7
 ### Added
 - Better feedback for build failures ([#197](https://github.com/google/jib/pull/197))
+- Warns if specified `mainClass` is not a valid Java class ([#206](https://github.com/google/jib/issues/206))
 
 ## 0.1.6
 ### Changed
