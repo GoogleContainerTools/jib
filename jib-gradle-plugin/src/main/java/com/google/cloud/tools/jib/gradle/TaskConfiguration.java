@@ -93,5 +93,6 @@ abstract class TaskConfiguration extends DefaultTask {
     mainClass = jibExtension.getMainClass();
     reproducible = jibExtension.getReproducible();
     format = jibExtension.getFormat();
+    useOnlyProjectCache = jibExtension.getUseOnlyProjectCache();
   }
 }
