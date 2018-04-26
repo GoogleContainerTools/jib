@@ -25,7 +25,6 @@ import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
-import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.base.Preconditions;
@@ -39,16 +38,12 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.Nullable;
-import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
-import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
-import org.gradle.api.tasks.Nested;
-import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.TaskAction;
 
 /** Builds a container image. */
-public class BuildImageTask extends DefaultTask {
+public class BuildImageTask extends TaskConfiguration {
 
   /** Directory name for the cache. The directory will be relative to the build output directory. */
   private static final String CACHE_DIRECTORY_NAME = "jib-cache";
@@ -56,71 +51,35 @@ public class BuildImageTask extends DefaultTask {
   /** {@code User-Agent} header suffix to send to the registry. */
   private static final String USER_AGENT_SUFFIX = "jib-gradle-plugin";
 
-  @Nullable private ImageConfiguration from;
-  @Nullable private ImageConfiguration to;
-  @Nullable private List<String> jvmFlags;
-  @Nullable private String mainClass;
-  private boolean reproducible;
-  @Nullable private Class<? extends BuildableManifestTemplate> format;
-  private boolean useOnlyProjectCache;
-
-  @Nested
+  /** Converts an {@link ImageConfiguration} to an {@link Authorization}. */
+  @Internal
   @Nullable
-  public ImageConfiguration getFrom() {
-    return from;
-  }
+  private static Authorization getImageAuthorization(ImageConfiguration imageConfiguration) {
+    if (imageConfiguration.getAuth().getUsername() == null
+        || imageConfiguration.getAuth().getPassword() == null) {
+      return null;
+    }
 
-  @Nested
-  @Nullable
-  public ImageConfiguration getTo() {
-    return to;
-  }
-
-  @Input
-  @Nullable
-  public List<String> getJvmFlags() {
-    return jvmFlags;
-  }
-
-  @Input
-  @Nullable
-  @Optional
-  public String getMainClass() {
-    return mainClass;
-  }
-
-  @Input
-  public boolean getReproducible() {
-    return reproducible;
-  }
-
-  @Input
-  @Nullable
-  public Class<? extends BuildableManifestTemplate> getFormat() {
-    return format;
-  }
-
-  @Input
-  public boolean getUseOnlyProjectCache() {
-    return useOnlyProjectCache;
+    return Authorizations.withBasicCredentials(
+        imageConfiguration.getAuth().getUsername(), imageConfiguration.getAuth().getPassword());
   }
 
   @TaskAction
   public void buildImage() throws InvalidImageReferenceException, IOException {
     // Asserts required @Input parameters are not null.
-    Preconditions.checkNotNull(from);
-    Preconditions.checkNotNull(from.getImage());
-    Preconditions.checkNotNull(to);
-    Preconditions.checkNotNull(to.getImage());
-    Preconditions.checkNotNull(jvmFlags);
-    Preconditions.checkNotNull(format);
+    Preconditions.checkNotNull(getFrom());
+    Preconditions.checkNotNull(getFrom().getImage());
+    Preconditions.checkNotNull(getTo());
+    Preconditions.checkNotNull(getTo().getImage());
+    Preconditions.checkNotNull(getJvmFlags());
+    Preconditions.checkNotNull(getFormat());
 
-    ImageReference baseImageReference = ImageReference.parse(from.getImage());
-    ImageReference targetImageReference = ImageReference.parse(to.getImage());
+    ImageReference baseImageReference = ImageReference.parse(getFrom().getImage());
+    ImageReference targetImageReference = ImageReference.parse(getTo().getImage());
 
     ProjectProperties projectProperties = new ProjectProperties(getProject(), getLogger());
 
-    String mainClass = this.mainClass;
+    String mainClass = getMainClass();
     if (mainClass == null) {
       mainClass = projectProperties.getMainClassFromJarTask();
       if (mainClass == null) {
@@ -136,19 +95,19 @@ public class BuildImageTask extends DefaultTask {
 
     // TODO: These should be passed separately - one for base image, one for target image.
     List<String> credHelpers = new ArrayList<>();
-    if (from.getCredHelper() != null) {
-      credHelpers.add(from.getCredHelper());
+    if (getFrom().getCredHelper() != null) {
+      credHelpers.add(getFrom().getCredHelper());
     }
-    if (to.getCredHelper() != null) {
-      credHelpers.add(to.getCredHelper());
+    if (getTo().getCredHelper() != null) {
+      credHelpers.add(getTo().getCredHelper());
     }
 
     Map<String, Authorization> registryCredentials = new HashMap<>(2);
-    Authorization fromAuthorization = getImageAuthorization(from);
+    Authorization fromAuthorization = getImageAuthorization(getFrom());
     if (fromAuthorization != null) {
       registryCredentials.put(baseImageReference.getRegistry(), fromAuthorization);
     }
-    Authorization toAuthorization = getImageAuthorization(to);
+    Authorization toAuthorization = getImageAuthorization(getTo());
     if (toAuthorization != null) {
       registryCredentials.put(targetImageReference.getRegistry(), toAuthorization);
     }
@@ -162,9 +121,9 @@ public class BuildImageTask extends DefaultTask {
             .setCredentialHelperNames(credHelpers)
             .setKnownRegistryCredentials(configuredRegistryCredentials)
             .setMainClass(mainClass)
-            .setEnableReproducibleBuilds(reproducible)
-            .setJvmFlags(jvmFlags)
-            .setTargetFormat(format)
+            .setEnableReproducibleBuilds(getReproducible())
+            .setJvmFlags(getJvmFlags())
+            .setTargetFormat(getFormat())
             .build();
 
     // Uses a directory in the Gradle build cache as the Jib cache.
@@ -200,19 +159,6 @@ public class BuildImageTask extends DefaultTask {
     getLogger().lifecycle("");
   }
 
-  /**
-   * Applies the configuration from {@code jibExtension}. This must be called before {@link
-   * #buildImage}.
-   */
-  void applyExtension(JibExtension jibExtension) {
-    from = jibExtension.getFrom();
-    to = jibExtension.getTo();
-    jvmFlags = jibExtension.getJvmFlags();
-    mainClass = jibExtension.getMainClass();
-    reproducible = jibExtension.getReproducible();
-    format = jibExtension.getFormat();
-  }
-
   private void doBuildImage(BuildImageSteps buildImageSteps) {
     try {
       buildImageSteps.run();
@@ -221,17 +167,5 @@ public class BuildImageTask extends DefaultTask {
       throw new GradleException("Build image failed", ex);
     }
     // TODO: Catch and handle exceptions.
-  }
-
-  @Internal
-  @Nullable
-  private Authorization getImageAuthorization(ImageConfiguration imageConfiguration) {
-    if (imageConfiguration.getAuth().getUsername() == null
-        || imageConfiguration.getAuth().getPassword() == null) {
-      return null;
-    }
-
-    return Authorizations.withBasicCredentials(
-        imageConfiguration.getAuth().getUsername(), imageConfiguration.getAuth().getPassword());
   }
 }

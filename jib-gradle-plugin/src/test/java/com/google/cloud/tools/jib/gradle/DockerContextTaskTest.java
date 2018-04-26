@@ -48,7 +48,8 @@ public class DockerContextTaskTest {
 
     testDockerContextTask.applyExtension(fakeJibExtension);
 
-    Assert.assertEquals("some image", testDockerContextTask.getBaseImage());
+    Assert.assertNotNull(testDockerContextTask.getFrom());
+    Assert.assertEquals("some image", testDockerContextTask.getFrom().getImage());
     Assert.assertEquals(Arrays.asList("flag1", "flag2"), testDockerContextTask.getJvmFlags());
     Assert.assertEquals("some main class", testDockerContextTask.getMainClass());
     Assert.assertEquals(
