@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.DockerContextGenerator;
+import com.google.common.base.Preconditions;
 import com.google.common.io.InsecureRecursiveDeleteException;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -37,9 +38,11 @@ import org.apache.maven.project.MavenProject;
 @Mojo(name = "dockercontext", requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM)
 public class DockerContextMojo extends AbstractMojo {
 
+  @Nullable
   @Parameter(defaultValue = "${project}", readonly = true)
   private MavenProject project;
 
+  @Nullable
   @Parameter(
     property = "jib.dockerDir",
     defaultValue = "${project.build.directory}/jib-dockercontext",
@@ -47,17 +50,23 @@ public class DockerContextMojo extends AbstractMojo {
   )
   private String targetDir;
 
+  @Nullable
   @Parameter(defaultValue = "gcr.io/distroless/java", required = true)
   private String from;
 
   @Parameter private List<String> jvmFlags = Collections.emptyList();
 
-  @Parameter private Map<String, String> environment;
+  @Nullable @Parameter private Map<String, String> environment;
 
-  @Parameter private String mainClass;
+  @Nullable @Parameter private String mainClass;
 
   @Override
   public void execute() throws MojoExecutionException {
+    // These @Nullable parameters should never be actually null.
+    Preconditions.checkNotNull(project);
+    Preconditions.checkNotNull(targetDir);
+    Preconditions.checkNotNull(from);
+
     ProjectProperties projectProperties = new ProjectProperties(project, getLog());
 
     // TODO: Refactor with BuildImageMojo.
@@ -69,6 +78,7 @@ public class DockerContextMojo extends AbstractMojo {
             "add a `mainClass` configuration to jib-maven-plugin");
       }
     }
+    Preconditions.checkNotNull(mainClass);
     if (!BuildConfiguration.isValidJavaClass(mainClass)) {
       getLog().warn("'mainClass' is not a valid Java class : " + mainClass);
     }
