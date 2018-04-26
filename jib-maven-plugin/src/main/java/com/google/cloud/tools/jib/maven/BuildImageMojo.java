@@ -36,6 +36,7 @@ import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.net.UnknownHostException;
@@ -84,33 +85,38 @@ public class BuildImageMojo extends AbstractMojo {
   /** {@code User-Agent} header suffix to send to the registry. */
   private static final String USER_AGENT_SUFFIX = "jib-maven-plugin";
 
+  @Nullable
   @Parameter(defaultValue = "${project}", readonly = true)
   private MavenProject project;
 
+  @Nullable
   @Parameter(defaultValue = "${session}", readonly = true)
   private MavenSession session;
 
+  @Nullable
   @Parameter(defaultValue = "gcr.io/distroless/java", required = true)
   private String from;
 
-  @Parameter private String registry;
+  @Nullable @Parameter private String registry;
 
+  @Nullable
   @Parameter(required = true)
   private String repository;
 
-  @Parameter private String tag;
+  @Nullable @Parameter private String tag;
 
-  @Parameter private List<String> credHelpers;
+  @Nullable @Parameter private List<String> credHelpers;
 
-  @Parameter private List<String> jvmFlags;
+  @Nullable @Parameter private List<String> jvmFlags;
 
-  @Parameter private Map<String, String> environment;
+  @Nullable @Parameter private Map<String, String> environment;
 
-  @Parameter private String mainClass;
+  @Nullable @Parameter private String mainClass;
 
   @Parameter(defaultValue = "true", required = true)
   private boolean enableReproducibleBuilds;
 
+  @Nullable
   @Parameter(defaultValue = "Docker", required = true)
   private String imageFormat;
 
@@ -119,6 +125,12 @@ public class BuildImageMojo extends AbstractMojo {
 
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
+    // These @Nullable parameters should never be null.
+    Preconditions.checkNotNull(project);
+    Preconditions.checkNotNull(session);
+    Preconditions.checkNotNull(repository);
+    Preconditions.checkNotNull(imageFormat);
+
     validateParameters();
 
     ProjectProperties projectProperties = new ProjectProperties(project, getLog());
@@ -131,6 +143,7 @@ public class BuildImageMojo extends AbstractMojo {
             "add a `mainClass` configuration to jib-maven-plugin");
       }
     }
+    Preconditions.checkNotNull(mainClass);
     if (!BuildConfiguration.isValidJavaClass(mainClass)) {
       getLog().warn("'mainClass' is not a valid Java class : " + mainClass);
     }
@@ -265,7 +278,11 @@ public class BuildImageMojo extends AbstractMojo {
 
   /** Attempts to retrieve credentials for {@code registry} from Maven settings. */
   @Nullable
-  private Authorization getRegistryCredentialsFromSettings(String registry) {
+  private Authorization getRegistryCredentialsFromSettings(@Nullable String registry) {
+    if (registry == null) {
+      return null;
+    }
+    Preconditions.checkNotNull(session);
     Server registryServerSettings = session.getSettings().getServer(registry);
     if (registryServerSettings == null) {
       return null;
@@ -276,6 +293,10 @@ public class BuildImageMojo extends AbstractMojo {
 
   /** Checks validity of plugin parameters. */
   private void validateParameters() throws MojoFailureException {
+    // These @Nullable parameters should never be null.
+    Preconditions.checkNotNull(repository);
+    Preconditions.checkNotNull(imageFormat);
+
     // Validates 'registry'.
     if (!Strings.isNullOrEmpty(registry) && !ImageReference.isValidRegistry(registry)) {
       getLog().error("Invalid format for 'registry'");
@@ -318,6 +339,8 @@ public class BuildImageMojo extends AbstractMojo {
 
   /** @return the {@link ImageReference} parsed from {@link #from}. */
   private ImageReference getBaseImageReference() throws MojoFailureException {
+    Preconditions.checkNotNull(from);
+
     try {
       return ImageReference.parse(from);
 
