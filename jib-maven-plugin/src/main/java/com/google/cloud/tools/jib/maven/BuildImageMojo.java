@@ -82,6 +82,9 @@ public class BuildImageMojo extends JibPluginConfiguration {
   /** {@code User-Agent} header suffix to send to the registry. */
   private static final String USER_AGENT_SUFFIX = "jib-maven-plugin";
 
+  private static final HelpfulMojoExecutionExceptionBuilder MOJO_EXECUTION_EXCEPTION_BUILDER =
+      new HelpfulMojoExecutionExceptionBuilder("Build image failed");
+
   @Nullable
   @Parameter(defaultValue = "${session}", readonly = true)
   private MavenSession session;
@@ -101,7 +104,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
     if (mainClass == null) {
       mainClass = projectProperties.getMainClassFromMavenJarPlugin();
       if (mainClass == null) {
-        throwMojoExecutionExceptionWithHelpMessage(
+        throw MOJO_EXECUTION_EXCEPTION_BUILDER.withSuggestion(
             new MojoFailureException("Could not find main class specified in maven-jar-plugin"),
             "add a `mainClass` configuration to jib-maven-plugin");
       }
@@ -190,7 +193,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
       buildImageSteps.run();
 
     } catch (CacheMetadataCorruptedException cacheMetadataCorruptedException) {
-      throwMojoExecutionExceptionWithHelpMessage(
+      throw MOJO_EXECUTION_EXCEPTION_BUILDER.withSuggestion(
           cacheMetadataCorruptedException, "run 'mvn clean' to clear the cache");
 
     } catch (ExecutionException executionException) {
@@ -198,7 +201,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
 
       if (executionException.getCause() instanceof HttpHostConnectException) {
         // Failed to connect to registry.
-        throwMojoExecutionExceptionWithHelpMessage(
+        throw MOJO_EXECUTION_EXCEPTION_BUILDER.withSuggestion(
             executionException.getCause(),
             "make sure your Internet is up and that the registry you are pushing to exists");
 
@@ -216,21 +219,21 @@ public class BuildImageMojo extends JibPluginConfiguration {
             buildConfiguration);
 
       } else if (executionException.getCause() instanceof UnknownHostException) {
-        throwMojoExecutionExceptionWithHelpMessage(
+        throw MOJO_EXECUTION_EXCEPTION_BUILDER.withSuggestion(
             executionException.getCause(),
             "make sure that the registry you configured exists/is spelled properly");
 
       } else {
-        throwMojoExecutionExceptionWithHelpMessage(executionException.getCause(), null);
+        throw MOJO_EXECUTION_EXCEPTION_BUILDER.withNoHelp(executionException.getCause());
       }
 
     } catch (InterruptedException | IOException ex) {
       getLog().error(ex);
       // TODO: Add more suggestions for various build failures.
-      throwMojoExecutionExceptionWithHelpMessage(ex, null);
+      throw MOJO_EXECUTION_EXCEPTION_BUILDER.withNoHelp(ex);
 
     } catch (CacheDirectoryNotOwnedException ex) {
-      throwMojoExecutionExceptionWithHelpMessage(
+      throw MOJO_EXECUTION_EXCEPTION_BUILDER.withSuggestion(
           ex,
           "check that '"
               + ex.getCacheDirectory()
@@ -319,7 +322,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
     if (registryUnauthorizedException.getHttpResponseException().getStatusCode()
         == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
       // No permissions for registry/repository.
-      throwMojoExecutionExceptionWithHelpMessage(
+      throw MOJO_EXECUTION_EXCEPTION_BUILDER.withSuggestion(
           registryUnauthorizedException,
           "make sure you have permissions for "
               + registryUnauthorizedException.getImageReference());
@@ -331,7 +334,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
                 .getKnownRegistryCredentials()
                 .has(registryUnauthorizedException.getRegistry()))) {
       // No credential helpers defined.
-      throwMojoExecutionExceptionWithHelpMessage(
+      throw MOJO_EXECUTION_EXCEPTION_BUILDER.withSuggestion(
           registryUnauthorizedException,
           "set a credential helper name with the configuration 'credHelpers' or "
               + "set credentials for '"
@@ -341,25 +344,11 @@ public class BuildImageMojo extends JibPluginConfiguration {
     } else {
       // Credential helper probably was not configured correctly or did not have the necessary
       // credentials.
-      throwMojoExecutionExceptionWithHelpMessage(
+      throw MOJO_EXECUTION_EXCEPTION_BUILDER.withSuggestion(
           registryUnauthorizedException,
           "make sure your credentials for '"
               + registryUnauthorizedException.getRegistry()
               + "' are set up correctly");
     }
-  }
-
-  /**
-   * Wraps an exception in a {@link MojoExecutionException} and provides a suggestion on how to fix
-   * the error.
-   */
-  private <T extends Throwable> void throwMojoExecutionExceptionWithHelpMessage(
-      T ex, @Nullable String suggestion) throws MojoExecutionException {
-    StringBuilder message = new StringBuilder("Build image failed");
-    if (suggestion != null) {
-      message.append(", perhaps you should ");
-      message.append(suggestion);
-    }
-    throw new MojoExecutionException(message.toString(), ex);
   }
 }

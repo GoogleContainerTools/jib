@@ -33,6 +33,9 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 @Mojo(name = "dockercontext", requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM)
 public class DockerContextMojo extends JibPluginConfiguration {
 
+  private static final HelpfulMojoExecutionExceptionBuilder MOJO_EXECUTION_EXCEPTION_BUILDER =
+      new HelpfulMojoExecutionExceptionBuilder("Export Docker context failed");
+
   @Nullable
   @Parameter(
     property = "jib.dockerDir",
@@ -54,7 +57,7 @@ public class DockerContextMojo extends JibPluginConfiguration {
     if (mainClass == null) {
       mainClass = projectProperties.getMainClassFromMavenJarPlugin();
       if (mainClass == null) {
-        throwMojoExecutionExceptionWithHelpMessage(
+        throw MOJO_EXECUTION_EXCEPTION_BUILDER.withSuggestion(
             new MojoFailureException("Could not find main class specified in maven-jar-plugin"),
             "add a `mainClass` configuration to jib-maven-plugin");
       }
@@ -74,28 +77,15 @@ public class DockerContextMojo extends JibPluginConfiguration {
       getLog().info("Created Docker context at " + targetDir);
 
     } catch (InsecureRecursiveDeleteException ex) {
-      throwMojoExecutionExceptionWithHelpMessage(
+      throw MOJO_EXECUTION_EXCEPTION_BUILDER.withSuggestion(
           ex,
           "cannot clear directory '"
               + targetDir
               + "' safely - clear it manually before creating the Docker context");
 
     } catch (IOException ex) {
-      throwMojoExecutionExceptionWithHelpMessage(ex, "check if `targetDir` is set correctly");
+      throw MOJO_EXECUTION_EXCEPTION_BUILDER.withSuggestion(
+          ex, "check if `targetDir` is set correctly");
     }
-  }
-
-  /**
-   * Wraps an exception in a {@link MojoExecutionException} and provides a suggestion on how to fix
-   * the error.
-   */
-  private <T extends Throwable> void throwMojoExecutionExceptionWithHelpMessage(
-      T ex, @Nullable String suggestion) throws MojoExecutionException {
-    StringBuilder message = new StringBuilder("Export Docker context failed");
-    if (suggestion != null) {
-      message.append(", perhaps you should ");
-      message.append(suggestion);
-    }
-    throw new MojoExecutionException(message.toString(), ex);
   }
 }
