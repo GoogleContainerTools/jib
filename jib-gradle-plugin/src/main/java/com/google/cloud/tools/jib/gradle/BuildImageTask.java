@@ -51,6 +51,9 @@ public class BuildImageTask extends TaskConfiguration {
   /** {@code User-Agent} header suffix to send to the registry. */
   private static final String USER_AGENT_SUFFIX = "jib-gradle-plugin";
 
+  private static final HelpfulGradleExceptionBuilder GRADLE_EXCEPTION_BUILDER =
+      new HelpfulGradleExceptionBuilder("Build image failed");
+
   /** Converts an {@link ImageConfiguration} to an {@link Authorization}. */
   @Internal
   @Nullable
@@ -164,7 +167,7 @@ public class BuildImageTask extends TaskConfiguration {
       buildImageSteps.run();
 
     } catch (Throwable ex) {
-      throw new GradleException("Build image failed", ex);
+      throw GRADLE_EXCEPTION_BUILDER.withNoHelp(ex);
     }
     // TODO: Catch and handle exceptions.
   }

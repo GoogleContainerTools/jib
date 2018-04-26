@@ -14,23 +14,21 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.maven;
+package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.frontend.HelpfulExceptionBuilder;
-import org.apache.maven.plugin.MojoExecutionException;
+import org.gradle.api.GradleException;
 
-/** Builds {@link MojoExecutionException} that provides a suggestion on how to fix the error. */
-class HelpfulMojoExecutionExceptionBuilder extends HelpfulExceptionBuilder<MojoExecutionException> {
+/** Builds {@link GradleException} that provides a suggestion on how to fix the error. */
+class HelpfulGradleExceptionBuilder extends HelpfulExceptionBuilder<GradleException> {
 
-  /**
-   * @param messageHeader the initial message text for the exception message
-   */
-  HelpfulMojoExecutionExceptionBuilder(String messageHeader) {
+  /** @param messageHeader the initial message text for the exception message */
+  HelpfulGradleExceptionBuilder(String messageHeader) {
     super(messageHeader);
   }
 
   @Override
-  protected MojoExecutionException makeException(String message, Throwable cause) {
-    return new MojoExecutionException(message, cause);
+  protected GradleException makeException(String message, Throwable cause) {
+    return new GradleException(message, cause);
   }
 }

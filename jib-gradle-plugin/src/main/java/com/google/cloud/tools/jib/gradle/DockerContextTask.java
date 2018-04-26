@@ -30,6 +30,9 @@ import org.gradle.api.tasks.options.Option;
 
 public class DockerContextTask extends TaskConfiguration {
 
+  private static final HelpfulGradleExceptionBuilder GRADLE_EXCEPTION_BUILDER =
+      new HelpfulGradleExceptionBuilder("Export Docker context failed");
+
   @Nullable private String targetDir;
 
   /** The output directory for the Docker context is by default {@code build/jib-dockercontext}. */
@@ -80,25 +83,15 @@ public class DockerContextTask extends TaskConfiguration {
       getLogger().info("Created Docker context at " + targetDir);
 
     } catch (InsecureRecursiveDeleteException ex) {
-      throwMojoExecutionExceptionWithHelpMessage(
+      throw GRADLE_EXCEPTION_BUILDER.withSuggestion(
           ex,
           "cannot clear directory '"
               + targetDir
               + "' safely - clear it manually before creating the Docker context");
 
     } catch (IOException ex) {
-      throwMojoExecutionExceptionWithHelpMessage(
+      throw GRADLE_EXCEPTION_BUILDER.withSuggestion(
           ex, "check if the command-line option `--jib.dockerDir` is set correctly");
     }
-  }
-
-  private <T extends Throwable> void throwMojoExecutionExceptionWithHelpMessage(
-      T ex, String suggestion) {
-    StringBuilder message = new StringBuilder("Export Docker context failed");
-    if (suggestion != null) {
-      message.append(", perhaps you should ");
-      message.append(suggestion);
-    }
-    throw new GradleException(message.toString(), ex);
   }
 }
