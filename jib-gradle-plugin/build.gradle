@@ -62,7 +62,7 @@ dependencies {
     compile gradleApi()
 
     // NullAway errorprone plugin
-    apt 'com.uber.nullaway:nullaway:0.3.7'
+    apt 'com.uber.nullaway:nullaway:0.4.2'
     errorprone 'com.google.errorprone:error_prone_core:2.2.0'
 }
 
