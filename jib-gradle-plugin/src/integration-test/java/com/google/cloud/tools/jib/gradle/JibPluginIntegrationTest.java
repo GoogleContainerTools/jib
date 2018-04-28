@@ -35,7 +35,7 @@ public class JibPluginIntegrationTest {
 
   private static String buildAndRun(TestProject testProject, String imageReference)
       throws IOException, InterruptedException {
-    BuildResult buildResult = testProject.build();
+    BuildResult buildResult = testProject.build("build", "jib");
 
     BuildTask jibTask = buildResult.task(":jib");
 
@@ -60,5 +60,37 @@ public class JibPluginIntegrationTest {
     Assert.assertEquals(
         "Hello, world\n",
         buildAndRun(simpleTestProject, "gcr.io/jib-integration-testing/simpleimage:gradle"));
+  }
+
+  @Test
+  public void testDockerContext() throws IOException, InterruptedException {
+    BuildResult buildResult = simpleTestProject.build("build", "jibDockerContext", "--info");
+
+    BuildTask jibDockerContextTask = buildResult.task(":jibDockerContext");
+
+    Assert.assertNotNull(jibDockerContextTask);
+    Assert.assertEquals(TaskOutcome.SUCCESS, jibDockerContextTask.getOutcome());
+    Assert.assertThat(
+        buildResult.getOutput(), CoreMatchers.containsString("Created Docker context at "));
+
+    String imageName = "jib-gradle-plugin/integration-test";
+    new Command(
+            "docker",
+            "build",
+            "-t",
+            imageName,
+            simpleTestProject
+                .getProjectRoot()
+                .resolve("build")
+                .resolve("jib-dockercontext")
+                .toString())
+        .run();
+    Assert.assertEquals("Hello, world\n", new Command("docker", "run", imageName).run());
+
+    // Checks that generating the Docker context again is skipped.
+    BuildTask upToDateJibDockerContextTask =
+        simpleTestProject.build("build", "jibDockerContext").task(":jibDockerContext");
+    Assert.assertNotNull(upToDateJibDockerContextTask);
+    Assert.assertEquals(TaskOutcome.UP_TO_DATE, upToDateJibDockerContextTask.getOutcome());
   }
 }

@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.DockerContextGenerator;
 import com.google.common.base.Preconditions;
 import com.google.common.io.InsecureRecursiveDeleteException;
@@ -68,6 +69,7 @@ public class DockerContextMojo extends AbstractMojo {
 
     ProjectProperties projectProperties = new ProjectProperties(project, getLog());
 
+    // TODO: Refactor with BuildImageMojo.
     if (mainClass == null) {
       mainClass = projectProperties.getMainClassFromMavenJarPlugin();
       if (mainClass == null) {
@@ -77,6 +79,9 @@ public class DockerContextMojo extends AbstractMojo {
       }
     }
     Preconditions.checkNotNull(mainClass);
+    if (!BuildConfiguration.isValidJavaClass(mainClass)) {
+      getLog().warn("'mainClass' is not a valid Java class : " + mainClass);
+    }
 
     try {
       new DockerContextGenerator(projectProperties.getSourceFilesConfiguration())
@@ -85,7 +90,8 @@ public class DockerContextMojo extends AbstractMojo {
           .setMainClass(mainClass)
           .generate(Paths.get(targetDir));
 
-      projectProperties.getLog().info("Created Docker context at " + targetDir);
+      getLog().info("Created Docker context at " + targetDir);
+
     } catch (InsecureRecursiveDeleteException ex) {
       throwMojoExecutionExceptionWithHelpMessage(
           ex,
