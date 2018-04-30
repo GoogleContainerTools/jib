@@ -39,7 +39,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.Nullable;
 import org.gradle.api.GradleException;
-import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.TaskAction;
 
 /** Builds a container image. */
@@ -52,7 +51,6 @@ public class BuildImageTask extends TaskConfiguration {
   private static final String USER_AGENT_SUFFIX = "jib-gradle-plugin";
 
   /** Converts an {@link ImageConfiguration} to an {@link Authorization}. */
-  @Internal
   @Nullable
   private static Authorization getImageAuthorization(ImageConfiguration imageConfiguration) {
     if (imageConfiguration.getAuth().getUsername() == null
