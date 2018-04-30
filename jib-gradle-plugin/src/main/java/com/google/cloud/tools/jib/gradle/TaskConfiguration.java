@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import java.util.List;
 import javax.annotation.Nullable;
-import org.gradle.api.DefaultTask;
 import org.gradle.api.Task;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Nested;
@@ -27,10 +26,11 @@ import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.TaskAction;
 
 /**
- * Defines the configuration parameters injected from {@link JibExtension}. {@link Task}s should
- * extend this class.
+ * Defines the configuration parameters injected from {@link JibExtension}. {@link Task}s should use
+ * this class as a nested input. This allows Gradle to inspect and inform the user of missing
+ * required inputs.
  */
-abstract class TaskConfiguration extends DefaultTask {
+class TaskConfiguration {
 
   @Nullable private ImageConfiguration from;
   @Nullable private ImageConfiguration to;
