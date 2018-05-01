@@ -23,17 +23,30 @@ import com.google.common.io.InsecureRecursiveDeleteException;
 import java.io.IOException;
 import java.nio.file.Paths;
 import javax.annotation.Nullable;
+import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
+import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.options.Option;
 
-public class DockerContextTask extends TaskConfiguration {
+public class DockerContextTask extends DefaultTask {
 
   private static final HelpfulGradleExceptionBuilder GRADLE_EXCEPTION_BUILDER =
       new HelpfulGradleExceptionBuilder("Export Docker context failed");
 
   @Nullable private String targetDir;
+  @Nullable private JibExtension jibExtension;
+
+  /**
+   * This will call the property {@code "jib"} so that it is the same name as the extension. This
+   * way, the user would see error messages for missing configuration with the prefix {@code jib.}.
+   */
+  @Nested
+  @Nullable
+  public JibExtension getJib() {
+    return jibExtension;
+  }
 
   /** The output directory for the Docker context is by default {@code build/jib-dockercontext}. */
   @OutputDirectory
@@ -53,14 +66,15 @@ public class DockerContextTask extends TaskConfiguration {
   @TaskAction
   public void generateDockerContext() {
     // Asserts required parameters are not null.
-    Preconditions.checkNotNull(getFrom());
-    Preconditions.checkNotNull(getFrom().getImage());
-    Preconditions.checkNotNull(getJvmFlags());
+    Preconditions.checkNotNull(jibExtension);
+    Preconditions.checkNotNull(jibExtension.getFrom());
+    Preconditions.checkNotNull(jibExtension.getFrom().getImage());
+    Preconditions.checkNotNull(jibExtension.getJvmFlags());
 
     // TODO: Refactor with BuildImageTask.
     ProjectProperties projectProperties = new ProjectProperties(getProject(), getLogger());
 
-    String mainClass = getMainClass();
+    String mainClass = jibExtension.getMainClass();
     if (mainClass == null) {
       mainClass = projectProperties.getMainClassFromJarTask();
       if (mainClass == null) {
@@ -75,8 +89,8 @@ public class DockerContextTask extends TaskConfiguration {
 
     try {
       new DockerContextGenerator(projectProperties.getSourceFilesConfiguration())
-          .setBaseImage(getFrom().getImage())
-          .setJvmFlags(getJvmFlags())
+          .setBaseImage(jibExtension.getFrom().getImage())
+          .setJvmFlags(jibExtension.getJvmFlags())
           .setMainClass(mainClass)
           .generate(Paths.get(targetDir));
 
@@ -93,5 +107,9 @@ public class DockerContextTask extends TaskConfiguration {
       throw GRADLE_EXCEPTION_BUILDER.withSuggestion(
           ex, "check if the command-line option `--jib.dockerDir` is set correctly");
     }
+  }
+
+  void setJibExtension(JibExtension jibExtension) {
+    this.jibExtension = jibExtension;
   }
 }
