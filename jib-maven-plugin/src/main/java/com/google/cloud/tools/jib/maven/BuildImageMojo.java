@@ -44,24 +44,21 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 import org.apache.http.conn.HttpHostConnectException;
 import org.apache.maven.execution.MavenSession;
-import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
-import org.apache.maven.project.MavenProject;
 import org.apache.maven.settings.Server;
 
 /** Builds a container image. */
 @Mojo(name = "build", requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM)
-public class BuildImageMojo extends AbstractMojo {
+public class BuildImageMojo extends JibPluginConfiguration {
 
   /** Enumeration of {@link BuildableManifestTemplate}s. */
   public enum ImageFormat {
@@ -86,42 +83,8 @@ public class BuildImageMojo extends AbstractMojo {
   private static final String USER_AGENT_SUFFIX = "jib-maven-plugin";
 
   @Nullable
-  @Parameter(defaultValue = "${project}", readonly = true)
-  private MavenProject project;
-
-  @Nullable
   @Parameter(defaultValue = "${session}", readonly = true)
   private MavenSession session;
-
-  @Nullable
-  @Parameter(defaultValue = "gcr.io/distroless/java", required = true)
-  private String from;
-
-  @Nullable @Parameter private String registry;
-
-  @Nullable
-  @Parameter(required = true)
-  private String repository;
-
-  @Nullable @Parameter private String tag;
-
-  @Nullable @Parameter private List<String> credHelpers;
-
-  @Nullable @Parameter private List<String> jvmFlags;
-
-  @Nullable @Parameter private Map<String, String> environment;
-
-  @Nullable @Parameter private String mainClass;
-
-  @Parameter(defaultValue = "true", required = true)
-  private boolean enableReproducibleBuilds;
-
-  @Nullable
-  @Parameter(defaultValue = "Docker", required = true)
-  private String imageFormat;
-
-  @Parameter(defaultValue = "false", required = true)
-  private boolean useOnlyProjectCache;
 
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {

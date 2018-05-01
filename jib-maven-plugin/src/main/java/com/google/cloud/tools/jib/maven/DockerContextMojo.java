@@ -22,25 +22,16 @@ import com.google.common.base.Preconditions;
 import com.google.common.io.InsecureRecursiveDeleteException;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import javax.annotation.Nullable;
-import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
-import org.apache.maven.project.MavenProject;
 
 /** Exports to a Docker context. This is an <b>incubating</b> feature. */
 @Mojo(name = "dockercontext", requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM)
-public class DockerContextMojo extends AbstractMojo {
-
-  @Nullable
-  @Parameter(defaultValue = "${project}", readonly = true)
-  private MavenProject project;
+public class DockerContextMojo extends JibPluginConfiguration {
 
   @Nullable
   @Parameter(
@@ -49,16 +40,6 @@ public class DockerContextMojo extends AbstractMojo {
     required = true
   )
   private String targetDir;
-
-  @Nullable
-  @Parameter(defaultValue = "gcr.io/distroless/java", required = true)
-  private String from;
-
-  @Parameter private List<String> jvmFlags = Collections.emptyList();
-
-  @Nullable @Parameter private Map<String, String> environment;
-
-  @Nullable @Parameter private String mainClass;
 
   @Override
   public void execute() throws MojoExecutionException {

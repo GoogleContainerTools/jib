@@ -22,11 +22,10 @@ import com.google.common.base.Preconditions;
 import com.google.common.io.InsecureRecursiveDeleteException;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.List;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
-import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.options.Option;
@@ -34,26 +33,16 @@ import org.gradle.api.tasks.options.Option;
 public class DockerContextTask extends DefaultTask {
 
   @Nullable private String targetDir;
-  @Nullable private String baseImage;
-  @Nullable private List<String> jvmFlags;
-  @Nullable private String mainClass;
+  @Nullable private JibExtension jibExtension;
 
-  @Input
+  /**
+   * This will call the property {@code "jib"} so that it is the same name as the extension. This
+   * way, the user would see error messages for missing configuration with the prefix {@code jib.}.
+   */
+  @Nested
   @Nullable
-  public String getBaseImage() {
-    return baseImage;
-  }
-
-  @Input
-  @Nullable
-  public List<String> getJvmFlags() {
-    return jvmFlags;
-  }
-
-  @Input
-  @Nullable
-  public String getMainClass() {
-    return mainClass;
+  public JibExtension getJib() {
+    return jibExtension;
   }
 
   /** The output directory for the Docker context is by default {@code build/jib-dockercontext}. */
@@ -74,14 +63,15 @@ public class DockerContextTask extends DefaultTask {
   @TaskAction
   public void generateDockerContext() {
     // Asserts required parameters are not null.
-    Preconditions.checkNotNull(baseImage);
-    Preconditions.checkNotNull(jvmFlags);
-    Preconditions.checkNotNull(mainClass);
+    Preconditions.checkNotNull(jibExtension);
+    Preconditions.checkNotNull(jibExtension.getFrom());
+    Preconditions.checkNotNull(jibExtension.getFrom().getImage());
+    Preconditions.checkNotNull(jibExtension.getJvmFlags());
 
     // TODO: Refactor with BuildImageTask.
     ProjectProperties projectProperties = new ProjectProperties(getProject(), getLogger());
 
-    String mainClass = this.mainClass;
+    String mainClass = jibExtension.getMainClass();
     if (mainClass == null) {
       mainClass = projectProperties.getMainClassFromJarTask();
       if (mainClass == null) {
@@ -96,8 +86,8 @@ public class DockerContextTask extends DefaultTask {
 
     try {
       new DockerContextGenerator(projectProperties.getSourceFilesConfiguration())
-          .setBaseImage(baseImage)
-          .setJvmFlags(jvmFlags)
+          .setBaseImage(jibExtension.getFrom().getImage())
+          .setJvmFlags(jibExtension.getJvmFlags())
           .setMainClass(mainClass)
           .generate(Paths.get(targetDir));
 
@@ -116,14 +106,8 @@ public class DockerContextTask extends DefaultTask {
     }
   }
 
-  /**
-   * Applies the configuration from {@code jibExtension}. This must be called before {@link
-   * #generateDockerContext}.
-   */
-  void applyExtension(JibExtension jibExtension) {
-    baseImage = jibExtension.getFrom().getImage();
-    jvmFlags = jibExtension.getJvmFlags();
-    mainClass = jibExtension.getMainClass();
+  void setJibExtension(JibExtension jibExtension) {
+    this.jibExtension = jibExtension;
   }
 
   private <T extends Throwable> void throwMojoExecutionExceptionWithHelpMessage(
