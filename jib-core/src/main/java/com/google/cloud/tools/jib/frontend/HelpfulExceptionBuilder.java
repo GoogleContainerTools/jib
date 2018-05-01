@@ -16,36 +16,36 @@
 
 package com.google.cloud.tools.jib.frontend;
 
-import java.util.concurrent.Callable;
-import java.util.function.Function;
-
-/** Builds exceptions that provides suggestions on how to fix the error. Extend by implementing with a specific wrapper exception class. */
+/**
+ * Builds exceptions that provides suggestions on how to fix the error. Extend by implementing with
+ * a specific wrapper exception class.
+ */
 public abstract class HelpfulExceptionBuilder<E extends Exception> {
 
-    private final String messageHeader;
+  private final String messageHeader;
 
-    /** @param messageHeader the initial message text for the exception message */
-    public HelpfulExceptionBuilder(String messageHeader) {
-      this.messageHeader = messageHeader;
-    }
-
-    /** @return an {@link E} with a cause and a suggestion */
-    public E withSuggestion(Throwable cause, String suggestion) {
-      StringBuilder message = getMessageHeader();
-      message.append(", perhaps you should ");
-      message.append(suggestion);
-      return makeException(message.toString(), cause);
-    }
-
-    /** @return an {@link E} with just a cause */
-    public E withNoHelp(Throwable cause) {
-      return makeException(getMessageHeader().toString(), cause);
-    }
-
-    /** Implement with constructing a specific wrapper exception class. */
-    protected abstract E makeException(String message, Throwable cause);
-
-    private StringBuilder getMessageHeader() {
-      return new StringBuilder(messageHeader);
-    }
+  /** @param messageHeader the initial message text for the exception message */
+  public HelpfulExceptionBuilder(String messageHeader) {
+    this.messageHeader = messageHeader;
   }
+
+  /** @return an {@link E} with a cause and a suggestion */
+  public E withSuggestion(Throwable cause, String suggestion) {
+    StringBuilder message = getMessageHeader();
+    message.append(", perhaps you should ");
+    message.append(suggestion);
+    return makeException(message.toString(), cause);
+  }
+
+  /** @return an {@link E} with just a cause */
+  public E withNoHelp(Throwable cause) {
+    return makeException(getMessageHeader().toString(), cause);
+  }
+
+  /** Implement with constructing a specific wrapper exception class. */
+  protected abstract E makeException(String message, Throwable cause);
+
+  private StringBuilder getMessageHeader() {
+    return new StringBuilder(messageHeader);
+  }
+}

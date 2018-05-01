@@ -22,9 +22,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 /** Builds {@link MojoExecutionException} that provides a suggestion on how to fix the error. */
 class HelpfulMojoExecutionExceptionBuilder extends HelpfulExceptionBuilder<MojoExecutionException> {
 
-  /**
-   * @param messageHeader the initial message text for the exception message
-   */
+  /** @param messageHeader the initial message text for the exception message */
   HelpfulMojoExecutionExceptionBuilder(String messageHeader) {
     super(messageHeader);
   }

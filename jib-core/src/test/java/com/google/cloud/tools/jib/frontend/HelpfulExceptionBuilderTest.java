@@ -34,24 +34,19 @@ public class HelpfulExceptionBuilderTest {
         }
       };
 
-  @Mock
-  private Throwable mockThrowable;
+  @Mock private Throwable mockThrowable;
 
   @Test
   public void testWithNoHelp() {
-    Exception exception =
-        testHelpfulExceptionBuilder.withNoHelp(mockThrowable);
+    Exception exception = testHelpfulExceptionBuilder.withNoHelp(mockThrowable);
     Assert.assertEquals("message header", exception.getMessage());
     Assert.assertEquals(mockThrowable, exception.getCause());
   }
 
   @Test
   public void testWithSuggestion() {
-    Exception exception =
-        testHelpfulExceptionBuilder.withSuggestion(mockThrowable, "do something");
-    Assert.assertEquals(
-        "message header, perhaps you should do something",
-        exception.getMessage());
+    Exception exception = testHelpfulExceptionBuilder.withSuggestion(mockThrowable, "do something");
+    Assert.assertEquals("message header, perhaps you should do something", exception.getMessage());
     Assert.assertEquals(mockThrowable, exception.getCause());
   }
 }
