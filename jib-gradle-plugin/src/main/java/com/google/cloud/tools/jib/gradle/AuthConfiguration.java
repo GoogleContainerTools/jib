@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.gradle;
 
 import javax.annotation.Nullable;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.Optional;
 
 /**
  * A bean that configures authorization credentials to be used for a registry. This is configurable
@@ -30,6 +31,7 @@ public class AuthConfiguration {
 
   @Input
   @Nullable
+  @Optional
   public String getUsername() {
     return username;
   }
@@ -40,6 +42,7 @@ public class AuthConfiguration {
 
   @Input
   @Nullable
+  @Optional
   public String getPassword() {
     return password;
   }

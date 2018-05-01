@@ -25,7 +25,6 @@ import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
-import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.base.Preconditions;
@@ -41,10 +40,7 @@ import java.util.logging.Logger;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
-import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.Nested;
-import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.TaskAction;
 
 /** Builds a container image. */
@@ -56,71 +52,47 @@ public class BuildImageTask extends DefaultTask {
   /** {@code User-Agent} header suffix to send to the registry. */
   private static final String USER_AGENT_SUFFIX = "jib-gradle-plugin";
 
-  @Nullable private ImageConfiguration from;
-  @Nullable private ImageConfiguration to;
-  @Nullable private List<String> jvmFlags;
-  @Nullable private String mainClass;
-  private boolean reproducible;
-  @Nullable private Class<? extends BuildableManifestTemplate> format;
-  private boolean useOnlyProjectCache;
+  /** Converts an {@link ImageConfiguration} to an {@link Authorization}. */
+  @Nullable
+  private static Authorization getImageAuthorization(ImageConfiguration imageConfiguration) {
+    if (imageConfiguration.getAuth().getUsername() == null
+        || imageConfiguration.getAuth().getPassword() == null) {
+      return null;
+    }
 
+    return Authorizations.withBasicCredentials(
+        imageConfiguration.getAuth().getUsername(), imageConfiguration.getAuth().getPassword());
+  }
+
+  @Nullable private JibExtension jibExtension;
+
+  /**
+   * This will call the property {@code "jib"} so that it is the same name as the extension. This
+   * way, the user would see error messages for missing configuration with the prefix {@code jib.}.
+   */
   @Nested
   @Nullable
-  public ImageConfiguration getFrom() {
-    return from;
-  }
-
-  @Nested
-  @Nullable
-  public ImageConfiguration getTo() {
-    return to;
-  }
-
-  @Input
-  @Nullable
-  public List<String> getJvmFlags() {
-    return jvmFlags;
-  }
-
-  @Input
-  @Nullable
-  @Optional
-  public String getMainClass() {
-    return mainClass;
-  }
-
-  @Input
-  public boolean getReproducible() {
-    return reproducible;
-  }
-
-  @Input
-  @Nullable
-  public Class<? extends BuildableManifestTemplate> getFormat() {
-    return format;
-  }
-
-  @Input
-  public boolean getUseOnlyProjectCache() {
-    return useOnlyProjectCache;
+  public JibExtension getJib() {
+    return jibExtension;
   }
 
   @TaskAction
   public void buildImage() throws InvalidImageReferenceException, IOException {
     // Asserts required @Input parameters are not null.
-    Preconditions.checkNotNull(from);
-    Preconditions.checkNotNull(from.getImage());
-    Preconditions.checkNotNull(to);
-    Preconditions.checkNotNull(to.getImage());
-    Preconditions.checkNotNull(jvmFlags);
-    Preconditions.checkNotNull(format);
+    Preconditions.checkNotNull(jibExtension);
+    Preconditions.checkNotNull(jibExtension.getFrom());
+    Preconditions.checkNotNull(jibExtension.getFrom().getImage());
+    Preconditions.checkNotNull(jibExtension.getTo());
+    Preconditions.checkNotNull(jibExtension.getTo().getImage());
+    Preconditions.checkNotNull(jibExtension.getJvmFlags());
+    Preconditions.checkNotNull(jibExtension.getFormat());
 
-    ImageReference baseImageReference = ImageReference.parse(from.getImage());
-    ImageReference targetImageReference = ImageReference.parse(to.getImage());
+    ImageReference baseImageReference = ImageReference.parse(jibExtension.getFrom().getImage());
+    ImageReference targetImageReference = ImageReference.parse(jibExtension.getTo().getImage());
 
     ProjectProperties projectProperties = new ProjectProperties(getProject(), getLogger());
 
-    String mainClass = this.mainClass;
+    String mainClass = jibExtension.getMainClass();
     if (mainClass == null) {
       mainClass = projectProperties.getMainClassFromJarTask();
       if (mainClass == null) {
@@ -136,19 +108,19 @@ public class BuildImageTask extends DefaultTask {
 
     // TODO: These should be passed separately - one for base image, one for target image.
     List<String> credHelpers = new ArrayList<>();
-    if (from.getCredHelper() != null) {
-      credHelpers.add(from.getCredHelper());
+    if (jibExtension.getFrom().getCredHelper() != null) {
+      credHelpers.add(jibExtension.getFrom().getCredHelper());
     }
-    if (to.getCredHelper() != null) {
-      credHelpers.add(to.getCredHelper());
+    if (jibExtension.getTo().getCredHelper() != null) {
+      credHelpers.add(jibExtension.getTo().getCredHelper());
     }
 
     Map<String, Authorization> registryCredentials = new HashMap<>(2);
-    Authorization fromAuthorization = getImageAuthorization(from);
+    Authorization fromAuthorization = getImageAuthorization(jibExtension.getFrom());
     if (fromAuthorization != null) {
       registryCredentials.put(baseImageReference.getRegistry(), fromAuthorization);
     }
-    Authorization toAuthorization = getImageAuthorization(to);
+    Authorization toAuthorization = getImageAuthorization(jibExtension.getTo());
     if (toAuthorization != null) {
       registryCredentials.put(targetImageReference.getRegistry(), toAuthorization);
     }
@@ -162,9 +134,9 @@ public class BuildImageTask extends DefaultTask {
             .setCredentialHelperNames(credHelpers)
             .setKnownRegistryCredentials(configuredRegistryCredentials)
             .setMainClass(mainClass)
-            .setEnableReproducibleBuilds(reproducible)
-            .setJvmFlags(jvmFlags)
-            .setTargetFormat(format)
+            .setEnableReproducibleBuilds(jibExtension.getReproducible())
+            .setJvmFlags(jibExtension.getJvmFlags())
+            .setTargetFormat(jibExtension.getFormat())
             .build();
 
     // Uses a directory in the Gradle build cache as the Jib cache.
@@ -173,7 +145,7 @@ public class BuildImageTask extends DefaultTask {
       Files.createDirectory(cacheDirectory);
     }
     Caches.Initializer cachesInitializer = Caches.newInitializer(cacheDirectory);
-    if (getUseOnlyProjectCache()) {
+    if (jibExtension.getUseOnlyProjectCache()) {
       cachesInitializer.setBaseCacheDirectory(cacheDirectory);
     }
 
@@ -200,17 +172,8 @@ public class BuildImageTask extends DefaultTask {
     getLogger().lifecycle("");
   }
 
-  /**
-   * Applies the configuration from {@code jibExtension}. This must be called before {@link
-   * #buildImage}.
-   */
-  void applyExtension(JibExtension jibExtension) {
-    from = jibExtension.getFrom();
-    to = jibExtension.getTo();
-    jvmFlags = jibExtension.getJvmFlags();
-    mainClass = jibExtension.getMainClass();
-    reproducible = jibExtension.getReproducible();
-    format = jibExtension.getFormat();
+  void setJibExtension(JibExtension jibExtension) {
+    this.jibExtension = jibExtension;
   }
 
   private void doBuildImage(BuildImageSteps buildImageSteps) {
@@ -221,17 +184,5 @@ public class BuildImageTask extends DefaultTask {
       throw new GradleException("Build image failed", ex);
     }
     // TODO: Catch and handle exceptions.
-  }
-
-  @Internal
-  @Nullable
-  private Authorization getImageAuthorization(ImageConfiguration imageConfiguration) {
-    if (imageConfiguration.getAuth().getUsername() == null
-        || imageConfiguration.getAuth().getPassword() == null) {
-      return null;
-    }
-
-    return Authorizations.withBasicCredentials(
-        imageConfiguration.getAuth().getUsername(), imageConfiguration.getAuth().getPassword());
   }
 }
