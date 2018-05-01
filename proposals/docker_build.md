@@ -13,7 +13,6 @@ Currently, Jib builds and pushes container images to a Docker registry without t
 ## Constraints
 
 * Building to local Docker daemon should be an extra feature, not the default
-* Should not depend on a Docker CLI
 
 ## Intended Workflow
 
