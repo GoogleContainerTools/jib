@@ -21,6 +21,7 @@ import javax.inject.Inject;
 import org.gradle.api.Action;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.Optional;
 
 /**
@@ -63,7 +64,7 @@ public class ImageConfiguration {
     this.credHelper = credHelper;
   }
 
-  @Input
+  @Nested
   @Optional
   AuthConfiguration getAuth() {
     return auth;

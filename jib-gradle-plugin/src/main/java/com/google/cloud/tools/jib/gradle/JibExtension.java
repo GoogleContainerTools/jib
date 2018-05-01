@@ -28,6 +28,9 @@ import org.gradle.api.Project;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
+import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.Nested;
+import org.gradle.api.tasks.Optional;
 
 /**
  * Plugin extension for {@link JibPlugin}.
@@ -134,31 +137,43 @@ public class JibExtension {
     this.useOnlyProjectCache.set(useOnlyProjectCache);
   }
 
+  @Nested
+  @Optional
   ImageConfiguration getFrom() {
     return from;
   }
 
+  @Nested
   ImageConfiguration getTo() {
     return to;
   }
 
+  @Input
   List<String> getJvmFlags() {
     return jvmFlags.get();
   }
 
+  @Input
   @Nullable
+  @Optional
   String getMainClass() {
     return mainClass.getOrNull();
   }
 
+  @Input
+  @Optional
   boolean getReproducible() {
     return reproducible.get();
   }
 
+  @Input
+  @Optional
   Class<? extends BuildableManifestTemplate> getFormat() {
     return format.get().getManifestTemplateClass();
   }
 
+  @Input
+  @Optional
   boolean getUseOnlyProjectCache() {
     return useOnlyProjectCache.get();
   }
