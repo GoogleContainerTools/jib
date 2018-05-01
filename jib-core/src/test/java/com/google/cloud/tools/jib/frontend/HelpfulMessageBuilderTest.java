@@ -22,31 +22,24 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link HelpfulExceptionBuilder}. */
+/** Tests for {@link HelpfulMessageBuilder}. */
 @RunWith(MockitoJUnitRunner.class)
-public class HelpfulExceptionBuilderTest {
+public class HelpfulMessageBuilderTest {
 
-  private final HelpfulExceptionBuilder testHelpfulExceptionBuilder =
-      new HelpfulExceptionBuilder<Exception>("message header") {
-        @Override
-        protected Exception makeException(String message, Throwable cause) {
-          return new Exception(message, cause);
-        }
-      };
+  private static final HelpfulMessageBuilder testHelpfulMessageBuilder =
+      new HelpfulMessageBuilder("message header");
 
   @Mock private Throwable mockThrowable;
 
   @Test
   public void testWithNoHelp() {
-    Exception exception = testHelpfulExceptionBuilder.withNoHelp(mockThrowable);
-    Assert.assertEquals("message header", exception.getMessage());
-    Assert.assertEquals(mockThrowable, exception.getCause());
+    String message = testHelpfulMessageBuilder.withNoHelp();
+    Assert.assertEquals("message header", message);
   }
 
   @Test
   public void testWithSuggestion() {
-    Exception exception = testHelpfulExceptionBuilder.withSuggestion(mockThrowable, "do something");
-    Assert.assertEquals("message header, perhaps you should do something", exception.getMessage());
-    Assert.assertEquals(mockThrowable, exception.getCause());
+    String message = testHelpfulMessageBuilder.withSuggestion("do something");
+    Assert.assertEquals("message header, perhaps you should do something", message);
   }
 }

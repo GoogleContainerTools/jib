@@ -14,21 +14,25 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.gradle;
+package com.google.cloud.tools.jib.frontend;
 
-import com.google.cloud.tools.jib.frontend.HelpfulExceptionBuilder;
-import org.gradle.api.GradleException;
+/** Builds messages that provides suggestions on how to fix the error. */
+public class HelpfulMessageBuilder {
 
-/** Builds {@link GradleException} that provides a suggestion on how to fix the error. */
-class HelpfulGradleExceptionBuilder extends HelpfulExceptionBuilder<GradleException> {
+  private final String messageHeader;
 
-  /** @param messageHeader the initial message text for the exception message */
-  HelpfulGradleExceptionBuilder(String messageHeader) {
-    super(messageHeader);
+  /** @param messageHeader the initial message text */
+  public HelpfulMessageBuilder(String messageHeader) {
+    this.messageHeader = messageHeader;
   }
 
-  @Override
-  protected GradleException makeException(String message, Throwable cause) {
-    return new GradleException(message, cause);
+  /** @return the message with a suggestion */
+  public String withSuggestion(String suggestion) {
+    return messageHeader + ", perhaps you should " + suggestion;
+  }
+
+  /** @return just the message */
+  public String withNoHelp() {
+    return messageHeader;
   }
 }
