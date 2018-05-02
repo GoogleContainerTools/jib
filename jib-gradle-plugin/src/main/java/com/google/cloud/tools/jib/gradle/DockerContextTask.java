@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.DockerContextGenerator;
 import com.google.cloud.tools.jib.frontend.HelpfulMessageBuilder;
 import com.google.common.base.Preconditions;
@@ -72,19 +71,9 @@ public class DockerContextTask extends DefaultTask {
     Preconditions.checkNotNull(jibExtension.getFrom().getImage());
     Preconditions.checkNotNull(jibExtension.getJvmFlags());
 
-    // TODO: Refactor with BuildImageTask.
-    ProjectProperties projectProperties = new ProjectProperties(getProject(), getLogger());
-
-    String mainClass = jibExtension.getMainClass();
-    if (mainClass == null) {
-      mainClass = projectProperties.getMainClassFromJarTask();
-      if (mainClass == null) {
-        throw new GradleException("Could not find main class specified in a 'jar' task");
-      }
-    }
-    if (!BuildConfiguration.isValidJavaClass(mainClass)) {
-      getLogger().warn("'mainClass' is not a valid Java class : " + mainClass);
-    }
+    ProjectProperties projectProperties =
+        new ProjectProperties(getProject(), getLogger());
+    String mainClass = projectProperties.getMainClass(jibExtension.getMainClass());
 
     String targetDir = getTargetDir();
 

@@ -101,20 +101,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
     validateParameters();
 
     ProjectProperties projectProperties = new ProjectProperties(project, getLog());
-
-    if (mainClass == null) {
-      mainClass = projectProperties.getMainClassFromMavenJarPlugin();
-      if (mainClass == null) {
-        throw new MojoExecutionException(
-            helpfulMessageBuilder.withSuggestion(
-                "add a `mainClass` configuration to jib-maven-plugin"),
-            new MojoFailureException("Could not find main class specified in maven-jar-plugin"));
-      }
-    }
-    Preconditions.checkNotNull(mainClass);
-    if (!BuildConfiguration.isValidJavaClass(mainClass)) {
-      getLog().warn("'mainClass' is not a valid Java class : " + mainClass);
-    }
+    String inferredMainClass = projectProperties.getMainClass(mainClass);
 
     SourceFilesConfiguration sourceFilesConfiguration =
         projectProperties.getSourceFilesConfiguration();
@@ -147,7 +134,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
             .setTargetImage(targetImageReference)
             .setCredentialHelperNames(credHelpers)
             .setKnownRegistryCredentials(mavenSettingsCredentials)
-            .setMainClass(mainClass)
+            .setMainClass(inferredMainClass)
             .setEnableReproducibleBuilds(enableReproducibleBuilds)
             .setJvmFlags(jvmFlags)
             .setEnvironment(environment)

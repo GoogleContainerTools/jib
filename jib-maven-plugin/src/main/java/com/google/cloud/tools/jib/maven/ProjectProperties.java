@@ -16,7 +16,10 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
+import com.google.cloud.tools.jib.frontend.HelpfulMessageBuilder;
+import com.google.common.base.Preconditions;
 import java.io.IOException;
 import javax.annotation.Nullable;
 import org.apache.maven.model.Plugin;
@@ -78,9 +81,27 @@ class ProjectProperties {
     }
   }
 
+  /** @return the main class to use in the container entrypoint */
+  String getMainClass(@Nullable String mainClass) throws MojoExecutionException {
+    if (mainClass == null) {
+      mainClass = getMainClassFromMavenJarPlugin();
+      if (mainClass == null) {
+        throw new MojoExecutionException(
+            new HelpfulMessageBuilder("Could not find main class specified in maven-jar-plugin")
+                .withSuggestion("add a `mainClass` configuration to jib-maven-plugin"));
+      }
+    }
+    Preconditions.checkNotNull(mainClass);
+    if (!BuildConfiguration.isValidJavaClass(mainClass)) {
+      getLog().warn("'mainClass' is not a valid Java class : " + mainClass);
+    }
+
+    return mainClass;
+  }
+
   /** Extracts main class from 'maven-jar-plugin' configuration if available. */
   @Nullable
-  String getMainClassFromMavenJarPlugin() {
+  private String getMainClassFromMavenJarPlugin() {
     Plugin mavenJarPlugin = project.getPlugin("org.apache.maven.plugins:maven-jar-plugin");
     if (mavenJarPlugin != null) {
       String mainClass = getMainClassFromMavenJarPlugin(mavenJarPlugin);
