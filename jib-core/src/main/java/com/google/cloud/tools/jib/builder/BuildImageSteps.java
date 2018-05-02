@@ -78,11 +78,17 @@ public class BuildImageSteps {
           ListenableFuture<Authorization> retrieveTargetRegistryCredentialsFuture =
               listeningExecutorService.submit(
                   new RetrieveRegistryCredentialsStep(
-                      buildConfiguration, buildConfiguration.getTargetRegistry()));
+                      buildConfiguration,
+                      buildConfiguration.getTargetRegistry(),
+                      buildConfiguration.getTargetImageCredentialHelperName(),
+                      buildConfiguration.getKnownTargetRegistryCredentials()));
           ListenableFuture<Authorization> retrieveBaseImageRegistryCredentialsFuture =
               listeningExecutorService.submit(
                   new RetrieveRegistryCredentialsStep(
-                      buildConfiguration, buildConfiguration.getBaseImageRegistry()));
+                      buildConfiguration,
+                      buildConfiguration.getBaseImageRegistry(),
+                      buildConfiguration.getBaseImageCredentialHelperName(),
+                      buildConfiguration.getKnownBaseRegistryCredentials()));
 
           timer2.lap("Setting up image push authentication");
           // Authenticates push.
