@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.DockerContextGenerator;
+import com.google.cloud.tools.jib.frontend.HelpfulMessageBuilder;
 import com.google.common.base.Preconditions;
 import com.google.common.io.InsecureRecursiveDeleteException;
 import java.io.IOException;
@@ -31,6 +32,9 @@ import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.options.Option;
 
 public class DockerContextTask extends DefaultTask {
+
+  private static final HelpfulMessageBuilder helpfulMessageBuilder =
+      new HelpfulMessageBuilder("Export Docker context failed");
 
   @Nullable private String targetDir;
   @Nullable private JibExtension jibExtension;
@@ -94,29 +98,22 @@ public class DockerContextTask extends DefaultTask {
       getLogger().info("Created Docker context at " + targetDir);
 
     } catch (InsecureRecursiveDeleteException ex) {
-      throwMojoExecutionExceptionWithHelpMessage(
-          ex,
-          "cannot clear directory '"
-              + targetDir
-              + "' safely - clear it manually before creating the Docker context");
+      throw new GradleException(
+          helpfulMessageBuilder.withSuggestion(
+              "cannot clear directory '"
+                  + targetDir
+                  + "' safely - clear it manually before creating the Docker context"),
+          ex);
 
     } catch (IOException ex) {
-      throwMojoExecutionExceptionWithHelpMessage(
-          ex, "check if the command-line option `--jib.dockerDir` is set correctly");
+      throw new GradleException(
+          helpfulMessageBuilder.withSuggestion(
+              "check if the command-line option `--jib.dockerDir` is set correctly"),
+          ex);
     }
   }
 
   void setJibExtension(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
-  }
-
-  private <T extends Throwable> void throwMojoExecutionExceptionWithHelpMessage(
-      T ex, String suggestion) {
-    StringBuilder message = new StringBuilder("Export Docker context failed");
-    if (suggestion != null) {
-      message.append(", perhaps you should ");
-      message.append(suggestion);
-    }
-    throw new GradleException(message.toString(), ex);
   }
 }

@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.BuildImageSteps;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.cache.Caches;
+import com.google.cloud.tools.jib.frontend.HelpfulMessageBuilder;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.image.ImageReference;
@@ -51,6 +52,9 @@ public class BuildImageTask extends DefaultTask {
 
   /** {@code User-Agent} header suffix to send to the registry. */
   private static final String USER_AGENT_SUFFIX = "jib-gradle-plugin";
+
+  private static final HelpfulMessageBuilder helpfulMessageBuilder =
+      new HelpfulMessageBuilder("Build image failed");
 
   /** Converts an {@link ImageConfiguration} to an {@link Authorization}. */
   @Nullable
@@ -181,7 +185,7 @@ public class BuildImageTask extends DefaultTask {
       buildImageSteps.run();
 
     } catch (Throwable ex) {
-      throw new GradleException("Build image failed", ex);
+      throw new GradleException(helpfulMessageBuilder.withNoHelp(), ex);
     }
     // TODO: Catch and handle exceptions.
   }

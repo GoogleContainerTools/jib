@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.DockerContextGenerator;
+import com.google.cloud.tools.jib.frontend.HelpfulMessageBuilder;
 import com.google.common.base.Preconditions;
 import com.google.common.io.InsecureRecursiveDeleteException;
 import java.io.IOException;
@@ -32,6 +33,9 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 /** Exports to a Docker context. This is an <b>incubating</b> feature. */
 @Mojo(name = "dockercontext", requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM)
 public class DockerContextMojo extends JibPluginConfiguration {
+
+  private static final HelpfulMessageBuilder helpfulMessageBuilder =
+      new HelpfulMessageBuilder("Export Docker context failed");
 
   @Nullable
   @Parameter(
@@ -54,9 +58,10 @@ public class DockerContextMojo extends JibPluginConfiguration {
     if (mainClass == null) {
       mainClass = projectProperties.getMainClassFromMavenJarPlugin();
       if (mainClass == null) {
-        throwMojoExecutionExceptionWithHelpMessage(
-            new MojoFailureException("Could not find main class specified in maven-jar-plugin"),
-            "add a `mainClass` configuration to jib-maven-plugin");
+        throw new MojoExecutionException(
+            helpfulMessageBuilder.withSuggestion(
+                "add a `mainClass` configuration to jib-maven-plugin"),
+            new MojoFailureException("Could not find main class specified in maven-jar-plugin"));
       }
     }
     Preconditions.checkNotNull(mainClass);
@@ -74,28 +79,16 @@ public class DockerContextMojo extends JibPluginConfiguration {
       getLog().info("Created Docker context at " + targetDir);
 
     } catch (InsecureRecursiveDeleteException ex) {
-      throwMojoExecutionExceptionWithHelpMessage(
-          ex,
-          "cannot clear directory '"
-              + targetDir
-              + "' safely - clear it manually before creating the Docker context");
+      throw new MojoExecutionException(
+          helpfulMessageBuilder.withSuggestion(
+              "cannot clear directory '"
+                  + targetDir
+                  + "' safely - clear it manually before creating the Docker context"),
+          ex);
 
     } catch (IOException ex) {
-      throwMojoExecutionExceptionWithHelpMessage(ex, "check if `targetDir` is set correctly");
+      throw new MojoExecutionException(
+          helpfulMessageBuilder.withSuggestion("check if `targetDir` is set correctly"), ex);
     }
-  }
-
-  /**
-   * Wraps an exception in a {@link MojoExecutionException} and provides a suggestion on how to fix
-   * the error.
-   */
-  private <T extends Throwable> void throwMojoExecutionExceptionWithHelpMessage(
-      T ex, @Nullable String suggestion) throws MojoExecutionException {
-    StringBuilder message = new StringBuilder("Export Docker context failed");
-    if (suggestion != null) {
-      message.append(", perhaps you should ");
-      message.append(suggestion);
-    }
-    throw new MojoExecutionException(message.toString(), ex);
   }
 }
