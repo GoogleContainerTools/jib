@@ -93,8 +93,7 @@ public class BuildImageTask extends DefaultTask {
     ImageReference baseImageReference = ImageReference.parse(jibExtension.getFrom().getImage());
     ImageReference targetImageReference = ImageReference.parse(jibExtension.getTo().getImage());
 
-    ProjectProperties projectProperties =
-        new ProjectProperties(getProject(), getLogger());
+    ProjectProperties projectProperties = new ProjectProperties(getProject(), getLogger());
     String mainClass = projectProperties.getMainClass(jibExtension.getMainClass());
 
     // TODO: These should be passed separately - one for base image, one for target image.
