@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.api.client.http.HttpTransport;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.BuildImageSteps;
-import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.cache.Caches;
 import com.google.cloud.tools.jib.frontend.HelpfulMessageBuilder;
 import com.google.cloud.tools.jib.http.Authorization;
@@ -95,20 +94,7 @@ public class BuildImageTask extends DefaultTask {
     ImageReference targetImageReference = ImageReference.parse(jibExtension.getTo().getImage());
 
     ProjectProperties projectProperties = new ProjectProperties(getProject(), getLogger());
-
-    String mainClass = jibExtension.getMainClass();
-    if (mainClass == null) {
-      mainClass = projectProperties.getMainClassFromJarTask();
-      if (mainClass == null) {
-        throw new GradleException("Could not find main class specified in a 'jar' task");
-      }
-    }
-    if (!BuildConfiguration.isValidJavaClass(mainClass)) {
-      getLogger().warn("'mainClass' is not a valid Java class : " + mainClass);
-    }
-
-    SourceFilesConfiguration sourceFilesConfiguration =
-        projectProperties.getSourceFilesConfiguration();
+    String mainClass = projectProperties.getMainClass(jibExtension.getMainClass());
 
     // TODO: These should be passed separately - one for base image, one for target image.
     List<String> credHelpers = new ArrayList<>();
@@ -169,7 +155,10 @@ public class BuildImageTask extends DefaultTask {
     RegistryClient.setUserAgentSuffix(USER_AGENT_SUFFIX);
 
     doBuildImage(
-        new BuildImageSteps(buildConfiguration, sourceFilesConfiguration, cachesInitializer));
+        new BuildImageSteps(
+            buildConfiguration,
+            projectProperties.getSourceFilesConfiguration(),
+            cachesInitializer));
 
     getLogger().lifecycle("");
     getLogger().lifecycle("Built and pushed image as " + targetImageReference);
