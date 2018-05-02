@@ -304,7 +304,11 @@ public class BuildImageMojo extends JibPluginConfiguration {
       ImageReference baseImage = ImageReference.parse(from);
 
       if (baseImage.usesDefaultTag()) {
-        getLog().warn("Base image '" + baseImage + "' does not use a specific image digest - build may not be reproducible");
+        getLog()
+            .warn(
+                "Base image '"
+                    + baseImage
+                    + "' does not use a specific image digest - build may not be reproducible");
       }
 
       return baseImage;
