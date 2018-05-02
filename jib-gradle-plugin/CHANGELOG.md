@@ -12,11 +12,11 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Warns if build may not be reproducible ([#]())
+- Warns if build may not be reproducible ([#245](https://github.com/GoogleContainerTools/jib/pull/245))
 
 ### Changed
 
-- Removed `reproducible` parameter - application layers will always be reproducible ([#]())
+- Removed `reproducible` parameter - application layers will always be reproducible ([#245](https://github.com/GoogleContainerTools/jib/pull/245))
 
 ## 0.1.2
 
