@@ -96,14 +96,6 @@ public class JibExtensionTest {
   }
 
   @Test
-  public void testReproducible() {
-    Assert.assertTrue(testJibExtension.getReproducible());
-
-    testJibExtension.setReproducible(false);
-    Assert.assertFalse(testJibExtension.getReproducible());
-  }
-
-  @Test
   public void testFormat() {
     Assert.assertEquals(V22ManifestTemplate.class, testJibExtension.getFormat());
 

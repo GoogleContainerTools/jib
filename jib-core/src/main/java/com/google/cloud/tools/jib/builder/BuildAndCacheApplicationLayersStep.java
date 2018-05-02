@@ -89,9 +89,7 @@ class BuildAndCacheApplicationLayersStep implements Callable<List<ListenableFutu
               return cachedLayer;
             }
 
-            LayerBuilder layerBuilder =
-                new LayerBuilder(
-                    sourceFiles, extractionPath, true);
+            LayerBuilder layerBuilder = new LayerBuilder(sourceFiles, extractionPath, true);
 
             cachedLayer = new CacheWriter(cache).writeLayer(layerBuilder);
             // TODO: Remove
