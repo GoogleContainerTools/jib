@@ -21,7 +21,7 @@ import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheReader;
 import com.google.cloud.tools.jib.cache.CacheWriter;
 import com.google.cloud.tools.jib.cache.CachedLayer;
-import com.google.cloud.tools.jib.image.LayerBuilder;
+import com.google.cloud.tools.jib.image.ReproducibleLayerBuilder;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.nio.file.Path;
@@ -89,9 +89,10 @@ class BuildAndCacheApplicationLayersStep implements Callable<List<ListenableFutu
               return cachedLayer;
             }
 
-            LayerBuilder layerBuilder = new LayerBuilder(sourceFiles, extractionPath, true);
+            ReproducibleLayerBuilder reproducibleLayerBuilder =
+                new ReproducibleLayerBuilder(sourceFiles, extractionPath);
 
-            cachedLayer = new CacheWriter(cache).writeLayer(layerBuilder);
+            cachedLayer = new CacheWriter(cache).writeLayer(reproducibleLayerBuilder);
             // TODO: Remove
             buildConfiguration
                 .getBuildLogger()
