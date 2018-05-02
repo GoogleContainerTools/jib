@@ -10,6 +10,10 @@ All notable changes to this project will be documented in this file.
 
 ## 0.9.0
 
+### Added
+
+- Warns if build may not be reproducible ([#]())
+
 ### Changed
 
 - Removed `reproducible` parameter - application layers will always be reproducible ([#]())

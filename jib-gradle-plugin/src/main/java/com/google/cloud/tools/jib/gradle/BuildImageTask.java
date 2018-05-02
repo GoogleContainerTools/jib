@@ -93,6 +93,10 @@ public class BuildImageTask extends DefaultTask {
     ImageReference baseImageReference = ImageReference.parse(jibExtension.getFrom().getImage());
     ImageReference targetImageReference = ImageReference.parse(jibExtension.getTo().getImage());
 
+    if (baseImageReference.usesDefaultTag()) {
+      getLogger().warn("Base image '" + baseImageReference + "' does not use a specific image digest - build may not be reproducible");
+    }
+
     ProjectProperties projectProperties = new ProjectProperties(getProject(), getLogger());
     String mainClass = projectProperties.getMainClass(jibExtension.getMainClass());
 
