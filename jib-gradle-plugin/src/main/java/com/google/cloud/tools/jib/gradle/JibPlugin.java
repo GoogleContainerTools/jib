@@ -29,14 +29,12 @@ public class JibPlugin implements Plugin<Project> {
         .create(
             "jib",
             BuildImageTask.class,
-            buildImageTask ->
-                project.afterEvaluate(ignored -> buildImageTask.applyExtension(jibExtension)));
+            buildImageTask -> buildImageTask.setJibExtension(jibExtension));
     project
         .getTasks()
         .create(
             "jibDockerContext",
             DockerContextTask.class,
-            dockerContextTask ->
-                project.afterEvaluate(ignored -> dockerContextTask.applyExtension(jibExtension)));
+            dockerContextTask -> dockerContextTask.setJibExtension(jibExtension));
   }
 }
