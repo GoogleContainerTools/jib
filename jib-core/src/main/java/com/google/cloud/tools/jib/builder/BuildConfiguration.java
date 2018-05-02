@@ -73,13 +73,13 @@ public class BuildConfiguration {
       return this;
     }
 
-    public Builder setKnownBaseImageCredentials(
+    public Builder setKnownBaseRegistryCredentials(
         @Nullable RegistryCredentials knownRegistryCrendentials) {
       knownBaseRegistryCredentials = knownRegistryCrendentials;
       return this;
     }
 
-    public Builder setKnownTargetImageCredentials(
+    public Builder setKnownTargetRegistryCredentials(
         @Nullable RegistryCredentials knownRegistryCrendentials) {
       knownTargetRegistryCredentials = knownRegistryCrendentials;
       return this;

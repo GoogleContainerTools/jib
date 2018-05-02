@@ -44,8 +44,6 @@ import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 import org.apache.http.conn.HttpHostConnectException;
@@ -111,29 +109,35 @@ public class BuildImageMojo extends JibPluginConfiguration {
 
     // Checks Maven settings for registry credentials.
     session.getSettings().getServer(baseImage.getRegistry());
-    Map<String, Authorization> registryCredentials = new HashMap<>(2);
+    RegistryCredentials knownBaseRegistryCredentials = null;
+    RegistryCredentials knownTargetRegistryCredentials = null;
     // Retrieves credentials for the base image registry.
-    Authorization baseImageRegistryCredentials =
+    Authorization baseRegistryCredentials =
         getRegistryCredentialsFromSettings(baseImage.getRegistry());
-    if (baseImageRegistryCredentials != null) {
-      registryCredentials.put(baseImage.getRegistry(), baseImageRegistryCredentials);
+    if (baseRegistryCredentials != null) {
+      knownBaseRegistryCredentials =
+          RegistryCredentials.of(
+              baseImage.getRegistry(), "Maven settings", baseRegistryCredentials);
     }
     // Retrieves credentials for the target registry.
     Authorization targetRegistryCredentials = getRegistryCredentialsFromSettings(registry);
     if (targetRegistryCredentials != null) {
-      registryCredentials.put(registry, targetRegistryCredentials);
+      knownTargetRegistryCredentials =
+          RegistryCredentials.of(registry, "Maven settings", targetRegistryCredentials);
     }
-    RegistryCredentials mavenSettingsCredentials =
-        RegistryCredentials.from("Maven settings", registryCredentials);
 
     ImageReference targetImageReference = ImageReference.of(registry, repository, tag);
     ImageFormat imageFormatToEnum = ImageFormat.valueOf(imageFormat);
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder(new MavenBuildLogger(getLog()))
             .setBaseImage(baseImage)
+            // TODO: This is a temporary hack that will be fixed in an immediate follow-up PR. Do
+            // NOT release.
+            .setBaseImageCredentialHelperName(credHelpers.get(0))
+            .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
             .setTargetImage(targetImageReference)
-            .setCredentialHelperNames(credHelpers)
-            .setKnownRegistryCredentials(mavenSettingsCredentials)
+            .setTargetImageCredentialHelperName(credHelpers.get(0))
+            .setKnownTargetRegistryCredentials(knownTargetRegistryCredentials)
             .setMainClass(inferredMainClass)
             .setEnableReproducibleBuilds(enableReproducibleBuilds)
             .setJvmFlags(jvmFlags)
@@ -322,22 +326,31 @@ public class BuildImageMojo extends JibPluginConfiguration {
                   + registryUnauthorizedException.getImageReference()),
           registryUnauthorizedException);
 
-    } else if ((buildConfiguration.getCredentialHelperNames() == null
-            || buildConfiguration.getCredentialHelperNames().isEmpty())
-        && (buildConfiguration.getKnownRegistryCredentials() == null
-            || !buildConfiguration
-                .getKnownRegistryCredentials()
-                .has(registryUnauthorizedException.getRegistry()))) {
-      // No credential helpers defined.
-      throw new MojoExecutionException(
-          helpfulMessageBuilder.withSuggestion(
-              "set a credential helper name with the configuration 'credHelpers' or "
-                  + "set credentials for '"
-                  + registryUnauthorizedException.getRegistry()
-                  + "' in your Maven settings"),
-          registryUnauthorizedException);
-
     } else {
+      boolean isRegistryForBase =
+          registryUnauthorizedException
+              .getRegistry()
+              .equals(buildConfiguration.getBaseImageRegistry());
+      boolean isRegistryForTarget = registryUnauthorizedException.getRegistry().equals(registry);
+      boolean areBaseImageCredentialsConfigured =
+          buildConfiguration.getBaseImageCredentialHelperName() != null
+              || buildConfiguration.getKnownBaseRegistryCredentials() != null;
+      boolean areTargetImageCredentialsConfigured =
+          buildConfiguration.getTargetImageCredentialHelperName() != null
+              || buildConfiguration.getKnownTargetRegistryCredentials() != null;
+
+      if (isRegistryForBase && !areBaseImageCredentialsConfigured
+          || isRegistryForTarget && !areTargetImageCredentialsConfigured) {
+        // No credential helpers defined.
+        throw new MojoExecutionException(
+            helpfulMessageBuilder.withSuggestion(
+                "set a credential helper name with the configuration 'credHelpers' or "
+                    + "set credentials for '"
+                    + registryUnauthorizedException.getRegistry()
+                    + "' in your Maven settings"),
+            registryUnauthorizedException);
+      }
+
       // Credential helper probably was not configured correctly or did not have the necessary
       // credentials.
       throw new MojoExecutionException(

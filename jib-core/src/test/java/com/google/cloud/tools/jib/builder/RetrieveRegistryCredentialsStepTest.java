@@ -36,7 +36,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 /** Tests for {@link RetrieveRegistryCredentialsStep}. */
 @RunWith(MockitoJUnitRunner.class)
 public class RetrieveRegistryCredentialsStepTest {
-  
+
   private static final String FAKE_TARGET_REGISTRY = "someRegistry";
 
   @Mock private BuildConfiguration mockBuildConfiguration;
@@ -102,7 +102,7 @@ public class RetrieveRegistryCredentialsStepTest {
     Assert.assertEquals(
         mockAuthorization,
         makeRetrieveRegistryCredentialsStep(
-            FAKE_TARGET_REGISTRY,
+                FAKE_TARGET_REGISTRY,
                 null,
                 RegistryCredentials.of(FAKE_TARGET_REGISTRY, "credentialSource", mockAuthorization))
             .call());

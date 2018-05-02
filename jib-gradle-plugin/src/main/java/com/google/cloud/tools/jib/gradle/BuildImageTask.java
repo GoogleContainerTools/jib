@@ -31,10 +31,6 @@ import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.Nullable;
@@ -96,33 +92,29 @@ public class BuildImageTask extends DefaultTask {
     ProjectProperties projectProperties = new ProjectProperties(getProject(), getLogger());
     String mainClass = projectProperties.getMainClass(jibExtension.getMainClass());
 
-    // TODO: These should be passed separately - one for base image, one for target image.
-    List<String> credHelpers = new ArrayList<>();
-    if (jibExtension.getFrom().getCredHelper() != null) {
-      credHelpers.add(jibExtension.getFrom().getCredHelper());
-    }
-    if (jibExtension.getTo().getCredHelper() != null) {
-      credHelpers.add(jibExtension.getTo().getCredHelper());
-    }
-
-    Map<String, Authorization> registryCredentials = new HashMap<>(2);
+    RegistryCredentials knownBaseRegistryCredentials = null;
+    RegistryCredentials knownTargetRegistryCredentials = null;
     Authorization fromAuthorization = getImageAuthorization(jibExtension.getFrom());
     if (fromAuthorization != null) {
-      registryCredentials.put(baseImageReference.getRegistry(), fromAuthorization);
+      knownBaseRegistryCredentials =
+          RegistryCredentials.of(
+              baseImageReference.getRegistry(), "jib.from.auth", fromAuthorization);
     }
     Authorization toAuthorization = getImageAuthorization(jibExtension.getTo());
     if (toAuthorization != null) {
-      registryCredentials.put(targetImageReference.getRegistry(), toAuthorization);
+      knownTargetRegistryCredentials =
+          RegistryCredentials.of(
+              targetImageReference.getRegistry(), "jib.to.auth", toAuthorization);
     }
-    RegistryCredentials configuredRegistryCredentials =
-        RegistryCredentials.from("jib extension", registryCredentials);
 
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder(new GradleBuildLogger(getLogger()))
             .setBaseImage(baseImageReference)
+            .setBaseImageCredentialHelperName(jibExtension.getFrom().getCredHelper())
+            .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
             .setTargetImage(targetImageReference)
-            .setCredentialHelperNames(credHelpers)
-            .setKnownRegistryCredentials(configuredRegistryCredentials)
+            .setTargetImageCredentialHelperName(jibExtension.getTo().getCredHelper())
+            .setKnownTargetRegistryCredentials(knownTargetRegistryCredentials)
             .setMainClass(mainClass)
             .setEnableReproducibleBuilds(jibExtension.getReproducible())
             .setJvmFlags(jibExtension.getJvmFlags())

@@ -58,12 +58,12 @@ public class BuildConfigurationTest {
                 ImageReference.of(
                     expectedBaseImageServerUrl, expectedBaseImageName, expectedBaseImageTag))
             .setBaseImageCredentialHelperName(expectedBaseImageCredentialHelperName)
-            .setKnownBaseImageCredentials(expectedKnownBaseRegistryCredentials)
+            .setKnownBaseRegistryCredentials(expectedKnownBaseRegistryCredentials)
             .setTargetImage(
                 ImageReference.of(
                     expectedTargetServerUrl, expectedTargetImageName, expectedTargetTag))
             .setTargetImageCredentialHelperName(expectedTargetImageCredentialHelperName)
-            .setKnownTargetImageCredentials(expectedKnownTargetRegistryCredentials)
+            .setKnownTargetRegistryCredentials(expectedKnownTargetRegistryCredentials)
             .setEnableReproducibleBuilds(expectedEnableReproducibleBuilds)
             .setMainClass(expectedMainClass)
             .setJvmFlags(expectedJvmFlags)
