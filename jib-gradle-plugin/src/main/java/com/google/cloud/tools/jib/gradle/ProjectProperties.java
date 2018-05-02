@@ -42,7 +42,8 @@ class ProjectProperties {
 
   /**
    * @param mainClass the configured main class
-   * @return the main class to use for the container entrypoint. */
+   * @return the main class to use for the container entrypoint.
+   */
   String getMainClass(@Nullable String mainClass) {
     if (mainClass == null) {
       mainClass = getMainClassFromJarTask();
