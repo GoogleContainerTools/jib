@@ -8,6 +8,12 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+## 0.9.0
+
+### Changed
+
+- Removed `reproducible` parameter - application layers will always be reproducible ([#]())
+
 ## 0.1.2
 
 ### Added

@@ -135,7 +135,6 @@ public class BuildImageMojo extends JibPluginConfiguration {
             .setCredentialHelperNames(credHelpers)
             .setKnownRegistryCredentials(mavenSettingsCredentials)
             .setMainClass(inferredMainClass)
-            .setEnableReproducibleBuilds(enableReproducibleBuilds)
             .setJvmFlags(jvmFlags)
             .setEnvironment(environment)
             .setTargetFormat(imageFormatToEnum.getManifestTemplateClass())

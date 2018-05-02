@@ -125,7 +125,6 @@ public class BuildImageTask extends DefaultTask {
             .setCredentialHelperNames(credHelpers)
             .setKnownRegistryCredentials(configuredRegistryCredentials)
             .setMainClass(mainClass)
-            .setEnableReproducibleBuilds(jibExtension.getReproducible())
             .setJvmFlags(jibExtension.getJvmFlags())
             .setTargetFormat(jibExtension.getFormat())
             .build();

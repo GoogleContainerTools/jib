@@ -39,7 +39,6 @@ public class BuildConfiguration {
     @Nullable private ImageReference targetImageReference;
     private List<String> credentialHelperNames = new ArrayList<>();
     private RegistryCredentials knownRegistryCredentials = RegistryCredentials.none();
-    private boolean enableReproducibleBuilds = true;
     @Nullable private String mainClass;
     private List<String> jvmFlags = new ArrayList<>();
     private Map<String, String> environmentMap = new HashMap<>();
@@ -73,11 +72,6 @@ public class BuildConfiguration {
       if (knownRegistryCredentials != null) {
         this.knownRegistryCredentials = knownRegistryCredentials;
       }
-      return this;
-    }
-
-    public Builder setEnableReproducibleBuilds(boolean isEnabled) {
-      enableReproducibleBuilds = isEnabled;
       return this;
     }
 
@@ -130,7 +124,6 @@ public class BuildConfiguration {
               targetImageReference,
               credentialHelperNames,
               knownRegistryCredentials,
-              enableReproducibleBuilds,
               mainClass,
               jvmFlags,
               environmentMap,
@@ -177,7 +170,6 @@ public class BuildConfiguration {
   private ImageReference targetImageReference;
   private List<String> credentialHelperNames;
   private RegistryCredentials knownRegistryCredentials;
-  private boolean enableReproducibleBuilds;
   private String mainClass;
   private List<String> jvmFlags;
   private Map<String, String> environmentMap;
@@ -194,7 +186,6 @@ public class BuildConfiguration {
       ImageReference targetImageReference,
       List<String> credentialHelperNames,
       RegistryCredentials knownRegistryCredentials,
-      boolean enableReproducibleBuilds,
       String mainClass,
       List<String> jvmFlags,
       Map<String, String> environmentMap,
@@ -204,7 +195,6 @@ public class BuildConfiguration {
     this.targetImageReference = targetImageReference;
     this.credentialHelperNames = Collections.unmodifiableList(credentialHelperNames);
     this.knownRegistryCredentials = knownRegistryCredentials;
-    this.enableReproducibleBuilds = enableReproducibleBuilds;
     this.mainClass = mainClass;
     this.jvmFlags = Collections.unmodifiableList(jvmFlags);
     this.environmentMap = Collections.unmodifiableMap(environmentMap);
@@ -245,10 +235,6 @@ public class BuildConfiguration {
 
   public List<String> getCredentialHelperNames() {
     return credentialHelperNames;
-  }
-
-  public boolean getEnableReproducibleBuilds() {
-    return enableReproducibleBuilds;
   }
 
   public String getMainClass() {
