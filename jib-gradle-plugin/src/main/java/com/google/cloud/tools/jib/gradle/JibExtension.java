@@ -49,7 +49,6 @@ import org.gradle.api.tasks.Optional;
  *   }
  *   jvmFlags = [‘-Xms512m’, ‘-Xdebug’]
  *   mainClass = ‘com.mycompany.myproject.Main’
- *   reproducible = true
  *   format = OCI
  * }
  * }</pre>
@@ -78,14 +77,12 @@ public class JibExtension {
   private static final String DEFAULT_FROM_IMAGE = "gcr.io/distroless/java";
   private static final List<String> DEFAULT_JVM_FLAGS = Collections.emptyList();
   private static final ImageFormat DEFAULT_FORMAT = ImageFormat.Docker;
-  private static final boolean DEFAULT_REPRODUCIBLE = true;
   private static final boolean DEFAULT_USE_ONLY_PROJECT_CACHE = false;
 
   private ImageConfiguration from;
   private ImageConfiguration to;
   private final ListProperty<String> jvmFlags;
   private final Property<String> mainClass;
-  private final Property<Boolean> reproducible;
   private final Property<ImageFormat> format;
   private final Property<Boolean> useOnlyProjectCache;
 
@@ -97,14 +94,12 @@ public class JibExtension {
 
     jvmFlags = objectFactory.listProperty(String.class);
     mainClass = objectFactory.property(String.class);
-    reproducible = objectFactory.property(Boolean.class);
     format = objectFactory.property(ImageFormat.class);
     useOnlyProjectCache = objectFactory.property(Boolean.class);
 
     // Sets defaults.
     from.setImage(DEFAULT_FROM_IMAGE);
     jvmFlags.set(DEFAULT_JVM_FLAGS);
-    reproducible.set(DEFAULT_REPRODUCIBLE);
     format.set(DEFAULT_FORMAT);
     useOnlyProjectCache.set(DEFAULT_USE_ONLY_PROJECT_CACHE);
   }
@@ -123,10 +118,6 @@ public class JibExtension {
 
   public void setMainClass(String mainClass) {
     this.mainClass.set(mainClass);
-  }
-
-  public void setReproducible(boolean isEnabled) {
-    reproducible.set(isEnabled);
   }
 
   public void setFormat(ImageFormat format) {
@@ -158,12 +149,6 @@ public class JibExtension {
   @Optional
   String getMainClass() {
     return mainClass.getOrNull();
-  }
-
-  @Input
-  @Optional
-  boolean getReproducible() {
-    return reproducible.get();
   }
 
   @Input

@@ -19,8 +19,8 @@ package com.google.cloud.tools.jib.cache;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
-import com.google.cloud.tools.jib.image.LayerBuilder;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
+import com.google.cloud.tools.jib.image.ReproducibleLayerBuilder;
 import com.google.cloud.tools.jib.image.UnwrittenLayer;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CountingOutputStream;
@@ -46,15 +46,15 @@ public class CacheWriter {
   }
 
   /**
-   * Builds an {@link UnwrittenLayer} from a {@link LayerBuilder} and compresses and writes the
-   * {@link UnwrittenLayer}'s uncompressed layer content BLOB to cache.
+   * Builds an {@link UnwrittenLayer} from a {@link ReproducibleLayerBuilder} and compresses and
+   * writes the {@link UnwrittenLayer}'s uncompressed layer content BLOB to cache.
    *
-   * @param layerBuilder the layer builder
+   * @param reproducibleLayerBuilder the layer builder
    * @return the cached layer
    */
-  public CachedLayer writeLayer(LayerBuilder layerBuilder)
+  public CachedLayer writeLayer(ReproducibleLayerBuilder reproducibleLayerBuilder)
       throws IOException, LayerPropertyNotFoundException {
-    UnwrittenLayer unwrittenLayer = layerBuilder.build();
+    UnwrittenLayer unwrittenLayer = reproducibleLayerBuilder.build();
 
     // Writes to a temporary file first because the UnwrittenLayer needs to be written first to
     // obtain its digest.
@@ -84,7 +84,8 @@ public class CacheWriter {
 
       CachedLayer cachedLayer = new CachedLayer(layerFile, compressedBlobDescriptor, diffId);
       LayerMetadata layerMetadata =
-          LayerMetadata.from(layerBuilder.getSourceFiles(), FileTime.from(Instant.now()));
+          LayerMetadata.from(
+              reproducibleLayerBuilder.getSourceFiles(), FileTime.from(Instant.now()));
       cache.addLayerToMetadata(cachedLayer, layerMetadata);
       return cachedLayer;
     }

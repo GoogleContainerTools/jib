@@ -21,8 +21,8 @@ import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
-import com.google.cloud.tools.jib.image.LayerBuilder;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
+import com.google.cloud.tools.jib.image.ReproducibleLayerBuilder;
 import com.google.cloud.tools.jib.image.UnwrittenLayer;
 import com.google.common.io.CharStreams;
 import com.google.common.io.CountingOutputStream;
@@ -88,11 +88,12 @@ public class CacheWriterTest {
     UnwrittenLayer unwrittenLayer = new UnwrittenLayer(Blobs.from(resourceBlob));
 
     List<Path> fakeSourceFiles = Collections.singletonList(Paths.get("some", "source", "file"));
-    LayerBuilder mockLayerBuilder = Mockito.mock(LayerBuilder.class);
-    Mockito.when(mockLayerBuilder.build()).thenReturn(unwrittenLayer);
-    Mockito.when(mockLayerBuilder.getSourceFiles()).thenReturn(fakeSourceFiles);
+    ReproducibleLayerBuilder mockReproducibleLayerBuilder =
+        Mockito.mock(ReproducibleLayerBuilder.class);
+    Mockito.when(mockReproducibleLayerBuilder.build()).thenReturn(unwrittenLayer);
+    Mockito.when(mockReproducibleLayerBuilder.getSourceFiles()).thenReturn(fakeSourceFiles);
 
-    CachedLayer cachedLayer = cacheWriter.writeLayer(mockLayerBuilder);
+    CachedLayer cachedLayer = cacheWriter.writeLayer(mockReproducibleLayerBuilder);
 
     CachedLayerWithMetadata layerInMetadata = testCache.getMetadata().getLayers().get(0);
     Assert.assertNotNull(layerInMetadata.getMetadata());
