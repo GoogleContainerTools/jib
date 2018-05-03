@@ -84,8 +84,10 @@ public class JsonToImageTranslator {
 
     image.setEntrypoint(containerConfigurationTemplate.getContainerEntrypoint());
 
-    for (String environmentVariable : containerConfigurationTemplate.getContainerEnvironment()) {
-      image.addEnvironmentVariableDefinition(environmentVariable);
+    if (containerConfigurationTemplate.getContainerEnvironment() != null) {
+      for (String environmentVariable : containerConfigurationTemplate.getContainerEnvironment()) {
+        image.addEnvironmentVariableDefinition(environmentVariable);
+      }
     }
 
     return image;
