@@ -135,7 +135,6 @@ public class BuildImageMojo extends JibPluginConfiguration {
             .setCredentialHelperNames(credHelpers)
             .setKnownRegistryCredentials(mavenSettingsCredentials)
             .setMainClass(inferredMainClass)
-            .setEnableReproducibleBuilds(enableReproducibleBuilds)
             .setJvmFlags(jvmFlags)
             .setEnvironment(environment)
             .setTargetFormat(imageFormatToEnum.getManifestTemplateClass())
@@ -302,7 +301,17 @@ public class BuildImageMojo extends JibPluginConfiguration {
     Preconditions.checkNotNull(from);
 
     try {
-      return ImageReference.parse(from);
+      ImageReference baseImage = ImageReference.parse(from);
+
+      if (baseImage.usesDefaultTag()) {
+        getLog()
+            .warn(
+                "Base image '"
+                    + baseImage
+                    + "' does not use a specific image digest - build may not be reproducible");
+      }
+
+      return baseImage;
 
     } catch (InvalidImageReferenceException ex) {
       throw new MojoFailureException("Parameter 'from' is invalid", ex);

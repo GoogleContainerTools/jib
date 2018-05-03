@@ -8,10 +8,14 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-## 0.1.7
+## 0.9.0
 ### Added
 - Better feedback for build failures ([#197](https://github.com/google/jib/pull/197))
 - Warns if specified `mainClass` is not a valid Java class ([#206](https://github.com/google/jib/issues/206))
+- Warns if build may not be reproducible ([#245](https://github.com/GoogleContainerTools/jib/pull/245))
+
+### Changed
+- Removed `enableReproducibleBuilds` parameter - application layers will always be reproducible ([#245](https://github.com/GoogleContainerTools/jib/pull/245))
 
 ## 0.1.6
 ### Changed

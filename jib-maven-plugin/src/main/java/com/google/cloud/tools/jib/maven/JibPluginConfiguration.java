@@ -52,9 +52,6 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
   @Nullable @Parameter String mainClass;
 
-  @Parameter(defaultValue = "true", required = true)
-  boolean enableReproducibleBuilds;
-
   @Nullable
   @Parameter(defaultValue = "Docker", required = true)
   String imageFormat;
