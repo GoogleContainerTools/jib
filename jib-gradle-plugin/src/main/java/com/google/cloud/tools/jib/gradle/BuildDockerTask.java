@@ -20,6 +20,7 @@ import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.tasks.TaskAction;
 
+/** Builds a container image and exports to the default Docker daemon. */
 public class BuildDockerTask extends DefaultTask {
 
   @Nullable private JibExtension jibExtension;
