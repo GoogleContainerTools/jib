@@ -145,7 +145,7 @@ public class BuildImageSteps {
                       listeningExecutorService)
                   .call();
 
-          timer2.lap("Building container configuration");
+          timer2.lap("Setting up build container configuration");
           // Builds the container configuration.
           ListenableFuture<ListenableFuture<BlobAndDigest>>
               buildContainerConfigurationFutureFuture =
