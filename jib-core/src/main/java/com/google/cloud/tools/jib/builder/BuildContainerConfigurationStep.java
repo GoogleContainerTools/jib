@@ -18,14 +18,11 @@ package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.blob.Blob;
-import com.google.cloud.tools.jib.blob.BlobAndDigest;
 import com.google.cloud.tools.jib.cache.CachedLayer;
-import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
-import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -36,7 +33,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-class BuildContainerConfigurationStep implements Callable<ListenableFuture<BlobAndDigest>> {
+class BuildContainerConfigurationStep implements Callable<ListenableFuture<Blob>> {
 
   private static final String DESCRIPTION = "Building container configuration";
 
@@ -65,7 +62,7 @@ class BuildContainerConfigurationStep implements Callable<ListenableFuture<BlobA
 
   /** Depends on {@code pullBaseImageLayerFuturesFuture}. */
   @Override
-  public ListenableFuture<BlobAndDigest> call() throws ExecutionException, InterruptedException {
+  public ListenableFuture<Blob> call() throws ExecutionException, InterruptedException {
     // TODO: This might need to belong in BuildImageSteps.
     List<ListenableFuture<?>> afterBaseImageLayerFuturesFutureDependencies = new ArrayList<>();
     afterBaseImageLayerFuturesFutureDependencies.add(pushAuthorizationFuture);
@@ -80,7 +77,7 @@ class BuildContainerConfigurationStep implements Callable<ListenableFuture<BlobA
    * Depends on {@code pushAuthorizationFuture}, {@code pullBaseImageLayerFuturesFuture.get()}, and
    * {@code buildApplicationLayerFutures}.
    */
-  private BlobAndDigest afterBaseImageLayerFuturesFuture()
+  private Blob afterBaseImageLayerFuturesFuture()
       throws ExecutionException, InterruptedException, LayerPropertyNotFoundException, IOException {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       // Constructs the image.
@@ -98,12 +95,7 @@ class BuildContainerConfigurationStep implements Callable<ListenableFuture<BlobA
       ImageToJsonTranslator imageToJsonTranslator = new ImageToJsonTranslator(image);
 
       // Gets the container configuration content descriptor.
-      Blob containerConfigurationBlob = imageToJsonTranslator.getContainerConfigurationBlob();
-      CountingDigestOutputStream digestOutputStream =
-          new CountingDigestOutputStream(ByteStreams.nullOutputStream());
-      containerConfigurationBlob.writeTo(digestOutputStream);
-
-      return new BlobAndDigest(containerConfigurationBlob, digestOutputStream.toBlobDescriptor());
+      return imageToJsonTranslator.getContainerConfigurationBlob();
     }
   }
 }

@@ -17,13 +17,21 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Timer;
-import com.google.cloud.tools.jib.blob.BlobAndDigest;
+import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
+import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.registry.RegistryClient;
+import com.google.cloud.tools.jib.registry.RegistryException;
+import com.google.common.io.ByteStreams;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 
 class PushContainerConfigurationStep implements Callable<ListenableFuture<BlobDescriptor>> {
 
@@ -31,39 +39,50 @@ class PushContainerConfigurationStep implements Callable<ListenableFuture<BlobDe
 
   private final BuildConfiguration buildConfiguration;
   private final ListenableFuture<Authorization> pushAuthorizationFuture;
-  private final ListenableFuture<BlobAndDigest> blobAndDigestFuture;
+  private final ListenableFuture<ListenableFuture<Blob>> blobFuturesFuture;
   private final ListeningExecutorService listeningExecutorService;
 
   PushContainerConfigurationStep(
       BuildConfiguration buildConfiguration,
       ListenableFuture<Authorization> pushAuthorizationFuture,
-      ListenableFuture<BlobAndDigest> blobAndDigestFuture,
+      ListenableFuture<ListenableFuture<Blob>> blobFuturesFuture,
       ListeningExecutorService listeningExecutorService) {
     this.buildConfiguration = buildConfiguration;
     this.pushAuthorizationFuture = pushAuthorizationFuture;
-    this.blobAndDigestFuture = blobAndDigestFuture;
+    this.blobFuturesFuture = blobFuturesFuture;
     this.listeningExecutorService = listeningExecutorService;
   }
 
+  /** Depends on {@code blobFutureFuture}. */
   @Override
-  public ListenableFuture<BlobDescriptor> call() {
-    return listeningExecutorService.submit(
-        () -> {
-          try (Timer timer = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
-            RegistryClient registryClient =
-                new RegistryClient(
-                        NonBlockingFutures.get(pushAuthorizationFuture),
-                        buildConfiguration.getTargetRegistry(),
-                        buildConfiguration.getTargetRepository())
-                    .setTimer(timer);
+  public ListenableFuture<BlobDescriptor> call() throws ExecutionException, InterruptedException {
+    List<ListenableFuture<?>> afterBlobFutureFutureDependencies = new ArrayList<>();
+    afterBlobFutureFutureDependencies.add(pushAuthorizationFuture);
+    afterBlobFutureFutureDependencies.add(NonBlockingFutures.get(blobFuturesFuture));
+    return Futures.whenAllSucceed(afterBlobFutureFutureDependencies)
+        .call(this::afterBlobFuturesFuture, listeningExecutorService);
+  }
 
-            // TODO: Use PushBlobStep.
-            // Pushes the container configuration.
-            BlobAndDigest blobAndDigest = blobAndDigestFuture.get();
-            registryClient.pushBlob(
-                blobAndDigest.getBlobDescriptor().getDigest(), blobAndDigest.getBlob());
-            return blobAndDigest.getBlobDescriptor();
-          }
-        });
+  /** Depends on {@code blobFutureFuture.get()} and {@code pushAuthorizationFuture}. */
+  private BlobDescriptor afterBlobFuturesFuture()
+      throws ExecutionException, InterruptedException, IOException, RegistryException {
+    try (Timer timer = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
+      RegistryClient registryClient =
+          new RegistryClient(
+                  NonBlockingFutures.get(pushAuthorizationFuture),
+                  buildConfiguration.getTargetRegistry(),
+                  buildConfiguration.getTargetRepository())
+              .setTimer(timer);
+
+      // TODO: Use PushBlobStep.
+      // Pushes the container configuration.
+      CountingDigestOutputStream digestOutputStream =
+          new CountingDigestOutputStream(ByteStreams.nullOutputStream());
+      Blob blob = NonBlockingFutures.get(NonBlockingFutures.get(blobFuturesFuture));
+      blob.writeTo(digestOutputStream);
+
+      registryClient.pushBlob(digestOutputStream.toBlobDescriptor().getDigest(), blob);
+      return digestOutputStream.toBlobDescriptor();
+    }
   }
 }

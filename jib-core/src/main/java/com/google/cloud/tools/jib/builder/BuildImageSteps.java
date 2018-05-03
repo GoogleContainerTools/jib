@@ -17,7 +17,7 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Timer;
-import com.google.cloud.tools.jib.blob.BlobAndDigest;
+import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
@@ -147,29 +147,28 @@ public class BuildImageSteps {
 
           timer2.lap("Setting up build container configuration");
           // Builds the container configuration.
-          ListenableFuture<ListenableFuture<BlobAndDigest>>
-              buildContainerConfigurationFutureFuture =
-                  Futures.whenAllSucceed(pullBaseImageLayerFuturesFuture)
-                      .call(
-                          new BuildContainerConfigurationStep(
-                              buildConfiguration,
-                              listeningExecutorService,
-                              authenticatePushFuture,
-                              pullBaseImageLayerFuturesFuture,
-                              buildAndCacheApplicationLayerFutures,
-                              entrypoint),
-                          listeningExecutorService);
+          ListenableFuture<ListenableFuture<Blob>> buildContainerConfigurationFuturesFuture =
+              Futures.whenAllSucceed(pullBaseImageLayerFuturesFuture)
+                  .call(
+                      new BuildContainerConfigurationStep(
+                          buildConfiguration,
+                          listeningExecutorService,
+                          authenticatePushFuture,
+                          pullBaseImageLayerFuturesFuture,
+                          buildAndCacheApplicationLayerFutures,
+                          entrypoint),
+                      listeningExecutorService);
 
           timer2.lap("Setting up container configuration push");
           // Pushes the container configuration.
           ListenableFuture<ListenableFuture<BlobDescriptor>>
               pushContainerConfigurationFutureFuture =
-                  Futures.whenAllSucceed(buildContainerConfigurationFutureFuture)
+                  Futures.whenAllSucceed(buildContainerConfigurationFuturesFuture)
                       .call(
                           new PushContainerConfigurationStep(
                               buildConfiguration,
                               authenticatePushFuture,
-                              buildContainerConfigurationFutureFuture.get(),
+                              buildContainerConfigurationFuturesFuture,
                               listeningExecutorService),
                           listeningExecutorService);
 
