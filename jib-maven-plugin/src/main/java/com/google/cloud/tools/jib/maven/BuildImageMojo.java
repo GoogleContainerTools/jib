@@ -132,10 +132,10 @@ public class BuildImageMojo extends JibPluginConfiguration {
             .setBaseImage(baseImage)
             // TODO: This is a temporary hack that will be fixed in an immediate follow-up PR. Do
             // NOT release.
-            .setBaseImageCredentialHelperName(credHelpers.get(0))
+            .setBaseImageCredentialHelperName(Preconditions.checkNotNull(credHelpers.get(0)))
             .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
             .setTargetImage(targetImageReference)
-            .setTargetImageCredentialHelperName(credHelpers.get(0))
+            .setTargetImageCredentialHelperName(Preconditions.checkNotNull(credHelpers.get(0)))
             .setKnownTargetRegistryCredentials(knownTargetRegistryCredentials)
             .setMainClass(inferredMainClass)
             .setJvmFlags(jvmFlags)
@@ -347,8 +347,8 @@ public class BuildImageMojo extends JibPluginConfiguration {
           buildConfiguration.getTargetImageCredentialHelperName() != null
               || buildConfiguration.getKnownTargetRegistryCredentials() != null;
 
-      if (isRegistryForBase && !areBaseImageCredentialsConfigured
-          || isRegistryForTarget && !areTargetImageCredentialsConfigured) {
+      if ((isRegistryForBase && !areBaseImageCredentialsConfigured)
+          || (isRegistryForTarget && !areTargetImageCredentialsConfigured)) {
         // No credential helpers defined.
         throw new MojoExecutionException(
             helpfulMessageBuilder.withSuggestion(
