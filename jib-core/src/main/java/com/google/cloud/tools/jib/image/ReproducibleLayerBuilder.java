@@ -27,8 +27,12 @@ import java.util.Comparator;
 import java.util.List;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 
-/** Builds an {@link UnwrittenLayer} from files. */
-public class LayerBuilder {
+/**
+ * Builds a reproducible {@link UnwrittenLayer} from files. The reproducibility is implemented by
+ * strips out all non-reproducible elements (modification time, group ID, user ID, user name, and
+ * group name) from name-sorted tar archive entries.
+ */
+public class ReproducibleLayerBuilder {
 
   /**
    * The source files to build the layer from. Source files that are directories will have all
@@ -42,14 +46,9 @@ public class LayerBuilder {
   /** The Unix-style path of the file in the partial filesystem changeset. */
   private final String extractionPath;
 
-  /** Enable reproducible features when building the tar */
-  private final boolean enableReproducibleBuilds;
-
-  public LayerBuilder(
-      List<Path> sourceFiles, String extractionPath, boolean enableReproducibleBuilds) {
+  public ReproducibleLayerBuilder(List<Path> sourceFiles, String extractionPath) {
     this.sourceFiles = new ArrayList<>(sourceFiles);
     this.extractionPath = extractionPath;
-    this.enableReproducibleBuilds = enableReproducibleBuilds;
   }
 
   /** Builds and returns the layer. */
@@ -83,29 +82,21 @@ public class LayerBuilder {
       }
     }
 
-    if (enableReproducibleBuilds) {
-      makeListReproducible(filesystemEntries);
-    }
-
     // Adds all the files to a tar stream.
     TarStreamBuilder tarStreamBuilder = new TarStreamBuilder();
+    filesystemEntries.sort(Comparator.comparing(TarArchiveEntry::getName));
     for (TarArchiveEntry entry : filesystemEntries) {
-      tarStreamBuilder.addEntry(entry);
-    }
-
-    return new UnwrittenLayer(tarStreamBuilder.toBlob());
-  }
-
-  // Sort list and strip out all non-reproducible elements from tar archive entries.
-  private void makeListReproducible(List<TarArchiveEntry> entries) {
-    entries.sort(Comparator.comparing(TarArchiveEntry::getName));
-    for (TarArchiveEntry entry : entries) {
+      // Strips out all non-reproducible elements from tar archive entries.
       entry.setModTime(0);
       entry.setGroupId(0);
       entry.setUserId(0);
       entry.setUserName("");
       entry.setGroupName("");
+
+      tarStreamBuilder.addEntry(entry);
     }
+
+    return new UnwrittenLayer(tarStreamBuilder.toBlob());
   }
 
   public List<Path> getSourceFiles() {

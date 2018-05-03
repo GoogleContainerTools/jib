@@ -47,7 +47,6 @@ public class BuildConfigurationTest {
     RegistryCredentials expectedKnownTargetRegistryCredentials =
         Mockito.mock(RegistryCredentials.class);
     String expectedMainClass = "mainclass";
-    boolean expectedEnableReproducibleBuilds = false;
     List<String> expectedJvmFlags = Arrays.asList("some", "jvm", "flags");
     Map<String, String> expectedEnvironment = ImmutableMap.of("key", "value");
     Class<? extends BuildableManifestTemplate> expectedTargetFormat = OCIManifestTemplate.class;
@@ -64,7 +63,6 @@ public class BuildConfigurationTest {
                     expectedTargetServerUrl, expectedTargetImageName, expectedTargetTag))
             .setTargetImageCredentialHelperName(expectedTargetImageCredentialHelperName)
             .setKnownTargetRegistryCredentials(expectedKnownTargetRegistryCredentials)
-            .setEnableReproducibleBuilds(expectedEnableReproducibleBuilds)
             .setMainClass(expectedMainClass)
             .setJvmFlags(expectedJvmFlags)
             .setEnvironment(expectedEnvironment)
@@ -83,8 +81,6 @@ public class BuildConfigurationTest {
     Assert.assertEquals(
         expectedTargetImageCredentialHelperName,
         buildConfiguration.getTargetImageCredentialHelperName());
-    Assert.assertEquals(
-        expectedEnableReproducibleBuilds, buildConfiguration.getEnableReproducibleBuilds());
     Assert.assertEquals(expectedMainClass, buildConfiguration.getMainClass());
     Assert.assertEquals(expectedJvmFlags, buildConfiguration.getJvmFlags());
     Assert.assertEquals(expectedEnvironment, buildConfiguration.getEnvironment());
@@ -117,7 +113,6 @@ public class BuildConfigurationTest {
     Assert.assertNull(buildConfiguration.getKnownBaseRegistryCredentials());
     Assert.assertNull(buildConfiguration.getTargetImageCredentialHelperName());
     Assert.assertNull(buildConfiguration.getKnownTargetRegistryCredentials());
-    Assert.assertTrue(buildConfiguration.getEnableReproducibleBuilds());
     Assert.assertEquals(Collections.emptyList(), buildConfiguration.getJvmFlags());
     Assert.assertEquals(Collections.emptyMap(), buildConfiguration.getEnvironment());
     Assert.assertEquals(V22ManifestTemplate.class, buildConfiguration.getTargetFormat());

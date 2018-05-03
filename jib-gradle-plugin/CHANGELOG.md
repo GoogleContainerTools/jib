@@ -8,11 +8,16 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-## 0.1.2
+## 0.9.0
 
 ### Added
 
 - Export a Docker context (including a Dockerfile) with `jibDockerContext` ([#204](https://github.com/google/jib/issues/204))
+- Warns if build may not be reproducible ([#245](https://github.com/GoogleContainerTools/jib/pull/245))
+
+### Changed
+
+- Removed `reproducible` parameter - application layers will always be reproducible ([#245](https://github.com/GoogleContainerTools/jib/pull/245))
 
 ## 0.1.1
 

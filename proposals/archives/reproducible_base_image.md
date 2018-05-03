@@ -1,5 +1,7 @@
 # Proposal: Address Base Image Reproducibility
 
+Implemented in: **v0.9.0**
+
 ## Motivation
 
 One of the main goals of Jib is to be able to build images reproducibly, such that the same contents always creates the same images. It does this by wiping the timestamps and user information from the files in the Java application layers (dependencies, resources, classes). However, it does not do the same for the base image layers, which, by default, are from the latest [`gcr.io/distroless/java`](gcr.io/distroless/java) image. This may be unexpected behaviors since by default, reproducibility is on (the user may switch it off using the `enableReproducibleBuilds` parameter for Maven or the `reproducible` parameter for Gradle).

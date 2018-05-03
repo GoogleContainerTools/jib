@@ -180,6 +180,10 @@ public class ImageReference {
     return tag;
   }
 
+  public boolean usesDefaultTag() {
+    return DEFAULT_TAG.equals(tag);
+  }
+
   /** @return the image reference in Docker-readable format (inverse of {@link #parse}) */
   @Override
   public String toString() {
