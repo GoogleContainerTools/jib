@@ -104,7 +104,7 @@ public class RetrieveRegistryCredentialsStepTest {
         makeRetrieveRegistryCredentialsStep(
                 FAKE_TARGET_REGISTRY,
                 null,
-                RegistryCredentials.of(FAKE_TARGET_REGISTRY, "credentialSource", mockAuthorization))
+                new RegistryCredentials("credentialSource", mockAuthorization))
             .call());
 
     Mockito.verify(mockBuildLogger).info("Using credentialSource for " + FAKE_TARGET_REGISTRY);

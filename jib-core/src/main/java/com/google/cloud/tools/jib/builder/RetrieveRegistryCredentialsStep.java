@@ -93,11 +93,8 @@ class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
 
       // Tries to get registry credentials from known registry credentials.
       if (knownRegistryCredentials != null) {
-        String credentialSource = knownRegistryCredentials.getCredentialSource(registry);
-        if (credentialSource != null) {
-          logGotCredentialsFrom(credentialSource);
-          return knownRegistryCredentials.getAuthorization(registry);
-        }
+        logGotCredentialsFrom(knownRegistryCredentials.getCredentialSource());
+        return knownRegistryCredentials.getAuthorization();
       }
 
       // Tries to get registry credentials from the Docker config.

@@ -96,15 +96,11 @@ public class BuildImageTask extends DefaultTask {
     RegistryCredentials knownTargetRegistryCredentials = null;
     Authorization fromAuthorization = getImageAuthorization(jibExtension.getFrom());
     if (fromAuthorization != null) {
-      knownBaseRegistryCredentials =
-          RegistryCredentials.of(
-              baseImageReference.getRegistry(), "jib.from.auth", fromAuthorization);
+      knownBaseRegistryCredentials = new RegistryCredentials("jib.from.auth", fromAuthorization);
     }
     Authorization toAuthorization = getImageAuthorization(jibExtension.getTo());
     if (toAuthorization != null) {
-      knownTargetRegistryCredentials =
-          RegistryCredentials.of(
-              targetImageReference.getRegistry(), "jib.to.auth", toAuthorization);
+      knownTargetRegistryCredentials = new RegistryCredentials("jib.to.auth", toAuthorization);
     }
 
     BuildConfiguration buildConfiguration =
