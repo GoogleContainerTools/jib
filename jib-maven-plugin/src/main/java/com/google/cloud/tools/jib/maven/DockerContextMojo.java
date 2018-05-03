@@ -55,7 +55,7 @@ public class DockerContextMojo extends JibPluginConfiguration {
 
     try {
       new DockerContextGenerator(projectProperties.getSourceFilesConfiguration())
-          .setBaseImage(from)
+          .setBaseImage(from.image)
           .setJvmFlags(jvmFlags)
           .setMainClass(inferredMainClass)
           .generate(Paths.get(targetDir));

@@ -38,7 +38,6 @@ import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
@@ -93,8 +92,9 @@ public class BuildImageMojo extends JibPluginConfiguration {
     // These @Nullable parameters should never be null.
     Preconditions.checkNotNull(project);
     Preconditions.checkNotNull(session);
-    Preconditions.checkNotNull(repository);
-    Preconditions.checkNotNull(imageFormat);
+    Preconditions.checkNotNull(to);
+    Preconditions.checkNotNull(to.image);
+    Preconditions.checkNotNull(format);
 
     validateParameters();
 
@@ -104,8 +104,9 @@ public class BuildImageMojo extends JibPluginConfiguration {
     SourceFilesConfiguration sourceFilesConfiguration =
         projectProperties.getSourceFilesConfiguration();
 
-    // Parses 'from' into image reference.
+    // Parses 'from' and 'to' into image reference.
     ImageReference baseImage = getBaseImageReference();
+    ImageReference targetImage = getTargetImageReference();
 
     // Checks Maven settings for registry credentials.
     session.getSettings().getServer(baseImage.getRegistry());
@@ -119,23 +120,23 @@ public class BuildImageMojo extends JibPluginConfiguration {
           new RegistryCredentials("Maven settings", baseRegistryCredentials);
     }
     // Retrieves credentials for the target registry.
-    Authorization targetRegistryCredentials = getRegistryCredentialsFromSettings(registry);
+    Authorization targetRegistryCredentials =
+        getRegistryCredentialsFromSettings(targetImage.getRegistry());
     if (targetRegistryCredentials != null) {
       knownTargetRegistryCredentials =
           new RegistryCredentials("Maven settings", targetRegistryCredentials);
     }
 
-    ImageReference targetImageReference = ImageReference.of(registry, repository, tag);
-    ImageFormat imageFormatToEnum = ImageFormat.valueOf(imageFormat);
+    ImageFormat imageFormatToEnum = ImageFormat.valueOf(format);
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder(new MavenBuildLogger(getLog()))
             .setBaseImage(baseImage)
             // TODO: This is a temporary hack that will be fixed in an immediate follow-up PR. Do
             // NOT release.
-            .setBaseImageCredentialHelperName(Preconditions.checkNotNull(credHelpers.get(0)))
+            .setBaseImageCredentialHelperName(from == null ? null : from.credHelper)
             .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
-            .setTargetImage(targetImageReference)
-            .setTargetImageCredentialHelperName(Preconditions.checkNotNull(credHelpers.get(0)))
+            .setTargetImage(targetImage)
+            .setTargetImageCredentialHelperName(to.credHelper)
             .setKnownTargetRegistryCredentials(knownTargetRegistryCredentials)
             .setMainClass(inferredMainClass)
             .setJvmFlags(jvmFlags)
@@ -159,7 +160,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
     }
 
     getLog().info("");
-    getLog().info("Pushing image as " + targetImageReference);
+    getLog().info("Pushing image as " + targetImage);
     getLog().info("");
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
@@ -174,7 +175,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
         new BuildImageSteps(buildConfiguration, sourceFilesConfiguration, cachesInitializer));
 
     getLog().info("");
-    getLog().info("Built and pushed image as " + targetImageReference);
+    getLog().info("Built and pushed image as " + targetImage);
     getLog().info("");
   }
 
@@ -255,34 +256,10 @@ public class BuildImageMojo extends JibPluginConfiguration {
 
   /** Checks validity of plugin parameters. */
   private void validateParameters() throws MojoFailureException {
-    // These @Nullable parameters should never be null.
-    Preconditions.checkNotNull(repository);
-    Preconditions.checkNotNull(imageFormat);
-
-    // Validates 'registry'.
-    if (!Strings.isNullOrEmpty(registry) && !ImageReference.isValidRegistry(registry)) {
-      getLog().error("Invalid format for 'registry'");
-    }
-    // Validates 'repository'.
-    if (!ImageReference.isValidRepository(repository)) {
-      getLog().error("Invalid format for 'repository'");
-    }
-    // Validates 'tag'.
-    if (!Strings.isNullOrEmpty(tag)) {
-      if (!ImageReference.isValidTag(tag)) {
-        getLog().error("Invalid format for 'tag'");
-      }
-
-      // 'tag' must not contain forward slashes.
-      if (tag.indexOf('/') >= 0) {
-        getLog().error("'tag' cannot contain '/'");
-        throw new MojoFailureException("Invalid configuration parameters");
-      }
-    }
     // Validates 'imageFormat'.
     boolean validFormat = false;
-    for (ImageFormat format : ImageFormat.values()) {
-      if (imageFormat.equals(format.name())) {
+    for (ImageFormat imageFormat : ImageFormat.values()) {
+      if (imageFormat.name().equals(format)) {
         validFormat = true;
         break;
       }
@@ -290,7 +267,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
     if (!validFormat) {
       throw new MojoFailureException(
           "<imageFormat> parameter is configured with value '"
-              + imageFormat
+              + format
               + "', but the only valid configuration options are '"
               + ImageFormat.Docker
               + "' and '"
@@ -304,7 +281,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
     Preconditions.checkNotNull(from);
 
     try {
-      ImageReference baseImage = ImageReference.parse(from);
+      ImageReference baseImage = ImageReference.parse(from.image);
 
       if (baseImage.usesDefaultTag()) {
         getLog()
@@ -318,6 +295,18 @@ public class BuildImageMojo extends JibPluginConfiguration {
 
     } catch (InvalidImageReferenceException ex) {
       throw new MojoFailureException("Parameter 'from' is invalid", ex);
+    }
+  }
+
+  /** @return the {@link ImageReference} parsed from {@link #to}. */
+  private ImageReference getTargetImageReference() throws MojoFailureException {
+    Preconditions.checkNotNull(to);
+
+    try {
+      return ImageReference.parse(to.image);
+
+    } catch (InvalidImageReferenceException ex) {
+      throw new MojoFailureException("Parameter 'to' is invalid", ex);
     }
   }
 
@@ -339,7 +328,10 @@ public class BuildImageMojo extends JibPluginConfiguration {
           registryUnauthorizedException
               .getRegistry()
               .equals(buildConfiguration.getBaseImageRegistry());
-      boolean isRegistryForTarget = registryUnauthorizedException.getRegistry().equals(registry);
+      boolean isRegistryForTarget =
+          registryUnauthorizedException
+              .getRegistry()
+              .equals(buildConfiguration.getTargetRegistry());
       boolean areBaseImageCredentialsConfigured =
           buildConfiguration.getBaseImageCredentialHelperName() != null
               || buildConfiguration.getKnownBaseRegistryCredentials() != null;
