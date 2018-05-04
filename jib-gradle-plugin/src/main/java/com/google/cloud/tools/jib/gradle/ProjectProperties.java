@@ -16,7 +16,9 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
+import com.google.cloud.tools.jib.frontend.HelpfulMessageBuilder;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +29,7 @@ import org.gradle.api.Task;
 import org.gradle.api.logging.Logger;
 import org.gradle.jvm.tasks.Jar;
 
-/** Obtains information about a Gradle {@link Project}. */
+/** Obtains information about a Gradle {@link Project} that uses Jib. */
 class ProjectProperties {
 
   private final Project project;
@@ -38,14 +40,23 @@ class ProjectProperties {
     this.logger = logger;
   }
 
-  /** Extracts main class from 'jar' task, if available. */
-  @Nullable
-  String getMainClassFromJarTask() {
-    List<Task> jarTasks = new ArrayList<>(project.getTasksByName("jar", false));
-    if (jarTasks.size() != 1) {
-      return null;
+  /**
+   * @param mainClass the configured main class
+   * @return the main class to use for the container entrypoint.
+   */
+  String getMainClass(@Nullable String mainClass) {
+    if (mainClass == null) {
+      mainClass = getMainClassFromJarTask();
+      if (mainClass == null) {
+        throw new GradleException(
+            new HelpfulMessageBuilder("Could not find main class specified in a 'jar' task")
+                .withSuggestion("add a `mainClass` configuration to jib"));
+      }
     }
-    return (String) ((Jar) jarTasks.get(0)).getManifest().getAttributes().get("Main-Class");
+    if (!BuildConfiguration.isValidJavaClass(mainClass)) {
+      getLogger().warn("'mainClass' is not a valid Java class : " + mainClass);
+    }
+    return mainClass;
   }
 
   Logger getLogger() {
@@ -88,5 +99,15 @@ class ProjectProperties {
     } catch (IOException ex) {
       throw new GradleException("Obtaining project build output files failed", ex);
     }
+  }
+
+  /** Extracts main class from 'jar' task, if available. */
+  @Nullable
+  private String getMainClassFromJarTask() {
+    List<Task> jarTasks = new ArrayList<>(project.getTasksByName("jar", false));
+    if (jarTasks.size() != 1) {
+      return null;
+    }
+    return (String) ((Jar) jarTasks.get(0)).getManifest().getAttributes().get("Main-Class");
   }
 }
