@@ -44,7 +44,10 @@ public class CountingDigestOutputStream extends DigestOutputStream {
     }
   }
 
-  /** Builds a {@link BlobDescriptor} with the hash and size of the bytes written. */
+  /**
+   * Builds a {@link BlobDescriptor} with the hash and size of the bytes written. The buffer resets
+   * after this method is called, so this method should only be called once per BlobDescriptor.
+   */
   public BlobDescriptor toBlobDescriptor() {
     try {
       byte[] hashedBytes = digest.digest();

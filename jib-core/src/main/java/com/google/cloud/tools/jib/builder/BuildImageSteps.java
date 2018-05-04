@@ -153,7 +153,6 @@ public class BuildImageSteps {
                       new BuildContainerConfigurationStep(
                           buildConfiguration,
                           listeningExecutorService,
-                          authenticatePushFuture,
                           pullBaseImageLayerFuturesFuture,
                           buildAndCacheApplicationLayerFutures,
                           entrypoint),

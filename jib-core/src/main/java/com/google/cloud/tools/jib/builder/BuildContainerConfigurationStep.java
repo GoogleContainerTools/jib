@@ -19,14 +19,12 @@ package com.google.cloud.tools.jib.builder;
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.cache.CachedLayer;
-import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -39,7 +37,6 @@ class BuildContainerConfigurationStep implements Callable<ListenableFuture<Blob>
 
   private final BuildConfiguration buildConfiguration;
   private final ListeningExecutorService listeningExecutorService;
-  private final ListenableFuture<Authorization> pushAuthorizationFuture;
   private final ListenableFuture<List<ListenableFuture<CachedLayer>>>
       pullBaseImageLayerFuturesFuture;
   private final List<ListenableFuture<CachedLayer>> buildApplicationLayerFutures;
@@ -48,13 +45,11 @@ class BuildContainerConfigurationStep implements Callable<ListenableFuture<Blob>
   BuildContainerConfigurationStep(
       BuildConfiguration buildConfiguration,
       ListeningExecutorService listeningExecutorService,
-      ListenableFuture<Authorization> pushAuthorizationFuture,
       ListenableFuture<List<ListenableFuture<CachedLayer>>> pullBaseImageLayerFuturesFuture,
       List<ListenableFuture<CachedLayer>> buildApplicationLayerFutures,
       List<String> entrypoint) {
     this.buildConfiguration = buildConfiguration;
     this.listeningExecutorService = listeningExecutorService;
-    this.pushAuthorizationFuture = pushAuthorizationFuture;
     this.pullBaseImageLayerFuturesFuture = pullBaseImageLayerFuturesFuture;
     this.buildApplicationLayerFutures = buildApplicationLayerFutures;
     this.entrypoint = entrypoint;
@@ -65,7 +60,6 @@ class BuildContainerConfigurationStep implements Callable<ListenableFuture<Blob>
   public ListenableFuture<Blob> call() throws ExecutionException, InterruptedException {
     // TODO: This might need to belong in BuildImageSteps.
     List<ListenableFuture<?>> afterBaseImageLayerFuturesFutureDependencies = new ArrayList<>();
-    afterBaseImageLayerFuturesFutureDependencies.add(pushAuthorizationFuture);
     afterBaseImageLayerFuturesFutureDependencies.addAll(
         NonBlockingFutures.get(pullBaseImageLayerFuturesFuture));
     afterBaseImageLayerFuturesFutureDependencies.addAll(buildApplicationLayerFutures);
@@ -78,7 +72,7 @@ class BuildContainerConfigurationStep implements Callable<ListenableFuture<Blob>
    * {@code buildApplicationLayerFutures}.
    */
   private Blob afterBaseImageLayerFuturesFuture()
-      throws ExecutionException, InterruptedException, LayerPropertyNotFoundException, IOException {
+      throws ExecutionException, InterruptedException, LayerPropertyNotFoundException {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       // Constructs the image.
       Image image = new Image();
@@ -92,10 +86,8 @@ class BuildContainerConfigurationStep implements Callable<ListenableFuture<Blob>
       image.setEnvironment(buildConfiguration.getEnvironment());
       image.setEntrypoint(entrypoint);
 
-      ImageToJsonTranslator imageToJsonTranslator = new ImageToJsonTranslator(image);
-
       // Gets the container configuration content descriptor.
-      return imageToJsonTranslator.getContainerConfigurationBlob();
+      return new ImageToJsonTranslator(image).getContainerConfigurationBlob();
     }
   }
 }

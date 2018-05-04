@@ -53,20 +53,22 @@ class PushContainerConfigurationStep implements Callable<ListenableFuture<BlobDe
     this.listeningExecutorService = listeningExecutorService;
   }
 
-  /** Depends on {@code blobFutureFuture}. */
+  /** Depends on {@code blobFuturesFuture} and {@code pushAuthorizationFuture}. */
   @Override
   public ListenableFuture<BlobDescriptor> call() throws ExecutionException, InterruptedException {
-    List<ListenableFuture<?>> afterBlobFutureFutureDependencies = new ArrayList<>();
-    afterBlobFutureFutureDependencies.add(pushAuthorizationFuture);
-    afterBlobFutureFutureDependencies.add(NonBlockingFutures.get(blobFuturesFuture));
-    return Futures.whenAllSucceed(afterBlobFutureFutureDependencies)
+    List<ListenableFuture<?>> blobFuturesFutureDependencies = new ArrayList<>();
+    blobFuturesFutureDependencies.add(pushAuthorizationFuture);
+    blobFuturesFutureDependencies.add(NonBlockingFutures.get(blobFuturesFuture));
+    return Futures.whenAllSucceed(blobFuturesFutureDependencies)
         .call(this::afterBlobFuturesFuture, listeningExecutorService);
   }
 
-  /** Depends on {@code blobFutureFuture.get()} and {@code pushAuthorizationFuture}. */
+  /** Depends on {@code blobFuturesFuture.get()} and {@code pushAuthorizationFuture}. */
   private BlobDescriptor afterBlobFuturesFuture()
       throws ExecutionException, InterruptedException, IOException, RegistryException {
     try (Timer timer = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
+      // TODO: Use PushBlobStep.
+      // Pushes the container configuration.
       RegistryClient registryClient =
           new RegistryClient(
                   NonBlockingFutures.get(pushAuthorizationFuture),
@@ -74,15 +76,14 @@ class PushContainerConfigurationStep implements Callable<ListenableFuture<BlobDe
                   buildConfiguration.getTargetRepository())
               .setTimer(timer);
 
-      // TODO: Use PushBlobStep.
-      // Pushes the container configuration.
       CountingDigestOutputStream digestOutputStream =
           new CountingDigestOutputStream(ByteStreams.nullOutputStream());
       Blob blob = NonBlockingFutures.get(NonBlockingFutures.get(blobFuturesFuture));
       blob.writeTo(digestOutputStream);
 
-      registryClient.pushBlob(digestOutputStream.toBlobDescriptor().getDigest(), blob);
-      return digestOutputStream.toBlobDescriptor();
+      BlobDescriptor descriptor = digestOutputStream.toBlobDescriptor();
+      registryClient.pushBlob(descriptor.getDigest(), blob);
+      return descriptor;
     }
   }
 }
