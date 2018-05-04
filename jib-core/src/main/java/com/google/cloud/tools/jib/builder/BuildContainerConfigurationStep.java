@@ -31,6 +31,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+/** Builds the container configuration. */
 class BuildContainerConfigurationStep implements Callable<ListenableFuture<Blob>> {
 
   private static final String DESCRIPTION = "Building container configuration";
@@ -59,11 +60,11 @@ class BuildContainerConfigurationStep implements Callable<ListenableFuture<Blob>
   @Override
   public ListenableFuture<Blob> call() throws ExecutionException, InterruptedException {
     // TODO: This might need to belong in BuildImageSteps.
-    List<ListenableFuture<?>> afterBaseImageLayerFuturesFutureDependencies = new ArrayList<>();
-    afterBaseImageLayerFuturesFutureDependencies.addAll(
+    List<ListenableFuture<?>> afterBaseImageLayerFutureFutureDependencies = new ArrayList<>();
+    afterBaseImageLayerFutureFutureDependencies.addAll(
         NonBlockingFutures.get(pullBaseImageLayerFuturesFuture));
-    afterBaseImageLayerFuturesFutureDependencies.addAll(buildApplicationLayerFutures);
-    return Futures.whenAllSucceed(afterBaseImageLayerFuturesFutureDependencies)
+    afterBaseImageLayerFutureFutureDependencies.addAll(buildApplicationLayerFutures);
+    return Futures.whenAllSucceed(afterBaseImageLayerFutureFutureDependencies)
         .call(this::afterBaseImageLayerFuturesFuture, listeningExecutorService);
   }
 

@@ -147,7 +147,7 @@ public class BuildImageSteps {
 
           timer2.lap("Setting up build container configuration");
           // Builds the container configuration.
-          ListenableFuture<ListenableFuture<Blob>> buildContainerConfigurationFuturesFuture =
+          ListenableFuture<ListenableFuture<Blob>> buildContainerConfigurationFutureFuture =
               Futures.whenAllSucceed(pullBaseImageLayerFuturesFuture)
                   .call(
                       new BuildContainerConfigurationStep(
@@ -162,12 +162,12 @@ public class BuildImageSteps {
           // Pushes the container configuration.
           ListenableFuture<ListenableFuture<BlobDescriptor>>
               pushContainerConfigurationFutureFuture =
-                  Futures.whenAllSucceed(buildContainerConfigurationFuturesFuture)
+                  Futures.whenAllSucceed(buildContainerConfigurationFutureFuture)
                       .call(
                           new PushContainerConfigurationStep(
                               buildConfiguration,
                               authenticatePushFuture,
-                              buildContainerConfigurationFuturesFuture,
+                              buildContainerConfigurationFutureFuture,
                               listeningExecutorService),
                           listeningExecutorService);
 

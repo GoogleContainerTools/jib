@@ -33,23 +33,24 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
+/** Pushes the container configuration. */
 class PushContainerConfigurationStep implements Callable<ListenableFuture<BlobDescriptor>> {
 
   private static final String DESCRIPTION = "Pushing container configuration";
 
   private final BuildConfiguration buildConfiguration;
   private final ListenableFuture<Authorization> pushAuthorizationFuture;
-  private final ListenableFuture<ListenableFuture<Blob>> blobFuturesFuture;
+  private final ListenableFuture<ListenableFuture<Blob>> buildContainerConfigurationFutureFuture;
   private final ListeningExecutorService listeningExecutorService;
 
   PushContainerConfigurationStep(
       BuildConfiguration buildConfiguration,
       ListenableFuture<Authorization> pushAuthorizationFuture,
-      ListenableFuture<ListenableFuture<Blob>> blobFuturesFuture,
+      ListenableFuture<ListenableFuture<Blob>> buildContainerConfigurationFutureFuture,
       ListeningExecutorService listeningExecutorService) {
     this.buildConfiguration = buildConfiguration;
     this.pushAuthorizationFuture = pushAuthorizationFuture;
-    this.blobFuturesFuture = blobFuturesFuture;
+    this.buildContainerConfigurationFutureFuture = buildContainerConfigurationFutureFuture;
     this.listeningExecutorService = listeningExecutorService;
   }
 
@@ -58,7 +59,8 @@ class PushContainerConfigurationStep implements Callable<ListenableFuture<BlobDe
   public ListenableFuture<BlobDescriptor> call() throws ExecutionException, InterruptedException {
     List<ListenableFuture<?>> blobFuturesFutureDependencies = new ArrayList<>();
     blobFuturesFutureDependencies.add(pushAuthorizationFuture);
-    blobFuturesFutureDependencies.add(NonBlockingFutures.get(blobFuturesFuture));
+    blobFuturesFutureDependencies.add(
+        NonBlockingFutures.get(buildContainerConfigurationFutureFuture));
     return Futures.whenAllSucceed(blobFuturesFutureDependencies)
         .call(this::afterBlobFuturesFuture, listeningExecutorService);
   }
@@ -78,7 +80,8 @@ class PushContainerConfigurationStep implements Callable<ListenableFuture<BlobDe
 
       CountingDigestOutputStream digestOutputStream =
           new CountingDigestOutputStream(ByteStreams.nullOutputStream());
-      Blob blob = NonBlockingFutures.get(NonBlockingFutures.get(blobFuturesFuture));
+      Blob blob =
+          NonBlockingFutures.get(NonBlockingFutures.get(buildContainerConfigurationFutureFuture));
       blob.writeTo(digestOutputStream);
 
       BlobDescriptor descriptor = digestOutputStream.toBlobDescriptor();
