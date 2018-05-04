@@ -60,11 +60,11 @@ class BuildContainerConfigurationStep implements Callable<ListenableFuture<Blob>
   @Override
   public ListenableFuture<Blob> call() throws ExecutionException, InterruptedException {
     // TODO: This might need to belong in BuildImageSteps.
-    List<ListenableFuture<?>> afterBaseImageLayerFutureFutureDependencies = new ArrayList<>();
-    afterBaseImageLayerFutureFutureDependencies.addAll(
+    List<ListenableFuture<?>> afterBaseImageLayerFuturesFutureDependencies = new ArrayList<>();
+    afterBaseImageLayerFuturesFutureDependencies.addAll(
         NonBlockingFutures.get(pullBaseImageLayerFuturesFuture));
-    afterBaseImageLayerFutureFutureDependencies.addAll(buildApplicationLayerFutures);
-    return Futures.whenAllSucceed(afterBaseImageLayerFutureFutureDependencies)
+    afterBaseImageLayerFuturesFutureDependencies.addAll(buildApplicationLayerFutures);
+    return Futures.whenAllSucceed(afterBaseImageLayerFuturesFutureDependencies)
         .call(this::afterBaseImageLayerFuturesFuture, listeningExecutorService);
   }
 

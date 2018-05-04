@@ -57,16 +57,16 @@ class PushContainerConfigurationStep implements Callable<ListenableFuture<BlobDe
   /** Depends on {@code blobFuturesFuture} and {@code pushAuthorizationFuture}. */
   @Override
   public ListenableFuture<BlobDescriptor> call() throws ExecutionException, InterruptedException {
-    List<ListenableFuture<?>> blobFuturesFutureDependencies = new ArrayList<>();
-    blobFuturesFutureDependencies.add(pushAuthorizationFuture);
-    blobFuturesFutureDependencies.add(
+    List<ListenableFuture<?>> afterConfigBuildFutureFutureDependencies = new ArrayList<>();
+    afterConfigBuildFutureFutureDependencies.add(pushAuthorizationFuture);
+    afterConfigBuildFutureFutureDependencies.add(
         NonBlockingFutures.get(buildContainerConfigurationFutureFuture));
-    return Futures.whenAllSucceed(blobFuturesFutureDependencies)
-        .call(this::afterBlobFuturesFuture, listeningExecutorService);
+    return Futures.whenAllSucceed(afterConfigBuildFutureFutureDependencies)
+        .call(this::afterConfigBuildFutureFuture, listeningExecutorService);
   }
 
   /** Depends on {@code blobFuturesFuture.get()} and {@code pushAuthorizationFuture}. */
-  private BlobDescriptor afterBlobFuturesFuture()
+  private BlobDescriptor afterConfigBuildFutureFuture()
       throws ExecutionException, InterruptedException, IOException, RegistryException {
     try (Timer timer = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       // TODO: Use PushBlobStep.
@@ -80,12 +80,12 @@ class PushContainerConfigurationStep implements Callable<ListenableFuture<BlobDe
 
       CountingDigestOutputStream digestOutputStream =
           new CountingDigestOutputStream(ByteStreams.nullOutputStream());
-      Blob blob =
+      Blob containerConfigurationBlob =
           NonBlockingFutures.get(NonBlockingFutures.get(buildContainerConfigurationFutureFuture));
-      blob.writeTo(digestOutputStream);
+      containerConfigurationBlob.writeTo(digestOutputStream);
 
       BlobDescriptor descriptor = digestOutputStream.toBlobDescriptor();
-      registryClient.pushBlob(descriptor.getDigest(), blob);
+      registryClient.pushBlob(descriptor.getDigest(), containerConfigurationBlob);
       return descriptor;
     }
   }
