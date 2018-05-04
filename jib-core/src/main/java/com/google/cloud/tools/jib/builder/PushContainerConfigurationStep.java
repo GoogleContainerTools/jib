@@ -40,32 +40,35 @@ class PushContainerConfigurationStep implements Callable<ListenableFuture<BlobDe
 
   private final BuildConfiguration buildConfiguration;
   private final ListenableFuture<Authorization> pushAuthorizationFuture;
-  private final ListenableFuture<ListenableFuture<Blob>> buildConfigFutureFuture;
+  private final ListenableFuture<ListenableFuture<Blob>> buildConfigurationFutureFuture;
   private final ListeningExecutorService listeningExecutorService;
 
   PushContainerConfigurationStep(
       BuildConfiguration buildConfiguration,
       ListenableFuture<Authorization> pushAuthorizationFuture,
-      ListenableFuture<ListenableFuture<Blob>> buildContainerConfigurationFutureFuture,
+      ListenableFuture<ListenableFuture<Blob>> buildConfigurationFutureFuture,
       ListeningExecutorService listeningExecutorService) {
     this.buildConfiguration = buildConfiguration;
     this.pushAuthorizationFuture = pushAuthorizationFuture;
-    this.buildConfigFutureFuture = buildContainerConfigurationFutureFuture;
+    this.buildConfigurationFutureFuture = buildConfigurationFutureFuture;
     this.listeningExecutorService = listeningExecutorService;
   }
 
-  /** Depends on {@code blobFuturesFuture} and {@code pushAuthorizationFuture}. */
+  /** Depends on {@code buildConfigurationFutureFuture} and {@code pushAuthorizationFuture}. */
   @Override
   public ListenableFuture<BlobDescriptor> call() throws ExecutionException, InterruptedException {
-    List<ListenableFuture<?>> afterBuildConfigFutureFutureDependencies = new ArrayList<>();
-    afterBuildConfigFutureFutureDependencies.add(pushAuthorizationFuture);
-    afterBuildConfigFutureFutureDependencies.add(NonBlockingFutures.get(buildConfigFutureFuture));
-    return Futures.whenAllSucceed(afterBuildConfigFutureFutureDependencies)
-        .call(this::afterBuildConfigFutureFuture, listeningExecutorService);
+    List<ListenableFuture<?>> afterBuildConfigurationFutureFutureDependencies = new ArrayList<>();
+    afterBuildConfigurationFutureFutureDependencies.add(pushAuthorizationFuture);
+    afterBuildConfigurationFutureFutureDependencies.add(
+        NonBlockingFutures.get(buildConfigurationFutureFuture));
+    return Futures.whenAllSucceed(afterBuildConfigurationFutureFutureDependencies)
+        .call(this::afterBuildConfigurationFutureFuture, listeningExecutorService);
   }
 
-  /** Depends on {@code blobFuturesFuture.get()} and {@code pushAuthorizationFuture}. */
-  private BlobDescriptor afterBuildConfigFutureFuture()
+  /**
+   * Depends on {@code buildConfigurationFutureFuture.get()} and {@code pushAuthorizationFuture}.
+   */
+  private BlobDescriptor afterBuildConfigurationFutureFuture()
       throws ExecutionException, InterruptedException, IOException, RegistryException {
     try (Timer timer = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       // TODO: Use PushBlobStep.
@@ -80,7 +83,7 @@ class PushContainerConfigurationStep implements Callable<ListenableFuture<BlobDe
       CountingDigestOutputStream digestOutputStream =
           new CountingDigestOutputStream(ByteStreams.nullOutputStream());
       Blob containerConfigurationBlob =
-          NonBlockingFutures.get(NonBlockingFutures.get(buildConfigFutureFuture));
+          NonBlockingFutures.get(NonBlockingFutures.get(buildConfigurationFutureFuture));
       containerConfigurationBlob.writeTo(digestOutputStream);
 
       BlobDescriptor descriptor = digestOutputStream.toBlobDescriptor();
