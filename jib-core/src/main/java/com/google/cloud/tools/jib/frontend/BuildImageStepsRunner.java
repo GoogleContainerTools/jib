@@ -27,15 +27,13 @@ import com.google.cloud.tools.jib.cache.Caches;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.http.conn.HttpHostConnectException;
-
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
+import org.apache.http.conn.HttpHostConnectException;
 
 /** Runs {@link BuildImageSteps} and builds helpful error messages. */
 public class BuildImageStepsRunner {
@@ -46,10 +44,16 @@ public class BuildImageStepsRunner {
   /**
    * Sets up a new {@link BuildImageStepsRunner}. Creates the directory for the cache, if needed.
    *
-   * @param useOnlyProjectCache if {@code true}, sets the base layers cache directory to be the same as the application layers cache directory
+   * @param useOnlyProjectCache if {@code true}, sets the base layers cache directory to be the same
+   *     as the application layers cache directory
    * @throws CacheDirectoryCreationException if the {@code cacheDirectory} could not be created
    */
-  public static BuildImageStepsRunner newRunner(BuildConfiguration buildConfiguration, SourceFilesConfiguration sourceFilesConfiguration, Path cacheDirectory, boolean useOnlyProjectCache) throws CacheDirectoryCreationException {
+  public static BuildImageStepsRunner newRunner(
+      BuildConfiguration buildConfiguration,
+      SourceFilesConfiguration sourceFilesConfiguration,
+      Path cacheDirectory,
+      boolean useOnlyProjectCache)
+      throws CacheDirectoryCreationException {
     if (!Files.exists(cacheDirectory)) {
       try {
         Files.createDirectory(cacheDirectory);
@@ -63,7 +67,8 @@ public class BuildImageStepsRunner {
       cachesInitializer.setBaseCacheDirectory(cacheDirectory);
     }
 
-    return new BuildImageStepsRunner(buildConfiguration, sourceFilesConfiguration, cachesInitializer);
+    return new BuildImageStepsRunner(
+        buildConfiguration, sourceFilesConfiguration, cachesInitializer);
   }
 
   private final Supplier<BuildImageSteps> buildImageStepsSupplier;
@@ -73,8 +78,12 @@ public class BuildImageStepsRunner {
     this.buildImageStepsSupplier = buildImageStepsSupplier;
   }
 
-  private BuildImageStepsRunner(BuildConfiguration buildConfiguration, SourceFilesConfiguration sourceFilesConfiguration, Caches.Initializer cachesInitializer) {
-    buildImageStepsSupplier = () -> new BuildImageSteps(buildConfiguration, sourceFilesConfiguration, cachesInitializer);
+  private BuildImageStepsRunner(
+      BuildConfiguration buildConfiguration,
+      SourceFilesConfiguration sourceFilesConfiguration,
+      Caches.Initializer cachesInitializer) {
+    buildImageStepsSupplier =
+        () -> new BuildImageSteps(buildConfiguration, sourceFilesConfiguration, cachesInitializer);
   }
 
   public void buildImage() throws BuildImageStepsExecutionException {
@@ -152,11 +161,11 @@ public class BuildImageStepsRunner {
           registryUnauthorizedException);
 
     } else if ((buildConfiguration.getCredentialHelperNames() == null
-        || buildConfiguration.getCredentialHelperNames().isEmpty())
+            || buildConfiguration.getCredentialHelperNames().isEmpty())
         && (buildConfiguration.getKnownRegistryCredentials() == null
-        || !buildConfiguration
-        .getKnownRegistryCredentials()
-        .has(registryUnauthorizedException.getRegistry()))) {
+            || !buildConfiguration
+                .getKnownRegistryCredentials()
+                .has(registryUnauthorizedException.getRegistry()))) {
       // No credential helpers defined.
       throw new BuildImageStepsExecutionException(
           // TODO: Have this be different for Maven and Gradle.

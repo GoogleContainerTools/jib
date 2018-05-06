@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.frontend;
 
 import com.google.cloud.tools.jib.cache.Cache;
-
 import java.nio.file.Path;
 
 /** Thrown when a directory could not be created to be used as the {@link Cache}. */
