@@ -21,6 +21,8 @@ import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.jib.http.Authorization;
+import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
+import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryException;
 import com.google.common.io.ByteStreams;
@@ -40,13 +42,14 @@ class PushContainerConfigurationStep implements Callable<ListenableFuture<BlobDe
 
   private final BuildConfiguration buildConfiguration;
   private final ListenableFuture<Authorization> pushAuthorizationFuture;
-  private final ListenableFuture<ListenableFuture<Blob>> buildConfigurationFutureFuture;
+  private final ListenableFuture<ListenableFuture<ImageToJsonTranslator>>
+      buildConfigurationFutureFuture;
   private final ListeningExecutorService listeningExecutorService;
 
   PushContainerConfigurationStep(
       BuildConfiguration buildConfiguration,
       ListenableFuture<Authorization> pushAuthorizationFuture,
-      ListenableFuture<ListenableFuture<Blob>> buildConfigurationFutureFuture,
+      ListenableFuture<ListenableFuture<ImageToJsonTranslator>> buildConfigurationFutureFuture,
       ListeningExecutorService listeningExecutorService) {
     this.buildConfiguration = buildConfiguration;
     this.pushAuthorizationFuture = pushAuthorizationFuture;
@@ -69,7 +72,8 @@ class PushContainerConfigurationStep implements Callable<ListenableFuture<BlobDe
    * Depends on {@code buildConfigurationFutureFuture.get()} and {@code pushAuthorizationFuture}.
    */
   private BlobDescriptor afterBuildConfigurationFutureFuture()
-      throws ExecutionException, InterruptedException, IOException, RegistryException {
+      throws ExecutionException, InterruptedException, IOException, RegistryException,
+          LayerPropertyNotFoundException {
     try (Timer timer = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       // TODO: Use PushBlobStep.
       // Pushes the container configuration.
@@ -83,7 +87,8 @@ class PushContainerConfigurationStep implements Callable<ListenableFuture<BlobDe
       CountingDigestOutputStream digestOutputStream =
           new CountingDigestOutputStream(ByteStreams.nullOutputStream());
       Blob containerConfigurationBlob =
-          NonBlockingFutures.get(NonBlockingFutures.get(buildConfigurationFutureFuture));
+          NonBlockingFutures.get(NonBlockingFutures.get(buildConfigurationFutureFuture))
+              .getContainerConfigurationBlob();
       containerConfigurationBlob.writeTo(digestOutputStream);
 
       BlobDescriptor descriptor = digestOutputStream.toBlobDescriptor();

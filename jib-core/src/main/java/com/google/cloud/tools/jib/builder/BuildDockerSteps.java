@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Timer;
-import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
@@ -35,8 +34,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
-/** All the steps to build an image. */
-public class BuildImageSteps {
+public class BuildDockerSteps {
 
   private static final String DESCRIPTION = "Building and pushing image";
 
@@ -44,7 +42,7 @@ public class BuildImageSteps {
   private final SourceFilesConfiguration sourceFilesConfiguration;
   private final Caches.Initializer cachesInitializer;
 
-  public BuildImageSteps(
+  public BuildDockerSteps(
       BuildConfiguration buildConfiguration,
       SourceFilesConfiguration sourceFilesConfiguration,
       Caches.Initializer cachesInitializer) {
@@ -59,7 +57,7 @@ public class BuildImageSteps {
 
   public void run()
       throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
-          CacheDirectoryNotOwnedException {
+      CacheDirectoryNotOwnedException {
     List<String> entrypoint =
         EntrypointBuilder.makeEntrypoint(
             sourceFilesConfiguration,
@@ -76,13 +74,6 @@ public class BuildImageSteps {
           Cache applicationLayersCache = caches.getApplicationCache();
 
           timer2.lap("Setting up credential retrieval");
-          ListenableFuture<Authorization> retrieveTargetRegistryCredentialsFuture =
-              listeningExecutorService.submit(
-                  new RetrieveRegistryCredentialsStep(
-                      buildConfiguration,
-                      buildConfiguration.getTargetRegistry(),
-                      buildConfiguration.getTargetImageCredentialHelperName(),
-                      buildConfiguration.getKnownTargetRegistryCredentials()));
           ListenableFuture<Authorization> retrieveBaseImageRegistryCredentialsFuture =
               listeningExecutorService.submit(
                   new RetrieveRegistryCredentialsStep(
@@ -90,15 +81,6 @@ public class BuildImageSteps {
                       buildConfiguration.getBaseImageRegistry(),
                       buildConfiguration.getBaseImageCredentialHelperName(),
                       buildConfiguration.getKnownBaseRegistryCredentials()));
-
-          timer2.lap("Setting up image push authentication");
-          // Authenticates push.
-          ListenableFuture<Authorization> authenticatePushFuture =
-              Futures.whenAllSucceed(retrieveTargetRegistryCredentialsFuture)
-                  .call(
-                      new AuthenticatePushStep(
-                          buildConfiguration, retrieveTargetRegistryCredentialsFuture),
-                      listeningExecutorService);
 
           timer2.lap("Setting up image pull authentication");
           // Authenticates base image pull.
@@ -129,80 +111,41 @@ public class BuildImageSteps {
                           pullBaseImageFuture),
                       listeningExecutorService);
 
-          timer2.lap("Setting up base image layer push");
-          // Pushes the base image layers.
-          ListenableFuture<List<ListenableFuture<Void>>> pushBaseImageLayerFuturesFuture =
-              Futures.whenAllSucceed(pullBaseImageLayerFuturesFuture)
-                  .call(
-                      new PushLayersStep(
-                          buildConfiguration,
-                          listeningExecutorService,
-                          authenticatePushFuture,
-                          pullBaseImageLayerFuturesFuture),
-                      listeningExecutorService);
-
           timer2.lap("Setting up build application layers");
           // Builds the application layers.
           List<ListenableFuture<CachedLayer>> buildAndCacheApplicationLayerFutures =
               new BuildAndCacheApplicationLayersStep(
-                      buildConfiguration,
-                      sourceFilesConfiguration,
-                      applicationLayersCache,
-                      listeningExecutorService)
+                  buildConfiguration,
+                  sourceFilesConfiguration,
+                  applicationLayersCache,
+                  listeningExecutorService)
                   .call();
 
           timer2.lap("Setting up build container configuration");
           // Builds the container configuration.
           ListenableFuture<ListenableFuture<ImageToJsonTranslator>>
               buildContainerConfigurationFutureFuture =
-                  Futures.whenAllSucceed(pullBaseImageLayerFuturesFuture)
-                      .call(
-                          new BuildContainerConfigurationStep(
-                              buildConfiguration,
-                              listeningExecutorService,
-                              pullBaseImageLayerFuturesFuture,
-                              buildAndCacheApplicationLayerFutures,
-                              entrypoint),
-                          listeningExecutorService);
+              Futures.whenAllSucceed(pullBaseImageLayerFuturesFuture)
+                  .call(
+                      new BuildContainerConfigurationStep(
+                          buildConfiguration,
+                          listeningExecutorService,
+                          pullBaseImageLayerFuturesFuture,
+                          buildAndCacheApplicationLayerFutures,
+                          entrypoint),
+                      listeningExecutorService);
 
-          timer2.lap("Setting up container configuration push");
-          // Pushes the container configuration.
-          ListenableFuture<ListenableFuture<BlobDescriptor>>
-              pushContainerConfigurationFutureFuture =
-                  Futures.whenAllSucceed(buildContainerConfigurationFutureFuture)
-                      .call(
-                          new PushContainerConfigurationStep(
-                              buildConfiguration,
-                              authenticatePushFuture,
-                              buildContainerConfigurationFutureFuture,
-                              listeningExecutorService),
-                          listeningExecutorService);
-
-          timer2.lap("Setting up application layer push");
-          // Pushes the application layers.
-          List<ListenableFuture<Void>> pushApplicationLayersFuture =
-              new PushLayersStep(
-                      buildConfiguration,
-                      listeningExecutorService,
-                      authenticatePushFuture,
-                      Futures.immediateFuture(buildAndCacheApplicationLayerFutures))
-                  .call();
-
-          timer2.lap("Setting up image manifest push");
+          timer2.lap("Setting up push to docker daemon");
           // Pushes the new image manifest.
           ListenableFuture<Void> pushImageFuture =
               Futures.whenAllSucceed(
-                      pushBaseImageLayerFuturesFuture, pushContainerConfigurationFutureFuture)
+                  pullBaseImageLayerFuturesFuture, buildContainerConfigurationFutureFuture)
                   .call(
-                      new PushImageStep(
-                          buildConfiguration,
+                      new BuildTarballAndLoadDockerStep(
                           listeningExecutorService,
-                          authenticatePushFuture,
                           pullBaseImageLayerFuturesFuture,
                           buildAndCacheApplicationLayerFutures,
-                          pushBaseImageLayerFuturesFuture,
-                          pushApplicationLayersFuture,
-                          pushContainerConfigurationFutureFuture),
+                          buildContainerConfigurationFutureFuture),
                       listeningExecutorService);
 
           timer2.lap("Running push new image");
