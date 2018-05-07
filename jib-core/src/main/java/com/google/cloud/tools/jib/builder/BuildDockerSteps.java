@@ -142,6 +142,7 @@ public class BuildDockerSteps {
                       pullBaseImageLayerFuturesFuture, buildContainerConfigurationFutureFuture)
                   .call(
                       new BuildTarballAndLoadDockerStep(
+                          buildConfiguration,
                           listeningExecutorService,
                           pullBaseImageLayerFuturesFuture,
                           buildAndCacheApplicationLayerFutures,

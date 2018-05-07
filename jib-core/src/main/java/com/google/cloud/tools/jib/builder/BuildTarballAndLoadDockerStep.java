@@ -43,6 +43,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 
 class BuildTarballAndLoadDockerStep implements Callable<Void> {
 
+  private final BuildConfiguration buildConfiguration;
   private final ListeningExecutorService listeningExecutorService;
   private final ListenableFuture<List<ListenableFuture<CachedLayer>>>
       pullBaseImageLayerFuturesFuture;
@@ -51,10 +52,12 @@ class BuildTarballAndLoadDockerStep implements Callable<Void> {
       buildConfigurationFutureFuture;
 
   BuildTarballAndLoadDockerStep(
+      BuildConfiguration buildConfiguration,
       ListeningExecutorService listeningExecutorService,
       ListenableFuture<List<ListenableFuture<CachedLayer>>> pullBaseImageLayerFuturesFuture,
       List<ListenableFuture<CachedLayer>> buildApplicationLayerFutures,
       ListenableFuture<ListenableFuture<ImageToJsonTranslator>> buildConfigurationFutureFuture) {
+    this.buildConfiguration = buildConfiguration;
     this.listeningExecutorService = listeningExecutorService;
     this.pullBaseImageLayerFuturesFuture = pullBaseImageLayerFuturesFuture;
     this.buildApplicationLayerFutures = buildApplicationLayerFutures;
@@ -97,7 +100,7 @@ class BuildTarballAndLoadDockerStep implements Callable<Void> {
     // Add config to tarball
     ImageToJsonTranslator imageToJsonTranslator =
         NonBlockingFutures.get(NonBlockingFutures.get(buildConfigurationFutureFuture));
-    Path tempConfig = Files.createTempFile(System.getProperty("java.io.tmpdir"), null);
+    Path tempConfig = Files.createTempFile(null, null);
     tempConfig.toFile().deleteOnExit();
     CountingDigestOutputStream digestOutputStream =
         new CountingDigestOutputStream(new BufferedOutputStream(Files.newOutputStream(tempConfig)));
@@ -106,7 +109,7 @@ class BuildTarballAndLoadDockerStep implements Callable<Void> {
     tarStreamBuilder.addEntry(new TarArchiveEntry(tempConfig.toFile(), "config.json"));
 
     // Add manifest to tarball
-    Path tempManifest = Files.createTempFile(System.getProperty("java.io.tmpdir"), null);
+    Path tempManifest = Files.createTempFile(null, null);
     tempManifest.toFile().deleteOnExit();
     BlobDescriptor descriptor = digestOutputStream.toBlobDescriptor();
     BuildableManifestTemplate manifestTemplate =
@@ -116,7 +119,8 @@ class BuildTarballAndLoadDockerStep implements Callable<Void> {
     tarStreamBuilder.addEntry(new TarArchiveEntry(tempManifest.toFile(), "manifest.json"));
 
     // Load the image to docker daemon
-    new DockerLoader().load(tarStreamBuilder.toBlob());
+    new DockerLoader()
+        .load(tarStreamBuilder.toBlob(), buildConfiguration.getTargetImageRepository());
 
     return null;
   }

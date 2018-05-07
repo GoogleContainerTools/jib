@@ -19,16 +19,16 @@ package com.google.cloud.tools.jib.docker;
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.blob.Blob;
 import java.io.BufferedOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 
 public class DockerLoader {
 
-  public void load(Blob image) throws IOException, InterruptedException {
-    Path tempFile = Files.createTempFile(System.getProperty("java.io.tmpdir"), null);
-    tempFile.toFile().deleteOnExit();
-    image.writeTo(new BufferedOutputStream(Files.newOutputStream(tempFile)));
-    new Command("docker", "load", "--input", tempFile.getFileName().toString()).run();
+  public void load(Blob image, String name) throws IOException, InterruptedException {
+    File tempFile = new File(System.getProperty("java.io.tmpdir"), name);
+    tempFile.deleteOnExit();
+    image.writeTo(new BufferedOutputStream(Files.newOutputStream(tempFile.toPath())));
+    new Command("docker", "load", "--input", name).run();
   }
 }
