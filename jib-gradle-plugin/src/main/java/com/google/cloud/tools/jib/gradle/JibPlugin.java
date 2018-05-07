@@ -36,5 +36,11 @@ public class JibPlugin implements Plugin<Project> {
             "jibDockerContext",
             DockerContextTask.class,
             dockerContextTask -> dockerContextTask.setJibExtension(jibExtension));
+    project
+        .getTasks()
+        .create(
+            "jibBuildDocker",
+            BuildDockerTask.class,
+            buildDockerTask -> buildDockerTask.setJibExtension(jibExtension));
   }
 }
