@@ -28,23 +28,38 @@ import org.apache.maven.project.MavenProject;
 /** Defines the configuration parameters for Jib. Jib {@link Mojo}s should extend this class. */
 abstract class JibPluginConfiguration extends AbstractMojo {
 
+  /**
+   * Configuration for {@code from} parameter, where image by default is {@code
+   * gcr.io/distroless/java}.
+   */
+  public static class FromConfiguration {
+
+    @Nullable
+    @Parameter(required = true)
+    String image = "gcr.io/distroless/java";
+
+    @Nullable @Parameter String credHelper;
+  }
+
+  /** Configuration for {@code to} parameter, where image is required. */
+  public static class ToConfiguration {
+
+    @Nullable
+    @Parameter(required = true)
+    String image;
+
+    @Nullable @Parameter String credHelper;
+  }
+
   @Nullable
   @Parameter(defaultValue = "${project}", readonly = true)
   MavenProject project;
 
-  @Nullable
-  @Parameter(defaultValue = "gcr.io/distroless/java", required = true)
-  String from;
-
-  @Nullable @Parameter String registry;
+  @Nullable @Parameter FromConfiguration from = new FromConfiguration();
 
   @Nullable
   @Parameter(required = true)
-  String repository;
-
-  @Nullable @Parameter String tag;
-
-  @Nullable @Parameter List<String> credHelpers;
+  ToConfiguration to;
 
   @Parameter List<String> jvmFlags = Collections.emptyList();
 
@@ -54,7 +69,7 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
   @Nullable
   @Parameter(defaultValue = "Docker", required = true)
-  String imageFormat;
+  String format;
 
   @Parameter(defaultValue = "false", required = true)
   boolean useOnlyProjectCache;

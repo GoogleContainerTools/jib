@@ -61,7 +61,7 @@ public class Image {
     return Collections.unmodifiableList(entrypoint);
   }
 
-  public Image setEntrypoint(List<String> entrypoint) {
+  public Image setEntrypoint(@Nullable List<String> entrypoint) {
     this.entrypoint = entrypoint;
     return this;
   }
