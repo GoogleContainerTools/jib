@@ -24,8 +24,7 @@ import com.google.cloud.tools.jib.registry.credentials.NonexistentDockerCredenti
 import com.google.cloud.tools.jib.registry.credentials.NonexistentServerUrlDockerCredentialHelperException;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
+import javax.annotation.Nullable;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,6 +36,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 /** Tests for {@link RetrieveRegistryCredentialsStep}. */
 @RunWith(MockitoJUnitRunner.class)
 public class RetrieveRegistryCredentialsStepTest {
+
+  private static final String FAKE_TARGET_REGISTRY = "someRegistry";
 
   @Mock private BuildConfiguration mockBuildConfiguration;
   @Mock private BuildLogger mockBuildLogger;
@@ -65,8 +66,6 @@ public class RetrieveRegistryCredentialsStepTest {
   @Mock
   private NonexistentDockerCredentialHelperException mockNonexistentDockerCredentialHelperException;
 
-  private static final String fakeTargetRegistry = "someRegistry";
-
   @Before
   public void setUpMocks()
       throws NonexistentServerUrlDockerCredentialHelperException,
@@ -82,98 +81,87 @@ public class RetrieveRegistryCredentialsStepTest {
 
   @Test
   public void testCall_useCredentialHelper()
-      throws IOException, NonexistentDockerCredentialHelperException,
-          NonexistentServerUrlDockerCredentialHelperException {
-    Mockito.when(mockBuildConfiguration.getCredentialHelperNames())
-        .thenReturn(Arrays.asList("someCredentialHelper", "someOtherCredentialHelper"));
-    Mockito.when(
-            mockDockerCredentialHelperFactory.withCredentialHelperSuffix("someCredentialHelper"))
-        .thenReturn(mockNonexistentServerUrlDockerCredentialHelper);
+      throws IOException, NonexistentDockerCredentialHelperException {
     Mockito.when(
             mockDockerCredentialHelperFactory.withCredentialHelperSuffix(
                 "someOtherCredentialHelper"))
         .thenReturn(mockDockerCredentialHelper);
 
     Assert.assertEquals(
-        mockAuthorization, makeRetrieveRegistryCredentialsStep(fakeTargetRegistry).call());
+        mockAuthorization,
+        makeRetrieveRegistryCredentialsStep(FAKE_TARGET_REGISTRY, "someOtherCredentialHelper", null)
+            .call());
 
     Mockito.verify(mockBuildLogger)
-        .info("Using docker-credential-someOtherCredentialHelper for " + fakeTargetRegistry);
+        .info("Using docker-credential-someOtherCredentialHelper for " + FAKE_TARGET_REGISTRY);
   }
 
   @Test
   public void testCall_useKnownRegistryCredentials()
-      throws IOException, NonexistentDockerCredentialHelperException,
-          NonexistentServerUrlDockerCredentialHelperException {
-    // Has no credential helpers be defined.
-    Mockito.when(mockBuildConfiguration.getCredentialHelperNames())
-        .thenReturn(Collections.emptyList());
-
-    Mockito.when(mockBuildConfiguration.getKnownRegistryCredentials())
-        .thenReturn(
-            RegistryCredentials.of(fakeTargetRegistry, "credentialSource", mockAuthorization));
-
+      throws IOException, NonexistentDockerCredentialHelperException {
     Assert.assertEquals(
-        mockAuthorization, makeRetrieveRegistryCredentialsStep(fakeTargetRegistry).call());
+        mockAuthorization,
+        makeRetrieveRegistryCredentialsStep(
+                FAKE_TARGET_REGISTRY,
+                null,
+                new RegistryCredentials("credentialSource", mockAuthorization))
+            .call());
 
-    Mockito.verify(mockBuildLogger).info("Using credentialSource for " + fakeTargetRegistry);
+    Mockito.verify(mockBuildLogger).info("Using credentialSource for " + FAKE_TARGET_REGISTRY);
   }
 
   @Test
   public void testCall_useDockerConfig()
       throws IOException, NonexistentDockerCredentialHelperException,
           NonexistentServerUrlDockerCredentialHelperException {
-    // Has no credential helpers be defined.
-    Mockito.when(mockBuildConfiguration.getCredentialHelperNames())
-        .thenReturn(Collections.emptyList());
-    // Has known credentials be empty.
-    Mockito.when(mockBuildConfiguration.getKnownRegistryCredentials())
-        .thenReturn(RegistryCredentials.none());
+    // Credential helper does not have credentials.
+    Mockito.when(
+            mockDockerCredentialHelperFactory.withCredentialHelperSuffix("someCredentialHelper"))
+        .thenReturn(mockNonexistentServerUrlDockerCredentialHelper);
 
     Mockito.when(mockDockerConfigCredentialRetriever.retrieve()).thenReturn(mockAuthorization);
 
     Assert.assertEquals(
-        mockAuthorization, makeRetrieveRegistryCredentialsStep(fakeTargetRegistry).call());
+        mockAuthorization,
+        makeRetrieveRegistryCredentialsStep(FAKE_TARGET_REGISTRY, "someCredentialHelper", null)
+            .call());
 
     Mockito.verify(mockBuildLogger)
-        .info("Using credentials from Docker config for " + fakeTargetRegistry);
+        .info("Using credentials from Docker config for " + FAKE_TARGET_REGISTRY);
   }
 
   @Test
   public void testCall_inferCommonCredentialHelpers()
       throws IOException, NonexistentDockerCredentialHelperException,
           NonexistentServerUrlDockerCredentialHelperException {
-    // Has no credential helpers be defined.
-    Mockito.when(mockBuildConfiguration.getCredentialHelperNames())
-        .thenReturn(Collections.emptyList());
-    // Has known credentials be empty.
-    Mockito.when(mockBuildConfiguration.getKnownRegistryCredentials())
-        .thenReturn(RegistryCredentials.none());
-    // Has no Docker config.
-    Mockito.when(mockDockerConfigCredentialRetriever.retrieve()).thenReturn(null);
-
     Mockito.when(mockDockerCredentialHelperFactory.withCredentialHelperSuffix("gcr"))
         .thenReturn(mockDockerCredentialHelper);
     Mockito.when(mockDockerCredentialHelperFactory.withCredentialHelperSuffix("ecr-login"))
         .thenReturn(mockNonexistentDockerCredentialHelper);
 
     Assert.assertEquals(
-        mockAuthorization, makeRetrieveRegistryCredentialsStep("something.gcr.io").call());
+        mockAuthorization,
+        makeRetrieveRegistryCredentialsStep("something.gcr.io", null, null).call());
     Mockito.verify(mockBuildLogger).info("Using docker-credential-gcr for something.gcr.io");
 
     Mockito.when(mockNonexistentDockerCredentialHelperException.getMessage()).thenReturn("warning");
     Assert.assertEquals(
-        null, makeRetrieveRegistryCredentialsStep("something.amazonaws.com").call());
+        null, makeRetrieveRegistryCredentialsStep("something.amazonaws.com", null, null).call());
     Mockito.verify(mockBuildLogger).warn("warning");
   }
 
   /** Creates a fake {@link RetrieveRegistryCredentialsStep} for {@code registry}. */
-  private RetrieveRegistryCredentialsStep makeRetrieveRegistryCredentialsStep(String registry) {
-    Mockito.when(mockBuildConfiguration.getTargetRegistry()).thenReturn(fakeTargetRegistry);
+  private RetrieveRegistryCredentialsStep makeRetrieveRegistryCredentialsStep(
+      String registry,
+      @Nullable String credentialHelperSuffix,
+      @Nullable RegistryCredentials knownRegistryCredentials) {
+    Mockito.when(mockBuildConfiguration.getTargetImageRegistry()).thenReturn(FAKE_TARGET_REGISTRY);
 
     return new RetrieveRegistryCredentialsStep(
         mockBuildConfiguration,
         registry,
+        credentialHelperSuffix,
+        knownRegistryCredentials,
         mockDockerCredentialHelperFactory,
         mockDockerConfigCredentialRetriever);
   }

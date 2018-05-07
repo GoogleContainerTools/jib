@@ -16,46 +16,29 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.api.client.http.HttpResponseException;
-import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
-import com.google.cloud.tools.jib.builder.BuildImageSteps;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
-import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
-import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
-import com.google.cloud.tools.jib.cache.Caches;
-import com.google.cloud.tools.jib.frontend.HelpfulMessageBuilder;
-import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.http.Authorizations;
+import com.google.cloud.tools.jib.frontend.BuildImageStepsExecutionException;
+import com.google.cloud.tools.jib.frontend.BuildImageStepsRunner;
+import com.google.cloud.tools.jib.frontend.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
-import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.registry.RegistryClient;
-import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import java.io.IOException;
-import java.net.UnknownHostException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
-import org.apache.http.conn.HttpHostConnectException;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
-import org.apache.maven.settings.Server;
 
 /** Builds a container image. */
 @Mojo(name = "build", requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM)
@@ -83,9 +66,6 @@ public class BuildImageMojo extends JibPluginConfiguration {
   /** {@code User-Agent} header suffix to send to the registry. */
   private static final String USER_AGENT_SUFFIX = "jib-maven-plugin";
 
-  private static final HelpfulMessageBuilder helpfulMessageBuilder =
-      new HelpfulMessageBuilder("Build image failed");
-
   @Nullable
   @Parameter(defaultValue = "${session}", readonly = true)
   private MavenSession session;
@@ -110,54 +90,30 @@ public class BuildImageMojo extends JibPluginConfiguration {
     ImageReference baseImage = getBaseImageReference();
 
     // Checks Maven settings for registry credentials.
-    session.getSettings().getServer(baseImage.getRegistry());
-    Map<String, Authorization> registryCredentials = new HashMap<>(2);
-    // Retrieves credentials for the base image registry.
-    Authorization baseImageRegistryCredentials =
-        getRegistryCredentialsFromSettings(baseImage.getRegistry());
-    if (baseImageRegistryCredentials != null) {
-      registryCredentials.put(baseImage.getRegistry(), baseImageRegistryCredentials);
-    }
-    // Retrieves credentials for the target registry.
-    Authorization targetRegistryCredentials = getRegistryCredentialsFromSettings(registry);
-    if (targetRegistryCredentials != null) {
-      registryCredentials.put(registry, targetRegistryCredentials);
-    }
-    RegistryCredentials mavenSettingsCredentials =
-        RegistryCredentials.from("Maven settings", registryCredentials);
+    MavenSettingsServerCredentials mavenSettingsServerCredentials =
+        new MavenSettingsServerCredentials(session.getSettings());
+    RegistryCredentials knownBaseRegistryCredentials =
+        mavenSettingsServerCredentials.retrieve(baseImage.getRegistry());
+    RegistryCredentials knownTargetRegistryCredentials =
+        mavenSettingsServerCredentials.retrieve(registry);
 
     ImageReference targetImageReference = ImageReference.of(registry, repository, tag);
     ImageFormat imageFormatToEnum = ImageFormat.valueOf(imageFormat);
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder(new MavenBuildLogger(getLog()))
             .setBaseImage(baseImage)
+            // TODO: This is a temporary hack that will be fixed in an immediate follow-up PR. Do
+            // NOT release.
+            .setBaseImageCredentialHelperName(Preconditions.checkNotNull(credHelpers).get(0))
+            .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
             .setTargetImage(targetImageReference)
-            .setCredentialHelperNames(credHelpers)
-            .setKnownRegistryCredentials(mavenSettingsCredentials)
+            .setTargetImageCredentialHelperName(Preconditions.checkNotNull(credHelpers).get(0))
+            .setKnownTargetRegistryCredentials(knownTargetRegistryCredentials)
             .setMainClass(inferredMainClass)
             .setJvmFlags(jvmFlags)
             .setEnvironment(environment)
             .setTargetFormat(imageFormatToEnum.getManifestTemplateClass())
             .build();
-
-    // Uses a directory in the Maven build cache as the Jib cache.
-    Path cacheDirectory = Paths.get(project.getBuild().getDirectory(), CACHE_DIRECTORY_NAME);
-    if (!Files.exists(cacheDirectory)) {
-      try {
-        Files.createDirectory(cacheDirectory);
-
-      } catch (IOException ex) {
-        throw new MojoExecutionException("Could not create cache directory: " + cacheDirectory, ex);
-      }
-    }
-    Caches.Initializer cachesInitializer = Caches.newInitializer(cacheDirectory);
-    if (useOnlyProjectCache) {
-      cachesInitializer.setBaseCacheDirectory(cacheDirectory);
-    }
-
-    getLog().info("");
-    getLog().info("Pushing image as " + targetImageReference);
-    getLog().info("");
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
     // Disables annoying Apache HTTP client logging.
@@ -167,87 +123,31 @@ public class BuildImageMojo extends JibPluginConfiguration {
 
     RegistryClient.setUserAgentSuffix(USER_AGENT_SUFFIX);
 
-    buildImage(
-        new BuildImageSteps(buildConfiguration, sourceFilesConfiguration, cachesInitializer));
-
-    getLog().info("");
-    getLog().info("Built and pushed image as " + targetImageReference);
-    getLog().info("");
-  }
-
-  @VisibleForTesting
-  void buildImage(BuildImageSteps buildImageSteps) throws MojoExecutionException {
+    // Uses a directory in the Maven build cache as the Jib cache.
+    Path cacheDirectory = Paths.get(project.getBuild().getDirectory(), CACHE_DIRECTORY_NAME);
     try {
-      buildImageSteps.run();
+      BuildImageStepsRunner buildImageStepsRunner =
+          BuildImageStepsRunner.newRunner(
+              buildConfiguration, sourceFilesConfiguration, cacheDirectory, useOnlyProjectCache);
 
-    } catch (CacheMetadataCorruptedException cacheMetadataCorruptedException) {
-      throw new MojoExecutionException(
-          helpfulMessageBuilder.withSuggestion("run 'mvn clean' to clear the cache"),
-          cacheMetadataCorruptedException);
+      getLog().info("");
+      getLog().info("Pushing image as " + targetImageReference);
+      getLog().info("");
 
-    } catch (ExecutionException executionException) {
-      BuildConfiguration buildConfiguration = buildImageSteps.getBuildConfiguration();
+      try {
+        buildImageStepsRunner.buildImage();
 
-      if (executionException.getCause() instanceof HttpHostConnectException) {
-        // Failed to connect to registry.
-        throw new MojoExecutionException(
-            helpfulMessageBuilder.withSuggestion(
-                "make sure your Internet is up and that the registry you are pushing to exists"),
-            executionException.getCause());
-
-      } else if (executionException.getCause() instanceof RegistryUnauthorizedException) {
-        handleRegistryUnauthorizedException(
-            (RegistryUnauthorizedException) executionException.getCause(), buildConfiguration);
-
-      } else if (executionException.getCause() instanceof RegistryAuthenticationFailedException
-          && executionException.getCause().getCause() instanceof HttpResponseException) {
-        handleRegistryUnauthorizedException(
-            new RegistryUnauthorizedException(
-                buildConfiguration.getTargetRegistry(),
-                buildConfiguration.getTargetRepository(),
-                (HttpResponseException) executionException.getCause().getCause()),
-            buildConfiguration);
-
-      } else if (executionException.getCause() instanceof UnknownHostException) {
-        throw new MojoExecutionException(
-            helpfulMessageBuilder.withSuggestion(
-                "make sure that the registry you configured exists/is spelled properly"),
-            executionException.getCause());
-
-      } else {
-        throw new MojoExecutionException(
-            helpfulMessageBuilder.withNoHelp(), executionException.getCause());
+      } catch (BuildImageStepsExecutionException ex) {
+        throw new MojoExecutionException(ex.getMessage(), ex.getCause());
       }
 
-    } catch (InterruptedException | IOException ex) {
-      getLog().error(ex);
-      // TODO: Add more suggestions for various build failures.
-      throw new MojoExecutionException(helpfulMessageBuilder.withNoHelp(), ex);
+      getLog().info("");
+      getLog().info("Built and pushed image as " + targetImageReference);
+      getLog().info("");
 
-    } catch (CacheDirectoryNotOwnedException ex) {
-      throw new MojoExecutionException(
-          helpfulMessageBuilder.withSuggestion(
-              "check that '"
-                  + ex.getCacheDirectory()
-                  + "' is not used by another application or set the `useOnlyProjectCache` "
-                  + "configuration"),
-          ex);
+    } catch (CacheDirectoryCreationException ex) {
+      throw new MojoExecutionException(ex.getMessage(), ex.getCause());
     }
-  }
-
-  /** Attempts to retrieve credentials for {@code registry} from Maven settings. */
-  @Nullable
-  private Authorization getRegistryCredentialsFromSettings(@Nullable String registry) {
-    if (registry == null) {
-      return null;
-    }
-    Preconditions.checkNotNull(session);
-    Server registryServerSettings = session.getSettings().getServer(registry);
-    if (registryServerSettings == null) {
-      return null;
-    }
-    return Authorizations.withBasicCredentials(
-        registryServerSettings.getUsername(), registryServerSettings.getPassword());
   }
 
   /** Checks validity of plugin parameters. */
@@ -315,46 +215,6 @@ public class BuildImageMojo extends JibPluginConfiguration {
 
     } catch (InvalidImageReferenceException ex) {
       throw new MojoFailureException("Parameter 'from' is invalid", ex);
-    }
-  }
-
-  private void handleRegistryUnauthorizedException(
-      RegistryUnauthorizedException registryUnauthorizedException,
-      BuildConfiguration buildConfiguration)
-      throws MojoExecutionException {
-    if (registryUnauthorizedException.getHttpResponseException().getStatusCode()
-        == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
-      // No permissions for registry/repository.
-      throw new MojoExecutionException(
-          helpfulMessageBuilder.withSuggestion(
-              "make sure you have permissions for "
-                  + registryUnauthorizedException.getImageReference()),
-          registryUnauthorizedException);
-
-    } else if ((buildConfiguration.getCredentialHelperNames() == null
-            || buildConfiguration.getCredentialHelperNames().isEmpty())
-        && (buildConfiguration.getKnownRegistryCredentials() == null
-            || !buildConfiguration
-                .getKnownRegistryCredentials()
-                .has(registryUnauthorizedException.getRegistry()))) {
-      // No credential helpers defined.
-      throw new MojoExecutionException(
-          helpfulMessageBuilder.withSuggestion(
-              "set a credential helper name with the configuration 'credHelpers' or "
-                  + "set credentials for '"
-                  + registryUnauthorizedException.getRegistry()
-                  + "' in your Maven settings"),
-          registryUnauthorizedException);
-
-    } else {
-      // Credential helper probably was not configured correctly or did not have the necessary
-      // credentials.
-      throw new MojoExecutionException(
-          helpfulMessageBuilder.withSuggestion(
-              "make sure your credentials for '"
-                  + registryUnauthorizedException.getRegistry()
-                  + "' are set up correctly"),
-          registryUnauthorizedException);
     }
   }
 }
