@@ -57,7 +57,7 @@ public class BuildDockerSteps {
 
   public void run()
       throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
-      CacheDirectoryNotOwnedException {
+          CacheDirectoryNotOwnedException {
     List<String> entrypoint =
         EntrypointBuilder.makeEntrypoint(
             sourceFilesConfiguration,
@@ -115,31 +115,31 @@ public class BuildDockerSteps {
           // Builds the application layers.
           List<ListenableFuture<CachedLayer>> buildAndCacheApplicationLayerFutures =
               new BuildAndCacheApplicationLayersStep(
-                  buildConfiguration,
-                  sourceFilesConfiguration,
-                  applicationLayersCache,
-                  listeningExecutorService)
+                      buildConfiguration,
+                      sourceFilesConfiguration,
+                      applicationLayersCache,
+                      listeningExecutorService)
                   .call();
 
           timer2.lap("Setting up build container configuration");
           // Builds the container configuration.
           ListenableFuture<ListenableFuture<ImageToJsonTranslator>>
               buildContainerConfigurationFutureFuture =
-              Futures.whenAllSucceed(pullBaseImageLayerFuturesFuture)
-                  .call(
-                      new BuildContainerConfigurationStep(
-                          buildConfiguration,
-                          listeningExecutorService,
-                          pullBaseImageLayerFuturesFuture,
-                          buildAndCacheApplicationLayerFutures,
-                          entrypoint),
-                      listeningExecutorService);
+                  Futures.whenAllSucceed(pullBaseImageLayerFuturesFuture)
+                      .call(
+                          new BuildContainerConfigurationStep(
+                              buildConfiguration,
+                              listeningExecutorService,
+                              pullBaseImageLayerFuturesFuture,
+                              buildAndCacheApplicationLayerFutures,
+                              entrypoint),
+                          listeningExecutorService);
 
           timer2.lap("Setting up push to docker daemon");
           // Pushes the new image manifest.
           ListenableFuture<Void> pushImageFuture =
               Futures.whenAllSucceed(
-                  pullBaseImageLayerFuturesFuture, buildContainerConfigurationFutureFuture)
+                      pullBaseImageLayerFuturesFuture, buildContainerConfigurationFutureFuture)
                   .call(
                       new BuildTarballAndLoadDockerStep(
                           listeningExecutorService,
@@ -148,7 +148,7 @@ public class BuildDockerSteps {
                           buildContainerConfigurationFutureFuture),
                       listeningExecutorService);
 
-          timer2.lap("Running push new image");
+          timer2.lap("Running push to docker daemon");
           pushImageFuture.get();
         }
       }

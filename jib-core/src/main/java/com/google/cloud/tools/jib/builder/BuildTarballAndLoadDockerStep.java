@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.builder;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.cache.CachedLayer;
+import com.google.cloud.tools.jib.docker.DockerLoader;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
@@ -97,6 +98,7 @@ class BuildTarballAndLoadDockerStep implements Callable<Void> {
     ImageToJsonTranslator imageToJsonTranslator =
         NonBlockingFutures.get(NonBlockingFutures.get(buildConfigurationFutureFuture));
     Path tempConfig = Files.createTempFile(System.getProperty("java.io.tmpdir"), null);
+    tempConfig.toFile().deleteOnExit();
     CountingDigestOutputStream digestOutputStream =
         new CountingDigestOutputStream(new BufferedOutputStream(Files.newOutputStream(tempConfig)));
     Blob containerConfigurationBlob = imageToJsonTranslator.getContainerConfigurationBlob();
@@ -105,6 +107,7 @@ class BuildTarballAndLoadDockerStep implements Callable<Void> {
 
     // Add manifest to tarball
     Path tempManifest = Files.createTempFile(System.getProperty("java.io.tmpdir"), null);
+    tempManifest.toFile().deleteOnExit();
     BlobDescriptor descriptor = digestOutputStream.toBlobDescriptor();
     BuildableManifestTemplate manifestTemplate =
         imageToJsonTranslator.getManifestTemplate(V22ManifestTemplate.class, descriptor);
@@ -112,14 +115,9 @@ class BuildTarballAndLoadDockerStep implements Callable<Void> {
         .writeTo(new BufferedOutputStream(Files.newOutputStream(tempManifest)));
     tarStreamBuilder.addEntry(new TarArchiveEntry(tempManifest.toFile(), "manifest.json"));
 
-    // TODO: Docker load
+    // Load the image to docker daemon
+    new DockerLoader().load(tarStreamBuilder.toBlob());
 
-    if (!tempConfig.toFile().delete()) {
-      throw new IOException("Failed to delete temporary config file.");
-    }
-    if (!tempManifest.toFile().delete()) {
-      throw new IOException("Failed to delete temporary manifest file.");
-    }
     return null;
   }
 }
