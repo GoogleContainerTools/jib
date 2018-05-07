@@ -116,8 +116,8 @@ public class BuildImageStepsRunner {
           && executionException.getCause().getCause() instanceof HttpResponseException) {
         handleRegistryUnauthorizedException(
             new RegistryUnauthorizedException(
-                buildConfiguration.getTargetRegistry(),
-                buildConfiguration.getTargetRepository(),
+                buildConfiguration.getTargetImageRegistry(),
+                buildConfiguration.getTargetImageRepository(),
                 (HttpResponseException) executionException.getCause().getCause()),
             buildConfiguration);
 
@@ -160,23 +160,34 @@ public class BuildImageStepsRunner {
                   + registryUnauthorizedException.getImageReference()),
           registryUnauthorizedException);
 
-    } else if ((buildConfiguration.getCredentialHelperNames() == null
-            || buildConfiguration.getCredentialHelperNames().isEmpty())
-        && (buildConfiguration.getKnownRegistryCredentials() == null
-            || !buildConfiguration
-                .getKnownRegistryCredentials()
-                .has(registryUnauthorizedException.getRegistry()))) {
-      // No credential helpers defined.
-      throw new BuildImageStepsExecutionException(
-          // TODO: Have this be different for Maven and Gradle.
-          helpfulMessageBuilder.withSuggestion(
-              "set a credential helper name with the configuration 'credHelpers' or "
-                  + "set credentials for '"
-                  + registryUnauthorizedException.getRegistry()
-                  + "' in your Maven settings"),
-          registryUnauthorizedException);
-
     } else {
+      boolean isRegistryForBase =
+          registryUnauthorizedException
+              .getRegistry()
+              .equals(buildConfiguration.getBaseImageRegistry());
+      boolean isRegistryForTarget =
+          registryUnauthorizedException
+              .getRegistry()
+              .equals(buildConfiguration.getTargetImageRegistry());
+      boolean areBaseImageCredentialsConfigured =
+          buildConfiguration.getBaseImageCredentialHelperName() != null
+              || buildConfiguration.getKnownBaseRegistryCredentials() != null;
+      boolean areTargetImageCredentialsConfigured =
+          buildConfiguration.getTargetImageCredentialHelperName() != null
+              || buildConfiguration.getKnownTargetRegistryCredentials() != null;
+
+      if ((isRegistryForBase && !areBaseImageCredentialsConfigured)
+          || (isRegistryForTarget && !areTargetImageCredentialsConfigured)) {
+        // No credential helpers defined.
+        throw new BuildImageStepsExecutionException(
+            helpfulMessageBuilder.withSuggestion(
+                "set a credential helper name with the configuration 'credHelpers' or "
+                    + "set credentials for '"
+                    + registryUnauthorizedException.getRegistry()
+                    + "' in your Maven settings"),
+            registryUnauthorizedException);
+      }
+
       // Credential helper probably was not configured correctly or did not have the necessary
       // credentials.
       throw new BuildImageStepsExecutionException(

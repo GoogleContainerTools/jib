@@ -57,11 +57,12 @@ class AuthenticatePushStep implements Callable<Authorization> {
     try (Timer ignored =
         new Timer(
             buildConfiguration.getBuildLogger(),
-            String.format(DESCRIPTION, buildConfiguration.getTargetRegistry()))) {
+            String.format(DESCRIPTION, buildConfiguration.getTargetImageRegistry()))) {
       Authorization registryCredentials = NonBlockingFutures.get(registryCredentialsFuture);
       RegistryAuthenticator registryAuthenticator =
           RegistryAuthenticators.forOther(
-              buildConfiguration.getTargetRegistry(), buildConfiguration.getTargetRepository());
+              buildConfiguration.getTargetImageRegistry(),
+              buildConfiguration.getTargetImageRepository());
       if (registryAuthenticator == null) {
         return registryCredentials;
       }
