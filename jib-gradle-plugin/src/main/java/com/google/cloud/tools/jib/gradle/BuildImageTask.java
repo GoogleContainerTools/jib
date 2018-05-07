@@ -75,11 +75,9 @@ public class BuildImageTask extends DefaultTask {
   public void buildImage() throws InvalidImageReferenceException, IOException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
-    Preconditions.checkNotNull(jibExtension.getFrom().getImage());
-    Preconditions.checkNotNull(jibExtension.getTo().getImage());
 
-    ImageReference baseImageReference = ImageReference.parse(jibExtension.getFrom().getImage());
-    ImageReference targetImageReference = ImageReference.parse(jibExtension.getTo().getImage());
+    ImageReference baseImageReference = ImageReference.parse(jibExtension.getBaseImage());
+    ImageReference targetImageReference = ImageReference.parse(jibExtension.getTargetImage());
 
     if (baseImageReference.usesDefaultTag()) {
       getLogger()

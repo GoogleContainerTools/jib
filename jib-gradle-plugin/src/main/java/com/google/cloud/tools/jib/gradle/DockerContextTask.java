@@ -61,9 +61,7 @@ public class DockerContextTask extends DefaultTask {
 
   @TaskAction
   public void generateDockerContext() {
-    // Asserts required parameters are not null.
     Preconditions.checkNotNull(jibExtension);
-    Preconditions.checkNotNull(jibExtension.getFrom().getImage());
 
     ProjectProperties projectProperties = new ProjectProperties(getProject(), getLogger());
     String mainClass = projectProperties.getMainClass(jibExtension.getMainClass());
@@ -72,7 +70,7 @@ public class DockerContextTask extends DefaultTask {
 
     try {
       new DockerContextGenerator(projectProperties.getSourceFilesConfiguration())
-          .setBaseImage(jibExtension.getFrom().getImage())
+          .setBaseImage(jibExtension.getBaseImage())
           .setJvmFlags(jibExtension.getJvmFlags())
           .setMainClass(mainClass)
           .generate(Paths.get(targetDir));
