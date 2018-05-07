@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.frontend.BuildImageStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildImageStepsRunner;
 import com.google.cloud.tools.jib.frontend.CacheDirectoryCreationException;
+import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
@@ -32,6 +33,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -135,7 +137,11 @@ public class BuildImageMojo extends JibPluginConfiguration {
       getLog().info("");
 
       try {
-        buildImageStepsRunner.buildImage();
+        Function<String, String> authConfigurationSuggestion = registry -> "set credentials for '"
+            + registry
+            + "' in your Maven settings";
+        HelpfulSuggestions helpfulSuggestions = new HelpfulSuggestions("mvn clean", "<from><credHelper>", authConfigurationSuggestion, "<to><credHelper>", authConfigurationSuggestion);
+        buildImageStepsRunner.buildImage(helpfulSuggestions);
 
       } catch (BuildImageStepsExecutionException ex) {
         throw new MojoExecutionException(ex.getMessage(), ex.getCause());

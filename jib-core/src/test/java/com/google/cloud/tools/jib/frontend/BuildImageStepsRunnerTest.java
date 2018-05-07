@@ -44,6 +44,14 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class BuildImageStepsRunnerTest {
 
+  private static final HelpfulSuggestions TEST_HELPFUL_SUGGESTIONS =
+      new HelpfulSuggestions(
+          "clearCacheCommand",
+          "baseImageCredHelperConfiguration",
+          registry -> "baseImageAuthConfiguration " + registry,
+          "targetImageCredHelperConfiguration",
+          registry -> "targetImageAuthConfiguration " + registry);
+
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Mock private BuildImageSteps mockBuildImageSteps;
@@ -64,7 +72,7 @@ public class BuildImageStepsRunnerTest {
 
   @Test
   public void testBuildImage_pass() throws BuildImageStepsExecutionException {
-    testBuildImageStepsRunner.buildImage();
+    testBuildImageStepsRunner.buildImage(TEST_HELPFUL_SUGGESTIONS);
   }
 
   @Test
@@ -76,13 +84,11 @@ public class BuildImageStepsRunnerTest {
     Mockito.doThrow(mockCacheMetadataCorruptedException).when(mockBuildImageSteps).run();
 
     try {
-      testBuildImageStepsRunner.buildImage();
+      testBuildImageStepsRunner.buildImage(TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
     } catch (BuildImageStepsExecutionException ex) {
-      Assert.assertEquals(
-          "Build image failed, perhaps you should run 'mvn clean' to clear the cache",
-          ex.getMessage());
+      Assert.assertEquals(TEST_HELPFUL_SUGGESTIONS.forCacheMetadataCorrupted(), ex.getMessage());
       Assert.assertEquals(mockCacheMetadataCorruptedException, ex.getCause());
     }
   }
@@ -97,13 +103,11 @@ public class BuildImageStepsRunnerTest {
     Mockito.doThrow(mockExecutionException).when(mockBuildImageSteps).run();
 
     try {
-      testBuildImageStepsRunner.buildImage();
+      testBuildImageStepsRunner.buildImage(TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
     } catch (BuildImageStepsExecutionException ex) {
-      Assert.assertEquals(
-          "Build image failed, perhaps you should make sure your Internet is up and that the registry you are pushing to exists",
-          ex.getMessage());
+      Assert.assertEquals(TEST_HELPFUL_SUGGESTIONS.forHttpHostConnect(), ex.getMessage());
       Assert.assertEquals(mockHttpHostConnectException, ex.getCause());
     }
   }
@@ -117,13 +121,11 @@ public class BuildImageStepsRunnerTest {
     Mockito.doThrow(mockExecutionException).when(mockBuildImageSteps).run();
 
     try {
-      testBuildImageStepsRunner.buildImage();
+      testBuildImageStepsRunner.buildImage(TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
     } catch (BuildImageStepsExecutionException ex) {
-      Assert.assertEquals(
-          "Build image failed, perhaps you should make sure that the registry you configured exists/is spelled properly",
-          ex.getMessage());
+      Assert.assertEquals(TEST_HELPFUL_SUGGESTIONS.forUnknownHost(), ex.getMessage());
       Assert.assertEquals(mockUnknownHostException, ex.getCause());
     }
   }
@@ -143,12 +145,12 @@ public class BuildImageStepsRunnerTest {
     Mockito.doThrow(mockExecutionException).when(mockBuildImageSteps).run();
 
     try {
-      testBuildImageStepsRunner.buildImage();
+      testBuildImageStepsRunner.buildImage(TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
     } catch (BuildImageStepsExecutionException ex) {
       Assert.assertEquals(
-          "Build image failed, perhaps you should make sure you have permissions for someregistry/somerepository",
+          TEST_HELPFUL_SUGGESTIONS.forHttpStatusCodeForbidden("someregistry/somerepository"),
           ex.getMessage());
       Assert.assertEquals(mockRegistryUnauthorizedException, ex.getCause());
     }
@@ -169,12 +171,12 @@ public class BuildImageStepsRunnerTest {
     Mockito.when(mockBuildConfiguration.getBaseImageRegistry()).thenReturn("someregistry");
 
     try {
-      testBuildImageStepsRunner.buildImage();
+      testBuildImageStepsRunner.buildImage(TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
     } catch (BuildImageStepsExecutionException ex) {
       Assert.assertEquals(
-          "Build image failed, perhaps you should set a credential helper name with the configuration 'credHelpers' or set credentials for 'someregistry' in your Maven settings",
+          TEST_HELPFUL_SUGGESTIONS.forNoCredentialHelpersDefinedForBaseImage("someregistry"),
           ex.getMessage());
       Assert.assertEquals(mockRegistryUnauthorizedException, ex.getCause());
     }
@@ -197,13 +199,12 @@ public class BuildImageStepsRunnerTest {
         .thenReturn("some-credential-helper");
 
     try {
-      testBuildImageStepsRunner.buildImage();
+      testBuildImageStepsRunner.buildImage(TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
     } catch (BuildImageStepsExecutionException ex) {
       Assert.assertEquals(
-          "Build image failed, perhaps you should make sure your credentials for 'someregistry' are set up correctly",
-          ex.getMessage());
+          TEST_HELPFUL_SUGGESTIONS.forCredentialsNotCorrect("someregistry"), ex.getMessage());
       Assert.assertEquals(mockRegistryUnauthorizedException, ex.getCause());
     }
   }
@@ -217,11 +218,11 @@ public class BuildImageStepsRunnerTest {
     Mockito.doThrow(mockExecutionException).when(mockBuildImageSteps).run();
 
     try {
-      testBuildImageStepsRunner.buildImage();
+      testBuildImageStepsRunner.buildImage(TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
     } catch (BuildImageStepsExecutionException ex) {
-      Assert.assertEquals("Build image failed", ex.getMessage());
+      Assert.assertEquals(TEST_HELPFUL_SUGGESTIONS.none(), ex.getMessage());
       Assert.assertEquals(throwable, ex.getCause());
     }
   }
@@ -234,11 +235,11 @@ public class BuildImageStepsRunnerTest {
     Mockito.doThrow(ioException).when(mockBuildImageSteps).run();
 
     try {
-      testBuildImageStepsRunner.buildImage();
+      testBuildImageStepsRunner.buildImage(TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
     } catch (BuildImageStepsExecutionException ex) {
-      Assert.assertEquals("Build image failed", ex.getMessage());
+      Assert.assertEquals(TEST_HELPFUL_SUGGESTIONS.none(), ex.getMessage());
       Assert.assertEquals(ioException, ex.getCause());
     }
   }
@@ -256,14 +257,12 @@ public class BuildImageStepsRunnerTest {
     Mockito.doThrow(mockCacheDirectoryNotOwnedException).when(mockBuildImageSteps).run();
 
     try {
-      testBuildImageStepsRunner.buildImage();
+      testBuildImageStepsRunner.buildImage(TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
     } catch (BuildImageStepsExecutionException ex) {
       Assert.assertEquals(
-          "Build image failed, perhaps you should check that '"
-              + expectedCacheDirectory
-              + "' is not used by another application or set the `useOnlyProjectCache` configuration",
+          TEST_HELPFUL_SUGGESTIONS.forCacheDirectoryNotOwned(expectedCacheDirectory),
           ex.getMessage());
       Assert.assertEquals(mockCacheDirectoryNotOwnedException, ex.getCause());
     }
