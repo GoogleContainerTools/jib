@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import org.apache.http.conn.HttpHostConnectException;
 import org.junit.Assert;
@@ -167,6 +166,8 @@ public class BuildImageStepsRunnerTest {
     Mockito.when(mockExecutionException.getCause()).thenReturn(mockRegistryUnauthorizedException);
     Mockito.doThrow(mockExecutionException).when(mockBuildImageSteps).run();
 
+    Mockito.when(mockBuildConfiguration.getBaseImageRegistry()).thenReturn("someregistry");
+
     try {
       testBuildImageStepsRunner.buildImage();
       Assert.fail("buildImage should have thrown an exception");
@@ -191,8 +192,9 @@ public class BuildImageStepsRunnerTest {
     Mockito.when(mockExecutionException.getCause()).thenReturn(mockRegistryUnauthorizedException);
     Mockito.doThrow(mockExecutionException).when(mockBuildImageSteps).run();
 
-    Mockito.when(mockBuildConfiguration.getCredentialHelperNames())
-        .thenReturn(Collections.singletonList("some-credential-helper"));
+    Mockito.when(mockBuildConfiguration.getBaseImageRegistry()).thenReturn("someregistry");
+    Mockito.when(mockBuildConfiguration.getBaseImageCredentialHelperName())
+        .thenReturn("some-credential-helper");
 
     try {
       testBuildImageStepsRunner.buildImage();

@@ -33,87 +33,50 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class MavenSettingsServerCredentialsTest {
 
-  private static final String SERVER1_USERNAME = "server1 username";
-  private static final String SERVER1_PASSWORD = "server1 password";
-  private static final String SERVER2_USERNAME = "server2 username";
-  private static final String SERVER2_PASSWORD = "server2 password";
-  private static final Authorization SERVER_1_AUTHORIZATION =
-      Authorizations.withBasicCredentials(SERVER1_USERNAME, SERVER1_PASSWORD);
-  private static final Authorization SERVER_2_AUTHORIZATION =
-      Authorizations.withBasicCredentials(SERVER2_USERNAME, SERVER2_PASSWORD);
-
   @Mock private Settings mockSettings;
   @Mock private Server mockServer1;
-  @Mock private Server mockServer2;
 
   private MavenSettingsServerCredentials testMavenSettingsServerCredentials;
 
   @Before
   public void setUp() {
     testMavenSettingsServerCredentials = new MavenSettingsServerCredentials(mockSettings);
-
-    Mockito.when(mockSettings.getServer("server1")).thenReturn(mockServer1);
-    Mockito.when(mockSettings.getServer("server2")).thenReturn(mockServer2);
-
-    Mockito.when(mockServer1.getUsername()).thenReturn(SERVER1_USERNAME);
-    Mockito.when(mockServer1.getPassword()).thenReturn(SERVER1_PASSWORD);
-    Mockito.when(mockServer2.getUsername()).thenReturn(SERVER2_USERNAME);
-    Mockito.when(mockServer2.getPassword()).thenReturn(SERVER2_PASSWORD);
   }
 
   @Test
   public void testRetrieve_found() {
+    Mockito.when(mockSettings.getServer("server1")).thenReturn(mockServer1);
+
+    Mockito.when(mockServer1.getUsername()).thenReturn("server1 username");
+    Mockito.when(mockServer1.getPassword()).thenReturn("server1 password");
+
     RegistryCredentials registryCredentials =
-        testMavenSettingsServerCredentials.retrieve("server1", "server2");
+        testMavenSettingsServerCredentials.retrieve("server1");
 
-    Assert.assertTrue(registryCredentials.has("server1"));
-    Assert.assertTrue(registryCredentials.has("server2"));
-    Assert.assertFalse(registryCredentials.has("serverUnknown"));
+    Assert.assertNotNull(registryCredentials);
     Assert.assertEquals(
         MavenSettingsServerCredentials.CREDENTIAL_SOURCE,
-        registryCredentials.getCredentialSource("server1"));
-    Assert.assertEquals(
-        MavenSettingsServerCredentials.CREDENTIAL_SOURCE,
-        registryCredentials.getCredentialSource("server2"));
+        registryCredentials.getCredentialSource());
 
-    Authorization retrievedServer1Authorization = registryCredentials.getAuthorization("server1");
+    Authorization retrievedServer1Authorization = registryCredentials.getAuthorization();
     Assert.assertNotNull(retrievedServer1Authorization);
     Assert.assertEquals(
-        SERVER_1_AUTHORIZATION.toString(), retrievedServer1Authorization.toString());
-
-    Authorization retrievedServer2Authorization = registryCredentials.getAuthorization("server2");
-    Assert.assertNotNull(retrievedServer2Authorization);
-    Assert.assertEquals(
-        SERVER_2_AUTHORIZATION.toString(), retrievedServer2Authorization.toString());
+        Authorizations.withBasicCredentials("server1 username", "server1 password").toString(),
+        retrievedServer1Authorization.toString());
   }
 
   @Test
   public void testRetrieve_notFound() {
     RegistryCredentials registryCredentials =
-        testMavenSettingsServerCredentials.retrieve("server1", "serverUnknown");
+        testMavenSettingsServerCredentials.retrieve("serverUnknown");
 
-    Assert.assertTrue(registryCredentials.has("server1"));
-    Assert.assertFalse(registryCredentials.has("server2"));
-    Assert.assertFalse(registryCredentials.has("serverUnknown"));
-
-    Authorization retrievedServer1Authorization = registryCredentials.getAuthorization("server1");
-    Assert.assertNotNull(retrievedServer1Authorization);
-    Assert.assertEquals(
-        SERVER_1_AUTHORIZATION.toString(), retrievedServer1Authorization.toString());
+    Assert.assertNull(registryCredentials);
   }
 
   @Test
   public void testRetrieve_withNullServer() {
-    RegistryCredentials registryCredentials =
-        testMavenSettingsServerCredentials.retrieve(null, "server2");
+    RegistryCredentials registryCredentials = testMavenSettingsServerCredentials.retrieve(null);
 
-    Assert.assertFalse(registryCredentials.has("server1"));
-    Assert.assertTrue(registryCredentials.has("server2"));
-    Assert.assertFalse(registryCredentials.has("serverUnknown"));
-
-    Authorization retrievedServer2Authorization = registryCredentials.getAuthorization("server2");
-    Assert.assertNotNull(retrievedServer2Authorization);
-    Assert.assertEquals(
-        SERVER_2_AUTHORIZATION.toString(), retrievedServer2Authorization.toString());
+    Assert.assertNull(registryCredentials);
   }
 }
