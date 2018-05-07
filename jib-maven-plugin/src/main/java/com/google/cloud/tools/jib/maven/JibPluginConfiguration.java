@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.common.base.Preconditions;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -32,45 +33,89 @@ abstract class JibPluginConfiguration extends AbstractMojo {
    * Configuration for {@code from} parameter, where image by default is {@code
    * gcr.io/distroless/java}.
    */
-  public static class FromConfiguration {
+  private static class FromConfiguration {
 
     @Nullable
     @Parameter(required = true)
-    String image = "gcr.io/distroless/java";
+    private String image = "gcr.io/distroless/java";
 
-    @Nullable @Parameter String credHelper;
+    @Nullable @Parameter private String credHelper;
   }
 
   /** Configuration for {@code to} parameter, where image is required. */
-  public static class ToConfiguration {
+  private static class ToConfiguration {
 
     @Nullable
     @Parameter(required = true)
-    String image;
+    private String image;
 
-    @Nullable @Parameter String credHelper;
+    @Nullable @Parameter private String credHelper;
   }
 
   @Nullable
   @Parameter(defaultValue = "${project}", readonly = true)
-  MavenProject project;
+  private MavenProject project;
 
-  @Nullable @Parameter FromConfiguration from = new FromConfiguration();
+  @Nullable @Parameter private FromConfiguration from = new FromConfiguration();
 
   @Nullable
   @Parameter(required = true)
-  ToConfiguration to;
+  private ToConfiguration to;
 
-  @Parameter List<String> jvmFlags = Collections.emptyList();
+  @Parameter private List<String> jvmFlags = Collections.emptyList();
 
-  @Nullable @Parameter Map<String, String> environment;
+  @Nullable @Parameter private Map<String, String> environment;
 
-  @Nullable @Parameter String mainClass;
+  @Nullable @Parameter private String mainClass;
 
   @Nullable
   @Parameter(defaultValue = "Docker", required = true)
-  String format;
+  private String format;
 
   @Parameter(defaultValue = "false", required = true)
-  boolean useOnlyProjectCache;
+  private boolean useOnlyProjectCache;
+
+  MavenProject getProject() {
+    return Preconditions.checkNotNull(project);
+  }
+
+  String getBaseImage() {
+    return Preconditions.checkNotNull(Preconditions.checkNotNull(from).image);
+  }
+
+  @Nullable
+  String getBaseImageCredentialHelperName() {
+    return Preconditions.checkNotNull(from).credHelper;
+  }
+
+  String getTargetImage() {
+    return Preconditions.checkNotNull(Preconditions.checkNotNull(to).image);
+  }
+
+  @Nullable
+  String getTargetImageCredentialHelperName() {
+    return Preconditions.checkNotNull(to).credHelper;
+  }
+
+  List<String> getJvmFlags() {
+    return jvmFlags;
+  }
+
+  @Nullable
+  Map<String, String> getEnvironment() {
+    return environment;
+  }
+
+  @Nullable
+  String getMainClass() {
+    return mainClass;
+  }
+
+  String getFormat() {
+    return Preconditions.checkNotNull(format);
+  }
+
+  boolean getUseOnlyProjectCache() {
+    return useOnlyProjectCache;
+  }
 }
