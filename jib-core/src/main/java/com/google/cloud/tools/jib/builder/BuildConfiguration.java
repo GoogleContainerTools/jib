@@ -244,15 +244,15 @@ public class BuildConfiguration {
     return knownBaseRegistryCredentials;
   }
 
-  public String getTargetRegistry() {
+  public String getTargetImageRegistry() {
     return targetImageReference.getRegistry();
   }
 
-  public String getTargetRepository() {
+  public String getTargetImageRepository() {
     return targetImageReference.getRepository();
   }
 
-  public String getTargetTag() {
+  public String getTargetImageTag() {
     return targetImageReference.getTag();
   }
 
