@@ -33,7 +33,7 @@ abstract class JibPluginConfiguration extends AbstractMojo {
    * Configuration for {@code from} parameter, where image by default is {@code
    * gcr.io/distroless/java}.
    */
-  private static class FromConfiguration {
+  public static class FromConfiguration {
 
     @Nullable
     @Parameter(required = true)
@@ -43,7 +43,7 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   }
 
   /** Configuration for {@code to} parameter, where image is required. */
-  private static class ToConfiguration {
+  public static class ToConfiguration {
 
     @Nullable
     @Parameter(required = true)
