@@ -61,9 +61,6 @@ public class HelpfulSuggestionsTest {
     Assert.assertEquals(
         "messagePrefix, perhaps you should clear directory manually before creating the Docker context",
         TEST_HELPFUL_SUGGESTIONS.forDockerContextInsecureRecursiveDelete("directory"));
-    Assert.assertEquals(
-        "messagePrefix, perhaps you should check if `configuration` is set correctly",
-        TEST_HELPFUL_SUGGESTIONS.forDockerContextIO("configuration"));
     Assert.assertEquals("messagePrefix", TEST_HELPFUL_SUGGESTIONS.none());
   }
 }

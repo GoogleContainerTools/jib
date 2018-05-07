@@ -138,18 +138,13 @@ public class BuildImageMojo extends JibPluginConfiguration {
       getLog().info("Pushing image as " + targetImageReference);
       getLog().info("");
 
-      try {
-        buildImageStepsRunner.buildImage(HELPFUL_SUGGESTIONS);
-
-      } catch (BuildImageStepsExecutionException ex) {
-        throw new MojoExecutionException(ex.getMessage(), ex.getCause());
-      }
+      buildImageStepsRunner.buildImage(HELPFUL_SUGGESTIONS);
 
       getLog().info("");
       getLog().info("Built and pushed image as " + targetImageReference);
       getLog().info("");
 
-    } catch (CacheDirectoryCreationException ex) {
+    } catch (CacheDirectoryCreationException | BuildImageStepsExecutionException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex.getCause());
     }
   }

@@ -70,7 +70,7 @@ public class DockerContextMojo extends JibPluginConfiguration {
     } catch (IOException ex) {
       throw new MojoExecutionException(
           HelpfulSuggestionsProvider.get("Export Docker context failed")
-              .forDockerContextIO("targetDir"),
+              .suggest("check if `targetDir` is set correctly"),
           ex);
     }
   }

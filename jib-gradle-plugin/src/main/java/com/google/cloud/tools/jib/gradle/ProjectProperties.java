@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
-import com.google.cloud.tools.jib.frontend.HelpfulMessageBuilder;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,8 +48,8 @@ class ProjectProperties {
       mainClass = getMainClassFromJarTask();
       if (mainClass == null) {
         throw new GradleException(
-            new HelpfulMessageBuilder("Could not find main class specified in a 'jar' task")
-                .withSuggestion("add a `mainClass` configuration to jib"));
+            HelpfulSuggestionsProvider.get("Could not find main class specified in a 'jar' task")
+                .suggest("add a `mainClass` configuration to jib"));
       }
     }
     if (!BuildConfiguration.isValidJavaClass(mainClass)) {

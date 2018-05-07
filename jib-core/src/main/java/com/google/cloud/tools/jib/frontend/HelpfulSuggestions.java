@@ -100,10 +100,6 @@ public class HelpfulSuggestions {
     return suggest("clear " + directory + " manually before creating the Docker context");
   }
 
-  public String forDockerContextIO(String configuration) {
-    return suggest("check if `" + configuration + "` is set correctly");
-  }
-
   public String none() {
     return messagePrefix;
   }

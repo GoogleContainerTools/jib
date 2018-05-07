@@ -18,9 +18,9 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.api.client.http.HttpTransport;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
-import com.google.cloud.tools.jib.builder.BuildImageSteps;
-import com.google.cloud.tools.jib.cache.Caches;
-import com.google.cloud.tools.jib.frontend.HelpfulMessageBuilder;
+import com.google.cloud.tools.jib.frontend.BuildImageStepsExecutionException;
+import com.google.cloud.tools.jib.frontend.BuildImageStepsRunner;
+import com.google.cloud.tools.jib.frontend.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.image.ImageReference;
@@ -29,7 +29,6 @@ import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -47,9 +46,6 @@ public class BuildImageTask extends DefaultTask {
 
   /** {@code User-Agent} header suffix to send to the registry. */
   private static final String USER_AGENT_SUFFIX = "jib-gradle-plugin";
-
-  private static final HelpfulMessageBuilder helpfulMessageBuilder =
-      new HelpfulMessageBuilder("Build image failed");
 
   /** Converts an {@link ImageConfiguration} to an {@link Authorization}. */
   @Nullable
@@ -79,12 +75,8 @@ public class BuildImageTask extends DefaultTask {
   public void buildImage() throws InvalidImageReferenceException, IOException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
-    Preconditions.checkNotNull(jibExtension.getFrom());
     Preconditions.checkNotNull(jibExtension.getFrom().getImage());
-    Preconditions.checkNotNull(jibExtension.getTo());
     Preconditions.checkNotNull(jibExtension.getTo().getImage());
-    Preconditions.checkNotNull(jibExtension.getJvmFlags());
-    Preconditions.checkNotNull(jibExtension.getFormat());
 
     ImageReference baseImageReference = ImageReference.parse(jibExtension.getFrom().getImage());
     ImageReference targetImageReference = ImageReference.parse(jibExtension.getTo().getImage());
@@ -124,20 +116,6 @@ public class BuildImageTask extends DefaultTask {
             .setTargetFormat(jibExtension.getFormat())
             .build();
 
-    // Uses a directory in the Gradle build cache as the Jib cache.
-    Path cacheDirectory = getProject().getBuildDir().toPath().resolve(CACHE_DIRECTORY_NAME);
-    if (!Files.exists(cacheDirectory)) {
-      Files.createDirectory(cacheDirectory);
-    }
-    Caches.Initializer cachesInitializer = Caches.newInitializer(cacheDirectory);
-    if (jibExtension.getUseOnlyProjectCache()) {
-      cachesInitializer.setBaseCacheDirectory(cacheDirectory);
-    }
-
-    getLogger().lifecycle("Pushing image as " + targetImageReference);
-    getLogger().lifecycle("");
-    getLogger().lifecycle("");
-
     // TODO: Instead of disabling logging, have authentication credentials be provided
     // Disables annoying Apache HTTP client logging.
     System.setProperty(
@@ -149,28 +127,32 @@ public class BuildImageTask extends DefaultTask {
 
     RegistryClient.setUserAgentSuffix(USER_AGENT_SUFFIX);
 
-    doBuildImage(
-        new BuildImageSteps(
-            buildConfiguration,
-            projectProperties.getSourceFilesConfiguration(),
-            cachesInitializer));
+    // Uses a directory in the Gradle build cache as the Jib cache.
+    Path cacheDirectory = getProject().getBuildDir().toPath().resolve(CACHE_DIRECTORY_NAME);
+    try {
+      BuildImageStepsRunner buildImageStepsRunner =
+          BuildImageStepsRunner.newRunner(
+              buildConfiguration,
+              projectProperties.getSourceFilesConfiguration(),
+              cacheDirectory,
+              jibExtension.getUseOnlyProjectCache());
 
-    getLogger().lifecycle("");
-    getLogger().lifecycle("Built and pushed image as " + targetImageReference);
-    getLogger().lifecycle("");
+      getLogger().lifecycle("Pushing image as " + targetImageReference);
+      getLogger().lifecycle("");
+      getLogger().lifecycle("");
+
+      buildImageStepsRunner.buildImage(HelpfulSuggestionsProvider.get("Build image failed"));
+
+      getLogger().lifecycle("");
+      getLogger().lifecycle("Built and pushed image as " + targetImageReference);
+      getLogger().lifecycle("");
+
+    } catch (CacheDirectoryCreationException | BuildImageStepsExecutionException ex) {
+      throw new GradleException(ex.getMessage(), ex.getCause());
+    }
   }
 
   void setJibExtension(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
-  }
-
-  private void doBuildImage(BuildImageSteps buildImageSteps) {
-    try {
-      buildImageSteps.run();
-
-    } catch (Throwable ex) {
-      throw new GradleException(helpfulMessageBuilder.withNoHelp(), ex);
-    }
-    // TODO: Catch and handle exceptions.
   }
 }
