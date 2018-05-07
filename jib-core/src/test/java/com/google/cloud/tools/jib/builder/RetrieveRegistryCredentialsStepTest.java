@@ -153,7 +153,7 @@ public class RetrieveRegistryCredentialsStepTest {
       String registry,
       @Nullable String credentialHelperSuffix,
       @Nullable RegistryCredentials knownRegistryCredentials) {
-    Mockito.when(mockBuildConfiguration.getTargetRegistry()).thenReturn(FAKE_TARGET_REGISTRY);
+    Mockito.when(mockBuildConfiguration.getTargetImageRegistry()).thenReturn(FAKE_TARGET_REGISTRY);
 
     return new RetrieveRegistryCredentialsStep(
         mockBuildLogger,

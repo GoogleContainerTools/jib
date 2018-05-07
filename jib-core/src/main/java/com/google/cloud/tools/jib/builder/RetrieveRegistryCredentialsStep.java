@@ -54,7 +54,7 @@ class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
   static RetrieveRegistryCredentialsStep forTargetImage(BuildConfiguration buildConfiguration) {
     return new RetrieveRegistryCredentialsStep(
         buildConfiguration.getBuildLogger(),
-        buildConfiguration.getTargetRegistry(),
+        buildConfiguration.getTargetImageRegistry(),
         buildConfiguration.getTargetImageCredentialHelperName(),
         buildConfiguration.getKnownTargetRegistryCredentials());
   }

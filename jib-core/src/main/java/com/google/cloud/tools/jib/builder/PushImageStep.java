@@ -103,8 +103,8 @@ class PushImageStep implements Callable<Void> {
       RegistryClient registryClient =
           new RegistryClient(
               NonBlockingFutures.get(pushAuthorizationFuture),
-              buildConfiguration.getTargetRegistry(),
-              buildConfiguration.getTargetRepository());
+              buildConfiguration.getTargetImageRegistry(),
+              buildConfiguration.getTargetImageRepository());
 
       // TODO: Consolidate with BuildAndPushContainerConfigurationStep.
       // Constructs the image.
@@ -124,7 +124,7 @@ class PushImageStep implements Callable<Void> {
               buildConfiguration.getTargetFormat(),
               NonBlockingFutures.get(
                   NonBlockingFutures.get(containerConfigurationBlobDescriptorFutureFuture)));
-      registryClient.pushManifest(manifestTemplate, buildConfiguration.getTargetTag());
+      registryClient.pushManifest(manifestTemplate, buildConfiguration.getTargetImageTag());
     }
 
     return null;

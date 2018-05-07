@@ -76,8 +76,8 @@ class PushContainerConfigurationStep implements Callable<ListenableFuture<BlobDe
       RegistryClient registryClient =
           new RegistryClient(
                   NonBlockingFutures.get(pushAuthorizationFuture),
-                  buildConfiguration.getTargetRegistry(),
-                  buildConfiguration.getTargetRepository())
+                  buildConfiguration.getTargetImageRegistry(),
+                  buildConfiguration.getTargetImageRepository())
               .setTimer(timer);
 
       CountingDigestOutputStream digestOutputStream =

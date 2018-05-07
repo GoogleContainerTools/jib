@@ -75,9 +75,9 @@ public class BuildConfigurationTest {
     Assert.assertEquals(
         expectedBaseImageCredentialHelperName,
         buildConfiguration.getBaseImageCredentialHelperName());
-    Assert.assertEquals(expectedTargetServerUrl, buildConfiguration.getTargetRegistry());
-    Assert.assertEquals(expectedTargetImageName, buildConfiguration.getTargetRepository());
-    Assert.assertEquals(expectedTargetTag, buildConfiguration.getTargetTag());
+    Assert.assertEquals(expectedTargetServerUrl, buildConfiguration.getTargetImageRegistry());
+    Assert.assertEquals(expectedTargetImageName, buildConfiguration.getTargetImageRepository());
+    Assert.assertEquals(expectedTargetTag, buildConfiguration.getTargetImageTag());
     Assert.assertEquals(
         expectedTargetImageCredentialHelperName,
         buildConfiguration.getTargetImageCredentialHelperName());
