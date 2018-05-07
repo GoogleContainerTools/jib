@@ -25,8 +25,6 @@ import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.Caches;
 import com.google.cloud.tools.jib.frontend.HelpfulMessageBuilder;
-import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
@@ -53,7 +51,6 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
-import org.apache.maven.settings.Server;
 
 /** Builds a container image. */
 @Mojo(name = "build", requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM)
@@ -108,22 +105,12 @@ public class BuildImageMojo extends JibPluginConfiguration {
     ImageReference baseImage = getBaseImageReference();
 
     // Checks Maven settings for registry credentials.
-    session.getSettings().getServer(baseImage.getRegistry());
-    RegistryCredentials knownBaseRegistryCredentials = null;
-    RegistryCredentials knownTargetRegistryCredentials = null;
-    // Retrieves credentials for the base image registry.
-    Authorization baseRegistryCredentials =
-        getRegistryCredentialsFromSettings(baseImage.getRegistry());
-    if (baseRegistryCredentials != null) {
-      knownBaseRegistryCredentials =
-          new RegistryCredentials("Maven settings", baseRegistryCredentials);
-    }
-    // Retrieves credentials for the target registry.
-    Authorization targetRegistryCredentials = getRegistryCredentialsFromSettings(registry);
-    if (targetRegistryCredentials != null) {
-      knownTargetRegistryCredentials =
-          new RegistryCredentials("Maven settings", targetRegistryCredentials);
-    }
+    MavenSettingsServerCredentials mavenSettingsServerCredentials =
+        new MavenSettingsServerCredentials(session.getSettings());
+    RegistryCredentials knownBaseRegistryCredentials =
+        mavenSettingsServerCredentials.retrieve(baseImage.getRegistry());
+    RegistryCredentials knownTargetRegistryCredentials =
+        mavenSettingsServerCredentials.retrieve(registry);
 
     ImageReference targetImageReference = ImageReference.of(registry, repository, tag);
     ImageFormat imageFormatToEnum = ImageFormat.valueOf(imageFormat);
@@ -236,21 +223,6 @@ public class BuildImageMojo extends JibPluginConfiguration {
                   + "configuration"),
           ex);
     }
-  }
-
-  /** Attempts to retrieve credentials for {@code registry} from Maven settings. */
-  @Nullable
-  private Authorization getRegistryCredentialsFromSettings(@Nullable String registry) {
-    if (registry == null) {
-      return null;
-    }
-    Preconditions.checkNotNull(session);
-    Server registryServerSettings = session.getSettings().getServer(registry);
-    if (registryServerSettings == null) {
-      return null;
-    }
-    return Authorizations.withBasicCredentials(
-        registryServerSettings.getUsername(), registryServerSettings.getPassword());
   }
 
   /** Checks validity of plugin parameters. */
