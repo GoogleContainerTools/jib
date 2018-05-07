@@ -49,6 +49,7 @@ public class DockerContextMojo extends JibPluginConfiguration {
     Preconditions.checkNotNull(project);
     Preconditions.checkNotNull(targetDir);
     Preconditions.checkNotNull(from);
+    Preconditions.checkNotNull(from.image);
 
     ProjectProperties projectProperties = new ProjectProperties(project, getLog());
     String inferredMainClass = projectProperties.getMainClass(mainClass);
