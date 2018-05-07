@@ -70,8 +70,6 @@ public class RetrieveRegistryCredentialsStepTest {
   public void setUpMocks()
       throws NonexistentServerUrlDockerCredentialHelperException,
           NonexistentDockerCredentialHelperException, IOException {
-    Mockito.when(mockBuildConfiguration.getBuildLogger()).thenReturn(mockBuildLogger);
-
     Mockito.when(mockDockerCredentialHelper.retrieve()).thenReturn(mockAuthorization);
     Mockito.when(mockNonexistentServerUrlDockerCredentialHelper.retrieve())
         .thenThrow(mockNonexistentServerUrlDockerCredentialHelperException);
@@ -158,7 +156,7 @@ public class RetrieveRegistryCredentialsStepTest {
     Mockito.when(mockBuildConfiguration.getTargetImageRegistry()).thenReturn(FAKE_TARGET_REGISTRY);
 
     return new RetrieveRegistryCredentialsStep(
-        mockBuildConfiguration,
+        mockBuildLogger,
         registry,
         credentialHelperSuffix,
         knownRegistryCredentials,
