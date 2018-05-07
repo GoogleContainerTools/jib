@@ -248,6 +248,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
   /** @return the {@link ImageReference} parsed from {@link #from}. */
   private ImageReference getBaseImageReference() throws MojoFailureException {
     Preconditions.checkNotNull(from);
+    Preconditions.checkNotNull(from.image);
 
     try {
       ImageReference baseImage = ImageReference.parse(from.image);
@@ -270,6 +271,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
   /** @return the {@link ImageReference} parsed from {@link #to}. */
   private ImageReference getTargetImageReference() throws MojoFailureException {
     Preconditions.checkNotNull(to);
+    Preconditions.checkNotNull(to.image);
 
     try {
       return ImageReference.parse(to.image);
