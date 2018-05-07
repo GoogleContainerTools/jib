@@ -46,6 +46,7 @@ public class BuildImageStepsRunnerTest {
 
   private static final HelpfulSuggestions TEST_HELPFUL_SUGGESTIONS =
       new HelpfulSuggestions(
+          "messagePrefix",
           "clearCacheCommand",
           "baseImageCredHelperConfiguration",
           registry -> "baseImageAuthConfiguration " + registry,

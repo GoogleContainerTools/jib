@@ -22,23 +22,7 @@ import java.util.function.Function;
 /** Builds messages that provides suggestions on how to fix the error. */
 public class HelpfulSuggestions {
 
-  /** The initial message text */
-  private static final String MESSAGE_PREFIX = "Build image failed";
-
-  private static String forNoCredentialHelpersDefined(
-      String credHelperConfiguration, String authConfiguration) {
-    return suggest(
-        "set a credential helper name with the configuration '"
-            + credHelperConfiguration
-            + "' or "
-            + authConfiguration);
-  }
-
-  /** @return the message containing a suggestion */
-  private static String suggest(String suggestion) {
-    return MESSAGE_PREFIX + ", perhaps you should " + suggestion;
-  }
-
+  private final String messagePrefix;
   private final String clearCacheCommand;
   private final String baseImageCredHelperConfiguration;
   private final Function<String, String> baseImageAuthConfiguration;
@@ -48,6 +32,7 @@ public class HelpfulSuggestions {
   /**
    * Creates a new {@link HelpfulSuggestions} with frontend-specific texts.
    *
+   * @param messagePrefix the initial message text
    * @param clearCacheCommand the command for clearing the cache
    * @param baseImageCredHelperConfiguration the configuration defining the credential helper name
    *     for the base image
@@ -59,11 +44,13 @@ public class HelpfulSuggestions {
    *     takes the target image registry as an argument
    */
   public HelpfulSuggestions(
+      String messagePrefix,
       String clearCacheCommand,
       String baseImageCredHelperConfiguration,
       Function<String, String> baseImageAuthConfiguration,
       String targetImageCredHelperConfiguration,
       Function<String, String> targetImageAuthConfiguration) {
+    this.messagePrefix = messagePrefix;
     this.clearCacheCommand = clearCacheCommand;
     this.baseImageCredHelperConfiguration = baseImageCredHelperConfiguration;
     this.baseImageAuthConfiguration = baseImageAuthConfiguration;
@@ -71,19 +58,19 @@ public class HelpfulSuggestions {
     this.targetImageAuthConfiguration = targetImageAuthConfiguration;
   }
 
-  String forCacheMetadataCorrupted() {
+  public String forCacheMetadataCorrupted() {
     return suggest("run '" + clearCacheCommand + "' to clear the cache");
   }
 
-  String forHttpHostConnect() {
+  public String forHttpHostConnect() {
     return suggest("make sure your Internet is up and that the registry you are pushing to exists");
   }
 
-  String forUnknownHost() {
+  public String forUnknownHost() {
     return suggest("make sure that the registry you configured exists/is spelled properly");
   }
 
-  String forCacheDirectoryNotOwned(Path cacheDirectory) {
+  public String forCacheDirectoryNotOwned(Path cacheDirectory) {
     return suggest(
         "check that '"
             + cacheDirectory
@@ -91,31 +78,47 @@ public class HelpfulSuggestions {
             + "configuration");
   }
 
-  String forHttpStatusCodeForbidden(String imageReference) {
+  public String forHttpStatusCodeForbidden(String imageReference) {
     return suggest("make sure you have permissions for " + imageReference);
   }
 
-  String forNoCredentialHelpersDefinedForBaseImage(String registry) {
-    return suggest(
-        "set a credential helper name with the configuration '"
-            + baseImageCredHelperConfiguration
-            + "' or "
-            + baseImageAuthConfiguration.apply(registry));
+  public String forNoCredentialHelpersDefinedForBaseImage(String registry) {
+    return forNoCredentialHelpersDefined(
+        baseImageCredHelperConfiguration, baseImageAuthConfiguration.apply(registry));
   }
 
-  String forNoCredentialHelpersDefinedForTargetImage(String registry) {
-    return suggest(
-        "set a credential helper name with the configuration '"
-            + targetImageCredHelperConfiguration
-            + "' or "
-            + targetImageAuthConfiguration.apply(registry));
+  public String forNoCredentialHelpersDefinedForTargetImage(String registry) {
+    return forNoCredentialHelpersDefined(
+        targetImageCredHelperConfiguration, targetImageAuthConfiguration.apply(registry));
   }
 
-  String forCredentialsNotCorrect(String registry) {
+  public String forCredentialsNotCorrect(String registry) {
     return suggest("make sure your credentials for '" + registry + "' are set up correctly");
   }
 
-  String none() {
-    return MESSAGE_PREFIX;
+  public String forDockerContextInsecureRecursiveDelete(String directory) {
+    return suggest("clear " + directory + " manually before creating the Docker context");
+  }
+
+  public String forDockerContextIO(String configuration) {
+    return suggest("check if `" + configuration + "` is set correctly");
+  }
+
+  public String none() {
+    return messagePrefix;
+  }
+
+  /** @return the message containing a suggestion */
+  public String suggest(String suggestion) {
+    return messagePrefix + ", perhaps you should " + suggestion;
+  }
+
+  private String forNoCredentialHelpersDefined(
+      String credHelperConfiguration, String authConfiguration) {
+    return suggest(
+        "set a credential helper name with the configuration '"
+            + credHelperConfiguration
+            + "' or "
+            + authConfiguration);
   }
 }

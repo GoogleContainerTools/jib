@@ -25,6 +25,7 @@ public class HelpfulSuggestionsTest {
 
   private static final HelpfulSuggestions TEST_HELPFUL_SUGGESTIONS =
       new HelpfulSuggestions(
+          "messagePrefix",
           "clearCacheCommand",
           "baseImageCredHelperConfiguration",
           registry -> "baseImageAuthConfiguration " + registry,
@@ -34,29 +35,35 @@ public class HelpfulSuggestionsTest {
   @Test
   public void testSuggestions_smoke() {
     Assert.assertEquals(
-        "Build image failed, perhaps you should run 'clearCacheCommand' to clear the cache",
+        "messagePrefix, perhaps you should run 'clearCacheCommand' to clear the cache",
         TEST_HELPFUL_SUGGESTIONS.forCacheMetadataCorrupted());
     Assert.assertEquals(
-        "Build image failed, perhaps you should make sure your Internet is up and that the registry you are pushing to exists",
+        "messagePrefix, perhaps you should make sure your Internet is up and that the registry you are pushing to exists",
         TEST_HELPFUL_SUGGESTIONS.forHttpHostConnect());
     Assert.assertEquals(
-        "Build image failed, perhaps you should make sure that the registry you configured exists/is spelled properly",
+        "messagePrefix, perhaps you should make sure that the registry you configured exists/is spelled properly",
         TEST_HELPFUL_SUGGESTIONS.forUnknownHost());
     Assert.assertEquals(
-        "Build image failed, perhaps you should check that 'cacheDirectory' is not used by another application or set the `useOnlyProjectCache` configuration",
+        "messagePrefix, perhaps you should check that 'cacheDirectory' is not used by another application or set the `useOnlyProjectCache` configuration",
         TEST_HELPFUL_SUGGESTIONS.forCacheDirectoryNotOwned(Paths.get("cacheDirectory")));
     Assert.assertEquals(
-        "Build image failed, perhaps you should make sure you have permissions for imageReference",
+        "messagePrefix, perhaps you should make sure you have permissions for imageReference",
         TEST_HELPFUL_SUGGESTIONS.forHttpStatusCodeForbidden("imageReference"));
     Assert.assertEquals(
-        "Build image failed, perhaps you should set a credential helper name with the configuration 'baseImageCredHelperConfiguration' or baseImageAuthConfiguration registry",
+        "messagePrefix, perhaps you should set a credential helper name with the configuration 'baseImageCredHelperConfiguration' or baseImageAuthConfiguration registry",
         TEST_HELPFUL_SUGGESTIONS.forNoCredentialHelpersDefinedForBaseImage("registry"));
     Assert.assertEquals(
-        "Build image failed, perhaps you should set a credential helper name with the configuration 'targetImageCredHelperConfiguration' or targetImageAuthConfiguration registry",
+        "messagePrefix, perhaps you should set a credential helper name with the configuration 'targetImageCredHelperConfiguration' or targetImageAuthConfiguration registry",
         TEST_HELPFUL_SUGGESTIONS.forNoCredentialHelpersDefinedForTargetImage("registry"));
     Assert.assertEquals(
-        "Build image failed, perhaps you should make sure your credentials for 'registry' are set up correctly",
+        "messagePrefix, perhaps you should make sure your credentials for 'registry' are set up correctly",
         TEST_HELPFUL_SUGGESTIONS.forCredentialsNotCorrect("registry"));
-    Assert.assertEquals("Build image failed", TEST_HELPFUL_SUGGESTIONS.none());
+    Assert.assertEquals(
+        "messagePrefix, perhaps you should clear directory manually before creating the Docker context",
+        TEST_HELPFUL_SUGGESTIONS.forDockerContextInsecureRecursiveDelete("directory"));
+    Assert.assertEquals(
+        "messagePrefix, perhaps you should check if `configuration` is set correctly",
+        TEST_HELPFUL_SUGGESTIONS.forDockerContextIO("configuration"));
+    Assert.assertEquals("messagePrefix", TEST_HELPFUL_SUGGESTIONS.none());
   }
 }

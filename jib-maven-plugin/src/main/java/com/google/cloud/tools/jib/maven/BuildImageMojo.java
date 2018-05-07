@@ -33,7 +33,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.function.Function;
 import javax.annotation.Nullable;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -67,6 +66,9 @@ public class BuildImageMojo extends JibPluginConfiguration {
 
   /** {@code User-Agent} header suffix to send to the registry. */
   private static final String USER_AGENT_SUFFIX = "jib-maven-plugin";
+
+  private static final HelpfulSuggestions HELPFUL_SUGGESTIONS =
+      HelpfulSuggestionsProvider.get("Build image failed");
 
   @Nullable
   @Parameter(defaultValue = "${session}", readonly = true)
@@ -137,11 +139,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
       getLog().info("");
 
       try {
-        Function<String, String> authConfigurationSuggestion = registry -> "set credentials for '"
-            + registry
-            + "' in your Maven settings";
-        HelpfulSuggestions helpfulSuggestions = new HelpfulSuggestions("mvn clean", "<from><credHelper>", authConfigurationSuggestion, "<to><credHelper>", authConfigurationSuggestion);
-        buildImageStepsRunner.buildImage(helpfulSuggestions);
+        buildImageStepsRunner.buildImage(HELPFUL_SUGGESTIONS);
 
       } catch (BuildImageStepsExecutionException ex) {
         throw new MojoExecutionException(ex.getMessage(), ex.getCause());

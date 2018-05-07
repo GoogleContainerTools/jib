@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.docker.DockerContextGenerator;
-import com.google.cloud.tools.jib.frontend.HelpfulMessageBuilder;
 import com.google.common.base.Preconditions;
 import com.google.common.io.InsecureRecursiveDeleteException;
 import java.io.IOException;
@@ -31,9 +30,6 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 /** Exports to a Docker context. This is an <b>incubating</b> feature. */
 @Mojo(name = "dockercontext", requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM)
 public class DockerContextMojo extends JibPluginConfiguration {
-
-  private static final HelpfulMessageBuilder helpfulMessageBuilder =
-      new HelpfulMessageBuilder("Export Docker context failed");
 
   @Nullable
   @Parameter(
@@ -64,15 +60,18 @@ public class DockerContextMojo extends JibPluginConfiguration {
 
     } catch (InsecureRecursiveDeleteException ex) {
       throw new MojoExecutionException(
-          helpfulMessageBuilder.withSuggestion(
-              "cannot clear directory '"
-                  + targetDir
-                  + "' safely - clear it manually before creating the Docker context"),
+          HelpfulSuggestionsProvider.get(
+                  "Export Docker context failed because cannot clear directory '"
+                      + targetDir
+                      + "' safely")
+              .forDockerContextInsecureRecursiveDelete(targetDir),
           ex);
 
     } catch (IOException ex) {
       throw new MojoExecutionException(
-          helpfulMessageBuilder.withSuggestion("check if `targetDir` is set correctly"), ex);
+          HelpfulSuggestionsProvider.get("Export Docker context failed")
+              .forDockerContextIO("targetDir"),
+          ex);
     }
   }
 }
