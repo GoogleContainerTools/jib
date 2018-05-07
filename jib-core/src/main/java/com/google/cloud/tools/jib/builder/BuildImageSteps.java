@@ -80,7 +80,7 @@ public class BuildImageSteps {
               listeningExecutorService.submit(
                   new RetrieveRegistryCredentialsStep(
                       buildConfiguration,
-                      buildConfiguration.getTargetRegistry(),
+                      buildConfiguration.getTargetImageRegistry(),
                       buildConfiguration.getTargetImageCredentialHelperName(),
                       buildConfiguration.getKnownTargetRegistryCredentials()));
           ListenableFuture<Authorization> retrieveBaseImageRegistryCredentialsFuture =
