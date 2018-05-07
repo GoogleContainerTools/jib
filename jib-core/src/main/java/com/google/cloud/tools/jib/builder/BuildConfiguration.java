@@ -36,9 +36,11 @@ public class BuildConfiguration {
 
     // All the parameters below are set to their default values.
     @Nullable private ImageReference baseImageReference;
+    @Nullable private String baseImageCredentialHelperName;
+    @Nullable private RegistryCredentials knownBaseRegistryCredentials;
     @Nullable private ImageReference targetImageReference;
-    private List<String> credentialHelperNames = new ArrayList<>();
-    private RegistryCredentials knownRegistryCredentials = RegistryCredentials.none();
+    @Nullable private String targetImageCredentialHelperName;
+    @Nullable private RegistryCredentials knownTargetRegistryCredentials;
     @Nullable private String mainClass;
     private List<String> jvmFlags = new ArrayList<>();
     private Map<String, String> environmentMap = new HashMap<>();
@@ -60,18 +62,25 @@ public class BuildConfiguration {
       return this;
     }
 
-    public Builder setCredentialHelperNames(@Nullable List<String> credentialHelperNames) {
-      if (credentialHelperNames != null) {
-        this.credentialHelperNames = credentialHelperNames;
-      }
+    public Builder setBaseImageCredentialHelperName(@Nullable String credentialHelperName) {
+      baseImageCredentialHelperName = credentialHelperName;
       return this;
     }
 
-    public Builder setKnownRegistryCredentials(
-        @Nullable RegistryCredentials knownRegistryCredentials) {
-      if (knownRegistryCredentials != null) {
-        this.knownRegistryCredentials = knownRegistryCredentials;
-      }
+    public Builder setTargetImageCredentialHelperName(@Nullable String credentialHelperName) {
+      targetImageCredentialHelperName = credentialHelperName;
+      return this;
+    }
+
+    public Builder setKnownBaseRegistryCredentials(
+        @Nullable RegistryCredentials knownRegistryCrendentials) {
+      knownBaseRegistryCredentials = knownRegistryCrendentials;
+      return this;
+    }
+
+    public Builder setKnownTargetRegistryCredentials(
+        @Nullable RegistryCredentials knownRegistryCrendentials) {
+      knownTargetRegistryCredentials = knownRegistryCrendentials;
       return this;
     }
 
@@ -121,9 +130,11 @@ public class BuildConfiguration {
           return new BuildConfiguration(
               buildLogger,
               baseImageReference,
+              baseImageCredentialHelperName,
+              knownBaseRegistryCredentials,
               targetImageReference,
-              credentialHelperNames,
-              knownRegistryCredentials,
+              targetImageCredentialHelperName,
+              knownTargetRegistryCredentials,
               mainClass,
               jvmFlags,
               environmentMap,
@@ -167,9 +178,11 @@ public class BuildConfiguration {
 
   private final BuildLogger buildLogger;
   private ImageReference baseImageReference;
+  @Nullable private String baseImageCredentialHelperName;
+  @Nullable private RegistryCredentials knownBaseRegistryCredentials;
   private ImageReference targetImageReference;
-  private List<String> credentialHelperNames;
-  private RegistryCredentials knownRegistryCredentials;
+  @Nullable private String targetImageCredentialHelperName;
+  @Nullable private RegistryCredentials knownTargetRegistryCredentials;
   private String mainClass;
   private List<String> jvmFlags;
   private Map<String, String> environmentMap;
@@ -183,18 +196,22 @@ public class BuildConfiguration {
   private BuildConfiguration(
       BuildLogger buildLogger,
       ImageReference baseImageReference,
+      @Nullable String baseImageCredentialHelperName,
+      @Nullable RegistryCredentials knownBaseRegistryCredentials,
       ImageReference targetImageReference,
-      List<String> credentialHelperNames,
-      RegistryCredentials knownRegistryCredentials,
+      @Nullable String targetImageCredentialHelperName,
+      @Nullable RegistryCredentials knownTargetRegistryCredentials,
       String mainClass,
       List<String> jvmFlags,
       Map<String, String> environmentMap,
       Class<? extends BuildableManifestTemplate> targetFormat) {
     this.buildLogger = buildLogger;
     this.baseImageReference = baseImageReference;
+    this.baseImageCredentialHelperName = baseImageCredentialHelperName;
+    this.knownBaseRegistryCredentials = knownBaseRegistryCredentials;
     this.targetImageReference = targetImageReference;
-    this.credentialHelperNames = Collections.unmodifiableList(credentialHelperNames);
-    this.knownRegistryCredentials = knownRegistryCredentials;
+    this.targetImageCredentialHelperName = targetImageCredentialHelperName;
+    this.knownTargetRegistryCredentials = knownTargetRegistryCredentials;
     this.mainClass = mainClass;
     this.jvmFlags = Collections.unmodifiableList(jvmFlags);
     this.environmentMap = Collections.unmodifiableMap(environmentMap);
@@ -217,6 +234,16 @@ public class BuildConfiguration {
     return baseImageReference.getTag();
   }
 
+  @Nullable
+  public String getBaseImageCredentialHelperName() {
+    return baseImageCredentialHelperName;
+  }
+
+  @Nullable
+  public RegistryCredentials getKnownBaseRegistryCredentials() {
+    return knownBaseRegistryCredentials;
+  }
+
   public String getTargetRegistry() {
     return targetImageReference.getRegistry();
   }
@@ -229,12 +256,14 @@ public class BuildConfiguration {
     return targetImageReference.getTag();
   }
 
-  public RegistryCredentials getKnownRegistryCredentials() {
-    return knownRegistryCredentials;
+  @Nullable
+  public String getTargetImageCredentialHelperName() {
+    return targetImageCredentialHelperName;
   }
 
-  public List<String> getCredentialHelperNames() {
-    return credentialHelperNames;
+  @Nullable
+  public RegistryCredentials getKnownTargetRegistryCredentials() {
+    return knownTargetRegistryCredentials;
   }
 
   public String getMainClass() {
