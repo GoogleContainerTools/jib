@@ -45,19 +45,15 @@ public class DockerContextMojo extends JibPluginConfiguration {
 
   @Override
   public void execute() throws MojoExecutionException {
-    // These @Nullable parameters should never be actually null.
-    Preconditions.checkNotNull(project);
     Preconditions.checkNotNull(targetDir);
-    Preconditions.checkNotNull(from);
-    Preconditions.checkNotNull(from.image);
 
-    ProjectProperties projectProperties = new ProjectProperties(project, getLog());
-    String inferredMainClass = projectProperties.getMainClass(mainClass);
+    ProjectProperties projectProperties = new ProjectProperties(getProject(), getLog());
+    String inferredMainClass = projectProperties.getMainClass(getMainClass());
 
     try {
       new DockerContextGenerator(projectProperties.getSourceFilesConfiguration())
-          .setBaseImage(from.image)
-          .setJvmFlags(jvmFlags)
+          .setBaseImage(getBaseImage())
+          .setJvmFlags(getJvmFlags())
           .setMainClass(inferredMainClass)
           .generate(Paths.get(targetDir));
 
