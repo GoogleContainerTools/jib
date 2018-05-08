@@ -38,13 +38,9 @@ import java.util.List;
  */
 class DockerLoadManifestTemplate implements JsonTemplate {
 
-  private String config;
+  private final String config = "config.json";
   private final String[] repoTags = new String[1];
   private final List<String> layers = new ArrayList<>();
-
-  public void setConfig(String config) {
-    this.config = config;
-  }
 
   public void setRepoTags(String repoTags) {
     this.repoTags[0] = repoTags;

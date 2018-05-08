@@ -71,7 +71,6 @@ public class ImageToJsonTranslator {
   public Blob getDockerLoadManifestBlob(String repository, String tag, List<String> layerFiles) {
     // Set up the JSON template.
     DockerLoadManifestTemplate template = new DockerLoadManifestTemplate();
-    template.setConfig("config.json");
     template.setRepoTags(repository + ":" + (tag == null ? "latest" : tag));
     template.addLayers(layerFiles);
 

@@ -116,7 +116,6 @@ class BuildTarballAndLoadDockerStep implements Callable<Void> {
     manifestBlob.writeTo(new BufferedOutputStream(Files.newOutputStream(tempManifest)));
     builder.addEntry(new TarArchiveEntry(tempManifest.toFile(), "manifest.json"));
 
-
     // Load the image to docker daemon
     File tarFile = File.createTempFile(buildConfiguration.getTargetImageRepository(), null);
     builder.toBlob().writeTo(new BufferedOutputStream(Files.newOutputStream(tarFile.toPath())));
