@@ -72,7 +72,7 @@ public class ImageToJsonTranslator {
     // Set up the JSON template.
     DockerLoadManifestTemplate template = new DockerLoadManifestTemplate();
     template.setRepoTags(repository + ":" + (tag == null ? "latest" : tag));
-    template.addLayers(layerFiles);
+    template.addLayerFiles(layerFiles);
 
     // Serializes into JSON.
     return JsonTemplateMapper.toArrayBlob(template);

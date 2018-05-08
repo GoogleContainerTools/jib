@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Timer;
+import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
@@ -25,7 +26,6 @@ import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.cache.Caches;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.Image;
-import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -153,17 +153,16 @@ public class BuildImageSteps {
 
           timer2.lap("Setting up build container configuration");
           // Builds the container configuration.
-          ListenableFuture<ListenableFuture<ImageToJsonTranslator>>
-              buildContainerConfigurationFutureFuture =
-                  Futures.whenAllSucceed(pullBaseImageLayerFuturesFuture)
-                      .call(
-                          new BuildContainerConfigurationStep(
-                              buildConfiguration,
-                              listeningExecutorService,
-                              pullBaseImageLayerFuturesFuture,
-                              buildAndCacheApplicationLayerFutures,
-                              entrypoint),
-                          listeningExecutorService);
+          ListenableFuture<ListenableFuture<Blob>> buildContainerConfigurationFutureFuture =
+              Futures.whenAllSucceed(pullBaseImageLayerFuturesFuture)
+                  .call(
+                      new BuildContainerConfigurationStep(
+                          buildConfiguration,
+                          listeningExecutorService,
+                          pullBaseImageLayerFuturesFuture,
+                          buildAndCacheApplicationLayerFutures,
+                          entrypoint),
+                      listeningExecutorService);
 
           timer2.lap("Setting up container configuration push");
           // Pushes the container configuration.

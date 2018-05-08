@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Timer;
+import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
@@ -24,7 +25,6 @@ import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.cache.Caches;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.Image;
-import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -42,7 +42,7 @@ public class BuildDockerSteps {
   private final SourceFilesConfiguration sourceFilesConfiguration;
   private final Caches.Initializer cachesInitializer;
 
-  public BuildDockerSteps(
+  BuildDockerSteps(
       BuildConfiguration buildConfiguration,
       SourceFilesConfiguration sourceFilesConfiguration,
       Caches.Initializer cachesInitializer) {
@@ -123,17 +123,16 @@ public class BuildDockerSteps {
 
           timer2.lap("Setting up build container configuration");
           // Builds the container configuration.
-          ListenableFuture<ListenableFuture<ImageToJsonTranslator>>
-              buildContainerConfigurationFutureFuture =
-                  Futures.whenAllSucceed(pullBaseImageLayerFuturesFuture)
-                      .call(
-                          new BuildContainerConfigurationStep(
-                              buildConfiguration,
-                              listeningExecutorService,
-                              pullBaseImageLayerFuturesFuture,
-                              buildAndCacheApplicationLayerFutures,
-                              entrypoint),
-                          listeningExecutorService);
+          ListenableFuture<ListenableFuture<Blob>> buildContainerConfigurationFutureFuture =
+              Futures.whenAllSucceed(pullBaseImageLayerFuturesFuture)
+                  .call(
+                      new BuildContainerConfigurationStep(
+                          buildConfiguration,
+                          listeningExecutorService,
+                          pullBaseImageLayerFuturesFuture,
+                          buildAndCacheApplicationLayerFutures,
+                          entrypoint),
+                      listeningExecutorService);
 
           timer2.lap("Setting up push to docker daemon");
           // Pushes the new image manifest.

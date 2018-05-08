@@ -46,7 +46,7 @@ class DockerLoadManifestTemplate implements JsonTemplate {
     this.repoTags[0] = repoTags;
   }
 
-  public void addLayers(List<String> layers) {
+  public void addLayerFiles(List<String> layers) {
     this.layers.addAll(layers);
   }
 }

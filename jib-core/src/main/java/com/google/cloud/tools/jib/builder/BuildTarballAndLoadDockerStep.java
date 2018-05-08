@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.builder;
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.cache.CachedLayer;
-import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
+import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.cloud.tools.jib.tar.TarStreamBuilder;
 import com.google.common.util.concurrent.Futures;
@@ -44,15 +44,14 @@ class BuildTarballAndLoadDockerStep implements Callable<Void> {
   private final ListenableFuture<List<ListenableFuture<CachedLayer>>>
       pullBaseImageLayerFuturesFuture;
   private final List<ListenableFuture<CachedLayer>> buildApplicationLayerFutures;
-  private final ListenableFuture<ListenableFuture<ImageToJsonTranslator>>
-      buildConfigurationFutureFuture;
+  private final ListenableFuture<ListenableFuture<Blob>> buildConfigurationFutureFuture;
 
   BuildTarballAndLoadDockerStep(
       BuildConfiguration buildConfiguration,
       ListeningExecutorService listeningExecutorService,
       ListenableFuture<List<ListenableFuture<CachedLayer>>> pullBaseImageLayerFuturesFuture,
       List<ListenableFuture<CachedLayer>> buildApplicationLayerFutures,
-      ListenableFuture<ListenableFuture<ImageToJsonTranslator>> buildConfigurationFutureFuture) {
+      ListenableFuture<ListenableFuture<Blob>> buildConfigurationFutureFuture) {
     this.buildConfiguration = buildConfiguration;
     this.listeningExecutorService = listeningExecutorService;
     this.pullBaseImageLayerFuturesFuture = pullBaseImageLayerFuturesFuture;
@@ -80,7 +79,7 @@ class BuildTarballAndLoadDockerStep implements Callable<Void> {
    * containerConfigurationBlobDescriptorFutureFuture.get()}.
    */
   private Void afterPushBaseImageLayerFuturesFuture()
-      throws ExecutionException, InterruptedException, LayerPropertyNotFoundException, IOException {
+      throws ExecutionException, InterruptedException, IOException {
     // Add layers to image tarball
     TarStreamBuilder builder = new TarStreamBuilder();
     List<String> layerFiles = new ArrayList<>();
@@ -97,15 +96,15 @@ class BuildTarballAndLoadDockerStep implements Callable<Void> {
     }
 
     // Add config to tarball
-    ImageToJsonTranslator imageToJsonTranslator =
+    Blob containerConfigurationBlob =
         NonBlockingFutures.get(NonBlockingFutures.get(buildConfigurationFutureFuture));
-    Blob containerConfigurationBlob = imageToJsonTranslator.getContainerConfigurationBlob();
     Path tempConfig = Files.createTempFile(null, null);
     tempConfig.toFile().deleteOnExit();
     containerConfigurationBlob.writeTo(new BufferedOutputStream(Files.newOutputStream(tempConfig)));
     builder.addEntry(new TarArchiveEntry(tempConfig.toFile(), "config.json"));
 
     // Add manifest to tarball
+    ImageToJsonTranslator imageToJsonTranslator = new ImageToJsonTranslator(new Image());
     Blob manifestBlob =
         imageToJsonTranslator.getDockerLoadManifestBlob(
             buildConfiguration.getTargetImageRepository(),
