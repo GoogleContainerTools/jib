@@ -89,12 +89,14 @@ class BuildTarballAndLoadDockerStep implements Callable<Void> {
     TarStreamBuilder tarStreamBuilder = new TarStreamBuilder();
     for (Future<CachedLayer> cachedLayerFuture :
         NonBlockingFutures.get(pullBaseImageLayerFuturesFuture)) {
+      Path blobFile = NonBlockingFutures.get(cachedLayerFuture).getContentFile();
       tarStreamBuilder.addEntry(
-          new TarArchiveEntry(NonBlockingFutures.get(cachedLayerFuture).getContentFile().toFile()));
+          new TarArchiveEntry(blobFile.toFile(), blobFile.getFileName().toString()));
     }
     for (Future<CachedLayer> cachedLayerFuture : buildApplicationLayerFutures) {
+      Path blobFile = NonBlockingFutures.get(cachedLayerFuture).getContentFile();
       tarStreamBuilder.addEntry(
-          new TarArchiveEntry(NonBlockingFutures.get(cachedLayerFuture).getContentFile().toFile()));
+          new TarArchiveEntry(blobFile.toFile(), blobFile.getFileName().toString()));
     }
 
     // Add config to tarball
