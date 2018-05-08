@@ -76,11 +76,7 @@ public class BuildDockerSteps {
           timer2.lap("Setting up credential retrieval");
           ListenableFuture<Authorization> retrieveBaseImageRegistryCredentialsFuture =
               listeningExecutorService.submit(
-                  new RetrieveRegistryCredentialsStep(
-                      buildConfiguration,
-                      buildConfiguration.getBaseImageRegistry(),
-                      buildConfiguration.getBaseImageCredentialHelperName(),
-                      buildConfiguration.getKnownBaseRegistryCredentials()));
+                  RetrieveRegistryCredentialsStep.forBaseImage(buildConfiguration));
 
           timer2.lap("Setting up image pull authentication");
           // Authenticates base image pull.
