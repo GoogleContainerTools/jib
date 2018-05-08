@@ -35,6 +35,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.DigestException;
 import java.util.Arrays;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -77,6 +78,21 @@ public class ImageToJsonTranslatorTest {
 
     Assert.assertEquals(
         expectedJson, new String(byteArrayOutputStream.toByteArray(), StandardCharsets.UTF_8));
+  }
+
+  @Test
+  public void testGetDockerLoadManifest() throws URISyntaxException, IOException {
+    // Loads the expected JSON string.
+    Path jsonFile = Paths.get(Resources.getResource("json/loadmanifest.json").toURI());
+    String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
+
+    List<String> layers = Arrays.asList("layer1.tar.gz", "layer2.tar.gz", "layer3.tar.gz");
+    Blob manifestBlob =
+        imageToJsonTranslator.getDockerLoadManifestBlob("testrepo", "testtag", layers);
+    ByteArrayOutputStream jsonStream = new ByteArrayOutputStream();
+    manifestBlob.writeTo(jsonStream);
+
+    Assert.assertEquals(expectedJson, new String(jsonStream.toByteArray(), StandardCharsets.UTF_8));
   }
 
   @Test

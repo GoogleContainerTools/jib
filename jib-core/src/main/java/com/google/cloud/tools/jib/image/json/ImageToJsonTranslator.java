@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 
 /**
  * Translates an {@link Image} into a manifest or container configuration JSON BLOB.
@@ -64,6 +65,18 @@ public class ImageToJsonTranslator {
 
     // Serializes into JSON.
     return JsonTemplateMapper.toBlob(template);
+  }
+
+  /** Gets the container manifest as a JSON template in a 'docker load'able format. */
+  public Blob getDockerLoadManifestBlob(String repository, String tag, List<String> layerFiles) {
+    // Set up the JSON template.
+    DockerLoadManifestTemplate template = new DockerLoadManifestTemplate();
+    template.setConfig("config.json");
+    template.setRepoTags(repository + ":" + (tag == null ? "latest" : tag));
+    template.addLayers(layerFiles);
+
+    // Serializes into JSON.
+    return JsonTemplateMapper.toArrayBlob(template);
   }
 
   /**
