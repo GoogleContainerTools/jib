@@ -61,8 +61,5 @@ public class BuildDockerStepsIntegrationTest {
     logger.info("Secondary build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
 
     Assert.assertEquals("Hello world\n", new Command("docker", "run", "testdocker").run());
-
-    // Cleanup
-    new Command("docker", "rmi", "testdocker").run();
   }
 }
