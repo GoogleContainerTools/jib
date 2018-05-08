@@ -38,12 +38,9 @@
         <artifactId>jib-maven-plugin</artifactId>
         <version>${jib-maven-plugin.version}</version>
         <configuration>
-          <registry>gcr.io</registry>
-          <repository>jib-integration-testing/simpleimage</repository>
-          <tag>maven</tag>
-          <credHelpers>
-            <credHelper>gcr</credHelper>
-          </credHelpers>
+          <to>
+            <image>gcr.io/jib-integration-testing/simpleimage:maven</image>
+          </to>
           <mainClass>com.test.HelloWorld</mainClass>
           <!-- Does not have tests use user-level cache for base image layers. -->
           <useOnlyProjectCache>true</useOnlyProjectCache>

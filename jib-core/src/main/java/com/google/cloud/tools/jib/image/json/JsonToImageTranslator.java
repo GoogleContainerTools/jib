@@ -82,13 +82,12 @@ public class JsonToImageTranslator {
       image.addLayer(layer);
     }
 
-    if (containerConfigurationTemplate.getContainerEntrypoint() == null) {
-      throw new IllegalArgumentException("containerConfigurationTemplate must have an entrypoint");
-    }
     image.setEntrypoint(containerConfigurationTemplate.getContainerEntrypoint());
 
-    for (String environmentVariable : containerConfigurationTemplate.getContainerEnvironment()) {
-      image.addEnvironmentVariableDefinition(environmentVariable);
+    if (containerConfigurationTemplate.getContainerEnvironment() != null) {
+      for (String environmentVariable : containerConfigurationTemplate.getContainerEnvironment()) {
+        image.addEnvironmentVariableDefinition(environmentVariable);
+      }
     }
 
     return image;
