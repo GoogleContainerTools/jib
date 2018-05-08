@@ -32,7 +32,7 @@ import java.util.List;
  *   "Layers": [
  *     "eb05f3dbdb543cc610527248690575bacbbcebabe6ecf665b189cf18b541e3ca.tar.gz",
  *     "ba7c544469e514f1a9a4dec59ab640540d50992b288adbb34a1a63c45bf19a24.tar.gz",
- *     "15705ab016593987662839b40f5a22fd1032996c90808d4a1371eb46974017d5.tar.gz",
+ *     "15705ab016593987662839b40f5a22fd1032996c90808d4a1371eb46974017d5.tar.gz"
  *   ]
  * }]</pre>
  */
