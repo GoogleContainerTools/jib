@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.docker.DockerContextGenerator;
-import com.google.cloud.tools.jib.frontend.HelpfulMessageBuilder;
 import com.google.common.base.Preconditions;
 import com.google.common.io.InsecureRecursiveDeleteException;
 import java.io.IOException;
@@ -31,9 +30,6 @@ import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.options.Option;
 
 public class DockerContextTask extends DefaultTask {
-
-  private static final HelpfulMessageBuilder helpfulMessageBuilder =
-      new HelpfulMessageBuilder("Export Docker context failed");
 
   @Nullable private String targetDir;
   @Nullable private JibExtension jibExtension;
@@ -65,11 +61,7 @@ public class DockerContextTask extends DefaultTask {
 
   @TaskAction
   public void generateDockerContext() {
-    // Asserts required parameters are not null.
     Preconditions.checkNotNull(jibExtension);
-    Preconditions.checkNotNull(jibExtension.getFrom());
-    Preconditions.checkNotNull(jibExtension.getFrom().getImage());
-    Preconditions.checkNotNull(jibExtension.getJvmFlags());
 
     ProjectProperties projectProperties = new ProjectProperties(getProject(), getLogger());
     String mainClass = projectProperties.getMainClass(jibExtension.getMainClass());
@@ -78,7 +70,7 @@ public class DockerContextTask extends DefaultTask {
 
     try {
       new DockerContextGenerator(projectProperties.getSourceFilesConfiguration())
-          .setBaseImage(jibExtension.getFrom().getImage())
+          .setBaseImage(jibExtension.getBaseImage())
           .setJvmFlags(jibExtension.getJvmFlags())
           .setMainClass(mainClass)
           .generate(Paths.get(targetDir));
@@ -87,16 +79,17 @@ public class DockerContextTask extends DefaultTask {
 
     } catch (InsecureRecursiveDeleteException ex) {
       throw new GradleException(
-          helpfulMessageBuilder.withSuggestion(
-              "cannot clear directory '"
-                  + targetDir
-                  + "' safely - clear it manually before creating the Docker context"),
+          HelpfulSuggestionsProvider.get(
+                  "Export Docker context failed because cannot clear directory '"
+                      + getTargetDir()
+                      + "' safely")
+              .forDockerContextInsecureRecursiveDelete(getTargetDir()),
           ex);
 
     } catch (IOException ex) {
       throw new GradleException(
-          helpfulMessageBuilder.withSuggestion(
-              "check if the command-line option `--jib.dockerDir` is set correctly"),
+          HelpfulSuggestionsProvider.get("Export Docker context failed")
+              .suggest("check if the command-line option `--jib.dockerDir` is set correctly"),
           ex);
     }
   }

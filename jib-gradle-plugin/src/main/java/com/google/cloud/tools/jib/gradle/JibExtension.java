@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -126,6 +127,14 @@ public class JibExtension {
 
   public void setUseOnlyProjectCache(boolean useOnlyProjectCache) {
     this.useOnlyProjectCache.set(useOnlyProjectCache);
+  }
+
+  String getBaseImage() {
+    return Preconditions.checkNotNull(from.getImage());
+  }
+
+  String getTargetImage() {
+    return Preconditions.checkNotNull(to.getImage());
   }
 
   @Nested

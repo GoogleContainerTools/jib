@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.frontend.BuildImageStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildImageStepsRunner;
 import com.google.cloud.tools.jib.frontend.CacheDirectoryCreationException;
+import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
@@ -64,6 +65,9 @@ public class BuildImageMojo extends JibPluginConfiguration {
 
   /** {@code User-Agent} header suffix to send to the registry. */
   private static final String USER_AGENT_SUFFIX = "jib-maven-plugin";
+
+  private static final HelpfulSuggestions HELPFUL_SUGGESTIONS =
+      HelpfulSuggestionsProvider.get("Build image failed");
 
   @Nullable
   @Parameter(defaultValue = "${session}", readonly = true)
@@ -128,18 +132,13 @@ public class BuildImageMojo extends JibPluginConfiguration {
       getLog().info("Pushing image as " + targetImage);
       getLog().info("");
 
-      try {
-        buildImageStepsRunner.buildImage();
-
-      } catch (BuildImageStepsExecutionException ex) {
-        throw new MojoExecutionException(ex.getMessage(), ex.getCause());
-      }
+      buildImageStepsRunner.buildImage(HELPFUL_SUGGESTIONS);
 
       getLog().info("");
       getLog().info("Built and pushed image as " + targetImage);
       getLog().info("");
 
-    } catch (CacheDirectoryCreationException ex) {
+    } catch (CacheDirectoryCreationException | BuildImageStepsExecutionException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex.getCause());
     }
   }
