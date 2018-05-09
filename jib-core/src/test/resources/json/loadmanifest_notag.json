@@ -1,0 +1,1 @@
+[{"config":"config.json","repoTags":["testrepo:latest"],"layers":["layer1.tar.gz","layer2.tar.gz","layer3.tar.gz"]}]

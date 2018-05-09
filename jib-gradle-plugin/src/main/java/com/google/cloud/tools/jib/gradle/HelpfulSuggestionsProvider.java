@@ -14,25 +14,22 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.frontend;
+package com.google.cloud.tools.jib.gradle;
 
-/** Builds messages that provides suggestions on how to fix the error. */
-public class HelpfulMessageBuilder {
+import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
 
-  private final String messageHeader;
+/** Provider for Maven-specific {@link HelpfulSuggestions}. */
+class HelpfulSuggestionsProvider {
 
-  /** @param messageHeader the initial message text */
-  public HelpfulMessageBuilder(String messageHeader) {
-    this.messageHeader = messageHeader;
+  static HelpfulSuggestions get(String messagePrefix) {
+    return new HelpfulSuggestions(
+        messagePrefix,
+        "gradle clean",
+        "from.credHelper",
+        ignored -> "from.auth",
+        "to.credHelper",
+        ignored -> "to.auth");
   }
 
-  /** @return the message with a suggestion */
-  public String withSuggestion(String suggestion) {
-    return messageHeader + ", perhaps you should " + suggestion;
-  }
-
-  /** @return just the message */
-  public String withNoHelp() {
-    return messageHeader;
-  }
+  private HelpfulSuggestionsProvider() {}
 }

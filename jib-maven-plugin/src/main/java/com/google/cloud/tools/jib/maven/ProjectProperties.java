@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
-import com.google.cloud.tools.jib.frontend.HelpfulMessageBuilder;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import javax.annotation.Nullable;
@@ -87,8 +86,9 @@ class ProjectProperties {
       mainClass = getMainClassFromMavenJarPlugin();
       if (mainClass == null) {
         throw new MojoExecutionException(
-            new HelpfulMessageBuilder("Could not find main class specified in maven-jar-plugin")
-                .withSuggestion("add a `mainClass` configuration to jib-maven-plugin"));
+            HelpfulSuggestionsProvider.get(
+                    "Could not find main class specified in maven-jar-plugin")
+                .suggest("add a `mainClass` configuration to jib-maven-plugin"));
       }
     }
     Preconditions.checkNotNull(mainClass);

@@ -244,6 +244,10 @@ public class BuildConfiguration {
     return knownBaseRegistryCredentials;
   }
 
+  public ImageReference getTargetImageReference() {
+    return targetImageReference;
+  }
+
   public String getTargetImageRegistry() {
     return targetImageReference.getRegistry();
   }
