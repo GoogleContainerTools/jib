@@ -22,7 +22,6 @@ import com.google.cloud.tools.jib.blob.Blobs;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 
 // TODO: Add JsonFactory for HTTP response parsing.
 /**
@@ -73,9 +72,9 @@ public class JsonTemplateMapper {
     return toBlob((Object) template);
   }
 
-  /** Convert a list of {@link JsonTemplate}s to a {@link Blob} of the JSON string. */
-  public static Blob toBlob(List<JsonTemplate> template) {
-    return toBlob((Object) template);
+  /** Convert a {@link ListOfJsonTemplate} to a {@link Blob} of the JSON string. */
+  public static Blob toBlob(ListOfJsonTemplate template) {
+    return toBlob(template.getList());
   }
 
   private static Blob toBlob(Object template) {

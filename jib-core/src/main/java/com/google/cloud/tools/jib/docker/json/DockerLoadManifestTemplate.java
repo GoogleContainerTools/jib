@@ -17,7 +17,9 @@
 package com.google.cloud.tools.jib.docker.json;
 
 import com.google.cloud.tools.jib.json.JsonTemplate;
+import com.google.cloud.tools.jib.json.ListOfJsonTemplate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -39,7 +41,7 @@ import java.util.List;
  * @see <a href="https://github.com/moby/moby/blob/master/image/tarexport/load.go">Docker load
  *     source</a>
  */
-public class DockerLoadManifestTemplate implements JsonTemplate {
+public class DockerLoadManifestTemplate implements ListOfJsonTemplate {
 
   private final String config = "config.json";
   private final List<String> repoTags = new ArrayList<>();
@@ -55,5 +57,10 @@ public class DockerLoadManifestTemplate implements JsonTemplate {
 
   public void addLayerFiles(List<String> layers) {
     this.layers.addAll(layers);
+  }
+
+  @Override
+  public List<JsonTemplate> getList() {
+    return Collections.singletonList(this);
   }
 }

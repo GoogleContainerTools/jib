@@ -34,7 +34,6 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -144,6 +143,6 @@ class BuildTarballAndLoadDockerStep implements Callable<ListenableFuture<Void>> 
     template.addLayerFiles(layerFiles);
 
     // Serializes into JSON.
-    return JsonTemplateMapper.toBlob(Collections.singletonList(template));
+    return JsonTemplateMapper.toBlob(template);
   }
 }
