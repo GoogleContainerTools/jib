@@ -49,4 +49,20 @@ public class DockerLoadManifestBlobTest {
           expectedJson, new String(jsonStream.toByteArray(), StandardCharsets.UTF_8));
     }
   }
+
+  @Test
+  public void testGetDockerLoadManifest_noTag() throws IOException, URISyntaxException {
+    // Loads the expected JSON string.
+    Path jsonFile = Paths.get(Resources.getResource("json/loadmanifest_notag.json").toURI());
+    String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
+
+    List<String> layers = Arrays.asList("layer1.tar.gz", "layer2.tar.gz", "layer3.tar.gz");
+    ImageReference testImage = ImageReference.of(null, "testrepo", null);
+    Blob manifestBlob = DockerLoadManifestBlob.get(testImage, layers);
+    try (ByteArrayOutputStream jsonStream = new ByteArrayOutputStream()) {
+      manifestBlob.writeTo(jsonStream);
+      Assert.assertEquals(
+          expectedJson, new String(jsonStream.toByteArray(), StandardCharsets.UTF_8));
+    }
+  }
 }
