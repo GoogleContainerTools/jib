@@ -73,7 +73,7 @@ public class JsonTemplateMapper {
     return mapToBlob(template);
   }
 
-  /** Convert a {@link List<JsonTemplate>} to a {@link Blob} of the JSON string. */
+  /** Convert a list of {@link JsonTemplate}s to a {@link Blob} of the JSON string. */
   public static Blob toBlob(List<JsonTemplate> template) {
     return mapToBlob(template);
   }
