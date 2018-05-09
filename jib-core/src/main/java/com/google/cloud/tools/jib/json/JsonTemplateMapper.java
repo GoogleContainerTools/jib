@@ -22,7 +22,7 @@ import com.google.cloud.tools.jib.blob.Blobs;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
+import java.util.List;
 
 // TODO: Add JsonFactory for HTTP response parsing.
 /**
@@ -70,13 +70,16 @@ public class JsonTemplateMapper {
 
   /** Convert a {@link JsonTemplate} to a {@link Blob} of the JSON string. */
   public static Blob toBlob(JsonTemplate template) {
-    return Blobs.from(outputStream -> objectMapper.writeValue(outputStream, template));
+    return mapToBlob(template);
   }
 
-  /** Convert a {@link JsonTemplate} to a {@link Blob} of the JSON string, wrapped in an array. */
-  public static Blob toArrayBlob(JsonTemplate template) {
-    return Blobs.from(
-        outputStream -> objectMapper.writeValue(outputStream, Collections.singletonList(template)));
+  /** Convert a {@link List<JsonTemplate>} to a {@link Blob} of the JSON string. */
+  public static Blob toBlob(List<JsonTemplate> template) {
+    return mapToBlob(template);
+  }
+
+  private static Blob mapToBlob(Object template) {
+    return Blobs.from(outputStream -> objectMapper.writeValue(outputStream, template));
   }
 
   private JsonTemplateMapper() {}

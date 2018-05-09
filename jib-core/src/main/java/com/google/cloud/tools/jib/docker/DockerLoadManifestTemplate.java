@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.image.json;
+package com.google.cloud.tools.jib.docker;
 
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import java.util.ArrayList;
@@ -35,15 +35,18 @@ import java.util.List;
  *     "15705ab016593987662839b40f5a22fd1032996c90808d4a1371eb46974017d5.tar.gz"
  *   ]
  * }]</pre>
+ *
+ * @see <a href="https://github.com/moby/moby/blob/master/image/tarexport/load.go">Docker load
+ *     source</a>
  */
 class DockerLoadManifestTemplate implements JsonTemplate {
 
   private final String config = "config.json";
-  private final String[] repoTags = new String[1];
+  private final List<String> repoTags = new ArrayList<>(1);
   private final List<String> layers = new ArrayList<>();
 
   public void setRepoTags(String repoTags) {
-    this.repoTags[0] = repoTags;
+    this.repoTags.add(repoTags);
   }
 
   public void addLayerFiles(List<String> layers) {

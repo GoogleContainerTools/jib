@@ -53,13 +53,7 @@ public class BuildDockerStepsIntegrationTest {
             sourceFilesConfiguration,
             Caches.newInitializer(cacheDirectory).setBaseCacheDirectory(cacheDirectory));
 
-    long lastTime = System.nanoTime();
     buildDockerSteps.run();
-    logger.info("Initial build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
-    lastTime = System.nanoTime();
-    buildDockerSteps.run();
-    logger.info("Secondary build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
-
     Assert.assertEquals("Hello world\n", new Command("docker", "run", "testdocker").run());
   }
 }

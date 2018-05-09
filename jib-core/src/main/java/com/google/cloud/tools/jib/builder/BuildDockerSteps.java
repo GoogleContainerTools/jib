@@ -34,6 +34,10 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
+/**
+ * All the steps to build to Docker daemon. TODO: Refactor for less duplicate code w/
+ * BuildImageSteps
+ */
 public class BuildDockerSteps {
 
   private static final String DESCRIPTION = "Building and pushing image";
@@ -130,9 +134,9 @@ public class BuildDockerSteps {
                           entrypoint),
                       listeningExecutorService);
 
-          timer2.lap("Setting up push to docker daemon");
-          // Pushes the new image manifest.
-          ListenableFuture<Void> pushImageFuture =
+          timer2.lap("Setting up build to docker daemon");
+          // Builds the image tarball and loads into the Docker daemon.
+          ListenableFuture<Void> buildToDockerFuture =
               Futures.whenAllSucceed(
                       pullBaseImageLayerFuturesFuture, buildContainerConfigurationFutureFuture)
                   .call(
@@ -144,8 +148,8 @@ public class BuildDockerSteps {
                           buildContainerConfigurationFutureFuture),
                       listeningExecutorService);
 
-          timer2.lap("Running push to docker daemon");
-          pushImageFuture.get();
+          timer2.lap("Running build to docker daemon");
+          buildToDockerFuture.get();
         }
       }
     }
