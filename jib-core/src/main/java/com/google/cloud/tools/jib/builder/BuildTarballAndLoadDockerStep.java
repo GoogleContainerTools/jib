@@ -43,13 +43,6 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 /** Adds image layers to a tarball and loads into Docker daemon. */
 class BuildTarballAndLoadDockerStep implements Callable<Void> {
 
-  private final BuildConfiguration buildConfiguration;
-  private final ListeningExecutorService listeningExecutorService;
-  private final ListenableFuture<List<ListenableFuture<CachedLayer>>>
-      pullBaseImageLayerFuturesFuture;
-  private final List<ListenableFuture<CachedLayer>> buildApplicationLayerFutures;
-  private final ListenableFuture<ListenableFuture<Blob>> buildConfigurationFutureFuture;
-
   /**
    * Builds a {@link DockerLoadManifestTemplate} from image parameters and returns the result as a
    * blob.
@@ -64,6 +57,13 @@ class BuildTarballAndLoadDockerStep implements Callable<Void> {
     // Serializes into JSON.
     return JsonTemplateMapper.toBlob(template);
   }
+
+  private final BuildConfiguration buildConfiguration;
+  private final ListeningExecutorService listeningExecutorService;
+  private final ListenableFuture<List<ListenableFuture<CachedLayer>>>
+      pullBaseImageLayerFuturesFuture;
+  private final List<ListenableFuture<CachedLayer>> buildApplicationLayerFutures;
+  private final ListenableFuture<ListenableFuture<Blob>> buildConfigurationFutureFuture;
 
   BuildTarballAndLoadDockerStep(
       BuildConfiguration buildConfiguration,

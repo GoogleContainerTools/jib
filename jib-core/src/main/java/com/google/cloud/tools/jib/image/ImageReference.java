@@ -212,6 +212,6 @@ public class ImageReference {
 
   /** @return the image reference in Docker-readable format, without hiding the tag. */
   public String toStringWithTag() {
-    return this + (usesDefaultTag() ? ":latest" : "");
+    return this + (usesDefaultTag() ? ":" + DEFAULT_TAG : "");
   }
 }

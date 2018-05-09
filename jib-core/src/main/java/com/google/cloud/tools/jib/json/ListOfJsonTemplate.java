@@ -25,6 +25,7 @@ import java.util.List;
  * <p>Json fields should be private fields and fields that are {@code null} will not be serialized.
  */
 public interface ListOfJsonTemplate extends JsonTemplate {
+
   /** Returns the JsonTemplate wrapped as a list. e.g.: [{"property":"value"}] */
   List<JsonTemplate> getList();
 }
