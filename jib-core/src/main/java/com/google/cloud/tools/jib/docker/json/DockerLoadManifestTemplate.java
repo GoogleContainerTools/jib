@@ -23,7 +23,8 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * JSON Template for loadable Docker Manifest
+ * JSON Template for loadable Docker Manifest. The repoTags property requires a tag; i.e. if a tag
+ * is missing, it explicitly should use "latest".
  *
  * <p>Example manifest JSON:
  *
@@ -44,15 +45,11 @@ import java.util.List;
 public class DockerLoadManifestTemplate implements ListOfJsonTemplate {
 
   private final String config = "config.json";
-  private final List<String> repoTags = new ArrayList<>();
+  private List<String> repoTags = Collections.singletonList(null);
   private final List<String> layers = new ArrayList<>();
 
   public void setRepoTags(String repoTags) {
-    if (this.repoTags.isEmpty()) {
-      this.repoTags.add(repoTags);
-    } else {
-      this.repoTags.set(0, repoTags);
-    }
+    this.repoTags = Collections.singletonList(repoTags);
   }
 
   public void addLayerFiles(List<String> layers) {

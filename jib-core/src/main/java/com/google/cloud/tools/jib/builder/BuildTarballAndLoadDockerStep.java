@@ -41,7 +41,7 @@ import java.util.concurrent.Future;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 
 /** Adds image layers to a tarball and loads into Docker daemon. */
-class BuildTarballAndLoadDockerStep implements Callable<ListenableFuture<Void>> {
+class BuildTarballAndLoadDockerStep implements Callable<Void> {
 
   private final BuildConfiguration buildConfiguration;
   private final ListeningExecutorService listeningExecutorService;
@@ -49,6 +49,21 @@ class BuildTarballAndLoadDockerStep implements Callable<ListenableFuture<Void>> 
       pullBaseImageLayerFuturesFuture;
   private final List<ListenableFuture<CachedLayer>> buildApplicationLayerFutures;
   private final ListenableFuture<ListenableFuture<Blob>> buildConfigurationFutureFuture;
+
+  /**
+   * Builds a {@link DockerLoadManifestTemplate} from image parameters and returns the result as a
+   * blob.
+   */
+  @VisibleForTesting
+  static Blob getManifestBlob(ImageReference imageReference, List<String> layerFiles) {
+    // Set up the JSON template.
+    DockerLoadManifestTemplate template = new DockerLoadManifestTemplate();
+    template.setRepoTags(imageReference.toStringWithTag());
+    template.addLayerFiles(layerFiles);
+
+    // Serializes into JSON.
+    return JsonTemplateMapper.toBlob(template);
+  }
 
   BuildTarballAndLoadDockerStep(
       BuildConfiguration buildConfiguration,
@@ -67,13 +82,14 @@ class BuildTarballAndLoadDockerStep implements Callable<ListenableFuture<Void>> 
    * Depends on {@code pullBaseImageLayerFuturesFuture} and {@code buildConfigurationFutureFuture}.
    */
   @Override
-  public ListenableFuture<Void> call() throws ExecutionException, InterruptedException {
+  public Void call() throws ExecutionException, InterruptedException {
     List<ListenableFuture<?>> dependencies = new ArrayList<>();
     dependencies.addAll(NonBlockingFutures.get(pullBaseImageLayerFuturesFuture));
     dependencies.addAll(buildApplicationLayerFutures);
     dependencies.add(NonBlockingFutures.get(buildConfigurationFutureFuture));
     return Futures.whenAllComplete(dependencies)
-        .call(this::afterPushBaseImageLayerFuturesFuture, listeningExecutorService);
+        .call(this::afterPushBaseImageLayerFuturesFuture, listeningExecutorService)
+        .get();
   }
 
   /**
@@ -128,21 +144,5 @@ class BuildTarballAndLoadDockerStep implements Callable<ListenableFuture<Void>> 
     new Command("docker", "load").run(Blobs.writeToByteArray(tarStreamBuilder.toBlob()));
 
     return null;
-  }
-
-  /**
-   * Builds a {@link DockerLoadManifestTemplate} from image parameters and returns the result as a
-   * blob.
-   */
-  @VisibleForTesting
-  static Blob getManifestBlob(ImageReference imageReference, List<String> layerFiles) {
-    // Set up the JSON template.
-    DockerLoadManifestTemplate template = new DockerLoadManifestTemplate();
-    template.setRepoTags(
-        imageReference.toString() + (imageReference.usesDefaultTag() ? ":latest" : ""));
-    template.addLayerFiles(layerFiles);
-
-    // Serializes into JSON.
-    return JsonTemplateMapper.toBlob(template);
   }
 }

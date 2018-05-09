@@ -137,7 +137,7 @@ public class BuildDockerSteps {
 
           timer2.lap("Setting up build to docker daemon");
           // Builds the image tarball and loads into the Docker daemon.
-          ListenableFuture<ListenableFuture<Void>> buildToDockerFutureFuture =
+          ListenableFuture<Void> buildToDockerFutureFuture =
               Futures.whenAllSucceed(
                       pullBaseImageLayerFuturesFuture, buildContainerConfigurationFutureFuture)
                   .call(
