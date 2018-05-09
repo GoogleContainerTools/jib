@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.json;
 
 import java.util.List;
 
+/** A {@link JsonTemplate} to be wrapped as a list. */
 public interface ListOfJsonTemplate extends JsonTemplate {
   List<JsonTemplate> getList();
 }
