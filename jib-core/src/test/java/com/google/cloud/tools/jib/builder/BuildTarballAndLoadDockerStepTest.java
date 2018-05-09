@@ -14,12 +14,12 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.docker;
+package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.blob.Blob;
+import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.common.io.Resources;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -31,8 +31,8 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** Tests for {@link DockerLoadManifestBlob}. */
-public class DockerLoadManifestBlobTest {
+/** Tests for {@link BuildTarballAndLoadDockerStep}. */
+public class BuildTarballAndLoadDockerStepTest {
 
   @Test
   public void testGetDockerLoadManifest() throws URISyntaxException, IOException {
@@ -41,13 +41,9 @@ public class DockerLoadManifestBlobTest {
     String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
 
     List<String> layers = Arrays.asList("layer1.tar.gz", "layer2.tar.gz", "layer3.tar.gz");
-    ImageReference testImage = ImageReference.of(null, "testrepo", "testtag");
-    Blob manifestBlob = DockerLoadManifestBlob.get(testImage, layers);
-    try (ByteArrayOutputStream jsonStream = new ByteArrayOutputStream()) {
-      manifestBlob.writeTo(jsonStream);
-      Assert.assertEquals(
-          expectedJson, new String(jsonStream.toByteArray(), StandardCharsets.UTF_8));
-    }
+    ImageReference testImage = ImageReference.of("testregistry", "testrepo", "testtag");
+    Blob manifestBlob = BuildTarballAndLoadDockerStep.getManifestBlob(testImage, layers);
+    Assert.assertEquals(expectedJson, Blobs.writeToString(manifestBlob));
   }
 
   @Test
@@ -58,11 +54,7 @@ public class DockerLoadManifestBlobTest {
 
     List<String> layers = Arrays.asList("layer1.tar.gz", "layer2.tar.gz", "layer3.tar.gz");
     ImageReference testImage = ImageReference.of(null, "testrepo", null);
-    Blob manifestBlob = DockerLoadManifestBlob.get(testImage, layers);
-    try (ByteArrayOutputStream jsonStream = new ByteArrayOutputStream()) {
-      manifestBlob.writeTo(jsonStream);
-      Assert.assertEquals(
-          expectedJson, new String(jsonStream.toByteArray(), StandardCharsets.UTF_8));
-    }
+    Blob manifestBlob = BuildTarballAndLoadDockerStep.getManifestBlob(testImage, layers);
+    Assert.assertEquals(expectedJson, Blobs.writeToString(manifestBlob));
   }
 }

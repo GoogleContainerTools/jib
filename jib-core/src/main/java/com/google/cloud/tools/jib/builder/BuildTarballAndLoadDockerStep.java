@@ -18,18 +18,23 @@ package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.blob.Blob;
+import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.cache.CachedLayer;
-import com.google.cloud.tools.jib.docker.DockerLoadManifestBlob;
+import com.google.cloud.tools.jib.docker.json.DockerLoadManifestTemplate;
+import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.tar.TarStreamBuilder;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
-import java.io.ByteArrayOutputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -37,7 +42,7 @@ import java.util.concurrent.Future;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 
 /** Adds image layers to a tarball and loads into Docker daemon. */
-class BuildTarballAndLoadDockerStep implements Callable<Void> {
+class BuildTarballAndLoadDockerStep implements Callable<ListenableFuture<Void>> {
 
   private final BuildConfiguration buildConfiguration;
   private final ListeningExecutorService listeningExecutorService;
@@ -63,20 +68,18 @@ class BuildTarballAndLoadDockerStep implements Callable<Void> {
    * Depends on {@code pullBaseImageLayerFuturesFuture} and {@code buildConfigurationFutureFuture}.
    */
   @Override
-  public Void call() throws ExecutionException, InterruptedException {
+  public ListenableFuture<Void> call() throws ExecutionException, InterruptedException {
     List<ListenableFuture<?>> dependencies = new ArrayList<>();
     dependencies.addAll(NonBlockingFutures.get(pullBaseImageLayerFuturesFuture));
     dependencies.addAll(buildApplicationLayerFutures);
     dependencies.add(NonBlockingFutures.get(buildConfigurationFutureFuture));
     return Futures.whenAllComplete(dependencies)
-        .call(this::afterPushBaseImageLayerFuturesFuture, listeningExecutorService)
-        .get();
+        .call(this::afterPushBaseImageLayerFuturesFuture, listeningExecutorService);
   }
 
   /**
-   * Depends on {@code pushAuthorizationFuture}, {@code pushBaseImageLayerFuturesFuture.get()},
-   * {@code pushApplicationLayerFutures}, and (@code
-   * containerConfigurationBlobDescriptorFutureFuture.get()}.
+   * Depends on {@code pullBaseImageLayerFuturesFuture.get()} and (@code
+   * buildConfigurationFutureFuture.get()}.
    *
    * <p>TODO: Refactor into testable components
    */
@@ -105,27 +108,42 @@ class BuildTarballAndLoadDockerStep implements Callable<Void> {
         NonBlockingFutures.get(NonBlockingFutures.get(buildConfigurationFutureFuture));
     Path tempConfig = Files.createTempFile(null, null);
     tempConfig.toFile().deleteOnExit();
-    try (OutputStream bufferedOutputStream = Files.newOutputStream(tempConfig)) {
+    try (OutputStream bufferedOutputStream =
+        new BufferedOutputStream(Files.newOutputStream(tempConfig))) {
       containerConfigurationBlob.writeTo(bufferedOutputStream);
     }
     tarStreamBuilder.addEntry(new TarArchiveEntry(tempConfig.toFile(), "config.json"));
 
     // Add manifest to tarball
-    Blob manifestBlob =
-        DockerLoadManifestBlob.get(buildConfiguration.getTargetImageReference(), layerFiles);
+    Blob manifestBlob = getManifestBlob(buildConfiguration.getTargetImageReference(), layerFiles);
     Path tempManifest = Files.createTempFile(null, null);
     tempManifest.toFile().deleteOnExit();
-    try (OutputStream bufferedOutputStream = Files.newOutputStream(tempManifest)) {
+    try (OutputStream bufferedOutputStream =
+        new BufferedOutputStream(Files.newOutputStream(tempManifest))) {
       manifestBlob.writeTo(bufferedOutputStream);
     }
     tarStreamBuilder.addEntry(new TarArchiveEntry(tempManifest.toFile(), "manifest.json"));
 
     // Load the image to docker daemon
-    try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
-      tarStreamBuilder.toBlob().writeTo(byteArrayOutputStream);
-      new Command("docker", "load").run(byteArrayOutputStream.toByteArray());
-    }
+    // TODO: Command is untested/not very robust
+    new Command("docker", "load").run(Blobs.writeToByteArray(tarStreamBuilder.toBlob()));
 
     return null;
+  }
+
+  /**
+   * Builds a {@link DockerLoadManifestTemplate} from image parameters and returns the result as a
+   * blob.
+   */
+  @VisibleForTesting
+  static Blob getManifestBlob(ImageReference imageReference, List<String> layerFiles) {
+    // Set up the JSON template.
+    DockerLoadManifestTemplate template = new DockerLoadManifestTemplate();
+    template.setRepoTags(
+        imageReference.toString() + (imageReference.usesDefaultTag() ? ":latest" : ""));
+    template.addLayerFiles(layerFiles);
+
+    // Serializes into JSON.
+    return JsonTemplateMapper.toBlob(Collections.singletonList(template));
   }
 }

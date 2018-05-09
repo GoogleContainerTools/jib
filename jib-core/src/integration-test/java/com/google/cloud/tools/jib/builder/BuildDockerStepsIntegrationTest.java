@@ -27,7 +27,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-/** Integration tests for {@link BuildImageSteps}. */
+/** Integration tests for {@link BuildDockerSteps}. */
 public class BuildDockerStepsIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
