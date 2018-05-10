@@ -53,10 +53,10 @@ public class JibPluginIntegrationTest {
       throws IOException, InterruptedException {
     BuildResult buildResult = testProject.build("build", "jibBuildDocker");
 
-    BuildTask jibTask = buildResult.task(":jibBuildDocker");
+    BuildTask jibBuildDockerTask = buildResult.task(":jibBuildDocker");
 
-    Assert.assertNotNull(jibTask);
-    Assert.assertEquals(TaskOutcome.SUCCESS, jibTask.getOutcome());
+    Assert.assertNotNull(jibBuildDockerTask);
+    Assert.assertEquals(TaskOutcome.SUCCESS, jibBuildDockerTask.getOutcome());
     Assert.assertThat(
         buildResult.getOutput(),
         CoreMatchers.containsString("Built image to Docker daemon as " + imageReference));
