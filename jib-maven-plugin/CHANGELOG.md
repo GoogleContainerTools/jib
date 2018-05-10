@@ -13,8 +13,7 @@ All notable changes to this project will be documented in this file.
 - Better feedback for build failures ([#197](https://github.com/google/jib/pull/197))
 - Warns if specified `mainClass` is not a valid Java class ([#206](https://github.com/google/jib/issues/206))
 - Warns if build may not be reproducible ([#245](https://github.com/GoogleContainerTools/jib/pull/245))
-- `jibBuildDocker` gradle task to build straight to Docker daemon ([#265](https://github.com/GoogleContainerTools/jib/pull/265))
-- `jib:buildDocker` maven goal to build stranght to Docker daemon ([#266](https://github.com/GoogleContainerTools/jib/pull/266))
+- `jib:buildDocker` maven goal to build straight to Docker daemon ([#266](https://github.com/GoogleContainerTools/jib/pull/266))
 
 ### Changed
 - Removed `enableReproducibleBuilds` parameter - application layers will always be reproducible ([#245](https://github.com/GoogleContainerTools/jib/pull/245))
