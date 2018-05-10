@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.api.client.http.HttpTransport;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.frontend.BuildDockerStepsRunner;
 import com.google.cloud.tools.jib.frontend.BuildImageStepsExecutionException;
@@ -25,12 +24,9 @@ import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
-import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.base.Preconditions;
 import java.nio.file.Path;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -42,9 +38,6 @@ public class BuildDockerTask extends DefaultTask {
 
   /** Directory name for the cache. The directory will be relative to the build output directory. */
   private static final String CACHE_DIRECTORY_NAME = "jib-cache";
-
-  /** {@code User-Agent} header suffix to send to the registry. */
-  private static final String USER_AGENT_SUFFIX = "jib-gradle-plugin";
 
   /** Converts an {@link ImageConfiguration} to an {@link Authorization}. */
   @Nullable
@@ -105,16 +98,6 @@ public class BuildDockerTask extends DefaultTask {
             .setMainClass(mainClass)
             .setJvmFlags(jibExtension.getJvmFlags())
             .build();
-
-    // Disables annoying Apache HTTP client logging.
-    System.setProperty(
-        "org.apache.commons.logging.Log", "org.apache.commons.logging.impl.SimpleLog");
-    System.setProperty("org.apache.commons.logging.simplelog.defaultlog", "error");
-    // Disables Google HTTP client logging.
-    Logger logger = Logger.getLogger(HttpTransport.class.getName());
-    logger.setLevel(Level.OFF);
-
-    RegistryClient.setUserAgentSuffix(USER_AGENT_SUFFIX);
 
     // Uses a directory in the Gradle build cache as the Jib cache.
     Path cacheDirectory = getProject().getBuildDir().toPath().resolve(CACHE_DIRECTORY_NAME);
