@@ -19,18 +19,14 @@ package com.google.cloud.tools.jib.builder;
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.cache.Caches;
 import com.google.cloud.tools.jib.image.ImageReference;
-import com.google.cloud.tools.jib.registry.LocalRegistry;
 import java.nio.file.Path;
 import org.junit.Assert;
-import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 /** Integration tests for {@link BuildDockerSteps}. */
 public class BuildDockerStepsIntegrationTest {
-
-  @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
 
   private static final TestBuildLogger logger = new TestBuildLogger();
 
