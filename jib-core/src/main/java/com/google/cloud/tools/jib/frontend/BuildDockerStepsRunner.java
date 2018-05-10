@@ -75,11 +75,6 @@ public class BuildDockerStepsRunner {
 
   private final Supplier<BuildDockerSteps> buildDockerStepsSupplier;
 
-  @VisibleForTesting
-  BuildDockerStepsRunner(Supplier<BuildDockerSteps> buildDockerStepsSupplier) {
-    this.buildDockerStepsSupplier = buildDockerStepsSupplier;
-  }
-
   private BuildDockerStepsRunner(
       BuildConfiguration buildConfiguration,
       SourceFilesConfiguration sourceFilesConfiguration,
