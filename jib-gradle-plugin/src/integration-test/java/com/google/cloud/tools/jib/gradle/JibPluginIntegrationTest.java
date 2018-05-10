@@ -49,6 +49,21 @@ public class JibPluginIntegrationTest {
     return new Command("docker", "run", imageReference).run();
   }
 
+  private static String buildToDockerDaemonAndRun(TestProject testProject, String imageReference)
+      throws IOException, InterruptedException {
+    BuildResult buildResult = testProject.build("build", "jibBuildDocker");
+
+    BuildTask jibTask = buildResult.task(":jibBuildDocker");
+
+    Assert.assertNotNull(jibTask);
+    Assert.assertEquals(TaskOutcome.SUCCESS, jibTask.getOutcome());
+    Assert.assertThat(
+        buildResult.getOutput(),
+        CoreMatchers.containsString("Built image to Docker daemon as " + imageReference));
+
+    return new Command("docker", "run", imageReference).run();
+  }
+
   @Test
   public void testBuild_empty() throws IOException, InterruptedException {
     Assert.assertEquals(
@@ -60,6 +75,22 @@ public class JibPluginIntegrationTest {
     Assert.assertEquals(
         "Hello, world\n",
         buildAndRun(simpleTestProject, "gcr.io/jib-integration-testing/simpleimage:gradle"));
+  }
+
+  @Test
+  public void testDockerDaemon_empty() throws IOException, InterruptedException {
+    Assert.assertEquals(
+        "",
+        buildToDockerDaemonAndRun(
+            emptyTestProject, "gcr.io/jib-integration-testing/emptyimage:gradle"));
+  }
+
+  @Test
+  public void testDockerDaemon_simple() throws IOException, InterruptedException {
+    Assert.assertEquals(
+        "Hello, world\n",
+        buildToDockerDaemonAndRun(
+            simpleTestProject, "gcr.io/jib-integration-testing/simpleimage:gradle"));
   }
 
   @Test

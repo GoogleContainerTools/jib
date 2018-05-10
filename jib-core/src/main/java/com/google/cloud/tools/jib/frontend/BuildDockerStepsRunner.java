@@ -42,7 +42,7 @@ import org.apache.http.conn.HttpHostConnectException;
  * TODO: Consolidate with {@link BuildImageStepsRunner}.
  */
 public class BuildDockerStepsRunner {
-  
+
   /**
    * Sets up a new {@link BuildDockerStepsRunner}. Creates the directory for the cache, if needed.
    *
