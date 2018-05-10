@@ -20,14 +20,12 @@ import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.BuildDockerSteps;
-import com.google.cloud.tools.jib.builder.BuildImageSteps;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.Caches;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
-import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
@@ -39,7 +37,7 @@ import org.apache.http.conn.HttpHostConnectException;
 /**
  * Runs {@link BuildDockerSteps} and builds helpful error messages.
  *
- * TODO: Consolidate with {@link BuildImageStepsRunner}.
+ * <p>TODO: Consolidate with {@link BuildImageStepsRunner}.
  */
 public class BuildDockerStepsRunner {
 
