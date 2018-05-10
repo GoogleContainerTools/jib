@@ -106,7 +106,7 @@ class PushImageStep implements Callable<Void> {
               buildConfiguration.getTargetImageRegistry(),
               buildConfiguration.getTargetImageRepository());
 
-      // TODO: Consolidate with BuildAndPushContainerConfigurationStep.
+      // TODO: Consolidate with BuildContainerConfigurationStep.
       // Constructs the image.
       Image image = new Image();
       for (Future<CachedLayer> cachedLayerFuture :

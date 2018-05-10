@@ -47,7 +47,7 @@ public class BuildDockerSteps {
   private final SourceFilesConfiguration sourceFilesConfiguration;
   private final Caches.Initializer cachesInitializer;
 
-  BuildDockerSteps(
+  public BuildDockerSteps(
       BuildConfiguration buildConfiguration,
       SourceFilesConfiguration sourceFilesConfiguration,
       Caches.Initializer cachesInitializer) {
