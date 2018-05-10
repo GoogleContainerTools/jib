@@ -36,10 +36,18 @@ import org.gradle.api.tasks.TaskAction;
 /** Builds a container image and exports to the default Docker daemon. */
 public class BuildDockerTask extends DefaultTask {
 
-  /** Directory name for the cache. The directory will be relative to the build output directory. */
+  /**
+   * Directory name for the cache. The directory will be relative to the build output directory.
+   *
+   * <p>TODO: Move to ProjectProperties.
+   */
   private static final String CACHE_DIRECTORY_NAME = "jib-cache";
 
-  /** Converts an {@link ImageConfiguration} to an {@link Authorization}. */
+  /**
+   * Converts an {@link ImageConfiguration} to an {@link Authorization}.
+   *
+   * <p>TODO: Move to ImageConfiguration.
+   */
   @Nullable
   private static Authorization getImageAuthorization(ImageConfiguration imageConfiguration) {
     if (imageConfiguration.getAuth().getUsername() == null
