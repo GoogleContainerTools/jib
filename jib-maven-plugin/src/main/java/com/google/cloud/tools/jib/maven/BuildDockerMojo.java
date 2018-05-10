@@ -54,6 +54,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
   @Parameter(defaultValue = "${session}", readonly = true)
   private MavenSession session;
 
+  /** TODO: Consolidate with BuildImageMojo. */
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
     ProjectProperties projectProperties = new ProjectProperties(getProject(), getLog());
