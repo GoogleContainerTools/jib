@@ -24,10 +24,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
@@ -35,29 +32,25 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 /** Builds a tarball archive. */
 public class TarStreamBuilder {
 
-  /** Holds the entries added to the archive. */
-  private final List<TarArchiveEntry> entries = new ArrayList<>();
+  @FunctionalInterface
+  private interface TarArchiveOutputStreamConsumer {
+    void accept(TarArchiveOutputStream tarArchiveOutputStream) throws IOException;
+  }
 
-  /** Holds onto non-file based contents that are added to the builder, indexed by name. */
-  private final Map<String, byte[]> blobContents = new HashMap<>();
+  /** Map of TarArchiveEntries and their corresponding content as output stream consumers. */
+  private final LinkedHashMap<TarArchiveEntry, TarArchiveOutputStreamConsumer> blobContents =
+      new LinkedHashMap<>();
 
   /** Writes each entry in the filesystem to the tarball archive stream. */
-  private void writeEntriesAsTarArchive(List<TarArchiveEntry> entries, OutputStream tarByteStream)
-      throws IOException {
-
+  private void writeEntriesAsTarArchive(OutputStream tarByteStream) throws IOException {
     try (TarArchiveOutputStream tarArchiveOutputStream =
         new TarArchiveOutputStream(tarByteStream)) {
       // Enables PAX extended headers to support long file names.
       tarArchiveOutputStream.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
-
-      for (TarArchiveEntry entry : entries) {
-        tarArchiveOutputStream.putArchiveEntry(entry);
-        if (blobContents.containsKey(entry.getName())) {
-          tarArchiveOutputStream.write(blobContents.get(entry.getName()));
-        } else if (entry.isFile()) {
-          InputStream contentStream = new BufferedInputStream(new FileInputStream(entry.getFile()));
-          ByteStreams.copy(contentStream, tarArchiveOutputStream);
-        }
+      for (Map.Entry<TarArchiveEntry, TarArchiveOutputStreamConsumer> entry :
+          blobContents.entrySet()) {
+        tarArchiveOutputStream.putArchiveEntry(entry.getKey());
+        entry.getValue().accept(tarArchiveOutputStream);
         tarArchiveOutputStream.closeArchiveEntry();
       }
     }
@@ -65,24 +58,27 @@ public class TarStreamBuilder {
 
   /** Adds an entry to the archive. */
   public void addEntry(TarArchiveEntry entry) {
-    entries.add(entry);
+    blobContents.put(
+        entry,
+        tarArchiveOutputStream -> {
+          if (entry.isFile()) {
+            try (InputStream contentStream =
+                new BufferedInputStream(new FileInputStream(entry.getFile()))) {
+              ByteStreams.copy(contentStream, tarArchiveOutputStream);
+            }
+          }
+        });
   }
 
   /** Adds a blob to the archive. */
-  public void addEntry(Blob blob, String name) throws IOException {
-    // TODO: Efficiency? We're writing blob contents twice (once here to get entry size, once when
-    // writing to TarArchiveOutputStream).
-    byte[] bytes = Blobs.writeToByteArray(blob);
+  public void addEntry(byte[] contents, String name) {
     TarArchiveEntry entry = new TarArchiveEntry(name);
-    entry.setSize(bytes.length);
-    blobContents.put(name, bytes);
-    entries.add(entry);
+    entry.setSize(contents.length);
+    blobContents.put(entry, tarArchiveOutputStream -> tarArchiveOutputStream.write(contents));
   }
 
   /** Builds a {@link Blob} that can stream the uncompressed tarball archive BLOB. */
   public Blob toBlob() {
-    return Blobs.from(
-        outputStream ->
-            writeEntriesAsTarArchive(Collections.unmodifiableList(entries), outputStream));
+    return Blobs.from(this::writeEntriesAsTarArchive);
   }
 }

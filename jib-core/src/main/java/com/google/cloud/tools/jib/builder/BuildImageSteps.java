@@ -147,7 +147,7 @@ public class BuildImageSteps {
           ListenableFuture<ListenableFuture<Image>> buildContainerConfigurationFutureFuture =
               Futures.whenAllSucceed(pullBaseImageLayerFuturesFuture)
                   .call(
-                      new BuildContainerConfigurationStep(
+                      new BuildImageStep(
                           buildConfiguration,
                           listeningExecutorService,
                           pullBaseImageLayerFuturesFuture,
@@ -182,9 +182,7 @@ public class BuildImageSteps {
           // Pushes the new image manifest.
           ListenableFuture<Void> pushImageFuture =
               Futures.whenAllSucceed(
-                      pushBaseImageLayerFuturesFuture,
-                      pushContainerConfigurationFutureFuture,
-                      buildContainerConfigurationFutureFuture)
+                      pushBaseImageLayerFuturesFuture, pushContainerConfigurationFutureFuture)
                   .call(
                       new PushImageStep(
                           buildConfiguration,

@@ -29,8 +29,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-/** Builds the container configuration. */
-class BuildContainerConfigurationStep implements Callable<ListenableFuture<Image>> {
+/** Builds the container image. */
+class BuildImageStep implements Callable<ListenableFuture<Image>> {
 
   private static final String DESCRIPTION = "Building container configuration";
 
@@ -41,7 +41,7 @@ class BuildContainerConfigurationStep implements Callable<ListenableFuture<Image
   private final List<ListenableFuture<CachedLayer>> buildApplicationLayerFutures;
   private final List<String> entrypoint;
 
-  BuildContainerConfigurationStep(
+  BuildImageStep(
       BuildConfiguration buildConfiguration,
       ListeningExecutorService listeningExecutorService,
       ListenableFuture<List<ListenableFuture<CachedLayer>>> pullBaseImageLayerFuturesFuture,

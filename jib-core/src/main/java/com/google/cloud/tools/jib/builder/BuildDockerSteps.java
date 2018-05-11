@@ -126,7 +126,7 @@ public class BuildDockerSteps {
           ListenableFuture<ListenableFuture<Image>> buildContainerConfigurationFutureFuture =
               Futures.whenAllSucceed(pullBaseImageLayerFuturesFuture)
                   .call(
-                      new BuildContainerConfigurationStep(
+                      new BuildImageStep(
                           buildConfiguration,
                           listeningExecutorService,
                           pullBaseImageLayerFuturesFuture,
