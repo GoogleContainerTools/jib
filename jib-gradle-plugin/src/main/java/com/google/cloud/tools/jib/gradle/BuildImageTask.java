@@ -33,21 +33,13 @@ import java.nio.file.Path;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.Nullable;
-import org.apache.http.client.HttpClient;
-import org.apache.http.impl.client.AbstractHttpClient;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.client.DefaultRequestDirector;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
-import org.gradle.api.logging.StandardOutputListener;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.internal.logging.events.LogEvent;
-import org.gradle.internal.logging.events.OutputEvent;
 import org.gradle.internal.logging.events.OutputEventListener;
-import org.gradle.internal.logging.sink.OutputEventRenderer;
 import org.gradle.internal.logging.slf4j.OutputEventListenerBackedLoggerContext;
-import org.gradle.internal.logging.text.StreamBackedStandardOutputListener;
 import org.slf4j.LoggerFactory;
 
 /** Builds a container image. */
@@ -132,14 +124,16 @@ public class BuildImageTask extends DefaultTask {
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
     // Disables annoying Apache HTTP client logging.
-    OutputEventListenerBackedLoggerContext context = (OutputEventListenerBackedLoggerContext) LoggerFactory.getILoggerFactory();
+    OutputEventListenerBackedLoggerContext context =
+        (OutputEventListenerBackedLoggerContext) LoggerFactory.getILoggerFactory();
     OutputEventListener defaultOutputEventListener = context.getOutputEventListener();
-    context.setOutputEventListener(event -> {
-      LogEvent logEvent = (LogEvent) event;
-      if (!logEvent.getCategory().contains("org.apache")) {
-        defaultOutputEventListener.onOutput(event);
-      }
-    });
+    context.setOutputEventListener(
+        event -> {
+          LogEvent logEvent = (LogEvent) event;
+          if (!logEvent.getCategory().contains("org.apache")) {
+            defaultOutputEventListener.onOutput(event);
+          }
+        });
 
     // Disables Google HTTP client logging.
     Logger.getLogger(HttpTransport.class.getName()).setLevel(Level.OFF);
