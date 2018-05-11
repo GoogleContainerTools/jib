@@ -112,9 +112,12 @@ class BuildTarballAndLoadDockerStep implements Callable<Void> {
     }
     for (Future<CachedLayer> cachedLayerFuture : buildApplicationLayerFutures) {
       Path layerFile = NonBlockingFutures.get(cachedLayerFuture).getContentFile();
-      layerFiles.add(layerFile.getFileName().toString());
-      tarStreamBuilder.addEntry(
-          new TarArchiveEntry(layerFile.toFile(), layerFile.getFileName().toString()));
+      // TODO: Consolidate with build configuration step so we don't have to rebuild the image
+      if (!layerFiles.contains(layerFile.getFileName().toString())) {
+        layerFiles.add(layerFile.getFileName().toString());
+        tarStreamBuilder.addEntry(
+            new TarArchiveEntry(layerFile.toFile(), layerFile.getFileName().toString()));
+      }
     }
 
     // Add config to tarball
