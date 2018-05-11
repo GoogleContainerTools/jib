@@ -26,7 +26,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 
@@ -36,9 +38,12 @@ public class TarStreamBuilder {
   /** Holds the entries added to the archive. */
   private final List<TarArchiveEntry> entries = new ArrayList<>();
 
+  /** Holds onto non-file based contents that are added to the builder, indexed by name. */
+  private final Map<String, byte[]> blobContents = new HashMap<>();
+
   /** Writes each entry in the filesystem to the tarball archive stream. */
-  private static void writeEntriesAsTarArchive(
-      List<TarArchiveEntry> entries, OutputStream tarByteStream) throws IOException {
+  private void writeEntriesAsTarArchive(List<TarArchiveEntry> entries, OutputStream tarByteStream)
+      throws IOException {
 
     try (TarArchiveOutputStream tarArchiveOutputStream =
         new TarArchiveOutputStream(tarByteStream)) {
@@ -47,7 +52,9 @@ public class TarStreamBuilder {
 
       for (TarArchiveEntry entry : entries) {
         tarArchiveOutputStream.putArchiveEntry(entry);
-        if (entry.isFile()) {
+        if (blobContents.containsKey(entry.getName())) {
+          tarArchiveOutputStream.write(blobContents.get(entry.getName()));
+        } else if (entry.isFile()) {
           InputStream contentStream = new BufferedInputStream(new FileInputStream(entry.getFile()));
           ByteStreams.copy(contentStream, tarArchiveOutputStream);
         }
@@ -58,6 +65,17 @@ public class TarStreamBuilder {
 
   /** Adds an entry to the archive. */
   public void addEntry(TarArchiveEntry entry) {
+    entries.add(entry);
+  }
+
+  /** Adds a blob to the archive. */
+  public void addEntry(Blob blob, String name) throws IOException {
+    // TODO: Efficiency? We're writing blob contents twice (once here to get entry size, once when
+    // writing to TarArchiveOutputStream).
+    byte[] bytes = Blobs.writeToByteArray(blob);
+    TarArchiveEntry entry = new TarArchiveEntry(name);
+    entry.setSize(bytes.length);
+    blobContents.put(name, bytes);
     entries.add(entry);
   }
 

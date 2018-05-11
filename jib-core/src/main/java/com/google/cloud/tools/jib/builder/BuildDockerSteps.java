@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Timer;
-import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
@@ -124,7 +123,7 @@ public class BuildDockerSteps {
 
           timer2.lap("Setting up build container configuration");
           // Builds the container configuration.
-          ListenableFuture<ListenableFuture<Blob>> buildContainerConfigurationFutureFuture =
+          ListenableFuture<ListenableFuture<Image>> buildContainerConfigurationFutureFuture =
               Futures.whenAllSucceed(pullBaseImageLayerFuturesFuture)
                   .call(
                       new BuildContainerConfigurationStep(

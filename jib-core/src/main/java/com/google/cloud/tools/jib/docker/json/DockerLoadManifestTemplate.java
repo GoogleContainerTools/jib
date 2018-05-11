@@ -53,8 +53,8 @@ public class DockerLoadManifestTemplate implements ListOfJsonTemplate {
     this.repoTags = Collections.singletonList(repoTags);
   }
 
-  public void addLayerFiles(List<String> layers) {
-    this.layers.addAll(layers);
+  public void addLayerFile(String layer) {
+    this.layers.add(layer);
   }
 
   @Override

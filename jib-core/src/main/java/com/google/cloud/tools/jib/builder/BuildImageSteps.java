@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Timer;
-import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
@@ -145,7 +144,7 @@ public class BuildImageSteps {
 
           timer2.lap("Setting up build container configuration");
           // Builds the container configuration.
-          ListenableFuture<ListenableFuture<Blob>> buildContainerConfigurationFutureFuture =
+          ListenableFuture<ListenableFuture<Image>> buildContainerConfigurationFutureFuture =
               Futures.whenAllSucceed(pullBaseImageLayerFuturesFuture)
                   .call(
                       new BuildContainerConfigurationStep(
@@ -183,17 +182,18 @@ public class BuildImageSteps {
           // Pushes the new image manifest.
           ListenableFuture<Void> pushImageFuture =
               Futures.whenAllSucceed(
-                      pushBaseImageLayerFuturesFuture, pushContainerConfigurationFutureFuture)
+                      pushBaseImageLayerFuturesFuture,
+                      pushContainerConfigurationFutureFuture,
+                      buildContainerConfigurationFutureFuture)
                   .call(
                       new PushImageStep(
                           buildConfiguration,
                           listeningExecutorService,
                           authenticatePushFuture,
-                          pullBaseImageLayerFuturesFuture,
-                          buildAndCacheApplicationLayerFutures,
                           pushBaseImageLayerFuturesFuture,
                           pushApplicationLayersFuture,
-                          pushContainerConfigurationFutureFuture),
+                          pushContainerConfigurationFutureFuture,
+                          buildContainerConfigurationFutureFuture),
                       listeningExecutorService);
 
           timer2.lap("Running push new image");
