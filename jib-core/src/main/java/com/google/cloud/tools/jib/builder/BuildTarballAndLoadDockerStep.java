@@ -84,11 +84,11 @@ class BuildTarballAndLoadDockerStep implements Callable<Void> {
     // Add layers to image tarball
     Image image = NonBlockingFutures.get(NonBlockingFutures.get(buildConfigurationFutureFuture));
     TarStreamBuilder tarStreamBuilder = new TarStreamBuilder();
-    DockerLoadManifestTemplate template = new DockerLoadManifestTemplate();
+    DockerLoadManifestTemplate manifestTemplate = new DockerLoadManifestTemplate();
     for (Layer layer : image.getLayers()) {
       String layerName = layer.getBlobDescriptor().getDigest() + ".tar.gz";
       tarStreamBuilder.addEntry(layer.getBlob(), layerName);
-      template.addLayerFile(layerName);
+      manifestTemplate.addLayerFile(layerName);
     }
 
     // Add config to tarball
@@ -97,8 +97,8 @@ class BuildTarballAndLoadDockerStep implements Callable<Void> {
     tarStreamBuilder.addEntry(containerConfigurationBlob, "config.json");
 
     // Add manifest to tarball
-    template.setRepoTags(buildConfiguration.getTargetImageReference().toStringWithTag());
-    tarStreamBuilder.addEntry(JsonTemplateMapper.toBlob(template), "manifest.json");
+    manifestTemplate.setRepoTags(buildConfiguration.getTargetImageReference().toStringWithTag());
+    tarStreamBuilder.addEntry(JsonTemplateMapper.toBlob(manifestTemplate), "manifest.json");
 
     // Load the image to docker daemon
     // TODO: Command is untested/not very robust
