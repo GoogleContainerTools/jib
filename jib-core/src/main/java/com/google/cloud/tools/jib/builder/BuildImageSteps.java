@@ -31,6 +31,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -57,6 +58,10 @@ public class BuildImageSteps {
     return buildConfiguration;
   }
 
+  public SourceFilesConfiguration getSourceFilesConfiguration() {
+    return sourceFilesConfiguration;
+  }
+
   public void run()
       throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
           CacheDirectoryNotOwnedException {
@@ -65,6 +70,8 @@ public class BuildImageSteps {
             sourceFilesConfiguration,
             buildConfiguration.getJvmFlags(),
             buildConfiguration.getMainClass());
+
+    buildConfiguration.getBuildLogger().lifecycle("");
 
     try (Timer timer = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       try (Timer timer2 = timer.subTimer("Initializing cache")) {
@@ -171,13 +178,36 @@ public class BuildImageSteps {
 
           timer2.lap("Setting up application layer push");
           // Pushes the application layers.
-          List<ListenableFuture<Void>> pushApplicationLayersFuture =
+          List<ListenableFuture<Void>> pushApplicationLayersFutures =
               new PushLayersStep(
                       buildConfiguration,
                       listeningExecutorService,
                       authenticatePushFuture,
                       Futures.immediateFuture(buildAndCacheApplicationLayerFutures))
                   .call();
+
+          List<ListenableFuture<?>> beforeBeforeFinalizing = new ArrayList<>();
+          beforeBeforeFinalizing.add(pullBaseImageLayerFuturesFuture);
+          beforeBeforeFinalizing.addAll(pushApplicationLayersFutures);
+          beforeBeforeFinalizing.add(pushContainerConfigurationFutureFuture);
+          Futures.whenAllSucceed(beforeBeforeFinalizing)
+              .call(
+                  () -> {
+                    List<ListenableFuture<?>> beforeFinalizing = new ArrayList<>();
+                    beforeFinalizing.addAll(
+                        NonBlockingFutures.get(pullBaseImageLayerFuturesFuture));
+                    beforeFinalizing.add(
+                        NonBlockingFutures.get(pushContainerConfigurationFutureFuture));
+                    Futures.whenAllSucceed(beforeFinalizing)
+                        .call(
+                            () -> {
+                              buildConfiguration.getBuildLogger().lifecycle("Finalizing...");
+                              return null;
+                            },
+                            listeningExecutorService);
+                    return null;
+                  },
+                  listeningExecutorService);
 
           timer2.lap("Setting up image manifest push");
           // Pushes the new image manifest.
@@ -192,7 +222,7 @@ public class BuildImageSteps {
                           pullBaseImageLayerFuturesFuture,
                           buildAndCacheApplicationLayerFutures,
                           pushBaseImageLayerFuturesFuture,
-                          pushApplicationLayersFuture,
+                          pushApplicationLayersFutures,
                           pushContainerConfigurationFutureFuture),
                       listeningExecutorService);
 

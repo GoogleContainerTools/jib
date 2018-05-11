@@ -20,10 +20,12 @@ import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.BuildImageSteps;
+import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.Caches;
+import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import com.google.common.annotations.VisibleForTesting;
@@ -92,7 +94,39 @@ public class BuildImageStepsRunner {
     BuildImageSteps buildImageSteps = buildImageStepsSupplier.get();
 
     try {
+      // TODO: This logging should be injected via another logging class.
+      BuildLogger buildLogger = buildImageSteps.getBuildConfiguration().getBuildLogger();
+      ImageReference targetImageReference =
+          buildImageSteps.getBuildConfiguration().getTargetImageReference();
+
+      buildLogger.lifecycle("");
+      buildLogger.lifecycle("Containerizing application to " + targetImageReference + "...");
+
+      // Logs the different source files used.
+      buildLogger.info("Containerizing application with the following files:");
+
+      buildLogger.info("\tClasses:");
+      buildImageSteps
+          .getSourceFilesConfiguration()
+          .getClassesFiles()
+          .forEach(classesFile -> buildLogger.info("\t\t" + classesFile));
+
+      buildLogger.info("\tResources:");
+      buildImageSteps
+          .getSourceFilesConfiguration()
+          .getResourcesFiles()
+          .forEach(resourceFile -> buildLogger.info("\t\t" + resourceFile));
+
+      buildLogger.info("\tDependencies:");
+      buildImageSteps
+          .getSourceFilesConfiguration()
+          .getDependenciesFiles()
+          .forEach(dependencyFile -> buildLogger.info("\t\t" + dependencyFile));
+
       buildImageSteps.run();
+
+      buildLogger.lifecycle("");
+      buildLogger.lifecycle("Built and pushed image as " + targetImageReference);
 
     } catch (CacheMetadataCorruptedException cacheMetadataCorruptedException) {
       // TODO: Have this be different for Maven and Gradle.

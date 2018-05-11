@@ -35,7 +35,8 @@ class MavenBuildLogger implements BuildLogger {
 
   @Override
   public void info(CharSequence charSequence) {
-    log.info(charSequence);
+    // Use lifecycle for progress-indicating messages.
+    debug(charSequence);
   }
 
   @Override
@@ -50,6 +51,6 @@ class MavenBuildLogger implements BuildLogger {
 
   @Override
   public void lifecycle(CharSequence message) {
-    info(message);
+    log.info(message);
   }
 }

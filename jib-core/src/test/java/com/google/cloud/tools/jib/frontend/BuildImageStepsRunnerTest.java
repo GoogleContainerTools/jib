@@ -20,14 +20,17 @@ import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.BuildImageSteps;
+import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
+import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import org.apache.http.conn.HttpHostConnectException;
 import org.junit.Assert;
@@ -57,6 +60,7 @@ public class BuildImageStepsRunnerTest {
 
   @Mock private BuildImageSteps mockBuildImageSteps;
   @Mock private SourceFilesConfiguration mockSourceFilesConfiguration;
+  @Mock private BuildLogger mockBuildLogger;
   @Mock private RegistryUnauthorizedException mockRegistryUnauthorizedException;
   @Mock private HttpResponseException mockHttpResponseException;
   @Mock private ExecutionException mockExecutionException;
@@ -69,6 +73,17 @@ public class BuildImageStepsRunnerTest {
     testBuildImageStepsRunner = new BuildImageStepsRunner(() -> mockBuildImageSteps);
 
     Mockito.when(mockBuildImageSteps.getBuildConfiguration()).thenReturn(mockBuildConfiguration);
+    Mockito.when(mockBuildConfiguration.getBuildLogger()).thenReturn(mockBuildLogger);
+    Mockito.when(mockBuildConfiguration.getTargetImageReference())
+        .thenReturn(ImageReference.of("someregistry", "somerepository", "sometag"));
+    Mockito.when(mockBuildImageSteps.getSourceFilesConfiguration())
+        .thenReturn(mockSourceFilesConfiguration);
+    Mockito.when(mockSourceFilesConfiguration.getClassesFiles())
+        .thenReturn(Collections.emptyList());
+    Mockito.when(mockSourceFilesConfiguration.getResourcesFiles())
+        .thenReturn(Collections.emptyList());
+    Mockito.when(mockSourceFilesConfiguration.getDependenciesFiles())
+        .thenReturn(Collections.emptyList());
   }
 
   @Test

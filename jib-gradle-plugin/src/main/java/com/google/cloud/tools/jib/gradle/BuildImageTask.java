@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.frontend.BuildImageStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildImageStepsRunner;
 import com.google.cloud.tools.jib.frontend.CacheDirectoryCreationException;
+import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.image.ImageReference;
@@ -46,6 +47,9 @@ public class BuildImageTask extends DefaultTask {
 
   /** {@code User-Agent} header suffix to send to the registry. */
   private static final String USER_AGENT_SUFFIX = "jib-gradle-plugin";
+
+  private static final HelpfulSuggestions HELPFUL_SUGGESTIONS =
+      HelpfulSuggestionsProvider.get("Build image failed");
 
   /** Converts an {@link ImageConfiguration} to an {@link Authorization}. */
   @Nullable
@@ -76,15 +80,16 @@ public class BuildImageTask extends DefaultTask {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
 
+    GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
+
     ImageReference baseImageReference = ImageReference.parse(jibExtension.getBaseImage());
     ImageReference targetImageReference = ImageReference.parse(jibExtension.getTargetImage());
 
     if (baseImageReference.usesDefaultTag()) {
-      getLogger()
-          .warn(
-              "Base image '"
-                  + baseImageReference
-                  + "' does not use a specific image digest - build may not be reproducible");
+      gradleBuildLogger.warn(
+          "Base image '"
+              + baseImageReference
+              + "' does not use a specific image digest - build may not be reproducible");
     }
 
     ProjectProperties projectProperties = new ProjectProperties(getProject(), getLogger());
@@ -102,7 +107,7 @@ public class BuildImageTask extends DefaultTask {
     }
 
     BuildConfiguration buildConfiguration =
-        BuildConfiguration.builder(new GradleBuildLogger(getLogger()))
+        BuildConfiguration.builder(gradleBuildLogger)
             .setBaseImage(baseImageReference)
             .setBaseImageCredentialHelperName(jibExtension.getFrom().getCredHelper())
             .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
@@ -135,15 +140,7 @@ public class BuildImageTask extends DefaultTask {
               cacheDirectory,
               jibExtension.getUseOnlyProjectCache());
 
-      getLogger().lifecycle("Pushing image as " + targetImageReference);
-      getLogger().lifecycle("");
-      getLogger().lifecycle("");
-
-      buildImageStepsRunner.buildImage(HelpfulSuggestionsProvider.get("Build image failed"));
-
-      getLogger().lifecycle("");
-      getLogger().lifecycle("Built and pushed image as " + targetImageReference);
-      getLogger().lifecycle("");
+      buildImageStepsRunner.buildImage(HELPFUL_SUGGESTIONS);
 
     } catch (CacheDirectoryCreationException | BuildImageStepsExecutionException ex) {
       throw new GradleException(ex.getMessage(), ex.getCause());

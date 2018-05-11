@@ -17,10 +17,16 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.builder.BuildLogger;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.gradle.api.logging.Logger;
 
 /** Implementation of {@link BuildLogger} for Gradle plugins. */
+@SuppressWarnings("FutureReturnValueIgnored")
 class GradleBuildLogger implements BuildLogger {
+
+  /** This executor keeps all log messages in order. */
+  private static final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
   private final Logger logger;
 
@@ -30,26 +36,26 @@ class GradleBuildLogger implements BuildLogger {
 
   @Override
   public void lifecycle(CharSequence message) {
-    logger.lifecycle(message.toString());
+    executorService.submit(() -> logger.lifecycle(message.toString()));
   }
 
   @Override
   public void debug(CharSequence message) {
-    logger.debug(message.toString());
+    executorService.submit(() -> logger.debug(message.toString()));
   }
 
   @Override
   public void info(CharSequence message) {
-    logger.info(message.toString());
+    executorService.submit(() -> logger.info(message.toString()));
   }
 
   @Override
   public void warn(CharSequence message) {
-    logger.warn(message.toString());
+    executorService.submit(() -> logger.warn("warning: " + message));
   }
 
   @Override
   public void error(CharSequence message) {
-    logger.error(message.toString());
+    executorService.submit(() -> logger.error(message.toString()));
   }
 }

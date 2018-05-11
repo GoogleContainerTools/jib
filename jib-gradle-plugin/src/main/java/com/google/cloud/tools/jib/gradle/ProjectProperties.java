@@ -65,35 +65,7 @@ class ProjectProperties {
   /** @return the {@link SourceFilesConfiguration} based on the current project */
   SourceFilesConfiguration getSourceFilesConfiguration() {
     try {
-      SourceFilesConfiguration sourceFilesConfiguration =
-          GradleSourceFilesConfiguration.getForProject(project);
-
-      // Logs the different source files used.
-      getLogger().lifecycle("");
-      getLogger().lifecycle("Containerizing application with the following files:");
-      getLogger().lifecycle("");
-
-      getLogger().lifecycle("\tDependencies:");
-      getLogger().lifecycle("");
-      sourceFilesConfiguration
-          .getDependenciesFiles()
-          .forEach(dependencyFile -> getLogger().lifecycle("\t\t" + dependencyFile));
-
-      getLogger().lifecycle("\tResources:");
-      getLogger().lifecycle("");
-      sourceFilesConfiguration
-          .getResourcesFiles()
-          .forEach(resourceFile -> getLogger().lifecycle("\t\t" + resourceFile));
-
-      getLogger().lifecycle("\tClasses:");
-      getLogger().lifecycle("");
-      sourceFilesConfiguration
-          .getClassesFiles()
-          .forEach(classesFile -> getLogger().lifecycle("\t\t" + classesFile));
-
-      getLogger().lifecycle("");
-
-      return sourceFilesConfiguration;
+      return GradleSourceFilesConfiguration.getForProject(project);
 
     } catch (IOException ex) {
       throw new GradleException("Obtaining project build output files failed", ex);
