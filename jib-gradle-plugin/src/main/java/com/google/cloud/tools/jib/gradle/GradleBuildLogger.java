@@ -22,6 +22,7 @@ import java.util.concurrent.Executors;
 import org.gradle.api.logging.Logger;
 
 /** Implementation of {@link BuildLogger} for Gradle plugins. */
+// We don't care about the return values of the logging futures.
 @SuppressWarnings("FutureReturnValueIgnored")
 class GradleBuildLogger implements BuildLogger {
 

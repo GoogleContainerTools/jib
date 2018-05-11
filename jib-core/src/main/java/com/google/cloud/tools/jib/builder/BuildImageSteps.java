@@ -186,25 +186,25 @@ public class BuildImageSteps {
                       Futures.immediateFuture(buildAndCacheApplicationLayerFutures))
                   .call();
 
-          List<ListenableFuture<?>> beforeBeforeFinalizing = new ArrayList<>();
-          beforeBeforeFinalizing.add(pullBaseImageLayerFuturesFuture);
-          beforeBeforeFinalizing.addAll(pushApplicationLayersFutures);
-          beforeBeforeFinalizing.add(pushContainerConfigurationFutureFuture);
-          Futures.whenAllSucceed(beforeBeforeFinalizing)
+          // Logs a message after pushing all the layers.
+          Futures.whenAllSucceed(pushBaseImageLayerFuturesFuture)
               .call(
                   () -> {
                     List<ListenableFuture<?>> beforeFinalizing = new ArrayList<>();
                     beforeFinalizing.addAll(
-                        NonBlockingFutures.get(pullBaseImageLayerFuturesFuture));
-                    beforeFinalizing.add(
-                        NonBlockingFutures.get(pushContainerConfigurationFutureFuture));
+                        NonBlockingFutures.get(pushBaseImageLayerFuturesFuture));
+                    beforeFinalizing.addAll(
+                        NonBlockingFutures.get(pushBaseImageLayerFuturesFuture));
+
                     Futures.whenAllSucceed(beforeFinalizing)
                         .call(
                             () -> {
+                              // TODO: Have this be more descriptive?
                               buildConfiguration.getBuildLogger().lifecycle("Finalizing...");
                               return null;
                             },
                             listeningExecutorService);
+
                     return null;
                   },
                   listeningExecutorService);

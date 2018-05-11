@@ -30,6 +30,7 @@ import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.Optional;
 
@@ -129,10 +130,12 @@ public class JibExtension {
     this.useOnlyProjectCache.set(useOnlyProjectCache);
   }
 
+  @Internal
   String getBaseImage() {
     return Preconditions.checkNotNull(from.getImage());
   }
 
+  @Internal
   String getTargetImage() {
     return Preconditions.checkNotNull(to.getImage());
   }
