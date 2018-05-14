@@ -124,6 +124,7 @@ public class BuildImageTask extends DefaultTask {
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
     // Disables annoying Apache HTTP client logging.
+    // Note that this is a hack and depends on internal Gradle classes
     OutputEventListenerBackedLoggerContext context =
         (OutputEventListenerBackedLoggerContext) LoggerFactory.getILoggerFactory();
     OutputEventListener defaultOutputEventListener = context.getOutputEventListener();
