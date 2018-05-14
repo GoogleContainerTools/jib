@@ -123,7 +123,7 @@ public class BuildDockerSteps {
 
           timer2.lap("Setting up build container configuration");
           // Builds the container configuration.
-          ListenableFuture<ListenableFuture<Image>> buildContainerConfigurationFutureFuture =
+          ListenableFuture<ListenableFuture<Image>> buildImageFutureFuture =
               Futures.whenAllSucceed(pullBaseImageLayerFuturesFuture)
                   .call(
                       new BuildImageStep(
@@ -137,15 +137,14 @@ public class BuildDockerSteps {
           timer2.lap("Setting up build to docker daemon");
           // Builds the image tarball and loads into the Docker daemon.
           ListenableFuture<Void> buildToDockerFutureFuture =
-              Futures.whenAllSucceed(
-                      pullBaseImageLayerFuturesFuture, buildContainerConfigurationFutureFuture)
+              Futures.whenAllSucceed(pullBaseImageLayerFuturesFuture, buildImageFutureFuture)
                   .call(
                       new BuildTarballAndLoadDockerStep(
                           buildConfiguration,
                           listeningExecutorService,
                           pullBaseImageLayerFuturesFuture,
                           buildAndCacheApplicationLayerFutures,
-                          buildContainerConfigurationFutureFuture),
+                          buildImageFutureFuture),
                       listeningExecutorService);
 
           timer2.lap("Running build to docker daemon");

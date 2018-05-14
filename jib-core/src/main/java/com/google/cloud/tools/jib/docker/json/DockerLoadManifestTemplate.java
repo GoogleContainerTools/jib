@@ -54,7 +54,7 @@ public class DockerLoadManifestTemplate implements ListOfJsonTemplate {
   }
 
   public void addLayerFile(String layer) {
-    this.layers.add(layer);
+    layers.add(layer);
   }
 
   @Override

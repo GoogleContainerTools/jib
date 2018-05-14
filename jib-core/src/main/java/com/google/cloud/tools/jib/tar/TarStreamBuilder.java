@@ -20,11 +20,11 @@ import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.common.io.ByteStreams;
 import java.io.BufferedInputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -38,8 +38,11 @@ public class TarStreamBuilder {
     void accept(TarArchiveOutputStream tarArchiveOutputStream) throws IOException;
   }
 
-  /** Map of TarArchiveEntries and their corresponding content as output stream consumers. */
-  private final LinkedHashMap<TarArchiveEntry, TarArchiveOutputStreamConsumer> blobContents =
+  /**
+   * Maps from {@link TarArchiveEntry} to function that outputs the entry onto a {@link
+   * TarArchiveOutputStream}. The order of the entries is the order they belong in the tarball.
+   */
+  private final LinkedHashMap<TarArchiveEntry, TarArchiveOutputStreamConsumer> archiveMap =
       new LinkedHashMap<>();
 
   /** Writes each entry in the filesystem to the tarball archive stream. */
@@ -49,7 +52,7 @@ public class TarStreamBuilder {
       // Enables PAX extended headers to support long file names.
       tarArchiveOutputStream.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
       for (Map.Entry<TarArchiveEntry, TarArchiveOutputStreamConsumer> entry :
-          blobContents.entrySet()) {
+          archiveMap.entrySet()) {
         tarArchiveOutputStream.putArchiveEntry(entry.getKey());
         entry.getValue().accept(tarArchiveOutputStream);
         tarArchiveOutputStream.closeArchiveEntry();
@@ -59,12 +62,12 @@ public class TarStreamBuilder {
 
   /** Adds an entry to the archive. */
   public void addEntry(TarArchiveEntry entry) {
-    blobContents.put(
+    archiveMap.put(
         entry,
         tarArchiveOutputStream -> {
           if (entry.isFile()) {
             try (InputStream contentStream =
-                new BufferedInputStream(new FileInputStream(entry.getFile()))) {
+                new BufferedInputStream(Files.newInputStream(entry.getFile().toPath()))) {
               ByteStreams.copy(contentStream, tarArchiveOutputStream);
             }
           }
@@ -75,7 +78,7 @@ public class TarStreamBuilder {
   public void addEntry(String contents, String name) {
     TarArchiveEntry entry = new TarArchiveEntry(name);
     entry.setSize(contents.length());
-    blobContents.put(
+    archiveMap.put(
         entry,
         tarArchiveOutputStream ->
             tarArchiveOutputStream.write(contents.getBytes(StandardCharsets.UTF_8)));

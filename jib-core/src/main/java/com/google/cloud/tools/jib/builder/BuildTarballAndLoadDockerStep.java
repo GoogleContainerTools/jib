@@ -46,30 +46,28 @@ class BuildTarballAndLoadDockerStep implements Callable<Void> {
   private final ListenableFuture<List<ListenableFuture<CachedLayer>>>
       pullBaseImageLayerFuturesFuture;
   private final List<ListenableFuture<CachedLayer>> buildApplicationLayerFutures;
-  private final ListenableFuture<ListenableFuture<Image>> buildConfigurationFutureFuture;
+  private final ListenableFuture<ListenableFuture<Image>> buildImageFutureFuture;
 
   BuildTarballAndLoadDockerStep(
       BuildConfiguration buildConfiguration,
       ListeningExecutorService listeningExecutorService,
       ListenableFuture<List<ListenableFuture<CachedLayer>>> pullBaseImageLayerFuturesFuture,
       List<ListenableFuture<CachedLayer>> buildApplicationLayerFutures,
-      ListenableFuture<ListenableFuture<Image>> buildConfigurationFutureFuture) {
+      ListenableFuture<ListenableFuture<Image>> buildImageFutureFuture) {
     this.buildConfiguration = buildConfiguration;
     this.listeningExecutorService = listeningExecutorService;
     this.pullBaseImageLayerFuturesFuture = pullBaseImageLayerFuturesFuture;
     this.buildApplicationLayerFutures = buildApplicationLayerFutures;
-    this.buildConfigurationFutureFuture = buildConfigurationFutureFuture;
+    this.buildImageFutureFuture = buildImageFutureFuture;
   }
 
-  /**
-   * Depends on {@code pullBaseImageLayerFuturesFuture} and {@code buildConfigurationFutureFuture}.
-   */
+  /** Depends on {@code pullBaseImageLayerFuturesFuture} and {@code buildImageFutureFuture}. */
   @Override
   public Void call() throws ExecutionException, InterruptedException {
     List<ListenableFuture<?>> dependencies = new ArrayList<>();
     dependencies.addAll(NonBlockingFutures.get(pullBaseImageLayerFuturesFuture));
     dependencies.addAll(buildApplicationLayerFutures);
-    dependencies.add(NonBlockingFutures.get(buildConfigurationFutureFuture));
+    dependencies.add(NonBlockingFutures.get(buildImageFutureFuture));
     return Futures.whenAllComplete(dependencies)
         .call(this::afterPushBaseImageLayerFuturesFuture, listeningExecutorService)
         .get();
@@ -77,18 +75,19 @@ class BuildTarballAndLoadDockerStep implements Callable<Void> {
 
   /**
    * Depends on {@code pullBaseImageLayerFuturesFuture.get()} and (@code
-   * buildConfigurationFutureFuture.get()}.
+   * buildImageFutureFuture.get()}.
    *
    * <p>TODO: Refactor into testable components
    */
   private Void afterPushBaseImageLayerFuturesFuture()
       throws ExecutionException, InterruptedException, IOException, LayerPropertyNotFoundException {
     // Add layers to image tarball
-    Image image = NonBlockingFutures.get(NonBlockingFutures.get(buildConfigurationFutureFuture));
+    Image image = NonBlockingFutures.get(NonBlockingFutures.get(buildImageFutureFuture));
     TarStreamBuilder tarStreamBuilder = new TarStreamBuilder();
     DockerLoadManifestTemplate manifestTemplate = new DockerLoadManifestTemplate();
 
     for (Layer layer : image.getLayers()) {
+      // TODO: Refactor Image to only contain CachedLayers
       Path cachedFile = ((CachedLayer) layer).getContentFile();
       String layerName = cachedFile.getFileName().toString();
       tarStreamBuilder.addEntry(new TarArchiveEntry(cachedFile.toFile(), layerName));
