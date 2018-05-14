@@ -186,15 +186,16 @@ public class BuildImageSteps {
                       Futures.immediateFuture(buildAndCacheApplicationLayerFutures))
                   .call();
 
+          // TODO: Move this somewhere that doesn't clutter this method.
           // Logs a message after pushing all the layers.
           Futures.whenAllSucceed(pushBaseImageLayerFuturesFuture)
               .call(
                   () -> {
+                    // Depends on all the layers being pushed.
                     List<ListenableFuture<?>> beforeFinalizing = new ArrayList<>();
                     beforeFinalizing.addAll(
                         NonBlockingFutures.get(pushBaseImageLayerFuturesFuture));
-                    beforeFinalizing.addAll(
-                        NonBlockingFutures.get(pushBaseImageLayerFuturesFuture));
+                    beforeFinalizing.addAll(pushApplicationLayersFutures);
 
                     Futures.whenAllSucceed(beforeFinalizing)
                         .call(
