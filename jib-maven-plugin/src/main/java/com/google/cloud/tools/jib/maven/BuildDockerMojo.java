@@ -84,6 +84,12 @@ public class BuildDockerMojo extends JibPluginConfiguration {
             .setEnvironment(getEnvironment())
             .build();
 
+    // TODO: Instead of disabling logging, have authentication credentials be provided
+    // Disables annoying Apache HTTP client logging.
+    System.setProperty(
+        "org.apache.commons.logging.Log", "org.apache.commons.logging.impl.SimpleLog");
+    System.setProperty("org.apache.commons.logging.simplelog.defaultlog", "error");
+
     // Uses a directory in the Maven build cache as the Jib cache.
     Path cacheDirectory = Paths.get(getProject().getBuild().getDirectory(), CACHE_DIRECTORY_NAME);
     try {
