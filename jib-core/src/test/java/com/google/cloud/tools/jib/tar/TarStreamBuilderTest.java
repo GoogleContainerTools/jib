@@ -62,77 +62,37 @@ public class TarStreamBuilderTest {
   @Test
   public void testToBlob_tarArchiveEntries() throws IOException {
     setUpWithTarEntries();
-
-    Blob blob = testTarStreamBuilder.toBlob();
-
-    // Writes the BLOB and captures the output.
-    ByteArrayOutputStream tarByteOutputStream = new ByteArrayOutputStream();
-    blob.writeTo(tarByteOutputStream);
-
-    // Rearrange the output into input for verification.
-    ByteArrayInputStream tarByteInputStream =
-        new ByteArrayInputStream(tarByteOutputStream.toByteArray());
-    TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(tarByteInputStream);
-
-    verifyTarArchive(tarArchiveInputStream);
+    verifyBlobWithoutCompression();
   }
 
   @Test
   public void testToBlob_strings() throws IOException {
     setUpWithStrings();
+    verifyBlobWithoutCompression();
+  }
 
-    Blob blob = testTarStreamBuilder.toBlob();
-
-    // Writes the BLOB and captures the output.
-    ByteArrayOutputStream tarByteOutputStream = new ByteArrayOutputStream();
-    blob.writeTo(tarByteOutputStream);
-
-    // Rearrange the output into input for verification.
-    ByteArrayInputStream tarByteInputStream =
-        new ByteArrayInputStream(tarByteOutputStream.toByteArray());
-    TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(tarByteInputStream);
-
-    verifyTarArchive(tarArchiveInputStream);
+  @Test
+  public void testToBlob_stringsAndTarArchiveEntries() throws IOException {
+    setUpWithStringsAndTarEntries();
+    verifyBlobWithoutCompression();
   }
 
   @Test
   public void testToBlob_tarArchiveEntriesWithCompression() throws IOException {
     setUpWithTarEntries();
-
-    Blob blob = testTarStreamBuilder.toBlob();
-
-    // Writes the BLOB and captures the output.
-    ByteArrayOutputStream tarByteOutputStream = new ByteArrayOutputStream();
-    OutputStream compressorStream = new GZIPOutputStream(tarByteOutputStream);
-    blob.writeTo(compressorStream);
-
-    // Rearrange the output into input for verification.
-    ByteArrayInputStream byteArrayInputStream =
-        new ByteArrayInputStream(tarByteOutputStream.toByteArray());
-    InputStream tarByteInputStream = new GZIPInputStream(byteArrayInputStream);
-    TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(tarByteInputStream);
-
-    verifyTarArchive(tarArchiveInputStream);
+    verifyBlobWithCompression();
   }
 
   @Test
   public void testToBlob_stringsWithCompression() throws IOException {
     setUpWithStrings();
+    verifyBlobWithCompression();
+  }
 
-    Blob blob = testTarStreamBuilder.toBlob();
-
-    // Writes the BLOB and captures the output.
-    ByteArrayOutputStream tarByteOutputStream = new ByteArrayOutputStream();
-    OutputStream compressorStream = new GZIPOutputStream(tarByteOutputStream);
-    blob.writeTo(compressorStream);
-
-    // Rearrange the output into input for verification.
-    ByteArrayInputStream byteArrayInputStream =
-        new ByteArrayInputStream(tarByteOutputStream.toByteArray());
-    InputStream tarByteInputStream = new GZIPInputStream(byteArrayInputStream);
-    TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(tarByteInputStream);
-
-    verifyTarArchive(tarArchiveInputStream);
+  @Test
+  public void testToBlob_stringsAndTarArchiveEntriesWithCompression() throws IOException {
+    setUpWithStringsAndTarEntries();
+    verifyBlobWithCompression();
   }
 
   /** Creates a TarStreamBuilder using TarArchiveEntries. */
@@ -157,6 +117,49 @@ public class TarStreamBuilderTest {
     testTarStreamBuilder.addEntry(
         fileAContents,
         "some/really/long/path/that/exceeds/100/characters/abcdefghijklmnopqrstuvwxyz0123456789012345678901234567890");
+  }
+
+  /** Creates a TarStreamBuilder using Strings and TarArchiveEntries. */
+  private void setUpWithStringsAndTarEntries() {
+    // Prepares a test TarStreamBuilder.
+    testTarStreamBuilder.addEntry(fileAContents, "some/path/to/resourceFileA");
+    testTarStreamBuilder.addEntry(new TarArchiveEntry(fileB.toFile(), "crepecake"));
+    testTarStreamBuilder.addEntry(new TarArchiveEntry(directoryA.toFile(), "some/path/to"));
+    testTarStreamBuilder.addEntry(
+        fileAContents,
+        "some/really/long/path/that/exceeds/100/characters/abcdefghijklmnopqrstuvwxyz0123456789012345678901234567890");
+  }
+
+  /** Creates a compressed blob from the TarStreamBuilder and verifies it. */
+  private void verifyBlobWithCompression() throws IOException {
+    Blob blob = testTarStreamBuilder.toBlob();
+
+    // Writes the BLOB and captures the output.
+    ByteArrayOutputStream tarByteOutputStream = new ByteArrayOutputStream();
+    OutputStream compressorStream = new GZIPOutputStream(tarByteOutputStream);
+    blob.writeTo(compressorStream);
+
+    // Rearrange the output into input for verification.
+    ByteArrayInputStream byteArrayInputStream =
+        new ByteArrayInputStream(tarByteOutputStream.toByteArray());
+    InputStream tarByteInputStream = new GZIPInputStream(byteArrayInputStream);
+    TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(tarByteInputStream);
+    verifyTarArchive(tarArchiveInputStream);
+  }
+
+  /** Creates an uncompressed blob from the TarStreamBuilder and verifies it. */
+  private void verifyBlobWithoutCompression() throws IOException {
+    Blob blob = testTarStreamBuilder.toBlob();
+
+    // Writes the BLOB and captures the output.
+    ByteArrayOutputStream tarByteOutputStream = new ByteArrayOutputStream();
+    blob.writeTo(tarByteOutputStream);
+
+    // Rearrange the output into input for verification.
+    ByteArrayInputStream byteArrayInputStream =
+        new ByteArrayInputStream(tarByteOutputStream.toByteArray());
+    TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(byteArrayInputStream);
+    verifyTarArchive(tarArchiveInputStream);
   }
 
   /**
