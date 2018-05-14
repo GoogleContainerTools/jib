@@ -94,14 +94,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
               cacheDirectory,
               getUseOnlyProjectCache());
 
-      getLog().info("");
-      getLog().info("Building to docker daemon as " + targetImage);
-      getLog().info("");
-
       buildDockerStepsRunner.buildDocker(HELPFUL_SUGGESTIONS);
-
-      getLog().info("");
-      getLog().info("Built image to Docker daemon as " + targetImage);
       getLog().info("");
 
     } catch (CacheDirectoryCreationException | BuildImageStepsExecutionException ex) {

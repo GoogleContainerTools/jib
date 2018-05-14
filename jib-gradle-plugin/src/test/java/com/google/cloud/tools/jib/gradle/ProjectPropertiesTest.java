@@ -22,7 +22,6 @@ import org.gradle.api.Project;
 import org.gradle.api.internal.file.FileResolver;
 import org.gradle.api.java.archives.Manifest;
 import org.gradle.api.java.archives.internal.DefaultManifest;
-import org.gradle.api.logging.Logger;
 import org.gradle.internal.impldep.com.google.common.collect.ImmutableMap;
 import org.gradle.internal.impldep.com.google.common.collect.ImmutableSet;
 import org.gradle.jvm.tasks.Jar;
@@ -42,7 +41,7 @@ public class ProjectPropertiesTest {
   @Mock private FileResolver mockFileResolver;
   @Mock private Jar mockJar;
   @Mock private Project mockProject;
-  @Mock private Logger mockLogger;
+  @Mock private GradleBuildLogger mockGradleBuildLogger;
 
   private Manifest fakeManifest;
   private ProjectProperties testProjectProperties;
@@ -52,7 +51,7 @@ public class ProjectPropertiesTest {
     fakeManifest = new DefaultManifest(mockFileResolver);
     Mockito.when(mockJar.getManifest()).thenReturn(fakeManifest);
 
-    testProjectProperties = new ProjectProperties(mockProject, mockLogger);
+    testProjectProperties = new ProjectProperties(mockProject, mockGradleBuildLogger);
   }
 
   @Test
@@ -86,7 +85,8 @@ public class ProjectPropertiesTest {
     Mockito.when(mockProject.getTasksByName("jar", false)).thenReturn(ImmutableSet.of(mockJar));
 
     Assert.assertEquals("${start-class}", testProjectProperties.getMainClass(null));
-    Mockito.verify(mockLogger).warn("'mainClass' is not a valid Java class : ${start-class}");
+    Mockito.verify(mockGradleBuildLogger)
+        .warn("'mainClass' is not a valid Java class : ${start-class}");
   }
 
   private void assertGetMainClassFails() {

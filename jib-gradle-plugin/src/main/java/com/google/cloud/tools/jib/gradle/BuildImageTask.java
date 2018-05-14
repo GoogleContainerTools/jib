@@ -95,7 +95,7 @@ public class BuildImageTask extends DefaultTask {
               + "' does not use a specific image digest - build may not be reproducible");
     }
 
-    ProjectProperties projectProperties = new ProjectProperties(getProject(), getLogger());
+    ProjectProperties projectProperties = new ProjectProperties(getProject(), gradleBuildLogger);
     String mainClass = projectProperties.getMainClass(jibExtension.getMainClass());
 
     RegistryCredentials knownBaseRegistryCredentials = null;

@@ -25,18 +25,17 @@ import javax.annotation.Nullable;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
-import org.gradle.api.logging.Logger;
 import org.gradle.jvm.tasks.Jar;
 
 /** Obtains information about a Gradle {@link Project} that uses Jib. */
 class ProjectProperties {
 
   private final Project project;
-  private final Logger logger;
+  private final GradleBuildLogger gradleBuildLogger;
 
-  ProjectProperties(Project project, Logger logger) {
+  ProjectProperties(Project project, GradleBuildLogger gradleBuildLogger) {
     this.project = project;
-    this.logger = logger;
+    this.gradleBuildLogger = gradleBuildLogger;
   }
 
   /**
@@ -58,8 +57,8 @@ class ProjectProperties {
     return mainClass;
   }
 
-  Logger getLogger() {
-    return logger;
+  GradleBuildLogger getLogger() {
+    return gradleBuildLogger;
   }
 
   /** @return the {@link SourceFilesConfiguration} based on the current project */

@@ -77,18 +77,19 @@ public class BuildDockerTask extends DefaultTask {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
 
+    GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
+
     ImageReference baseImageReference = ImageReference.parse(jibExtension.getBaseImage());
     ImageReference targetImageReference = ImageReference.parse(jibExtension.getTargetImage());
 
     if (baseImageReference.usesDefaultTag()) {
-      getLogger()
-          .warn(
-              "Base image '"
-                  + baseImageReference
-                  + "' does not use a specific image digest - build may not be reproducible");
+      gradleBuildLogger.warn(
+          "Base image '"
+              + baseImageReference
+              + "' does not use a specific image digest - build may not be reproducible");
     }
 
-    ProjectProperties projectProperties = new ProjectProperties(getProject(), getLogger());
+    ProjectProperties projectProperties = new ProjectProperties(getProject(), gradleBuildLogger);
     String mainClass = projectProperties.getMainClass(jibExtension.getMainClass());
 
     RegistryCredentials knownBaseRegistryCredentials = null;
@@ -98,7 +99,7 @@ public class BuildDockerTask extends DefaultTask {
     }
 
     BuildConfiguration buildConfiguration =
-        BuildConfiguration.builder(new GradleBuildLogger(getLogger()))
+        BuildConfiguration.builder(gradleBuildLogger)
             .setBaseImage(baseImageReference)
             .setBaseImageCredentialHelperName(jibExtension.getFrom().getCredHelper())
             .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
@@ -116,17 +117,8 @@ public class BuildDockerTask extends DefaultTask {
               projectProperties.getSourceFilesConfiguration(),
               cacheDirectory,
               jibExtension.getUseOnlyProjectCache());
-
-      getLogger().lifecycle("Building to docker daemon as " + targetImageReference);
-      getLogger().lifecycle("");
-      getLogger().lifecycle("");
-
       buildDockerStepsRunner.buildDocker(
           HelpfulSuggestionsProvider.get("Build to Docker daemon failed"));
-
-      getLogger().lifecycle("");
-      getLogger().lifecycle("Built image to Docker daemon as " + targetImageReference);
-      getLogger().lifecycle("");
 
     } catch (CacheDirectoryCreationException | BuildImageStepsExecutionException ex) {
       throw new GradleException(ex.getMessage(), ex.getCause());

@@ -126,7 +126,9 @@ public class BuildImageStepsRunner {
       buildImageSteps.run();
 
       buildLogger.lifecycle("");
-      buildLogger.lifecycle("Built and pushed image as \u001B[36m" + targetImageReference);
+      // targetImageReference in cyan.
+      buildLogger.lifecycle(
+          "Built and pushed image as \u001B[36m" + targetImageReference + "\u001B[0m");
 
     } catch (CacheMetadataCorruptedException cacheMetadataCorruptedException) {
       // TODO: Have this be different for Maven and Gradle.

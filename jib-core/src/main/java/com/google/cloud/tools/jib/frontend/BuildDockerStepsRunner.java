@@ -20,10 +20,12 @@ import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.BuildDockerSteps;
+import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.Caches;
+import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import java.io.IOException;
@@ -91,7 +93,19 @@ public class BuildDockerStepsRunner {
     BuildDockerSteps buildDockerSteps = buildDockerStepsSupplier.get();
 
     try {
+      BuildLogger buildLogger = buildDockerSteps.getBuildConfiguration().getBuildLogger();
+      ImageReference targetImageReference =
+          buildDockerSteps.getBuildConfiguration().getTargetImageReference();
+
+      buildLogger.lifecycle("");
+      buildLogger.lifecycle("Building to Docker daemon as " + targetImageReference + "...");
+
       buildDockerSteps.run();
+
+      buildLogger.lifecycle("");
+      // targetImageReference in cyan.
+      buildLogger.lifecycle(
+          "Built image to Docker daemon as \u001B[36m" + targetImageReference + "\u001B[0m");
 
     } catch (CacheMetadataCorruptedException cacheMetadataCorruptedException) {
       // TODO: Have this be different for Maven and Gradle.

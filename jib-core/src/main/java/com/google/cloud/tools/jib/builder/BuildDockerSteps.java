@@ -69,6 +69,8 @@ public class BuildDockerSteps {
             buildConfiguration.getJvmFlags(),
             buildConfiguration.getMainClass());
 
+    buildConfiguration.getBuildLogger().lifecycle("");
+
     try (Timer timer = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       try (Timer timer2 = timer.subTimer("Initializing cache")) {
         ListeningExecutorService listeningExecutorService =
