@@ -29,7 +29,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-/** Builds the container image. */
+/** Builds a model {@link Image}. */
 class BuildImageStep implements Callable<ListenableFuture<Image>> {
 
   private static final String DESCRIPTION = "Building container configuration";

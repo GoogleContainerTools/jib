@@ -24,6 +24,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -71,10 +72,13 @@ public class TarStreamBuilder {
   }
 
   /** Adds a blob to the archive. */
-  public void addEntry(byte[] contents, String name) {
+  public void addEntry(String contents, String name) {
     TarArchiveEntry entry = new TarArchiveEntry(name);
-    entry.setSize(contents.length);
-    blobContents.put(entry, tarArchiveOutputStream -> tarArchiveOutputStream.write(contents));
+    entry.setSize(contents.length());
+    blobContents.put(
+        entry,
+        tarArchiveOutputStream ->
+            tarArchiveOutputStream.write(contents.getBytes(StandardCharsets.UTF_8)));
   }
 
   /** Builds a {@link Blob} that can stream the uncompressed tarball archive BLOB. */

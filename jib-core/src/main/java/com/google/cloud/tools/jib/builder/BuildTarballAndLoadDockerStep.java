@@ -31,10 +31,12 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 
 /** Adds image layers to a tarball and loads into Docker daemon. */
 class BuildTarballAndLoadDockerStep implements Callable<Void> {
@@ -85,21 +87,23 @@ class BuildTarballAndLoadDockerStep implements Callable<Void> {
     Image image = NonBlockingFutures.get(NonBlockingFutures.get(buildConfigurationFutureFuture));
     TarStreamBuilder tarStreamBuilder = new TarStreamBuilder();
     DockerLoadManifestTemplate manifestTemplate = new DockerLoadManifestTemplate();
+
     for (Layer layer : image.getLayers()) {
-      String layerName = layer.getBlobDescriptor().getDigest() + ".tar.gz";
-      tarStreamBuilder.addEntry(Blobs.writeToByteArray(layer.getBlob()), layerName);
+      Path cachedFile = ((CachedLayer) layer).getContentFile();
+      String layerName = cachedFile.getFileName().toString();
+      tarStreamBuilder.addEntry(new TarArchiveEntry(cachedFile.toFile(), layerName));
       manifestTemplate.addLayerFile(layerName);
     }
 
     // Add config to tarball
     Blob containerConfigurationBlob =
         new ImageToJsonTranslator(image).getContainerConfigurationBlob();
-    tarStreamBuilder.addEntry(Blobs.writeToByteArray(containerConfigurationBlob), "config.json");
+    tarStreamBuilder.addEntry(Blobs.writeToString(containerConfigurationBlob), "config.json");
 
     // Add manifest to tarball
     manifestTemplate.setRepoTags(buildConfiguration.getTargetImageReference().toStringWithTag());
     tarStreamBuilder.addEntry(
-        Blobs.writeToByteArray(JsonTemplateMapper.toBlob(manifestTemplate)), "manifest.json");
+        Blobs.writeToString(JsonTemplateMapper.toBlob(manifestTemplate)), "manifest.json");
 
     // Load the image to docker daemon
     // TODO: Command is untested/not very robust
