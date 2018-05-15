@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.builder;
 
-import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.cache.CachedLayer;
@@ -27,10 +26,14 @@ import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.tar.TarStreamBuilder;
+import com.google.common.io.CharStreams;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -105,8 +108,18 @@ class BuildTarballAndLoadDockerStep implements Callable<Void> {
         Blobs.writeToString(JsonTemplateMapper.toBlob(manifestTemplate)), "manifest.json");
 
     // Load the image to docker daemon
-    // TODO: Command is untested/not very robust
-    new Command("docker", "load").run(Blobs.writeToByteArray(tarStreamBuilder.toBlob()));
+    ProcessBuilder processBuilder = new ProcessBuilder("docker", "load");
+    Process process = processBuilder.start();
+    try (OutputStream stdin = process.getOutputStream()) {
+      tarStreamBuilder.toBlob().writeTo(stdin);
+    }
+    try (InputStreamReader stdout =
+        new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)) {
+      String output = CharStreams.toString(stdout);
+      if (process.waitFor() != 0) {
+        throw new RuntimeException("'docker load' command failed with output: " + output);
+      }
+    }
 
     return null;
   }
