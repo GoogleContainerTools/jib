@@ -130,9 +130,6 @@
             <version>2.21.0</version>
             <configuration>
               <classesDirectory>${project.build.directory}/classes</classesDirectory>
-              <additionalClasspathElements>
-                <additionalClasspathElement>${basedir}/../jib-core/build/classes/java/integrationTest</additionalClasspathElement>
-              </additionalClasspathElements>
               <includes>
                 <include>**/*IntegrationTest.java</include>
               </includes>
