@@ -25,8 +25,8 @@ import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-/** Integration tests for {@link BuildImageMojo}. */
-public class BuildImageMojoIT {
+/** Integration tests for {@link BuildDockerMojo}. */
+public class BuildDockerMojoIntegrationTest {
 
   @ClassRule public static final TestPlugin testPlugin = new TestPlugin();
 
@@ -37,35 +37,19 @@ public class BuildImageMojoIT {
   public static final TestProject emptyTestProject = new TestProject(testPlugin, "empty");
 
   /**
-   * Builds and runs jib:build on a project at {@code projectRoot} pushing to {@code
+   * Builds and runs jib:buildDocker on a project at {@code projectRoot} pushing to {@code
    * imageReference}.
    */
-  private static String buildAndRun(Path projectRoot, String imageReference)
+  private static String buildToDockerDaemonAndRun(Path projectRoot, String imageReference)
       throws VerificationException, IOException, InterruptedException {
     Verifier verifier = new Verifier(projectRoot.toString());
     verifier.setAutoclean(false);
     verifier.executeGoal("package");
 
     // Builds twice, and checks if the second build took less time.
-    long lastTime = System.nanoTime();
-    verifier.executeGoal("jib:build");
-    long timeOne = System.nanoTime() - lastTime;
-    lastTime = System.nanoTime();
-
-    verifier.executeGoal("jib:build");
-    long timeTwo = System.nanoTime() - lastTime;
-
+    verifier.executeGoal("jib:buildDocker");
     verifier.verifyErrorFreeLog();
 
-    Assert.assertTrue(
-        "First build time ("
-            + timeOne
-            + ") is not greater than second build time ("
-            + timeTwo
-            + ")",
-        timeOne > timeTwo);
-
-    new Command("docker", "pull", imageReference).run();
     return new Command("docker", "run", imageReference).run();
   }
 
@@ -73,7 +57,7 @@ public class BuildImageMojoIT {
   public void testExecute_simple() throws VerificationException, IOException, InterruptedException {
     Assert.assertEquals(
         "Hello, world\n",
-        buildAndRun(
+        buildToDockerDaemonAndRun(
             simpleTestProject.getProjectRoot(),
             "gcr.io/jib-integration-testing/simpleimage:maven"));
   }
@@ -82,7 +66,7 @@ public class BuildImageMojoIT {
   public void testExecute_empty() throws InterruptedException, IOException, VerificationException {
     Assert.assertEquals(
         "",
-        buildAndRun(
+        buildToDockerDaemonAndRun(
             emptyTestProject.getProjectRoot(), "gcr.io/jib-integration-testing/emptyimage:maven"));
   }
 }

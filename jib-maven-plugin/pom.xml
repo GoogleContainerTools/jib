@@ -130,6 +130,9 @@
             <version>2.21.0</version>
             <configuration>
               <classesDirectory>${project.build.directory}/classes</classesDirectory>
+              <includes>
+                <include>**/*IntegrationTest.java</include>
+              </includes>
             </configuration>
             <executions>
               <execution>
@@ -335,7 +338,6 @@
         <configuration>
           <excludes>
             <exclude>**/*IntegrationTest.java</exclude>
-            <exclude>**/*IT.java</exclude>
           </excludes>
         </configuration>
       </plugin>
