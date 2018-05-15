@@ -117,7 +117,7 @@ class BuildTarballAndLoadDockerStep implements Callable<Void> {
         new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)) {
       String output = CharStreams.toString(stdout);
       if (process.waitFor() != 0) {
-        throw new RuntimeException("'docker load' command failed with output: " + output);
+        throw new IOException("'docker load' command failed with output: " + output);
       }
     }
 
