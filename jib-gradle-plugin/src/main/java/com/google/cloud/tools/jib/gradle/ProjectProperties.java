@@ -18,6 +18,8 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
+import com.google.cloud.tools.jib.frontend.MainClassFinder;
+import com.google.cloud.tools.jib.frontend.MainClassFinder.MultipleClassesFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,9 +49,25 @@ class ProjectProperties {
     if (mainClass == null) {
       mainClass = getMainClassFromJarTask();
       if (mainClass == null) {
-        throw new GradleException(
-            HelpfulSuggestionsProvider.get("Could not find main class specified in a 'jar' task")
-                .suggest("add a `mainClass` configuration to jib"));
+        getLogger()
+            .info(
+                "Could not find main class specified in a 'jar' task; attempting to "
+                    + "infer main class.");
+        try {
+          mainClass =
+              MainClassFinder.findMainClass(
+                  getSourceFilesConfiguration().getClassesFiles(),
+                  project.getBuildDir().getAbsolutePath());
+        } catch (MultipleClassesFoundException ex) {
+          throw new GradleException(
+              HelpfulSuggestionsProvider.get("Failed to get main class: " + ex.getMessage())
+                  .suggest("add a `mainClass` configuration to jib-maven-plugin"));
+        }
+        if (mainClass == null) {
+          throw new GradleException(
+              HelpfulSuggestionsProvider.get("Could not infer main class")
+                  .suggest("add a `mainClass` configuration to jib-maven-plugin"));
+        }
       }
     }
     if (!BuildConfiguration.isValidJavaClass(mainClass)) {

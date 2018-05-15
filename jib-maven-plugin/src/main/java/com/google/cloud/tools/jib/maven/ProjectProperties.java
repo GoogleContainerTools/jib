@@ -18,6 +18,8 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
+import com.google.cloud.tools.jib.frontend.MainClassFinder;
+import com.google.cloud.tools.jib.frontend.MainClassFinder.MultipleClassesFoundException;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import javax.annotation.Nullable;
@@ -85,10 +87,25 @@ class ProjectProperties {
     if (mainClass == null) {
       mainClass = getMainClassFromMavenJarPlugin();
       if (mainClass == null) {
-        throw new MojoExecutionException(
-            HelpfulSuggestionsProvider.get(
-                    "Could not find main class specified in maven-jar-plugin")
-                .suggest("add a `mainClass` configuration to jib-maven-plugin"));
+        getLog()
+            .info(
+                "Could not find main class specified in maven-jar-plugin; attempting to "
+                    + "infer main class.");
+        try {
+          mainClass =
+              MainClassFinder.findMainClass(
+                  getSourceFilesConfiguration().getClassesFiles(),
+                  project.getBuild().getOutputDirectory());
+        } catch (MultipleClassesFoundException ex) {
+          throw new MojoExecutionException(
+              HelpfulSuggestionsProvider.get("Failed to get main class: " + ex.getMessage())
+                  .suggest("add a `mainClass` configuration to jib-maven-plugin"));
+        }
+        if (mainClass == null) {
+          throw new MojoExecutionException(
+              HelpfulSuggestionsProvider.get("Could not infer main class")
+                  .suggest("add a `mainClass` configuration to jib-maven-plugin"));
+        }
       }
     }
     Preconditions.checkNotNull(mainClass);
