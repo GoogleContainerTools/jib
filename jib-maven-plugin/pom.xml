@@ -144,39 +144,6 @@
               </execution>
             </executions>
           </plugin>
-          <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>build-helper-maven-plugin</artifactId>
-            <version>3.0.0</version>
-            <executions>
-              <execution>
-                <id>add-jib-core-integration-test-sources</id>
-                <phase>generate-test-sources</phase>
-                <goals>
-                  <goal>add-test-source</goal>
-                </goals>
-                <configuration>
-                  <sources>
-                    <source>${basedir}/../jib-core/src/integration-test/java</source>
-                  </sources>
-                </configuration>
-              </execution>
-              <execution>
-                <id>add-jib-core-integration-test-resources</id>
-                <phase>generate-test-sources</phase>
-                <goals>
-                  <goal>add-test-resource</goal>
-                </goals>
-                <configuration>
-                  <resources>
-                    <resource>
-                      <directory>${basedir}/../jib-core/src/integration-test/resources</directory>
-                    </resource>
-                  </resources>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
         </plugins>
       </build>
     </profile>
@@ -273,6 +240,32 @@
               <resources>
                 <resource>
                   <directory>${basedir}/../jib-core/src/test/resources</directory>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+          <execution>
+            <id>add-jib-core-integration-test-sources</id>
+            <phase>generate-test-sources</phase>
+            <goals>
+              <goal>add-test-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>${basedir}/../jib-core/src/integration-test/java</source>
+              </sources>
+            </configuration>
+          </execution>
+          <execution>
+            <id>add-jib-core-integration-test-resources</id>
+            <phase>generate-test-sources</phase>
+            <goals>
+              <goal>add-test-resource</goal>
+            </goals>
+            <configuration>
+              <resources>
+                <resource>
+                  <directory>${basedir}/../jib-core/src/integration-test/resources</directory>
                 </resource>
               </resources>
             </configuration>
