@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.frontend.BuildImageStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildImageStepsRunner;
 import com.google.cloud.tools.jib.frontend.CacheDirectoryCreationException;
+import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.image.ImageReference;
@@ -28,7 +29,6 @@ import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.base.Preconditions;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -37,6 +37,10 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.internal.logging.events.LogEvent;
+import org.gradle.internal.logging.events.OutputEventListener;
+import org.gradle.internal.logging.slf4j.OutputEventListenerBackedLoggerContext;
+import org.slf4j.LoggerFactory;
 
 /** Builds a container image. */
 public class BuildImageTask extends DefaultTask {
@@ -46,6 +50,9 @@ public class BuildImageTask extends DefaultTask {
 
   /** {@code User-Agent} header suffix to send to the registry. */
   private static final String USER_AGENT_SUFFIX = "jib-gradle-plugin";
+
+  private static final HelpfulSuggestions HELPFUL_SUGGESTIONS =
+      HelpfulSuggestionsProvider.get("Build image failed");
 
   /** Converts an {@link ImageConfiguration} to an {@link Authorization}. */
   @Nullable
@@ -72,22 +79,23 @@ public class BuildImageTask extends DefaultTask {
   }
 
   @TaskAction
-  public void buildImage() throws InvalidImageReferenceException, IOException {
+  public void buildImage() throws InvalidImageReferenceException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
+
+    GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
 
     ImageReference baseImageReference = ImageReference.parse(jibExtension.getBaseImage());
     ImageReference targetImageReference = ImageReference.parse(jibExtension.getTargetImage());
 
     if (baseImageReference.usesDefaultTag()) {
-      getLogger()
-          .warn(
-              "Base image '"
-                  + baseImageReference
-                  + "' does not use a specific image digest - build may not be reproducible");
+      gradleBuildLogger.warn(
+          "Base image '"
+              + baseImageReference
+              + "' does not use a specific image digest - build may not be reproducible");
     }
 
-    ProjectProperties projectProperties = new ProjectProperties(getProject(), getLogger());
+    ProjectProperties projectProperties = new ProjectProperties(getProject(), gradleBuildLogger);
     String mainClass = projectProperties.getMainClass(jibExtension.getMainClass());
 
     RegistryCredentials knownBaseRegistryCredentials = null;
@@ -102,7 +110,7 @@ public class BuildImageTask extends DefaultTask {
     }
 
     BuildConfiguration buildConfiguration =
-        BuildConfiguration.builder(new GradleBuildLogger(getLogger()))
+        BuildConfiguration.builder(gradleBuildLogger)
             .setBaseImage(baseImageReference)
             .setBaseImageCredentialHelperName(jibExtension.getFrom().getCredHelper())
             .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
@@ -116,12 +124,20 @@ public class BuildImageTask extends DefaultTask {
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
     // Disables annoying Apache HTTP client logging.
-    System.setProperty(
-        "org.apache.commons.logging.Log", "org.apache.commons.logging.impl.SimpleLog");
-    System.setProperty("org.apache.commons.logging.simplelog.defaultlog", "error");
+    // Note that this is a hack and depends on internal Gradle classes
+    OutputEventListenerBackedLoggerContext context =
+        (OutputEventListenerBackedLoggerContext) LoggerFactory.getILoggerFactory();
+    OutputEventListener defaultOutputEventListener = context.getOutputEventListener();
+    context.setOutputEventListener(
+        event -> {
+          LogEvent logEvent = (LogEvent) event;
+          if (!logEvent.getCategory().contains("org.apache")) {
+            defaultOutputEventListener.onOutput(event);
+          }
+        });
+
     // Disables Google HTTP client logging.
-    Logger logger = Logger.getLogger(HttpTransport.class.getName());
-    logger.setLevel(Level.OFF);
+    Logger.getLogger(HttpTransport.class.getName()).setLevel(Level.OFF);
 
     RegistryClient.setUserAgentSuffix(USER_AGENT_SUFFIX);
 
@@ -135,15 +151,7 @@ public class BuildImageTask extends DefaultTask {
               cacheDirectory,
               jibExtension.getUseOnlyProjectCache());
 
-      getLogger().lifecycle("Pushing image as " + targetImageReference);
-      getLogger().lifecycle("");
-      getLogger().lifecycle("");
-
-      buildImageStepsRunner.buildImage(HelpfulSuggestionsProvider.get("Build image failed"));
-
-      getLogger().lifecycle("");
-      getLogger().lifecycle("Built and pushed image as " + targetImageReference);
-      getLogger().lifecycle("");
+      buildImageStepsRunner.buildImage(HELPFUL_SUGGESTIONS);
 
     } catch (CacheDirectoryCreationException | BuildImageStepsExecutionException ex) {
       throw new GradleException(ex.getMessage(), ex.getCause());

@@ -63,7 +63,9 @@ public class DockerContextTask extends DefaultTask {
   public void generateDockerContext() {
     Preconditions.checkNotNull(jibExtension);
 
-    ProjectProperties projectProperties = new ProjectProperties(getProject(), getLogger());
+    GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
+
+    ProjectProperties projectProperties = new ProjectProperties(getProject(), gradleBuildLogger);
     String mainClass = projectProperties.getMainClass(jibExtension.getMainClass());
 
     String targetDir = getTargetDir();
@@ -75,7 +77,7 @@ public class DockerContextTask extends DefaultTask {
           .setMainClass(mainClass)
           .generate(Paths.get(targetDir));
 
-      getLogger().info("Created Docker context at " + targetDir);
+      gradleBuildLogger.info("Created Docker context at " + targetDir);
 
     } catch (InsecureRecursiveDeleteException ex) {
       throw new GradleException(

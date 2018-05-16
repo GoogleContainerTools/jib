@@ -100,6 +100,8 @@ class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
   @Override
   @Nullable
   public Authorization call() throws IOException, NonexistentDockerCredentialHelperException {
+    buildLogger.lifecycle(String.format(DESCRIPTION, registry) + "...");
+
     try (Timer ignored = new Timer(buildLogger, String.format(DESCRIPTION, registry))) {
       // Tries to get registry credentials from Docker credential helpers.
       if (credentialHelperSuffix != null) {

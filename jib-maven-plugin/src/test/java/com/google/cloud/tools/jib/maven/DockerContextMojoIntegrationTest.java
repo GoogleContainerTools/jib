@@ -30,7 +30,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 /** Integration tests for {@link DockerContextMojo}. */
 @RunWith(MockitoJUnitRunner.class)
-public class DockerContextMojoIT {
+public class DockerContextMojoIntegrationTest {
 
   @ClassRule public static final TestPlugin testPlugin = new TestPlugin();
 

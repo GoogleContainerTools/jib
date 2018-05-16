@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Timer;
-import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
@@ -31,6 +30,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -57,6 +57,10 @@ public class BuildImageSteps {
     return buildConfiguration;
   }
 
+  public SourceFilesConfiguration getSourceFilesConfiguration() {
+    return sourceFilesConfiguration;
+  }
+
   public void run()
       throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
           CacheDirectoryNotOwnedException {
@@ -65,6 +69,8 @@ public class BuildImageSteps {
             sourceFilesConfiguration,
             buildConfiguration.getJvmFlags(),
             buildConfiguration.getMainClass());
+
+    buildConfiguration.getBuildLogger().lifecycle("");
 
     try (Timer timer = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       try (Timer timer2 = timer.subTimer("Initializing cache")) {
@@ -145,10 +151,10 @@ public class BuildImageSteps {
 
           timer2.lap("Setting up build container configuration");
           // Builds the container configuration.
-          ListenableFuture<ListenableFuture<Blob>> buildContainerConfigurationFutureFuture =
+          ListenableFuture<ListenableFuture<Image>> buildImageFutureFuture =
               Futures.whenAllSucceed(pullBaseImageLayerFuturesFuture)
                   .call(
-                      new BuildContainerConfigurationStep(
+                      new BuildImageStep(
                           buildConfiguration,
                           listeningExecutorService,
                           pullBaseImageLayerFuturesFuture,
@@ -160,24 +166,48 @@ public class BuildImageSteps {
           // Pushes the container configuration.
           ListenableFuture<ListenableFuture<BlobDescriptor>>
               pushContainerConfigurationFutureFuture =
-                  Futures.whenAllSucceed(buildContainerConfigurationFutureFuture)
+                  Futures.whenAllSucceed(buildImageFutureFuture)
                       .call(
                           new PushContainerConfigurationStep(
                               buildConfiguration,
                               authenticatePushFuture,
-                              buildContainerConfigurationFutureFuture,
+                              buildImageFutureFuture,
                               listeningExecutorService),
                           listeningExecutorService);
 
           timer2.lap("Setting up application layer push");
           // Pushes the application layers.
-          List<ListenableFuture<Void>> pushApplicationLayersFuture =
+          List<ListenableFuture<Void>> pushApplicationLayersFutures =
               new PushLayersStep(
                       buildConfiguration,
                       listeningExecutorService,
                       authenticatePushFuture,
                       Futures.immediateFuture(buildAndCacheApplicationLayerFutures))
                   .call();
+
+          // TODO: Move this somewhere that doesn't clutter this method.
+          // Logs a message after pushing all the layers.
+          Futures.whenAllSucceed(pushBaseImageLayerFuturesFuture)
+              .call(
+                  () -> {
+                    // Depends on all the layers being pushed.
+                    List<ListenableFuture<?>> beforeFinalizing = new ArrayList<>();
+                    beforeFinalizing.addAll(
+                        NonBlockingFutures.get(pushBaseImageLayerFuturesFuture));
+                    beforeFinalizing.addAll(pushApplicationLayersFutures);
+
+                    Futures.whenAllSucceed(beforeFinalizing)
+                        .call(
+                            () -> {
+                              // TODO: Have this be more descriptive?
+                              buildConfiguration.getBuildLogger().lifecycle("Finalizing...");
+                              return null;
+                            },
+                            listeningExecutorService);
+
+                    return null;
+                  },
+                  listeningExecutorService);
 
           timer2.lap("Setting up image manifest push");
           // Pushes the new image manifest.
@@ -189,11 +219,10 @@ public class BuildImageSteps {
                           buildConfiguration,
                           listeningExecutorService,
                           authenticatePushFuture,
-                          pullBaseImageLayerFuturesFuture,
-                          buildAndCacheApplicationLayerFutures,
                           pushBaseImageLayerFuturesFuture,
-                          pushApplicationLayersFuture,
-                          pushContainerConfigurationFutureFuture),
+                          pushApplicationLayersFutures,
+                          pushContainerConfigurationFutureFuture,
+                          buildImageFutureFuture),
                       listeningExecutorService);
 
           timer2.lap("Running push new image");

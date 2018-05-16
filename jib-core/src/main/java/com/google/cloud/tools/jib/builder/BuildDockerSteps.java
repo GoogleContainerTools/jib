@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Timer;
-import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
@@ -30,6 +29,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -68,6 +68,8 @@ public class BuildDockerSteps {
             sourceFilesConfiguration,
             buildConfiguration.getJvmFlags(),
             buildConfiguration.getMainClass());
+
+    buildConfiguration.getBuildLogger().lifecycle("");
 
     try (Timer timer = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       try (Timer timer2 = timer.subTimer("Initializing cache")) {
@@ -124,10 +126,10 @@ public class BuildDockerSteps {
 
           timer2.lap("Setting up build container configuration");
           // Builds the container configuration.
-          ListenableFuture<ListenableFuture<Blob>> buildContainerConfigurationFutureFuture =
+          ListenableFuture<ListenableFuture<Image>> buildImageFutureFuture =
               Futures.whenAllSucceed(pullBaseImageLayerFuturesFuture)
                   .call(
-                      new BuildContainerConfigurationStep(
+                      new BuildImageStep(
                           buildConfiguration,
                           listeningExecutorService,
                           pullBaseImageLayerFuturesFuture,
@@ -135,18 +137,42 @@ public class BuildDockerSteps {
                           entrypoint),
                       listeningExecutorService);
 
+          // TODO: Move this somewhere that doesn't clutter this method. Consolidate with
+          // BuildImageSteps.
+          // Logs a message after pushing all the layers.
+          Futures.whenAllSucceed(pullBaseImageLayerFuturesFuture)
+              .call(
+                  () -> {
+                    // Depends on all the layers being pushed.
+                    List<ListenableFuture<?>> beforeFinalizing = new ArrayList<>();
+                    beforeFinalizing.addAll(
+                        NonBlockingFutures.get(pullBaseImageLayerFuturesFuture));
+                    beforeFinalizing.addAll(buildAndCacheApplicationLayerFutures);
+
+                    Futures.whenAllSucceed(beforeFinalizing)
+                        .call(
+                            () -> {
+                              // TODO: Have this be more descriptive?
+                              buildConfiguration.getBuildLogger().lifecycle("Finalizing...");
+                              return null;
+                            },
+                            listeningExecutorService);
+
+                    return null;
+                  },
+                  listeningExecutorService);
+
           timer2.lap("Setting up build to docker daemon");
           // Builds the image tarball and loads into the Docker daemon.
           ListenableFuture<Void> buildToDockerFutureFuture =
-              Futures.whenAllSucceed(
-                      pullBaseImageLayerFuturesFuture, buildContainerConfigurationFutureFuture)
+              Futures.whenAllSucceed(pullBaseImageLayerFuturesFuture, buildImageFutureFuture)
                   .call(
                       new BuildTarballAndLoadDockerStep(
                           buildConfiguration,
                           listeningExecutorService,
                           pullBaseImageLayerFuturesFuture,
                           buildAndCacheApplicationLayerFutures,
-                          buildContainerConfigurationFutureFuture),
+                          buildImageFutureFuture),
                       listeningExecutorService);
 
           timer2.lap("Running build to docker daemon");
