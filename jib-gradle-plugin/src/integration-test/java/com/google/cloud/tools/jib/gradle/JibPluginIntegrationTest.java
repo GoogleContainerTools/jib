@@ -42,8 +42,8 @@ public class JibPluginIntegrationTest {
     Assert.assertNotNull(jibTask);
     Assert.assertEquals(TaskOutcome.SUCCESS, jibTask.getOutcome());
     Assert.assertThat(
-        buildResult.getOutput(),
-        CoreMatchers.containsString("Built and pushed image as " + imageReference));
+        buildResult.getOutput(), CoreMatchers.containsString("Built and pushed image as "));
+    Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
 
     new Command("docker", "pull", imageReference).run();
     return new Command("docker", "run", imageReference).run();
@@ -58,8 +58,8 @@ public class JibPluginIntegrationTest {
     Assert.assertNotNull(jibBuildDockerTask);
     Assert.assertEquals(TaskOutcome.SUCCESS, jibBuildDockerTask.getOutcome());
     Assert.assertThat(
-        buildResult.getOutput(),
-        CoreMatchers.containsString("Built image to Docker daemon as " + imageReference));
+        buildResult.getOutput(), CoreMatchers.containsString("Built image to Docker daemon as "));
+    Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
 
     return new Command("docker", "run", imageReference).run();
   }
