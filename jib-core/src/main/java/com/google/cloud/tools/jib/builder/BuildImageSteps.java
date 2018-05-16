@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Timer;
-import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
@@ -152,10 +151,10 @@ public class BuildImageSteps {
 
           timer2.lap("Setting up build container configuration");
           // Builds the container configuration.
-          ListenableFuture<ListenableFuture<Blob>> buildContainerConfigurationFutureFuture =
+          ListenableFuture<ListenableFuture<Image>> buildImageFutureFuture =
               Futures.whenAllSucceed(pullBaseImageLayerFuturesFuture)
                   .call(
-                      new BuildContainerConfigurationStep(
+                      new BuildImageStep(
                           buildConfiguration,
                           listeningExecutorService,
                           pullBaseImageLayerFuturesFuture,
@@ -167,12 +166,12 @@ public class BuildImageSteps {
           // Pushes the container configuration.
           ListenableFuture<ListenableFuture<BlobDescriptor>>
               pushContainerConfigurationFutureFuture =
-                  Futures.whenAllSucceed(buildContainerConfigurationFutureFuture)
+                  Futures.whenAllSucceed(buildImageFutureFuture)
                       .call(
                           new PushContainerConfigurationStep(
                               buildConfiguration,
                               authenticatePushFuture,
-                              buildContainerConfigurationFutureFuture,
+                              buildImageFutureFuture,
                               listeningExecutorService),
                           listeningExecutorService);
 
@@ -220,11 +219,10 @@ public class BuildImageSteps {
                           buildConfiguration,
                           listeningExecutorService,
                           authenticatePushFuture,
-                          pullBaseImageLayerFuturesFuture,
-                          buildAndCacheApplicationLayerFutures,
                           pushBaseImageLayerFuturesFuture,
                           pushApplicationLayersFutures,
-                          pushContainerConfigurationFutureFuture),
+                          pushContainerConfigurationFutureFuture,
+                          buildImageFutureFuture),
                       listeningExecutorService);
 
           timer2.lap("Running push new image");

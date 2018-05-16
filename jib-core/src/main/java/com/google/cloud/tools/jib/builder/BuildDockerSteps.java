@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Timer;
-import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
@@ -127,10 +126,10 @@ public class BuildDockerSteps {
 
           timer2.lap("Setting up build container configuration");
           // Builds the container configuration.
-          ListenableFuture<ListenableFuture<Blob>> buildContainerConfigurationFutureFuture =
+          ListenableFuture<ListenableFuture<Image>> buildImageFutureFuture =
               Futures.whenAllSucceed(pullBaseImageLayerFuturesFuture)
                   .call(
-                      new BuildContainerConfigurationStep(
+                      new BuildImageStep(
                           buildConfiguration,
                           listeningExecutorService,
                           pullBaseImageLayerFuturesFuture,
@@ -166,15 +165,14 @@ public class BuildDockerSteps {
           timer2.lap("Setting up build to docker daemon");
           // Builds the image tarball and loads into the Docker daemon.
           ListenableFuture<Void> buildToDockerFutureFuture =
-              Futures.whenAllSucceed(
-                      pullBaseImageLayerFuturesFuture, buildContainerConfigurationFutureFuture)
+              Futures.whenAllSucceed(pullBaseImageLayerFuturesFuture, buildImageFutureFuture)
                   .call(
                       new BuildTarballAndLoadDockerStep(
                           buildConfiguration,
                           listeningExecutorService,
                           pullBaseImageLayerFuturesFuture,
                           buildAndCacheApplicationLayerFutures,
-                          buildContainerConfigurationFutureFuture),
+                          buildImageFutureFuture),
                       listeningExecutorService);
 
           timer2.lap("Running build to docker daemon");
