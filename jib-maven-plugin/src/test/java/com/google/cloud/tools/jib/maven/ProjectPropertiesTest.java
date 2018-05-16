@@ -103,10 +103,10 @@ public class ProjectPropertiesTest {
       Assert.fail("Main class not expected");
 
     } catch (MojoExecutionException ex) {
-      Mockito.verify(mockLog).info("Could not find main class specified in maven-jar-plugin; attempting to infer main class.");
-      Assert.assertThat(
-          ex.getMessage(),
-          CoreMatchers.containsString("Could not infer main class"));
+      Mockito.verify(mockLog)
+          .info(
+              "Could not find main class specified in maven-jar-plugin; attempting to infer main class.");
+      Assert.assertThat(ex.getMessage(), CoreMatchers.containsString("Could not infer main class"));
       Assert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString("add a `mainClass` configuration to jib-maven-plugin"));

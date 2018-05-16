@@ -92,8 +92,7 @@ class ProjectProperties {
                 "Could not find main class specified in maven-jar-plugin; attempting to "
                     + "infer main class.");
         try {
-          mainClass =
-              MainClassFinder.findMainClass(project.getBuild().getOutputDirectory());
+          mainClass = MainClassFinder.findMainClass(project.getBuild().getOutputDirectory());
         } catch (MultipleClassesFoundException | IOException ex) {
           throw new MojoExecutionException(
               HelpfulSuggestionsProvider.get("Failed to get main class: " + ex.getMessage())

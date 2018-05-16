@@ -54,7 +54,16 @@ class ProjectProperties {
                 "Could not find main class specified in a 'jar' task; attempting to "
                     + "infer main class.");
         try {
-          mainClass = MainClassFinder.findMainClass(project.getBuildDir().getAbsolutePath());
+          mainClass =
+              MainClassFinder.findMainClass(
+                  project
+                      .getBuildDir()
+                      .toPath()
+                      .resolve("classes")
+                      .resolve("java")
+                      .resolve("main")
+                      .toFile()
+                      .getAbsolutePath());
         } catch (MultipleClassesFoundException | IOException ex) {
           throw new GradleException(
               HelpfulSuggestionsProvider.get("Failed to get main class: " + ex.getMessage())

@@ -16,9 +16,9 @@
 
 package com.google.cloud.tools.jib.frontend;
 
-import com.google.common.base.Strings;
 import java.io.IOException;
-import java.io.InputStream;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -26,47 +26,29 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
-import jdk.internal.org.objectweb.asm.ClassReader;
-import jdk.internal.org.objectweb.asm.ClassVisitor;
-import jdk.internal.org.objectweb.asm.MethodVisitor;
-import jdk.internal.org.objectweb.asm.Opcodes;
-import jdk.internal.org.objectweb.asm.Type;
 
 /** Class used for inferring the main class in an application. */
 public class MainClassFinder {
 
-  /** ClassVisitor used to search for main method within a class file. */
-  private static class ClassDescriptor extends ClassVisitor {
-    private boolean foundMainMethod;
+  /** Helper class for loading a .class file. */
+  private static class ClassFileLoader extends ClassLoader {
 
-    private ClassDescriptor() {
-      super(Opcodes.ASM5);
-    }
+    private Path classFile;
 
-    /** Builds a ClassDescriptor from an input stream. */
-    static ClassDescriptor build(InputStream inputStream) throws IOException {
-      ClassReader classReader = new ClassReader(inputStream);
-      ClassDescriptor classDescriptor = new ClassDescriptor();
-      classReader.accept(classDescriptor, ClassReader.SKIP_CODE);
-      return classDescriptor;
+    ClassFileLoader(Path classFile) {
+      this.classFile = classFile;
     }
 
     @Nullable
     @Override
-    public MethodVisitor visitMethod(
-        int access, String name, String desc, String signature, String[] exceptions) {
-      Type methodType = Type.getMethodType(Type.VOID_TYPE, Type.getType(String[].class));
-      if ((access & Opcodes.ACC_PUBLIC) != 0
-          && (access & Opcodes.ACC_STATIC) != 0
-          && name.equals("main")
-          && desc.equals(methodType.getDescriptor())) {
-        this.foundMainMethod = true;
+    public Class findClass(String name) {
+      try {
+        byte[] bytes = Files.readAllBytes(classFile);
+        return defineClass(name, bytes, 0, bytes.length);
+      } catch (IOException | ClassFormatError ignored) {
+        // Not a valid class file
+        return null;
       }
-      return null;
-    }
-
-    boolean isMainMethodFound() {
-      return foundMainMethod;
     }
   }
 
@@ -93,29 +75,36 @@ public class MainClassFinder {
               .collect(Collectors.toList());
 
       for (Path classFile : classFiles) {
-        try (InputStream inputStream = Files.newInputStream(classFile)) {
-          ClassDescriptor classDescriptor = ClassDescriptor.build(inputStream);
-          if (!classDescriptor.isMainMethodFound()) {
-            // Valid class, but has no main method
-            continue;
-          }
-        } catch (IOException | ArrayIndexOutOfBoundsException ex) {
-          // Not a valid class file
-          continue;
-        }
-
         // Convert filename to class name
         String name = classFile.toAbsolutePath().toString();
-        if (!Strings.isNullOrEmpty(rootDirectory)) {
+        if (!rootDirectory.isEmpty()) {
           name = name.substring(rootDirectory.length() + 1);
         }
         name = name.replace('/', '.').replace('\\', '.');
         name = name.substring(0, name.length() - ".class".length());
 
-        if (className == null) {
-          className = name;
-        } else {
-          throw new MultipleClassesFoundException(className, name);
+        // Load class from file
+        Class fileClass = new ClassFileLoader(classFile).findClass(name);
+        if (fileClass == null) {
+          continue;
+        }
+
+        // Check if class contains a public static void main(String[] args)
+        try {
+          Method main = fileClass.getMethod("main", String[].class);
+          if (main != null
+              && main.getReturnType() == void.class
+              && Modifier.isStatic(main.getModifiers())
+              && Modifier.isPublic(main.getModifiers())) {
+            if (className == null) {
+              className = name;
+            } else {
+              throw new MultipleClassesFoundException(className, name);
+            }
+          }
+
+        } catch (NoSuchMethodException ignored) {
+          // main method not found
         }
       }
     }
