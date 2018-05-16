@@ -24,7 +24,6 @@ import org.gradle.api.Project;
 import org.gradle.api.internal.file.FileResolver;
 import org.gradle.api.java.archives.Manifest;
 import org.gradle.api.java.archives.internal.DefaultManifest;
-import org.gradle.api.logging.Logger;
 import org.gradle.internal.impldep.com.google.common.collect.ImmutableMap;
 import org.gradle.internal.impldep.com.google.common.collect.ImmutableSet;
 import org.gradle.jvm.tasks.Jar;
@@ -48,7 +47,7 @@ public class ProjectPropertiesTest {
   @Mock private FileResolver mockFileResolver;
   @Mock private Jar mockJar;
   @Mock private Project mockProject;
-  @Mock private Logger mockLogger;
+  @Mock private GradleBuildLogger mockGradleBuildLogger;
 
   private Manifest fakeManifest;
   private ProjectProperties testProjectProperties;
@@ -61,7 +60,7 @@ public class ProjectPropertiesTest {
     File tempFolder = temporaryFolder.newFolder();
     Mockito.when(mockProject.getBuildDir()).thenReturn(tempFolder);
 
-    testProjectProperties = new ProjectProperties(mockProject, mockLogger);
+    testProjectProperties = new ProjectProperties(mockProject, mockGradleBuildLogger);
   }
 
   @Test
@@ -95,7 +94,8 @@ public class ProjectPropertiesTest {
     Mockito.when(mockProject.getTasksByName("jar", false)).thenReturn(ImmutableSet.of(mockJar));
 
     Assert.assertEquals("${start-class}", testProjectProperties.getMainClass(null));
-    Mockito.verify(mockLogger).warn("'mainClass' is not a valid Java class : ${start-class}");
+    Mockito.verify(mockGradleBuildLogger)
+        .warn("'mainClass' is not a valid Java class : ${start-class}");
   }
 
   private void assertGetMainClassFails() {
@@ -104,7 +104,7 @@ public class ProjectPropertiesTest {
       Assert.fail("Main class not expected");
 
     } catch (GradleException ex) {
-      Mockito.verify(mockLogger)
+      Mockito.verify(mockGradleBuildLogger)
           .info(
               "Could not find main class specified in a 'jar' task; attempting to infer main class.");
       Assert.assertThat(ex.getMessage(), CoreMatchers.containsString("Could not infer main class"));

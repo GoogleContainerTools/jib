@@ -222,6 +222,10 @@ public class BuildConfiguration {
     return buildLogger;
   }
 
+  public ImageReference getBaseImageReference() {
+    return baseImageReference;
+  }
+
   public String getBaseImageRegistry() {
     return baseImageReference.getRegistry();
   }

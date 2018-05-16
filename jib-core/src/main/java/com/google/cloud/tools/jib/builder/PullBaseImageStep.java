@@ -57,6 +57,10 @@ class PullBaseImageStep implements Callable<Image> {
   public Image call()
       throws IOException, RegistryException, LayerPropertyNotFoundException,
           LayerCountMismatchException, ExecutionException, InterruptedException {
+    buildConfiguration
+        .getBuildLogger()
+        .lifecycle("Getting base image " + buildConfiguration.getBaseImageReference() + "...");
+
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       RegistryClient registryClient =
           new RegistryClient(

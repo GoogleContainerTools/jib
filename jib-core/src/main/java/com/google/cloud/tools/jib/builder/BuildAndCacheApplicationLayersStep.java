@@ -81,6 +81,8 @@ class BuildAndCacheApplicationLayersStep implements Callable<List<ListenableFutu
 
     return listeningExecutorService.submit(
         () -> {
+          buildConfiguration.getBuildLogger().lifecycle(description + "...");
+
           try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), description)) {
             // Don't build the layer if it exists already.
             CachedLayer cachedLayer =
