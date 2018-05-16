@@ -48,10 +48,9 @@ class ProjectProperties {
     if (mainClass == null) {
       mainClass = getMainClassFromJarTask();
       if (mainClass == null) {
-        getLogger()
-            .info(
-                "Could not find main class specified in a 'jar' task; attempting to "
-                    + "infer main class.");
+        gradleBuildLogger.info(
+            "Could not find main class specified in a 'jar' task; attempting to "
+                + "infer main class.");
         try {
           mainClass =
               MainClassFinder.findMainClass(
@@ -76,13 +75,9 @@ class ProjectProperties {
       }
     }
     if (!BuildConfiguration.isValidJavaClass(mainClass)) {
-      getLogger().warn("'mainClass' is not a valid Java class : " + mainClass);
+      gradleBuildLogger.warn("'mainClass' is not a valid Java class : " + mainClass);
     }
     return mainClass;
-  }
-
-  private GradleBuildLogger getLogger() {
-    return gradleBuildLogger;
   }
 
   /** @return the {@link SourceFilesConfiguration} based on the current project */
