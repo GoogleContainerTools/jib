@@ -16,17 +16,11 @@
 
 package com.google.cloud.tools.jib.frontend;
 
-import com.google.cloud.tools.jib.frontend.MainClassFinder.MultipleClassesFoundException;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -36,40 +30,39 @@ public class MainClassFinderTest {
   @Test
   public void testFindMainClass_simple()
       throws URISyntaxException, MultipleClassesFoundException, IOException {
-    Path rootDirectory = Paths.get(Resources.getResource("application/classes").toURI());
-    try (Stream<Path> classStream = Files.walk(rootDirectory)) {
-      List<Path> classFiles = classStream.collect(Collectors.toList());
-
-      String mainClass = MainClassFinder.findMainClass(classFiles, rootDirectory.toString());
-
-      Assert.assertEquals("HelloWorld", mainClass);
-    }
+    Path rootDirectory = Paths.get(Resources.getResource("class-finder-tests/simple").toURI());
+    String mainClass = MainClassFinder.findMainClass(rootDirectory.toString());
+    Assert.assertEquals("HelloWorld", mainClass);
   }
 
   @Test
-  public void testFindMainClass_none() throws URISyntaxException, MultipleClassesFoundException {
-    Path rootDirectory = Paths.get(Resources.getResource("application/classes").toURI());
-    List<Path> classFiles = new ArrayList<>();
+  public void testFindMainClass_subdirectories()
+      throws URISyntaxException, MultipleClassesFoundException, IOException {
+    Path rootDirectory =
+        Paths.get(Resources.getResource("class-finder-tests/subdirectories").toURI());
+    String mainClass = MainClassFinder.findMainClass(rootDirectory.toString());
+    Assert.assertEquals("multi.layered.HelloWorld", mainClass);
+  }
 
-    String mainClass = MainClassFinder.findMainClass(classFiles, rootDirectory.toString());
-
+  @Test
+  public void testFindMainClass_noClass()
+      throws URISyntaxException, MultipleClassesFoundException, IOException {
+    Path rootDirectory = Paths.get(Resources.getResource("class-finder-tests/no-main").toURI());
+    String mainClass = MainClassFinder.findMainClass(rootDirectory.toString());
     Assert.assertEquals(null, mainClass);
   }
 
   @Test
   public void testFindMainClass_multiple() throws URISyntaxException, IOException {
-    Path rootDirectory = Paths.get(Resources.getResource("application/classes").toURI());
-    try (Stream<Path> classStream = Files.walk(rootDirectory)) {
-      List<Path> classFiles = classStream.collect(Collectors.toList());
-      classFiles.add(
-          Paths.get(Resources.getResource("application/classes/HelloWorld.class").toURI()));
-      try {
-        MainClassFinder.findMainClass(classFiles, rootDirectory.toString());
-        Assert.fail();
-      } catch (MultipleClassesFoundException ex) {
-        Assert.assertEquals(
-            "Multiple classes found while trying to infer main class", ex.getMessage());
-      }
+    Path rootDirectory = Paths.get(Resources.getResource("class-finder-tests/multiple").toURI());
+    try {
+      MainClassFinder.findMainClass(rootDirectory.toString());
+      Assert.fail();
+    } catch (MultipleClassesFoundException ex) {
+      Assert.assertTrue(
+          ex.getMessage().contains("Multiple classes found while trying to infer main class: "));
+      Assert.assertTrue(ex.getMessage().contains("multi.layered.HelloMoon"));
+      Assert.assertTrue(ex.getMessage().contains("HelloWorld"));
     }
   }
 }

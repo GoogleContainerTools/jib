@@ -21,7 +21,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.ClassVisitor;
@@ -31,13 +34,6 @@ import jdk.internal.org.objectweb.asm.Type;
 
 /** Class used for inferring the main class in an application. */
 public class MainClassFinder {
-
-  /** Exception thrown when multiple main class candidates are found. */
-  public static class MultipleClassesFoundException extends Exception {
-    MultipleClassesFoundException() {
-      super("Multiple classes found while trying to infer main class");
-    }
-  }
 
   /** ClassVisitor used to search for main method within a class file. */
   private static class ClassDescriptor extends ClassVisitor {
@@ -75,43 +71,47 @@ public class MainClassFinder {
   }
 
   /**
-   * Searches for a class containing a main method in a list of files.
+   * Searches for a class containing a main method given a root directory.
    *
    * @return the name of the class if one is found, null if no class is found.
    * @throws MultipleClassesFoundException if more than one valid main class is found.
    */
   @Nullable
-  public static String findMainClass(List<Path> classFiles, String rootDirectory)
-      throws MultipleClassesFoundException {
+  public static String findMainClass(String rootDirectory)
+      throws MultipleClassesFoundException, IOException {
     String className = null;
-    for (Path classFile : classFiles) {
-      // Skip non-class files
-      if (!classFile.toString().endsWith(".class")) {
-        continue;
-      }
-
-      try (InputStream inputStream = Files.newInputStream(classFile)) {
-        ClassDescriptor classDescriptor = ClassDescriptor.build(inputStream);
-        if (!classDescriptor.isMainMethodFound()) {
-          // Valid class, but has no main method
+    try (Stream<Path> pathStream = Files.walk(Paths.get(rootDirectory))) {
+      List<Path> classFiles = pathStream.filter(Files::isRegularFile).collect(Collectors.toList());
+      for (Path classFile : classFiles) {
+        // Skip non-class files
+        if (!classFile.toString().endsWith(".class")) {
           continue;
         }
-      } catch (IOException | ArrayIndexOutOfBoundsException ex) {
-        // Not a valid class file
-        continue;
-      }
 
-      if (className == null) {
-        // Found a valid main class, save it and continue
-        className = classFile.toAbsolutePath().toString();
-        if (!Strings.isNullOrEmpty(rootDirectory)) {
-          className = className.substring(rootDirectory.length() + 1);
+        try (InputStream inputStream = Files.newInputStream(classFile)) {
+          ClassDescriptor classDescriptor = ClassDescriptor.build(inputStream);
+          if (!classDescriptor.isMainMethodFound()) {
+            // Valid class, but has no main method
+            continue;
+          }
+        } catch (IOException | ArrayIndexOutOfBoundsException ex) {
+          // Not a valid class file
+          continue;
         }
-        className = className.replace('/', '.').replace('\\', '.');
-        className = className.substring(0, className.length() - ".class".length());
-      } else {
-        // Found more than one valid main class, error out
-        throw new MultipleClassesFoundException();
+
+        String name = classFile.toAbsolutePath().toString();
+        if (!Strings.isNullOrEmpty(rootDirectory)) {
+          name = name.substring(rootDirectory.length() + 1);
+        }
+        name = name.replace('/', '.').replace('\\', '.');
+        name = name.substring(0, name.length() - ".class".length());
+        if (className == null) {
+          // Found a valid main class, save it and continue
+          className = name;
+        } else {
+          // Found more than one valid main class, error out
+          throw new MultipleClassesFoundException(className, name);
+        }
       }
     }
 

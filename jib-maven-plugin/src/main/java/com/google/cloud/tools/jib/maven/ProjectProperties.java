@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.frontend.MainClassFinder;
-import com.google.cloud.tools.jib.frontend.MainClassFinder.MultipleClassesFoundException;
+import com.google.cloud.tools.jib.frontend.MultipleClassesFoundException;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import javax.annotation.Nullable;
@@ -93,10 +93,8 @@ class ProjectProperties {
                     + "infer main class.");
         try {
           mainClass =
-              MainClassFinder.findMainClass(
-                  getSourceFilesConfiguration().getClassesFiles(),
-                  project.getBuild().getOutputDirectory());
-        } catch (MultipleClassesFoundException ex) {
+              MainClassFinder.findMainClass(project.getBuild().getOutputDirectory());
+        } catch (MultipleClassesFoundException | IOException ex) {
           throw new MojoExecutionException(
               HelpfulSuggestionsProvider.get("Failed to get main class: " + ex.getMessage())
                   .suggest("add a `mainClass` configuration to jib-maven-plugin"));
