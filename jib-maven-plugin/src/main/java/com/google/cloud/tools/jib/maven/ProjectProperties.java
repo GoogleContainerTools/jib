@@ -150,7 +150,7 @@ class ProjectProperties {
   }
 
   /** Returns the Maven logger. */
-  Log getLog() {
+  private Log getLog() {
     return log;
   }
 }

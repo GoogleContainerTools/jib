@@ -35,7 +35,7 @@ public class MainClassFinder {
 
     private Path classFile;
 
-    ClassFileLoader(Path classFile) {
+    private ClassFileLoader(Path classFile) {
       this.classFile = classFile;
     }
 
@@ -53,9 +53,10 @@ public class MainClassFinder {
   }
 
   /**
-   * Searches for a class containing a main method given a root directory.
+   * Searches for a class containing a main method given an absolute root directory.
    *
    * @return the name of the class if one is found, null if no class is found.
+   * @throws IOException if searching/reading files fails.
    * @throws MultipleClassesFoundException if more than one valid main class is found.
    */
   @Nullable
@@ -68,6 +69,7 @@ public class MainClassFinder {
 
     String className = null;
     try (Stream<Path> pathStream = Files.walk(Paths.get(rootDirectory))) {
+      // Get all .class files
       List<Path> classFiles =
           pathStream
               .filter(Files::isRegularFile)
@@ -75,34 +77,33 @@ public class MainClassFinder {
               .collect(Collectors.toList());
 
       for (Path classFile : classFiles) {
-        // Convert filename to class name
+        // Convert filename (rootDir/path/to/ClassName.class) to class name (path.to.ClassName)
         String name = classFile.toAbsolutePath().toString();
-        if (!rootDirectory.isEmpty()) {
-          name = name.substring(rootDirectory.length() + 1);
-        }
+        name = name.substring(rootDirectory.length() + 1);
         name = name.replace('/', '.').replace('\\', '.');
         name = name.substring(0, name.length() - ".class".length());
 
-        // Load class from file
         Class fileClass = new ClassFileLoader(classFile).findClass(name);
         if (fileClass == null) {
+          // Got an invalid class file, keep searching
           continue;
         }
 
-        // Check if class contains a public static void main(String[] args)
         try {
+          // Check if class contains a public static void main(String[] args)
           Method main = fileClass.getMethod("main", String[].class);
           if (main != null
               && main.getReturnType() == void.class
               && Modifier.isStatic(main.getModifiers())
               && Modifier.isPublic(main.getModifiers())) {
             if (className == null) {
+              // Main method found; save it and continue searching for duplicates
               className = name;
             } else {
+              // Found more than one main method
               throw new MultipleClassesFoundException(className, name);
             }
           }
-
         } catch (NoSuchMethodException ignored) {
           // main method not found
         }

@@ -62,8 +62,8 @@ class ProjectProperties {
                       .resolve("classes")
                       .resolve("java")
                       .resolve("main")
-                      .toFile()
-                      .getAbsolutePath());
+                      .toAbsolutePath()
+                      .toString());
         } catch (MultipleClassesFoundException | IOException ex) {
           throw new GradleException(
               HelpfulSuggestionsProvider.get("Failed to get main class: " + ex.getMessage())
@@ -82,7 +82,7 @@ class ProjectProperties {
     return mainClass;
   }
 
-  Logger getLogger() {
+  private Logger getLogger() {
     return logger;
   }
 
