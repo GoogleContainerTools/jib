@@ -41,35 +41,7 @@ class ProjectProperties {
   /** @return the {@link SourceFilesConfiguration} based on the current project */
   SourceFilesConfiguration getSourceFilesConfiguration() throws MojoExecutionException {
     try {
-      SourceFilesConfiguration sourceFilesConfiguration =
-          MavenSourceFilesConfiguration.getForProject(project);
-
-      // Logs the different source files used.
-      log.info("");
-      log.info("Containerizing application with the following files:");
-      log.info("");
-
-      log.info("\tDependencies:");
-      log.info("");
-      sourceFilesConfiguration
-          .getDependenciesFiles()
-          .forEach(dependencyFile -> log.info("\t\t" + dependencyFile));
-
-      log.info("\tResources:");
-      log.info("");
-      sourceFilesConfiguration
-          .getResourcesFiles()
-          .forEach(resourceFile -> log.info("\t\t" + resourceFile));
-
-      log.info("\tClasses:");
-      log.info("");
-      sourceFilesConfiguration
-          .getClassesFiles()
-          .forEach(classesFile -> log.info("\t\t" + classesFile));
-
-      log.info("");
-
-      return sourceFilesConfiguration;
+      return MavenSourceFilesConfiguration.getForProject(project);
 
     } catch (IOException ex) {
       throw new MojoExecutionException(
@@ -93,7 +65,7 @@ class ProjectProperties {
     }
     Preconditions.checkNotNull(mainClass);
     if (!BuildConfiguration.isValidJavaClass(mainClass)) {
-      getLog().warn("'mainClass' is not a valid Java class : " + mainClass);
+      log.warn("'mainClass' is not a valid Java class : " + mainClass);
     }
 
     return mainClass;
@@ -106,7 +78,7 @@ class ProjectProperties {
     if (mavenJarPlugin != null) {
       String mainClass = getMainClassFromMavenJarPlugin(mavenJarPlugin);
       if (mainClass != null) {
-        log.info("Using main class from maven-jar-plugin: " + mainClass);
+        log.debug("Using main class from maven-jar-plugin: " + mainClass);
         return mainClass;
       }
     }
@@ -133,10 +105,5 @@ class ProjectProperties {
       return null;
     }
     return mainClassObject.getValue();
-  }
-
-  /** Returns the Maven logger. */
-  Log getLog() {
-    return log;
   }
 }
