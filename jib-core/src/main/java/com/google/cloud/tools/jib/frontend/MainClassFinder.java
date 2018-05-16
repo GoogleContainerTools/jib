@@ -79,15 +79,20 @@ public class MainClassFinder {
   @Nullable
   public static String findMainClass(String rootDirectory)
       throws MultipleClassesFoundException, IOException {
+    // Make sure rootDirectory is valid
+    if (!Files.exists(Paths.get(rootDirectory)) || !Files.isDirectory(Paths.get(rootDirectory))) {
+      return null;
+    }
+
     String className = null;
     try (Stream<Path> pathStream = Files.walk(Paths.get(rootDirectory))) {
-      List<Path> classFiles = pathStream.filter(Files::isRegularFile).collect(Collectors.toList());
-      for (Path classFile : classFiles) {
-        // Skip non-class files
-        if (!classFile.toString().endsWith(".class")) {
-          continue;
-        }
+      List<Path> classFiles =
+          pathStream
+              .filter(Files::isRegularFile)
+              .filter(path -> path.toString().endsWith(".class"))
+              .collect(Collectors.toList());
 
+      for (Path classFile : classFiles) {
         try (InputStream inputStream = Files.newInputStream(classFile)) {
           ClassDescriptor classDescriptor = ClassDescriptor.build(inputStream);
           if (!classDescriptor.isMainMethodFound()) {
@@ -99,17 +104,17 @@ public class MainClassFinder {
           continue;
         }
 
+        // Convert filename to class name
         String name = classFile.toAbsolutePath().toString();
         if (!Strings.isNullOrEmpty(rootDirectory)) {
           name = name.substring(rootDirectory.length() + 1);
         }
         name = name.replace('/', '.').replace('\\', '.');
         name = name.substring(0, name.length() - ".class".length());
+
         if (className == null) {
-          // Found a valid main class, save it and continue
           className = name;
         } else {
-          // Found more than one valid main class, error out
           throw new MultipleClassesFoundException(className, name);
         }
       }

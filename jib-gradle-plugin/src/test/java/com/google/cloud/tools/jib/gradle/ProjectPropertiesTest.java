@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
@@ -29,7 +31,9 @@ import org.gradle.jvm.tasks.Jar;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -38,6 +42,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 /** Tests for {@link ProjectProperties}. */
 @RunWith(MockitoJUnitRunner.class)
 public class ProjectPropertiesTest {
+
+  @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Mock private FileResolver mockFileResolver;
   @Mock private Jar mockJar;
@@ -48,9 +54,12 @@ public class ProjectPropertiesTest {
   private ProjectProperties testProjectProperties;
 
   @Before
-  public void setUp() {
+  public void setUp() throws IOException {
     fakeManifest = new DefaultManifest(mockFileResolver);
     Mockito.when(mockJar.getManifest()).thenReturn(fakeManifest);
+
+    File tempFolder = temporaryFolder.newFolder();
+    Mockito.when(mockProject.getBuildDir()).thenReturn(tempFolder);
 
     testProjectProperties = new ProjectProperties(mockProject, mockLogger);
   }
@@ -95,9 +104,10 @@ public class ProjectPropertiesTest {
       Assert.fail("Main class not expected");
 
     } catch (GradleException ex) {
-      Assert.assertThat(
-          ex.getMessage(),
-          CoreMatchers.containsString("Could not find main class specified in a 'jar' task"));
+      Mockito.verify(mockLogger)
+          .info(
+              "Could not find main class specified in a 'jar' task; attempting to infer main class.");
+      Assert.assertThat(ex.getMessage(), CoreMatchers.containsString("Could not infer main class"));
       Assert.assertThat(
           ex.getMessage(), CoreMatchers.containsString("add a `mainClass` configuration to jib"));
     }

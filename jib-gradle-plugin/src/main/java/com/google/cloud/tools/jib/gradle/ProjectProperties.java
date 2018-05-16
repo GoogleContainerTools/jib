@@ -54,17 +54,16 @@ class ProjectProperties {
                 "Could not find main class specified in a 'jar' task; attempting to "
                     + "infer main class.");
         try {
-          mainClass =
-              MainClassFinder.findMainClass(project.getBuildDir().getAbsolutePath());
+          mainClass = MainClassFinder.findMainClass(project.getBuildDir().getAbsolutePath());
         } catch (MultipleClassesFoundException | IOException ex) {
           throw new GradleException(
               HelpfulSuggestionsProvider.get("Failed to get main class: " + ex.getMessage())
-                  .suggest("add a `mainClass` configuration to jib-maven-plugin"));
+                  .suggest("add a `mainClass` configuration to jib"));
         }
         if (mainClass == null) {
           throw new GradleException(
               HelpfulSuggestionsProvider.get("Could not infer main class")
-                  .suggest("add a `mainClass` configuration to jib-maven-plugin"));
+                  .suggest("add a `mainClass` configuration to jib"));
         }
       }
     }

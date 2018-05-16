@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import org.apache.maven.model.Build;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
@@ -38,6 +39,8 @@ public class ProjectPropertiesTest {
   @Mock private Log mockLog;
   @Mock private Plugin mockJarPlugin;
 
+  @Mock private Build mockBuild;
+
   private final Xpp3Dom fakeJarPluginConfiguration = new Xpp3Dom("");
   private final Xpp3Dom jarPluginMainClass = new Xpp3Dom("mainClass");
 
@@ -52,6 +55,9 @@ public class ProjectPropertiesTest {
     manifest.addChild(jarPluginMainClass);
 
     Mockito.when(mockJarPlugin.getConfiguration()).thenReturn(fakeJarPluginConfiguration);
+
+    Mockito.when(mockMavenProject.getBuild()).thenReturn(mockBuild);
+    Mockito.when(mockBuild.getOutputDirectory()).thenReturn("fake/dir");
 
     testProjectProperties = new ProjectProperties(mockMavenProject, mockLog);
   }
@@ -97,9 +103,10 @@ public class ProjectPropertiesTest {
       Assert.fail("Main class not expected");
 
     } catch (MojoExecutionException ex) {
+      Mockito.verify(mockLog).info("Could not find main class specified in maven-jar-plugin; attempting to infer main class.");
       Assert.assertThat(
           ex.getMessage(),
-          CoreMatchers.containsString("Could not find main class specified in maven-jar-plugin"));
+          CoreMatchers.containsString("Could not infer main class"));
       Assert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString("add a `mainClass` configuration to jib-maven-plugin"));
