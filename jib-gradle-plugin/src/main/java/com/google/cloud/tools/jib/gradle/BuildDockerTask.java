@@ -89,7 +89,8 @@ public class BuildDockerTask extends DefaultTask {
               + "' does not use a specific image digest - build may not be reproducible");
     }
 
-    ProjectProperties projectProperties = new ProjectProperties(getProject(), gradleBuildLogger);
+    ProjectProperties projectProperties =
+        ProjectProperties.getForProject(getProject(), gradleBuildLogger);
     String mainClass = projectProperties.getMainClass(jibExtension.getMainClass());
 
     RegistryCredentials knownBaseRegistryCredentials = null;
