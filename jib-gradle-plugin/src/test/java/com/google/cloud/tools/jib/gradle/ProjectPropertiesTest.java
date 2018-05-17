@@ -16,23 +16,25 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.Collections;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
+import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.file.FileResolver;
 import org.gradle.api.java.archives.Manifest;
 import org.gradle.api.java.archives.internal.DefaultManifest;
+import org.gradle.api.plugins.Convention;
+import org.gradle.api.plugins.JavaPluginConvention;
+import org.gradle.api.tasks.SourceSet;
+import org.gradle.api.tasks.SourceSetContainer;
+import org.gradle.api.tasks.SourceSetOutput;
 import org.gradle.internal.impldep.com.google.common.collect.ImmutableMap;
 import org.gradle.internal.impldep.com.google.common.collect.ImmutableSet;
 import org.gradle.jvm.tasks.Jar;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -42,23 +44,34 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class ProjectPropertiesTest {
 
-  @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
-
   @Mock private FileResolver mockFileResolver;
   @Mock private Jar mockJar;
   @Mock private Project mockProject;
   @Mock private GradleBuildLogger mockGradleBuildLogger;
 
+  @Mock private Convention mockConvention;
+  @Mock private JavaPluginConvention mockPluginConvention;
+  @Mock private SourceSetContainer mockSourceSetContainer;
+  @Mock private SourceSet mockSourceSet;
+  @Mock private SourceSetOutput mockSourceSetOutput;
+  @Mock private FileCollection mockFileCollection;
+
   private Manifest fakeManifest;
   private ProjectProperties testProjectProperties;
 
   @Before
-  public void setUp() throws IOException {
+  public void setUp() {
     fakeManifest = new DefaultManifest(mockFileResolver);
     Mockito.when(mockJar.getManifest()).thenReturn(fakeManifest);
 
-    File tempFolder = temporaryFolder.newFolder();
-    Mockito.when(mockProject.getBuildDir()).thenReturn(tempFolder);
+    Mockito.when(mockProject.getConvention()).thenReturn(mockConvention);
+    Mockito.when(mockConvention.getPlugin(JavaPluginConvention.class))
+        .thenReturn(mockPluginConvention);
+    Mockito.when(mockPluginConvention.getSourceSets()).thenReturn(mockSourceSetContainer);
+    Mockito.when(mockSourceSetContainer.getByName("main")).thenReturn(mockSourceSet);
+    Mockito.when(mockSourceSet.getOutput()).thenReturn(mockSourceSetOutput);
+    Mockito.when(mockSourceSetOutput.getClassesDirs()).thenReturn(mockFileCollection);
+    Mockito.when(mockFileCollection.getAsPath()).thenReturn("a/b/c");
 
     testProjectProperties = new ProjectProperties(mockProject, mockGradleBuildLogger);
   }
@@ -105,9 +118,8 @@ public class ProjectPropertiesTest {
 
     } catch (GradleException ex) {
       Mockito.verify(mockGradleBuildLogger)
-          .info(
+          .debug(
               "Could not find main class specified in a 'jar' task; attempting to infer main class.");
-      Assert.assertThat(ex.getMessage(), CoreMatchers.containsString("Could not infer main class"));
       Assert.assertThat(
           ex.getMessage(), CoreMatchers.containsString("add a `mainClass` configuration to jib"));
     }

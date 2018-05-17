@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -28,41 +29,35 @@ import org.junit.Test;
 public class MainClassFinderTest {
 
   @Test
-  public void testFindMainClass_simple()
-      throws URISyntaxException, MultipleClassesFoundException, IOException {
+  public void testFindMainClass_simple() throws URISyntaxException, IOException {
     Path rootDirectory = Paths.get(Resources.getResource("class-finder-tests/simple").toURI());
-    String mainClass = MainClassFinder.findMainClass(rootDirectory.toString());
-    Assert.assertEquals("HelloWorld", mainClass);
+    List<String> mainClasses = MainClassFinder.findMainClass(rootDirectory);
+    Assert.assertEquals(1, mainClasses.size());
+    Assert.assertTrue(mainClasses.contains("HelloWorld"));
   }
 
   @Test
-  public void testFindMainClass_subdirectories()
-      throws URISyntaxException, MultipleClassesFoundException, IOException {
+  public void testFindMainClass_subdirectories() throws URISyntaxException, IOException {
     Path rootDirectory =
         Paths.get(Resources.getResource("class-finder-tests/subdirectories").toURI());
-    String mainClass = MainClassFinder.findMainClass(rootDirectory.toString());
-    Assert.assertEquals("multi.layered.HelloWorld", mainClass);
+    List<String> mainClasses = MainClassFinder.findMainClass(rootDirectory);
+    Assert.assertEquals(1, mainClasses.size());
+    Assert.assertTrue(mainClasses.contains("multi.layered.HelloWorld"));
   }
 
   @Test
-  public void testFindMainClass_noClass()
-      throws URISyntaxException, MultipleClassesFoundException, IOException {
+  public void testFindMainClass_noClass() throws URISyntaxException, IOException {
     Path rootDirectory = Paths.get(Resources.getResource("class-finder-tests/no-main").toURI());
-    String mainClass = MainClassFinder.findMainClass(rootDirectory.toString());
-    Assert.assertEquals(null, mainClass);
+    List<String> mainClasses = MainClassFinder.findMainClass(rootDirectory);
+    Assert.assertTrue(mainClasses.isEmpty());
   }
 
   @Test
   public void testFindMainClass_multiple() throws URISyntaxException, IOException {
     Path rootDirectory = Paths.get(Resources.getResource("class-finder-tests/multiple").toURI());
-    try {
-      MainClassFinder.findMainClass(rootDirectory.toString());
-      Assert.fail();
-    } catch (MultipleClassesFoundException ex) {
-      Assert.assertTrue(
-          ex.getMessage().contains("Multiple classes found while trying to infer main class: "));
-      Assert.assertTrue(ex.getMessage().contains("multi.layered.HelloMoon"));
-      Assert.assertTrue(ex.getMessage().contains("HelloWorld"));
-    }
+    List<String> mainClasses = MainClassFinder.findMainClass(rootDirectory);
+    Assert.assertEquals(2, mainClasses.size());
+    Assert.assertTrue(mainClasses.contains("multi.layered.HelloMoon"));
+    Assert.assertTrue(mainClasses.contains("HelloWorld"));
   }
 }

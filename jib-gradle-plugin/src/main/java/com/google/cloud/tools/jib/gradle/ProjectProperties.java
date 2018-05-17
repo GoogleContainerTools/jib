@@ -19,14 +19,17 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.frontend.MainClassFinder;
-import com.google.cloud.tools.jib.frontend.MultipleClassesFoundException;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.api.plugins.JavaPluginConvention;
+import org.gradle.api.tasks.SourceSet;
 import org.gradle.jvm.tasks.Jar;
 
 /** Obtains information about a Gradle {@link Project} that uses Jib. */
@@ -48,29 +51,36 @@ class ProjectProperties {
     if (mainClass == null) {
       mainClass = getMainClassFromJarTask();
       if (mainClass == null) {
-        gradleBuildLogger.info(
+        gradleBuildLogger.debug(
             "Could not find main class specified in a 'jar' task; attempting to "
                 + "infer main class.");
+
+        final String mainClassSuggestion = "add a `mainClass` configuration to jib";
         try {
-          mainClass =
-              MainClassFinder.findMainClass(
-                  project
-                      .getBuildDir()
-                      .toPath()
-                      .resolve("classes")
-                      .resolve("java")
-                      .resolve("main")
-                      .toAbsolutePath()
-                      .toString());
-        } catch (MultipleClassesFoundException | IOException ex) {
+          // Adds each file in each classes output directory to the classes files list.
+          JavaPluginConvention javaPluginConvention =
+              project.getConvention().getPlugin(JavaPluginConvention.class);
+          SourceSet mainSourceSet = javaPluginConvention.getSourceSets().getByName("main");
+          Path classesDirs = Paths.get(mainSourceSet.getOutput().getClassesDirs().getAsPath());
+          List<String> mainClasses = new ArrayList<>(MainClassFinder.findMainClass(classesDirs));
+
+          if (mainClasses.size() == 1) {
+            mainClass = mainClasses.get(0);
+          } else if (mainClasses.size() == 0) {
+            throw new GradleException(
+                HelpfulSuggestionsProvider.get("Main class was not found")
+                    .suggest(mainClassSuggestion));
+          } else {
+            throw new GradleException(
+                HelpfulSuggestionsProvider.get(
+                        "Multiple valid main classes were found: " + String.join(", ", mainClasses))
+                    .suggest(mainClassSuggestion));
+          }
+        } catch (IOException ex) {
           throw new GradleException(
-              HelpfulSuggestionsProvider.get("Failed to get main class: " + ex.getMessage())
-                  .suggest("add a `mainClass` configuration to jib"));
-        }
-        if (mainClass == null) {
-          throw new GradleException(
-              HelpfulSuggestionsProvider.get("Could not infer main class")
-                  .suggest("add a `mainClass` configuration to jib"));
+              HelpfulSuggestionsProvider.get("Failed to get main class")
+                  .suggest(mainClassSuggestion),
+              ex);
         }
       }
     }

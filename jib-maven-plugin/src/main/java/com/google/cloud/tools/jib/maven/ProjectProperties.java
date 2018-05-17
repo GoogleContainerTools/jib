@@ -19,9 +19,10 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.frontend.MainClassFinder;
-import com.google.cloud.tools.jib.frontend.MultipleClassesFoundException;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.List;
 import javax.annotation.Nullable;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -59,20 +60,31 @@ class ProjectProperties {
     if (mainClass == null) {
       mainClass = getMainClassFromMavenJarPlugin();
       if (mainClass == null) {
-        log.info(
+        log.debug(
             "Could not find main class specified in maven-jar-plugin; attempting to infer main "
                 + "class.");
+
+        final String mainClassSuggestion = "add a `mainClass` configuration to jib-maven-plugin";
         try {
-          mainClass = MainClassFinder.findMainClass(project.getBuild().getOutputDirectory());
-        } catch (MultipleClassesFoundException | IOException ex) {
+          List<String> mainClasses =
+              MainClassFinder.findMainClass(Paths.get(project.getBuild().getOutputDirectory()));
+          if (mainClasses.size() == 1) {
+            mainClass = mainClasses.get(0);
+          } else if (mainClasses.size() == 0) {
+            throw new MojoExecutionException(
+                HelpfulSuggestionsProvider.get("Main class was not found")
+                    .suggest(mainClassSuggestion));
+          } else {
+            throw new MojoExecutionException(
+                HelpfulSuggestionsProvider.get(
+                        "Multiple valid main classes were found: " + String.join(", ", mainClasses))
+                    .suggest(mainClassSuggestion));
+          }
+        } catch (IOException ex) {
           throw new MojoExecutionException(
-              HelpfulSuggestionsProvider.get("Failed to get main class: " + ex.getMessage())
-                  .suggest("add a `mainClass` configuration to jib-maven-plugin"));
-        }
-        if (mainClass == null) {
-          throw new MojoExecutionException(
-              HelpfulSuggestionsProvider.get("Could not infer main class")
-                  .suggest("add a `mainClass` configuration to jib-maven-plugin"));
+              HelpfulSuggestionsProvider.get("Failed to get main class")
+                  .suggest(mainClassSuggestion),
+              ex);
         }
       }
     }

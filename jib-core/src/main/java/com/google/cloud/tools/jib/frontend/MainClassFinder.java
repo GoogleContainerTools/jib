@@ -16,24 +16,24 @@
 
 package com.google.cloud.tools.jib.frontend;
 
+import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.StringJoiner;
 import javax.annotation.Nullable;
 
-/** Class used for inferring the main class in an application. */
+/** Infers the main class in an application. */
 public class MainClassFinder {
 
-  /** Helper class for loading a .class file. */
+  /** Helper for loading a .class file. */
   private static class ClassFileLoader extends ClassLoader {
 
-    private Path classFile;
+    private final Path classFile;
 
     private ClassFileLoader(Path classFile) {
       this.classFile = classFile;
@@ -53,63 +53,54 @@ public class MainClassFinder {
   }
 
   /**
-   * Searches for a class containing a main method given an absolute root directory.
+   * Searches for a .class file containing a main method given an absolute root directory.
    *
    * @return the name of the class if one is found, null if no class is found.
    * @throws IOException if searching/reading files fails.
-   * @throws MultipleClassesFoundException if more than one valid main class is found.
    */
-  @Nullable
-  public static String findMainClass(String rootDirectory)
-      throws MultipleClassesFoundException, IOException {
+  public static List<String> findMainClass(Path rootDirectory) throws IOException {
+    List<String> results = new ArrayList<>();
+
     // Make sure rootDirectory is valid
-    if (!Files.exists(Paths.get(rootDirectory)) || !Files.isDirectory(Paths.get(rootDirectory))) {
-      return null;
+    if (!Files.exists(rootDirectory) || !Files.isDirectory(rootDirectory)) {
+      return results;
     }
 
-    String className = null;
-    try (Stream<Path> pathStream = Files.walk(Paths.get(rootDirectory))) {
-      // Get all .class files
-      List<Path> classFiles =
-          pathStream
-              .filter(Files::isRegularFile)
-              .filter(path -> path.toString().endsWith(".class"))
-              .collect(Collectors.toList());
+    // Get all .class files
+    new DirectoryWalker(rootDirectory)
+        .filter(Files::isRegularFile)
+        .filter(path -> path.toString().endsWith(".class"))
+        .walk(
+            classFile -> {
+              // Convert filename (rootDir/path/to/ClassName.class) to class name
+              // (path.to.ClassName)
+              Path relativized = rootDirectory.relativize(classFile);
+              StringJoiner stringJoiner = new StringJoiner(".");
+              for (Path path : relativized) {
+                stringJoiner.add(path.toString());
+              }
+              String name = stringJoiner.toString();
+              name = name.substring(0, name.length() - ".class".length());
 
-      for (Path classFile : classFiles) {
-        // Convert filename (rootDir/path/to/ClassName.class) to class name (path.to.ClassName)
-        String name = classFile.toAbsolutePath().toString();
-        name = name.substring(rootDirectory.length() + 1);
-        name = name.replace('/', '.').replace('\\', '.');
-        name = name.substring(0, name.length() - ".class".length());
+              Class<?> fileClass = new ClassFileLoader(classFile).findClass(name);
+              if (fileClass != null) {
+                try {
+                  // Check if class contains {@code public static void main(String[] args)}
+                  Method main = fileClass.getMethod("main", String[].class);
+                  if (main != null
+                      && main.getReturnType() == void.class
+                      && Modifier.isStatic(main.getModifiers())
+                      && Modifier.isPublic(main.getModifiers())) {
+                    results.add(name);
+                  }
+                } catch (NoSuchMethodException ignored) {
+                  // main method not found
+                }
+              }
+            });
 
-        Class fileClass = new ClassFileLoader(classFile).findClass(name);
-        if (fileClass == null) {
-          // Got an invalid class file, keep searching
-          continue;
-        }
-
-        try {
-          // Check if class contains a public static void main(String[] args)
-          Method main = fileClass.getMethod("main", String[].class);
-          if (main != null
-              && main.getReturnType() == void.class
-              && Modifier.isStatic(main.getModifiers())
-              && Modifier.isPublic(main.getModifiers())) {
-            if (className == null) {
-              // Main method found; save it and continue searching for duplicates
-              className = name;
-            } else {
-              // Found more than one main method
-              throw new MultipleClassesFoundException(className, name);
-            }
-          }
-        } catch (NoSuchMethodException ignored) {
-          // main method not found
-        }
-      }
-    }
-
-    return className;
+    return results;
   }
+
+  private MainClassFinder() {}
 }
