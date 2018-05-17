@@ -57,7 +57,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
   /** TODO: Consolidate with BuildImageMojo. */
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
-    ProjectProperties projectProperties = new ProjectProperties(getProject(), getLog());
+    ProjectProperties projectProperties = ProjectProperties.getForProject(getProject(), getLog());
     String inferredMainClass = projectProperties.getMainClass(getMainClass());
 
     SourceFilesConfiguration sourceFilesConfiguration =

@@ -100,6 +100,10 @@ public class HelpfulSuggestions {
     return suggest("clear " + directory + " manually before creating the Docker context");
   }
 
+  public String forMainClassNotFound(String pluginName) {
+    return suggest("add a `mainClass` configuration to " + pluginName);
+  }
+
   public String none() {
     return messagePrefix;
   }
