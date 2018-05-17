@@ -16,18 +16,16 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.List;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
-import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.file.FileResolver;
 import org.gradle.api.java.archives.Manifest;
 import org.gradle.api.java.archives.internal.DefaultManifest;
-import org.gradle.api.plugins.Convention;
-import org.gradle.api.plugins.JavaPluginConvention;
-import org.gradle.api.tasks.SourceSet;
-import org.gradle.api.tasks.SourceSetContainer;
-import org.gradle.api.tasks.SourceSetOutput;
 import org.gradle.internal.impldep.com.google.common.collect.ImmutableMap;
 import org.gradle.internal.impldep.com.google.common.collect.ImmutableSet;
 import org.gradle.jvm.tasks.Jar;
@@ -48,32 +46,20 @@ public class ProjectPropertiesTest {
   @Mock private Jar mockJar;
   @Mock private Project mockProject;
   @Mock private GradleBuildLogger mockGradleBuildLogger;
-
-  @Mock private Convention mockConvention;
-  @Mock private JavaPluginConvention mockPluginConvention;
-  @Mock private SourceSetContainer mockSourceSetContainer;
-  @Mock private SourceSet mockSourceSet;
-  @Mock private SourceSetOutput mockSourceSetOutput;
-  @Mock private FileCollection mockFileCollection;
+  @Mock private SourceFilesConfiguration mockSourceFilesConfiguration;
 
   private Manifest fakeManifest;
   private ProjectProperties testProjectProperties;
+  private final List<Path> classesPath = Collections.singletonList(Paths.get("a/b/c"));
 
   @Before
   public void setUp() {
     fakeManifest = new DefaultManifest(mockFileResolver);
     Mockito.when(mockJar.getManifest()).thenReturn(fakeManifest);
+    Mockito.when(mockSourceFilesConfiguration.getClassesFiles()).thenReturn(classesPath);
 
-    Mockito.when(mockProject.getConvention()).thenReturn(mockConvention);
-    Mockito.when(mockConvention.getPlugin(JavaPluginConvention.class))
-        .thenReturn(mockPluginConvention);
-    Mockito.when(mockPluginConvention.getSourceSets()).thenReturn(mockSourceSetContainer);
-    Mockito.when(mockSourceSetContainer.getByName("main")).thenReturn(mockSourceSet);
-    Mockito.when(mockSourceSet.getOutput()).thenReturn(mockSourceSetOutput);
-    Mockito.when(mockSourceSetOutput.getClassesDirs()).thenReturn(mockFileCollection);
-    Mockito.when(mockFileCollection.getAsPath()).thenReturn("a/b/c");
-
-    testProjectProperties = new ProjectProperties(mockProject, mockGradleBuildLogger);
+    testProjectProperties =
+        new ProjectProperties(mockProject, mockGradleBuildLogger, mockSourceFilesConfiguration);
   }
 
   @Test

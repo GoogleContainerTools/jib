@@ -31,7 +31,7 @@ public class MainClassFinderTest {
   @Test
   public void testFindMainClass_simple() throws URISyntaxException, IOException {
     Path rootDirectory = Paths.get(Resources.getResource("class-finder-tests/simple").toURI());
-    List<String> mainClasses = MainClassFinder.findMainClass(rootDirectory);
+    List<String> mainClasses = MainClassFinder.findMainClasses(rootDirectory);
     Assert.assertEquals(1, mainClasses.size());
     Assert.assertTrue(mainClasses.contains("HelloWorld"));
   }
@@ -40,7 +40,7 @@ public class MainClassFinderTest {
   public void testFindMainClass_subdirectories() throws URISyntaxException, IOException {
     Path rootDirectory =
         Paths.get(Resources.getResource("class-finder-tests/subdirectories").toURI());
-    List<String> mainClasses = MainClassFinder.findMainClass(rootDirectory);
+    List<String> mainClasses = MainClassFinder.findMainClasses(rootDirectory);
     Assert.assertEquals(1, mainClasses.size());
     Assert.assertTrue(mainClasses.contains("multi.layered.HelloWorld"));
   }
@@ -48,14 +48,14 @@ public class MainClassFinderTest {
   @Test
   public void testFindMainClass_noClass() throws URISyntaxException, IOException {
     Path rootDirectory = Paths.get(Resources.getResource("class-finder-tests/no-main").toURI());
-    List<String> mainClasses = MainClassFinder.findMainClass(rootDirectory);
+    List<String> mainClasses = MainClassFinder.findMainClasses(rootDirectory);
     Assert.assertTrue(mainClasses.isEmpty());
   }
 
   @Test
   public void testFindMainClass_multiple() throws URISyntaxException, IOException {
     Path rootDirectory = Paths.get(Resources.getResource("class-finder-tests/multiple").toURI());
-    List<String> mainClasses = MainClassFinder.findMainClass(rootDirectory);
+    List<String> mainClasses = MainClassFinder.findMainClasses(rootDirectory);
     Assert.assertEquals(2, mainClasses.size());
     Assert.assertTrue(mainClasses.contains("multi.layered.HelloMoon"));
     Assert.assertTrue(mainClasses.contains("HelloWorld"));

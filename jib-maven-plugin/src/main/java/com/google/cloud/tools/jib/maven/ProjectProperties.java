@@ -33,6 +33,8 @@ import org.codehaus.plexus.util.xml.Xpp3Dom;
 /** Obtains information about a {@link MavenProject}. */
 class ProjectProperties {
 
+  private static final String PLUGIN_NAME = "jib-maven-plugin";
+
   private final MavenProject project;
   private final Log log;
 
@@ -55,7 +57,18 @@ class ProjectProperties {
     }
   }
 
-  /** @return the main class to use in the container entrypoint */
+  /**
+   * If {@code mainClass} is {@code null}, tries to infer main class in this order:
+   *
+   * <ul>
+   *   <li>1. Looks in a {@code jar} task.
+   *   <li>2. Searches for a class defined with a main method.
+   * </ul>
+   *
+   * <p>Warns if main class is not valid.
+   *
+   * @throws MojoExecutionException if no valid main class is not found.
+   */
   String getMainClass(@Nullable String mainClass) throws MojoExecutionException {
     if (mainClass == null) {
       mainClass = getMainClassFromMavenJarPlugin();
@@ -64,26 +77,25 @@ class ProjectProperties {
             "Could not find main class specified in maven-jar-plugin; attempting to infer main "
                 + "class.");
 
-        final String mainClassSuggestion = "add a `mainClass` configuration to jib-maven-plugin";
         try {
           List<String> mainClasses =
-              MainClassFinder.findMainClass(Paths.get(project.getBuild().getOutputDirectory()));
+              MainClassFinder.findMainClasses(Paths.get(project.getBuild().getOutputDirectory()));
           if (mainClasses.size() == 1) {
             mainClass = mainClasses.get(0);
           } else if (mainClasses.size() == 0) {
             throw new MojoExecutionException(
                 HelpfulSuggestionsProvider.get("Main class was not found")
-                    .suggest(mainClassSuggestion));
+                    .forMainClassNotFound(PLUGIN_NAME));
           } else {
             throw new MojoExecutionException(
                 HelpfulSuggestionsProvider.get(
                         "Multiple valid main classes were found: " + String.join(", ", mainClasses))
-                    .suggest(mainClassSuggestion));
+                    .forMainClassNotFound(PLUGIN_NAME));
           }
         } catch (IOException ex) {
           throw new MojoExecutionException(
               HelpfulSuggestionsProvider.get("Failed to get main class")
-                  .suggest(mainClassSuggestion),
+                  .forMainClassNotFound(PLUGIN_NAME),
               ex);
         }
       }
