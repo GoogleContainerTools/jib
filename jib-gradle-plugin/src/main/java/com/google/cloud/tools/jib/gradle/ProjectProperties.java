@@ -39,11 +39,11 @@ class ProjectProperties {
   private final GradleBuildLogger gradleBuildLogger;
   private final SourceFilesConfiguration sourceFilesConfiguration;
 
-  ProjectProperties(Project project, GradleBuildLogger gradleBuildLogger) {
-    this.project = project;
-    this.gradleBuildLogger = gradleBuildLogger;
+  /** @return a ProjectProperties from the given project and logger. */
+  static ProjectProperties getForProject(Project project, GradleBuildLogger gradleBuildLogger) {
     try {
-      sourceFilesConfiguration = GradleSourceFilesConfiguration.getForProject(project);
+      return new ProjectProperties(
+          project, gradleBuildLogger, GradleSourceFilesConfiguration.getForProject(project));
     } catch (IOException ex) {
       throw new GradleException("Obtaining project build output files failed", ex);
     }
@@ -73,6 +73,10 @@ class ProjectProperties {
    */
   String getMainClass(@Nullable String mainClass) {
     if (mainClass == null) {
+      gradleBuildLogger.info(
+          "Searching for main class... Add a 'mainClass' configuration to '"
+              + PLUGIN_NAME
+              + "' to improve build speed.");
       mainClass = getMainClassFromJarTask();
       if (mainClass == null) {
         gradleBuildLogger.debug(

@@ -82,7 +82,7 @@ public class MainClassFinder {
                     && main.getReturnType() == void.class
                     && Modifier.isStatic(main.getModifiers())
                     && Modifier.isPublic(main.getModifiers())) {
-                  classNames.add(fileClass.getCanonicalName());
+                  classNames.add(fileClass.getName());
                 }
               } catch (NoSuchMethodException ignored) {
                 // main method not found

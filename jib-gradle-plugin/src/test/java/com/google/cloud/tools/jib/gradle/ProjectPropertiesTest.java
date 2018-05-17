@@ -48,9 +48,9 @@ public class ProjectPropertiesTest {
   @Mock private GradleBuildLogger mockGradleBuildLogger;
   @Mock private SourceFilesConfiguration mockSourceFilesConfiguration;
 
+  private final List<Path> classesPath = Collections.singletonList(Paths.get("a/b/c"));
   private Manifest fakeManifest;
   private ProjectProperties testProjectProperties;
-  private final List<Path> classesPath = Collections.singletonList(Paths.get("a/b/c"));
 
   @Before
   public void setUp() {

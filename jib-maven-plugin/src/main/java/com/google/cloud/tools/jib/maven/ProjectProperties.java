@@ -19,9 +19,11 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.frontend.MainClassFinder;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
-import java.nio.file.Paths;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
 import org.apache.maven.model.Plugin;
@@ -37,17 +39,14 @@ class ProjectProperties {
 
   private final MavenProject project;
   private final Log log;
+  private final SourceFilesConfiguration sourceFilesConfiguration;
 
-  ProjectProperties(MavenProject project, Log log) {
-    this.project = project;
-    this.log = log;
-  }
-
-  /** @return the {@link SourceFilesConfiguration} based on the current project */
-  SourceFilesConfiguration getSourceFilesConfiguration() throws MojoExecutionException {
+  /** @return a ProjectProperties from the given project and logger. */
+  static ProjectProperties getForProject(MavenProject project, Log log)
+      throws MojoExecutionException {
     try {
-      return MavenSourceFilesConfiguration.getForProject(project);
-
+      return new ProjectProperties(
+          project, log, MavenSourceFilesConfiguration.getForProject(project));
     } catch (IOException ex) {
       throw new MojoExecutionException(
           "Obtaining project build output files failed; make sure you have compiled your project "
@@ -55,6 +54,19 @@ class ProjectProperties {
               + "jib:build\" instead of \"mvn clean compile jib:build\"?)",
           ex);
     }
+  }
+
+  @VisibleForTesting
+  ProjectProperties(
+      MavenProject project, Log log, SourceFilesConfiguration sourceFilesConfiguration) {
+    this.project = project;
+    this.log = log;
+    this.sourceFilesConfiguration = sourceFilesConfiguration;
+  }
+
+  /** @return the {@link SourceFilesConfiguration} based on the current project */
+  SourceFilesConfiguration getSourceFilesConfiguration() {
+    return sourceFilesConfiguration;
   }
 
   /**
@@ -71,6 +83,10 @@ class ProjectProperties {
    */
   String getMainClass(@Nullable String mainClass) throws MojoExecutionException {
     if (mainClass == null) {
+      log.info(
+          "Searching for main class... Add a 'mainClass' configuration to '"
+              + PLUGIN_NAME
+              + "' to improve build speed.");
       mainClass = getMainClassFromMavenJarPlugin();
       if (mainClass == null) {
         log.debug(
@@ -78,8 +94,11 @@ class ProjectProperties {
                 + "class.");
 
         try {
-          List<String> mainClasses =
-              MainClassFinder.findMainClasses(Paths.get(project.getBuild().getOutputDirectory()));
+          List<String> mainClasses = new ArrayList<>();
+          for (Path classPath : sourceFilesConfiguration.getClassesFiles()) {
+            mainClasses.addAll(MainClassFinder.findMainClasses(classPath));
+          }
+
           if (mainClasses.size() == 1) {
             mainClass = mainClasses.get(0);
           } else if (mainClasses.size() == 0) {
