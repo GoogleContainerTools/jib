@@ -20,6 +20,10 @@ All notable changes to this project will be documented in this file.
 
 - Removed `reproducible` parameter - application layers will always be reproducible ([#245](https://github.com/GoogleContainerTools/jib/pull/245))
 
+### Fixed
+
+- Using base images that lack entrypoints ([#284](https://github.com/GoogleContainerTools/jib/pull/284)
+
 ## 0.1.1
 
 ### Added

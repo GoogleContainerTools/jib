@@ -19,6 +19,10 @@ All notable changes to this project will be documented in this file.
 - Removed `enableReproducibleBuilds` parameter - application layers will always be reproducible ([#245](https://github.com/GoogleContainerTools/jib/pull/245))
 - Changed configuration schema to be more like configuration for `jib-gradle-plugin` - NOT compatible with prior versions of `jib-maven-plugin` ([#212](https://github.com/GoogleContainerTools/jib/issues/212))
 
+## 0.1.7
+### Fixed
+- Using base images that lack entrypoints ([#284](https://github.com/GoogleContainerTools/jib/pull/284)
+
 ## 0.1.6
 ### Changed
 - Base image layers are now cached on a user-level rather than a project level - disable with `useOnlyProjectCache` configuration ([#29](https://github.com/google/jib/issues/29))
