@@ -26,13 +26,12 @@ import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryException;
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
@@ -60,11 +59,12 @@ class PushContainerConfigurationStep implements Callable<ListenableFuture<BlobDe
   /** Depends on {@code buildImageFutureFuture} and {@code pushAuthorizationFuture}. */
   @Override
   public ListenableFuture<BlobDescriptor> call() throws ExecutionException, InterruptedException {
-    List<ListenableFuture<?>> afterBuildConfigurationFutureFutureDependencies = new ArrayList<>();
-    afterBuildConfigurationFutureFutureDependencies.add(pushAuthorizationFuture);
-    afterBuildConfigurationFutureFutureDependencies.add(
+    ImmutableList.Builder<ListenableFuture<?>>
+        afterBuildConfigurationFutureFutureDependenciesBuilder = ImmutableList.builder();
+    afterBuildConfigurationFutureFutureDependenciesBuilder.add(pushAuthorizationFuture);
+    afterBuildConfigurationFutureFutureDependenciesBuilder.add(
         NonBlockingFutures.get(buildImageFutureFuture));
-    return Futures.whenAllSucceed(afterBuildConfigurationFutureFutureDependencies)
+    return Futures.whenAllSucceed(afterBuildConfigurationFutureFutureDependenciesBuilder.build())
         .call(this::afterBuildConfigurationFutureFuture, listeningExecutorService);
   }
 

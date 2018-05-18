@@ -27,10 +27,10 @@ import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryException;
 import com.google.common.io.CountingOutputStream;
+import com.google.common.util.concurrent.ListenableFuture;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 /** Pulls and caches a single base image layer. */
 class PullAndCacheBaseImageLayerStep implements Callable<CachedLayer> {
@@ -40,13 +40,13 @@ class PullAndCacheBaseImageLayerStep implements Callable<CachedLayer> {
   private final BuildConfiguration buildConfiguration;
   private final Cache cache;
   private final DescriptorDigest layerDigest;
-  private final Future<Authorization> pullAuthorizationFuture;
+  private final ListenableFuture<Authorization> pullAuthorizationFuture;
 
   PullAndCacheBaseImageLayerStep(
       BuildConfiguration buildConfiguration,
       Cache cache,
       DescriptorDigest layerDigest,
-      Future<Authorization> pullAuthorizationFuture) {
+      ListenableFuture<Authorization> pullAuthorizationFuture) {
     this.buildConfiguration = buildConfiguration;
     this.cache = cache;
     this.layerDigest = layerDigest;
@@ -62,7 +62,7 @@ class PullAndCacheBaseImageLayerStep implements Callable<CachedLayer> {
         new Timer(buildConfiguration.getBuildLogger(), String.format(DESCRIPTION, layerDigest))) {
       RegistryClient registryClient =
           new RegistryClient(
-              pullAuthorizationFuture.get(),
+              NonBlockingFutures.get(pullAuthorizationFuture),
               buildConfiguration.getBaseImageRegistry(),
               buildConfiguration.getBaseImageRepository());
 
