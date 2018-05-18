@@ -105,24 +105,25 @@ public class BuildImageSteps implements BuildSteps {
 
           timer2.lap("Setting up credential retrieval");
           RetrieveRegistryCredentialsStep retrieveTargetRegistryCredentialsStep =
-              RetrieveRegistryCredentialsStep.forTargetImage(buildConfiguration);
+              RetrieveRegistryCredentialsStep.forTargetImage(
+                  listeningExecutorService, buildConfiguration);
           RetrieveRegistryCredentialsStep retrieveBaseRegistryCredentialsStep =
-              RetrieveRegistryCredentialsStep.forBaseImage(buildConfiguration);
+              RetrieveRegistryCredentialsStep.forBaseImage(
+                  listeningExecutorService, buildConfiguration);
 
           // TODO: Keep refactoring other steps to implement AsyncStep and remove logic like this.
-          ListenableFuture<Authorization> retrieveTargetRegistryCredentialsFuture =
-              retrieveTargetRegistryCredentialsStep.submit(listeningExecutorService);
           ListenableFuture<Authorization> retrieveBaseImageRegistryCredentialsFuture =
-              retrieveBaseRegistryCredentialsStep.submit(listeningExecutorService);
+              retrieveBaseRegistryCredentialsStep.getFuture();
 
           timer2.lap("Setting up image push authentication");
           // Authenticates push.
-          ListenableFuture<Authorization> authenticatePushFuture =
-              Futures.whenAllSucceed(retrieveTargetRegistryCredentialsFuture)
-                  .call(
-                      new AuthenticatePushStep(
-                          buildConfiguration, retrieveTargetRegistryCredentialsFuture),
-                      listeningExecutorService);
+          AuthenticatePushStep authenticatePushStep =
+              new AuthenticatePushStep(
+                  listeningExecutorService,
+                  buildConfiguration,
+                  retrieveTargetRegistryCredentialsStep);
+
+          ListenableFuture<Authorization> authenticatePushFuture = authenticatePushStep.getFuture();
 
           timer2.lap("Setting up image pull authentication");
           // Authenticates base image pull.

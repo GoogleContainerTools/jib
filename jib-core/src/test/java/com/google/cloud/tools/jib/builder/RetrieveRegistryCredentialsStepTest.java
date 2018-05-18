@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelperFac
 import com.google.cloud.tools.jib.registry.credentials.NonexistentDockerCredentialHelperException;
 import com.google.cloud.tools.jib.registry.credentials.NonexistentServerUrlDockerCredentialHelperException;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
 import javax.annotation.Nullable;
 import org.junit.Assert;
@@ -39,6 +40,7 @@ public class RetrieveRegistryCredentialsStepTest {
 
   private static final String FAKE_TARGET_REGISTRY = "someRegistry";
 
+  @Mock private ListeningExecutorService mockListeningExecutorService;
   @Mock private BuildConfiguration mockBuildConfiguration;
   @Mock private BuildLogger mockBuildLogger;
 
@@ -154,6 +156,7 @@ public class RetrieveRegistryCredentialsStepTest {
     Mockito.when(mockBuildConfiguration.getTargetImageRegistry()).thenReturn(FAKE_TARGET_REGISTRY);
 
     return new RetrieveRegistryCredentialsStep(
+        mockListeningExecutorService,
         mockBuildLogger,
         registry,
         credentialHelperSuffix,

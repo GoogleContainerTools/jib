@@ -27,8 +27,9 @@ import java.util.concurrent.Callable;
  * <ol>
  *   <li>Construct with the dependent {@link AsyncStep}s.
  *   <li>Implement {@link #call} with the actual work
- *   <li>Implement {@link #submit} by submitting itself to the {@link ListeningExecutorService} to
- *       run after all its dependent {@link AsyncStep}s.
+ *   <li>Implement {@link #getFuture} by submitting itself to the {@link ListeningExecutorService}
+ *       to run after all its dependent {@link AsyncStep}s for the first call, and returning that
+ *       future for subsequent calls.
  * </ol>
  *
  * @param <T> the object type passed on by this step
@@ -39,5 +40,6 @@ interface AsyncStep<T> extends Callable<T> {
    * Submits to a {@link ListeningExecutorService} to run after its dependencies. For example, by
    * using {@link Futures#whenAllSucceed}.
    */
-  ListenableFuture<T> submit(ListeningExecutorService listeningExecutorService);
+  // TODO: Consider changing this to be orchestrated by an AsyncStepsBuilder.
+  ListenableFuture<T> getFuture();
 }
