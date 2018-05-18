@@ -63,10 +63,12 @@ public class ImageLayersTest {
     List<Layer> expectedLayers =
         Arrays.asList(mockCachedLayer, mockReferenceLayer, mockDigestOnlyLayer);
 
-    ImageLayers<Layer> imageLayers = new ImageLayers<>();
-    imageLayers.add(mockCachedLayer);
-    imageLayers.add(mockReferenceLayer);
-    imageLayers.add(mockDigestOnlyLayer);
+    ImageLayers<Layer> imageLayers =
+        ImageLayers.builder()
+            .add(mockCachedLayer)
+            .add(mockReferenceLayer)
+            .add(mockDigestOnlyLayer)
+            .build();
 
     Assert.assertThat(imageLayers.getLayers(), CoreMatchers.is(expectedLayers));
   }
@@ -76,12 +78,14 @@ public class ImageLayersTest {
     List<Layer> expectedLayers =
         Arrays.asList(mockCachedLayer, mockReferenceLayer, mockDigestOnlyLayer, mockUnwrittenLayer);
 
-    ImageLayers<Layer> imageLayers = new ImageLayers<>();
-    imageLayers.add(mockCachedLayer);
-    imageLayers.add(mockReferenceLayer);
-    imageLayers.add(mockDigestOnlyLayer);
-    imageLayers.add(mockUnwrittenLayer);
-    imageLayers.add(mockCachedLayer);
+    ImageLayers<Layer> imageLayers =
+        ImageLayers.builder()
+            .add(mockCachedLayer)
+            .add(mockReferenceLayer)
+            .add(mockDigestOnlyLayer)
+            .add(mockUnwrittenLayer)
+            .add(mockCachedLayer)
+            .build();
 
     Assert.assertEquals(expectedLayers, imageLayers.getLayers());
   }

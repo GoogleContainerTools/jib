@@ -53,7 +53,8 @@ public class BuildAndCacheApplicationLayersStepTest {
     TestSourceFilesConfiguration testSourceFilesConfiguration = new TestSourceFilesConfiguration();
     Path temporaryCacheDirectory = temporaryFolder.newFolder().toPath();
 
-    ImageLayers<CachedLayer> applicationLayers = new ImageLayers<>();
+    ImageLayers.Builder<CachedLayer> applicationLayersBuilder = ImageLayers.builder();
+    ImageLayers<CachedLayer> applicationLayers;
 
     try (Cache cache = Cache.init(temporaryCacheDirectory)) {
       BuildAndCacheApplicationLayersStep buildAndCacheApplicationLayersStep =
@@ -65,9 +66,10 @@ public class BuildAndCacheApplicationLayersStepTest {
 
       for (ListenableFuture<CachedLayer> applicationLayerFuture :
           buildAndCacheApplicationLayersStep.call()) {
-        applicationLayers.add(applicationLayerFuture.get());
+        applicationLayersBuilder.add(applicationLayerFuture.get());
       }
 
+      applicationLayers = applicationLayersBuilder.build();
       Assert.assertEquals(3, applicationLayers.size());
     }
 

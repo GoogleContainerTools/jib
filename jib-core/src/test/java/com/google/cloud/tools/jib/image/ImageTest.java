@@ -31,23 +31,24 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class ImageTest {
 
   @Mock private Layer mockLayer;
-  @Mock private ImageLayers<Layer> mockImageLayers;
+  @Mock private ImageLayers.Builder<Layer> mockImageLayersBuilder;
 
-  @InjectMocks private Image image;
+  @InjectMocks private Image.Builder imageBuilder;
 
   @Test
   public void test_smokeTest() throws LayerPropertyNotFoundException {
     ImmutableList<String> expectedEnvironment =
         ImmutableList.of("crepecake=is great", "VARIABLE=VALUE");
 
-    image.setEnvironmentVariable("crepecake", "is great");
-    image.setEnvironmentVariable("VARIABLE", "VALUE");
+    Image image =
+        imageBuilder
+            .setEnvironmentVariable("crepecake", "is great")
+            .setEnvironmentVariable("VARIABLE", "VALUE")
+            .setEntrypoint(Arrays.asList("some", "command"))
+            .addLayer(mockLayer)
+            .build();
 
-    image.setEntrypoint(Arrays.asList("some", "command"));
-
-    image.addLayer(mockLayer);
-
-    Mockito.verify(mockImageLayers).add(mockLayer);
+    Mockito.verify(mockImageLayersBuilder).add(mockLayer);
 
     Assert.assertEquals(expectedEnvironment, image.getEnvironment());
 

@@ -46,20 +46,20 @@ public class ImageToJsonTranslatorTest {
 
   @Before
   public void setUp() throws DigestException, LayerPropertyNotFoundException {
-    Image testImage = new Image();
+    Image.Builder testImageBuilder = Image.builder();
 
-    testImage.setEnvironmentVariable("VAR1", "VAL1");
-    testImage.setEnvironmentVariable("VAR2", "VAL2");
+    testImageBuilder.setEnvironmentVariable("VAR1", "VAL1");
+    testImageBuilder.setEnvironmentVariable("VAR2", "VAL2");
 
-    testImage.setEntrypoint(Arrays.asList("some", "entrypoint", "command"));
+    testImageBuilder.setEntrypoint(Arrays.asList("some", "entrypoint", "command"));
 
     DescriptorDigest fakeDigest =
         DescriptorDigest.fromDigest(
             "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad");
     Layer fakeLayer = new ReferenceLayer(new BlobDescriptor(1000, fakeDigest), fakeDigest);
-    testImage.addLayer(fakeLayer);
+    testImageBuilder.addLayer(fakeLayer);
 
-    imageToJsonTranslator = new ImageToJsonTranslator(testImage);
+    imageToJsonTranslator = new ImageToJsonTranslator(testImageBuilder.build());
   }
 
   @Test

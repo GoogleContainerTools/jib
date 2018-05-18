@@ -34,14 +34,14 @@ public class JsonToImageTranslator {
   /** Translates {@link V21ManifestTemplate} to {@link Image}. */
   public static Image toImage(V21ManifestTemplate manifestTemplate)
       throws LayerPropertyNotFoundException {
-    Image image = new Image();
+    Image.Builder imageBuilder = Image.builder();
 
     for (DescriptorDigest digest : manifestTemplate.getLayerDigests()) {
       Layer layer = new DigestOnlyLayer(digest);
-      image.addLayer(layer);
+      imageBuilder.addLayer(layer);
     }
 
-    return image;
+    return imageBuilder.build();
   }
 
   /**
@@ -52,7 +52,7 @@ public class JsonToImageTranslator {
       BuildableManifestTemplate manifestTemplate,
       ContainerConfigurationTemplate containerConfigurationTemplate)
       throws LayerCountMismatchException, LayerPropertyNotFoundException {
-    Image image = new Image();
+    Image.Builder imageBuilder = Image.builder();
 
     List<ReferenceNoDiffIdLayer> layers = new ArrayList<>();
     for (BuildableManifestTemplate.ContentDescriptorTemplate layerObjectTemplate :
@@ -79,18 +79,20 @@ public class JsonToImageTranslator {
       DescriptorDigest diffId = diffIds.get(layerIndex);
 
       Layer layer = new ReferenceLayer(noDiffIdLayer.getBlobDescriptor(), diffId);
-      image.addLayer(layer);
+      imageBuilder.addLayer(layer);
     }
 
-    image.setEntrypoint(containerConfigurationTemplate.getContainerEntrypoint());
+    if (containerConfigurationTemplate.getContainerEntrypoint() != null) {
+      imageBuilder.setEntrypoint(containerConfigurationTemplate.getContainerEntrypoint());
+    }
 
     if (containerConfigurationTemplate.getContainerEnvironment() != null) {
       for (String environmentVariable : containerConfigurationTemplate.getContainerEnvironment()) {
-        image.addEnvironmentVariableDefinition(environmentVariable);
+        imageBuilder.addEnvironmentVariableDefinition(environmentVariable);
       }
     }
 
-    return image;
+    return imageBuilder.build();
   }
 
   private JsonToImageTranslator() {}

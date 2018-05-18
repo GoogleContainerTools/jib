@@ -16,9 +16,10 @@
 
 package com.google.cloud.tools.jib.image;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -28,15 +29,70 @@ import javax.annotation.Nullable;
 /** Holds the layers for an image. Makes sure that each layer is only added once. */
 public class ImageLayers<T extends Layer> implements Iterable<T> {
 
+  public static class Builder<T extends Layer> {
+
+    private final List<T> layers = new ArrayList<>();
+    private final Set<DescriptorDigest> layerDigests = new HashSet<>();
+
+    /**
+     * Adds a layer.
+     *
+     * @param layer the layer to add
+     */
+    public Builder<T> add(T layer) throws LayerPropertyNotFoundException {
+      // Doesn't add the layer if the last layer is the same.
+      if (!isSameAsLastLayer(layer)) {
+        layerDigests.add(layer.getBlobDescriptor().getDigest());
+        layers.add(layer);
+      }
+
+      return this;
+    }
+
+    /** Adds all layers in {@code layers}. */
+    public <U extends T> Builder<T> addAll(ImageLayers<U> layers)
+        throws LayerPropertyNotFoundException {
+      for (U layer : layers) {
+        add(layer);
+      }
+      return this;
+    }
+
+    public ImageLayers<T> build() {
+      return new ImageLayers<>(ImmutableList.copyOf(layers), ImmutableSet.copyOf(layerDigests));
+    }
+
+    /** @return {@code true} if {@code layer} is the same as the last layer in {@link #layers} */
+    private boolean isSameAsLastLayer(T layer) throws LayerPropertyNotFoundException {
+      if (layers.size() == 0) {
+        return false;
+      }
+      T lastLayer = Iterables.getLast(layers);
+      return layer
+          .getBlobDescriptor()
+          .getDigest()
+          .equals(lastLayer.getBlobDescriptor().getDigest());
+    }
+  }
+
+  public static <U extends Layer> Builder<U> builder() {
+    return new Builder<>();
+  }
+
   /** The layers of the image, in the order in which they are applied. */
-  private final List<T> layers = new ArrayList<>();
+  private final ImmutableList<T> layers;
 
   /** Keeps track of the layers already added. */
-  private final Set<DescriptorDigest> layerDigests = new HashSet<>();
+  private final ImmutableSet<DescriptorDigest> layerDigests;
+
+  private ImageLayers(ImmutableList<T> layers, ImmutableSet<DescriptorDigest> layerDigests) {
+    this.layers = layers;
+    this.layerDigests = layerDigests;
+  }
 
   /** Returns a read-only view of the image layers. */
-  public List<T> getLayers() {
-    return Collections.unmodifiableList(layers);
+  public ImmutableList<T> getLayers() {
+    return layers;
   }
 
   /** @return the layer count */
@@ -72,41 +128,8 @@ public class ImageLayers<T extends Layer> implements Iterable<T> {
     return layerDigests.contains(digest);
   }
 
-  /**
-   * Adds a layer.
-   *
-   * @param layer the layer to add
-   */
-  public ImageLayers<T> add(T layer) throws LayerPropertyNotFoundException {
-    // Doesn't add the layer if the last layer is the same.
-    if (!isSameAsLastLayer(layer)) {
-      layerDigests.add(layer.getBlobDescriptor().getDigest());
-      layers.add(layer);
-    }
-
-    return this;
-  }
-
-  /** Adds all layers in {@code layers}. */
-  public <U extends T> ImageLayers<T> addAll(ImageLayers<U> layers)
-      throws LayerPropertyNotFoundException {
-    for (U layer : layers) {
-      add(layer);
-    }
-    return this;
-  }
-
   @Override
   public Iterator<T> iterator() {
     return getLayers().iterator();
-  }
-
-  /** @return {@code true} if {@code layer} is the same as the last layer in {@link #layers} */
-  private boolean isSameAsLastLayer(T layer) throws LayerPropertyNotFoundException {
-    if (layers.size() == 0) {
-      return false;
-    }
-    T lastLayer = Iterables.getLast(layers);
-    return layer.getBlobDescriptor().getDigest().equals(lastLayer.getBlobDescriptor().getDigest());
   }
 }

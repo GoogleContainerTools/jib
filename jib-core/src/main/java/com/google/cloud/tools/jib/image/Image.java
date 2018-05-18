@@ -16,68 +16,95 @@
 
 package com.google.cloud.tools.jib.image;
 
+import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /** Represents an image. */
 public class Image {
 
+  public static class Builder {
+
+    private ImageLayers.Builder<Layer> imageLayersBuilder = ImageLayers.builder();
+    private final List<String> environment = new ArrayList<>();
+
+    private List<String> entrypoint = new ArrayList<>();
+
+    /** Sets the environment with a map from environment variable names to values. */
+    public Builder setEnvironment(Map<String, String> environment) {
+      for (Map.Entry<String, String> environmentVariable : environment.entrySet()) {
+        setEnvironmentVariable(environmentVariable.getKey(), environmentVariable.getValue());
+      }
+      return this;
+    }
+
+    public Builder setEnvironmentVariable(String name, String value) {
+      environment.add(name + "=" + value);
+      return this;
+    }
+
+    /** Adds an environment variable definition in the format {@code NAME=VALUE}. */
+    public Builder addEnvironmentVariableDefinition(String environmentVariableDefinition) {
+      environment.add(environmentVariableDefinition);
+      return this;
+    }
+
+    public Builder setEntrypoint(List<String> entrypoint) {
+      this.entrypoint = entrypoint;
+      return this;
+    }
+
+    public Builder addLayer(Layer layer) throws LayerPropertyNotFoundException {
+      imageLayersBuilder.add(layer);
+      return this;
+    }
+
+    public <T extends Layer> Builder addLayers(ImageLayers<T> layers)
+        throws LayerPropertyNotFoundException {
+      this.imageLayersBuilder.addAll(layers);
+      return this;
+    }
+
+    public Image build() {
+      return new Image(
+          imageLayersBuilder.build(),
+          ImmutableList.copyOf(environment),
+          ImmutableList.copyOf(entrypoint));
+    }
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
   /** The layers of the image, in the order in which they are applied. */
-  private ImageLayers<Layer> layers = new ImageLayers<>();
+  private final ImageLayers<Layer> layers;
 
   /** Environment variable definitions for running the image, in the format {@code NAME=VALUE}. */
-  private final List<String> environment = new ArrayList<>();
+  private final ImmutableList<String> environment;
 
   /** Initial command to run when running the image. */
-  @Nullable private List<String> entrypoint;
+  private final ImmutableList<String> entrypoint;
 
-  public List<String> getEnvironment() {
-    return Collections.unmodifiableList(environment);
-  }
-
-  /** Sets the environment with a map from environment variable names to values. */
-  public Image setEnvironment(Map<String, String> environment) {
-    for (Map.Entry<String, String> environmentVariable : environment.entrySet()) {
-      setEnvironmentVariable(environmentVariable.getKey(), environmentVariable.getValue());
-    }
-    return this;
-  }
-
-  public Image setEnvironmentVariable(String name, String value) {
-    environment.add(name + "=" + value);
-    return this;
-  }
-
-  /** Adds an environment variable definition in the format {@code NAME=VALUE}. */
-  public Image addEnvironmentVariableDefinition(String environmentVariableDefinition) {
-    environment.add(environmentVariableDefinition);
-    return this;
-  }
-
-  public List<String> getEntrypoint() {
-    return Collections.unmodifiableList(entrypoint);
-  }
-
-  public Image setEntrypoint(@Nullable List<String> entrypoint) {
+  private Image(
+      ImageLayers<Layer> layers,
+      ImmutableList<String> environment,
+      ImmutableList<String> entrypoint) {
+    this.layers = layers;
+    this.environment = environment;
     this.entrypoint = entrypoint;
-    return this;
   }
 
-  public List<Layer> getLayers() {
+  public ImmutableList<String> getEnvironment() {
+    return environment;
+  }
+
+  public ImmutableList<String> getEntrypoint() {
+    return entrypoint;
+  }
+
+  public ImmutableList<Layer> getLayers() {
     return layers.getLayers();
-  }
-
-  public Image addLayer(Layer layer) throws LayerPropertyNotFoundException {
-    layers.add(layer);
-    return this;
-  }
-
-  public <T extends Layer> Image addLayers(ImageLayers<T> layers)
-      throws LayerPropertyNotFoundException {
-    this.layers.addAll(layers);
-    return this;
   }
 }
