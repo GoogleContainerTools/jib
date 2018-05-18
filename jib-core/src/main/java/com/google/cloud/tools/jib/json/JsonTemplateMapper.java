@@ -69,10 +69,16 @@ public class JsonTemplateMapper {
 
   /** Convert a {@link JsonTemplate} to a {@link Blob} of the JSON string. */
   public static Blob toBlob(JsonTemplate template) {
-    return Blobs.from(
-        outputStream -> {
-          objectMapper.writeValue(outputStream, template);
-        });
+    return toBlob((Object) template);
+  }
+
+  /** Convert a {@link ListOfJsonTemplate} to a {@link Blob} of the JSON string. */
+  public static Blob toBlob(ListOfJsonTemplate template) {
+    return toBlob(template.getList());
+  }
+
+  private static Blob toBlob(Object template) {
+    return Blobs.from(outputStream -> objectMapper.writeValue(outputStream, template));
   }
 
   private JsonTemplateMapper() {}

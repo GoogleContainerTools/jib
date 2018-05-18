@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.registry.credentials.DockerConfigCredentialRet
 import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelperFactory;
 import com.google.cloud.tools.jib.registry.credentials.NonexistentDockerCredentialHelperException;
 import com.google.cloud.tools.jib.registry.credentials.NonexistentServerUrlDockerCredentialHelperException;
+import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
@@ -40,40 +41,70 @@ class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
   private static final ImmutableMap<String, String> COMMON_CREDENTIAL_HELPERS =
       ImmutableMap.of("gcr.io", "gcr", "amazonaws.com", "ecr-login");
 
-  private final BuildConfiguration buildConfiguration;
+  /** Retrieves credentials for the base image. */
+  static RetrieveRegistryCredentialsStep forBaseImage(BuildConfiguration buildConfiguration) {
+    return new RetrieveRegistryCredentialsStep(
+        buildConfiguration.getBuildLogger(),
+        buildConfiguration.getBaseImageRegistry(),
+        buildConfiguration.getBaseImageCredentialHelperName(),
+        buildConfiguration.getKnownBaseRegistryCredentials());
+  }
+
+  /** Retrieves credentials for the target image. */
+  static RetrieveRegistryCredentialsStep forTargetImage(BuildConfiguration buildConfiguration) {
+    return new RetrieveRegistryCredentialsStep(
+        buildConfiguration.getBuildLogger(),
+        buildConfiguration.getTargetImageRegistry(),
+        buildConfiguration.getTargetImageCredentialHelperName(),
+        buildConfiguration.getKnownTargetRegistryCredentials());
+  }
+
+  private final BuildLogger buildLogger;
   private final String registry;
+  @Nullable private final String credentialHelperSuffix;
+  @Nullable private final RegistryCredentials knownRegistryCredentials;
   private final DockerCredentialHelperFactory dockerCredentialHelperFactory;
   private final DockerConfigCredentialRetriever dockerConfigCredentialRetriever;
 
-  RetrieveRegistryCredentialsStep(BuildConfiguration buildConfiguration, String registry) {
-    this(
-        buildConfiguration,
-        registry,
-        new DockerCredentialHelperFactory(registry),
-        new DockerConfigCredentialRetriever(registry));
-  }
-
   @VisibleForTesting
   RetrieveRegistryCredentialsStep(
-      BuildConfiguration buildConfiguration,
+      BuildLogger buildLogger,
       String registry,
+      @Nullable String credentialHelperSuffix,
+      @Nullable RegistryCredentials knownRegistryCredentials,
       DockerCredentialHelperFactory dockerCredentialHelperFactory,
       DockerConfigCredentialRetriever dockerConfigCredentialRetriever) {
-    this.buildConfiguration = buildConfiguration;
+    this.buildLogger = buildLogger;
     this.registry = registry;
+    this.credentialHelperSuffix = credentialHelperSuffix;
+    this.knownRegistryCredentials = knownRegistryCredentials;
     this.dockerCredentialHelperFactory = dockerCredentialHelperFactory;
     this.dockerConfigCredentialRetriever = dockerConfigCredentialRetriever;
+  }
+
+  /** Instantiate with {@link #forBaseImage} or {@link #forTargetImage}. */
+  private RetrieveRegistryCredentialsStep(
+      BuildLogger buildLogger,
+      String registry,
+      @Nullable String credentialHelperSuffix,
+      @Nullable RegistryCredentials knownRegistryCredentials) {
+    this(
+        buildLogger,
+        registry,
+        credentialHelperSuffix,
+        knownRegistryCredentials,
+        new DockerCredentialHelperFactory(registry),
+        new DockerConfigCredentialRetriever(registry));
   }
 
   @Override
   @Nullable
   public Authorization call() throws IOException, NonexistentDockerCredentialHelperException {
-    try (Timer ignored =
-        new Timer(
-            buildConfiguration.getBuildLogger(),
-            String.format(DESCRIPTION, buildConfiguration.getTargetRegistry()))) {
+    buildLogger.lifecycle(String.format(DESCRIPTION, registry) + "...");
+
+    try (Timer ignored = new Timer(buildLogger, String.format(DESCRIPTION, registry))) {
       // Tries to get registry credentials from Docker credential helpers.
-      for (String credentialHelperSuffix : buildConfiguration.getCredentialHelperNames()) {
+      if (credentialHelperSuffix != null) {
         Authorization authorization = retrieveFromCredentialHelper(credentialHelperSuffix);
         if (authorization != null) {
           return authorization;
@@ -81,25 +112,21 @@ class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
       }
 
       // Tries to get registry credentials from known registry credentials.
-      String credentialSource =
-          buildConfiguration.getKnownRegistryCredentials().getCredentialSource(registry);
-      if (credentialSource != null) {
-        logGotCredentialsFrom(credentialSource);
-        return buildConfiguration.getKnownRegistryCredentials().getAuthorization(registry);
+      if (knownRegistryCredentials != null) {
+        logGotCredentialsFrom(knownRegistryCredentials.getCredentialSource());
+        return knownRegistryCredentials.getAuthorization();
       }
 
       // Tries to get registry credentials from the Docker config.
       try {
         Authorization dockerConfigAuthorization = dockerConfigCredentialRetriever.retrieve();
         if (dockerConfigAuthorization != null) {
-          buildConfiguration
-              .getBuildLogger()
-              .info("Using credentials from Docker config for " + registry);
+          buildLogger.info("Using credentials from Docker config for " + registry);
           return dockerConfigAuthorization;
         }
 
       } catch (IOException ex) {
-        buildConfiguration.getBuildLogger().info("Unable to parse Docker config");
+        buildLogger.info("Unable to parse Docker config");
       }
 
       // Tries to infer common credential helpers for known registries.
@@ -119,7 +146,7 @@ class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
             if (ex.getMessage() != null) {
               // Warns the user that the specified (or inferred) credential helper is not on the
               // system.
-              buildConfiguration.getBuildLogger().warn(ex.getMessage());
+              buildLogger.warn(ex.getMessage());
             }
           }
         }
@@ -129,9 +156,7 @@ class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
        * If no credentials found, give an info (not warning because in most cases, the base image is
        * public and does not need extra credentials) and return null.
        */
-      buildConfiguration
-          .getBuildLogger()
-          .info("No credentials could be retrieved for registry " + registry);
+      buildLogger.info("No credentials could be retrieved for registry " + registry);
       return null;
     }
   }
@@ -144,9 +169,7 @@ class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
   @Nullable
   Authorization retrieveFromCredentialHelper(String credentialHelperSuffix)
       throws NonexistentDockerCredentialHelperException, IOException {
-    buildConfiguration
-        .getBuildLogger()
-        .info("Checking credentials from docker-credential-" + credentialHelperSuffix);
+    buildLogger.info("Checking credentials from docker-credential-" + credentialHelperSuffix);
 
     try {
       Authorization authorization =
@@ -157,15 +180,13 @@ class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
       return authorization;
 
     } catch (NonexistentServerUrlDockerCredentialHelperException ex) {
-      buildConfiguration
-          .getBuildLogger()
-          .info(
-              "No credentials for " + registry + " in docker-credential-" + credentialHelperSuffix);
+      buildLogger.info(
+          "No credentials for " + registry + " in docker-credential-" + credentialHelperSuffix);
       return null;
     }
   }
 
   private void logGotCredentialsFrom(String credentialSource) {
-    buildConfiguration.getBuildLogger().info("Using " + credentialSource + " for " + registry);
+    buildLogger.info("Using " + credentialSource + " for " + registry);
   }
 }

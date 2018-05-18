@@ -21,7 +21,7 @@ import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheReader;
 import com.google.cloud.tools.jib.cache.CacheWriter;
 import com.google.cloud.tools.jib.cache.CachedLayer;
-import com.google.cloud.tools.jib.image.LayerBuilder;
+import com.google.cloud.tools.jib.image.ReproducibleLayerBuilder;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.nio.file.Path;
@@ -81,6 +81,8 @@ class BuildAndCacheApplicationLayersStep implements Callable<List<ListenableFutu
 
     return listeningExecutorService.submit(
         () -> {
+          buildConfiguration.getBuildLogger().lifecycle(description + "...");
+
           try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), description)) {
             // Don't build the layer if it exists already.
             CachedLayer cachedLayer =
@@ -89,11 +91,10 @@ class BuildAndCacheApplicationLayersStep implements Callable<List<ListenableFutu
               return cachedLayer;
             }
 
-            LayerBuilder layerBuilder =
-                new LayerBuilder(
-                    sourceFiles, extractionPath, buildConfiguration.getEnableReproducibleBuilds());
+            ReproducibleLayerBuilder reproducibleLayerBuilder =
+                new ReproducibleLayerBuilder(sourceFiles, extractionPath);
 
-            cachedLayer = new CacheWriter(cache).writeLayer(layerBuilder);
+            cachedLayer = new CacheWriter(cache).writeLayer(reproducibleLayerBuilder);
             // TODO: Remove
             buildConfiguration
                 .getBuildLogger()

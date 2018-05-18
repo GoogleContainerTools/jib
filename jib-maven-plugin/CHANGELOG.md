@@ -8,6 +8,17 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+## 0.9.0
+### Added
+- Better feedback for build failures ([#197](https://github.com/google/jib/pull/197))
+- Warns if specified `mainClass` is not a valid Java class ([#206](https://github.com/google/jib/issues/206))
+- Warns if build may not be reproducible ([#245](https://github.com/GoogleContainerTools/jib/pull/245))
+- `jib:buildDocker` maven goal to build straight to Docker daemon ([#266](https://github.com/GoogleContainerTools/jib/pull/266))
+
+### Changed
+- Removed `enableReproducibleBuilds` parameter - application layers will always be reproducible ([#245](https://github.com/GoogleContainerTools/jib/pull/245))
+- Changed configuration schema to be more like configuration for `jib-gradle-plugin` - NOT compatible with prior versions of `jib-maven-plugin` ([#212](https://github.com/GoogleContainerTools/jib/issues/212))
+
 ## 0.1.6
 ### Changed
 - Base image layers are now cached on a user-level rather than a project level - disable with `useOnlyProjectCache` configuration ([#29](https://github.com/google/jib/issues/29))

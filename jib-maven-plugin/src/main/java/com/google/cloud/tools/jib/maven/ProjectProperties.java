@@ -16,7 +16,9 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
+import com.google.common.base.Preconditions;
 import java.io.IOException;
 import javax.annotation.Nullable;
 import org.apache.maven.model.Plugin;
@@ -39,49 +41,44 @@ class ProjectProperties {
   /** @return the {@link SourceFilesConfiguration} based on the current project */
   SourceFilesConfiguration getSourceFilesConfiguration() throws MojoExecutionException {
     try {
-      SourceFilesConfiguration sourceFilesConfiguration =
-          MavenSourceFilesConfiguration.getForProject(project);
-
-      // Logs the different source files used.
-      log.info("");
-      log.info("Containerizing application with the following files:");
-      log.info("");
-
-      log.info("\tDependencies:");
-      log.info("");
-      sourceFilesConfiguration
-          .getDependenciesFiles()
-          .forEach(dependencyFile -> log.info("\t\t" + dependencyFile));
-
-      log.info("\tResources:");
-      log.info("");
-      sourceFilesConfiguration
-          .getResourcesFiles()
-          .forEach(resourceFile -> log.info("\t\t" + resourceFile));
-
-      log.info("\tClasses:");
-      log.info("");
-      sourceFilesConfiguration
-          .getClassesFiles()
-          .forEach(classesFile -> log.info("\t\t" + classesFile));
-
-      log.info("");
-
-      return sourceFilesConfiguration;
+      return MavenSourceFilesConfiguration.getForProject(project);
 
     } catch (IOException ex) {
-      throw new MojoExecutionException("Obtaining project build output files failed", ex);
+      throw new MojoExecutionException(
+          "Obtaining project build output files failed; make sure you have compiled your project "
+              + "before trying to build the image. (Did you accidentally run \"mvn clean "
+              + "jib:build\" instead of \"mvn clean compile jib:build\"?)",
+          ex);
     }
+  }
+
+  /** @return the main class to use in the container entrypoint */
+  String getMainClass(@Nullable String mainClass) throws MojoExecutionException {
+    if (mainClass == null) {
+      mainClass = getMainClassFromMavenJarPlugin();
+      if (mainClass == null) {
+        throw new MojoExecutionException(
+            HelpfulSuggestionsProvider.get(
+                    "Could not find main class specified in maven-jar-plugin")
+                .suggest("add a `mainClass` configuration to jib-maven-plugin"));
+      }
+    }
+    Preconditions.checkNotNull(mainClass);
+    if (!BuildConfiguration.isValidJavaClass(mainClass)) {
+      log.warn("'mainClass' is not a valid Java class : " + mainClass);
+    }
+
+    return mainClass;
   }
 
   /** Extracts main class from 'maven-jar-plugin' configuration if available. */
   @Nullable
-  String getMainClassFromMavenJarPlugin() {
+  private String getMainClassFromMavenJarPlugin() {
     Plugin mavenJarPlugin = project.getPlugin("org.apache.maven.plugins:maven-jar-plugin");
     if (mavenJarPlugin != null) {
       String mainClass = getMainClassFromMavenJarPlugin(mavenJarPlugin);
       if (mainClass != null) {
-        log.info("Using main class from maven-jar-plugin: " + mainClass);
+        log.debug("Using main class from maven-jar-plugin: " + mainClass);
         return mainClass;
       }
     }
@@ -108,10 +105,5 @@ class ProjectProperties {
       return null;
     }
     return mainClassObject.getValue();
-  }
-
-  /** Returns the Maven logger. */
-  Log getLog() {
-    return log;
   }
 }

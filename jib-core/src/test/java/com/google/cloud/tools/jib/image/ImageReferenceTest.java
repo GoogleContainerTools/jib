@@ -134,6 +134,23 @@ public class ImageReferenceTest {
         ImageReference.of("anotherregistry", "anotherimage", "sometag").toString());
   }
 
+  @Test
+  public void testToStringWithTag() {
+    Assert.assertEquals(
+        "someimage:latest", ImageReference.of(null, "someimage", null).toStringWithTag());
+    Assert.assertEquals(
+        "someimage:latest", ImageReference.of("", "someimage", "").toStringWithTag());
+    Assert.assertEquals(
+        "someotherimage:latest",
+        ImageReference.of(null, "library/someotherimage", null).toStringWithTag());
+    Assert.assertEquals(
+        "someregistry/someotherimage:latest",
+        ImageReference.of("someregistry", "someotherimage", null).toStringWithTag());
+    Assert.assertEquals(
+        "anotherregistry/anotherimage:sometag",
+        ImageReference.of("anotherregistry", "anotherimage", "sometag").toStringWithTag());
+  }
+
   private void verifyParse(String registry, String repository, String tagSeparator, String tag)
       throws InvalidImageReferenceException {
     // Gets the expected parsed components.

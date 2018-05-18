@@ -61,6 +61,9 @@ public class RegistryClient {
 
             @Override
             public void error(CharSequence message) {}
+
+            @Override
+            public void lifecycle(CharSequence message) {}
           },
           "NULL TIMER");
 

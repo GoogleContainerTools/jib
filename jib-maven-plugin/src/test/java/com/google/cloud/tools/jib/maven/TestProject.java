@@ -24,7 +24,7 @@ import java.nio.file.Path;
 import org.apache.maven.it.util.ResourceExtractor;
 import org.junit.rules.TemporaryFolder;
 
-/** Works with the test Maven project in the {@code resources/project} directory. */
+/** Works with the test Maven projects in the {@code resources/projects} directory. */
 class TestProject extends TemporaryFolder implements Closeable {
 
   private static final String PROJECTS_PATH_IN_RESOURCES = "/projects/";

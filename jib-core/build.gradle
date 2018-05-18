@@ -1,9 +1,7 @@
 plugins {
-    id 'java-gradle-plugin'
+    id 'java'
     id 'checkstyle'
     id 'com.github.sherter.google-java-format' version '0.6'
-    id 'maven-publish'
-    id 'maven'
     id 'net.ltgt.apt' version '0.13'
     id 'net.ltgt.errorprone' version '0.0.13'
 }
@@ -34,16 +32,18 @@ configurations {
 }
 
 dependencies {
+    // Make sure these are consistent with jib-maven-plugin.
     compile 'com.google.http-client:google-http-client:1.23.0'
     compile 'org.apache.commons:commons-compress:1.15'
     compile 'com.google.guava:guava:23.5-jre'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.9.2'
     compile 'org.slf4j:slf4j-api:1.7.25'
+    
     testCompile 'junit:junit:4.12'
     testCompile 'org.mockito:mockito-core:2.12.0'
 
     // NullAway errorprone plugin
-    apt 'com.uber.nullaway:nullaway:0.3.5'
+    apt 'com.uber.nullaway:nullaway:0.4.2'
     errorprone 'com.google.errorprone:error_prone_core:2.2.0'
 }
 
@@ -53,16 +53,8 @@ jar {
     }
 }
 
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            from components.java
-        }
-    }
-}
-
 task wrapper(type: Wrapper) {
-    gradleVersion = "4.3.1"
+    gradleVersion = '4.6'
 }
 
 // Integration tests must be run explicitly
@@ -114,10 +106,3 @@ checkstyle {
     maxWarnings = 0
 }
 /* CHECKSTYLE */
-
-// Writes a pom.xml for adding the corresponding dependencies to jib-maven-plugin.
-task writePom {
-    doLast {
-        pom {}.writeTo("$buildDir/pom.xml")
-    }
-}

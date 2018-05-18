@@ -28,12 +28,10 @@
         <artifactId>jib-maven-plugin</artifactId>
         <version>${jib-maven-plugin.version}</version>
         <configuration>
-          <registry>gcr.io</registry>
-          <repository>jib-integration-testing/emptyimage</repository>
+          <to>
+            <image>gcr.io/jib-integration-testing/emptyimage:maven</image>
+          </to>
           <mainClass>com.test.Empty</mainClass>
-          <credHelpers>
-            <credHelper>gcr</credHelper>
-          </credHelpers>
           <!-- Does not have tests use user-level cache for base image layers. -->
           <useOnlyProjectCache>true</useOnlyProjectCache>
         </configuration>

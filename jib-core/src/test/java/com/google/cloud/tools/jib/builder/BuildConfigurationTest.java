@@ -37,14 +37,16 @@ public class BuildConfigurationTest {
     String expectedBaseImageServerUrl = "someserver";
     String expectedBaseImageName = "baseimage";
     String expectedBaseImageTag = "baseimagetag";
+    String expectedBaseImageCredentialHelperName = "credentialhelper";
+    RegistryCredentials expectedKnownBaseRegistryCredentials =
+        Mockito.mock(RegistryCredentials.class);
     String expectedTargetServerUrl = "someotherserver";
     String expectedTargetImageName = "targetimage";
     String expectedTargetTag = "targettag";
-    List<String> expectedCredentialHelperNames =
-        Arrays.asList("credentialhelper", "anotherCredentialHelper");
+    String expectedTargetImageCredentialHelperName = "anotherCredentialHelper";
+    RegistryCredentials expectedKnownTargetRegistryCredentials =
+        Mockito.mock(RegistryCredentials.class);
     String expectedMainClass = "mainclass";
-    RegistryCredentials expectedKnownRegistryCredentials = Mockito.mock(RegistryCredentials.class);
-    boolean expectedEnableReproducibleBuilds = false;
     List<String> expectedJvmFlags = Arrays.asList("some", "jvm", "flags");
     Map<String, String> expectedEnvironment = ImmutableMap.of("key", "value");
     Class<? extends BuildableManifestTemplate> expectedTargetFormat = OCIManifestTemplate.class;
@@ -54,12 +56,13 @@ public class BuildConfigurationTest {
             .setBaseImage(
                 ImageReference.of(
                     expectedBaseImageServerUrl, expectedBaseImageName, expectedBaseImageTag))
+            .setBaseImageCredentialHelperName(expectedBaseImageCredentialHelperName)
+            .setKnownBaseRegistryCredentials(expectedKnownBaseRegistryCredentials)
             .setTargetImage(
                 ImageReference.of(
                     expectedTargetServerUrl, expectedTargetImageName, expectedTargetTag))
-            .setCredentialHelperNames(expectedCredentialHelperNames)
-            .setKnownRegistryCredentials(expectedKnownRegistryCredentials)
-            .setEnableReproducibleBuilds(expectedEnableReproducibleBuilds)
+            .setTargetImageCredentialHelperName(expectedTargetImageCredentialHelperName)
+            .setKnownTargetRegistryCredentials(expectedKnownTargetRegistryCredentials)
             .setMainClass(expectedMainClass)
             .setJvmFlags(expectedJvmFlags)
             .setEnvironment(expectedEnvironment)
@@ -69,15 +72,15 @@ public class BuildConfigurationTest {
     Assert.assertEquals(expectedBaseImageServerUrl, buildConfiguration.getBaseImageRegistry());
     Assert.assertEquals(expectedBaseImageName, buildConfiguration.getBaseImageRepository());
     Assert.assertEquals(expectedBaseImageTag, buildConfiguration.getBaseImageTag());
-    Assert.assertEquals(expectedTargetServerUrl, buildConfiguration.getTargetRegistry());
-    Assert.assertEquals(expectedTargetImageName, buildConfiguration.getTargetRepository());
-    Assert.assertEquals(expectedTargetTag, buildConfiguration.getTargetTag());
     Assert.assertEquals(
-        expectedCredentialHelperNames, buildConfiguration.getCredentialHelperNames());
+        expectedBaseImageCredentialHelperName,
+        buildConfiguration.getBaseImageCredentialHelperName());
+    Assert.assertEquals(expectedTargetServerUrl, buildConfiguration.getTargetImageRegistry());
+    Assert.assertEquals(expectedTargetImageName, buildConfiguration.getTargetImageRepository());
+    Assert.assertEquals(expectedTargetTag, buildConfiguration.getTargetImageTag());
     Assert.assertEquals(
-        expectedKnownRegistryCredentials, buildConfiguration.getKnownRegistryCredentials());
-    Assert.assertEquals(
-        expectedEnableReproducibleBuilds, buildConfiguration.getEnableReproducibleBuilds());
+        expectedTargetImageCredentialHelperName,
+        buildConfiguration.getTargetImageCredentialHelperName());
     Assert.assertEquals(expectedMainClass, buildConfiguration.getMainClass());
     Assert.assertEquals(expectedJvmFlags, buildConfiguration.getJvmFlags());
     Assert.assertEquals(expectedEnvironment, buildConfiguration.getEnvironment());
@@ -106,10 +109,10 @@ public class BuildConfigurationTest {
             .setMainClass(expectedMainClass)
             .build();
 
-    Assert.assertEquals(Collections.emptyList(), buildConfiguration.getCredentialHelperNames());
-    Assert.assertEquals(
-        RegistryCredentials.none(), buildConfiguration.getKnownRegistryCredentials());
-    Assert.assertTrue(buildConfiguration.getEnableReproducibleBuilds());
+    Assert.assertNull(buildConfiguration.getBaseImageCredentialHelperName());
+    Assert.assertNull(buildConfiguration.getKnownBaseRegistryCredentials());
+    Assert.assertNull(buildConfiguration.getTargetImageCredentialHelperName());
+    Assert.assertNull(buildConfiguration.getKnownTargetRegistryCredentials());
     Assert.assertEquals(Collections.emptyList(), buildConfiguration.getJvmFlags());
     Assert.assertEquals(Collections.emptyMap(), buildConfiguration.getEnvironment());
     Assert.assertEquals(V22ManifestTemplate.class, buildConfiguration.getTargetFormat());
@@ -152,5 +155,17 @@ public class BuildConfigurationTest {
           "base image is required but not set, target image is required but not set, and main class is required but not set",
           ex.getMessage());
     }
+  }
+
+  @Test
+  public void testValidJavaClassRegex() {
+    Assert.assertTrue(BuildConfiguration.isValidJavaClass("my.Class"));
+    Assert.assertTrue(BuildConfiguration.isValidJavaClass("my.java_Class$valid"));
+    Assert.assertTrue(BuildConfiguration.isValidJavaClass("multiple.package.items"));
+    Assert.assertTrue(BuildConfiguration.isValidJavaClass("is123.valid"));
+    Assert.assertFalse(BuildConfiguration.isValidJavaClass("${start-class}"));
+    Assert.assertFalse(BuildConfiguration.isValidJavaClass("123not.Valid"));
+    Assert.assertFalse(BuildConfiguration.isValidJavaClass("{class}"));
+    Assert.assertFalse(BuildConfiguration.isValidJavaClass("not valid"));
   }
 }

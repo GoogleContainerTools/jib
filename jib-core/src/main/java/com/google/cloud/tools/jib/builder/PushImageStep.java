@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
-import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
@@ -34,7 +33,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 /** Pushes the final image. */
 class PushImageStep implements Callable<Void> {
@@ -44,40 +42,36 @@ class PushImageStep implements Callable<Void> {
   private final BuildConfiguration buildConfiguration;
   private final ListeningExecutorService listeningExecutorService;
   private final ListenableFuture<Authorization> pushAuthorizationFuture;
-  private final ListenableFuture<List<ListenableFuture<CachedLayer>>>
-      pullBaseImageLayerFuturesFuture;
-  private final List<ListenableFuture<CachedLayer>> buildApplicationLayerFutures;
 
   private final ListenableFuture<List<ListenableFuture<Void>>> pushBaseImageLayerFuturesFuture;
   private final List<ListenableFuture<Void>> pushApplicationLayerFutures;
   private final ListenableFuture<ListenableFuture<BlobDescriptor>>
       containerConfigurationBlobDescriptorFutureFuture;
+  private final ListenableFuture<ListenableFuture<Image>> buildImageFutureFuture;
 
   PushImageStep(
       BuildConfiguration buildConfiguration,
       ListeningExecutorService listeningExecutorService,
       ListenableFuture<Authorization> pushAuthorizationFuture,
-      ListenableFuture<List<ListenableFuture<CachedLayer>>> pullBaseImageLayerFuturesFuture,
-      List<ListenableFuture<CachedLayer>> buildApplicationLayerFutures,
       ListenableFuture<List<ListenableFuture<Void>>> pushBaseImageLayerFuturesFuture,
       List<ListenableFuture<Void>> pushApplicationLayerFutures,
       ListenableFuture<ListenableFuture<BlobDescriptor>>
-          containerConfigurationBlobDescriptorFutureFuture) {
+          containerConfigurationBlobDescriptorFutureFuture,
+      ListenableFuture<ListenableFuture<Image>> buildImageFutureFuture) {
     this.buildConfiguration = buildConfiguration;
     this.listeningExecutorService = listeningExecutorService;
     this.pushAuthorizationFuture = pushAuthorizationFuture;
-    this.pullBaseImageLayerFuturesFuture = pullBaseImageLayerFuturesFuture;
-    this.buildApplicationLayerFutures = buildApplicationLayerFutures;
 
     this.pushBaseImageLayerFuturesFuture = pushBaseImageLayerFuturesFuture;
     this.pushApplicationLayerFutures = pushApplicationLayerFutures;
     this.containerConfigurationBlobDescriptorFutureFuture =
         containerConfigurationBlobDescriptorFutureFuture;
+    this.buildImageFutureFuture = buildImageFutureFuture;
   }
 
   /**
-   * Depends on {@code pushBaseImageLayerFuturesFuture} and {@code
-   * containerConfigurationBlobDescriptorFutureFuture}.
+   * Depends on {@code pushBaseImageLayerFuturesFuture}, {@code
+   * containerConfigurationBlobDescriptorFutureFuture}, and {@code buildImageFutureFuture}.
    */
   @Override
   public Void call() throws ExecutionException, InterruptedException {
@@ -86,6 +80,7 @@ class PushImageStep implements Callable<Void> {
     dependencies.addAll(NonBlockingFutures.get(pushBaseImageLayerFuturesFuture));
     dependencies.addAll(pushApplicationLayerFutures);
     dependencies.add(NonBlockingFutures.get(containerConfigurationBlobDescriptorFutureFuture));
+    dependencies.add(NonBlockingFutures.get(buildImageFutureFuture));
     return Futures.whenAllComplete(dependencies)
         .call(this::afterPushBaseImageLayerFuturesFuture, listeningExecutorService)
         .get();
@@ -93,8 +88,9 @@ class PushImageStep implements Callable<Void> {
 
   /**
    * Depends on {@code pushAuthorizationFuture}, {@code pushBaseImageLayerFuturesFuture.get()},
-   * {@code pushApplicationLayerFutures}, and (@code
-   * containerConfigurationBlobDescriptorFutureFuture.get()}.
+   * {@code pushApplicationLayerFutures}, {@code
+   * containerConfigurationBlobDescriptorFutureFuture.get()}, and {@code
+   * buildImageFutureFuture.get()}.
    */
   private Void afterPushBaseImageLayerFuturesFuture()
       throws IOException, RegistryException, ExecutionException, InterruptedException,
@@ -103,20 +99,13 @@ class PushImageStep implements Callable<Void> {
       RegistryClient registryClient =
           new RegistryClient(
               NonBlockingFutures.get(pushAuthorizationFuture),
-              buildConfiguration.getTargetRegistry(),
-              buildConfiguration.getTargetRepository());
+              buildConfiguration.getTargetImageRegistry(),
+              buildConfiguration.getTargetImageRepository());
 
-      // TODO: Consolidate with BuildAndPushContainerConfigurationStep.
       // Constructs the image.
-      Image image = new Image();
-      for (Future<CachedLayer> cachedLayerFuture :
-          NonBlockingFutures.get(pullBaseImageLayerFuturesFuture)) {
-        image.addLayer(NonBlockingFutures.get(cachedLayerFuture));
-      }
-      for (Future<CachedLayer> cachedLayerFuture : buildApplicationLayerFutures) {
-        image.addLayer(NonBlockingFutures.get(cachedLayerFuture));
-      }
-      ImageToJsonTranslator imageToJsonTranslator = new ImageToJsonTranslator(image);
+      ImageToJsonTranslator imageToJsonTranslator =
+          new ImageToJsonTranslator(
+              NonBlockingFutures.get(NonBlockingFutures.get(buildImageFutureFuture)));
 
       // Pushes the image manifest.
       BuildableManifestTemplate manifestTemplate =
@@ -124,7 +113,7 @@ class PushImageStep implements Callable<Void> {
               buildConfiguration.getTargetFormat(),
               NonBlockingFutures.get(
                   NonBlockingFutures.get(containerConfigurationBlobDescriptorFutureFuture)));
-      registryClient.pushManifest(manifestTemplate, buildConfiguration.getTargetTag());
+      registryClient.pushManifest(manifestTemplate, buildConfiguration.getTargetImageTag());
     }
 
     return null;

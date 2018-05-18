@@ -20,12 +20,14 @@ import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
+import com.google.common.base.Splitter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
+import javax.lang.model.SourceVersion;
 
 /** Immutable configuration options for the builder process. */
 public class BuildConfiguration {
@@ -34,10 +36,11 @@ public class BuildConfiguration {
 
     // All the parameters below are set to their default values.
     @Nullable private ImageReference baseImageReference;
+    @Nullable private String baseImageCredentialHelperName;
+    @Nullable private RegistryCredentials knownBaseRegistryCredentials;
     @Nullable private ImageReference targetImageReference;
-    private List<String> credentialHelperNames = new ArrayList<>();
-    private RegistryCredentials knownRegistryCredentials = RegistryCredentials.none();
-    private boolean enableReproducibleBuilds = true;
+    @Nullable private String targetImageCredentialHelperName;
+    @Nullable private RegistryCredentials knownTargetRegistryCredentials;
     @Nullable private String mainClass;
     private List<String> jvmFlags = new ArrayList<>();
     private Map<String, String> environmentMap = new HashMap<>();
@@ -59,23 +62,25 @@ public class BuildConfiguration {
       return this;
     }
 
-    public Builder setCredentialHelperNames(@Nullable List<String> credentialHelperNames) {
-      if (credentialHelperNames != null) {
-        this.credentialHelperNames = credentialHelperNames;
-      }
+    public Builder setBaseImageCredentialHelperName(@Nullable String credentialHelperName) {
+      baseImageCredentialHelperName = credentialHelperName;
       return this;
     }
 
-    public Builder setKnownRegistryCredentials(
-        @Nullable RegistryCredentials knownRegistryCredentials) {
-      if (knownRegistryCredentials != null) {
-        this.knownRegistryCredentials = knownRegistryCredentials;
-      }
+    public Builder setTargetImageCredentialHelperName(@Nullable String credentialHelperName) {
+      targetImageCredentialHelperName = credentialHelperName;
       return this;
     }
 
-    public Builder setEnableReproducibleBuilds(boolean isEnabled) {
-      enableReproducibleBuilds = isEnabled;
+    public Builder setKnownBaseRegistryCredentials(
+        @Nullable RegistryCredentials knownRegistryCrendentials) {
+      knownBaseRegistryCredentials = knownRegistryCrendentials;
+      return this;
+    }
+
+    public Builder setKnownTargetRegistryCredentials(
+        @Nullable RegistryCredentials knownRegistryCrendentials) {
+      knownTargetRegistryCredentials = knownRegistryCrendentials;
       return this;
     }
 
@@ -125,10 +130,11 @@ public class BuildConfiguration {
           return new BuildConfiguration(
               buildLogger,
               baseImageReference,
+              baseImageCredentialHelperName,
+              knownBaseRegistryCredentials,
               targetImageReference,
-              credentialHelperNames,
-              knownRegistryCredentials,
-              enableReproducibleBuilds,
+              targetImageCredentialHelperName,
+              knownTargetRegistryCredentials,
               mainClass,
               jvmFlags,
               environmentMap,
@@ -158,12 +164,25 @@ public class BuildConfiguration {
     }
   }
 
+  /**
+   * @return {@code true} if {@code className} is a valid Java class name; {@code false} otherwise
+   */
+  public static boolean isValidJavaClass(String className) {
+    for (String part : Splitter.on('.').split(className)) {
+      if (!SourceVersion.isIdentifier(part)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   private final BuildLogger buildLogger;
   private ImageReference baseImageReference;
+  @Nullable private String baseImageCredentialHelperName;
+  @Nullable private RegistryCredentials knownBaseRegistryCredentials;
   private ImageReference targetImageReference;
-  private List<String> credentialHelperNames;
-  private RegistryCredentials knownRegistryCredentials;
-  private boolean enableReproducibleBuilds;
+  @Nullable private String targetImageCredentialHelperName;
+  @Nullable private RegistryCredentials knownTargetRegistryCredentials;
   private String mainClass;
   private List<String> jvmFlags;
   private Map<String, String> environmentMap;
@@ -177,20 +196,22 @@ public class BuildConfiguration {
   private BuildConfiguration(
       BuildLogger buildLogger,
       ImageReference baseImageReference,
+      @Nullable String baseImageCredentialHelperName,
+      @Nullable RegistryCredentials knownBaseRegistryCredentials,
       ImageReference targetImageReference,
-      List<String> credentialHelperNames,
-      RegistryCredentials knownRegistryCredentials,
-      boolean enableReproducibleBuilds,
+      @Nullable String targetImageCredentialHelperName,
+      @Nullable RegistryCredentials knownTargetRegistryCredentials,
       String mainClass,
       List<String> jvmFlags,
       Map<String, String> environmentMap,
       Class<? extends BuildableManifestTemplate> targetFormat) {
     this.buildLogger = buildLogger;
     this.baseImageReference = baseImageReference;
+    this.baseImageCredentialHelperName = baseImageCredentialHelperName;
+    this.knownBaseRegistryCredentials = knownBaseRegistryCredentials;
     this.targetImageReference = targetImageReference;
-    this.credentialHelperNames = Collections.unmodifiableList(credentialHelperNames);
-    this.knownRegistryCredentials = knownRegistryCredentials;
-    this.enableReproducibleBuilds = enableReproducibleBuilds;
+    this.targetImageCredentialHelperName = targetImageCredentialHelperName;
+    this.knownTargetRegistryCredentials = knownTargetRegistryCredentials;
     this.mainClass = mainClass;
     this.jvmFlags = Collections.unmodifiableList(jvmFlags);
     this.environmentMap = Collections.unmodifiableMap(environmentMap);
@@ -199,6 +220,10 @@ public class BuildConfiguration {
 
   public BuildLogger getBuildLogger() {
     return buildLogger;
+  }
+
+  public ImageReference getBaseImageReference() {
+    return baseImageReference;
   }
 
   public String getBaseImageRegistry() {
@@ -213,28 +238,40 @@ public class BuildConfiguration {
     return baseImageReference.getTag();
   }
 
-  public String getTargetRegistry() {
+  @Nullable
+  public String getBaseImageCredentialHelperName() {
+    return baseImageCredentialHelperName;
+  }
+
+  @Nullable
+  public RegistryCredentials getKnownBaseRegistryCredentials() {
+    return knownBaseRegistryCredentials;
+  }
+
+  public ImageReference getTargetImageReference() {
+    return targetImageReference;
+  }
+
+  public String getTargetImageRegistry() {
     return targetImageReference.getRegistry();
   }
 
-  public String getTargetRepository() {
+  public String getTargetImageRepository() {
     return targetImageReference.getRepository();
   }
 
-  public String getTargetTag() {
+  public String getTargetImageTag() {
     return targetImageReference.getTag();
   }
 
-  public RegistryCredentials getKnownRegistryCredentials() {
-    return knownRegistryCredentials;
+  @Nullable
+  public String getTargetImageCredentialHelperName() {
+    return targetImageCredentialHelperName;
   }
 
-  public List<String> getCredentialHelperNames() {
-    return credentialHelperNames;
-  }
-
-  public boolean getEnableReproducibleBuilds() {
-    return enableReproducibleBuilds;
+  @Nullable
+  public RegistryCredentials getKnownTargetRegistryCredentials() {
+    return knownTargetRegistryCredentials;
   }
 
   public String getMainClass() {

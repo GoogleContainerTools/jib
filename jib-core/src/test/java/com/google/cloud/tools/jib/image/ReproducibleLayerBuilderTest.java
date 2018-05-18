@@ -34,6 +34,7 @@ import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.hamcrest.CoreMatchers;
@@ -44,9 +45,9 @@ import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link LayerBuilder}. */
+/** Tests for {@link ReproducibleLayerBuilder}. */
 @RunWith(MockitoJUnitRunner.class)
-public class LayerBuilderTest {
+public class ReproducibleLayerBuilderTest {
 
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -56,9 +57,9 @@ public class LayerBuilderTest {
     Path blobA = Paths.get(Resources.getResource("blobA").toURI());
 
     String extractionPathBase = "extract/here";
-    LayerBuilder layerBuilder =
-        new LayerBuilder(
-            new ArrayList<>(Arrays.asList(layerDirectory, blobA)), extractionPathBase, false);
+    ReproducibleLayerBuilder layerBuilder =
+        new ReproducibleLayerBuilder(
+            new ArrayList<>(Arrays.asList(layerDirectory, blobA)), extractionPathBase);
 
     // Writes the layer tar to a temporary file.
     UnwrittenLayer unwrittenLayer = layerBuilder.build();
@@ -71,47 +72,44 @@ public class LayerBuilderTest {
     // Reads the file back.
     try (TarArchiveInputStream tarArchiveInputStream =
         new TarArchiveInputStream(Files.newInputStream(temporaryFile))) {
-      // Verifies that all the files have been added to the tarball stream.
-      new DirectoryWalker(layerDirectory)
-          .filter(path -> !path.equals(layerDirectory))
-          .walk(
-              path -> {
-                TarArchiveEntry header = tarArchiveInputStream.getNextTarEntry();
-
-                StringBuilder expectedExtractionPath = new StringBuilder("extract/here");
-                for (Path pathComponent : layerDirectory.getParent().relativize(path)) {
-                  expectedExtractionPath.append("/").append(pathComponent);
-                }
-                // Check path-equality because there might be an appended backslash in the header
-                // filename.
-                Assert.assertEquals(
-                    Paths.get(expectedExtractionPath.toString()), Paths.get(header.getName()));
-
-                // If is a normal file, checks that the file contents match.
-                if (Files.isRegularFile(path)) {
-                  String expectedFileString =
-                      new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
-
-                  String extractedFileString =
-                      CharStreams.toString(
-                          new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
-
-                  Assert.assertEquals(expectedFileString, extractedFileString);
-                }
-              });
-
       // Verifies that blobA was added.
       TarArchiveEntry header = tarArchiveInputStream.getNextTarEntry();
-      String expectedExtractionPath = "extract/here/blobA";
-      Assert.assertEquals(expectedExtractionPath, header.getName());
+      Assert.assertEquals("extract/here/blobA", header.getName());
 
-      String expectedFileString = new String(Files.readAllBytes(blobA), StandardCharsets.UTF_8);
+      String expectedBlobAString = new String(Files.readAllBytes(blobA), StandardCharsets.UTF_8);
 
-      String extractedFileString =
+      String extractedBlobAString =
           CharStreams.toString(
               new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
 
-      Assert.assertEquals(expectedFileString, extractedFileString);
+      Assert.assertEquals(expectedBlobAString, extractedBlobAString);
+
+      // Verifies that all the files have been added to the tarball stream.
+      List<Path> layerDirectoryPaths =
+          new DirectoryWalker(layerDirectory).filter(path -> !path.equals(layerDirectory)).walk();
+      for (Path path : layerDirectoryPaths) {
+        header = tarArchiveInputStream.getNextTarEntry();
+
+        StringBuilder expectedExtractionPath = new StringBuilder("extract/here");
+        for (Path pathComponent : layerDirectory.getParent().relativize(path)) {
+          expectedExtractionPath.append("/").append(pathComponent);
+        }
+        // Check path-equality because there might be an appended backslash in the header
+        // filename.
+        Assert.assertEquals(
+            Paths.get(expectedExtractionPath.toString()), Paths.get(header.getName()));
+
+        // If is a normal file, checks that the file contents match.
+        if (Files.isRegularFile(path)) {
+          String expectedFileString = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+
+          String extractedFileString =
+              CharStreams.toString(
+                  new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
+
+          Assert.assertEquals(expectedFileString, extractedFileString);
+        }
+      }
     }
   }
 
@@ -138,20 +136,18 @@ public class LayerBuilderTest {
 
     // create layers of exact same content but ordered differently and with different timestamps
     Blob layer =
-        new LayerBuilder(Arrays.asList(fileA1, fileB1), extractionPath, true).build().getBlob();
+        new ReproducibleLayerBuilder(Arrays.asList(fileA1, fileB1), extractionPath)
+            .build()
+            .getBlob();
     Blob reproduced =
-        new LayerBuilder(Arrays.asList(fileB2, fileA2), extractionPath, true).build().getBlob();
-
-    // this is a control layer that is the same as 'layerReproduced' without reproducibility on
-    Blob notReproduced =
-        new LayerBuilder(Arrays.asList(fileB2, fileA2), extractionPath, false).build().getBlob();
+        new ReproducibleLayerBuilder(Arrays.asList(fileB2, fileA2), extractionPath)
+            .build()
+            .getBlob();
 
     byte[] layerContent = Blobs.writeToByteArray(layer);
     byte[] reproducedLayerContent = Blobs.writeToByteArray(reproduced);
-    byte[] notReproducedLayerContent = Blobs.writeToByteArray(notReproduced);
 
     Assert.assertThat(layerContent, CoreMatchers.is(reproducedLayerContent));
-    Assert.assertThat(layerContent, CoreMatchers.not(notReproducedLayerContent));
   }
 
   private Path createFile(Path root, String filename, String content, long lastModifiedTime)

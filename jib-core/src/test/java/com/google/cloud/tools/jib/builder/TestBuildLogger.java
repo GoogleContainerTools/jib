@@ -43,4 +43,9 @@ public class TestBuildLogger implements BuildLogger {
   public void error(CharSequence message) {
     LOGGER.error(message.toString());
   }
+
+  @Override
+  public void lifecycle(CharSequence message) {
+    info(message);
+  }
 }

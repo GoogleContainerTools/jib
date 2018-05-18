@@ -22,5 +22,25 @@ import org.gradle.api.Project;
 public class JibPlugin implements Plugin<Project> {
 
   @Override
-  public void apply(Project project) {}
+  public void apply(Project project) {
+    JibExtension jibExtension = project.getExtensions().create("jib", JibExtension.class, project);
+    project
+        .getTasks()
+        .create(
+            "jib",
+            BuildImageTask.class,
+            buildImageTask -> buildImageTask.setJibExtension(jibExtension));
+    project
+        .getTasks()
+        .create(
+            "jibDockerContext",
+            DockerContextTask.class,
+            dockerContextTask -> dockerContextTask.setJibExtension(jibExtension));
+    project
+        .getTasks()
+        .create(
+            "jibBuildDocker",
+            BuildDockerTask.class,
+            buildDockerTask -> buildDockerTask.setJibExtension(jibExtension));
+  }
 }

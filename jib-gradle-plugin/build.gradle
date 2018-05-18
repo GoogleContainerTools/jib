@@ -2,10 +2,18 @@ plugins {
     id 'java-gradle-plugin'
     id 'checkstyle'
     id 'com.github.sherter.google-java-format' version '0.6'
-    id 'com.gradle.plugin-publish' version '0.9.10'
+
+    // For local install
     id 'maven'
+
+    // Error-prone checker
     id 'net.ltgt.apt' version '0.13'
     id 'net.ltgt.errorprone' version '0.0.13'
+
+    // Prepare release
+    id 'net.researchgate.release' version '2.6.0'
+    // Gradle Plugin Portal publish
+    id 'com.gradle.plugin-publish' version '0.9.10'
 }
 
 group 'com.google.cloud.tools'
@@ -19,17 +27,25 @@ repositories {
 }
 
 sourceSets {
-    main.java.srcDir file('../jib-core/src/main/java')
-    test.java.srcDir file('../jib-core/src/test/java')
-    test.resources.srcDir file('../jib-core/src/test/resources')
-
+    main {
+        java.srcDir file('../jib-core/src/main/java')
+        resources.srcDir file('../jib-core/src/main/resources')
+    }
+    test {
+        java.srcDir file('../jib-core/src/test/java')
+        resources.srcDir file('../jib-core/src/test/resources')
+    }
     integrationTest {
         java {
             compileClasspath += main.output + test.output
             runtimeClasspath += main.output + test.output
             srcDir file('src/integration-test/java')
+            srcDir file('../jib-core/src/integration-test/java')
         }
-        resources.srcDir file('src/integration-test/resources')
+        resources {
+            srcDir file('src/integration-test/resources')
+            srcDir file('../jib-core/src/integration-test/resources')
+        }
     }
 }
 
@@ -51,13 +67,12 @@ dependencies {
     compile gradleApi()
 
     // NullAway errorprone plugin
-    // TODO: Update to latest version once https://github.com/uber/NullAway/issues/133 is fixed.
-    apt 'com.uber.nullaway:nullaway:0.3.2'
+    apt 'com.uber.nullaway:nullaway:0.4.2'
     errorprone 'com.google.errorprone:error_prone_core:2.2.0'
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = "4.3.1"
+    gradleVersion = '4.6'
 }
 
 // Integration tests must be run explicitly
@@ -111,18 +126,26 @@ checkstyle {
 /* CHECKSTYLE */
 
 /* RELEASE */
-// gradle plugin portal releases
+// Prepare release
+release {
+    tagTemplate = 'v$version-gradle'
+    git {
+        requireBranch = /^gradle_release_v\d+.*$/  //regex
+    }
+}
+// Gradle Plugin Portal releases
 pluginBundle {
     website = 'https://github.com/google/jib/'
     vcsUrl = 'https://github.com/google/jib/'
 
     plugins {
-        minikubePlugin {
-            id = 'com.google.cloud.tools'
+        jibPlugin {
+            id = 'com.google.cloud.tools.jib'
             displayName = 'Jib'
             description = 'Containerize your Java application'
             tags = ['google', 'java', 'containers', 'docker', 'kubernetes', 'microservices']
         }
     }
 }
+tasks.publishPlugins.dependsOn integrationTest
 /* RELEASE */
