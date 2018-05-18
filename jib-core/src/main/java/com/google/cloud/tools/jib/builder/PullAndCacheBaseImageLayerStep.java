@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryException;
 import com.google.common.io.CountingOutputStream;
+import com.google.common.util.concurrent.ListenableFuture;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -46,7 +47,7 @@ class PullAndCacheBaseImageLayerStep implements Callable<CachedLayer> {
       BuildConfiguration buildConfiguration,
       Cache cache,
       DescriptorDigest layerDigest,
-      Future<Authorization> pullAuthorizationFuture) {
+      ListenableFuture<Authorization> pullAuthorizationFuture) {
     this.buildConfiguration = buildConfiguration;
     this.cache = cache;
     this.layerDigest = layerDigest;
@@ -62,7 +63,7 @@ class PullAndCacheBaseImageLayerStep implements Callable<CachedLayer> {
         new Timer(buildConfiguration.getBuildLogger(), String.format(DESCRIPTION, layerDigest))) {
       RegistryClient registryClient =
           new RegistryClient(
-              pullAuthorizationFuture.get(),
+              NonBlockingFutures.get(pullAuthorizationFuture),
               buildConfiguration.getBaseImageRegistry(),
               buildConfiguration.getBaseImageRepository());
 
