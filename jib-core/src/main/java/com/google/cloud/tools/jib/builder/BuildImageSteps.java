@@ -111,10 +111,6 @@ public class BuildImageSteps implements BuildSteps {
               RetrieveRegistryCredentialsStep.forBaseImage(
                   listeningExecutorService, buildConfiguration);
 
-          // TODO: Keep refactoring other steps to implement AsyncStep and remove logic like this.
-          ListenableFuture<Authorization> retrieveBaseImageRegistryCredentialsFuture =
-              retrieveBaseRegistryCredentialsStep.getFuture();
-
           timer2.lap("Setting up image push authentication");
           // Authenticates push.
           AuthenticatePushStep authenticatePushStep =
@@ -123,16 +119,14 @@ public class BuildImageSteps implements BuildSteps {
                   buildConfiguration,
                   retrieveTargetRegistryCredentialsStep);
 
+          // TODO: Keep refactoring other steps to implement AsyncStep and remove logic like this.
           ListenableFuture<Authorization> authenticatePushFuture = authenticatePushStep.getFuture();
 
           timer2.lap("Setting up image pull authentication");
           // Authenticates base image pull.
-          ListenableFuture<Authorization> authenticatePullFuture =
-              Futures.whenAllSucceed(retrieveBaseImageRegistryCredentialsFuture)
-                  .call(
-                      new AuthenticatePullStep(
-                          buildConfiguration, retrieveBaseImageRegistryCredentialsFuture),
-                      listeningExecutorService);
+          AuthenticatePullStep authenticatePullStep = new AuthenticatePullStep(listeningExecutorService, buildConfiguration, retrieveBaseRegistryCredentialsStep);
+
+          ListenableFuture<Authorization> authenticatePullFuture = authenticatePullStep.getFuture();
 
           timer2.lap("Setting up base image pull");
           // Pulls the base image.
