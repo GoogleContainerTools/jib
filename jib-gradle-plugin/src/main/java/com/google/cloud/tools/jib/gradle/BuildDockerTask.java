@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.frontend.BuildImageStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
 import com.google.cloud.tools.jib.frontend.CacheDirectoryCreationException;
+import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.image.ImageReference;
@@ -42,6 +43,9 @@ public class BuildDockerTask extends DefaultTask {
    * <p>TODO: Move to ProjectProperties.
    */
   private static final String CACHE_DIRECTORY_NAME = "jib-cache";
+
+  private static final HelpfulSuggestions HELPFUL_SUGGESTIONS =
+      HelpfulSuggestionsProvider.get("Build to Docker daemon failed");
 
   /**
    * Converts an {@link ImageConfiguration} to an {@link Authorization}.
@@ -74,6 +78,10 @@ public class BuildDockerTask extends DefaultTask {
   /** TODO: Refactor with {@link BuildImageTask} for less duplicate code. */
   @TaskAction
   public void buildDocker() throws InvalidImageReferenceException {
+    if (!BuildStepsRunner.isDockerInstalled()) {
+      throw new GradleException(HELPFUL_SUGGESTIONS.forDockerNotInstalled());
+    }
+
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
 

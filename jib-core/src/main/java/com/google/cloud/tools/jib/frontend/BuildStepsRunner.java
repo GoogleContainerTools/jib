@@ -97,6 +97,16 @@ public class BuildStepsRunner {
     return cachesInitializer;
   }
 
+  /** @return true if Docker is installed on the user's system. */
+  public static boolean isDockerInstalled() {
+    try {
+      new ProcessBuilder("docker").start();
+      return true;
+    } catch (IOException ex) {
+      return false;
+    }
+  }
+
   @VisibleForTesting
   BuildStepsRunner(Supplier<BuildSteps> buildStepsSupplier) {
     this.buildStepsSupplier = buildStepsSupplier;
