@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+<<<<<<< HEAD:jib-maven-plugin/CHANGELOG.md
 ## 0.9.0
 ### Added
 - Better feedback for build failures ([#197](https://github.com/google/jib/pull/197))
@@ -19,6 +20,8 @@ All notable changes to this project will be documented in this file.
 - Removed `enableReproducibleBuilds` parameter - application layers will always be reproducible ([#245](https://github.com/GoogleContainerTools/jib/pull/245))
 - Changed configuration schema to be more like configuration for `jib-gradle-plugin` - NOT compatible with prior versions of `jib-maven-plugin` ([#212](https://github.com/GoogleContainerTools/jib/issues/212))
 
+=======
+>>>>>>> 007b6f05f2ee2b5ef6ee0af8de51eac889867305:CHANGELOG.md
 ## 0.1.7
 ### Fixed
 - Using base images that lack entrypoints ([#284](https://github.com/GoogleContainerTools/jib/pull/284)
