@@ -30,7 +30,7 @@ import javax.annotation.Nullable;
  */
 class CacheMetadata {
 
-  private final ImageLayers<CachedLayerWithMetadata> layers = new ImageLayers<>();
+  private final ImageLayers.Builder<CachedLayerWithMetadata> layersBuilder = ImageLayers.builder();
 
   /** Can be used to filter layers in the metadata. */
   static class LayerFilter {
@@ -52,7 +52,7 @@ class CacheMetadata {
     /** Applies the filters to the metadata layers. */
     ImageLayers<CachedLayerWithMetadata> filter() throws CacheMetadataCorruptedException {
       try {
-        ImageLayers<CachedLayerWithMetadata> filteredLayers = new ImageLayers<>();
+        ImageLayers.Builder<CachedLayerWithMetadata> filteredLayersBuilder = ImageLayers.builder();
 
         for (CachedLayerWithMetadata layer : layers) {
           if (sourceFiles != null) {
@@ -71,10 +71,10 @@ class CacheMetadata {
             }
           }
 
-          filteredLayers.add(layer);
+          filteredLayersBuilder.add(layer);
         }
 
-        return filteredLayers;
+        return filteredLayersBuilder.build();
 
       } catch (LayerPropertyNotFoundException ex) {
         throw new CacheMetadataCorruptedException(ex);
@@ -83,14 +83,14 @@ class CacheMetadata {
   }
 
   ImageLayers<CachedLayerWithMetadata> getLayers() {
-    return layers;
+    return layersBuilder.build();
   }
 
   synchronized void addLayer(CachedLayerWithMetadata layer) throws LayerPropertyNotFoundException {
-    layers.add(layer);
+    layersBuilder.add(layer);
   }
 
   LayerFilter filterLayers() {
-    return new LayerFilter(layers);
+    return new LayerFilter(layersBuilder.build());
   }
 }
