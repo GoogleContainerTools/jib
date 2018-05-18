@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder;
 
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.util.concurrent.Callable;
@@ -34,5 +35,9 @@ import java.util.concurrent.Callable;
  */
 interface AsyncStep<T> extends Callable<T> {
 
+  /**
+   * Submits to a {@link ListeningExecutorService} to run after its dependencies. For example, by
+   * using {@link Futures#whenAllSucceed}.
+   */
   ListenableFuture<T> submit(ListeningExecutorService listeningExecutorService);
 }

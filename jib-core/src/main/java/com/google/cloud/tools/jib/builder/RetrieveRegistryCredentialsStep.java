@@ -99,6 +99,11 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Authorization> {
   }
 
   @Override
+  public ListenableFuture<Authorization> submit(ListeningExecutorService listeningExecutorService) {
+    return listeningExecutorService.submit(this);
+  }
+
+  @Override
   @Nullable
   public Authorization call() throws IOException, NonexistentDockerCredentialHelperException {
     buildLogger.lifecycle(String.format(DESCRIPTION, registry) + "...");
@@ -160,11 +165,6 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Authorization> {
       buildLogger.info("No credentials could be retrieved for registry " + registry);
       return null;
     }
-  }
-
-  @Override
-  public ListenableFuture<Authorization> submit(ListeningExecutorService listeningExecutorService) {
-    return listeningExecutorService.submit(this);
   }
 
   /**
