@@ -26,7 +26,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 /** Builds a model {@link Image}. */
 class BuildImageStep implements Callable<ListenableFuture<Image>> {
@@ -76,11 +75,11 @@ class BuildImageStep implements Callable<ListenableFuture<Image>> {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       // Constructs the image.
       Image.Builder imageBuilder = Image.builder();
-      for (Future<CachedLayer> cachedLayerFuture :
+      for (ListenableFuture<CachedLayer> cachedLayerFuture :
           NonBlockingFutures.get(pullBaseImageLayerFuturesFuture)) {
         imageBuilder.addLayer(NonBlockingFutures.get(cachedLayerFuture));
       }
-      for (Future<CachedLayer> cachedLayerFuture : buildApplicationLayerFutures) {
+      for (ListenableFuture<CachedLayer> cachedLayerFuture : buildApplicationLayerFutures) {
         imageBuilder.addLayer(NonBlockingFutures.get(cachedLayerFuture));
       }
       imageBuilder.setEnvironment(buildConfiguration.getEnvironment());

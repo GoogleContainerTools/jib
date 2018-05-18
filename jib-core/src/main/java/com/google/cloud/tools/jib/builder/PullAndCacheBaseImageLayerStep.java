@@ -31,7 +31,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 /** Pulls and caches a single base image layer. */
 class PullAndCacheBaseImageLayerStep implements Callable<CachedLayer> {
@@ -41,7 +40,7 @@ class PullAndCacheBaseImageLayerStep implements Callable<CachedLayer> {
   private final BuildConfiguration buildConfiguration;
   private final Cache cache;
   private final DescriptorDigest layerDigest;
-  private final Future<Authorization> pullAuthorizationFuture;
+  private final ListenableFuture<Authorization> pullAuthorizationFuture;
 
   PullAndCacheBaseImageLayerStep(
       BuildConfiguration buildConfiguration,
