@@ -33,7 +33,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 /** Pulls and caches the base image layers. */
-class PullAndCacheBaseImageLayersStep implements Callable<List<ListenableFuture<CachedLayer>>> {
+class PullAndCacheBaseImageLayersStep implements Callable<ImmutableList<ListenableFuture<CachedLayer>>> {
 
   private static final String DESCRIPTION = "Setting up base image caching";
 

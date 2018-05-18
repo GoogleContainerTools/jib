@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.builder;
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.http.Authorization;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -27,20 +28,20 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
-class PushLayersStep implements Callable<List<ListenableFuture<Void>>> {
+class PushLayersStep implements Callable<ImmutableList<ListenableFuture<Void>>> {
 
   private static final String DESCRIPTION = "Setting up to push layers";
 
   private final BuildConfiguration buildConfiguration;
   private final ListeningExecutorService listeningExecutorService;
   private final ListenableFuture<Authorization> pushAuthorizationFuture;
-  private final ListenableFuture<List<ListenableFuture<CachedLayer>>> cachedLayerFuturesFuture;
+  private final ListenableFuture<ImmutableList<ListenableFuture<CachedLayer>>> cachedLayerFuturesFuture;
 
   PushLayersStep(
       BuildConfiguration buildConfiguration,
       ListeningExecutorService listeningExecutorService,
       ListenableFuture<Authorization> pushAuthorizationFuture,
-      ListenableFuture<List<ListenableFuture<CachedLayer>>> cachedLayerFuturesFuture) {
+      ListenableFuture<ImmutableList<ListenableFuture<CachedLayer>>> cachedLayerFuturesFuture) {
     this.buildConfiguration = buildConfiguration;
     this.listeningExecutorService = listeningExecutorService;
     this.pushAuthorizationFuture = pushAuthorizationFuture;
@@ -49,12 +50,13 @@ class PushLayersStep implements Callable<List<ListenableFuture<Void>>> {
 
   /** Depends on {@code cachedLayerFuturesFuture}. */
   @Override
-  public List<ListenableFuture<Void>> call() throws ExecutionException, InterruptedException {
+  public ImmutableList<ListenableFuture<Void>> call() throws ExecutionException, InterruptedException {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
+      ImmutableList<ListenableFuture<CachedLayer>> cachedLayerFutures = NonBlockingFutures.get(cachedLayerFuturesFuture);
+
       // Pushes the image layers.
-      List<ListenableFuture<Void>> pushLayerFutures = new ArrayList<>();
-      for (ListenableFuture<CachedLayer> cachedLayerFuture :
-          NonBlockingFutures.get(cachedLayerFuturesFuture)) {
+      ImmutableList.Builder<ListenableFuture<Void>> pushLayerFutures = ImmutableList.builder();
+      for (ListenableFuture<CachedLayer> cachedLayerFuture : cachedLayerFutures) {
         pushLayerFutures.add(
             Futures.whenAllComplete(pushAuthorizationFuture, cachedLayerFuture)
                 .call(
@@ -63,7 +65,7 @@ class PushLayersStep implements Callable<List<ListenableFuture<Void>>> {
                     listeningExecutorService));
       }
 
-      return pushLayerFutures;
+      return pushLayerFutures.build();
     }
   }
 }

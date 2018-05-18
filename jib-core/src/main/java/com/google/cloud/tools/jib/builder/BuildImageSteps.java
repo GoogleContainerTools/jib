@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.cache.Caches;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.Image;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -116,7 +117,7 @@ public class BuildImageSteps {
                       listeningExecutorService);
           timer2.lap("Setting up base image layer pull");
           // Pulls and caches the base image layers.
-          ListenableFuture<List<ListenableFuture<CachedLayer>>> pullBaseImageLayerFuturesFuture =
+          ListenableFuture<ImmutableList<ListenableFuture<CachedLayer>>> pullBaseImageLayerFuturesFuture =
               Futures.whenAllSucceed(pullBaseImageFuture)
                   .call(
                       new PullAndCacheBaseImageLayersStep(
@@ -129,7 +130,7 @@ public class BuildImageSteps {
 
           timer2.lap("Setting up base image layer push");
           // Pushes the base image layers.
-          ListenableFuture<List<ListenableFuture<Void>>> pushBaseImageLayerFuturesFuture =
+          ListenableFuture<ImmutableList<ListenableFuture<Void>>> pushBaseImageLayerFuturesFuture =
               Futures.whenAllSucceed(pullBaseImageLayerFuturesFuture)
                   .call(
                       new PushLayersStep(
