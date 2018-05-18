@@ -41,8 +41,6 @@ import org.apache.http.conn.HttpHostConnectException;
 /** Runs a {@link BuildSteps} and builds helpful error messages. */
 public class BuildStepsRunner {
 
-  private final BuildSteps buildSteps;
-
   /**
    * Creates a runner to build an image. Creates a directory for the cache, if needed.
    *
@@ -156,6 +154,8 @@ public class BuildStepsRunner {
     }
   }
 
+  private final BuildSteps buildSteps;
+
   @VisibleForTesting
   BuildStepsRunner(BuildSteps buildSteps) {
     this.buildSteps = buildSteps;
@@ -198,7 +198,6 @@ public class BuildStepsRunner {
       buildSteps.run();
 
       buildLogger.lifecycle("");
-      // targetImageReference in cyan.
       buildLogger.lifecycle(buildSteps.getSuccessMessage());
 
     } catch (CacheMetadataCorruptedException cacheMetadataCorruptedException) {

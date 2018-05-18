@@ -39,8 +39,9 @@ import java.util.concurrent.Executors;
 public class BuildImageSteps implements BuildSteps {
 
   private static final String DESCRIPTION = "Building and pushing image";
-  private static final String STARTUP_FORMAT = "Containerizing application to %s...";
-  private static final String SUCCESS_FORMAT = "Built and pushed image as \u001B[36m%s\u001B[0m";
+  private static final String STARTUP_MESSAGE_FORMAT = "Containerizing application to %s...";
+  // String parameter in cyan.
+  private static final String SUCCESS_MESSAGE_FORMAT = "Built and pushed image as \u001B[36m%s\u001B[0m";
 
   private final BuildConfiguration buildConfiguration;
   private final SourceFilesConfiguration sourceFilesConfiguration;
@@ -55,8 +56,8 @@ public class BuildImageSteps implements BuildSteps {
     this.buildConfiguration = buildConfiguration;
     this.sourceFilesConfiguration = sourceFilesConfiguration;
     this.cachesInitializer = cachesInitializer;
-    startupMessage = String.format(STARTUP_FORMAT, buildConfiguration.getTargetImageReference());
-    successMessage = String.format(SUCCESS_FORMAT, buildConfiguration.getTargetImageReference());
+    startupMessage = String.format(STARTUP_MESSAGE_FORMAT, buildConfiguration.getTargetImageReference());
+    successMessage = String.format(SUCCESS_MESSAGE_FORMAT, buildConfiguration.getTargetImageReference());
   }
 
   @Override
