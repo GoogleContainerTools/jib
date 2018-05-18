@@ -45,38 +45,13 @@ import org.slf4j.LoggerFactory;
 /** Builds a container image. */
 public class BuildImageTask extends DefaultTask {
 
-  /** Directory name for the cache. The directory will be relative to the build output directory. */
-  private static final String CACHE_DIRECTORY_NAME = "jib-cache";
-
   /** {@code User-Agent} header suffix to send to the registry. */
   private static final String USER_AGENT_SUFFIX = "jib-gradle-plugin";
 
   private static final HelpfulSuggestions HELPFUL_SUGGESTIONS =
       HelpfulSuggestionsProvider.get("Build image failed");
 
-  /** Converts an {@link ImageConfiguration} to an {@link Authorization}. */
-  @Nullable
-  private static Authorization getImageAuthorization(ImageConfiguration imageConfiguration) {
-    if (imageConfiguration.getAuth().getUsername() == null
-        || imageConfiguration.getAuth().getPassword() == null) {
-      return null;
-    }
-
-    return Authorizations.withBasicCredentials(
-        imageConfiguration.getAuth().getUsername(), imageConfiguration.getAuth().getPassword());
-  }
-
   @Nullable private JibExtension jibExtension;
-
-  /**
-   * This will call the property {@code "jib"} so that it is the same name as the extension. This
-   * way, the user would see error messages for missing configuration with the prefix {@code jib.}.
-   */
-  @Nested
-  @Nullable
-  public JibExtension getJib() {
-    return jibExtension;
-  }
 
   @TaskAction
   public void buildImage() throws InvalidImageReferenceException {
@@ -87,7 +62,6 @@ public class BuildImageTask extends DefaultTask {
 
     ImageReference baseImageReference = ImageReference.parse(jibExtension.getBaseImage());
     ImageReference targetImageReference = ImageReference.parse(jibExtension.getTargetImage());
-
     if (baseImageReference.usesDefaultTag()) {
       gradleBuildLogger.warn(
           "Base image '"
@@ -101,11 +75,11 @@ public class BuildImageTask extends DefaultTask {
 
     RegistryCredentials knownBaseRegistryCredentials = null;
     RegistryCredentials knownTargetRegistryCredentials = null;
-    Authorization fromAuthorization = getImageAuthorization(jibExtension.getFrom());
+    Authorization fromAuthorization = jibExtension.getFrom().getImageAuthorization();
     if (fromAuthorization != null) {
       knownBaseRegistryCredentials = new RegistryCredentials("jib.from.auth", fromAuthorization);
     }
-    Authorization toAuthorization = getImageAuthorization(jibExtension.getTo());
+    Authorization toAuthorization = jibExtension.getTo().getImageAuthorization();
     if (toAuthorization != null) {
       knownTargetRegistryCredentials = new RegistryCredentials("jib.to.auth", toAuthorization);
     }
@@ -143,7 +117,7 @@ public class BuildImageTask extends DefaultTask {
     RegistryClient.setUserAgentSuffix(USER_AGENT_SUFFIX);
 
     // Uses a directory in the Gradle build cache as the Jib cache.
-    Path cacheDirectory = getProject().getBuildDir().toPath().resolve(CACHE_DIRECTORY_NAME);
+    Path cacheDirectory = projectProperties.getCacheDirectory();
     try {
       BuildStepsRunner.forBuildImage(
               buildConfiguration,

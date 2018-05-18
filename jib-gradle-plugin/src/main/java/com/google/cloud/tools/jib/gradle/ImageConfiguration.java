@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.http.Authorization;
+import com.google.cloud.tools.jib.http.Authorizations;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import org.gradle.api.Action;
@@ -72,5 +74,15 @@ public class ImageConfiguration {
 
   public void auth(Action<? super AuthConfiguration> action) {
     action.execute(auth);
+  }
+
+  /** Converts an {@link ImageConfiguration} to an {@link Authorization}. */
+  @Nullable
+  public Authorization getImageAuthorization() {
+    if (getAuth().getUsername() == null || getAuth().getPassword() == null) {
+      return null;
+    }
+
+    return Authorizations.withBasicCredentials(getAuth().getUsername(), getAuth().getPassword());
   }
 }

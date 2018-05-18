@@ -34,6 +34,7 @@ import org.gradle.jvm.tasks.Jar;
 class ProjectProperties {
 
   private static final String PLUGIN_NAME = "jib";
+  private static final String CACHE_DIRECTORY_NAME = "jib-cache";
 
   private final Project project;
   private final GradleBuildLogger gradleBuildLogger;
@@ -47,6 +48,10 @@ class ProjectProperties {
     } catch (IOException ex) {
       throw new GradleException("Obtaining project build output files failed", ex);
     }
+  }
+
+  public Path getCacheDirectory() {
+    return project.getBuildDir().toPath().resolve(CACHE_DIRECTORY_NAME);
   }
 
   @VisibleForTesting
