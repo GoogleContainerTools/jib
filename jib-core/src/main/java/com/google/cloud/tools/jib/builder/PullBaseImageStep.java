@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.blob.Blobs;
-import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.LayerCountMismatchException;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
@@ -31,29 +30,45 @@ import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryException;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import javax.annotation.Nullable;
 
 /** Pulls the base image manifest. */
-class PullBaseImageStep implements Callable<Image> {
+class PullBaseImageStep implements AsyncStep<Image> {
 
   private static final String DESCRIPTION = "Pulling base image manifest";
 
   private final BuildConfiguration buildConfiguration;
-  private final ListenableFuture<Authorization> pullAuthorizationFuture;
+  private final AuthenticatePullStep authenticatePullStep;
+
+  private final ListeningExecutorService listeningExecutorService;
+  @Nullable private ListenableFuture<Image> listenableFuture;
 
   PullBaseImageStep(
+      ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
-      ListenableFuture<Authorization> pullAuthorizationFuture) {
+      AuthenticatePullStep authenticatePullStep) {
+    this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
-    this.pullAuthorizationFuture = pullAuthorizationFuture;
+    this.authenticatePullStep = authenticatePullStep;
   }
 
-  /** Depends on {@code pullAuthorizationFuture}. */
+  @Override
+  public ListenableFuture<Image> getFuture() {
+    if (listenableFuture == null) {
+      listenableFuture =
+          Futures.whenAllSucceed(authenticatePullStep.getFuture())
+              .call(this, listeningExecutorService);
+    }
+    return listenableFuture;
+  }
+
   @Override
   public Image call()
       throws IOException, RegistryException, LayerPropertyNotFoundException,
@@ -65,7 +80,7 @@ class PullBaseImageStep implements Callable<Image> {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       RegistryClient registryClient =
           new RegistryClient(
-              NonBlockingFutures.get(pullAuthorizationFuture),
+              NonBlockingSteps.get(authenticatePullStep),
               buildConfiguration.getBaseImageRegistry(),
               buildConfiguration.getBaseImageRepository());
 

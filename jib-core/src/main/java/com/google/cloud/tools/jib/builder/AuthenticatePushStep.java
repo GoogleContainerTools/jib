@@ -65,7 +65,6 @@ class AuthenticatePushStep implements AsyncStep<Authorization> {
     return listenableFuture;
   }
 
-  /** Depends on {@link RetrieveRegistryCredentialsStep}. */
   @Override
   @Nullable
   public Authorization call()
