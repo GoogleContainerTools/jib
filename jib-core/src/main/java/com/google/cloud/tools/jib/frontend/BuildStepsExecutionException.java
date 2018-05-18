@@ -16,9 +16,9 @@
 
 package com.google.cloud.tools.jib.frontend;
 
-import com.google.cloud.tools.jib.builder.BuildImageSteps;
+import com.google.cloud.tools.jib.builder.BuildSteps;
 
-/** Wraps an exception that happens during {@link BuildImageSteps#run}. */
+/** Wraps an exception that happens during {@link BuildSteps#run}. */
 public class BuildStepsExecutionException extends Exception {
 
   BuildStepsExecutionException(String message, Throwable cause) {
