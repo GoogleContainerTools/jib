@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file.
 
 ## 0.1.7
 ### Fixed
-- Using base images that lack entrypoints
+- Using base images that lack entrypoints ([#284](https://github.com/GoogleContainerTools/jib/pull/284)
 
 ## 0.1.6
 ### Changed
