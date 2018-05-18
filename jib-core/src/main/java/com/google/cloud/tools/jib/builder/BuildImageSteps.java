@@ -104,12 +104,16 @@ public class BuildImageSteps implements BuildSteps {
           Cache applicationLayersCache = caches.getApplicationCache();
 
           timer2.lap("Setting up credential retrieval");
+          RetrieveRegistryCredentialsStep retrieveTargetRegistryCredentialsStep =
+              RetrieveRegistryCredentialsStep.forTargetImage(buildConfiguration);
+          RetrieveRegistryCredentialsStep retrieveBaseRegistryCredentialsStep =
+              RetrieveRegistryCredentialsStep.forBaseImage(buildConfiguration);
+
+          // TODO: Keep refactoring other steps to implement AsyncStep and remove logic like this.
           ListenableFuture<Authorization> retrieveTargetRegistryCredentialsFuture =
-              listeningExecutorService.submit(
-                  RetrieveRegistryCredentialsStep.forTargetImage(buildConfiguration));
+              retrieveTargetRegistryCredentialsStep.submit(listeningExecutorService);
           ListenableFuture<Authorization> retrieveBaseImageRegistryCredentialsFuture =
-              listeningExecutorService.submit(
-                  RetrieveRegistryCredentialsStep.forBaseImage(buildConfiguration));
+              retrieveBaseRegistryCredentialsStep.submit(listeningExecutorService);
 
           timer2.lap("Setting up image push authentication");
           // Authenticates push.

@@ -25,12 +25,13 @@ import com.google.cloud.tools.jib.registry.credentials.NonexistentServerUrlDocke
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
-import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
 /** Attempts to retrieve registry credentials. */
-class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
+class RetrieveRegistryCredentialsStep implements AsyncStep<Authorization> {
 
   private static final String DESCRIPTION = "Retrieving registry credentials for %s";
 
@@ -95,6 +96,11 @@ class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
         knownRegistryCredentials,
         new DockerCredentialHelperFactory(registry),
         new DockerConfigCredentialRetriever(registry));
+  }
+
+  @Override
+  public ListenableFuture<Authorization> submit(ListeningExecutorService listeningExecutorService) {
+    return listeningExecutorService.submit(this);
   }
 
   @Override

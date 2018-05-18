@@ -110,8 +110,7 @@ public class RetrieveRegistryCredentialsStepTest {
 
   @Test
   public void testCall_useDockerConfig()
-      throws IOException, NonexistentDockerCredentialHelperException,
-          NonexistentServerUrlDockerCredentialHelperException {
+      throws IOException, NonexistentDockerCredentialHelperException {
     // Credential helper does not have credentials.
     Mockito.when(
             mockDockerCredentialHelperFactory.withCredentialHelperSuffix("someCredentialHelper"))
@@ -130,8 +129,7 @@ public class RetrieveRegistryCredentialsStepTest {
 
   @Test
   public void testCall_inferCommonCredentialHelpers()
-      throws IOException, NonexistentDockerCredentialHelperException,
-          NonexistentServerUrlDockerCredentialHelperException {
+      throws IOException, NonexistentDockerCredentialHelperException {
     Mockito.when(mockDockerCredentialHelperFactory.withCredentialHelperSuffix("gcr"))
         .thenReturn(mockDockerCredentialHelper);
     Mockito.when(mockDockerCredentialHelperFactory.withCredentialHelperSuffix("ecr-login"))
