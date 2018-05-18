@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.image;
 
 import com.google.common.collect.ImmutableList;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -26,10 +25,10 @@ public class Image {
 
   public static class Builder {
 
-    private ImageLayers.Builder<Layer> imageLayersBuilder = ImageLayers.builder();
-    private final List<String> environment = new ArrayList<>();
+    private final ImageLayers.Builder<Layer> imageLayersBuilder = ImageLayers.builder();
+    private final ImmutableList.Builder<String> environmentBuilder = ImmutableList.builder();
 
-    private List<String> entrypoint = new ArrayList<>();
+    private ImmutableList<String> entrypoint = ImmutableList.of();
 
     /** Sets the environment with a map from environment variable names to values. */
     public Builder setEnvironment(Map<String, String> environment) {
@@ -40,18 +39,18 @@ public class Image {
     }
 
     public Builder setEnvironmentVariable(String name, String value) {
-      environment.add(name + "=" + value);
+      environmentBuilder.add(name + "=" + value);
       return this;
     }
 
     /** Adds an environment variable definition in the format {@code NAME=VALUE}. */
     public Builder addEnvironmentVariableDefinition(String environmentVariableDefinition) {
-      environment.add(environmentVariableDefinition);
+      environmentBuilder.add(environmentVariableDefinition);
       return this;
     }
 
     public Builder setEntrypoint(List<String> entrypoint) {
-      this.entrypoint = entrypoint;
+      this.entrypoint = ImmutableList.copyOf(entrypoint);
       return this;
     }
 
@@ -68,9 +67,7 @@ public class Image {
 
     public Image build() {
       return new Image(
-          imageLayersBuilder.build(),
-          ImmutableList.copyOf(environment),
-          ImmutableList.copyOf(entrypoint));
+          imageLayersBuilder.build(), environmentBuilder.build(), ImmutableList.copyOf(entrypoint));
     }
   }
 
@@ -82,7 +79,7 @@ public class Image {
   private final ImageLayers<Layer> layers;
 
   /** Environment variable definitions for running the image, in the format {@code NAME=VALUE}. */
-  private final ImmutableList<String> environment;
+  private final ImmutableList<String> environmentBuilder;
 
   /** Initial command to run when running the image. */
   private final ImmutableList<String> entrypoint;
@@ -92,12 +89,12 @@ public class Image {
       ImmutableList<String> environment,
       ImmutableList<String> entrypoint) {
     this.layers = layers;
-    this.environment = environment;
+    this.environmentBuilder = environment;
     this.entrypoint = entrypoint;
   }
 
   public ImmutableList<String> getEnvironment() {
-    return environment;
+    return environmentBuilder;
   }
 
   public ImmutableList<String> getEntrypoint() {

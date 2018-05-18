@@ -16,12 +16,13 @@
 
 package com.google.cloud.tools.jib.image;
 
+import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.common.collect.ImmutableList;
 import java.util.Arrays;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -31,9 +32,13 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class ImageTest {
 
   @Mock private Layer mockLayer;
-  @Mock private ImageLayers.Builder<Layer> mockImageLayersBuilder;
+  @Mock private DescriptorDigest mockDescriptorDigest;
 
-  @InjectMocks private Image.Builder imageBuilder;
+  @Before
+  public void setUp() throws LayerPropertyNotFoundException {
+    Mockito.when(mockLayer.getBlobDescriptor())
+        .thenReturn(new BlobDescriptor(mockDescriptorDigest));
+  }
 
   @Test
   public void test_smokeTest() throws LayerPropertyNotFoundException {
@@ -41,17 +46,16 @@ public class ImageTest {
         ImmutableList.of("crepecake=is great", "VARIABLE=VALUE");
 
     Image image =
-        imageBuilder
+        Image.builder()
             .setEnvironmentVariable("crepecake", "is great")
             .setEnvironmentVariable("VARIABLE", "VALUE")
             .setEntrypoint(Arrays.asList("some", "command"))
             .addLayer(mockLayer)
             .build();
 
-    Mockito.verify(mockImageLayersBuilder).add(mockLayer);
-
+    Assert.assertEquals(
+        mockDescriptorDigest, image.getLayers().get(0).getBlobDescriptor().getDigest());
     Assert.assertEquals(expectedEnvironment, image.getEnvironment());
-
     Assert.assertEquals(Arrays.asList("some", "command"), image.getEntrypoint());
   }
 }

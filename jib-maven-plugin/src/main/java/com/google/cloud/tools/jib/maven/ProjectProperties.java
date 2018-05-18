@@ -18,8 +18,13 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
+import com.google.cloud.tools.jib.frontend.MainClassFinder;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import javax.annotation.Nullable;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -30,19 +35,18 @@ import org.codehaus.plexus.util.xml.Xpp3Dom;
 /** Obtains information about a {@link MavenProject}. */
 class ProjectProperties {
 
+  private static final String PLUGIN_NAME = "jib-maven-plugin";
+
   private final MavenProject project;
   private final Log log;
+  private final SourceFilesConfiguration sourceFilesConfiguration;
 
-  ProjectProperties(MavenProject project, Log log) {
-    this.project = project;
-    this.log = log;
-  }
-
-  /** @return the {@link SourceFilesConfiguration} based on the current project */
-  SourceFilesConfiguration getSourceFilesConfiguration() throws MojoExecutionException {
+  /** @return a ProjectProperties from the given project and logger. */
+  static ProjectProperties getForProject(MavenProject project, Log log)
+      throws MojoExecutionException {
     try {
-      return MavenSourceFilesConfiguration.getForProject(project);
-
+      return new ProjectProperties(
+          project, log, MavenSourceFilesConfiguration.getForProject(project));
     } catch (IOException ex) {
       throw new MojoExecutionException(
           "Obtaining project build output files failed; make sure you have compiled your project "
@@ -52,15 +56,67 @@ class ProjectProperties {
     }
   }
 
-  /** @return the main class to use in the container entrypoint */
+  @VisibleForTesting
+  ProjectProperties(
+      MavenProject project, Log log, SourceFilesConfiguration sourceFilesConfiguration) {
+    this.project = project;
+    this.log = log;
+    this.sourceFilesConfiguration = sourceFilesConfiguration;
+  }
+
+  /** @return the {@link SourceFilesConfiguration} based on the current project */
+  SourceFilesConfiguration getSourceFilesConfiguration() {
+    return sourceFilesConfiguration;
+  }
+
+  /**
+   * If {@code mainClass} is {@code null}, tries to infer main class in this order:
+   *
+   * <ul>
+   *   <li>1. Looks in a {@code jar} task.
+   *   <li>2. Searches for a class defined with a main method.
+   * </ul>
+   *
+   * <p>Warns if main class is not valid.
+   *
+   * @throws MojoExecutionException if no valid main class is not found.
+   */
   String getMainClass(@Nullable String mainClass) throws MojoExecutionException {
     if (mainClass == null) {
+      log.info(
+          "Searching for main class... Add a 'mainClass' configuration to '"
+              + PLUGIN_NAME
+              + "' to improve build speed.");
       mainClass = getMainClassFromMavenJarPlugin();
       if (mainClass == null) {
-        throw new MojoExecutionException(
-            HelpfulSuggestionsProvider.get(
-                    "Could not find main class specified in maven-jar-plugin")
-                .suggest("add a `mainClass` configuration to jib-maven-plugin"));
+        log.debug(
+            "Could not find main class specified in maven-jar-plugin; attempting to infer main "
+                + "class.");
+
+        try {
+          List<String> mainClasses = new ArrayList<>();
+          for (Path classPath : sourceFilesConfiguration.getClassesFiles()) {
+            mainClasses.addAll(MainClassFinder.findMainClasses(classPath));
+          }
+
+          if (mainClasses.size() == 1) {
+            mainClass = mainClasses.get(0);
+          } else if (mainClasses.size() == 0) {
+            throw new MojoExecutionException(
+                HelpfulSuggestionsProvider.get("Main class was not found")
+                    .forMainClassNotFound(PLUGIN_NAME));
+          } else {
+            throw new MojoExecutionException(
+                HelpfulSuggestionsProvider.get(
+                        "Multiple valid main classes were found: " + String.join(", ", mainClasses))
+                    .forMainClassNotFound(PLUGIN_NAME));
+          }
+        } catch (IOException ex) {
+          throw new MojoExecutionException(
+              HelpfulSuggestionsProvider.get("Failed to get main class")
+                  .forMainClassNotFound(PLUGIN_NAME),
+              ex);
+        }
       }
     }
     Preconditions.checkNotNull(mainClass);

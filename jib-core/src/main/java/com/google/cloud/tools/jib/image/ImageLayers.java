@@ -18,12 +18,7 @@ package com.google.cloud.tools.jib.image;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
 import javax.annotation.Nullable;
 
 /** Holds the layers for an image. Makes sure that each layer is only added once. */
@@ -31,8 +26,12 @@ public class ImageLayers<T extends Layer> implements Iterable<T> {
 
   public static class Builder<T extends Layer> {
 
-    private final List<T> layers = new ArrayList<>();
-    private final Set<DescriptorDigest> layerDigests = new HashSet<>();
+    private final ImmutableList.Builder<T> layersBuilder = ImmutableList.builder();
+    private final ImmutableSet.Builder<DescriptorDigest> layerDigestsBuilder =
+        ImmutableSet.builder();
+
+    /** The last layer added. */
+    @Nullable private T lastLayer;
 
     /**
      * Adds a layer.
@@ -42,8 +41,9 @@ public class ImageLayers<T extends Layer> implements Iterable<T> {
     public Builder<T> add(T layer) throws LayerPropertyNotFoundException {
       // Doesn't add the layer if the last layer is the same.
       if (!isSameAsLastLayer(layer)) {
-        layerDigests.add(layer.getBlobDescriptor().getDigest());
-        layers.add(layer);
+        layerDigestsBuilder.add(layer.getBlobDescriptor().getDigest());
+        layersBuilder.add(layer);
+        lastLayer = layer;
       }
 
       return this;
@@ -59,19 +59,16 @@ public class ImageLayers<T extends Layer> implements Iterable<T> {
     }
 
     public ImageLayers<T> build() {
-      return new ImageLayers<>(ImmutableList.copyOf(layers), ImmutableSet.copyOf(layerDigests));
+      return new ImageLayers<>(layersBuilder.build(), layerDigestsBuilder.build());
     }
 
     /** @return {@code true} if {@code layer} is the same as the last layer in {@link #layers} */
     private boolean isSameAsLastLayer(T layer) throws LayerPropertyNotFoundException {
-      if (layers.size() == 0) {
-        return false;
-      }
-      T lastLayer = Iterables.getLast(layers);
-      return layer
-          .getBlobDescriptor()
-          .getDigest()
-          .equals(lastLayer.getBlobDescriptor().getDigest());
+      return lastLayer != null
+          && layer
+              .getBlobDescriptor()
+              .getDigest()
+              .equals(lastLayer.getBlobDescriptor().getDigest());
     }
   }
 
