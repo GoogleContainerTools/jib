@@ -26,7 +26,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
@@ -44,8 +43,7 @@ class AuthenticatePullStep implements AsyncStep<Authorization> {
   private final RetrieveRegistryCredentialsStep retrieveBaseRegistryCredentialsStep;
 
   private final ListeningExecutorService listeningExecutorService;
-  @Nullable
-  private ListenableFuture<Authorization> listenableFuture;
+  @Nullable private ListenableFuture<Authorization> listenableFuture;
 
   AuthenticatePullStep(
       ListeningExecutorService listeningExecutorService,

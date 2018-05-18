@@ -124,8 +124,13 @@ public class BuildImageSteps implements BuildSteps {
 
           timer2.lap("Setting up image pull authentication");
           // Authenticates base image pull.
-          AuthenticatePullStep authenticatePullStep = new AuthenticatePullStep(listeningExecutorService, buildConfiguration, retrieveBaseRegistryCredentialsStep);
+          AuthenticatePullStep authenticatePullStep =
+              new AuthenticatePullStep(
+                  listeningExecutorService,
+                  buildConfiguration,
+                  retrieveBaseRegistryCredentialsStep);
 
+          // TODO: Keep refactoring other steps to implement AsyncStep and remove logic like this.
           ListenableFuture<Authorization> authenticatePullFuture = authenticatePullStep.getFuture();
 
           timer2.lap("Setting up base image pull");
