@@ -28,11 +28,8 @@ import com.google.cloud.tools.jib.cache.Caches;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
-import com.google.common.io.CharStreams;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.ExecutionException;
@@ -197,15 +194,9 @@ public class BuildDockerStepsRunner {
   /** @return true if Docker is installed on the user's system. */
   public static boolean isDockerInstalled() {
     try {
-      ProcessBuilder processBuilder = new ProcessBuilder("docker");
-      processBuilder.redirectErrorStream(true);
-      Process process = processBuilder.start();
-      try (InputStreamReader stdout =
-          new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)) {
-        String output = CharStreams.toString(stdout);
-        return process.waitFor() == 0 && output.contains("Usage:\tdocker COMMAND");
-      }
-    } catch (InterruptedException | IOException ex) {
+      new ProcessBuilder("docker").start();
+      return true;
+    } catch (IOException ex) {
       return false;
     }
   }
