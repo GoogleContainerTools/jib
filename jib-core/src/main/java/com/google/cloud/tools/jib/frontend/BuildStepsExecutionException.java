@@ -16,12 +16,12 @@
 
 package com.google.cloud.tools.jib.frontend;
 
-import com.google.cloud.tools.jib.builder.BuildImageSteps;
+import com.google.cloud.tools.jib.builder.BuildSteps;
 
-/** Wraps an exception that happens during {@link BuildImageSteps#run}. */
-public class BuildImageStepsExecutionException extends Exception {
+/** Wraps an exception that happens during {@link BuildSteps#run}. */
+public class BuildStepsExecutionException extends Exception {
 
-  BuildImageStepsExecutionException(String message, Throwable cause) {
+  BuildStepsExecutionException(String message, Throwable cause) {
     super(message, cause);
   }
 }
