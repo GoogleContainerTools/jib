@@ -16,7 +16,11 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.List;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.internal.file.FileResolver;
@@ -42,7 +46,9 @@ public class ProjectPropertiesTest {
   @Mock private Jar mockJar;
   @Mock private Project mockProject;
   @Mock private GradleBuildLogger mockGradleBuildLogger;
+  @Mock private SourceFilesConfiguration mockSourceFilesConfiguration;
 
+  private final List<Path> classesPath = Collections.singletonList(Paths.get("a/b/c"));
   private Manifest fakeManifest;
   private ProjectProperties testProjectProperties;
 
@@ -50,8 +56,10 @@ public class ProjectPropertiesTest {
   public void setUp() {
     fakeManifest = new DefaultManifest(mockFileResolver);
     Mockito.when(mockJar.getManifest()).thenReturn(fakeManifest);
+    Mockito.when(mockSourceFilesConfiguration.getClassesFiles()).thenReturn(classesPath);
 
-    testProjectProperties = new ProjectProperties(mockProject, mockGradleBuildLogger);
+    testProjectProperties =
+        new ProjectProperties(mockProject, mockGradleBuildLogger, mockSourceFilesConfiguration);
   }
 
   @Test
@@ -95,9 +103,9 @@ public class ProjectPropertiesTest {
       Assert.fail("Main class not expected");
 
     } catch (GradleException ex) {
-      Assert.assertThat(
-          ex.getMessage(),
-          CoreMatchers.containsString("Could not find main class specified in a 'jar' task"));
+      Mockito.verify(mockGradleBuildLogger)
+          .debug(
+              "Could not find main class specified in a 'jar' task; attempting to infer main class.");
       Assert.assertThat(
           ex.getMessage(), CoreMatchers.containsString("add a `mainClass` configuration to jib"));
     }

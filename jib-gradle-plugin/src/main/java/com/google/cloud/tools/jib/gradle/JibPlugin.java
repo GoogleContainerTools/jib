@@ -16,13 +16,19 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.common.annotations.VisibleForTesting;
+import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.util.GradleVersion;
 
 public class JibPlugin implements Plugin<Project> {
 
+  @VisibleForTesting static final GradleVersion GRADLE_MIN_VERSION = GradleVersion.version("4.6");
+
   @Override
   public void apply(Project project) {
+    checkGradleVersion();
     JibExtension jibExtension = project.getExtensions().create("jib", JibExtension.class, project);
     project
         .getTasks()
@@ -42,5 +48,18 @@ public class JibPlugin implements Plugin<Project> {
             "jibBuildDocker",
             BuildDockerTask.class,
             buildDockerTask -> buildDockerTask.setJibExtension(jibExtension));
+  }
+
+  private static void checkGradleVersion() {
+    if (GRADLE_MIN_VERSION.compareTo(GradleVersion.current()) > 0) {
+      throw new GradleException(
+          "Detected "
+              + GradleVersion.current()
+              + ", but jib requires "
+              + GRADLE_MIN_VERSION
+              + " or higher. You can upgrade by running 'gradle wrapper --gradle-version="
+              + GRADLE_MIN_VERSION.getVersion()
+              + "'.");
+    }
   }
 }

@@ -16,6 +16,12 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.List;
+import org.apache.maven.model.Build;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
@@ -37,9 +43,13 @@ public class ProjectPropertiesTest {
   @Mock private MavenProject mockMavenProject;
   @Mock private Log mockLog;
   @Mock private Plugin mockJarPlugin;
+  @Mock private SourceFilesConfiguration mockSourceFilesConfiguration;
+
+  @Mock private Build mockBuild;
 
   private final Xpp3Dom fakeJarPluginConfiguration = new Xpp3Dom("");
   private final Xpp3Dom jarPluginMainClass = new Xpp3Dom("mainClass");
+  private final List<Path> classesPath = Collections.singletonList(Paths.get("a/b/c"));
 
   private ProjectProperties testProjectProperties;
 
@@ -52,8 +62,10 @@ public class ProjectPropertiesTest {
     manifest.addChild(jarPluginMainClass);
 
     Mockito.when(mockJarPlugin.getConfiguration()).thenReturn(fakeJarPluginConfiguration);
+    Mockito.when(mockSourceFilesConfiguration.getClassesFiles()).thenReturn(classesPath);
 
-    testProjectProperties = new ProjectProperties(mockMavenProject, mockLog);
+    testProjectProperties =
+        new ProjectProperties(mockMavenProject, mockLog, mockSourceFilesConfiguration);
   }
 
   @Test
@@ -97,9 +109,9 @@ public class ProjectPropertiesTest {
       Assert.fail("Main class not expected");
 
     } catch (MojoExecutionException ex) {
-      Assert.assertThat(
-          ex.getMessage(),
-          CoreMatchers.containsString("Could not find main class specified in maven-jar-plugin"));
+      Mockito.verify(mockLog)
+          .debug(
+              "Could not find main class specified in maven-jar-plugin; attempting to infer main class.");
       Assert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString("add a `mainClass` configuration to jib-maven-plugin"));
