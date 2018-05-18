@@ -18,7 +18,10 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
+import com.google.cloud.tools.jib.frontend.MainClassFinder;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -30,45 +33,91 @@ import org.gradle.jvm.tasks.Jar;
 /** Obtains information about a Gradle {@link Project} that uses Jib. */
 class ProjectProperties {
 
+  private static final String PLUGIN_NAME = "jib";
+
   private final Project project;
   private final GradleBuildLogger gradleBuildLogger;
+  private final SourceFilesConfiguration sourceFilesConfiguration;
 
-  ProjectProperties(Project project, GradleBuildLogger gradleBuildLogger) {
+  /** @return a ProjectProperties from the given project and logger. */
+  static ProjectProperties getForProject(Project project, GradleBuildLogger gradleBuildLogger) {
+    try {
+      return new ProjectProperties(
+          project, gradleBuildLogger, GradleSourceFilesConfiguration.getForProject(project));
+    } catch (IOException ex) {
+      throw new GradleException("Obtaining project build output files failed", ex);
+    }
+  }
+
+  @VisibleForTesting
+  ProjectProperties(
+      Project project,
+      GradleBuildLogger gradleBuildLogger,
+      SourceFilesConfiguration sourceFilesConfiguration) {
     this.project = project;
     this.gradleBuildLogger = gradleBuildLogger;
+    this.sourceFilesConfiguration = sourceFilesConfiguration;
   }
 
   /**
-   * @param mainClass the configured main class
-   * @return the main class to use for the container entrypoint.
+   * If {@code mainClass} is {@code null}, tries to infer main class in this order:
+   *
+   * <ul>
+   *   <li>1. Looks in a {@code jar} task.
+   *   <li>2. Searches for a class defined with a main method.
+   * </ul>
+   *
+   * <p>Warns if main class is not valid.
+   *
+   * @throws GradleException if no valid main class is not found.
    */
   String getMainClass(@Nullable String mainClass) {
     if (mainClass == null) {
+      gradleBuildLogger.info(
+          "Searching for main class... Add a 'mainClass' configuration to '"
+              + PLUGIN_NAME
+              + "' to improve build speed.");
       mainClass = getMainClassFromJarTask();
       if (mainClass == null) {
-        throw new GradleException(
-            HelpfulSuggestionsProvider.get("Could not find main class specified in a 'jar' task")
-                .suggest("add a `mainClass` configuration to jib"));
+        gradleBuildLogger.debug(
+            "Could not find main class specified in a 'jar' task; attempting to "
+                + "infer main class.");
+        try {
+          // Adds each file in each classes output directory to the classes files list.
+          List<String> mainClasses = new ArrayList<>();
+          for (Path classPath : sourceFilesConfiguration.getClassesFiles()) {
+            mainClasses.addAll(MainClassFinder.findMainClasses(classPath));
+          }
+
+          if (mainClasses.size() == 1) {
+            mainClass = mainClasses.get(0);
+          } else if (mainClasses.size() == 0) {
+            throw new GradleException(
+                HelpfulSuggestionsProvider.get("Main class was not found")
+                    .forMainClassNotFound(PLUGIN_NAME));
+          } else {
+            throw new GradleException(
+                HelpfulSuggestionsProvider.get(
+                        "Multiple valid main classes were found: " + String.join(", ", mainClasses))
+                    .forMainClassNotFound(PLUGIN_NAME));
+          }
+        } catch (IOException ex) {
+          throw new GradleException(
+              HelpfulSuggestionsProvider.get("Failed to get main class")
+                  .forMainClassNotFound(PLUGIN_NAME),
+              ex);
+        }
       }
     }
     if (!BuildConfiguration.isValidJavaClass(mainClass)) {
-      getLogger().warn("'mainClass' is not a valid Java class : " + mainClass);
+      gradleBuildLogger.warn("'mainClass' is not a valid Java class : " + mainClass);
     }
     return mainClass;
   }
 
-  GradleBuildLogger getLogger() {
-    return gradleBuildLogger;
-  }
-
   /** @return the {@link SourceFilesConfiguration} based on the current project */
   SourceFilesConfiguration getSourceFilesConfiguration() {
-    try {
-      return GradleSourceFilesConfiguration.getForProject(project);
-
-    } catch (IOException ex) {
-      throw new GradleException("Obtaining project build output files failed", ex);
-    }
+    return sourceFilesConfiguration;
   }
 
   /** Extracts main class from 'jar' task, if available. */

@@ -48,7 +48,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
   private static final String CACHE_DIRECTORY_NAME = "jib-cache";
 
   private static final HelpfulSuggestions HELPFUL_SUGGESTIONS =
-      HelpfulSuggestionsProvider.get("Build image failed");
+      HelpfulSuggestionsProvider.get("Build to Docker daemon failed");
 
   @Nullable
   @Parameter(defaultValue = "${session}", readonly = true)
@@ -57,7 +57,11 @@ public class BuildDockerMojo extends JibPluginConfiguration {
   /** TODO: Consolidate with BuildImageMojo. */
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
-    ProjectProperties projectProperties = new ProjectProperties(getProject(), getLog());
+    if (!BuildDockerStepsRunner.isDockerInstalled()) {
+      throw new MojoExecutionException(HELPFUL_SUGGESTIONS.forDockerNotInstalled());
+    }
+
+    ProjectProperties projectProperties = ProjectProperties.getForProject(getProject(), getLog());
     String inferredMainClass = projectProperties.getMainClass(getMainClass());
 
     SourceFilesConfiguration sourceFilesConfiguration =

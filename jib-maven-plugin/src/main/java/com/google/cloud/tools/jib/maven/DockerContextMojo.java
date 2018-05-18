@@ -43,7 +43,7 @@ public class DockerContextMojo extends JibPluginConfiguration {
   public void execute() throws MojoExecutionException {
     Preconditions.checkNotNull(targetDir);
 
-    ProjectProperties projectProperties = new ProjectProperties(getProject(), getLog());
+    ProjectProperties projectProperties = ProjectProperties.getForProject(getProject(), getLog());
     String inferredMainClass = projectProperties.getMainClass(getMainClass());
 
     try {
