@@ -22,15 +22,16 @@ import com.google.cloud.tools.jib.cache.CacheReader;
 import com.google.cloud.tools.jib.cache.CacheWriter;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.image.ReproducibleLayerBuilder;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
 /** Builds and caches application layers. */
-class BuildAndCacheApplicationLayersStep implements Callable<List<ListenableFuture<CachedLayer>>> {
+class BuildAndCacheApplicationLayersStep
+    implements Callable<ImmutableList<ListenableFuture<CachedLayer>>> {
 
   private static final String DESCRIPTION = "Building application layers";
 
@@ -52,26 +53,21 @@ class BuildAndCacheApplicationLayersStep implements Callable<List<ListenableFutu
 
   /** Depends on nothing. */
   @Override
-  public List<ListenableFuture<CachedLayer>> call() {
+  public ImmutableList<ListenableFuture<CachedLayer>> call() {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
-      List<ListenableFuture<CachedLayer>> applicationLayerFutures = new ArrayList<>(3);
-      applicationLayerFutures.add(
+      return ImmutableList.of(
           buildAndCacheLayerAsync(
               "dependencies",
               sourceFilesConfiguration.getDependenciesFiles(),
-              sourceFilesConfiguration.getDependenciesPathOnImage()));
-      applicationLayerFutures.add(
+              sourceFilesConfiguration.getDependenciesPathOnImage()),
           buildAndCacheLayerAsync(
               "resources",
               sourceFilesConfiguration.getResourcesFiles(),
-              sourceFilesConfiguration.getResourcesPathOnImage()));
-      applicationLayerFutures.add(
+              sourceFilesConfiguration.getResourcesPathOnImage()),
           buildAndCacheLayerAsync(
               "classes",
               sourceFilesConfiguration.getClassesFiles(),
               sourceFilesConfiguration.getClassesPathOnImage()));
-
-      return applicationLayerFutures;
     }
   }
 

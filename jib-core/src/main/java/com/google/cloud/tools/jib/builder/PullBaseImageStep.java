@@ -31,12 +31,12 @@ import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryException;
+import com.google.common.util.concurrent.ListenableFuture;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 /** Pulls the base image manifest. */
 class PullBaseImageStep implements Callable<Image> {
@@ -44,10 +44,11 @@ class PullBaseImageStep implements Callable<Image> {
   private static final String DESCRIPTION = "Pulling base image manifest";
 
   private final BuildConfiguration buildConfiguration;
-  private final Future<Authorization> pullAuthorizationFuture;
+  private final ListenableFuture<Authorization> pullAuthorizationFuture;
 
   PullBaseImageStep(
-      BuildConfiguration buildConfiguration, Future<Authorization> pullAuthorizationFuture) {
+      BuildConfiguration buildConfiguration,
+      ListenableFuture<Authorization> pullAuthorizationFuture) {
     this.buildConfiguration = buildConfiguration;
     this.pullAuthorizationFuture = pullAuthorizationFuture;
   }
