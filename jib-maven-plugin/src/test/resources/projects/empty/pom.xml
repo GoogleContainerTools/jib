@@ -31,7 +31,6 @@
           <to>
             <image>gcr.io/jib-integration-testing/emptyimage:maven</image>
           </to>
-          <mainClass>com.test.Empty</mainClass>
           <!-- Does not have tests use user-level cache for base image layers. -->
           <useOnlyProjectCache>true</useOnlyProjectCache>
         </configuration>

@@ -61,6 +61,9 @@ public class HelpfulSuggestionsTest {
     Assert.assertEquals(
         "messagePrefix, perhaps you should clear directory manually before creating the Docker context",
         TEST_HELPFUL_SUGGESTIONS.forDockerContextInsecureRecursiveDelete("directory"));
+    Assert.assertEquals(
+        "messagePrefix, perhaps you should add a `mainClass` configuration to plugin",
+        TEST_HELPFUL_SUGGESTIONS.forMainClassNotFound("plugin"));
     Assert.assertEquals("messagePrefix", TEST_HELPFUL_SUGGESTIONS.none());
   }
 }

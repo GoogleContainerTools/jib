@@ -65,7 +65,8 @@ public class DockerContextTask extends DefaultTask {
 
     GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
 
-    ProjectProperties projectProperties = new ProjectProperties(getProject(), gradleBuildLogger);
+    ProjectProperties projectProperties =
+        ProjectProperties.getForProject(getProject(), gradleBuildLogger);
     String mainClass = projectProperties.getMainClass(jibExtension.getMainClass());
 
     String targetDir = getTargetDir();
