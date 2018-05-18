@@ -8,6 +8,10 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+## 0.1.7
+### Fixed
+- Using base images that lack entrypoints
+
 ## 0.1.6
 ### Changed
 - Base image layers are now cached on a user-level rather than a project level - disable with `useOnlyProjectCache` configuration ([#29](https://github.com/google/jib/issues/29))
