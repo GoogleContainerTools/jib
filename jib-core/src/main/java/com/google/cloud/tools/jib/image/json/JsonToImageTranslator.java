@@ -82,10 +82,9 @@ public class JsonToImageTranslator {
       image.addLayer(layer);
     }
 
-    if (containerConfigurationTemplate.getContainerEntrypoint() == null) {
-      throw new IllegalArgumentException("containerConfigurationTemplate must have an entrypoint");
+    if (containerConfigurationTemplate.getContainerEntrypoint() != null) {
+      image.setEntrypoint(containerConfigurationTemplate.getContainerEntrypoint());
     }
-    image.setEntrypoint(containerConfigurationTemplate.getContainerEntrypoint());
 
     for (String environmentVariable : containerConfigurationTemplate.getContainerEnvironment()) {
       image.addEnvironmentVariableDefinition(environmentVariable);
