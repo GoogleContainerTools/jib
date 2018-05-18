@@ -27,13 +27,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 /** Pulls and caches the base image layers. */
-class PullAndCacheBaseImageLayersStep implements Callable<ImmutableList<ListenableFuture<CachedLayer>>> {
+class PullAndCacheBaseImageLayersStep
+    implements Callable<ImmutableList<ListenableFuture<CachedLayer>>> {
 
   private static final String DESCRIPTION = "Setting up base image caching";
 
@@ -63,7 +62,9 @@ class PullAndCacheBaseImageLayersStep implements Callable<ImmutableList<Listenab
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       ImmutableList<Layer> baseImageLayers = NonBlockingFutures.get(baseImageFuture).getLayers();
 
-      ImmutableList.Builder<ListenableFuture<CachedLayer>> pullAndCacheBaseImageLayerFuturesBuilder = ImmutableList.builderWithExpectedSize(baseImageLayers.size());
+      ImmutableList.Builder<ListenableFuture<CachedLayer>>
+          pullAndCacheBaseImageLayerFuturesBuilder =
+              ImmutableList.builderWithExpectedSize(baseImageLayers.size());
       for (Layer layer : baseImageLayers) {
         pullAndCacheBaseImageLayerFuturesBuilder.add(
             Futures.whenAllSucceed(pullAuthorizationFuture)

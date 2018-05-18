@@ -26,6 +26,7 @@ import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.tar.TarStreamBuilder;
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharStreams;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -35,8 +36,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -46,16 +45,17 @@ class BuildTarballAndLoadDockerStep implements Callable<Void> {
 
   private final BuildConfiguration buildConfiguration;
   private final ListeningExecutorService listeningExecutorService;
-  private final ListenableFuture<List<ListenableFuture<CachedLayer>>>
+  private final ListenableFuture<ImmutableList<ListenableFuture<CachedLayer>>>
       pullBaseImageLayerFuturesFuture;
-  private final List<ListenableFuture<CachedLayer>> buildApplicationLayerFutures;
+  private final ImmutableList<ListenableFuture<CachedLayer>> buildApplicationLayerFutures;
   private final ListenableFuture<ListenableFuture<Image>> buildImageFutureFuture;
 
   BuildTarballAndLoadDockerStep(
       BuildConfiguration buildConfiguration,
       ListeningExecutorService listeningExecutorService,
-      ListenableFuture<List<ListenableFuture<CachedLayer>>> pullBaseImageLayerFuturesFuture,
-      List<ListenableFuture<CachedLayer>> buildApplicationLayerFutures,
+      ListenableFuture<ImmutableList<ListenableFuture<CachedLayer>>>
+          pullBaseImageLayerFuturesFuture,
+      ImmutableList<ListenableFuture<CachedLayer>> buildApplicationLayerFutures,
       ListenableFuture<ListenableFuture<Image>> buildImageFutureFuture) {
     this.buildConfiguration = buildConfiguration;
     this.listeningExecutorService = listeningExecutorService;
@@ -67,11 +67,11 @@ class BuildTarballAndLoadDockerStep implements Callable<Void> {
   /** Depends on {@code pullBaseImageLayerFuturesFuture} and {@code buildImageFutureFuture}. */
   @Override
   public Void call() throws ExecutionException, InterruptedException {
-    List<ListenableFuture<?>> dependencies = new ArrayList<>();
-    dependencies.addAll(NonBlockingFutures.get(pullBaseImageLayerFuturesFuture));
-    dependencies.addAll(buildApplicationLayerFutures);
-    dependencies.add(NonBlockingFutures.get(buildImageFutureFuture));
-    return Futures.whenAllComplete(dependencies)
+    ImmutableList.Builder<ListenableFuture<?>> dependenciesBuilder = ImmutableList.builder();
+    dependenciesBuilder.addAll(NonBlockingFutures.get(pullBaseImageLayerFuturesFuture));
+    dependenciesBuilder.addAll(buildApplicationLayerFutures);
+    dependenciesBuilder.add(NonBlockingFutures.get(buildImageFutureFuture));
+    return Futures.whenAllComplete(dependenciesBuilder.build())
         .call(this::afterPushBaseImageLayerFuturesFuture, listeningExecutorService)
         .get();
   }

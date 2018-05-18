@@ -24,8 +24,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -45,7 +43,8 @@ class BuildImageStep implements Callable<ListenableFuture<Image>> {
   BuildImageStep(
       BuildConfiguration buildConfiguration,
       ListeningExecutorService listeningExecutorService,
-      ListenableFuture<ImmutableList<ListenableFuture<CachedLayer>>> pullBaseImageLayerFuturesFuture,
+      ListenableFuture<ImmutableList<ListenableFuture<CachedLayer>>>
+          pullBaseImageLayerFuturesFuture,
       ImmutableList<ListenableFuture<CachedLayer>> buildApplicationLayerFutures,
       ImmutableList<String> entrypoint) {
     this.buildConfiguration = buildConfiguration;
@@ -59,7 +58,8 @@ class BuildImageStep implements Callable<ListenableFuture<Image>> {
   @Override
   public ListenableFuture<Image> call() throws ExecutionException, InterruptedException {
     // TODO: This might need to belong in BuildImageSteps.
-    ImmutableList.Builder<ListenableFuture<?>> afterImageLayerFuturesFutureDependenciesBuilder = ImmutableList.builder();
+    ImmutableList.Builder<ListenableFuture<?>> afterImageLayerFuturesFutureDependenciesBuilder =
+        ImmutableList.builder();
     afterImageLayerFuturesFutureDependenciesBuilder.addAll(
         NonBlockingFutures.get(pullBaseImageLayerFuturesFuture));
     afterImageLayerFuturesFutureDependenciesBuilder.addAll(buildApplicationLayerFutures);

@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.common.collect.ImmutableList;
-import java.util.ArrayList;
 import java.util.List;
 
 /** Builds an image entrypoint for the Java application. */
@@ -30,11 +29,16 @@ public class EntrypointBuilder {
    */
   public static ImmutableList<String> makeEntrypoint(
       SourceFilesConfiguration sourceFilesConfiguration, List<String> jvmFlags, String mainClass) {
-    ImmutableList<String> classPaths = ImmutableList.of(sourceFilesConfiguration.getDependenciesPathOnImage() + "*",sourceFilesConfiguration.getResourcesPathOnImage(),sourceFilesConfiguration.getClassesPathOnImage());
+    ImmutableList<String> classPaths =
+        ImmutableList.of(
+            sourceFilesConfiguration.getDependenciesPathOnImage() + "*",
+            sourceFilesConfiguration.getResourcesPathOnImage(),
+            sourceFilesConfiguration.getClassesPathOnImage());
 
     String classPathsString = String.join(":", classPaths);
 
-    ImmutableList.Builder<String> entrypointBuilder = ImmutableList.builderWithExpectedSize(4 + jvmFlags.size());
+    ImmutableList.Builder<String> entrypointBuilder =
+        ImmutableList.builderWithExpectedSize(4 + jvmFlags.size());
     entrypointBuilder.add("java");
     entrypointBuilder.addAll(jvmFlags);
     entrypointBuilder.add("-cp");

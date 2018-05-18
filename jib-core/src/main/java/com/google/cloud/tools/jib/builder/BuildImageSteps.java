@@ -31,8 +31,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
@@ -117,16 +115,17 @@ public class BuildImageSteps {
                       listeningExecutorService);
           timer2.lap("Setting up base image layer pull");
           // Pulls and caches the base image layers.
-          ListenableFuture<ImmutableList<ListenableFuture<CachedLayer>>> pullBaseImageLayerFuturesFuture =
-              Futures.whenAllSucceed(pullBaseImageFuture)
-                  .call(
-                      new PullAndCacheBaseImageLayersStep(
-                          buildConfiguration,
-                          baseLayersCache,
-                          listeningExecutorService,
-                          authenticatePullFuture,
-                          pullBaseImageFuture),
-                      listeningExecutorService);
+          ListenableFuture<ImmutableList<ListenableFuture<CachedLayer>>>
+              pullBaseImageLayerFuturesFuture =
+                  Futures.whenAllSucceed(pullBaseImageFuture)
+                      .call(
+                          new PullAndCacheBaseImageLayersStep(
+                              buildConfiguration,
+                              baseLayersCache,
+                              listeningExecutorService,
+                              authenticatePullFuture,
+                              pullBaseImageFuture),
+                          listeningExecutorService);
 
           timer2.lap("Setting up base image layer push");
           // Pushes the base image layers.
@@ -192,7 +191,8 @@ public class BuildImageSteps {
               .call(
                   () -> {
                     // Depends on all the layers being pushed.
-                    ImmutableList.Builder<ListenableFuture<?>> beforeFinalizingDependenciesBuilder = ImmutableList.builder();
+                    ImmutableList.Builder<ListenableFuture<?>> beforeFinalizingDependenciesBuilder =
+                        ImmutableList.builder();
                     beforeFinalizingDependenciesBuilder.addAll(
                         NonBlockingFutures.get(pushBaseImageLayerFuturesFuture));
                     beforeFinalizingDependenciesBuilder.addAll(pushApplicationLayersFutures);

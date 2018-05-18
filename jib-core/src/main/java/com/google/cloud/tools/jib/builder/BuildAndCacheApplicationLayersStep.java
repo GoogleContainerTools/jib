@@ -26,12 +26,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
 /** Builds and caches application layers. */
-class BuildAndCacheApplicationLayersStep implements Callable<ImmutableList<ListenableFuture<CachedLayer>>> {
+class BuildAndCacheApplicationLayersStep
+    implements Callable<ImmutableList<ListenableFuture<CachedLayer>>> {
 
   private static final String DESCRIPTION = "Building application layers";
 
