@@ -39,13 +39,15 @@ import java.util.concurrent.Executors;
  *
  * <p>TODO: Refactor for less duplicate code w/ BuildImageSteps
  */
-public class BuildDockerSteps {
+public class BuildDockerSteps implements BuildSteps {
 
   private static final String DESCRIPTION = "Building and pushing image";
 
   private final BuildConfiguration buildConfiguration;
   private final SourceFilesConfiguration sourceFilesConfiguration;
   private final Caches.Initializer cachesInitializer;
+  private final String startupMessage;
+  private final String successMessage;
 
   public BuildDockerSteps(
       BuildConfiguration buildConfiguration,
@@ -54,12 +56,35 @@ public class BuildDockerSteps {
     this.buildConfiguration = buildConfiguration;
     this.sourceFilesConfiguration = sourceFilesConfiguration;
     this.cachesInitializer = cachesInitializer;
+    startupMessage =
+        "Building to Docker daemon as " + buildConfiguration.getTargetImageReference() + "...";
+    successMessage =
+        "Built image to Docker daemon as \u001B[36m"
+            + buildConfiguration.getTargetImageReference()
+            + "\u001B[0m";
   }
 
+  @Override
   public BuildConfiguration getBuildConfiguration() {
     return buildConfiguration;
   }
 
+  @Override
+  public SourceFilesConfiguration getSourceFilesConfiguration() {
+    return sourceFilesConfiguration;
+  }
+
+  @Override
+  public String getStartupMessage() {
+    return startupMessage;
+  }
+
+  @Override
+  public String getSuccessMessage() {
+    return successMessage;
+  }
+
+  @Override
   public void run()
       throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
           CacheDirectoryNotOwnedException {

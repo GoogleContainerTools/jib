@@ -37,7 +37,7 @@ public class BuildDockerMojoIntegrationTest {
   public static final TestProject emptyTestProject = new TestProject(testPlugin, "empty");
 
   /**
-   * Builds and runs jib:buildDocker on a project at {@code projectRoot} pushing to {@code
+   * Builds and runs jib:build on a project at {@code projectRoot} pushing to {@code
    * imageReference}.
    */
   private static String buildToDockerDaemonAndRun(Path projectRoot, String imageReference)
@@ -47,7 +47,7 @@ public class BuildDockerMojoIntegrationTest {
     verifier.executeGoal("package");
 
     // Builds twice, and checks if the second build took less time.
-    verifier.executeGoal("jib:buildDocker");
+    verifier.executeGoal("jib:build");
     verifier.verifyErrorFreeLog();
 
     return new Command("docker", "run", imageReference).run();

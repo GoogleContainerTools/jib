@@ -17,8 +17,8 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
-import com.google.cloud.tools.jib.frontend.BuildDockerStepsRunner;
 import com.google.cloud.tools.jib.frontend.BuildImageStepsExecutionException;
+import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
 import com.google.cloud.tools.jib.frontend.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
@@ -112,14 +112,12 @@ public class BuildDockerTask extends DefaultTask {
     // Uses a directory in the Gradle build cache as the Jib cache.
     Path cacheDirectory = getProject().getBuildDir().toPath().resolve(CACHE_DIRECTORY_NAME);
     try {
-      BuildDockerStepsRunner buildDockerStepsRunner =
-          BuildDockerStepsRunner.newRunner(
+      BuildStepsRunner.forBuildToDockerDaemon(
               buildConfiguration,
               projectProperties.getSourceFilesConfiguration(),
               cacheDirectory,
-              jibExtension.getUseOnlyProjectCache());
-      buildDockerStepsRunner.buildDocker(
-          HelpfulSuggestionsProvider.get("Build to Docker daemon failed"));
+              jibExtension.getUseOnlyProjectCache())
+          .build(HelpfulSuggestionsProvider.get("Build to Docker daemon failed"));
 
     } catch (CacheDirectoryCreationException | BuildImageStepsExecutionException ex) {
       throw new GradleException(ex.getMessage(), ex.getCause());

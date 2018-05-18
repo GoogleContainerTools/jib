@@ -24,7 +24,6 @@ import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
-import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import java.io.IOException;
 import java.net.UnknownHostException;
@@ -43,9 +42,9 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link BuildImageStepsRunner}. */
+/** Tests for {@link BuildStepsRunner}. */
 @RunWith(MockitoJUnitRunner.class)
-public class BuildImageStepsRunnerTest {
+public class BuildStepsRunnerTest {
 
   private static final HelpfulSuggestions TEST_HELPFUL_SUGGESTIONS =
       new HelpfulSuggestions(
@@ -66,16 +65,14 @@ public class BuildImageStepsRunnerTest {
   @Mock private ExecutionException mockExecutionException;
   @Mock private BuildConfiguration mockBuildConfiguration;
 
-  private BuildImageStepsRunner testBuildImageStepsRunner;
+  private BuildStepsRunner testBuildImageStepsRunner;
 
   @Before
   public void setUpMocks() {
-    testBuildImageStepsRunner = new BuildImageStepsRunner(() -> mockBuildImageSteps);
+    testBuildImageStepsRunner = new BuildStepsRunner(() -> mockBuildImageSteps);
 
     Mockito.when(mockBuildImageSteps.getBuildConfiguration()).thenReturn(mockBuildConfiguration);
     Mockito.when(mockBuildConfiguration.getBuildLogger()).thenReturn(mockBuildLogger);
-    Mockito.when(mockBuildConfiguration.getTargetImageReference())
-        .thenReturn(ImageReference.of("someregistry", "somerepository", "sometag"));
     Mockito.when(mockBuildImageSteps.getSourceFilesConfiguration())
         .thenReturn(mockSourceFilesConfiguration);
     Mockito.when(mockSourceFilesConfiguration.getClassesFiles())
@@ -88,7 +85,7 @@ public class BuildImageStepsRunnerTest {
 
   @Test
   public void testBuildImage_pass() throws BuildImageStepsExecutionException {
-    testBuildImageStepsRunner.buildImage(TEST_HELPFUL_SUGGESTIONS);
+    testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
   }
 
   @Test
@@ -100,7 +97,7 @@ public class BuildImageStepsRunnerTest {
     Mockito.doThrow(mockCacheMetadataCorruptedException).when(mockBuildImageSteps).run();
 
     try {
-      testBuildImageStepsRunner.buildImage(TEST_HELPFUL_SUGGESTIONS);
+      testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
     } catch (BuildImageStepsExecutionException ex) {
@@ -119,7 +116,7 @@ public class BuildImageStepsRunnerTest {
     Mockito.doThrow(mockExecutionException).when(mockBuildImageSteps).run();
 
     try {
-      testBuildImageStepsRunner.buildImage(TEST_HELPFUL_SUGGESTIONS);
+      testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
     } catch (BuildImageStepsExecutionException ex) {
@@ -137,7 +134,7 @@ public class BuildImageStepsRunnerTest {
     Mockito.doThrow(mockExecutionException).when(mockBuildImageSteps).run();
 
     try {
-      testBuildImageStepsRunner.buildImage(TEST_HELPFUL_SUGGESTIONS);
+      testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
     } catch (BuildImageStepsExecutionException ex) {
@@ -161,7 +158,7 @@ public class BuildImageStepsRunnerTest {
     Mockito.doThrow(mockExecutionException).when(mockBuildImageSteps).run();
 
     try {
-      testBuildImageStepsRunner.buildImage(TEST_HELPFUL_SUGGESTIONS);
+      testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
     } catch (BuildImageStepsExecutionException ex) {
@@ -187,7 +184,7 @@ public class BuildImageStepsRunnerTest {
     Mockito.when(mockBuildConfiguration.getBaseImageRegistry()).thenReturn("someregistry");
 
     try {
-      testBuildImageStepsRunner.buildImage(TEST_HELPFUL_SUGGESTIONS);
+      testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
     } catch (BuildImageStepsExecutionException ex) {
@@ -215,7 +212,7 @@ public class BuildImageStepsRunnerTest {
         .thenReturn("some-credential-helper");
 
     try {
-      testBuildImageStepsRunner.buildImage(TEST_HELPFUL_SUGGESTIONS);
+      testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
     } catch (BuildImageStepsExecutionException ex) {
@@ -234,7 +231,7 @@ public class BuildImageStepsRunnerTest {
     Mockito.doThrow(mockExecutionException).when(mockBuildImageSteps).run();
 
     try {
-      testBuildImageStepsRunner.buildImage(TEST_HELPFUL_SUGGESTIONS);
+      testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
     } catch (BuildImageStepsExecutionException ex) {
@@ -251,7 +248,7 @@ public class BuildImageStepsRunnerTest {
     Mockito.doThrow(ioException).when(mockBuildImageSteps).run();
 
     try {
-      testBuildImageStepsRunner.buildImage(TEST_HELPFUL_SUGGESTIONS);
+      testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
     } catch (BuildImageStepsExecutionException ex) {
@@ -273,7 +270,7 @@ public class BuildImageStepsRunnerTest {
     Mockito.doThrow(mockCacheDirectoryNotOwnedException).when(mockBuildImageSteps).run();
 
     try {
-      testBuildImageStepsRunner.buildImage(TEST_HELPFUL_SUGGESTIONS);
+      testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
     } catch (BuildImageStepsExecutionException ex) {

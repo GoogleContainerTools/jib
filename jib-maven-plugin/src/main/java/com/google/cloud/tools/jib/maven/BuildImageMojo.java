@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.frontend.BuildImageStepsExecutionException;
-import com.google.cloud.tools.jib.frontend.BuildImageStepsRunner;
+import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
 import com.google.cloud.tools.jib.frontend.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
 import com.google.cloud.tools.jib.image.ImageReference;
@@ -121,14 +121,12 @@ public class BuildImageMojo extends JibPluginConfiguration {
     // Uses a directory in the Maven build cache as the Jib cache.
     Path cacheDirectory = Paths.get(getProject().getBuild().getDirectory(), CACHE_DIRECTORY_NAME);
     try {
-      BuildImageStepsRunner buildImageStepsRunner =
-          BuildImageStepsRunner.newRunner(
+      BuildStepsRunner.forBuildImage(
               buildConfiguration,
               sourceFilesConfiguration,
               cacheDirectory,
-              getUseOnlyProjectCache());
-
-      buildImageStepsRunner.buildImage(HELPFUL_SUGGESTIONS);
+              getUseOnlyProjectCache())
+          .build(HELPFUL_SUGGESTIONS);
       getLog().info("");
 
     } catch (CacheDirectoryCreationException | BuildImageStepsExecutionException ex) {

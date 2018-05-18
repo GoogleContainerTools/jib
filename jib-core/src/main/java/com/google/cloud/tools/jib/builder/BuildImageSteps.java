@@ -36,13 +36,15 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
 /** All the steps to build an image. */
-public class BuildImageSteps {
+public class BuildImageSteps implements BuildSteps {
 
   private static final String DESCRIPTION = "Building and pushing image";
 
   private final BuildConfiguration buildConfiguration;
   private final SourceFilesConfiguration sourceFilesConfiguration;
   private final Caches.Initializer cachesInitializer;
+  private final String startupMessage;
+  private final String successMessage;
 
   public BuildImageSteps(
       BuildConfiguration buildConfiguration,
@@ -51,16 +53,35 @@ public class BuildImageSteps {
     this.buildConfiguration = buildConfiguration;
     this.sourceFilesConfiguration = sourceFilesConfiguration;
     this.cachesInitializer = cachesInitializer;
+    startupMessage =
+        "Containerizing application to " + buildConfiguration.getTargetImageReference() + "...";
+    successMessage =
+        "Built and pushed image as \u001B[36m"
+            + buildConfiguration.getTargetImageReference()
+            + "\u001B[0m";
   }
 
+  @Override
   public BuildConfiguration getBuildConfiguration() {
     return buildConfiguration;
   }
 
+  @Override
   public SourceFilesConfiguration getSourceFilesConfiguration() {
     return sourceFilesConfiguration;
   }
 
+  @Override
+  public String getStartupMessage() {
+    return startupMessage;
+  }
+
+  @Override
+  public String getSuccessMessage() {
+    return successMessage;
+  }
+
+  @Override
   public void run()
       throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
           CacheDirectoryNotOwnedException {
