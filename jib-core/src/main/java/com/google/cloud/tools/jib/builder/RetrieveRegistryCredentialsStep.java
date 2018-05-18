@@ -43,8 +43,10 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Authorization> {
       ImmutableMap.of("gcr.io", "gcr", "amazonaws.com", "ecr-login");
 
   /** Retrieves credentials for the base image. */
-  static RetrieveRegistryCredentialsStep forBaseImage(BuildConfiguration buildConfiguration) {
+  static RetrieveRegistryCredentialsStep forBaseImage(
+      ListeningExecutorService listeningExecutorService, BuildConfiguration buildConfiguration) {
     return new RetrieveRegistryCredentialsStep(
+        listeningExecutorService,
         buildConfiguration.getBuildLogger(),
         buildConfiguration.getBaseImageRegistry(),
         buildConfiguration.getBaseImageCredentialHelperName(),
@@ -52,8 +54,10 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Authorization> {
   }
 
   /** Retrieves credentials for the target image. */
-  static RetrieveRegistryCredentialsStep forTargetImage(BuildConfiguration buildConfiguration) {
+  static RetrieveRegistryCredentialsStep forTargetImage(
+      ListeningExecutorService listeningExecutorService, BuildConfiguration buildConfiguration) {
     return new RetrieveRegistryCredentialsStep(
+        listeningExecutorService,
         buildConfiguration.getBuildLogger(),
         buildConfiguration.getTargetImageRegistry(),
         buildConfiguration.getTargetImageCredentialHelperName(),
@@ -67,14 +71,19 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Authorization> {
   private final DockerCredentialHelperFactory dockerCredentialHelperFactory;
   private final DockerConfigCredentialRetriever dockerConfigCredentialRetriever;
 
+  private final ListeningExecutorService listeningExecutorService;
+  @Nullable private ListenableFuture<Authorization> listenableFuture;
+
   @VisibleForTesting
   RetrieveRegistryCredentialsStep(
+      ListeningExecutorService listeningExecutorService,
       BuildLogger buildLogger,
       String registry,
       @Nullable String credentialHelperSuffix,
       @Nullable RegistryCredentials knownRegistryCredentials,
       DockerCredentialHelperFactory dockerCredentialHelperFactory,
       DockerConfigCredentialRetriever dockerConfigCredentialRetriever) {
+    this.listeningExecutorService = listeningExecutorService;
     this.buildLogger = buildLogger;
     this.registry = registry;
     this.credentialHelperSuffix = credentialHelperSuffix;
@@ -85,11 +94,13 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Authorization> {
 
   /** Instantiate with {@link #forBaseImage} or {@link #forTargetImage}. */
   private RetrieveRegistryCredentialsStep(
+      ListeningExecutorService listeningExecutorService,
       BuildLogger buildLogger,
       String registry,
       @Nullable String credentialHelperSuffix,
       @Nullable RegistryCredentials knownRegistryCredentials) {
     this(
+        listeningExecutorService,
         buildLogger,
         registry,
         credentialHelperSuffix,
@@ -99,8 +110,11 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Authorization> {
   }
 
   @Override
-  public ListenableFuture<Authorization> submit(ListeningExecutorService listeningExecutorService) {
-    return listeningExecutorService.submit(this);
+  public ListenableFuture<Authorization> getFuture() {
+    if (listenableFuture == null) {
+      listenableFuture = listeningExecutorService.submit(this);
+    }
+    return listenableFuture;
   }
 
   @Override
