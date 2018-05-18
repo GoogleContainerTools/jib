@@ -21,8 +21,9 @@ import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 
-/** Steps run for building an image. */
+/** Steps for building an image. */
 public interface BuildSteps {
+
   void run()
       throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
           CacheDirectoryNotOwnedException;

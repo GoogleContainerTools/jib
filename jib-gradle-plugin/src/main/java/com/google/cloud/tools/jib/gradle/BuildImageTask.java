@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.api.client.http.HttpTransport;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
-import com.google.cloud.tools.jib.frontend.BuildImageStepsExecutionException;
+import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
 import com.google.cloud.tools.jib.frontend.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
@@ -152,7 +152,7 @@ public class BuildImageTask extends DefaultTask {
               jibExtension.getUseOnlyProjectCache())
           .build(HELPFUL_SUGGESTIONS);
 
-    } catch (CacheDirectoryCreationException | BuildImageStepsExecutionException ex) {
+    } catch (CacheDirectoryCreationException | BuildStepsExecutionException ex) {
       throw new GradleException(ex.getMessage(), ex.getCause());
     }
   }

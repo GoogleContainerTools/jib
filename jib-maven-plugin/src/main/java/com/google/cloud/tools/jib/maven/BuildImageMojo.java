@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
-import com.google.cloud.tools.jib.frontend.BuildImageStepsExecutionException;
+import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
 import com.google.cloud.tools.jib.frontend.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
@@ -129,7 +129,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
           .build(HELPFUL_SUGGESTIONS);
       getLog().info("");
 
-    } catch (CacheDirectoryCreationException | BuildImageStepsExecutionException ex) {
+    } catch (CacheDirectoryCreationException | BuildStepsExecutionException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex.getCause());
     }
   }

@@ -36,13 +36,12 @@ import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Supplier;
 import org.apache.http.conn.HttpHostConnectException;
 
 /** Runs a {@link BuildSteps} and builds helpful error messages. */
 public class BuildStepsRunner {
 
-  private final Supplier<BuildSteps> buildStepsSupplier;
+  private final BuildSteps buildSteps;
 
   /**
    * Creates a runner to build an image. Creates a directory for the cache, if needed.
@@ -59,7 +58,7 @@ public class BuildStepsRunner {
       throws CacheDirectoryCreationException {
     Initializer cacheInitializer = getCacheInitializer(cacheDirectory, useOnlyProjectCache);
     return new BuildStepsRunner(
-        () -> new BuildImageSteps(buildConfiguration, sourceFilesConfiguration, cacheInitializer));
+        new BuildImageSteps(buildConfiguration, sourceFilesConfiguration, cacheInitializer));
   }
 
   /**
@@ -77,7 +76,17 @@ public class BuildStepsRunner {
       throws CacheDirectoryCreationException {
     Initializer cacheInitializer = getCacheInitializer(cacheDirectory, useOnlyProjectCache);
     return new BuildStepsRunner(
-        () -> new BuildDockerSteps(buildConfiguration, sourceFilesConfiguration, cacheInitializer));
+        new BuildDockerSteps(buildConfiguration, sourceFilesConfiguration, cacheInitializer));
+  }
+
+  /** @return true if Docker is installed on the user's system. */
+  public static boolean isDockerInstalled() {
+    try {
+      new ProcessBuilder("docker").start();
+      return true;
+    } catch (IOException ex) {
+      return false;
+    }
   }
 
   private static Initializer getCacheInitializer(Path cacheDirectory, boolean useOnlyProjectCache)
@@ -97,19 +106,59 @@ public class BuildStepsRunner {
     return cachesInitializer;
   }
 
-  /** @return true if Docker is installed on the user's system. */
-  public static boolean isDockerInstalled() {
-    try {
-      new ProcessBuilder("docker").start();
-      return true;
-    } catch (IOException ex) {
-      return false;
+  private static void handleRegistryUnauthorizedException(
+      RegistryUnauthorizedException registryUnauthorizedException,
+      BuildConfiguration buildConfiguration,
+      HelpfulSuggestions helpfulSuggestions)
+      throws BuildStepsExecutionException {
+    if (registryUnauthorizedException.getHttpResponseException().getStatusCode()
+        == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
+      // No permissions for registry/repository.
+      throw new BuildStepsExecutionException(
+          helpfulSuggestions.forHttpStatusCodeForbidden(
+              registryUnauthorizedException.getImageReference()),
+          registryUnauthorizedException);
+
+    } else {
+      boolean isRegistryForBase =
+          registryUnauthorizedException
+              .getRegistry()
+              .equals(buildConfiguration.getBaseImageRegistry());
+      boolean isRegistryForTarget =
+          registryUnauthorizedException
+              .getRegistry()
+              .equals(buildConfiguration.getTargetImageRegistry());
+      boolean areBaseImageCredentialsConfigured =
+          buildConfiguration.getBaseImageCredentialHelperName() != null
+              || buildConfiguration.getKnownBaseRegistryCredentials() != null;
+      boolean areTargetImageCredentialsConfigured =
+          buildConfiguration.getTargetImageCredentialHelperName() != null
+              || buildConfiguration.getKnownTargetRegistryCredentials() != null;
+
+      if (isRegistryForBase && !areBaseImageCredentialsConfigured) {
+        throw new BuildStepsExecutionException(
+            helpfulSuggestions.forNoCredentialHelpersDefinedForBaseImage(
+                registryUnauthorizedException.getRegistry()),
+            registryUnauthorizedException);
+      }
+      if (isRegistryForTarget && !areTargetImageCredentialsConfigured) {
+        throw new BuildStepsExecutionException(
+            helpfulSuggestions.forNoCredentialHelpersDefinedForTargetImage(
+                registryUnauthorizedException.getRegistry()),
+            registryUnauthorizedException);
+      }
+
+      // Credential helper probably was not configured correctly or did not have the necessary
+      // credentials.
+      throw new BuildStepsExecutionException(
+          helpfulSuggestions.forCredentialsNotCorrect(registryUnauthorizedException.getRegistry()),
+          registryUnauthorizedException);
     }
   }
 
   @VisibleForTesting
-  BuildStepsRunner(Supplier<BuildSteps> buildStepsSupplier) {
-    this.buildStepsSupplier = buildStepsSupplier;
+  BuildStepsRunner(BuildSteps buildSteps) {
+    this.buildSteps = buildSteps;
   }
 
   /**
@@ -117,10 +166,7 @@ public class BuildStepsRunner {
    *
    * @param helpfulSuggestions suggestions to use in help messages for exceptions
    */
-  public void build(HelpfulSuggestions helpfulSuggestions)
-      throws BuildImageStepsExecutionException {
-    BuildSteps buildSteps = buildStepsSupplier.get();
-
+  public void build(HelpfulSuggestions helpfulSuggestions) throws BuildStepsExecutionException {
     try {
       // TODO: This logging should be injected via another logging class.
       BuildLogger buildLogger = buildSteps.getBuildConfiguration().getBuildLogger();
@@ -157,7 +203,7 @@ public class BuildStepsRunner {
 
     } catch (CacheMetadataCorruptedException cacheMetadataCorruptedException) {
       // TODO: Have this be different for Maven and Gradle.
-      throw new BuildImageStepsExecutionException(
+      throw new BuildStepsExecutionException(
           helpfulSuggestions.forCacheMetadataCorrupted(), cacheMetadataCorruptedException);
 
     } catch (ExecutionException executionException) {
@@ -165,7 +211,7 @@ public class BuildStepsRunner {
 
       if (executionException.getCause() instanceof HttpHostConnectException) {
         // Failed to connect to registry.
-        throw new BuildImageStepsExecutionException(
+        throw new BuildStepsExecutionException(
             helpfulSuggestions.forHttpHostConnect(), executionException.getCause());
 
       } else if (executionException.getCause() instanceof RegistryUnauthorizedException) {
@@ -185,71 +231,21 @@ public class BuildStepsRunner {
             helpfulSuggestions);
 
       } else if (executionException.getCause() instanceof UnknownHostException) {
-        throw new BuildImageStepsExecutionException(
+        throw new BuildStepsExecutionException(
             helpfulSuggestions.forUnknownHost(), executionException.getCause());
 
       } else {
-        throw new BuildImageStepsExecutionException(
+        throw new BuildStepsExecutionException(
             helpfulSuggestions.none(), executionException.getCause());
       }
 
     } catch (InterruptedException | IOException ex) {
       // TODO: Add more suggestions for various build failures.
-      throw new BuildImageStepsExecutionException(helpfulSuggestions.none(), ex);
+      throw new BuildStepsExecutionException(helpfulSuggestions.none(), ex);
 
     } catch (CacheDirectoryNotOwnedException ex) {
-      throw new BuildImageStepsExecutionException(
+      throw new BuildStepsExecutionException(
           helpfulSuggestions.forCacheDirectoryNotOwned(ex.getCacheDirectory()), ex);
-    }
-  }
-
-  private static void handleRegistryUnauthorizedException(
-      RegistryUnauthorizedException registryUnauthorizedException,
-      BuildConfiguration buildConfiguration,
-      HelpfulSuggestions helpfulSuggestions)
-      throws BuildImageStepsExecutionException {
-    if (registryUnauthorizedException.getHttpResponseException().getStatusCode()
-        == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
-      // No permissions for registry/repository.
-      throw new BuildImageStepsExecutionException(
-          helpfulSuggestions.forHttpStatusCodeForbidden(
-              registryUnauthorizedException.getImageReference()),
-          registryUnauthorizedException);
-
-    } else {
-      boolean isRegistryForBase =
-          registryUnauthorizedException
-              .getRegistry()
-              .equals(buildConfiguration.getBaseImageRegistry());
-      boolean isRegistryForTarget =
-          registryUnauthorizedException
-              .getRegistry()
-              .equals(buildConfiguration.getTargetImageRegistry());
-      boolean areBaseImageCredentialsConfigured =
-          buildConfiguration.getBaseImageCredentialHelperName() != null
-              || buildConfiguration.getKnownBaseRegistryCredentials() != null;
-      boolean areTargetImageCredentialsConfigured =
-          buildConfiguration.getTargetImageCredentialHelperName() != null
-              || buildConfiguration.getKnownTargetRegistryCredentials() != null;
-
-      if (isRegistryForBase && !areBaseImageCredentialsConfigured) {
-        throw new BuildImageStepsExecutionException(
-            helpfulSuggestions.forNoCredentialHelpersDefinedForBaseImage(
-                registryUnauthorizedException.getRegistry()),
-            registryUnauthorizedException);
-      }
-      if (isRegistryForTarget && !areTargetImageCredentialsConfigured) {
-        throw new BuildImageStepsExecutionException(
-            helpfulSuggestions.forNoCredentialHelpersDefinedForTargetImage(
-                registryUnauthorizedException.getRegistry()),
-            registryUnauthorizedException);
-      }
-
-      // Credential helper probably was not configured correctly or did not have the necessary
-      // credentials.
-      throw new BuildImageStepsExecutionException(
-          helpfulSuggestions.forCredentialsNotCorrect(registryUnauthorizedException.getRegistry()),
-          registryUnauthorizedException);
     }
   }
 }

@@ -42,6 +42,9 @@ import java.util.concurrent.Executors;
 public class BuildDockerSteps implements BuildSteps {
 
   private static final String DESCRIPTION = "Building and pushing image";
+  private static final String STARTUP_FORMAT = "Building to Docker daemon as %s...";
+  private static final String SUCCESS_FORMAT =
+      "Built image to Docker daemon as \u001B[36m%s\u001B[0m";
 
   private final BuildConfiguration buildConfiguration;
   private final SourceFilesConfiguration sourceFilesConfiguration;
@@ -56,12 +59,8 @@ public class BuildDockerSteps implements BuildSteps {
     this.buildConfiguration = buildConfiguration;
     this.sourceFilesConfiguration = sourceFilesConfiguration;
     this.cachesInitializer = cachesInitializer;
-    startupMessage =
-        "Building to Docker daemon as " + buildConfiguration.getTargetImageReference() + "...";
-    successMessage =
-        "Built image to Docker daemon as \u001B[36m"
-            + buildConfiguration.getTargetImageReference()
-            + "\u001B[0m";
+    startupMessage = String.format(STARTUP_FORMAT, buildConfiguration.getTargetImageReference());
+    successMessage = String.format(SUCCESS_FORMAT, buildConfiguration.getTargetImageReference());
   }
 
   @Override

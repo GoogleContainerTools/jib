@@ -69,7 +69,7 @@ public class BuildStepsRunnerTest {
 
   @Before
   public void setUpMocks() {
-    testBuildImageStepsRunner = new BuildStepsRunner(() -> mockBuildImageSteps);
+    testBuildImageStepsRunner = new BuildStepsRunner(mockBuildImageSteps);
 
     Mockito.when(mockBuildImageSteps.getBuildConfiguration()).thenReturn(mockBuildConfiguration);
     Mockito.when(mockBuildConfiguration.getBuildLogger()).thenReturn(mockBuildLogger);
@@ -84,7 +84,7 @@ public class BuildStepsRunnerTest {
   }
 
   @Test
-  public void testBuildImage_pass() throws BuildImageStepsExecutionException {
+  public void testBuildImage_pass() throws BuildStepsExecutionException {
     testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
   }
 
@@ -100,7 +100,7 @@ public class BuildStepsRunnerTest {
       testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
-    } catch (BuildImageStepsExecutionException ex) {
+    } catch (BuildStepsExecutionException ex) {
       Assert.assertEquals(TEST_HELPFUL_SUGGESTIONS.forCacheMetadataCorrupted(), ex.getMessage());
       Assert.assertEquals(mockCacheMetadataCorruptedException, ex.getCause());
     }
@@ -119,7 +119,7 @@ public class BuildStepsRunnerTest {
       testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
-    } catch (BuildImageStepsExecutionException ex) {
+    } catch (BuildStepsExecutionException ex) {
       Assert.assertEquals(TEST_HELPFUL_SUGGESTIONS.forHttpHostConnect(), ex.getMessage());
       Assert.assertEquals(mockHttpHostConnectException, ex.getCause());
     }
@@ -137,7 +137,7 @@ public class BuildStepsRunnerTest {
       testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
-    } catch (BuildImageStepsExecutionException ex) {
+    } catch (BuildStepsExecutionException ex) {
       Assert.assertEquals(TEST_HELPFUL_SUGGESTIONS.forUnknownHost(), ex.getMessage());
       Assert.assertEquals(mockUnknownHostException, ex.getCause());
     }
@@ -161,7 +161,7 @@ public class BuildStepsRunnerTest {
       testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
-    } catch (BuildImageStepsExecutionException ex) {
+    } catch (BuildStepsExecutionException ex) {
       Assert.assertEquals(
           TEST_HELPFUL_SUGGESTIONS.forHttpStatusCodeForbidden("someregistry/somerepository"),
           ex.getMessage());
@@ -187,7 +187,7 @@ public class BuildStepsRunnerTest {
       testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
-    } catch (BuildImageStepsExecutionException ex) {
+    } catch (BuildStepsExecutionException ex) {
       Assert.assertEquals(
           TEST_HELPFUL_SUGGESTIONS.forNoCredentialHelpersDefinedForBaseImage("someregistry"),
           ex.getMessage());
@@ -215,7 +215,7 @@ public class BuildStepsRunnerTest {
       testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
-    } catch (BuildImageStepsExecutionException ex) {
+    } catch (BuildStepsExecutionException ex) {
       Assert.assertEquals(
           TEST_HELPFUL_SUGGESTIONS.forCredentialsNotCorrect("someregistry"), ex.getMessage());
       Assert.assertEquals(mockRegistryUnauthorizedException, ex.getCause());
@@ -234,7 +234,7 @@ public class BuildStepsRunnerTest {
       testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
-    } catch (BuildImageStepsExecutionException ex) {
+    } catch (BuildStepsExecutionException ex) {
       Assert.assertEquals(TEST_HELPFUL_SUGGESTIONS.none(), ex.getMessage());
       Assert.assertEquals(throwable, ex.getCause());
     }
@@ -251,7 +251,7 @@ public class BuildStepsRunnerTest {
       testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
-    } catch (BuildImageStepsExecutionException ex) {
+    } catch (BuildStepsExecutionException ex) {
       Assert.assertEquals(TEST_HELPFUL_SUGGESTIONS.none(), ex.getMessage());
       Assert.assertEquals(ioException, ex.getCause());
     }
@@ -273,7 +273,7 @@ public class BuildStepsRunnerTest {
       testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
-    } catch (BuildImageStepsExecutionException ex) {
+    } catch (BuildStepsExecutionException ex) {
       Assert.assertEquals(
           TEST_HELPFUL_SUGGESTIONS.forCacheDirectoryNotOwned(expectedCacheDirectory),
           ex.getMessage());
