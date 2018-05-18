@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder;
 
+import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,22 +28,19 @@ public class EntrypointBuilder {
    *
    * <p>The entrypoint is {@code java [jvm flags] -cp [classpaths] [main class]}.
    */
-  public static List<String> makeEntrypoint(
+  public static ImmutableList<String> makeEntrypoint(
       SourceFilesConfiguration sourceFilesConfiguration, List<String> jvmFlags, String mainClass) {
-    List<String> classPaths = new ArrayList<>();
-    classPaths.add(sourceFilesConfiguration.getDependenciesPathOnImage() + "*");
-    classPaths.add(sourceFilesConfiguration.getResourcesPathOnImage());
-    classPaths.add(sourceFilesConfiguration.getClassesPathOnImage());
+    ImmutableList<String> classPaths = ImmutableList.of(sourceFilesConfiguration.getDependenciesPathOnImage() + "*",sourceFilesConfiguration.getResourcesPathOnImage(),sourceFilesConfiguration.getClassesPathOnImage());
 
     String classPathsString = String.join(":", classPaths);
 
-    List<String> entrypoint = new ArrayList<>(4 + jvmFlags.size());
-    entrypoint.add("java");
-    entrypoint.addAll(jvmFlags);
-    entrypoint.add("-cp");
-    entrypoint.add(classPathsString);
-    entrypoint.add(mainClass);
-    return entrypoint;
+    ImmutableList.Builder<String> entrypointBuilder = ImmutableList.builderWithExpectedSize(4 + jvmFlags.size());
+    entrypointBuilder.add("java");
+    entrypointBuilder.addAll(jvmFlags);
+    entrypointBuilder.add("-cp");
+    entrypointBuilder.add(classPathsString);
+    entrypointBuilder.add(mainClass);
+    return entrypointBuilder.build();
   }
 
   private EntrypointBuilder() {}

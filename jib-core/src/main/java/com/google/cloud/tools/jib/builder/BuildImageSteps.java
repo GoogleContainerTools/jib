@@ -65,7 +65,7 @@ public class BuildImageSteps {
   public void run()
       throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
           CacheDirectoryNotOwnedException {
-    List<String> entrypoint =
+    ImmutableList<String> entrypoint =
         EntrypointBuilder.makeEntrypoint(
             sourceFilesConfiguration,
             buildConfiguration.getJvmFlags(),
@@ -142,7 +142,7 @@ public class BuildImageSteps {
 
           timer2.lap("Setting up build application layers");
           // Builds the application layers.
-          List<ListenableFuture<CachedLayer>> buildAndCacheApplicationLayerFutures =
+          ImmutableList<ListenableFuture<CachedLayer>> buildAndCacheApplicationLayerFutures =
               new BuildAndCacheApplicationLayersStep(
                       buildConfiguration,
                       sourceFilesConfiguration,
@@ -192,12 +192,12 @@ public class BuildImageSteps {
               .call(
                   () -> {
                     // Depends on all the layers being pushed.
-                    List<ListenableFuture<?>> beforeFinalizing = new ArrayList<>();
-                    beforeFinalizing.addAll(
+                    ImmutableList.Builder<ListenableFuture<?>> beforeFinalizingDependenciesBuilder = ImmutableList.builder();
+                    beforeFinalizingDependenciesBuilder.addAll(
                         NonBlockingFutures.get(pushBaseImageLayerFuturesFuture));
-                    beforeFinalizing.addAll(pushApplicationLayersFutures);
+                    beforeFinalizingDependenciesBuilder.addAll(pushApplicationLayersFutures);
 
-                    Futures.whenAllSucceed(beforeFinalizing)
+                    Futures.whenAllSucceed(beforeFinalizingDependenciesBuilder.build())
                         .call(
                             () -> {
                               // TODO: Have this be more descriptive?

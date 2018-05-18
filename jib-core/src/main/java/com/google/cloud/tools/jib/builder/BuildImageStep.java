@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -36,17 +37,17 @@ class BuildImageStep implements Callable<ListenableFuture<Image>> {
 
   private final BuildConfiguration buildConfiguration;
   private final ListeningExecutorService listeningExecutorService;
-  private final ListenableFuture<List<ListenableFuture<CachedLayer>>>
+  private final ListenableFuture<ImmutableList<ListenableFuture<CachedLayer>>>
       pullBaseImageLayerFuturesFuture;
-  private final List<ListenableFuture<CachedLayer>> buildApplicationLayerFutures;
-  private final List<String> entrypoint;
+  private final ImmutableList<ListenableFuture<CachedLayer>> buildApplicationLayerFutures;
+  private final ImmutableList<String> entrypoint;
 
   BuildImageStep(
       BuildConfiguration buildConfiguration,
       ListeningExecutorService listeningExecutorService,
-      ListenableFuture<List<ListenableFuture<CachedLayer>>> pullBaseImageLayerFuturesFuture,
-      List<ListenableFuture<CachedLayer>> buildApplicationLayerFutures,
-      List<String> entrypoint) {
+      ListenableFuture<ImmutableList<ListenableFuture<CachedLayer>>> pullBaseImageLayerFuturesFuture,
+      ImmutableList<ListenableFuture<CachedLayer>> buildApplicationLayerFutures,
+      ImmutableList<String> entrypoint) {
     this.buildConfiguration = buildConfiguration;
     this.listeningExecutorService = listeningExecutorService;
     this.pullBaseImageLayerFuturesFuture = pullBaseImageLayerFuturesFuture;
@@ -58,11 +59,11 @@ class BuildImageStep implements Callable<ListenableFuture<Image>> {
   @Override
   public ListenableFuture<Image> call() throws ExecutionException, InterruptedException {
     // TODO: This might need to belong in BuildImageSteps.
-    List<ListenableFuture<?>> afterImageLayerFuturesFutureDependencies = new ArrayList<>();
-    afterImageLayerFuturesFutureDependencies.addAll(
+    ImmutableList.Builder<ListenableFuture<?>> afterImageLayerFuturesFutureDependenciesBuilder = ImmutableList.builder();
+    afterImageLayerFuturesFutureDependenciesBuilder.addAll(
         NonBlockingFutures.get(pullBaseImageLayerFuturesFuture));
-    afterImageLayerFuturesFutureDependencies.addAll(buildApplicationLayerFutures);
-    return Futures.whenAllSucceed(afterImageLayerFuturesFutureDependencies)
+    afterImageLayerFuturesFutureDependenciesBuilder.addAll(buildApplicationLayerFutures);
+    return Futures.whenAllSucceed(afterImageLayerFuturesFutureDependenciesBuilder.build())
         .call(this::afterImageLayerFuturesFuture, listeningExecutorService);
   }
 

@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryException;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -43,8 +44,8 @@ class PushImageStep implements Callable<Void> {
   private final ListeningExecutorService listeningExecutorService;
   private final ListenableFuture<Authorization> pushAuthorizationFuture;
 
-  private final ListenableFuture<List<ListenableFuture<Void>>> pushBaseImageLayerFuturesFuture;
-  private final List<ListenableFuture<Void>> pushApplicationLayerFutures;
+  private final ListenableFuture<ImmutableList<ListenableFuture<Void>>> pushBaseImageLayerFuturesFuture;
+  private final ImmutableList<ListenableFuture<Void>> pushApplicationLayerFutures;
   private final ListenableFuture<ListenableFuture<BlobDescriptor>>
       containerConfigurationBlobDescriptorFutureFuture;
   private final ListenableFuture<ListenableFuture<Image>> buildImageFutureFuture;
@@ -53,8 +54,8 @@ class PushImageStep implements Callable<Void> {
       BuildConfiguration buildConfiguration,
       ListeningExecutorService listeningExecutorService,
       ListenableFuture<Authorization> pushAuthorizationFuture,
-      ListenableFuture<List<ListenableFuture<Void>>> pushBaseImageLayerFuturesFuture,
-      List<ListenableFuture<Void>> pushApplicationLayerFutures,
+      ListenableFuture<ImmutableList<ListenableFuture<Void>>> pushBaseImageLayerFuturesFuture,
+      ImmutableList<ListenableFuture<Void>> pushApplicationLayerFutures,
       ListenableFuture<ListenableFuture<BlobDescriptor>>
           containerConfigurationBlobDescriptorFutureFuture,
       ListenableFuture<ListenableFuture<Image>> buildImageFutureFuture) {
@@ -75,13 +76,13 @@ class PushImageStep implements Callable<Void> {
    */
   @Override
   public Void call() throws ExecutionException, InterruptedException {
-    List<ListenableFuture<?>> dependencies = new ArrayList<>();
-    dependencies.add(pushAuthorizationFuture);
-    dependencies.addAll(NonBlockingFutures.get(pushBaseImageLayerFuturesFuture));
-    dependencies.addAll(pushApplicationLayerFutures);
-    dependencies.add(NonBlockingFutures.get(containerConfigurationBlobDescriptorFutureFuture));
-    dependencies.add(NonBlockingFutures.get(buildImageFutureFuture));
-    return Futures.whenAllComplete(dependencies)
+    ImmutableList.Builder<ListenableFuture<?>> dependenciesBuilder = ImmutableList.builder();
+    dependenciesBuilder.add(pushAuthorizationFuture);
+    dependenciesBuilder.addAll(NonBlockingFutures.get(pushBaseImageLayerFuturesFuture));
+    dependenciesBuilder.addAll(pushApplicationLayerFutures);
+    dependenciesBuilder.add(NonBlockingFutures.get(containerConfigurationBlobDescriptorFutureFuture));
+    dependenciesBuilder.add(NonBlockingFutures.get(buildImageFutureFuture));
+    return Futures.whenAllComplete(dependenciesBuilder.build())
         .call(this::afterPushBaseImageLayerFuturesFuture, listeningExecutorService)
         .get();
   }
