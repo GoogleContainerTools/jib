@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -57,12 +58,14 @@ class PullAndCacheBaseImageLayersStep implements Callable<List<ListenableFuture<
 
   /** Depends on {@code baseImageFuture}. */
   @Override
-  public List<ListenableFuture<CachedLayer>> call()
+  public ImmutableList<ListenableFuture<CachedLayer>> call()
       throws ExecutionException, InterruptedException, LayerPropertyNotFoundException {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
-      List<ListenableFuture<CachedLayer>> pullAndCacheBaseImageLayerFutures = new ArrayList<>();
-      for (Layer layer : NonBlockingFutures.get(baseImageFuture).getLayers()) {
-        pullAndCacheBaseImageLayerFutures.add(
+      ImmutableList<Layer> baseImageLayers = NonBlockingFutures.get(baseImageFuture).getLayers();
+
+      ImmutableList.Builder<ListenableFuture<CachedLayer>> pullAndCacheBaseImageLayerFuturesBuilder = ImmutableList.builderWithExpectedSize(baseImageLayers.size());
+      for (Layer layer : baseImageLayers) {
+        pullAndCacheBaseImageLayerFuturesBuilder.add(
             Futures.whenAllSucceed(pullAuthorizationFuture)
                 .call(
                     new PullAndCacheBaseImageLayerStep(
@@ -73,7 +76,7 @@ class PullAndCacheBaseImageLayersStep implements Callable<List<ListenableFuture<
                     listeningExecutorService));
       }
 
-      return pullAndCacheBaseImageLayerFutures;
+      return pullAndCacheBaseImageLayerFuturesBuilder.build();
     }
   }
 }
