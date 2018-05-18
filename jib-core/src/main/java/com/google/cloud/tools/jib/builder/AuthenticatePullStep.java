@@ -57,7 +57,9 @@ class AuthenticatePullStep implements AsyncStep<Authorization> {
   @Override
   public ListenableFuture<Authorization> getFuture() {
     if (listenableFuture == null) {
-      listenableFuture = Futures.whenAllSucceed(retrieveBaseRegistryCredentialsStep.getFuture()).call(this, listeningExecutorService);
+      listenableFuture =
+          Futures.whenAllSucceed(retrieveBaseRegistryCredentialsStep.getFuture())
+              .call(this, listeningExecutorService);
     }
     return listenableFuture;
   }
