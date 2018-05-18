@@ -178,7 +178,7 @@ public class BuildImageSteps {
 
           timer2.lap("Setting up application layer push");
           // Pushes the application layers.
-          List<ListenableFuture<Void>> pushApplicationLayersFutures =
+          ImmutableList<ListenableFuture<Void>> pushApplicationLayersFutures =
               new PushLayersStep(
                       buildConfiguration,
                       listeningExecutorService,
