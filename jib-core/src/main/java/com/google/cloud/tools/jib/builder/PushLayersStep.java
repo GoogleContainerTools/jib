@@ -55,9 +55,9 @@ class PushLayersStep implements Callable<ImmutableList<ListenableFuture<Void>>> 
       ImmutableList<ListenableFuture<CachedLayer>> cachedLayerFutures = NonBlockingFutures.get(cachedLayerFuturesFuture);
 
       // Pushes the image layers.
-      ImmutableList.Builder<ListenableFuture<Void>> pushLayerFutures = ImmutableList.builder();
+      ImmutableList.Builder<ListenableFuture<Void>> pushLayerFuturesBuilder = ImmutableList.builder();
       for (ListenableFuture<CachedLayer> cachedLayerFuture : cachedLayerFutures) {
-        pushLayerFutures.add(
+        pushLayerFuturesBuilder.add(
             Futures.whenAllComplete(pushAuthorizationFuture, cachedLayerFuture)
                 .call(
                     new PushBlobStep(
@@ -65,7 +65,7 @@ class PushLayersStep implements Callable<ImmutableList<ListenableFuture<Void>>> 
                     listeningExecutorService));
       }
 
-      return pushLayerFutures.build();
+      return pushLayerFuturesBuilder.build();
     }
   }
 }
