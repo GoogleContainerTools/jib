@@ -74,19 +74,19 @@ class BuildImageStep implements Callable<ListenableFuture<Image>> {
       throws ExecutionException, InterruptedException, LayerPropertyNotFoundException {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       // Constructs the image.
-      Image image = new Image();
+      Image.Builder imageBuilder = Image.builder();
       for (Future<CachedLayer> cachedLayerFuture :
           NonBlockingFutures.get(pullBaseImageLayerFuturesFuture)) {
-        image.addLayer(NonBlockingFutures.get(cachedLayerFuture));
+        imageBuilder.addLayer(NonBlockingFutures.get(cachedLayerFuture));
       }
       for (Future<CachedLayer> cachedLayerFuture : buildApplicationLayerFutures) {
-        image.addLayer(NonBlockingFutures.get(cachedLayerFuture));
+        imageBuilder.addLayer(NonBlockingFutures.get(cachedLayerFuture));
       }
-      image.setEnvironment(buildConfiguration.getEnvironment());
-      image.setEntrypoint(entrypoint);
+      imageBuilder.setEnvironment(buildConfiguration.getEnvironment());
+      imageBuilder.setEntrypoint(entrypoint);
 
       // Gets the container configuration content descriptor.
-      return image;
+      return imageBuilder.build();
     }
   }
 }
