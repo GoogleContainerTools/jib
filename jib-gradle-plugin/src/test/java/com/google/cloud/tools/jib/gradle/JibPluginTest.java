@@ -63,7 +63,9 @@ public class JibPluginTest {
               .contains(
                   "Detected Gradle 4.3, but jib requires "
                       + JibPlugin.GRADLE_MIN_VERSION
-                      + " or higher."));
+                      + " or higher. You can upgrade by running 'gradle wrapper --gradle-version="
+                      + JibPlugin.GRADLE_MIN_VERSION.getVersion()
+                      + "'."));
     }
   }
 }
