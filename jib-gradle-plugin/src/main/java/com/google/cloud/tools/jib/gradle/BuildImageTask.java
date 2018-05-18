@@ -18,8 +18,8 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.api.client.http.HttpTransport;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
-import com.google.cloud.tools.jib.frontend.BuildImageStepsExecutionException;
-import com.google.cloud.tools.jib.frontend.BuildImageStepsRunner;
+import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
+import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
 import com.google.cloud.tools.jib.frontend.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
 import com.google.cloud.tools.jib.http.Authorization;
@@ -145,16 +145,14 @@ public class BuildImageTask extends DefaultTask {
     // Uses a directory in the Gradle build cache as the Jib cache.
     Path cacheDirectory = getProject().getBuildDir().toPath().resolve(CACHE_DIRECTORY_NAME);
     try {
-      BuildImageStepsRunner buildImageStepsRunner =
-          BuildImageStepsRunner.newRunner(
+      BuildStepsRunner.forBuildImage(
               buildConfiguration,
               projectProperties.getSourceFilesConfiguration(),
               cacheDirectory,
-              jibExtension.getUseOnlyProjectCache());
+              jibExtension.getUseOnlyProjectCache())
+          .build(HELPFUL_SUGGESTIONS);
 
-      buildImageStepsRunner.buildImage(HELPFUL_SUGGESTIONS);
-
-    } catch (CacheDirectoryCreationException | BuildImageStepsExecutionException ex) {
+    } catch (CacheDirectoryCreationException | BuildStepsExecutionException ex) {
       throw new GradleException(ex.getMessage(), ex.getCause());
     }
   }
