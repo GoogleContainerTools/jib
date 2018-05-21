@@ -40,7 +40,7 @@ class AuthenticatePushStep implements AsyncStep<Authorization> {
   private static final String DESCRIPTION = "Authenticating with push to %s";
 
   private final BuildConfiguration buildConfiguration;
-  private final RetrieveRegistryCredentialsStep retrieveRegistryCredentialsStep;
+  private final RetrieveRegistryCredentialsStep retrieveTargetRegistryCredentialsStep;
 
   private final ListeningExecutorService listeningExecutorService;
   @Nullable private ListenableFuture<Authorization> listenableFuture;
@@ -48,17 +48,17 @@ class AuthenticatePushStep implements AsyncStep<Authorization> {
   AuthenticatePushStep(
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
-      RetrieveRegistryCredentialsStep retrieveRegistryCredentialsStep) {
+      RetrieveRegistryCredentialsStep retrieveTargetRegistryCredentialsStep) {
     this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
-    this.retrieveRegistryCredentialsStep = retrieveRegistryCredentialsStep;
+    this.retrieveTargetRegistryCredentialsStep = retrieveTargetRegistryCredentialsStep;
   }
 
   @Override
   public ListenableFuture<Authorization> getFuture() {
     if (listenableFuture == null) {
       listenableFuture =
-          Futures.whenAllSucceed(retrieveRegistryCredentialsStep.getFuture())
+          Futures.whenAllSucceed(retrieveTargetRegistryCredentialsStep.getFuture())
               .call(this, listeningExecutorService);
     }
 
@@ -75,7 +75,8 @@ class AuthenticatePushStep implements AsyncStep<Authorization> {
         new Timer(
             buildConfiguration.getBuildLogger(),
             String.format(DESCRIPTION, buildConfiguration.getTargetImageRegistry()))) {
-      Authorization registryCredentials = NonBlockingSteps.get(retrieveRegistryCredentialsStep);
+      Authorization registryCredentials =
+          NonBlockingSteps.get(retrieveTargetRegistryCredentialsStep);
       RegistryAuthenticator registryAuthenticator =
           RegistryAuthenticators.forOther(
               buildConfiguration.getTargetImageRegistry(),
