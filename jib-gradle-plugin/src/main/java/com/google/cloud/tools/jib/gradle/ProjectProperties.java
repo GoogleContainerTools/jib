@@ -52,7 +52,7 @@ class ProjectProperties {
     }
   }
 
-  public Path getCacheDirectory() {
+  Path getCacheDirectory() {
     return project.getBuildDir().toPath().resolve(CACHE_DIRECTORY_NAME);
   }
 

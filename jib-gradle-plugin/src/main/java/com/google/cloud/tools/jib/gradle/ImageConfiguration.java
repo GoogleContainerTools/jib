@@ -78,11 +78,11 @@ public class ImageConfiguration {
 
   /** Converts the {@link ImageConfiguration} to an {@link Authorization}. */
   @Nullable
-  public Authorization getImageAuthorization() {
-    if (getAuth().getUsername() == null || getAuth().getPassword() == null) {
+  Authorization getImageAuthorization() {
+    if (auth.getUsername() == null || auth.getPassword() == null) {
       return null;
     }
 
-    return Authorizations.withBasicCredentials(getAuth().getUsername(), getAuth().getPassword());
+    return Authorizations.withBasicCredentials(auth.getUsername(), auth.getPassword());
   }
 }
