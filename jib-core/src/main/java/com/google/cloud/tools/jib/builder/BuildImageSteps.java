@@ -229,11 +229,7 @@ public class BuildImageSteps implements BuildSteps {
                   buildImageStep);
 
           timer2.lap("Running push new image");
-          try {
-            pushImageStep.getFuture().get();
-          } catch (ExecutionException ex) {
-            ex.printStackTrace();
-          }
+          pushImageStep.getFuture().get();
         }
       }
     }
