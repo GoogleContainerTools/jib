@@ -23,6 +23,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -36,6 +37,9 @@ import org.codehaus.plexus.util.xml.Xpp3Dom;
 class ProjectProperties {
 
   private static final String PLUGIN_NAME = "jib-maven-plugin";
+
+  /** Directory name for the cache. The directory will be relative to the build output directory. */
+  private static final String CACHE_DIRECTORY_NAME = "jib-cache";
 
   private final MavenProject project;
   private final Log log;
@@ -54,6 +58,10 @@ class ProjectProperties {
               + "jib:build\" instead of \"mvn clean compile jib:build\"?)",
           ex);
     }
+  }
+
+  Path getCacheDirectory() {
+    return Paths.get(project.getBuild().getDirectory(), CACHE_DIRECTORY_NAME);
   }
 
   @VisibleForTesting
