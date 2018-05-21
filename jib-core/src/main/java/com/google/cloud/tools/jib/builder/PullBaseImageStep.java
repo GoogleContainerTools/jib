@@ -37,7 +37,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutionException;
-import javax.annotation.Nullable;
 
 /** Pulls the base image manifest. */
 class PullBaseImageStep implements AsyncStep<Image> {
@@ -47,32 +46,29 @@ class PullBaseImageStep implements AsyncStep<Image> {
   private final BuildConfiguration buildConfiguration;
   private final AuthenticatePullStep authenticatePullStep;
 
-  private final ListeningExecutorService listeningExecutorService;
-  @Nullable private ListenableFuture<Image> listenableFuture;
+  private final ListenableFuture<Image> listenableFuture;
 
   PullBaseImageStep(
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
       AuthenticatePullStep authenticatePullStep) {
-    this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
     this.authenticatePullStep = authenticatePullStep;
+
+    listenableFuture =
+        Futures.whenAllSucceed(authenticatePullStep.getFuture())
+            .call(this, listeningExecutorService);
   }
 
   @Override
   public ListenableFuture<Image> getFuture() {
-    if (listenableFuture == null) {
-      listenableFuture =
-          Futures.whenAllSucceed(authenticatePullStep.getFuture())
-              .call(this, listeningExecutorService);
-    }
     return listenableFuture;
   }
 
   @Override
   public Image call()
       throws IOException, RegistryException, LayerPropertyNotFoundException,
-          LayerCountMismatchException, ExecutionException, InterruptedException {
+          LayerCountMismatchException, ExecutionException {
     buildConfiguration
         .getBuildLogger()
         .lifecycle("Getting base image " + buildConfiguration.getBaseImageReference() + "...");

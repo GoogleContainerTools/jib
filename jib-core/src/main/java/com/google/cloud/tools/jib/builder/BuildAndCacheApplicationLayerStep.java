@@ -30,7 +30,6 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
-import javax.annotation.Nullable;
 
 /** Builds and caches application layers. */
 class BuildAndCacheApplicationLayerStep implements AsyncStep<CachedLayer> {
@@ -78,8 +77,7 @@ class BuildAndCacheApplicationLayerStep implements AsyncStep<CachedLayer> {
   private final String extractionPath;
   private final Cache cache;
 
-  private final ListeningExecutorService listeningExecutorService;
-  @Nullable private ListenableFuture<CachedLayer> listenableFuture;
+  private final ListenableFuture<CachedLayer> listenableFuture;
 
   private BuildAndCacheApplicationLayerStep(
       String layerType,
@@ -89,18 +87,16 @@ class BuildAndCacheApplicationLayerStep implements AsyncStep<CachedLayer> {
       String extractionPath,
       Cache cache) {
     this.layerType = layerType;
-    this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
     this.sourceFiles = sourceFiles;
     this.extractionPath = extractionPath;
     this.cache = cache;
+
+    listenableFuture = listeningExecutorService.submit(this);
   }
 
   @Override
   public ListenableFuture<CachedLayer> getFuture() {
-    if (listenableFuture == null) {
-      listenableFuture = listeningExecutorService.submit(this);
-    }
     return listenableFuture;
   }
 

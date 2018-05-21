@@ -28,7 +28,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
-import javax.annotation.Nullable;
 
 /** Pushes the final image. */
 class PushImageStep implements AsyncStep<Void> {
@@ -44,7 +43,7 @@ class PushImageStep implements AsyncStep<Void> {
   private final BuildImageStep buildImageStep;
 
   private final ListeningExecutorService listeningExecutorService;
-  @Nullable private ListenableFuture<Void> listenableFuture;
+  private final ListenableFuture<Void> listenableFuture;
 
   PushImageStep(
       ListeningExecutorService listeningExecutorService,
@@ -62,18 +61,17 @@ class PushImageStep implements AsyncStep<Void> {
     this.pushApplicationLayersStep = pushApplicationLayersStep;
     this.pushContainerConfigurationStep = pushContainerConfigurationStep;
     this.buildImageStep = buildImageStep;
+
+    listenableFuture =
+        Futures.whenAllSucceed(
+                pushBaseImageLayersStep.getFuture(),
+                pushApplicationLayersStep.getFuture(),
+                pushContainerConfigurationStep.getFuture())
+            .call(this, listeningExecutorService);
   }
 
   @Override
   public ListenableFuture<Void> getFuture() {
-    if (listenableFuture == null) {
-      listenableFuture =
-          Futures.whenAllSucceed(
-                  pushBaseImageLayersStep.getFuture(),
-                  pushApplicationLayersStep.getFuture(),
-                  pushContainerConfigurationStep.getFuture())
-              .call(this, listeningExecutorService);
-    }
     return listenableFuture;
   }
 

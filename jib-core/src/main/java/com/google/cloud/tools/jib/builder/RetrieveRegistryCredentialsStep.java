@@ -71,8 +71,7 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Authorization> {
   private final DockerCredentialHelperFactory dockerCredentialHelperFactory;
   private final DockerConfigCredentialRetriever dockerConfigCredentialRetriever;
 
-  private final ListeningExecutorService listeningExecutorService;
-  @Nullable private ListenableFuture<Authorization> listenableFuture;
+  private final ListenableFuture<Authorization> listenableFuture;
 
   @VisibleForTesting
   RetrieveRegistryCredentialsStep(
@@ -83,13 +82,14 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Authorization> {
       @Nullable RegistryCredentials knownRegistryCredentials,
       DockerCredentialHelperFactory dockerCredentialHelperFactory,
       DockerConfigCredentialRetriever dockerConfigCredentialRetriever) {
-    this.listeningExecutorService = listeningExecutorService;
     this.buildLogger = buildLogger;
     this.registry = registry;
     this.credentialHelperSuffix = credentialHelperSuffix;
     this.knownRegistryCredentials = knownRegistryCredentials;
     this.dockerCredentialHelperFactory = dockerCredentialHelperFactory;
     this.dockerConfigCredentialRetriever = dockerConfigCredentialRetriever;
+
+    listenableFuture = listeningExecutorService.submit(this);
   }
 
   /** Instantiate with {@link #forBaseImage} or {@link #forTargetImage}. */
@@ -111,9 +111,6 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Authorization> {
 
   @Override
   public ListenableFuture<Authorization> getFuture() {
-    if (listenableFuture == null) {
-      listenableFuture = listeningExecutorService.submit(this);
-    }
     return listenableFuture;
   }
 

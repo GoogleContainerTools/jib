@@ -31,7 +31,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
-import javax.annotation.Nullable;
 
 /** Pushes the container configuration. */
 class PushContainerConfigurationStep implements AsyncStep<ListenableFuture<BlobDescriptor>> {
@@ -43,7 +42,7 @@ class PushContainerConfigurationStep implements AsyncStep<ListenableFuture<BlobD
   private final BuildImageStep buildImageStep;
 
   private final ListeningExecutorService listeningExecutorService;
-  @Nullable private ListenableFuture<ListenableFuture<BlobDescriptor>> listenableFuture;
+  private final ListenableFuture<ListenableFuture<BlobDescriptor>> listenableFuture;
 
   PushContainerConfigurationStep(
       ListeningExecutorService listeningExecutorService,
@@ -54,14 +53,13 @@ class PushContainerConfigurationStep implements AsyncStep<ListenableFuture<BlobD
     this.buildConfiguration = buildConfiguration;
     this.authenticatePushStep = authenticatePushStep;
     this.buildImageStep = buildImageStep;
+
+    listenableFuture =
+        Futures.whenAllSucceed(buildImageStep.getFuture()).call(this, listeningExecutorService);
   }
 
   @Override
   public ListenableFuture<ListenableFuture<BlobDescriptor>> getFuture() {
-    if (listenableFuture == null) {
-      listenableFuture =
-          Futures.whenAllSucceed(buildImageStep.getFuture()).call(this, listeningExecutorService);
-    }
     return listenableFuture;
   }
 

@@ -26,7 +26,6 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import javax.annotation.Nullable;
 
 /** Builds a model {@link Image}. */
 // TODO: Change ListenableFuture to AsyncStep
@@ -40,7 +39,7 @@ class BuildImageStep implements AsyncStep<ListenableFuture<Image>> {
   private final ImmutableList<String> entrypoint;
 
   private final ListeningExecutorService listeningExecutorService;
-  @Nullable private ListenableFuture<ListenableFuture<Image>> listenableFuture;
+  private final ListenableFuture<ListenableFuture<Image>> listenableFuture;
 
   BuildImageStep(
       ListeningExecutorService listeningExecutorService,
@@ -53,15 +52,14 @@ class BuildImageStep implements AsyncStep<ListenableFuture<Image>> {
     this.pullAndCacheBaseImageLayersStep = pullAndCacheBaseImageLayersStep;
     this.buildAndCacheApplicationLayerSteps = buildAndCacheApplicationLayerSteps;
     this.entrypoint = entrypoint;
+
+    listenableFuture =
+        Futures.whenAllSucceed(pullAndCacheBaseImageLayersStep.getFuture())
+            .call(this, listeningExecutorService);
   }
 
   @Override
   public ListenableFuture<ListenableFuture<Image>> getFuture() {
-    if (listenableFuture == null) {
-      listenableFuture =
-          Futures.whenAllSucceed(pullAndCacheBaseImageLayersStep.getFuture())
-              .call(this, listeningExecutorService);
-    }
     return listenableFuture;
   }
 

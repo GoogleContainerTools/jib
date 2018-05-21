@@ -23,7 +23,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.util.concurrent.ExecutionException;
-import javax.annotation.Nullable;
 
 class PushLayersStep implements AsyncStep<ImmutableList<PushBlobStep>> {
 
@@ -35,7 +34,7 @@ class PushLayersStep implements AsyncStep<ImmutableList<PushBlobStep>> {
       cachedLayerStepsStep;
 
   private final ListeningExecutorService listeningExecutorService;
-  @Nullable private ListenableFuture<ImmutableList<PushBlobStep>> listenableFuture;
+  private final ListenableFuture<ImmutableList<PushBlobStep>> listenableFuture;
 
   PushLayersStep(
       ListeningExecutorService listeningExecutorService,
@@ -46,20 +45,19 @@ class PushLayersStep implements AsyncStep<ImmutableList<PushBlobStep>> {
     this.buildConfiguration = buildConfiguration;
     this.authenticatePushStep = authenticatePushStep;
     this.cachedLayerStepsStep = cachedLayerStepsStep;
+
+    listenableFuture =
+        Futures.whenAllSucceed(cachedLayerStepsStep.getFuture())
+            .call(this, listeningExecutorService);
   }
 
   @Override
   public ListenableFuture<ImmutableList<PushBlobStep>> getFuture() {
-    if (listenableFuture == null) {
-      listenableFuture =
-          Futures.whenAllSucceed(cachedLayerStepsStep.getFuture())
-              .call(this, listeningExecutorService);
-    }
     return listenableFuture;
   }
 
   @Override
-  public ImmutableList<PushBlobStep> call() throws ExecutionException, InterruptedException {
+  public ImmutableList<PushBlobStep> call() throws ExecutionException {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       ImmutableList<? extends AsyncStep<CachedLayer>> cachedLayerSteps =
           NonBlockingSteps.get(cachedLayerStepsStep);

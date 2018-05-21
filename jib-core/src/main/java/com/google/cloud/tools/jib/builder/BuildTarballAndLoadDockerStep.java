@@ -37,7 +37,6 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.concurrent.ExecutionException;
-import javax.annotation.Nullable;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 
 /** Adds image layers to a tarball and loads into Docker daemon. */
@@ -49,7 +48,7 @@ class BuildTarballAndLoadDockerStep implements AsyncStep<Void> {
   private final BuildImageStep buildImageStep;
 
   private final ListeningExecutorService listeningExecutorService;
-  @Nullable private ListenableFuture<Void> listenableFuture;
+  private final ListenableFuture<Void> listenableFuture;
 
   BuildTarballAndLoadDockerStep(
       ListeningExecutorService listeningExecutorService,
@@ -62,16 +61,15 @@ class BuildTarballAndLoadDockerStep implements AsyncStep<Void> {
     this.pullAndCacheBaseImageLayersStep = pullAndCacheBaseImageLayersStep;
     this.buildAndCacheApplicationLayerSteps = buildAndCacheApplicationLayerSteps;
     this.buildImageStep = buildImageStep;
+
+    listenableFuture =
+        Futures.whenAllSucceed(
+                pullAndCacheBaseImageLayersStep.getFuture(), buildImageStep.getFuture())
+            .call(this, listeningExecutorService);
   }
 
   @Override
   public ListenableFuture<Void> getFuture() {
-    if (listenableFuture == null) {
-      listenableFuture =
-          Futures.whenAllSucceed(
-                  pullAndCacheBaseImageLayersStep.getFuture(), buildImageStep.getFuture())
-              .call(this, listeningExecutorService);
-    }
     return listenableFuture;
   }
 

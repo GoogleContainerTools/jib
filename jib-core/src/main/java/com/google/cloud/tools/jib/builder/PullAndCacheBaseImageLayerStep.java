@@ -31,7 +31,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
-import javax.annotation.Nullable;
 
 /** Pulls and caches a single base image layer. */
 class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer> {
@@ -43,8 +42,7 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer> {
   private final DescriptorDigest layerDigest;
   private final AuthenticatePullStep authenticatePullStep;
 
-  private final ListeningExecutorService listeningExecutorService;
-  @Nullable private ListenableFuture<CachedLayer> listenableFuture;
+  private final ListenableFuture<CachedLayer> listenableFuture;
 
   PullAndCacheBaseImageLayerStep(
       ListeningExecutorService listeningExecutorService,
@@ -52,27 +50,24 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer> {
       Cache cache,
       DescriptorDigest layerDigest,
       AuthenticatePullStep authenticatePullStep) {
-    this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
     this.cache = cache;
     this.layerDigest = layerDigest;
     this.authenticatePullStep = authenticatePullStep;
+
+    listenableFuture =
+        Futures.whenAllSucceed(authenticatePullStep.getFuture())
+            .call(this, listeningExecutorService);
   }
 
   @Override
   public ListenableFuture<CachedLayer> getFuture() {
-    if (listenableFuture == null) {
-      listenableFuture =
-          Futures.whenAllSucceed(authenticatePullStep.getFuture())
-              .call(this, listeningExecutorService);
-    }
     return listenableFuture;
   }
 
   @Override
   public CachedLayer call()
-      throws IOException, RegistryException, LayerPropertyNotFoundException, ExecutionException,
-          InterruptedException {
+      throws IOException, RegistryException, LayerPropertyNotFoundException, ExecutionException {
     try (Timer ignored =
         new Timer(buildConfiguration.getBuildLogger(), String.format(DESCRIPTION, layerDigest))) {
       RegistryClient registryClient =

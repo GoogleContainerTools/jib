@@ -25,21 +25,19 @@ import java.util.concurrent.Callable;
  * A step to run asynchronously. Implementations should:
  *
  * <ol>
- *   <li>Construct with the dependent {@link AsyncStep}s.
+ *   <li>Be immutable
+ *   <li>Construct with the dependent {@link AsyncStep}s and submitting itself to the {@link
+ *       ListeningExecutorService} to run after all its dependent {@link AsyncStep}s (for example,
+ *       by using {@link Futures#whenAllSucceed})
  *   <li>Implement {@link #call} with the actual work
- *   <li>Implement {@link #getFuture} by submitting itself to the {@link ListeningExecutorService}
- *       to run after all its dependent {@link AsyncStep}s for the first call, and returning that
- *       future for subsequent calls.
+ *   <li>Implement {@link #getFuture} by
  * </ol>
  *
  * @param <T> the object type passed on by this step
  */
 interface AsyncStep<T> extends Callable<T> {
 
-  /**
-   * Submits to a {@link ListeningExecutorService} to run after its dependencies. For example, by
-   * using {@link Futures#whenAllSucceed}.
-   */
+  /** @return the submitted future */
   // TODO: Consider changing this to be orchestrated by an AsyncStepsBuilder.
   ListenableFuture<T> getFuture();
 }

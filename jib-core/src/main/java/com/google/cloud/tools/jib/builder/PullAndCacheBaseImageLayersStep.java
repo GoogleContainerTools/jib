@@ -25,7 +25,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.util.concurrent.ExecutionException;
-import javax.annotation.Nullable;
 
 /** Pulls and caches the base image layers. */
 class PullAndCacheBaseImageLayersStep
@@ -39,9 +38,7 @@ class PullAndCacheBaseImageLayersStep
   private final PullBaseImageStep pullBaseImageStep;
 
   private final ListeningExecutorService listeningExecutorService;
-
-  @Nullable
-  private ListenableFuture<ImmutableList<PullAndCacheBaseImageLayerStep>> listenableFuture;
+  private final ListenableFuture<ImmutableList<PullAndCacheBaseImageLayerStep>> listenableFuture;
 
   PullAndCacheBaseImageLayersStep(
       ListeningExecutorService listeningExecutorService,
@@ -54,21 +51,19 @@ class PullAndCacheBaseImageLayersStep
     this.cache = cache;
     this.authenticatePullStep = authenticatePullStep;
     this.pullBaseImageStep = pullBaseImageStep;
+
+    listenableFuture =
+        Futures.whenAllSucceed(pullBaseImageStep.getFuture()).call(this, listeningExecutorService);
   }
 
   @Override
   public ListenableFuture<ImmutableList<PullAndCacheBaseImageLayerStep>> getFuture() {
-    if (listenableFuture == null) {
-      listenableFuture =
-          Futures.whenAllSucceed(pullBaseImageStep.getFuture())
-              .call(this, listeningExecutorService);
-    }
     return listenableFuture;
   }
 
   @Override
   public ImmutableList<PullAndCacheBaseImageLayerStep> call()
-      throws ExecutionException, InterruptedException, LayerPropertyNotFoundException {
+      throws ExecutionException, LayerPropertyNotFoundException {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       ImmutableList<Layer> baseImageLayers = NonBlockingSteps.get(pullBaseImageStep).getLayers();
 

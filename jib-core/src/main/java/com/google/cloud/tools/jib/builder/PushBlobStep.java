@@ -26,7 +26,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
-import javax.annotation.Nullable;
 
 /** Pushes a BLOB to the target registry. */
 class PushBlobStep implements AsyncStep<Void> {
@@ -37,27 +36,24 @@ class PushBlobStep implements AsyncStep<Void> {
   private final AuthenticatePushStep authenticatePushStep;
   private final AsyncStep<CachedLayer> cachedLayerStep;
 
-  private final ListeningExecutorService listeningExecutorService;
-  @Nullable private ListenableFuture<Void> listenableFuture;
+  private final ListenableFuture<Void> listenableFuture;
 
   PushBlobStep(
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
       AuthenticatePushStep authenticatePushStep,
       AsyncStep<CachedLayer> cachedLayerStep) {
-    this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
     this.authenticatePushStep = authenticatePushStep;
     this.cachedLayerStep = cachedLayerStep;
+
+    listenableFuture =
+        Futures.whenAllSucceed(authenticatePushStep.getFuture(), cachedLayerStep.getFuture())
+            .call(this, listeningExecutorService);
   }
 
   @Override
   public ListenableFuture<Void> getFuture() {
-    if (listenableFuture == null) {
-      listenableFuture =
-          Futures.whenAllSucceed(authenticatePushStep.getFuture(), cachedLayerStep.getFuture())
-              .call(this, listeningExecutorService);
-    }
     return listenableFuture;
   }
 

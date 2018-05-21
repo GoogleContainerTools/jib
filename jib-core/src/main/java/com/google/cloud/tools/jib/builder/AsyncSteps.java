@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.builder;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import javax.annotation.Nullable;
 
 /** Static methods for {@link AsyncStep}. */
 class AsyncSteps {
@@ -26,19 +25,16 @@ class AsyncSteps {
   static <T> AsyncStep<T> immediate(T returnValue) {
     return new AsyncStep<T>() {
 
-      @Nullable private ListenableFuture<T> listenableFuture;
+      private final ListenableFuture<T> listenableFuture = Futures.immediateFuture(returnValue);
 
       @Override
       public ListenableFuture<T> getFuture() {
-        if (listenableFuture == null) {
-          listenableFuture = Futures.immediateFuture(call());
-        }
         return listenableFuture;
       }
 
       @Override
       public T call() {
-        return returnValue;
+        throw new UnsupportedOperationException("Should not call AsyncStep directly");
       }
     };
   }
