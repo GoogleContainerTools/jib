@@ -76,7 +76,7 @@ public class ImageConfiguration {
     action.execute(auth);
   }
 
-  /** Converts an {@link ImageConfiguration} to an {@link Authorization}. */
+  /** Converts the {@link ImageConfiguration} to an {@link Authorization}. */
   @Nullable
   public Authorization getImageAuthorization() {
     if (getAuth().getUsername() == null || getAuth().getPassword() == null) {

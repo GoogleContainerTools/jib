@@ -63,7 +63,7 @@ public class BuildConfiguration {
       return this;
     }
 
-    public Builder setBaseAndTargetImage(@Nullable String baseImage, @Nullable String targetImage)
+    public Builder setBaseAndTargetImage(String baseImage, String targetImage)
         throws InvalidImageReferenceException {
       baseImageReference = ImageReference.parse(baseImage);
       targetImageReference = ImageReference.parse(targetImage);

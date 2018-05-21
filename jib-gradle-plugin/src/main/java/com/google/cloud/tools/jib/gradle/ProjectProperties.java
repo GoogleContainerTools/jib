@@ -34,6 +34,8 @@ import org.gradle.jvm.tasks.Jar;
 class ProjectProperties {
 
   private static final String PLUGIN_NAME = "jib";
+
+  /** Directory name for the cache. The directory will be relative to the build output directory. */
   private static final String CACHE_DIRECTORY_NAME = "jib-cache";
 
   private final Project project;
