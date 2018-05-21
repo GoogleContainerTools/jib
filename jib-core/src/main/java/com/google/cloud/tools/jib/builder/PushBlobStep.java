@@ -18,44 +18,59 @@ package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.cache.CachedLayer;
-import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryException;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import javax.annotation.Nullable;
 
 /** Pushes a BLOB to the target registry. */
-class PushBlobStep implements Callable<Void> {
+class PushBlobStep implements AsyncStep<Void> {
 
   private static final String DESCRIPTION = "Pushing BLOB ";
 
   private final BuildConfiguration buildConfiguration;
-  private final Future<Authorization> pushAuthorizationFuture;
-  private final Future<CachedLayer> pullLayerFuture;
+  private final AuthenticatePushStep authenticatePushStep;
+  private final AsyncStep<CachedLayer> cachedLayerStep;
+
+  private final ListeningExecutorService listeningExecutorService;
+  @Nullable private ListenableFuture<Void> listenableFuture;
 
   PushBlobStep(
+      ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
-      Future<Authorization> pushAuthorizationFuture,
-      Future<CachedLayer> pullLayerFuture) {
+      AuthenticatePushStep authenticatePushStep,
+      AsyncStep<CachedLayer> cachedLayerStep) {
+    this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
-    this.pushAuthorizationFuture = pushAuthorizationFuture;
-    this.pullLayerFuture = pullLayerFuture;
+    this.authenticatePushStep = authenticatePushStep;
+    this.cachedLayerStep = cachedLayerStep;
   }
 
-  /** Depends on {@code pushAuthorizationFuture} and {@code pullLayerFuture}. */
+  @Override
+  public ListenableFuture<Void> getFuture() {
+    if (listenableFuture == null) {
+      listenableFuture =
+          Futures.whenAllSucceed(authenticatePushStep.getFuture(), cachedLayerStep.getFuture())
+              .call(this, listeningExecutorService);
+    }
+    return listenableFuture;
+  }
+
   @Override
   public Void call()
       throws IOException, RegistryException, ExecutionException, InterruptedException {
-    CachedLayer layer = pullLayerFuture.get();
+    CachedLayer layer = NonBlockingSteps.get(cachedLayerStep);
     DescriptorDigest layerDigest = layer.getBlobDescriptor().getDigest();
 
     try (Timer timer = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION + layerDigest)) {
       RegistryClient registryClient =
           new RegistryClient(
-                  pushAuthorizationFuture.get(),
+                  NonBlockingSteps.get(authenticatePushStep),
                   buildConfiguration.getTargetImageRegistry(),
                   buildConfiguration.getTargetImageRepository())
               .setTimer(timer);

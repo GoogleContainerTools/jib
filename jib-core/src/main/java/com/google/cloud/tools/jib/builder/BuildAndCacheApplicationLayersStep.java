@@ -18,42 +18,55 @@ package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.cache.Cache;
+import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.CacheReader;
 import com.google.cloud.tools.jib.cache.CacheWriter;
 import com.google.cloud.tools.jib.cache.CachedLayer;
+import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.ReproducibleLayerBuilder;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.concurrent.Callable;
+import javax.annotation.Nullable;
 
 /** Builds and caches application layers. */
 class BuildAndCacheApplicationLayersStep
-    implements Callable<ImmutableList<ListenableFuture<CachedLayer>>> {
+    implements AsyncStep<ImmutableList<AsyncStep<CachedLayer>>> {
 
   private static final String DESCRIPTION = "Building application layers";
 
   private final BuildConfiguration buildConfiguration;
   private final SourceFilesConfiguration sourceFilesConfiguration;
   private final Cache cache;
+
   private final ListeningExecutorService listeningExecutorService;
+  @Nullable private ListenableFuture<ImmutableList<AsyncStep<CachedLayer>>> listenableFuture;
 
   BuildAndCacheApplicationLayersStep(
+      ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
       SourceFilesConfiguration sourceFilesConfiguration,
-      Cache cache,
-      ListeningExecutorService listeningExecutorService) {
+      Cache cache) {
+    this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
     this.sourceFilesConfiguration = sourceFilesConfiguration;
     this.cache = cache;
-    this.listeningExecutorService = listeningExecutorService;
+  }
+
+  @Override
+  public ListenableFuture<ImmutableList<AsyncStep<CachedLayer>>> getFuture() {
+    if (listenableFuture == null) {
+      listenableFuture = listeningExecutorService.submit(this);
+    }
+    return listenableFuture;
   }
 
   /** Depends on nothing. */
   @Override
-  public ImmutableList<ListenableFuture<CachedLayer>> call() {
+  public ImmutableList<AsyncStep<CachedLayer>> call() {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       return ImmutableList.of(
           buildAndCacheLayerAsync(
@@ -71,32 +84,46 @@ class BuildAndCacheApplicationLayersStep
     }
   }
 
-  private ListenableFuture<CachedLayer> buildAndCacheLayerAsync(
+  private AsyncStep<CachedLayer> buildAndCacheLayerAsync(
       String layerType, List<Path> sourceFiles, String extractionPath) {
     String description = "Building " + layerType + " layer";
 
-    return listeningExecutorService.submit(
-        () -> {
-          buildConfiguration.getBuildLogger().lifecycle(description + "...");
+    return new AsyncStep<CachedLayer>() {
 
-          try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), description)) {
-            // Don't build the layer if it exists already.
-            CachedLayer cachedLayer =
-                new CacheReader(cache).getUpToDateLayerBySourceFiles(sourceFiles);
-            if (cachedLayer != null) {
-              return cachedLayer;
-            }
+      @Nullable private ListenableFuture<CachedLayer> listenableFuture;
 
-            ReproducibleLayerBuilder reproducibleLayerBuilder =
-                new ReproducibleLayerBuilder(sourceFiles, extractionPath);
+      @Override
+      public ListenableFuture<CachedLayer> getFuture() {
+        if (listenableFuture == null) {
+          listenableFuture = listeningExecutorService.submit(this);
+        }
+        return listenableFuture;
+      }
 
-            cachedLayer = new CacheWriter(cache).writeLayer(reproducibleLayerBuilder);
-            // TODO: Remove
-            buildConfiguration
-                .getBuildLogger()
-                .debug(description + " built " + cachedLayer.getBlobDescriptor().getDigest());
+      @Override
+      public CachedLayer call()
+          throws IOException, CacheMetadataCorruptedException, LayerPropertyNotFoundException {
+        buildConfiguration.getBuildLogger().lifecycle(description + "...");
+
+        try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), description)) {
+          // Don't build the layer if it exists already.
+          CachedLayer cachedLayer =
+              new CacheReader(cache).getUpToDateLayerBySourceFiles(sourceFiles);
+          if (cachedLayer != null) {
             return cachedLayer;
           }
-        });
+
+          ReproducibleLayerBuilder reproducibleLayerBuilder =
+              new ReproducibleLayerBuilder(sourceFiles, extractionPath);
+
+          cachedLayer = new CacheWriter(cache).writeLayer(reproducibleLayerBuilder);
+          // TODO: Remove
+          buildConfiguration
+              .getBuildLogger()
+              .debug(description + " built " + cachedLayer.getBlobDescriptor().getDigest());
+          return cachedLayer;
+        }
+      }
+    };
   }
 }

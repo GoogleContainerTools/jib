@@ -18,8 +18,6 @@ package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
-import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
@@ -30,83 +28,91 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import javax.annotation.Nullable;
 
 /** Pushes the final image. */
-class PushImageStep implements Callable<Void> {
+class PushImageStep implements AsyncStep<Void> {
 
   private static final String DESCRIPTION = "Pushing new image";
 
   private final BuildConfiguration buildConfiguration;
-  private final ListeningExecutorService listeningExecutorService;
-  private final ListenableFuture<Authorization> pushAuthorizationFuture;
+  private final AuthenticatePushStep authenticatePushStep;
 
-  private final ListenableFuture<ImmutableList<ListenableFuture<Void>>>
-      pushBaseImageLayerFuturesFuture;
-  private final ImmutableList<ListenableFuture<Void>> pushApplicationLayerFutures;
+  private final PushLayersStep pushBaseImageLayersStep;
+  private final PushLayersStep pushApplicationLayersStep;
+  // TODO: Change to step
   private final ListenableFuture<ListenableFuture<BlobDescriptor>>
       containerConfigurationBlobDescriptorFutureFuture;
-  private final ListenableFuture<ListenableFuture<Image>> buildImageFutureFuture;
+  private final BuildImageStep buildImageStep;
+
+  private final ListeningExecutorService listeningExecutorService;
+  @Nullable private ListenableFuture<Void> listenableFuture;
 
   PushImageStep(
-      BuildConfiguration buildConfiguration,
       ListeningExecutorService listeningExecutorService,
-      ListenableFuture<Authorization> pushAuthorizationFuture,
-      ListenableFuture<ImmutableList<ListenableFuture<Void>>> pushBaseImageLayerFuturesFuture,
-      ImmutableList<ListenableFuture<Void>> pushApplicationLayerFutures,
+      BuildConfiguration buildConfiguration,
+      AuthenticatePushStep authenticatePushStep,
+      PushLayersStep pushBaseImageLayersStep,
+      PushLayersStep pushApplicationLayersStep,
       ListenableFuture<ListenableFuture<BlobDescriptor>>
           containerConfigurationBlobDescriptorFutureFuture,
-      ListenableFuture<ListenableFuture<Image>> buildImageFutureFuture) {
-    this.buildConfiguration = buildConfiguration;
+      BuildImageStep buildImageStep) {
     this.listeningExecutorService = listeningExecutorService;
-    this.pushAuthorizationFuture = pushAuthorizationFuture;
+    this.buildConfiguration = buildConfiguration;
+    this.authenticatePushStep = authenticatePushStep;
 
-    this.pushBaseImageLayerFuturesFuture = pushBaseImageLayerFuturesFuture;
-    this.pushApplicationLayerFutures = pushApplicationLayerFutures;
+    this.pushBaseImageLayersStep = pushBaseImageLayersStep;
+    this.pushApplicationLayersStep = pushApplicationLayersStep;
     this.containerConfigurationBlobDescriptorFutureFuture =
         containerConfigurationBlobDescriptorFutureFuture;
-    this.buildImageFutureFuture = buildImageFutureFuture;
+    this.buildImageStep = buildImageStep;
   }
 
-  /**
-   * Depends on {@code pushBaseImageLayerFuturesFuture}, {@code
-   * containerConfigurationBlobDescriptorFutureFuture}, and {@code buildImageFutureFuture}.
-   */
+  @Override
+  public ListenableFuture<Void> getFuture() {
+    if (listenableFuture == null) {
+      listenableFuture =
+          Futures.whenAllSucceed(
+                  pushBaseImageLayersStep.getFuture(),
+                  pushApplicationLayersStep.getFuture(),
+                  containerConfigurationBlobDescriptorFutureFuture)
+              .call(this, listeningExecutorService);
+    }
+    return listenableFuture;
+  }
+
   @Override
   public Void call() throws ExecutionException, InterruptedException {
     ImmutableList.Builder<ListenableFuture<?>> dependenciesBuilder = ImmutableList.builder();
-    dependenciesBuilder.add(pushAuthorizationFuture);
-    dependenciesBuilder.addAll(NonBlockingFutures.get(pushBaseImageLayerFuturesFuture));
-    dependenciesBuilder.addAll(pushApplicationLayerFutures);
+    dependenciesBuilder.add(authenticatePushStep.getFuture());
+    for (PushBlobStep pushBlobStep : NonBlockingSteps.get(pushBaseImageLayersStep)) {
+      dependenciesBuilder.add(pushBlobStep.getFuture());
+    }
+    for (PushBlobStep pushBlobStep : NonBlockingSteps.get(pushApplicationLayersStep)) {
+      dependenciesBuilder.add(pushBlobStep.getFuture());
+    }
     dependenciesBuilder.add(
         NonBlockingFutures.get(containerConfigurationBlobDescriptorFutureFuture));
-    dependenciesBuilder.add(NonBlockingFutures.get(buildImageFutureFuture));
+    dependenciesBuilder.add(NonBlockingSteps.get(buildImageStep));
     return Futures.whenAllComplete(dependenciesBuilder.build())
         .call(this::afterPushBaseImageLayerFuturesFuture, listeningExecutorService)
         .get();
   }
 
-  /**
-   * Depends on {@code pushAuthorizationFuture}, {@code pushBaseImageLayerFuturesFuture.get()},
-   * {@code pushApplicationLayerFutures}, {@code
-   * containerConfigurationBlobDescriptorFutureFuture.get()}, and {@code
-   * buildImageFutureFuture.get()}.
-   */
   private Void afterPushBaseImageLayerFuturesFuture()
       throws IOException, RegistryException, ExecutionException, InterruptedException,
           LayerPropertyNotFoundException {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       RegistryClient registryClient =
           new RegistryClient(
-              NonBlockingFutures.get(pushAuthorizationFuture),
+              NonBlockingSteps.get(authenticatePushStep),
               buildConfiguration.getTargetImageRegistry(),
               buildConfiguration.getTargetImageRepository());
 
       // Constructs the image.
       ImageToJsonTranslator imageToJsonTranslator =
-          new ImageToJsonTranslator(
-              NonBlockingFutures.get(NonBlockingFutures.get(buildImageFutureFuture)));
+          new ImageToJsonTranslator(NonBlockingFutures.get(NonBlockingSteps.get(buildImageStep)));
 
       // Pushes the image manifest.
       BuildableManifestTemplate manifestTemplate =

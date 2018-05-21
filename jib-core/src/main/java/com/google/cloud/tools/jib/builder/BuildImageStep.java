@@ -24,63 +24,79 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import javax.annotation.Nullable;
 
 /** Builds a model {@link Image}. */
-class BuildImageStep implements Callable<ListenableFuture<Image>> {
+// TODO: Change ListenableFuture to AsyncStep
+class BuildImageStep implements AsyncStep<ListenableFuture<Image>> {
 
   private static final String DESCRIPTION = "Building container configuration";
 
   private final BuildConfiguration buildConfiguration;
-  private final ListeningExecutorService listeningExecutorService;
-  private final ListenableFuture<ImmutableList<ListenableFuture<CachedLayer>>>
-      pullBaseImageLayerFuturesFuture;
-  private final ImmutableList<ListenableFuture<CachedLayer>> buildApplicationLayerFutures;
+  private final PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep;
+  private final BuildAndCacheApplicationLayersStep buildAndCacheApplicationLayersStep;
   private final ImmutableList<String> entrypoint;
 
+  private final ListeningExecutorService listeningExecutorService;
+  @Nullable private ListenableFuture<ListenableFuture<Image>> listenableFuture;
+
   BuildImageStep(
-      BuildConfiguration buildConfiguration,
       ListeningExecutorService listeningExecutorService,
-      ListenableFuture<ImmutableList<ListenableFuture<CachedLayer>>>
-          pullBaseImageLayerFuturesFuture,
-      ImmutableList<ListenableFuture<CachedLayer>> buildApplicationLayerFutures,
+      BuildConfiguration buildConfiguration,
+      PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep,
+      BuildAndCacheApplicationLayersStep buildAndCacheApplicationLayersStep,
       ImmutableList<String> entrypoint) {
-    this.buildConfiguration = buildConfiguration;
     this.listeningExecutorService = listeningExecutorService;
-    this.pullBaseImageLayerFuturesFuture = pullBaseImageLayerFuturesFuture;
-    this.buildApplicationLayerFutures = buildApplicationLayerFutures;
+    this.buildConfiguration = buildConfiguration;
+    this.pullAndCacheBaseImageLayersStep = pullAndCacheBaseImageLayersStep;
+    this.buildAndCacheApplicationLayersStep = buildAndCacheApplicationLayersStep;
     this.entrypoint = entrypoint;
   }
 
-  /** Depends on {@code pullBaseImageLayerFuturesFuture}. */
+  @Override
+  public ListenableFuture<ListenableFuture<Image>> getFuture() {
+    if (listenableFuture == null) {
+      listenableFuture =
+          Futures.whenAllSucceed(
+                  pullAndCacheBaseImageLayersStep.getFuture(),
+                  buildAndCacheApplicationLayersStep.getFuture())
+              .call(this, listeningExecutorService);
+    }
+    return listenableFuture;
+  }
+
   @Override
   public ListenableFuture<Image> call() throws ExecutionException, InterruptedException {
-    // TODO: This might need to belong in BuildImageSteps.
     ImmutableList.Builder<ListenableFuture<?>> afterImageLayerFuturesFutureDependenciesBuilder =
         ImmutableList.builder();
-    afterImageLayerFuturesFutureDependenciesBuilder.addAll(
-        NonBlockingFutures.get(pullBaseImageLayerFuturesFuture));
-    afterImageLayerFuturesFutureDependenciesBuilder.addAll(buildApplicationLayerFutures);
+
+    for (PullAndCacheBaseImageLayerStep pullAndCacheBaseImageLayerStep :
+        NonBlockingSteps.get(pullAndCacheBaseImageLayersStep)) {
+      afterImageLayerFuturesFutureDependenciesBuilder.add(
+          pullAndCacheBaseImageLayerStep.getFuture());
+    }
+    for (AsyncStep<CachedLayer> buildAndCacheApplicationLayerStep :
+        NonBlockingSteps.get(buildAndCacheApplicationLayersStep)) {
+      afterImageLayerFuturesFutureDependenciesBuilder.add(
+          buildAndCacheApplicationLayerStep.getFuture());
+    }
     return Futures.whenAllSucceed(afterImageLayerFuturesFutureDependenciesBuilder.build())
         .call(this::afterImageLayerFuturesFuture, listeningExecutorService);
   }
 
-  /**
-   * Depends on {@code pushAuthorizationFuture}, {@code pullBaseImageLayerFuturesFuture.get()}, and
-   * {@code buildApplicationLayerFutures}.
-   */
   private Image afterImageLayerFuturesFuture()
       throws ExecutionException, InterruptedException, LayerPropertyNotFoundException {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       // Constructs the image.
       Image.Builder imageBuilder = Image.builder();
-      for (ListenableFuture<CachedLayer> cachedLayerFuture :
-          NonBlockingFutures.get(pullBaseImageLayerFuturesFuture)) {
-        imageBuilder.addLayer(NonBlockingFutures.get(cachedLayerFuture));
+      for (PullAndCacheBaseImageLayerStep pullAndCacheBaseImageLayerStep :
+          NonBlockingSteps.get(pullAndCacheBaseImageLayersStep)) {
+        imageBuilder.addLayer(NonBlockingSteps.get(pullAndCacheBaseImageLayerStep));
       }
-      for (ListenableFuture<CachedLayer> cachedLayerFuture : buildApplicationLayerFutures) {
-        imageBuilder.addLayer(NonBlockingFutures.get(cachedLayerFuture));
+      for (AsyncStep<CachedLayer> cachedLayerFuture :
+          NonBlockingSteps.get(buildAndCacheApplicationLayersStep)) {
+        imageBuilder.addLayer(NonBlockingSteps.get(cachedLayerFuture));
       }
       imageBuilder.setEnvironment(buildConfiguration.getEnvironment());
       imageBuilder.setEntrypoint(entrypoint);

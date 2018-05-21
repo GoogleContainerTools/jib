@@ -18,56 +18,64 @@ package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.cache.CachedLayer;
-import com.google.cloud.tools.jib.http.Authorization;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import javax.annotation.Nullable;
 
-class PushLayersStep implements Callable<ImmutableList<ListenableFuture<Void>>> {
+class PushLayersStep implements AsyncStep<ImmutableList<PushBlobStep>> {
 
   private static final String DESCRIPTION = "Setting up to push layers";
 
   private final BuildConfiguration buildConfiguration;
+  private final AuthenticatePushStep authenticatePushStep;
+  private final AsyncStep<? extends ImmutableList<? extends AsyncStep<CachedLayer>>>
+      cachedLayerStepsStep;
+
   private final ListeningExecutorService listeningExecutorService;
-  private final ListenableFuture<Authorization> pushAuthorizationFuture;
-  private final ListenableFuture<ImmutableList<ListenableFuture<CachedLayer>>>
-      cachedLayerFuturesFuture;
+  @Nullable private ListenableFuture<ImmutableList<PushBlobStep>> listenableFuture;
 
   PushLayersStep(
-      BuildConfiguration buildConfiguration,
       ListeningExecutorService listeningExecutorService,
-      ListenableFuture<Authorization> pushAuthorizationFuture,
-      ListenableFuture<ImmutableList<ListenableFuture<CachedLayer>>> cachedLayerFuturesFuture) {
-    this.buildConfiguration = buildConfiguration;
+      BuildConfiguration buildConfiguration,
+      AuthenticatePushStep authenticatePushStep,
+      AsyncStep<? extends ImmutableList<? extends AsyncStep<CachedLayer>>> cachedLayerStepsStep) {
     this.listeningExecutorService = listeningExecutorService;
-    this.pushAuthorizationFuture = pushAuthorizationFuture;
-    this.cachedLayerFuturesFuture = cachedLayerFuturesFuture;
+    this.buildConfiguration = buildConfiguration;
+    this.authenticatePushStep = authenticatePushStep;
+    this.cachedLayerStepsStep = cachedLayerStepsStep;
   }
 
-  /** Depends on {@code cachedLayerFuturesFuture}. */
   @Override
-  public ImmutableList<ListenableFuture<Void>> call()
-      throws ExecutionException, InterruptedException {
+  public ListenableFuture<ImmutableList<PushBlobStep>> getFuture() {
+    if (listenableFuture == null) {
+      listenableFuture =
+          Futures.whenAllSucceed(cachedLayerStepsStep.getFuture())
+              .call(this, listeningExecutorService);
+    }
+    return listenableFuture;
+  }
+
+  @Override
+  public ImmutableList<PushBlobStep> call() throws ExecutionException, InterruptedException {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
-      ImmutableList<ListenableFuture<CachedLayer>> cachedLayerFutures =
-          NonBlockingFutures.get(cachedLayerFuturesFuture);
+      ImmutableList<? extends AsyncStep<CachedLayer>> cachedLayerSteps =
+          NonBlockingSteps.get(cachedLayerStepsStep);
 
       // Pushes the image layers.
-      ImmutableList.Builder<ListenableFuture<Void>> pushLayerFuturesBuilder =
-          ImmutableList.builder();
-      for (ListenableFuture<CachedLayer> cachedLayerFuture : cachedLayerFutures) {
-        pushLayerFuturesBuilder.add(
-            Futures.whenAllComplete(pushAuthorizationFuture, cachedLayerFuture)
-                .call(
-                    new PushBlobStep(
-                        buildConfiguration, pushAuthorizationFuture, cachedLayerFuture),
-                    listeningExecutorService));
+      ImmutableList.Builder<PushBlobStep> pushBlobStepsBuilder = ImmutableList.builder();
+      for (AsyncStep<CachedLayer> cachedLayerStep : cachedLayerSteps) {
+        pushBlobStepsBuilder.add(
+            new PushBlobStep(
+                listeningExecutorService,
+                buildConfiguration,
+                authenticatePushStep,
+                cachedLayerStep));
       }
 
-      return pushLayerFuturesBuilder.build();
+      return pushBlobStepsBuilder.build();
     }
   }
 }

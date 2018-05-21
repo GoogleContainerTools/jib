@@ -18,66 +18,74 @@ package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.cache.Cache;
-import com.google.cloud.tools.jib.cache.CachedLayer;
-import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import javax.annotation.Nullable;
 
 /** Pulls and caches the base image layers. */
 class PullAndCacheBaseImageLayersStep
-    implements Callable<ImmutableList<ListenableFuture<CachedLayer>>> {
+    implements AsyncStep<ImmutableList<PullAndCacheBaseImageLayerStep>> {
 
   private static final String DESCRIPTION = "Setting up base image caching";
 
   private final BuildConfiguration buildConfiguration;
   private final Cache cache;
+  private final AuthenticatePullStep authenticatePullStep;
+  private final PullBaseImageStep pullBaseImageStep;
+
   private final ListeningExecutorService listeningExecutorService;
-  private final ListenableFuture<Authorization> pullAuthorizationFuture;
-  private final ListenableFuture<Image> baseImageFuture;
+
+  @Nullable
+  private ListenableFuture<ImmutableList<PullAndCacheBaseImageLayerStep>> listenableFuture;
 
   PullAndCacheBaseImageLayersStep(
+      ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
       Cache cache,
-      ListeningExecutorService listeningExecutorService,
-      ListenableFuture<Authorization> pullAuthorizationFuture,
-      ListenableFuture<Image> baseImageFuture) {
+      AuthenticatePullStep authenticatePullStep,
+      PullBaseImageStep pullBaseImageStep) {
+    this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
     this.cache = cache;
-    this.listeningExecutorService = listeningExecutorService;
-    this.pullAuthorizationFuture = pullAuthorizationFuture;
-    this.baseImageFuture = baseImageFuture;
+    this.authenticatePullStep = authenticatePullStep;
+    this.pullBaseImageStep = pullBaseImageStep;
+  }
+
+  @Override
+  public ListenableFuture<ImmutableList<PullAndCacheBaseImageLayerStep>> getFuture() {
+    if (listenableFuture == null) {
+      listenableFuture =
+          Futures.whenAllSucceed(pullBaseImageStep.getFuture())
+              .call(this, listeningExecutorService);
+    }
+    return listenableFuture;
   }
 
   /** Depends on {@code baseImageFuture}. */
   @Override
-  public ImmutableList<ListenableFuture<CachedLayer>> call()
+  public ImmutableList<PullAndCacheBaseImageLayerStep> call()
       throws ExecutionException, InterruptedException, LayerPropertyNotFoundException {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
-      ImmutableList<Layer> baseImageLayers = NonBlockingFutures.get(baseImageFuture).getLayers();
+      ImmutableList<Layer> baseImageLayers = NonBlockingSteps.get(pullBaseImageStep).getLayers();
 
-      ImmutableList.Builder<ListenableFuture<CachedLayer>>
-          pullAndCacheBaseImageLayerFuturesBuilder =
-              ImmutableList.builderWithExpectedSize(baseImageLayers.size());
+      ImmutableList.Builder<PullAndCacheBaseImageLayerStep> pullAndCacheBaseImageLayerStepsBuilder =
+          ImmutableList.builderWithExpectedSize(baseImageLayers.size());
       for (Layer layer : baseImageLayers) {
-        pullAndCacheBaseImageLayerFuturesBuilder.add(
-            Futures.whenAllSucceed(pullAuthorizationFuture)
-                .call(
-                    new PullAndCacheBaseImageLayerStep(
-                        buildConfiguration,
-                        cache,
-                        layer.getBlobDescriptor().getDigest(),
-                        pullAuthorizationFuture),
-                    listeningExecutorService));
+        pullAndCacheBaseImageLayerStepsBuilder.add(
+            new PullAndCacheBaseImageLayerStep(
+                listeningExecutorService,
+                buildConfiguration,
+                cache,
+                layer.getBlobDescriptor().getDigest(),
+                authenticatePullStep));
       }
 
-      return pullAndCacheBaseImageLayerFuturesBuilder.build();
+      return pullAndCacheBaseImageLayerStepsBuilder.build();
     }
   }
 }

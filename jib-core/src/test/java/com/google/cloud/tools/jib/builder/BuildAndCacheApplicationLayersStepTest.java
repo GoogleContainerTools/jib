@@ -22,7 +22,6 @@ import com.google.cloud.tools.jib.cache.CacheReader;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.image.ImageLayers;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -59,14 +58,14 @@ public class BuildAndCacheApplicationLayersStepTest {
     try (Cache cache = Cache.init(temporaryCacheDirectory)) {
       BuildAndCacheApplicationLayersStep buildAndCacheApplicationLayersStep =
           new BuildAndCacheApplicationLayersStep(
+              MoreExecutors.newDirectExecutorService(),
               mockBuildConfiguration,
               testSourceFilesConfiguration,
-              cache,
-              MoreExecutors.newDirectExecutorService());
+              cache);
 
-      for (ListenableFuture<CachedLayer> applicationLayerFuture :
+      for (AsyncStep<CachedLayer> applicationLayerStep :
           buildAndCacheApplicationLayersStep.call()) {
-        applicationLayersBuilder.add(applicationLayerFuture.get());
+        applicationLayersBuilder.add(NonBlockingSteps.get(applicationLayerStep));
       }
 
       applicationLayers = applicationLayersBuilder.build();

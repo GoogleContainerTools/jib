@@ -21,7 +21,6 @@ import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
-import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.cache.Caches;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.Image;
@@ -130,66 +129,53 @@ public class BuildImageSteps implements BuildSteps {
                   buildConfiguration,
                   retrieveBaseRegistryCredentialsStep);
 
-          // TODO: Keep refactoring other steps to implement AsyncStep and remove logic like this.
-          ListenableFuture<Authorization> authenticatePullFuture = authenticatePullStep.getFuture();
-
           timer2.lap("Setting up base image pull");
           // Pulls the base image.
           PullBaseImageStep pullBaseImageStep =
               new PullBaseImageStep(
                   listeningExecutorService, buildConfiguration, authenticatePullStep);
 
-          // TODO: Keep refactoring other steps to implement AsyncStep and remove logic like this.
-          ListenableFuture<Image> pullBaseImageFuture = pullBaseImageStep.getFuture();
-
           timer2.lap("Setting up base image layer pull");
           // Pulls and caches the base image layers.
-          ListenableFuture<ImmutableList<ListenableFuture<CachedLayer>>>
-              pullBaseImageLayerFuturesFuture =
-                  Futures.whenAllSucceed(pullBaseImageFuture)
-                      .call(
-                          new PullAndCacheBaseImageLayersStep(
-                              buildConfiguration,
-                              baseLayersCache,
-                              listeningExecutorService,
-                              authenticatePullFuture,
-                              pullBaseImageFuture),
-                          listeningExecutorService);
+          PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep =
+              new PullAndCacheBaseImageLayersStep(
+                  listeningExecutorService,
+                  buildConfiguration,
+                  baseLayersCache,
+                  authenticatePullStep,
+                  pullBaseImageStep);
 
           timer2.lap("Setting up base image layer push");
           // Pushes the base image layers.
-          ListenableFuture<ImmutableList<ListenableFuture<Void>>> pushBaseImageLayerFuturesFuture =
-              Futures.whenAllSucceed(pullBaseImageLayerFuturesFuture)
-                  .call(
-                      new PushLayersStep(
-                          buildConfiguration,
-                          listeningExecutorService,
-                          authenticatePushFuture,
-                          pullBaseImageLayerFuturesFuture),
-                      listeningExecutorService);
+          PushLayersStep pushBaseImageLayersStep =
+              new PushLayersStep(
+                  listeningExecutorService,
+                  buildConfiguration,
+                  authenticatePushStep,
+                  pullAndCacheBaseImageLayersStep);
 
           timer2.lap("Setting up build application layers");
           // Builds the application layers.
-          ImmutableList<ListenableFuture<CachedLayer>> buildAndCacheApplicationLayerFutures =
+          BuildAndCacheApplicationLayersStep buildAndCacheApplicationLayersStep =
               new BuildAndCacheApplicationLayersStep(
-                      buildConfiguration,
-                      sourceFilesConfiguration,
-                      applicationLayersCache,
-                      listeningExecutorService)
-                  .call();
+                  listeningExecutorService,
+                  buildConfiguration,
+                  sourceFilesConfiguration,
+                  applicationLayersCache);
 
           timer2.lap("Setting up build container configuration");
-          // Builds the container configuration.
+          // Builds the image model.
+          BuildImageStep buildImageStep =
+              new BuildImageStep(
+                  listeningExecutorService,
+                  buildConfiguration,
+                  pullAndCacheBaseImageLayersStep,
+                  buildAndCacheApplicationLayersStep,
+                  entrypoint);
+
+          // TODO: Keep refactoring other steps to implement AsyncStep and remove logic like this.
           ListenableFuture<ListenableFuture<Image>> buildImageFutureFuture =
-              Futures.whenAllSucceed(pullBaseImageLayerFuturesFuture)
-                  .call(
-                      new BuildImageStep(
-                          buildConfiguration,
-                          listeningExecutorService,
-                          pullBaseImageLayerFuturesFuture,
-                          buildAndCacheApplicationLayerFutures,
-                          entrypoint),
-                      listeningExecutorService);
+              buildImageStep.getFuture();
 
           timer2.lap("Setting up container configuration push");
           // Pushes the container configuration.
@@ -206,25 +192,30 @@ public class BuildImageSteps implements BuildSteps {
 
           timer2.lap("Setting up application layer push");
           // Pushes the application layers.
-          ImmutableList<ListenableFuture<Void>> pushApplicationLayersFutures =
+          PushLayersStep pushApplicationLayersStep =
               new PushLayersStep(
-                      buildConfiguration,
-                      listeningExecutorService,
-                      authenticatePushFuture,
-                      Futures.immediateFuture(buildAndCacheApplicationLayerFutures))
-                  .call();
+                  listeningExecutorService,
+                  buildConfiguration,
+                  authenticatePushStep,
+                  buildAndCacheApplicationLayersStep);
 
           // TODO: Move this somewhere that doesn't clutter this method.
           // Logs a message after pushing all the layers.
-          Futures.whenAllSucceed(pushBaseImageLayerFuturesFuture)
+          Futures.whenAllSucceed(
+                  pushBaseImageLayersStep.getFuture(), pushApplicationLayersStep.getFuture())
               .call(
                   () -> {
                     // Depends on all the layers being pushed.
                     ImmutableList.Builder<ListenableFuture<?>> beforeFinalizingDependenciesBuilder =
                         ImmutableList.builder();
-                    beforeFinalizingDependenciesBuilder.addAll(
-                        NonBlockingFutures.get(pushBaseImageLayerFuturesFuture));
-                    beforeFinalizingDependenciesBuilder.addAll(pushApplicationLayersFutures);
+                    for (PushBlobStep pushBaseImageLayerStep :
+                        NonBlockingSteps.get(pushBaseImageLayersStep)) {
+                      beforeFinalizingDependenciesBuilder.add(pushBaseImageLayerStep.getFuture());
+                    }
+                    for (PushBlobStep pushApplicationLayerStep :
+                        NonBlockingSteps.get(pushApplicationLayersStep)) {
+                      beforeFinalizingDependenciesBuilder.add(pushApplicationLayerStep.getFuture());
+                    }
 
                     Futures.whenAllSucceed(beforeFinalizingDependenciesBuilder.build())
                         .call(
@@ -241,22 +232,18 @@ public class BuildImageSteps implements BuildSteps {
 
           timer2.lap("Setting up image manifest push");
           // Pushes the new image manifest.
-          ListenableFuture<Void> pushImageFuture =
-              Futures.whenAllSucceed(
-                      pushBaseImageLayerFuturesFuture, pushContainerConfigurationFutureFuture)
-                  .call(
-                      new PushImageStep(
-                          buildConfiguration,
-                          listeningExecutorService,
-                          authenticatePushFuture,
-                          pushBaseImageLayerFuturesFuture,
-                          pushApplicationLayersFutures,
-                          pushContainerConfigurationFutureFuture,
-                          buildImageFutureFuture),
-                      listeningExecutorService);
+          PushImageStep pushImageStep =
+              new PushImageStep(
+                  listeningExecutorService,
+                  buildConfiguration,
+                  authenticatePushStep,
+                  pushBaseImageLayersStep,
+                  pushApplicationLayersStep,
+                  pushContainerConfigurationFutureFuture,
+                  buildImageStep);
 
           timer2.lap("Running push new image");
-          pushImageFuture.get();
+          pushImageStep.getFuture().get();
         }
       }
     }
