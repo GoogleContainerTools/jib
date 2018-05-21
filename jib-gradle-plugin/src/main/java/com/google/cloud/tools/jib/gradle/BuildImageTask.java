@@ -33,6 +33,7 @@ import java.util.logging.Logger;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
+import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.internal.logging.events.LogEvent;
 import org.gradle.internal.logging.events.OutputEventListener;
@@ -49,6 +50,16 @@ public class BuildImageTask extends DefaultTask {
       HelpfulSuggestionsProvider.get("Build image failed");
 
   @Nullable private JibExtension jibExtension;
+
+  /*
+   * This will call the property {@code "jib"} so that it is the same name as the extension. This
+   * way, the user would see error messages for missing configuration with the prefix {@code jib.}.
+   */
+  @Nested
+  @Nullable
+  public JibExtension getJib() {
+    return jibExtension;
+  }
 
   @TaskAction
   public void buildImage() throws InvalidImageReferenceException {
