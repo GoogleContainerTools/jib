@@ -35,6 +35,9 @@ class ProjectProperties {
 
   private static final String PLUGIN_NAME = "jib";
 
+  /** Directory name for the cache. The directory will be relative to the build output directory. */
+  private static final String CACHE_DIRECTORY_NAME = "jib-cache";
+
   private final Project project;
   private final GradleBuildLogger gradleBuildLogger;
   private final SourceFilesConfiguration sourceFilesConfiguration;
@@ -47,6 +50,10 @@ class ProjectProperties {
     } catch (IOException ex) {
       throw new GradleException("Obtaining project build output files failed", ex);
     }
+  }
+
+  Path getCacheDirectory() {
+    return project.getBuildDir().toPath().resolve(CACHE_DIRECTORY_NAME);
   }
 
   @VisibleForTesting

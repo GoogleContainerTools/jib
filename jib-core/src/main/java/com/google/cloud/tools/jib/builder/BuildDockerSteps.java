@@ -123,11 +123,12 @@ public class BuildDockerSteps implements BuildSteps {
 
           timer2.lap("Setting up base image pull");
           // Pulls the base image.
-          ListenableFuture<Image> pullBaseImageFuture =
-              Futures.whenAllSucceed(authenticatePullFuture)
-                  .call(
-                      new PullBaseImageStep(buildConfiguration, authenticatePullFuture),
-                      listeningExecutorService);
+          PullBaseImageStep pullBaseImageStep =
+              new PullBaseImageStep(
+                  listeningExecutorService, buildConfiguration, authenticatePullStep);
+
+          ListenableFuture<Image> pullBaseImageFuture = pullBaseImageStep.getFuture();
+
           timer2.lap("Setting up base image layer pull");
           // Pulls and caches the base image layers.
           ListenableFuture<ImmutableList<ListenableFuture<CachedLayer>>>
