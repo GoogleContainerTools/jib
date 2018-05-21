@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All Rights Reserved.
+ * Copyright 2018 Google LLC. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -109,7 +109,8 @@ public class BuildDockerSteps implements BuildSteps {
           timer2.lap("Setting up credential retrieval");
           ListenableFuture<Authorization> retrieveBaseImageRegistryCredentialsFuture =
               listeningExecutorService.submit(
-                  RetrieveRegistryCredentialsStep.forBaseImage(buildConfiguration));
+                  RetrieveRegistryCredentialsStep.forBaseImage(
+                      listeningExecutorService, buildConfiguration));
 
           timer2.lap("Setting up image pull authentication");
           // Authenticates base image pull.

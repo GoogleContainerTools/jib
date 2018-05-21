@@ -22,9 +22,10 @@ import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException
 import com.google.cloud.tools.jib.registry.RegistryAuthenticator;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticators;
 import com.google.cloud.tools.jib.registry.RegistryException;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
@@ -34,18 +35,34 @@ import javax.annotation.Nullable;
  * @see <a
  *     href="https://docs.docker.com/registry/spec/auth/token/">https://docs.docker.com/registry/spec/auth/token/</a>
  */
-class AuthenticatePushStep implements Callable<Authorization> {
+class AuthenticatePushStep implements AsyncStep<Authorization> {
 
   private static final String DESCRIPTION = "Authenticating with push to %s";
 
   private final BuildConfiguration buildConfiguration;
-  private final ListenableFuture<Authorization> registryCredentialsFuture;
+  private final RetrieveRegistryCredentialsStep retrieveRegistryCredentialsStep;
+
+  private final ListeningExecutorService listeningExecutorService;
+  @Nullable private ListenableFuture<Authorization> listenableFuture;
 
   AuthenticatePushStep(
+      ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
-      ListenableFuture<Authorization> registryCredentialsFuture) {
+      RetrieveRegistryCredentialsStep retrieveRegistryCredentialsStep) {
+    this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
-    this.registryCredentialsFuture = registryCredentialsFuture;
+    this.retrieveRegistryCredentialsStep = retrieveRegistryCredentialsStep;
+  }
+
+  @Override
+  public ListenableFuture<Authorization> getFuture() {
+    if (listenableFuture == null) {
+      listenableFuture =
+          Futures.whenAllSucceed(retrieveRegistryCredentialsStep.getFuture())
+              .call(this, listeningExecutorService);
+    }
+
+    return listenableFuture;
   }
 
   /** Depends on {@link RetrieveRegistryCredentialsStep}. */
@@ -58,7 +75,7 @@ class AuthenticatePushStep implements Callable<Authorization> {
         new Timer(
             buildConfiguration.getBuildLogger(),
             String.format(DESCRIPTION, buildConfiguration.getTargetImageRegistry()))) {
-      Authorization registryCredentials = NonBlockingFutures.get(registryCredentialsFuture);
+      Authorization registryCredentials = NonBlockingSteps.get(retrieveRegistryCredentialsStep);
       RegistryAuthenticator registryAuthenticator =
           RegistryAuthenticators.forOther(
               buildConfiguration.getTargetImageRegistry(),
@@ -66,9 +83,7 @@ class AuthenticatePushStep implements Callable<Authorization> {
       if (registryAuthenticator == null) {
         return registryCredentials;
       }
-      return registryAuthenticator
-          .setAuthorization(NonBlockingFutures.get(registryCredentialsFuture))
-          .authenticatePush();
+      return registryAuthenticator.setAuthorization(registryCredentials).authenticatePush();
     }
   }
 }

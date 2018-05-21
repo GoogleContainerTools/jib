@@ -16,23 +16,20 @@
 
 package com.google.cloud.tools.jib.builder;
 
-import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
-import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
-import java.io.IOException;
+import com.google.common.util.concurrent.ListenableFuture;
 import java.util.concurrent.ExecutionException;
 
-/** Steps for building an image. */
-public interface BuildSteps {
+/** Static utility for ensuring {@link ListenableFuture#get} does not block. */
+// TODO: Eventually replace NonBlockingFutures with this class.
+class NonBlockingSteps {
 
-  void run()
-      throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
-          CacheDirectoryNotOwnedException;
+  static <T> T get(AsyncStep<T> asyncStep) throws ExecutionException, InterruptedException {
+    ListenableFuture<T> listenableFuture = asyncStep.getFuture();
+    if (!listenableFuture.isDone()) {
+      throw new IllegalStateException("get() called before done");
+    }
+    return listenableFuture.get();
+  }
 
-  BuildConfiguration getBuildConfiguration();
-
-  SourceFilesConfiguration getSourceFilesConfiguration();
-
-  String getStartupMessage();
-
-  String getSuccessMessage();
+  private NonBlockingSteps() {}
 }

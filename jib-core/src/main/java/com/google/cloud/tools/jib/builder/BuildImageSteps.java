@@ -104,21 +104,26 @@ public class BuildImageSteps implements BuildSteps {
           Cache applicationLayersCache = caches.getApplicationCache();
 
           timer2.lap("Setting up credential retrieval");
-          ListenableFuture<Authorization> retrieveTargetRegistryCredentialsFuture =
-              listeningExecutorService.submit(
-                  RetrieveRegistryCredentialsStep.forTargetImage(buildConfiguration));
+          RetrieveRegistryCredentialsStep retrieveTargetRegistryCredentialsStep =
+              RetrieveRegistryCredentialsStep.forTargetImage(
+                  listeningExecutorService, buildConfiguration);
+          RetrieveRegistryCredentialsStep retrieveBaseRegistryCredentialsStep =
+              RetrieveRegistryCredentialsStep.forBaseImage(
+                  listeningExecutorService, buildConfiguration);
+
+          // TODO: Keep refactoring other steps to implement AsyncStep and remove logic like this.
           ListenableFuture<Authorization> retrieveBaseImageRegistryCredentialsFuture =
-              listeningExecutorService.submit(
-                  RetrieveRegistryCredentialsStep.forBaseImage(buildConfiguration));
+              retrieveBaseRegistryCredentialsStep.getFuture();
 
           timer2.lap("Setting up image push authentication");
           // Authenticates push.
-          ListenableFuture<Authorization> authenticatePushFuture =
-              Futures.whenAllSucceed(retrieveTargetRegistryCredentialsFuture)
-                  .call(
-                      new AuthenticatePushStep(
-                          buildConfiguration, retrieveTargetRegistryCredentialsFuture),
-                      listeningExecutorService);
+          AuthenticatePushStep authenticatePushStep =
+              new AuthenticatePushStep(
+                  listeningExecutorService,
+                  buildConfiguration,
+                  retrieveTargetRegistryCredentialsStep);
+
+          ListenableFuture<Authorization> authenticatePushFuture = authenticatePushStep.getFuture();
 
           timer2.lap("Setting up image pull authentication");
           // Authenticates base image pull.

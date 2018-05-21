@@ -25,12 +25,13 @@ import com.google.cloud.tools.jib.registry.credentials.NonexistentServerUrlDocke
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
-import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
 /** Attempts to retrieve registry credentials. */
-class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
+class RetrieveRegistryCredentialsStep implements AsyncStep<Authorization> {
 
   private static final String DESCRIPTION = "Retrieving registry credentials for %s";
 
@@ -42,8 +43,10 @@ class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
       ImmutableMap.of("gcr.io", "gcr", "amazonaws.com", "ecr-login");
 
   /** Retrieves credentials for the base image. */
-  static RetrieveRegistryCredentialsStep forBaseImage(BuildConfiguration buildConfiguration) {
+  static RetrieveRegistryCredentialsStep forBaseImage(
+      ListeningExecutorService listeningExecutorService, BuildConfiguration buildConfiguration) {
     return new RetrieveRegistryCredentialsStep(
+        listeningExecutorService,
         buildConfiguration.getBuildLogger(),
         buildConfiguration.getBaseImageRegistry(),
         buildConfiguration.getBaseImageCredentialHelperName(),
@@ -51,8 +54,10 @@ class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
   }
 
   /** Retrieves credentials for the target image. */
-  static RetrieveRegistryCredentialsStep forTargetImage(BuildConfiguration buildConfiguration) {
+  static RetrieveRegistryCredentialsStep forTargetImage(
+      ListeningExecutorService listeningExecutorService, BuildConfiguration buildConfiguration) {
     return new RetrieveRegistryCredentialsStep(
+        listeningExecutorService,
         buildConfiguration.getBuildLogger(),
         buildConfiguration.getTargetImageRegistry(),
         buildConfiguration.getTargetImageCredentialHelperName(),
@@ -66,14 +71,19 @@ class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
   private final DockerCredentialHelperFactory dockerCredentialHelperFactory;
   private final DockerConfigCredentialRetriever dockerConfigCredentialRetriever;
 
+  private final ListeningExecutorService listeningExecutorService;
+  @Nullable private ListenableFuture<Authorization> listenableFuture;
+
   @VisibleForTesting
   RetrieveRegistryCredentialsStep(
+      ListeningExecutorService listeningExecutorService,
       BuildLogger buildLogger,
       String registry,
       @Nullable String credentialHelperSuffix,
       @Nullable RegistryCredentials knownRegistryCredentials,
       DockerCredentialHelperFactory dockerCredentialHelperFactory,
       DockerConfigCredentialRetriever dockerConfigCredentialRetriever) {
+    this.listeningExecutorService = listeningExecutorService;
     this.buildLogger = buildLogger;
     this.registry = registry;
     this.credentialHelperSuffix = credentialHelperSuffix;
@@ -84,17 +94,27 @@ class RetrieveRegistryCredentialsStep implements Callable<Authorization> {
 
   /** Instantiate with {@link #forBaseImage} or {@link #forTargetImage}. */
   private RetrieveRegistryCredentialsStep(
+      ListeningExecutorService listeningExecutorService,
       BuildLogger buildLogger,
       String registry,
       @Nullable String credentialHelperSuffix,
       @Nullable RegistryCredentials knownRegistryCredentials) {
     this(
+        listeningExecutorService,
         buildLogger,
         registry,
         credentialHelperSuffix,
         knownRegistryCredentials,
         new DockerCredentialHelperFactory(registry),
         new DockerConfigCredentialRetriever(registry));
+  }
+
+  @Override
+  public ListenableFuture<Authorization> getFuture() {
+    if (listenableFuture == null) {
+      listenableFuture = listeningExecutorService.submit(this);
+    }
+    return listenableFuture;
   }
 
   @Override
