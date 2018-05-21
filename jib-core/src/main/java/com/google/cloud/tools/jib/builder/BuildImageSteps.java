@@ -135,11 +135,13 @@ public class BuildImageSteps implements BuildSteps {
 
           timer2.lap("Setting up base image pull");
           // Pulls the base image.
-          ListenableFuture<Image> pullBaseImageFuture =
-              Futures.whenAllSucceed(authenticatePullFuture)
-                  .call(
-                      new PullBaseImageStep(buildConfiguration, authenticatePullFuture),
-                      listeningExecutorService);
+          PullBaseImageStep pullBaseImageStep =
+              new PullBaseImageStep(
+                  listeningExecutorService, buildConfiguration, authenticatePullStep);
+
+          // TODO: Keep refactoring other steps to implement AsyncStep and remove logic like this.
+          ListenableFuture<Image> pullBaseImageFuture = pullBaseImageStep.getFuture();
+
           timer2.lap("Setting up base image layer pull");
           // Pulls and caches the base image layers.
           ListenableFuture<ImmutableList<ListenableFuture<CachedLayer>>>
