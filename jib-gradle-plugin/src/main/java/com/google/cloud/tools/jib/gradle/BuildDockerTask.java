@@ -22,8 +22,6 @@ import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
 import com.google.cloud.tools.jib.frontend.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
 import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.http.Authorizations;
-import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.base.Preconditions;
@@ -37,31 +35,8 @@ import org.gradle.api.tasks.TaskAction;
 /** Builds a container image and exports to the default Docker daemon. */
 public class BuildDockerTask extends DefaultTask {
 
-  /**
-   * Directory name for the cache. The directory will be relative to the build output directory.
-   *
-   * <p>TODO: Move to ProjectProperties.
-   */
-  private static final String CACHE_DIRECTORY_NAME = "jib-cache";
-
   private static final HelpfulSuggestions HELPFUL_SUGGESTIONS =
       HelpfulSuggestionsProvider.get("Build to Docker daemon failed");
-
-  /**
-   * Converts an {@link ImageConfiguration} to an {@link Authorization}.
-   *
-   * <p>TODO: Move to ImageConfiguration.
-   */
-  @Nullable
-  private static Authorization getImageAuthorization(ImageConfiguration imageConfiguration) {
-    if (imageConfiguration.getAuth().getUsername() == null
-        || imageConfiguration.getAuth().getPassword() == null) {
-      return null;
-    }
-
-    return Authorizations.withBasicCredentials(
-        imageConfiguration.getAuth().getUsername(), imageConfiguration.getAuth().getPassword());
-  }
 
   @Nullable private JibExtension jibExtension;
 
@@ -75,7 +50,6 @@ public class BuildDockerTask extends DefaultTask {
     return jibExtension;
   }
 
-  /** TODO: Refactor with {@link BuildImageTask} for less duplicate code. */
   @TaskAction
   public void buildDocker() throws InvalidImageReferenceException {
     if (!BuildStepsRunner.isDockerInstalled()) {
@@ -87,45 +61,35 @@ public class BuildDockerTask extends DefaultTask {
 
     GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
 
-    ImageReference baseImageReference = ImageReference.parse(jibExtension.getBaseImage());
-    ImageReference targetImageReference = ImageReference.parse(jibExtension.getTargetImage());
-
-    if (baseImageReference.usesDefaultTag()) {
-      gradleBuildLogger.warn(
-          "Base image '"
-              + baseImageReference
-              + "' does not use a specific image digest - build may not be reproducible");
-    }
-
     ProjectProperties projectProperties =
         ProjectProperties.getForProject(getProject(), gradleBuildLogger);
     String mainClass = projectProperties.getMainClass(jibExtension.getMainClass());
 
     RegistryCredentials knownBaseRegistryCredentials = null;
-    Authorization fromAuthorization = getImageAuthorization(jibExtension.getFrom());
+    Authorization fromAuthorization = jibExtension.getFrom().getImageAuthorization();
     if (fromAuthorization != null) {
       knownBaseRegistryCredentials = new RegistryCredentials("jib.from.auth", fromAuthorization);
     }
 
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder(gradleBuildLogger)
-            .setBaseImage(baseImageReference)
+            .setBaseImage(jibExtension.getBaseImage())
+            .setTargetImage(jibExtension.getTargetImage())
             .setBaseImageCredentialHelperName(jibExtension.getFrom().getCredHelper())
             .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
-            .setTargetImage(targetImageReference)
             .setMainClass(mainClass)
             .setJvmFlags(jibExtension.getJvmFlags())
             .build();
 
     // Uses a directory in the Gradle build cache as the Jib cache.
-    Path cacheDirectory = getProject().getBuildDir().toPath().resolve(CACHE_DIRECTORY_NAME);
+    Path cacheDirectory = projectProperties.getCacheDirectory();
     try {
       BuildStepsRunner.forBuildToDockerDaemon(
               buildConfiguration,
               projectProperties.getSourceFilesConfiguration(),
               cacheDirectory,
               jibExtension.getUseOnlyProjectCache())
-          .build(HelpfulSuggestionsProvider.get("Build to Docker daemon failed"));
+          .build(HELPFUL_SUGGESTIONS);
 
     } catch (CacheDirectoryCreationException | BuildStepsExecutionException ex) {
       throw new GradleException(ex.getMessage(), ex.getCause());
