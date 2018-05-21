@@ -22,10 +22,12 @@ import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException
 import com.google.cloud.tools.jib.registry.RegistryAuthenticator;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticators;
 import com.google.cloud.tools.jib.registry.RegistryException;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import javax.annotation.Nullable;
 
 /**
  * Authenticates pull from the base image registry using Docker Token Authentication.
@@ -33,18 +35,33 @@ import java.util.concurrent.ExecutionException;
  * @see <a
  *     href="https://docs.docker.com/registry/spec/auth/token/">https://docs.docker.com/registry/spec/auth/token/</a>
  */
-class AuthenticatePullStep implements Callable<Authorization> {
+class AuthenticatePullStep implements AsyncStep<Authorization> {
 
   private static final String DESCRIPTION = "Authenticating pull from %s";
 
   private final BuildConfiguration buildConfiguration;
-  private final ListenableFuture<Authorization> registryCredentialsFuture;
+  private final RetrieveRegistryCredentialsStep retrieveBaseRegistryCredentialsStep;
+
+  private final ListeningExecutorService listeningExecutorService;
+  @Nullable private ListenableFuture<Authorization> listenableFuture;
 
   AuthenticatePullStep(
+      ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
-      ListenableFuture<Authorization> registryCredentialsFuture) {
+      RetrieveRegistryCredentialsStep retrieveBaseRegistryCredentialsStep) {
+    this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
-    this.registryCredentialsFuture = registryCredentialsFuture;
+    this.retrieveBaseRegistryCredentialsStep = retrieveBaseRegistryCredentialsStep;
+  }
+
+  @Override
+  public ListenableFuture<Authorization> getFuture() {
+    if (listenableFuture == null) {
+      listenableFuture =
+          Futures.whenAllSucceed(retrieveBaseRegistryCredentialsStep.getFuture())
+              .call(this, listeningExecutorService);
+    }
+    return listenableFuture;
   }
 
   /** Depends on {@link RetrieveRegistryCredentialsStep}. */
@@ -56,7 +73,7 @@ class AuthenticatePullStep implements Callable<Authorization> {
         new Timer(
             buildConfiguration.getBuildLogger(),
             String.format(DESCRIPTION, buildConfiguration.getBaseImageRegistry()))) {
-      Authorization registryCredentials = NonBlockingFutures.get(registryCredentialsFuture);
+      Authorization registryCredentials = NonBlockingSteps.get(retrieveBaseRegistryCredentialsStep);
       RegistryAuthenticator registryAuthenticator =
           RegistryAuthenticators.forOther(
               buildConfiguration.getBaseImageRegistry(),

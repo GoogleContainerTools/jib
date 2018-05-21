@@ -107,19 +107,19 @@ public class BuildDockerSteps implements BuildSteps {
           Cache applicationLayersCache = caches.getApplicationCache();
 
           timer2.lap("Setting up credential retrieval");
-          ListenableFuture<Authorization> retrieveBaseImageRegistryCredentialsFuture =
-              listeningExecutorService.submit(
-                  RetrieveRegistryCredentialsStep.forBaseImage(
-                      listeningExecutorService, buildConfiguration));
+          RetrieveRegistryCredentialsStep retrieveBaseRegistryCredentialsStep =
+              RetrieveRegistryCredentialsStep.forBaseImage(
+                  listeningExecutorService, buildConfiguration);
 
           timer2.lap("Setting up image pull authentication");
           // Authenticates base image pull.
-          ListenableFuture<Authorization> authenticatePullFuture =
-              Futures.whenAllSucceed(retrieveBaseImageRegistryCredentialsFuture)
-                  .call(
-                      new AuthenticatePullStep(
-                          buildConfiguration, retrieveBaseImageRegistryCredentialsFuture),
-                      listeningExecutorService);
+          AuthenticatePullStep authenticatePullStep =
+              new AuthenticatePullStep(
+                  listeningExecutorService,
+                  buildConfiguration,
+                  retrieveBaseRegistryCredentialsStep);
+
+          ListenableFuture<Authorization> authenticatePullFuture = authenticatePullStep.getFuture();
 
           timer2.lap("Setting up base image pull");
           // Pulls the base image.
