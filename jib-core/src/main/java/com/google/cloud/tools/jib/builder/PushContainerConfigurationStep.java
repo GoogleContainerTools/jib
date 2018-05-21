@@ -66,15 +66,14 @@ class PushContainerConfigurationStep implements AsyncStep<ListenableFuture<BlobD
   }
 
   @Override
-  public ListenableFuture<BlobDescriptor> call() throws ExecutionException, InterruptedException {
+  public ListenableFuture<BlobDescriptor> call() throws ExecutionException {
     return Futures.whenAllSucceed(
             authenticatePushStep.getFuture(), NonBlockingSteps.get(buildImageStep))
         .call(this::afterBuildConfigurationFutureFuture, listeningExecutorService);
   }
 
   private BlobDescriptor afterBuildConfigurationFutureFuture()
-      throws ExecutionException, InterruptedException, IOException, RegistryException,
-          LayerPropertyNotFoundException {
+      throws ExecutionException, IOException, RegistryException, LayerPropertyNotFoundException {
     try (Timer timer = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       // TODO: Use PushBlobStep.
       // Pushes the container configuration.
@@ -85,7 +84,7 @@ class PushContainerConfigurationStep implements AsyncStep<ListenableFuture<BlobD
                   buildConfiguration.getTargetImageRepository())
               .setTimer(timer);
 
-      Image image = NonBlockingFutures.get(NonBlockingSteps.get(buildImageStep));
+      Image image = Futures.getDone(NonBlockingSteps.get(buildImageStep));
       Blob containerConfigurationBlob =
           new ImageToJsonTranslator(image).getContainerConfigurationBlob();
       CountingDigestOutputStream digestOutputStream =

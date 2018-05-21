@@ -96,7 +96,7 @@ class BuildTarballAndLoadDockerStep implements AsyncStep<Void> {
   private Void afterPushBaseImageLayerFuturesFuture()
       throws ExecutionException, InterruptedException, IOException, LayerPropertyNotFoundException {
     // Add layers to image tarball
-    Image image = NonBlockingFutures.get(NonBlockingSteps.get(buildImageStep));
+    Image image = Futures.getDone(NonBlockingSteps.get(buildImageStep));
     TarStreamBuilder tarStreamBuilder = new TarStreamBuilder();
     DockerLoadManifestTemplate manifestTemplate = new DockerLoadManifestTemplate();
 

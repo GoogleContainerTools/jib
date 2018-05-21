@@ -16,19 +16,15 @@
 
 package com.google.cloud.tools.jib.builder;
 
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.util.concurrent.ExecutionException;
 
 /** Static utility for ensuring {@link ListenableFuture#get} does not block. */
-// TODO: Eventually replace NonBlockingFutures with this class.
 class NonBlockingSteps {
 
-  static <T> T get(AsyncStep<T> asyncStep) throws ExecutionException, InterruptedException {
-    ListenableFuture<T> listenableFuture = asyncStep.getFuture();
-    if (!listenableFuture.isDone()) {
-      throw new IllegalStateException("NonBlockingSteps : get() called before done");
-    }
-    return listenableFuture.get();
+  static <T> T get(AsyncStep<T> asyncStep) throws ExecutionException {
+    return Futures.getDone(asyncStep.getFuture());
   }
 
   private NonBlockingSteps() {}

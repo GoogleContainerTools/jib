@@ -23,6 +23,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
@@ -64,26 +66,22 @@ class BuildImageStep implements AsyncStep<ListenableFuture<Image>> {
   }
 
   @Override
-  public ListenableFuture<Image> call() throws ExecutionException, InterruptedException {
-    ImmutableList.Builder<ListenableFuture<?>> afterImageLayerFuturesFutureDependenciesBuilder =
-        ImmutableList.builder();
+  public ListenableFuture<Image> call() throws ExecutionException {
+    List<ListenableFuture<?>> dependencies = new ArrayList<>();
 
     for (PullAndCacheBaseImageLayerStep pullAndCacheBaseImageLayerStep :
         NonBlockingSteps.get(pullAndCacheBaseImageLayersStep)) {
-      afterImageLayerFuturesFutureDependenciesBuilder.add(
-          pullAndCacheBaseImageLayerStep.getFuture());
+      dependencies.add(pullAndCacheBaseImageLayerStep.getFuture());
     }
     for (BuildAndCacheApplicationLayerStep buildAndCacheApplicationLayerStep :
         buildAndCacheApplicationLayerSteps) {
-      afterImageLayerFuturesFutureDependenciesBuilder.add(
-          buildAndCacheApplicationLayerStep.getFuture());
+      dependencies.add(buildAndCacheApplicationLayerStep.getFuture());
     }
-    return Futures.whenAllSucceed(afterImageLayerFuturesFutureDependenciesBuilder.build())
-        .call(this::afterImageLayerFuturesFuture, listeningExecutorService);
+    return Futures.whenAllSucceed(dependencies)
+        .call(this::afterCachedLayersSteps, listeningExecutorService);
   }
 
-  private Image afterImageLayerFuturesFuture()
-      throws ExecutionException, InterruptedException, LayerPropertyNotFoundException {
+  private Image afterCachedLayersSteps() throws ExecutionException, LayerPropertyNotFoundException {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       // Constructs the image.
       Image.Builder imageBuilder = Image.builder();

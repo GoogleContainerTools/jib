@@ -95,8 +95,7 @@ class PushImageStep implements AsyncStep<Void> {
   }
 
   private Void afterPushBaseImageLayerFuturesFuture()
-      throws IOException, RegistryException, ExecutionException, InterruptedException,
-          LayerPropertyNotFoundException {
+      throws IOException, RegistryException, ExecutionException, LayerPropertyNotFoundException {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       RegistryClient registryClient =
           new RegistryClient(
@@ -106,13 +105,13 @@ class PushImageStep implements AsyncStep<Void> {
 
       // Constructs the image.
       ImageToJsonTranslator imageToJsonTranslator =
-          new ImageToJsonTranslator(NonBlockingFutures.get(NonBlockingSteps.get(buildImageStep)));
+          new ImageToJsonTranslator(Futures.getDone(NonBlockingSteps.get(buildImageStep)));
 
       // Pushes the image manifest.
       BuildableManifestTemplate manifestTemplate =
           imageToJsonTranslator.getManifestTemplate(
               buildConfiguration.getTargetFormat(),
-              NonBlockingFutures.get(NonBlockingSteps.get(pushContainerConfigurationStep)));
+              Futures.getDone(NonBlockingSteps.get(pushContainerConfigurationStep)));
       registryClient.pushManifest(manifestTemplate, buildConfiguration.getTargetImageTag());
     }
 
