@@ -16,11 +16,14 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.common.base.Preconditions;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -52,9 +55,31 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     @Nullable @Parameter private String credHelper;
   }
 
+  /** @return the {@link ImageReference} parsed from {@code from}. */
+  static ImageReference parseBaseImageReference(String from) {
+    try {
+      return ImageReference.parse(from);
+    } catch (InvalidImageReferenceException ex) {
+      throw new IllegalStateException("Parameter 'from' is invalid", ex);
+    }
+  }
+
+  /** @return the {@link ImageReference} parsed from {@code to}. */
+  static ImageReference parseTargetImageReference(String to) {
+    try {
+      return ImageReference.parse(to);
+    } catch (InvalidImageReferenceException ex) {
+      throw new IllegalStateException("Parameter 'to' is invalid", ex);
+    }
+  }
+
   @Nullable
   @Parameter(defaultValue = "${project}", readonly = true)
   private MavenProject project;
+
+  @Nullable
+  @Parameter(defaultValue = "${session}", readonly = true)
+  MavenSession session;
 
   @Nullable @Parameter private FromConfiguration from = new FromConfiguration();
 
