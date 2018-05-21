@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
@@ -59,6 +60,17 @@ public class BuildConfiguration {
 
     public Builder setTargetImage(@Nullable ImageReference imageReference) {
       targetImageReference = imageReference;
+      return this;
+    }
+
+    // TODO: Get rid of overloads, do parsing+error handling in build()
+    public Builder setBaseImage(String baseImage) throws InvalidImageReferenceException {
+      baseImageReference = ImageReference.parse(baseImage);
+      return this;
+    }
+
+    public Builder setTargetImage(String targetImage) throws InvalidImageReferenceException {
+      targetImageReference = ImageReference.parse(targetImage);
       return this;
     }
 
@@ -126,6 +138,12 @@ public class BuildConfiguration {
         case 0: // No errors
           if (baseImageReference == null || targetImageReference == null || mainClass == null) {
             throw new IllegalStateException("Required fields should not be null");
+          }
+          if (baseImageReference.usesDefaultTag()) {
+            buildLogger.warn(
+                "Base image '"
+                    + baseImageReference
+                    + "' does not use a specific image digest - build may not be reproducible");
           }
           return new BuildConfiguration(
               buildLogger,
