@@ -23,11 +23,11 @@ import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
 import com.google.cloud.tools.jib.frontend.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
 import com.google.cloud.tools.jib.http.Authorization;
+import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.base.Preconditions;
-import java.nio.file.Path;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.Nullable;
@@ -66,12 +66,6 @@ public class BuildImageTask extends DefaultTask {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
 
-    GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
-
-    ProjectProperties projectProperties =
-        ProjectProperties.getForProject(getProject(), gradleBuildLogger);
-    String mainClass = projectProperties.getMainClass(jibExtension.getMainClass());
-
     RegistryCredentials knownBaseRegistryCredentials = null;
     RegistryCredentials knownTargetRegistryCredentials = null;
     Authorization fromAuthorization = jibExtension.getFrom().getImageAuthorization();
@@ -83,15 +77,18 @@ public class BuildImageTask extends DefaultTask {
       knownTargetRegistryCredentials = new RegistryCredentials("jib.to.auth", toAuthorization);
     }
 
+    GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
+    ProjectProperties projectProperties =
+        ProjectProperties.getForProject(getProject(), gradleBuildLogger);
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder(gradleBuildLogger)
-            .setBaseImage(jibExtension.getBaseImage())
-            .setTargetImage(jibExtension.getTargetImage())
+            .setBaseImage(ImageReference.parse(jibExtension.getBaseImage()))
+            .setTargetImage(ImageReference.parse(jibExtension.getTargetImage()))
             .setBaseImageCredentialHelperName(jibExtension.getFrom().getCredHelper())
             .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
             .setTargetImageCredentialHelperName(jibExtension.getTo().getCredHelper())
             .setKnownTargetRegistryCredentials(knownTargetRegistryCredentials)
-            .setMainClass(mainClass)
+            .setMainClass(projectProperties.getMainClass(jibExtension.getMainClass()))
             .setJvmFlags(jibExtension.getJvmFlags())
             .setTargetFormat(jibExtension.getFormat())
             .build();
@@ -115,13 +112,11 @@ public class BuildImageTask extends DefaultTask {
 
     RegistryClient.setUserAgentSuffix(USER_AGENT_SUFFIX);
 
-    // Uses a directory in the Gradle build cache as the Jib cache.
-    Path cacheDirectory = projectProperties.getCacheDirectory();
     try {
       BuildStepsRunner.forBuildImage(
               buildConfiguration,
               projectProperties.getSourceFilesConfiguration(),
-              cacheDirectory,
+              projectProperties.getCacheDirectory(),
               jibExtension.getUseOnlyProjectCache())
           .build(HELPFUL_SUGGESTIONS);
 
