@@ -64,7 +64,6 @@ class AuthenticatePullStep implements AsyncStep<Authorization> {
     return listenableFuture;
   }
 
-  /** Depends on {@link RetrieveRegistryCredentialsStep}. */
   @Override
   public Authorization call()
       throws RegistryAuthenticationFailedException, IOException, RegistryException,
