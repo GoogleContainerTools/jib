@@ -45,7 +45,7 @@ class BuildTarballAndLoadDockerStep implements AsyncStep<Void> {
 
   private final BuildConfiguration buildConfiguration;
   private final PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep;
-  private final BuildAndCacheApplicationLayersStep buildAndCacheApplicationLayersStep;
+  private final ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps;
   private final BuildImageStep buildImageStep;
 
   private final ListeningExecutorService listeningExecutorService;
@@ -55,12 +55,12 @@ class BuildTarballAndLoadDockerStep implements AsyncStep<Void> {
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
       PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep,
-      BuildAndCacheApplicationLayersStep buildAndCacheApplicationLayersStep,
+      ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps,
       BuildImageStep buildImageStep) {
     this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
     this.pullAndCacheBaseImageLayersStep = pullAndCacheBaseImageLayersStep;
-    this.buildAndCacheApplicationLayersStep = buildAndCacheApplicationLayersStep;
+    this.buildAndCacheApplicationLayerSteps = buildAndCacheApplicationLayerSteps;
     this.buildImageStep = buildImageStep;
   }
 
@@ -69,9 +69,7 @@ class BuildTarballAndLoadDockerStep implements AsyncStep<Void> {
     if (listenableFuture == null) {
       listenableFuture =
           Futures.whenAllSucceed(
-                  pullAndCacheBaseImageLayersStep.getFuture(),
-                  buildAndCacheApplicationLayersStep.getFuture(),
-                  buildImageStep.getFuture())
+                  pullAndCacheBaseImageLayersStep.getFuture(), buildImageStep.getFuture())
               .call(this, listeningExecutorService);
     }
     return listenableFuture;
@@ -84,8 +82,8 @@ class BuildTarballAndLoadDockerStep implements AsyncStep<Void> {
         NonBlockingSteps.get(pullAndCacheBaseImageLayersStep)) {
       dependenciesBuilder.add(pullAndCacheBaseImageLayerStep.getFuture());
     }
-    for (AsyncStep<CachedLayer> buildAndCacheApplicationLayerStep :
-        NonBlockingSteps.get(buildAndCacheApplicationLayersStep)) {
+    for (BuildAndCacheApplicationLayerStep buildAndCacheApplicationLayerStep :
+        buildAndCacheApplicationLayerSteps) {
       dependenciesBuilder.add(buildAndCacheApplicationLayerStep.getFuture());
     }
     dependenciesBuilder.add(NonBlockingSteps.get(buildImageStep));

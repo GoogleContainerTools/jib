@@ -20,7 +20,6 @@ import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
-import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.cache.Caches;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
@@ -135,8 +134,8 @@ public class BuildDockerSteps implements BuildSteps {
 
           timer2.lap("Setting up build application layers");
           // Builds the application layers.
-          BuildAndCacheApplicationLayersStep buildAndCacheApplicationLayersStep =
-              new BuildAndCacheApplicationLayersStep(
+          ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps =
+              BuildAndCacheApplicationLayerStep.makeList(
                   listeningExecutorService,
                   buildConfiguration,
                   sourceFilesConfiguration,
@@ -149,15 +148,13 @@ public class BuildDockerSteps implements BuildSteps {
                   listeningExecutorService,
                   buildConfiguration,
                   pullAndCacheBaseImageLayersStep,
-                  buildAndCacheApplicationLayersStep,
+                  buildAndCacheApplicationLayerSteps,
                   entrypoint);
 
           // TODO: Move this somewhere that doesn't clutter this method. Consolidate with
           // BuildImageSteps.
           // Logs a message after pushing all the layers.
-          Futures.whenAllSucceed(
-                  pullAndCacheBaseImageLayersStep.getFuture(),
-                  buildAndCacheApplicationLayersStep.getFuture())
+          Futures.whenAllSucceed(pullAndCacheBaseImageLayersStep.getFuture())
               .call(
                   () -> {
                     // Depends on all the layers being pushed.
@@ -167,9 +164,10 @@ public class BuildDockerSteps implements BuildSteps {
                         NonBlockingSteps.get(pullAndCacheBaseImageLayersStep)) {
                       beforeFinalizingDependenciesBuilder.add(pushBaseImageLayerStep.getFuture());
                     }
-                    for (AsyncStep<CachedLayer> pushApplicationLayerStep :
-                        NonBlockingSteps.get(buildAndCacheApplicationLayersStep)) {
-                      beforeFinalizingDependenciesBuilder.add(pushApplicationLayerStep.getFuture());
+                    for (BuildAndCacheApplicationLayerStep buildAndCacheApplicationLayerStep :
+                        buildAndCacheApplicationLayerSteps) {
+                      beforeFinalizingDependenciesBuilder.add(
+                          buildAndCacheApplicationLayerStep.getFuture());
                     }
 
                     Futures.whenAllSucceed(beforeFinalizingDependenciesBuilder.build())
@@ -192,7 +190,7 @@ public class BuildDockerSteps implements BuildSteps {
                   listeningExecutorService,
                   buildConfiguration,
                   pullAndCacheBaseImageLayersStep,
-                  buildAndCacheApplicationLayersStep,
+                  buildAndCacheApplicationLayerSteps,
                   buildImageStep);
 
           timer2.lap("Running build to docker daemon");

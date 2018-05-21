@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Timer;
-import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.common.collect.ImmutableList;
@@ -35,7 +34,7 @@ class BuildImageStep implements AsyncStep<ListenableFuture<Image>> {
 
   private final BuildConfiguration buildConfiguration;
   private final PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep;
-  private final BuildAndCacheApplicationLayersStep buildAndCacheApplicationLayersStep;
+  private final ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps;
   private final ImmutableList<String> entrypoint;
 
   private final ListeningExecutorService listeningExecutorService;
@@ -45,12 +44,12 @@ class BuildImageStep implements AsyncStep<ListenableFuture<Image>> {
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
       PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep,
-      BuildAndCacheApplicationLayersStep buildAndCacheApplicationLayersStep,
+      ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps,
       ImmutableList<String> entrypoint) {
     this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
     this.pullAndCacheBaseImageLayersStep = pullAndCacheBaseImageLayersStep;
-    this.buildAndCacheApplicationLayersStep = buildAndCacheApplicationLayersStep;
+    this.buildAndCacheApplicationLayerSteps = buildAndCacheApplicationLayerSteps;
     this.entrypoint = entrypoint;
   }
 
@@ -58,9 +57,7 @@ class BuildImageStep implements AsyncStep<ListenableFuture<Image>> {
   public ListenableFuture<ListenableFuture<Image>> getFuture() {
     if (listenableFuture == null) {
       listenableFuture =
-          Futures.whenAllSucceed(
-                  pullAndCacheBaseImageLayersStep.getFuture(),
-                  buildAndCacheApplicationLayersStep.getFuture())
+          Futures.whenAllSucceed(pullAndCacheBaseImageLayersStep.getFuture())
               .call(this, listeningExecutorService);
     }
     return listenableFuture;
@@ -76,8 +73,8 @@ class BuildImageStep implements AsyncStep<ListenableFuture<Image>> {
       afterImageLayerFuturesFutureDependenciesBuilder.add(
           pullAndCacheBaseImageLayerStep.getFuture());
     }
-    for (AsyncStep<CachedLayer> buildAndCacheApplicationLayerStep :
-        NonBlockingSteps.get(buildAndCacheApplicationLayersStep)) {
+    for (BuildAndCacheApplicationLayerStep buildAndCacheApplicationLayerStep :
+        buildAndCacheApplicationLayerSteps) {
       afterImageLayerFuturesFutureDependenciesBuilder.add(
           buildAndCacheApplicationLayerStep.getFuture());
     }
@@ -94,9 +91,9 @@ class BuildImageStep implements AsyncStep<ListenableFuture<Image>> {
           NonBlockingSteps.get(pullAndCacheBaseImageLayersStep)) {
         imageBuilder.addLayer(NonBlockingSteps.get(pullAndCacheBaseImageLayerStep));
       }
-      for (AsyncStep<CachedLayer> cachedLayerFuture :
-          NonBlockingSteps.get(buildAndCacheApplicationLayersStep)) {
-        imageBuilder.addLayer(NonBlockingSteps.get(cachedLayerFuture));
+      for (BuildAndCacheApplicationLayerStep buildAndCacheApplicationLayerStep :
+          buildAndCacheApplicationLayerSteps) {
+        imageBuilder.addLayer(NonBlockingSteps.get(buildAndCacheApplicationLayerStep));
       }
       imageBuilder.setEnvironment(buildConfiguration.getEnvironment());
       imageBuilder.setEntrypoint(entrypoint);

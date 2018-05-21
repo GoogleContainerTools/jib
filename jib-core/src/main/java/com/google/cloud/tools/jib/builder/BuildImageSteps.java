@@ -156,8 +156,8 @@ public class BuildImageSteps implements BuildSteps {
 
           timer2.lap("Setting up build application layers");
           // Builds the application layers.
-          BuildAndCacheApplicationLayersStep buildAndCacheApplicationLayersStep =
-              new BuildAndCacheApplicationLayersStep(
+          ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps =
+              BuildAndCacheApplicationLayerStep.makeList(
                   listeningExecutorService,
                   buildConfiguration,
                   sourceFilesConfiguration,
@@ -170,7 +170,7 @@ public class BuildImageSteps implements BuildSteps {
                   listeningExecutorService,
                   buildConfiguration,
                   pullAndCacheBaseImageLayersStep,
-                  buildAndCacheApplicationLayersStep,
+                  buildAndCacheApplicationLayerSteps,
                   entrypoint);
 
           // TODO: Keep refactoring other steps to implement AsyncStep and remove logic like this.
@@ -197,7 +197,7 @@ public class BuildImageSteps implements BuildSteps {
                   listeningExecutorService,
                   buildConfiguration,
                   authenticatePushStep,
-                  buildAndCacheApplicationLayersStep);
+                  AsyncSteps.immediate(buildAndCacheApplicationLayerSteps));
 
           // TODO: Move this somewhere that doesn't clutter this method.
           // Logs a message after pushing all the layers.
