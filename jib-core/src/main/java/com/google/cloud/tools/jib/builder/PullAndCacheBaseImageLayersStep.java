@@ -66,7 +66,6 @@ class PullAndCacheBaseImageLayersStep
     return listenableFuture;
   }
 
-  /** Depends on {@code baseImageFuture}. */
   @Override
   public ImmutableList<PullAndCacheBaseImageLayerStep> call()
       throws ExecutionException, InterruptedException, LayerPropertyNotFoundException {

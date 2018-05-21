@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Timer;
-import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
@@ -41,9 +40,7 @@ class PushImageStep implements AsyncStep<Void> {
 
   private final PushLayersStep pushBaseImageLayersStep;
   private final PushLayersStep pushApplicationLayersStep;
-  // TODO: Change to step
-  private final ListenableFuture<ListenableFuture<BlobDescriptor>>
-      containerConfigurationBlobDescriptorFutureFuture;
+  private final PushContainerConfigurationStep pushContainerConfigurationStep;
   private final BuildImageStep buildImageStep;
 
   private final ListeningExecutorService listeningExecutorService;
@@ -55,8 +52,7 @@ class PushImageStep implements AsyncStep<Void> {
       AuthenticatePushStep authenticatePushStep,
       PushLayersStep pushBaseImageLayersStep,
       PushLayersStep pushApplicationLayersStep,
-      ListenableFuture<ListenableFuture<BlobDescriptor>>
-          containerConfigurationBlobDescriptorFutureFuture,
+      PushContainerConfigurationStep pushContainerConfigurationStep,
       BuildImageStep buildImageStep) {
     this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
@@ -64,8 +60,7 @@ class PushImageStep implements AsyncStep<Void> {
 
     this.pushBaseImageLayersStep = pushBaseImageLayersStep;
     this.pushApplicationLayersStep = pushApplicationLayersStep;
-    this.containerConfigurationBlobDescriptorFutureFuture =
-        containerConfigurationBlobDescriptorFutureFuture;
+    this.pushContainerConfigurationStep = pushContainerConfigurationStep;
     this.buildImageStep = buildImageStep;
   }
 
@@ -76,7 +71,7 @@ class PushImageStep implements AsyncStep<Void> {
           Futures.whenAllSucceed(
                   pushBaseImageLayersStep.getFuture(),
                   pushApplicationLayersStep.getFuture(),
-                  containerConfigurationBlobDescriptorFutureFuture)
+                  pushContainerConfigurationStep.getFuture())
               .call(this, listeningExecutorService);
     }
     return listenableFuture;
@@ -92,8 +87,7 @@ class PushImageStep implements AsyncStep<Void> {
     for (PushBlobStep pushBlobStep : NonBlockingSteps.get(pushApplicationLayersStep)) {
       dependenciesBuilder.add(pushBlobStep.getFuture());
     }
-    dependenciesBuilder.add(
-        NonBlockingFutures.get(containerConfigurationBlobDescriptorFutureFuture));
+    dependenciesBuilder.add(NonBlockingSteps.get(pushContainerConfigurationStep));
     dependenciesBuilder.add(NonBlockingSteps.get(buildImageStep));
     return Futures.whenAllComplete(dependenciesBuilder.build())
         .call(this::afterPushBaseImageLayerFuturesFuture, listeningExecutorService)
@@ -118,8 +112,7 @@ class PushImageStep implements AsyncStep<Void> {
       BuildableManifestTemplate manifestTemplate =
           imageToJsonTranslator.getManifestTemplate(
               buildConfiguration.getTargetFormat(),
-              NonBlockingFutures.get(
-                  NonBlockingFutures.get(containerConfigurationBlobDescriptorFutureFuture)));
+              NonBlockingFutures.get(NonBlockingSteps.get(pushContainerConfigurationStep)));
       registryClient.pushManifest(manifestTemplate, buildConfiguration.getTargetImageTag());
     }
 

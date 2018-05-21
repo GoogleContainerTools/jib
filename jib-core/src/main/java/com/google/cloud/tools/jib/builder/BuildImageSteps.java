@@ -17,13 +17,10 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Timer;
-import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.Caches;
-import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.image.Image;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -118,9 +115,6 @@ public class BuildImageSteps implements BuildSteps {
                   buildConfiguration,
                   retrieveTargetRegistryCredentialsStep);
 
-          // TODO: Keep refactoring other steps to implement AsyncStep and remove logic like this.
-          ListenableFuture<Authorization> authenticatePushFuture = authenticatePushStep.getFuture();
-
           timer2.lap("Setting up image pull authentication");
           // Authenticates base image pull.
           AuthenticatePullStep authenticatePullStep =
@@ -173,22 +167,14 @@ public class BuildImageSteps implements BuildSteps {
                   buildAndCacheApplicationLayerSteps,
                   entrypoint);
 
-          // TODO: Keep refactoring other steps to implement AsyncStep and remove logic like this.
-          ListenableFuture<ListenableFuture<Image>> buildImageFutureFuture =
-              buildImageStep.getFuture();
-
           timer2.lap("Setting up container configuration push");
           // Pushes the container configuration.
-          ListenableFuture<ListenableFuture<BlobDescriptor>>
-              pushContainerConfigurationFutureFuture =
-                  Futures.whenAllSucceed(buildImageFutureFuture)
-                      .call(
-                          new PushContainerConfigurationStep(
-                              buildConfiguration,
-                              authenticatePushFuture,
-                              buildImageFutureFuture,
-                              listeningExecutorService),
-                          listeningExecutorService);
+          PushContainerConfigurationStep pushContainerConfigurationStep =
+              new PushContainerConfigurationStep(
+                  listeningExecutorService,
+                  buildConfiguration,
+                  authenticatePushStep,
+                  buildImageStep);
 
           timer2.lap("Setting up application layer push");
           // Pushes the application layers.
@@ -239,7 +225,7 @@ public class BuildImageSteps implements BuildSteps {
                   authenticatePushStep,
                   pushBaseImageLayersStep,
                   pushApplicationLayersStep,
-                  pushContainerConfigurationFutureFuture,
+                  pushContainerConfigurationStep,
                   buildImageStep);
 
           timer2.lap("Running push new image");

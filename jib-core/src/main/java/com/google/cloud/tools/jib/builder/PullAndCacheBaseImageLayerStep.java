@@ -69,7 +69,6 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer> {
     return listenableFuture;
   }
 
-  /** Depends on {@code pullAuthorizationFuture}. */
   @Override
   public CachedLayer call()
       throws IOException, RegistryException, LayerPropertyNotFoundException, ExecutionException,

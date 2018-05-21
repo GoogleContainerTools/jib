@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.builder;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
+/** Static methods for {@link AsyncStep}. */
 class AsyncSteps {
 
   static <T> AsyncStep<T> immediate(T returnValue) {

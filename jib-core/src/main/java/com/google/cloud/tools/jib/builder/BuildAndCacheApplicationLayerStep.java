@@ -37,6 +37,10 @@ class BuildAndCacheApplicationLayerStep implements AsyncStep<CachedLayer> {
 
   private static final String DESCRIPTION = "Building application layers";
 
+  /**
+   * Makes a list of {@link BuildAndCacheApplicationLayerStep} for dependencies, resources, and
+   * classes layers.
+   */
   static ImmutableList<BuildAndCacheApplicationLayerStep> makeList(
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
@@ -100,7 +104,6 @@ class BuildAndCacheApplicationLayerStep implements AsyncStep<CachedLayer> {
     return listenableFuture;
   }
 
-  /** Depends on nothing. */
   @Override
   public CachedLayer call()
       throws IOException, LayerPropertyNotFoundException, CacheMetadataCorruptedException {
