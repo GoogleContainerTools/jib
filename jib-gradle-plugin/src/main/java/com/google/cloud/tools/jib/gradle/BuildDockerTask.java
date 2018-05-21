@@ -40,7 +40,7 @@ public class BuildDockerTask extends DefaultTask {
 
   @Nullable private JibExtension jibExtension;
 
-  /*
+  /**
    * This will call the property {@code "jib"} so that it is the same name as the extension. This
    * way, the user would see error messages for missing configuration with the prefix {@code jib.}.
    */
