@@ -53,15 +53,6 @@ public class BuildDockerTask extends DefaultTask {
 
     GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
 
-    ImageReference baseImageReference = ImageReference.parse(jibExtension.getBaseImage());
-    ImageReference targetImageReference = ImageReference.parse(jibExtension.getTargetImage());
-    if (baseImageReference.usesDefaultTag()) {
-      gradleBuildLogger.warn(
-          "Base image '"
-              + baseImageReference
-              + "' does not use a specific image digest - build may not be reproducible");
-    }
-
     ProjectProperties projectProperties =
         ProjectProperties.getForProject(getProject(), gradleBuildLogger);
     String mainClass = projectProperties.getMainClass(jibExtension.getMainClass());
@@ -74,10 +65,9 @@ public class BuildDockerTask extends DefaultTask {
 
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder(gradleBuildLogger)
-            .setBaseImage(baseImageReference)
+            .setBaseAndTargetImage(jibExtension.getBaseImage(), jibExtension.getTargetImage())
             .setBaseImageCredentialHelperName(jibExtension.getFrom().getCredHelper())
             .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
-            .setTargetImage(targetImageReference)
             .setMainClass(mainClass)
             .setJvmFlags(jibExtension.getJvmFlags())
             .build();

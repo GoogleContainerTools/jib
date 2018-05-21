@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
@@ -59,6 +60,19 @@ public class BuildConfiguration {
 
     public Builder setTargetImage(@Nullable ImageReference imageReference) {
       targetImageReference = imageReference;
+      return this;
+    }
+
+    public Builder setBaseAndTargetImage(@Nullable String baseImage, @Nullable String targetImage)
+        throws InvalidImageReferenceException {
+      baseImageReference = ImageReference.parse(baseImage);
+      targetImageReference = ImageReference.parse(targetImage);
+      if (baseImageReference.usesDefaultTag()) {
+        buildLogger.warn(
+            "Base image '"
+                + baseImageReference
+                + "' does not use a specific image digest - build may not be reproducible");
+      }
       return this;
     }
 

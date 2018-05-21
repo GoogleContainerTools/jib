@@ -60,15 +60,6 @@ public class BuildImageTask extends DefaultTask {
 
     GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
 
-    ImageReference baseImageReference = ImageReference.parse(jibExtension.getBaseImage());
-    ImageReference targetImageReference = ImageReference.parse(jibExtension.getTargetImage());
-    if (baseImageReference.usesDefaultTag()) {
-      gradleBuildLogger.warn(
-          "Base image '"
-              + baseImageReference
-              + "' does not use a specific image digest - build may not be reproducible");
-    }
-
     ProjectProperties projectProperties =
         ProjectProperties.getForProject(getProject(), gradleBuildLogger);
     String mainClass = projectProperties.getMainClass(jibExtension.getMainClass());
@@ -86,10 +77,9 @@ public class BuildImageTask extends DefaultTask {
 
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder(gradleBuildLogger)
-            .setBaseImage(baseImageReference)
+            .setBaseAndTargetImage(jibExtension.getBaseImage(), jibExtension.getTargetImage())
             .setBaseImageCredentialHelperName(jibExtension.getFrom().getCredHelper())
             .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
-            .setTargetImage(targetImageReference)
             .setTargetImageCredentialHelperName(jibExtension.getTo().getCredHelper())
             .setKnownTargetRegistryCredentials(knownTargetRegistryCredentials)
             .setMainClass(mainClass)
