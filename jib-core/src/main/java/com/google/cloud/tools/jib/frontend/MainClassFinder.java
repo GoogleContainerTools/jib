@@ -92,16 +92,23 @@ public class MainClassFinder {
           } else if (mainClasses.size() == 0 && mainClass == null) {
             // No main class found anywhere
             throw new IllegalStateException(
-                projectProperties.getMainClassErrorMessage("Main class was not found"));
+                projectProperties
+                    .getHelpfulSuggestions("Main class was not found")
+                    .forMainClassNotFound(projectProperties.getPluginName()));
           } else if (mainClasses.size() > 1 && mainClass == null) {
             // More than one main class found with no jar plugin to fall back on; error
             throw new IllegalStateException(
-                projectProperties.getMainClassErrorMessage(
-                    "Multiple valid main classes were found: " + String.join(", ", mainClasses)));
+                projectProperties
+                    .getHelpfulSuggestions(
+                        "Multiple valid main classes were found: " + String.join(", ", mainClasses))
+                    .forMainClassNotFound(projectProperties.getPluginName()));
           }
         } catch (IOException ex) {
           throw new IllegalStateException(
-              projectProperties.getMainClassErrorMessage("Failed to get main class"));
+              projectProperties
+                  .getHelpfulSuggestions("Failed to get main class")
+                  .forMainClassNotFound(projectProperties.getPluginName()),
+              ex);
         }
       }
     }

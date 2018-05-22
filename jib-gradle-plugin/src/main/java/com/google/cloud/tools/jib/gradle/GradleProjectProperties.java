@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
+import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
 import com.google.cloud.tools.jib.frontend.ProjectProperties;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -68,8 +69,8 @@ class GradleProjectProperties implements ProjectProperties {
   }
 
   @Override
-  public String getMainClassErrorMessage(String prefix) {
-    return HelpfulSuggestionsProvider.get(prefix).forMainClassNotFound(PLUGIN_NAME);
+  public HelpfulSuggestions getHelpfulSuggestions(String prefix) {
+    return HelpfulSuggestionsProvider.get(prefix);
   }
 
   @Override

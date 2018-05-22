@@ -30,9 +30,12 @@ public interface ProjectProperties {
 
   String getPluginName();
 
-  @Nullable String getMainClassFromJar();
-
   SourceFilesConfiguration getSourceFilesConfiguration();
 
-  String getMainClassErrorMessage(String prefix);
+  /** @return the name of the main class configured in a jar plugin, or null if none is found. */
+  @Nullable
+  String getMainClassFromJar();
+
+  /** @return a {@link HelpfulSuggestions} instance for main class inference failure. */
+  HelpfulSuggestions getHelpfulSuggestions(String prefix);
 }
