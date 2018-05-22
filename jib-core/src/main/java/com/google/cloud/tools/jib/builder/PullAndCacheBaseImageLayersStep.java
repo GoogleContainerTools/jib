@@ -24,11 +24,13 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 /** Pulls and caches the base image layers. */
 class PullAndCacheBaseImageLayersStep
-    implements AsyncStep<ImmutableList<PullAndCacheBaseImageLayerStep>> {
+    implements AsyncStep<ImmutableList<PullAndCacheBaseImageLayerStep>>,
+        Callable<ImmutableList<PullAndCacheBaseImageLayerStep>> {
 
   private static final String DESCRIPTION = "Setting up base image caching";
 

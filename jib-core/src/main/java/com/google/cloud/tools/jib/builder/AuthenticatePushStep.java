@@ -26,6 +26,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
@@ -35,7 +36,7 @@ import javax.annotation.Nullable;
  * @see <a
  *     href="https://docs.docker.com/registry/spec/auth/token/">https://docs.docker.com/registry/spec/auth/token/</a>
  */
-class AuthenticatePushStep implements AsyncStep<Authorization> {
+class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authorization> {
 
   private static final String DESCRIPTION = "Authenticating with push to %s";
 

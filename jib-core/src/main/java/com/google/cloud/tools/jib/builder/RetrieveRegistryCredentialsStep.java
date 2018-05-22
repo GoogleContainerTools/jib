@@ -28,10 +28,11 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
+import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
 /** Attempts to retrieve registry credentials. */
-class RetrieveRegistryCredentialsStep implements AsyncStep<Authorization> {
+class RetrieveRegistryCredentialsStep implements AsyncStep<Authorization>, Callable<Authorization> {
 
   private static final String DESCRIPTION = "Retrieving registry credentials for %s";
 

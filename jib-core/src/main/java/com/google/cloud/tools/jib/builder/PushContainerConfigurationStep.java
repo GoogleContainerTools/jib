@@ -30,12 +30,14 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 /** Pushes the container configuration. */
 // TODO: Consider implementing AsyncStep and Callable separately to for example, not have
 // ListenableFuture in the template here.
-class PushContainerConfigurationStep implements AsyncStep<ListenableFuture<BlobDescriptor>> {
+class PushContainerConfigurationStep
+    implements AsyncStep<AsyncStep<BlobDescriptor>>, Callable<AsyncStep<BlobDescriptor>> {
 
   private static final String DESCRIPTION = "Pushing container configuration";
 
@@ -44,7 +46,7 @@ class PushContainerConfigurationStep implements AsyncStep<ListenableFuture<BlobD
   private final BuildImageStep buildImageStep;
 
   private final ListeningExecutorService listeningExecutorService;
-  private final ListenableFuture<ListenableFuture<BlobDescriptor>> listenableFuture;
+  private final ListenableFuture<AsyncStep<BlobDescriptor>> listenableFuture;
 
   PushContainerConfigurationStep(
       ListeningExecutorService listeningExecutorService,
@@ -61,15 +63,17 @@ class PushContainerConfigurationStep implements AsyncStep<ListenableFuture<BlobD
   }
 
   @Override
-  public ListenableFuture<ListenableFuture<BlobDescriptor>> getFuture() {
+  public ListenableFuture<AsyncStep<BlobDescriptor>> getFuture() {
     return listenableFuture;
   }
 
   @Override
-  public ListenableFuture<BlobDescriptor> call() throws ExecutionException {
-    return Futures.whenAllSucceed(
-            authenticatePushStep.getFuture(), NonBlockingSteps.get(buildImageStep))
-        .call(this::afterBuildConfigurationFutureFuture, listeningExecutorService);
+  public AsyncStep<BlobDescriptor> call() throws ExecutionException {
+    ListenableFuture<BlobDescriptor> future =
+        Futures.whenAllSucceed(
+                authenticatePushStep.getFuture(), NonBlockingSteps.get(buildImageStep).getFuture())
+            .call(this::afterBuildConfigurationFutureFuture, listeningExecutorService);
+    return () -> future;
   }
 
   private BlobDescriptor afterBuildConfigurationFutureFuture()
@@ -84,7 +88,7 @@ class PushContainerConfigurationStep implements AsyncStep<ListenableFuture<BlobD
                   buildConfiguration.getTargetImageRepository())
               .setTimer(timer);
 
-      Image image = Futures.getDone(NonBlockingSteps.get(buildImageStep));
+      Image image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
       Blob containerConfigurationBlob =
           new ImageToJsonTranslator(image).getContainerConfigurationBlob();
       CountingDigestOutputStream digestOutputStream =
