@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
-/** Logs a message after pushing all the layers. */
+/** Logs the message before finalizing an image build. */
 class FinalizingStep implements AsyncStep<Void>, Callable<Void> {
 
   private final BuildConfiguration buildConfiguration;
@@ -49,7 +49,8 @@ class FinalizingStep implements AsyncStep<Void>, Callable<Void> {
     this.buildConfiguration = buildConfiguration;
     this.futureDependencyLists = wrappedDependencyLists;
 
-    List<ListenableFuture<?>> dependenciesFutures = new ArrayList<>(wrappedDependencyLists.size());
+    List<ListenableFuture<?>> dependenciesFutures =
+        new ArrayList<>(wrappedDependencyLists.size() + dependencyList.size());
     for (AsyncStep<?> dependency : wrappedDependencyLists) {
       dependenciesFutures.add(dependency.getFuture());
     }
