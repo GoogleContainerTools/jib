@@ -17,6 +17,8 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
+import com.google.common.io.Resources;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -48,7 +50,7 @@ public class ProjectPropertiesTest {
   @Mock private GradleBuildLogger mockGradleBuildLogger;
   @Mock private SourceFilesConfiguration mockSourceFilesConfiguration;
 
-  private final List<Path> classesPath = Collections.singletonList(Paths.get("a/b/c"));
+  private final List<Path> fakeClassesPath = Collections.singletonList(Paths.get("a/b/c"));
   private Manifest fakeManifest;
   private ProjectProperties testProjectProperties;
 
@@ -56,7 +58,6 @@ public class ProjectPropertiesTest {
   public void setUp() {
     fakeManifest = new DefaultManifest(mockFileResolver);
     Mockito.when(mockJar.getManifest()).thenReturn(fakeManifest);
-    Mockito.when(mockSourceFilesConfiguration.getClassesFiles()).thenReturn(classesPath);
 
     testProjectProperties =
         new ProjectProperties(mockProject, mockGradleBuildLogger, mockSourceFilesConfiguration);
@@ -74,6 +75,7 @@ public class ProjectPropertiesTest {
 
   @Test
   public void testGetMainClass_noJarTask() {
+    Mockito.when(mockSourceFilesConfiguration.getClassesFiles()).thenReturn(fakeClassesPath);
     Mockito.when(mockProject.getTasksByName("jar", false)).thenReturn(Collections.emptySet());
 
     assertGetMainClassFails();
@@ -81,6 +83,7 @@ public class ProjectPropertiesTest {
 
   @Test
   public void testGetMainClass_couldNotFindInJarTask() {
+    Mockito.when(mockSourceFilesConfiguration.getClassesFiles()).thenReturn(fakeClassesPath);
     Mockito.when(mockProject.getTasksByName("jar", false)).thenReturn(ImmutableSet.of(mockJar));
 
     assertGetMainClassFails();
@@ -90,11 +93,71 @@ public class ProjectPropertiesTest {
   public void testGetMainClass_notValid() {
     fakeManifest.attributes(ImmutableMap.of("Main-Class", "${start-class}"));
 
+    Mockito.when(mockSourceFilesConfiguration.getClassesFiles()).thenReturn(fakeClassesPath);
     Mockito.when(mockProject.getTasksByName("jar", false)).thenReturn(ImmutableSet.of(mockJar));
 
     Assert.assertEquals("${start-class}", testProjectProperties.getMainClass(null));
     Mockito.verify(mockGradleBuildLogger)
         .warn("'mainClass' is not a valid Java class : ${start-class}");
+  }
+
+  @Test
+  public void testGetMainClass_multipleInferredWithBackup() throws URISyntaxException {
+    Mockito.when(mockProject.getTasksByName("jar", false)).thenReturn(ImmutableSet.of(mockJar));
+
+    Mockito.when(mockSourceFilesConfiguration.getClassesFiles())
+        .thenReturn(
+            Collections.singletonList(Paths.get(Resources.getResource("multiple-mains").toURI())));
+    fakeManifest.attributes(ImmutableMap.of("Main-Class", "${start-class}"));
+
+    Assert.assertEquals("${start-class}", testProjectProperties.getMainClass(null));
+    Mockito.verify(mockGradleBuildLogger)
+        .warn("'mainClass' is not a valid Java class : ${start-class}");
+  }
+
+  @Test
+  public void testGetMainClass_multipleInferredWithoutBackup() throws URISyntaxException {
+    Mockito.when(mockProject.getTasksByName("jar", false)).thenReturn(ImmutableSet.of(mockJar));
+    Mockito.when(mockSourceFilesConfiguration.getClassesFiles())
+        .thenReturn(
+            Collections.singletonList(Paths.get(Resources.getResource("multiple-mains").toURI())));
+
+    try {
+      testProjectProperties.getMainClass(null);
+      Assert.fail();
+    } catch (GradleException ex) {
+      Assert.assertEquals(
+          ex.getMessage(),
+          "Multiple valid main classes were found: HelloWorld, HelloWorld, perhaps you should add "
+              + "a `mainClass` configuration to jib");
+    }
+  }
+
+  @Test
+  public void testGetMainClass_noneInferredWithBackup() {
+    Mockito.when(mockProject.getTasksByName("jar", false)).thenReturn(ImmutableSet.of(mockJar));
+
+    Mockito.when(mockSourceFilesConfiguration.getClassesFiles()).thenReturn(fakeClassesPath);
+    fakeManifest.attributes(ImmutableMap.of("Main-Class", "${start-class}"));
+
+    Assert.assertEquals("${start-class}", testProjectProperties.getMainClass(null));
+    Mockito.verify(mockGradleBuildLogger)
+        .warn("'mainClass' is not a valid Java class : ${start-class}");
+  }
+
+  @Test
+  public void testGetMainClass_noneInferredWithoutBackup() {
+    Mockito.when(mockProject.getTasksByName("jar", false)).thenReturn(ImmutableSet.of(mockJar));
+    Mockito.when(mockSourceFilesConfiguration.getClassesFiles()).thenReturn(fakeClassesPath);
+
+    try {
+      testProjectProperties.getMainClass(null);
+      Assert.fail();
+    } catch (GradleException ex) {
+      Assert.assertEquals(
+          ex.getMessage(),
+          "Main class was not found, perhaps you should add a `mainClass` configuration to jib");
+    }
   }
 
   private void assertGetMainClassFails() {

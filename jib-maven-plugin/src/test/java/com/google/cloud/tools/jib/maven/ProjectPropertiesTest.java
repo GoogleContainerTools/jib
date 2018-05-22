@@ -17,6 +17,8 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
+import com.google.common.io.Resources;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -49,7 +51,7 @@ public class ProjectPropertiesTest {
 
   private final Xpp3Dom fakeJarPluginConfiguration = new Xpp3Dom("");
   private final Xpp3Dom jarPluginMainClass = new Xpp3Dom("mainClass");
-  private final List<Path> classesPath = Collections.singletonList(Paths.get("a/b/c"));
+  private final List<Path> fakeClassesPath = Collections.singletonList(Paths.get("a/b/c"));
 
   private ProjectProperties testProjectProperties;
 
@@ -62,7 +64,6 @@ public class ProjectPropertiesTest {
     manifest.addChild(jarPluginMainClass);
 
     Mockito.when(mockJarPlugin.getConfiguration()).thenReturn(fakeJarPluginConfiguration);
-    Mockito.when(mockSourceFilesConfiguration.getClassesFiles()).thenReturn(classesPath);
 
     testProjectProperties =
         new ProjectProperties(mockMavenProject, mockLog, mockSourceFilesConfiguration);
@@ -81,11 +82,13 @@ public class ProjectPropertiesTest {
 
   @Test
   public void testGetMainClass_noJarTask() {
+    Mockito.when(mockSourceFilesConfiguration.getClassesFiles()).thenReturn(fakeClassesPath);
     assertGetMainClassFails();
   }
 
   @Test
   public void testGetMainClass_couldNotFindInJarTask() {
+    Mockito.when(mockSourceFilesConfiguration.getClassesFiles()).thenReturn(fakeClassesPath);
     Mockito.when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
         .thenReturn(mockJarPlugin);
 
@@ -97,10 +100,74 @@ public class ProjectPropertiesTest {
     Mockito.when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
         .thenReturn(mockJarPlugin);
 
+    Mockito.when(mockSourceFilesConfiguration.getClassesFiles()).thenReturn(fakeClassesPath);
     jarPluginMainClass.setValue("${start-class}");
 
     Assert.assertEquals("${start-class}", testProjectProperties.getMainClass(null));
     Mockito.verify(mockLog).warn("'mainClass' is not a valid Java class : ${start-class}");
+  }
+
+  @Test
+  public void testGetMainClass_multipleInferredWithBackup()
+      throws URISyntaxException, MojoExecutionException {
+    Mockito.when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
+        .thenReturn(mockJarPlugin);
+
+    Mockito.when(mockSourceFilesConfiguration.getClassesFiles())
+        .thenReturn(
+            Collections.singletonList(Paths.get(Resources.getResource("multiple-mains").toURI())));
+    jarPluginMainClass.setValue("${start-class}");
+
+    Assert.assertEquals("${start-class}", testProjectProperties.getMainClass(null));
+    Mockito.verify(mockLog).warn("'mainClass' is not a valid Java class : ${start-class}");
+  }
+
+  @Test
+  public void testGetMainClass_multipleInferredWithoutBackup() throws URISyntaxException {
+    Mockito.when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
+        .thenReturn(mockJarPlugin);
+    Mockito.when(mockSourceFilesConfiguration.getClassesFiles())
+        .thenReturn(
+            Collections.singletonList(Paths.get(Resources.getResource("multiple-mains").toURI())));
+
+    try {
+      testProjectProperties.getMainClass(null);
+      Assert.fail();
+    } catch (MojoExecutionException ex) {
+      Assert.assertEquals(
+          ex.getMessage(),
+          "Multiple valid main classes were found: HelloWorld, "
+              + "HelloWorld, perhaps you should add a `mainClass` configuration to jib-maven-plugin");
+    }
+  }
+
+  @Test
+  public void testGetMainClass_noneInferredWithBackup() throws MojoExecutionException {
+    Mockito.when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
+        .thenReturn(mockJarPlugin);
+
+    Mockito.when(mockSourceFilesConfiguration.getClassesFiles()).thenReturn(fakeClassesPath);
+    jarPluginMainClass.setValue("${start-class}");
+
+    Assert.assertEquals("${start-class}", testProjectProperties.getMainClass(null));
+    Mockito.verify(mockLog).warn("'mainClass' is not a valid Java class : ${start-class}");
+  }
+
+  @Test
+  public void testGetMainClass_noneInferredWithoutBackup() {
+    Mockito.when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
+        .thenReturn(mockJarPlugin);
+    Mockito.when(mockSourceFilesConfiguration.getClassesFiles()).thenReturn(fakeClassesPath);
+
+    try {
+      testProjectProperties.getMainClass(null);
+      Assert.fail();
+    } catch (MojoExecutionException ex) {
+      Assert.assertEquals(
+          ex.getMessage(),
+          "Main class was not found, perhaps you should add a "
+              + "`mainClass` configuration to jib-maven-plugin");
+    }
   }
 
   private void assertGetMainClassFails() {
