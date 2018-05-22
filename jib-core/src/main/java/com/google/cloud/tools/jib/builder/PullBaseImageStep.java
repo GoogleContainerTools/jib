@@ -36,10 +36,11 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 /** Pulls the base image manifest. */
-class PullBaseImageStep implements AsyncStep<Image> {
+class PullBaseImageStep implements AsyncStep<Image>, Callable<Image> {
 
   private static final String DESCRIPTION = "Pulling base image manifest";
 

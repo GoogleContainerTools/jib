@@ -25,11 +25,11 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 /** Builds a model {@link Image}. */
-// TODO: Change ListenableFuture to AsyncStep
-class BuildImageStep implements AsyncStep<ListenableFuture<Image>> {
+class BuildImageStep implements AsyncStep<AsyncStep<Image>>, Callable<AsyncStep<Image>> {
 
   private static final String DESCRIPTION = "Building container configuration";
 
@@ -39,7 +39,7 @@ class BuildImageStep implements AsyncStep<ListenableFuture<Image>> {
   private final ImmutableList<String> entrypoint;
 
   private final ListeningExecutorService listeningExecutorService;
-  private final ListenableFuture<ListenableFuture<Image>> listenableFuture;
+  private final ListenableFuture<AsyncStep<Image>> listenableFuture;
 
   BuildImageStep(
       ListeningExecutorService listeningExecutorService,
@@ -59,12 +59,12 @@ class BuildImageStep implements AsyncStep<ListenableFuture<Image>> {
   }
 
   @Override
-  public ListenableFuture<ListenableFuture<Image>> getFuture() {
+  public ListenableFuture<AsyncStep<Image>> getFuture() {
     return listenableFuture;
   }
 
   @Override
-  public ListenableFuture<Image> call() throws ExecutionException {
+  public AsyncStep<Image> call() throws ExecutionException {
     List<ListenableFuture<?>> dependencies = new ArrayList<>();
 
     for (PullAndCacheBaseImageLayerStep pullAndCacheBaseImageLayerStep :
@@ -75,8 +75,10 @@ class BuildImageStep implements AsyncStep<ListenableFuture<Image>> {
         buildAndCacheApplicationLayerSteps) {
       dependencies.add(buildAndCacheApplicationLayerStep.getFuture());
     }
-    return Futures.whenAllSucceed(dependencies)
-        .call(this::afterCachedLayersSteps, listeningExecutorService);
+    ListenableFuture<Image> future =
+        Futures.whenAllSucceed(dependencies)
+            .call(this::afterCachedLayersSteps, listeningExecutorService);
+    return () -> future;
   }
 
   private Image afterCachedLayersSteps() throws ExecutionException, LayerPropertyNotFoundException {

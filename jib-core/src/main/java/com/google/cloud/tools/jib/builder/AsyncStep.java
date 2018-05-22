@@ -22,20 +22,19 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import java.util.concurrent.Callable;
 
 /**
- * A step to run asynchronously. Implementations should:
+ * Holds the future for an asynchronously-running step. Implementations should:
  *
  * <ol>
  *   <li>Be immutable
- *   <li>Construct with the dependent {@link AsyncStep}s and submitting itself to the {@link
- *       ListeningExecutorService} to run after all its dependent {@link AsyncStep}s (for example,
- *       by using {@link Futures#whenAllSucceed})
- *   <li>Implement {@link #call} with the actual work
+ *   <li>Construct with the dependent {@link AsyncStep}s and submitting a {@link Callable} to the
+ *       {@link ListeningExecutorService} to run after all its dependent {@link AsyncStep}s (for
+ *       example, by using {@link Futures#whenAllSucceed})
  *   <li>Have {@link #getFuture} return the submitted future
  * </ol>
  *
  * @param <T> the object type passed on by this step
  */
-interface AsyncStep<T> extends Callable<T> {
+interface AsyncStep<T> {
 
   /** @return the submitted future */
   // TODO: Consider changing this to be orchestrated by an AsyncStepsBuilder.

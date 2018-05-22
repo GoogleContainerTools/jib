@@ -36,11 +36,12 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 
 /** Adds image layers to a tarball and loads into Docker daemon. */
-class BuildTarballAndLoadDockerStep implements AsyncStep<Void> {
+class BuildTarballAndLoadDockerStep implements AsyncStep<Void>, Callable<Void> {
 
   private final BuildConfiguration buildConfiguration;
   private final PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep;
@@ -84,7 +85,7 @@ class BuildTarballAndLoadDockerStep implements AsyncStep<Void> {
         buildAndCacheApplicationLayerSteps) {
       dependenciesBuilder.add(buildAndCacheApplicationLayerStep.getFuture());
     }
-    dependenciesBuilder.add(NonBlockingSteps.get(buildImageStep));
+    dependenciesBuilder.add(NonBlockingSteps.get(buildImageStep).getFuture());
     return Futures.whenAllComplete(dependenciesBuilder.build())
         .call(this::afterPushBaseImageLayerFuturesFuture, listeningExecutorService)
         .get();
@@ -94,7 +95,7 @@ class BuildTarballAndLoadDockerStep implements AsyncStep<Void> {
   private Void afterPushBaseImageLayerFuturesFuture()
       throws ExecutionException, InterruptedException, IOException, LayerPropertyNotFoundException {
     // Add layers to image tarball
-    Image image = Futures.getDone(NonBlockingSteps.get(buildImageStep));
+    Image image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
     TarStreamBuilder tarStreamBuilder = new TarStreamBuilder();
     DockerLoadManifestTemplate manifestTemplate = new DockerLoadManifestTemplate();
 

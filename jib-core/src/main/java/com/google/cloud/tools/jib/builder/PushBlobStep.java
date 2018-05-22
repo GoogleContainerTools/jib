@@ -25,10 +25,11 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 /** Pushes a BLOB to the target registry. */
-class PushBlobStep implements AsyncStep<Void> {
+class PushBlobStep implements AsyncStep<Void>, Callable<Void> {
 
   private static final String DESCRIPTION = "Pushing BLOB ";
 
