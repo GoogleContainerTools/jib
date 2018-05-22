@@ -27,7 +27,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
-import javax.annotation.Nullable;
 
 /**
  * Authenticates pull from the base image registry using Docker Token Authentication.
@@ -42,32 +41,29 @@ class AuthenticatePullStep implements AsyncStep<Authorization> {
   private final BuildConfiguration buildConfiguration;
   private final RetrieveRegistryCredentialsStep retrieveBaseRegistryCredentialsStep;
 
-  private final ListeningExecutorService listeningExecutorService;
-  @Nullable private ListenableFuture<Authorization> listenableFuture;
+  private final ListenableFuture<Authorization> listenableFuture;
 
   AuthenticatePullStep(
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
       RetrieveRegistryCredentialsStep retrieveBaseRegistryCredentialsStep) {
-    this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
     this.retrieveBaseRegistryCredentialsStep = retrieveBaseRegistryCredentialsStep;
+
+    listenableFuture =
+        Futures.whenAllSucceed(retrieveBaseRegistryCredentialsStep.getFuture())
+            .call(this, listeningExecutorService);
   }
 
   @Override
   public ListenableFuture<Authorization> getFuture() {
-    if (listenableFuture == null) {
-      listenableFuture =
-          Futures.whenAllSucceed(retrieveBaseRegistryCredentialsStep.getFuture())
-              .call(this, listeningExecutorService);
-    }
     return listenableFuture;
   }
 
   @Override
   public Authorization call()
       throws RegistryAuthenticationFailedException, IOException, RegistryException,
-          ExecutionException, InterruptedException {
+          ExecutionException {
     try (Timer ignored =
         new Timer(
             buildConfiguration.getBuildLogger(),

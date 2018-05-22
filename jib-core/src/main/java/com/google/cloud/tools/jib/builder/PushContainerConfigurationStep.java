@@ -20,69 +20,71 @@ import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
-import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryException;
-import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 /** Pushes the container configuration. */
-class PushContainerConfigurationStep implements Callable<ListenableFuture<BlobDescriptor>> {
+// TODO: Consider implementing AsyncStep and Callable separately to for example, not have
+// ListenableFuture in the template here.
+class PushContainerConfigurationStep implements AsyncStep<ListenableFuture<BlobDescriptor>> {
 
   private static final String DESCRIPTION = "Pushing container configuration";
 
   private final BuildConfiguration buildConfiguration;
-  private final ListenableFuture<Authorization> pushAuthorizationFuture;
-  private final ListenableFuture<ListenableFuture<Image>> buildImageFutureFuture;
+  private final AuthenticatePushStep authenticatePushStep;
+  private final BuildImageStep buildImageStep;
+
   private final ListeningExecutorService listeningExecutorService;
+  private final ListenableFuture<ListenableFuture<BlobDescriptor>> listenableFuture;
 
   PushContainerConfigurationStep(
+      ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
-      ListenableFuture<Authorization> pushAuthorizationFuture,
-      ListenableFuture<ListenableFuture<Image>> buildImageFutureFuture,
-      ListeningExecutorService listeningExecutorService) {
-    this.buildConfiguration = buildConfiguration;
-    this.pushAuthorizationFuture = pushAuthorizationFuture;
-    this.buildImageFutureFuture = buildImageFutureFuture;
+      AuthenticatePushStep authenticatePushStep,
+      BuildImageStep buildImageStep) {
     this.listeningExecutorService = listeningExecutorService;
+    this.buildConfiguration = buildConfiguration;
+    this.authenticatePushStep = authenticatePushStep;
+    this.buildImageStep = buildImageStep;
+
+    listenableFuture =
+        Futures.whenAllSucceed(buildImageStep.getFuture()).call(this, listeningExecutorService);
   }
 
-  /** Depends on {@code buildImageFutureFuture} and {@code pushAuthorizationFuture}. */
   @Override
-  public ListenableFuture<BlobDescriptor> call() throws ExecutionException, InterruptedException {
-    ImmutableList.Builder<ListenableFuture<?>>
-        afterBuildConfigurationFutureFutureDependenciesBuilder = ImmutableList.builder();
-    afterBuildConfigurationFutureFutureDependenciesBuilder.add(pushAuthorizationFuture);
-    afterBuildConfigurationFutureFutureDependenciesBuilder.add(
-        NonBlockingFutures.get(buildImageFutureFuture));
-    return Futures.whenAllSucceed(afterBuildConfigurationFutureFutureDependenciesBuilder.build())
+  public ListenableFuture<ListenableFuture<BlobDescriptor>> getFuture() {
+    return listenableFuture;
+  }
+
+  @Override
+  public ListenableFuture<BlobDescriptor> call() throws ExecutionException {
+    return Futures.whenAllSucceed(
+            authenticatePushStep.getFuture(), NonBlockingSteps.get(buildImageStep))
         .call(this::afterBuildConfigurationFutureFuture, listeningExecutorService);
   }
 
-  /** Depends on {@code buildImageFutureFuture.get()} and {@code pushAuthorizationFuture}. */
   private BlobDescriptor afterBuildConfigurationFutureFuture()
-      throws ExecutionException, InterruptedException, IOException, RegistryException,
-          LayerPropertyNotFoundException {
+      throws ExecutionException, IOException, RegistryException, LayerPropertyNotFoundException {
     try (Timer timer = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       // TODO: Use PushBlobStep.
       // Pushes the container configuration.
       RegistryClient registryClient =
           new RegistryClient(
-                  NonBlockingFutures.get(pushAuthorizationFuture),
+                  NonBlockingSteps.get(authenticatePushStep),
                   buildConfiguration.getTargetImageRegistry(),
                   buildConfiguration.getTargetImageRepository())
               .setTimer(timer);
 
-      Image image = NonBlockingFutures.get(NonBlockingFutures.get(buildImageFutureFuture));
+      Image image = Futures.getDone(NonBlockingSteps.get(buildImageStep));
       Blob containerConfigurationBlob =
           new ImageToJsonTranslator(image).getContainerConfigurationBlob();
       CountingDigestOutputStream digestOutputStream =

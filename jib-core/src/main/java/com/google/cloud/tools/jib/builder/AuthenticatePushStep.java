@@ -42,34 +42,30 @@ class AuthenticatePushStep implements AsyncStep<Authorization> {
   private final BuildConfiguration buildConfiguration;
   private final RetrieveRegistryCredentialsStep retrieveTargetRegistryCredentialsStep;
 
-  private final ListeningExecutorService listeningExecutorService;
-  @Nullable private ListenableFuture<Authorization> listenableFuture;
+  private final ListenableFuture<Authorization> listenableFuture;
 
   AuthenticatePushStep(
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
       RetrieveRegistryCredentialsStep retrieveTargetRegistryCredentialsStep) {
-    this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
     this.retrieveTargetRegistryCredentialsStep = retrieveTargetRegistryCredentialsStep;
+
+    listenableFuture =
+        Futures.whenAllSucceed(retrieveTargetRegistryCredentialsStep.getFuture())
+            .call(this, listeningExecutorService);
   }
 
   @Override
   public ListenableFuture<Authorization> getFuture() {
-    if (listenableFuture == null) {
-      listenableFuture =
-          Futures.whenAllSucceed(retrieveTargetRegistryCredentialsStep.getFuture())
-              .call(this, listeningExecutorService);
-    }
-
     return listenableFuture;
   }
 
   @Override
   @Nullable
   public Authorization call()
-      throws ExecutionException, InterruptedException, RegistryAuthenticationFailedException,
-          IOException, RegistryException {
+      throws ExecutionException, RegistryAuthenticationFailedException, IOException,
+          RegistryException {
     try (Timer ignored =
         new Timer(
             buildConfiguration.getBuildLogger(),
