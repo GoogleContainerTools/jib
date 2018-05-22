@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.frontend.MainClassFinder;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -85,10 +86,11 @@ class ProjectProperties {
               + PLUGIN_NAME
               + "' to improve build speed.");
       mainClass = getMainClassFromJarTask();
-      if (mainClass == null) {
+      if (mainClass == null || !BuildConfiguration.isValidJavaClass(mainClass)) {
         gradleBuildLogger.debug(
-            "Could not find main class specified in a 'jar' task; attempting to "
-                + "infer main class.");
+            "Could not find a valid main class specified in a 'jar' task; attempting to infer main "
+                + "class.");
+
         try {
           // Adds each file in each classes output directory to the classes files list.
           List<String> mainClasses = new ArrayList<>();
@@ -97,12 +99,15 @@ class ProjectProperties {
           }
 
           if (mainClasses.size() == 1) {
+            // Valid class found; use inferred main class
             mainClass = mainClasses.get(0);
-          } else if (mainClasses.size() == 0) {
+          } else if (mainClasses.size() == 0 && mainClass == null) {
+            // No main class found anywhere
             throw new GradleException(
                 HelpfulSuggestionsProvider.get("Main class was not found")
                     .forMainClassNotFound(PLUGIN_NAME));
-          } else {
+          } else if (mainClasses.size() > 1 && mainClass == null) {
+            // More than one main class found with no jar plugin to fall back on; error
             throw new GradleException(
                 HelpfulSuggestionsProvider.get(
                         "Multiple valid main classes were found: " + String.join(", ", mainClasses))
@@ -116,9 +121,11 @@ class ProjectProperties {
         }
       }
     }
+    Preconditions.checkNotNull(mainClass);
     if (!BuildConfiguration.isValidJavaClass(mainClass)) {
       gradleBuildLogger.warn("'mainClass' is not a valid Java class : " + mainClass);
     }
+
     return mainClass;
   }
 

@@ -96,24 +96,28 @@ class ProjectProperties {
               + PLUGIN_NAME
               + "' to improve build speed.");
       mainClass = getMainClassFromMavenJarPlugin();
-      if (mainClass == null) {
+      if (mainClass == null || !BuildConfiguration.isValidJavaClass(mainClass)) {
         log.debug(
-            "Could not find main class specified in maven-jar-plugin; attempting to infer main "
-                + "class.");
+            "Could not find a valid main class specified in maven-jar-plugin; attempting to infer "
+                + "main class.");
 
         try {
+          // Adds each file in each classes output directory to the classes files list.
           List<String> mainClasses = new ArrayList<>();
           for (Path classPath : sourceFilesConfiguration.getClassesFiles()) {
             mainClasses.addAll(MainClassFinder.findMainClasses(classPath));
           }
 
           if (mainClasses.size() == 1) {
+            // Valid class found; use inferred main class
             mainClass = mainClasses.get(0);
-          } else if (mainClasses.size() == 0) {
+          } else if (mainClasses.size() == 0 && mainClass == null) {
+            // No main class found anywhere
             throw new MojoExecutionException(
                 HelpfulSuggestionsProvider.get("Main class was not found")
                     .forMainClassNotFound(PLUGIN_NAME));
-          } else {
+          } else if (mainClasses.size() > 1 && mainClass == null) {
+            // More than one main class found with no jar plugin to fall back on; error
             throw new MojoExecutionException(
                 HelpfulSuggestionsProvider.get(
                         "Multiple valid main classes were found: " + String.join(", ", mainClasses))
