@@ -22,11 +22,11 @@ import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.nio.file.Paths;
 import java.security.DigestException;
-import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import org.junit.Assert;
@@ -59,7 +59,7 @@ public class BuildImageStepTest {
             Paths.get(""), new BlobDescriptor(testDescriptorDigest), testDescriptorDigest);
 
     Mockito.when(mockBuildConfiguration.getBuildLogger()).thenReturn(mockBuildLogger);
-    Mockito.when(mockBuildConfiguration.getEnvironment()).thenReturn(Collections.emptyMap());
+    Mockito.when(mockBuildConfiguration.getEnvironment()).thenReturn(ImmutableMap.of());
 
     Mockito.when(mockPullAndCacheBaseImageLayersStep.getFuture())
         .thenReturn(

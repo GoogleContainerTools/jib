@@ -21,8 +21,9 @@ import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -142,8 +143,8 @@ public class BuildConfiguration {
               targetImageCredentialHelperName,
               knownTargetRegistryCredentials,
               mainClass,
-              jvmFlags,
-              environmentMap,
+              ImmutableList.copyOf(jvmFlags),
+              ImmutableMap.copyOf(environmentMap),
               targetFormat);
 
         case 1:
@@ -183,16 +184,16 @@ public class BuildConfiguration {
   }
 
   private final BuildLogger buildLogger;
-  private ImageReference baseImageReference;
-  @Nullable private String baseImageCredentialHelperName;
-  @Nullable private RegistryCredentials knownBaseRegistryCredentials;
-  private ImageReference targetImageReference;
-  @Nullable private String targetImageCredentialHelperName;
-  @Nullable private RegistryCredentials knownTargetRegistryCredentials;
-  private String mainClass;
-  private List<String> jvmFlags;
-  private Map<String, String> environmentMap;
-  private Class<? extends BuildableManifestTemplate> targetFormat;
+  private final ImageReference baseImageReference;
+  @Nullable private final String baseImageCredentialHelperName;
+  @Nullable private final RegistryCredentials knownBaseRegistryCredentials;
+  private final ImageReference targetImageReference;
+  @Nullable private final String targetImageCredentialHelperName;
+  @Nullable private final RegistryCredentials knownTargetRegistryCredentials;
+  private final String mainClass;
+  private final ImmutableList<String> jvmFlags;
+  private final ImmutableMap<String, String> environmentMap;
+  private final Class<? extends BuildableManifestTemplate> targetFormat;
 
   public static Builder builder(BuildLogger buildLogger) {
     return new Builder(buildLogger);
@@ -208,8 +209,8 @@ public class BuildConfiguration {
       @Nullable String targetImageCredentialHelperName,
       @Nullable RegistryCredentials knownTargetRegistryCredentials,
       String mainClass,
-      List<String> jvmFlags,
-      Map<String, String> environmentMap,
+      ImmutableList<String> jvmFlags,
+      ImmutableMap<String, String> environmentMap,
       Class<? extends BuildableManifestTemplate> targetFormat) {
     this.buildLogger = buildLogger;
     this.baseImageReference = baseImageReference;
@@ -219,8 +220,8 @@ public class BuildConfiguration {
     this.targetImageCredentialHelperName = targetImageCredentialHelperName;
     this.knownTargetRegistryCredentials = knownTargetRegistryCredentials;
     this.mainClass = mainClass;
-    this.jvmFlags = Collections.unmodifiableList(jvmFlags);
-    this.environmentMap = Collections.unmodifiableMap(environmentMap);
+    this.jvmFlags = jvmFlags;
+    this.environmentMap = environmentMap;
     this.targetFormat = targetFormat;
   }
 
@@ -284,11 +285,11 @@ public class BuildConfiguration {
     return mainClass;
   }
 
-  public List<String> getJvmFlags() {
+  public ImmutableList<String> getJvmFlags() {
     return jvmFlags;
   }
 
-  public Map<String, String> getEnvironment() {
+  public ImmutableMap<String, String> getEnvironment() {
     return environmentMap;
   }
 
