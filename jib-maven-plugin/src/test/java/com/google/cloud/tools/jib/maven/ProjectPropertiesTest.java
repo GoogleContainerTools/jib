@@ -111,7 +111,8 @@ public class ProjectPropertiesTest {
     } catch (MojoExecutionException ex) {
       Mockito.verify(mockLog)
           .debug(
-              "Could not find main class specified in maven-jar-plugin; attempting to infer main class.");
+              "Could not find a valid main class specified in maven-jar-plugin; attempting to "
+                  + "infer main class.");
       Assert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString("add a `mainClass` configuration to jib-maven-plugin"));

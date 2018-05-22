@@ -105,7 +105,8 @@ public class ProjectPropertiesTest {
     } catch (GradleException ex) {
       Mockito.verify(mockGradleBuildLogger)
           .debug(
-              "Could not find main class specified in a 'jar' task; attempting to infer main class.");
+              "Could not find a valid main class specified in a 'jar' task; attempting to infer "
+                  + "main class.");
       Assert.assertThat(
           ex.getMessage(), CoreMatchers.containsString("add a `mainClass` configuration to jib"));
     }
