@@ -22,11 +22,10 @@ import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.Caches;
 import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
@@ -151,37 +150,11 @@ public class BuildDockerSteps implements BuildSteps {
                   buildAndCacheApplicationLayerSteps,
                   entrypoint);
 
-          // TODO: Move this somewhere that doesn't clutter this method. Consolidate with
-          // BuildImageSteps.
-          // Logs a message after pushing all the layers.
-          Futures.whenAllSucceed(pullAndCacheBaseImageLayersStep.getFuture())
-              .call(
-                  () -> {
-                    // Depends on all the layers being pushed.
-                    ImmutableList.Builder<ListenableFuture<?>> beforeFinalizingDependenciesBuilder =
-                        ImmutableList.builder();
-                    for (PullAndCacheBaseImageLayerStep pushBaseImageLayerStep :
-                        NonBlockingSteps.get(pullAndCacheBaseImageLayersStep)) {
-                      beforeFinalizingDependenciesBuilder.add(pushBaseImageLayerStep.getFuture());
-                    }
-                    for (BuildAndCacheApplicationLayerStep buildAndCacheApplicationLayerStep :
-                        buildAndCacheApplicationLayerSteps) {
-                      beforeFinalizingDependenciesBuilder.add(
-                          buildAndCacheApplicationLayerStep.getFuture());
-                    }
-
-                    Futures.whenAllSucceed(beforeFinalizingDependenciesBuilder.build())
-                        .call(
-                            () -> {
-                              // TODO: Have this be more descriptive?
-                              buildConfiguration.getBuildLogger().lifecycle("Finalizing...");
-                              return null;
-                            },
-                            listeningExecutorService);
-
-                    return null;
-                  },
-                  listeningExecutorService);
+          new FinalizingStep(
+              listeningExecutorService,
+              buildConfiguration,
+              Collections.singletonList(pullAndCacheBaseImageLayersStep),
+              buildAndCacheApplicationLayerSteps);
 
           timer2.lap("Setting up build to docker daemon");
           // Builds the image tarball and loads into the Docker daemon.

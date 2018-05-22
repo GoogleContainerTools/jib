@@ -22,11 +22,11 @@ import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.Caches;
 import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
@@ -185,36 +185,11 @@ public class BuildImageSteps implements BuildSteps {
                   authenticatePushStep,
                   AsyncSteps.immediate(buildAndCacheApplicationLayerSteps));
 
-          // TODO: Move this somewhere that doesn't clutter this method.
-          // Logs a message after pushing all the layers.
-          Futures.whenAllSucceed(
-                  pushBaseImageLayersStep.getFuture(), pushApplicationLayersStep.getFuture())
-              .call(
-                  () -> {
-                    // Depends on all the layers being pushed.
-                    ImmutableList.Builder<ListenableFuture<?>> beforeFinalizingDependenciesBuilder =
-                        ImmutableList.builder();
-                    for (PushBlobStep pushBaseImageLayerStep :
-                        NonBlockingSteps.get(pushBaseImageLayersStep)) {
-                      beforeFinalizingDependenciesBuilder.add(pushBaseImageLayerStep.getFuture());
-                    }
-                    for (PushBlobStep pushApplicationLayerStep :
-                        NonBlockingSteps.get(pushApplicationLayersStep)) {
-                      beforeFinalizingDependenciesBuilder.add(pushApplicationLayerStep.getFuture());
-                    }
-
-                    Futures.whenAllSucceed(beforeFinalizingDependenciesBuilder.build())
-                        .call(
-                            () -> {
-                              // TODO: Have this be more descriptive?
-                              buildConfiguration.getBuildLogger().lifecycle("Finalizing...");
-                              return null;
-                            },
-                            listeningExecutorService);
-
-                    return null;
-                  },
-                  listeningExecutorService);
+          new FinalizingStep(
+              listeningExecutorService,
+              buildConfiguration,
+              Arrays.asList(pushBaseImageLayersStep, pushApplicationLayersStep),
+              Collections.emptyList());
 
           timer2.lap("Setting up image manifest push");
           // Pushes the new image manifest.
