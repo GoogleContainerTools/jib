@@ -33,6 +33,8 @@ import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 
 /** Pushes the container configuration. */
+// TODO: Consider implementing AsyncStep and Callable separately to for example, not have
+// ListenableFuture in the template here.
 class PushContainerConfigurationStep implements AsyncStep<ListenableFuture<BlobDescriptor>> {
 
   private static final String DESCRIPTION = "Pushing container configuration";
