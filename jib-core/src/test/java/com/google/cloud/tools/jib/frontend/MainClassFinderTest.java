@@ -128,7 +128,7 @@ public class MainClassFinderTest {
       Assert.fail();
     } catch (IllegalStateException ex) {
       Mockito.verify(projectProperties)
-          .getMainClassErrorMessage(
+          .getHelpfulSuggestions(
               "Multiple valid main classes were found: HelloWorld, multi.layered.HelloMoon");
     }
   }
@@ -152,7 +152,7 @@ public class MainClassFinderTest {
       MainClassFinder.resolveMainClass(null, projectProperties);
       Assert.fail();
     } catch (IllegalStateException ex) {
-      Mockito.verify(projectProperties).getMainClassErrorMessage("Main class was not found");
+      Mockito.verify(projectProperties).getHelpfulSuggestions("Main class was not found");
     }
   }
 }
