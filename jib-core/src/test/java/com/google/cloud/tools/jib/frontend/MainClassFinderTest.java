@@ -16,17 +16,40 @@
 
 package com.google.cloud.tools.jib.frontend;
 
+import com.google.cloud.tools.jib.builder.BuildLogger;
+import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.List;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /** Test for MainClassFinder. */
+@RunWith(MockitoJUnitRunner.class)
 public class MainClassFinderTest {
+
+  @Mock private BuildLogger mockBuildLogger;
+  @Mock private SourceFilesConfiguration mockSourceFilesConfiguration;
+  @Mock private ProjectProperties projectProperties;
+
+  private final List<Path> fakeClassesPath = Collections.singletonList(Paths.get("a/b/c"));
+
+  @Before
+  public void setup() {
+    Mockito.when(projectProperties.getLogger()).thenReturn(mockBuildLogger);
+    Mockito.when(projectProperties.getPluginName()).thenReturn("plugin");
+    Mockito.when(projectProperties.getSourceFilesConfiguration())
+        .thenReturn(mockSourceFilesConfiguration);
+  }
 
   @Test
   public void testFindMainClass_simple() throws URISyntaxException, IOException {
@@ -59,5 +82,77 @@ public class MainClassFinderTest {
     Assert.assertEquals(2, mainClasses.size());
     Assert.assertTrue(mainClasses.contains("multi.layered.HelloMoon"));
     Assert.assertTrue(mainClasses.contains("HelloWorld"));
+  }
+
+  @Test
+  public void testResolveMainClass() {
+    Mockito.when(projectProperties.getMainClassFromJar()).thenReturn("some.main.class");
+    Assert.assertEquals(
+        "some.main.class", MainClassFinder.resolveMainClass(null, projectProperties));
+    Assert.assertEquals(
+        "configured", MainClassFinder.resolveMainClass("configured", projectProperties));
+  }
+
+  @Test
+  public void testResolveMainClass_notValid() {
+    Mockito.when(projectProperties.getMainClassFromJar()).thenReturn("${start-class}");
+    Mockito.when(mockSourceFilesConfiguration.getClassesFiles()).thenReturn(fakeClassesPath);
+    Assert.assertEquals(
+        "${start-class}", MainClassFinder.resolveMainClass(null, projectProperties));
+    Mockito.verify(mockBuildLogger).warn("'mainClass' is not a valid Java class : ${start-class}");
+  }
+
+  @Test
+  public void testResolveMainClass_multipleInferredWithBackup() throws Throwable {
+    Mockito.when(projectProperties.getMainClassFromJar()).thenReturn("${start-class}");
+    Mockito.when(mockSourceFilesConfiguration.getClassesFiles())
+        .thenReturn(
+            Collections.singletonList(
+                Paths.get(Resources.getResource("class-finder-tests/multiple").toURI())));
+
+    Assert.assertEquals(
+        "${start-class}", MainClassFinder.resolveMainClass(null, projectProperties));
+    Mockito.verify(mockBuildLogger).warn("'mainClass' is not a valid Java class : ${start-class}");
+  }
+
+  @Test
+  public void testResolveMainClass_multipleInferredWithoutBackup() throws URISyntaxException {
+    Mockito.when(projectProperties.getMainClassFromJar()).thenReturn(null);
+    Mockito.when(mockSourceFilesConfiguration.getClassesFiles())
+        .thenReturn(
+            Collections.singletonList(
+                Paths.get(Resources.getResource("class-finder-tests/multiple").toURI())));
+
+    try {
+      MainClassFinder.resolveMainClass(null, projectProperties);
+      Assert.fail();
+    } catch (IllegalStateException ex) {
+      Mockito.verify(projectProperties)
+          .getMainClassErrorMessage(
+              "Multiple valid main classes were found: HelloWorld, multi.layered.HelloMoon");
+    }
+  }
+
+  @Test
+  public void testResolveMainClass_noneInferredWithBackup() {
+    Mockito.when(projectProperties.getMainClassFromJar()).thenReturn("${start-class}");
+    Mockito.when(mockSourceFilesConfiguration.getClassesFiles()).thenReturn(fakeClassesPath);
+
+    Assert.assertEquals(
+        "${start-class}", MainClassFinder.resolveMainClass(null, projectProperties));
+    Mockito.verify(mockBuildLogger).warn("'mainClass' is not a valid Java class : ${start-class}");
+  }
+
+  @Test
+  public void testResolveMainClass_noneInferredWithoutBackup() {
+    Mockito.when(projectProperties.getMainClassFromJar()).thenReturn(null);
+    Mockito.when(mockSourceFilesConfiguration.getClassesFiles()).thenReturn(fakeClassesPath);
+
+    try {
+      MainClassFinder.resolveMainClass(null, projectProperties);
+      Assert.fail();
+    } catch (IllegalStateException ex) {
+      Mockito.verify(projectProperties).getMainClassErrorMessage("Main class was not found");
+    }
   }
 }

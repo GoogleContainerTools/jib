@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.docker.DockerContextGenerator;
+import com.google.cloud.tools.jib.frontend.MainClassFinder;
 import com.google.common.base.Preconditions;
 import com.google.common.io.InsecureRecursiveDeleteException;
 import java.io.IOException;
@@ -43,17 +44,21 @@ public class DockerContextMojo extends JibPluginConfiguration {
   public void execute() throws MojoExecutionException {
     Preconditions.checkNotNull(targetDir);
 
-    ProjectProperties projectProperties = ProjectProperties.getForProject(getProject(), getLog());
-    String inferredMainClass = projectProperties.getMainClass(getMainClass());
+    MavenBuildLogger mavenBuildLogger = new MavenBuildLogger(getLog());
+
+    MavenProjectProperties mavenProjectProperties =
+        MavenProjectProperties.getForProject(getProject(), mavenBuildLogger);
+    String inferredMainClass =
+        MainClassFinder.resolveMainClass(getMainClass(), mavenProjectProperties);
 
     try {
-      new DockerContextGenerator(projectProperties.getSourceFilesConfiguration())
+      new DockerContextGenerator(mavenProjectProperties.getSourceFilesConfiguration())
           .setBaseImage(getBaseImage())
           .setJvmFlags(getJvmFlags())
           .setMainClass(inferredMainClass)
           .generate(Paths.get(targetDir));
 
-      getLog().info("Created Docker context at " + targetDir);
+      mavenBuildLogger.info("Created Docker context at " + targetDir);
 
     } catch (InsecureRecursiveDeleteException ex) {
       throw new MojoExecutionException(

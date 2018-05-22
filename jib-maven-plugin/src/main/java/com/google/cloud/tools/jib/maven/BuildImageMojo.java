@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
 import com.google.cloud.tools.jib.frontend.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
+import com.google.cloud.tools.jib.frontend.MainClassFinder;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
@@ -86,16 +87,18 @@ public class BuildImageMojo extends JibPluginConfiguration {
     RegistryCredentials knownTargetRegistryCredentials =
         mavenSettingsServerCredentials.retrieve(targetImage.getRegistry());
 
-    ProjectProperties projectProperties = ProjectProperties.getForProject(getProject(), getLog());
+    MavenBuildLogger mavenBuildLogger = new MavenBuildLogger(getLog());
+    MavenProjectProperties mavenProjectProperties =
+        MavenProjectProperties.getForProject(getProject(), mavenBuildLogger);
     BuildConfiguration buildConfiguration =
-        BuildConfiguration.builder(new MavenBuildLogger(getLog()))
+        BuildConfiguration.builder(mavenBuildLogger)
             .setBaseImage(baseImage)
             .setBaseImageCredentialHelperName(getBaseImageCredentialHelperName())
             .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
             .setTargetImage(targetImage)
             .setTargetImageCredentialHelperName(getTargetImageCredentialHelperName())
             .setKnownTargetRegistryCredentials(knownTargetRegistryCredentials)
-            .setMainClass(projectProperties.getMainClass(getMainClass()))
+            .setMainClass(MainClassFinder.resolveMainClass(getMainClass(), mavenProjectProperties))
             .setJvmFlags(getJvmFlags())
             .setEnvironment(getEnvironment())
             .setTargetFormat(ImageFormat.valueOf(getFormat()).getManifestTemplateClass())
@@ -112,8 +115,8 @@ public class BuildImageMojo extends JibPluginConfiguration {
     try {
       BuildStepsRunner.forBuildImage(
               buildConfiguration,
-              projectProperties.getSourceFilesConfiguration(),
-              projectProperties.getCacheDirectory(),
+              mavenProjectProperties.getSourceFilesConfiguration(),
+              mavenProjectProperties.getCacheDirectory(),
               getUseOnlyProjectCache())
           .build(HELPFUL_SUGGESTIONS);
       getLog().info("");

@@ -16,7 +16,11 @@
 
 package com.google.cloud.tools.jib.frontend;
 
+import com.google.cloud.tools.jib.builder.BuildConfiguration;
+import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -52,11 +56,70 @@ public class MainClassFinder {
   }
 
   /**
+   * If {@code mainClass} is {@code null}, tries to infer main class in this order:
+   *
+   * <ul>
+   *   <li>1. Looks in a {@code jar} plugin provided by {@code projectProperties}.
+   *   <li>2. Searches for a class defined with a main method.
+   * </ul>
+   *
+   * <p>Warns if main class is not valid, or throws an error if no valid main class is not found.
+   */
+  public static String resolveMainClass(
+      @Nullable String mainClass, ProjectProperties projectProperties) {
+    BuildLogger logger = projectProperties.getLogger();
+    if (mainClass == null) {
+      logger.info(
+          "Searching for main class... Add a 'mainClass' configuration to '"
+              + projectProperties.getPluginName()
+              + "' to improve build speed.");
+      mainClass = projectProperties.getMainClassFromJar();
+      if (mainClass == null || !BuildConfiguration.isValidJavaClass(mainClass)) {
+        logger.debug(
+            "Could not find a valid main class specified in a jar plugin; attempting to infer "
+                + "main class.");
+
+        try {
+          // Adds each file in each classes output directory to the classes files list.
+          List<String> mainClasses = new ArrayList<>();
+          for (Path classPath : projectProperties.getSourceFilesConfiguration().getClassesFiles()) {
+            mainClasses.addAll(findMainClasses(classPath));
+          }
+
+          if (mainClasses.size() == 1) {
+            // Valid class found; use inferred main class
+            mainClass = mainClasses.get(0);
+          } else if (mainClasses.size() == 0 && mainClass == null) {
+            // No main class found anywhere
+            throw new IllegalStateException(
+                projectProperties.getMainClassErrorMessage("Main class was not found"));
+          } else if (mainClasses.size() > 1 && mainClass == null) {
+            // More than one main class found with no jar plugin to fall back on; error
+            throw new IllegalStateException(
+                projectProperties.getMainClassErrorMessage(
+                    "Multiple valid main classes were found: " + String.join(", ", mainClasses)));
+          }
+        } catch (IOException ex) {
+          throw new IllegalStateException(
+              projectProperties.getMainClassErrorMessage("Failed to get main class"));
+        }
+      }
+    }
+    Preconditions.checkNotNull(mainClass);
+    if (!BuildConfiguration.isValidJavaClass(mainClass)) {
+      logger.warn("'mainClass' is not a valid Java class : " + mainClass);
+    }
+
+    return mainClass;
+  }
+
+  /**
    * Searches for a .class file containing a main method in a root directory.
    *
    * @return the name of the class if one is found, null if no class is found.
    * @throws IOException if searching/reading files fails.
    */
+  @VisibleForTesting
   public static List<String> findMainClasses(Path rootDirectory) throws IOException {
     List<String> classNames = new ArrayList<>();
 

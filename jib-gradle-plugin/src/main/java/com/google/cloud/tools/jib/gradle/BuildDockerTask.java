@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
 import com.google.cloud.tools.jib.frontend.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
+import com.google.cloud.tools.jib.frontend.MainClassFinder;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
@@ -66,15 +67,17 @@ public class BuildDockerTask extends DefaultTask {
     }
 
     GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
-    ProjectProperties projectProperties =
-        ProjectProperties.getForProject(getProject(), gradleBuildLogger);
+    GradleProjectProperties gradleProjectProperties =
+        GradleProjectProperties.getForProject(getProject(), gradleBuildLogger);
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder(gradleBuildLogger)
             .setBaseImage(ImageReference.parse(jibExtension.getBaseImage()))
             .setTargetImage(ImageReference.parse(jibExtension.getTargetImage()))
             .setBaseImageCredentialHelperName(jibExtension.getFrom().getCredHelper())
             .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
-            .setMainClass(projectProperties.getMainClass(jibExtension.getMainClass()))
+            .setMainClass(
+                MainClassFinder.resolveMainClass(
+                    jibExtension.getMainClass(), gradleProjectProperties))
             .setJvmFlags(jibExtension.getJvmFlags())
             .build();
 
@@ -82,8 +85,8 @@ public class BuildDockerTask extends DefaultTask {
     try {
       BuildStepsRunner.forBuildToDockerDaemon(
               buildConfiguration,
-              projectProperties.getSourceFilesConfiguration(),
-              projectProperties.getCacheDirectory(),
+              gradleProjectProperties.getSourceFilesConfiguration(),
+              gradleProjectProperties.getCacheDirectory(),
               jibExtension.getUseOnlyProjectCache())
           .build(HELPFUL_SUGGESTIONS);
 

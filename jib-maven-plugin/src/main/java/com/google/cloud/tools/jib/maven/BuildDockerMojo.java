@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
 import com.google.cloud.tools.jib.frontend.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
+import com.google.cloud.tools.jib.frontend.MainClassFinder;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.base.Preconditions;
@@ -52,14 +53,16 @@ public class BuildDockerMojo extends JibPluginConfiguration {
     RegistryCredentials knownBaseRegistryCredentials =
         mavenSettingsServerCredentials.retrieve(baseImage.getRegistry());
 
-    ProjectProperties projectProperties = ProjectProperties.getForProject(getProject(), getLog());
+    MavenBuildLogger mavenBuildLogger = new MavenBuildLogger(getLog());
+    MavenProjectProperties mavenProjectProperties =
+        MavenProjectProperties.getForProject(getProject(), mavenBuildLogger);
     BuildConfiguration buildConfiguration =
-        BuildConfiguration.builder(new MavenBuildLogger(getLog()))
+        BuildConfiguration.builder(mavenBuildLogger)
             .setBaseImage(baseImage)
             .setBaseImageCredentialHelperName(getBaseImageCredentialHelperName())
             .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
             .setTargetImage(targetImage)
-            .setMainClass(projectProperties.getMainClass(getMainClass()))
+            .setMainClass(MainClassFinder.resolveMainClass(getMainClass(), mavenProjectProperties))
             .setJvmFlags(getJvmFlags())
             .setEnvironment(getEnvironment())
             .build();
@@ -67,8 +70,8 @@ public class BuildDockerMojo extends JibPluginConfiguration {
     try {
       BuildStepsRunner.forBuildToDockerDaemon(
               buildConfiguration,
-              projectProperties.getSourceFilesConfiguration(),
-              projectProperties.getCacheDirectory(),
+              mavenProjectProperties.getSourceFilesConfiguration(),
+              mavenProjectProperties.getCacheDirectory(),
               getUseOnlyProjectCache())
           .build(HELPFUL_SUGGESTIONS);
       getLog().info("");
