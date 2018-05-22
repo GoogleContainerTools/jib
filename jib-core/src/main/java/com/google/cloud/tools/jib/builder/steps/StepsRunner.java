@@ -14,8 +14,11 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.builder;
+package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.async.AsyncSteps;
+import com.google.cloud.tools.jib.builder.BuildConfiguration;
+import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -33,7 +36,7 @@ import javax.annotation.Nullable;
  * <p>Use by constructing the runner and calling {@code run...} each step. Make sure that steps are
  * run before other steps that depend on them. Wait on the last step.
  */
-class StepsRunner {
+public class StepsRunner {
 
   private final ListeningExecutorService listeningExecutorService =
       MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
@@ -59,7 +62,7 @@ class StepsRunner {
   @Nullable private PushImageStep pushImageStep;
   @Nullable private BuildTarballAndLoadDockerStep buildTarballAndLoadDockerStep;
 
-  StepsRunner(
+  public StepsRunner(
       BuildConfiguration buildConfiguration,
       SourceFilesConfiguration sourceFilesConfiguration,
       Cache baseLayersCache,
@@ -70,20 +73,20 @@ class StepsRunner {
     this.applicationLayersCache = applicationLayersCache;
   }
 
-  StepsRunner runRetrieveBaseRegistryCredentialsStep() {
+  public StepsRunner runRetrieveBaseRegistryCredentialsStep() {
     retrieveBaseRegistryCredentialsStep =
         RetrieveRegistryCredentialsStep.forBaseImage(listeningExecutorService, buildConfiguration);
     return this;
   }
 
-  StepsRunner runRetrieveTargetRegistryCredentialsStep() {
+  public StepsRunner runRetrieveTargetRegistryCredentialsStep() {
     retrieveTargetRegistryCredentialsStep =
         RetrieveRegistryCredentialsStep.forTargetImage(
             listeningExecutorService, buildConfiguration);
     return this;
   }
 
-  StepsRunner runAuthenticatePushStep() {
+  public StepsRunner runAuthenticatePushStep() {
     authenticatePushStep =
         new AuthenticatePushStep(
             listeningExecutorService,
@@ -92,7 +95,7 @@ class StepsRunner {
     return this;
   }
 
-  StepsRunner runAuthenticatePullStep() {
+  public StepsRunner runAuthenticatePullStep() {
     authenticatePullStep =
         new AuthenticatePullStep(
             listeningExecutorService,
@@ -101,7 +104,7 @@ class StepsRunner {
     return this;
   }
 
-  StepsRunner runPullBaseImageStep() {
+  public StepsRunner runPullBaseImageStep() {
     pullBaseImageStep =
         new PullBaseImageStep(
             listeningExecutorService,
@@ -110,7 +113,7 @@ class StepsRunner {
     return this;
   }
 
-  StepsRunner runPullAndCacheBaseImageLayersStep() {
+  public StepsRunner runPullAndCacheBaseImageLayersStep() {
     pullAndCacheBaseImageLayersStep =
         new PullAndCacheBaseImageLayersStep(
             listeningExecutorService,
@@ -121,7 +124,7 @@ class StepsRunner {
     return this;
   }
 
-  StepsRunner runPushBaseImageLayersStep() {
+  public StepsRunner runPushBaseImageLayersStep() {
     pushBaseImageLayersStep =
         new PushLayersStep(
             listeningExecutorService,
@@ -131,7 +134,7 @@ class StepsRunner {
     return this;
   }
 
-  StepsRunner runBuildAndCacheApplicationLayerSteps() {
+  public StepsRunner runBuildAndCacheApplicationLayerSteps() {
     buildAndCacheApplicationLayerSteps =
         BuildAndCacheApplicationLayerStep.makeList(
             listeningExecutorService,
@@ -141,7 +144,7 @@ class StepsRunner {
     return this;
   }
 
-  StepsRunner runBuildImageStep(ImmutableList<String> entrypoint) {
+  public StepsRunner runBuildImageStep(ImmutableList<String> entrypoint) {
     buildImageStep =
         new BuildImageStep(
             listeningExecutorService,
@@ -152,7 +155,7 @@ class StepsRunner {
     return this;
   }
 
-  StepsRunner runPushContainerConfigurationStep() {
+  public StepsRunner runPushContainerConfigurationStep() {
     pushContainerConfigurationStep =
         new PushContainerConfigurationStep(
             listeningExecutorService,
@@ -162,7 +165,7 @@ class StepsRunner {
     return this;
   }
 
-  StepsRunner runPushApplicationLayersStep() {
+  public StepsRunner runPushApplicationLayersStep() {
     pushApplicationLayersStep =
         new PushLayersStep(
             listeningExecutorService,
@@ -172,7 +175,7 @@ class StepsRunner {
     return this;
   }
 
-  StepsRunner runFinalizingPushStep() {
+  public StepsRunner runFinalizingPushStep() {
     new FinalizingStep(
         listeningExecutorService,
         buildConfiguration,
@@ -183,7 +186,7 @@ class StepsRunner {
     return this;
   }
 
-  StepsRunner runFinalizingBuildStep() {
+  public StepsRunner runFinalizingBuildStep() {
     new FinalizingStep(
         listeningExecutorService,
         buildConfiguration,
@@ -192,7 +195,7 @@ class StepsRunner {
     return this;
   }
 
-  StepsRunner runPushImageStep() {
+  public StepsRunner runPushImageStep() {
     pushImageStep =
         new PushImageStep(
             listeningExecutorService,
@@ -205,7 +208,7 @@ class StepsRunner {
     return this;
   }
 
-  StepsRunner runBuildTarballAndLoadDockerStep() {
+  public StepsRunner runBuildTarballAndLoadDockerStep() {
     buildTarballAndLoadDockerStep =
         new BuildTarballAndLoadDockerStep(
             listeningExecutorService,
@@ -216,11 +219,12 @@ class StepsRunner {
     return this;
   }
 
-  void waitOnPushImageStep() throws ExecutionException, InterruptedException {
+  public void waitOnPushImageStep() throws ExecutionException, InterruptedException {
     Preconditions.checkNotNull(pushImageStep).getFuture().get();
   }
 
-  void waitOnBuildTarballAndLoadDockerStep() throws ExecutionException, InterruptedException {
+  public void waitOnBuildTarballAndLoadDockerStep()
+      throws ExecutionException, InterruptedException {
     Preconditions.checkNotNull(buildTarballAndLoadDockerStep).getFuture().get();
   }
 }

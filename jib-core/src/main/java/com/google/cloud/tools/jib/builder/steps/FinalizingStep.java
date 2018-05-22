@@ -14,8 +14,11 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.builder;
+package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.async.AsyncStep;
+import com.google.cloud.tools.jib.async.NonBlockingSteps;
+import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;

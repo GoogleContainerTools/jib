@@ -14,8 +14,12 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.builder;
+package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.async.NonBlockingSteps;
+import com.google.cloud.tools.jib.builder.BuildConfiguration;
+import com.google.cloud.tools.jib.builder.TestBuildLogger;
+import com.google.cloud.tools.jib.builder.TestSourceFilesConfiguration;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.CacheReader;
@@ -48,7 +52,7 @@ public class BuildAndCacheApplicationLayerStepTest {
   @Test
   public void testRun()
       throws LayerPropertyNotFoundException, IOException, CacheMetadataCorruptedException,
-          URISyntaxException, ExecutionException, InterruptedException {
+          URISyntaxException, ExecutionException {
     Mockito.when(mockBuildConfiguration.getBuildLogger()).thenReturn(new TestBuildLogger());
     TestSourceFilesConfiguration testSourceFilesConfiguration = new TestSourceFilesConfiguration();
     Path temporaryCacheDirectory = temporaryFolder.newFolder().toPath();
