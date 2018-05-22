@@ -90,33 +90,24 @@ class MavenProjectProperties implements ProjectProperties {
   public String getMainClassFromJar() {
     Plugin mavenJarPlugin = project.getPlugin("org.apache.maven.plugins:maven-jar-plugin");
     if (mavenJarPlugin != null) {
-      String mainClass = getMainClassFromMavenJarPlugin(mavenJarPlugin);
-      if (mainClass != null) {
-        return mainClass;
+      Xpp3Dom jarConfiguration = (Xpp3Dom) mavenJarPlugin.getConfiguration();
+      if (jarConfiguration == null) {
+        return null;
       }
+      Xpp3Dom archiveObject = jarConfiguration.getChild("archive");
+      if (archiveObject == null) {
+        return null;
+      }
+      Xpp3Dom manifestObject = archiveObject.getChild("manifest");
+      if (manifestObject == null) {
+        return null;
+      }
+      Xpp3Dom mainClassObject = manifestObject.getChild("mainClass");
+      if (mainClassObject == null) {
+        return null;
+      }
+      return mainClassObject.getValue();
     }
     return null;
-  }
-
-  /** Gets the {@code mainClass} configuration from {@code maven-jar-plugin}. */
-  @Nullable
-  private String getMainClassFromMavenJarPlugin(Plugin mavenJarPlugin) {
-    Xpp3Dom jarConfiguration = (Xpp3Dom) mavenJarPlugin.getConfiguration();
-    if (jarConfiguration == null) {
-      return null;
-    }
-    Xpp3Dom archiveObject = jarConfiguration.getChild("archive");
-    if (archiveObject == null) {
-      return null;
-    }
-    Xpp3Dom manifestObject = archiveObject.getChild("manifest");
-    if (manifestObject == null) {
-      return null;
-    }
-    Xpp3Dom mainClassObject = manifestObject.getChild("mainClass");
-    if (mainClassObject == null) {
-      return null;
-    }
-    return mainClassObject.getValue();
   }
 }
