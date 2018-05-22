@@ -36,7 +36,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link com.google.cloud.tools.jib.builder.steps.RetrieveRegistryCredentialsStep}. */
+/** Tests for {@link RetrieveRegistryCredentialsStep}. */
 @RunWith(MockitoJUnitRunner.class)
 public class RetrieveRegistryCredentialsStepTest {
 
@@ -150,10 +150,7 @@ public class RetrieveRegistryCredentialsStepTest {
     Mockito.verify(mockBuildLogger).warn("warning");
   }
 
-  /**
-   * Creates a fake {@link com.google.cloud.tools.jib.builder.steps.RetrieveRegistryCredentialsStep}
-   * for {@code registry}.
-   */
+  /** Creates a fake {@link RetrieveRegistryCredentialsStep} for {@code registry}. */
   private RetrieveRegistryCredentialsStep makeRetrieveRegistryCredentialsStep(
       String registry,
       @Nullable String credentialHelperSuffix,

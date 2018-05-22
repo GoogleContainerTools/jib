@@ -26,10 +26,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * Implementation of {@link com.google.cloud.tools.jib.builder.SourceFilesConfiguration} that uses
- * test resources.
- */
+/** Implementation of {@link SourceFilesConfiguration} that uses test resources. */
 public class TestSourceFilesConfiguration implements SourceFilesConfiguration {
 
   private static final String EXTRACTION_PATH = "/some/extraction/path/";

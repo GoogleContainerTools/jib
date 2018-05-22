@@ -62,8 +62,7 @@ class PushBlobStep implements AsyncStep<Void>, Callable<Void> {
   }
 
   @Override
-  public Void call()
-      throws IOException, RegistryException, ExecutionException {
+  public Void call() throws IOException, RegistryException, ExecutionException {
     CachedLayer layer = NonBlockingSteps.get(cachedLayerStep);
     DescriptorDigest layerDigest = layer.getBlobDescriptor().getDigest();
 

@@ -41,7 +41,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link com.google.cloud.tools.jib.builder.steps.BuildAndCacheApplicationLayerStep}. */
+/** Tests for {@link BuildAndCacheApplicationLayerStep}. */
 @RunWith(MockitoJUnitRunner.class)
 public class BuildAndCacheApplicationLayerStepTest {
 

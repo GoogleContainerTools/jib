@@ -39,7 +39,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link com.google.cloud.tools.jib.builder.steps.BuildImageStep}. */
+/** Tests for {@link BuildImageStep}. */
 @RunWith(MockitoJUnitRunner.class)
 public class BuildImageStepTest {
 
