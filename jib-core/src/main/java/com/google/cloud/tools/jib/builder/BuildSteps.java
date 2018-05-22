@@ -66,23 +66,22 @@ public class BuildSteps {
         String.format(
             SUCCESS_MESSAGE_FORMAT_FOR_DOCKER_REGISTRY,
             buildConfiguration.getTargetImageReference()),
-        stepsRunner -> {
-          stepsRunner
-              .runRetrieveTargetRegistryCredentialsStep()
-              .runRetrieveBaseRegistryCredentialsStep()
-              .runAuthenticatePushStep()
-              .runAuthenticatePullStep()
-              .runPullBaseImageStep()
-              .runPullAndCacheBaseImageLayersStep()
-              .runPushBaseImageLayersStep()
-              .runBuildAndCacheApplicationLayerSteps()
-              .runBuildImageStep(getEntrypoint(buildConfiguration, sourceFilesConfiguration))
-              .runPushContainerConfigurationStep()
-              .runPushApplicationLayersStep()
-              .runFinalizingPushStep()
-              .runPushImageStep()
-              .waitOnPushImageStep();
-        });
+        stepsRunner ->
+            stepsRunner
+                .runRetrieveTargetRegistryCredentialsStep()
+                .runRetrieveBaseRegistryCredentialsStep()
+                .runAuthenticatePushStep()
+                .runAuthenticatePullStep()
+                .runPullBaseImageStep()
+                .runPullAndCacheBaseImageLayersStep()
+                .runPushBaseImageLayersStep()
+                .runBuildAndCacheApplicationLayerSteps()
+                .runBuildImageStep(getEntrypoint(buildConfiguration, sourceFilesConfiguration))
+                .runPushContainerConfigurationStep()
+                .runPushApplicationLayersStep()
+                .runFinalizingPushStep()
+                .runPushImageStep()
+                .waitOnPushImageStep());
   }
 
   /** All the steps to build to Docker daemon */
@@ -99,18 +98,17 @@ public class BuildSteps {
             STARTUP_MESSAGE_FORMAT_FOR_DOCKER_DAEMON, buildConfiguration.getTargetImageReference()),
         String.format(
             SUCCESS_MESSAGE_FORMAT_FOR_DOCKER_DAEMON, buildConfiguration.getTargetImageReference()),
-        stepsRunner -> {
-          stepsRunner
-              .runRetrieveBaseRegistryCredentialsStep()
-              .runAuthenticatePullStep()
-              .runPullBaseImageStep()
-              .runPullAndCacheBaseImageLayersStep()
-              .runBuildAndCacheApplicationLayerSteps()
-              .runBuildImageStep(getEntrypoint(buildConfiguration, sourceFilesConfiguration))
-              .runFinalizingBuildStep()
-              .runBuildTarballAndLoadDockerStep()
-              .waitOnBuildTarballAndLoadDockerStep();
-        });
+        stepsRunner ->
+            stepsRunner
+                .runRetrieveBaseRegistryCredentialsStep()
+                .runAuthenticatePullStep()
+                .runPullBaseImageStep()
+                .runPullAndCacheBaseImageLayersStep()
+                .runBuildAndCacheApplicationLayerSteps()
+                .runBuildImageStep(getEntrypoint(buildConfiguration, sourceFilesConfiguration))
+                .runFinalizingBuildStep()
+                .runBuildTarballAndLoadDockerStep()
+                .waitOnBuildTarballAndLoadDockerStep());
   }
 
   /** Creates the container entrypoint for a given configuration. */
