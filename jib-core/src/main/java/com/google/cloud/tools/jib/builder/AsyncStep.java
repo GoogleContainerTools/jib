@@ -30,7 +30,7 @@ import java.util.concurrent.Callable;
  *       ListeningExecutorService} to run after all its dependent {@link AsyncStep}s (for example,
  *       by using {@link Futures#whenAllSucceed})
  *   <li>Implement {@link #call} with the actual work
- *   <li>Implement {@link #getFuture} by
+ *   <li>Have {@link #getFuture} return the submitted future
  * </ol>
  *
  * @param <T> the object type passed on by this step
