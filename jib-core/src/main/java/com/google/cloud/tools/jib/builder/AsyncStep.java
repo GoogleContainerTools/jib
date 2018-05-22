@@ -26,9 +26,9 @@ import java.util.concurrent.Callable;
  *
  * <ol>
  *   <li>Be immutable
- *   <li>Construct with the dependent {@link AsyncStep}s and submitting a {@link Callable} to the
- *       {@link ListeningExecutorService} to run after all its dependent {@link AsyncStep}s (for
- *       example, by using {@link Futures#whenAllSucceed})
+ *   <li>Construct with the dependent {@link AsyncStep}s and submit a {@link Callable} to the {@link
+ *       ListeningExecutorService} to run after all its dependent {@link AsyncStep}s (for example,
+ *       by using {@link Futures#whenAllSucceed})
  *   <li>Have {@link #getFuture} return the submitted future
  * </ol>
  *
