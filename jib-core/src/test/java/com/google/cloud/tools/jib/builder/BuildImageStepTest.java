@@ -87,7 +87,7 @@ public class BuildImageStepTest {
                 mockBuildAndCacheApplicationLayerStep,
                 mockBuildAndCacheApplicationLayerStep),
             ImmutableList.of());
-    Image image = buildImageStep.getFuture().get().get();
+    Image image = buildImageStep.getFuture().get().getFuture().get();
     Assert.assertEquals(
         testDescriptorDigest, image.getLayers().asList().get(0).getBlobDescriptor().getDigest());
   }

@@ -23,20 +23,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 class AsyncSteps {
 
   static <T> AsyncStep<T> immediate(T returnValue) {
-    return new AsyncStep<T>() {
-
-      private final ListenableFuture<T> listenableFuture = Futures.immediateFuture(returnValue);
-
-      @Override
-      public ListenableFuture<T> getFuture() {
-        return listenableFuture;
-      }
-
-      @Override
-      public T call() {
-        throw new UnsupportedOperationException("Should not call AsyncStep directly");
-      }
-    };
+    ListenableFuture<T> future = Futures.immediateFuture(returnValue);
+    return () -> future;
   }
 
   private AsyncSteps() {}

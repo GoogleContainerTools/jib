@@ -30,9 +30,10 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 /** Builds and caches application layers. */
-class BuildAndCacheApplicationLayerStep implements AsyncStep<CachedLayer> {
+class BuildAndCacheApplicationLayerStep implements AsyncStep<CachedLayer>, Callable<CachedLayer> {
 
   private static final String DESCRIPTION = "Building application layers";
 

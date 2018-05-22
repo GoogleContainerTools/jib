@@ -27,10 +27,11 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 /** Pushes the final image. */
-class PushImageStep implements AsyncStep<Void> {
+class PushImageStep implements AsyncStep<Void>, Callable<Void> {
 
   private static final String DESCRIPTION = "Pushing new image";
 
@@ -85,8 +86,8 @@ class PushImageStep implements AsyncStep<Void> {
     for (PushBlobStep pushBlobStep : NonBlockingSteps.get(pushApplicationLayersStep)) {
       dependenciesBuilder.add(pushBlobStep.getFuture());
     }
-    dependenciesBuilder.add(NonBlockingSteps.get(pushContainerConfigurationStep));
-    dependenciesBuilder.add(NonBlockingSteps.get(buildImageStep));
+    dependenciesBuilder.add(NonBlockingSteps.get(pushContainerConfigurationStep).getFuture());
+    dependenciesBuilder.add(NonBlockingSteps.get(buildImageStep).getFuture());
     return Futures.whenAllComplete(dependenciesBuilder.build())
         .call(this::afterPushBaseImageLayerFuturesFuture, listeningExecutorService)
         .get();
@@ -103,13 +104,13 @@ class PushImageStep implements AsyncStep<Void> {
 
       // Constructs the image.
       ImageToJsonTranslator imageToJsonTranslator =
-          new ImageToJsonTranslator(Futures.getDone(NonBlockingSteps.get(buildImageStep)));
+          new ImageToJsonTranslator(NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep)));
 
       // Pushes the image manifest.
       BuildableManifestTemplate manifestTemplate =
           imageToJsonTranslator.getManifestTemplate(
               buildConfiguration.getTargetFormat(),
-              Futures.getDone(NonBlockingSteps.get(pushContainerConfigurationStep)));
+              NonBlockingSteps.get(NonBlockingSteps.get(pushContainerConfigurationStep)));
       registryClient.pushManifest(manifestTemplate, buildConfiguration.getTargetImageTag());
     }
 

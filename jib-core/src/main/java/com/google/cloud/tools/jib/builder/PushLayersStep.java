@@ -22,9 +22,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
-class PushLayersStep implements AsyncStep<ImmutableList<PushBlobStep>> {
+class PushLayersStep
+    implements AsyncStep<ImmutableList<PushBlobStep>>, Callable<ImmutableList<PushBlobStep>> {
 
   private static final String DESCRIPTION = "Setting up to push layers";
 
