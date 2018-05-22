@@ -14,10 +14,13 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.builder;
+package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.Timer;
+import com.google.cloud.tools.jib.async.AsyncStep;
+import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.LayerCountMismatchException;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;

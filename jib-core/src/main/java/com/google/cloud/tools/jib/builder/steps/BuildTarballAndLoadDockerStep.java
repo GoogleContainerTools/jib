@@ -14,10 +14,13 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.builder;
+package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.async.AsyncStep;
+import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.docker.json.DockerLoadManifestTemplate;
 import com.google.cloud.tools.jib.image.Image;

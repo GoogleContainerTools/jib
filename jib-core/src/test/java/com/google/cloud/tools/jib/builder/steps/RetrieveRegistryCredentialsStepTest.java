@@ -14,8 +14,10 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.builder;
+package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.builder.BuildConfiguration;
+import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.registry.credentials.DockerConfigCredentialRetriever;
 import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelper;
@@ -34,7 +36,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link RetrieveRegistryCredentialsStep}. */
+/** Tests for {@link com.google.cloud.tools.jib.builder.steps.RetrieveRegistryCredentialsStep}. */
 @RunWith(MockitoJUnitRunner.class)
 public class RetrieveRegistryCredentialsStepTest {
 
@@ -148,7 +150,10 @@ public class RetrieveRegistryCredentialsStepTest {
     Mockito.verify(mockBuildLogger).warn("warning");
   }
 
-  /** Creates a fake {@link RetrieveRegistryCredentialsStep} for {@code registry}. */
+  /**
+   * Creates a fake {@link com.google.cloud.tools.jib.builder.steps.RetrieveRegistryCredentialsStep}
+   * for {@code registry}.
+   */
   private RetrieveRegistryCredentialsStep makeRetrieveRegistryCredentialsStep(
       String registry,
       @Nullable String credentialHelperSuffix,
