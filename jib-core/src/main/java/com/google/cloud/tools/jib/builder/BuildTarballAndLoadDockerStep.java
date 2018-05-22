@@ -36,56 +36,65 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 
 /** Adds image layers to a tarball and loads into Docker daemon. */
-class BuildTarballAndLoadDockerStep implements Callable<Void> {
+class BuildTarballAndLoadDockerStep implements AsyncStep<Void> {
 
   private final BuildConfiguration buildConfiguration;
+  private final PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep;
+  private final ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps;
+  private final BuildImageStep buildImageStep;
+
   private final ListeningExecutorService listeningExecutorService;
-  private final ListenableFuture<ImmutableList<ListenableFuture<CachedLayer>>>
-      pullBaseImageLayerFuturesFuture;
-  private final ImmutableList<ListenableFuture<CachedLayer>> buildApplicationLayerFutures;
-  private final ListenableFuture<ListenableFuture<Image>> buildImageFutureFuture;
+  private final ListenableFuture<Void> listenableFuture;
 
   BuildTarballAndLoadDockerStep(
-      BuildConfiguration buildConfiguration,
       ListeningExecutorService listeningExecutorService,
-      ListenableFuture<ImmutableList<ListenableFuture<CachedLayer>>>
-          pullBaseImageLayerFuturesFuture,
-      ImmutableList<ListenableFuture<CachedLayer>> buildApplicationLayerFutures,
-      ListenableFuture<ListenableFuture<Image>> buildImageFutureFuture) {
-    this.buildConfiguration = buildConfiguration;
+      BuildConfiguration buildConfiguration,
+      PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep,
+      ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps,
+      BuildImageStep buildImageStep) {
     this.listeningExecutorService = listeningExecutorService;
-    this.pullBaseImageLayerFuturesFuture = pullBaseImageLayerFuturesFuture;
-    this.buildApplicationLayerFutures = buildApplicationLayerFutures;
-    this.buildImageFutureFuture = buildImageFutureFuture;
+    this.buildConfiguration = buildConfiguration;
+    this.pullAndCacheBaseImageLayersStep = pullAndCacheBaseImageLayersStep;
+    this.buildAndCacheApplicationLayerSteps = buildAndCacheApplicationLayerSteps;
+    this.buildImageStep = buildImageStep;
+
+    listenableFuture =
+        Futures.whenAllSucceed(
+                pullAndCacheBaseImageLayersStep.getFuture(), buildImageStep.getFuture())
+            .call(this, listeningExecutorService);
   }
 
-  /** Depends on {@code pullBaseImageLayerFuturesFuture} and {@code buildImageFutureFuture}. */
+  @Override
+  public ListenableFuture<Void> getFuture() {
+    return listenableFuture;
+  }
+
   @Override
   public Void call() throws ExecutionException, InterruptedException {
     ImmutableList.Builder<ListenableFuture<?>> dependenciesBuilder = ImmutableList.builder();
-    dependenciesBuilder.addAll(NonBlockingFutures.get(pullBaseImageLayerFuturesFuture));
-    dependenciesBuilder.addAll(buildApplicationLayerFutures);
-    dependenciesBuilder.add(NonBlockingFutures.get(buildImageFutureFuture));
+    for (PullAndCacheBaseImageLayerStep pullAndCacheBaseImageLayerStep :
+        NonBlockingSteps.get(pullAndCacheBaseImageLayersStep)) {
+      dependenciesBuilder.add(pullAndCacheBaseImageLayerStep.getFuture());
+    }
+    for (BuildAndCacheApplicationLayerStep buildAndCacheApplicationLayerStep :
+        buildAndCacheApplicationLayerSteps) {
+      dependenciesBuilder.add(buildAndCacheApplicationLayerStep.getFuture());
+    }
+    dependenciesBuilder.add(NonBlockingSteps.get(buildImageStep));
     return Futures.whenAllComplete(dependenciesBuilder.build())
         .call(this::afterPushBaseImageLayerFuturesFuture, listeningExecutorService)
         .get();
   }
 
-  /**
-   * Depends on {@code pullBaseImageLayerFuturesFuture.get()} and (@code
-   * buildImageFutureFuture.get()}.
-   *
-   * <p>TODO: Refactor into testable components
-   */
+  // TODO: Refactor into testable components
   private Void afterPushBaseImageLayerFuturesFuture()
       throws ExecutionException, InterruptedException, IOException, LayerPropertyNotFoundException {
     // Add layers to image tarball
-    Image image = NonBlockingFutures.get(NonBlockingFutures.get(buildImageFutureFuture));
+    Image image = Futures.getDone(NonBlockingSteps.get(buildImageStep));
     TarStreamBuilder tarStreamBuilder = new TarStreamBuilder();
     DockerLoadManifestTemplate manifestTemplate = new DockerLoadManifestTemplate();
 

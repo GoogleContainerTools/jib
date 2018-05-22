@@ -22,7 +22,7 @@ import com.google.cloud.tools.jib.cache.CacheReader;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.image.ImageLayers;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
-import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -37,9 +37,9 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link BuildAndCacheApplicationLayersStep}. */
+/** Tests for {@link BuildAndCacheApplicationLayerStep}. */
 @RunWith(MockitoJUnitRunner.class)
-public class BuildAndCacheApplicationLayersStepTest {
+public class BuildAndCacheApplicationLayerStepTest {
 
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -57,16 +57,16 @@ public class BuildAndCacheApplicationLayersStepTest {
     ImageLayers<CachedLayer> applicationLayers;
 
     try (Cache cache = Cache.init(temporaryCacheDirectory)) {
-      BuildAndCacheApplicationLayersStep buildAndCacheApplicationLayersStep =
-          new BuildAndCacheApplicationLayersStep(
+      ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps =
+          BuildAndCacheApplicationLayerStep.makeList(
+              MoreExecutors.newDirectExecutorService(),
               mockBuildConfiguration,
               testSourceFilesConfiguration,
-              cache,
-              MoreExecutors.newDirectExecutorService());
+              cache);
 
-      for (ListenableFuture<CachedLayer> applicationLayerFuture :
-          buildAndCacheApplicationLayersStep.call()) {
-        applicationLayersBuilder.add(applicationLayerFuture.get());
+      for (BuildAndCacheApplicationLayerStep buildAndCacheApplicationLayerStep :
+          buildAndCacheApplicationLayerSteps) {
+        applicationLayersBuilder.add(NonBlockingSteps.get(buildAndCacheApplicationLayerStep));
       }
 
       applicationLayers = applicationLayersBuilder.build();

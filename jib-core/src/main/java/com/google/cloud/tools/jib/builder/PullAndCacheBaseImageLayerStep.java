@@ -21,48 +21,58 @@ import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheReader;
 import com.google.cloud.tools.jib.cache.CacheWriter;
 import com.google.cloud.tools.jib.cache.CachedLayer;
-import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryException;
 import com.google.common.io.CountingOutputStream;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 /** Pulls and caches a single base image layer. */
-class PullAndCacheBaseImageLayerStep implements Callable<CachedLayer> {
+class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer> {
 
   private static final String DESCRIPTION = "Pulling base image layer %s";
 
   private final BuildConfiguration buildConfiguration;
   private final Cache cache;
   private final DescriptorDigest layerDigest;
-  private final ListenableFuture<Authorization> pullAuthorizationFuture;
+  private final AuthenticatePullStep authenticatePullStep;
+
+  private final ListenableFuture<CachedLayer> listenableFuture;
 
   PullAndCacheBaseImageLayerStep(
+      ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
       Cache cache,
       DescriptorDigest layerDigest,
-      ListenableFuture<Authorization> pullAuthorizationFuture) {
+      AuthenticatePullStep authenticatePullStep) {
     this.buildConfiguration = buildConfiguration;
     this.cache = cache;
     this.layerDigest = layerDigest;
-    this.pullAuthorizationFuture = pullAuthorizationFuture;
+    this.authenticatePullStep = authenticatePullStep;
+
+    listenableFuture =
+        Futures.whenAllSucceed(authenticatePullStep.getFuture())
+            .call(this, listeningExecutorService);
   }
 
-  /** Depends on {@code pullAuthorizationFuture}. */
+  @Override
+  public ListenableFuture<CachedLayer> getFuture() {
+    return listenableFuture;
+  }
+
   @Override
   public CachedLayer call()
-      throws IOException, RegistryException, LayerPropertyNotFoundException, ExecutionException,
-          InterruptedException {
+      throws IOException, RegistryException, LayerPropertyNotFoundException, ExecutionException {
     try (Timer ignored =
         new Timer(buildConfiguration.getBuildLogger(), String.format(DESCRIPTION, layerDigest))) {
       RegistryClient registryClient =
           new RegistryClient(
-              NonBlockingFutures.get(pullAuthorizationFuture),
+              NonBlockingSteps.get(authenticatePullStep),
               buildConfiguration.getBaseImageRegistry(),
               buildConfiguration.getBaseImageRepository());
 

@@ -20,10 +20,7 @@ import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
-import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.cache.Caches;
-import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.image.Image;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -119,66 +116,59 @@ public class BuildDockerSteps implements BuildSteps {
                   buildConfiguration,
                   retrieveBaseRegistryCredentialsStep);
 
-          ListenableFuture<Authorization> authenticatePullFuture = authenticatePullStep.getFuture();
-
           timer2.lap("Setting up base image pull");
           // Pulls the base image.
           PullBaseImageStep pullBaseImageStep =
               new PullBaseImageStep(
                   listeningExecutorService, buildConfiguration, authenticatePullStep);
 
-          ListenableFuture<Image> pullBaseImageFuture = pullBaseImageStep.getFuture();
-
           timer2.lap("Setting up base image layer pull");
           // Pulls and caches the base image layers.
-          ListenableFuture<ImmutableList<ListenableFuture<CachedLayer>>>
-              pullBaseImageLayerFuturesFuture =
-                  Futures.whenAllSucceed(pullBaseImageFuture)
-                      .call(
-                          new PullAndCacheBaseImageLayersStep(
-                              buildConfiguration,
-                              baseLayersCache,
-                              listeningExecutorService,
-                              authenticatePullFuture,
-                              pullBaseImageFuture),
-                          listeningExecutorService);
+          PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep =
+              new PullAndCacheBaseImageLayersStep(
+                  listeningExecutorService,
+                  buildConfiguration,
+                  baseLayersCache,
+                  authenticatePullStep,
+                  pullBaseImageStep);
 
           timer2.lap("Setting up build application layers");
           // Builds the application layers.
-          ImmutableList<ListenableFuture<CachedLayer>> buildAndCacheApplicationLayerFutures =
-              new BuildAndCacheApplicationLayersStep(
-                      buildConfiguration,
-                      sourceFilesConfiguration,
-                      applicationLayersCache,
-                      listeningExecutorService)
-                  .call();
+          ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps =
+              BuildAndCacheApplicationLayerStep.makeList(
+                  listeningExecutorService,
+                  buildConfiguration,
+                  sourceFilesConfiguration,
+                  applicationLayersCache);
 
           timer2.lap("Setting up build container configuration");
           // Builds the container configuration.
-          ListenableFuture<ListenableFuture<Image>> buildImageFutureFuture =
-              Futures.whenAllSucceed(pullBaseImageLayerFuturesFuture)
-                  .call(
-                      new BuildImageStep(
-                          buildConfiguration,
-                          listeningExecutorService,
-                          pullBaseImageLayerFuturesFuture,
-                          buildAndCacheApplicationLayerFutures,
-                          entrypoint),
-                      listeningExecutorService);
+          BuildImageStep buildImageStep =
+              new BuildImageStep(
+                  listeningExecutorService,
+                  buildConfiguration,
+                  pullAndCacheBaseImageLayersStep,
+                  buildAndCacheApplicationLayerSteps,
+                  entrypoint);
 
           // TODO: Move this somewhere that doesn't clutter this method. Consolidate with
           // BuildImageSteps.
           // Logs a message after pushing all the layers.
-          Futures.whenAllSucceed(pullBaseImageLayerFuturesFuture)
+          Futures.whenAllSucceed(pullAndCacheBaseImageLayersStep.getFuture())
               .call(
                   () -> {
                     // Depends on all the layers being pushed.
                     ImmutableList.Builder<ListenableFuture<?>> beforeFinalizingDependenciesBuilder =
                         ImmutableList.builder();
-                    beforeFinalizingDependenciesBuilder.addAll(
-                        NonBlockingFutures.get(pullBaseImageLayerFuturesFuture));
-                    beforeFinalizingDependenciesBuilder.addAll(
-                        buildAndCacheApplicationLayerFutures);
+                    for (PullAndCacheBaseImageLayerStep pushBaseImageLayerStep :
+                        NonBlockingSteps.get(pullAndCacheBaseImageLayersStep)) {
+                      beforeFinalizingDependenciesBuilder.add(pushBaseImageLayerStep.getFuture());
+                    }
+                    for (BuildAndCacheApplicationLayerStep buildAndCacheApplicationLayerStep :
+                        buildAndCacheApplicationLayerSteps) {
+                      beforeFinalizingDependenciesBuilder.add(
+                          buildAndCacheApplicationLayerStep.getFuture());
+                    }
 
                     Futures.whenAllSucceed(beforeFinalizingDependenciesBuilder.build())
                         .call(
@@ -195,19 +185,16 @@ public class BuildDockerSteps implements BuildSteps {
 
           timer2.lap("Setting up build to docker daemon");
           // Builds the image tarball and loads into the Docker daemon.
-          ListenableFuture<Void> buildToDockerFutureFuture =
-              Futures.whenAllSucceed(pullBaseImageLayerFuturesFuture, buildImageFutureFuture)
-                  .call(
-                      new BuildTarballAndLoadDockerStep(
-                          buildConfiguration,
-                          listeningExecutorService,
-                          pullBaseImageLayerFuturesFuture,
-                          buildAndCacheApplicationLayerFutures,
-                          buildImageFutureFuture),
-                      listeningExecutorService);
+          BuildTarballAndLoadDockerStep buildTarballAndLoadDockerStep =
+              new BuildTarballAndLoadDockerStep(
+                  listeningExecutorService,
+                  buildConfiguration,
+                  pullAndCacheBaseImageLayersStep,
+                  buildAndCacheApplicationLayerSteps,
+                  buildImageStep);
 
           timer2.lap("Running build to docker daemon");
-          buildToDockerFutureFuture.get();
+          buildTarballAndLoadDockerStep.getFuture().get();
         }
       }
     }
