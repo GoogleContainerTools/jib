@@ -50,19 +50,6 @@ class GradleProjectProperties implements ProjectProperties {
     }
   }
 
-  public Path getCacheDirectory() {
-    return project.getBuildDir().toPath().resolve(CACHE_DIRECTORY_NAME);
-  }
-
-  private GradleProjectProperties(
-      Project project,
-      GradleBuildLogger gradleBuildLogger,
-      SourceFilesConfiguration sourceFilesConfiguration) {
-    this.project = project;
-    this.gradleBuildLogger = gradleBuildLogger;
-    this.sourceFilesConfiguration = sourceFilesConfiguration;
-  }
-
   @Override
   public SourceFilesConfiguration getSourceFilesConfiguration() {
     return sourceFilesConfiguration;
@@ -91,5 +78,18 @@ class GradleProjectProperties implements ProjectProperties {
       return null;
     }
     return (String) ((Jar) jarTasks.get(0)).getManifest().getAttributes().get("Main-Class");
+  }
+
+  public Path getCacheDirectory() {
+    return project.getBuildDir().toPath().resolve(CACHE_DIRECTORY_NAME);
+  }
+
+  private GradleProjectProperties(
+      Project project,
+      GradleBuildLogger gradleBuildLogger,
+      SourceFilesConfiguration sourceFilesConfiguration) {
+    this.project = project;
+    this.gradleBuildLogger = gradleBuildLogger;
+    this.sourceFilesConfiguration = sourceFilesConfiguration;
   }
 }

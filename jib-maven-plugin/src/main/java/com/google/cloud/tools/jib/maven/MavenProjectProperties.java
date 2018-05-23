@@ -53,19 +53,6 @@ class MavenProjectProperties implements ProjectProperties {
     }
   }
 
-  Path getCacheDirectory() {
-    return Paths.get(project.getBuild().getDirectory(), CACHE_DIRECTORY_NAME);
-  }
-
-  private MavenProjectProperties(
-      MavenProject project,
-      MavenBuildLogger mavenBuildLogger,
-      SourceFilesConfiguration sourceFilesConfiguration) {
-    this.project = project;
-    this.mavenBuildLogger = mavenBuildLogger;
-    this.sourceFilesConfiguration = sourceFilesConfiguration;
-  }
-
   @Override
   public SourceFilesConfiguration getSourceFilesConfiguration() {
     return sourceFilesConfiguration;
@@ -110,5 +97,18 @@ class MavenProjectProperties implements ProjectProperties {
       return mainClassObject.getValue();
     }
     return null;
+  }
+
+  Path getCacheDirectory() {
+    return Paths.get(project.getBuild().getDirectory(), CACHE_DIRECTORY_NAME);
+  }
+
+  private MavenProjectProperties(
+      MavenProject project,
+      MavenBuildLogger mavenBuildLogger,
+      SourceFilesConfiguration sourceFilesConfiguration) {
+    this.project = project;
+    this.mavenBuildLogger = mavenBuildLogger;
+    this.sourceFilesConfiguration = sourceFilesConfiguration;
   }
 }
