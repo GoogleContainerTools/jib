@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
 import com.google.cloud.tools.jib.frontend.MainClassFinder;
 import com.google.cloud.tools.jib.frontend.MainClassInferenceException;
 import com.google.cloud.tools.jib.frontend.ProjectProperties;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -56,7 +57,8 @@ class MavenProjectProperties implements ProjectProperties {
   private final MavenBuildLogger mavenBuildLogger;
   private final SourceFilesConfiguration sourceFilesConfiguration;
 
-  private MavenProjectProperties(
+  @VisibleForTesting
+  MavenProjectProperties(
       MavenProject project,
       MavenBuildLogger mavenBuildLogger,
       SourceFilesConfiguration sourceFilesConfiguration) {

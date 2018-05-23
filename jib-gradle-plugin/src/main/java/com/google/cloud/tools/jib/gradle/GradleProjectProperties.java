@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
 import com.google.cloud.tools.jib.frontend.MainClassFinder;
 import com.google.cloud.tools.jib.frontend.MainClassInferenceException;
 import com.google.cloud.tools.jib.frontend.ProjectProperties;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -57,7 +58,8 @@ class GradleProjectProperties implements ProjectProperties {
   private final GradleBuildLogger gradleBuildLogger;
   private final SourceFilesConfiguration sourceFilesConfiguration;
 
-  private GradleProjectProperties(
+  @VisibleForTesting
+  GradleProjectProperties(
       Project project,
       GradleBuildLogger gradleBuildLogger,
       SourceFilesConfiguration sourceFilesConfiguration) {
