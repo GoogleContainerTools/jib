@@ -16,23 +16,181 @@
 
 package com.google.cloud.tools.jib.builder;
 
+import com.google.cloud.tools.jib.Timer;
+import com.google.cloud.tools.jib.builder.steps.StepsRunner;
+import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
+import com.google.cloud.tools.jib.cache.Caches;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 
 /** Steps for building an image. */
-public interface BuildSteps {
+public class BuildSteps {
 
-  void run()
+  /** Accepts {@link StepsRunner} by running the appropriate steps. */
+  @FunctionalInterface
+  private interface StepsRunnerConsumer {
+
+    void accept(StepsRunner stepsRunner) throws ExecutionException, InterruptedException;
+  }
+
+  private static final String DESCRIPTION_FOR_DOCKER_REGISTRY = "Building and pushing image";
+  private static final String STARTUP_MESSAGE_FORMAT_FOR_DOCKER_REGISTRY =
+      "Containerizing application to %s...";
+  // String parameter (target image reference) in cyan.
+  private static final String SUCCESS_MESSAGE_FORMAT_FOR_DOCKER_REGISTRY =
+      "Built and pushed image as \u001B[36m%s\u001B[0m";
+
+  private static final String DESCRIPTION_FOR_DOCKER_DAEMON = "Building image to Docker daemon";
+  private static final String STARTUP_MESSAGE_FORMAT_FOR_DOCKER_DAEMON =
+      "Containerizing application to Docker daemon as %s...";
+  // String parameter (target image reference) in cyan.
+  private static final String SUCCESS_MESSAGE_FORMAT_FOR_DOCKER_DAEMON =
+      "Built image to Docker daemon as \u001B[36m%s\u001B[0m";
+
+  /** All the steps to build an image to a Docker registry. */
+  public static BuildSteps forBuildToDockerRegistry(
+      BuildConfiguration buildConfiguration,
+      SourceFilesConfiguration sourceFilesConfiguration,
+      Caches.Initializer cachesInitializer) {
+    return new BuildSteps(
+        DESCRIPTION_FOR_DOCKER_REGISTRY,
+        buildConfiguration,
+        sourceFilesConfiguration,
+        cachesInitializer,
+        String.format(
+            STARTUP_MESSAGE_FORMAT_FOR_DOCKER_REGISTRY,
+            buildConfiguration.getTargetImageReference()),
+        String.format(
+            SUCCESS_MESSAGE_FORMAT_FOR_DOCKER_REGISTRY,
+            buildConfiguration.getTargetImageReference()),
+        stepsRunner ->
+            stepsRunner
+                .runRetrieveTargetRegistryCredentialsStep()
+                .runRetrieveBaseRegistryCredentialsStep()
+                .runAuthenticatePushStep()
+                .runAuthenticatePullStep()
+                .runPullBaseImageStep()
+                .runPullAndCacheBaseImageLayersStep()
+                .runPushBaseImageLayersStep()
+                .runBuildAndCacheApplicationLayerSteps()
+                .runBuildImageStep(getEntrypoint(buildConfiguration, sourceFilesConfiguration))
+                .runPushContainerConfigurationStep()
+                .runPushApplicationLayersStep()
+                .runFinalizingPushStep()
+                .runPushImageStep()
+                .waitOnPushImageStep());
+  }
+
+  /** All the steps to build to Docker daemon */
+  public static BuildSteps forBuildToDockerDaemon(
+      BuildConfiguration buildConfiguration,
+      SourceFilesConfiguration sourceFilesConfiguration,
+      Caches.Initializer cachesInitializer) {
+    return new BuildSteps(
+        DESCRIPTION_FOR_DOCKER_DAEMON,
+        buildConfiguration,
+        sourceFilesConfiguration,
+        cachesInitializer,
+        String.format(
+            STARTUP_MESSAGE_FORMAT_FOR_DOCKER_DAEMON, buildConfiguration.getTargetImageReference()),
+        String.format(
+            SUCCESS_MESSAGE_FORMAT_FOR_DOCKER_DAEMON, buildConfiguration.getTargetImageReference()),
+        stepsRunner ->
+            stepsRunner
+                .runRetrieveBaseRegistryCredentialsStep()
+                .runAuthenticatePullStep()
+                .runPullBaseImageStep()
+                .runPullAndCacheBaseImageLayersStep()
+                .runBuildAndCacheApplicationLayerSteps()
+                .runBuildImageStep(getEntrypoint(buildConfiguration, sourceFilesConfiguration))
+                .runFinalizingBuildStep()
+                .runBuildTarballAndLoadDockerStep()
+                .waitOnBuildTarballAndLoadDockerStep());
+  }
+
+  /** Creates the container entrypoint for a given configuration. */
+  private static ImmutableList<String> getEntrypoint(
+      BuildConfiguration buildConfiguration, SourceFilesConfiguration sourceFilesConfiguration) {
+    return EntrypointBuilder.makeEntrypoint(
+        sourceFilesConfiguration,
+        buildConfiguration.getJvmFlags(),
+        buildConfiguration.getMainClass());
+  }
+
+  private final String description;
+  private final BuildConfiguration buildConfiguration;
+  private final SourceFilesConfiguration sourceFilesConfiguration;
+  private final Caches.Initializer cachesInitializer;
+  private final String startupMessage;
+  private final String successMessage;
+  private final StepsRunnerConsumer stepsRunnerConsumer;
+
+  /**
+   * @param description a description of what the steps do
+   * @param startupMessage shown when the steps start running
+   * @param successMessage shown when the steps finish successfully
+   * @param stepsRunnerConsumer accepts a {@link StepsRunner} by running the necessary steps
+   */
+  private BuildSteps(
+      String description,
+      BuildConfiguration buildConfiguration,
+      SourceFilesConfiguration sourceFilesConfiguration,
+      Caches.Initializer cachesInitializer,
+      String startupMessage,
+      String successMessage,
+      StepsRunnerConsumer stepsRunnerConsumer) {
+    this.description = description;
+    this.buildConfiguration = buildConfiguration;
+    this.sourceFilesConfiguration = sourceFilesConfiguration;
+    this.cachesInitializer = cachesInitializer;
+    this.startupMessage = startupMessage;
+    this.successMessage = successMessage;
+    this.stepsRunnerConsumer = stepsRunnerConsumer;
+  }
+
+  public BuildConfiguration getBuildConfiguration() {
+    return buildConfiguration;
+  }
+
+  public SourceFilesConfiguration getSourceFilesConfiguration() {
+    return sourceFilesConfiguration;
+  }
+
+  public String getStartupMessage() {
+    return startupMessage;
+  }
+
+  public String getSuccessMessage() {
+    return successMessage;
+  }
+
+  public void run()
       throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
-          CacheDirectoryNotOwnedException;
+          CacheDirectoryNotOwnedException {
+    buildConfiguration.getBuildLogger().lifecycle("");
 
-  BuildConfiguration getBuildConfiguration();
+    try (Timer timer = new Timer(buildConfiguration.getBuildLogger(), description)) {
+      try (Caches caches = cachesInitializer.init()) {
+        Cache baseLayersCache = caches.getBaseCache();
+        Cache applicationLayersCache = caches.getApplicationCache();
 
-  SourceFilesConfiguration getSourceFilesConfiguration();
+        stepsRunnerConsumer.accept(
+            new StepsRunner(
+                buildConfiguration,
+                sourceFilesConfiguration,
+                baseLayersCache,
+                applicationLayersCache));
+      }
+    }
 
-  String getStartupMessage();
-
-  String getSuccessMessage();
+    buildConfiguration.getBuildLogger().lifecycle("");
+    buildConfiguration
+        .getBuildLogger()
+        .lifecycle(
+            "Container entrypoint set to "
+                + getEntrypoint(buildConfiguration, sourceFilesConfiguration));
+  }
 }

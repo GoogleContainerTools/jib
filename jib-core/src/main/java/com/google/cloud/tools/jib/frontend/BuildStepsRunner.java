@@ -19,8 +19,6 @@ package com.google.cloud.tools.jib.frontend;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
-import com.google.cloud.tools.jib.builder.BuildDockerSteps;
-import com.google.cloud.tools.jib.builder.BuildImageSteps;
 import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.builder.BuildSteps;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
@@ -56,7 +54,8 @@ public class BuildStepsRunner {
       throws CacheDirectoryCreationException {
     Initializer cacheInitializer = getCacheInitializer(cacheDirectory, useOnlyProjectCache);
     return new BuildStepsRunner(
-        new BuildImageSteps(buildConfiguration, sourceFilesConfiguration, cacheInitializer));
+        BuildSteps.forBuildToDockerRegistry(
+            buildConfiguration, sourceFilesConfiguration, cacheInitializer));
   }
 
   /**
@@ -74,7 +73,8 @@ public class BuildStepsRunner {
       throws CacheDirectoryCreationException {
     Initializer cacheInitializer = getCacheInitializer(cacheDirectory, useOnlyProjectCache);
     return new BuildStepsRunner(
-        new BuildDockerSteps(buildConfiguration, sourceFilesConfiguration, cacheInitializer));
+        BuildSteps.forBuildToDockerDaemon(
+            buildConfiguration, sourceFilesConfiguration, cacheInitializer));
   }
 
   /** @return true if Docker is installed on the user's system. */
@@ -162,7 +162,7 @@ public class BuildStepsRunner {
   }
 
   /**
-   * Runs the {@link BuildImageSteps}.
+   * Runs the {@link BuildSteps}.
    *
    * @param helpfulSuggestions suggestions to use in help messages for exceptions
    */

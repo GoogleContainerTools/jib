@@ -19,8 +19,8 @@ package com.google.cloud.tools.jib.frontend;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
-import com.google.cloud.tools.jib.builder.BuildImageSteps;
 import com.google.cloud.tools.jib.builder.BuildLogger;
+import com.google.cloud.tools.jib.builder.BuildSteps;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
@@ -57,7 +57,7 @@ public class BuildStepsRunnerTest {
 
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  @Mock private BuildImageSteps mockBuildImageSteps;
+  @Mock private BuildSteps mockBuildSteps;
   @Mock private SourceFilesConfiguration mockSourceFilesConfiguration;
   @Mock private BuildLogger mockBuildLogger;
   @Mock private RegistryUnauthorizedException mockRegistryUnauthorizedException;
@@ -69,11 +69,11 @@ public class BuildStepsRunnerTest {
 
   @Before
   public void setUpMocks() {
-    testBuildImageStepsRunner = new BuildStepsRunner(mockBuildImageSteps);
+    testBuildImageStepsRunner = new BuildStepsRunner(mockBuildSteps);
 
-    Mockito.when(mockBuildImageSteps.getBuildConfiguration()).thenReturn(mockBuildConfiguration);
+    Mockito.when(mockBuildSteps.getBuildConfiguration()).thenReturn(mockBuildConfiguration);
     Mockito.when(mockBuildConfiguration.getBuildLogger()).thenReturn(mockBuildLogger);
-    Mockito.when(mockBuildImageSteps.getSourceFilesConfiguration())
+    Mockito.when(mockBuildSteps.getSourceFilesConfiguration())
         .thenReturn(mockSourceFilesConfiguration);
     Mockito.when(mockSourceFilesConfiguration.getClassesFiles())
         .thenReturn(Collections.emptyList());
@@ -94,7 +94,7 @@ public class BuildStepsRunnerTest {
           CacheDirectoryNotOwnedException {
     CacheMetadataCorruptedException mockCacheMetadataCorruptedException =
         Mockito.mock(CacheMetadataCorruptedException.class);
-    Mockito.doThrow(mockCacheMetadataCorruptedException).when(mockBuildImageSteps).run();
+    Mockito.doThrow(mockCacheMetadataCorruptedException).when(mockBuildSteps).run();
 
     try {
       testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
@@ -113,7 +113,7 @@ public class BuildStepsRunnerTest {
     HttpHostConnectException mockHttpHostConnectException =
         Mockito.mock(HttpHostConnectException.class);
     Mockito.when(mockExecutionException.getCause()).thenReturn(mockHttpHostConnectException);
-    Mockito.doThrow(mockExecutionException).when(mockBuildImageSteps).run();
+    Mockito.doThrow(mockExecutionException).when(mockBuildSteps).run();
 
     try {
       testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
@@ -131,7 +131,7 @@ public class BuildStepsRunnerTest {
           CacheDirectoryNotOwnedException {
     UnknownHostException mockUnknownHostException = Mockito.mock(UnknownHostException.class);
     Mockito.when(mockExecutionException.getCause()).thenReturn(mockUnknownHostException);
-    Mockito.doThrow(mockExecutionException).when(mockBuildImageSteps).run();
+    Mockito.doThrow(mockExecutionException).when(mockBuildSteps).run();
 
     try {
       testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
@@ -155,7 +155,7 @@ public class BuildStepsRunnerTest {
         .thenReturn(HttpStatusCodes.STATUS_CODE_FORBIDDEN);
 
     Mockito.when(mockExecutionException.getCause()).thenReturn(mockRegistryUnauthorizedException);
-    Mockito.doThrow(mockExecutionException).when(mockBuildImageSteps).run();
+    Mockito.doThrow(mockExecutionException).when(mockBuildSteps).run();
 
     try {
       testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
@@ -179,7 +179,7 @@ public class BuildStepsRunnerTest {
     Mockito.when(mockHttpResponseException.getStatusCode()).thenReturn(-1); // Unknown
 
     Mockito.when(mockExecutionException.getCause()).thenReturn(mockRegistryUnauthorizedException);
-    Mockito.doThrow(mockExecutionException).when(mockBuildImageSteps).run();
+    Mockito.doThrow(mockExecutionException).when(mockBuildSteps).run();
 
     Mockito.when(mockBuildConfiguration.getBaseImageRegistry()).thenReturn("someregistry");
 
@@ -205,7 +205,7 @@ public class BuildStepsRunnerTest {
     Mockito.when(mockHttpResponseException.getStatusCode()).thenReturn(-1); // Unknown
 
     Mockito.when(mockExecutionException.getCause()).thenReturn(mockRegistryUnauthorizedException);
-    Mockito.doThrow(mockExecutionException).when(mockBuildImageSteps).run();
+    Mockito.doThrow(mockExecutionException).when(mockBuildSteps).run();
 
     Mockito.when(mockBuildConfiguration.getBaseImageRegistry()).thenReturn("someregistry");
     Mockito.when(mockBuildConfiguration.getBaseImageCredentialHelperName())
@@ -228,7 +228,7 @@ public class BuildStepsRunnerTest {
           CacheDirectoryNotOwnedException {
     Throwable throwable = new Throwable();
     Mockito.when(mockExecutionException.getCause()).thenReturn(throwable);
-    Mockito.doThrow(mockExecutionException).when(mockBuildImageSteps).run();
+    Mockito.doThrow(mockExecutionException).when(mockBuildSteps).run();
 
     try {
       testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
@@ -245,7 +245,7 @@ public class BuildStepsRunnerTest {
       throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
           CacheDirectoryNotOwnedException {
     IOException ioException = new IOException();
-    Mockito.doThrow(ioException).when(mockBuildImageSteps).run();
+    Mockito.doThrow(ioException).when(mockBuildSteps).run();
 
     try {
       testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
@@ -267,7 +267,7 @@ public class BuildStepsRunnerTest {
         Mockito.mock(CacheDirectoryNotOwnedException.class);
     Mockito.when(mockCacheDirectoryNotOwnedException.getCacheDirectory())
         .thenReturn(expectedCacheDirectory);
-    Mockito.doThrow(mockCacheDirectoryNotOwnedException).when(mockBuildImageSteps).run();
+    Mockito.doThrow(mockCacheDirectoryNotOwnedException).when(mockBuildSteps).run();
 
     try {
       testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
