@@ -16,8 +16,6 @@
 
 package com.google.cloud.tools.jib.frontend;
 
-import static org.mockito.ArgumentMatchers.any;
-
 import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.common.io.Resources;
@@ -31,6 +29,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -52,7 +51,7 @@ public class MainClassFinderTest {
     Mockito.when(mockProjectProperties.getPluginName()).thenReturn("plugin");
     Mockito.when(mockProjectProperties.getSourceFilesConfiguration())
         .thenReturn(mockSourceFilesConfiguration);
-    Mockito.when(mockProjectProperties.getHelpfulSuggestions(any()))
+    Mockito.when(mockProjectProperties.getMainClassHelpfulSuggestions(ArgumentMatchers.any()))
         .thenReturn(mockHelpfulSuggestions);
   }
 
@@ -133,7 +132,7 @@ public class MainClassFinderTest {
       Assert.fail();
     } catch (IllegalStateException ex) {
       Mockito.verify(mockProjectProperties)
-          .getHelpfulSuggestions(
+          .getMainClassHelpfulSuggestions(
               "Multiple valid main classes were found: HelloWorld, multi.layered.HelloMoon");
     }
   }
@@ -157,7 +156,8 @@ public class MainClassFinderTest {
       MainClassFinder.resolveMainClass(null, mockProjectProperties);
       Assert.fail();
     } catch (IllegalStateException ex) {
-      Mockito.verify(mockProjectProperties).getHelpfulSuggestions("Main class was not found");
+      Mockito.verify(mockProjectProperties)
+          .getMainClassHelpfulSuggestions("Main class was not found");
     }
   }
 }

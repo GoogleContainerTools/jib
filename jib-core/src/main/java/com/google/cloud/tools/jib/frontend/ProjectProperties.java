@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.frontend;
 
 import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
+import java.nio.file.Path;
 import javax.annotation.Nullable;
 
 /** Project property methods that require maven/gradle-specific implementations. */
@@ -32,10 +33,12 @@ public interface ProjectProperties {
 
   SourceFilesConfiguration getSourceFilesConfiguration();
 
+  Path getCacheDirectory();
+
   /** @return the name of the main class configured in a jar plugin, or null if none is found. */
   @Nullable
   String getMainClassFromJar();
 
   /** @return a {@link HelpfulSuggestions} instance for main class inference failure. */
-  HelpfulSuggestions getHelpfulSuggestions(String prefix);
+  HelpfulSuggestions getMainClassHelpfulSuggestions(String prefix);
 }

@@ -56,13 +56,15 @@ public class BuildDockerMojo extends JibPluginConfiguration {
     MavenBuildLogger mavenBuildLogger = new MavenBuildLogger(getLog());
     MavenProjectProperties mavenProjectProperties =
         MavenProjectProperties.getForProject(getProject(), mavenBuildLogger);
+    String mainClass = MainClassFinder.resolveMainClass(getMainClass(), mavenProjectProperties);
+
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder(mavenBuildLogger)
             .setBaseImage(baseImage)
             .setBaseImageCredentialHelperName(getBaseImageCredentialHelperName())
             .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
             .setTargetImage(targetImage)
-            .setMainClass(MainClassFinder.resolveMainClass(getMainClass(), mavenProjectProperties))
+            .setMainClass(mainClass)
             .setJvmFlags(getJvmFlags())
             .setEnvironment(getEnvironment())
             .build();

@@ -69,15 +69,16 @@ public class BuildDockerTask extends DefaultTask {
     GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(getProject(), gradleBuildLogger);
+    String mainClass =
+        MainClassFinder.resolveMainClass(jibExtension.getMainClass(), gradleProjectProperties);
+
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder(gradleBuildLogger)
             .setBaseImage(ImageReference.parse(jibExtension.getBaseImage()))
             .setTargetImage(ImageReference.parse(jibExtension.getTargetImage()))
             .setBaseImageCredentialHelperName(jibExtension.getFrom().getCredHelper())
             .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
-            .setMainClass(
-                MainClassFinder.resolveMainClass(
-                    jibExtension.getMainClass(), gradleProjectProperties))
+            .setMainClass(mainClass)
             .setJvmFlags(jibExtension.getJvmFlags())
             .build();
 

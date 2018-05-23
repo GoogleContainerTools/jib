@@ -34,10 +34,6 @@ class MavenProjectProperties implements ProjectProperties {
 
   private static final String PLUGIN_NAME = "jib-maven-plugin";
 
-  private final MavenProject project;
-  private final MavenBuildLogger mavenBuildLogger;
-  private final SourceFilesConfiguration sourceFilesConfiguration;
-
   /** @return a MavenProjectProperties from the given project and logger. */
   static MavenProjectProperties getForProject(
       MavenProject project, MavenBuildLogger mavenBuildLogger) throws MojoExecutionException {
@@ -53,13 +49,26 @@ class MavenProjectProperties implements ProjectProperties {
     }
   }
 
+  private final MavenProject project;
+  private final MavenBuildLogger mavenBuildLogger;
+  private final SourceFilesConfiguration sourceFilesConfiguration;
+
+  private MavenProjectProperties(
+      MavenProject project,
+      MavenBuildLogger mavenBuildLogger,
+      SourceFilesConfiguration sourceFilesConfiguration) {
+    this.project = project;
+    this.mavenBuildLogger = mavenBuildLogger;
+    this.sourceFilesConfiguration = sourceFilesConfiguration;
+  }
+
   @Override
   public SourceFilesConfiguration getSourceFilesConfiguration() {
     return sourceFilesConfiguration;
   }
 
   @Override
-  public HelpfulSuggestions getHelpfulSuggestions(String prefix) {
+  public HelpfulSuggestions getMainClassHelpfulSuggestions(String prefix) {
     return HelpfulSuggestionsProvider.get(prefix);
   }
 
@@ -99,16 +108,8 @@ class MavenProjectProperties implements ProjectProperties {
     return null;
   }
 
-  Path getCacheDirectory() {
+  @Override
+  public Path getCacheDirectory() {
     return Paths.get(project.getBuild().getDirectory(), CACHE_DIRECTORY_NAME);
-  }
-
-  private MavenProjectProperties(
-      MavenProject project,
-      MavenBuildLogger mavenBuildLogger,
-      SourceFilesConfiguration sourceFilesConfiguration) {
-    this.project = project;
-    this.mavenBuildLogger = mavenBuildLogger;
-    this.sourceFilesConfiguration = sourceFilesConfiguration;
   }
 }

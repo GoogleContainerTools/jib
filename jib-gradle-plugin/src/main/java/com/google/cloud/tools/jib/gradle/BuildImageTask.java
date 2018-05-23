@@ -81,6 +81,9 @@ public class BuildImageTask extends DefaultTask {
     GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(getProject(), gradleBuildLogger);
+    String mainClass =
+        MainClassFinder.resolveMainClass(jibExtension.getMainClass(), gradleProjectProperties);
+
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder(gradleBuildLogger)
             .setBaseImage(ImageReference.parse(jibExtension.getBaseImage()))
@@ -89,9 +92,7 @@ public class BuildImageTask extends DefaultTask {
             .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
             .setTargetImageCredentialHelperName(jibExtension.getTo().getCredHelper())
             .setKnownTargetRegistryCredentials(knownTargetRegistryCredentials)
-            .setMainClass(
-                MainClassFinder.resolveMainClass(
-                    jibExtension.getMainClass(), gradleProjectProperties))
+            .setMainClass(mainClass)
             .setJvmFlags(jibExtension.getJvmFlags())
             .setTargetFormat(jibExtension.getFormat())
             .build();

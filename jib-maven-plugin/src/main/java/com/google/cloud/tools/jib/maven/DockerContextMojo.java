@@ -47,12 +47,13 @@ public class DockerContextMojo extends JibPluginConfiguration {
     MavenBuildLogger mavenBuildLogger = new MavenBuildLogger(getLog());
     MavenProjectProperties mavenProjectProperties =
         MavenProjectProperties.getForProject(getProject(), mavenBuildLogger);
+    String mainClass = MainClassFinder.resolveMainClass(getMainClass(), mavenProjectProperties);
 
     try {
       new DockerContextGenerator(mavenProjectProperties.getSourceFilesConfiguration())
           .setBaseImage(getBaseImage())
           .setJvmFlags(getJvmFlags())
-          .setMainClass(MainClassFinder.resolveMainClass(getMainClass(), mavenProjectProperties))
+          .setMainClass(mainClass)
           .generate(Paths.get(targetDir));
 
       mavenBuildLogger.info("Created Docker context at " + targetDir);

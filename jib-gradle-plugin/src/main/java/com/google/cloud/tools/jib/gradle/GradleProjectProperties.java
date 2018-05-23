@@ -35,10 +35,6 @@ class GradleProjectProperties implements ProjectProperties {
 
   private static final String PLUGIN_NAME = "jib";
 
-  private final Project project;
-  private final GradleBuildLogger gradleBuildLogger;
-  private final SourceFilesConfiguration sourceFilesConfiguration;
-
   /** @return a GradleProjectProperties from the given project and logger. */
   static GradleProjectProperties getForProject(
       Project project, GradleBuildLogger gradleBuildLogger) {
@@ -46,8 +42,25 @@ class GradleProjectProperties implements ProjectProperties {
       return new GradleProjectProperties(
           project, gradleBuildLogger, GradleSourceFilesConfiguration.getForProject(project));
     } catch (IOException ex) {
-      throw new GradleException("Obtaining project build output files failed", ex);
+      throw new GradleException(
+          "Obtaining project build output files failed; make sure you have compiled your project "
+              + "before trying to build the image. (Did you accidentally run \"gradle clean "
+              + "jib\" instead of \"gradle clean compileJava jib\"?)",
+          ex);
     }
+  }
+
+  private final Project project;
+  private final GradleBuildLogger gradleBuildLogger;
+  private final SourceFilesConfiguration sourceFilesConfiguration;
+
+  private GradleProjectProperties(
+      Project project,
+      GradleBuildLogger gradleBuildLogger,
+      SourceFilesConfiguration sourceFilesConfiguration) {
+    this.project = project;
+    this.gradleBuildLogger = gradleBuildLogger;
+    this.sourceFilesConfiguration = sourceFilesConfiguration;
   }
 
   @Override
@@ -56,7 +69,7 @@ class GradleProjectProperties implements ProjectProperties {
   }
 
   @Override
-  public HelpfulSuggestions getHelpfulSuggestions(String prefix) {
+  public HelpfulSuggestions getMainClassHelpfulSuggestions(String prefix) {
     return HelpfulSuggestionsProvider.get(prefix);
   }
 
@@ -80,16 +93,8 @@ class GradleProjectProperties implements ProjectProperties {
     return (String) ((Jar) jarTasks.get(0)).getManifest().getAttributes().get("Main-Class");
   }
 
+  @Override
   public Path getCacheDirectory() {
     return project.getBuildDir().toPath().resolve(CACHE_DIRECTORY_NAME);
-  }
-
-  private GradleProjectProperties(
-      Project project,
-      GradleBuildLogger gradleBuildLogger,
-      SourceFilesConfiguration sourceFilesConfiguration) {
-    this.project = project;
-    this.gradleBuildLogger = gradleBuildLogger;
-    this.sourceFilesConfiguration = sourceFilesConfiguration;
   }
 }

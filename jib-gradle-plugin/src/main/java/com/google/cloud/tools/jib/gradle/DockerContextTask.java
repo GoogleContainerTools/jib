@@ -67,6 +67,8 @@ public class DockerContextTask extends DefaultTask {
     GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(getProject(), gradleBuildLogger);
+    String mainClass =
+        MainClassFinder.resolveMainClass(jibExtension.getMainClass(), gradleProjectProperties);
 
     String targetDir = getTargetDir();
 
@@ -74,9 +76,7 @@ public class DockerContextTask extends DefaultTask {
       new DockerContextGenerator(gradleProjectProperties.getSourceFilesConfiguration())
           .setBaseImage(jibExtension.getBaseImage())
           .setJvmFlags(jibExtension.getJvmFlags())
-          .setMainClass(
-              MainClassFinder.resolveMainClass(
-                  jibExtension.getMainClass(), gradleProjectProperties))
+          .setMainClass(mainClass)
           .generate(Paths.get(targetDir));
 
       gradleBuildLogger.info("Created Docker context at " + targetDir);

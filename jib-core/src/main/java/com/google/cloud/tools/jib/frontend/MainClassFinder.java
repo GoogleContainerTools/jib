@@ -59,7 +59,8 @@ public class MainClassFinder {
    * If {@code mainClass} is {@code null}, tries to infer main class in this order:
    *
    * <ul>
-   *   <li>1. Looks in a {@code jar} plugin provided by {@code projectProperties}.
+   *   <li>1. Looks in a {@code jar} plugin provided by {@code projectProperties} ({@code
+   *       maven-jar-plugin} for maven or {@code jar} task for gradle).
    *   <li>2. Searches for a class defined with a main method.
    * </ul>
    *
@@ -93,20 +94,20 @@ public class MainClassFinder {
             // No main class found anywhere
             throw new IllegalStateException(
                 projectProperties
-                    .getHelpfulSuggestions("Main class was not found")
+                    .getMainClassHelpfulSuggestions("Main class was not found")
                     .forMainClassNotFound(projectProperties.getPluginName()));
           } else if (mainClasses.size() > 1 && mainClass == null) {
             // More than one main class found with no jar plugin to fall back on; error
             throw new IllegalStateException(
                 projectProperties
-                    .getHelpfulSuggestions(
+                    .getMainClassHelpfulSuggestions(
                         "Multiple valid main classes were found: " + String.join(", ", mainClasses))
                     .forMainClassNotFound(projectProperties.getPluginName()));
           }
         } catch (IOException ex) {
           throw new IllegalStateException(
               projectProperties
-                  .getHelpfulSuggestions("Failed to get main class")
+                  .getMainClassHelpfulSuggestions("Failed to get main class")
                   .forMainClassNotFound(projectProperties.getPluginName()),
               ex);
         }
@@ -127,7 +128,7 @@ public class MainClassFinder {
    * @throws IOException if searching/reading files fails.
    */
   @VisibleForTesting
-  public static List<String> findMainClasses(Path rootDirectory) throws IOException {
+  static List<String> findMainClasses(Path rootDirectory) throws IOException {
     List<String> classNames = new ArrayList<>();
 
     // Make sure rootDirectory is valid
