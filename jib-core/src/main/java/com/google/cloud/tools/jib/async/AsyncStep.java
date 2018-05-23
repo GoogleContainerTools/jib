@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.builder;
+package com.google.cloud.tools.jib.async;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -34,7 +34,7 @@ import java.util.concurrent.Callable;
  *
  * @param <T> the object type passed on by this step
  */
-interface AsyncStep<T> {
+public interface AsyncStep<T> {
 
   /** @return the submitted future */
   // TODO: Consider changing this to be orchestrated by an AsyncStepsBuilder.

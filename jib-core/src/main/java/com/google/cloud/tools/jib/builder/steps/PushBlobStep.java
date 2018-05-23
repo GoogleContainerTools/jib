@@ -14,9 +14,12 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.builder;
+package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.Timer;
+import com.google.cloud.tools.jib.async.AsyncStep;
+import com.google.cloud.tools.jib.async.NonBlockingSteps;
+import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.registry.RegistryClient;
@@ -59,8 +62,7 @@ class PushBlobStep implements AsyncStep<Void>, Callable<Void> {
   }
 
   @Override
-  public Void call()
-      throws IOException, RegistryException, ExecutionException, InterruptedException {
+  public Void call() throws IOException, RegistryException, ExecutionException {
     CachedLayer layer = NonBlockingSteps.get(cachedLayerStep);
     DescriptorDigest layerDigest = layer.getBlobDescriptor().getDigest();
 

@@ -14,18 +14,18 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.builder;
+package com.google.cloud.tools.jib.async;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import java.util.concurrent.ExecutionException;
 
-/** Static utility for ensuring {@link ListenableFuture#get} does not block. */
-class NonBlockingSteps {
+/** Static methods for {@link AsyncStep}. */
+public class AsyncSteps {
 
-  static <T> T get(AsyncStep<T> asyncStep) throws ExecutionException {
-    return Futures.getDone(asyncStep.getFuture());
+  public static <T> AsyncStep<T> immediate(T returnValue) {
+    ListenableFuture<T> future = Futures.immediateFuture(returnValue);
+    return () -> future;
   }
 
-  private NonBlockingSteps() {}
+  private AsyncSteps() {}
 }

@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /** Implementation of {@link SourceFilesConfiguration} that uses test resources. */
-class TestSourceFilesConfiguration implements SourceFilesConfiguration {
+public class TestSourceFilesConfiguration implements SourceFilesConfiguration {
 
   private static final String EXTRACTION_PATH = "/some/extraction/path/";
 
@@ -35,7 +35,7 @@ class TestSourceFilesConfiguration implements SourceFilesConfiguration {
   private final List<Path> resourcesSourceFiles;
   private final List<Path> classesSourceFiles;
 
-  TestSourceFilesConfiguration() throws URISyntaxException, IOException {
+  public TestSourceFilesConfiguration() throws URISyntaxException, IOException {
     dependenciesSourceFiles = getFilesList("application/dependencies");
     resourcesSourceFiles = getFilesList("application/resources");
     classesSourceFiles = getFilesList("application/classes");
