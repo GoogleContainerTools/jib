@@ -30,6 +30,8 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
@@ -83,20 +85,37 @@ class PushImageStep implements AsyncStep<Void>, Callable<Void> {
   public Void call() throws ExecutionException, InterruptedException {
     ImmutableList.Builder<ListenableFuture<?>> dependenciesBuilder = ImmutableList.builder();
     dependenciesBuilder.add(authenticatePushStep.getFuture());
-    for (PushBlobStep pushBlobStep : NonBlockingSteps.get(pushBaseImageLayersStep)) {
-      dependenciesBuilder.add(pushBlobStep.getFuture());
+    for (AsyncStep<PushBlobStep> pushBlobStepStep : NonBlockingSteps.get(pushBaseImageLayersStep)) {
+      dependenciesBuilder.add(pushBlobStepStep.getFuture());
     }
-    for (PushBlobStep pushBlobStep : NonBlockingSteps.get(pushApplicationLayersStep)) {
-      dependenciesBuilder.add(pushBlobStep.getFuture());
+    for (AsyncStep<PushBlobStep> pushBlobStepStep :
+        NonBlockingSteps.get(pushApplicationLayersStep)) {
+      dependenciesBuilder.add(pushBlobStepStep.getFuture());
     }
     dependenciesBuilder.add(NonBlockingSteps.get(pushContainerConfigurationStep).getFuture());
     dependenciesBuilder.add(NonBlockingSteps.get(buildImageStep).getFuture());
-    return Futures.whenAllComplete(dependenciesBuilder.build())
-        .call(this::afterPushBaseImageLayerFuturesFuture, listeningExecutorService)
+    return Futures.whenAllSucceed(dependenciesBuilder.build())
+        .call(this::afterPushSteps, listeningExecutorService)
+        .get()
         .get();
   }
 
-  private Void afterPushBaseImageLayerFuturesFuture()
+  private ListenableFuture<Void> afterPushSteps() throws ExecutionException {
+    List<ListenableFuture<?>> dependencies = new ArrayList<>();
+    for (AsyncStep<PushBlobStep> pushBlobStepStep : NonBlockingSteps.get(pushBaseImageLayersStep)) {
+      dependencies.add(NonBlockingSteps.get(pushBlobStepStep).getFuture());
+    }
+    for (AsyncStep<PushBlobStep> pushBlobStepStep :
+        NonBlockingSteps.get(pushApplicationLayersStep)) {
+      dependencies.add(NonBlockingSteps.get(pushBlobStepStep).getFuture());
+    }
+    dependencies.add(
+        NonBlockingSteps.get(NonBlockingSteps.get(pushContainerConfigurationStep)).getFuture());
+    return Futures.whenAllSucceed(dependencies)
+        .call(this::afterAllPushed, listeningExecutorService);
+  }
+
+  private Void afterAllPushed()
       throws IOException, RegistryException, ExecutionException, LayerPropertyNotFoundException {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       RegistryClient registryClient =
@@ -113,7 +132,8 @@ class PushImageStep implements AsyncStep<Void>, Callable<Void> {
       BuildableManifestTemplate manifestTemplate =
           imageToJsonTranslator.getManifestTemplate(
               buildConfiguration.getTargetFormat(),
-              NonBlockingSteps.get(NonBlockingSteps.get(pushContainerConfigurationStep)));
+              NonBlockingSteps.get(
+                  NonBlockingSteps.get(NonBlockingSteps.get(pushContainerConfigurationStep))));
       registryClient.pushManifest(manifestTemplate, buildConfiguration.getTargetImageTag());
     }
 

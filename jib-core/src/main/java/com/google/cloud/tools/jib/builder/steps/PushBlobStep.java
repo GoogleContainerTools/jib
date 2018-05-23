@@ -19,9 +19,9 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
+import com.google.cloud.tools.jib.blob.Blob;
+import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
-import com.google.cloud.tools.jib.cache.CachedLayer;
-import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryException;
 import com.google.common.util.concurrent.Futures;
@@ -32,41 +32,42 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 /** Pushes a BLOB to the target registry. */
-class PushBlobStep implements AsyncStep<Void>, Callable<Void> {
+class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor> {
 
   private static final String DESCRIPTION = "Pushing BLOB ";
 
   private final BuildConfiguration buildConfiguration;
   private final AuthenticatePushStep authenticatePushStep;
-  private final AsyncStep<CachedLayer> cachedLayerStep;
+  private final BlobDescriptor blobDescriptor;
+  private final Blob blob;
 
-  private final ListenableFuture<Void> listenableFuture;
+  private final ListenableFuture<BlobDescriptor> listenableFuture;
 
   PushBlobStep(
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
       AuthenticatePushStep authenticatePushStep,
-      AsyncStep<CachedLayer> cachedLayerStep) {
+      BlobDescriptor blobDescriptor,
+      Blob blob) {
     this.buildConfiguration = buildConfiguration;
     this.authenticatePushStep = authenticatePushStep;
-    this.cachedLayerStep = cachedLayerStep;
+    this.blobDescriptor = blobDescriptor;
+    this.blob = blob;
 
     listenableFuture =
-        Futures.whenAllSucceed(authenticatePushStep.getFuture(), cachedLayerStep.getFuture())
+        Futures.whenAllSucceed(authenticatePushStep.getFuture())
             .call(this, listeningExecutorService);
   }
 
   @Override
-  public ListenableFuture<Void> getFuture() {
+  public ListenableFuture<BlobDescriptor> getFuture() {
     return listenableFuture;
   }
 
   @Override
-  public Void call() throws IOException, RegistryException, ExecutionException {
-    CachedLayer layer = NonBlockingSteps.get(cachedLayerStep);
-    DescriptorDigest layerDigest = layer.getBlobDescriptor().getDigest();
-
-    try (Timer timer = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION + layerDigest)) {
+  public BlobDescriptor call() throws IOException, RegistryException, ExecutionException {
+    try (Timer timer =
+        new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION + blobDescriptor)) {
       RegistryClient registryClient =
           new RegistryClient(
                   NonBlockingSteps.get(authenticatePushStep),
@@ -74,16 +75,16 @@ class PushBlobStep implements AsyncStep<Void>, Callable<Void> {
                   buildConfiguration.getTargetImageRepository())
               .setTimer(timer);
 
-      if (registryClient.checkBlob(layerDigest) != null) {
+      if (registryClient.checkBlob(blobDescriptor.getDigest()) != null) {
         buildConfiguration
             .getBuildLogger()
-            .info("BLOB : " + layerDigest + " already exists on registry");
-        return null;
+            .info("BLOB : " + blobDescriptor + " already exists on registry");
+        return blobDescriptor;
       }
 
-      registryClient.pushBlob(layerDigest, layer.getBlob());
+      registryClient.pushBlob(blobDescriptor.getDigest(), blob);
 
-      return null;
+      return blobDescriptor;
     }
   }
 }
