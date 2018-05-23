@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.docker.DockerContextGenerator;
-import com.google.cloud.tools.jib.frontend.MainClassFinder;
 import com.google.common.base.Preconditions;
 import com.google.common.io.InsecureRecursiveDeleteException;
 import java.io.IOException;
@@ -67,8 +66,7 @@ public class DockerContextTask extends DefaultTask {
     GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(getProject(), gradleBuildLogger);
-    String mainClass =
-        MainClassFinder.resolveMainClass(jibExtension.getMainClass(), gradleProjectProperties);
+    String mainClass = gradleProjectProperties.getMainClass(jibExtension);
 
     String targetDir = getTargetDir();
 

@@ -17,13 +17,13 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.docker.DockerContextGenerator;
-import com.google.cloud.tools.jib.frontend.MainClassFinder;
 import com.google.common.base.Preconditions;
 import com.google.common.io.InsecureRecursiveDeleteException;
 import java.io.IOException;
 import java.nio.file.Paths;
 import javax.annotation.Nullable;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
@@ -41,13 +41,13 @@ public class DockerContextMojo extends JibPluginConfiguration {
   private String targetDir;
 
   @Override
-  public void execute() throws MojoExecutionException {
+  public void execute() throws MojoExecutionException, MojoFailureException {
     Preconditions.checkNotNull(targetDir);
 
     MavenBuildLogger mavenBuildLogger = new MavenBuildLogger(getLog());
     MavenProjectProperties mavenProjectProperties =
         MavenProjectProperties.getForProject(getProject(), mavenBuildLogger);
-    String mainClass = MainClassFinder.resolveMainClass(getMainClass(), mavenProjectProperties);
+    String mainClass = mavenProjectProperties.getMainClass(this);
 
     try {
       new DockerContextGenerator(mavenProjectProperties.getSourceFilesConfiguration())

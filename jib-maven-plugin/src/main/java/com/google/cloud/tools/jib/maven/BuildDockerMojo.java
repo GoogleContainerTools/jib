@@ -21,7 +21,6 @@ import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
 import com.google.cloud.tools.jib.frontend.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
-import com.google.cloud.tools.jib.frontend.MainClassFinder;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.base.Preconditions;
@@ -56,7 +55,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
     MavenBuildLogger mavenBuildLogger = new MavenBuildLogger(getLog());
     MavenProjectProperties mavenProjectProperties =
         MavenProjectProperties.getForProject(getProject(), mavenBuildLogger);
-    String mainClass = MainClassFinder.resolveMainClass(getMainClass(), mavenProjectProperties);
+    String mainClass = mavenProjectProperties.getMainClass(this);
 
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder(mavenBuildLogger)

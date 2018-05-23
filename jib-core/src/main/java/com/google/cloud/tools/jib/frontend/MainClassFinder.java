@@ -48,7 +48,7 @@ public class MainClassFinder {
       try {
         byte[] bytes = Files.readAllBytes(classFile);
         return defineClass(name, bytes, 0, bytes.length);
-      } catch (IOException | ClassFormatError ignored) {
+      } catch (IOException | ClassFormatError | NoClassDefFoundError ignored) {
         // Not a valid class file
         return null;
       }
@@ -67,7 +67,8 @@ public class MainClassFinder {
    * <p>Warns if main class is not valid, or throws an error if no valid main class is not found.
    */
   public static String resolveMainClass(
-      @Nullable String mainClass, ProjectProperties projectProperties) {
+      @Nullable String mainClass, ProjectProperties projectProperties)
+      throws MainClassInferenceException {
     BuildLogger logger = projectProperties.getLogger();
     if (mainClass == null) {
       logger.info(
@@ -77,8 +78,9 @@ public class MainClassFinder {
       mainClass = projectProperties.getMainClassFromJar();
       if (mainClass == null || !BuildConfiguration.isValidJavaClass(mainClass)) {
         logger.debug(
-            "Could not find a valid main class specified in a jar plugin; attempting to infer "
-                + "main class.");
+            "Could not find a valid main class specified in "
+                + projectProperties.getJarPluginName()
+                + "; attempting to infer main class.");
 
         try {
           // Adds each file in each classes output directory to the classes files list.
@@ -92,20 +94,20 @@ public class MainClassFinder {
             mainClass = mainClasses.get(0);
           } else if (mainClasses.size() == 0 && mainClass == null) {
             // No main class found anywhere
-            throw new IllegalStateException(
+            throw new MainClassInferenceException(
                 projectProperties
                     .getMainClassHelpfulSuggestions("Main class was not found")
                     .forMainClassNotFound(projectProperties.getPluginName()));
           } else if (mainClasses.size() > 1 && mainClass == null) {
             // More than one main class found with no jar plugin to fall back on; error
-            throw new IllegalStateException(
+            throw new MainClassInferenceException(
                 projectProperties
                     .getMainClassHelpfulSuggestions(
                         "Multiple valid main classes were found: " + String.join(", ", mainClasses))
                     .forMainClassNotFound(projectProperties.getPluginName()));
           }
         } catch (IOException ex) {
-          throw new IllegalStateException(
+          throw new MainClassInferenceException(
               projectProperties
                   .getMainClassHelpfulSuggestions("Failed to get main class")
                   .forMainClassNotFound(projectProperties.getPluginName()),

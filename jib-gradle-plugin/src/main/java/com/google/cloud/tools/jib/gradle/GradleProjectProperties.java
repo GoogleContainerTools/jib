@@ -19,6 +19,8 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
+import com.google.cloud.tools.jib.frontend.MainClassFinder;
+import com.google.cloud.tools.jib.frontend.MainClassInferenceException;
 import com.google.cloud.tools.jib.frontend.ProjectProperties;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -34,6 +36,7 @@ import org.gradle.jvm.tasks.Jar;
 class GradleProjectProperties implements ProjectProperties {
 
   private static final String PLUGIN_NAME = "jib";
+  private static final String JAR_PLUGIN_NAME = "'jar' task";
 
   /** @return a GradleProjectProperties from the given project and logger. */
   static GradleProjectProperties getForProject(
@@ -96,5 +99,23 @@ class GradleProjectProperties implements ProjectProperties {
   @Override
   public Path getCacheDirectory() {
     return project.getBuildDir().toPath().resolve(CACHE_DIRECTORY_NAME);
+  }
+
+  @Override
+  public String getJarPluginName() {
+    return JAR_PLUGIN_NAME;
+  }
+
+  /**
+   * Tries to resolve the main class.
+   *
+   * @throws GradleException if resolving the main class fails.
+   */
+  String getMainClass(JibExtension jibExtension) {
+    try {
+      return MainClassFinder.resolveMainClass(jibExtension.getMainClass(), this);
+    } catch (MainClassInferenceException ex) {
+      throw new GradleException(ex.getMessage(), ex);
+    }
   }
 }

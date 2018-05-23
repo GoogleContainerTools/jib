@@ -19,6 +19,8 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
+import com.google.cloud.tools.jib.frontend.MainClassFinder;
+import com.google.cloud.tools.jib.frontend.MainClassInferenceException;
 import com.google.cloud.tools.jib.frontend.ProjectProperties;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -33,6 +35,7 @@ import org.codehaus.plexus.util.xml.Xpp3Dom;
 class MavenProjectProperties implements ProjectProperties {
 
   private static final String PLUGIN_NAME = "jib-maven-plugin";
+  private static final String JAR_PLUGIN_NAME = "'maven-jar-plugin'";
 
   /** @return a MavenProjectProperties from the given project and logger. */
   static MavenProjectProperties getForProject(
@@ -111,5 +114,23 @@ class MavenProjectProperties implements ProjectProperties {
   @Override
   public Path getCacheDirectory() {
     return Paths.get(project.getBuild().getDirectory(), CACHE_DIRECTORY_NAME);
+  }
+
+  @Override
+  public String getJarPluginName() {
+    return JAR_PLUGIN_NAME;
+  }
+
+  /**
+   * Tries to resolve the main class.
+   *
+   * @throws MojoExecutionException if resolving the main class fails.
+   */
+  String getMainClass(JibPluginConfiguration jibPluginConfiguration) throws MojoExecutionException {
+    try {
+      return MainClassFinder.resolveMainClass(jibPluginConfiguration.getMainClass(), this);
+    } catch (MainClassInferenceException ex) {
+      throw new MojoExecutionException(ex.getMessage(), ex);
+    }
   }
 }

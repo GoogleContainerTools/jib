@@ -21,7 +21,6 @@ import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
 import com.google.cloud.tools.jib.frontend.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
-import com.google.cloud.tools.jib.frontend.MainClassFinder;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
@@ -90,7 +89,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
     MavenBuildLogger mavenBuildLogger = new MavenBuildLogger(getLog());
     MavenProjectProperties mavenProjectProperties =
         MavenProjectProperties.getForProject(getProject(), mavenBuildLogger);
-    String mainClass = MainClassFinder.resolveMainClass(getMainClass(), mavenProjectProperties);
+    String mainClass = mavenProjectProperties.getMainClass(this);
 
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder(mavenBuildLogger)

@@ -53,6 +53,7 @@ public class MainClassFinderTest {
         .thenReturn(mockSourceFilesConfiguration);
     Mockito.when(mockProjectProperties.getMainClassHelpfulSuggestions(ArgumentMatchers.any()))
         .thenReturn(mockHelpfulSuggestions);
+    Mockito.when(mockProjectProperties.getJarPluginName()).thenReturn("jar-plugin");
   }
 
   @Test
@@ -89,7 +90,7 @@ public class MainClassFinderTest {
   }
 
   @Test
-  public void testResolveMainClass() {
+  public void testResolveMainClass() throws MainClassInferenceException {
     Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("some.main.class");
     Assert.assertEquals(
         "some.main.class", MainClassFinder.resolveMainClass(null, mockProjectProperties));
@@ -98,7 +99,7 @@ public class MainClassFinderTest {
   }
 
   @Test
-  public void testResolveMainClass_notValid() {
+  public void testResolveMainClass_notValid() throws MainClassInferenceException {
     Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("${start-class}");
     Mockito.when(mockSourceFilesConfiguration.getClassesFiles()).thenReturn(fakeClassesPath);
     Assert.assertEquals(
@@ -130,7 +131,7 @@ public class MainClassFinderTest {
     try {
       MainClassFinder.resolveMainClass(null, mockProjectProperties);
       Assert.fail();
-    } catch (IllegalStateException ex) {
+    } catch (MainClassInferenceException ex) {
       Mockito.verify(mockProjectProperties)
           .getMainClassHelpfulSuggestions(
               "Multiple valid main classes were found: HelloWorld, multi.layered.HelloMoon");
@@ -138,7 +139,7 @@ public class MainClassFinderTest {
   }
 
   @Test
-  public void testResolveMainClass_noneInferredWithBackup() {
+  public void testResolveMainClass_noneInferredWithBackup() throws MainClassInferenceException {
     Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("${start-class}");
     Mockito.when(mockSourceFilesConfiguration.getClassesFiles()).thenReturn(fakeClassesPath);
 
@@ -155,7 +156,7 @@ public class MainClassFinderTest {
     try {
       MainClassFinder.resolveMainClass(null, mockProjectProperties);
       Assert.fail();
-    } catch (IllegalStateException ex) {
+    } catch (MainClassInferenceException ex) {
       Mockito.verify(mockProjectProperties)
           .getMainClassHelpfulSuggestions("Main class was not found");
     }
