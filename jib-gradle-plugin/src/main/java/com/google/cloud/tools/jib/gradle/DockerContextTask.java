@@ -64,15 +64,14 @@ public class DockerContextTask extends DefaultTask {
     Preconditions.checkNotNull(jibExtension);
 
     GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
-
-    ProjectProperties projectProperties =
-        ProjectProperties.getForProject(getProject(), gradleBuildLogger);
-    String mainClass = projectProperties.getMainClass(jibExtension.getMainClass());
+    GradleProjectProperties gradleProjectProperties =
+        GradleProjectProperties.getForProject(getProject(), gradleBuildLogger);
+    String mainClass = gradleProjectProperties.getMainClass(jibExtension);
 
     String targetDir = getTargetDir();
 
     try {
-      new DockerContextGenerator(projectProperties.getSourceFilesConfiguration())
+      new DockerContextGenerator(gradleProjectProperties.getSourceFilesConfiguration())
           .setBaseImage(jibExtension.getBaseImage())
           .setJvmFlags(jibExtension.getJvmFlags())
           .setMainClass(mainClass)

@@ -78,8 +78,10 @@ public class BuildImageTask extends DefaultTask {
     }
 
     GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
-    ProjectProperties projectProperties =
-        ProjectProperties.getForProject(getProject(), gradleBuildLogger);
+    GradleProjectProperties gradleProjectProperties =
+        GradleProjectProperties.getForProject(getProject(), gradleBuildLogger);
+    String mainClass = gradleProjectProperties.getMainClass(jibExtension);
+
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder(gradleBuildLogger)
             .setBaseImage(ImageReference.parse(jibExtension.getBaseImage()))
@@ -88,7 +90,7 @@ public class BuildImageTask extends DefaultTask {
             .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
             .setTargetImageCredentialHelperName(jibExtension.getTo().getCredHelper())
             .setKnownTargetRegistryCredentials(knownTargetRegistryCredentials)
-            .setMainClass(projectProperties.getMainClass(jibExtension.getMainClass()))
+            .setMainClass(mainClass)
             .setJvmFlags(jibExtension.getJvmFlags())
             .setTargetFormat(jibExtension.getFormat())
             .build();
@@ -115,8 +117,8 @@ public class BuildImageTask extends DefaultTask {
     try {
       BuildStepsRunner.forBuildImage(
               buildConfiguration,
-              projectProperties.getSourceFilesConfiguration(),
-              projectProperties.getCacheDirectory(),
+              gradleProjectProperties.getSourceFilesConfiguration(),
+              gradleProjectProperties.getCacheDirectory(),
               jibExtension.getUseOnlyProjectCache())
           .build(HELPFUL_SUGGESTIONS);
 

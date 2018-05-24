@@ -52,14 +52,18 @@ public class BuildDockerMojo extends JibPluginConfiguration {
     RegistryCredentials knownBaseRegistryCredentials =
         mavenSettingsServerCredentials.retrieve(baseImage.getRegistry());
 
-    ProjectProperties projectProperties = ProjectProperties.getForProject(getProject(), getLog());
+    MavenBuildLogger mavenBuildLogger = new MavenBuildLogger(getLog());
+    MavenProjectProperties mavenProjectProperties =
+        MavenProjectProperties.getForProject(getProject(), mavenBuildLogger);
+    String mainClass = mavenProjectProperties.getMainClass(this);
+
     BuildConfiguration buildConfiguration =
-        BuildConfiguration.builder(new MavenBuildLogger(getLog()))
+        BuildConfiguration.builder(mavenBuildLogger)
             .setBaseImage(baseImage)
             .setBaseImageCredentialHelperName(getBaseImageCredentialHelperName())
             .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
             .setTargetImage(targetImage)
-            .setMainClass(projectProperties.getMainClass(getMainClass()))
+            .setMainClass(mainClass)
             .setJvmFlags(getJvmFlags())
             .setEnvironment(getEnvironment())
             .build();
@@ -67,8 +71,8 @@ public class BuildDockerMojo extends JibPluginConfiguration {
     try {
       BuildStepsRunner.forBuildToDockerDaemon(
               buildConfiguration,
-              projectProperties.getSourceFilesConfiguration(),
-              projectProperties.getCacheDirectory(),
+              mavenProjectProperties.getSourceFilesConfiguration(),
+              mavenProjectProperties.getCacheDirectory(),
               getUseOnlyProjectCache())
           .build(HELPFUL_SUGGESTIONS);
       getLog().info("");

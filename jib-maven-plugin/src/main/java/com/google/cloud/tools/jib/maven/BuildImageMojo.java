@@ -86,16 +86,20 @@ public class BuildImageMojo extends JibPluginConfiguration {
     RegistryCredentials knownTargetRegistryCredentials =
         mavenSettingsServerCredentials.retrieve(targetImage.getRegistry());
 
-    ProjectProperties projectProperties = ProjectProperties.getForProject(getProject(), getLog());
+    MavenBuildLogger mavenBuildLogger = new MavenBuildLogger(getLog());
+    MavenProjectProperties mavenProjectProperties =
+        MavenProjectProperties.getForProject(getProject(), mavenBuildLogger);
+    String mainClass = mavenProjectProperties.getMainClass(this);
+
     BuildConfiguration buildConfiguration =
-        BuildConfiguration.builder(new MavenBuildLogger(getLog()))
+        BuildConfiguration.builder(mavenBuildLogger)
             .setBaseImage(baseImage)
             .setBaseImageCredentialHelperName(getBaseImageCredentialHelperName())
             .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
             .setTargetImage(targetImage)
             .setTargetImageCredentialHelperName(getTargetImageCredentialHelperName())
             .setKnownTargetRegistryCredentials(knownTargetRegistryCredentials)
-            .setMainClass(projectProperties.getMainClass(getMainClass()))
+            .setMainClass(mainClass)
             .setJvmFlags(getJvmFlags())
             .setEnvironment(getEnvironment())
             .setTargetFormat(ImageFormat.valueOf(getFormat()).getManifestTemplateClass())
@@ -112,8 +116,8 @@ public class BuildImageMojo extends JibPluginConfiguration {
     try {
       BuildStepsRunner.forBuildImage(
               buildConfiguration,
-              projectProperties.getSourceFilesConfiguration(),
-              projectProperties.getCacheDirectory(),
+              mavenProjectProperties.getSourceFilesConfiguration(),
+              mavenProjectProperties.getCacheDirectory(),
               getUseOnlyProjectCache())
           .build(HELPFUL_SUGGESTIONS);
       getLog().info("");
