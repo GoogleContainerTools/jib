@@ -44,7 +44,7 @@ public class MainClassFinder {
       try {
         byte[] bytes = Files.readAllBytes(classFile);
         return defineClass(name, bytes, 0, bytes.length);
-      } catch (IOException | ClassFormatError ignored) {
+      } catch (IOException | ClassFormatError | NoClassDefFoundError ignored) {
         // Not a valid class file
         return null;
       }
