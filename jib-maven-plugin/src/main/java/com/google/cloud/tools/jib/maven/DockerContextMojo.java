@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import javax.annotation.Nullable;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
@@ -40,20 +41,22 @@ public class DockerContextMojo extends JibPluginConfiguration {
   private String targetDir;
 
   @Override
-  public void execute() throws MojoExecutionException {
+  public void execute() throws MojoExecutionException, MojoFailureException {
     Preconditions.checkNotNull(targetDir);
 
-    ProjectProperties projectProperties = ProjectProperties.getForProject(getProject(), getLog());
-    String inferredMainClass = projectProperties.getMainClass(getMainClass());
+    MavenBuildLogger mavenBuildLogger = new MavenBuildLogger(getLog());
+    MavenProjectProperties mavenProjectProperties =
+        MavenProjectProperties.getForProject(getProject(), mavenBuildLogger);
+    String mainClass = mavenProjectProperties.getMainClass(this);
 
     try {
-      new DockerContextGenerator(projectProperties.getSourceFilesConfiguration())
+      new DockerContextGenerator(mavenProjectProperties.getSourceFilesConfiguration())
           .setBaseImage(getBaseImage())
           .setJvmFlags(getJvmFlags())
-          .setMainClass(inferredMainClass)
+          .setMainClass(mainClass)
           .generate(Paths.get(targetDir));
 
-      getLog().info("Created Docker context at " + targetDir);
+      mavenBuildLogger.info("Created Docker context at " + targetDir);
 
     } catch (InsecureRecursiveDeleteException ex) {
       throw new MojoExecutionException(

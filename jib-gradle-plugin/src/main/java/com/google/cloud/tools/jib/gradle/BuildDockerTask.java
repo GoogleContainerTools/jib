@@ -58,7 +58,6 @@ public class BuildDockerTask extends DefaultTask {
 
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
-
     RegistryCredentials knownBaseRegistryCredentials = null;
     Authorization fromAuthorization = jibExtension.getFrom().getImageAuthorization();
     if (fromAuthorization != null) {
@@ -66,15 +65,16 @@ public class BuildDockerTask extends DefaultTask {
     }
 
     GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
-    ProjectProperties projectProperties =
-        ProjectProperties.getForProject(getProject(), gradleBuildLogger);
+    GradleProjectProperties gradleProjectProperties =
+        GradleProjectProperties.getForProject(getProject(), gradleBuildLogger);
+    String mainClass = gradleProjectProperties.getMainClass(jibExtension);
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder(gradleBuildLogger)
             .setBaseImage(ImageReference.parse(jibExtension.getBaseImage()))
             .setTargetImage(ImageReference.parse(jibExtension.getTargetImage()))
             .setBaseImageCredentialHelperName(jibExtension.getFrom().getCredHelper())
             .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
-            .setMainClass(projectProperties.getMainClass(jibExtension.getMainClass()))
+            .setMainClass(mainClass)
             .setJvmFlags(jibExtension.getJvmFlags())
             .build();
 
@@ -82,8 +82,8 @@ public class BuildDockerTask extends DefaultTask {
     try {
       BuildStepsRunner.forBuildToDockerDaemon(
               buildConfiguration,
-              projectProperties.getSourceFilesConfiguration(),
-              projectProperties.getCacheDirectory(),
+              gradleProjectProperties.getSourceFilesConfiguration(),
+              gradleProjectProperties.getCacheDirectory(),
               jibExtension.getUseOnlyProjectCache())
           .build(HELPFUL_SUGGESTIONS);
 
