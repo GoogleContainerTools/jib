@@ -25,7 +25,7 @@ import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import java.lang.reflect.InvocationTargetException;
 
 /**
- * Translates an {@link Image<CachedLayer>} into a manifest or container configuration JSON BLOB.
+ * Translates an {@link Image} into a manifest or container configuration JSON BLOB.
  *
  * <p>Example usage:
  *
@@ -40,7 +40,7 @@ public class ImageToJsonTranslator {
 
   private final Image<CachedLayer> image;
 
-  /** Instantiate with an {@link Image<CachedLayer>}. */
+  /** Instantiate with an {@link Image}. */
   public ImageToJsonTranslator(Image<CachedLayer> image) {
     this.image = image;
   }
