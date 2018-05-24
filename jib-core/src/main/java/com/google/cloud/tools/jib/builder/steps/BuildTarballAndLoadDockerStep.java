@@ -24,8 +24,6 @@ import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.docker.json.DockerLoadManifestTemplate;
 import com.google.cloud.tools.jib.image.Image;
-import com.google.cloud.tools.jib.image.Layer;
-import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.tar.TarStreamBuilder;
@@ -96,15 +94,14 @@ class BuildTarballAndLoadDockerStep implements AsyncStep<Void>, Callable<Void> {
 
   // TODO: Refactor into testable components
   private Void afterPushBaseImageLayerFuturesFuture()
-      throws ExecutionException, InterruptedException, IOException, LayerPropertyNotFoundException {
+      throws ExecutionException, InterruptedException, IOException {
     // Add layers to image tarball
-    Image image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
+    Image<CachedLayer> image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
     TarStreamBuilder tarStreamBuilder = new TarStreamBuilder();
     DockerLoadManifestTemplate manifestTemplate = new DockerLoadManifestTemplate();
 
-    for (Layer layer : image.getLayers()) {
-      // TODO: Refactor Image to only contain CachedLayers
-      Path cachedFile = ((CachedLayer) layer).getContentFile();
+    for (CachedLayer layer : image.getLayers()) {
+      Path cachedFile = layer.getContentFile();
       String layerName = cachedFile.getFileName().toString();
       tarStreamBuilder.addEntry(new TarArchiveEntry(cachedFile.toFile(), layerName));
       manifestTemplate.addLayerFile(layerName);

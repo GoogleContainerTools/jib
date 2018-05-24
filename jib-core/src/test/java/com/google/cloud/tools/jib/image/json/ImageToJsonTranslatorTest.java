@@ -18,11 +18,10 @@ package com.google.cloud.tools.jib.image.json;
 
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
+import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
-import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
-import com.google.cloud.tools.jib.image.ReferenceLayer;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Resources;
@@ -38,6 +37,7 @@ import java.util.Arrays;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 /** Tests for {@link ImageToJsonTranslator}. */
 public class ImageToJsonTranslatorTest {
@@ -46,7 +46,7 @@ public class ImageToJsonTranslatorTest {
 
   @Before
   public void setUp() throws DigestException, LayerPropertyNotFoundException {
-    Image.Builder testImageBuilder = Image.builder();
+    Image.Builder<CachedLayer> testImageBuilder = Image.builder();
 
     testImageBuilder.setEnvironmentVariable("VAR1", "VAL1");
     testImageBuilder.setEnvironmentVariable("VAR2", "VAL2");
@@ -56,15 +56,15 @@ public class ImageToJsonTranslatorTest {
     DescriptorDigest fakeDigest =
         DescriptorDigest.fromDigest(
             "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad");
-    Layer fakeLayer = new ReferenceLayer(new BlobDescriptor(1000, fakeDigest), fakeDigest);
+    CachedLayer fakeLayer =
+        new CachedLayer(Mockito.mock(Path.class), new BlobDescriptor(1000, fakeDigest), fakeDigest);
     testImageBuilder.addLayer(fakeLayer);
 
     imageToJsonTranslator = new ImageToJsonTranslator(testImageBuilder.build());
   }
 
   @Test
-  public void testGetContainerConfiguration()
-      throws IOException, LayerPropertyNotFoundException, URISyntaxException {
+  public void testGetContainerConfiguration() throws IOException, URISyntaxException {
     // Loads the expected JSON string.
     Path jsonFile = Paths.get(Resources.getResource("json/containerconfig.json").toURI());
     String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
@@ -80,21 +80,19 @@ public class ImageToJsonTranslatorTest {
   }
 
   @Test
-  public void testGetManifest_v22()
-      throws URISyntaxException, IOException, LayerPropertyNotFoundException {
+  public void testGetManifest_v22() throws URISyntaxException, IOException {
     testGetManifest(V22ManifestTemplate.class, "json/translated_v22manifest.json");
   }
 
   @Test
-  public void testGetManifest_oci()
-      throws URISyntaxException, IOException, LayerPropertyNotFoundException {
+  public void testGetManifest_oci() throws URISyntaxException, IOException {
     testGetManifest(OCIManifestTemplate.class, "json/translated_ocimanifest.json");
   }
 
   /** Tests translation of image to {@link BuildableManifestTemplate}. */
   private <T extends BuildableManifestTemplate> void testGetManifest(
       Class<T> manifestTemplateClass, String translatedJsonFilename)
-      throws URISyntaxException, IOException, LayerPropertyNotFoundException {
+      throws URISyntaxException, IOException {
     // Loads the expected JSON string.
     Path jsonFile = Paths.get(Resources.getResource(translatedJsonFilename).toURI());
     String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);

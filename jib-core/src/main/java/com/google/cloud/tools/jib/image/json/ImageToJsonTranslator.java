@@ -18,15 +18,14 @@ package com.google.cloud.tools.jib.image.json;
 
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
+import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
-import com.google.cloud.tools.jib.image.Layer;
-import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import java.lang.reflect.InvocationTargetException;
 
 /**
- * Translates an {@link Image} into a manifest or container configuration JSON BLOB.
+ * Translates an {@link Image<CachedLayer>} into a manifest or container configuration JSON BLOB.
  *
  * <p>Example usage:
  *
@@ -39,20 +38,20 @@ import java.lang.reflect.InvocationTargetException;
  */
 public class ImageToJsonTranslator {
 
-  private final Image image;
+  private final Image<CachedLayer> image;
 
-  /** Instantiate with an {@link Image} that should not be modified afterwards. */
-  public ImageToJsonTranslator(Image image) {
+  /** Instantiate with an {@link Image<CachedLayer>}. */
+  public ImageToJsonTranslator(Image<CachedLayer> image) {
     this.image = image;
   }
 
   /** Gets the container configuration as a {@link Blob}. */
-  public Blob getContainerConfigurationBlob() throws LayerPropertyNotFoundException {
+  public Blob getContainerConfigurationBlob() {
     // Set up the JSON template.
     ContainerConfigurationTemplate template = new ContainerConfigurationTemplate();
 
     // Adds the layer diff IDs.
-    for (Layer layer : image.getLayers()) {
+    for (CachedLayer layer : image.getLayers()) {
       template.addLayerDiffId(layer.getDiffId());
     }
 
@@ -72,8 +71,7 @@ public class ImageToJsonTranslator {
    * returned from {@link #getContainerConfigurationBlob()}.
    */
   public <T extends BuildableManifestTemplate> T getManifestTemplate(
-      Class<T> manifestTemplateClass, BlobDescriptor containerConfigurationBlobDescriptor)
-      throws LayerPropertyNotFoundException {
+      Class<T> manifestTemplateClass, BlobDescriptor containerConfigurationBlobDescriptor) {
     try {
       // Set up the JSON template.
       T template = manifestTemplateClass.getDeclaredConstructor().newInstance();
@@ -85,7 +83,7 @@ public class ImageToJsonTranslator {
       template.setContainerConfiguration(containerConfigurationSize, containerConfigurationDigest);
 
       // Adds the layers.
-      for (Layer layer : image.getLayers()) {
+      for (CachedLayer layer : image.getLayers()) {
         template.addLayer(
             layer.getBlobDescriptor().getSize(), layer.getBlobDescriptor().getDigest());
       }
