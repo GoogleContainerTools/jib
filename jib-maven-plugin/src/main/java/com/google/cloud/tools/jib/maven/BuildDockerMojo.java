@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
+import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
 import com.google.cloud.tools.jib.frontend.CacheDirectoryCreationException;
@@ -25,7 +26,6 @@ import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.base.Preconditions;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
@@ -37,8 +37,8 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       HelpfulSuggestionsProvider.get("Build to Docker daemon failed");
 
   @Override
-  public void execute() throws MojoExecutionException, MojoFailureException {
-    if (!BuildStepsRunner.isDockerInstalled()) {
+  public void execute() throws MojoExecutionException {
+    if (!DockerClient.isDockerInstalled()) {
       throw new MojoExecutionException(HELPFUL_SUGGESTIONS.forDockerNotInstalled());
     }
 
