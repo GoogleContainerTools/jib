@@ -89,7 +89,7 @@ class BuildTarballAndLoadDockerStep implements AsyncStep<Void>, Callable<Void> {
       dependenciesBuilder.add(buildAndCacheApplicationLayerStep.getFuture());
     }
     dependenciesBuilder.add(NonBlockingSteps.get(buildImageStep).getFuture());
-    return Futures.whenAllComplete(dependenciesBuilder.build())
+    return Futures.whenAllSucceed(dependenciesBuilder.build())
         .call(this::afterPushBaseImageLayerFuturesFuture, listeningExecutorService)
         .get();
   }
