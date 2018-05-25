@@ -38,7 +38,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
 
   @Override
   public void execute() throws MojoExecutionException {
-    if (!DockerClient.isDockerInstalled()) {
+    if (!new DockerClient().isDockerInstalled()) {
       throw new MojoExecutionException(HELPFUL_SUGGESTIONS.forDockerNotInstalled());
     }
 

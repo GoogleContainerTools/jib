@@ -24,26 +24,12 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
 /** Calls out to the {@code docker} CLI. */
 public class DockerClient {
-
-  /**
-   * @return {@code true} if Docker is installed on the user's system and accessible as {@code
-   *     docker}
-   */
-  public static boolean isDockerInstalled() {
-    try {
-      new ProcessBuilder("docker").start();
-      return true;
-
-    } catch (IOException ex) {
-      return false;
-    }
-  }
 
   /**
    * @param dockerSubCommand the subcommand to run after {@code docker}
@@ -69,6 +55,20 @@ public class DockerClient {
   }
 
   /**
+   * @return {@code true} if Docker is installed on the user's system and accessible as {@code
+   *     docker}
+   */
+  public boolean isDockerInstalled() {
+    try {
+      docker();
+      return true;
+
+    } catch (IOException ex) {
+      return false;
+    }
+  }
+
+  /**
    * Loads an image tarball into the Docker daemon.
    *
    * @see <a
@@ -77,7 +77,7 @@ public class DockerClient {
    */
   public String load(Blob imageTarballBlob) throws IOException, InterruptedException {
     // Runs 'docker load'.
-    Process dockerProcess = processBuilderFactory.apply(Collections.singletonList("load")).start();
+    Process dockerProcess = docker("load");
 
     try (OutputStream stdin = dockerProcess.getOutputStream()) {
       imageTarballBlob.writeTo(stdin);
@@ -92,5 +92,10 @@ public class DockerClient {
 
       return output;
     }
+  }
+
+  /** Runs a {@code docker} command. */
+  private Process docker(String... subCommand) throws IOException {
+    return processBuilderFactory.apply(Arrays.asList(subCommand)).start();
   }
 }

@@ -18,10 +18,13 @@ package com.google.cloud.tools.jib.docker;
 
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.common.io.ByteStreams;
+import com.google.common.io.Resources;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,6 +43,20 @@ public class DockerClientTest {
   @Before
   public void setUp() throws IOException {
     Mockito.when(mockProcessBuilder.start()).thenReturn(mockProcess);
+  }
+
+  @Test
+  public void testIsDockerInstalled_pass() throws URISyntaxException {
+    ProcessBuilder executableProcessBuilder =
+        new ProcessBuilder(Paths.get(Resources.getResource("executable").toURI()).toString());
+    Assert.assertTrue(new DockerClient(ignored -> executableProcessBuilder).isDockerInstalled());
+  }
+
+  @Test
+  public void testIsDockerInstalled_fail() {
+    ProcessBuilder nonexistentProcessBuilder =
+        new ProcessBuilder(Paths.get("path/to/nonexistent/file").toString());
+    Assert.assertFalse(new DockerClient(ignored -> nonexistentProcessBuilder).isDockerInstalled());
   }
 
   @Test
