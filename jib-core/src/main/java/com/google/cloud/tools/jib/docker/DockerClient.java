@@ -24,7 +24,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 
@@ -76,7 +76,8 @@ public class DockerClient {
    * @return stdout from {@code docker}
    */
   public String load(Blob imageTarballBlob) throws IOException, InterruptedException {
-    Process dockerProcess = docker("load");
+    // Runs 'docker load'.
+    Process dockerProcess = processBuilderFactory.apply(Collections.singletonList("load")).start();
 
     try (OutputStream stdin = dockerProcess.getOutputStream()) {
       imageTarballBlob.writeTo(stdin);
@@ -91,10 +92,5 @@ public class DockerClient {
 
       return output;
     }
-  }
-
-  /** Runs a {@code docker} command. */
-  private Process docker(String... subCommand) throws IOException {
-    return processBuilderFactory.apply(Arrays.asList(subCommand)).start();
   }
 }
