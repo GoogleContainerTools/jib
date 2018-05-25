@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
+import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.common.collect.ImmutableList;
@@ -32,7 +33,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 /** Builds a model {@link Image}. */
-class BuildImageStep implements AsyncStep<AsyncStep<Image>>, Callable<AsyncStep<Image>> {
+class BuildImageStep
+    implements AsyncStep<AsyncStep<Image<CachedLayer>>>, Callable<AsyncStep<Image<CachedLayer>>> {
 
   private static final String DESCRIPTION = "Building container configuration";
 
@@ -42,7 +44,7 @@ class BuildImageStep implements AsyncStep<AsyncStep<Image>>, Callable<AsyncStep<
   private final ImmutableList<String> entrypoint;
 
   private final ListeningExecutorService listeningExecutorService;
-  private final ListenableFuture<AsyncStep<Image>> listenableFuture;
+  private final ListenableFuture<AsyncStep<Image<CachedLayer>>> listenableFuture;
 
   BuildImageStep(
       ListeningExecutorService listeningExecutorService,
@@ -62,12 +64,12 @@ class BuildImageStep implements AsyncStep<AsyncStep<Image>>, Callable<AsyncStep<
   }
 
   @Override
-  public ListenableFuture<AsyncStep<Image>> getFuture() {
+  public ListenableFuture<AsyncStep<Image<CachedLayer>>> getFuture() {
     return listenableFuture;
   }
 
   @Override
-  public AsyncStep<Image> call() throws ExecutionException {
+  public AsyncStep<Image<CachedLayer>> call() throws ExecutionException {
     List<ListenableFuture<?>> dependencies = new ArrayList<>();
 
     for (PullAndCacheBaseImageLayerStep pullAndCacheBaseImageLayerStep :
@@ -78,16 +80,17 @@ class BuildImageStep implements AsyncStep<AsyncStep<Image>>, Callable<AsyncStep<
         buildAndCacheApplicationLayerSteps) {
       dependencies.add(buildAndCacheApplicationLayerStep.getFuture());
     }
-    ListenableFuture<Image> future =
+    ListenableFuture<Image<CachedLayer>> future =
         Futures.whenAllSucceed(dependencies)
             .call(this::afterCachedLayersSteps, listeningExecutorService);
     return () -> future;
   }
 
-  private Image afterCachedLayersSteps() throws ExecutionException, LayerPropertyNotFoundException {
+  private Image<CachedLayer> afterCachedLayersSteps()
+      throws ExecutionException, LayerPropertyNotFoundException {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       // Constructs the image.
-      Image.Builder imageBuilder = Image.builder();
+      Image.Builder<CachedLayer> imageBuilder = Image.builder();
       for (PullAndCacheBaseImageLayerStep pullAndCacheBaseImageLayerStep :
           NonBlockingSteps.get(pullAndCacheBaseImageLayersStep)) {
         imageBuilder.addLayer(NonBlockingSteps.get(pullAndCacheBaseImageLayerStep));

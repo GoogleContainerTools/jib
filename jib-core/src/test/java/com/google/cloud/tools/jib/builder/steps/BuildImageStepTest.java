@@ -22,7 +22,6 @@ import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
-import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
@@ -77,8 +76,7 @@ public class BuildImageStepTest {
   }
 
   @Test
-  public void test_validateAsyncDependencies()
-      throws ExecutionException, InterruptedException, LayerPropertyNotFoundException {
+  public void test_validateAsyncDependencies() throws ExecutionException, InterruptedException {
     BuildImageStep buildImageStep =
         new BuildImageStep(
             MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()),
@@ -89,7 +87,7 @@ public class BuildImageStepTest {
                 mockBuildAndCacheApplicationLayerStep,
                 mockBuildAndCacheApplicationLayerStep),
             ImmutableList.of());
-    Image image = buildImageStep.getFuture().get().getFuture().get();
+    Image<CachedLayer> image = buildImageStep.getFuture().get().getFuture().get();
     Assert.assertEquals(
         testDescriptorDigest, image.getLayers().asList().get(0).getBlobDescriptor().getDigest());
   }
