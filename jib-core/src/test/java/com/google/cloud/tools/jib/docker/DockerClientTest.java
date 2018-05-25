@@ -24,10 +24,15 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFilePermissions;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -36,6 +41,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 /** Tests for {@link DockerClient}. */
 @RunWith(MockitoJUnitRunner.class)
 public class DockerClientTest {
+
+  @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Mock private ProcessBuilder mockProcessBuilder;
   @Mock private Process mockProcess;
@@ -46,9 +53,13 @@ public class DockerClientTest {
   }
 
   @Test
-  public void testIsDockerInstalled_pass() throws URISyntaxException {
-    ProcessBuilder executableProcessBuilder =
-        new ProcessBuilder(Paths.get(Resources.getResource("executable").toURI()).toString());
+  public void testIsDockerInstalled_pass() throws URISyntaxException, IOException {
+    Path executableFile = temporaryFolder.newFolder().toPath().resolve("executable");
+    Files.copy(Paths.get(Resources.getResource("executable").toURI()), executableFile);
+    // 755
+    Files.setPosixFilePermissions(executableFile, PosixFilePermissions.fromString("rwxr-xr-x"));
+
+    ProcessBuilder executableProcessBuilder = new ProcessBuilder(executableFile.toString());
     Assert.assertTrue(new DockerClient(ignored -> executableProcessBuilder).isDockerInstalled());
   }
 
