@@ -53,7 +53,7 @@ public class BuildDockerTask extends DefaultTask {
 
   @TaskAction
   public void buildDocker() throws InvalidImageReferenceException {
-    if (! new DockerClient().isDockerInstalled()) {
+    if (!new DockerClient().isDockerInstalled()) {
       throw new GradleException(HELPFUL_SUGGESTIONS.forDockerNotInstalled());
     }
 
