@@ -32,13 +32,12 @@ import java.util.List;
 public class JsonToImageTranslator {
 
   /** Translates {@link V21ManifestTemplate} to {@link Image}. */
-  public static Image toImage(V21ManifestTemplate manifestTemplate)
+  public static Image<Layer> toImage(V21ManifestTemplate manifestTemplate)
       throws LayerPropertyNotFoundException {
-    Image.Builder imageBuilder = Image.builder();
+    Image.Builder<Layer> imageBuilder = Image.builder();
 
     for (DescriptorDigest digest : manifestTemplate.getLayerDigests()) {
-      Layer layer = new DigestOnlyLayer(digest);
-      imageBuilder.addLayer(layer);
+      imageBuilder.addLayer(new DigestOnlyLayer(digest));
     }
 
     return imageBuilder.build();
@@ -48,12 +47,10 @@ public class JsonToImageTranslator {
    * Translates {@link BuildableManifestTemplate} to {@link Image}. Uses the corresponding {@link
    * ContainerConfigurationTemplate} to get the layer diff IDs.
    */
-  public static Image toImage(
+  public static Image<Layer> toImage(
       BuildableManifestTemplate manifestTemplate,
       ContainerConfigurationTemplate containerConfigurationTemplate)
       throws LayerCountMismatchException, LayerPropertyNotFoundException {
-    Image.Builder imageBuilder = Image.builder();
-
     List<ReferenceNoDiffIdLayer> layers = new ArrayList<>();
     for (BuildableManifestTemplate.ContentDescriptorTemplate layerObjectTemplate :
         manifestTemplate.getLayers()) {
@@ -74,12 +71,13 @@ public class JsonToImageTranslator {
           "Mismatch between image manifest and container configuration");
     }
 
+    Image.Builder<Layer> imageBuilder = Image.builder();
+
     for (int layerIndex = 0; layerIndex < layers.size(); layerIndex++) {
       ReferenceNoDiffIdLayer noDiffIdLayer = layers.get(layerIndex);
       DescriptorDigest diffId = diffIds.get(layerIndex);
 
-      Layer layer = new ReferenceLayer(noDiffIdLayer.getBlobDescriptor(), diffId);
-      imageBuilder.addLayer(layer);
+      imageBuilder.addLayer(new ReferenceLayer(noDiffIdLayer.getBlobDescriptor(), diffId));
     }
 
     if (containerConfigurationTemplate.getContainerEntrypoint() != null) {

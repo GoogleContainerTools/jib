@@ -21,62 +21,57 @@ import java.util.List;
 import java.util.Map;
 
 /** Represents an image. */
-public class Image {
+public class Image<T extends Layer> {
 
-  public static class Builder {
+  /** Builds the immutable {@link Image}. */
+  public static class Builder<T extends Layer> {
 
-    private final ImageLayers.Builder<Layer> imageLayersBuilder = ImageLayers.builder();
+    private final ImageLayers.Builder<T> imageLayersBuilder = ImageLayers.builder();
     private final ImmutableList.Builder<String> environmentBuilder = ImmutableList.builder();
 
     private ImmutableList<String> entrypoint = ImmutableList.of();
 
     /** Sets the environment with a map from environment variable names to values. */
-    public Builder setEnvironment(Map<String, String> environment) {
+    public Builder<T> setEnvironment(Map<String, String> environment) {
       for (Map.Entry<String, String> environmentVariable : environment.entrySet()) {
         setEnvironmentVariable(environmentVariable.getKey(), environmentVariable.getValue());
       }
       return this;
     }
 
-    public Builder setEnvironmentVariable(String name, String value) {
+    public Builder<T> setEnvironmentVariable(String name, String value) {
       environmentBuilder.add(name + "=" + value);
       return this;
     }
 
     /** Adds an environment variable definition in the format {@code NAME=VALUE}. */
-    public Builder addEnvironmentVariableDefinition(String environmentVariableDefinition) {
+    public Builder<T> addEnvironmentVariableDefinition(String environmentVariableDefinition) {
       environmentBuilder.add(environmentVariableDefinition);
       return this;
     }
 
-    public Builder setEntrypoint(List<String> entrypoint) {
+    public Builder<T> setEntrypoint(List<String> entrypoint) {
       this.entrypoint = ImmutableList.copyOf(entrypoint);
       return this;
     }
 
-    public Builder addLayer(Layer layer) throws LayerPropertyNotFoundException {
+    public Builder<T> addLayer(T layer) throws LayerPropertyNotFoundException {
       imageLayersBuilder.add(layer);
       return this;
     }
 
-    public <T extends Layer> Builder addLayers(ImageLayers<T> layers)
-        throws LayerPropertyNotFoundException {
-      this.imageLayersBuilder.addAll(layers);
-      return this;
-    }
-
-    public Image build() {
-      return new Image(
+    public Image<T> build() {
+      return new Image<>(
           imageLayersBuilder.build(), environmentBuilder.build(), ImmutableList.copyOf(entrypoint));
     }
   }
 
-  public static Builder builder() {
-    return new Builder();
+  public static <T extends Layer> Builder<T> builder() {
+    return new Builder<>();
   }
 
   /** The layers of the image, in the order in which they are applied. */
-  private final ImageLayers<Layer> layers;
+  private final ImageLayers<T> layers;
 
   /** Environment variable definitions for running the image, in the format {@code NAME=VALUE}. */
   private final ImmutableList<String> environmentBuilder;
@@ -85,9 +80,7 @@ public class Image {
   private final ImmutableList<String> entrypoint;
 
   private Image(
-      ImageLayers<Layer> layers,
-      ImmutableList<String> environment,
-      ImmutableList<String> entrypoint) {
+      ImageLayers<T> layers, ImmutableList<String> environment, ImmutableList<String> entrypoint) {
     this.layers = layers;
     this.environmentBuilder = environment;
     this.entrypoint = entrypoint;
@@ -101,7 +94,7 @@ public class Image {
     return entrypoint;
   }
 
-  public ImmutableList<Layer> getLayers() {
+  public ImmutableList<T> getLayers() {
     return layers.getLayers();
   }
 }

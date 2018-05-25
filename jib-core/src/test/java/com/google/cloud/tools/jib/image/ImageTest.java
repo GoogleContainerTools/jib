@@ -45,7 +45,7 @@ public class ImageTest {
     ImmutableList<String> expectedEnvironment =
         ImmutableList.of("crepecake=is great", "VARIABLE=VALUE");
 
-    Image image =
+    Image<Layer> image =
         Image.builder()
             .setEnvironmentVariable("crepecake", "is great")
             .setEnvironmentVariable("VARIABLE", "VALUE")

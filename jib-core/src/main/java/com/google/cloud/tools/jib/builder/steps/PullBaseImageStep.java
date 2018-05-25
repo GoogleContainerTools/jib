@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.image.Image;
+import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerCountMismatchException;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
@@ -43,14 +44,14 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 /** Pulls the base image manifest. */
-class PullBaseImageStep implements AsyncStep<Image>, Callable<Image> {
+class PullBaseImageStep implements AsyncStep<Image<Layer>>, Callable<Image<Layer>> {
 
   private static final String DESCRIPTION = "Pulling base image manifest";
 
   private final BuildConfiguration buildConfiguration;
   private final AuthenticatePullStep authenticatePullStep;
 
-  private final ListenableFuture<Image> listenableFuture;
+  private final ListenableFuture<Image<Layer>> listenableFuture;
 
   PullBaseImageStep(
       ListeningExecutorService listeningExecutorService,
@@ -65,12 +66,12 @@ class PullBaseImageStep implements AsyncStep<Image>, Callable<Image> {
   }
 
   @Override
-  public ListenableFuture<Image> getFuture() {
+  public ListenableFuture<Image<Layer>> getFuture() {
     return listenableFuture;
   }
 
   @Override
-  public Image call()
+  public Image<Layer> call()
       throws IOException, RegistryException, LayerPropertyNotFoundException,
           LayerCountMismatchException, ExecutionException {
     buildConfiguration

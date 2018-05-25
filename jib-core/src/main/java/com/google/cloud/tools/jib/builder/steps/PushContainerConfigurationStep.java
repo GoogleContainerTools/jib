@@ -22,9 +22,9 @@ import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
+import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.jib.image.Image;
-import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.Futures;
@@ -76,9 +76,9 @@ class PushContainerConfigurationStep
   }
 
   private PushBlobStep afterBuildConfigurationFutureFuture()
-      throws ExecutionException, IOException, LayerPropertyNotFoundException {
+      throws ExecutionException, IOException {
     try (Timer timer = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
-      Image image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
+      Image<CachedLayer> image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
       Blob containerConfigurationBlob =
           new ImageToJsonTranslator(image).getContainerConfigurationBlob();
       CountingDigestOutputStream digestOutputStream =
