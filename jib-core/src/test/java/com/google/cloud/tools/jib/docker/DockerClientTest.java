@@ -56,8 +56,13 @@ public class DockerClientTest {
   public void testIsDockerInstalled_pass() throws URISyntaxException, IOException {
     Path executableFile = temporaryFolder.newFolder().toPath().resolve("executable");
     Files.copy(Paths.get(Resources.getResource("executable").toURI()), executableFile);
-    // 755
-    Files.setPosixFilePermissions(executableFile, PosixFilePermissions.fromString("rwxr-xr-x"));
+    try {
+      // 755
+      Files.setPosixFilePermissions(executableFile, PosixFilePermissions.fromString("rwxr-xr-x"));
+
+    } catch (UnsupportedOperationException ex) {
+      // Ignores for non-POSIX systems.
+    }
 
     ProcessBuilder executableProcessBuilder = new ProcessBuilder(executableFile.toString());
     Assert.assertTrue(new DockerClient(ignored -> executableProcessBuilder).isDockerInstalled());
