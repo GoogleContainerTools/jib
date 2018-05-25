@@ -53,16 +53,11 @@ public class MainClassFinder {
         // we should resolve the correct filename.
         if (name != null) {
           classFile = rootDirectory;
-          List<String> folders = Splitter.on(".").splitToList(name);
-          for (int index = 0; index < folders.size() - 1; index++) {
-            classFile = classFile.resolve(folders.get(index));
+          ArrayList<String> folders = new ArrayList<>(Splitter.on('.').splitToList(name));
+          String className = folders.remove(folders.size() - 1) + ".class";
+          for (String folder : folders) {
+            classFile = classFile.resolve(folder);
           }
-
-          String className = folders.get(folders.size() - 1);
-          if (className.contains("$")) {
-            className = className.substring(0, className.indexOf("$"));
-          }
-          className += ".class";
           classFile = classFile.resolve(className);
           if (!Files.exists(classFile)) {
             // TODO: Log search class failure?
