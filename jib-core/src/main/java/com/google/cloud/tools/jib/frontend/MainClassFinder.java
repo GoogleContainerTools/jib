@@ -28,6 +28,8 @@ import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -37,8 +39,8 @@ public class MainClassFinder {
   /** Helper for loading a .class file. */
   private static class ClassFileLoader extends ClassLoader {
 
-    private Path rootDirectory;
-    private Path classFile;
+    private final Path rootDirectory;
+    private final Path classFile;
 
     private ClassFileLoader(Path classFile, Path rootDirectory) {
       this.classFile = classFile;
@@ -51,21 +53,22 @@ public class MainClassFinder {
       try {
         // Name is only ever null when we call findClass manually, and not null otherwise. If null,
         // we should resolve the correct filename.
+        Path file = classFile;
         if (name != null) {
-          classFile = rootDirectory;
-          ArrayList<String> folders = new ArrayList<>(Splitter.on('.').splitToList(name));
-          String className = folders.remove(folders.size() - 1) + ".class";
+          file = rootDirectory;
+          LinkedList<String> folders = new LinkedList<>(Splitter.on('.').splitToList(name));
+          String className = folders.removeLast() + ".class";
           for (String folder : folders) {
-            classFile = classFile.resolve(folder);
+            file = file.resolve(folder);
           }
-          classFile = classFile.resolve(className);
-          if (!Files.exists(classFile)) {
+          file = file.resolve(className);
+          if (!Files.exists(file)) {
             // TODO: Log search class failure?
             return null;
           }
         }
 
-        byte[] bytes = Files.readAllBytes(classFile);
+        byte[] bytes = Files.readAllBytes(file);
         return defineClass(name, bytes, 0, bytes.length);
 
       } catch (IOException
@@ -92,7 +95,7 @@ public class MainClassFinder {
    * <p>Warns if main class is not valid, or throws an error if no valid main class is not found.
    */
   public static String resolveMainClass(
-      @Nullable String mainClass, ProjectProperties projectProperties, Path rootDirectory)
+      @Nullable String mainClass, ProjectProperties projectProperties)
       throws MainClassInferenceException {
     BuildLogger logger = projectProperties.getLogger();
     if (mainClass == null) {
@@ -109,7 +112,16 @@ public class MainClassFinder {
 
         try {
           // Adds each file in the classes output directory to the classes files list.
-          List<String> mainClasses = findMainClasses(rootDirectory);
+          HashSet<Path> visitedRoots = new HashSet<>();
+          ArrayList<String> mainClasses = new ArrayList<>();
+          for (Path classPath : projectProperties.getSourceFilesConfiguration().getClassesFiles()) {
+            Path root = classPath.getParent();
+            if (visitedRoots.contains(root)) {
+              continue;
+            }
+            visitedRoots.add(root);
+            mainClasses.addAll(findMainClasses(root));
+          }
 
           if (mainClasses.size() == 1) {
             // Valid class found; use inferred main class

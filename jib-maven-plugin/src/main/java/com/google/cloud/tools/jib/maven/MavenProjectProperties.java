@@ -130,10 +130,7 @@ class MavenProjectProperties implements ProjectProperties {
    */
   String getMainClass(JibPluginConfiguration jibPluginConfiguration) throws MojoExecutionException {
     try {
-      return MainClassFinder.resolveMainClass(
-          jibPluginConfiguration.getMainClass(),
-          this,
-          Paths.get(project.getBuild().getOutputDirectory()));
+      return MainClassFinder.resolveMainClass(jibPluginConfiguration.getMainClass(), this);
     } catch (MainClassInferenceException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex);
     }

@@ -17,11 +17,14 @@
 package com.google.cloud.tools.jib.frontend;
 
 import com.google.cloud.tools.jib.builder.BuildLogger;
+import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
@@ -37,15 +40,18 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class MainClassFinderTest {
 
   @Mock private BuildLogger mockBuildLogger;
+  @Mock private SourceFilesConfiguration mockSourceFilesConfiguration;
   @Mock private ProjectProperties mockProjectProperties;
   @Mock private HelpfulSuggestions mockHelpfulSuggestions;
 
-  private final Path fakeClassesPath = Paths.get("a/b/c");
+  private final List<Path> fakeClassesPath = Collections.singletonList(Paths.get("a/b/c"));
 
   @Before
   public void setup() {
     Mockito.when(mockProjectProperties.getLogger()).thenReturn(mockBuildLogger);
     Mockito.when(mockProjectProperties.getPluginName()).thenReturn("plugin");
+    Mockito.when(mockProjectProperties.getSourceFilesConfiguration())
+        .thenReturn(mockSourceFilesConfiguration);
     Mockito.when(mockProjectProperties.getMainClassHelpfulSuggestions(ArgumentMatchers.any()))
         .thenReturn(mockHelpfulSuggestions);
     Mockito.when(mockProjectProperties.getJarPluginName()).thenReturn("jar-plugin");
@@ -105,40 +111,50 @@ public class MainClassFinderTest {
   public void testResolveMainClass() throws MainClassInferenceException {
     Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("some.main.class");
     Assert.assertEquals(
-        "some.main.class",
-        MainClassFinder.resolveMainClass(null, mockProjectProperties, fakeClassesPath));
+        "some.main.class", MainClassFinder.resolveMainClass(null, mockProjectProperties));
     Assert.assertEquals(
-        "configured",
-        MainClassFinder.resolveMainClass("configured", mockProjectProperties, fakeClassesPath));
+        "configured", MainClassFinder.resolveMainClass("configured", mockProjectProperties));
   }
 
   @Test
   public void testResolveMainClass_notValid() throws MainClassInferenceException {
     Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("${start-class}");
+    Mockito.when(mockSourceFilesConfiguration.getClassesFiles()).thenReturn(fakeClassesPath);
     Assert.assertEquals(
-        "${start-class}",
-        MainClassFinder.resolveMainClass(null, mockProjectProperties, fakeClassesPath));
+        "${start-class}", MainClassFinder.resolveMainClass(null, mockProjectProperties));
     Mockito.verify(mockBuildLogger).warn("'mainClass' is not a valid Java class : ${start-class}");
   }
 
   @Test
-  public void testResolveMainClass_multipleInferredWithBackup() throws Throwable {
-    Path rootDirectory = Paths.get(Resources.getResource("class-finder-tests/multiple").toURI());
+  public void testResolveMainClass_multipleInferredWithBackup()
+      throws MainClassInferenceException, URISyntaxException {
     Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("${start-class}");
-
+    Mockito.when(mockSourceFilesConfiguration.getClassesFiles())
+        .thenReturn(
+            Arrays.asList(
+                Paths.get(Resources.getResource("class-finder-tests/multiple/multi").toURI()),
+                Paths.get(
+                    Resources.getResource("class-finder-tests/multiple/HelloWorld.class").toURI()),
+                Paths.get(
+                    Resources.getResource("class-finder-tests/multiple/NotMain.class").toURI())));
     Assert.assertEquals(
-        "${start-class}",
-        MainClassFinder.resolveMainClass(null, mockProjectProperties, rootDirectory));
+        "${start-class}", MainClassFinder.resolveMainClass(null, mockProjectProperties));
     Mockito.verify(mockBuildLogger).warn("'mainClass' is not a valid Java class : ${start-class}");
   }
 
   @Test
   public void testResolveMainClass_multipleInferredWithoutBackup() throws URISyntaxException {
-    Path rootDirectory = Paths.get(Resources.getResource("class-finder-tests/multiple").toURI());
     Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn(null);
-
+    Mockito.when(mockSourceFilesConfiguration.getClassesFiles())
+        .thenReturn(
+            Arrays.asList(
+                Paths.get(Resources.getResource("class-finder-tests/multiple/multi").toURI()),
+                Paths.get(
+                    Resources.getResource("class-finder-tests/multiple/HelloWorld.class").toURI()),
+                Paths.get(
+                    Resources.getResource("class-finder-tests/multiple/NotMain.class").toURI())));
     try {
-      MainClassFinder.resolveMainClass(null, mockProjectProperties, rootDirectory);
+      MainClassFinder.resolveMainClass(null, mockProjectProperties);
       Assert.fail();
     } catch (MainClassInferenceException ex) {
       Mockito.verify(mockProjectProperties)
@@ -150,19 +166,16 @@ public class MainClassFinderTest {
   @Test
   public void testResolveMainClass_noneInferredWithBackup() throws MainClassInferenceException {
     Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("${start-class}");
-
     Assert.assertEquals(
-        "${start-class}",
-        MainClassFinder.resolveMainClass(null, mockProjectProperties, fakeClassesPath));
+        "${start-class}", MainClassFinder.resolveMainClass(null, mockProjectProperties));
     Mockito.verify(mockBuildLogger).warn("'mainClass' is not a valid Java class : ${start-class}");
   }
 
   @Test
   public void testResolveMainClass_noneInferredWithoutBackup() {
     Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn(null);
-
     try {
-      MainClassFinder.resolveMainClass(null, mockProjectProperties, fakeClassesPath);
+      MainClassFinder.resolveMainClass(null, mockProjectProperties);
       Assert.fail();
     } catch (MainClassInferenceException ex) {
       Mockito.verify(mockProjectProperties)
