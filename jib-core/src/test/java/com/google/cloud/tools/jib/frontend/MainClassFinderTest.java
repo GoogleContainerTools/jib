@@ -108,6 +108,15 @@ public class MainClassFinderTest {
   }
 
   @Test
+  public void testFindMainClass_innerClasses() throws URISyntaxException, IOException {
+    Path rootDirectory =
+        Paths.get(Resources.getResource("class-finder-tests/inner-classes").toURI());
+    List<String> mainClasses = MainClassFinder.findMainClasses(rootDirectory);
+    Assert.assertEquals(1, mainClasses.size());
+    Assert.assertTrue(mainClasses.contains("HelloWorld$InnerClass"));
+  }
+
+  @Test
   public void testResolveMainClass() throws MainClassInferenceException {
     Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("some.main.class");
     Assert.assertEquals(

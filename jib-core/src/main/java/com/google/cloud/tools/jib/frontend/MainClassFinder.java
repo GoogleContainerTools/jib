@@ -27,10 +27,12 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /** Infers the main class in an application. */
@@ -40,10 +42,10 @@ public class MainClassFinder {
   private static class ClassFileLoader extends ClassLoader {
 
     private final Path rootDirectory;
-    private final Path classFile;
+    private final Path defaultClassFile;
 
-    private ClassFileLoader(Path classFile, Path rootDirectory) {
-      this.classFile = classFile;
+    private ClassFileLoader(Path defaultClassFile, Path rootDirectory) {
+      this.defaultClassFile = defaultClassFile;
       this.rootDirectory = rootDirectory;
     }
 
@@ -53,19 +55,10 @@ public class MainClassFinder {
       try {
         // Name is only ever null when we call findClass manually, and not null otherwise. If null,
         // we should resolve the correct filename.
-        Path file = classFile;
-        if (name != null) {
-          file = rootDirectory;
-          LinkedList<String> folders = new LinkedList<>(Splitter.on('.').splitToList(name));
-          String className = folders.removeLast() + ".class";
-          for (String folder : folders) {
-            file = file.resolve(folder);
-          }
-          file = file.resolve(className);
-          if (!Files.exists(file)) {
-            // TODO: Log search class failure?
-            return null;
-          }
+        Path file = (name == null ? defaultClassFile : getPathFromClassName(name));
+        if (!Files.exists(file)) {
+          // TODO: Log search class failure?
+          return null;
         }
 
         byte[] bytes = Files.readAllBytes(file);
@@ -80,6 +73,17 @@ public class MainClassFinder {
         // TODO: Log search class failure when NoClassDefFoundError/SecurityException is caught?
         return null;
       }
+    }
+
+    private Path getPathFromClassName(String className) {
+      Path path = rootDirectory;
+      Deque<String> folders = new ArrayDeque<>(Splitter.on('.').splitToList(className));
+      String fileName = folders.removeLast() + ".class";
+      for (String folder : folders) {
+        path = path.resolve(folder);
+      }
+      path = path.resolve(fileName);
+      return path;
     }
   }
 
@@ -112,8 +116,8 @@ public class MainClassFinder {
 
         try {
           // Adds each file in the classes output directory to the classes files list.
-          HashSet<Path> visitedRoots = new HashSet<>();
-          ArrayList<String> mainClasses = new ArrayList<>();
+          Set<Path> visitedRoots = new HashSet<>();
+          List<String> mainClasses = new ArrayList<>();
           for (Path classPath : projectProperties.getSourceFilesConfiguration().getClassesFiles()) {
             Path root = classPath.getParent();
             if (visitedRoots.contains(root)) {
