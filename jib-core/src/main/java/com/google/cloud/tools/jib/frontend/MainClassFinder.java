@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -36,20 +37,49 @@ public class MainClassFinder {
   /** Helper for loading a .class file. */
   private static class ClassFileLoader extends ClassLoader {
 
-    private final Path classFile;
+    private Path rootDirectory;
+    private Path classFile;
 
-    private ClassFileLoader(Path classFile) {
+    private ClassFileLoader(Path classFile, Path rootDirectory) {
       this.classFile = classFile;
+      this.rootDirectory = rootDirectory;
     }
 
     @Nullable
     @Override
     public Class findClass(@Nullable String name) {
       try {
+        // Name is only ever null when we call findClass manually, and not null otherwise. If null,
+        // we should resolve the correct filename.
+        if (name != null) {
+          classFile = rootDirectory;
+          List<String> folders = Splitter.on(".").splitToList(name);
+          for (int index = 0; index < folders.size() - 1; index++) {
+            classFile = classFile.resolve(folders.get(index));
+          }
+
+          String className = folders.get(folders.size() - 1);
+          if (className.contains("$")) {
+            className = className.substring(0, className.indexOf("$"));
+          }
+          className += ".class";
+          classFile = classFile.resolve(className);
+          if (!Files.exists(classFile)) {
+            // TODO: Log search class failure?
+            return null;
+          }
+        }
+
         byte[] bytes = Files.readAllBytes(classFile);
         return defineClass(name, bytes, 0, bytes.length);
-      } catch (IOException | ClassFormatError | NoClassDefFoundError ignored) {
+
+      } catch (IOException
+          | ClassFormatError
+          | IndexOutOfBoundsException
+          | SecurityException
+          | NoClassDefFoundError ignored) {
         // Not a valid class file
+        // TODO: Log search class failure when NoClassDefFoundError/SecurityException is caught?
         return null;
       }
     }
@@ -67,7 +97,7 @@ public class MainClassFinder {
    * <p>Warns if main class is not valid, or throws an error if no valid main class is not found.
    */
   public static String resolveMainClass(
-      @Nullable String mainClass, ProjectProperties projectProperties)
+      @Nullable String mainClass, ProjectProperties projectProperties, Path rootDirectory)
       throws MainClassInferenceException {
     BuildLogger logger = projectProperties.getLogger();
     if (mainClass == null) {
@@ -83,11 +113,8 @@ public class MainClassFinder {
                 + "; attempting to infer main class.");
 
         try {
-          // Adds each file in each classes output directory to the classes files list.
-          List<String> mainClasses = new ArrayList<>();
-          for (Path classPath : projectProperties.getSourceFilesConfiguration().getClassesFiles()) {
-            mainClasses.addAll(findMainClasses(classPath));
-          }
+          // Adds each file in the classes output directory to the classes files list.
+          List<String> mainClasses = findMainClasses(rootDirectory);
 
           if (mainClasses.size() == 1) {
             // Valid class found; use inferred main class
@@ -144,7 +171,7 @@ public class MainClassFinder {
         .filter(path -> path.toString().endsWith(".class"))
         .walk(
             classFile -> {
-              Class<?> fileClass = new ClassFileLoader(classFile).findClass(null);
+              Class<?> fileClass = new ClassFileLoader(classFile, rootDirectory).findClass(null);
               if (fileClass == null) {
                 return;
               }
@@ -157,8 +184,9 @@ public class MainClassFinder {
                     && Modifier.isPublic(main.getModifiers())) {
                   classNames.add(fileClass.getName());
                 }
-              } catch (NoSuchMethodException ignored) {
+              } catch (NoSuchMethodException | NoClassDefFoundError ignored) {
                 // main method not found
+                // TODO: Log search class failure when NoClassDefFoundError is caught?
               }
             });
 
