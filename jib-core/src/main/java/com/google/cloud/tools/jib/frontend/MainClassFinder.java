@@ -30,65 +30,67 @@ import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 
 /** Infers the main class in an application. */
 public class MainClassFinder {
 
   /** Helper for loading a .class file. */
-  private static class ClassFileLoader extends ClassLoader {
+  @VisibleForTesting
+  static class ClassFileLoader extends ClassLoader {
 
-    private static final Map<Path, Class<?>> cache = new ConcurrentHashMap<>();
-
+    private final Map<Path, Class<?>> definedClasses = new HashMap<>();
     private final Path rootDirectory;
-    private final Path defaultClassFile;
 
-    private ClassFileLoader(Path defaultClassFile, Path rootDirectory) {
-      this.defaultClassFile = defaultClassFile;
+    @VisibleForTesting
+    ClassFileLoader(Path rootDirectory) {
       this.rootDirectory = rootDirectory;
     }
 
     @Nullable
     @Override
-    public Class findClass(@Nullable String name) {
+    public Class<?> findClass(String name) {
+      return findClass(name, getPathFromClassName(name));
+    }
+
+    /**
+     * @param name the name of the class. This should be {@code null} when we call it manually with
+     *     a file, and not {@code null} when it is called internally.
+     * @param file the .class file defining the class.
+     * @return the {@code class} defined by the file, or {@code null} if the class could not be
+     *     defined.
+     */
+    @Nullable
+    private Class<?> findClass(@Nullable String name, Path file) {
+      if (definedClasses.containsKey(file)) {
+        return definedClasses.get(file);
+      }
+
+      if (!Files.exists(file)) {
+        // TODO: Log search class failure?
+        return null;
+      }
+
       try {
-        // Name is only ever null when we call findClass manually, and not null otherwise. If null,
-        // we should resolve the correct filename.
-        Path file = (name == null ? defaultClassFile : getPathFromClassName(name));
-        if (cache.containsKey(file)) {
-          return cache.get(file);
-        }
-
-        if (!Files.exists(file)) {
-          // TODO: Log search class failure?
-          return null;
-        }
-
         byte[] bytes = Files.readAllBytes(file);
         Class<?> definedClass = defineClass(name, bytes, 0, bytes.length);
-        cache.put(file, definedClass);
+        definedClasses.put(file, definedClass);
         return definedClass;
-
-      } catch (IOException
-          | ClassFormatError
-          | IndexOutOfBoundsException
-          | SecurityException
-          | NoClassDefFoundError ignored) {
+      } catch (IOException | ClassFormatError | SecurityException | NoClassDefFoundError ignored) {
         // Not a valid class file
         // TODO: Log search class failure when NoClassDefFoundError/SecurityException is caught?
         return null;
       }
     }
 
-    /**
-     * Converts a class name (pack.age.ClassName) to a Path (rootFolder/pack/age/ClassName.class).
-     */
-    private Path getPathFromClassName(String className) {
+    /** Converts a class name (pack.ClassName) to a Path (rootDirectory/pack/ClassName.class). */
+    @VisibleForTesting
+    Path getPathFromClassName(String className) {
       Path path = rootDirectory;
       Deque<String> folders = new ArrayDeque<>(Splitter.on('.').splitToList(className));
       String fileName = folders.removeLast() + ".class";
@@ -190,12 +192,13 @@ public class MainClassFinder {
     }
 
     // Get all .class files
+    ClassFileLoader classFileLoader = new ClassFileLoader(rootDirectory);
     new DirectoryWalker(rootDirectory)
         .filter(Files::isRegularFile)
         .filter(path -> path.toString().endsWith(".class"))
         .walk(
             classFile -> {
-              Class<?> fileClass = new ClassFileLoader(classFile, rootDirectory).findClass(null);
+              Class<?> fileClass = classFileLoader.findClass(null, classFile);
               if (fileClass == null) {
                 return;
               }
