@@ -62,7 +62,7 @@ public class MainClassFinder {
      * @param name the name of the class. This should be {@code null} when we call it manually with
      *     a file, and not {@code null} when it is called internally.
      * @param file the .class file defining the class.
-     * @return the {@code class} defined by the file, or {@code null} if the class could not be
+     * @return the {@link Class} defined by the file, or {@code null} if the class could not be
      *     defined.
      */
     @Nullable
