@@ -136,9 +136,11 @@ Field | Type | Default | Description
 `from` | [`from`](#from-closure) | See [`from`](#from-closure) | Configures the base image to build your application on top of.
 `to` | [`to`](#to-closure) | *Required* | Configures the target image to build your application to.
 `jvmFlags` | `List<String>` | *None* | Additional flags to pass into the JVM when running your application.
-`mainClass` | `String` | Uses the main class defined in the `jar` task or tries to find a valid main class | The main class to launch your application from.
+`mainClass` | `String` | *Inferred\** | The main class to launch your application from.
 `format` | `String` | `Docker` | Use `OCI` to build an [OCI container image](https://www.opencontainers.org/).
 `useProjectOnlyCache` | `boolean` | `false` | If set to true, Jib does not share a cache between different Maven projects.
+
+*\* Uses the main class defined in the `jar` task or tries to find a valid main class.*
 
 <a name="from-closure"></a>`from` is a closure with the following properties:
 
