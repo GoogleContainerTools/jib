@@ -64,6 +64,7 @@ public class DockerClient {
       return true;
 
     } catch (IOException ex) {
+      ex.printStackTrace();
       return false;
     }
   }
