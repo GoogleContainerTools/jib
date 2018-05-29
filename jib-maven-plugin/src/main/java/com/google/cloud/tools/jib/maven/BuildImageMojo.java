@@ -62,10 +62,10 @@ public class BuildImageMojo extends JibPluginConfiguration {
 
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
-    // Validate 'imageFormat'.
+    // Validates 'format'.
     if (Arrays.stream(ImageFormat.values()).noneMatch(value -> value.name().equals(getFormat()))) {
       throw new MojoFailureException(
-          "<imageFormat> parameter is configured with value '"
+          "<format> parameter is configured with value '"
               + getFormat()
               + "', but the only valid configuration options are '"
               + ImageFormat.Docker
