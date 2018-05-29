@@ -108,7 +108,15 @@ class MavenSourceFilesConfiguration implements SourceFilesConfiguration {
    */
   private void addFileToResourcesOrClasses(
       Path classesSourceDirectory, Path classesOutputDirectory, Path file) {
-    // Checks if is .class file.
+    // If is a directory, checks if there is corresponding directory in source directory.
+    if (Files.isDirectory(file)) {
+      if (Files.exists(classesSourceDirectory.resolve(classesOutputDirectory.relativize(file)))) {
+        classesFiles.add(file);
+        return;
+      }
+    }
+
+    // If is .class file, checks if there is corresponding .java file in source directory.
     if (FileSystems.getDefault().getPathMatcher("glob:**.class").matches(file)) {
       // Replaces the extension with '.java'.
       Path javaFile =
