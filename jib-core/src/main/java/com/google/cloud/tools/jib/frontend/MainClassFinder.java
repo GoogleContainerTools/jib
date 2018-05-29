@@ -30,8 +30,10 @@ import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -40,6 +42,8 @@ public class MainClassFinder {
 
   /** Helper for loading a .class file. */
   private static class ClassFileLoader extends ClassLoader {
+
+    private static final Map<Path, Class> cache = new HashMap<>();
 
     private final Path rootDirectory;
     private final Path defaultClassFile;
@@ -56,13 +60,19 @@ public class MainClassFinder {
         // Name is only ever null when we call findClass manually, and not null otherwise. If null,
         // we should resolve the correct filename.
         Path file = (name == null ? defaultClassFile : getPathFromClassName(name));
+        if (cache.containsKey(file)) {
+          return cache.get(file);
+        }
+
         if (!Files.exists(file)) {
           // TODO: Log search class failure?
           return null;
         }
 
         byte[] bytes = Files.readAllBytes(file);
-        return defineClass(name, bytes, 0, bytes.length);
+        Class<?> definedClass = defineClass(name, bytes, 0, bytes.length);
+        cache.put(file, definedClass);
+        return definedClass;
 
       } catch (IOException
           | ClassFormatError
@@ -75,6 +85,9 @@ public class MainClassFinder {
       }
     }
 
+    /**
+     * Converts a class name (pack.age.ClassName) to a Path (rootFolder/pack/age/ClassName.class).
+     */
     private Path getPathFromClassName(String className) {
       Path path = rootDirectory;
       Deque<String> folders = new ArrayDeque<>(Splitter.on('.').splitToList(className));
