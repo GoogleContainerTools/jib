@@ -18,16 +18,12 @@ package com.google.cloud.tools.jib.docker;
 
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Resources;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.PosixFilePermissions;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -54,17 +50,18 @@ public class DockerClientTest {
 
   @Test
   public void testIsDockerInstalled_pass() throws URISyntaxException, IOException {
-    Path executableFile = temporaryFolder.newFolder().toPath().resolve("executable");
-    Files.copy(Paths.get(Resources.getResource("executable").toURI()), executableFile);
-    try {
-      // 755
-      Files.setPosixFilePermissions(executableFile, PosixFilePermissions.fromString("rwxr-xr-x"));
+    // Path executableFile = temporaryFolder.newFolder().toPath().resolve("executable.sh");
+    // Files.copy(Paths.get(Resources.getResource("executable.sh").toURI()), executableFile);
+    // try {
+    //   // 755
+    //   Files.setPosixFilePermissions(executableFile,
+    // PosixFilePermissions.fromString("rwxr-xr-x"));
+    //
+    // } catch (UnsupportedOperationException ex) {
+    //   // Ignores for non-POSIX systems.
+    // }
 
-    } catch (UnsupportedOperationException ex) {
-      // Ignores for non-POSIX systems.
-    }
-
-    ProcessBuilder executableProcessBuilder = new ProcessBuilder(executableFile.toString());
+    ProcessBuilder executableProcessBuilder = new ProcessBuilder("/bin/bash");
     Assert.assertTrue(new DockerClient(ignored -> executableProcessBuilder).isDockerInstalled());
   }
 
