@@ -54,8 +54,8 @@ public class DockerClientTest {
 
   @Test
   public void testIsDockerInstalled_pass() throws URISyntaxException, IOException {
-    Path executableFile = temporaryFolder.newFolder().toPath().resolve("executable");
-    Files.copy(Paths.get(Resources.getResource("executable").toURI()), executableFile);
+    Path executableFile = temporaryFolder.newFolder().toPath().resolve("executable.sh");
+    Files.copy(Paths.get(Resources.getResource("executable.sh").toURI()), executableFile);
     try {
       // 755
       Files.setPosixFilePermissions(executableFile, PosixFilePermissions.fromString("rwxr-xr-x"));
