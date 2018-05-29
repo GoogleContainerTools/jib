@@ -6,8 +6,7 @@
   <version>1</version>
 
   <properties>
-    <jib-maven-plugin.version>0.1.2</jib-maven-plugin.version>
-    <mainClass>example.HelloWorld</mainClass>
+    <jib-maven-plugin.version>0.1.8-SNAPSHOT</jib-maven-plugin.version>
   </properties>
 
   <dependencies>
@@ -35,10 +34,9 @@
         <artifactId>jib-maven-plugin</artifactId>
         <version>${jib-maven-plugin.version}</version>
         <configuration>
-          <credentialHelperName>gcr</credentialHelperName>
-          <registry>gcr.io</registry>
-          <repository>REPLACE-WITH-YOUR-GCP-PROJECT/image-built-with-jib</repository>
-          <mainClass>${mainClass}</mainClass>
+          <to>
+            <image>gcr.io/REPLACE-WITH-YOUR-GCP-PROJECT/image-built-with-jib</image>
+          </to>
         </configuration>
         <executions>
           <execution>
