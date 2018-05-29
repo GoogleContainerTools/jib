@@ -103,7 +103,8 @@ class MavenSourceFilesConfiguration implements SourceFilesConfiguration {
 
   /**
    * Adds {@code file} to {@link #classesFiles} if it is a {@code .class} file and there is a
-   * corresponding {@code .java} file in the {@code classesSourceDirectory}.
+   * corresponding {@code .java} file in the {@code classesSourceDirectory}; otherwise, adds {@code
+   * file} to {@link #resourcesFiles}.
    */
   private void addFileToResourcesOrClasses(
       Path classesSourceDirectory, Path classesOutputDirectory, Path file) {
