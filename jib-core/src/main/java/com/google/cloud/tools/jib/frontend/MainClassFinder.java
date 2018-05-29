@@ -30,11 +30,11 @@ import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 
 /** Infers the main class in an application. */
@@ -43,7 +43,7 @@ public class MainClassFinder {
   /** Helper for loading a .class file. */
   private static class ClassFileLoader extends ClassLoader {
 
-    private static final Map<Path, Class> cache = new HashMap<>();
+    private static final Map<Path, Class<?>> cache = new ConcurrentHashMap<>();
 
     private final Path rootDirectory;
     private final Path defaultClassFile;
