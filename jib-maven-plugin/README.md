@@ -14,6 +14,7 @@ For the Gradle plugin, see the [jib-gradle-plugin project](../jib-gradle-plugin)
 These features are not currently supported but will be added in later releases.
 
 * Support for WAR format
+* Run and debug the built container
 
 ## Quickstart
 
@@ -76,7 +77,6 @@ For example, to build the image `my-docker-id/my-app`, the configuration would b
 <configuration>
   <to>
     <image>registry.hub.docker.com/my-docker-id/my-app</image>
-    <credHelper>osxkeychain</credHelper>
   </to>
 </configuration>
 ```
@@ -95,15 +95,15 @@ Subsequent builds are much faster than the initial build.
 
 *Having trouble? Let us know by [submitting an issue](/../../issues/new), contacting us on [Gitter](https://gitter.im/google/jib), or posting to the [Jib users forum](https://groups.google.com/forum/#!forum/jib-users).*
 
-### Build to Docker daemon
+#### Build to Docker daemon
 
-Alternatively, Jib can also build the image directly to a Docker daemon. This requires that you have `docker` available on your `PATH`.
+Jib can also build your image directly to a Docker daemon. This requires that you have `docker` available on your `PATH`.
 
 ```shell
 mvn compile jib:buildDocker
 ```
 
-#### Minikube Docker daemon
+##### Minikube Docker daemon
 
 If you are using [`minikube`](https://github.com/kubernetes/minikube)'s remote Docker daemon, make sure you [set up the correct environment variables](https://github.com/kubernetes/minikube/blob/master/docs/reusing_the_docker_daemon.md) to point to the remote daemon:
 

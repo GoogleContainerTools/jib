@@ -14,7 +14,6 @@ For the Maven plugin, see the [jib-maven-plugin project](../jib-maven-plugin).
 These features are not currently supported but will be added in later releases.
 
 * Support for WAR format
-* Export to a Docker context
 * Run and debug the built container
 
 ## Quickstart
@@ -27,7 +26,7 @@ In your Gradle Java project, add the plugin to your `build.gradle`:
 
 ```groovy
 plugins {
-  id 'com.google.cloud.tools.jib' version '0.1.1'
+  id 'com.google.cloud.tools.jib' version '0.1.2-SNAPSHOT'
 }
 ```
 
@@ -79,13 +78,24 @@ gradle build jib
 
 Subsequent builds are much faster than the initial build. 
 
-If you want to clear Jib's build cache and force it to re-pull the base image and re-build the application layers, run:
+*Having trouble? Let us know by [submitting an issue](/../../issues/new), contacting us on [Gitter](https://gitter.im/google/jib), or posting to the [Jib users forum](https://groups.google.com/forum/#!forum/jib-users).*
+
+#### Build to Docker daemon
+
+Jib can also build your image directly to a Docker daemon. This requires that you have `docker` available on your `PATH`.
 
 ```shell
-gradle clean build jib
+gradle build jibBuildDocker
 ```
 
-*Having trouble? Let us know by [submitting an issue](/../../issues/new), contacting us on [Gitter](https://gitter.im/google/jib), or posting to the [Jib users forum](https://groups.google.com/forum/#!forum/jib-users).*
+##### Minikube Docker daemon
+
+If you are using [`minikube`](https://github.com/kubernetes/minikube)'s remote Docker daemon, make sure you [set up the correct environment variables](https://github.com/kubernetes/minikube/blob/master/docs/reusing_the_docker_daemon.md) to point to the remote daemon:
+
+```shell
+eval $(minikube docker-env)
+gradle build jibBuildDocker
+```
 
 ### Run `jib` with each build
 
@@ -99,7 +109,23 @@ Then, ```gradle build``` will build and containerize your application.
 
 ### Export to a Docker context
 
-*Not yet supported*
+Jib can also export to a Docker context so that you can build with Docker, if needed:
+
+```shell
+gradle build jibDockerContext
+```
+
+The Docker context will be created at `build/jib-dockercontext` by default. You can change this directory with the `targetDir` configuration option or the `---jib.dockerDir` parameter:
+
+```shell
+gradle build jibDockerContext --jib.dockerDir=my/docker/context/
+```
+
+You can then build your image with Docker:
+
+```shell
+docker build -t myregistry/myapp my/docker/context/
+``` 
 
 ## Extended Usage
 
