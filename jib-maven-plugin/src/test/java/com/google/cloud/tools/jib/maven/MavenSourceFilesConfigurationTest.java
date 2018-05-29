@@ -74,6 +74,7 @@ public class MavenSourceFilesConfigurationTest {
             Paths.get("application", "dependencies", "libraryB.jar"));
     List<Path> expectedResourcesFiles =
         Arrays.asList(
+            Paths.get(Resources.getResource("application/output").toURI()).resolve("directory"),
             Paths.get(Resources.getResource("application/output").toURI()).resolve("resourceA"),
             Paths.get(Resources.getResource("application/output").toURI()).resolve("resourceB"),
             Paths.get(Resources.getResource("application/output").toURI()).resolve("world"));
