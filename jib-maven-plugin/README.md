@@ -169,7 +169,7 @@ Field | Type | Default | Description
 `jvmFlags` | list | *None* | Additional flags to pass into the JVM when running your application.
 `mainClass` | string | *Inferred\** | The main class to launch the application from.
 `format` | string | `Docker` | Use `OCI` to build an [OCI container image](https://www.opencontainers.org/).
-`useOnlyProjectCache` | boolean | `false` | If set to true, Jib does not share a cache between different Maven projects.
+`useOnlyProjectCache` | boolean | `false` | If set to true, Jib does not share a cache between different Gradle projects.
 
 *\* Uses `mainClass` from `maven-jar-plugin` or tries to find a valid main class.*
 
