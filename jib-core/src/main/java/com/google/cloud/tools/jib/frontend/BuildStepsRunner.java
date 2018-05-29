@@ -77,16 +77,6 @@ public class BuildStepsRunner {
             buildConfiguration, sourceFilesConfiguration, cacheInitializer));
   }
 
-  /** @return true if Docker is installed on the user's system. */
-  public static boolean isDockerInstalled() {
-    try {
-      new ProcessBuilder("docker").start();
-      return true;
-    } catch (IOException ex) {
-      return false;
-    }
-  }
-
   private static Initializer getCacheInitializer(Path cacheDirectory, boolean useOnlyProjectCache)
       throws CacheDirectoryCreationException {
     if (!Files.exists(cacheDirectory)) {
