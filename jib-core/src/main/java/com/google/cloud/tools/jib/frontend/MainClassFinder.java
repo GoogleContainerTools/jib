@@ -21,37 +21,84 @@ import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /** Infers the main class in an application. */
 public class MainClassFinder {
 
   /** Helper for loading a .class file. */
-  private static class ClassFileLoader extends ClassLoader {
+  @VisibleForTesting
+  static class ClassFileLoader extends ClassLoader {
 
-    private final Path classFile;
+    private final Map<Path, Class<?>> definedClasses = new HashMap<>();
+    private final Path rootDirectory;
 
-    private ClassFileLoader(Path classFile) {
-      this.classFile = classFile;
+    @VisibleForTesting
+    ClassFileLoader(Path rootDirectory) {
+      this.rootDirectory = rootDirectory;
     }
 
     @Nullable
     @Override
-    public Class findClass(@Nullable String name) {
-      try {
-        byte[] bytes = Files.readAllBytes(classFile);
-        return defineClass(name, bytes, 0, bytes.length);
-      } catch (IOException | ClassFormatError ignored) {
-        // Not a valid class file
+    public Class<?> findClass(String name) {
+      return findClass(name, getPathFromClassName(name));
+    }
+
+    /**
+     * @param name the name of the class. This should be {@code null} when we call it manually with
+     *     a file, and not {@code null} when it is called internally.
+     * @param file the .class file defining the class.
+     * @return the {@link Class} defined by the file, or {@code null} if the class could not be
+     *     defined.
+     */
+    @Nullable
+    private Class<?> findClass(@Nullable String name, Path file) {
+      if (definedClasses.containsKey(file)) {
+        return definedClasses.get(file);
+      }
+
+      if (!Files.exists(file)) {
+        // TODO: Log search class failure?
         return null;
       }
+
+      try {
+        byte[] bytes = Files.readAllBytes(file);
+        Class<?> definedClass = defineClass(name, bytes, 0, bytes.length);
+        definedClasses.put(file, definedClass);
+        return definedClass;
+      } catch (IOException | ClassFormatError | SecurityException | NoClassDefFoundError ignored) {
+        // Not a valid class file
+        // TODO: Log search class failure when NoClassDefFoundError/SecurityException is caught?
+        return null;
+      }
+    }
+
+    /** Converts a class name (pack.ClassName) to a Path (rootDirectory/pack/ClassName.class). */
+    @VisibleForTesting
+    Path getPathFromClassName(String className) {
+      Path path = rootDirectory;
+      Deque<String> folders = new ArrayDeque<>(Splitter.on('.').splitToList(className));
+      String fileName = folders.removeLast() + ".class";
+      for (String folder : folders) {
+        path = path.resolve(folder);
+      }
+      path = path.resolve(fileName);
+      return path;
     }
   }
 
@@ -83,10 +130,16 @@ public class MainClassFinder {
                 + "; attempting to infer main class.");
 
         try {
-          // Adds each file in each classes output directory to the classes files list.
+          // Adds each file in the classes output directory to the classes files list.
+          Set<Path> visitedRoots = new HashSet<>();
           List<String> mainClasses = new ArrayList<>();
           for (Path classPath : projectProperties.getSourceFilesConfiguration().getClassesFiles()) {
-            mainClasses.addAll(findMainClasses(classPath));
+            Path root = classPath.getParent();
+            if (visitedRoots.contains(root)) {
+              continue;
+            }
+            visitedRoots.add(root);
+            mainClasses.addAll(findMainClasses(root));
           }
 
           if (mainClasses.size() == 1) {
@@ -139,12 +192,13 @@ public class MainClassFinder {
     }
 
     // Get all .class files
+    ClassFileLoader classFileLoader = new ClassFileLoader(rootDirectory);
     new DirectoryWalker(rootDirectory)
         .filter(Files::isRegularFile)
         .filter(path -> path.toString().endsWith(".class"))
         .walk(
             classFile -> {
-              Class<?> fileClass = new ClassFileLoader(classFile).findClass(null);
+              Class<?> fileClass = classFileLoader.findClass(null, classFile);
               if (fileClass == null) {
                 return;
               }
@@ -157,8 +211,9 @@ public class MainClassFinder {
                     && Modifier.isPublic(main.getModifiers())) {
                   classNames.add(fileClass.getName());
                 }
-              } catch (NoSuchMethodException ignored) {
+              } catch (NoSuchMethodException | NoClassDefFoundError ignored) {
                 // main method not found
+                // TODO: Log search class failure when NoClassDefFoundError is caught?
               }
             });
 
