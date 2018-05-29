@@ -178,6 +178,8 @@ Property | Type | Default | Description
 `image` | string | `gcr.io/distroless/java` | The image reference for the base image.
 `credHelper` | string | *None* | Suffix for the credential helper that can authenticate pulling the base image (following `docker-credential-`).
 
+<a name="to-object"></a>`to` is an object with the following properties:
+
 Property | Type | Default | Description
 --- | --- | --- | ---
 `image` | string | *Required* | The image reference for the target image.
