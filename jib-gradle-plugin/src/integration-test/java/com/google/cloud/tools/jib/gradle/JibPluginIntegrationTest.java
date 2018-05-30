@@ -31,6 +31,7 @@ import org.junit.Test;
 public class JibPluginIntegrationTest {
 
   @ClassRule public static final TestProject emptyTestProject = new TestProject("empty");
+
   @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
 
   private static String buildAndRun(TestProject testProject, String imageReference)
