@@ -29,13 +29,13 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
 /** Exports to a Docker context. This is an <b>incubating</b> feature. */
-@Mojo(name = "dockercontext", requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM)
+@Mojo(name = "dockerContext", requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM)
 public class DockerContextMojo extends JibPluginConfiguration {
 
   @Nullable
   @Parameter(
     property = "jib.dockerDir",
-    defaultValue = "${project.build.directory}/jib-dockercontext",
+    defaultValue = "${project.build.directory}/jib-docker-context",
     required = true
   )
   private String targetDir;
