@@ -115,7 +115,7 @@ Jib can also export to a Docker context so that you can build with Docker, if ne
 gradle build jibDockerContext
 ```
 
-The Docker context will be created at `build/jib-dockercontext` by default. You can change this directory with the `targetDir` configuration option or the `---jib.dockerDir` parameter:
+The Docker context will be created at `build/jib-docker-context` by default. You can change this directory with the `targetDir` configuration option or the `---jib.dockerDir` parameter:
 
 ```shell
 gradle build jibDockerContext --jib.dockerDir=my/docker/context/

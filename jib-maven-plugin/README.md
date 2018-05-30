@@ -143,13 +143,13 @@ mvn package
 Jib can also export to a Docker context so that you can build with Docker, if needed:
 
 ```shell
-mvn compile jib:dockercontext
+mvn compile jib:dockerContext
 ```
 
-The Docker context will be created at `target/jib-dockercontext` by default. You can change this directory with the `targetDir` configuration option or the `jib.dockerDir` parameter:
+The Docker context will be created at `target/jib-docker-context` by default. You can change this directory with the `targetDir` configuration option or the `jib.dockerDir` parameter:
 
 ```shell
-mvn compile jib:dockercontext -Djib.dockerDir=my/docker/context/
+mvn compile jib:dockerContext -Djib.dockerDir=my/docker/context/
 ```
 
 You can then build your image with Docker:
