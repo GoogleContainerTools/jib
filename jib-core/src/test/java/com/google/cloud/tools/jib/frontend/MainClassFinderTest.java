@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import org.junit.Assert;
@@ -90,6 +91,32 @@ public class MainClassFinderTest {
   }
 
   @Test
+  public void testFindMainClass_extension() throws URISyntaxException, IOException {
+    Path rootDirectory = Paths.get(Resources.getResource("class-finder-tests/extension").toURI());
+    List<String> mainClasses = MainClassFinder.findMainClasses(rootDirectory);
+    Assert.assertEquals(1, mainClasses.size());
+    Assert.assertTrue(mainClasses.contains("main.MainClass"));
+  }
+
+  @Test
+  public void testFindMainClass_externalmethod() throws URISyntaxException, IOException {
+    Path rootDirectory =
+        Paths.get(Resources.getResource("class-finder-tests/externalmethod").toURI());
+    List<String> mainClasses = MainClassFinder.findMainClasses(rootDirectory);
+    Assert.assertEquals(1, mainClasses.size());
+    Assert.assertTrue(mainClasses.contains("main.MainClass"));
+  }
+
+  @Test
+  public void testFindMainClass_innerClasses() throws URISyntaxException, IOException {
+    Path rootDirectory =
+        Paths.get(Resources.getResource("class-finder-tests/inner-classes").toURI());
+    List<String> mainClasses = MainClassFinder.findMainClasses(rootDirectory);
+    Assert.assertEquals(1, mainClasses.size());
+    Assert.assertTrue(mainClasses.contains("HelloWorld$InnerClass"));
+  }
+
+  @Test
   public void testResolveMainClass() throws MainClassInferenceException {
     Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("some.main.class");
     Assert.assertEquals(
@@ -108,13 +135,17 @@ public class MainClassFinderTest {
   }
 
   @Test
-  public void testResolveMainClass_multipleInferredWithBackup() throws Throwable {
+  public void testResolveMainClass_multipleInferredWithBackup()
+      throws MainClassInferenceException, URISyntaxException {
     Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("${start-class}");
     Mockito.when(mockSourceFilesConfiguration.getClassesFiles())
         .thenReturn(
-            Collections.singletonList(
-                Paths.get(Resources.getResource("class-finder-tests/multiple").toURI())));
-
+            Arrays.asList(
+                Paths.get(Resources.getResource("class-finder-tests/multiple/multi").toURI()),
+                Paths.get(
+                    Resources.getResource("class-finder-tests/multiple/HelloWorld.class").toURI()),
+                Paths.get(
+                    Resources.getResource("class-finder-tests/multiple/NotMain.class").toURI())));
     Assert.assertEquals(
         "${start-class}", MainClassFinder.resolveMainClass(null, mockProjectProperties));
     Mockito.verify(mockBuildLogger).warn("'mainClass' is not a valid Java class : ${start-class}");
@@ -125,9 +156,12 @@ public class MainClassFinderTest {
     Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn(null);
     Mockito.when(mockSourceFilesConfiguration.getClassesFiles())
         .thenReturn(
-            Collections.singletonList(
-                Paths.get(Resources.getResource("class-finder-tests/multiple").toURI())));
-
+            Arrays.asList(
+                Paths.get(Resources.getResource("class-finder-tests/multiple/multi").toURI()),
+                Paths.get(
+                    Resources.getResource("class-finder-tests/multiple/HelloWorld.class").toURI()),
+                Paths.get(
+                    Resources.getResource("class-finder-tests/multiple/NotMain.class").toURI())));
     try {
       MainClassFinder.resolveMainClass(null, mockProjectProperties);
       Assert.fail();
@@ -141,8 +175,6 @@ public class MainClassFinderTest {
   @Test
   public void testResolveMainClass_noneInferredWithBackup() throws MainClassInferenceException {
     Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("${start-class}");
-    Mockito.when(mockSourceFilesConfiguration.getClassesFiles()).thenReturn(fakeClassesPath);
-
     Assert.assertEquals(
         "${start-class}", MainClassFinder.resolveMainClass(null, mockProjectProperties));
     Mockito.verify(mockBuildLogger).warn("'mainClass' is not a valid Java class : ${start-class}");
@@ -151,8 +183,6 @@ public class MainClassFinderTest {
   @Test
   public void testResolveMainClass_noneInferredWithoutBackup() {
     Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn(null);
-    Mockito.when(mockSourceFilesConfiguration.getClassesFiles()).thenReturn(fakeClassesPath);
-
     try {
       MainClassFinder.resolveMainClass(null, mockProjectProperties);
       Assert.fail();
@@ -160,5 +190,21 @@ public class MainClassFinderTest {
       Mockito.verify(mockProjectProperties)
           .getMainClassHelpfulSuggestions("Main class was not found");
     }
+  }
+
+  @Test
+  public void testGetPathFromClassName() {
+    Path root = Paths.get("test").resolve("root");
+    MainClassFinder.ClassFileLoader classFileLoader = new MainClassFinder.ClassFileLoader(root);
+    Assert.assertEquals(
+        root.resolve("test").resolve("ClassName.class"),
+        classFileLoader.getPathFromClassName("test.ClassName"));
+  }
+
+  @Test
+  public void testGetPathFromClassName_emptyClassName() {
+    MainClassFinder.ClassFileLoader classFileLoader =
+        new MainClassFinder.ClassFileLoader(Paths.get(""));
+    Assert.assertEquals(Paths.get(".class"), classFileLoader.getPathFromClassName(""));
   }
 }
