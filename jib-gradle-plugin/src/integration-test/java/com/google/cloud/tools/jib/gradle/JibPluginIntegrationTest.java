@@ -21,6 +21,7 @@ import java.io.IOException;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.BuildTask;
 import org.gradle.testkit.runner.TaskOutcome;
+import org.gradle.testkit.runner.UnexpectedBuildFailure;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.ClassRule;
@@ -72,6 +73,19 @@ public class JibPluginIntegrationTest {
 
   @Test
   public void testBuild_simple() throws IOException, InterruptedException {
+    // Test empty output error
+    try {
+      simpleTestProject.build("clean", "jib");
+      Assert.fail();
+    } catch (UnexpectedBuildFailure ex) {
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.containsString(
+              "Obtaining project build output files failed; make sure you have compiled your "
+                  + "project before trying to build the image. (Did you accidentally run \"gradle "
+                  + "clean jib\" instead of \"gradle clean compileJava jib\"?)"));
+    }
+
     Assert.assertEquals(
         "Hello, world\n",
         buildAndRun(simpleTestProject, "gcr.io/jib-integration-testing/simpleimage:gradle"));
