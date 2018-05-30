@@ -19,8 +19,10 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.Command;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Arrays;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -35,6 +37,9 @@ public class BuildImageMojoIntegrationTest {
 
   @ClassRule
   public static final TestProject emptyTestProject = new TestProject(testPlugin, "empty");
+
+  @ClassRule
+  public static final TestProject blankTestProject = new TestProject(testPlugin, "blank");
 
   /**
    * Builds and runs jib:build on a project at {@code projectRoot} pushing to {@code
@@ -84,5 +89,22 @@ public class BuildImageMojoIntegrationTest {
         "",
         buildAndRun(
             emptyTestProject.getProjectRoot(), "gcr.io/jib-integration-testing/emptyimage:maven"));
+  }
+
+  @Test
+  public void testExecute_blank() {
+    try {
+      Verifier verifier = new Verifier(blankTestProject.getProjectRoot().toString());
+      verifier.setAutoclean(false);
+      verifier.executeGoals(Arrays.asList("package", "jib:build"));
+      Assert.fail();
+    } catch (VerificationException ex) {
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.containsString(
+              "Obtaining project build output files failed; make sure you have compiled your "
+                  + "project before trying to build the image. (Did you accidentally run \"mvn "
+                  + "clean jib:build\" instead of \"mvn clean compile jib:build\"?)"));
+    }
   }
 }
