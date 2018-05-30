@@ -37,9 +37,6 @@ public class BuildImageMojoIntegrationTest {
   @ClassRule
   public static final TestProject emptyTestProject = new TestProject(testPlugin, "empty");
 
-  @ClassRule
-  public static final TestProject blankTestProject = new TestProject(testPlugin, "blank");
-
   /**
    * Builds and runs jib:build on a project at {@code projectRoot} pushing to {@code
    * imageReference}.
@@ -75,6 +72,21 @@ public class BuildImageMojoIntegrationTest {
 
   @Test
   public void testExecute_simple() throws VerificationException, IOException, InterruptedException {
+    // Test empty output error
+    try {
+      Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
+      verifier.setAutoclean(false);
+      verifier.executeGoals(Arrays.asList("clean", "jib:build"));
+      Assert.fail();
+    } catch (VerificationException ex) {
+      Assert.assertTrue(
+          ex.getMessage()
+              .contains(
+                  "Obtaining project build output files failed; make sure you have compiled your "
+                      + "project before trying to build the image. (Did you accidentally run \"mvn "
+                      + "clean jib:build\" instead of \"mvn clean compile jib:build\"?)"));
+    }
+
     Assert.assertEquals(
         "Hello, world\n",
         buildAndRun(
@@ -88,22 +100,5 @@ public class BuildImageMojoIntegrationTest {
         "",
         buildAndRun(
             emptyTestProject.getProjectRoot(), "gcr.io/jib-integration-testing/emptyimage:maven"));
-  }
-
-  @Test
-  public void testExecute_blank() {
-    try {
-      Verifier verifier = new Verifier(blankTestProject.getProjectRoot().toString());
-      verifier.setAutoclean(false);
-      verifier.executeGoals(Arrays.asList("package", "jib:build"));
-      Assert.fail();
-    } catch (VerificationException ex) {
-      Assert.assertTrue(
-          ex.getMessage()
-              .contains(
-                  "Obtaining project build output files failed; make sure you have compiled your "
-                      + "project before trying to build the image. (Did you accidentally run \"mvn "
-                      + "clean jib:build\" instead of \"mvn clean compile jib:build\"?)"));
-    }
   }
 }
