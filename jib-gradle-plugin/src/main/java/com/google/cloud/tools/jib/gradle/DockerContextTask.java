@@ -44,11 +44,11 @@ public class DockerContextTask extends DefaultTask {
     return jibExtension;
   }
 
-  /** The output directory for the Docker context is by default {@code build/jib-dockercontext}. */
+  /** The output directory for the Docker context is by default {@code build/jib-dockerContext}. */
   @OutputDirectory
   public String getTargetDir() {
     if (targetDir == null) {
-      return getProject().getBuildDir().toPath().resolve("jib-dockercontext").toString();
+      return getProject().getBuildDir().toPath().resolve("jib-dockerContext").toString();
     }
     return targetDir;
   }

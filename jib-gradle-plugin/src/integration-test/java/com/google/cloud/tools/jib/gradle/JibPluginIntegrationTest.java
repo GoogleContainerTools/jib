@@ -113,7 +113,7 @@ public class JibPluginIntegrationTest {
             simpleTestProject
                 .getProjectRoot()
                 .resolve("build")
-                .resolve("jib-dockercontext")
+                .resolve("jib-dockerContext")
                 .toString())
         .run();
     Assert.assertEquals("Hello, world\n", new Command("docker", "run", imageName).run());
