@@ -102,37 +102,25 @@ class MavenSourceFilesConfiguration implements SourceFilesConfiguration {
   }
 
   /**
-   * Adds {@code file} to {@link #classesFiles} if it is a {@code .class} file and there is a
-   * corresponding {@code .java} file in the {@code classesSourceDirectory}; otherwise, adds {@code
-   * file} to {@link #resourcesFiles}.
+   * Adds {@code file} to {@link #classesFiles} if it is a {@code .class} file or is a directory
+   * that also exists in the classes source directory; otherwise, adds {@code file} to {@link
+   * #resourcesFiles}.
    */
   private void addFileToResourcesOrClasses(
       Path classesSourceDirectory, Path classesOutputDirectory, Path file) {
     // If is a directory, checks if there is corresponding directory in source directory.
-    if (Files.isDirectory(file)) {
-      if (Files.exists(classesSourceDirectory.resolve(classesOutputDirectory.relativize(file)))) {
-        classesFiles.add(file);
-        return;
-      }
+    if (Files.isDirectory(file)
+        && Files.exists(classesSourceDirectory.resolve(classesOutputDirectory.relativize(file)))) {
+      classesFiles.add(file);
+      return;
     }
 
-    // If is .class file, checks if there is corresponding .java file in source directory.
+    // Checks if is .class file.
     if (FileSystems.getDefault().getPathMatcher("glob:**.class").matches(file)) {
-      // Replaces the extension with '.java'.
-      Path javaFile =
-          file.resolveSibling(file.getFileName().toString().replaceAll("(.*?)\\.class", "$1.java"));
-
-      // Resolves the file in the source directory.
-      Path correspondingSourceDirFile =
-          classesSourceDirectory.resolve(classesOutputDirectory.relativize(javaFile));
-      if (Files.exists(correspondingSourceDirFile)) {
-        // Adds the file as a classes file since it is in the source directory.
-        classesFiles.add(file);
-        return;
-      }
+      classesFiles.add(file);
+      return;
     }
 
-    // Adds the file as a resource since it is not a .class file or is not in the source directory.
     resourcesFiles.add(file);
   }
 }
