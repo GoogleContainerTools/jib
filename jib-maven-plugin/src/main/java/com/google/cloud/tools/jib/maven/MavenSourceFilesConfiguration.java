@@ -42,16 +42,6 @@ class MavenSourceFilesConfiguration implements SourceFilesConfiguration {
     return new MavenSourceFilesConfiguration(project);
   }
 
-  /** If the {@code path} has extension {@code .class}, replace the extension with {@code .java}. */
-  private static Path replaceClassExtensionWithJava(Path path) {
-    if (FileSystems.getDefault().getPathMatcher("glob:**.class").matches(path)) {
-      // If is a class file, replace extension with .java.
-      return path.resolveSibling(
-          path.getFileName().toString().replaceAll("(.*?)\\.class", "$1.java"));
-    }
-    return path;
-  }
-
   private final List<Path> dependenciesFiles = new ArrayList<>();
   private final List<Path> resourcesFiles = new ArrayList<>();
   private final List<Path> classesFiles = new ArrayList<>();
@@ -70,20 +60,9 @@ class MavenSourceFilesConfiguration implements SourceFilesConfiguration {
     // files by matching them against the .java source files. All other files are deemed resources.
     try (Stream<Path> classFileStream = Files.list(classesOutputDirectory)) {
       classFileStream.forEach(
-          classFile -> {
-            Path javaFile = replaceClassExtensionWithJava(classFile);
-
-            // Resolves the file in the source directory.
-            Path correspondingSourceDirFile =
-                classesSourceDirectory.resolve(classesOutputDirectory.relativize(javaFile));
-            if (Files.exists(correspondingSourceDirFile)) {
-              // Adds the file as a classes file since it is in the source directory.
-              classesFiles.add(classFile);
-            } else {
-              // Adds the file as a resource since it is not in the source directory.
-              resourcesFiles.add(classFile);
-            }
-          });
+          classFile ->
+              addFileToResourcesOrClasses(
+                  classesSourceDirectory, classesOutputDirectory, classFile));
     }
 
     // Sort all files by path for consistent ordering.
@@ -120,5 +99,28 @@ class MavenSourceFilesConfiguration implements SourceFilesConfiguration {
   @Override
   public String getClassesPathOnImage() {
     return CLASSES_PATH_ON_IMAGE;
+  }
+
+  /**
+   * Adds {@code file} to {@link #classesFiles} if it is a {@code .class} file or is a directory
+   * that also exists in the classes source directory; otherwise, adds {@code file} to {@link
+   * #resourcesFiles}.
+   */
+  private void addFileToResourcesOrClasses(
+      Path classesSourceDirectory, Path classesOutputDirectory, Path file) {
+    // If is a directory, checks if there is corresponding directory in source directory.
+    if (Files.isDirectory(file)
+        && Files.exists(classesSourceDirectory.resolve(classesOutputDirectory.relativize(file)))) {
+      classesFiles.add(file);
+      return;
+    }
+
+    // Checks if is .class file.
+    if (FileSystems.getDefault().getPathMatcher("glob:**.class").matches(file)) {
+      classesFiles.add(file);
+      return;
+    }
+
+    resourcesFiles.add(file);
   }
 }
