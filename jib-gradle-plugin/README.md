@@ -268,7 +268,6 @@ See the [Jib project README](/../../#how-jib-works).
 
 These limitations will be fixed in later releases.
 
-* Does not build directly to a Docker daemon.
 * Pushing to Azure Container Registry is not currently supported.
 
 ## Frequently Asked Questions (FAQ)
