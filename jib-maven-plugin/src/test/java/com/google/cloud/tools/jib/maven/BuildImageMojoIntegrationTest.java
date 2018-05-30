@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -79,12 +80,12 @@ public class BuildImageMojoIntegrationTest {
       verifier.executeGoals(Arrays.asList("clean", "jib:build"));
       Assert.fail();
     } catch (VerificationException ex) {
-      Assert.assertTrue(
-          ex.getMessage()
-              .contains(
-                  "Obtaining project build output files failed; make sure you have compiled your "
-                      + "project before trying to build the image. (Did you accidentally run \"mvn "
-                      + "clean jib:build\" instead of \"mvn clean compile jib:build\"?)"));
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.containsString(
+              "Obtaining project build output files failed; make sure you have compiled your "
+                  + "project before trying to build the image. (Did you accidentally run \"mvn "
+                  + "clean jib:build\" instead of \"mvn clean compile jib:build\"?)"));
     }
 
     Assert.assertEquals(
