@@ -42,10 +42,10 @@ public class DockerContextMojoIntegrationTest {
     Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
     verifier.setAutoclean(false);
     verifier.executeGoal("compile");
-    verifier.executeGoal("jib:dockercontext");
+    verifier.executeGoal("jib:dockerContext");
 
     Path dockerContextDirectory =
-        simpleTestProject.getProjectRoot().resolve("target").resolve("jib-dockercontext");
+        simpleTestProject.getProjectRoot().resolve("target").resolve("jib-docker-context");
     Assert.assertTrue(Files.exists(dockerContextDirectory));
 
     String imageName = "jib/integration-test";
