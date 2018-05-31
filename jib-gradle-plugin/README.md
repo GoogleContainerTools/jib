@@ -124,7 +124,7 @@ gradle build jibDockerContext --jib.dockerDir=my/docker/context/
 You can then build your image with Docker:
 
 ```shell
-docker build -t myregistry/myapp my/docker/context/
+docker build -t myimage my/docker/context/
 ``` 
 
 ## Extended Usage
