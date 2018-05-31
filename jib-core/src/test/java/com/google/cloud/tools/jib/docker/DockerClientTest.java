@@ -21,6 +21,7 @@ import com.google.common.io.ByteStreams;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import org.junit.Assert;
@@ -85,7 +86,32 @@ public class DockerClientTest {
   }
 
   @Test
-  public void testLoad_fail() throws InterruptedException {
+  public void testLoad_stdinFail() throws InterruptedException {
+    DockerClient testDockerClient = new DockerClient(ignored -> mockProcessBuilder);
+
+    Mockito.when(mockProcess.getOutputStream())
+        .thenReturn(
+            new OutputStream() {
+
+              @Override
+              public void write(int b) throws IOException {
+                throw new IOException();
+              }
+            });
+    Mockito.when(mockProcess.getErrorStream())
+        .thenReturn(new ByteArrayInputStream("error".getBytes(StandardCharsets.UTF_8)));
+
+    try {
+      testDockerClient.load(Blobs.from("jib"));
+      Assert.fail("Write should have failed");
+
+    } catch (IOException ex) {
+      Assert.assertEquals("'docker load' command failed with error: error", ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testLoad_stdoutFail() throws InterruptedException {
     DockerClient testDockerClient = new DockerClient(ignored -> mockProcessBuilder);
     Mockito.when(mockProcess.waitFor()).thenReturn(1);
 

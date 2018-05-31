@@ -75,13 +75,23 @@ public class DockerClient {
    *     href="https://docs.docker.com/engine/reference/commandline/load/">https://docs.docker.com/engine/reference/commandline/load/</a>
    * @return stdout from {@code docker}
    */
-  public String load(Blob imageTarballBlob) throws IOException, InterruptedException {
+  public String load(Blob imageTarballBlob) throws InterruptedException, IOException {
     // Runs 'docker load'.
     Process dockerProcess = docker("load");
 
     try (OutputStream stdin = dockerProcess.getOutputStream()) {
       imageTarballBlob.writeTo(stdin);
+
+    } catch (IOException ex) {
+      // This error usually happens when docker is not able to connect to the daemon socket.
+      try (InputStreamReader stderr =
+          new InputStreamReader(dockerProcess.getErrorStream(), StandardCharsets.UTF_8)) {
+        String error = CharStreams.toString(stderr);
+
+        throw new IOException("'docker load' command failed with error: " + error);
+      }
     }
+
     try (InputStreamReader stdout =
         new InputStreamReader(dockerProcess.getInputStream(), StandardCharsets.UTF_8)) {
       String output = CharStreams.toString(stdout);
