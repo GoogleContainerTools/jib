@@ -154,7 +154,7 @@ Property | Type | Default | Description
 
 Property | Type | Default | Description
 --- | --- | --- | ---
-`image` | `String` | *Required* | The image reference for the target image.
+`image` | `String` | *Required* | The image reference for the target image. This can also be specified via the `--image` command line option.
 `credHelper` | `String` | *None* | Suffix for the credential helper that can authenticate pulling the base image (following `docker-credential-`).
 `auth` | [`auth`](#auth-closure) | *None* | Specify credentials directly (alternative to `credHelper`).
 

@@ -18,6 +18,16 @@ These features are not currently supported but will be added in later releases.
 
 ## Quickstart
 
+You can containerize your application easily with one command:
+
+```shell
+mvn com.google.cloud.tools:jib-maven-plugin:0.1.8-SNAPSHOT:build -Dimage=<MY IMAGE>
+```
+
+*If you encounter authentication issues, see [Authentication Methods](#authentication-methods).*
+
+If you would like to set up Jib as part of your Maven build, follow the guide below.
+
 ### Setup
 
 In your Maven Java project, add the plugin to your `pom.xml`:
@@ -184,7 +194,7 @@ Property | Type | Default | Description
 
 Property | Type | Default | Description
 --- | --- | --- | ---
-`image` | string | *Required* | The image reference for the target image.
+`image` | string | *Required* | The image reference for the target image. This can also be specified via the `-Dimage` command line option.
 `credHelper` | string | *None* | Suffix for the credential helper that can authenticate pulling the base image (following `docker-credential-`).
 
 ### Example
