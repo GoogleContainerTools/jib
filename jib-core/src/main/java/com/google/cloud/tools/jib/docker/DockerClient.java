@@ -89,7 +89,9 @@ public class DockerClient {
         try (InputStreamReader stderr =
             new InputStreamReader(dockerProcess.getErrorStream(), StandardCharsets.UTF_8)) {
           error = CharStreams.toString(stderr);
+
         } catch (IOException ignored) {
+          // This ignores exceptions from reading stderr and throws the original exception from writing to stdin.
           throw ex;
         }
         throw new IOException("'docker load' command failed with error: " + error, ex);
