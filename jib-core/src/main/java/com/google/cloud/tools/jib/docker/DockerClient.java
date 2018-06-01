@@ -91,7 +91,8 @@ public class DockerClient {
           error = CharStreams.toString(stderr);
 
         } catch (IOException ignored) {
-          // This ignores exceptions from reading stderr and throws the original exception from writing to stdin.
+          // This ignores exceptions from reading stderr and throws the original exception from
+          // writing to stdin.
           throw ex;
         }
         throw new IOException("'docker load' command failed with error: " + error, ex);
