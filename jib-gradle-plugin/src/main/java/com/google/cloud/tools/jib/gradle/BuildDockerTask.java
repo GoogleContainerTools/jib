@@ -32,6 +32,7 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.tasks.options.Option;
 
 /** Builds a container image and exports to the default Docker daemon. */
 public class BuildDockerTask extends DefaultTask {
@@ -49,6 +50,12 @@ public class BuildDockerTask extends DefaultTask {
   @Nullable
   public JibExtension getJib() {
     return jibExtension;
+  }
+
+  /** The target image can be overriden with the {@code --image} command line option. */
+  @Option(option = "image", description = "The image reference for the target image")
+  public void setTargetImage(String targetImage) {
+    Preconditions.checkNotNull(jibExtension).getTo().setImage(targetImage);
   }
 
   @TaskAction
