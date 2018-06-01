@@ -24,6 +24,7 @@ import java.nio.file.Paths;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
+import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
@@ -43,6 +44,9 @@ public class DockerContextTask extends DefaultTask {
   public JibExtension getJib() {
     return jibExtension;
   }
+
+  @InputFiles
+  public
 
   /** The output directory for the Docker context is by default {@code build/jib-docker-context}. */
   @OutputDirectory
