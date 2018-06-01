@@ -31,20 +31,6 @@ import java.util.function.Function;
 /** Calls out to the {@code docker} CLI. */
 public class DockerClient {
 
-  /** Accepts an {@link OutputStream}, possibly throwing an {@link IOException}. */
-  @FunctionalInterface
-  private interface OutputStreamConsumer {
-
-    void accept(OutputStream outputStream) throws IOException;
-  }
-
-  /** Handles an {@link IOException}, possibly throwing an {@link IOException}. */
-  @FunctionalInterface
-  private interface IOExceptionHandler {
-
-    void handle(IOException ex) throws IOException;
-  }
-
   /**
    * @param dockerSubCommand the subcommand to run after {@code docker}
    * @return the default {@link ProcessBuilder} factory for running a {@code docker} subcommand
@@ -54,26 +40,6 @@ public class DockerClient {
     dockerCommand.add("docker");
     dockerCommand.addAll(dockerSubCommand);
     return new ProcessBuilder(dockerCommand);
-  }
-
-  /**
-   * Writes to a process's stdin.
-   *
-   * @param process the {@link Process} to
-   * @param stdinConsumer writes to a stdin {@link OutputStream}
-   * @param ioExceptionHandler handles any {@link IOException} returned by the {@code stdinConsumer}
-   */
-  private static void writeToStdin(
-      Process process, OutputStreamConsumer stdinConsumer, IOExceptionHandler ioExceptionHandler)
-      throws IOException {
-    try (OutputStream stdin = process.getOutputStream()) {
-      try {
-        stdinConsumer.accept(stdin);
-
-      } catch (IOException ex) {
-        ioExceptionHandler.handle(ex);
-      }
-    }
   }
 
   /** Factory for generating the {@link ProcessBuilder} for running {@code docker} commands. */
@@ -113,18 +79,22 @@ public class DockerClient {
     // Runs 'docker load'.
     Process dockerProcess = docker("load");
 
-    writeToStdin(
-        dockerProcess,
-        imageTarballBlob::writeTo,
-        ioException -> {
-          // Tries to read from stderr.
-          try (InputStreamReader stderr =
-              new InputStreamReader(dockerProcess.getErrorStream(), StandardCharsets.UTF_8)) {
-            throw new IOException(
-                "'docker load' command failed with error: " + CharStreams.toString(stderr),
-                ioException);
-          }
-        });
+    try (OutputStream stdin = dockerProcess.getOutputStream()) {
+      try {
+        imageTarballBlob.writeTo(stdin);
+
+      } catch (IOException ex) {
+        // Tries to read from stderr.
+        String error;
+        try (InputStreamReader stderr =
+            new InputStreamReader(dockerProcess.getErrorStream(), StandardCharsets.UTF_8)) {
+          error = CharStreams.toString(stderr);
+        } catch (IOException ignored) {
+          throw ex;
+        }
+        throw new IOException("'docker load' command failed with error: " + error, ex);
+      }
+    }
 
     try (InputStreamReader stdout =
         new InputStreamReader(dockerProcess.getInputStream(), StandardCharsets.UTF_8)) {
