@@ -57,7 +57,7 @@ public class DockerClient {
   }
 
   /**
-   * Writes a process's stdin.
+   * Writes to a process's stdin.
    *
    * @param process the {@link Process} to
    * @param stdinConsumer writes to a stdin {@link OutputStream}
