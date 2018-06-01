@@ -40,6 +40,7 @@ import org.gradle.internal.logging.events.LogEvent;
 import org.gradle.internal.logging.events.OutputEventListener;
 import org.gradle.internal.logging.slf4j.OutputEventListenerBackedLoggerContext;
 import org.slf4j.LoggerFactory;
+import org.gradle.api.tasks.options.Option;
 
 /** Builds a container image and exports to the default Docker daemon. */
 public class BuildDockerTask extends DefaultTask {
@@ -60,6 +61,12 @@ public class BuildDockerTask extends DefaultTask {
   @Nullable
   public JibExtension getJib() {
     return jibExtension;
+  }
+
+  /** The target image can be overriden with the {@code --image} command line option. */
+  @Option(option = "image", description = "The image reference for the target image")
+  public void setTargetImage(String targetImage) {
+    Preconditions.checkNotNull(jibExtension).getTo().setImage(targetImage);
   }
 
   @TaskAction

@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.blob.Blobs;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 // TODO: Add JsonFactory for HTTP response parsing.
 /**
@@ -65,6 +66,14 @@ public class JsonTemplateMapper {
   public static <T extends JsonTemplate> T readJson(String jsonString, Class<T> templateClass)
       throws IOException {
     return objectMapper.readValue(jsonString, templateClass);
+  }
+
+  /** Deserializes a JSON object list from a JSON string. */
+  public static <T extends ListOfJsonTemplate> List<T> readListOfJson(
+      String jsonString, Class<T> templateClass) throws IOException {
+    return objectMapper.readValue(
+        jsonString,
+        objectMapper.getTypeFactory().constructCollectionType(List.class, templateClass));
   }
 
   /** Convert a {@link JsonTemplate} to a {@link Blob} of the JSON string. */

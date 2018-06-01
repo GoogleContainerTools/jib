@@ -53,6 +53,10 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     private String image;
 
     @Nullable @Parameter private String credHelper;
+
+    public void set(String image) {
+      this.image = image;
+    }
   }
 
   /** @return the {@link ImageReference} parsed from {@code from}. */
@@ -84,7 +88,7 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   @Nullable @Parameter private FromConfiguration from = new FromConfiguration();
 
   @Nullable
-  @Parameter(required = true)
+  @Parameter(property = "image", required = true)
   private ToConfiguration to;
 
   @Parameter private List<String> jvmFlags = Collections.emptyList();
