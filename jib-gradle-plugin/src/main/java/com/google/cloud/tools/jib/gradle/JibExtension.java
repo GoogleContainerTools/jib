@@ -81,8 +81,8 @@ public class JibExtension {
   private static final ImageFormat DEFAULT_FORMAT = ImageFormat.Docker;
   private static final boolean DEFAULT_USE_ONLY_PROJECT_CACHE = false;
 
-  private ImageConfiguration from;
-  private ImageConfiguration to;
+  private final ImageConfiguration from;
+  private final ImageConfiguration to;
   private final ListProperty<String> jvmFlags;
   private final Property<String> mainClass;
   private final Property<ImageFormat> format;
@@ -146,7 +146,6 @@ public class JibExtension {
     return from;
   }
 
-  @Nested
   ImageConfiguration getTo() {
     return to;
   }
