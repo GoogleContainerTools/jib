@@ -27,7 +27,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.ProtectionDomain;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -38,7 +37,6 @@ import java.util.Map;
 import java.util.Set;
 import javassist.CannotCompileException;
 import javassist.ClassPool;
-import javassist.CtClass;
 import javax.annotation.Nullable;
 
 /** Infers the main class in an application. */
@@ -48,8 +46,9 @@ public class MainClassFinder {
   @VisibleForTesting
   static class ClassFileLoader extends ClassLoader {
 
-    /** Maps from class name to class. */
-    private final Map<String, Class<?>> definedClasses = new HashMap<>();
+    /** Maps from class file to class. */
+    private final Map<Path, Class<?>> definedClasses = new HashMap<>();
+
     private final Path rootDirectory;
 
     @VisibleForTesting
@@ -57,32 +56,35 @@ public class MainClassFinder {
       this.rootDirectory = rootDirectory;
     }
 
+    /**
+     * Use {@link #findClass(Path)}.
+     *
+     * This method resolves possible dependency classes for the classes loaded from files.
+     */
     @Nullable
     @Override
     public Class<?> findClass(String className) {
-      if (definedClasses.containsKey(className)) {
-        return definedClasses.get(className);
-      }
-
       Path classFile = getPathFromClassName(className);
 
       if (!Files.exists(classFile)) {
         // TODO: Log search class failure?
-        System.out.println("external " + className);
+        // Cannot find corresponding class file. The class is probably in a dependency JAR.
+        // Makes an empty class to prevent NoClassDefFoundError.
         try {
-          Class<?> externalClass = ClassPool.getDefault().makeClass(className).toClass(this, MainClassFinder.class.getProtectionDomain());
-          definedClasses.put(className, externalClass);
-          return externalClass;
+          return ClassPool.getDefault()
+              .makeClass(className)
+              .toClass(this, MainClassFinder.class.getProtectionDomain());
 
         } catch (CannotCompileException ex) {
-          throw new RuntimeException(ex);
+          throw new Error(ex);
         }
       }
 
       return findClass(className, classFile);
     }
 
-    @Nullable private Class<?> findClass(Path classFile) {
+    @Nullable
+    private Class<?> findClass(Path classFile) {
       return findClass(null, classFile);
     }
 
@@ -96,24 +98,18 @@ public class MainClassFinder {
      */
     @Nullable
     private Class<?> findClass(@Nullable String className, Path classFile) {
-      System.out.println("findClass(" + className + "," + classFile);
-      if (definedClasses.containsKey(className)) {
-        return definedClasses.get(className);
+      if (definedClasses.containsKey(classFile)) {
+        return definedClasses.get(classFile);
       }
 
       try {
         byte[] bytes = Files.readAllBytes(classFile);
         Class<?> definedClass = defineClass(className, bytes, 0, bytes.length);
-        if (className == null) {
-          className = definedClass.getName();
-        }
-        definedClasses.put(className, definedClass);
-        System.out.println("defined " + className + "," + classFile);
+        definedClasses.put(classFile, definedClass);
         return definedClass;
 
       } catch (IOException | ClassFormatError | SecurityException | NoClassDefFoundError ignored) {
-        // Not a valid class file
-        System.out.println("invalid " + className + "," + classFile);
+        // Not a valid class file.
         // TODO: Log search class failure when NoClassDefFoundError/SecurityException is caught?
         return null;
       }
@@ -217,12 +213,12 @@ public class MainClassFinder {
   static List<String> findMainClasses(Path rootDirectory) throws IOException {
     List<String> classNames = new ArrayList<>();
 
-    // Make sure rootDirectory is valid
+    // Makes sure rootDirectory is valid.
     if (!Files.exists(rootDirectory) || !Files.isDirectory(rootDirectory)) {
       return classNames;
     }
 
-    // Get all .class files
+    // Gets all .class files.
     ClassFileLoader classFileLoader = new ClassFileLoader(rootDirectory);
     new DirectoryWalker(rootDirectory)
         .filter(Files::isRegularFile)
@@ -234,7 +230,7 @@ public class MainClassFinder {
                 return;
               }
               try {
-                // Check if class contains {@code public static void main(String[] args)}
+                // Check if class contains {@code public static void main(String[] args)}.
                 Method main = fileClass.getMethod("main", String[].class);
                 if (main != null
                     && main.getReturnType() == void.class
@@ -244,8 +240,6 @@ public class MainClassFinder {
                 }
               } catch (NoSuchMethodException | NoClassDefFoundError ignored) {
                 // main method not found
-                ignored.printStackTrace();
-                System.out.println("no main method " + fileClass + " - " + ignored);
                 // TODO: Log search class failure when NoClassDefFoundError is caught?
               }
             });
