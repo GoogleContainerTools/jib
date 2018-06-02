@@ -59,7 +59,7 @@ public class MainClassFinder {
     /**
      * Use {@link #findClass(Path)}.
      *
-     * This method resolves possible dependency classes for the classes loaded from files.
+     * <p>This method resolves possible dependency classes for the classes loaded from files.
      */
     @Nullable
     @Override
