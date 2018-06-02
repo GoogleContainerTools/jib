@@ -27,6 +27,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.ProtectionDomain;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -47,9 +48,8 @@ public class MainClassFinder {
   @VisibleForTesting
   static class ClassFileLoader extends ClassLoader {
 
-    private static class ExternalClass {}
-
-    private final Map<Path, Class<?>> definedClasses = new HashMap<>();
+    /** Maps from class name to class. */
+    private final Map<String, Class<?>> definedClasses = new HashMap<>();
     private final Path rootDirectory;
 
     @VisibleForTesting
@@ -59,63 +59,61 @@ public class MainClassFinder {
 
     @Nullable
     @Override
-    public Class<?> findClass(String name) {
-      return findClass(name, getPathFromClassName(name));
-    }
-
-    /**
-     * @param name the name of the class. This should be {@code null} when we call it manually with
-     *     a file, and not {@code null} when it is called internally.
-     * @param file the .class file defining the class.
-     * @return the {@link Class} defined by the file, or {@code null} if the class could not be
-     *     defined.
-     */
-    @Nullable
-    private Class<?> findClass(@Nullable String name, Path file) {
-      System.out.println("findClass(" + name + "," + file);
-      if (definedClasses.containsKey(file)) {
-        return definedClasses.get(file);
+    public Class<?> findClass(String className) {
+      if (definedClasses.containsKey(className)) {
+        return definedClasses.get(className);
       }
 
-      if (!Files.exists(file)) {
+      Path classFile = getPathFromClassName(className);
+
+      if (!Files.exists(classFile)) {
         // TODO: Log search class failure?
-        System.out.println("external " + name + "," + file);
+        System.out.println("external " + className);
         try {
-          //          byte[] classBytes =
-          //
-          // Files.readAllBytes(Paths.get(Resources.getResource("Empty.class").toURI()));
-          //          String classBytesString = new String(classBytes, StandardCharsets.UTF_8);
+          Class<?> externalClass = ClassPool.getDefault().makeClass(className).toClass(this, MainClassFinder.class.getProtectionDomain());
+          definedClasses.put(className, externalClass);
+          return externalClass;
 
-          //          Deque<String> classPath = new
-          // ArrayDeque<>(Splitter.on('.').splitToList(name));
-          //          String className = classPath.removeLast();
-
-          //          classBytesString =
-          //              classBytesString
-          //                  .replaceAll("Empty", className)
-          //                  .replace("PACKAGE", Joiner.on('.').join(classPath));
-          //          classBytes = classBytesString.getBytes(StandardCharsets.UTF_8);
-
-          ClassPool pool = ClassPool.getDefault();
-          CtClass cc = pool.makeClass(name);
-          return cc.toClass();
-
-          //          return defineClass(name, classBytes, 0, classBytes.length);
         } catch (CannotCompileException ex) {
           throw new RuntimeException(ex);
         }
       }
 
+      return findClass(className, classFile);
+    }
+
+    @Nullable private Class<?> findClass(Path classFile) {
+      return findClass(null, classFile);
+    }
+
+    /**
+     * Use {@link #findClass(Path)}.
+     *
+     * @param className the name of the class
+     * @param classFile the .class file defining the class
+     * @return the {@link Class} defined by the file, or {@code null} if the class could not be
+     *     defined
+     */
+    @Nullable
+    private Class<?> findClass(@Nullable String className, Path classFile) {
+      System.out.println("findClass(" + className + "," + classFile);
+      if (definedClasses.containsKey(className)) {
+        return definedClasses.get(className);
+      }
+
       try {
-        byte[] bytes = Files.readAllBytes(file);
-        Class<?> definedClass = defineClass(name, bytes, 0, bytes.length);
-        definedClasses.put(file, definedClass);
-        System.out.println("defined " + name + "," + file);
+        byte[] bytes = Files.readAllBytes(classFile);
+        Class<?> definedClass = defineClass(className, bytes, 0, bytes.length);
+        if (className == null) {
+          className = definedClass.getName();
+        }
+        definedClasses.put(className, definedClass);
+        System.out.println("defined " + className + "," + classFile);
         return definedClass;
 
       } catch (IOException | ClassFormatError | SecurityException | NoClassDefFoundError ignored) {
         // Not a valid class file
-        System.out.println("invalid " + name + "," + file);
+        System.out.println("invalid " + className + "," + classFile);
         // TODO: Log search class failure when NoClassDefFoundError/SecurityException is caught?
         return null;
       }
@@ -231,15 +229,11 @@ public class MainClassFinder {
         .filter(path -> path.toString().endsWith(".class"))
         .walk(
             classFile -> {
-              Class<?> fileClass = classFileLoader.findClass(null, classFile);
+              Class<?> fileClass = classFileLoader.findClass(classFile);
               if (fileClass == null) {
                 return;
               }
               try {
-                for (Method method : fileClass.getDeclaredMethods()) {
-                  System.out.println(fileClass + " method: " + method);
-                }
-
                 // Check if class contains {@code public static void main(String[] args)}
                 Method main = fileClass.getMethod("main", String[].class);
                 if (main != null
