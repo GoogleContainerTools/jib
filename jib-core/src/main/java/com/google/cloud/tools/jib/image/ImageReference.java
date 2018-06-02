@@ -71,14 +71,13 @@ public class ImageReference {
         sequence(any(group(REPOSITORY_PART, literal('/'))), REPOSITORY_PART);
 
     /** Matches a tag of max length 128. */
-    private static final String TAG_REGEX =
-        sequence(wordChars(), range(wordChars('.', '-'), 0, 127));
+    private static final String TAG = sequence(wordChars(), range(wordChars('.', '-'), 0, 127));
 
     /**
      * Matches a full image reference, which is the registry, repository, and tag/digest separated
      * by backslashes. The repository is required, but the registry and tag/digest are optional.
      */
-    private static final String REFERENCE_REGEX =
+    private static final String REFERENCE =
         sequence(
             begin(),
             optional(group(match(REGISTRY), literal('/'))),
@@ -86,11 +85,11 @@ public class ImageReference {
             optional(
                 group(
                     or(
-                        group(literal(':'), match(TAG_REGEX)),
+                        group(literal(':'), match(TAG)),
                         group(literal('@'), match(DescriptorDigest.DIGEST_REGEX))))),
             end());
 
-    private static final Pattern REFERENCE_PATTERN = Pattern.compile(Regex.REFERENCE_REGEX);
+    private static final Pattern REFERENCE_PATTERN = Pattern.compile(Regex.REFERENCE);
   }
 
   private static final String DOCKER_HUB_REGISTRY = "registry.hub.docker.com";
@@ -176,7 +175,7 @@ public class ImageReference {
 
   /** @return {@code true} if is a valid tag; {@code false} otherwise */
   public static boolean isValidTag(String tag) {
-    return tag.matches(Regex.TAG_REGEX);
+    return tag.matches(Regex.TAG);
   }
 
   private final String registry;
