@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.image;
 
+import com.google.cloud.tools.jib.regex.RegexBuilder;
 import com.google.common.base.Strings;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,53 +32,74 @@ import javax.annotation.Nullable;
  */
 public class ImageReference {
 
+  /** Regular expression patterns for the image reference. */
+  private static class Regex extends RegexBuilder {
+
+    /**
+     * Matches all sequences of alphanumeric characters possibly separated by any number of dashes
+     * in the middle.
+     */
+    private static final String REGISTRY_PART =
+        group(alphanum(), group(any(alphanum('-')), alphanum()));
+
+    /**
+     * Matches sequences of {@link #REGISTRY_PART} separated by a dot, with an optional {@code
+     * :port} at the end.
+     */
+    private static final String REGISTRY =
+        sequence(
+            REGISTRY_PART,
+            any(group(literal('.'), REGISTRY_PART)),
+            optional(group(literal(':'), repeated(digit()))));
+
+    /**
+     * Matches all sequences of lowercase alphanumeric characters separated by a separator.
+     *
+     * <p>A separator is either an underscore, a dot, two underscores, or any number of dashes.
+     */
+    private static final String REPOSITORY_PART =
+        sequence(
+            repeated(lowerAlphanum()),
+            any(
+                group(
+                    sequence(
+                        group(or(chars('_', '.'), "__", any(literal('-')))),
+                        repeated(lowerAlphanum())))));
+
+    /** Matches all repetitions of {@link #REPOSITORY_PART} separated by a backslash. */
+    private static final String REPOSITORY =
+        sequence(any(group(REPOSITORY_PART, literal('/'))), REPOSITORY_PART);
+
+    /** Matches a tag of max length 128. */
+    private static final String TAG_REGEX =
+        sequence(wordChars(), range(wordChars('.', '-'), 0, 127));
+
+    /**
+     * Matches a full image reference, which is the registry, repository, and tag/digest separated
+     * by backslashes. The repository is required, but the registry and tag/digest are optional.
+     */
+    private static final String REFERENCE_REGEX =
+        sequence(
+            begin(),
+            optional(group(match(REGISTRY), literal('/'))),
+            match(REPOSITORY),
+            optional(
+                group(
+                    or(
+                        group(literal(':'), match(TAG_REGEX)),
+                        group(literal('@'), match(DescriptorDigest.DIGEST_REGEX))))),
+            end());
+
+    private static final Pattern REFERENCE_PATTERN = Pattern.compile(Regex.REFERENCE_REGEX);
+  }
+
   private static final String DOCKER_HUB_REGISTRY = "registry.hub.docker.com";
   private static final String DEFAULT_TAG = "latest";
   private static final String LIBRARY_REPOSITORY_PREFIX = "library/";
 
-  /**
-   * Matches all sequences of alphanumeric characters possibly separated by any number of dashes in
-   * the middle.
-   */
-  private static final String REGISTRY_COMPONENT_REGEX =
-      "(?:[a-zA-Z\\d]|(?:[a-zA-Z\\d][a-zA-Z\\d-]*[a-zA-Z\\d]))";
-
-  /**
-   * Matches sequences of {@code REGISTRY_COMPONENT_REGEX} separated by a dot, with an optional
-   * {@code :port} at the end.
-   */
-  private static final String REGISTRY_REGEX =
-      String.format("%s(?:\\.%s)*(?::\\d+)?", REGISTRY_COMPONENT_REGEX, REGISTRY_COMPONENT_REGEX);
-
-  /**
-   * Matches all sequences of alphanumeric characters separated by a separator.
-   *
-   * <p>A separator is either an underscore, a dot, two underscores, or any number of dashes.
-   */
-  private static final String REPOSITORY_COMPONENT_REGEX =
-      "[a-z\\d]+(?:(?:[_.]|__|[-]*)[a-z\\d]+)*";
-
-  /** Matches all repetitions of {@code REPOSITORY_COMPONENT_REGEX} separated by a backslash. */
-  private static final String REPOSITORY_REGEX =
-      String.format("(?:%s/)*%s", REPOSITORY_COMPONENT_REGEX, REPOSITORY_COMPONENT_REGEX);
-
-  /** Matches a tag of max length 128. */
-  private static final String TAG_REGEX = "[\\w][\\w.-]{0,127}";
-
-  /**
-   * Matches a full image reference, which is the registry, repository, and tag/digest separated by
-   * backslashes. The repository is required, but the registry and tag/digest are optional.
-   */
-  private static final String REFERENCE_REGEX =
-      String.format(
-          "^(?:(%s)/)?(%s)(?:(?::(%s))|(?:@(%s)))?$",
-          REGISTRY_REGEX, REPOSITORY_REGEX, TAG_REGEX, DescriptorDigest.DIGEST_REGEX);
-
-  private static final Pattern REFERENCE_PATTERN = Pattern.compile(REFERENCE_REGEX);
-
   /** Parses an image reference. */
   public static ImageReference parse(String reference) throws InvalidImageReferenceException {
-    Matcher matcher = REFERENCE_PATTERN.matcher(reference);
+    Matcher matcher = Regex.REFERENCE_PATTERN.matcher(reference);
 
     if (!matcher.find() || matcher.groupCount() < 4) {
       throw new InvalidImageReferenceException(reference);
@@ -144,17 +166,17 @@ public class ImageReference {
 
   /** @return {@code true} if is a valid registry; {@code false} otherwise */
   public static boolean isValidRegistry(String registry) {
-    return registry.matches(REGISTRY_REGEX);
+    return registry.matches(Regex.REGISTRY);
   }
 
   /** @return {@code true} if is a valid repository; {@code false} otherwise */
   public static boolean isValidRepository(String repository) {
-    return repository.matches(REPOSITORY_REGEX);
+    return repository.matches(Regex.REPOSITORY);
   }
 
   /** @return {@code true} if is a valid tag; {@code false} otherwise */
   public static boolean isValidTag(String tag) {
-    return tag.matches(TAG_REGEX);
+    return tag.matches(Regex.TAG_REGEX);
   }
 
   private final String registry;
