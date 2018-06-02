@@ -35,6 +35,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javassist.CannotCompileException;
+import javassist.ClassPool;
+import javassist.CtClass;
 import javax.annotation.Nullable;
 
 /** Infers the main class in an application. */
@@ -43,6 +46,8 @@ public class MainClassFinder {
   /** Helper for loading a .class file. */
   @VisibleForTesting
   static class ClassFileLoader extends ClassLoader {
+
+    private static class ExternalClass {}
 
     private final Map<Path, Class<?>> definedClasses = new HashMap<>();
     private final Path rootDirectory;
@@ -67,22 +72,50 @@ public class MainClassFinder {
      */
     @Nullable
     private Class<?> findClass(@Nullable String name, Path file) {
+      System.out.println("findClass(" + name + "," + file);
       if (definedClasses.containsKey(file)) {
         return definedClasses.get(file);
       }
 
       if (!Files.exists(file)) {
         // TODO: Log search class failure?
-        return null;
+        System.out.println("external " + name + "," + file);
+        try {
+          //          byte[] classBytes =
+          //
+          // Files.readAllBytes(Paths.get(Resources.getResource("Empty.class").toURI()));
+          //          String classBytesString = new String(classBytes, StandardCharsets.UTF_8);
+
+          //          Deque<String> classPath = new
+          // ArrayDeque<>(Splitter.on('.').splitToList(name));
+          //          String className = classPath.removeLast();
+
+          //          classBytesString =
+          //              classBytesString
+          //                  .replaceAll("Empty", className)
+          //                  .replace("PACKAGE", Joiner.on('.').join(classPath));
+          //          classBytes = classBytesString.getBytes(StandardCharsets.UTF_8);
+
+          ClassPool pool = ClassPool.getDefault();
+          CtClass cc = pool.makeClass(name);
+          return cc.toClass();
+
+          //          return defineClass(name, classBytes, 0, classBytes.length);
+        } catch (CannotCompileException ex) {
+          throw new RuntimeException(ex);
+        }
       }
 
       try {
         byte[] bytes = Files.readAllBytes(file);
         Class<?> definedClass = defineClass(name, bytes, 0, bytes.length);
         definedClasses.put(file, definedClass);
+        System.out.println("defined " + name + "," + file);
         return definedClass;
+
       } catch (IOException | ClassFormatError | SecurityException | NoClassDefFoundError ignored) {
         // Not a valid class file
+        System.out.println("invalid " + name + "," + file);
         // TODO: Log search class failure when NoClassDefFoundError/SecurityException is caught?
         return null;
       }
@@ -203,6 +236,10 @@ public class MainClassFinder {
                 return;
               }
               try {
+                for (Method method : fileClass.getDeclaredMethods()) {
+                  System.out.println(fileClass + " method: " + method);
+                }
+
                 // Check if class contains {@code public static void main(String[] args)}
                 Method main = fileClass.getMethod("main", String[].class);
                 if (main != null
@@ -213,6 +250,8 @@ public class MainClassFinder {
                 }
               } catch (NoSuchMethodException | NoClassDefFoundError ignored) {
                 // main method not found
+                ignored.printStackTrace();
+                System.out.println("no main method " + fileClass + " - " + ignored);
                 // TODO: Log search class failure when NoClassDefFoundError is caught?
               }
             });

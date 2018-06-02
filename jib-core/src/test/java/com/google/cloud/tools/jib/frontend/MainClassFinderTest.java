@@ -99,9 +99,18 @@ public class MainClassFinderTest {
   }
 
   @Test
-  public void testFindMainClass_externalmethod() throws URISyntaxException, IOException {
+  public void testFindMainClass_importedmethods() throws URISyntaxException, IOException {
     Path rootDirectory =
-        Paths.get(Resources.getResource("class-finder-tests/externalmethod").toURI());
+        Paths.get(Resources.getResource("class-finder-tests/imported-methods").toURI());
+    List<String> mainClasses = MainClassFinder.findMainClasses(rootDirectory);
+    Assert.assertEquals(1, mainClasses.size());
+    Assert.assertTrue(mainClasses.contains("main.MainClass"));
+  }
+
+  @Test
+  public void testFindMainClass_externalClasses() throws URISyntaxException, IOException {
+    Path rootDirectory =
+        Paths.get(Resources.getResource("class-finder-tests/external-classes").toURI());
     List<String> mainClasses = MainClassFinder.findMainClasses(rootDirectory);
     Assert.assertEquals(1, mainClasses.size());
     Assert.assertTrue(mainClasses.contains("main.MainClass"));
