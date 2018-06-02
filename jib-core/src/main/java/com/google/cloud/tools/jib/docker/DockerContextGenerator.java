@@ -82,8 +82,10 @@ public class DockerContextGenerator {
 
     // Deletes the targetDir if it exists.
     if (Files.exists(targetDirectory)) {
+      System.out.println("WTFFFF");
       MoreFiles.deleteDirectoryContents(targetDirectory);
     } else {
+      System.out.println("asfasdfasdfsaf");
       Files.createDirectory(targetDirectory);
     }
 
