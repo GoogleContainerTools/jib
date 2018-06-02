@@ -82,18 +82,15 @@ public class DockerContextGenerator {
     Preconditions.checkNotNull(baseImage);
 
     // Deletes the targetDir if it exists.
-    if (Files.exists(targetDirectory)) {
-      System.out.println("WTFFFF");
-      try {
-        Files.delete(targetDirectory);
+    try {
+      Files.deleteIfExists(targetDirectory);
 
-      } catch (DirectoryNotEmptyException ex) {
-        MoreFiles.deleteDirectoryContents(targetDirectory);
-        Files.delete(targetDirectory);
-      }
+    } catch (DirectoryNotEmptyException ex) {
+      MoreFiles.deleteDirectoryContents(targetDirectory);
+      Files.delete(targetDirectory);
     }
 
-      Files.createDirectory(targetDirectory);
+    Files.createDirectory(targetDirectory);
 
     // Creates the directories.
     Path dependenciesDir = targetDirectory.resolve("libs");
