@@ -73,7 +73,7 @@ jib.to.image = 'my-docker-id/my-app'
 Build your container image with:
 
 ```shell
-gradle classes jib
+gradle jib
 ```
 
 Subsequent builds are much faster than the initial build. 
@@ -85,7 +85,7 @@ Subsequent builds are much faster than the initial build.
 Jib can also build your image directly to a Docker daemon. This requires that you have `docker` available on your `PATH`.
 
 ```shell
-gradle classes jibBuildDocker
+gradle jibBuildDocker
 ```
 
 ##### Minikube Docker daemon
@@ -94,7 +94,7 @@ If you are using [`minikube`](https://github.com/kubernetes/minikube)'s remote D
 
 ```shell
 eval $(minikube docker-env)
-gradle classes jibBuildDocker
+gradle jibBuildDocker
 ```
 
 ### Run `jib` with each build
@@ -102,23 +102,23 @@ gradle classes jibBuildDocker
 You can also have `jib` run with each build by attaching it to the `build` task:
 
 ```groovy
-tasks.classes.finalizedBy tasks.jib
+tasks.build.dependsOn tasks.jib
 ```
 
-Then, ```gradle classes``` will build and containerize your application.
+Then, ```gradle build``` will build and containerize your application.
 
 ### Export to a Docker context
 
 Jib can also export to a Docker context so that you can build with Docker, if needed:
 
 ```shell
-gradle classes jibDockerContext
+gradle jibDockerContext
 ```
 
 The Docker context will be created at `build/jib-docker-context` by default. You can change this directory with the `targetDir` configuration option or the `---jib.dockerDir` parameter:
 
 ```shell
-gradle classes jibDockerContext --jib.dockerDir=my/docker/context/
+gradle jibDockerContext --jib.dockerDir=my/docker/context/
 ```
 
 You can then build your image with Docker:
