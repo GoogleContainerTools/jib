@@ -50,7 +50,7 @@ public class ImageTest {
             .setEnvironmentVariable("crepecake", "is great")
             .setEnvironmentVariable("VARIABLE", "VALUE")
             .setEntrypoint(Arrays.asList("some", "command"))
-            .setCmd(Arrays.asList("arg1", "arg2"))
+            .setJavaArguments(Arrays.asList("arg1", "arg2"))
             .addLayer(mockLayer)
             .build();
 
@@ -58,6 +58,6 @@ public class ImageTest {
         mockDescriptorDigest, image.getLayers().get(0).getBlobDescriptor().getDigest());
     Assert.assertEquals(expectedEnvironment, image.getEnvironment());
     Assert.assertEquals(Arrays.asList("some", "command"), image.getEntrypoint());
-    Assert.assertEquals(Arrays.asList("arg1", "arg2"), image.getCmd());
+    Assert.assertEquals(Arrays.asList("arg1", "arg2"), image.getJavaArguments());
   }
 }

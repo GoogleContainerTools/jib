@@ -53,7 +53,7 @@ public class ImageToJsonTranslatorTest {
 
     testImageBuilder.setEntrypoint(Arrays.asList("some", "entrypoint", "command"));
 
-    testImageBuilder.setCmd(Arrays.asList("arg1", "arg2"));
+    testImageBuilder.setJavaArguments(Arrays.asList("arg1", "arg2"));
 
     DescriptorDigest fakeDigest =
         DescriptorDigest.fromDigest(

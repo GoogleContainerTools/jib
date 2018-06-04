@@ -152,8 +152,7 @@ public class StepsRunner {
             buildConfiguration,
             Preconditions.checkNotNull(pullAndCacheBaseImageLayersStep),
             Preconditions.checkNotNull(buildAndCacheApplicationLayerSteps),
-            entrypoint,
-            javaArguments);
+            entrypoint);
     return this;
   }
 

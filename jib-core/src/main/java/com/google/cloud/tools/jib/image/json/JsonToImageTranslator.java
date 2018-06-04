@@ -85,7 +85,7 @@ public class JsonToImageTranslator {
     }
 
     if (containerConfigurationTemplate.getContainerCmd() != null) {
-      imageBuilder.setCmd(containerConfigurationTemplate.getContainerCmd());
+      imageBuilder.setJavaArguments(containerConfigurationTemplate.getContainerCmd());
     }
 
     if (containerConfigurationTemplate.getContainerEnvironment() != null) {

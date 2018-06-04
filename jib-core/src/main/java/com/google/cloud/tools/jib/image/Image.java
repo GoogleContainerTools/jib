@@ -30,7 +30,7 @@ public class Image<T extends Layer> {
     private final ImmutableList.Builder<String> environmentBuilder = ImmutableList.builder();
 
     private ImmutableList<String> entrypoint = ImmutableList.of();
-    private ImmutableList<String> cmd = ImmutableList.of();
+    private ImmutableList<String> javaArguments = ImmutableList.of();
 
     /** Sets the environment with a map from environment variable names to values. */
     public Builder<T> setEnvironment(Map<String, String> environment) {
@@ -57,8 +57,8 @@ public class Image<T extends Layer> {
     }
 
     /** Sets the items in the "Cmd" field in the container configuration (i.e. the main args). */
-    public Builder<T> setCmd(List<String> cmd) {
-      this.cmd = ImmutableList.copyOf(cmd);
+    public Builder<T> setJavaArguments(List<String> javaArguments) {
+      this.javaArguments = ImmutableList.copyOf(javaArguments);
       return this;
     }
 
@@ -72,7 +72,7 @@ public class Image<T extends Layer> {
           imageLayersBuilder.build(),
           environmentBuilder.build(),
           ImmutableList.copyOf(entrypoint),
-          ImmutableList.copyOf(cmd));
+          ImmutableList.copyOf(javaArguments));
     }
   }
 
@@ -90,17 +90,17 @@ public class Image<T extends Layer> {
   private final ImmutableList<String> entrypoint;
 
   /** Arguments to pass into main when running the image. */
-  private final ImmutableList<String> cmd;
+  private final ImmutableList<String> javaArguments;
 
   private Image(
       ImageLayers<T> layers,
       ImmutableList<String> environment,
       ImmutableList<String> entrypoint,
-      ImmutableList<String> cmd) {
+      ImmutableList<String> javaArguments) {
     this.layers = layers;
     this.environmentBuilder = environment;
     this.entrypoint = entrypoint;
-    this.cmd = cmd;
+    this.javaArguments = javaArguments;
   }
 
   public ImmutableList<String> getEnvironment() {
@@ -111,8 +111,8 @@ public class Image<T extends Layer> {
     return entrypoint;
   }
 
-  public ImmutableList<String> getCmd() {
-    return cmd;
+  public ImmutableList<String> getJavaArguments() {
+    return javaArguments;
   }
 
   public ImmutableList<T> getLayers() {
