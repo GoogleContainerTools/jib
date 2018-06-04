@@ -30,6 +30,7 @@ public class Image<T extends Layer> {
     private final ImmutableList.Builder<String> environmentBuilder = ImmutableList.builder();
 
     private ImmutableList<String> entrypoint = ImmutableList.of();
+    private ImmutableList<String> cmd = ImmutableList.of();
 
     /** Sets the environment with a map from environment variable names to values. */
     public Builder<T> setEnvironment(Map<String, String> environment) {
@@ -55,6 +56,11 @@ public class Image<T extends Layer> {
       return this;
     }
 
+    public Builder<T> setCmd(List<String> cmd) {
+      this.cmd = ImmutableList.copyOf(cmd);
+      return this;
+    }
+
     public Builder<T> addLayer(T layer) throws LayerPropertyNotFoundException {
       imageLayersBuilder.add(layer);
       return this;
@@ -62,7 +68,10 @@ public class Image<T extends Layer> {
 
     public Image<T> build() {
       return new Image<>(
-          imageLayersBuilder.build(), environmentBuilder.build(), ImmutableList.copyOf(entrypoint));
+          imageLayersBuilder.build(),
+          environmentBuilder.build(),
+          ImmutableList.copyOf(entrypoint),
+          ImmutableList.copyOf(cmd));
     }
   }
 
@@ -79,11 +88,18 @@ public class Image<T extends Layer> {
   /** Initial command to run when running the image. */
   private final ImmutableList<String> entrypoint;
 
+  /** Arguments to pass into main when running the image. */
+  private final ImmutableList<String> cmd;
+
   private Image(
-      ImageLayers<T> layers, ImmutableList<String> environment, ImmutableList<String> entrypoint) {
+      ImageLayers<T> layers,
+      ImmutableList<String> environment,
+      ImmutableList<String> entrypoint,
+      ImmutableList<String> cmd) {
     this.layers = layers;
     this.environmentBuilder = environment;
     this.entrypoint = entrypoint;
+    this.cmd = cmd;
   }
 
   public ImmutableList<String> getEnvironment() {
@@ -92,6 +108,10 @@ public class Image<T extends Layer> {
 
   public ImmutableList<String> getEntrypoint() {
     return entrypoint;
+  }
+
+  public ImmutableList<String> getCmd() {
+    return cmd;
   }
 
   public ImmutableList<T> getLayers() {
