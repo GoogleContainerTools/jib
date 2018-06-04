@@ -99,7 +99,7 @@ public class MainClassFinderTest {
   }
 
   @Test
-  public void testFindMainClass_importedmethods() throws URISyntaxException, IOException {
+  public void testFindMainClass_importedMethods() throws URISyntaxException, IOException {
     Path rootDirectory =
         Paths.get(Resources.getResource("class-finder-tests/imported-methods").toURI());
     List<String> mainClasses = MainClassFinder.findMainClasses(rootDirectory);

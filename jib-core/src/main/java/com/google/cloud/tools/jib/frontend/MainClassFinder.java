@@ -35,7 +35,6 @@ import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtMethod;
 import javassist.NotFoundException;
-import javassist.bytecode.Descriptor;
 import javax.annotation.Nullable;
 
 /** Infers the main class in an application. */
@@ -128,42 +127,48 @@ public class MainClassFinder {
     }
 
     List<String> classNames = new ArrayList<>();
-    ClassPool classPool = ClassPool.getDefault();
 
-    new DirectoryWalker(rootDirectory)
-        .filter(Files::isRegularFile)
-        .filter(path -> path.toString().endsWith(".class"))
-        .walk(
-            classFile -> {
-              try (InputStream classFileInputStream = Files.newInputStream(classFile)) {
-                CtClass fileClass = classPool.makeClass(classFileInputStream);
+    ClassPool classPool = new ClassPool();
+    classPool.appendSystemPath();
 
-                try {
-                  // Check if class contains 'public static void main(String[] args)'.
-                  CtMethod mainMethod =
-                      fileClass.getMethod(
-                          "main",
-                          Descriptor.ofMethod(
-                              CtClass.voidType,
-                              new CtClass[] {classPool.get("java.lang.String[]")}));
+    try {
+      CtClass[] mainMethodParams = new CtClass[] {classPool.get("java.lang.String[]")};
 
-                  if (Modifier.isStatic(mainMethod.getModifiers())
-                      && Modifier.isPublic(mainMethod.getModifiers())) {
-                    classNames.add(fileClass.getName());
+      new DirectoryWalker(rootDirectory)
+          .filter(Files::isRegularFile)
+          .filter(path -> path.toString().endsWith(".class"))
+          .walk(
+              classFile -> {
+                try (InputStream classFileInputStream = Files.newInputStream(classFile)) {
+                  CtClass fileClass = classPool.makeClass(classFileInputStream);
+
+                  try {
+                    // Check if class contains 'public static void main(String[] args)'.
+                    CtMethod mainMethod = fileClass.getDeclaredMethod("main", mainMethodParams);
+
+                    if (CtClass.voidType.equals(mainMethod.getReturnType())
+                        && Modifier.isStatic(mainMethod.getModifiers())
+                        && Modifier.isPublic(mainMethod.getModifiers())) {
+                      classNames.add(fileClass.getName());
+                    }
+
+                  } catch (NotFoundException ex) {
+                    // main method not found
+                    // TODO: Log find class failure when NotFoundException is caught?
                   }
 
-                } catch (NotFoundException ex) {
-                  // main method not found
-                  // TODO: Log find class failure when NotFoundException is caught?
+                } catch (IOException ex) {
+                  // Could not read class file.
+                  // TODO: Log find class failure?
                 }
+              });
 
-              } catch (IOException ex) {
-                // Could not read class file.
-                // TODO: Log find class failure?
-              }
-            });
+      return classNames;
 
-    return classNames;
+    } catch (NotFoundException ex) {
+      // Thrown if 'java.lang.String' is not found in classPool.
+      throw new RuntimeException(ex);
+    }
   }
 
   private MainClassFinder() {}
