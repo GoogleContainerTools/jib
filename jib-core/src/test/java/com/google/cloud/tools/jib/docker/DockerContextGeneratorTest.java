@@ -113,17 +113,14 @@ public class DockerContextGeneratorTest {
 
   @Test
   public void testMakeDockerList() {
-    DockerContextGenerator dockerContextGenerator =
-        new DockerContextGenerator(mockSourceFilesConfiguration);
-
     Assert.assertEquals(
         "[\"java\",\"-cp\",\"/app/libs/*:/app/resources/:/app/classes/\",\"\"]",
-        dockerContextGenerator.makeDockerList(
+        DockerContextGenerator.joinAsJsonArray(
             ImmutableList.of("java", "-cp", "/app/libs/*:/app/resources/:/app/classes/", "")));
 
     Assert.assertEquals(
         "[\"java\",\"-flag\",\"another\\\"Flag\",\"-cp\",\"/app/libs/*:/app/resources/:/app/classes/\",\"AnotherMainClass\"]",
-        dockerContextGenerator.makeDockerList(
+        DockerContextGenerator.joinAsJsonArray(
             EntrypointBuilder.makeEntrypoint(
                 mockSourceFilesConfiguration,
                 Arrays.asList("-flag", "another\"Flag"),
