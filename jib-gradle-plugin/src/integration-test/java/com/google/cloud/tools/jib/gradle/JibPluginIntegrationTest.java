@@ -36,10 +36,13 @@ public class JibPluginIntegrationTest {
 
   private static String buildAndRun(TestProject testProject, String imageReference)
       throws IOException, InterruptedException {
-    BuildResult buildResult = testProject.build("build", "jib");
+    BuildResult buildResult = testProject.build("clean", "jib");
 
+    BuildTask classesTask = buildResult.task(":classes");
     BuildTask jibTask = buildResult.task(":jib");
 
+    Assert.assertNotNull(classesTask);
+    Assert.assertEquals(TaskOutcome.SUCCESS, classesTask.getOutcome());
     Assert.assertNotNull(jibTask);
     Assert.assertEquals(TaskOutcome.SUCCESS, jibTask.getOutcome());
     Assert.assertThat(
@@ -52,10 +55,13 @@ public class JibPluginIntegrationTest {
 
   private static String buildToDockerDaemonAndRun(TestProject testProject, String imageReference)
       throws IOException, InterruptedException {
-    BuildResult buildResult = testProject.build("build", "jibBuildDocker");
+    BuildResult buildResult = testProject.build("clean", "jibBuildDocker");
 
+    BuildTask classesTask = buildResult.task(":classes");
     BuildTask jibBuildDockerTask = buildResult.task(":jibBuildDocker");
 
+    Assert.assertNotNull(classesTask);
+    Assert.assertEquals(TaskOutcome.SUCCESS, classesTask.getOutcome());
     Assert.assertNotNull(jibBuildDockerTask);
     Assert.assertEquals(TaskOutcome.SUCCESS, jibBuildDockerTask.getOutcome());
     Assert.assertThat(
@@ -75,7 +81,7 @@ public class JibPluginIntegrationTest {
   public void testBuild_simple() throws IOException, InterruptedException {
     // Test empty output error
     try {
-      simpleTestProject.build("clean", "jib");
+      simpleTestProject.build("clean", "jib", "-x=classes");
       Assert.fail();
     } catch (UnexpectedBuildFailure ex) {
       Assert.assertThat(
