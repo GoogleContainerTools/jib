@@ -50,6 +50,7 @@ public class DockerContextGenerator {
   @Nullable private String baseImage;
   private List<String> jvmFlags = Collections.emptyList();
   private String mainClass = "";
+  private List<String> javaArguments = Collections.emptyList();
 
   public DockerContextGenerator(SourceFilesConfiguration sourceFilesConfiguration) {
     this.sourceFilesConfiguration = sourceFilesConfiguration;
@@ -73,6 +74,12 @@ public class DockerContextGenerator {
   /** Sets the main class used in the {@code ENTRYPOINT}. */
   public DockerContextGenerator setMainClass(String mainClass) {
     this.mainClass = mainClass;
+    return this;
+  }
+
+  /** Sets the arguments used in the {@code CMD}. */
+  public DockerContextGenerator setJavaArguments(List<String> javaArguments) {
+    this.javaArguments = javaArguments;
     return this;
   }
 
@@ -119,35 +126,36 @@ public class DockerContextGenerator {
             "@@DEPENDENCIES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getDependenciesPathOnImage())
         .replace("@@RESOURCES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getResourcesPathOnImage())
         .replace("@@CLASSES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getClassesPathOnImage())
-        .replace("@@ENTRYPOINT@@", getEntrypoint());
+        .replace(
+            "@@ENTRYPOINT@@",
+            makeDockerList(
+                EntrypointBuilder.makeEntrypoint(sourceFilesConfiguration, jvmFlags, mainClass)))
+        .replace("@@CMD@@", makeDockerList(javaArguments));
   }
 
   /**
-   * Gets the Dockerfile ENTRYPOINT in exec-form.
+   * Formats a list for the Dockerfile's ENTRYPOINT or CMD.
    *
    * @see <a
    *     href="https://docs.docker.com/engine/reference/builder/#exec-form-entrypoint-example">https://docs.docker.com/engine/reference/builder/#exec-form-entrypoint-example</a>
    */
   @VisibleForTesting
-  String getEntrypoint() {
-    List<String> entrypoint =
-        EntrypointBuilder.makeEntrypoint(sourceFilesConfiguration, jvmFlags, mainClass);
-
-    StringBuilder entrypointString = new StringBuilder("[");
+  String makeDockerList(List<String> items) {
+    StringBuilder resultString = new StringBuilder("[");
     boolean firstComponent = true;
-    for (String entrypointComponent : entrypoint) {
+    for (String entrypointComponent : items) {
       if (!firstComponent) {
-        entrypointString.append(',');
+        resultString.append(',');
       }
 
       // Escapes quotes.
       entrypointComponent = entrypointComponent.replaceAll("\"", Matcher.quoteReplacement("\\\""));
 
-      entrypointString.append('"').append(entrypointComponent).append('"');
+      resultString.append('"').append(entrypointComponent).append('"');
       firstComponent = false;
     }
-    entrypointString.append(']');
+    resultString.append(']');
 
-    return entrypointString.toString();
+    return resultString.toString();
   }
 }
