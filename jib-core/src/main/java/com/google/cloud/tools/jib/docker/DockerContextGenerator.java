@@ -112,8 +112,8 @@ public class DockerContextGenerator {
         targetDirectory.resolve("Dockerfile"), makeDockerfile().getBytes(StandardCharsets.UTF_8));
   }
 
-  @VisibleForTesting
   /** Makes a {@code Dockerfile} from the {@code DockerfileTemplate}. */
+  @VisibleForTesting
   String makeDockerfile() throws IOException {
     Preconditions.checkNotNull(baseImage);
 
@@ -143,15 +143,15 @@ public class DockerContextGenerator {
   String makeDockerList(List<String> items) {
     StringBuilder resultString = new StringBuilder("[");
     boolean firstComponent = true;
-    for (String entrypointComponent : items) {
+    for (String item : items) {
       if (!firstComponent) {
         resultString.append(',');
       }
 
       // Escapes quotes.
-      entrypointComponent = entrypointComponent.replaceAll("\"", Matcher.quoteReplacement("\\\""));
+      item = item.replaceAll("\"", Matcher.quoteReplacement("\\\""));
 
-      resultString.append('"').append(entrypointComponent).append('"');
+      resultString.append('"').append(item).append('"');
       firstComponent = false;
     }
     resultString.append(']');

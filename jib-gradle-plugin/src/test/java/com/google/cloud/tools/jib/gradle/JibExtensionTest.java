@@ -99,8 +99,8 @@ public class JibExtensionTest {
   public void testArgs() {
     Assert.assertEquals(Collections.emptyList(), testJibExtension.getArgs());
 
-    testJibExtension.setArgs(Arrays.asList("flag1", "flag2"));
-    Assert.assertEquals(Arrays.asList("flag1", "flag2"), testJibExtension.getArgs());
+    testJibExtension.setArgs(Arrays.asList("arg1", "arg2"));
+    Assert.assertEquals(Arrays.asList("arg1", "arg2"), testJibExtension.getArgs());
   }
 
   @Test
