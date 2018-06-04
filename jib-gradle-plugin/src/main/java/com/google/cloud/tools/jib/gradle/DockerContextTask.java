@@ -98,6 +98,7 @@ public class DockerContextTask extends DefaultTask {
           .setBaseImage(jibExtension.getBaseImage())
           .setJvmFlags(jibExtension.getJvmFlags())
           .setMainClass(mainClass)
+          .setJavaArguments(jibExtension.getArgs())
           .generate(Paths.get(targetDir));
 
       gradleBuildLogger.info("Created Docker context at " + targetDir);

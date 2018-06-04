@@ -98,6 +98,7 @@ public class BuildImageTask extends DefaultTask {
             .setTargetImageCredentialHelperName(jibExtension.getTo().getCredHelper())
             .setKnownTargetRegistryCredentials(knownTargetRegistryCredentials)
             .setMainClass(mainClass)
+            .setJavaArguments(jibExtension.getArgs())
             .setJvmFlags(jibExtension.getJvmFlags())
             .setTargetFormat(jibExtension.getFormat())
             .build();

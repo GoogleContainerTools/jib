@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 - `mainClass` is inferred by searching through class files if configuration is missing ([#278](https://github.com/GoogleContainerTools/jib/pull/278))
 - All tasks depend on `classes` by default ([#335](https://github.com/GoogleContainerTools/jib/issues/335))
 - Can now specify target image with `--image` ([#328](https://github.com/GoogleContainerTools/jib/issues/328))
+- `args` parameter to define default main arguments ([#346](https://github.com/GoogleContainerTools/jib/issues/346))
 
 ### Changed
 

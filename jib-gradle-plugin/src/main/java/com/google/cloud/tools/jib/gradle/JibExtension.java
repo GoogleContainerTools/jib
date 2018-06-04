@@ -51,6 +51,7 @@ import org.gradle.api.tasks.Optional;
  *   }
  *   jvmFlags = [‘-Xms512m’, ‘-Xdebug’]
  *   mainClass = ‘com.mycompany.myproject.Main’
+ *   args = ['arg1', 'arg2']
  *   format = OCI
  * }
  * }</pre>
@@ -78,6 +79,7 @@ public class JibExtension {
   // Defines default configuration values.
   private static final String DEFAULT_FROM_IMAGE = "gcr.io/distroless/java";
   private static final List<String> DEFAULT_JVM_FLAGS = Collections.emptyList();
+  private static final List<String> DEFAULT_ARGS = Collections.emptyList();
   private static final ImageFormat DEFAULT_FORMAT = ImageFormat.Docker;
   private static final boolean DEFAULT_USE_ONLY_PROJECT_CACHE = false;
 
@@ -85,6 +87,7 @@ public class JibExtension {
   private final ImageConfiguration to;
   private final ListProperty<String> jvmFlags;
   private final Property<String> mainClass;
+  private final ListProperty<String> args;
   private final Property<ImageFormat> format;
   private final Property<Boolean> useOnlyProjectCache;
 
@@ -96,12 +99,14 @@ public class JibExtension {
 
     jvmFlags = objectFactory.listProperty(String.class);
     mainClass = objectFactory.property(String.class);
+    args = objectFactory.listProperty(String.class);
     format = objectFactory.property(ImageFormat.class);
     useOnlyProjectCache = objectFactory.property(Boolean.class);
 
     // Sets defaults.
     from.setImage(DEFAULT_FROM_IMAGE);
     jvmFlags.set(DEFAULT_JVM_FLAGS);
+    args.set(DEFAULT_ARGS);
     format.set(DEFAULT_FORMAT);
     useOnlyProjectCache.set(DEFAULT_USE_ONLY_PROJECT_CACHE);
   }
@@ -120,6 +125,10 @@ public class JibExtension {
 
   public void setMainClass(String mainClass) {
     this.mainClass.set(mainClass);
+  }
+
+  public void setArgs(List<String> args) {
+    this.args.set(args);
   }
 
   public void setFormat(ImageFormat format) {
@@ -160,6 +169,12 @@ public class JibExtension {
   @Optional
   String getMainClass() {
     return mainClass.getOrNull();
+  }
+
+  @Input
+  @Optional
+  List<String> getArgs() {
+    return args.get();
   }
 
   @Input

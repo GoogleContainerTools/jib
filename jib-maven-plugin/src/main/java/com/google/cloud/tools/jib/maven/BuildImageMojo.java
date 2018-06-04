@@ -100,6 +100,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
             .setTargetImageCredentialHelperName(getTargetImageCredentialHelperName())
             .setKnownTargetRegistryCredentials(knownTargetRegistryCredentials)
             .setMainClass(mainClass)
+            .setJavaArguments(getArgs())
             .setJvmFlags(getJvmFlags())
             .setEnvironment(getEnvironment())
             .setTargetFormat(ImageFormat.valueOf(getFormat()).getManifestTemplateClass())

@@ -68,6 +68,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
             .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
             .setTargetImage(targetImage)
             .setMainClass(mainClass)
+            .setJavaArguments(getArgs())
             .setJvmFlags(getJvmFlags())
             .setEnvironment(getEnvironment())
             .build();

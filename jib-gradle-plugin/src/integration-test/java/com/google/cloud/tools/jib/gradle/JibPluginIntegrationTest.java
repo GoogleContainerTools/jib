@@ -94,7 +94,7 @@ public class JibPluginIntegrationTest {
     }
 
     Assert.assertEquals(
-        "Hello, world\n",
+        "Hello, world. An argument.\n",
         buildAndRun(simpleTestProject, "gcr.io/jib-integration-testing/simpleimage:gradle"));
   }
 
@@ -109,7 +109,7 @@ public class JibPluginIntegrationTest {
   @Test
   public void testDockerDaemon_simple() throws IOException, InterruptedException {
     Assert.assertEquals(
-        "Hello, world\n",
+        "Hello, world. An argument.\n",
         buildToDockerDaemonAndRun(
             simpleTestProject, "gcr.io/jib-integration-testing/simpleimage:gradle"));
   }
@@ -140,7 +140,8 @@ public class JibPluginIntegrationTest {
                 .resolve("jib-docker-context")
                 .toString())
         .run();
-    Assert.assertEquals("Hello, world\n", new Command("docker", "run", imageName).run());
+    Assert.assertEquals(
+        "Hello, world. An argument.\n", new Command("docker", "run", imageName).run());
 
     // Checks that generating the Docker context again is skipped.
     BuildTask upToDateJibDockerContextTask =
