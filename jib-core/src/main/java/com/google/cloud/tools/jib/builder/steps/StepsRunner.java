@@ -144,8 +144,7 @@ public class StepsRunner {
     return this;
   }
 
-  public StepsRunner runBuildImageStep(
-      ImmutableList<String> entrypoint, ImmutableList<String> javaArguments) {
+  public StepsRunner runBuildImageStep(ImmutableList<String> entrypoint) {
     buildImageStep =
         new BuildImageStep(
             listeningExecutorService,
