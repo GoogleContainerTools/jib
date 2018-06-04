@@ -60,7 +60,7 @@ public class MainClassFinderTest {
   @Test
   public void testFindMainClass_simple() throws URISyntaxException, IOException {
     Path rootDirectory = Paths.get(Resources.getResource("class-finder-tests/simple").toURI());
-    List<String> mainClasses = MainClassFinder.findMainClasses(rootDirectory);
+    List<String> mainClasses = MainClassFinder.findMainClasses(rootDirectory, mockBuildLogger);
     Assert.assertEquals(1, mainClasses.size());
     Assert.assertTrue(mainClasses.contains("HelloWorld"));
   }
@@ -69,7 +69,7 @@ public class MainClassFinderTest {
   public void testFindMainClass_subdirectories() throws URISyntaxException, IOException {
     Path rootDirectory =
         Paths.get(Resources.getResource("class-finder-tests/subdirectories").toURI());
-    List<String> mainClasses = MainClassFinder.findMainClasses(rootDirectory);
+    List<String> mainClasses = MainClassFinder.findMainClasses(rootDirectory, mockBuildLogger);
     Assert.assertEquals(1, mainClasses.size());
     Assert.assertTrue(mainClasses.contains("multi.layered.HelloWorld"));
   }
@@ -77,14 +77,14 @@ public class MainClassFinderTest {
   @Test
   public void testFindMainClass_noClass() throws URISyntaxException, IOException {
     Path rootDirectory = Paths.get(Resources.getResource("class-finder-tests/no-main").toURI());
-    List<String> mainClasses = MainClassFinder.findMainClasses(rootDirectory);
+    List<String> mainClasses = MainClassFinder.findMainClasses(rootDirectory, mockBuildLogger);
     Assert.assertTrue(mainClasses.isEmpty());
   }
 
   @Test
   public void testFindMainClass_multiple() throws URISyntaxException, IOException {
     Path rootDirectory = Paths.get(Resources.getResource("class-finder-tests/multiple").toURI());
-    List<String> mainClasses = MainClassFinder.findMainClasses(rootDirectory);
+    List<String> mainClasses = MainClassFinder.findMainClasses(rootDirectory, mockBuildLogger);
     Assert.assertEquals(2, mainClasses.size());
     Assert.assertTrue(mainClasses.contains("multi.layered.HelloMoon"));
     Assert.assertTrue(mainClasses.contains("HelloWorld"));
@@ -93,7 +93,7 @@ public class MainClassFinderTest {
   @Test
   public void testFindMainClass_extension() throws URISyntaxException, IOException {
     Path rootDirectory = Paths.get(Resources.getResource("class-finder-tests/extension").toURI());
-    List<String> mainClasses = MainClassFinder.findMainClasses(rootDirectory);
+    List<String> mainClasses = MainClassFinder.findMainClasses(rootDirectory, mockBuildLogger);
     Assert.assertEquals(1, mainClasses.size());
     Assert.assertTrue(mainClasses.contains("main.MainClass"));
   }
@@ -102,7 +102,7 @@ public class MainClassFinderTest {
   public void testFindMainClass_importedMethods() throws URISyntaxException, IOException {
     Path rootDirectory =
         Paths.get(Resources.getResource("class-finder-tests/imported-methods").toURI());
-    List<String> mainClasses = MainClassFinder.findMainClasses(rootDirectory);
+    List<String> mainClasses = MainClassFinder.findMainClasses(rootDirectory, mockBuildLogger);
     Assert.assertEquals(1, mainClasses.size());
     Assert.assertTrue(mainClasses.contains("main.MainClass"));
   }
@@ -111,7 +111,7 @@ public class MainClassFinderTest {
   public void testFindMainClass_externalClasses() throws URISyntaxException, IOException {
     Path rootDirectory =
         Paths.get(Resources.getResource("class-finder-tests/external-classes").toURI());
-    List<String> mainClasses = MainClassFinder.findMainClasses(rootDirectory);
+    List<String> mainClasses = MainClassFinder.findMainClasses(rootDirectory, mockBuildLogger);
     Assert.assertEquals(1, mainClasses.size());
     Assert.assertTrue(mainClasses.contains("main.MainClass"));
   }
@@ -120,7 +120,7 @@ public class MainClassFinderTest {
   public void testFindMainClass_innerClasses() throws URISyntaxException, IOException {
     Path rootDirectory =
         Paths.get(Resources.getResource("class-finder-tests/inner-classes").toURI());
-    List<String> mainClasses = MainClassFinder.findMainClasses(rootDirectory);
+    List<String> mainClasses = MainClassFinder.findMainClasses(rootDirectory, mockBuildLogger);
     Assert.assertEquals(1, mainClasses.size());
     Assert.assertTrue(mainClasses.contains("HelloWorld$InnerClass"));
   }

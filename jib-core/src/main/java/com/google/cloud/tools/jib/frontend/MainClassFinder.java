@@ -77,7 +77,7 @@ public class MainClassFinder {
               continue;
             }
             visitedRoots.add(root);
-            mainClasses.addAll(findMainClasses(root));
+            mainClasses.addAll(findMainClasses(root, logger));
           }
 
           if (mainClasses.size() == 1) {
@@ -120,7 +120,8 @@ public class MainClassFinder {
    * @param rootDirectory directory containing the {@code .class} files
    */
   @VisibleForTesting
-  static List<String> findMainClasses(Path rootDirectory) throws IOException {
+  static List<String> findMainClasses(Path rootDirectory, BuildLogger buildLogger)
+      throws IOException {
     // Makes sure rootDirectory is valid.
     if (!Files.exists(rootDirectory) || !Files.isDirectory(rootDirectory)) {
       return Collections.emptyList();
@@ -142,24 +143,21 @@ public class MainClassFinder {
                 try (InputStream classFileInputStream = Files.newInputStream(classFile)) {
                   CtClass fileClass = classPool.makeClass(classFileInputStream);
 
-                  try {
-                    // Check if class contains 'public static void main(String[] args)'.
-                    CtMethod mainMethod = fileClass.getDeclaredMethod("main", mainMethodParams);
+                  // Check if class contains 'public static void main(String[] args)'.
+                  CtMethod mainMethod = fileClass.getDeclaredMethod("main", mainMethodParams);
 
-                    if (CtClass.voidType.equals(mainMethod.getReturnType())
-                        && Modifier.isStatic(mainMethod.getModifiers())
-                        && Modifier.isPublic(mainMethod.getModifiers())) {
-                      classNames.add(fileClass.getName());
-                    }
-
-                  } catch (NotFoundException ex) {
-                    // main method not found
-                    // TODO: Log find class failure when NotFoundException is caught?
+                  if (CtClass.voidType.equals(mainMethod.getReturnType())
+                      && Modifier.isStatic(mainMethod.getModifiers())
+                      && Modifier.isPublic(mainMethod.getModifiers())) {
+                    classNames.add(fileClass.getName());
                   }
+
+                } catch (NotFoundException ex) {
+                  // Ignores main method not found.
 
                 } catch (IOException ex) {
                   // Could not read class file.
-                  // TODO: Log find class failure?
+                  buildLogger.warn("Could not read class file: " + classFile);
                 }
               });
 
