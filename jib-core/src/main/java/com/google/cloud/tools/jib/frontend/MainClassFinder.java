@@ -57,7 +57,7 @@ public class MainClassFinder {
     }
 
     /**
-     * Use {@link #findClass(Path)}.
+     * Use {@link #loadFromFile}.
      *
      * <p>This method resolves possible dependency classes for the classes loaded from files.
      */
@@ -80,16 +80,16 @@ public class MainClassFinder {
         }
       }
 
-      return findClass(className, classFile);
+      return loadClassFromFile(className, classFile);
     }
 
     @Nullable
-    private Class<?> findClass(Path classFile) {
-      return findClass(null, classFile);
+    private Class<?> loadFromFile(Path classFile) {
+      return loadClassFromFile(null, classFile);
     }
 
     /**
-     * Use {@link #findClass(Path)}.
+     * Use {@link #loadFromFile}.
      *
      * @param className the name of the class
      * @param classFile the .class file defining the class
@@ -97,7 +97,7 @@ public class MainClassFinder {
      *     defined
      */
     @Nullable
-    private Class<?> findClass(@Nullable String className, Path classFile) {
+    private Class<?> loadClassFromFile(@Nullable String className, Path classFile) {
       if (definedClasses.containsKey(classFile)) {
         return definedClasses.get(classFile);
       }
@@ -225,7 +225,7 @@ public class MainClassFinder {
         .filter(path -> path.toString().endsWith(".class"))
         .walk(
             classFile -> {
-              Class<?> fileClass = classFileLoader.findClass(classFile);
+              Class<?> fileClass = classFileLoader.loadFromFile(classFile);
               if (fileClass == null) {
                 return;
               }
