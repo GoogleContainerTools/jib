@@ -97,6 +97,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
   @Nullable @Parameter private String mainClass;
 
+  @Parameter private List<String> args = Collections.emptyList();
+
   @Nullable
   @Parameter(defaultValue = "Docker", required = true)
   private String format;
@@ -138,6 +140,10 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   @Nullable
   String getMainClass() {
     return mainClass;
+  }
+
+  List<String> getArgs() {
+    return args;
   }
 
   String getFormat() {
