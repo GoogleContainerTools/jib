@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - `jib:buildDocker` maven goal to build straight to Docker daemon ([#266](https://github.com/GoogleContainerTools/jib/pull/266))
 - `mainClass` is inferred by searching through class files if configuration is missing ([#278](https://github.com/GoogleContainerTools/jib/pull/278))
 - Can now specify target image with `-Dimage` ([#328](https://github.com/GoogleContainerTools/jib/issues/328))
+- `args` parameter to define default main args ([#346](https://github.com/GoogleContainerTools/jib/issues/346))
 
 ### Changed
 - Removed `enableReproducibleBuilds` parameter - application layers will always be reproducible ([#245](https://github.com/GoogleContainerTools/jib/pull/245))
