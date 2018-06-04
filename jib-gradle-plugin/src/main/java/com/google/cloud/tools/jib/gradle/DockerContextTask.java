@@ -67,15 +67,14 @@ public class DockerContextTask extends DefaultTask {
     return getProject().files(dependencyFileCollections);
   }
 
-   /** The output directory for the Docker context is by default {@code
-  build/jib-docker-context}. */
-   @OutputDirectory
-   public String getTargetDir() {
-     if (targetDir == null) {
-       return getProject().getBuildDir().toPath().resolve("jib-docker-context").toString();
-     }
-     return targetDir;
-   }
+  /** The output directory for the Docker context is by default {@code build/jib-docker-context}. */
+  @OutputDirectory
+  public String getTargetDir() {
+    if (targetDir == null) {
+      return getProject().getBuildDir().toPath().resolve("jib-docker-context").toString();
+    }
+    return targetDir;
+  }
 
   /** The output directory can be overriden with the {@code --jib.dockerDir} command line option. */
   @Option(option = "jib.dockerDir", description = "Directory to output the Docker context to")
@@ -120,7 +119,8 @@ public class DockerContextTask extends DefaultTask {
     }
   }
 
-  void setJibExtension(JibExtension jibExtension) {
+  DockerContextTask setJibExtension(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
+    return this;
   }
 }

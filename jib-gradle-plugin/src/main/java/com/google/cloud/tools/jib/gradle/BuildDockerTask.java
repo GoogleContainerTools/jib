@@ -93,7 +93,8 @@ public class BuildDockerTask extends DefaultTask {
     }
   }
 
-  void setJibExtension(JibExtension jibExtension) {
+  BuildDockerTask setJibExtension(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
+    return this;
   }
 }
