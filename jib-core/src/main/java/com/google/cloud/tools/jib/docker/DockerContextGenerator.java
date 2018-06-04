@@ -128,9 +128,9 @@ public class DockerContextGenerator {
         .replace("@@CLASSES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getClassesPathOnImage())
         .replace(
             "@@ENTRYPOINT@@",
-            makeDockerList(
+            joinAsJsonArray(
                 EntrypointBuilder.makeEntrypoint(sourceFilesConfiguration, jvmFlags, mainClass)))
-        .replace("@@CMD@@", makeDockerList(javaArguments));
+        .replace("@@CMD@@", joinAsJsonArray(javaArguments));
   }
 
   /**
@@ -140,7 +140,7 @@ public class DockerContextGenerator {
    *     href="https://docs.docker.com/engine/reference/builder/#exec-form-entrypoint-example">https://docs.docker.com/engine/reference/builder/#exec-form-entrypoint-example</a>
    */
   @VisibleForTesting
-  String makeDockerList(List<String> items) {
+  static String joinAsJsonArray(List<String> items) {
     StringBuilder resultString = new StringBuilder("[");
     boolean firstComponent = true;
     for (String item : items) {
