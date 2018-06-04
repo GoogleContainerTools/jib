@@ -21,113 +21,25 @@ import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
 import java.io.IOException;
-import java.lang.reflect.Method;
+import java.io.InputStream;
 import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import javassist.CannotCompileException;
 import javassist.ClassPool;
+import javassist.CtClass;
+import javassist.CtMethod;
+import javassist.NotFoundException;
+import javassist.bytecode.Descriptor;
 import javax.annotation.Nullable;
 
 /** Infers the main class in an application. */
 public class MainClassFinder {
-
-  /** Helper for loading a .class file. */
-  @VisibleForTesting
-  static class ClassFileLoader extends ClassLoader {
-
-    /** Maps from class file to class. */
-    private final Map<Path, Class<?>> definedClasses = new HashMap<>();
-
-    private final Path rootDirectory;
-
-    @VisibleForTesting
-    ClassFileLoader(Path rootDirectory) {
-      this.rootDirectory = rootDirectory;
-    }
-
-    /**
-     * Use {@link #loadFromFile}.
-     *
-     * <p>This method resolves possible dependency classes for the classes loaded from files.
-     */
-    @Nullable
-    @Override
-    public Class<?> findClass(String className) {
-      Path classFile = getPathFromClassName(className);
-
-      if (!Files.exists(classFile)) {
-        // TODO: Log search class failure?
-        // Cannot find corresponding class file. The class is probably in a dependency JAR.
-        // Makes an empty class to prevent NoClassDefFoundError.
-        try {
-          return ClassPool.getDefault()
-              .makeClass(className)
-              .toClass(this, MainClassFinder.class.getProtectionDomain());
-
-        } catch (CannotCompileException ex) {
-          throw new Error(ex);
-        }
-      }
-
-      return loadClassFromFile(className, classFile);
-    }
-
-    @Nullable
-    private Class<?> loadFromFile(Path classFile) {
-      return loadClassFromFile(null, classFile);
-    }
-
-    /**
-     * Use {@link #loadFromFile}.
-     *
-     * @param className the name of the class
-     * @param classFile the .class file defining the class
-     * @return the {@link Class} defined by the file, or {@code null} if the class could not be
-     *     defined
-     */
-    @Nullable
-    private Class<?> loadClassFromFile(@Nullable String className, Path classFile) {
-      if (definedClasses.containsKey(classFile)) {
-        return definedClasses.get(classFile);
-      }
-
-      try {
-        byte[] bytes = Files.readAllBytes(classFile);
-        Class<?> definedClass = defineClass(className, bytes, 0, bytes.length);
-        definedClasses.put(classFile, definedClass);
-        return definedClass;
-
-      } catch (IOException | ClassFormatError | SecurityException | NoClassDefFoundError ignored) {
-        // Not a valid class file.
-        // TODO: Log search class failure when NoClassDefFoundError/SecurityException is caught?
-        return null;
-      }
-    }
-
-    /** Converts a class name (pack.ClassName) to a Path (rootDirectory/pack/ClassName.class). */
-    @VisibleForTesting
-    Path getPathFromClassName(String className) {
-      Path path = rootDirectory;
-      Deque<String> folders = new ArrayDeque<>(Splitter.on('.').splitToList(className));
-      String fileName = folders.removeLast() + ".class";
-      for (String folder : folders) {
-        path = path.resolve(folder);
-      }
-      path = path.resolve(fileName);
-      return path;
-    }
-  }
 
   /**
    * If {@code mainClass} is {@code null}, tries to infer main class in this order:
@@ -204,43 +116,50 @@ public class MainClassFinder {
   }
 
   /**
-   * Searches for a .class file containing a main method in a root directory.
+   * Finds the classes with {@code public static void main(String[] args)} in {@code rootDirectory}.
    *
-   * @return the name of the class if one is found, null if no class is found.
-   * @throws IOException if searching/reading files fails.
+   * @param rootDirectory directory containing the {@code .class} files
    */
   @VisibleForTesting
   static List<String> findMainClasses(Path rootDirectory) throws IOException {
-    List<String> classNames = new ArrayList<>();
-
     // Makes sure rootDirectory is valid.
     if (!Files.exists(rootDirectory) || !Files.isDirectory(rootDirectory)) {
-      return classNames;
+      return Collections.emptyList();
     }
 
-    // Gets all .class files.
-    ClassFileLoader classFileLoader = new ClassFileLoader(rootDirectory);
+    List<String> classNames = new ArrayList<>();
+    ClassPool classPool = ClassPool.getDefault();
+
     new DirectoryWalker(rootDirectory)
         .filter(Files::isRegularFile)
         .filter(path -> path.toString().endsWith(".class"))
         .walk(
             classFile -> {
-              Class<?> fileClass = classFileLoader.loadFromFile(classFile);
-              if (fileClass == null) {
-                return;
-              }
-              try {
-                // Check if class contains {@code public static void main(String[] args)}.
-                Method main = fileClass.getMethod("main", String[].class);
-                if (main != null
-                    && main.getReturnType() == void.class
-                    && Modifier.isStatic(main.getModifiers())
-                    && Modifier.isPublic(main.getModifiers())) {
-                  classNames.add(fileClass.getName());
+              try (InputStream classFileInputStream = Files.newInputStream(classFile)) {
+                CtClass fileClass = classPool.makeClass(classFileInputStream);
+
+                try {
+                  // Check if class contains 'public static void main(String[] args)'.
+                  CtMethod mainMethod =
+                      fileClass.getMethod(
+                          "main",
+                          Descriptor.ofMethod(
+                              CtClass.voidType,
+                              new CtClass[] {classPool.get("java.lang.String[]")}));
+
+                  if (Modifier.isStatic(mainMethod.getModifiers())
+                      && Modifier.isPublic(mainMethod.getModifiers())) {
+                    classNames.add(fileClass.getName());
+                  }
+
+                } catch (NotFoundException ex) {
+                  // main method not found
+                  // TODO: Log find class failure when NotFoundException is caught?
                 }
-              } catch (NoSuchMethodException | NoClassDefFoundError ignored) {
-                // main method not found
-                // TODO: Log search class failure when NoClassDefFoundError is caught?
+
+              } catch (IOException ex) {
+                // Could not read class file.
+                // TODO: Log find class failure?
               }
             });
 

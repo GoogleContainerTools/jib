@@ -200,20 +200,4 @@ public class MainClassFinderTest {
           .getMainClassHelpfulSuggestions("Main class was not found");
     }
   }
-
-  @Test
-  public void testGetPathFromClassName() {
-    Path root = Paths.get("test").resolve("root");
-    MainClassFinder.ClassFileLoader classFileLoader = new MainClassFinder.ClassFileLoader(root);
-    Assert.assertEquals(
-        root.resolve("test").resolve("ClassName.class"),
-        classFileLoader.getPathFromClassName("test.ClassName"));
-  }
-
-  @Test
-  public void testGetPathFromClassName_emptyClassName() {
-    MainClassFinder.ClassFileLoader classFileLoader =
-        new MainClassFinder.ClassFileLoader(Paths.get(""));
-    Assert.assertEquals(Paths.get(".class"), classFileLoader.getPathFromClassName(""));
-  }
 }
