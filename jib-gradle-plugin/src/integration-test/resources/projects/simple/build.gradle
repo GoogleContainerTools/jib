@@ -19,6 +19,8 @@ jib {
         image = 'gcr.io/jib-integration-testing/simpleimage:gradle'
         credHelper = 'gcr'
     }
+    args = ['An argument.']
+
     // Does not have tests use user-level cache for base image layers.
     useOnlyProjectCache = true
 }

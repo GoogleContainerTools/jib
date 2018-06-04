@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - `jibBuildDocker` gradle task to build straight to Docker daemon ([#265](https://github.com/GoogleContainerTools/jib/pull/265))
 - `mainClass` is inferred by searching through class files if configuration is missing ([#278](https://github.com/GoogleContainerTools/jib/pull/278))
 - Can now specify target image with `--image` ([#328](https://github.com/GoogleContainerTools/jib/issues/328))
+- `args` parameter to define default main arguments ([#346](https://github.com/GoogleContainerTools/jib/issues/346))
 
 ### Changed
 

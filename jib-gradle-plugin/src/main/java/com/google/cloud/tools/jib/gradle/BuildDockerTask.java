@@ -94,6 +94,7 @@ public class BuildDockerTask extends DefaultTask {
             .setBaseImageCredentialHelperName(jibExtension.getFrom().getCredHelper())
             .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
             .setMainClass(mainClass)
+            .setJavaArguments(jibExtension.getArgs())
             .setJvmFlags(jibExtension.getJvmFlags())
             .build();
 

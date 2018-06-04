@@ -43,6 +43,7 @@ public class BuildConfiguration {
     @Nullable private String targetImageCredentialHelperName;
     @Nullable private RegistryCredentials knownTargetRegistryCredentials;
     @Nullable private String mainClass;
+    private List<String> javaArguments = new ArrayList<>();
     private List<String> jvmFlags = new ArrayList<>();
     private Map<String, String> environmentMap = new HashMap<>();
     private Class<? extends BuildableManifestTemplate> targetFormat = V22ManifestTemplate.class;
@@ -87,6 +88,13 @@ public class BuildConfiguration {
 
     public Builder setMainClass(@Nullable String mainClass) {
       this.mainClass = mainClass;
+      return this;
+    }
+
+    public Builder setJavaArguments(@Nullable List<String> javaArguments) {
+      if (javaArguments != null) {
+        this.javaArguments = javaArguments;
+      }
       return this;
     }
 
@@ -143,6 +151,7 @@ public class BuildConfiguration {
               targetImageCredentialHelperName,
               knownTargetRegistryCredentials,
               mainClass,
+              ImmutableList.copyOf(javaArguments),
               ImmutableList.copyOf(jvmFlags),
               ImmutableMap.copyOf(environmentMap),
               targetFormat);
@@ -191,6 +200,7 @@ public class BuildConfiguration {
   @Nullable private final String targetImageCredentialHelperName;
   @Nullable private final RegistryCredentials knownTargetRegistryCredentials;
   private final String mainClass;
+  private final ImmutableList<String> javaArguments;
   private final ImmutableList<String> jvmFlags;
   private final ImmutableMap<String, String> environmentMap;
   private final Class<? extends BuildableManifestTemplate> targetFormat;
@@ -209,6 +219,7 @@ public class BuildConfiguration {
       @Nullable String targetImageCredentialHelperName,
       @Nullable RegistryCredentials knownTargetRegistryCredentials,
       String mainClass,
+      ImmutableList<String> javaArguments,
       ImmutableList<String> jvmFlags,
       ImmutableMap<String, String> environmentMap,
       Class<? extends BuildableManifestTemplate> targetFormat) {
@@ -220,6 +231,7 @@ public class BuildConfiguration {
     this.targetImageCredentialHelperName = targetImageCredentialHelperName;
     this.knownTargetRegistryCredentials = knownTargetRegistryCredentials;
     this.mainClass = mainClass;
+    this.javaArguments = javaArguments;
     this.jvmFlags = jvmFlags;
     this.environmentMap = environmentMap;
     this.targetFormat = targetFormat;
@@ -283,6 +295,10 @@ public class BuildConfiguration {
 
   public String getMainClass() {
     return mainClass;
+  }
+
+  public ImmutableList<String> getJavaArguments() {
+    return javaArguments;
   }
 
   public ImmutableList<String> getJvmFlags() {
