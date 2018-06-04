@@ -16,14 +16,13 @@
 
 package com.google.cloud.tools.jib.builder;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /** Implementation of {@link SourceFilesConfiguration} that uses test resources. */
@@ -31,9 +30,9 @@ public class TestSourceFilesConfiguration implements SourceFilesConfiguration {
 
   private static final String EXTRACTION_PATH = "/some/extraction/path/";
 
-  private final List<Path> dependenciesSourceFiles;
-  private final List<Path> resourcesSourceFiles;
-  private final List<Path> classesSourceFiles;
+  private final ImmutableList<Path> dependenciesSourceFiles;
+  private final ImmutableList<Path> resourcesSourceFiles;
+  private final ImmutableList<Path> classesSourceFiles;
 
   public TestSourceFilesConfiguration() throws URISyntaxException, IOException {
     dependenciesSourceFiles = getFilesList("application/dependencies");
@@ -42,17 +41,17 @@ public class TestSourceFilesConfiguration implements SourceFilesConfiguration {
   }
 
   @Override
-  public List<Path> getDependenciesFiles() {
+  public ImmutableList<Path> getDependenciesFiles() {
     return dependenciesSourceFiles;
   }
 
   @Override
-  public List<Path> getResourcesFiles() {
+  public ImmutableList<Path> getResourcesFiles() {
     return resourcesSourceFiles;
   }
 
   @Override
-  public List<Path> getClassesFiles() {
+  public ImmutableList<Path> getClassesFiles() {
     return classesSourceFiles;
   }
 
@@ -72,10 +71,11 @@ public class TestSourceFilesConfiguration implements SourceFilesConfiguration {
   }
 
   /** Lists the files in the {@code resourcePath} resources directory. */
-  private List<Path> getFilesList(String resourcePath) throws URISyntaxException, IOException {
+  private ImmutableList<Path> getFilesList(String resourcePath)
+      throws URISyntaxException, IOException {
     try (Stream<Path> fileStream =
         Files.list(Paths.get(Resources.getResource(resourcePath).toURI()))) {
-      return fileStream.collect(Collectors.toList());
+      return fileStream.collect(ImmutableList.toImmutableList());
     }
   }
 }

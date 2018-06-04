@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.cache;
 
 import com.google.cloud.tools.jib.image.ImageLayers;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
+import com.google.common.collect.ImmutableList;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -37,14 +38,14 @@ class CacheMetadata {
 
     private final ImageLayers<CachedLayerWithMetadata> layers;
 
-    @Nullable private List<Path> sourceFiles;
+    @Nullable private ImmutableList<Path> sourceFiles;
 
     private LayerFilter(ImageLayers<CachedLayerWithMetadata> layers) {
       this.layers = layers;
     }
 
     /** Filters to a certain list of source files. */
-    LayerFilter bySourceFiles(List<Path> sourceFiles) {
+    LayerFilter bySourceFiles(ImmutableList<Path> sourceFiles) {
       this.sourceFiles = sourceFiles;
       return this;
     }

@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.ImageLayers;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
+import com.google.common.collect.ImmutableList;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.util.Arrays;
@@ -95,7 +96,7 @@ public class CacheMetadataTest {
         cacheMetadata
             .filterLayers()
             .bySourceFiles(
-                Arrays.asList(
+                ImmutableList.of(
                     Paths.get("some", "source", "file"), Paths.get("some", "source", "directory")))
             .filter();
 
@@ -131,7 +132,7 @@ public class CacheMetadataTest {
     }
 
     ImageLayers<CachedLayerWithMetadata> filteredLayers =
-        cacheMetadata.filterLayers().bySourceFiles(Collections.emptyList()).filter();
+        cacheMetadata.filterLayers().bySourceFiles(ImmutableList.of()).filter();
 
     Assert.assertEquals(1, filteredLayers.size());
     Assert.assertEquals(fakeEmptySourceFilesLayerMetadata, filteredLayers.get(0).getMetadata());

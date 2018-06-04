@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.docker;
 
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -81,10 +82,11 @@ public class DockerContextGeneratorTest {
     Path testResources = Paths.get(Resources.getResource("application/resources").toURI());
     Path testClasses = Paths.get(Resources.getResource("application/classes").toURI());
 
-    List<Path> expectedDependenciesFiles =
+    ImmutableList<Path> expectedDependenciesFiles =
         new DirectoryWalker(testDependencies).filterRoot().walk();
-    List<Path> expectedResourcesFiles = new DirectoryWalker(testResources).filterRoot().walk();
-    List<Path> expectedClassesFiles = new DirectoryWalker(testClasses).filterRoot().walk();
+    ImmutableList<Path> expectedResourcesFiles =
+        new DirectoryWalker(testResources).filterRoot().walk();
+    ImmutableList<Path> expectedClassesFiles = new DirectoryWalker(testClasses).filterRoot().walk();
     Mockito.when(mockSourceFilesConfiguration.getDependenciesFiles())
         .thenReturn(expectedDependenciesFiles);
     Mockito.when(mockSourceFilesConfiguration.getResourcesFiles())
