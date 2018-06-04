@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.ImageLayers;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -74,7 +75,7 @@ public class CacheReader {
    *     sourceFiles}, or {@code null} if there is no match
    */
   @Nullable
-  public Path getLayerFile(List<Path> sourceFiles) throws CacheMetadataCorruptedException {
+  public Path getLayerFile(ImmutableList<Path> sourceFiles) throws CacheMetadataCorruptedException {
     CacheMetadata cacheMetadata = cache.getMetadata();
     ImageLayers<CachedLayerWithMetadata> cachedLayers =
         cacheMetadata.filterLayers().bySourceFiles(sourceFiles).filter();
@@ -106,7 +107,7 @@ public class CacheReader {
    * should have the same file contents)
    */
   @Nullable
-  public CachedLayer getUpToDateLayerBySourceFiles(List<Path> sourceFiles)
+  public CachedLayer getUpToDateLayerBySourceFiles(ImmutableList<Path> sourceFiles)
       throws IOException, CacheMetadataCorruptedException {
     // Grabs all the layers that have matching source files.
     ImageLayers<CachedLayerWithMetadata> cachedLayersWithSourceFiles =

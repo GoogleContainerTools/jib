@@ -16,16 +16,16 @@
 
 package com.google.cloud.tools.jib.filesystem;
 
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 
 /** Static methods for operating on the filesystem. */
 public class FileOperations {
 
   /** Copies {@code sourceFiles} to the {@code destDir} directory. */
-  public static void copy(List<Path> sourceFiles, Path destDir) throws IOException {
+  public static void copy(ImmutableList<Path> sourceFiles, Path destDir) throws IOException {
     for (Path sourceFile : sourceFiles) {
       PathConsumer copyPathConsumer =
           path -> {
