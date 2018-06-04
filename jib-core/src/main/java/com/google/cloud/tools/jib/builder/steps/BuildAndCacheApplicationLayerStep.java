@@ -32,7 +32,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.concurrent.Callable;
 
 /** Builds and caches application layers. */
@@ -77,7 +76,7 @@ class BuildAndCacheApplicationLayerStep implements AsyncStep<CachedLayer>, Calla
 
   private final String layerType;
   private final BuildConfiguration buildConfiguration;
-  private final List<Path> sourceFiles;
+  private final ImmutableList<Path> sourceFiles;
   private final String extractionPath;
   private final Cache cache;
 
@@ -87,7 +86,7 @@ class BuildAndCacheApplicationLayerStep implements AsyncStep<CachedLayer>, Calla
       String layerType,
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
-      List<Path> sourceFiles,
+      ImmutableList<Path> sourceFiles,
       String extractionPath,
       Cache cache) {
     this.layerType = layerType;

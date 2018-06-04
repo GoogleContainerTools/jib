@@ -83,10 +83,11 @@ public class DockerContextGeneratorTest {
     Path testResources = Paths.get(Resources.getResource("application/resources").toURI());
     Path testClasses = Paths.get(Resources.getResource("application/classes").toURI());
 
-    List<Path> expectedDependenciesFiles =
+    ImmutableList<Path> expectedDependenciesFiles =
         new DirectoryWalker(testDependencies).filterRoot().walk();
-    List<Path> expectedResourcesFiles = new DirectoryWalker(testResources).filterRoot().walk();
-    List<Path> expectedClassesFiles = new DirectoryWalker(testClasses).filterRoot().walk();
+    ImmutableList<Path> expectedResourcesFiles =
+        new DirectoryWalker(testResources).filterRoot().walk();
+    ImmutableList<Path> expectedClassesFiles = new DirectoryWalker(testClasses).filterRoot().walk();
     Mockito.when(mockSourceFilesConfiguration.getDependenciesFiles())
         .thenReturn(expectedDependenciesFiles);
     Mockito.when(mockSourceFilesConfiguration.getResourcesFiles())

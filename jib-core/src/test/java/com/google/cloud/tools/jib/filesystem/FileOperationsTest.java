@@ -16,13 +16,13 @@
 
 package com.google.cloud.tools.jib.filesystem;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -42,7 +42,7 @@ public class FileOperationsTest {
         Paths.get(Resources.getResource("application/dependencies/libraryB.jar").toURI());
     Path dirLayer = Paths.get(Resources.getResource("layer").toURI());
 
-    FileOperations.copy(Arrays.asList(libraryA, libraryB, dirLayer), destDir);
+    FileOperations.copy(ImmutableList.of(libraryA, libraryB, dirLayer), destDir);
 
     assertFilesEqual(libraryA, destDir.resolve("libraryA.jar"));
     assertFilesEqual(libraryB, destDir.resolve("libraryB.jar"));

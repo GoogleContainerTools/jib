@@ -16,13 +16,12 @@
 
 package com.google.cloud.tools.jib.filesystem;
 
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /** Recursively applies a function to each file in a directory. */
@@ -56,8 +55,8 @@ public class DirectoryWalker {
    * Walks {@link #rootDir} and applies {@code pathConsumer} to each file. Note that {@link
    * #rootDir} itself is visited as well.
    */
-  public List<Path> walk(PathConsumer pathConsumer) throws IOException {
-    List<Path> files = walk();
+  public ImmutableList<Path> walk(PathConsumer pathConsumer) throws IOException {
+    ImmutableList<Path> files = walk();
     for (Path path : files) {
       pathConsumer.accept(path);
     }
@@ -65,13 +64,13 @@ public class DirectoryWalker {
   }
 
   /** Walks {@link #rootDir} and returns the walked files. */
-  public List<Path> walk() throws IOException {
+  public ImmutableList<Path> walk() throws IOException {
     try (Stream<Path> fileStream = Files.walk(rootDir)) {
       Stream<Path> filteredFileStream = fileStream;
       if (pathFilter != null) {
         filteredFileStream = fileStream.filter(pathFilter);
       }
-      return filteredFileStream.sorted().collect(Collectors.toList());
+      return filteredFileStream.sorted().collect(ImmutableList.toImmutableList());
     }
   }
 }
