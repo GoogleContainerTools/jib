@@ -30,6 +30,7 @@ public class Image<T extends Layer> {
     private final ImmutableList.Builder<String> environmentBuilder = ImmutableList.builder();
 
     private ImmutableList<String> entrypoint = ImmutableList.of();
+    private ImmutableList<String> javaArguments = ImmutableList.of();
 
     /** Sets the environment with a map from environment variable names to values. */
     public Builder<T> setEnvironment(Map<String, String> environment) {
@@ -55,6 +56,12 @@ public class Image<T extends Layer> {
       return this;
     }
 
+    /** Sets the items in the "Cmd" field in the container configuration (i.e. the main args). */
+    public Builder<T> setJavaArguments(List<String> javaArguments) {
+      this.javaArguments = ImmutableList.copyOf(javaArguments);
+      return this;
+    }
+
     public Builder<T> addLayer(T layer) throws LayerPropertyNotFoundException {
       imageLayersBuilder.add(layer);
       return this;
@@ -62,7 +69,10 @@ public class Image<T extends Layer> {
 
     public Image<T> build() {
       return new Image<>(
-          imageLayersBuilder.build(), environmentBuilder.build(), ImmutableList.copyOf(entrypoint));
+          imageLayersBuilder.build(),
+          environmentBuilder.build(),
+          ImmutableList.copyOf(entrypoint),
+          ImmutableList.copyOf(javaArguments));
     }
   }
 
@@ -79,11 +89,18 @@ public class Image<T extends Layer> {
   /** Initial command to run when running the image. */
   private final ImmutableList<String> entrypoint;
 
+  /** Arguments to pass into main when running the image. */
+  private final ImmutableList<String> javaArguments;
+
   private Image(
-      ImageLayers<T> layers, ImmutableList<String> environment, ImmutableList<String> entrypoint) {
+      ImageLayers<T> layers,
+      ImmutableList<String> environment,
+      ImmutableList<String> entrypoint,
+      ImmutableList<String> javaArguments) {
     this.layers = layers;
     this.environmentBuilder = environment;
     this.entrypoint = entrypoint;
+    this.javaArguments = javaArguments;
   }
 
   public ImmutableList<String> getEnvironment() {
@@ -92,6 +109,10 @@ public class Image<T extends Layer> {
 
   public ImmutableList<String> getEntrypoint() {
     return entrypoint;
+  }
+
+  public ImmutableList<String> getJavaArguments() {
+    return javaArguments;
   }
 
   public ImmutableList<T> getLayers() {
