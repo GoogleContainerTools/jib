@@ -53,6 +53,10 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     private String image;
 
     @Nullable @Parameter private String credHelper;
+
+    public void set(String image) {
+      this.image = image;
+    }
   }
 
   /** @return the {@link ImageReference} parsed from {@code from}. */
@@ -84,7 +88,7 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   @Nullable @Parameter private FromConfiguration from = new FromConfiguration();
 
   @Nullable
-  @Parameter(required = true)
+  @Parameter(property = "image", required = true)
   private ToConfiguration to;
 
   @Parameter private List<String> jvmFlags = Collections.emptyList();
@@ -92,6 +96,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   @Nullable @Parameter private Map<String, String> environment;
 
   @Nullable @Parameter private String mainClass;
+
+  @Parameter private List<String> args = Collections.emptyList();
 
   @Nullable
   @Parameter(defaultValue = "Docker", required = true)
@@ -134,6 +140,10 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   @Nullable
   String getMainClass() {
     return mainClass;
+  }
+
+  List<String> getArgs() {
+    return args;
   }
 
   String getFormat() {

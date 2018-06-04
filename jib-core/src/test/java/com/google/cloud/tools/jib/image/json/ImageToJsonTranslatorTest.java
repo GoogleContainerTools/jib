@@ -53,6 +53,8 @@ public class ImageToJsonTranslatorTest {
 
     testImageBuilder.setEntrypoint(Arrays.asList("some", "entrypoint", "command"));
 
+    testImageBuilder.setJavaArguments(Arrays.asList("arg1", "arg2"));
+
     DescriptorDigest fakeDigest =
         DescriptorDigest.fromDigest(
             "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad");

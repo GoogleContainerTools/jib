@@ -35,6 +35,7 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.tasks.options.Option;
 import org.gradle.internal.logging.events.LogEvent;
 import org.gradle.internal.logging.events.OutputEventListener;
 import org.gradle.internal.logging.slf4j.OutputEventListenerBackedLoggerContext;
@@ -59,6 +60,12 @@ public class BuildImageTask extends DefaultTask {
   @Nullable
   public JibExtension getJib() {
     return jibExtension;
+  }
+
+  /** The target image can be overriden with the {@code --image} command line option. */
+  @Option(option = "image", description = "The image reference for the target image")
+  public void setTargetImage(String targetImage) {
+    Preconditions.checkNotNull(jibExtension).getTo().setImage(targetImage);
   }
 
   @TaskAction
@@ -91,6 +98,7 @@ public class BuildImageTask extends DefaultTask {
             .setTargetImageCredentialHelperName(jibExtension.getTo().getCredHelper())
             .setKnownTargetRegistryCredentials(knownTargetRegistryCredentials)
             .setMainClass(mainClass)
+            .setJavaArguments(jibExtension.getArgs())
             .setJvmFlags(jibExtension.getJvmFlags())
             .setTargetFormat(jibExtension.getFormat())
             .build();

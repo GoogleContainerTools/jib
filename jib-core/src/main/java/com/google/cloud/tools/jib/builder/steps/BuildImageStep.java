@@ -101,6 +101,7 @@ class BuildImageStep
       }
       imageBuilder.setEnvironment(buildConfiguration.getEnvironment());
       imageBuilder.setEntrypoint(entrypoint);
+      imageBuilder.setJavaArguments(buildConfiguration.getJavaArguments());
 
       // Gets the container configuration content descriptor.
       return imageBuilder.build();

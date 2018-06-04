@@ -1,5 +1,7 @@
 # Proposal: Align `jib-maven-plugin` configuration with `jib-gradle-plugin`
 
+Implemented in: **v0.9.0**
+
 ## Motivation
 
 `jib-gradle-plugin` introduced a different configuration schema from `jib-maven-plugin`. This schema has many benefits over the original `jib-maven-plugin` configuration. Therefore, to maintain consistency between the two plugins, the `jib-maven-plugin` configuration should be updated to be more similar to the `jib-gradle-plugin` configuration.

@@ -16,8 +16,10 @@
 
 package com.google.cloud.tools.jib.docker;
 
+import com.google.cloud.tools.jib.builder.EntrypointBuilder;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -110,21 +112,19 @@ public class DockerContextGeneratorTest {
   }
 
   @Test
-  public void testGetEntrypoint() {
-    DockerContextGenerator dockerContextGenerator =
-        new DockerContextGenerator(mockSourceFilesConfiguration);
-
+  public void testMakeDockerList() {
     Assert.assertEquals(
         "[\"java\",\"-cp\",\"/app/libs/*:/app/resources/:/app/classes/\",\"\"]",
-        dockerContextGenerator.getEntrypoint());
-
-    dockerContextGenerator
-        .setJvmFlags(Arrays.asList("-flag", "another\"Flag"))
-        .setMainClass("AnotherMainClass");
+        DockerContextGenerator.joinAsJsonArray(
+            ImmutableList.of("java", "-cp", "/app/libs/*:/app/resources/:/app/classes/", "")));
 
     Assert.assertEquals(
         "[\"java\",\"-flag\",\"another\\\"Flag\",\"-cp\",\"/app/libs/*:/app/resources/:/app/classes/\",\"AnotherMainClass\"]",
-        dockerContextGenerator.getEntrypoint());
+        DockerContextGenerator.joinAsJsonArray(
+            EntrypointBuilder.makeEntrypoint(
+                mockSourceFilesConfiguration,
+                Arrays.asList("-flag", "another\"Flag"),
+                "AnotherMainClass")));
   }
 
   @Test
@@ -132,12 +132,14 @@ public class DockerContextGeneratorTest {
     String expectedBaseImage = "somebaseimage";
     List<String> expectedJvmFlags = Arrays.asList("-flag", "another\"Flag");
     String expectedMainClass = "SomeMainClass";
+    List<String> expectedJavaArguments = Arrays.asList("arg1", "arg2");
 
     String dockerfile =
         new DockerContextGenerator(mockSourceFilesConfiguration)
             .setBaseImage(expectedBaseImage)
             .setJvmFlags(expectedJvmFlags)
             .setMainClass(expectedMainClass)
+            .setJavaArguments(expectedJavaArguments)
             .makeDockerfile();
 
     Path sampleDockerfile = Paths.get(Resources.getResource("sampleDockerfile").toURI());

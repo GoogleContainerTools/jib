@@ -19,8 +19,10 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.Command;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Arrays;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -71,8 +73,23 @@ public class BuildImageMojoIntegrationTest {
 
   @Test
   public void testExecute_simple() throws VerificationException, IOException, InterruptedException {
+    // Test empty output error
+    try {
+      Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
+      verifier.setAutoclean(false);
+      verifier.executeGoals(Arrays.asList("clean", "jib:build"));
+      Assert.fail();
+    } catch (VerificationException ex) {
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.containsString(
+              "Obtaining project build output files failed; make sure you have compiled your "
+                  + "project before trying to build the image. (Did you accidentally run \"mvn "
+                  + "clean jib:build\" instead of \"mvn clean compile jib:build\"?)"));
+    }
+
     Assert.assertEquals(
-        "Hello, world\n",
+        "Hello, world. An argument.\n",
         buildAndRun(
             simpleTestProject.getProjectRoot(),
             "gcr.io/jib-integration-testing/simpleimage:maven"));

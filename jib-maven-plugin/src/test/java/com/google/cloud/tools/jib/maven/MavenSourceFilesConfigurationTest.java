@@ -74,14 +74,15 @@ public class MavenSourceFilesConfigurationTest {
             Paths.get("application", "dependencies", "libraryB.jar"));
     List<Path> expectedResourcesFiles =
         Arrays.asList(
-            Paths.get(Resources.getResource("application/output").toURI()).resolve("resourceA"),
-            Paths.get(Resources.getResource("application/output").toURI()).resolve("resourceB"),
-            Paths.get(Resources.getResource("application/output").toURI()).resolve("world"));
+            Paths.get(Resources.getResource("application/output/directory").toURI()),
+            Paths.get(Resources.getResource("application/output/resourceA").toURI()),
+            Paths.get(Resources.getResource("application/output/resourceB").toURI()),
+            Paths.get(Resources.getResource("application/output/world").toURI()));
     List<Path> expectedClassesFiles =
         Arrays.asList(
-            Paths.get(Resources.getResource("application/output").toURI())
-                .resolve("HelloWorld.class"),
-            Paths.get(Resources.getResource("application/output").toURI()).resolve("some.class"));
+            Paths.get(Resources.getResource("application/output/HelloWorld.class").toURI()),
+            Paths.get(Resources.getResource("application/output/package").toURI()),
+            Paths.get(Resources.getResource("application/output/some.class").toURI()));
 
     Assert.assertEquals(
         expectedDependenciesFiles, testMavenSourceFilesConfiguration.getDependenciesFiles());

@@ -21,6 +21,7 @@ import java.io.IOException;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.BuildTask;
 import org.gradle.testkit.runner.TaskOutcome;
+import org.gradle.testkit.runner.UnexpectedBuildFailure;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.ClassRule;
@@ -72,8 +73,21 @@ public class JibPluginIntegrationTest {
 
   @Test
   public void testBuild_simple() throws IOException, InterruptedException {
+    // Test empty output error
+    try {
+      simpleTestProject.build("clean", "jib");
+      Assert.fail();
+    } catch (UnexpectedBuildFailure ex) {
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.containsString(
+              "Obtaining project build output files failed; make sure you have compiled your "
+                  + "project before trying to build the image. (Did you accidentally run \"gradle "
+                  + "clean jib\" instead of \"gradle clean compileJava jib\"?)"));
+    }
+
     Assert.assertEquals(
-        "Hello, world\n",
+        "Hello, world. An argument.\n",
         buildAndRun(simpleTestProject, "gcr.io/jib-integration-testing/simpleimage:gradle"));
   }
 
@@ -88,7 +102,7 @@ public class JibPluginIntegrationTest {
   @Test
   public void testDockerDaemon_simple() throws IOException, InterruptedException {
     Assert.assertEquals(
-        "Hello, world\n",
+        "Hello, world. An argument.\n",
         buildToDockerDaemonAndRun(
             simpleTestProject, "gcr.io/jib-integration-testing/simpleimage:gradle"));
   }
@@ -116,7 +130,8 @@ public class JibPluginIntegrationTest {
                 .resolve("jib-docker-context")
                 .toString())
         .run();
-    Assert.assertEquals("Hello, world\n", new Command("docker", "run", imageName).run());
+    Assert.assertEquals(
+        "Hello, world. An argument.\n", new Command("docker", "run", imageName).run());
 
     // Checks that generating the Docker context again is skipped.
     BuildTask upToDateJibDockerContextTask =
