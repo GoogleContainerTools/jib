@@ -75,13 +75,30 @@ public class DockerClient {
    *     href="https://docs.docker.com/engine/reference/commandline/load/">https://docs.docker.com/engine/reference/commandline/load/</a>
    * @return stdout from {@code docker}
    */
-  public String load(Blob imageTarballBlob) throws IOException, InterruptedException {
+  public String load(Blob imageTarballBlob) throws InterruptedException, IOException {
     // Runs 'docker load'.
     Process dockerProcess = docker("load");
 
     try (OutputStream stdin = dockerProcess.getOutputStream()) {
-      imageTarballBlob.writeTo(stdin);
+      try {
+        imageTarballBlob.writeTo(stdin);
+
+      } catch (IOException ex) {
+        // Tries to read from stderr.
+        String error;
+        try (InputStreamReader stderr =
+            new InputStreamReader(dockerProcess.getErrorStream(), StandardCharsets.UTF_8)) {
+          error = CharStreams.toString(stderr);
+
+        } catch (IOException ignored) {
+          // This ignores exceptions from reading stderr and throws the original exception from
+          // writing to stdin.
+          throw ex;
+        }
+        throw new IOException("'docker load' command failed with error: " + error, ex);
+      }
     }
+
     try (InputStreamReader stdout =
         new InputStreamReader(dockerProcess.getInputStream(), StandardCharsets.UTF_8)) {
       String output = CharStreams.toString(stdout);
