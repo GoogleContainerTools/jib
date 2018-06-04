@@ -86,6 +86,7 @@ public class BuildImageStepTest {
                 mockBuildAndCacheApplicationLayerStep,
                 mockBuildAndCacheApplicationLayerStep,
                 mockBuildAndCacheApplicationLayerStep),
+            ImmutableList.of(),
             ImmutableList.of());
     Image<CachedLayer> image = buildImageStep.getFuture().get().getFuture().get();
     Assert.assertEquals(

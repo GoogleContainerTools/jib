@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.cache.Caches;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
+import com.google.common.collect.ImmutableList;
 import java.nio.file.Path;
 import org.junit.Assert;
 import org.junit.ClassRule;
@@ -44,6 +45,7 @@ public class BuildStepsIntegrationTest {
             .setBaseImage(ImageReference.of("gcr.io", "distroless/java", "latest"))
             .setTargetImage(ImageReference.of("localhost:5000", "testimage", "testtag"))
             .setMainClass("HelloWorld")
+            .setJavaArguments(ImmutableList.of("An argument."))
             .build();
 
     Path cacheDirectory = temporaryCacheDirectory.newFolder().toPath();
@@ -62,7 +64,8 @@ public class BuildStepsIntegrationTest {
 
     String imageReference = "localhost:5000/testimage:testtag";
     new Command("docker", "pull", imageReference).run();
-    Assert.assertEquals("Hello world\n", new Command("docker", "run", imageReference).run());
+    Assert.assertEquals(
+        "Hello, world. An argument.\n", new Command("docker", "run", imageReference).run());
   }
 
   @Test
@@ -73,6 +76,7 @@ public class BuildStepsIntegrationTest {
             .setBaseImage(ImageReference.of("gcr.io", "distroless/java", "latest"))
             .setTargetImage(ImageReference.of(null, "testdocker", null))
             .setMainClass("HelloWorld")
+            .setJavaArguments(ImmutableList.of("An argument."))
             .build();
 
     Path cacheDirectory = temporaryCacheDirectory.newFolder().toPath();
@@ -83,6 +87,7 @@ public class BuildStepsIntegrationTest {
             Caches.newInitializer(cacheDirectory).setBaseCacheDirectory(cacheDirectory));
 
     buildDockerSteps.run();
-    Assert.assertEquals("Hello world\n", new Command("docker", "run", "testdocker").run());
+    Assert.assertEquals(
+        "Hello, world. An argument.\n", new Command("docker", "run", "testdocker").run());
   }
 }

@@ -42,6 +42,7 @@ class BuildImageStep
   private final PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep;
   private final ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps;
   private final ImmutableList<String> entrypoint;
+  private final ImmutableList<String> javaArguments;
 
   private final ListeningExecutorService listeningExecutorService;
   private final ListenableFuture<AsyncStep<Image<CachedLayer>>> listenableFuture;
@@ -51,12 +52,14 @@ class BuildImageStep
       BuildConfiguration buildConfiguration,
       PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep,
       ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps,
-      ImmutableList<String> entrypoint) {
+      ImmutableList<String> entrypoint,
+      ImmutableList<String> javaArguments) {
     this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
     this.pullAndCacheBaseImageLayersStep = pullAndCacheBaseImageLayersStep;
     this.buildAndCacheApplicationLayerSteps = buildAndCacheApplicationLayerSteps;
     this.entrypoint = entrypoint;
+    this.javaArguments = javaArguments;
 
     listenableFuture =
         Futures.whenAllSucceed(pullAndCacheBaseImageLayersStep.getFuture())
@@ -101,6 +104,7 @@ class BuildImageStep
       }
       imageBuilder.setEnvironment(buildConfiguration.getEnvironment());
       imageBuilder.setEntrypoint(entrypoint);
+      imageBuilder.setCmd(javaArguments);
 
       // Gets the container configuration content descriptor.
       return imageBuilder.build();

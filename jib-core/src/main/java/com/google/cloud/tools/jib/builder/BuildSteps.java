@@ -76,7 +76,9 @@ public class BuildSteps {
                 .runPullAndCacheBaseImageLayersStep()
                 .runPushBaseImageLayersStep()
                 .runBuildAndCacheApplicationLayerSteps()
-                .runBuildImageStep(getEntrypoint(buildConfiguration, sourceFilesConfiguration))
+                .runBuildImageStep(
+                    getEntrypoint(buildConfiguration, sourceFilesConfiguration),
+                    buildConfiguration.getJavaArguments())
                 .runPushContainerConfigurationStep()
                 .runPushApplicationLayersStep()
                 .runFinalizingPushStep()
@@ -105,7 +107,9 @@ public class BuildSteps {
                 .runPullBaseImageStep()
                 .runPullAndCacheBaseImageLayersStep()
                 .runBuildAndCacheApplicationLayerSteps()
-                .runBuildImageStep(getEntrypoint(buildConfiguration, sourceFilesConfiguration))
+                .runBuildImageStep(
+                    getEntrypoint(buildConfiguration, sourceFilesConfiguration),
+                    buildConfiguration.getJavaArguments())
                 .runFinalizingBuildStep()
                 .runBuildTarballAndLoadDockerStep()
                 .waitOnBuildTarballAndLoadDockerStep());
