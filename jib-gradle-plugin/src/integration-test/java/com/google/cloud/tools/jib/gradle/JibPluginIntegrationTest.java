@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.Command;
 import java.io.IOException;
+import java.nio.file.Files;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.BuildTask;
 import org.gradle.testkit.runner.TaskOutcome;
@@ -115,10 +116,13 @@ public class JibPluginIntegrationTest {
 
   @Test
   public void testDockerContext() throws IOException, InterruptedException {
-    BuildResult buildResult = simpleTestProject.build("build", "jibDockerContext", "--info");
+    BuildResult buildResult = simpleTestProject.build("clean", "jibDockerContext", "--info");
 
+    BuildTask classesTask = buildResult.task(":classes");
     BuildTask jibDockerContextTask = buildResult.task(":jibDockerContext");
 
+    Assert.assertNotNull(classesTask);
+    Assert.assertEquals(TaskOutcome.SUCCESS, classesTask.getOutcome());
     Assert.assertNotNull(jibDockerContextTask);
     Assert.assertEquals(TaskOutcome.SUCCESS, jibDockerContextTask.getOutcome());
     Assert.assertThat(
@@ -140,8 +144,21 @@ public class JibPluginIntegrationTest {
 
     // Checks that generating the Docker context again is skipped.
     BuildTask upToDateJibDockerContextTask =
-        simpleTestProject.build("build", "jibDockerContext").task(":jibDockerContext");
+        simpleTestProject.build("jibDockerContext").task(":jibDockerContext");
     Assert.assertNotNull(upToDateJibDockerContextTask);
     Assert.assertEquals(TaskOutcome.UP_TO_DATE, upToDateJibDockerContextTask.getOutcome());
+
+    // Checks that adding a new file generates the Docker context again.
+    Files.createFile(
+        simpleTestProject
+            .getProjectRoot()
+            .resolve("src")
+            .resolve("main")
+            .resolve("resources")
+            .resolve("newfile"));
+    BuildTask reexecutedJibDockerContextTask =
+        simpleTestProject.build("jibDockerContext").task(":jibDockerContext");
+    Assert.assertNotNull(reexecutedJibDockerContextTask);
+    Assert.assertEquals(TaskOutcome.SUCCESS, reexecutedJibDockerContextTask.getOutcome());
   }
 }
