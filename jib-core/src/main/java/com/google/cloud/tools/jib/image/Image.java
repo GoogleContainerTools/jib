@@ -56,6 +56,7 @@ public class Image<T extends Layer> {
       return this;
     }
 
+    /** Sets the items in the "Cmd" field in the container configuration (i.e. the main args). */
     public Builder<T> setCmd(List<String> cmd) {
       this.cmd = ImmutableList.copyOf(cmd);
       return this;

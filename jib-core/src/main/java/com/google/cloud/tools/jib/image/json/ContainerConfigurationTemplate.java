@@ -104,8 +104,8 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     config.Entrypoint = command;
   }
 
-  public void setContainerCmd(List<String> args) {
-    config.Cmd = args;
+  public void setContainerCmd(List<String> cmd) {
+    config.Cmd = cmd;
   }
 
   public void addLayerDiffId(DescriptorDigest diffId) {

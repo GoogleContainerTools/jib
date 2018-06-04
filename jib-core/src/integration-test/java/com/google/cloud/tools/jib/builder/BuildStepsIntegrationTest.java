@@ -20,8 +20,8 @@ import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.cache.Caches;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
-import com.google.common.collect.ImmutableList;
 import java.nio.file.Path;
+import java.util.Collections;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -45,7 +45,7 @@ public class BuildStepsIntegrationTest {
             .setBaseImage(ImageReference.of("gcr.io", "distroless/java", "latest"))
             .setTargetImage(ImageReference.of("localhost:5000", "testimage", "testtag"))
             .setMainClass("HelloWorld")
-            .setJavaArguments(ImmutableList.of("An argument."))
+            .setJavaArguments(Collections.singletonList("An argument."))
             .build();
 
     Path cacheDirectory = temporaryCacheDirectory.newFolder().toPath();
@@ -76,7 +76,7 @@ public class BuildStepsIntegrationTest {
             .setBaseImage(ImageReference.of("gcr.io", "distroless/java", "latest"))
             .setTargetImage(ImageReference.of(null, "testdocker", null))
             .setMainClass("HelloWorld")
-            .setJavaArguments(ImmutableList.of("An argument."))
+            .setJavaArguments(Collections.singletonList("An argument."))
             .build();
 
     Path cacheDirectory = temporaryCacheDirectory.newFolder().toPath();
