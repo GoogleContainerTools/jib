@@ -35,7 +35,8 @@ import javax.annotation.Nullable;
  *   "os": "linux",
  *   "config": {
  *     "Env": ["/usr/bin/java"],
- *     "Entrypoint": ["PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"]
+ *     "Entrypoint": ["PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"],
+ *     "Cmd": ["arg1", "arg2"]
  *   },
  *   "rootfs": {
  *     "diff_ids": [
@@ -74,6 +75,9 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
 
     /** Command to run when container starts. */
     @Nullable private List<String> Entrypoint;
+
+    /** Arguments to pass into main. */
+    @Nullable private List<String> Cmd;
   }
 
   /**
@@ -100,6 +104,10 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     config.Entrypoint = command;
   }
 
+  public void setContainerCmd(List<String> args) {
+    config.Cmd = args;
+  }
+
   public void addLayerDiffId(DescriptorDigest diffId) {
     rootfs.diff_ids.add(diffId);
   }
@@ -116,6 +124,11 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
   @Nullable
   List<String> getContainerEntrypoint() {
     return config.Entrypoint;
+  }
+
+  @Nullable
+  List<String> getContainerCmd() {
+    return config.Cmd;
   }
 
   @VisibleForTesting
