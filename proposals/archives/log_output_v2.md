@@ -1,5 +1,7 @@
 # Proposal: Improve Jib Log Output
 
+Implemented in: **v0.9.0**
+
 ## Motivation
 
 To have a more organized, readable, and aethetically-pleasing log output.

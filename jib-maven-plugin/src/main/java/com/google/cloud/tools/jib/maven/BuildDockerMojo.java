@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
 import com.google.cloud.tools.jib.frontend.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
 import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.base.Preconditions;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -32,6 +33,9 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 /** Builds a container image and exports to the default Docker daemon. */
 @Mojo(name = "buildDocker", requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM)
 public class BuildDockerMojo extends JibPluginConfiguration {
+
+  /** {@code User-Agent} header suffix to send to the registry. */
+  private static final String USER_AGENT_SUFFIX = "jib-maven-plugin";
 
   private static final HelpfulSuggestions HELPFUL_SUGGESTIONS =
       HelpfulSuggestionsProvider.get("Build to Docker daemon failed");
@@ -64,9 +68,19 @@ public class BuildDockerMojo extends JibPluginConfiguration {
             .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
             .setTargetImage(targetImage)
             .setMainClass(mainClass)
+            .setJavaArguments(getArgs())
             .setJvmFlags(getJvmFlags())
             .setEnvironment(getEnvironment())
             .build();
+
+    // TODO: Consolidate with BuildImageMojo
+    // TODO: Instead of disabling logging, have authentication credentials be provided
+    // Disables annoying Apache HTTP client logging.
+    System.setProperty(
+        "org.apache.commons.logging.Log", "org.apache.commons.logging.impl.SimpleLog");
+    System.setProperty("org.apache.commons.logging.simplelog.defaultlog", "error");
+
+    RegistryClient.setUserAgentSuffix(USER_AGENT_SUFFIX);
 
     try {
       BuildStepsRunner.forBuildToDockerDaemon(

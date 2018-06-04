@@ -45,6 +45,7 @@ public class ContainerConfigurationTemplateTest {
 
     containerConfigJson.setContainerEnvironment(Arrays.asList("VAR1=VAL1", "VAR2=VAL2"));
     containerConfigJson.setContainerEntrypoint(Arrays.asList("some", "entrypoint", "command"));
+    containerConfigJson.setContainerCmd(Arrays.asList("arg1", "arg2"));
 
     containerConfigJson.addLayerDiffId(
         DescriptorDigest.fromDigest(
@@ -72,6 +73,8 @@ public class ContainerConfigurationTemplateTest {
     Assert.assertEquals(
         Arrays.asList("some", "entrypoint", "command"),
         containerConfigJson.getContainerEntrypoint());
+
+    Assert.assertEquals(Arrays.asList("arg1", "arg2"), containerConfigJson.getContainerCmd());
 
     Assert.assertEquals(
         DescriptorDigest.fromDigest(

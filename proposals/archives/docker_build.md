@@ -1,5 +1,7 @@
 # Proposal: Build to Docker Daemon
 
+Implemented in: **v0.9.0**
+
 ## Motivation
 
 Currently, Jib builds and pushes container images to a Docker registry without the need for a Docker daemon. However, for development use cases where the developer does not have a registry set up but do have a Docker daemon available, they may wish to build to the Docker daemon directly.
