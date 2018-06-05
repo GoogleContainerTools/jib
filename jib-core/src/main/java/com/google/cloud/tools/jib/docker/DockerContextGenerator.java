@@ -25,6 +25,7 @@ import com.google.common.io.MoreFiles;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -88,11 +89,15 @@ public class DockerContextGenerator {
     Preconditions.checkNotNull(baseImage);
 
     // Deletes the targetDir if it exists.
-    if (Files.exists(targetDirectory)) {
+    try {
+      Files.deleteIfExists(targetDirectory);
+
+    } catch (DirectoryNotEmptyException ex) {
       MoreFiles.deleteDirectoryContents(targetDirectory);
-    } else {
-      Files.createDirectory(targetDirectory);
+      Files.delete(targetDirectory);
     }
+
+    Files.createDirectory(targetDirectory);
 
     // Creates the directories.
     Path dependenciesDir = targetDirectory.resolve("libs");

@@ -17,12 +17,12 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
+import com.google.common.collect.ImmutableList;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 import org.gradle.api.Project;
@@ -46,9 +46,9 @@ class GradleSourceFilesConfiguration implements SourceFilesConfiguration {
     return new GradleSourceFilesConfiguration(project);
   }
 
-  private final List<Path> dependenciesFiles = new ArrayList<>();
-  private final List<Path> resourcesFiles = new ArrayList<>();
-  private final List<Path> classesFiles = new ArrayList<>();
+  private final ImmutableList<Path> dependenciesFiles;
+  private final ImmutableList<Path> resourcesFiles;
+  private final ImmutableList<Path> classesFiles;
 
   /** Instantiate with {@link #getForProject}. */
   private GradleSourceFilesConfiguration(Project project) throws IOException {
@@ -56,6 +56,10 @@ class GradleSourceFilesConfiguration implements SourceFilesConfiguration {
         project.getConvention().getPlugin(JavaPluginConvention.class);
 
     SourceSet mainSourceSet = javaPluginConvention.getSourceSets().getByName(MAIN_SOURCE_SET_NAME);
+
+    List<Path> dependenciesFiles = new ArrayList<>();
+    List<Path> resourcesFiles = new ArrayList<>();
+    List<Path> classesFiles = new ArrayList<>();
 
     // Adds each file in each classes output directory to the classes files list.
     FileCollection classesOutputDirectories = mainSourceSet.getOutput().getClassesDirs();
@@ -86,23 +90,23 @@ class GradleSourceFilesConfiguration implements SourceFilesConfiguration {
     }
 
     // Sorts all files by path for consistent ordering.
-    Collections.sort(dependenciesFiles);
-    Collections.sort(resourcesFiles);
-    Collections.sort(classesFiles);
+    this.dependenciesFiles = ImmutableList.sortedCopyOf(dependenciesFiles);
+    this.resourcesFiles = ImmutableList.sortedCopyOf(resourcesFiles);
+    this.classesFiles = ImmutableList.sortedCopyOf(classesFiles);
   }
 
   @Override
-  public List<Path> getDependenciesFiles() {
+  public ImmutableList<Path> getDependenciesFiles() {
     return dependenciesFiles;
   }
 
   @Override
-  public List<Path> getResourcesFiles() {
+  public ImmutableList<Path> getResourcesFiles() {
     return resourcesFiles;
   }
 
   @Override
-  public List<Path> getClassesFiles() {
+  public ImmutableList<Path> getClassesFiles() {
     return classesFiles;
   }
 

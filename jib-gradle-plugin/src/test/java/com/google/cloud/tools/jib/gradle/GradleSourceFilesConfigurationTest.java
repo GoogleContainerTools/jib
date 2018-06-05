@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
 import java.io.File;
@@ -23,9 +24,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import org.gradle.api.Project;
 import org.gradle.api.file.FileCollection;
@@ -109,19 +108,19 @@ public class GradleSourceFilesConfigurationTest {
 
   @Test
   public void test_correctFiles() throws URISyntaxException {
-    List<Path> expectedDependenciesFiles =
-        Arrays.asList(
+    ImmutableList<Path> expectedDependenciesFiles =
+        ImmutableList.of(
             Paths.get(
                 Resources.getResource("application/dependencies/dependency-1.0.0.jar").toURI()),
             Paths.get(Resources.getResource("application/dependencies/libraryA.jar").toURI()),
             Paths.get(Resources.getResource("application/dependencies/libraryB.jar").toURI()));
-    List<Path> expectedResourcesFiles =
-        Arrays.asList(
+    ImmutableList<Path> expectedResourcesFiles =
+        ImmutableList.of(
             Paths.get(Resources.getResource("application/resources").toURI()).resolve("resourceA"),
             Paths.get(Resources.getResource("application/resources").toURI()).resolve("resourceB"),
             Paths.get(Resources.getResource("application/resources").toURI()).resolve("world"));
-    List<Path> expectedClassesFiles =
-        Arrays.asList(
+    ImmutableList<Path> expectedClassesFiles =
+        ImmutableList.of(
             Paths.get(Resources.getResource("application/classes").toURI())
                 .resolve("HelloWorld.class"),
             Paths.get(Resources.getResource("application/classes").toURI()).resolve("some.class"));

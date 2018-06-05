@@ -20,6 +20,7 @@ import com.google.common.annotations.VisibleForTesting;
 import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.Task;
 import org.gradle.util.GradleVersion;
 
 public class JibPlugin implements Plugin<Project> {
@@ -29,25 +30,25 @@ public class JibPlugin implements Plugin<Project> {
   @Override
   public void apply(Project project) {
     checkGradleVersion();
+
     JibExtension jibExtension = project.getExtensions().create("jib", JibExtension.class, project);
+    Task classesTask = project.getTasks().getByPath("classes");
+
     project
         .getTasks()
-        .create(
-            "jib",
-            BuildImageTask.class,
-            buildImageTask -> buildImageTask.setJibExtension(jibExtension));
+        .create("jib", BuildImageTask.class)
+        .setJibExtension(jibExtension)
+        .dependsOn(classesTask);
     project
         .getTasks()
-        .create(
-            "jibDockerContext",
-            DockerContextTask.class,
-            dockerContextTask -> dockerContextTask.setJibExtension(jibExtension));
+        .create("jibDockerContext", DockerContextTask.class)
+        .setJibExtension(jibExtension)
+        .dependsOn(classesTask);
     project
         .getTasks()
-        .create(
-            "jibBuildDocker",
-            BuildDockerTask.class,
-            buildDockerTask -> buildDockerTask.setJibExtension(jibExtension));
+        .create("jibBuildDocker", BuildDockerTask.class)
+        .setJibExtension(jibExtension)
+        .dependsOn(classesTask);
   }
 
   private static void checkGradleVersion() {
