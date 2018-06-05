@@ -137,8 +137,8 @@ release {
 }
 // Gradle Plugin Portal releases
 pluginBundle {
-    website = 'https://github.com/google/jib/'
-    vcsUrl = 'https://github.com/google/jib/'
+    website = 'https://github.com/GoogleContainerTools/jib/'
+    vcsUrl = 'https://github.com/GoogleContainerTools/jib/'
 
     plugins {
         jibPlugin {

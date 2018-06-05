@@ -5,7 +5,7 @@
 
 # Jib
 
-<image src="https://github.com/google/jib/raw/master/logo/jib-build-docker-java-container-image.png" alt="Jib - Containerize your Java applications." width="650px" />
+<image src="https://github.com/GoogleContainerTools/jib/raw/master/logo/jib-build-docker-java-container-image.png" alt="Jib - Containerize your Java applications." width="650px" />
 
 ## What is Jib?
 
@@ -40,7 +40,7 @@ See also [rules_docker](https://github.com/bazelbuild/rules_docker) for a simila
 
 ## Frequently Asked Questions (FAQ)
 
-See the [Frequently Asked Questions (FAQ) wiki page](https://github.com/google/jib/wiki/Frequently-Asked-Questions-(FAQ)).
+See the [Frequently Asked Questions (FAQ) wiki page](/../../wiki/Frequently-Asked-Questions-(FAQ)).
 
 ## Community
 
