@@ -74,4 +74,4 @@ git push origin ${VERSION}
 
 # File a PR on Github for the new branch. Have someone LGTM it, which gives you permission to continue.
 EchoGreen 'File a PR for the new release branch:'
-echo https://github.com/google/jib/compare/${VERSION}
+echo https://github.com/GoogleContainerTools/jib/compare/${VERSION}
