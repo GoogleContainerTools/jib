@@ -48,8 +48,8 @@ public class JibPlugin implements Plugin<Project> {
 
     // Has all tasks depend on the 'classes' task.
     project.afterEvaluate(
-        ignored -> {
-          Task classesTask = project.getTasks().getByPath("classes");
+        projectAfterEvaluation -> {
+          Task classesTask = projectAfterEvaluation.getTasks().getByPath("classes");
 
           buildImageTask.dependsOn(classesTask);
           dockerContextTask.dependsOn(classesTask);
