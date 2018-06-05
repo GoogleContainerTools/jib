@@ -25,11 +25,11 @@ import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import org.apache.http.conn.HttpHostConnectException;
 import org.junit.Assert;
@@ -75,12 +75,10 @@ public class BuildStepsRunnerTest {
     Mockito.when(mockBuildConfiguration.getBuildLogger()).thenReturn(mockBuildLogger);
     Mockito.when(mockBuildSteps.getSourceFilesConfiguration())
         .thenReturn(mockSourceFilesConfiguration);
-    Mockito.when(mockSourceFilesConfiguration.getClassesFiles())
-        .thenReturn(Collections.emptyList());
-    Mockito.when(mockSourceFilesConfiguration.getResourcesFiles())
-        .thenReturn(Collections.emptyList());
+    Mockito.when(mockSourceFilesConfiguration.getClassesFiles()).thenReturn(ImmutableList.of());
+    Mockito.when(mockSourceFilesConfiguration.getResourcesFiles()).thenReturn(ImmutableList.of());
     Mockito.when(mockSourceFilesConfiguration.getDependenciesFiles())
-        .thenReturn(Collections.emptyList());
+        .thenReturn(ImmutableList.of());
   }
 
   @Test

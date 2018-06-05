@@ -89,7 +89,7 @@ public class BuildImageMojoIntegrationTest {
     }
 
     Assert.assertEquals(
-        "Hello, world\n",
+        "Hello, world. An argument.\n",
         buildAndRun(
             simpleTestProject.getProjectRoot(),
             "gcr.io/jib-integration-testing/simpleimage:maven"));

@@ -50,6 +50,7 @@ public class DockerContextMojoIntegrationTest {
 
     String imageName = "jib/integration-test";
     new Command("docker", "build", "-t", imageName, dockerContextDirectory.toString()).run();
-    Assert.assertEquals("Hello, world\n", new Command("docker", "run", imageName).run());
+    Assert.assertEquals(
+        "Hello, world. An argument.\n", new Command("docker", "run", imageName).run());
   }
 }

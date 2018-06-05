@@ -21,9 +21,15 @@ import com.google.common.base.Preconditions;
 import com.google.common.io.InsecureRecursiveDeleteException;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
+import org.gradle.api.Task;
+import org.gradle.api.file.FileCollection;
+import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
@@ -42,6 +48,23 @@ public class DockerContextTask extends DefaultTask {
   @Nullable
   public JibExtension getJib() {
     return jibExtension;
+  }
+
+  /**
+   * The input files to this task are all the output files for all the dependencies of the {@code
+   * classes} task.
+   */
+  @InputFiles
+  public FileCollection getInputFiles() {
+    Task classesTask = getProject().getTasks().getByPath("classes");
+    Set<? extends Task> classesDependencies =
+        classesTask.getTaskDependencies().getDependencies(classesTask);
+
+    List<FileCollection> dependencyFileCollections = new ArrayList<>();
+    for (Task task : classesDependencies) {
+      dependencyFileCollections.add(task.getOutputs().getFiles());
+    }
+    return getProject().files(dependencyFileCollections);
   }
 
   /** The output directory for the Docker context is by default {@code build/jib-docker-context}. */
@@ -75,6 +98,7 @@ public class DockerContextTask extends DefaultTask {
           .setBaseImage(jibExtension.getBaseImage())
           .setJvmFlags(jibExtension.getJvmFlags())
           .setMainClass(mainClass)
+          .setJavaArguments(jibExtension.getArgs())
           .generate(Paths.get(targetDir));
 
       gradleBuildLogger.info("Created Docker context at " + targetDir);
@@ -96,7 +120,8 @@ public class DockerContextTask extends DefaultTask {
     }
   }
 
-  void setJibExtension(JibExtension jibExtension) {
+  DockerContextTask setJibExtension(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
+    return this;
   }
 }

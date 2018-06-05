@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.builder;
 
+import com.google.common.collect.ImmutableList;
 import java.nio.file.Path;
-import java.util.List;
 
 /**
  * Immutable configuration that defines where the source files for each of the application layers
@@ -29,18 +29,18 @@ public interface SourceFilesConfiguration {
    * @return the source files for the dependencies layer. These files should be in a deterministic
    *     order.
    */
-  List<Path> getDependenciesFiles();
+  ImmutableList<Path> getDependenciesFiles();
 
   /**
    * @return the source files for the resources layer. These files should be in a deterministic
    *     order.
    */
-  List<Path> getResourcesFiles();
+  ImmutableList<Path> getResourcesFiles();
 
   /**
    * @return the source files for the classes layer. These files should be in a deterministic order.
    */
-  List<Path> getClassesFiles();
+  ImmutableList<Path> getClassesFiles();
 
   /**
    * @return the Unix-style path where the dependencies source files are placed in the container
