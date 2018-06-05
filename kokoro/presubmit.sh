@@ -11,6 +11,6 @@ docker stop $(docker container ls --quiet) || true
 
 cd github/jib
 
-(cd jib-core; ./gradlew clean build integrationTest --info)
+(cd jib-core; ./gradlew clean build integrationTest --info --stacktrace)
 (cd jib-maven-plugin; ./mvnw clean install -B -U -X)
-(cd jib-gradle-plugin; ./gradlew clean build --info)
+(cd jib-gradle-plugin; ./gradlew clean build --info --stacktrace)
