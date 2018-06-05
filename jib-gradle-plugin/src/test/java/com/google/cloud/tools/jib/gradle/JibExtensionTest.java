@@ -34,7 +34,10 @@ public class JibExtensionTest {
   @Before
   public void setUp() {
     Project fakeProject = ProjectBuilder.builder().build();
-    testJibExtension = fakeProject.getExtensions().create("jib", JibExtension.class, fakeProject);
+    testJibExtension =
+        fakeProject
+            .getExtensions()
+            .create(JibPlugin.JIB_EXTENSION_NAME, JibExtension.class, fakeProject);
   }
 
   @Test

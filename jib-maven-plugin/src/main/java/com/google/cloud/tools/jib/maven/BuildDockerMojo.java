@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -32,10 +33,12 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 
 /** Builds a container image and exports to the default Docker daemon. */
 @Mojo(
-  name = "buildToDockerDaemon",
+  name = BuildDockerMojo.GOAL_NAME,
   requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM
 )
 public class BuildDockerMojo extends JibPluginConfiguration {
+
+  @VisibleForTesting static final String GOAL_NAME = "buildToDockerDaemon";
 
   /** {@code User-Agent} header suffix to send to the registry. */
   private static final String USER_AGENT_SUFFIX = "jib-maven-plugin";
