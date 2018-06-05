@@ -20,7 +20,7 @@ package com.google.cloud.tools.jib;
 public class ProjectInfo {
 
   /** Link to the GitHub repository. */
-  public static final String GITHUB_URL = "https://github.com/google/jib";
+  public static final String GITHUB_URL = "https://github.com/GoogleContainerTools/jib";
 
   /** Link to file an issue against the GitHub repository. */
   public static final String GITHUB_NEW_ISSUE_URL = GITHUB_URL + "/issues/new";
