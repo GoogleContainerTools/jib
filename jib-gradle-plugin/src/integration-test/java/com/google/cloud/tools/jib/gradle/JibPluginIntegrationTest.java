@@ -59,7 +59,7 @@ public class JibPluginIntegrationTest {
     BuildResult buildResult = testProject.build("clean", "jibBuildDocker");
 
     BuildTask classesTask = buildResult.task(":classes");
-    BuildTask jibBuildDockerTask = buildResult.task(":jibBuildDocker");
+    BuildTask jibBuildDockerTask = buildResult.task(":jibBuildToDockerDaemon");
 
     Assert.assertNotNull(classesTask);
     Assert.assertEquals(TaskOutcome.SUCCESS, classesTask.getOutcome());

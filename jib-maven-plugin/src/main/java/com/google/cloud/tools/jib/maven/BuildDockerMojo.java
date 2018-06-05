@@ -31,7 +31,10 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
 /** Builds a container image and exports to the default Docker daemon. */
-@Mojo(name = "buildDocker", requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM)
+@Mojo(
+  name = "buildToDockerDaemon",
+  requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM
+)
 public class BuildDockerMojo extends JibPluginConfiguration {
 
   /** {@code User-Agent} header suffix to send to the registry. */
