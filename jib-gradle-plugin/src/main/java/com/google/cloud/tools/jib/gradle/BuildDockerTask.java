@@ -56,7 +56,7 @@ public class BuildDockerTask extends DefaultTask {
     return jibExtension;
   }
 
-  /** The target image can be overriden with the {@code --image} command line option. */
+  /** The target image can be overridden with the {@code --image} command line option. */
   @Option(option = "image", description = "The image reference for the target image")
   public void setTargetImage(String targetImage) {
     Preconditions.checkNotNull(jibExtension).getTo().setImage(targetImage);

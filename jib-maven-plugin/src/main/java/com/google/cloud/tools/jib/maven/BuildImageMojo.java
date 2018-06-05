@@ -28,6 +28,7 @@ import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import java.util.Arrays;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -74,9 +75,18 @@ public class BuildImageMojo extends JibPluginConfiguration {
               + "'.");
     }
 
-    // Parses 'from' and 'to' into image reference.
+    // Parses 'from' into image reference.
     ImageReference baseImage = parseBaseImageReference(getBaseImage());
-    ImageReference targetImage = parseTargetImageReference(getTargetImage());
+
+    // Parses and validates 'to'.
+    String targetImageString = getTargetImage();
+    if (Strings.isNullOrEmpty(targetImageString)) {
+      throw new MojoFailureException(
+          "Missing target image parameter. Add a <to.image> configuration parameter to your "
+              + "pom.xml or set the parameter via commandline (e.g. 'mvn compile jib:build "
+              + "-Dimage=your.image/name').");
+    }
+    ImageReference targetImage = parseTargetImageReference(targetImageString);
 
     // Checks Maven settings for registry credentials.
     MavenSettingsServerCredentials mavenSettingsServerCredentials =
