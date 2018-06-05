@@ -165,6 +165,7 @@ public class JibPluginIntegrationTest {
 
     } catch (UnexpectedBuildFailure ex) {
       // THis might happen on systems without SecureDirectoryStream, so we just ignore it.
+      // See com.google.common.io.MoreFiles#deleteDirectoryContents.
       Assert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
