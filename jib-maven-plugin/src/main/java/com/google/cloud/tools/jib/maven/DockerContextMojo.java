@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.docker.DockerContextGenerator;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.io.InsecureRecursiveDeleteException;
 import java.io.IOException;
@@ -29,8 +30,13 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
 /** Exports to a Docker context. */
-@Mojo(name = "exportDockerContext", requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM)
+@Mojo(
+  name = DockerContextMojo.GOAL_NAME,
+  requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM
+)
 public class DockerContextMojo extends JibPluginConfiguration {
+
+  @VisibleForTesting static final String GOAL_NAME = "exportDockerContext";
 
   @Nullable
   @Parameter(

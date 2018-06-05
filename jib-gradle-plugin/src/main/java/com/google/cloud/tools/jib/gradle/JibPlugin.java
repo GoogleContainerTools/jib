@@ -27,26 +27,32 @@ public class JibPlugin implements Plugin<Project> {
 
   @VisibleForTesting static final GradleVersion GRADLE_MIN_VERSION = GradleVersion.version("4.6");
 
+  @VisibleForTesting static final String JIB_EXTENSION_NAME = "jib";
+  @VisibleForTesting static final String BUILD_IMAGE_TASK_NAME = "jib";
+  @VisibleForTesting static final String BUILD_DOCKER_TASK_NAME = "jibBuildDocker";
+  @VisibleForTesting static final String DOCKER_CONTEXT_TASK_NAME = "jibExportDockerContext";
+
   @Override
   public void apply(Project project) {
     checkGradleVersion();
 
-    JibExtension jibExtension = project.getExtensions().create("jib", JibExtension.class, project);
+    JibExtension jibExtension =
+        project.getExtensions().create(JIB_EXTENSION_NAME, JibExtension.class, project);
     Task classesTask = project.getTasks().getByPath("classes");
 
     project
         .getTasks()
-        .create("jib", BuildImageTask.class)
+        .create(BUILD_IMAGE_TASK_NAME, BuildImageTask.class)
         .setJibExtension(jibExtension)
         .dependsOn(classesTask);
     project
         .getTasks()
-        .create("jibExportDockerContext", DockerContextTask.class)
+        .create(DOCKER_CONTEXT_TASK_NAME, DockerContextTask.class)
         .setJibExtension(jibExtension)
         .dependsOn(classesTask);
     project
         .getTasks()
-        .create("jibBuildDocker", BuildDockerTask.class)
+        .create(BUILD_DOCKER_TASK_NAME, BuildDockerTask.class)
         .setJibExtension(jibExtension)
         .dependsOn(classesTask);
   }
