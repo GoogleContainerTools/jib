@@ -160,11 +160,21 @@ public class JibPluginIntegrationTest {
             .resolve("main")
             .resolve("resources")
             .resolve("newfile"));
-    BuildTask reexecutedJibDockerContextTask =
-        simpleTestProject
-            .build(JibPlugin.DOCKER_CONTEXT_TASK_NAME)
-            .task(":" + JibPlugin.DOCKER_CONTEXT_TASK_NAME);
-    Assert.assertNotNull(reexecutedJibDockerContextTask);
-    Assert.assertEquals(TaskOutcome.SUCCESS, reexecutedJibDockerContextTask.getOutcome());
+    try {
+      BuildTask reexecutedJibDockerContextTask =
+          simpleTestProject
+              .build(JibPlugin.DOCKER_CONTEXT_TASK_NAME)
+              .task(":" + JibPlugin.DOCKER_CONTEXT_TASK_NAME);
+      Assert.assertNotNull(reexecutedJibDockerContextTask);
+      Assert.assertEquals(TaskOutcome.SUCCESS, reexecutedJibDockerContextTask.getOutcome());
+
+    } catch (UnexpectedBuildFailure ex) {
+      // THis might happen on systems without SecureDirectoryStream, so we just ignore it.
+      // See com.google.common.io.MoreFiles#deleteDirectoryContents.
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.containsString(
+              "Export Docker context failed because cannot clear directory"));
+    }
   }
 }

@@ -83,7 +83,9 @@ class CacheMetadata {
     }
   }
 
-  ImageLayers<CachedLayerWithMetadata> getLayers() {
+  // TODO: Remove explicit synchronization by refactoring build steps to not mutate a common
+  // CacheMetadata.
+  synchronized ImageLayers<CachedLayerWithMetadata> getLayers() {
     return layersBuilder.build();
   }
 
@@ -91,7 +93,7 @@ class CacheMetadata {
     layersBuilder.add(layer);
   }
 
-  LayerFilter filterLayers() {
+  synchronized LayerFilter filterLayers() {
     return new LayerFilter(layersBuilder.build());
   }
 }
