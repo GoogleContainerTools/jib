@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.api.client.http.HttpTransport;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
@@ -29,18 +28,12 @@ import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.base.Preconditions;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.options.Option;
-import org.gradle.internal.logging.events.LogEvent;
-import org.gradle.internal.logging.events.OutputEventListener;
-import org.gradle.internal.logging.slf4j.OutputEventListenerBackedLoggerContext;
-import org.slf4j.LoggerFactory;
 
 /** Builds a container image and exports to the default Docker daemon. */
 public class BuildDockerTask extends DefaultTask {
@@ -98,23 +91,8 @@ public class BuildDockerTask extends DefaultTask {
             .setJvmFlags(jibExtension.getJvmFlags())
             .build();
 
-    // TODO: Consolidate with BuildImageTask
     // TODO: Instead of disabling logging, have authentication credentials be provided
-    // Disables annoying Apache HTTP client logging.
-    // Note that this is a hack and depends on internal Gradle classes
-    OutputEventListenerBackedLoggerContext context =
-        (OutputEventListenerBackedLoggerContext) LoggerFactory.getILoggerFactory();
-    OutputEventListener defaultOutputEventListener = context.getOutputEventListener();
-    context.setOutputEventListener(
-        event -> {
-          LogEvent logEvent = (LogEvent) event;
-          if (!logEvent.getCategory().contains("org.apache")) {
-            defaultOutputEventListener.onOutput(event);
-          }
-        });
-
-    // Disables Google HTTP client logging.
-    Logger.getLogger(HttpTransport.class.getName()).setLevel(Level.OFF);
+    GradleProjectProperties.disableHttpLogging();
 
     RegistryClient.setUserAgentSuffix(USER_AGENT_SUFFIX);
 
