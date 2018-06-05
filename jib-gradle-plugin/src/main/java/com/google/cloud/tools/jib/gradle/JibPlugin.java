@@ -41,7 +41,7 @@ public class JibPlugin implements Plugin<Project> {
         .dependsOn(classesTask);
     project
         .getTasks()
-        .create("jibDockerContext", DockerContextTask.class)
+        .create("jibExportDockerContext", DockerContextTask.class)
         .setJibExtension(jibExtension)
         .dependsOn(classesTask);
     project

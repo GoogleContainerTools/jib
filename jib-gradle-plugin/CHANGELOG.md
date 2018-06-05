@@ -23,6 +23,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Removed `reproducible` parameter - application layers will always be reproducible ([#245](https://github.com/GoogleContainerTools/jib/pull/245))
+- Renamed task `jibDockerContext` to `jibExportDockerContext` ([##350](https://github.com/GoogleContainerTools/jib/issues/350)) 
 
 ### Fixed
 

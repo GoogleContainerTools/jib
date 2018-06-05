@@ -21,7 +21,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Removed `enableReproducibleBuilds` parameter - application layers will always be reproducible ([#245](https://github.com/GoogleContainerTools/jib/pull/245))
 - Changed configuration schema to be more like configuration for `jib-gradle-plugin` - NOT compatible with prior versions of `jib-maven-plugin` ([#212](https://github.com/GoogleContainerTools/jib/issues/212))
-- `jib:dockercontext` has been changed to `jib:dockerContext` ([#321](https://github.com/GoogleContainerTools/jib/issues/321))
+- `jib:dockercontext` has been changed to `jib:exportDockerContext` ([##350](https://github.com/GoogleContainerTools/jib/issues/350))
 
 ### Fixed
 - Directories in resources are added to classes layer ([#318](https://github.com/GoogleContainerTools/jib/issues/318))
