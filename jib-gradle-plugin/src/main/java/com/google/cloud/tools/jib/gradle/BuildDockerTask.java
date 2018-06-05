@@ -28,6 +28,7 @@ import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -80,10 +81,17 @@ public class BuildDockerTask extends DefaultTask {
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(getProject(), gradleBuildLogger);
     String mainClass = gradleProjectProperties.getMainClass(jibExtension);
+
+    String targetImage = jibExtension.getTargetImage();
+    if (Strings.isNullOrEmpty(targetImage)) {
+      // Use default value "project-name:project-version"
+      targetImage = getProject().getName() + ":" + getProject().getVersion();
+    }
+
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder(gradleBuildLogger)
             .setBaseImage(ImageReference.parse(jibExtension.getBaseImage()))
-            .setTargetImage(ImageReference.parse(jibExtension.getTargetImage()))
+            .setTargetImage(ImageReference.parse(targetImage))
             .setBaseImageCredentialHelperName(jibExtension.getFrom().getCredHelper())
             .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
             .setMainClass(mainClass)

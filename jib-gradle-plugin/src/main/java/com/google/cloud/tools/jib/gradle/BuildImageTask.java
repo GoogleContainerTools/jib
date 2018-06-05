@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -66,6 +67,14 @@ public class BuildImageTask extends DefaultTask {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
 
+    String targetImage = jibExtension.getTargetImage();
+    if (Strings.isNullOrEmpty(targetImage)) {
+      throw new GradleException(
+          "Missing target image parameter. Add a 'to.image' configuration parameter to your "
+              + "build.gradle or set the parameter via commandline (e.g. 'gradle jib --image "
+              + "your.image/name').");
+    }
+
     RegistryCredentials knownBaseRegistryCredentials = null;
     RegistryCredentials knownTargetRegistryCredentials = null;
     Authorization fromAuthorization = jibExtension.getFrom().getImageAuthorization();
@@ -85,7 +94,7 @@ public class BuildImageTask extends DefaultTask {
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder(gradleBuildLogger)
             .setBaseImage(ImageReference.parse(jibExtension.getBaseImage()))
-            .setTargetImage(ImageReference.parse(jibExtension.getTargetImage()))
+            .setTargetImage(ImageReference.parse(targetImage))
             .setBaseImageCredentialHelperName(jibExtension.getFrom().getCredHelper())
             .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
             .setTargetImageCredentialHelperName(jibExtension.getTo().getCredHelper())

@@ -47,6 +47,7 @@ public class ImageConfiguration {
 
   @Input
   @Nullable
+  @Optional
   public String getImage() {
     return image;
   }
