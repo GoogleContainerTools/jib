@@ -26,11 +26,21 @@ In your Gradle Java project, add the plugin to your `build.gradle`:
 
 ```groovy
 plugins {
-  id 'com.google.cloud.tools.jib' version '0.1.2-SNAPSHOT'
+  id 'com.google.cloud.tools.jib' version '0.9.0'
 }
 ```
 
-See the [Gradle Plugin Portal](https://plugins.gradle.org/plugin/com.google.cloud.tools.jib) for more details.
+*See the [Gradle Plugin Portal](https://plugins.gradle.org/plugin/com.google.cloud.tools.jib) for more details.*
+
+You can containerize your application easily with one command:
+
+```shell
+gradle jib --image=<MY IMAGE>
+```
+
+*If you encounter authentication issues, see [Authentication Methods](#authentication-methods).*
+
+If you would like to set up Jib as part of your Gradle build, follow the guide below.
 
 ## Configuration
 
@@ -85,7 +95,7 @@ Subsequent builds are much faster than the initial build.
 Jib can also build your image directly to a Docker daemon. This requires that you have `docker` available on your `PATH`.
 
 ```shell
-gradle jibBuildDocker
+gradle jibDockerBuild
 ```
 
 ##### Minikube Docker daemon
@@ -94,7 +104,7 @@ If you are using [`minikube`](https://github.com/kubernetes/minikube)'s remote D
 
 ```shell
 eval $(minikube docker-env)
-gradle jibBuildDocker
+gradle jibDockerBuild
 ```
 
 ### Run `jib` with each build
@@ -112,13 +122,13 @@ Then, ```gradle build``` will build and containerize your application.
 Jib can also export to a Docker context so that you can build with Docker, if needed:
 
 ```shell
-gradle jibDockerContext
+gradle jibExportDockerContext
 ```
 
 The Docker context will be created at `build/jib-docker-context` by default. You can change this directory with the `targetDir` configuration option or the `---jib.dockerDir` parameter:
 
 ```shell
-gradle jibDockerContext --jib.dockerDir=my/docker/context/
+gradle jibExportDockerContext --jib.dockerDir=my/docker/context/
 ```
 
 You can then build your image with Docker:

@@ -36,7 +36,7 @@ In your Maven Java project, add the plugin to your `pom.xml`:
 <plugin>
   <groupId>com.google.cloud.tools</groupId>
   <artifactId>jib-maven-plugin</artifactId>
-  <version>0.1.8-SNAPSHOT</version>
+  <version>0.9.0</version>
   <configuration>
     <to>
       <image>myimage</image>
@@ -110,7 +110,7 @@ Subsequent builds are much faster than the initial build.
 Jib can also build your image directly to a Docker daemon. This requires that you have `docker` available on your `PATH`.
 
 ```shell
-mvn compile jib:buildDocker
+mvn compile jib:dockerBuild
 ```
 
 ##### Minikube Docker daemon
@@ -119,7 +119,7 @@ If you are using [`minikube`](https://github.com/kubernetes/minikube)'s remote D
 
 ```shell
 eval $(minikube docker-env)
-mvn compile jib:buildDocker
+mvn compile jib:dockerBuild
 ```
 
 ### Bind to a lifecycle
@@ -153,13 +153,13 @@ mvn package
 Jib can also export to a Docker context so that you can build with Docker, if needed:
 
 ```shell
-mvn compile jib:dockerContext
+mvn compile jib:exportDockerContext
 ```
 
 The Docker context will be created at `target/jib-docker-context` by default. You can change this directory with the `targetDir` configuration option or the `jib.dockerDir` parameter:
 
 ```shell
-mvn compile jib:dockerContext -Djib.dockerDir=my/docker/context/
+mvn compile jib:exportDockerContext -Djib.dockerDir=my/docker/context/
 ```
 
 You can then build your image with Docker:
