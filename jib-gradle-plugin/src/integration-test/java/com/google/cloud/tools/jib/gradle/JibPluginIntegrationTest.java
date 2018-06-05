@@ -56,7 +56,7 @@ public class JibPluginIntegrationTest {
 
   private static String buildToDockerDaemonAndRun(TestProject testProject, String imageReference)
       throws IOException, InterruptedException {
-    BuildResult buildResult = testProject.build("clean", "jibBuildDocker");
+    BuildResult buildResult = testProject.build("clean", "jibBuildToDockerDaemon");
 
     BuildTask classesTask = buildResult.task(":classes");
     BuildTask jibBuildDockerTask = buildResult.task(":jibBuildToDockerDaemon");
