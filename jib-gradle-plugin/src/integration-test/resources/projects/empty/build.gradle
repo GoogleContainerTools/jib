@@ -1,7 +1,9 @@
 plugins {
-    id 'java'
     id 'com.google.cloud.tools.jib'
 }
+
+// Applies the java plugin after Jib to make sure it works in this order.
+apply plugin: 'java'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8

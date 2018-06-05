@@ -32,23 +32,29 @@ public class JibPlugin implements Plugin<Project> {
     checkGradleVersion();
 
     JibExtension jibExtension = project.getExtensions().create("jib", JibExtension.class, project);
-    Task classesTask = project.getTasks().getByPath("classes");
 
-    project
-        .getTasks()
-        .create("jib", BuildImageTask.class)
-        .setJibExtension(jibExtension)
-        .dependsOn(classesTask);
-    project
-        .getTasks()
-        .create("jibDockerContext", DockerContextTask.class)
-        .setJibExtension(jibExtension)
-        .dependsOn(classesTask);
-    project
-        .getTasks()
-        .create("jibBuildDocker", BuildDockerTask.class)
-        .setJibExtension(jibExtension)
-        .dependsOn(classesTask);
+    Task buildImageTask =
+        project.getTasks().create("jib", BuildImageTask.class).setJibExtension(jibExtension);
+    Task dockerContextTask =
+        project
+            .getTasks()
+            .create("jibDockerContext", DockerContextTask.class)
+            .setJibExtension(jibExtension);
+    Task buildDockerTask =
+        project
+            .getTasks()
+            .create("jibBuildDocker", BuildDockerTask.class)
+            .setJibExtension(jibExtension);
+
+    // Has all tasks depend on the 'classes' task.
+    project.afterEvaluate(
+        projectAfterEvaluation -> {
+          Task classesTask = projectAfterEvaluation.getTasks().getByPath("classes");
+
+          buildImageTask.dependsOn(classesTask);
+          dockerContextTask.dependsOn(classesTask);
+          buildDockerTask.dependsOn(classesTask);
+        });
   }
 
   private static void checkGradleVersion() {
