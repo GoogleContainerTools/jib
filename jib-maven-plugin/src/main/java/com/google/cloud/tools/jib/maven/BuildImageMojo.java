@@ -107,10 +107,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
             .build();
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
-    // Disables annoying Apache HTTP client logging.
-    System.setProperty(
-        "org.apache.commons.logging.Log", "org.apache.commons.logging.impl.SimpleLog");
-    System.setProperty("org.apache.commons.logging.simplelog.defaultlog", "error");
+    MavenProjectProperties.disableHttpLogging();
 
     RegistryClient.setUserAgentSuffix(USER_AGENT_SUFFIX);
 

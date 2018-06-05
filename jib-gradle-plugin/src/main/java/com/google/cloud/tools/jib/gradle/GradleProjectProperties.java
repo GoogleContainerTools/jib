@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.api.client.http.HttpTransport;
 import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
@@ -27,11 +28,17 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.annotation.Nullable;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.internal.logging.events.LogEvent;
+import org.gradle.internal.logging.events.OutputEventListener;
+import org.gradle.internal.logging.slf4j.OutputEventListenerBackedLoggerContext;
 import org.gradle.jvm.tasks.Jar;
+import org.slf4j.LoggerFactory;
 
 /** Obtains information about a Gradle {@link Project} that uses Jib. */
 class GradleProjectProperties implements ProjectProperties {
@@ -52,6 +59,27 @@ class GradleProjectProperties implements ProjectProperties {
               + "jib\" instead of \"gradle clean compileJava jib\"?)",
           ex);
     }
+  }
+
+  /**
+   * Disables annoying Apache/Google HTTP client logging. Note that this is a hack and depends on
+   * internal Gradle classes.
+   */
+  static void disableHttpLogging() {
+    // Disables Apache HTTP client logging.
+    OutputEventListenerBackedLoggerContext context =
+        (OutputEventListenerBackedLoggerContext) LoggerFactory.getILoggerFactory();
+    OutputEventListener defaultOutputEventListener = context.getOutputEventListener();
+    context.setOutputEventListener(
+        event -> {
+          LogEvent logEvent = (LogEvent) event;
+          if (!logEvent.getCategory().contains("org.apache")) {
+            defaultOutputEventListener.onOutput(event);
+          }
+        });
+
+    // Disables Google HTTP client logging.
+    Logger.getLogger(HttpTransport.class.getName()).setLevel(Level.OFF);
   }
 
   private final Project project;
