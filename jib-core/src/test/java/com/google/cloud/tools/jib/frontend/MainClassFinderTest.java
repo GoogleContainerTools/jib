@@ -18,13 +18,12 @@ package com.google.cloud.tools.jib.frontend;
 
 import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
@@ -44,7 +43,7 @@ public class MainClassFinderTest {
   @Mock private ProjectProperties mockProjectProperties;
   @Mock private HelpfulSuggestions mockHelpfulSuggestions;
 
-  private final List<Path> fakeClassesPath = Collections.singletonList(Paths.get("a/b/c"));
+  private final ImmutableList<Path> fakeClassesPath = ImmutableList.of(Paths.get("a/b/c"));
 
   @Before
   public void setup() {
@@ -140,7 +139,7 @@ public class MainClassFinderTest {
     Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("${start-class}");
     Mockito.when(mockSourceFilesConfiguration.getClassesFiles())
         .thenReturn(
-            Arrays.asList(
+            ImmutableList.of(
                 Paths.get(Resources.getResource("class-finder-tests/multiple/multi").toURI()),
                 Paths.get(
                     Resources.getResource("class-finder-tests/multiple/HelloWorld.class").toURI()),
@@ -156,7 +155,7 @@ public class MainClassFinderTest {
     Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn(null);
     Mockito.when(mockSourceFilesConfiguration.getClassesFiles())
         .thenReturn(
-            Arrays.asList(
+            ImmutableList.of(
                 Paths.get(Resources.getResource("class-finder-tests/multiple/multi").toURI()),
                 Paths.get(
                     Resources.getResource("class-finder-tests/multiple/HelloWorld.class").toURI()),
@@ -175,6 +174,7 @@ public class MainClassFinderTest {
   @Test
   public void testResolveMainClass_noneInferredWithBackup() throws MainClassInferenceException {
     Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("${start-class}");
+    Mockito.when(mockSourceFilesConfiguration.getClassesFiles()).thenReturn(ImmutableList.of());
     Assert.assertEquals(
         "${start-class}", MainClassFinder.resolveMainClass(null, mockProjectProperties));
     Mockito.verify(mockBuildLogger).warn("'mainClass' is not a valid Java class : ${start-class}");
@@ -182,7 +182,7 @@ public class MainClassFinderTest {
 
   @Test
   public void testResolveMainClass_noneInferredWithoutBackup() {
-    Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn(null);
+    Mockito.when(mockSourceFilesConfiguration.getClassesFiles()).thenReturn(ImmutableList.of());
     try {
       MainClassFinder.resolveMainClass(null, mockProjectProperties);
       Assert.fail();

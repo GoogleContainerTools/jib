@@ -3,12 +3,12 @@
 
   <groupId>com.google.cloud.tools</groupId>
   <artifactId>jib-maven-plugin</artifactId>
-  <version>0.1.8-SNAPSHOT</version>
+  <version>0.9.0-SNAPSHOT</version>
   <packaging>maven-plugin</packaging>
 
   <name>Jib</name>
   <description>A tool for building container images for your Java applications.</description>
-  <url>https://github.com/google/jib</url>
+  <url>https://github.com/GoogleContainerTools/jib</url>
 
   <licenses>
     <license>
@@ -31,15 +31,16 @@
   </developers>
 
   <scm>
-    <connection>scm:git:https://github.com/google/jib.git
+    <connection>scm:git:https://github.com/GoogleContainerTools/jib.git
     </connection>
-    <developerConnection>scm:git:https://github.com/google/jib.git
+    <developerConnection>scm:git:https://github.com/GoogleContainerTools/jib.git
     </developerConnection>
-    <url>https://github.com/google/jib</url>
+    <url>https://github.com/GoogleContainerTools/jib</url>
   </scm>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
   </properties>

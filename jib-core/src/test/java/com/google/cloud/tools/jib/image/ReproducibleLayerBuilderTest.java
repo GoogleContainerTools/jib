@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.image;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Resources;
 import java.io.BufferedOutputStream;
@@ -34,7 +35,6 @@ import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.hamcrest.CoreMatchers;
@@ -85,7 +85,7 @@ public class ReproducibleLayerBuilderTest {
       Assert.assertEquals(expectedBlobAString, extractedBlobAString);
 
       // Verifies that all the files have been added to the tarball stream.
-      List<Path> layerDirectoryPaths =
+      ImmutableList<Path> layerDirectoryPaths =
           new DirectoryWalker(layerDirectory).filter(path -> !path.equals(layerDirectory)).walk();
       for (Path path : layerDirectoryPaths) {
         header = tarArchiveInputStream.getNextTarEntry();

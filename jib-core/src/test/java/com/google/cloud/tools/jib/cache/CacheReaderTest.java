@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.ImageLayers;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -30,7 +31,6 @@ import java.nio.file.attribute.FileTime;
 import java.security.DigestException;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -96,9 +96,8 @@ public class CacheReaderTest {
 
       Assert.assertEquals(
           expectedFile,
-          cacheReader.getLayerFile(
-              Collections.singletonList(Paths.get("some", "source", "directory"))));
-      Assert.assertNull(cacheReader.getLayerFile(Collections.emptyList()));
+          cacheReader.getLayerFile(ImmutableList.of(Paths.get("some", "source", "directory"))));
+      Assert.assertNull(cacheReader.getLayerFile(ImmutableList.of()));
     }
   }
 
@@ -117,8 +116,8 @@ public class CacheReaderTest {
 
     // Walk the files in reverse order so that the subfiles are changed before the parent
     // directories are.
-    List<Path> paths = new DirectoryWalker(testSourceFiles).walk();
-    paths.sort(Comparator.reverseOrder());
+    ImmutableList<Path> paths = new DirectoryWalker(testSourceFiles).walk();
+    paths = ImmutableList.sortedCopyOf(Comparator.reverseOrder(), paths);
     for (Path path : paths) {
       Files.setLastModifiedTime(path, olderLastModifiedTime);
     }
@@ -143,19 +142,18 @@ public class CacheReaderTest {
       Assert.assertEquals(
           classesCachedLayer.getBlobDescriptor(),
           cacheReader
-              .getUpToDateLayerBySourceFiles(Collections.singletonList(testSourceFiles))
+              .getUpToDateLayerBySourceFiles(ImmutableList.of(testSourceFiles))
               .getBlobDescriptor());
 
       // Changes a file and checks that the change is detected.
       Files.setLastModifiedTime(
           testSourceFiles.resolve("a").resolve("b").resolve("bar"), newerLastModifiedTime);
       Assert.assertNull(
-          cacheReader.getUpToDateLayerBySourceFiles(Collections.singletonList(testSourceFiles)));
+          cacheReader.getUpToDateLayerBySourceFiles(ImmutableList.of(testSourceFiles)));
 
       // Any non-cached directory should be deemed modified.
       Assert.assertNull(
-          cacheReader.getUpToDateLayerBySourceFiles(
-              Collections.singletonList(resourceSourceFiles)));
+          cacheReader.getUpToDateLayerBySourceFiles(ImmutableList.of(resourceSourceFiles)));
     }
   }
 }

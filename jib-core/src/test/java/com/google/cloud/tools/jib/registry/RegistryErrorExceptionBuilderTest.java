@@ -49,9 +49,10 @@ public class RegistryErrorExceptionBuilderTest {
 
     try {
       throw builder.build();
+
     } catch (RegistryErrorException ex) {
       Assert.assertEquals(
-          "Tried to do something but failed because: manifest invalid (something went wrong), blob unknown (something went wrong), manifest unknown, tag invalid, manifest unverified, other: some other error happened, unknown: some unknown error happened | If this is a bug, please file an issue at https://github.com/google/jib/issues/new",
+          "Tried to do something but failed because: manifest invalid (something went wrong), blob unknown (something went wrong), manifest unknown, tag invalid, manifest unverified, other: some other error happened, unknown: some unknown error happened | If this is a bug, please file an issue at https://github.com/GoogleContainerTools/jib/issues/new",
           ex.getMessage());
     }
   }

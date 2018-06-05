@@ -17,13 +17,13 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 import org.apache.maven.artifact.Artifact;
@@ -42,14 +42,18 @@ class MavenSourceFilesConfiguration implements SourceFilesConfiguration {
     return new MavenSourceFilesConfiguration(project);
   }
 
-  private final List<Path> dependenciesFiles = new ArrayList<>();
-  private final List<Path> resourcesFiles = new ArrayList<>();
-  private final List<Path> classesFiles = new ArrayList<>();
+  private final ImmutableList<Path> dependenciesFiles;
+  private final ImmutableList<Path> resourcesFiles;
+  private final ImmutableList<Path> classesFiles;
 
   /** Instantiate with {@link #getForProject}. */
   private MavenSourceFilesConfiguration(MavenProject project) throws IOException {
     Path classesSourceDirectory = Paths.get(project.getBuild().getSourceDirectory());
     Path classesOutputDirectory = Paths.get(project.getBuild().getOutputDirectory());
+
+    List<Path> dependenciesFiles = new ArrayList<>();
+    List<Path> resourcesFiles = new ArrayList<>();
+    List<Path> classesFiles = new ArrayList<>();
 
     // Gets all the dependencies.
     for (Artifact artifact : project.getArtifacts()) {
@@ -60,29 +64,45 @@ class MavenSourceFilesConfiguration implements SourceFilesConfiguration {
     // files by matching them against the .java source files. All other files are deemed resources.
     try (Stream<Path> classFileStream = Files.list(classesOutputDirectory)) {
       classFileStream.forEach(
-          classFile ->
-              addFileToResourcesOrClasses(
-                  classesSourceDirectory, classesOutputDirectory, classFile));
+          classFile -> {
+            /*
+             * Adds classFile to classesFiles if it is a .class file or is a directory that also
+             * exists in the classes source directory; otherwise, adds file to resourcesFiles.
+             */
+            if (Files.isDirectory(classFile)
+                && Files.exists(
+                    classesSourceDirectory.resolve(classesOutputDirectory.relativize(classFile)))) {
+              classesFiles.add(classFile);
+              return;
+            }
+
+            if (FileSystems.getDefault().getPathMatcher("glob:**.class").matches(classFile)) {
+              classesFiles.add(classFile);
+              return;
+            }
+
+            resourcesFiles.add(classFile);
+          });
     }
 
     // Sort all files by path for consistent ordering.
-    Collections.sort(dependenciesFiles);
-    Collections.sort(resourcesFiles);
-    Collections.sort(classesFiles);
+    this.dependenciesFiles = ImmutableList.sortedCopyOf(dependenciesFiles);
+    this.resourcesFiles = ImmutableList.sortedCopyOf(resourcesFiles);
+    this.classesFiles = ImmutableList.sortedCopyOf(classesFiles);
   }
 
   @Override
-  public List<Path> getDependenciesFiles() {
+  public ImmutableList<Path> getDependenciesFiles() {
     return dependenciesFiles;
   }
 
   @Override
-  public List<Path> getResourcesFiles() {
+  public ImmutableList<Path> getResourcesFiles() {
     return resourcesFiles;
   }
 
   @Override
-  public List<Path> getClassesFiles() {
+  public ImmutableList<Path> getClassesFiles() {
     return classesFiles;
   }
 
@@ -99,28 +119,5 @@ class MavenSourceFilesConfiguration implements SourceFilesConfiguration {
   @Override
   public String getClassesPathOnImage() {
     return CLASSES_PATH_ON_IMAGE;
-  }
-
-  /**
-   * Adds {@code file} to {@link #classesFiles} if it is a {@code .class} file or is a directory
-   * that also exists in the classes source directory; otherwise, adds {@code file} to {@link
-   * #resourcesFiles}.
-   */
-  private void addFileToResourcesOrClasses(
-      Path classesSourceDirectory, Path classesOutputDirectory, Path file) {
-    // If is a directory, checks if there is corresponding directory in source directory.
-    if (Files.isDirectory(file)
-        && Files.exists(classesSourceDirectory.resolve(classesOutputDirectory.relativize(file)))) {
-      classesFiles.add(file);
-      return;
-    }
-
-    // Checks if is .class file.
-    if (FileSystems.getDefault().getPathMatcher("glob:**.class").matches(file)) {
-      classesFiles.add(file);
-      return;
-    }
-
-    resourcesFiles.add(file);
   }
 }

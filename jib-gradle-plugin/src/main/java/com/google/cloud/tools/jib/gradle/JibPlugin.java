@@ -20,6 +20,7 @@ import com.google.common.annotations.VisibleForTesting;
 import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.Task;
 import org.gradle.util.GradleVersion;
 
 public class JibPlugin implements Plugin<Project> {
@@ -29,25 +30,31 @@ public class JibPlugin implements Plugin<Project> {
   @Override
   public void apply(Project project) {
     checkGradleVersion();
+
     JibExtension jibExtension = project.getExtensions().create("jib", JibExtension.class, project);
-    project
-        .getTasks()
-        .create(
-            "jib",
-            BuildImageTask.class,
-            buildImageTask -> buildImageTask.setJibExtension(jibExtension));
-    project
-        .getTasks()
-        .create(
-            "jibDockerContext",
-            DockerContextTask.class,
-            dockerContextTask -> dockerContextTask.setJibExtension(jibExtension));
-    project
-        .getTasks()
-        .create(
-            "jibBuildDocker",
-            BuildDockerTask.class,
-            buildDockerTask -> buildDockerTask.setJibExtension(jibExtension));
+
+    Task buildImageTask =
+        project.getTasks().create("jib", BuildImageTask.class).setJibExtension(jibExtension);
+    Task dockerContextTask =
+        project
+            .getTasks()
+            .create("jibDockerContext", DockerContextTask.class)
+            .setJibExtension(jibExtension);
+    Task buildDockerTask =
+        project
+            .getTasks()
+            .create("jibBuildDocker", BuildDockerTask.class)
+            .setJibExtension(jibExtension);
+
+    // Has all tasks depend on the 'classes' task.
+    project.afterEvaluate(
+        projectAfterEvaluation -> {
+          Task classesTask = projectAfterEvaluation.getTasks().getByPath("classes");
+
+          buildImageTask.dependsOn(classesTask);
+          dockerContextTask.dependsOn(classesTask);
+          buildDockerTask.dependsOn(classesTask);
+        });
   }
 
   private static void checkGradleVersion() {
