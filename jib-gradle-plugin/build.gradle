@@ -98,6 +98,7 @@ tasks.withType(JavaCompile) {
     }
 }
 
+// Suppress javadoc warnings
 tasks.withType(Javadoc) {
     options.addStringOption('Xdoclint:none', '-quiet')
 }
