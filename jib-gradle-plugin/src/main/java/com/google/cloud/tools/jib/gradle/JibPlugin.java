@@ -29,7 +29,7 @@ public class JibPlugin implements Plugin<Project> {
 
   @VisibleForTesting static final String JIB_EXTENSION_NAME = "jib";
   @VisibleForTesting static final String BUILD_IMAGE_TASK_NAME = "jib";
-  @VisibleForTesting static final String BUILD_DOCKER_TASK_NAME = "jibBuildDocker";
+  @VisibleForTesting static final String BUILD_DOCKER_TASK_NAME = "jibDockerBuild";
   @VisibleForTesting static final String DOCKER_CONTEXT_TASK_NAME = "jibExportDockerContext";
 
   @Override

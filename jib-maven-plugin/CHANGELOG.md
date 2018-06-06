@@ -13,7 +13,7 @@ All notable changes to this project will be documented in this file.
 - Better feedback for build failures ([#197](https://github.com/google/jib/pull/197))
 - Warns if specified `mainClass` is not a valid Java class ([#206](https://github.com/google/jib/issues/206))
 - Warns if build may not be reproducible ([#245](https://github.com/GoogleContainerTools/jib/pull/245))
-- `jib:buildDocker` maven goal to build straight to Docker daemon ([#266](https://github.com/GoogleContainerTools/jib/pull/266))
+- `jib:dockerBuild` maven goal to build straight to Docker daemon ([#266](https://github.com/GoogleContainerTools/jib/pull/266))
 - `mainClass` is inferred by searching through class files if configuration is missing ([#278](https://github.com/GoogleContainerTools/jib/pull/278))
 - Can now specify target image with `-Dimage` ([#328](https://github.com/GoogleContainerTools/jib/issues/328))
 - `args` parameter to define default main args ([#346](https://github.com/GoogleContainerTools/jib/issues/346))
