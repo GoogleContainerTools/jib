@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
@@ -54,7 +55,12 @@ public class BuildDockerMojo extends JibPluginConfiguration {
 
     // Parses 'from' and 'to' into image reference.
     ImageReference baseImage = parseBaseImageReference(getBaseImage());
-    ImageReference targetImage = parseTargetImageReference(getTargetImage());
+
+    // TODO: Validate that project name and version are valid repository/tag
+    ImageReference targetImage =
+        Strings.isNullOrEmpty(getTargetImage())
+            ? ImageReference.of(null, getProject().getName(), getProject().getVersion())
+            : parseTargetImageReference(getTargetImage());
 
     // Checks Maven settings for registry credentials.
     MavenSettingsServerCredentials mavenSettingsServerCredentials =

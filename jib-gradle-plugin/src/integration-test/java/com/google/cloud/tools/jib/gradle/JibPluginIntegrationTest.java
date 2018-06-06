@@ -35,6 +35,9 @@ public class JibPluginIntegrationTest {
 
   @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
 
+  @ClassRule
+  public static final TestProject defaultTargetTestProject = new TestProject("default-target");
+
   private static String buildAndRun(TestProject testProject, String imageReference)
       throws IOException, InterruptedException {
     BuildResult buildResult = testProject.build("clean", JibPlugin.BUILD_IMAGE_TASK_NAME);
@@ -99,6 +102,22 @@ public class JibPluginIntegrationTest {
   }
 
   @Test
+  public void testBuild_defaultTarget() {
+    // Test error when 'to' is missing
+    try {
+      defaultTargetTestProject.build("clean", JibPlugin.BUILD_IMAGE_TASK_NAME, "-x=classes");
+      Assert.fail();
+    } catch (UnexpectedBuildFailure ex) {
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.containsString(
+              "Missing target image parameter. Add a 'jib.to.image' configuration parameter to "
+                  + "your build.gradle or set the parameter via commandline (e.g. 'gradle jib "
+                  + "--image <your image name>')."));
+    }
+  }
+
+  @Test
   public void testDockerDaemon_empty() throws IOException, InterruptedException {
     Assert.assertEquals(
         "",
@@ -112,6 +131,14 @@ public class JibPluginIntegrationTest {
         "Hello, world. An argument.\n",
         buildToDockerDaemonAndRun(
             simpleTestProject, "gcr.io/jib-integration-testing/simpleimage:gradle"));
+  }
+
+  @Test
+  public void testDockerDaemon_defaultTarget() throws IOException, InterruptedException {
+    Assert.assertEquals(
+        "Hello, world. An argument.\n",
+        buildToDockerDaemonAndRun(
+            defaultTargetTestProject, "default-target-name:default-target-version"));
   }
 
   @Test

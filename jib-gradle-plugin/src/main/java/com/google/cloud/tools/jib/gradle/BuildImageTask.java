@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -55,7 +56,7 @@ public class BuildImageTask extends DefaultTask {
     return jibExtension;
   }
 
-  /** The target image can be overriden with the {@code --image} command line option. */
+  /** The target image can be overridden with the {@code --image} command line option. */
   @Option(option = "image", description = "The image reference for the target image")
   public void setTargetImage(String targetImage) {
     Preconditions.checkNotNull(jibExtension).getTo().setImage(targetImage);
@@ -65,6 +66,13 @@ public class BuildImageTask extends DefaultTask {
   public void buildImage() throws InvalidImageReferenceException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
+
+    if (Strings.isNullOrEmpty(jibExtension.getTargetImage())) {
+      throw new GradleException(
+          "Missing target image parameter. Add a 'jib.to.image' configuration parameter to your "
+              + "build.gradle or set the parameter via commandline (e.g. 'gradle jib --image "
+              + "<your image name>').");
+    }
 
     RegistryCredentials knownBaseRegistryCredentials = null;
     RegistryCredentials knownTargetRegistryCredentials = null;

@@ -38,6 +38,10 @@ public class BuildImageMojoIntegrationTest {
   @ClassRule
   public static final TestProject emptyTestProject = new TestProject(testPlugin, "empty");
 
+  @ClassRule
+  public static final TestProject defaultTargetTestProject =
+      new TestProject(testPlugin, "default-target");
+
   /**
    * Builds and runs jib:build on a project at {@code projectRoot} pushing to {@code
    * imageReference}.
@@ -101,5 +105,23 @@ public class BuildImageMojoIntegrationTest {
         "",
         buildAndRun(
             emptyTestProject.getProjectRoot(), "gcr.io/jib-integration-testing/emptyimage:maven"));
+  }
+
+  @Test
+  public void testExecute_defaultTarget() {
+    // Test error when 'to' is missing
+    try {
+      Verifier verifier = new Verifier(defaultTargetTestProject.getProjectRoot().toString());
+      verifier.setAutoclean(false);
+      verifier.executeGoals(Arrays.asList("clean", "jib:" + BuildImageMojo.GOAL_NAME));
+      Assert.fail();
+    } catch (VerificationException ex) {
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.containsString(
+              "Missing target image parameter. Add a <to><image> configuration parameter to your "
+                  + "pom.xml or set the parameter via commandline (e.g. 'mvn compile jib:build "
+                  + "-Dimage=<your image name>')."));
+    }
   }
 }
