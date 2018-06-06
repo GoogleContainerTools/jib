@@ -39,18 +39,22 @@ if [[ $(git status -uno --porcelain) ]]; then
     Die 'There are uncommitted changes.'
 fi
 
+# Runs integration tests.
+./gradlew integrationTest --info --stacktrace
+
 # Checks out a new branch for this version release (eg. 1.5.7).
-git checkout -b gradle_release_v${VERSION}
+BRANCH=gradle_release_v${VERSION}
+git checkout -b ${BRANCH}
 
 # Changes the version for release and creates the commits/tags.
 echo | ./gradlew release -PreleaseVersion=${VERSION}
 
 # Pushes the release branch and tag to Github.
-git push origin gradle_release_v${VERSION}
+git push origin ${BRANCH}
 git push origin v${VERSION}-gradle
 
 # File a PR on Github for the new branch. Have someone LGTM it, which gives you permission to continue.
 EchoGreen 'File a PR for the new release branch:'
-echo https://github.com/GoogleContainerTools/jib/compare/gradle_release_v${VERSION}
+echo https://github.com/GoogleContainerTools/jib/compare/${BRANCH}
 
 EchoGreen "Once approved and merged, checkout the 'v${VERSION}-gradle' tag and run './gradlew publishPlugins'."

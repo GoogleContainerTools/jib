@@ -50,15 +50,20 @@ if [[ $(git status -uno --porcelain) ]]; then
     Die 'There are uncommitted changes.'
 fi
 
+# Runs integration tests.
+./mvnw -X -Pintegration-tests verify
+
 # Checks out a new branch for this version release (eg. 1.5.7).
-git checkout -b ${VERSION}
+BRANCH=maven_release_v${VERSION}
+git checkout -b ${BRANCH}
 
 # Updates the pom.xml with the version to release.
 mvn versions:set versions:commit -DnewVersion=${VERSION}
 
 # Tags a new commit for this release.
+TAG=v${VERSION}-maven
 git commit -am "preparing release ${VERSION}"
-git tag v${VERSION}
+git tag ${TAG}
 
 # Updates the pom.xml with the next snapshot version.
 # For example, when releasing 1.5.7, the next snapshot version would be 1.5.8-SNAPSHOT.
@@ -69,9 +74,9 @@ mvn versions:set versions:commit -DnewVersion=${NEXT_SNAPSHOT}
 git commit -am "${NEXT_SNAPSHOT}"
 
 # Pushes the tag and release branch to Github.
-git push origin v${VERSION}
-git push origin ${VERSION}
+git push origin ${BRANCH}
+git push origin ${TAG}
 
 # File a PR on Github for the new branch. Have someone LGTM it, which gives you permission to continue.
 EchoGreen 'File a PR for the new release branch:'
-echo https://github.com/GoogleContainerTools/jib/compare/${VERSION}
+echo https://github.com/GoogleContainerTools/jib/compare/${BRANCH}
