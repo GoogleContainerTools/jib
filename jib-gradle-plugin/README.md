@@ -98,8 +98,6 @@ Jib can also build your image directly to a Docker daemon. This uses the `docker
 gradle jibDockerBuild
 ```
 
-##### Minikube Docker daemon
-
 If you are using [`minikube`](https://github.com/kubernetes/minikube)'s remote Docker daemon, make sure you [set up the correct environment variables](https://github.com/kubernetes/minikube/blob/master/docs/reusing_the_docker_daemon.md) to point to the remote daemon:
 
 ```shell
@@ -119,7 +117,7 @@ Then, ```gradle build``` will build and containerize your application.
 
 ### Export to a Docker context
 
-Jib can also export to a Docker context so that you can build with Docker, if needed:
+Jib can also export a Docker context so that you can build with Docker, if needed:
 
 ```shell
 gradle jibExportDockerContext
@@ -146,8 +144,8 @@ Field | Type | Default | Description
 `from` | [`from`](#from-closure) | See [`from`](#from-closure) | Configures the base image to build your application on top of.
 `to` | [`to`](#to-closure) | *Required* | Configures the target image to build your application to.
 `jvmFlags` | `List<String>` | *None* | Additional flags to pass into the JVM when running your application.
-`args` | `List<String>` | *None* | Default main method arguments to run your application with.
 `mainClass` | `String` | *Inferred\** | The main class to launch your application from.
+`args` | `List<String>` | *None* | Default main method arguments to run your application with.
 `format` | `String` | `Docker` | Use `OCI` to build an [OCI container image](https://www.opencontainers.org/).
 `useProjectOnlyCache` | `boolean` | `false` | If set to true, Jib does not share a cache between different Maven projects.
 
