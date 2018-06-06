@@ -53,13 +53,6 @@ class MavenProjectProperties implements ProjectProperties {
     }
   }
 
-  /** Disables annoying Apache HTTP client logging. */
-  static void disableHttpLogging() {
-    System.setProperty(
-        "org.apache.commons.logging.Log", "org.apache.commons.logging.impl.SimpleLog");
-    System.setProperty("org.apache.commons.logging.simplelog.defaultlog", "error");
-  }
-
   private final MavenProject project;
   private final MavenBuildLogger mavenBuildLogger;
   private final SourceFilesConfiguration sourceFilesConfiguration;

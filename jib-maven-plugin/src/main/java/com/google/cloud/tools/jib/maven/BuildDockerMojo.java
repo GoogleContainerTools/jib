@@ -86,7 +86,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
             .build();
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
-    MavenProjectProperties.disableHttpLogging();
+    MavenBuildLogger.disableHttpLogging();
 
     RegistryClient.setUserAgentSuffix(USER_AGENT_SUFFIX);
 

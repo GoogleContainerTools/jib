@@ -1,5 +1,5 @@
 [![experimental](http://badges.github.io/stability-badges/dist/experimental.svg)](http://github.com/badges/stability-badges)
-[![Gradle Plugin Portal](https://img.shields.io/badge/gradle%20plugin-v0.1.1-blue.svg)](https://plugins.gradle.org/plugin/com.google.cloud.tools.jib)
+[![Gradle Plugin Portal](https://img.shields.io/badge/gradle%20plugin-v0.9.0-blue.svg)](https://plugins.gradle.org/plugin/com.google.cloud.tools.jib)
 [![Gitter version](https://img.shields.io/gitter/room/gitterHQ/gitter.svg)](https://gitter.im/google/jib)
 
 # Jib - Containerize your Gradle Java project
@@ -14,7 +14,6 @@ For the Maven plugin, see the [jib-maven-plugin project](../jib-maven-plugin).
 These features are not currently supported but will be added in later releases.
 
 * Support for WAR format
-* Export to a Docker context
 * Run and debug the built container
 
 ## Quickstart
@@ -27,11 +26,21 @@ In your Gradle Java project, add the plugin to your `build.gradle`:
 
 ```groovy
 plugins {
-  id 'com.google.cloud.tools.jib' version '0.1.1'
+  id 'com.google.cloud.tools.jib' version '0.9.0'
 }
 ```
 
-See the [Gradle Plugin Portal](https://plugins.gradle.org/plugin/com.google.cloud.tools.jib) for more details.
+*See the [Gradle Plugin Portal](https://plugins.gradle.org/plugin/com.google.cloud.tools.jib) for more details.*
+
+You can containerize your application easily with one command:
+
+```shell
+gradle jib --image=<MY IMAGE>
+```
+
+*If you encounter authentication issues, see [Authentication Methods](#authentication-methods).*
+
+If you would like to set up Jib as part of your Gradle build, follow the guide below.
 
 ## Configuration
 
@@ -74,32 +83,57 @@ jib.to.image = 'my-docker-id/my-app'
 Build your container image with:
 
 ```shell
-gradle build jib
+gradle jib
 ```
 
 Subsequent builds are much faster than the initial build. 
 
-If you want to clear Jib's build cache and force it to re-pull the base image and re-build the application layers, run:
+*Having trouble? Let us know by [submitting an issue](/../../issues/new), contacting us on [Gitter](https://gitter.im/google/jib), or posting to the [Jib users forum](https://groups.google.com/forum/#!forum/jib-users).*
+
+#### Build to Docker daemon
+
+Jib can also build your image directly to a Docker daemon. This uses the `docker` command line tool and requires that you have `docker` available on your `PATH`.
 
 ```shell
-gradle clean build jib
+gradle jibDockerBuild
 ```
 
-*Having trouble? Let us know by [submitting an issue](/../../issues/new), contacting us on [Gitter](https://gitter.im/google/jib), or posting to the [Jib users forum](https://groups.google.com/forum/#!forum/jib-users).*
+If you are using [`minikube`](https://github.com/kubernetes/minikube)'s remote Docker daemon, make sure you [set up the correct environment variables](https://github.com/kubernetes/minikube/blob/master/docs/reusing_the_docker_daemon.md) to point to the remote daemon:
+
+```shell
+eval $(minikube docker-env)
+gradle jibDockerBuild
+```
 
 ### Run `jib` with each build
 
 You can also have `jib` run with each build by attaching it to the `build` task:
 
 ```groovy
-tasks.build.finalizedBy tasks.jib
+tasks.build.dependsOn tasks.jib
 ```
 
 Then, ```gradle build``` will build and containerize your application.
 
 ### Export to a Docker context
 
-*Not yet supported*
+Jib can also export a Docker context so that you can build with Docker, if needed:
+
+```shell
+gradle jibExportDockerContext
+```
+
+The Docker context will be created at `build/jib-docker-context` by default. You can change this directory with the `targetDir` configuration option or the `---jib.dockerDir` parameter:
+
+```shell
+gradle jibExportDockerContext --jib.dockerDir=my/docker/context/
+```
+
+You can then build your image with Docker:
+
+```shell
+docker build -t myimage my/docker/context/
+``` 
 
 ## Extended Usage
 
@@ -110,10 +144,12 @@ Field | Type | Default | Description
 `from` | [`from`](#from-closure) | See [`from`](#from-closure) | Configures the base image to build your application on top of.
 `to` | [`to`](#to-closure) | *Required* | Configures the target image to build your application to.
 `jvmFlags` | `List<String>` | *None* | Additional flags to pass into the JVM when running your application.
-`mainClass` | `String` | Uses the main class defined in the `jar` task | The main class to launch your application from.
-`reproducible` | `boolean` | `true` | Building with the same application contents always generates the same image.<br>Note that this does NOT preserve file timestamps and ownership.
+`mainClass` | `String` | *Inferred\** | The main class to launch your application from.
+`args` | `List<String>` | *None* | Default main method arguments to run your application with.
 `format` | `String` | `Docker` | Use `OCI` to build an [OCI container image](https://www.opencontainers.org/).
 `useProjectOnlyCache` | `boolean` | `false` | If set to true, Jib does not share a cache between different Maven projects.
+
+*\* Uses the main class defined in the `jar` task or tries to find a valid main class.*
 
 <a name="from-closure"></a>`from` is a closure with the following properties:
 
@@ -127,7 +163,7 @@ Property | Type | Default | Description
 
 Property | Type | Default | Description
 --- | --- | --- | ---
-`image` | `String` | *Required* | The image reference for the target image.
+`image` | `String` | *Required* | The image reference for the target image. This can also be specified via the `--image` command line option.
 `credHelper` | `String` | *None* | Suffix for the credential helper that can authenticate pulling the base image (following `docker-credential-`).
 `auth` | [`auth`](#auth-closure) | *None* | Specify credentials directly (alternative to `credHelper`).
 
@@ -143,7 +179,7 @@ Property | Type
 In this configuration, the image is:
 * Built from a base of `openjdk:alpine` (pulled from Docker Hub)
 * Pushed to `localhost:5000/my-image:built-with-jib`
-* Runs by calling `java -Xms512m -Xdebug -Xmy:flag=jib-rules -cp app/libs/*:app/resources:app/classes mypackage.MyApp`
+* Runs by calling `java -Xms512m -Xdebug -Xmy:flag=jib-rules -cp app/libs/*:app/resources:app/classes mypackage.MyApp some args`
 * Reproducible
 * Built as OCI format
 
@@ -157,8 +193,8 @@ jib {
     credHelper = 'osxkeychain'
   }
   jvmFlags = ['-Xms512m', '-Xdebug', '-Xmy:flag=jib-rules']
+  args = ['some', 'args']
   mainClass = 'mypackage.MyApp'
-  reproducible = true
   format = 'OCI'
 }
 ```
@@ -242,7 +278,6 @@ See the [Jib project README](/../../#how-jib-works).
 
 These limitations will be fixed in later releases.
 
-* Does not build directly to a Docker daemon.
 * Pushing to Azure Container Registry is not currently supported.
 
 ## Frequently Asked Questions (FAQ)

@@ -100,7 +100,7 @@ public class BuildDockerTask extends DefaultTask {
             .build();
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
-    GradleProjectProperties.disableHttpLogging();
+    GradleBuildLogger.disableHttpLogging();
 
     RegistryClient.setUserAgentSuffix(USER_AGENT_SUFFIX);
 
