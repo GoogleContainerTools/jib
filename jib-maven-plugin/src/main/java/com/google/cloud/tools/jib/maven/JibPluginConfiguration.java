@@ -48,9 +48,7 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   /** Configuration for {@code to} parameter, where image is required. */
   public static class ToConfiguration {
 
-    @Nullable
-    @Parameter(required = true)
-    private String image;
+    @Nullable @Parameter private String image;
 
     @Nullable @Parameter private String credHelper;
 
@@ -85,11 +83,10 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   @Parameter(defaultValue = "${session}", readonly = true)
   MavenSession session;
 
-  @Nullable @Parameter private FromConfiguration from = new FromConfiguration();
+  @Parameter private FromConfiguration from = new FromConfiguration();
 
-  @Nullable
-  @Parameter(property = "image", required = true)
-  private ToConfiguration to;
+  @Parameter(property = "image")
+  private ToConfiguration to = new ToConfiguration();
 
   @Parameter private List<String> jvmFlags = Collections.emptyList();
 
@@ -119,8 +116,9 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     return Preconditions.checkNotNull(from).credHelper;
   }
 
+  @Nullable
   String getTargetImage() {
-    return Preconditions.checkNotNull(Preconditions.checkNotNull(to).image);
+    return to.image;
   }
 
   @Nullable

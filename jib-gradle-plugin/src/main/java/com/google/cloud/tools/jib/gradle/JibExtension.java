@@ -125,8 +125,9 @@ public class JibExtension {
   }
 
   @Internal
+  @Nullable
   String getTargetImage() {
-    return Preconditions.checkNotNull(to.getImage());
+    return to.getImage();
   }
 
   @Nested
@@ -135,6 +136,8 @@ public class JibExtension {
     return from;
   }
 
+  @Nested
+  @Optional
   ImageConfiguration getTo() {
     return to;
   }

@@ -28,6 +28,7 @@ import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -56,7 +57,7 @@ public class BuildDockerTask extends DefaultTask {
     return jibExtension;
   }
 
-  /** The target image can be overriden with the {@code --image} command line option. */
+  /** The target image can be overridden with the {@code --image} command line option. */
   @Option(option = "image", description = "The image reference for the target image")
   public void setTargetImage(String targetImage) {
     Preconditions.checkNotNull(jibExtension).getTo().setImage(targetImage);
@@ -80,10 +81,17 @@ public class BuildDockerTask extends DefaultTask {
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(getProject(), gradleBuildLogger);
     String mainClass = gradleProjectProperties.getMainClass(jibExtension);
+
+    // TODO: Validate that project name and version are valid repository/tag
+    ImageReference targetImage =
+        Strings.isNullOrEmpty(jibExtension.getTargetImage())
+            ? ImageReference.of(null, getProject().getName(), getProject().getVersion().toString())
+            : ImageReference.parse(jibExtension.getTargetImage());
+
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder(gradleBuildLogger)
             .setBaseImage(ImageReference.parse(jibExtension.getBaseImage()))
-            .setTargetImage(ImageReference.parse(jibExtension.getTargetImage()))
+            .setTargetImage(targetImage)
             .setBaseImageCredentialHelperName(jibExtension.getFrom().getCredHelper())
             .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
             .setMainClass(mainClass)
