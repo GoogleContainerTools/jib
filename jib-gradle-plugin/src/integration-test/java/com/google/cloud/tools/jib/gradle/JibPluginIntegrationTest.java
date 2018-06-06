@@ -102,8 +102,8 @@ public class JibPluginIntegrationTest {
   }
 
   @Test
-  public void testBuild_defaultTarget() throws IOException, InterruptedException {
-    // Test empty output error
+  public void testBuild_defaultTarget() {
+    // Test error when 'to' is missing
     try {
       defaultTargetTestProject.build("clean", JibPlugin.BUILD_IMAGE_TASK_NAME, "-x=classes");
       Assert.fail();
