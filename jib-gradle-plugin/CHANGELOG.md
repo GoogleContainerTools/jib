@@ -12,9 +12,9 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Export a Docker context (including a Dockerfile) with `jibDockerContext` ([#204](https://github.com/google/jib/issues/204))
+- Export a Docker context (including a Dockerfile) with `jibExportDockerContext` ([#204](https://github.com/google/jib/issues/204))
 - Warns if build may not be reproducible ([#245](https://github.com/GoogleContainerTools/jib/pull/245))
-- `jibBuildDocker` gradle task to build straight to Docker daemon ([#265](https://github.com/GoogleContainerTools/jib/pull/265))
+- `jibDockerBuild` gradle task to build straight to Docker daemon ([#265](https://github.com/GoogleContainerTools/jib/pull/265))
 - `mainClass` is inferred by searching through class files if configuration is missing ([#278](https://github.com/GoogleContainerTools/jib/pull/278))
 - All tasks depend on `classes` by default ([#335](https://github.com/GoogleContainerTools/jib/issues/335))
 - Can now specify target image with `--image` ([#328](https://github.com/GoogleContainerTools/jib/issues/328))
@@ -22,8 +22,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Removed `reproducible` parameter - application layers will always be reproducible ([#245](https://github.com/GoogleContainerTools/jib/pull/245))
-- Renamed task `jibDockerContext` to `jibExportDockerContext` ([##350](https://github.com/GoogleContainerTools/jib/issues/350)) 
+- Removed `reproducible` parameter - application layers will always be reproducible ([#245](https://github.com/GoogleContainerTools/jib/pull/245)) 
 
 ### Fixed
 

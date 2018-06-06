@@ -38,7 +38,7 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 )
 public class BuildDockerMojo extends JibPluginConfiguration {
 
-  @VisibleForTesting static final String GOAL_NAME = "buildDocker";
+  @VisibleForTesting static final String GOAL_NAME = "dockerBuild";
 
   /** {@code User-Agent} header suffix to send to the registry. */
   private static final String USER_AGENT_SUFFIX = "jib-maven-plugin";
