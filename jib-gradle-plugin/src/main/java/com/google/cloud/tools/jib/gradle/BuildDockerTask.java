@@ -82,16 +82,16 @@ public class BuildDockerTask extends DefaultTask {
         GradleProjectProperties.getForProject(getProject(), gradleBuildLogger);
     String mainClass = gradleProjectProperties.getMainClass(jibExtension);
 
-    String targetImage = jibExtension.getTargetImage();
-    if (Strings.isNullOrEmpty(targetImage)) {
-      // Use default value "project-name:project-version"
-      targetImage = getProject().getName() + ":" + getProject().getVersion();
-    }
+    // TODO: Validate that project name and version are valid repository/tag
+    ImageReference targetImage =
+        Strings.isNullOrEmpty(jibExtension.getTargetImage())
+            ? ImageReference.of(null, getProject().getName(), getProject().getVersion().toString())
+            : ImageReference.parse(jibExtension.getTargetImage());
 
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder(gradleBuildLogger)
             .setBaseImage(ImageReference.parse(jibExtension.getBaseImage()))
-            .setTargetImage(ImageReference.parse(targetImage))
+            .setTargetImage(targetImage)
             .setBaseImageCredentialHelperName(jibExtension.getFrom().getCredHelper())
             .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
             .setMainClass(mainClass)

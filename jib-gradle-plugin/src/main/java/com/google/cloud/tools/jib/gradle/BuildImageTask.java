@@ -67,12 +67,11 @@ public class BuildImageTask extends DefaultTask {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
 
-    String targetImage = jibExtension.getTargetImage();
-    if (Strings.isNullOrEmpty(targetImage)) {
+    if (Strings.isNullOrEmpty(jibExtension.getTargetImage())) {
       throw new GradleException(
-          "Missing target image parameter. Add a 'to.image' configuration parameter to your "
+          "Missing target image parameter. Add a 'jib.to.image' configuration parameter to your "
               + "build.gradle or set the parameter via commandline (e.g. 'gradle jib --image "
-              + "your.image/name').");
+              + "<your image name>').");
     }
 
     RegistryCredentials knownBaseRegistryCredentials = null;
@@ -94,7 +93,7 @@ public class BuildImageTask extends DefaultTask {
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder(gradleBuildLogger)
             .setBaseImage(ImageReference.parse(jibExtension.getBaseImage()))
-            .setTargetImage(ImageReference.parse(targetImage))
+            .setTargetImage(ImageReference.parse(jibExtension.getTargetImage()))
             .setBaseImageCredentialHelperName(jibExtension.getFrom().getCredHelper())
             .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
             .setTargetImageCredentialHelperName(jibExtension.getTo().getCredHelper())

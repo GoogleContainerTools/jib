@@ -78,15 +78,15 @@ public class BuildImageMojo extends JibPluginConfiguration {
     // Parses 'from' into image reference.
     ImageReference baseImage = parseBaseImageReference(getBaseImage());
 
-    // Parses and validates 'to'.
-    String targetImageString = getTargetImage();
-    if (Strings.isNullOrEmpty(targetImageString)) {
+    // Parses 'to' into image reference.
+    if (Strings.isNullOrEmpty(getTargetImage())) {
+      // TODO: Consolidate with gradle message
       throw new MojoFailureException(
-          "Missing target image parameter. Add a <to.image> configuration parameter to your "
+          "Missing target image parameter. Add a <to><image> configuration parameter to your "
               + "pom.xml or set the parameter via commandline (e.g. 'mvn compile jib:build "
-              + "-Dimage=your.image/name').");
+              + "-Dimage=<your image name>').");
     }
-    ImageReference targetImage = parseTargetImageReference(targetImageString);
+    ImageReference targetImage = parseTargetImageReference(getTargetImage());
 
     // Checks Maven settings for registry credentials.
     MavenSettingsServerCredentials mavenSettingsServerCredentials =
