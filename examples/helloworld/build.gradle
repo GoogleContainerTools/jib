@@ -1,0 +1,17 @@
+plugins {
+  id 'java'
+  id 'com.google.cloud.tools.jib' version '0.9.0'
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  compile 'com.google.guava:guava:23.6-jre'
+}
+
+jib.to.image = 'gcr.io/REPLACE-WITH-YOUR-GCP-PROJECT/image-built-with-jib'
