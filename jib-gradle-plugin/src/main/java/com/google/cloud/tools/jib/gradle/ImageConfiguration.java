@@ -23,6 +23,7 @@ import javax.inject.Inject;
 import org.gradle.api.Action;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.Optional;
 
@@ -47,6 +48,7 @@ public class ImageConfiguration {
 
   @Input
   @Nullable
+  @Optional
   public String getImage() {
     return image;
   }
@@ -77,6 +79,7 @@ public class ImageConfiguration {
   }
 
   /** Converts the {@link ImageConfiguration} to an {@link Authorization}. */
+  @Internal
   @Nullable
   Authorization getImageAuthorization() {
     if (auth.getUsername() == null || auth.getPassword() == null) {

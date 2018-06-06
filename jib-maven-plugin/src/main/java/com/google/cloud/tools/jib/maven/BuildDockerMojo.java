@@ -25,14 +25,21 @@ import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
 /** Builds a container image and exports to the default Docker daemon. */
-@Mojo(name = "buildDocker", requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM)
+@Mojo(
+  name = BuildDockerMojo.GOAL_NAME,
+  requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM
+)
 public class BuildDockerMojo extends JibPluginConfiguration {
+
+  @VisibleForTesting static final String GOAL_NAME = "dockerBuild";
 
   /** {@code User-Agent} header suffix to send to the registry. */
   private static final String USER_AGENT_SUFFIX = "jib-maven-plugin";
@@ -48,7 +55,12 @@ public class BuildDockerMojo extends JibPluginConfiguration {
 
     // Parses 'from' and 'to' into image reference.
     ImageReference baseImage = parseBaseImageReference(getBaseImage());
-    ImageReference targetImage = parseTargetImageReference(getTargetImage());
+
+    // TODO: Validate that project name and version are valid repository/tag
+    ImageReference targetImage =
+        Strings.isNullOrEmpty(getTargetImage())
+            ? ImageReference.of(null, getProject().getName(), getProject().getVersion())
+            : parseTargetImageReference(getTargetImage());
 
     // Checks Maven settings for registry credentials.
     MavenSettingsServerCredentials mavenSettingsServerCredentials =

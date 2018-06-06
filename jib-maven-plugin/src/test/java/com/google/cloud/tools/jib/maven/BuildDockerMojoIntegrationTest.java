@@ -36,6 +36,10 @@ public class BuildDockerMojoIntegrationTest {
   @ClassRule
   public static final TestProject emptyTestProject = new TestProject(testPlugin, "empty");
 
+  @ClassRule
+  public static final TestProject defaultTargetTestProject =
+      new TestProject(testPlugin, "default-target");
+
   /**
    * Builds and runs jib:buildDocker on a project at {@code projectRoot} pushing to {@code
    * imageReference}.
@@ -47,7 +51,7 @@ public class BuildDockerMojoIntegrationTest {
     verifier.executeGoal("package");
 
     // Builds twice, and checks if the second build took less time.
-    verifier.executeGoal("jib:buildDocker");
+    verifier.executeGoal("jib:" + BuildDockerMojo.GOAL_NAME);
     verifier.verifyErrorFreeLog();
 
     return new Command("docker", "run", imageReference).run();
@@ -68,5 +72,15 @@ public class BuildDockerMojoIntegrationTest {
         "",
         buildToDockerDaemonAndRun(
             emptyTestProject.getProjectRoot(), "gcr.io/jib-integration-testing/emptyimage:maven"));
+  }
+
+  @Test
+  public void testExecute_defaultTarget()
+      throws VerificationException, IOException, InterruptedException {
+    Assert.assertEquals(
+        "Hello, world. An argument.\n",
+        buildToDockerDaemonAndRun(
+            defaultTargetTestProject.getProjectRoot(),
+            "default-target-name:default-target-version"));
   }
 }

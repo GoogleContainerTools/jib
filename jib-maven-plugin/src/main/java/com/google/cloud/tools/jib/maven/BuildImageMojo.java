@@ -21,13 +21,13 @@ import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
 import com.google.cloud.tools.jib.frontend.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
+import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.ImageReference;
-import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
-import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
-import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import java.util.Arrays;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -35,24 +35,13 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
 /** Builds a container image. */
-@Mojo(name = "build", requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM)
+@Mojo(
+  name = BuildImageMojo.GOAL_NAME,
+  requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM
+)
 public class BuildImageMojo extends JibPluginConfiguration {
 
-  /** Enumeration of {@link BuildableManifestTemplate}s. */
-  public enum ImageFormat {
-    Docker(V22ManifestTemplate.class),
-    OCI(OCIManifestTemplate.class);
-
-    private final Class<? extends BuildableManifestTemplate> manifestTemplateClass;
-
-    ImageFormat(Class<? extends BuildableManifestTemplate> manifestTemplateClass) {
-      this.manifestTemplateClass = manifestTemplateClass;
-    }
-
-    private Class<? extends BuildableManifestTemplate> getManifestTemplateClass() {
-      return manifestTemplateClass;
-    }
-  }
+  @VisibleForTesting static final String GOAL_NAME = "build";
 
   /** {@code User-Agent} header suffix to send to the registry. */
   private static final String USER_AGENT_SUFFIX = "jib-maven-plugin";
@@ -74,8 +63,17 @@ public class BuildImageMojo extends JibPluginConfiguration {
               + "'.");
     }
 
-    // Parses 'from' and 'to' into image reference.
+    // Parses 'from' into image reference.
     ImageReference baseImage = parseBaseImageReference(getBaseImage());
+
+    // Parses 'to' into image reference.
+    if (Strings.isNullOrEmpty(getTargetImage())) {
+      // TODO: Consolidate with gradle message
+      throw new MojoFailureException(
+          "Missing target image parameter. Add a <to><image> configuration parameter to your "
+              + "pom.xml or set the parameter via commandline (e.g. 'mvn compile jib:build "
+              + "-Dimage=<your image name>').");
+    }
     ImageReference targetImage = parseTargetImageReference(getTargetImage());
 
     // Checks Maven settings for registry credentials.

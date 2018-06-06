@@ -1,0 +1,22 @@
+plugins {
+    id 'java'
+    id 'com.google.cloud.tools.jib'
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile files('libs/dependency-1.0.0.jar')
+}
+
+jib {
+    args = ['An argument.']
+
+    // Does not have tests use user-level cache for base image layers.
+    useOnlyProjectCache = true
+}

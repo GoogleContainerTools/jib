@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import java.util.Arrays;
@@ -34,7 +35,10 @@ public class JibExtensionTest {
   @Before
   public void setUp() {
     Project fakeProject = ProjectBuilder.builder().build();
-    testJibExtension = fakeProject.getExtensions().create("jib", JibExtension.class, fakeProject);
+    testJibExtension =
+        fakeProject
+            .getExtensions()
+            .create(JibPlugin.JIB_EXTENSION_NAME, JibExtension.class, fakeProject);
   }
 
   @Test
@@ -107,7 +111,7 @@ public class JibExtensionTest {
   public void testFormat() {
     Assert.assertEquals(V22ManifestTemplate.class, testJibExtension.getFormat());
 
-    testJibExtension.setFormat(JibExtension.ImageFormat.OCI);
+    testJibExtension.setFormat(ImageFormat.OCI);
     Assert.assertEquals(OCIManifestTemplate.class, testJibExtension.getFormat());
   }
 

@@ -42,7 +42,7 @@ public class DockerContextMojoIntegrationTest {
     Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
     verifier.setAutoclean(false);
     verifier.executeGoal("compile");
-    verifier.executeGoal("jib:dockerContext");
+    verifier.executeGoal("jib:" + DockerContextMojo.GOAL_NAME);
 
     Path dockerContextDirectory =
         simpleTestProject.getProjectRoot().resolve("target").resolve("jib-docker-context");

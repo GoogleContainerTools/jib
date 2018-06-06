@@ -16,10 +16,8 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
-import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
-import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.util.Collections;
 import java.util.List;
@@ -57,24 +55,6 @@ import org.gradle.api.tasks.Optional;
  * }</pre>
  */
 public class JibExtension {
-
-  // TODO: Consolidate with BuildImageMojo#ImageFormat.
-  /** Enumeration of {@link BuildableManifestTemplate}s. */
-  @VisibleForTesting
-  enum ImageFormat {
-    Docker(V22ManifestTemplate.class),
-    OCI(OCIManifestTemplate.class);
-
-    private final Class<? extends BuildableManifestTemplate> manifestTemplateClass;
-
-    ImageFormat(Class<? extends BuildableManifestTemplate> manifestTemplateClass) {
-      this.manifestTemplateClass = manifestTemplateClass;
-    }
-
-    private Class<? extends BuildableManifestTemplate> getManifestTemplateClass() {
-      return manifestTemplateClass;
-    }
-  }
 
   // Defines default configuration values.
   private static final String DEFAULT_FROM_IMAGE = "gcr.io/distroless/java";
@@ -145,8 +125,9 @@ public class JibExtension {
   }
 
   @Internal
+  @Nullable
   String getTargetImage() {
-    return Preconditions.checkNotNull(to.getImage());
+    return to.getImage();
   }
 
   @Nested
@@ -155,6 +136,8 @@ public class JibExtension {
     return from;
   }
 
+  @Nested
+  @Optional
   ImageConfiguration getTo() {
     return to;
   }

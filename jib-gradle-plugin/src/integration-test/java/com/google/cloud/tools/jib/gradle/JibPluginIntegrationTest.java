@@ -35,12 +35,15 @@ public class JibPluginIntegrationTest {
 
   @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
 
+  @ClassRule
+  public static final TestProject defaultTargetTestProject = new TestProject("default-target");
+
   private static String buildAndRun(TestProject testProject, String imageReference)
       throws IOException, InterruptedException {
-    BuildResult buildResult = testProject.build("clean", "jib");
+    BuildResult buildResult = testProject.build("clean", JibPlugin.BUILD_IMAGE_TASK_NAME);
 
     BuildTask classesTask = buildResult.task(":classes");
-    BuildTask jibTask = buildResult.task(":jib");
+    BuildTask jibTask = buildResult.task(":" + JibPlugin.BUILD_IMAGE_TASK_NAME);
 
     Assert.assertNotNull(classesTask);
     Assert.assertEquals(TaskOutcome.SUCCESS, classesTask.getOutcome());
@@ -56,10 +59,10 @@ public class JibPluginIntegrationTest {
 
   private static String buildToDockerDaemonAndRun(TestProject testProject, String imageReference)
       throws IOException, InterruptedException {
-    BuildResult buildResult = testProject.build("clean", "jibBuildDocker");
+    BuildResult buildResult = testProject.build("clean", JibPlugin.BUILD_DOCKER_TASK_NAME);
 
     BuildTask classesTask = buildResult.task(":classes");
-    BuildTask jibBuildDockerTask = buildResult.task(":jibBuildDocker");
+    BuildTask jibBuildDockerTask = buildResult.task(":" + JibPlugin.BUILD_DOCKER_TASK_NAME);
 
     Assert.assertNotNull(classesTask);
     Assert.assertEquals(TaskOutcome.SUCCESS, classesTask.getOutcome());
@@ -82,7 +85,7 @@ public class JibPluginIntegrationTest {
   public void testBuild_simple() throws IOException, InterruptedException {
     // Test empty output error
     try {
-      simpleTestProject.build("clean", "jib", "-x=classes");
+      simpleTestProject.build("clean", JibPlugin.BUILD_IMAGE_TASK_NAME, "-x=classes");
       Assert.fail();
     } catch (UnexpectedBuildFailure ex) {
       Assert.assertThat(
@@ -96,6 +99,22 @@ public class JibPluginIntegrationTest {
     Assert.assertEquals(
         "Hello, world. An argument.\n",
         buildAndRun(simpleTestProject, "gcr.io/jib-integration-testing/simpleimage:gradle"));
+  }
+
+  @Test
+  public void testBuild_defaultTarget() {
+    // Test error when 'to' is missing
+    try {
+      defaultTargetTestProject.build("clean", JibPlugin.BUILD_IMAGE_TASK_NAME, "-x=classes");
+      Assert.fail();
+    } catch (UnexpectedBuildFailure ex) {
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.containsString(
+              "Missing target image parameter. Add a 'jib.to.image' configuration parameter to "
+                  + "your build.gradle or set the parameter via commandline (e.g. 'gradle jib "
+                  + "--image <your image name>')."));
+    }
   }
 
   @Test
@@ -115,11 +134,20 @@ public class JibPluginIntegrationTest {
   }
 
   @Test
+  public void testDockerDaemon_defaultTarget() throws IOException, InterruptedException {
+    Assert.assertEquals(
+        "Hello, world. An argument.\n",
+        buildToDockerDaemonAndRun(
+            defaultTargetTestProject, "default-target-name:default-target-version"));
+  }
+
+  @Test
   public void testDockerContext() throws IOException, InterruptedException {
-    BuildResult buildResult = simpleTestProject.build("clean", "jibDockerContext", "--info");
+    BuildResult buildResult =
+        simpleTestProject.build("clean", JibPlugin.DOCKER_CONTEXT_TASK_NAME, "--info");
 
     BuildTask classesTask = buildResult.task(":classes");
-    BuildTask jibDockerContextTask = buildResult.task(":jibDockerContext");
+    BuildTask jibDockerContextTask = buildResult.task(":" + JibPlugin.DOCKER_CONTEXT_TASK_NAME);
 
     Assert.assertNotNull(classesTask);
     Assert.assertEquals(TaskOutcome.SUCCESS, classesTask.getOutcome());
@@ -145,7 +173,9 @@ public class JibPluginIntegrationTest {
 
     // Checks that generating the Docker context again is skipped.
     BuildTask upToDateJibDockerContextTask =
-        simpleTestProject.build("jibDockerContext").task(":jibDockerContext");
+        simpleTestProject
+            .build(JibPlugin.DOCKER_CONTEXT_TASK_NAME)
+            .task(":" + JibPlugin.DOCKER_CONTEXT_TASK_NAME);
     Assert.assertNotNull(upToDateJibDockerContextTask);
     Assert.assertEquals(TaskOutcome.UP_TO_DATE, upToDateJibDockerContextTask.getOutcome());
 
@@ -159,7 +189,9 @@ public class JibPluginIntegrationTest {
             .resolve("newfile"));
     try {
       BuildTask reexecutedJibDockerContextTask =
-          simpleTestProject.build("jibDockerContext").task(":jibDockerContext");
+          simpleTestProject
+              .build(JibPlugin.DOCKER_CONTEXT_TASK_NAME)
+              .task(":" + JibPlugin.DOCKER_CONTEXT_TASK_NAME);
       Assert.assertNotNull(reexecutedJibDockerContextTask);
       Assert.assertEquals(TaskOutcome.SUCCESS, reexecutedJibDockerContextTask.getOutcome());
 
