@@ -21,7 +21,7 @@ These features are not currently supported but will be added in later releases.
 You can containerize your application easily with one command:
 
 ```shell
-mvn com.google.cloud.tools:jib-maven-plugin:0.1.8-SNAPSHOT:build -Dimage=<MY IMAGE>
+mvn com.google.cloud.tools:jib-maven-plugin:0.9.0:build -Dimage=<MY IMAGE>
 ```
 
 *If you encounter authentication issues, see [Authentication Methods](#authentication-methods).*
@@ -107,7 +107,7 @@ Subsequent builds are much faster than the initial build.
 
 #### Build to Docker daemon
 
-Jib can also build your image directly to a Docker daemon. This requires that you have `docker` available on your `PATH`.
+Jib can also build your image directly to a Docker daemon. This uses the `docker` command line tool and requires that you have `docker` available on your `PATH`.
 
 ```shell
 mvn compile jib:dockerBuild

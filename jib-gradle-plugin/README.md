@@ -92,7 +92,7 @@ Subsequent builds are much faster than the initial build.
 
 #### Build to Docker daemon
 
-Jib can also build your image directly to a Docker daemon. This requires that you have `docker` available on your `PATH`.
+Jib can also build your image directly to a Docker daemon. This uses the `docker` command line tool and requires that you have `docker` available on your `PATH`.
 
 ```shell
 gradle jibDockerBuild
