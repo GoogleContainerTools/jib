@@ -27,28 +27,43 @@ public class JibPlugin implements Plugin<Project> {
 
   @VisibleForTesting static final GradleVersion GRADLE_MIN_VERSION = GradleVersion.version("4.6");
 
+  @VisibleForTesting static final String JIB_EXTENSION_NAME = "jib";
+  @VisibleForTesting static final String BUILD_IMAGE_TASK_NAME = "jib";
+  @VisibleForTesting static final String BUILD_DOCKER_TASK_NAME = "jibDockerBuild";
+  @VisibleForTesting static final String DOCKER_CONTEXT_TASK_NAME = "jibExportDockerContext";
+
   @Override
   public void apply(Project project) {
     checkGradleVersion();
 
-    JibExtension jibExtension = project.getExtensions().create("jib", JibExtension.class, project);
-    Task classesTask = project.getTasks().getByPath("classes");
+    JibExtension jibExtension =
+        project.getExtensions().create(JIB_EXTENSION_NAME, JibExtension.class, project);
 
-    project
-        .getTasks()
-        .create("jib", BuildImageTask.class)
-        .setJibExtension(jibExtension)
-        .dependsOn(classesTask);
-    project
-        .getTasks()
-        .create("jibDockerContext", DockerContextTask.class)
-        .setJibExtension(jibExtension)
-        .dependsOn(classesTask);
-    project
-        .getTasks()
-        .create("jibBuildDocker", BuildDockerTask.class)
-        .setJibExtension(jibExtension)
-        .dependsOn(classesTask);
+    Task buildImageTask =
+        project
+            .getTasks()
+            .create(BUILD_IMAGE_TASK_NAME, BuildImageTask.class)
+            .setJibExtension(jibExtension);
+    Task dockerContextTask =
+        project
+            .getTasks()
+            .create(DOCKER_CONTEXT_TASK_NAME, DockerContextTask.class)
+            .setJibExtension(jibExtension);
+    Task buildDockerTask =
+        project
+            .getTasks()
+            .create(BUILD_DOCKER_TASK_NAME, BuildDockerTask.class)
+            .setJibExtension(jibExtension);
+
+    // Has all tasks depend on the 'classes' task.
+    project.afterEvaluate(
+        projectAfterEvaluation -> {
+          Task classesTask = projectAfterEvaluation.getTasks().getByPath("classes");
+
+          buildImageTask.dependsOn(classesTask);
+          dockerContextTask.dependsOn(classesTask);
+          buildDockerTask.dependsOn(classesTask);
+        });
   }
 
   private static void checkGradleVersion() {

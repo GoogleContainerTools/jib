@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.util.Arrays;
@@ -36,8 +37,13 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
 /** Builds a container image. */
-@Mojo(name = "build", requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM)
+@Mojo(
+  name = BuildImageMojo.GOAL_NAME,
+  requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM
+)
 public class BuildImageMojo extends JibPluginConfiguration {
+
+  @VisibleForTesting static final String GOAL_NAME = "build";
 
   /** Enumeration of {@link BuildableManifestTemplate}s. */
   public enum ImageFormat {

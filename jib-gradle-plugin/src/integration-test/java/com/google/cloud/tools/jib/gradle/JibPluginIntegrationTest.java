@@ -37,10 +37,10 @@ public class JibPluginIntegrationTest {
 
   private static String buildAndRun(TestProject testProject, String imageReference)
       throws IOException, InterruptedException {
-    BuildResult buildResult = testProject.build("clean", "jib");
+    BuildResult buildResult = testProject.build("clean", JibPlugin.BUILD_IMAGE_TASK_NAME);
 
     BuildTask classesTask = buildResult.task(":classes");
-    BuildTask jibTask = buildResult.task(":jib");
+    BuildTask jibTask = buildResult.task(":" + JibPlugin.BUILD_IMAGE_TASK_NAME);
 
     Assert.assertNotNull(classesTask);
     Assert.assertEquals(TaskOutcome.SUCCESS, classesTask.getOutcome());
@@ -56,10 +56,10 @@ public class JibPluginIntegrationTest {
 
   private static String buildToDockerDaemonAndRun(TestProject testProject, String imageReference)
       throws IOException, InterruptedException {
-    BuildResult buildResult = testProject.build("clean", "jibBuildDocker");
+    BuildResult buildResult = testProject.build("clean", JibPlugin.BUILD_DOCKER_TASK_NAME);
 
     BuildTask classesTask = buildResult.task(":classes");
-    BuildTask jibBuildDockerTask = buildResult.task(":jibBuildDocker");
+    BuildTask jibBuildDockerTask = buildResult.task(":" + JibPlugin.BUILD_DOCKER_TASK_NAME);
 
     Assert.assertNotNull(classesTask);
     Assert.assertEquals(TaskOutcome.SUCCESS, classesTask.getOutcome());
@@ -82,7 +82,7 @@ public class JibPluginIntegrationTest {
   public void testBuild_simple() throws IOException, InterruptedException {
     // Test empty output error
     try {
-      simpleTestProject.build("clean", "jib", "-x=classes");
+      simpleTestProject.build("clean", JibPlugin.BUILD_IMAGE_TASK_NAME, "-x=classes");
       Assert.fail();
     } catch (UnexpectedBuildFailure ex) {
       Assert.assertThat(
@@ -116,10 +116,11 @@ public class JibPluginIntegrationTest {
 
   @Test
   public void testDockerContext() throws IOException, InterruptedException {
-    BuildResult buildResult = simpleTestProject.build("clean", "jibDockerContext", "--info");
+    BuildResult buildResult =
+        simpleTestProject.build("clean", JibPlugin.DOCKER_CONTEXT_TASK_NAME, "--info");
 
     BuildTask classesTask = buildResult.task(":classes");
-    BuildTask jibDockerContextTask = buildResult.task(":jibDockerContext");
+    BuildTask jibDockerContextTask = buildResult.task(":" + JibPlugin.DOCKER_CONTEXT_TASK_NAME);
 
     Assert.assertNotNull(classesTask);
     Assert.assertEquals(TaskOutcome.SUCCESS, classesTask.getOutcome());
@@ -145,7 +146,9 @@ public class JibPluginIntegrationTest {
 
     // Checks that generating the Docker context again is skipped.
     BuildTask upToDateJibDockerContextTask =
-        simpleTestProject.build("jibDockerContext").task(":jibDockerContext");
+        simpleTestProject
+            .build(JibPlugin.DOCKER_CONTEXT_TASK_NAME)
+            .task(":" + JibPlugin.DOCKER_CONTEXT_TASK_NAME);
     Assert.assertNotNull(upToDateJibDockerContextTask);
     Assert.assertEquals(TaskOutcome.UP_TO_DATE, upToDateJibDockerContextTask.getOutcome());
 
@@ -157,9 +160,21 @@ public class JibPluginIntegrationTest {
             .resolve("main")
             .resolve("resources")
             .resolve("newfile"));
-    BuildTask reexecutedJibDockerContextTask =
-        simpleTestProject.build("jibDockerContext").task(":jibDockerContext");
-    Assert.assertNotNull(reexecutedJibDockerContextTask);
-    Assert.assertEquals(TaskOutcome.SUCCESS, reexecutedJibDockerContextTask.getOutcome());
+    try {
+      BuildTask reexecutedJibDockerContextTask =
+          simpleTestProject
+              .build(JibPlugin.DOCKER_CONTEXT_TASK_NAME)
+              .task(":" + JibPlugin.DOCKER_CONTEXT_TASK_NAME);
+      Assert.assertNotNull(reexecutedJibDockerContextTask);
+      Assert.assertEquals(TaskOutcome.SUCCESS, reexecutedJibDockerContextTask.getOutcome());
+
+    } catch (UnexpectedBuildFailure ex) {
+      // THis might happen on systems without SecureDirectoryStream, so we just ignore it.
+      // See com.google.common.io.MoreFiles#deleteDirectoryContents.
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.containsString(
+              "Export Docker context failed because cannot clear directory"));
+    }
   }
 }
