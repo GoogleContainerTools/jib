@@ -64,6 +64,9 @@ public class HelpfulSuggestionsTest {
     Assert.assertEquals(
         "messagePrefix, perhaps you should add a `mainClass` configuration to plugin",
         TEST_HELPFUL_SUGGESTIONS.forMainClassNotFound("plugin"));
+    Assert.assertEquals(
+        "messagePrefix, perhaps you should add a parameter configuration parameter to your buildFile or set the parameter via commandline (e.g. 'command').",
+        TEST_HELPFUL_SUGGESTIONS.forToNotConfigured("parameter", "buildFile", "command"));
     Assert.assertEquals("messagePrefix", TEST_HELPFUL_SUGGESTIONS.none());
   }
 }

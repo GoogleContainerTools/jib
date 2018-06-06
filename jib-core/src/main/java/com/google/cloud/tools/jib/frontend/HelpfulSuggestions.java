@@ -125,4 +125,15 @@ public class HelpfulSuggestions {
             + "' or "
             + authConfiguration);
   }
+
+  public String forToNotConfigured(String parameter, String buildConfigFilename, String command) {
+    return suggest(
+        "add a "
+            + parameter
+            + " configuration parameter to your "
+            + buildConfigFilename
+            + " or set the parameter via commandline (e.g. '"
+            + command
+            + "').");
+  }
 }
