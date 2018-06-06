@@ -33,16 +33,26 @@ If you would like to set up Jib as part of your Maven build, follow the guide be
 In your Maven Java project, add the plugin to your `pom.xml`:
 
 ```xml
-<plugin>
-  <groupId>com.google.cloud.tools</groupId>
-  <artifactId>jib-maven-plugin</artifactId>
-  <version>0.9.0</version>
-  <configuration>
-    <to>
-      <image>myimage</image>
-    </to>
-  </configuration>
-</plugin>
+<project>
+  ...
+  <build>
+    <plugins>
+      ...
+      <plugin>
+        <groupId>com.google.cloud.tools</groupId>
+        <artifactId>jib-maven-plugin</artifactId>
+        <version>0.9.0</version>
+        <configuration>
+          <to>
+            <image>myimage</image>
+          </to>
+        </configuration>
+      </plugin>
+      ...
+    </plugins>
+  </build>
+  ...
+</project>
 ```
 
 ### Configuration
