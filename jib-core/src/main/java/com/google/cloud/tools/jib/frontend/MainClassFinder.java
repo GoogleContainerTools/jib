@@ -21,86 +21,24 @@ import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
 import java.io.IOException;
-import java.lang.reflect.Method;
+import java.io.InputStream;
 import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
+import javassist.ClassPool;
+import javassist.CtClass;
+import javassist.CtMethod;
+import javassist.NotFoundException;
 import javax.annotation.Nullable;
 
 /** Infers the main class in an application. */
 public class MainClassFinder {
-
-  /** Helper for loading a .class file. */
-  @VisibleForTesting
-  static class ClassFileLoader extends ClassLoader {
-
-    private final Map<Path, Class<?>> definedClasses = new HashMap<>();
-    private final Path rootDirectory;
-
-    @VisibleForTesting
-    ClassFileLoader(Path rootDirectory) {
-      this.rootDirectory = rootDirectory;
-    }
-
-    @Nullable
-    @Override
-    public Class<?> findClass(String name) {
-      return findClass(name, getPathFromClassName(name));
-    }
-
-    /**
-     * @param name the name of the class. This should be {@code null} when we call it manually with
-     *     a file, and not {@code null} when it is called internally.
-     * @param file the .class file defining the class.
-     * @return the {@link Class} defined by the file, or {@code null} if the class could not be
-     *     defined.
-     */
-    @Nullable
-    private Class<?> findClass(@Nullable String name, Path file) {
-      if (definedClasses.containsKey(file)) {
-        return definedClasses.get(file);
-      }
-
-      if (!Files.exists(file)) {
-        // TODO: Log search class failure?
-        return null;
-      }
-
-      try {
-        byte[] bytes = Files.readAllBytes(file);
-        Class<?> definedClass = defineClass(name, bytes, 0, bytes.length);
-        definedClasses.put(file, definedClass);
-        return definedClass;
-      } catch (IOException | ClassFormatError | SecurityException | NoClassDefFoundError ignored) {
-        // Not a valid class file
-        // TODO: Log search class failure when NoClassDefFoundError/SecurityException is caught?
-        return null;
-      }
-    }
-
-    /** Converts a class name (pack.ClassName) to a Path (rootDirectory/pack/ClassName.class). */
-    @VisibleForTesting
-    Path getPathFromClassName(String className) {
-      Path path = rootDirectory;
-      Deque<String> folders = new ArrayDeque<>(Splitter.on('.').splitToList(className));
-      String fileName = folders.removeLast() + ".class";
-      for (String folder : folders) {
-        path = path.resolve(folder);
-      }
-      path = path.resolve(fileName);
-      return path;
-    }
-  }
 
   /**
    * If {@code mainClass} is {@code null}, tries to infer main class in this order:
@@ -139,7 +77,7 @@ public class MainClassFinder {
               continue;
             }
             visitedRoots.add(root);
-            mainClasses.addAll(findMainClasses(root));
+            mainClasses.addAll(findMainClasses(root, logger));
           }
 
           if (mainClasses.size() == 1) {
@@ -177,47 +115,58 @@ public class MainClassFinder {
   }
 
   /**
-   * Searches for a .class file containing a main method in a root directory.
+   * Finds the classes with {@code public static void main(String[] args)} in {@code rootDirectory}.
    *
-   * @return the name of the class if one is found, null if no class is found.
-   * @throws IOException if searching/reading files fails.
+   * @param rootDirectory directory containing the {@code .class} files
    */
   @VisibleForTesting
-  static List<String> findMainClasses(Path rootDirectory) throws IOException {
-    List<String> classNames = new ArrayList<>();
-
-    // Make sure rootDirectory is valid
+  static List<String> findMainClasses(Path rootDirectory, BuildLogger buildLogger)
+      throws IOException {
+    // Makes sure rootDirectory is valid.
     if (!Files.exists(rootDirectory) || !Files.isDirectory(rootDirectory)) {
-      return classNames;
+      return Collections.emptyList();
     }
 
-    // Get all .class files
-    ClassFileLoader classFileLoader = new ClassFileLoader(rootDirectory);
-    new DirectoryWalker(rootDirectory)
-        .filter(Files::isRegularFile)
-        .filter(path -> path.toString().endsWith(".class"))
-        .walk(
-            classFile -> {
-              Class<?> fileClass = classFileLoader.findClass(null, classFile);
-              if (fileClass == null) {
-                return;
-              }
-              try {
-                // Check if class contains {@code public static void main(String[] args)}
-                Method main = fileClass.getMethod("main", String[].class);
-                if (main != null
-                    && main.getReturnType() == void.class
-                    && Modifier.isStatic(main.getModifiers())
-                    && Modifier.isPublic(main.getModifiers())) {
-                  classNames.add(fileClass.getName());
-                }
-              } catch (NoSuchMethodException | NoClassDefFoundError ignored) {
-                // main method not found
-                // TODO: Log search class failure when NoClassDefFoundError is caught?
-              }
-            });
+    List<String> classNames = new ArrayList<>();
 
-    return classNames;
+    ClassPool classPool = new ClassPool();
+    classPool.appendSystemPath();
+
+    try {
+      CtClass[] mainMethodParams = new CtClass[] {classPool.get("java.lang.String[]")};
+
+      new DirectoryWalker(rootDirectory)
+          .filter(Files::isRegularFile)
+          .filter(path -> path.toString().endsWith(".class"))
+          .walk(
+              classFile -> {
+                try (InputStream classFileInputStream = Files.newInputStream(classFile)) {
+                  CtClass fileClass = classPool.makeClass(classFileInputStream);
+
+                  // Check if class contains 'public static void main(String[] args)'.
+                  CtMethod mainMethod = fileClass.getDeclaredMethod("main", mainMethodParams);
+
+                  if (CtClass.voidType.equals(mainMethod.getReturnType())
+                      && Modifier.isStatic(mainMethod.getModifiers())
+                      && Modifier.isPublic(mainMethod.getModifiers())) {
+                    classNames.add(fileClass.getName());
+                  }
+
+                } catch (NotFoundException ex) {
+                  // Ignores main method not found.
+
+                } catch (IOException ex) {
+                  // Could not read class file.
+                  buildLogger.warn("Could not read class file: " + classFile);
+                }
+              });
+
+      return classNames;
+
+    } catch (NotFoundException ex) {
+      // Thrown if 'java.lang.String' is not found in classPool.
+      throw new RuntimeException(ex);
+    }
   }
 
   private MainClassFinder() {}
