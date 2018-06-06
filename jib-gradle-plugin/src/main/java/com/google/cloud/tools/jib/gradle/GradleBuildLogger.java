@@ -16,10 +16,16 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.api.client.http.HttpTransport;
 import com.google.cloud.tools.jib.builder.BuildLogger;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.logging.Level;
 import org.gradle.api.logging.Logger;
+import org.gradle.internal.logging.events.LogEvent;
+import org.gradle.internal.logging.events.OutputEventListener;
+import org.gradle.internal.logging.slf4j.OutputEventListenerBackedLoggerContext;
+import org.slf4j.LoggerFactory;
 
 /** Implementation of {@link BuildLogger} for Gradle plugins. */
 // We don't care about the return values of the logging futures.
@@ -28,6 +34,27 @@ class GradleBuildLogger implements BuildLogger {
 
   /** This executor keeps all log messages in order. */
   private static final ExecutorService executorService = Executors.newSingleThreadExecutor();
+
+  /**
+   * Disables annoying Apache/Google HTTP client logging. Note that this is a hack and depends on
+   * internal Gradle classes.
+   */
+  static void disableHttpLogging() {
+    // Disables Apache HTTP client logging.
+    OutputEventListenerBackedLoggerContext context =
+        (OutputEventListenerBackedLoggerContext) LoggerFactory.getILoggerFactory();
+    OutputEventListener defaultOutputEventListener = context.getOutputEventListener();
+    context.setOutputEventListener(
+        event -> {
+          LogEvent logEvent = (LogEvent) event;
+          if (!logEvent.getCategory().contains("org.apache")) {
+            defaultOutputEventListener.onOutput(event);
+          }
+        });
+
+    // Disables Google HTTP client logging.
+    java.util.logging.Logger.getLogger(HttpTransport.class.getName()).setLevel(Level.OFF);
+  }
 
   private final Logger logger;
 
