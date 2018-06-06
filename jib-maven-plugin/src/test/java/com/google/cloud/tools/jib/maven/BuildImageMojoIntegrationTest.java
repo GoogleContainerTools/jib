@@ -50,11 +50,11 @@ public class BuildImageMojoIntegrationTest {
 
     // Builds twice, and checks if the second build took less time.
     long lastTime = System.nanoTime();
-    verifier.executeGoal("jib:build");
+    verifier.executeGoal("jib:" + BuildImageMojo.GOAL_NAME);
     long timeOne = System.nanoTime() - lastTime;
     lastTime = System.nanoTime();
 
-    verifier.executeGoal("jib:build");
+    verifier.executeGoal("jib:" + BuildImageMojo.GOAL_NAME);
     long timeTwo = System.nanoTime() - lastTime;
 
     verifier.verifyErrorFreeLog();
@@ -77,7 +77,7 @@ public class BuildImageMojoIntegrationTest {
     try {
       Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
       verifier.setAutoclean(false);
-      verifier.executeGoals(Arrays.asList("clean", "jib:build"));
+      verifier.executeGoals(Arrays.asList("clean", "jib:" + BuildImageMojo.GOAL_NAME));
       Assert.fail();
     } catch (VerificationException ex) {
       Assert.assertThat(
