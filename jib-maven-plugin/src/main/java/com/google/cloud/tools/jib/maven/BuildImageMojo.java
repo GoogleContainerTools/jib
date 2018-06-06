@@ -21,10 +21,8 @@ import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
 import com.google.cloud.tools.jib.frontend.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
+import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.ImageReference;
-import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
-import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
-import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.annotations.VisibleForTesting;
@@ -44,22 +42,6 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 public class BuildImageMojo extends JibPluginConfiguration {
 
   @VisibleForTesting static final String GOAL_NAME = "build";
-
-  /** Enumeration of {@link BuildableManifestTemplate}s. */
-  public enum ImageFormat {
-    Docker(V22ManifestTemplate.class),
-    OCI(OCIManifestTemplate.class);
-
-    private final Class<? extends BuildableManifestTemplate> manifestTemplateClass;
-
-    ImageFormat(Class<? extends BuildableManifestTemplate> manifestTemplateClass) {
-      this.manifestTemplateClass = manifestTemplateClass;
-    }
-
-    private Class<? extends BuildableManifestTemplate> getManifestTemplateClass() {
-      return manifestTemplateClass;
-    }
-  }
 
   /** {@code User-Agent} header suffix to send to the registry. */
   private static final String USER_AGENT_SUFFIX = "jib-maven-plugin";
