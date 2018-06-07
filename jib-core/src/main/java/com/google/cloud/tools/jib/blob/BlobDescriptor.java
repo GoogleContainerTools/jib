@@ -34,6 +34,11 @@ public class BlobDescriptor {
   /**
    * Creates a new {@link BlobDescriptor} from the contents of an {@link InputStream} while piping
    * to an {@link OutputStream}. Does not close either streams.
+   *
+   * @param inputStream the stream to read the contents from
+   * @param outputStream the {@link OutputStream} to pipe to
+   * @return a {@link BlobDescriptor} created from the {@link InputStream}
+   * @throws IOException if reading from or writing to the streams fails
    */
   static BlobDescriptor fromPipe(InputStream inputStream, OutputStream outputStream)
       throws IOException {
@@ -49,7 +54,11 @@ public class BlobDescriptor {
     this.digest = digest;
   }
 
-  /** Initialize with just digest. */
+  /**
+   * Initialize with just digest.
+   *
+   * @param digest the digest to initialize the {@link BlobDescriptor} from
+   */
   public BlobDescriptor(DescriptorDigest digest) {
     this(-1, digest);
   }

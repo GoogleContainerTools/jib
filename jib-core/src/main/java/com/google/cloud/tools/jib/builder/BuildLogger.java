@@ -20,7 +20,6 @@ public interface BuildLogger {
 
   void error(CharSequence message);
 
-  /** Logs messages as part of normal execution (default log level). */
   void lifecycle(CharSequence message);
 
   void warn(CharSequence message);

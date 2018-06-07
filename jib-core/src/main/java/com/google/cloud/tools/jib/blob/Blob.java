@@ -27,6 +27,7 @@ public interface Blob {
    *
    * @param outputStream the {@link OutputStream} to write to
    * @return the {@link BlobDescriptor} of the written BLOB
+   * @throws IOException if writing the BlobDescriptor fails
    */
   BlobDescriptor writeTo(OutputStream outputStream) throws IOException;
 }
