@@ -69,9 +69,9 @@ public class BuildImageTask extends DefaultTask {
 
     if (Strings.isNullOrEmpty(jibExtension.getTargetImage())) {
       throw new GradleException(
-          "Missing target image parameter. Add a 'jib.to.image' configuration parameter to your "
-              + "build.gradle or set the parameter via commandline (e.g. 'gradle jib --image "
-              + "<your image name>').");
+          HelpfulSuggestionsProvider.get("Missing target image parameter")
+              .forToNotConfigured(
+                  "'jib.to.image'", "build.gradle", "gradle jib --image <your image name>"));
     }
 
     RegistryCredentials knownBaseRegistryCredentials = null;
