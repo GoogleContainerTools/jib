@@ -33,8 +33,10 @@ import javax.annotation.Nullable;
 public class CacheReader {
 
   /**
+   * @param path the file to check.
    * @return the last modified time for the file at {@code path}. Recursively finds the most recent
    *     last modified time for all subfiles if the file is a directory.
+   * @throws IOException if checking the last modified time fails.
    */
   private static FileTime getLastModifiedTime(Path path) throws IOException {
     if (Files.isDirectory(path)) {
@@ -61,7 +63,11 @@ public class CacheReader {
     this.cache = cache;
   }
 
-  /** @return the cached layer with digest {@code layerDigest}, or {@code null} if not found */
+  /**
+   * @param layerDigest the layer digest of the layer to get.
+   * @return the cached layer with digest {@code layerDigest}, or {@code null} if not found.
+   * @throws LayerPropertyNotFoundException if getting the layer fails.
+   */
   @Nullable
   public CachedLayer getLayer(DescriptorDigest layerDigest) throws LayerPropertyNotFoundException {
     return cache.getMetadata().getLayers().get(layerDigest);
@@ -70,9 +76,10 @@ public class CacheReader {
   /**
    * Finds the file that stores the content BLOB for an application layer.
    *
-   * @param sourceFiles the source files the layer must be built from
+   * @param sourceFiles the source files the layer must be built from.
    * @return the newest cached layer file that matches the {@code layerType} and {@code
-   *     sourceFiles}, or {@code null} if there is no match
+   *     sourceFiles}, or {@code null} if there is no match.
+   * @throws CacheMetadataCorruptedException if getting the cache metadata fails.
    */
   @Nullable
   public Path getLayerFile(ImmutableList<Path> sourceFiles) throws CacheMetadataCorruptedException {
@@ -104,7 +111,12 @@ public class CacheReader {
    *
    * <p>The method returns the first up-to-date layer found. This is safe because the source files
    * will not have been modified since creation of any up-to-date layer (ie. all up-to-date layers
-   * should have the same file contents)
+   * should have the same file contents).
+   *
+   * @param sourceFiles the layer's source files.
+   * @return an up-to-date layer containing the source files.
+   * @throws IOException if reading the source files fails.
+   * @throws CacheMetadataCorruptedException if reading the cache metadata fails.
    */
   @Nullable
   public CachedLayer getUpToDateLayerBySourceFiles(ImmutableList<Path> sourceFiles)

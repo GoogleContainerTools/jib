@@ -49,8 +49,10 @@ public class CacheWriter {
    * Builds an {@link UnwrittenLayer} from a {@link ReproducibleLayerBuilder} and compresses and
    * writes the {@link UnwrittenLayer}'s uncompressed layer content BLOB to cache.
    *
-   * @param reproducibleLayerBuilder the layer builder
-   * @return the cached layer
+   * @param reproducibleLayerBuilder the layer builder.
+   * @return the cached layer.
+   * @throws IOException if writing the layer to file fails.
+   * @throws LayerPropertyNotFoundException if adding the layer to the cache metadata fails.
    */
   public CachedLayer writeLayer(ReproducibleLayerBuilder reproducibleLayerBuilder)
       throws IOException, LayerPropertyNotFoundException {
@@ -92,8 +94,10 @@ public class CacheWriter {
   }
 
   /**
+   * @param layerDigest the written layer's digest.
    * @return the {@link CountingOutputStream} to write to to cache a layer with the specified
-   *     compressed digest
+   *     compressed digest.
+   * @throws IOException if writing to the layer file's output stream fails.
    */
   public CountingOutputStream getLayerOutputStream(DescriptorDigest layerDigest)
       throws IOException {
@@ -102,8 +106,12 @@ public class CacheWriter {
   }
 
   /**
+   * @param layerDigest the digest of the layer to retrieve.
+   * @param countingOutputStream the output stream the BLOB was written to.
    * @return a {@link CachedLayer} from a layer digest and the {@link CountingOutputStream} the
-   *     layer BLOB was written to
+   *     layer BLOB was written to.
+   * @throws IOException if closing the output stream or getting the layer diff ID fails.
+   * @throws LayerPropertyNotFoundException if adding the layer to the cache metadata fails.
    */
   public CachedLayer getCachedLayer(
       DescriptorDigest layerDigest, CountingOutputStream countingOutputStream)
@@ -120,12 +128,19 @@ public class CacheWriter {
     return cachedLayer;
   }
 
-  /** @return the path to the file for the layer with the specified compressed digest */
+  /**
+   * @param compressedDigest the compressed digest of the layer to find.
+   * @return the path to the file for the layer with the specified compressed digest.
+   */
   private Path getLayerFile(DescriptorDigest compressedDigest) {
     return CacheFiles.getLayerFile(cache.getCacheDirectory(), compressedDigest);
   }
 
-  /** @return the layer diff ID by decompressing the layer content file */
+  /**
+   * @param layerFile the layer content file.
+   * @return the layer diff ID by decompressing the layer content file.
+   * @throws IOException if reading the layer file fails.
+   */
   private DescriptorDigest getDiffId(Path layerFile) throws IOException {
     CountingDigestOutputStream diffIdCaptureOutputStream =
         new CountingDigestOutputStream(ByteStreams.nullOutputStream());

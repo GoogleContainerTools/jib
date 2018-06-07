@@ -41,6 +41,11 @@ public class Cache implements Closeable {
   /**
    * Initializes a cache with a directory. This also loads the cache metadata if it exists in the
    * directory.
+   *
+   * @param cacheDirectory the directory to use for the cache.
+   * @return the initialized cache.
+   * @throws NotDirectoryException if {@code cacheDirectory} is not a directory.
+   * @throws CacheMetadataCorruptedException if loading the cache metadata fails.
    */
   public static Cache init(Path cacheDirectory)
       throws NotDirectoryException, CacheMetadataCorruptedException {
@@ -76,13 +81,23 @@ public class Cache implements Closeable {
     this.cacheMetadata = cacheMetadata;
   }
 
-  /** Finishes the use of the cache by flushing any unsaved changes. */
+  /**
+   * Finishes the use of the cache by flushing any unsaved changes.
+   *
+   * @throws IOException if saving the cache metadata fails.
+   */
   @Override
   public void close() throws IOException {
     saveCacheMetadata(cacheDirectory);
   }
 
-  /** Adds the cached layer to the cache metadata. */
+  /**
+   * Adds the cached layer to the cache metadata.
+   *
+   * @param cachedLayer the layer to add.
+   * @param layerMetadata the metadata to add the layer to.
+   * @throws LayerPropertyNotFoundException if adding the layer fails.
+   */
   void addLayerToMetadata(CachedLayer cachedLayer, @Nullable LayerMetadata layerMetadata)
       throws LayerPropertyNotFoundException {
     cacheMetadata.addLayer(new CachedLayerWithMetadata(cachedLayer, layerMetadata));
