@@ -51,7 +51,12 @@ public class ReproducibleLayerBuilder {
     this.extractionPath = extractionPath;
   }
 
-  /** Builds and returns the layer. */
+  /**
+   * Builds and returns the layer.
+   *
+   * @return the new layer
+   * @throws IOException if walking the source files fails
+   */
   public UnwrittenLayer build() throws IOException {
     List<TarArchiveEntry> filesystemEntries = new ArrayList<>();
 

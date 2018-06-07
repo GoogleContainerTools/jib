@@ -31,7 +31,12 @@ public class ReferenceLayer implements Layer {
   /** The digest of the uncompressed layer content. */
   private final DescriptorDigest diffId;
 
-  /** Instantiate with a {@link BlobDescriptor} and diff ID. */
+  /**
+   * Instantiate with a {@link BlobDescriptor} and diff ID.
+   *
+   * @param blobDescriptor the blob descriptor
+   * @param diffId the diff ID
+   */
   public ReferenceLayer(BlobDescriptor blobDescriptor, DescriptorDigest diffId) {
     this.blobDescriptor = blobDescriptor;
     this.diffId = diffId;
