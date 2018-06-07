@@ -50,6 +50,11 @@ public class MainClassFinder {
    * </ul>
    *
    * <p>Warns if main class is not valid, or throws an error if no valid main class is not found.
+   *
+   * @param mainClass the explicitly configured main class ({@code null} if not configured).
+   * @param projectProperties properties containing plugin information and help messages.
+   * @return the name of the main class to be used for the container entrypoint.
+   * @throws MainClassInferenceException if no valid main class is configured or discovered.
    */
   public static String resolveMainClass(
       @Nullable String mainClass, ProjectProperties projectProperties)
@@ -117,7 +122,10 @@ public class MainClassFinder {
   /**
    * Finds the classes with {@code public static void main(String[] args)} in {@code rootDirectory}.
    *
-   * @param rootDirectory directory containing the {@code .class} files
+   * @param rootDirectory directory containing the {@code .class} files.
+   * @param buildLogger used for displaying status messages.
+   * @return a list of class names containing a main method.
+   * @throws IOException if searching the root directory fails.
    */
   @VisibleForTesting
   static List<String> findMainClasses(Path rootDirectory, BuildLogger buildLogger)
