@@ -36,7 +36,7 @@ import org.apache.http.NoHttpResponseException;
 /** Makes requests to a registry endpoint. */
 class RegistryEndpointCaller<T> {
 
-  private static final String PROTOCOL = "https";
+  private static final String DEFAULT_PROTOCOL = "https";
 
   /** Maintains the state of a request. This is used to retry requests with different parameters. */
   private static class RequestState {
@@ -78,7 +78,7 @@ class RegistryEndpointCaller<T> {
       throws MalformedURLException {
     this.initialRequestState =
         new RequestState(
-            authorization, registryEndpointProvider.getApiRoute(PROTOCOL + "://" + apiRouteBase));
+            authorization, registryEndpointProvider.getApiRoute(DEFAULT_PROTOCOL + "://" + apiRouteBase));
     this.userAgent = userAgent;
     this.registryEndpointProvider = registryEndpointProvider;
     this.registryEndpointProperties = registryEndpointProperties;
