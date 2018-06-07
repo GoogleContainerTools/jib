@@ -108,6 +108,24 @@ public class HelpfulSuggestions {
     return suggest("make sure Docker is installed and you have correct privileges to run it");
   }
 
+  /**
+   * @param parameter the parameter name (should be 'to.image' for gradle, {@literal <to><image>}
+   *     for maven
+   * @param buildConfigFilename the name of the build config (build.gradle or pom.xml)
+   * @param command an example command for passing the parameter via commandline
+   * @return a suggested fix for a missing target image configuration
+   */
+  public String forToNotConfigured(String parameter, String buildConfigFilename, String command) {
+    return suggest(
+        "add a "
+            + parameter
+            + " configuration parameter to your "
+            + buildConfigFilename
+            + " or set the parameter via the commandline (e.g. '"
+            + command
+            + "').");
+  }
+
   public String none() {
     return messagePrefix;
   }
@@ -124,16 +142,5 @@ public class HelpfulSuggestions {
             + credHelperConfiguration
             + "' or "
             + authConfiguration);
-  }
-
-  public String forToNotConfigured(String parameter, String buildConfigFilename, String command) {
-    return suggest(
-        "add a "
-            + parameter
-            + " configuration parameter to your "
-            + buildConfigFilename
-            + " or set the parameter via commandline (e.g. '"
-            + command
-            + "').");
   }
 }

@@ -120,7 +120,7 @@ public class BuildImageMojoIntegrationTest {
           ex.getMessage(),
           CoreMatchers.containsString(
               "Missing target image parameter, perhaps you should add a <to><image> configuration "
-                  + "parameter to your pom.xml or set the parameter via commandline (e.g. 'mvn "
+                  + "parameter to your pom.xml or set the parameter via the commandline (e.g. 'mvn "
                   + "compile jib:build -Dimage=<your image name>')."));
     }
   }
