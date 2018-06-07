@@ -37,7 +37,7 @@ public class BlobDescriptor {
    *
    * @param inputStream the stream to read the contents from
    * @param outputStream the {@link OutputStream} to pipe to
-   * @return a {@link BlobDescriptor} created from the {@link InputStream}
+   * @return a {@link BlobDescriptor} of the piped contents
    * @throws IOException if reading from or writing to the streams fails
    */
   static BlobDescriptor fromPipe(InputStream inputStream, OutputStream outputStream)

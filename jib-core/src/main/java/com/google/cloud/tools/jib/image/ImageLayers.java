@@ -124,7 +124,7 @@ public class ImageLayers<T extends Layer> implements Iterable<T> {
 
   /**
    * @param digest the digest used to retrieve the layer
-   * @return the layer by digest, or {@code null} if not found
+   * @return the layer found, or {@code null} if not found
    * @throws LayerPropertyNotFoundException if getting the layer's blob descriptor fails
    */
   @Nullable

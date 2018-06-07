@@ -60,7 +60,7 @@ public class Image<T extends Layer> {
     /**
      * Adds an environment variable definition in the format {@code NAME=VALUE}.
      *
-     * @param environmentVariableDefinition the string to add
+     * @param environmentVariableDefinition the definition to add
      * @return this
      */
     public Builder<T> addEnvironmentVariableDefinition(String environmentVariableDefinition) {
