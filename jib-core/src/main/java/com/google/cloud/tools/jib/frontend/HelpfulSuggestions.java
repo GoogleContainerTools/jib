@@ -109,8 +109,7 @@ public class HelpfulSuggestions {
   }
 
   /**
-   * @param parameter the parameter name (should be 'to.image' for gradle, {@literal <to><image>}
-   *     for maven
+   * @param parameter the parameter name (e.g. 'to.image' or {@literal <to><image>})
    * @param buildConfigFilename the name of the build config (build.gradle or pom.xml)
    * @param command an example command for passing the parameter via commandline
    * @return a suggested fix for a missing target image configuration
