@@ -43,6 +43,8 @@ public class DockerContextTask extends DefaultTask {
   /**
    * This will call the property {@code "jib"} so that it is the same name as the extension. This
    * way, the user would see error messages for missing configuration with the prefix {@code jib.}.
+   *
+   * @return the {@link JibExtension}.
    */
   @Nested
   @Nullable
@@ -51,8 +53,8 @@ public class DockerContextTask extends DefaultTask {
   }
 
   /**
-   * The input files to this task are all the output files for all the dependencies of the {@code
-   * classes} task.
+   * @return the input files to this task are all the output files for all the dependencies of the
+   *     {@code classes} task.
    */
   @InputFiles
   public FileCollection getInputFiles() {
@@ -67,7 +69,10 @@ public class DockerContextTask extends DefaultTask {
     return getProject().files(dependencyFileCollections);
   }
 
-  /** The output directory for the Docker context is by default {@code build/jib-docker-context}. */
+  /**
+   * @return the output directory for the Docker context is by default {@code build/jib-docker-
+   *     context}.
+   */
   @OutputDirectory
   public String getTargetDir() {
     if (targetDir == null) {
@@ -76,7 +81,11 @@ public class DockerContextTask extends DefaultTask {
     return targetDir;
   }
 
-  /** The output directory can be overriden with the {@code --jib.dockerDir} command line option. */
+  /**
+   * The output directory can be overriden with the {@code --jib.dockerDir} command line option.
+   *
+   * @param targetDir the output directory.
+   */
   @Option(option = "jib.dockerDir", description = "Directory to output the Docker context to")
   public void setTargetDir(String targetDir) {
     this.targetDir = targetDir;

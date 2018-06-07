@@ -45,7 +45,12 @@ public class TarStreamBuilder {
   private final LinkedHashMap<TarArchiveEntry, TarArchiveOutputStreamConsumer> archiveMap =
       new LinkedHashMap<>();
 
-  /** Writes each entry in the filesystem to the tarball archive stream. */
+  /**
+   * Writes each entry in the filesystem to the tarball archive stream.
+   *
+   * @param tarByteStream the stream to write to.
+   * @throws IOException if building the tarball fails.
+   */
   private void writeEntriesAsTarArchive(OutputStream tarByteStream) throws IOException {
     try (TarArchiveOutputStream tarArchiveOutputStream =
         new TarArchiveOutputStream(tarByteStream)) {
@@ -60,7 +65,11 @@ public class TarStreamBuilder {
     }
   }
 
-  /** Adds an entry to the archive. */
+  /**
+   * Adds an entry to the archive.
+   *
+   * @param entry the entry to add.
+   */
   public void addEntry(TarArchiveEntry entry) {
     archiveMap.put(
         entry,
@@ -74,7 +83,12 @@ public class TarStreamBuilder {
         });
   }
 
-  /** Adds a blob to the archive. */
+  /**
+   * Adds a blob to the archive.
+   *
+   * @param contents the blob contents to add to the tarball.
+   * @param name the name of the entry (i.e. filename).
+   */
   public void addEntry(String contents, String name) {
     TarArchiveEntry entry = new TarArchiveEntry(name);
     entry.setSize(contents.length());
@@ -84,7 +98,9 @@ public class TarStreamBuilder {
             tarArchiveOutputStream.write(contents.getBytes(StandardCharsets.UTF_8)));
   }
 
-  /** Builds a {@link Blob} that can stream the uncompressed tarball archive BLOB. */
+  /**
+   * @return a new {@link Blob} that can stream the uncompressed tarball archive BLOB.
+   */
   public Blob toBlob() {
     return Blobs.from(this::writeEntriesAsTarArchive);
   }

@@ -83,9 +83,19 @@ public interface BuildableManifestTemplate extends ManifestTemplate {
   /** @return an unmodifiable view of the layers */
   List<ContentDescriptorTemplate> getLayers();
 
-  /** Sets the content descriptor of the container configuration. */
+  /**
+   * Sets the content descriptor of the container configuration.
+   *
+   * @param size the size of the container configuration.
+   * @param digest the container configuration content descriptor digest.
+   */
   void setContainerConfiguration(long size, DescriptorDigest digest);
 
-  /** Adds a layer to the manifest. */
+  /**
+   * Adds a layer to the manifest.
+   *
+   * @param size the size of the layer.
+   * @param digest the layer descriptor digest.
+   */
   void addLayer(long size, DescriptorDigest digest);
 }

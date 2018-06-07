@@ -31,7 +31,12 @@ public class DirectoryWalker {
 
   private Predicate<Path> pathFilter = path -> true;
 
-  /** Initialize with a root directory to walk. */
+  /**
+   * Initialize with a root directory to walk.
+   *
+   * @param rootDir the root directory.
+   * @throws NotDirectoryException if the root directory is not a directory.
+   */
   public DirectoryWalker(Path rootDir) throws NotDirectoryException {
     if (!Files.isDirectory(rootDir)) {
       throw new NotDirectoryException(rootDir + " is not a directory");
@@ -39,13 +44,22 @@ public class DirectoryWalker {
     this.rootDir = rootDir;
   }
 
-  /** Adds a filter to the walked paths. */
+  /**
+   * Adds a filter to the walked paths.
+   *
+   * @param pathFilter the filter.
+   * @return the {@link DirectoryWalker} with the path filter set.
+   */
   public DirectoryWalker filter(Predicate<Path> pathFilter) {
     this.pathFilter = this.pathFilter.and(pathFilter);
     return this;
   }
 
-  /** Filters away the {@code rootDir}. */
+  /**
+   * Filters away the {@code rootDir}.
+   *
+   * @return the {@link DirectoryWalker} with the root directory filtered out.
+   */
   public DirectoryWalker filterRoot() {
     filter(path -> !path.equals(rootDir));
     return this;
@@ -54,6 +68,10 @@ public class DirectoryWalker {
   /**
    * Walks {@link #rootDir} and applies {@code pathConsumer} to each file. Note that {@link
    * #rootDir} itself is visited as well.
+   *
+   * @param pathConsumer the consumer that is applied to each file.
+   * @return a list of Paths that were walked.
+   * @throws IOException if the walk fails.
    */
   public ImmutableList<Path> walk(PathConsumer pathConsumer) throws IOException {
     ImmutableList<Path> files = walk();
@@ -63,7 +81,12 @@ public class DirectoryWalker {
     return files;
   }
 
-  /** Walks {@link #rootDir} and returns the walked files. */
+  /**
+   * Walks {@link #rootDir}.
+   *
+   * @return the walked files.
+   * @throws IOException if walking the files fails.
+   */
   public ImmutableList<Path> walk() throws IOException {
     try (Stream<Path> fileStream = Files.walk(rootDir)) {
       Stream<Path> filteredFileStream = fileStream;
