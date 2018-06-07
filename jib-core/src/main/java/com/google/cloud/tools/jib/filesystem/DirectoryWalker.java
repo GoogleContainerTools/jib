@@ -47,8 +47,9 @@ public class DirectoryWalker {
   /**
    * Adds a filter to the walked paths.
    *
-   * @param pathFilter the filter.
-   * @return the {@link DirectoryWalker} with the path filter set.
+   * @param pathFilter the filter. {@code pathFilter} returns {@code true} if the path should be
+   *     accepted and {@code false} otherwise.
+   * @return this
    */
   public DirectoryWalker filter(Predicate<Path> pathFilter) {
     this.pathFilter = this.pathFilter.and(pathFilter);
@@ -58,7 +59,7 @@ public class DirectoryWalker {
   /**
    * Filters away the {@code rootDir}.
    *
-   * @return the {@link DirectoryWalker} with the root directory filtered out.
+   * @return this
    */
   public DirectoryWalker filterRoot() {
     filter(path -> !path.equals(rootDir));

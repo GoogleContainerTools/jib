@@ -113,7 +113,7 @@ public class HelpfulSuggestions {
   }
 
   /**
-   * @param suggestion a suggested fix for the problem described by {@code messagePrefix}
+   * @param suggestion a suggested fix for the problem described by {@link #messagePrefix}
    * @return the message containing the suggestion
    */
   public String suggest(String suggestion) {

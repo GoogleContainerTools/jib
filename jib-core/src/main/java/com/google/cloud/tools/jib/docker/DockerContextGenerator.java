@@ -62,7 +62,7 @@ public class DockerContextGenerator {
    * #generate}.
    *
    * @param baseImage the base image.
-   * @return The {@link DockerContextGenerator} with the base image set.
+   * @return this
    */
   public DockerContextGenerator setBaseImage(String baseImage) {
     this.baseImage = baseImage;
@@ -73,7 +73,7 @@ public class DockerContextGenerator {
    * Sets the JVM flags used in the {@code ENTRYPOINT}.
    *
    * @param jvmFlags the jvm flags.
-   * @return The {@link DockerContextGenerator} with the jvm flags set.
+   * @return this
    */
   public DockerContextGenerator setJvmFlags(List<String> jvmFlags) {
     this.jvmFlags = jvmFlags;
@@ -84,7 +84,7 @@ public class DockerContextGenerator {
    * Sets the main class used in the {@code ENTRYPOINT}.
    *
    * @param mainClass the name of the main class.
-   * @return The {@link DockerContextGenerator} with the main class set.
+   * @return this
    */
   public DockerContextGenerator setMainClass(String mainClass) {
     this.mainClass = mainClass;
@@ -95,7 +95,7 @@ public class DockerContextGenerator {
    * Sets the arguments used in the {@code CMD}.
    *
    * @param javaArguments the list of arguments to pass into main.
-   * @return The {@link DockerContextGenerator} with the main arguments set.
+   * @return this
    */
   public DockerContextGenerator setJavaArguments(List<String> javaArguments) {
     this.javaArguments = javaArguments;
