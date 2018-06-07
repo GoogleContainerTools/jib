@@ -31,7 +31,13 @@ import java.util.List;
 /** Translates {@link V21ManifestTemplate} and {@link V22ManifestTemplate} into {@link Image}. */
 public class JsonToImageTranslator {
 
-  /** Translates {@link V21ManifestTemplate} to {@link Image}. */
+  /**
+   * Translates {@link V21ManifestTemplate} to {@link Image}.
+   *
+   * @param manifestTemplate the template containing the image layers.
+   * @return the translated {@link Image}.
+   * @throws LayerPropertyNotFoundException if adding image layers fails.
+   */
   public static Image<Layer> toImage(V21ManifestTemplate manifestTemplate)
       throws LayerPropertyNotFoundException {
     Image.Builder<Layer> imageBuilder = Image.builder();
@@ -46,6 +52,14 @@ public class JsonToImageTranslator {
   /**
    * Translates {@link BuildableManifestTemplate} to {@link Image}. Uses the corresponding {@link
    * ContainerConfigurationTemplate} to get the layer diff IDs.
+   *
+   * @param manifestTemplate the template containing the image layers.
+   * @param containerConfigurationTemplate the template containing the diff IDs and container
+   *     configuration properties.
+   * @return the translated {@link Image}.
+   * @throws LayerCountMismatchException if the manifest and configuration contain conflicting layer
+   *     information.
+   * @throws LayerPropertyNotFoundException if adding image layers fails.
    */
   public static Image<Layer> toImage(
       BuildableManifestTemplate manifestTemplate,
