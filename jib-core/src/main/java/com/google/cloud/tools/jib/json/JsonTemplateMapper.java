@@ -52,6 +52,7 @@ public class JsonTemplateMapper {
   /**
    * Deserializes a JSON file via a JSON object template.
    *
+   * @param <T> child type of {@link JsonTemplate}
    * @param jsonFile a file containing a JSON string
    * @param templateClass the template to deserialize the string to
    * @return the template filled with the values parsed from {@code jsonFile}
@@ -62,13 +63,27 @@ public class JsonTemplateMapper {
     return objectMapper.readValue(Files.newInputStream(jsonFile), templateClass);
   }
 
-  /** Deserializes a JSON object from a JSON string. */
+  /** Deserializes a JSON object from a JSON string.
+   *
+   * @param <T> child type of {@link JsonTemplate}
+   * @param jsonString a JSON string
+   * @param templateClass the template to deserialize the string to
+   * @return the template filled with the values parsed from {@code jsonString}
+   * @throws IOException if an error occurred during parsing the JSON
+   */
   public static <T extends JsonTemplate> T readJson(String jsonString, Class<T> templateClass)
       throws IOException {
     return objectMapper.readValue(jsonString, templateClass);
   }
 
-  /** Deserializes a JSON object list from a JSON string. */
+  /** Deserializes a JSON object list from a JSON string.
+   *
+   * @param <T> child type of {@link ListOfJsonTemplate}
+   * @param jsonString a JSON string
+   * @param templateClass the template to deserialize the string to
+   * @return the template filled with the values parsed from {@code jsonFile}
+   * @throws IOException if an error occurred during parsing the JSON
+   */
   public static <T extends ListOfJsonTemplate> List<T> readListOfJson(
       String jsonString, Class<T> templateClass) throws IOException {
     return objectMapper.readValue(
@@ -76,12 +91,22 @@ public class JsonTemplateMapper {
         objectMapper.getTypeFactory().constructCollectionType(List.class, templateClass));
   }
 
-  /** Convert a {@link JsonTemplate} to a {@link Blob} of the JSON string. */
+  /**
+   * Convert a {@link JsonTemplate} to a {@link Blob} of the JSON string.
+   *
+   * @param template the JSON template to convert
+   * @return a {@link Blob} of the JSON string
+   */
   public static Blob toBlob(JsonTemplate template) {
     return toBlob((Object) template);
   }
 
-  /** Convert a {@link ListOfJsonTemplate} to a {@link Blob} of the JSON string. */
+  /**
+   * Convert a {@link ListOfJsonTemplate} to a {@link Blob} of the JSON string.
+   *
+   * @param template the list of JSON templates to convert
+   * @return a {@link Blob} of the JSON string
+   */
   public static Blob toBlob(ListOfJsonTemplate template) {
     return toBlob(template.getList());
   }
