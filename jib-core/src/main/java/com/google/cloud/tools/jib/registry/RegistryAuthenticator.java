@@ -47,6 +47,9 @@ public class RegistryAuthenticator {
    *
    * @param authenticationMethod the {@code WWW-Authenticate} header value
    * @param repository the repository/image name
+   * @return a new {@link RegistryAuthenticator} for authenticating with the registry service
+   * @throws RegistryAuthenticationFailedException if authentication fails
+   * @throws MalformedURLException TODO: it doesn't really
    * @see <a
    *     href="https://docs.docker.com/registry/spec/auth/token/#how-to-authenticate">https://docs.docker.com/registry/spec/auth/token/#how-to-authenticate</a>
    */
@@ -105,18 +108,33 @@ public class RegistryAuthenticator {
     authenticationUrlBase = realm + "?service=" + service + "&scope=repository:" + repository + ":";
   }
 
-  /** Sets an {@code Authorization} header to authenticate with. */
+  /**
+   * Sets an {@code Authorization} header to authenticate with.
+   *
+   * @param authorization the authorization header
+   * @return this
+   */
   public RegistryAuthenticator setAuthorization(@Nullable Authorization authorization) {
     this.authorization = authorization;
     return this;
   }
 
-  /** Authenticates permissions to pull. */
+  /**
+   * Authenticates permissions to pull.
+   *
+   * @return an {@code Authorization} authenticating the pull
+   * @throws RegistryAuthenticationFailedException if authentication fails
+   */
   public Authorization authenticatePull() throws RegistryAuthenticationFailedException {
     return authenticate("pull");
   }
 
-  /** Authenticates permission to pull and push. */
+  /**
+   * Authenticates permission to pull and push.
+   *
+   * @return an {@code Authorization} authenticating the push
+   * @throws RegistryAuthenticationFailedException if authentication fails
+   */
   public Authorization authenticatePush() throws RegistryAuthenticationFailedException {
     return authenticate("pull,push");
   }
@@ -130,6 +148,8 @@ public class RegistryAuthenticator {
    * Sends the authentication request and retrieves the Bearer authorization token.
    *
    * @param scope the scope of permissions to authenticate for
+   * @return the {@link Authorization} response
+   * @throws RegistryAuthenticationFailedException if authentication fails
    * @see <a
    *     href="https://docs.docker.com/registry/spec/auth/token/#how-to-authenticate">https://docs.docker.com/registry/spec/auth/token/#how-to-authenticate</a>
    */
