@@ -68,11 +68,10 @@ public class BuildImageMojo extends JibPluginConfiguration {
 
     // Parses 'to' into image reference.
     if (Strings.isNullOrEmpty(getTargetImage())) {
-      // TODO: Consolidate with gradle message
       throw new MojoFailureException(
-          "Missing target image parameter. Add a <to><image> configuration parameter to your "
-              + "pom.xml or set the parameter via commandline (e.g. 'mvn compile jib:build "
-              + "-Dimage=<your image name>').");
+          HelpfulSuggestionsProvider.get("Missing target image parameter")
+              .forToNotConfigured(
+                  "<to><image>", "pom.xml", "mvn compile jib:build -Dimage=<your image name>"));
     }
     ImageReference targetImage = parseTargetImageReference(getTargetImage());
 
