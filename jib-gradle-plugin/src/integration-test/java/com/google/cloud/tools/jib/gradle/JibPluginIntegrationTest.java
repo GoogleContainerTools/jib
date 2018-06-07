@@ -111,9 +111,9 @@ public class JibPluginIntegrationTest {
       Assert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
-              "Missing target image parameter. Add a 'jib.to.image' configuration parameter to "
-                  + "your build.gradle or set the parameter via commandline (e.g. 'gradle jib "
-                  + "--image <your image name>')."));
+              "Missing target image parameter, perhaps you should add a 'jib.to.image' "
+                  + "configuration parameter to your build.gradle or set the parameter via the "
+                  + "commandline (e.g. 'gradle jib --image <your image name>')."));
     }
   }
 
