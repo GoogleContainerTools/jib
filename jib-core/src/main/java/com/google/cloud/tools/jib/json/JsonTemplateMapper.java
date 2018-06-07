@@ -63,7 +63,8 @@ public class JsonTemplateMapper {
     return objectMapper.readValue(Files.newInputStream(jsonFile), templateClass);
   }
 
-  /** Deserializes a JSON object from a JSON string.
+  /**
+   * Deserializes a JSON object from a JSON string.
    *
    * @param <T> child type of {@link JsonTemplate}
    * @param jsonString a JSON string
@@ -76,7 +77,8 @@ public class JsonTemplateMapper {
     return objectMapper.readValue(jsonString, templateClass);
   }
 
-  /** Deserializes a JSON object list from a JSON string.
+  /**
+   * Deserializes a JSON object list from a JSON string.
    *
    * @param <T> child type of {@link ListOfJsonTemplate}
    * @param jsonString a JSON string

@@ -98,9 +98,7 @@ public class TarStreamBuilder {
             tarArchiveOutputStream.write(contents.getBytes(StandardCharsets.UTF_8)));
   }
 
-  /**
-   * @return a new {@link Blob} that can stream the uncompressed tarball archive BLOB.
-   */
+  /** @return a new {@link Blob} that can stream the uncompressed tarball archive BLOB. */
   public Blob toBlob() {
     return Blobs.from(this::writeEntriesAsTarArchive);
   }
