@@ -39,7 +39,11 @@ public class ImageToTarballTranslator {
 
   private final Image<CachedLayer> image;
 
-  /** Instantiate with an {@link Image}. */
+  /**
+   * Instantiate with an {@link Image}.
+   *
+   * @param image the image to convert into a tarball.
+   */
   public ImageToTarballTranslator(Image<CachedLayer> image) {
     this.image = image;
   }
