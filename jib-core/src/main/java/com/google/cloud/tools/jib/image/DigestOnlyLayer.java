@@ -25,7 +25,11 @@ public class DigestOnlyLayer implements Layer {
   /** The {@link BlobDescriptor} of the compressed layer content. */
   private final BlobDescriptor blobDescriptor;
 
-  /** Instantiate with a {@link DescriptorDigest}. */
+  /**
+   * Instantiate with a {@link DescriptorDigest}.
+   *
+   * @param digest the digest to instantiate the {@link DigestOnlyLayer} from
+   */
   public DigestOnlyLayer(DescriptorDigest digest) {
     blobDescriptor = new BlobDescriptor(digest);
   }
