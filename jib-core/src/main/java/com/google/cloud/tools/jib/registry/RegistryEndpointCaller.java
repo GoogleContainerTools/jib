@@ -78,7 +78,8 @@ class RegistryEndpointCaller<T> {
       throws MalformedURLException {
     this.initialRequestState =
         new RequestState(
-            authorization, registryEndpointProvider.getApiRoute(DEFAULT_PROTOCOL + "://" + apiRouteBase));
+            authorization,
+            registryEndpointProvider.getApiRoute(DEFAULT_PROTOCOL + "://" + apiRouteBase));
     this.userAgent = userAgent;
     this.registryEndpointProvider = registryEndpointProvider;
     this.registryEndpointProperties = registryEndpointProperties;
