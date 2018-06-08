@@ -54,13 +54,13 @@ public class BuildDockerMojo extends JibPluginConfiguration {
     }
 
     // Parses 'from' and 'to' into image reference.
-    ImageReference baseImage = parseBaseImageReference(getBaseImage());
+    ImageReference baseImage = parseImageReference(getBaseImage(), "from");
 
     // TODO: Validate that project name and version are valid repository/tag
     ImageReference targetImage =
         Strings.isNullOrEmpty(getTargetImage())
             ? ImageReference.of(null, getProject().getName(), getProject().getVersion())
-            : parseTargetImageReference(getTargetImage());
+            : parseImageReference(getTargetImage(), "to");
 
     // Checks Maven settings for registry credentials.
     MavenSettingsServerCredentials mavenSettingsServerCredentials =

@@ -24,7 +24,13 @@ import java.nio.file.Path;
 /** Static methods for operating on the filesystem. */
 public class FileOperations {
 
-  /** Copies {@code sourceFiles} to the {@code destDir} directory. */
+  /**
+   * Copies {@code sourceFiles} to the {@code destDir} directory.
+   *
+   * @param sourceFiles the list of source files.
+   * @param destDir the directory to copy the files to.
+   * @throws IOException if the copy fails.
+   */
   public static void copy(ImmutableList<Path> sourceFiles, Path destDir) throws IOException {
     for (Path sourceFile : sourceFiles) {
       PathConsumer copyPathConsumer =

@@ -59,6 +59,8 @@ public class Connection implements Closeable {
 
   /**
    * Make sure to wrap with a try-with-resource to ensure that the connection is closed after usage.
+   *
+   * @param url the url to send the request to
    */
   public Connection(URL url) {
     this.url = new GenericUrl(url);
@@ -73,22 +75,47 @@ public class Connection implements Closeable {
     httpResponse.disconnect();
   }
 
-  /** Sends the request with method GET. */
+  /**
+   * Sends the request with method GET.
+   *
+   * @param request the request to send
+   * @return the response to the sent request
+   * @throws IOException if sending the request fails
+   */
   public Response get(Request request) throws IOException {
     return send(HttpMethods.GET, request);
   }
 
-  /** Sends the request with method POST. */
+  /**
+   * Sends the request with method POST.
+   *
+   * @param request the request to send
+   * @return the response to the sent request
+   * @throws IOException if sending the request fails
+   */
   public Response post(Request request) throws IOException {
     return send(HttpMethods.POST, request);
   }
 
-  /** Sends the request with method PUT. */
+  /**
+   * Sends the request with method PUT.
+   *
+   * @param request the request to send
+   * @return the response to the sent request
+   * @throws IOException if sending the request fails
+   */
   public Response put(Request request) throws IOException {
     return send(HttpMethods.PUT, request);
   }
 
-  /** Sends the request. */
+  /**
+   * Sends the request.
+   *
+   * @param httpMethod the HTTP request method
+   * @param request the request to send
+   * @return the response to the sent request
+   * @throws IOException if building the HTTP request fails.
+   */
   public Response send(String httpMethod, Request request) throws IOException {
     httpResponse =
         requestFactory

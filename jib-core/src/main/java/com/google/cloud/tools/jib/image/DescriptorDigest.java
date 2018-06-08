@@ -45,7 +45,13 @@ public class DescriptorDigest {
 
   private final String hash;
 
-  /** Creates a new instance from a valid hash string. */
+  /**
+   * Creates a new instance from a valid hash string.
+   *
+   * @param hash the hash to generate the {@link DescriptorDigest} from
+   * @return a new {@link DescriptorDigest} created from the hash
+   * @throws DigestException if the hash is invalid
+   */
   public static DescriptorDigest fromHash(String hash) throws DigestException {
     if (!hash.matches(HASH_REGEX)) {
       throw new DigestException("Invalid hash: " + hash);
@@ -54,7 +60,13 @@ public class DescriptorDigest {
     return new DescriptorDigest(hash);
   }
 
-  /** Creates a new instance from a valid digest string. */
+  /**
+   * Creates a new instance from a valid digest string.
+   *
+   * @param digest the digest to generate the {@link DescriptorDigest} from
+   * @return a new {@link DescriptorDigest} created from the digest
+   * @throws DigestException if the digest is invalid
+   */
   public static DescriptorDigest fromDigest(String digest) throws DigestException {
     if (!digest.matches(DIGEST_REGEX)) {
       throw new DigestException("Invalid digest: " + digest);

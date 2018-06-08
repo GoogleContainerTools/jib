@@ -76,6 +76,7 @@ public class DockerConfigTemplate implements JsonTemplate {
   private final Map<String, String> credHelpers = new HashMap<>();
 
   /**
+   * @param registry the registry to get the authorization for
    * @return the base64-encoded {@code Basic} authorization for {@code registry}, or {@code null} if
    *     none exists
    */
@@ -88,6 +89,7 @@ public class DockerConfigTemplate implements JsonTemplate {
   }
 
   /**
+   * @param registry the registry to get the credential helpers for
    * @return {@code credsStore} if {@code registry} is present in {@code auths}; otherwise, searches
    *     {@code credHelpers}; otherwise, {@code null} if not found
    */

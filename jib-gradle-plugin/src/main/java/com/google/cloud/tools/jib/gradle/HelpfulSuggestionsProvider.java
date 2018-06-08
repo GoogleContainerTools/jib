@@ -21,6 +21,10 @@ import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
 /** Provider for Maven-specific {@link HelpfulSuggestions}. */
 class HelpfulSuggestionsProvider {
 
+  /**
+   * @param messagePrefix the prefix
+   * @return a new {@link HelpfulSuggestions} with the specified message prefix
+   */
   static HelpfulSuggestions get(String messagePrefix) {
     return new HelpfulSuggestions(
         messagePrefix,

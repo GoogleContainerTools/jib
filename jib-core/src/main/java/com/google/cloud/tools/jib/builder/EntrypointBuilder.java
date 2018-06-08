@@ -26,6 +26,11 @@ public class EntrypointBuilder {
    * Builds the container entrypoint.
    *
    * <p>The entrypoint is {@code java [jvm flags] -cp [classpaths] [main class]}.
+   *
+   * @param sourceFilesConfiguration configuration defining where files are copied onto the image
+   * @param jvmFlags the JVM flags to start the container with
+   * @param mainClass the name of the main class to run on startup
+   * @return a list of the entrypoint tokens
    */
   public static ImmutableList<String> makeEntrypoint(
       SourceFilesConfiguration sourceFilesConfiguration, List<String> jvmFlags, String mainClass) {

@@ -98,6 +98,11 @@ tasks.withType(JavaCompile) {
     }
 }
 
+// Fail build on javadoc warnings
+tasks.withType(Javadoc) {
+    options.addBooleanOption('Xwerror', true)
+}
+
 tasks.withType(Test) {
     reports.html.setDestination file("${reporting.baseDir}/${name}")
 }

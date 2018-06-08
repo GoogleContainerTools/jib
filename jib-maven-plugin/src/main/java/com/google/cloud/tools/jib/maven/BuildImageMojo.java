@@ -64,7 +64,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
     }
 
     // Parses 'from' into image reference.
-    ImageReference baseImage = parseBaseImageReference(getBaseImage());
+    ImageReference baseImage = parseImageReference(getBaseImage(), "from");
 
     // Parses 'to' into image reference.
     if (Strings.isNullOrEmpty(getTargetImage())) {
@@ -73,7 +73,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
               .forToNotConfigured(
                   "<to><image>", "pom.xml", "mvn compile jib:build -Dimage=<your image name>"));
     }
-    ImageReference targetImage = parseTargetImageReference(getTargetImage());
+    ImageReference targetImage = parseImageReference(getTargetImage(), "to");
 
     // Checks Maven settings for registry credentials.
     MavenSettingsServerCredentials mavenSettingsServerCredentials =

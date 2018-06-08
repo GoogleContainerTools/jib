@@ -37,6 +37,8 @@ public class ImageLayers<T extends Layer> implements Iterable<T> {
      * Adds a layer.
      *
      * @param layer the layer to add
+     * @return this
+     * @throws LayerPropertyNotFoundException if adding the layer fails
      */
     public Builder<T> add(T layer) throws LayerPropertyNotFoundException {
       // Doesn't add the layer if the last layer is the same.
@@ -49,7 +51,14 @@ public class ImageLayers<T extends Layer> implements Iterable<T> {
       return this;
     }
 
-    /** Adds all layers in {@code layers}. */
+    /**
+     * Adds all layers in {@code layers}.
+     *
+     * @param <U> child type of {@link Layer}
+     * @param layers the layers to add
+     * @return this
+     * @throws LayerPropertyNotFoundException if adding a layer fails
+     */
     public <U extends T> Builder<T> addAll(ImageLayers<U> layers)
         throws LayerPropertyNotFoundException {
       for (U layer : layers) {
@@ -62,7 +71,11 @@ public class ImageLayers<T extends Layer> implements Iterable<T> {
       return new ImageLayers<>(layersBuilder.build(), layerDigestsBuilder.build());
     }
 
-    /** @return {@code true} if {@code layer} is the same as the last layer in {@link #layers} */
+    /**
+     * @param layer the layer to compare
+     * @return {@code true} if {@code layer} is the same as the last layer in {@link #layers}
+     * @throws LayerPropertyNotFoundException if getting the last layer's blob descriptor fails
+     */
     private boolean isSameAsLastLayer(T layer) throws LayerPropertyNotFoundException {
       return lastLayer != null
           && layer
@@ -87,7 +100,7 @@ public class ImageLayers<T extends Layer> implements Iterable<T> {
     this.layerDigests = layerDigests;
   }
 
-  /** Returns a read-only view of the image layers. */
+  /** @return a read-only view of the image layers. */
   public ImmutableList<T> getLayers() {
     return layers;
   }
@@ -101,12 +114,19 @@ public class ImageLayers<T extends Layer> implements Iterable<T> {
     return layers.isEmpty();
   }
 
-  /** @return the layer at the specified index */
+  /**
+   * @param index the index of the layer to get
+   * @return the layer at the specified index
+   */
   public T get(int index) {
     return layers.get(index);
   }
 
-  /** @return the layer by digest, or {@code null} if not found */
+  /**
+   * @param digest the digest used to retrieve the layer
+   * @return the layer found, or {@code null} if not found
+   * @throws LayerPropertyNotFoundException if getting the layer's blob descriptor fails
+   */
   @Nullable
   public T get(DescriptorDigest digest) throws LayerPropertyNotFoundException {
     if (!has(digest)) {
@@ -120,7 +140,10 @@ public class ImageLayers<T extends Layer> implements Iterable<T> {
     throw new IllegalStateException("Layer digest exists but layer not found");
   }
 
-  /** @return true if the layer with the specified digest exists; false otherwise */
+  /**
+   * @param digest the digest to check for
+   * @return true if the layer with the specified digest exists; false otherwise
+   */
   public boolean has(DescriptorDigest digest) {
     return layerDigests.contains(digest);
   }

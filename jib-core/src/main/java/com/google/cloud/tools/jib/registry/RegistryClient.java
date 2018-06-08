@@ -77,12 +77,16 @@ public class RegistryClient {
   @Nullable private static String userAgentSuffix;
 
   // TODO: Inject via a RegistryClientFactory.
-  /** Sets a suffix to append to {@code User-Agent} headers. */
+  /**
+   * Sets a suffix to append to {@code User-Agent} headers.
+   *
+   * @param userAgentSuffix the suffix to append
+   */
   public static void setUserAgentSuffix(@Nullable String userAgentSuffix) {
     RegistryClient.userAgentSuffix = userAgentSuffix;
   }
 
-  /** Gets the {@code User-Agent} header to send. */
+  /** @return the {@code User-Agent} header to send. */
   @VisibleForTesting
   static String getUserAgent() {
     String version = RegistryClient.class.getPackage().getImplementationVersion();
@@ -108,6 +112,8 @@ public class RegistryClient {
   /**
    * @return the {@link RegistryAuthenticator} to authenticate pulls/pushes with the registry, or
    *     {@code null} if no token authentication is necessary
+   * @throws IOException if communicating with the endpoint fails
+   * @throws RegistryException if communicating with the endpoint fails
    */
   @Nullable
   public RegistryAuthenticator getRegistryAuthenticator() throws IOException, RegistryException {
@@ -119,9 +125,13 @@ public class RegistryClient {
   /**
    * Pulls the image manifest for a specific tag.
    *
+   * @param <T> child type of ManifestTemplate
    * @param imageTag the tag to pull on
    * @param manifestTemplateClass the specific version of manifest template to pull, or {@link
    *     ManifestTemplate} to pull either {@link V22ManifestTemplate} or {@link V21ManifestTemplate}
+   * @return the manifest template
+   * @throws IOException if communicating with the endpoint fails
+   * @throws RegistryException if communicating with the endpoint fails
    */
   public <T extends ManifestTemplate> T pullManifest(
       String imageTag, Class<T> manifestTemplateClass) throws IOException, RegistryException {
@@ -138,7 +148,14 @@ public class RegistryClient {
     return pullManifest(imageTag, ManifestTemplate.class);
   }
 
-  /** Pushes the image manifest for a specific tag. */
+  /**
+   * Pushes the image manifest for a specific tag.
+   *
+   * @param manifestTemplate the image manifest
+   * @param imageTag the tag to push on
+   * @throws IOException if communicating with the endpoint fails
+   * @throws RegistryException if communicating with the endpoint fails
+   */
   public void pushManifest(BuildableManifestTemplate manifestTemplate, String imageTag)
       throws IOException, RegistryException {
     callRegistryEndpoint(
@@ -146,8 +163,11 @@ public class RegistryClient {
   }
 
   /**
+   * @param blobDigest the blob digest to check for
    * @return the BLOB's {@link BlobDescriptor} if the BLOB exists on the registry, or {@code null}
    *     if it doesn't
+   * @throws IOException if communicating with the endpoint fails
+   * @throws RegistryException if communicating with the endpoint fails
    */
   @Nullable
   public BlobDescriptor checkBlob(DescriptorDigest blobDigest)
@@ -163,6 +183,8 @@ public class RegistryClient {
    * @param destinationOutputStream the {@link OutputStream} to write the BLOB to
    * @return a {@link Blob} backed by the file at {@code destPath}. The file at {@code destPath}
    *     must exist for {@link Blob} to be valid.
+   * @throws IOException if communicating with the endpoint fails
+   * @throws RegistryException if communicating with the endpoint fails
    */
   public Void pullBlob(DescriptorDigest blobDigest, OutputStream destinationOutputStream)
       throws RegistryException, IOException {
@@ -179,6 +201,8 @@ public class RegistryClient {
    * @param blob the BLOB to push
    * @return {@code true} if the BLOB already exists on the registry and pushing was skipped; false
    *     if the BLOB was pushed
+   * @throws IOException if communicating with the endpoint fails
+   * @throws RegistryException if communicating with the endpoint fails
    */
   public boolean pushBlob(DescriptorDigest blobDigest, Blob blob)
       throws IOException, RegistryException {
@@ -220,6 +244,8 @@ public class RegistryClient {
    * Calls the registry endpoint.
    *
    * @param registryEndpointProvider the {@link RegistryEndpointProvider} to the endpoint
+   * @throws IOException if communicating with the endpoint fails
+   * @throws RegistryException if communicating with the endpoint fails
    */
   @Nullable
   private <T> T callRegistryEndpoint(RegistryEndpointProvider<T> registryEndpointProvider)
@@ -233,6 +259,8 @@ public class RegistryClient {
    * @param url the endpoint URL to call, or {@code null} to use default from {@code
    *     registryEndpointProvider}
    * @param registryEndpointProvider the {@link RegistryEndpointProvider} to the endpoint
+   * @throws IOException if communicating with the endpoint fails
+   * @throws RegistryException if communicating with the endpoint fails
    */
   @Nullable
   private <T> T callRegistryEndpoint(

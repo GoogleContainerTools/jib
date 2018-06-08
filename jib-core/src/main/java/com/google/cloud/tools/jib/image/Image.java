@@ -32,7 +32,12 @@ public class Image<T extends Layer> {
     private ImmutableList<String> entrypoint = ImmutableList.of();
     private ImmutableList<String> javaArguments = ImmutableList.of();
 
-    /** Sets the environment with a map from environment variable names to values. */
+    /**
+     * Sets the environment with a map from environment variable names to values.
+     *
+     * @param environment the map of environment variables
+     * @return this
+     */
     public Builder<T> setEnvironment(Map<String, String> environment) {
       for (Map.Entry<String, String> environmentVariable : environment.entrySet()) {
         setEnvironmentVariable(environmentVariable.getKey(), environmentVariable.getValue());
@@ -40,28 +45,58 @@ public class Image<T extends Layer> {
       return this;
     }
 
+    /**
+     * Adds an environment variable with a given name and value.
+     *
+     * @param name the name of the variable
+     * @param value the value to set it to
+     * @return this
+     */
     public Builder<T> setEnvironmentVariable(String name, String value) {
       environmentBuilder.add(name + "=" + value);
       return this;
     }
 
-    /** Adds an environment variable definition in the format {@code NAME=VALUE}. */
+    /**
+     * Adds an environment variable definition in the format {@code NAME=VALUE}.
+     *
+     * @param environmentVariableDefinition the definition to add
+     * @return this
+     */
     public Builder<T> addEnvironmentVariableDefinition(String environmentVariableDefinition) {
       environmentBuilder.add(environmentVariableDefinition);
       return this;
     }
 
+    /**
+     * Sets the entrypoint of the image.
+     *
+     * @param entrypoint the list of entrypoint tokens
+     * @return this
+     */
     public Builder<T> setEntrypoint(List<String> entrypoint) {
       this.entrypoint = ImmutableList.copyOf(entrypoint);
       return this;
     }
 
-    /** Sets the items in the "Cmd" field in the container configuration (i.e. the main args). */
+    /**
+     * Sets the items in the "Cmd" field in the container configuration (i.e. the main args).
+     *
+     * @param javaArguments the list of main args to add
+     * @return this
+     */
     public Builder<T> setJavaArguments(List<String> javaArguments) {
       this.javaArguments = ImmutableList.copyOf(javaArguments);
       return this;
     }
 
+    /**
+     * Adds a layer to the image.
+     *
+     * @param layer the layer to add
+     * @return this
+     * @throws LayerPropertyNotFoundException if adding the layer fails
+     */
     public Builder<T> addLayer(T layer) throws LayerPropertyNotFoundException {
       imageLayersBuilder.add(layer);
       return this;
