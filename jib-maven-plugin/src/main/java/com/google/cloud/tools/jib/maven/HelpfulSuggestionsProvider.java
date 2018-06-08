@@ -25,6 +25,10 @@ class HelpfulSuggestionsProvider {
   private static final Function<String, String> AUTH_CONFIGURATION_SUGGESTION =
       registry -> "set credentials for '" + registry + "' in your Maven settings";
 
+  /**
+   * @param messagePrefix the prefix
+   * @return a new {@link HelpfulSuggestions} with the specified message prefix
+   */
   static HelpfulSuggestions get(String messagePrefix) {
     return new HelpfulSuggestions(
         messagePrefix,

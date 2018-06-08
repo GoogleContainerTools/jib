@@ -37,7 +37,13 @@ class MavenSourceFilesConfiguration implements SourceFilesConfiguration {
   private static final String RESOURCES_PATH_ON_IMAGE = "/app/resources/";
   private static final String CLASSES_PATH_ON_IMAGE = "/app/classes/";
 
-  /** Resolves the source files configuration for a Maven {@link MavenProject}. */
+  /**
+   * Resolves the source files configuration for a Maven {@link MavenProject}.
+   *
+   * @param project the {@link MavenProject}
+   * @return a new {@link MavenSourceFilesConfiguration} for the project
+   * @throws IOException if collecting the project files fails
+   */
   static MavenSourceFilesConfiguration getForProject(MavenProject project) throws IOException {
     return new MavenSourceFilesConfiguration(project);
   }

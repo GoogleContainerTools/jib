@@ -38,7 +38,12 @@ class MavenProjectProperties implements ProjectProperties {
   private static final String PLUGIN_NAME = "jib-maven-plugin";
   private static final String JAR_PLUGIN_NAME = "'maven-jar-plugin'";
 
-  /** @return a MavenProjectProperties from the given project and logger. */
+  /**
+   * @param project the {@link MavenProject} for the plugin.
+   * @param mavenBuildLogger the logger used for printing status messages.
+   * @return a MavenProjectProperties from the given project and logger.
+   * @throws MojoExecutionException if no class files are found in the output directory.
+   */
   static MavenProjectProperties getForProject(
       MavenProject project, MavenBuildLogger mavenBuildLogger) throws MojoExecutionException {
     try {
@@ -57,6 +62,13 @@ class MavenProjectProperties implements ProjectProperties {
   private final MavenBuildLogger mavenBuildLogger;
   private final SourceFilesConfiguration sourceFilesConfiguration;
 
+  /**
+   * Constructor used for testing purposes.
+   *
+   * @param project the {@link MavenProject}
+   * @param mavenBuildLogger the {@link BuildLogger}
+   * @param sourceFilesConfiguration the project files configuration
+   */
   @VisibleForTesting
   MavenProjectProperties(
       MavenProject project,
@@ -126,6 +138,8 @@ class MavenProjectProperties implements ProjectProperties {
   /**
    * Tries to resolve the main class.
    *
+   * @param jibPluginConfiguration the mojo configuration properties.
+   * @return the configured main class, or the inferred main class if none is configured.
    * @throws MojoExecutionException if resolving the main class fails.
    */
   String getMainClass(JibPluginConfiguration jibPluginConfiguration) throws MojoExecutionException {

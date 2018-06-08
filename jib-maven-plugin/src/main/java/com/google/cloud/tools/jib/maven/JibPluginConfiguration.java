@@ -57,7 +57,10 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     }
   }
 
-  /** @return the {@link ImageReference} parsed from {@code from}. */
+  /**
+   * @param from the image reference string to parse.
+   * @return the {@link ImageReference} parsed from {@code from}.
+   */
   static ImageReference parseBaseImageReference(String from) {
     try {
       return ImageReference.parse(from);
@@ -66,7 +69,10 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     }
   }
 
-  /** @return the {@link ImageReference} parsed from {@code to}. */
+  /**
+   * @param to the image reference string to parse.
+   * @return the {@link ImageReference} parsed from {@code to}.
+   */
   static ImageReference parseTargetImageReference(String to) {
     try {
       return ImageReference.parse(to);
