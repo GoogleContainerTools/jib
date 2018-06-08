@@ -81,7 +81,7 @@ tasks.withType(JavaCompile) {
 
 // Fail build on javadoc warnings
 tasks.withType(Javadoc) {
-    options.addStringOption('Xwerror', '-quiet')
+    options.addBooleanOption('Xwerror', true)
 }
 
 tasks.withType(Test) {
