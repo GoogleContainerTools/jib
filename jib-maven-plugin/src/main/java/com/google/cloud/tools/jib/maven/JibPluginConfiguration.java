@@ -59,7 +59,7 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
   /**
    * @param image the image reference string to parse.
-   * @param type the type of image (e.g. "to" or "from").
+   * @param type name of the parameter being parsed (e.g. "to" or "from").
    * @return the {@link ImageReference} parsed from {@code from}.
    */
   static ImageReference parseImageReference(String image, String type) {
