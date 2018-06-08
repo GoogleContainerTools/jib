@@ -382,7 +382,7 @@
           </dependency>
         </dependencies>
         <configuration>
-          <consoleOutput>false</consoleOutput>
+          <logViolationsToConsole>true</logViolationsToConsole>
           <failOnViolation>true</failOnViolation>
           <violationSeverity>warning</violationSeverity>
           <sourceDirectory>${project.build.sourceDirectory}</sourceDirectory>

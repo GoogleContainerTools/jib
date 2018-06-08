@@ -49,6 +49,8 @@ public class BuildImageTask extends DefaultTask {
   /**
    * This will call the property {@code "jib"} so that it is the same name as the extension. This
    * way, the user would see error messages for missing configuration with the prefix {@code jib.}.
+   *
+   * @return the {@link JibExtension}.
    */
   @Nested
   @Nullable
@@ -56,7 +58,11 @@ public class BuildImageTask extends DefaultTask {
     return jibExtension;
   }
 
-  /** The target image can be overridden with the {@code --image} command line option. */
+  /**
+   * The target image can be overridden with the {@code --image} command line option.
+   *
+   * @param targetImage the name of the 'to' image.
+   */
   @Option(option = "image", description = "The image reference for the target image")
   public void setTargetImage(String targetImage) {
     Preconditions.checkNotNull(jibExtension).getTo().setImage(targetImage);

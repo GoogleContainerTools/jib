@@ -42,8 +42,12 @@ public class BuildStepsRunner {
   /**
    * Creates a runner to build an image. Creates a directory for the cache, if needed.
    *
+   * @param buildConfiguration the configuration parameters for the build
+   * @param sourceFilesConfiguration the source/destination file configuration for the image
+   * @param cacheDirectory the directory to use for the cache
    * @param useOnlyProjectCache if {@code true}, sets the base layers cache directory to be the same
    *     as the application layers cache directory
+   * @return a {@link BuildStepsRunner} for building to a registry
    * @throws CacheDirectoryCreationException if the {@code cacheDirectory} could not be created
    */
   public static BuildStepsRunner forBuildImage(
@@ -61,8 +65,12 @@ public class BuildStepsRunner {
   /**
    * Creates a runner to build to the Docker daemon. Creates a directory for the cache, if needed.
    *
+   * @param buildConfiguration the configuration parameters for the build
+   * @param sourceFilesConfiguration the source/destination file configuration for the image
+   * @param cacheDirectory the directory to use for the cache
    * @param useOnlyProjectCache if {@code true}, sets the base layers cache directory to be the same
    *     as the application layers cache directory
+   * @return a {@link BuildStepsRunner} for building to a Docker daemon
    * @throws CacheDirectoryCreationException if the {@code cacheDirectory} could not be created
    */
   public static BuildStepsRunner forBuildToDockerDaemon(
@@ -155,6 +163,7 @@ public class BuildStepsRunner {
    * Runs the {@link BuildSteps}.
    *
    * @param helpfulSuggestions suggestions to use in help messages for exceptions
+   * @throws BuildStepsExecutionException if another exception is thrown during the build
    */
   public void build(HelpfulSuggestions helpfulSuggestions) throws BuildStepsExecutionException {
     try {

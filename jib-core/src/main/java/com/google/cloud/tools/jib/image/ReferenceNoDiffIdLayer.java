@@ -28,7 +28,11 @@ public class ReferenceNoDiffIdLayer implements Layer {
   /** The {@link BlobDescriptor} of the compressed layer content. */
   private final BlobDescriptor blobDescriptor;
 
-  /** Instantiate with a {@link BlobDescriptor} and diff ID. */
+  /**
+   * Instantiate with a {@link BlobDescriptor} and no diff ID.
+   *
+   * @param blobDescriptor the blob descriptor
+   */
   public ReferenceNoDiffIdLayer(BlobDescriptor blobDescriptor) {
     this.blobDescriptor = blobDescriptor;
   }

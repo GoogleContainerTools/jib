@@ -26,6 +26,6 @@ import java.util.List;
  */
 public interface ListOfJsonTemplate extends JsonTemplate {
 
-  /** Returns the JsonTemplate wrapped as a list. e.g.: [{"property":"value"}] */
+  /** @return the JsonTemplate wrapped as a list. e.g.: [{"property":"value"}] */
   List<JsonTemplate> getList();
 }

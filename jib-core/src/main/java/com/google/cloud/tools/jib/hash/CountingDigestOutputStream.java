@@ -33,7 +33,11 @@ public class CountingDigestOutputStream extends DigestOutputStream {
   /** Keeps track of the total number of bytes appended. */
   private long totalBytes = 0;
 
-  /** Wraps the {@code outputStream}. */
+  /**
+   * Wraps the {@code outputStream}.
+   *
+   * @param outputStream the {@link OutputStream} to wrap.
+   */
   public CountingDigestOutputStream(OutputStream outputStream) {
     super(outputStream, null);
     try {
@@ -47,6 +51,8 @@ public class CountingDigestOutputStream extends DigestOutputStream {
   /**
    * Builds a {@link BlobDescriptor} with the hash and size of the bytes written. The buffer resets
    * after this method is called, so this method should only be called once per BlobDescriptor.
+   *
+   * @return the built {@link BlobDescriptor}.
    */
   public BlobDescriptor toBlobDescriptor() {
     try {

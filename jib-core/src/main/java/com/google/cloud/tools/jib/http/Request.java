@@ -38,7 +38,12 @@ public class Request {
       return new Request(this);
     }
 
-    /** Sets the {@code Authorization} header. */
+    /**
+     * Sets the {@code Authorization} header.
+     *
+     * @param authorization the authorization
+     * @return this
+     */
     public Builder setAuthorization(@Nullable Authorization authorization) {
       if (authorization != null) {
         headers.setAuthorization(authorization.toString());
@@ -46,19 +51,34 @@ public class Request {
       return this;
     }
 
-    /** Sets the {@code Accept} header. */
+    /**
+     * Sets the {@code Accept} header.
+     *
+     * @param mimeTypes the items to pass into the accept header
+     * @return this
+     */
     public Builder setAccept(List<String> mimeTypes) {
       headers.setAccept(String.join(",", mimeTypes));
       return this;
     }
 
-    /** Sets the {@code User-Agent} header. */
+    /**
+     * Sets the {@code User-Agent} header.
+     *
+     * @param userAgent the user agent
+     * @return this
+     */
     public Builder setUserAgent(String userAgent) {
       headers.setUserAgent(userAgent);
       return this;
     }
 
-    /** Sets the body and its corresponding {@code Content-Type} header. */
+    /**
+     * Sets the body and its corresponding {@code Content-Type} header.
+     *
+     * @param blobHttpContent the body content
+     * @return this
+     */
     public Builder setBody(@Nullable BlobHttpContent blobHttpContent) {
       this.body = blobHttpContent;
       return this;

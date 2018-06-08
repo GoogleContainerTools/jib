@@ -32,17 +32,23 @@ public class Response {
     this.httpResponse = httpResponse;
   }
 
-  /** Gets the HTTP status code of the response. */
+  /** @return the HTTP status code of the response */
   public int getStatusCode() {
     return httpResponse.getStatusCode();
   }
 
-  /** Gets a header in the response. */
+  /**
+   * @param headerName the header name
+   * @return a list of headers in the response
+   */
   public List<String> getHeader(String headerName) {
     return httpResponse.getHeaders().getHeaderStringValues(headerName);
   }
 
-  /** @return the first {@code Content-Length} header, or {@code -1} if not found */
+  /**
+   * @return the first {@code Content-Length} header, or {@code -1} if not found
+   * @throws NumberFormatException if parsing the content length header fails
+   */
   public long getContentLength() throws NumberFormatException {
     String contentLengthHeader =
         httpResponse.getHeaders().getFirstHeaderStringValue(HttpHeaders.CONTENT_LENGTH);
@@ -57,7 +63,10 @@ public class Response {
     }
   }
 
-  /** Gets the HTTP response body as a {@link Blob}. */
+  /**
+   * @return the HTTP response body as a {@link Blob}.
+   * @throws IOException if getting the HTTP response content fails.
+   */
   public Blob getBody() throws IOException {
     return Blobs.from(httpResponse.getContent());
   }

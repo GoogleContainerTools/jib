@@ -60,31 +60,54 @@ public class DockerContextGenerator {
   /**
    * Sets the base image for the {@code FROM} directive. This must be called before {@link
    * #generate}.
+   *
+   * @param baseImage the base image.
+   * @return this
    */
   public DockerContextGenerator setBaseImage(String baseImage) {
     this.baseImage = baseImage;
     return this;
   }
 
-  /** Sets the JVM flags used in the {@code ENTRYPOINT}. */
+  /**
+   * Sets the JVM flags used in the {@code ENTRYPOINT}.
+   *
+   * @param jvmFlags the jvm flags.
+   * @return this
+   */
   public DockerContextGenerator setJvmFlags(List<String> jvmFlags) {
     this.jvmFlags = jvmFlags;
     return this;
   }
 
-  /** Sets the main class used in the {@code ENTRYPOINT}. */
+  /**
+   * Sets the main class used in the {@code ENTRYPOINT}.
+   *
+   * @param mainClass the name of the main class.
+   * @return this
+   */
   public DockerContextGenerator setMainClass(String mainClass) {
     this.mainClass = mainClass;
     return this;
   }
 
-  /** Sets the arguments used in the {@code CMD}. */
+  /**
+   * Sets the arguments used in the {@code CMD}.
+   *
+   * @param javaArguments the list of arguments to pass into main.
+   * @return this
+   */
   public DockerContextGenerator setJavaArguments(List<String> javaArguments) {
     this.javaArguments = javaArguments;
     return this;
   }
 
-  /** Creates the Docker context in {@code #targetDirectory}. */
+  /**
+   * Creates the Docker context in {@code #targetDirectory}.
+   *
+   * @param targetDirectory the directory to generate the Docker context in.
+   * @throws IOException if the export fails.
+   */
   public void generate(Path targetDirectory) throws IOException {
     Preconditions.checkNotNull(baseImage);
 
@@ -117,7 +140,12 @@ public class DockerContextGenerator {
         targetDirectory.resolve("Dockerfile"), makeDockerfile().getBytes(StandardCharsets.UTF_8));
   }
 
-  /** Makes a {@code Dockerfile} from the {@code DockerfileTemplate}. */
+  /**
+   * Makes a {@code Dockerfile} from the {@code DockerfileTemplate}.
+   *
+   * @return the {@code Dockerfile} contents.
+   * @throws IOException if reading the Dockerfile template fails.
+   */
   @VisibleForTesting
   String makeDockerfile() throws IOException {
     Preconditions.checkNotNull(baseImage);
@@ -143,6 +171,8 @@ public class DockerContextGenerator {
    *
    * @see <a
    *     href="https://docs.docker.com/engine/reference/builder/#exec-form-entrypoint-example">https://docs.docker.com/engine/reference/builder/#exec-form-entrypoint-example</a>
+   * @param items the list of items to join into an array.
+   * @return a string in the format: ["item1","item2",...]
    */
   @VisibleForTesting
   static String joinAsJsonArray(List<String> items) {

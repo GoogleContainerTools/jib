@@ -28,7 +28,11 @@ public class UnwrittenLayer implements Layer {
 
   private final Blob uncompressedBlob;
 
-  /** Initializes with the uncompressed {@link Blob} of the layer content. */
+  /**
+   * Initializes with the uncompressed {@link Blob} of the layer content.
+   *
+   * @param uncompressedBlob the uncompressed {@link Blob} of the layer content
+   */
   public UnwrittenLayer(Blob uncompressedBlob) {
     this.uncompressedBlob = uncompressedBlob;
   }

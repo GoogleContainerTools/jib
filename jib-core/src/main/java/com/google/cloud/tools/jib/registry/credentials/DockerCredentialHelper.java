@@ -60,13 +60,15 @@ public class DockerCredentialHelper {
   }
 
   /**
-   * Retrieves the Docker credentials by calling the corresponding CLI.
-   *
-   * <p>The credential helper CLI is called in the form:
-   *
-   * <pre>{@code
+   * @return the Docker credentials by calling the corresponding CLI.
+   *     <p>The credential helper CLI is called in the form:
+   *     <pre>{@code
    * echo -n <server URL> | docker-credential-<credential helper suffix> get
    * }</pre>
+   *
+   * @throws IOException if writing/reading process input/output fails.
+   * @throws NonexistentServerUrlDockerCredentialHelperException if credentials are not found.
+   * @throws NonexistentDockerCredentialHelperException if the credential helper CLI doesn't exist.
    */
   public Authorization retrieve()
       throws IOException, NonexistentServerUrlDockerCredentialHelperException,

@@ -181,6 +181,7 @@ public class BuildConfiguration {
   }
 
   /**
+   * @param className the class name to check
    * @return {@code true} if {@code className} is a valid Java class name; {@code false} otherwise
    */
   public static boolean isValidJavaClass(String className) {

@@ -50,7 +50,14 @@ public class BuildSteps {
   private static final String SUCCESS_MESSAGE_FORMAT_FOR_DOCKER_DAEMON =
       "Built image to Docker daemon as \u001B[36m%s\u001B[0m";
 
-  /** All the steps to build an image to a Docker registry. */
+  /**
+   * All the steps to build an image to a Docker registry.
+   *
+   * @param buildConfiguration the configuration parameters for the build
+   * @param sourceFilesConfiguration the source/destination file configuration for the image
+   * @param cachesInitializer the {@link Caches.Initializer} used to setup the cache
+   * @return a new {@link BuildSteps} for building to a registry
+   */
   public static BuildSteps forBuildToDockerRegistry(
       BuildConfiguration buildConfiguration,
       SourceFilesConfiguration sourceFilesConfiguration,
@@ -84,7 +91,14 @@ public class BuildSteps {
                 .waitOnPushImageStep());
   }
 
-  /** All the steps to build to Docker daemon */
+  /**
+   * All the steps to build to Docker daemon
+   *
+   * @param buildConfiguration the configuration parameters for the build
+   * @param sourceFilesConfiguration the source/destination file configuration for the image
+   * @param cachesInitializer the {@link Caches.Initializer} used to setup the cache
+   * @return a new {@link BuildSteps} for building to a Docker daemon
+   */
   public static BuildSteps forBuildToDockerDaemon(
       BuildConfiguration buildConfiguration,
       SourceFilesConfiguration sourceFilesConfiguration,

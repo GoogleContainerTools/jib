@@ -75,7 +75,11 @@ public class ImageReference {
 
   private static final Pattern REFERENCE_PATTERN = Pattern.compile(REFERENCE_REGEX);
 
-  /** Parses an image reference. */
+  /**
+   * @param reference the string to parse
+   * @return an {@link ImageReference} parsed from the string
+   * @throws InvalidImageReferenceException if {@code reference} is formatted incorrectly
+   */
   public static ImageReference parse(String reference) throws InvalidImageReferenceException {
     Matcher matcher = REFERENCE_PATTERN.matcher(reference);
 
@@ -130,7 +134,12 @@ public class ImageReference {
     return new ImageReference(registry, repository, tag);
   }
 
-  /** Builds an image reference from a registry, repository, and tag. */
+  /**
+   * @param registry the image registry
+   * @param repository the image repository
+   * @param tag the image tag
+   * @return an {@link ImageReference} built from the given registry, repository, and tag
+   */
   public static ImageReference of(
       @Nullable String registry, String repository, @Nullable String tag) {
     if (Strings.isNullOrEmpty(registry)) {
@@ -142,17 +151,26 @@ public class ImageReference {
     return new ImageReference(registry, repository, tag);
   }
 
-  /** @return {@code true} if is a valid registry; {@code false} otherwise */
+  /**
+   * @param registry the registry to check
+   * @return {@code true} if is a valid registry; {@code false} otherwise
+   */
   public static boolean isValidRegistry(String registry) {
     return registry.matches(REGISTRY_REGEX);
   }
 
-  /** @return {@code true} if is a valid repository; {@code false} otherwise */
+  /**
+   * @param repository the repository to check
+   * @return {@code true} if is a valid repository; {@code false} otherwise
+   */
   public static boolean isValidRepository(String repository) {
     return repository.matches(REPOSITORY_REGEX);
   }
 
-  /** @return {@code true} if is a valid tag; {@code false} otherwise */
+  /**
+   * @param tag the tag to check
+   * @return {@code true} if is a valid tag; {@code false} otherwise
+   */
   public static boolean isValidTag(String tag) {
     return tag.matches(TAG_REGEX);
   }

@@ -37,7 +37,12 @@ class MavenSettingsServerCredentials {
     this.settings = settings;
   }
 
-  /** Attempts to retrieve credentials for {@code registry} from Maven settings. */
+  /**
+   * Attempts to retrieve credentials for {@code registry} from Maven settings.
+   *
+   * @param registry the registry
+   * @return the credentials for the registry
+   */
   @Nullable
   RegistryCredentials retrieve(@Nullable String registry) {
     if (registry == null) {

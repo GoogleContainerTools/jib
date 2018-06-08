@@ -26,8 +26,8 @@ public class DockerCredentialHelperFactory {
   }
 
   /**
-   * @return a {@link DockerCredentialHelper} that uses the {@code
-   *     docker-credential-[credentialHelperSuffix]} command
+   * @param credentialHelperSuffix the suffix of the docker-credential-[suffix] command to be run.
+   * @return a {@link DockerCredentialHelper} retrieved from the command.
    */
   public DockerCredentialHelper withCredentialHelperSuffix(String credentialHelperSuffix) {
     return new DockerCredentialHelper(registry, credentialHelperSuffix);

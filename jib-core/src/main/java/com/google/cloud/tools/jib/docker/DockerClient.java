@@ -72,8 +72,11 @@ public class DockerClient {
    * Loads an image tarball into the Docker daemon.
    *
    * @see <a
-   *     href="https://docs.docker.com/engine/reference/commandline/load/">https://docs.docker.com/engine/reference/commandline/load/</a>
-   * @return stdout from {@code docker}
+   *     href="https://docs.docker.com/engine/reference/commandline/load/">https://docs.docker.com/engine/reference/commandline/load</a>
+   * @param imageTarballBlob the built container tarball.
+   * @return stdout from {@code docker}.
+   * @throws InterruptedException if the 'docker load' process is interrupted.
+   * @throws IOException if streaming the blob to 'docker load' fails.
    */
   public String load(Blob imageTarballBlob) throws InterruptedException, IOException {
     // Runs 'docker load'.

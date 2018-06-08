@@ -129,7 +129,10 @@ public class HelpfulSuggestions {
     return messagePrefix;
   }
 
-  /** @return the message containing a suggestion */
+  /**
+   * @param suggestion a suggested fix for the problem described by {@link #messagePrefix}
+   * @return the message containing the suggestion
+   */
   public String suggest(String suggestion) {
     return messagePrefix + ", perhaps you should " + suggestion;
   }

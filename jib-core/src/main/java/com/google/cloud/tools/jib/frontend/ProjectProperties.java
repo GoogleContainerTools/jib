@@ -41,6 +41,9 @@ public interface ProjectProperties {
   @Nullable
   String getMainClassFromJar();
 
-  /** @return a {@link HelpfulSuggestions} instance for main class inference failure. */
+  /**
+   * @param prefix the prefix message for the {@link HelpfulSuggestions}.
+   * @return a {@link HelpfulSuggestions} instance for main class inference failure.
+   */
   HelpfulSuggestions getMainClassHelpfulSuggestions(String prefix);
 }

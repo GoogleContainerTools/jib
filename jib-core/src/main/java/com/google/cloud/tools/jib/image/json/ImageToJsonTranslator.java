@@ -40,12 +40,20 @@ public class ImageToJsonTranslator {
 
   private final Image<CachedLayer> image;
 
-  /** Instantiate with an {@link Image}. */
+  /**
+   * Instantiate with an {@link Image}.
+   *
+   * @param image the image to translate.
+   */
   public ImageToJsonTranslator(Image<CachedLayer> image) {
     this.image = image;
   }
 
-  /** Gets the container configuration as a {@link Blob}. */
+  /**
+   * Gets the container configuration as a {@link Blob}.
+   *
+   * @return the container configuration {@link Blob}.
+   */
   public Blob getContainerConfigurationBlob() {
     // Set up the JSON template.
     ContainerConfigurationTemplate template = new ContainerConfigurationTemplate();
@@ -72,6 +80,11 @@ public class ImageToJsonTranslator {
    * Gets the manifest as a JSON template. The {@code containerConfigurationBlobDescriptor} must be
    * the [@link BlobDescriptor} obtained by writing out the container configuration {@link Blob}
    * returned from {@link #getContainerConfigurationBlob()}.
+   *
+   * @param <T> child type of {@link BuildableManifestTemplate}.
+   * @param manifestTemplateClass the JSON template to translate the image to.
+   * @param containerConfigurationBlobDescriptor the container configuration descriptor.
+   * @return the image contents serialized as JSON.
    */
   public <T extends BuildableManifestTemplate> T getManifestTemplate(
       Class<T> manifestTemplateClass, BlobDescriptor containerConfigurationBlobDescriptor) {
