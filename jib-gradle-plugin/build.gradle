@@ -99,10 +99,8 @@ tasks.withType(JavaCompile) {
 }
 
 // Fail build on javadoc warnings
-if (JavaVersion.current().isJava8Compatible()) {
-    tasks.withType(Javadoc) {
-        options.addStringOption('Xwerror', '-quiet')
-    }
+tasks.withType(Javadoc) {
+    options.addStringOption('Xwerror', '-quiet')
 }
 
 tasks.withType(Test) {
