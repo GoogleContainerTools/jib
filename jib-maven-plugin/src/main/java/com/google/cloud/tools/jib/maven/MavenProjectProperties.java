@@ -62,13 +62,6 @@ class MavenProjectProperties implements ProjectProperties {
   private final MavenBuildLogger mavenBuildLogger;
   private final SourceFilesConfiguration sourceFilesConfiguration;
 
-  /**
-   * Constructor used for testing purposes.
-   *
-   * @param project the {@link MavenProject}
-   * @param mavenBuildLogger the {@link BuildLogger}
-   * @param sourceFilesConfiguration the project files configuration
-   */
   @VisibleForTesting
   MavenProjectProperties(
       MavenProject project,
