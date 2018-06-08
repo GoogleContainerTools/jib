@@ -58,26 +58,15 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   }
 
   /**
-   * @param from the image reference string to parse.
+   * @param image the image reference string to parse.
+   * @param type the type of image (e.g. "to" or "from").
    * @return the {@link ImageReference} parsed from {@code from}.
    */
-  static ImageReference parseBaseImageReference(String from) {
+  static ImageReference parseImageReference(String image, String type) {
     try {
-      return ImageReference.parse(from);
+      return ImageReference.parse(image);
     } catch (InvalidImageReferenceException ex) {
-      throw new IllegalStateException("Parameter 'from' is invalid", ex);
-    }
-  }
-
-  /**
-   * @param to the image reference string to parse.
-   * @return the {@link ImageReference} parsed from {@code to}.
-   */
-  static ImageReference parseTargetImageReference(String to) {
-    try {
-      return ImageReference.parse(to);
-    } catch (InvalidImageReferenceException ex) {
-      throw new IllegalStateException("Parameter 'to' is invalid", ex);
+      throw new IllegalStateException("Parameter '" + type + "' is invalid", ex);
     }
   }
 
