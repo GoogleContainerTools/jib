@@ -16,32 +16,21 @@
 
 package com.google.cloud.tools.jib.registry;
 
-import com.google.api.client.http.GenericUrl;
-import com.google.api.client.http.HttpResponseException;
-import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.http.Connection;
-import com.google.cloud.tools.jib.http.Request;
-import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
-import com.google.cloud.tools.jib.json.JsonTemplateMapper;
-import com.google.cloud.tools.jib.registry.json.ErrorEntryTemplate;
-import com.google.cloud.tools.jib.registry.json.ErrorResponseTemplate;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URL;
 import javax.annotation.Nullable;
-import javax.net.ssl.SSLPeerUnverifiedException;
-import org.apache.http.NoHttpResponseException;
 
 /** Interfaces with a registry. */
 public class RegistryClient {
@@ -71,8 +60,6 @@ public class RegistryClient {
     this.parentTimer = parentTimer;
     return this;
   }
-
-  private static final String PROTOCOL = "https";
 
   @Nullable private static String userAgentSuffix;
 
@@ -234,10 +221,10 @@ public class RegistryClient {
     }
   }
 
-  /** @return the registry endpoint's API root URL */
+  /** @return the registry endpoint's API root, without the protocol */
   @VisibleForTesting
   String getApiRouteBase() {
-    return PROTOCOL + "://" + registryEndpointProperties.getServerUrl() + "/v2/";
+    return registryEndpointProperties.getServerUrl() + "/v2/";
   }
 
   /**
@@ -250,87 +237,12 @@ public class RegistryClient {
   @Nullable
   private <T> T callRegistryEndpoint(RegistryEndpointProvider<T> registryEndpointProvider)
       throws IOException, RegistryException {
-    return callRegistryEndpoint(null, registryEndpointProvider);
-  }
-
-  /**
-   * Calls the registry endpoint with an override URL.
-   *
-   * @param url the endpoint URL to call, or {@code null} to use default from {@code
-   *     registryEndpointProvider}
-   * @param registryEndpointProvider the {@link RegistryEndpointProvider} to the endpoint
-   * @throws IOException if communicating with the endpoint fails
-   * @throws RegistryException if communicating with the endpoint fails
-   */
-  @Nullable
-  private <T> T callRegistryEndpoint(
-      @Nullable URL url, RegistryEndpointProvider<T> registryEndpointProvider)
-      throws IOException, RegistryException {
-    if (url == null) {
-      url = registryEndpointProvider.getApiRoute(getApiRouteBase());
-    }
-
-    try (Connection connection = new Connection(url)) {
-      Request request =
-          Request.builder()
-              .setAuthorization(authorization)
-              .setUserAgent(getUserAgent())
-              .setAccept(registryEndpointProvider.getAccept())
-              .setBody(registryEndpointProvider.getContent())
-              .build();
-      Response response = connection.send(registryEndpointProvider.getHttpMethod(), request);
-
-      return registryEndpointProvider.handleResponse(response);
-
-    } catch (HttpResponseException ex) {
-      // First, see if the endpoint provider handles an exception as an expected response.
-      try {
-        return registryEndpointProvider.handleHttpResponseException(ex);
-
-      } catch (HttpResponseException httpResponseException) {
-        if (httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_BAD_REQUEST
-            || httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_NOT_FOUND
-            || httpResponseException.getStatusCode()
-                == HttpStatusCodes.STATUS_CODE_METHOD_NOT_ALLOWED) {
-          // The name or reference was invalid.
-          ErrorResponseTemplate errorResponse =
-              JsonTemplateMapper.readJson(
-                  httpResponseException.getContent(), ErrorResponseTemplate.class);
-          RegistryErrorExceptionBuilder registryErrorExceptionBuilder =
-              new RegistryErrorExceptionBuilder(
-                  registryEndpointProvider.getActionDescription(), httpResponseException);
-          for (ErrorEntryTemplate errorEntry : errorResponse.getErrors()) {
-            registryErrorExceptionBuilder.addReason(errorEntry);
-          }
-
-          throw registryErrorExceptionBuilder.build();
-
-        } else if (httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_UNAUTHORIZED
-            || httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
-          throw new RegistryUnauthorizedException(
-              registryEndpointProperties.getServerUrl(),
-              registryEndpointProperties.getImageName(),
-              httpResponseException);
-
-        } else if (httpResponseException.getStatusCode()
-            == HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT) {
-          return callRegistryEndpoint(
-              new URL(httpResponseException.getHeaders().getLocation()), registryEndpointProvider);
-
-        } else {
-          // Unknown
-          throw httpResponseException;
-        }
-      }
-
-    } catch (NoHttpResponseException ex) {
-      throw new RegistryNoResponseException(ex);
-
-    } catch (SSLPeerUnverifiedException ex) {
-      // Fall-back to HTTP
-      GenericUrl httpUrl = new GenericUrl(url);
-      httpUrl.setScheme("http");
-      return callRegistryEndpoint(httpUrl.toURL(), registryEndpointProvider);
-    }
+    return new RegistryEndpointCaller<>(
+            getUserAgent(),
+            getApiRouteBase(),
+            registryEndpointProvider,
+            authorization,
+            registryEndpointProperties)
+        .call();
   }
 }

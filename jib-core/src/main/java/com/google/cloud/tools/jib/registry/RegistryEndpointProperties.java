@@ -16,7 +16,8 @@
 
 package com.google.cloud.tools.jib.registry;
 
-/** Properties of registry endpoints. */
+/** Properties of registry endpoint requests. */
+// TODO: Probably rename to RegistryEndpointRequestProperties.
 class RegistryEndpointProperties {
 
   private final String serverUrl;
