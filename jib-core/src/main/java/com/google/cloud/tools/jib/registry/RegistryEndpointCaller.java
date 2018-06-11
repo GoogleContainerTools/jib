@@ -33,7 +33,11 @@ import javax.annotation.Nullable;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import org.apache.http.NoHttpResponseException;
 
-/** Makes requests to a registry endpoint. */
+/**
+ * Makes requests to a registry endpoint.
+ *
+ * @param <T> the type returned by calling the endpoint
+ */
 class RegistryEndpointCaller<T> {
 
   private static final String DEFAULT_PROTOCOL = "https";
@@ -68,6 +72,7 @@ class RegistryEndpointCaller<T> {
    * @param registryEndpointProvider the {@link RegistryEndpointProvider} to the endpoint
    * @param authorization optional authentication credentials to use
    * @param registryEndpointProperties properties of the registry endpoint request
+   * @throws MalformedURLException if the URL generated for the endpoint is malformed
    */
   RegistryEndpointCaller(
       String userAgent,
@@ -85,7 +90,13 @@ class RegistryEndpointCaller<T> {
     this.registryEndpointProperties = registryEndpointProperties;
   }
 
-  /** Makes the request to the endpoint. */
+  /**
+   * Makes the request to the endpoint.
+   *
+   * @return an object representing the response, or {@code null}
+   * @throws IOException for most I/O exceptions when making the request
+   * @throws RegistryException for known exceptions when interacting with the registry
+   */
   @Nullable
   T call() throws IOException, RegistryException {
     return call(initialRequestState);
