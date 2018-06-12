@@ -58,6 +58,6 @@ public class RegistryClientTest {
 
   @Test
   public void testGetApiRouteBase() {
-    Assert.assertEquals("https://some.server.url/v2/", testRegistryClient.getApiRouteBase());
+    Assert.assertEquals("some.server.url/v2/", testRegistryClient.getApiRouteBase());
   }
 }
