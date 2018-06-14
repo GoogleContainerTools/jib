@@ -8,6 +8,11 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+## 0.9.1
+
+### Changed
+- Fetches credentials from inferred credential helper before Docker config ([#401](https://github.com/GoogleContainerTools/jib/issues/401)) 
+
 ## 0.9.0
 ### Added
 - Better feedback for build failures ([#197](https://github.com/google/jib/pull/197))
