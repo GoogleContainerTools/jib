@@ -32,6 +32,7 @@ import java.net.URL;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import org.apache.http.NoHttpResponseException;
+import org.apache.http.conn.HttpHostConnectException;
 
 /**
  * Makes requests to a registry endpoint.
@@ -50,8 +51,7 @@ class RegistryEndpointCaller<T> {
 
     /**
      * @param authorization authentication credentials
-     * @param url the endpoint URL to call, or {@code null} to use default from {@code
-     *     registryEndpointProvider}
+     * @param url the endpoint URL to call
      */
     private RequestState(@Nullable Authorization authorization, URL url) {
       this.authorization = authorization;
@@ -79,12 +79,11 @@ class RegistryEndpointCaller<T> {
       String apiRouteBase,
       RegistryEndpointProvider<T> registryEndpointProvider,
       @Nullable Authorization authorization,
-      RegistryEndpointProperties registryEndpointProperties)
-      throws MalformedURLException {
+      RegistryEndpointProperties registryEndpointProperties) throws MalformedURLException {
     this.initialRequestState =
         new RequestState(
             authorization,
-            registryEndpointProvider.getApiRoute(DEFAULT_PROTOCOL + "://" + apiRouteBase));
+            registryEndpointProvider.getApiRoute(apiRouteBase));
     this.userAgent = userAgent;
     this.registryEndpointProvider = registryEndpointProvider;
     this.registryEndpointProperties = registryEndpointProperties;
@@ -126,7 +125,7 @@ class RegistryEndpointCaller<T> {
         if (httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_BAD_REQUEST
             || httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_NOT_FOUND
             || httpResponseException.getStatusCode()
-                == HttpStatusCodes.STATUS_CODE_METHOD_NOT_ALLOWED) {
+            == HttpStatusCodes.STATUS_CODE_METHOD_NOT_ALLOWED) {
           // The name or reference was invalid.
           ErrorResponseTemplate errorResponse =
               JsonTemplateMapper.readJson(
@@ -160,6 +159,15 @@ class RegistryEndpointCaller<T> {
           throw httpResponseException;
         }
       }
+
+    } catch (HttpHostConnectException ex) {
+      // Tries to call with HTTP protocol if HTTPS failed to connect.
+      if (DEFAULT_PROTOCOL.equals(requestState.url.getProtocol())) {
+        URL urlWithHttpProtocol = new URL("http", requestState.url.getHost(), requestState.url.getPort(), requestState.url.getFile());
+        return call(new RequestState(requestState.authorization, urlWithHttpProtocol));
+      }
+
+      throw ex;
 
     } catch (NoHttpResponseException ex) {
       throw new RegistryNoResponseException(ex);
