@@ -138,18 +138,6 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Authorization>, Calla
         return knownRegistryCredentials.getAuthorization();
       }
 
-      // Tries to get registry credentials from the Docker config.
-      try {
-        Authorization dockerConfigAuthorization = dockerConfigCredentialRetriever.retrieve();
-        if (dockerConfigAuthorization != null) {
-          buildLogger.info("Using credentials from Docker config for " + registry);
-          return dockerConfigAuthorization;
-        }
-
-      } catch (IOException ex) {
-        buildLogger.info("Unable to parse Docker config");
-      }
-
       // Tries to infer common credential helpers for known registries.
       for (String registrySuffix : COMMON_CREDENTIAL_HELPERS.keySet()) {
         if (registry.endsWith(registrySuffix)) {
@@ -171,6 +159,18 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Authorization>, Calla
             }
           }
         }
+      }
+
+      // Tries to get registry credentials from the Docker config.
+      try {
+        Authorization dockerConfigAuthorization = dockerConfigCredentialRetriever.retrieve();
+        if (dockerConfigAuthorization != null) {
+          buildLogger.info("Using credentials from Docker config for " + registry);
+          return dockerConfigAuthorization;
+        }
+
+      } catch (IOException ex) {
+        buildLogger.info("Unable to parse Docker config");
       }
 
       /*
