@@ -43,6 +43,12 @@ import org.apache.http.conn.HttpHostConnectException;
  */
 class RegistryEndpointCaller<T> {
 
+  /**
+   * @see <a
+   *     href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308">https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308</a>
+   */
+  @VisibleForTesting static final int STATUS_CODE_PERMANENT_REDIRECT = 308;
+
   private static final String DEFAULT_PROTOCOL = "https";
 
   /** Maintains the state of a request. This is used to retry requests with different parameters. */
@@ -192,7 +198,10 @@ class RegistryEndpointCaller<T> {
               httpResponseException);
 
         } else if (httpResponseException.getStatusCode()
-            == HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT) {
+                == HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT
+            || httpResponseException.getStatusCode()
+                == HttpStatusCodes.STATUS_CODE_MOVED_PERMANENTLY
+            || httpResponseException.getStatusCode() == STATUS_CODE_PERMANENT_REDIRECT) {
           // TODO: Use copy-construct builder.
           return call(
               new RequestState(
