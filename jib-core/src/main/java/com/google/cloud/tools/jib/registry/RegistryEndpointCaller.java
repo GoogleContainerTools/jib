@@ -61,7 +61,12 @@ class RegistryEndpointCaller<T> {
     }
   }
 
-  /** Converts the {@link URL}'s protocol to HTTP. */
+  /**
+   * Converts the {@link URL}'s protocol to HTTP.
+   *
+   * @param url the URL to conver to HTTP
+   * @return the URL with protocol set to HTTP
+   */
   private static URL urlWithHttp(URL url) {
     GenericUrl httpUrl = new GenericUrl(url);
     httpUrl.setScheme("http");
@@ -133,7 +138,15 @@ class RegistryEndpointCaller<T> {
     return call(initialRequestState);
   }
 
-  /** Calls the registry endpoint with a certain {@link RequestState}. */
+  /**
+   * Calls the registry endpoint with a certain {@link RequestState}.
+   *
+   * @param requestState the state of the request - determines how to make the request and how to
+   *     process the response
+   * @return an object representing the response, or {@code null}
+   * @throws IOException for most I/O exceptions when making the request
+   * @throws RegistryException for known exceptions when interacting with the registry
+   */
   @Nullable
   private T call(RequestState requestState) throws IOException, RegistryException {
     try (Connection connection = connectionFactory.apply(requestState.url)) {
