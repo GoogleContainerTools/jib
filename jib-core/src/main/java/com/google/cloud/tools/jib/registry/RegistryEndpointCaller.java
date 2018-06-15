@@ -207,7 +207,7 @@ class RegistryEndpointCaller<T> {
 
     } catch (HttpHostConnectException | SSLPeerUnverifiedException ex) {
       // Tries to call with HTTP protocol if HTTPS failed to connect.
-      if (DEFAULT_PROTOCOL.equals(requestState.url.getProtocol())) {
+      if ("https".equals(requestState.url.getProtocol())) {
         return call(new RequestState(requestState.authorization, urlWithHttp(requestState.url)));
       }
 
