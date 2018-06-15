@@ -36,8 +36,7 @@ interface RegistryEndpointProvider<T> {
   String getHttpMethod();
 
   /**
-   * @param apiRouteBase the registry's base URL without the protocol (for example, {@code
-   *     gcr.io/v2/})
+   * @param apiRouteBase the registry's base URL (for example, {@code https://gcr.io/v2/})
    * @return the registry endpoint URL
    */
   URL getApiRoute(String apiRouteBase) throws MalformedURLException;
