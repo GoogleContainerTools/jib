@@ -1,12 +1,15 @@
 # Change Log
 All notable changes to this project will be documented in this file.
+
 ## [unreleased]
 
 ### Added
 
 ### Changed
 
-### Fixed
+- Fetches credentials from inferred credential helper before Docker config ([#401](https://github.com/GoogleContainerTools/jib/issues/401))
+
+### Fixed 
 
 - Registries without TLS now supported ([#388](https://github.com/GoogleContainerTools/jib/issues/388))
 

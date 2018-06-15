@@ -83,6 +83,7 @@ tasks.withType(JavaCompile) {
 tasks.withType(Javadoc) {
     options.addBooleanOption('Xwerror', true)
 }
+assemble.dependsOn javadoc
 
 tasks.withType(Test) {
     reports.html.setDestination file("${reporting.baseDir}/${name}")
