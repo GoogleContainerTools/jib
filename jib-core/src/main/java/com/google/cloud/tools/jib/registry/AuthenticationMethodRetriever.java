@@ -88,7 +88,7 @@ class AuthenticationMethodRetriever implements RegistryEndpointProvider<Registry
       return RegistryAuthenticator.fromAuthenticationMethod(
           authenticationMethod, registryEndpointProperties.getImageName());
 
-    } catch (RegistryAuthenticationFailedException | MalformedURLException ex) {
+    } catch (RegistryAuthenticationFailedException ex) {
       throw new RegistryErrorExceptionBuilder(getActionDescription(), ex)
           .addReason("Failed get authentication method from 'WWW-Authenticate' header")
           .build();
