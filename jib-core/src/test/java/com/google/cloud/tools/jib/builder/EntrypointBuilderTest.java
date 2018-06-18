@@ -30,7 +30,6 @@ public class EntrypointBuilderTest {
     String expectedDependenciesPath = "/app/libs/";
     String expectedResourcesPath = "/app/resources/";
     String expectedClassesPath = "/app/classes/";
-
     List<String> expectedJvmFlags = Arrays.asList("-flag", "anotherFlag");
     String expectedMainClass = "SomeMainClass";
 
