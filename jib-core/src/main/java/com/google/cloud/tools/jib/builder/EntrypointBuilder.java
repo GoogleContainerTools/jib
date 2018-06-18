@@ -36,9 +36,9 @@ public class EntrypointBuilder {
       SourceFilesConfiguration sourceFilesConfiguration, List<String> jvmFlags, String mainClass) {
     ImmutableList<String> classPaths =
         ImmutableList.of(
-            sourceFilesConfiguration.DEPENDENCIES_PATH_ON_IMAGE + "*",
-            sourceFilesConfiguration.RESOURCES_PATH_ON_IMAGE,
-            sourceFilesConfiguration.CLASSES_PATH_ON_IMAGE);
+            sourceFilesConfiguration.getDependenciesPathOnImage() + "*",
+            sourceFilesConfiguration.getResourcesPathOnImage(),
+            sourceFilesConfiguration.getClassesPathOnImage());
 
     String classPathsString = String.join(":", classPaths);
 

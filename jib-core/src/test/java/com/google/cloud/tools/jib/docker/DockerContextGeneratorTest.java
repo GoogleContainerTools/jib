@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -61,6 +62,20 @@ public class DockerContextGeneratorTest {
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Mock private SourceFilesConfiguration mockSourceFilesConfiguration;
+
+  @Before
+  public void setUpMocks() {
+    String expectedDependenciesPath = "/app/libs/";
+    String expectedResourcesPath = "/app/resources/";
+    String expectedClassesPath = "/app/classes/";
+
+    Mockito.when(mockSourceFilesConfiguration.getDependenciesPathOnImage())
+        .thenReturn(expectedDependenciesPath);
+    Mockito.when(mockSourceFilesConfiguration.getResourcesPathOnImage())
+        .thenReturn(expectedResourcesPath);
+    Mockito.when(mockSourceFilesConfiguration.getClassesPathOnImage())
+        .thenReturn(expectedClassesPath);
+  }
 
   @Test
   public void testGenerate() throws IOException, URISyntaxException {

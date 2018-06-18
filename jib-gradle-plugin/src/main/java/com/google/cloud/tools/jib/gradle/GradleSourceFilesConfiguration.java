@@ -104,4 +104,19 @@ class GradleSourceFilesConfiguration implements SourceFilesConfiguration {
   public ImmutableList<Path> getClassesFiles() {
     return classesFiles;
   }
+
+  @Override
+  public String getDependenciesPathOnImage() {
+    return DEPENDENCIES_PATH_ON_IMAGE;
+  }
+
+  @Override
+  public String getResourcesPathOnImage() {
+    return RESOURCES_PATH_ON_IMAGE;
+  }
+
+  @Override
+  public String getClassesPathOnImage() {
+    return CLASSES_PATH_ON_IMAGE;
+  }
 }

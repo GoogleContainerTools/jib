@@ -91,6 +91,15 @@ public class MavenSourceFilesConfigurationTest {
     Assert.assertEquals(expectedClassesFiles, testMavenSourceFilesConfiguration.getClassesFiles());
   }
 
+  @Test
+  public void test_correctPathsOnImage() {
+    Assert.assertEquals(
+        "/app/libs/", testMavenSourceFilesConfiguration.getDependenciesPathOnImage());
+    Assert.assertEquals(
+        "/app/resources/", testMavenSourceFilesConfiguration.getResourcesPathOnImage());
+    Assert.assertEquals("/app/classes/", testMavenSourceFilesConfiguration.getClassesPathOnImage());
+  }
+
   private Artifact makeArtifact(Path path) {
     Artifact artifact = Mockito.mock(Artifact.class);
     Mockito.when(artifact.getFile()).thenReturn(path.toFile());
