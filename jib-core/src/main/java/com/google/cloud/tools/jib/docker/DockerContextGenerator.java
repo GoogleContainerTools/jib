@@ -156,9 +156,9 @@ public class DockerContextGenerator {
     return dockerfileTemplate
         .replace("@@BASE_IMAGE@@", baseImage)
         .replace(
-            "@@DEPENDENCIES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getDependenciesPathOnImage())
-        .replace("@@RESOURCES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getResourcesPathOnImage())
-        .replace("@@CLASSES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getClassesPathOnImage())
+            "@@DEPENDENCIES_PATH_ON_IMAGE@@", sourceFilesConfiguration.DEPENDENCIES_PATH_ON_IMAGE)
+        .replace("@@RESOURCES_PATH_ON_IMAGE@@", sourceFilesConfiguration.RESOURCES_PATH_ON_IMAGE)
+        .replace("@@CLASSES_PATH_ON_IMAGE@@", sourceFilesConfiguration.CLASSES_PATH_ON_IMAGE)
         .replace(
             "@@ENTRYPOINT@@",
             joinAsJsonArray(

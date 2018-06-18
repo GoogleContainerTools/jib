@@ -28,8 +28,6 @@ import java.util.stream.Stream;
 /** Implementation of {@link SourceFilesConfiguration} that uses test resources. */
 public class TestSourceFilesConfiguration implements SourceFilesConfiguration {
 
-  private static final String EXTRACTION_PATH = "/some/extraction/path/";
-
   private final ImmutableList<Path> dependenciesSourceFiles;
   private final ImmutableList<Path> resourcesSourceFiles;
   private final ImmutableList<Path> classesSourceFiles;
@@ -53,21 +51,6 @@ public class TestSourceFilesConfiguration implements SourceFilesConfiguration {
   @Override
   public ImmutableList<Path> getClassesFiles() {
     return classesSourceFiles;
-  }
-
-  @Override
-  public String getDependenciesPathOnImage() {
-    return EXTRACTION_PATH + "libs/";
-  }
-
-  @Override
-  public String getResourcesPathOnImage() {
-    return EXTRACTION_PATH + "resources/";
-  }
-
-  @Override
-  public String getClassesPathOnImage() {
-    return EXTRACTION_PATH + "classes/";
   }
 
   /** Lists the files in the {@code resourcePath} resources directory. */

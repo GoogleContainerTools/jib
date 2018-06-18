@@ -131,14 +131,4 @@ public class GradleSourceFilesConfigurationTest {
         expectedResourcesFiles, testGradleSourceFilesConfiguration.getResourcesFiles());
     Assert.assertEquals(expectedClassesFiles, testGradleSourceFilesConfiguration.getClassesFiles());
   }
-
-  @Test
-  public void test_correctPathsOnImage() {
-    Assert.assertEquals(
-        "/app/libs/", testGradleSourceFilesConfiguration.getDependenciesPathOnImage());
-    Assert.assertEquals(
-        "/app/resources/", testGradleSourceFilesConfiguration.getResourcesPathOnImage());
-    Assert.assertEquals(
-        "/app/classes/", testGradleSourceFilesConfiguration.getClassesPathOnImage());
-  }
 }

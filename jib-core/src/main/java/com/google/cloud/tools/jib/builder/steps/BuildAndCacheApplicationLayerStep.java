@@ -55,21 +55,21 @@ class BuildAndCacheApplicationLayerStep implements AsyncStep<CachedLayer>, Calla
               listeningExecutorService,
               buildConfiguration,
               sourceFilesConfiguration.getDependenciesFiles(),
-              sourceFilesConfiguration.getDependenciesPathOnImage(),
+              sourceFilesConfiguration.DEPENDENCIES_PATH_ON_IMAGE,
               cache),
           new BuildAndCacheApplicationLayerStep(
               "resources",
               listeningExecutorService,
               buildConfiguration,
               sourceFilesConfiguration.getResourcesFiles(),
-              sourceFilesConfiguration.getResourcesPathOnImage(),
+              sourceFilesConfiguration.RESOURCES_PATH_ON_IMAGE,
               cache),
           new BuildAndCacheApplicationLayerStep(
               "classes",
               listeningExecutorService,
               buildConfiguration,
               sourceFilesConfiguration.getClassesFiles(),
-              sourceFilesConfiguration.getClassesPathOnImage(),
+              sourceFilesConfiguration.CLASSES_PATH_ON_IMAGE,
               cache));
     }
   }

@@ -26,6 +26,24 @@ import java.nio.file.Path;
 public interface SourceFilesConfiguration {
 
   /**
+   * The Unix-style path where the dependencies source files are placed in the container filesystem.
+   * Must end with backslash.
+   */
+  String DEPENDENCIES_PATH_ON_IMAGE = "/app/libs/";
+
+  /**
+   * The Unix-style path where the resources source files are placed in the container filesystem.
+   * Must end with backslash.
+   */
+  String RESOURCES_PATH_ON_IMAGE = "/app/resources/";
+
+  /**
+   * the Unix-style path where the classes source files are placed in the container filesystem. Must
+   * end with backslash.
+   */
+  String CLASSES_PATH_ON_IMAGE = "/app/classes/";
+
+  /**
    * @return the source files for the dependencies layer. These files should be in a deterministic
    *     order.
    */
@@ -41,22 +59,4 @@ public interface SourceFilesConfiguration {
    * @return the source files for the classes layer. These files should be in a deterministic order.
    */
   ImmutableList<Path> getClassesFiles();
-
-  /**
-   * @return the Unix-style path where the dependencies source files are placed in the container
-   *     filesystem. Must end with backslash.
-   */
-  String getDependenciesPathOnImage();
-
-  /**
-   * @return the Unix-style path where the resources source files are placed in the container
-   *     filesystem. Must end with backslash.
-   */
-  String getResourcesPathOnImage();
-
-  /**
-   * @return the Unix-style path where the classes source files are placed in the container
-   *     filesystem. Must end with backslash.
-   */
-  String getClassesPathOnImage();
 }
