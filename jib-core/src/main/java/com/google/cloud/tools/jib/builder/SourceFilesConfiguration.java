@@ -25,9 +25,9 @@ import java.nio.file.Path;
  */
 public interface SourceFilesConfiguration {
 
-  String DEPENDENCIES_PATH_ON_IMAGE = "/app/libs/";
-  String RESOURCES_PATH_ON_IMAGE = "/app/resources/";
-  String CLASSES_PATH_ON_IMAGE = "/app/classes/";
+  String DEFAULT_DEPENDENCIES_PATH_ON_IMAGE = "/app/libs/";
+  String DEFAULT_RESOURCES_PATH_ON_IMAGE = "/app/resources/";
+  String DEFAULT_CLASSES_PATH_ON_IMAGE = "/app/classes/";
 
   /**
    * @return the source files for the dependencies layer. These files should be in a deterministic
