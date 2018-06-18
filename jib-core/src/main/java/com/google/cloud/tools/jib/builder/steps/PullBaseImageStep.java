@@ -104,6 +104,7 @@ class PullBaseImageStep implements AsyncStep<Result>, Callable<Result> {
 
       } catch (RegistryUnauthorizedException ex) {
         // If failed, then, retrieve base registry credentials and try with retrieved credentials.
+        // TODO: Refactor the logic in RetrieveRegistryCredentialsStep out to registry.credentials.RegistryCredentialsRetriever to avoid this direct executor hack.
         ListeningExecutorService directExecutorService = MoreExecutors.newDirectExecutorService();
         RetrieveRegistryCredentialsStep retrieveBaseRegistryCredentialsStep =
             RetrieveRegistryCredentialsStep.forBaseImage(directExecutorService, buildConfiguration);
