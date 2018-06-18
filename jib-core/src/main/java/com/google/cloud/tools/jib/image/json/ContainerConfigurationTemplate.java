@@ -31,6 +31,7 @@ import javax.annotation.Nullable;
  *
  * <pre>{@code
  * {
+ *   "created": "1970-01-01T00:00:00Z",
  *   "architecture": "amd64",
  *   "os": "linux",
  *   "config": {
@@ -53,6 +54,15 @@ import javax.annotation.Nullable;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ContainerConfigurationTemplate implements JsonTemplate {
+
+  /**
+   * A combined date and time at which the image was created. Constant to maintain reproducibility
+   * and avoid Docker's weird "292 years old" bug.
+   *
+   * @see <a
+   *     href="https://github.com/GoogleContainerTools/jib/issues/341">https://github.com/GoogleContainerTools/jib/issues/341</a>
+   */
+  private String created = "1970-01-01T00:00:00Z";
 
   /** The CPU architecture to run the binaries in this container. */
   private String architecture = "amd64";
