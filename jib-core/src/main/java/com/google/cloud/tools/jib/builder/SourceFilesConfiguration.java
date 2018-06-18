@@ -27,19 +27,19 @@ public interface SourceFilesConfiguration {
 
   /**
    * The Unix-style path where the dependencies source files are placed in the container filesystem.
-   * Must end with backslash.
+   * Must end with slash.
    */
   String DEPENDENCIES_PATH_ON_IMAGE = "/app/libs/";
 
   /**
    * The Unix-style path where the resources source files are placed in the container filesystem.
-   * Must end with backslash.
+   * Must end with slash.
    */
   String RESOURCES_PATH_ON_IMAGE = "/app/resources/";
 
   /**
    * the Unix-style path where the classes source files are placed in the container filesystem. Must
-   * end with backslash.
+   * end with slash.
    */
   String CLASSES_PATH_ON_IMAGE = "/app/classes/";
 
