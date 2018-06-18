@@ -49,14 +49,12 @@ public class RegistryAuthenticator {
    * @param repository the repository/image name
    * @return a new {@link RegistryAuthenticator} for authenticating with the registry service
    * @throws RegistryAuthenticationFailedException if authentication fails
-   * @throws MalformedURLException TODO: it doesn't really
    * @see <a
    *     href="https://docs.docker.com/registry/spec/auth/token/#how-to-authenticate">https://docs.docker.com/registry/spec/auth/token/#how-to-authenticate</a>
    */
   @Nullable
   static RegistryAuthenticator fromAuthenticationMethod(
-      String authenticationMethod, String repository)
-      throws RegistryAuthenticationFailedException, MalformedURLException {
+      String authenticationMethod, String repository) throws RegistryAuthenticationFailedException {
     // If the authentication method starts with 'Basic ', no registry authentication is needed.
     if (authenticationMethod.matches("^Basic .*")) {
       return null;
@@ -103,8 +101,7 @@ public class RegistryAuthenticator {
   private final String authenticationUrlBase;
   @Nullable private Authorization authorization;
 
-  RegistryAuthenticator(String realm, String service, String repository)
-      throws MalformedURLException {
+  RegistryAuthenticator(String realm, String service, String repository) {
     authenticationUrlBase = realm + "?service=" + service + "&scope=repository:" + repository + ":";
   }
 
