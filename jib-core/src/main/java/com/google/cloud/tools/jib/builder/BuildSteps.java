@@ -76,9 +76,7 @@ public class BuildSteps {
         stepsRunner ->
             stepsRunner
                 .runRetrieveTargetRegistryCredentialsStep()
-                .runRetrieveBaseRegistryCredentialsStep()
                 .runAuthenticatePushStep()
-                .runAuthenticatePullStep()
                 .runPullBaseImageStep()
                 .runPullAndCacheBaseImageLayersStep()
                 .runPushBaseImageLayersStep()
@@ -114,8 +112,6 @@ public class BuildSteps {
             SUCCESS_MESSAGE_FORMAT_FOR_DOCKER_DAEMON, buildConfiguration.getTargetImageReference()),
         stepsRunner ->
             stepsRunner
-                .runRetrieveBaseRegistryCredentialsStep()
-                .runAuthenticatePullStep()
                 .runPullBaseImageStep()
                 .runPullAndCacheBaseImageLayersStep()
                 .runBuildAndCacheApplicationLayerSteps()
