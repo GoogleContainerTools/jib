@@ -54,6 +54,7 @@ class MavenSettingsServerCredentials {
       return null;
     }
 
+    // TODO: Add log message that says using credentials from Maven settings.
     return new RegistryCredentials(
         CREDENTIAL_SOURCE,
         Authorizations.withBasicCredentials(

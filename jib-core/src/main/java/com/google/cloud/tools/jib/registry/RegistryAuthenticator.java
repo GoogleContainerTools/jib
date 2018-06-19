@@ -96,6 +96,23 @@ public class RegistryAuthenticator {
   private static class AuthenticationResponseTemplate implements JsonTemplate {
 
     @Nullable private String token;
+
+    /**
+     * {@code access_token} is accepted as an alias for {@code token}.
+     *
+     * @see <a
+     *     href="https://docs.docker.com/registry/spec/auth/token/#token-response-fields">https://docs.docker.com/registry/spec/auth/token/#token-response-fields</a>
+     */
+    @Nullable private String access_token;
+
+    /** @return {@link #token} if not null, or {@link #access_token} */
+    @Nullable
+    private String getToken() {
+      if (token != null) {
+        return token;
+      }
+      return access_token;
+    }
   }
 
   private final String authenticationUrlBase;
@@ -164,11 +181,11 @@ public class RegistryAuthenticator {
 
         AuthenticationResponseTemplate responseJson =
             JsonTemplateMapper.readJson(responseString, AuthenticationResponseTemplate.class);
-        if (responseJson.token == null) {
+        if (responseJson.getToken() == null) {
           throw new RegistryAuthenticationFailedException(
               "Did not get token in authentication response from " + authenticationUrl);
         }
-        return Authorizations.withBearerToken(responseJson.token);
+        return Authorizations.withBearerToken(responseJson.getToken());
       }
 
     } catch (IOException ex) {
