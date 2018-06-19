@@ -16,16 +16,11 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.image.ImageFormat;
-import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.common.base.Preconditions;
-import java.util.Collections;
-import java.util.List;
 import javax.annotation.Nullable;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.model.ObjectFactory;
-import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
@@ -58,17 +53,11 @@ public class JibExtension {
 
   // Defines default configuration values.
   private static final String DEFAULT_FROM_IMAGE = "gcr.io/distroless/java";
-  private static final List<String> DEFAULT_JVM_FLAGS = Collections.emptyList();
-  private static final List<String> DEFAULT_ARGS = Collections.emptyList();
-  private static final ImageFormat DEFAULT_FORMAT = ImageFormat.Docker;
   private static final boolean DEFAULT_USE_ONLY_PROJECT_CACHE = false;
 
   private final ImageConfiguration from;
   private final ImageConfiguration to;
-  private final ListProperty<String> jvmFlags;
-  private final Property<String> mainClass;
-  private final ListProperty<String> args;
-  private final Property<ImageFormat> format;
+  private final ContainerConfiguration container;
   private final Property<Boolean> useOnlyProjectCache;
 
   public JibExtension(Project project) {
@@ -76,18 +65,12 @@ public class JibExtension {
 
     from = objectFactory.newInstance(ImageConfiguration.class);
     to = objectFactory.newInstance(ImageConfiguration.class);
+    container = objectFactory.newInstance(ContainerConfiguration.class);
 
-    jvmFlags = objectFactory.listProperty(String.class);
-    mainClass = objectFactory.property(String.class);
-    args = objectFactory.listProperty(String.class);
-    format = objectFactory.property(ImageFormat.class);
     useOnlyProjectCache = objectFactory.property(Boolean.class);
 
     // Sets defaults.
     from.setImage(DEFAULT_FROM_IMAGE);
-    jvmFlags.set(DEFAULT_JVM_FLAGS);
-    args.set(DEFAULT_ARGS);
-    format.set(DEFAULT_FORMAT);
     useOnlyProjectCache.set(DEFAULT_USE_ONLY_PROJECT_CACHE);
   }
 
@@ -99,20 +82,8 @@ public class JibExtension {
     action.execute(to);
   }
 
-  public void setJvmFlags(List<String> jvmFlags) {
-    this.jvmFlags.set(jvmFlags);
-  }
-
-  public void setMainClass(String mainClass) {
-    this.mainClass.set(mainClass);
-  }
-
-  public void setArgs(List<String> args) {
-    this.args.set(args);
-  }
-
-  public void setFormat(ImageFormat format) {
-    this.format.set(format);
+  public void container(Action<? super ContainerConfiguration> action) {
+    action.execute(container);
   }
 
   public void setUseOnlyProjectCache(boolean useOnlyProjectCache) {
@@ -142,28 +113,10 @@ public class JibExtension {
     return to;
   }
 
-  @Input
-  List<String> getJvmFlags() {
-    return jvmFlags.get();
-  }
-
-  @Input
-  @Nullable
+  @Nested
   @Optional
-  String getMainClass() {
-    return mainClass.getOrNull();
-  }
-
-  @Input
-  @Optional
-  List<String> getArgs() {
-    return args.get();
-  }
-
-  @Input
-  @Optional
-  Class<? extends BuildableManifestTemplate> getFormat() {
-    return format.get().getManifestTemplateClass();
+  ContainerConfiguration getContainer() {
+    return container;
   }
 
   @Input

@@ -84,35 +84,25 @@ public class JibExtensionTest {
   }
 
   @Test
-  public void testJvmFlags() {
-    Assert.assertEquals(Collections.emptyList(), testJibExtension.getJvmFlags());
+  public void testContainer() {
+    Assert.assertEquals(Collections.emptyList(), testJibExtension.getContainer().getJvmFlags());
+    Assert.assertNull(testJibExtension.getContainer().getMainClass());
+    Assert.assertEquals(Collections.emptyList(), testJibExtension.getContainer().getArgs());
+    Assert.assertEquals(V22ManifestTemplate.class, testJibExtension.getContainer().getFormat());
 
-    testJibExtension.setJvmFlags(Arrays.asList("flag1", "flag2"));
-    Assert.assertEquals(Arrays.asList("flag1", "flag2"), testJibExtension.getJvmFlags());
-  }
-
-  @Test
-  public void testMainClass() {
-    Assert.assertNull(testJibExtension.getMainClass());
-
-    testJibExtension.setMainClass("some main class");
-    Assert.assertEquals("some main class", testJibExtension.getMainClass());
-  }
-
-  @Test
-  public void testArgs() {
-    Assert.assertEquals(Collections.emptyList(), testJibExtension.getArgs());
-
-    testJibExtension.setArgs(Arrays.asList("arg1", "arg2"));
-    Assert.assertEquals(Arrays.asList("arg1", "arg2"), testJibExtension.getArgs());
-  }
-
-  @Test
-  public void testFormat() {
-    Assert.assertEquals(V22ManifestTemplate.class, testJibExtension.getFormat());
-
-    testJibExtension.setFormat(ImageFormat.OCI);
-    Assert.assertEquals(OCIManifestTemplate.class, testJibExtension.getFormat());
+    testJibExtension.container(
+        container -> {
+          container.setJvmFlags(Arrays.asList("jvmFlag1", "jvmFlag2"));
+          container.setMainClass("mainClass");
+          container.setArgs(Arrays.asList("arg1", "arg2", "arg3"));
+          container.setFormat(ImageFormat.OCI);
+        });
+    Assert.assertEquals(
+        Arrays.asList("jvmFlag1", "jvmFlag2"), testJibExtension.getContainer().getJvmFlags());
+    Assert.assertEquals("mainClass", testJibExtension.getContainer().getMainClass());
+    Assert.assertEquals(
+        Arrays.asList("arg1", "arg2", "arg3"), testJibExtension.getContainer().getArgs());
+    Assert.assertEquals(OCIManifestTemplate.class, testJibExtension.getContainer().getFormat());
   }
 
   @Test

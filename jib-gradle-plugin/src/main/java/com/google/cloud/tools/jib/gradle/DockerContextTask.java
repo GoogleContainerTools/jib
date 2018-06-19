@@ -105,9 +105,9 @@ public class DockerContextTask extends DefaultTask {
     try {
       new DockerContextGenerator(gradleProjectProperties.getSourceFilesConfiguration())
           .setBaseImage(jibExtension.getBaseImage())
-          .setJvmFlags(jibExtension.getJvmFlags())
+          .setJvmFlags(jibExtension.getContainer().getJvmFlags())
           .setMainClass(mainClass)
-          .setJavaArguments(jibExtension.getArgs())
+          .setJavaArguments(jibExtension.getContainer().getArgs())
           .generate(Paths.get(targetDir));
 
       gradleBuildLogger.info("Created Docker context at " + targetDir);

@@ -105,9 +105,9 @@ public class BuildImageTask extends DefaultTask {
             .setTargetImageCredentialHelperName(jibExtension.getTo().getCredHelper())
             .setKnownTargetRegistryCredentials(knownTargetRegistryCredentials)
             .setMainClass(mainClass)
-            .setJavaArguments(jibExtension.getArgs())
-            .setJvmFlags(jibExtension.getJvmFlags())
-            .setTargetFormat(jibExtension.getFormat())
+            .setJavaArguments(jibExtension.getContainer().getArgs())
+            .setJvmFlags(jibExtension.getContainer().getJvmFlags())
+            .setTargetFormat(jibExtension.getContainer().getFormat())
             .build();
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
