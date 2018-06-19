@@ -45,9 +45,7 @@ public class StepsRunner {
   private final Cache baseLayersCache;
   private final Cache applicationLayersCache;
 
-  @Nullable private RetrieveRegistryCredentialsStep retrieveBaseRegistryCredentialsStep;
   @Nullable private RetrieveRegistryCredentialsStep retrieveTargetRegistryCredentialsStep;
-  @Nullable private AuthenticatePullStep authenticatePullStep;
   @Nullable private AuthenticatePushStep authenticatePushStep;
   @Nullable private PullBaseImageStep pullBaseImageStep;
   @Nullable private PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep;
@@ -73,12 +71,6 @@ public class StepsRunner {
     this.applicationLayersCache = applicationLayersCache;
   }
 
-  public StepsRunner runRetrieveBaseRegistryCredentialsStep() {
-    retrieveBaseRegistryCredentialsStep =
-        RetrieveRegistryCredentialsStep.forBaseImage(listeningExecutorService, buildConfiguration);
-    return this;
-  }
-
   public StepsRunner runRetrieveTargetRegistryCredentialsStep() {
     retrieveTargetRegistryCredentialsStep =
         RetrieveRegistryCredentialsStep.forTargetImage(
@@ -95,21 +87,8 @@ public class StepsRunner {
     return this;
   }
 
-  public StepsRunner runAuthenticatePullStep() {
-    authenticatePullStep =
-        new AuthenticatePullStep(
-            listeningExecutorService,
-            buildConfiguration,
-            Preconditions.checkNotNull(retrieveBaseRegistryCredentialsStep));
-    return this;
-  }
-
   public StepsRunner runPullBaseImageStep() {
-    pullBaseImageStep =
-        new PullBaseImageStep(
-            listeningExecutorService,
-            buildConfiguration,
-            Preconditions.checkNotNull(authenticatePullStep));
+    pullBaseImageStep = new PullBaseImageStep(listeningExecutorService, buildConfiguration);
     return this;
   }
 
@@ -119,7 +98,6 @@ public class StepsRunner {
             listeningExecutorService,
             buildConfiguration,
             baseLayersCache,
-            Preconditions.checkNotNull(authenticatePullStep),
             Preconditions.checkNotNull(pullBaseImageStep));
     return this;
   }

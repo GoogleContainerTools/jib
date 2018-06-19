@@ -91,6 +91,11 @@ public class RegistryClient {
   @Nullable private final Authorization authorization;
   private final RegistryEndpointProperties registryEndpointProperties;
 
+  /**
+   * @param authorization the {@link Authorization} to access the registry/repository
+   * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
+   * @param imageName the image/repository name (also known as, namespace)
+   */
   public RegistryClient(@Nullable Authorization authorization, String serverUrl, String imageName) {
     this.authorization = authorization;
     this.registryEndpointProperties = new RegistryEndpointProperties(serverUrl, imageName);

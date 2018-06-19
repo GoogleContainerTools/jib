@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
+import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.BaseImageWithAuthorization;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
@@ -39,7 +40,6 @@ class PullAndCacheBaseImageLayersStep
 
   private final BuildConfiguration buildConfiguration;
   private final Cache cache;
-  private final AuthenticatePullStep authenticatePullStep;
   private final PullBaseImageStep pullBaseImageStep;
 
   private final ListeningExecutorService listeningExecutorService;
@@ -49,12 +49,10 @@ class PullAndCacheBaseImageLayersStep
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
       Cache cache,
-      AuthenticatePullStep authenticatePullStep,
       PullBaseImageStep pullBaseImageStep) {
     this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
     this.cache = cache;
-    this.authenticatePullStep = authenticatePullStep;
     this.pullBaseImageStep = pullBaseImageStep;
 
     listenableFuture =
@@ -70,7 +68,8 @@ class PullAndCacheBaseImageLayersStep
   public ImmutableList<PullAndCacheBaseImageLayerStep> call()
       throws ExecutionException, LayerPropertyNotFoundException {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
-      ImmutableList<Layer> baseImageLayers = NonBlockingSteps.get(pullBaseImageStep).getLayers();
+      BaseImageWithAuthorization pullBaseImageStepResult = NonBlockingSteps.get(pullBaseImageStep);
+      ImmutableList<Layer> baseImageLayers = pullBaseImageStepResult.getBaseImage().getLayers();
 
       ImmutableList.Builder<PullAndCacheBaseImageLayerStep> pullAndCacheBaseImageLayerStepsBuilder =
           ImmutableList.builderWithExpectedSize(baseImageLayers.size());
@@ -81,7 +80,7 @@ class PullAndCacheBaseImageLayersStep
                 buildConfiguration,
                 cache,
                 layer.getBlobDescriptor().getDigest(),
-                authenticatePullStep));
+                pullBaseImageStepResult.getBaseImageAuthorization()));
       }
 
       return pullAndCacheBaseImageLayerStepsBuilder.build();
