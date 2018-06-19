@@ -33,6 +33,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
+// TODO: This is probably not necessary anymore either.
 /**
  * Authenticates push to a target registry using Docker Token Authentication.
  *
