@@ -57,6 +57,20 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     }
   }
 
+  /** Configuration for {@code container} parameter. */
+  public static class ContainerConfiguration {
+
+    @Parameter private List<String> jvmFlags = Collections.emptyList();
+
+    @Nullable @Parameter private String mainClass;
+
+    @Parameter private List<String> args = Collections.emptyList();
+
+    @Nullable
+    @Parameter(required = true)
+    private String format = "Docker";
+  }
+
   /**
    * @param image the image reference string to parse.
    * @param type name of the parameter being parsed (e.g. "to" or "from").
@@ -83,17 +97,9 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   @Parameter(property = "image")
   private ToConfiguration to = new ToConfiguration();
 
-  @Parameter private List<String> jvmFlags = Collections.emptyList();
+  @Parameter private ContainerConfiguration container = new ContainerConfiguration();
 
   @Nullable @Parameter private Map<String, String> environment;
-
-  @Nullable @Parameter private String mainClass;
-
-  @Parameter private List<String> args = Collections.emptyList();
-
-  @Nullable
-  @Parameter(defaultValue = "Docker", required = true)
-  private String format;
 
   @Parameter(defaultValue = "false", required = true)
   private boolean useOnlyProjectCache;
@@ -122,7 +128,7 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   }
 
   List<String> getJvmFlags() {
-    return jvmFlags;
+    return container.jvmFlags;
   }
 
   @Nullable
@@ -132,15 +138,15 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
   @Nullable
   String getMainClass() {
-    return mainClass;
+    return container.mainClass;
   }
 
   List<String> getArgs() {
-    return args;
+    return container.args;
   }
 
   String getFormat() {
-    return Preconditions.checkNotNull(format);
+    return Preconditions.checkNotNull(container.format);
   }
 
   boolean getUseOnlyProjectCache() {
