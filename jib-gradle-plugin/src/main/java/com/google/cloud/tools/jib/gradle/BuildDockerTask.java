@@ -77,13 +77,15 @@ public class BuildDockerTask extends DefaultTask {
 
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
+    GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
+    jibExtension.handleDeprecatedParameters(gradleBuildLogger);
+
     RegistryCredentials knownBaseRegistryCredentials = null;
     Authorization fromAuthorization = jibExtension.getFrom().getImageAuthorization();
     if (fromAuthorization != null) {
       knownBaseRegistryCredentials = new RegistryCredentials("jib.from.auth", fromAuthorization);
     }
 
-    GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(getProject(), gradleBuildLogger);
     String mainClass = gradleProjectProperties.getMainClass(jibExtension);
@@ -101,8 +103,8 @@ public class BuildDockerTask extends DefaultTask {
             .setBaseImageCredentialHelperName(jibExtension.getFrom().getCredHelper())
             .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
             .setMainClass(mainClass)
-            .setJavaArguments(jibExtension.getContainer().getArgs())
-            .setJvmFlags(jibExtension.getContainer().getJvmFlags())
+            .setJavaArguments(jibExtension.getArgs())
+            .setJvmFlags(jibExtension.getJvmFlags())
             .build();
 
     // TODO: Instead of disabling logging, have authentication credentials be provided

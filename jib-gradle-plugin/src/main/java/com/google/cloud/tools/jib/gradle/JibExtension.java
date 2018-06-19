@@ -16,11 +16,18 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.builder.BuildLogger;
+import com.google.cloud.tools.jib.image.ImageFormat;
+import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import java.util.Collections;
+import java.util.List;
 import javax.annotation.Nullable;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
@@ -42,10 +49,12 @@ import org.gradle.api.tasks.Optional;
  *     image = ‘gcr.io/gcp-project/my-app:built-with-jib’
  *     credHelper = ‘ecr-login’
  *   }
- *   jvmFlags = [‘-Xms512m’, ‘-Xdebug’]
- *   mainClass = ‘com.mycompany.myproject.Main’
- *   args = ['arg1', 'arg2']
- *   format = OCI
+ *   container {
+ *     jvmFlags = [‘-Xms512m’, ‘-Xdebug’]
+ *     mainClass = ‘com.mycompany.myproject.Main’
+ *     args = ['arg1', 'arg2']
+ *     format = OCI
+ *   }
  * }
  * }</pre>
  */
@@ -57,7 +66,13 @@ public class JibExtension {
 
   private final ImageConfiguration from;
   private final ImageConfiguration to;
-  private final ContainerConfiguration container;
+  private final ContainerParameters container;
+
+  private final ListProperty<String> jvmFlags;
+  private final Property<String> mainClass;
+  private final ListProperty<String> args;
+  private final Property<ImageFormat> format;
+
   private final Property<Boolean> useOnlyProjectCache;
 
   public JibExtension(Project project) {
@@ -65,13 +80,60 @@ public class JibExtension {
 
     from = objectFactory.newInstance(ImageConfiguration.class);
     to = objectFactory.newInstance(ImageConfiguration.class);
-    container = objectFactory.newInstance(ContainerConfiguration.class);
+    container = objectFactory.newInstance(ContainerParameters.class);
+
+    jvmFlags = objectFactory.listProperty(String.class);
+    mainClass = objectFactory.property(String.class);
+    args = objectFactory.listProperty(String.class);
+    format = objectFactory.property(ImageFormat.class);
 
     useOnlyProjectCache = objectFactory.property(Boolean.class);
 
     // Sets defaults.
     from.setImage(DEFAULT_FROM_IMAGE);
+    jvmFlags.set(Collections.emptyList());
+    args.set(Collections.emptyList());
+    format.set(ImageFormat.Docker);
     useOnlyProjectCache.set(DEFAULT_USE_ONLY_PROJECT_CACHE);
+  }
+
+  /**
+   * Warns about deprecated parameters in use.
+   *
+   * @param logger The logger used to print the warnings
+   */
+  public void handleDeprecatedParameters(BuildLogger logger) {
+    StringBuilder deprecatedParams = new StringBuilder();
+    if (!jvmFlags.get().isEmpty()) {
+      deprecatedParams.append("  jvmFlags -> container.jvmFlags\n");
+      if (container.getJvmFlags().isEmpty()) {
+        container.setJvmFlags(jvmFlags.get());
+      }
+    }
+    if (!Strings.isNullOrEmpty(mainClass.getOrNull())) {
+      deprecatedParams.append("  mainClass -> container.mainClass\n");
+      if (Strings.isNullOrEmpty(container.getMainClass())) {
+        container.setMainClass(mainClass.getOrNull());
+      }
+    }
+    if (!args.get().isEmpty()) {
+      deprecatedParams.append("  args -> container.args\n");
+      if (container.getArgs().isEmpty()) {
+        container.setArgs(args.get());
+      }
+    }
+    if (format.get() != ImageFormat.Docker) {
+      deprecatedParams.append("  format -> container.format\n");
+      container.setFormat(format.get());
+    }
+
+    if (deprecatedParams.length() > 0) {
+      logger.warn(
+          "There are deprecated parameters used in the build configuration. Please make the "
+              + "following changes to your build.gradle to avoid issues in the future:\n"
+              + deprecatedParams
+              + "You may also wrap the parameters in a container{} block.");
+    }
   }
 
   public void from(Action<? super ImageConfiguration> action) {
@@ -82,8 +144,24 @@ public class JibExtension {
     action.execute(to);
   }
 
-  public void container(Action<? super ContainerConfiguration> action) {
+  public void container(Action<? super ContainerParameters> action) {
     action.execute(container);
+  }
+
+  public void setJvmFlags(List<String> jvmFlags) {
+    this.jvmFlags.set(jvmFlags);
+  }
+
+  public void setMainClass(String mainClass) {
+    this.mainClass.set(mainClass);
+  }
+
+  public void setArgs(List<String> args) {
+    this.args.set(args);
+  }
+
+  public void setFormat(ImageFormat format) {
+    this.format.set(format);
   }
 
   public void setUseOnlyProjectCache(boolean useOnlyProjectCache) {
@@ -115,8 +193,37 @@ public class JibExtension {
 
   @Nested
   @Optional
-  ContainerConfiguration getContainer() {
+  ContainerParameters getContainer() {
     return container;
+  }
+
+  // TODO: Make @Internal (deprecated)
+  @Input
+  @Optional
+  List<String> getJvmFlags() {
+    return container.getJvmFlags();
+  }
+
+  // TODO: Make @Internal (deprecated)
+  @Input
+  @Nullable
+  @Optional
+  String getMainClass() {
+    return container.getMainClass();
+  }
+
+  // TODO: Make @Internal (deprecated)
+  @Input
+  @Optional
+  List<String> getArgs() {
+    return container.getArgs();
+  }
+
+  // TODO: Make @Internal (deprecated)
+  @Input
+  @Optional
+  Class<? extends BuildableManifestTemplate> getFormat() {
+    return container.getFormat();
   }
 
   @Input

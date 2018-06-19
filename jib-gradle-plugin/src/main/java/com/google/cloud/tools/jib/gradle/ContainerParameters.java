@@ -29,7 +29,7 @@ import org.gradle.api.tasks.Optional;
  * A bean that configures properties of the container run from the image. This is configurable with
  * Groovy closures and can be validated when used as a task input.
  */
-public class ContainerConfiguration {
+public class ContainerParameters {
 
   private List<String> jvmFlags = Collections.emptyList();
   @Nullable private String mainClass;

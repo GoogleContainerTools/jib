@@ -96,6 +96,8 @@ public class DockerContextTask extends DefaultTask {
     Preconditions.checkNotNull(jibExtension);
 
     GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
+    jibExtension.handleDeprecatedParameters(gradleBuildLogger);
+
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(getProject(), gradleBuildLogger);
     String mainClass = gradleProjectProperties.getMainClass(jibExtension);
@@ -105,9 +107,9 @@ public class DockerContextTask extends DefaultTask {
     try {
       new DockerContextGenerator(gradleProjectProperties.getSourceFilesConfiguration())
           .setBaseImage(jibExtension.getBaseImage())
-          .setJvmFlags(jibExtension.getContainer().getJvmFlags())
+          .setJvmFlags(jibExtension.getJvmFlags())
           .setMainClass(mainClass)
-          .setJavaArguments(jibExtension.getContainer().getArgs())
+          .setJavaArguments(jibExtension.getArgs())
           .generate(Paths.get(targetDir));
 
       gradleBuildLogger.info("Created Docker context at " + targetDir);
