@@ -11,6 +11,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Registries without TLS now supported ([#388](https://github.com/GoogleContainerTools/jib/issues/388))
+
 ## 0.9.0
 ### Added
 - Better feedback for build failures ([#197](https://github.com/google/jib/pull/197))
