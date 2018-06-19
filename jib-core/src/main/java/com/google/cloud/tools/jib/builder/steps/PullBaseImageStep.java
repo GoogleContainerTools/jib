@@ -117,6 +117,17 @@ class PullBaseImageStep implements AsyncStep<Result>, Callable<Result> {
     }
   }
 
+  /**
+   * Pulls the base image.
+   *
+   * @param registryCredentials authentication credentials to possibly use
+   * @return the pulled image
+   * @throws IOException when an I/O exception occurs during the pulling
+   * @throws RegistryException if communicating with the registry caused a known error
+   * @throws LayerCountMismatchException if the manifest and configuration contain conflicting layer
+   *     information
+   * @throws LayerPropertyNotFoundException if adding image layers fails
+   */
   private Image<Layer> pullBaseImage(@Nullable Authorization registryCredentials)
       throws IOException, RegistryException, LayerPropertyNotFoundException,
           LayerCountMismatchException {
