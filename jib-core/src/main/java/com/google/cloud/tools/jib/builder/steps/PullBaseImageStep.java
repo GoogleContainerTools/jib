@@ -21,7 +21,7 @@ import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
-import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.Result;
+import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.BaseImageWithAuthorization;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
@@ -48,17 +48,19 @@ import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
 /** Pulls the base image manifest. */
-class PullBaseImageStep implements AsyncStep<Result>, Callable<Result> {
+class PullBaseImageStep
+    implements AsyncStep<BaseImageWithAuthorization>, Callable<BaseImageWithAuthorization> {
 
   private static final String DESCRIPTION = "Pulling base image manifest";
 
   /** Structure for the result returned by this step. */
-  static class Result {
+  static class BaseImageWithAuthorization {
 
     private final Image<Layer> baseImage;
     private final @Nullable Authorization baseImageAuthorization;
 
-    private Result(Image<Layer> baseImage, @Nullable Authorization baseImageAuthorization) {
+    private BaseImageWithAuthorization(
+        Image<Layer> baseImage, @Nullable Authorization baseImageAuthorization) {
       this.baseImage = baseImage;
       this.baseImageAuthorization = baseImageAuthorization;
     }
@@ -75,7 +77,7 @@ class PullBaseImageStep implements AsyncStep<Result>, Callable<Result> {
 
   private final BuildConfiguration buildConfiguration;
 
-  private final ListenableFuture<Result> listenableFuture;
+  private final ListenableFuture<BaseImageWithAuthorization> listenableFuture;
 
   PullBaseImageStep(
       ListeningExecutorService listeningExecutorService, BuildConfiguration buildConfiguration) {
@@ -85,12 +87,12 @@ class PullBaseImageStep implements AsyncStep<Result>, Callable<Result> {
   }
 
   @Override
-  public ListenableFuture<Result> getFuture() {
+  public ListenableFuture<BaseImageWithAuthorization> getFuture() {
     return listenableFuture;
   }
 
   @Override
-  public Result call()
+  public BaseImageWithAuthorization call()
       throws IOException, RegistryException, LayerPropertyNotFoundException,
           LayerCountMismatchException, ExecutionException {
     buildConfiguration
@@ -100,7 +102,7 @@ class PullBaseImageStep implements AsyncStep<Result>, Callable<Result> {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       // First, try with no credentials.
       try {
-        return new Result(pullBaseImage(null), null);
+        return new BaseImageWithAuthorization(pullBaseImage(null), null);
 
       } catch (RegistryUnauthorizedException ex) {
         // If failed, then, retrieve base registry credentials and try with retrieved credentials.
@@ -112,7 +114,8 @@ class PullBaseImageStep implements AsyncStep<Result>, Callable<Result> {
 
         Authorization registryCredentials =
             NonBlockingSteps.get(retrieveBaseRegistryCredentialsStep);
-        return new Result(pullBaseImage(registryCredentials), registryCredentials);
+        return new BaseImageWithAuthorization(
+            pullBaseImage(registryCredentials), registryCredentials);
       }
     }
   }
