@@ -33,6 +33,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
+// TODO: This is probably not necessary anymore either.
 /**
  * Authenticates push to a target registry using Docker Token Authentication.
  *
@@ -76,15 +77,14 @@ class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authori
             String.format(DESCRIPTION, buildConfiguration.getTargetImageRegistry()))) {
       Authorization registryCredentials =
           NonBlockingSteps.get(retrieveTargetRegistryCredentialsStep);
-      return registryCredentials;
-      // RegistryAuthenticator registryAuthenticator =
-      //     RegistryAuthenticators.forOther(
-      //         buildConfiguration.getTargetImageRegistry(),
-      //         buildConfiguration.getTargetImageRepository());
-      // if (registryAuthenticator == null) {
-      //   return registryCredentials;
-      // }
-      // return registryAuthenticator.setAuthorization(registryCredentials).authenticatePush();
+      RegistryAuthenticator registryAuthenticator =
+          RegistryAuthenticators.forOther(
+              buildConfiguration.getTargetImageRegistry(),
+              buildConfiguration.getTargetImageRepository());
+      if (registryAuthenticator == null) {
+        return registryCredentials;
+      }
+      return registryAuthenticator.setAuthorization(registryCredentials).authenticatePush();
     }
   }
 }
