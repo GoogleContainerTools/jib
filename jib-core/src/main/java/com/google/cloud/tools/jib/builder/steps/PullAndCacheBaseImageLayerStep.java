@@ -18,23 +18,22 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.async.AsyncStep;
-import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheReader;
 import com.google.cloud.tools.jib.cache.CacheWriter;
 import com.google.cloud.tools.jib.cache.CachedLayer;
+import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryException;
 import com.google.common.io.CountingOutputStream;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
+import javax.annotation.Nullable;
 
 /** Pulls and caches a single base image layer. */
 class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer>, Callable<CachedLayer> {
@@ -44,7 +43,7 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer>, Callable
   private final BuildConfiguration buildConfiguration;
   private final Cache cache;
   private final DescriptorDigest layerDigest;
-  private final AuthenticatePullStep authenticatePullStep;
+  private final @Nullable Authorization pullAuthorization;
 
   private final ListenableFuture<CachedLayer> listenableFuture;
 
@@ -53,15 +52,13 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer>, Callable
       BuildConfiguration buildConfiguration,
       Cache cache,
       DescriptorDigest layerDigest,
-      AuthenticatePullStep authenticatePullStep) {
+      @Nullable Authorization pullAuthorization) {
     this.buildConfiguration = buildConfiguration;
     this.cache = cache;
     this.layerDigest = layerDigest;
-    this.authenticatePullStep = authenticatePullStep;
+    this.pullAuthorization = pullAuthorization;
 
-    listenableFuture =
-        Futures.whenAllSucceed(authenticatePullStep.getFuture())
-            .call(this, listeningExecutorService);
+    listenableFuture = listeningExecutorService.submit(this);
   }
 
   @Override
@@ -70,13 +67,12 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer>, Callable
   }
 
   @Override
-  public CachedLayer call()
-      throws IOException, RegistryException, LayerPropertyNotFoundException, ExecutionException {
+  public CachedLayer call() throws IOException, RegistryException, LayerPropertyNotFoundException {
     try (Timer ignored =
         new Timer(buildConfiguration.getBuildLogger(), String.format(DESCRIPTION, layerDigest))) {
       RegistryClient registryClient =
           new RegistryClient(
-              NonBlockingSteps.get(authenticatePullStep),
+              pullAuthorization,
               buildConfiguration.getBaseImageRegistry(),
               buildConfiguration.getBaseImageRepository());
 
