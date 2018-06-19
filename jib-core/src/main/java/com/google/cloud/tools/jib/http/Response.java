@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.http;
 
+import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpResponse;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
@@ -69,5 +70,10 @@ public class Response {
    */
   public Blob getBody() throws IOException {
     return Blobs.from(httpResponse.getContent());
+  }
+
+  /** @return the original request URL */
+  public GenericUrl getRequestUrl() {
+    return httpResponse.getRequest().getUrl();
   }
 }

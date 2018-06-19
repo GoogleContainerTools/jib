@@ -22,8 +22,6 @@ import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
-import com.google.cloud.tools.jib.registry.RegistryAuthenticator;
-import com.google.cloud.tools.jib.registry.RegistryAuthenticators;
 import com.google.cloud.tools.jib.registry.RegistryException;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -77,14 +75,15 @@ class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authori
             String.format(DESCRIPTION, buildConfiguration.getTargetImageRegistry()))) {
       Authorization registryCredentials =
           NonBlockingSteps.get(retrieveTargetRegistryCredentialsStep);
-      RegistryAuthenticator registryAuthenticator =
-          RegistryAuthenticators.forOther(
-              buildConfiguration.getTargetImageRegistry(),
-              buildConfiguration.getTargetImageRepository());
-      if (registryAuthenticator == null) {
-        return registryCredentials;
-      }
-      return registryAuthenticator.setAuthorization(registryCredentials).authenticatePush();
+      return registryCredentials;
+      // RegistryAuthenticator registryAuthenticator =
+      //     RegistryAuthenticators.forOther(
+      //         buildConfiguration.getTargetImageRegistry(),
+      //         buildConfiguration.getTargetImageRepository());
+      // if (registryAuthenticator == null) {
+      //   return registryCredentials;
+      // }
+      // return registryAuthenticator.setAuthorization(registryCredentials).authenticatePush();
     }
   }
 }
