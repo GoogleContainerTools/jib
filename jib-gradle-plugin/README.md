@@ -225,7 +225,7 @@ Some common credential helpers include:
 Configure credential helpers to use by specifying them as a `credHelper` for their respective image in the `jib` extension.
 
 *Example configuration:* 
-```xml
+```groovy
 jib {
   from {
     image = 'aws_account_id.dkr.ecr.region.amazonaws.com/my-base-image'
@@ -242,7 +242,7 @@ jib {
 
 You can specify credentials directly in the extension for the `from` and/or `to` images.
 
-```xml
+```groovy
 jib {
   from {
     image = 'aws_account_id.dkr.ecr.region.amazonaws.com/my-base-image'
@@ -265,7 +265,7 @@ These credentials can be stored in `gradle.properties`, retrieved from a command
 
 For example, you can use a key file for authentication (for GCR, see [Using a JSON key file](https://cloud.google.com/container-registry/docs/advanced-authentication#using_a_json_key_file)):
 
-```xml
+```groovy
 jib {
   to {
     image = 'gcr.io/my-gcp-project/my-app'
