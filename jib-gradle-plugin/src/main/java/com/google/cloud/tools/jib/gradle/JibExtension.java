@@ -71,7 +71,7 @@ public class JibExtension {
   private final ListProperty<String> jvmFlags;
   private final Property<String> mainClass;
   private final ListProperty<String> args;
-  @Nullable private Property<ImageFormat> format;
+  private final Property<ImageFormat> format;
 
   private final Property<Boolean> useOnlyProjectCache;
 
@@ -85,6 +85,7 @@ public class JibExtension {
     jvmFlags = objectFactory.listProperty(String.class);
     mainClass = objectFactory.property(String.class);
     args = objectFactory.listProperty(String.class);
+    format = objectFactory.property(ImageFormat.class);
 
     useOnlyProjectCache = objectFactory.property(Boolean.class);
 
@@ -120,7 +121,7 @@ public class JibExtension {
         container.setArgs(args.get());
       }
     }
-    if (format != null) {
+    if (format.getOrNull() != null) {
       deprecatedParams.append("  format -> container.format\n");
       container.setFormat(format.get());
     }
@@ -219,7 +220,6 @@ public class JibExtension {
 
   // TODO: Make @Internal (deprecated)
   @Input
-  @Nullable
   @Optional
   Class<? extends BuildableManifestTemplate> getFormat() {
     return container.getFormat();
