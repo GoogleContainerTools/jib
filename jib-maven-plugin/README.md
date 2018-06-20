@@ -203,7 +203,7 @@ Property | Type | Default | Description
 `image` | string | *Required* | The image reference for the target image. This can also be specified via the `-Dimage` command line option.
 `credHelper` | string | *None* | Suffix for the credential helper that can authenticate pulling the base image (following `docker-credential-`).
 
-<a name="container-closure"></a>`container` is an object with the following properties:
+<a name="container-object"></a>`container` is an object with the following properties:
 
 Property | Type | Default | Description
 --- | --- | --- | ---
