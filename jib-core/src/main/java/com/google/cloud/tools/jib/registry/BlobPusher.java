@@ -49,7 +49,7 @@ class BlobPusher {
   private final Blob blob;
 
   /** Initializes the BLOB upload. */
-  private class Initializer implements RegistryEndpointProvider<String> {
+  private class Initializer implements RegistryEndpointProvider<URL> {
 
     @Nullable
     @Override
@@ -68,14 +68,14 @@ class BlobPusher {
      */
     @Nullable
     @Override
-    public String handleResponse(Response response) throws RegistryErrorException {
+    public URL handleResponse(Response response) throws RegistryErrorException {
       switch (response.getStatusCode()) {
         case HttpStatusCodes.STATUS_CODE_CREATED:
           // The BLOB exists in the registry.
           return null;
 
         case HttpURLConnection.HTTP_ACCEPTED:
-          return extractLocationHeader(response);
+          return getRedirectLocation(response);
 
         default:
           throw buildRegistryErrorException(
@@ -104,7 +104,7 @@ class BlobPusher {
   }
 
   /** Writes the BLOB content to the upload location. */
-  private class Writer implements RegistryEndpointProvider<String> {
+  private class Writer implements RegistryEndpointProvider<URL> {
 
     private final URL location;
 
@@ -121,9 +121,9 @@ class BlobPusher {
 
     /** @return a URL to continue pushing the BLOB to */
     @Override
-    public String handleResponse(Response response) throws RegistryException {
+    public URL handleResponse(Response response) throws RegistryException {
       // TODO: Handle 204 No Content
-      return extractLocationHeader(response);
+      return getRedirectLocation(response);
     }
 
     @Override
@@ -201,7 +201,7 @@ class BlobPusher {
    * @return a {@link RegistryEndpointProvider} for initializing the BLOB upload with an existence
    *     check
    */
-  RegistryEndpointProvider<String> initializer() {
+  RegistryEndpointProvider<URL> initializer() {
     return new Initializer();
   }
 
@@ -209,7 +209,7 @@ class BlobPusher {
    * @param location the upload URL
    * @return a {@link RegistryEndpointProvider} for writing the BLOB to an upload location
    */
-  RegistryEndpointProvider<String> writer(URL location) {
+  RegistryEndpointProvider<URL> writer(URL location) {
     return new Writer(location);
   }
 
@@ -242,11 +242,18 @@ class BlobPusher {
   }
 
   /**
+   * Extract the {@code Location} header from the response to get the new location for the next
+   * request.
+   *
+   * <p>The {@code Location} header can be relative or absolute.
+   *
+   * @see <a
+   *     href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Location#Directives">https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Location#Directives</a>
    * @param response the response to extract the 'Location' header from
-   * @return the value of the 'Location' header
+   * @return the new location for the next request
    * @throws RegistryErrorException if there was not a single 'Location' header
    */
-  private String extractLocationHeader(Response response) throws RegistryErrorException {
+  private URL getRedirectLocation(Response response) throws RegistryErrorException {
     // Extracts and returns the 'Location' header.
     List<String> locationHeaders = response.getHeader("Location");
     if (locationHeaders.size() != 1) {
@@ -254,6 +261,7 @@ class BlobPusher {
           "Expected 1 'Location' header, but found " + locationHeaders.size());
     }
 
-    return locationHeaders.get(0);
+    String locationHeader = locationHeaders.get(0);
+    return response.getRequestUrl().toURL(locationHeader);
   }
 }
