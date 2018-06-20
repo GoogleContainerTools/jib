@@ -67,13 +67,13 @@ public class JibExtension {
   private final ImageConfiguration from;
   private final ImageConfiguration to;
   private final ContainerParameters container;
+  private final Property<Boolean> useOnlyProjectCache;
 
+  // TODO: Deprecated parameters; remove these 4
   private final ListProperty<String> jvmFlags;
   private final Property<String> mainClass;
   private final ListProperty<String> args;
   private final Property<ImageFormat> format;
-
-  private final Property<Boolean> useOnlyProjectCache;
 
   public JibExtension(Project project) {
     ObjectFactory objectFactory = project.getObjects();
