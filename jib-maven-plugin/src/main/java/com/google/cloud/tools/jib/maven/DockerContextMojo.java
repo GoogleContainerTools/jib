@@ -48,9 +48,11 @@ public class DockerContextMojo extends JibPluginConfiguration {
 
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
+    MavenBuildLogger mavenBuildLogger = new MavenBuildLogger(getLog());
+    handleDeprecatedParameters(mavenBuildLogger);
+
     Preconditions.checkNotNull(targetDir);
 
-    MavenBuildLogger mavenBuildLogger = new MavenBuildLogger(getLog());
     MavenProjectProperties mavenProjectProperties =
         MavenProjectProperties.getForProject(getProject(), mavenBuildLogger);
     String mainClass = mavenProjectProperties.getMainClass(this);

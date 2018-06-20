@@ -15,7 +15,9 @@ dependencies {
 }
 
 jib {
-    args = ['An argument.']
+    container {
+        args = ['An argument.']
+    }
 
     // Does not have tests use user-level cache for base image layers.
     useOnlyProjectCache = true
