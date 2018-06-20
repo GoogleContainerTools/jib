@@ -6,7 +6,7 @@
 
 Jib is a [Maven](https://maven.apache.org/) plugin for building Docker and OCI images for your Java applications.
 
-For information about the project, see the [Jib project README](..).
+For information about the project, see the [Jib project README](../README.md).
 For the Gradle plugin, see the [jib-gradle-plugin project](../jib-gradle-plugin).
 
 ## Upcoming Features
@@ -21,7 +21,7 @@ These features are not currently supported but will be added in later releases.
 You can containerize your application easily with one command:
 
 ```shell
-mvn com.google.cloud.tools:jib-maven-plugin:0.9.0:build -Dimage=<MY IMAGE>
+mvn compile com.google.cloud.tools:jib-maven-plugin:0.9.0:build -Dimage=<MY IMAGE>
 ```
 
 *If you encounter authentication issues, see [Authentication Methods](#authentication-methods).*
