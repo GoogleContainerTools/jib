@@ -18,10 +18,12 @@ package com.google.cloud.tools.jib.image.json;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.json.EmptyStruct;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.SortedMap;
 import javax.annotation.Nullable;
 
 /**
@@ -38,6 +40,7 @@ import javax.annotation.Nullable;
  *     "Env": ["/usr/bin/java"],
  *     "Entrypoint": ["PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"],
  *     "Cmd": ["arg1", "arg2"]
+ *     "ExposedPorts": { "6000/tcp":{}, "8000/tcp":{}, "9000/tcp":{} }
  *   },
  *   "rootfs": {
  *     "diff_ids": [
@@ -88,6 +91,9 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
 
     /** Arguments to pass into main. */
     @Nullable private List<String> Cmd;
+
+    /** Network ports the container listens on. */
+    @Nullable private SortedMap<String, EmptyStruct> ExposedPorts;
   }
 
   /**
@@ -118,6 +124,10 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     config.Cmd = cmd;
   }
 
+  public void setContainerExposedPorts(SortedMap<String, EmptyStruct> exposedPorts) {
+    config.ExposedPorts = exposedPorts;
+  }
+
   public void addLayerDiffId(DescriptorDigest diffId) {
     rootfs.diff_ids.add(diffId);
   }
@@ -139,6 +149,11 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
   @Nullable
   List<String> getContainerCmd() {
     return config.Cmd;
+  }
+
+  @Nullable
+  SortedMap<String, EmptyStruct> getContainerExposedPorts() {
+    return config.ExposedPorts;
   }
 
   @VisibleForTesting

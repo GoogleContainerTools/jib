@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.nio.file.Paths;
@@ -62,6 +63,7 @@ public class BuildImageStepTest {
     Mockito.when(mockBuildConfiguration.getBuildLogger()).thenReturn(mockBuildLogger);
     Mockito.when(mockBuildConfiguration.getEnvironment()).thenReturn(ImmutableMap.of());
     Mockito.when(mockBuildConfiguration.getJavaArguments()).thenReturn(ImmutableList.of());
+    Mockito.when(mockBuildConfiguration.getExposedPorts()).thenReturn(ImmutableSortedMap.of());
 
     Mockito.when(mockPullAndCacheBaseImageLayersStep.getFuture())
         .thenReturn(

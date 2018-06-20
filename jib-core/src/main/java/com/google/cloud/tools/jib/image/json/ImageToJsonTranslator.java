@@ -72,6 +72,9 @@ public class ImageToJsonTranslator {
     // Sets the main method arguments.
     template.setContainerCmd(image.getJavaArguments());
 
+    // Sets the exposed ports.
+    template.setContainerExposedPorts(image.getExposedPorts());
+
     // Serializes into JSON.
     return JsonTemplateMapper.toBlob(template);
   }

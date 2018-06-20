@@ -19,14 +19,19 @@ package com.google.cloud.tools.jib.builder;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
+import com.google.cloud.tools.jib.json.EmptyStruct;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSortedMap;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import javax.annotation.Nullable;
 import javax.lang.model.SourceVersion;
 
@@ -46,6 +51,7 @@ public class BuildConfiguration {
     private List<String> javaArguments = new ArrayList<>();
     private List<String> jvmFlags = new ArrayList<>();
     private Map<String, String> environmentMap = new HashMap<>();
+    private List<String> exposedPorts = new ArrayList<>();
     private Class<? extends BuildableManifestTemplate> targetFormat = V22ManifestTemplate.class;
 
     private BuildLogger buildLogger;
@@ -112,6 +118,13 @@ public class BuildConfiguration {
       return this;
     }
 
+    public Builder setExposedPorts(@Nullable List<String> exposedPorts) {
+      if (exposedPorts != null) {
+        this.exposedPorts = exposedPorts;
+      }
+      return this;
+    }
+
     public Builder setTargetFormat(Class<? extends BuildableManifestTemplate> targetFormat) {
       this.targetFormat = targetFormat;
       return this;
@@ -129,6 +142,15 @@ public class BuildConfiguration {
       }
       if (mainClass == null) {
         errorMessages.add("main class is required but not set");
+      }
+
+      ImmutableSortedMap<String, EmptyStruct> exposedPortsMap = ImmutableSortedMap.of();
+      try {
+        exposedPortsMap = portListToPortMap(exposedPorts);
+      } catch (NumberFormatException ex) {
+        errorMessages.add(
+            "exposed ports are configured in an invalid format (must be a single "
+                + "port number or a range of port number)");
       }
 
       switch (errorMessages.size()) {
@@ -154,6 +176,7 @@ public class BuildConfiguration {
               ImmutableList.copyOf(javaArguments),
               ImmutableList.copyOf(jvmFlags),
               ImmutableMap.copyOf(environmentMap),
+              ImmutableSortedMap.copyOf(exposedPortsMap),
               targetFormat);
 
         case 1:
@@ -193,6 +216,54 @@ public class BuildConfiguration {
     return true;
   }
 
+  /**
+   * Converts a list of port numbers to the corresponding ExposedPorts map format.
+   *
+   * <p>Example: [1000, 2000-2002] -> {"1000/tcp":{}, "2000/tcp":{}, "2001/tcp":{}, "2002/tcp":{}})
+   *
+   * @return the map
+   */
+  @VisibleForTesting
+  static ImmutableSortedMap<String, EmptyStruct> portListToPortMap(List<String> ports)
+      throws NumberFormatException {
+    SortedMap<String, EmptyStruct> result = new TreeMap<>();
+
+    for (String port : ports) {
+      // Remove all spaces
+      port = port.trim().replace(" ", "");
+
+      if (port.matches("\\d+")) {
+        // Port is a single number
+        int portNum = Integer.parseInt(port);
+        if (portNum < 1 || portNum > 65535) {
+          throw new NumberFormatException("Invalid port number " + port);
+        }
+        result.put(port + "/tcp", EmptyStruct.get());
+
+      } else if (port.matches("\\d+-\\d+")) {
+        // Port is a range
+        List<String> range = Splitter.on('-').splitToList(port);
+        int min = Integer.parseInt(range.get(0));
+        int max = Integer.parseInt(range.get(1));
+
+        // Make sure range is valid (min-max, within port range)
+        if (min > max || min < 1 || max > 65535) {
+          throw new NumberFormatException("Invalid port range " + port);
+        }
+
+        for (int portNum = min; portNum <= max; portNum++) {
+          result.put(portNum + "/tcp", EmptyStruct.get());
+        }
+
+      } else {
+        // Port is neither a single number nor a range
+        throw new NumberFormatException("Invalid port number " + port);
+      }
+    }
+
+    return ImmutableSortedMap.copyOf(result);
+  }
+
   private final BuildLogger buildLogger;
   private final ImageReference baseImageReference;
   @Nullable private final String baseImageCredentialHelperName;
@@ -204,6 +275,7 @@ public class BuildConfiguration {
   private final ImmutableList<String> javaArguments;
   private final ImmutableList<String> jvmFlags;
   private final ImmutableMap<String, String> environmentMap;
+  private final ImmutableSortedMap<String, EmptyStruct> exposedPorts;
   private final Class<? extends BuildableManifestTemplate> targetFormat;
 
   public static Builder builder(BuildLogger buildLogger) {
@@ -223,6 +295,7 @@ public class BuildConfiguration {
       ImmutableList<String> javaArguments,
       ImmutableList<String> jvmFlags,
       ImmutableMap<String, String> environmentMap,
+      ImmutableSortedMap<String, EmptyStruct> exposedPorts,
       Class<? extends BuildableManifestTemplate> targetFormat) {
     this.buildLogger = buildLogger;
     this.baseImageReference = baseImageReference;
@@ -235,6 +308,7 @@ public class BuildConfiguration {
     this.javaArguments = javaArguments;
     this.jvmFlags = jvmFlags;
     this.environmentMap = environmentMap;
+    this.exposedPorts = exposedPorts;
     this.targetFormat = targetFormat;
   }
 
@@ -308,6 +382,10 @@ public class BuildConfiguration {
 
   public ImmutableMap<String, String> getEnvironment() {
     return environmentMap;
+  }
+
+  public ImmutableSortedMap<String, EmptyStruct> getExposedPorts() {
+    return exposedPorts;
   }
 
   public Class<? extends BuildableManifestTemplate> getTargetFormat() {
