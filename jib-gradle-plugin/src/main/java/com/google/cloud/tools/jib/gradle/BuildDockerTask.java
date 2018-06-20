@@ -77,13 +77,15 @@ public class BuildDockerTask extends DefaultTask {
 
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
+    GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
+    jibExtension.handleDeprecatedParameters(gradleBuildLogger);
+
     RegistryCredentials knownBaseRegistryCredentials = null;
     Authorization fromAuthorization = jibExtension.getFrom().getImageAuthorization();
     if (fromAuthorization != null) {
       knownBaseRegistryCredentials = new RegistryCredentials("jib.from.auth", fromAuthorization);
     }
 
-    GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(getProject(), gradleBuildLogger);
     String mainClass = gradleProjectProperties.getMainClass(jibExtension);

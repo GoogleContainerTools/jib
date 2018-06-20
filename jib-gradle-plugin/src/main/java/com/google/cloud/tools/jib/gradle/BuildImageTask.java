@@ -72,6 +72,8 @@ public class BuildImageTask extends DefaultTask {
   public void buildImage() throws InvalidImageReferenceException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
+    GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
+    jibExtension.handleDeprecatedParameters(gradleBuildLogger);
 
     if (Strings.isNullOrEmpty(jibExtension.getTargetImage())) {
       throw new GradleException(
@@ -91,7 +93,6 @@ public class BuildImageTask extends DefaultTask {
       knownTargetRegistryCredentials = new RegistryCredentials("jib.to.auth", toAuthorization);
     }
 
-    GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(getProject(), gradleBuildLogger);
     String mainClass = gradleProjectProperties.getMainClass(jibExtension);

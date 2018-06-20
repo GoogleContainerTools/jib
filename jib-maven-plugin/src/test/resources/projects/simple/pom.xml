@@ -41,7 +41,9 @@
           <to>
             <image>gcr.io/jib-integration-testing/simpleimage:maven</image>
           </to>
-          <args>An argument.</args>
+          <container>
+            <args>An argument.</args>
+          </container>
           <!-- Does not have tests use user-level cache for base image layers. -->
           <useOnlyProjectCache>true</useOnlyProjectCache>
         </configuration>
