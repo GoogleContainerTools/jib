@@ -83,17 +83,26 @@ class CacheMetadata {
     }
   }
 
-  // TODO: Remove explicit synchronization by refactoring build steps to not mutate a common
-  // CacheMetadata.
-  synchronized ImageLayers<CachedLayerWithMetadata> getLayers() {
+  ImageLayers<CachedLayerWithMetadata> getLayers() {
     return layersBuilder.build();
   }
 
-  synchronized void addLayer(CachedLayerWithMetadata layer) throws LayerPropertyNotFoundException {
-    layersBuilder.add(layer);
+  /**
+   * Adds a layer to the metadata. This method is <b>NOT</b> thread-safe.
+   *
+   * @param layer the layer to add
+   */
+  void addLayer(CachedLayerWithMetadata layer) {
+    try {
+      layersBuilder.add(layer);
+
+    } catch (LayerPropertyNotFoundException ex) {
+      // Should not happen with CachedLayerWithMetadata
+      throw new RuntimeException(ex);
+    }
   }
 
-  synchronized LayerFilter filterLayers() {
-    return new LayerFilter(layersBuilder.build());
+  LayerFilter filterLayers() {
+    return new LayerFilter(getLayers());
   }
 }

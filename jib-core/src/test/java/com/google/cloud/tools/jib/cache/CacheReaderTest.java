@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.cache;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.ImageLayers;
-import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 import java.io.IOException;
@@ -66,8 +65,7 @@ public class CacheReaderTest {
 
   @Test
   public void testAreBaseImageLayersCached()
-      throws DigestException, LayerPropertyNotFoundException, CacheMetadataCorruptedException,
-          IOException {
+      throws DigestException, CacheMetadataCorruptedException, IOException {
     try (Cache cache = Cache.init(testCacheFolder)) {
       CacheReader cacheReader = new CacheReader(cache);
       Assert.assertNotNull(

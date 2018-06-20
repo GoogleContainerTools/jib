@@ -19,12 +19,12 @@ package com.google.cloud.tools.jib.cache;
 import javax.annotation.Nullable;
 
 /** A {@link CachedLayer} with a last modified time. */
-class CachedLayerWithMetadata extends CachedLayer {
+public class CachedLayerWithMetadata extends CachedLayer {
 
   /** Extra layer properties for application layers. */
   @Nullable private final LayerMetadata metadata;
 
-  CachedLayerWithMetadata(CachedLayer cachedLayer, @Nullable LayerMetadata metadata) {
+  public CachedLayerWithMetadata(CachedLayer cachedLayer, @Nullable LayerMetadata metadata) {
     super(cachedLayer.getContentFile(), cachedLayer.getBlobDescriptor(), cachedLayer.getDiffId());
 
     this.metadata = metadata;

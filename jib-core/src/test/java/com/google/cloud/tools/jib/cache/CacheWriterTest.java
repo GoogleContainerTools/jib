@@ -21,7 +21,6 @@ import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
-import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.ReproducibleLayerBuilder;
 import com.google.cloud.tools.jib.image.UnwrittenLayer;
 import com.google.common.io.CharStreams;
@@ -79,7 +78,7 @@ public class CacheWriterTest {
   }
 
   @Test
-  public void testWriteLayer_unwritten() throws IOException, LayerPropertyNotFoundException {
+  public void testWriteLayer_unwritten() throws IOException {
     ExpectedLayer expectedLayer = getExpectedLayer();
 
     // Writes resourceBlob as a layer to the cache.
@@ -93,7 +92,10 @@ public class CacheWriterTest {
     Mockito.when(mockReproducibleLayerBuilder.build()).thenReturn(unwrittenLayer);
     Mockito.when(mockReproducibleLayerBuilder.getSourceFiles()).thenReturn(fakeSourceFiles);
 
-    CachedLayer cachedLayer = cacheWriter.writeLayer(mockReproducibleLayerBuilder);
+    CachedLayerWithMetadata cachedLayerWithMetadata =
+        cacheWriter.writeLayer(mockReproducibleLayerBuilder);
+    testCache.addCachedLayersWithMetadataToMetadata(
+        Collections.singletonList(cachedLayerWithMetadata));
 
     CachedLayerWithMetadata layerInMetadata = testCache.getMetadata().getLayers().get(0);
     Assert.assertNotNull(layerInMetadata.getMetadata());
@@ -101,11 +103,11 @@ public class CacheWriterTest {
         Collections.singletonList(Paths.get("some", "source", "file").toString()),
         layerInMetadata.getMetadata().getSourceFiles());
 
-    verifyCachedLayerIsExpected(expectedLayer, cachedLayer);
+    verifyCachedLayerIsExpected(expectedLayer, cachedLayerWithMetadata);
   }
 
   @Test
-  public void testGetLayerOutputStream() throws IOException, LayerPropertyNotFoundException {
+  public void testGetLayerOutputStream() throws IOException {
     ExpectedLayer expectedLayer = getExpectedLayer();
 
     // Writes resourceBlob as a layer to the cache.
@@ -114,8 +116,11 @@ public class CacheWriterTest {
     CountingOutputStream layerOutputStream =
         cacheWriter.getLayerOutputStream(expectedLayer.blobDescriptor.getDigest());
     expectedLayer.blob.writeTo(layerOutputStream);
+    layerOutputStream.close();
     CachedLayer cachedLayer =
-        cacheWriter.getCachedLayer(expectedLayer.blobDescriptor.getDigest(), layerOutputStream);
+        cacheWriter.getCachedLayer(
+            layerOutputStream.getCount(), expectedLayer.blobDescriptor.getDigest());
+    testCache.addCachedLayersToMetadata(Collections.singletonList(cachedLayer));
 
     CachedLayerWithMetadata layerInMetadata = testCache.getMetadata().getLayers().get(0);
     Assert.assertNull(layerInMetadata.getMetadata());
