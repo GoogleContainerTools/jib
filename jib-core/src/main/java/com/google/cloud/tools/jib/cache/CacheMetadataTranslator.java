@@ -27,7 +27,7 @@ public class CacheMetadataTranslator {
 
   /** Translates {@link CacheMetadataTemplate} to {@link CacheMetadata}. */
   static CacheMetadata fromTemplate(CacheMetadataTemplate template, Path cacheDirectory) {
-    CacheMetadata cacheMetadata = new CacheMetadata();
+    CacheMetadata.Builder cacheMetadataBuilder = CacheMetadata.builder();
 
     // Converts each layer object in the template to a cache metadata layer.
     for (CacheMetadataLayerObjectTemplate layerObjectTemplate : template.getLayers()) {
@@ -60,10 +60,10 @@ public class CacheMetadataTranslator {
 
       CachedLayerWithMetadata cachedLayerWithMetadata =
           new CachedLayerWithMetadata(cachedLayer, layerMetadata);
-      cacheMetadata.addLayer(cachedLayerWithMetadata);
+      cacheMetadataBuilder.addLayer(cachedLayerWithMetadata);
     }
 
-    return cacheMetadata;
+    return cacheMetadataBuilder.build();
   }
 
   /** Translates {@link CacheMetadata} to {@link CacheMetadataTemplate}. */

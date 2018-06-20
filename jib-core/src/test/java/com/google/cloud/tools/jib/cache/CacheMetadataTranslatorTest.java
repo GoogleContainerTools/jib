@@ -114,8 +114,6 @@ public class CacheMetadataTranslatorTest {
     Path jsonFile = PlatformSpecificMetadataJson.getMetadataJsonFile();
     String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
 
-    CacheMetadata cacheMetadata = new CacheMetadata();
-
     CachedLayer baseCachedLayer =
         new CachedLayer(mockPath, baseLayerBlobDescriptor, baseLayerDiffId);
     CachedLayerWithMetadata baseLayer = new CachedLayerWithMetadata(baseCachedLayer, null);
@@ -127,8 +125,8 @@ public class CacheMetadataTranslatorTest {
     CachedLayerWithMetadata classesLayer =
         new CachedLayerWithMetadata(classesCachedLayer, classesLayerMetadata);
 
-    cacheMetadata.addLayer(baseLayer);
-    cacheMetadata.addLayer(classesLayer);
+    CacheMetadata cacheMetadata =
+        CacheMetadata.builder().addLayer(baseLayer).addLayer(classesLayer).build();
 
     CacheMetadataTemplate cacheMetadataTemplate = CacheMetadataTranslator.toTemplate(cacheMetadata);
 

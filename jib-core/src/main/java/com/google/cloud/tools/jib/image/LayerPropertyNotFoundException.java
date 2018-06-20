@@ -17,7 +17,7 @@
 package com.google.cloud.tools.jib.image;
 
 /** Exception thrown when accessing non-existent properties of layers. */
-public class LayerPropertyNotFoundException extends Exception {
+public class LayerPropertyNotFoundException extends RuntimeException {
 
   LayerPropertyNotFoundException(String message) {
     super(message);

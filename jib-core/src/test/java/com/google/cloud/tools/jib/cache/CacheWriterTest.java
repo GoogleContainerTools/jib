@@ -97,7 +97,7 @@ public class CacheWriterTest {
     testCache.addCachedLayersWithMetadataToMetadata(
         Collections.singletonList(cachedLayerWithMetadata));
 
-    CachedLayerWithMetadata layerInMetadata = testCache.getMetadata().getLayers().get(0);
+    CachedLayerWithMetadata layerInMetadata = testCache.getUpdatedMetadata().getLayers().get(0);
     Assert.assertNotNull(layerInMetadata.getMetadata());
     Assert.assertEquals(
         Collections.singletonList(Paths.get("some", "source", "file").toString()),
@@ -122,7 +122,7 @@ public class CacheWriterTest {
             layerOutputStream.getCount(), expectedLayer.blobDescriptor.getDigest());
     testCache.addCachedLayersToMetadata(Collections.singletonList(cachedLayer));
 
-    CachedLayerWithMetadata layerInMetadata = testCache.getMetadata().getLayers().get(0);
+    CachedLayerWithMetadata layerInMetadata = testCache.getUpdatedMetadata().getLayers().get(0);
     Assert.assertNull(layerInMetadata.getMetadata());
 
     verifyCachedLayerIsExpected(expectedLayer, cachedLayer);

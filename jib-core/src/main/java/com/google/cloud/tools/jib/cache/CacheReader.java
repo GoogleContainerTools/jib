@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.cache;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.ImageLayers;
-import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -69,13 +68,7 @@ public class CacheReader {
    */
   @Nullable
   public CachedLayer getLayer(DescriptorDigest layerDigest) {
-    try {
-      return cache.getMetadata().getLayers().get(layerDigest);
-
-    } catch (LayerPropertyNotFoundException ex) {
-      // Should not happen for CachedLayer.
-      throw new RuntimeException(ex);
-    }
+    return cache.getMetadata().getLayers().get(layerDigest);
   }
 
   /**

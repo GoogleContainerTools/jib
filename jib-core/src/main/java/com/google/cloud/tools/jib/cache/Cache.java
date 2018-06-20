@@ -55,7 +55,7 @@ public class Cache implements Closeable {
     Path cacheMetadataJsonFile = cacheDirectory.resolve(CacheFiles.METADATA_FILENAME);
 
     if (!Files.exists(cacheMetadataJsonFile)) {
-      return new CacheMetadata();
+      return CacheMetadata.builder().build();
     }
 
     try {
@@ -75,9 +75,13 @@ public class Cache implements Closeable {
   /** The metadata that corresponds to the cache at {@link #cacheDirectory}. */
   private final CacheMetadata cacheMetadata;
 
+  /** Builds the updated cache metadata to save back to the cache. */
+  private final CacheMetadata.Builder cacheMetadataBuilder;
+
   private Cache(Path cacheDirectory, CacheMetadata cacheMetadata) {
     this.cacheDirectory = cacheDirectory;
     this.cacheMetadata = cacheMetadata;
+    cacheMetadataBuilder = cacheMetadata.newAppendingBuilder();
   }
 
   /**
@@ -97,7 +101,7 @@ public class Cache implements Closeable {
    */
   public void addCachedLayersToMetadata(List<CachedLayer> cachedLayers) {
     for (CachedLayer cachedLayer : cachedLayers) {
-      cacheMetadata.addLayer(new CachedLayerWithMetadata(cachedLayer, null));
+      cacheMetadataBuilder.addLayer(new CachedLayerWithMetadata(cachedLayer, null));
     }
   }
 
@@ -109,7 +113,7 @@ public class Cache implements Closeable {
   public void addCachedLayersWithMetadataToMetadata(
       List<CachedLayerWithMetadata> cachedLayersWithMetadata) {
     for (CachedLayerWithMetadata cachedLayerWithMetadata : cachedLayersWithMetadata) {
-      cacheMetadata.addLayer(cachedLayerWithMetadata);
+      cacheMetadataBuilder.addLayer(cachedLayerWithMetadata);
     }
   }
 
@@ -123,11 +127,17 @@ public class Cache implements Closeable {
     return cacheMetadata;
   }
 
+  @VisibleForTesting
+  CacheMetadata getUpdatedMetadata() {
+    return cacheMetadataBuilder.build();
+  }
+
   /** Saves the updated cache metadata back to the cache. */
   private void saveCacheMetadata(Path cacheDirectory) throws IOException {
     Path cacheMetadataJsonFile = cacheDirectory.resolve(CacheFiles.METADATA_FILENAME);
 
-    CacheMetadataTemplate cacheMetadataJson = CacheMetadataTranslator.toTemplate(cacheMetadata);
+    CacheMetadataTemplate cacheMetadataJson =
+        CacheMetadataTranslator.toTemplate(cacheMetadataBuilder.build());
 
     try (OutputStream fileOutputStream =
         new BufferedOutputStream(Files.newOutputStream(cacheMetadataJsonFile))) {

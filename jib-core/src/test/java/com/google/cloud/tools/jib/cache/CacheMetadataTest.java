@@ -48,8 +48,8 @@ public class CacheMetadataTest {
     CachedLayerWithMetadata testCachedLayerWithMetadata =
         new CachedLayerWithMetadata(mockCachedLayer(), Mockito.mock(LayerMetadata.class));
 
-    CacheMetadata cacheMetadata = new CacheMetadata();
-    cacheMetadata.addLayer(testCachedLayerWithMetadata);
+    CacheMetadata cacheMetadata =
+        CacheMetadata.builder().addLayer(testCachedLayerWithMetadata).build();
 
     Assert.assertEquals(
         Collections.singletonList(testCachedLayerWithMetadata),
@@ -85,10 +85,11 @@ public class CacheMetadataTest {
             new CachedLayerWithMetadata(
                 mockLayers.get(5), fakeExpectedSourceFilesResourcesLayerMetadata));
 
-    CacheMetadata cacheMetadata = new CacheMetadata();
+    CacheMetadata.Builder cacheMetadataBuilder = CacheMetadata.builder();
     for (CachedLayerWithMetadata cachedLayer : cachedLayers) {
-      cacheMetadata.addLayer(cachedLayer);
+      cacheMetadataBuilder.addLayer(cachedLayer);
     }
+    CacheMetadata cacheMetadata = cacheMetadataBuilder.build();
 
     ImageLayers<CachedLayerWithMetadata> filteredLayers =
         cacheMetadata
@@ -123,10 +124,11 @@ public class CacheMetadataTest {
             new CachedLayerWithMetadata(mockLayers.get(0), fakeSourceFilesLayerMetadata),
             new CachedLayerWithMetadata(mockLayers.get(1), fakeEmptySourceFilesLayerMetadata));
 
-    CacheMetadata cacheMetadata = new CacheMetadata();
+    CacheMetadata.Builder cacheMetadataBuilder = CacheMetadata.builder();
     for (CachedLayerWithMetadata cachedLayer : cachedLayers) {
-      cacheMetadata.addLayer(cachedLayer);
+      cacheMetadataBuilder.addLayer(cachedLayer);
     }
+    CacheMetadata cacheMetadata = cacheMetadataBuilder.build();
 
     ImageLayers<CachedLayerWithMetadata> filteredLayers =
         cacheMetadata.filterLayers().bySourceFiles(ImmutableList.of()).filter();
