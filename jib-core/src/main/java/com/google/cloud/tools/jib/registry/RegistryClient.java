@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URL;
@@ -204,17 +205,17 @@ public class RegistryClient {
       try (Timer t2 = t.subTimer("pushBlob POST " + blobDigest)) {
 
         // POST /v2/<name>/blobs/uploads/?mount={blob.digest}
-        String locationHeader = callRegistryEndpoint(blobPusher.initializer());
-        if (locationHeader == null) {
+        URL patchLocation = callRegistryEndpoint(blobPusher.initializer());
+        if (patchLocation == null) {
           // The BLOB exists already.
           return true;
         }
-        URL patchLocation = new URL(locationHeader);
 
         t2.lap("pushBlob PATCH " + blobDigest);
 
         // PATCH <Location> with BLOB
-        URL putLocation = new URL(callRegistryEndpoint(blobPusher.writer(patchLocation)));
+        URL putLocation = callRegistryEndpoint(blobPusher.writer(patchLocation));
+        Preconditions.checkNotNull(putLocation);
 
         t2.lap("pushBlob PUT " + blobDigest);
 
