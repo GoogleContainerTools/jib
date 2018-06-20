@@ -78,11 +78,12 @@ public class RegistryClient {
 
   /**
    * @return the {@code User-Agent} header to send. The {@code User-Agent} can be disabled by
-   *     setting the environment variable {@code _JIB_DISABLE_USER_AGENT} to any non-empty string.
+   *     setting the system property variable {@code _JIB_DISABLE_USER_AGENT} to any non-empty
+   *     string.
    */
   @VisibleForTesting
   static String getUserAgent() {
-    if (!Strings.isNullOrEmpty(System.getenv("_JIB_DISABLE_USER_AGENT"))) {
+    if (!Strings.isNullOrEmpty(System.getProperty("_JIB_DISABLE_USER_AGENT"))) {
       return "";
     }
 

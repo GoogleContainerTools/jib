@@ -81,7 +81,7 @@ task wrapper(type: Wrapper) {
 task integrationTest(type: Test) {
     testClassesDirs = sourceSets.integrationTest.output.classesDirs
     classpath = sourceSets.integrationTest.runtimeClasspath
-    environment '_JIB_DISABLE_USER_AGENT', true
+    systemProperty '_JIB_DISABLE_USER_AGENT', true
 }
 integrationTest.dependsOn test
 
