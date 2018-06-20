@@ -221,7 +221,9 @@ public class BuildConfiguration {
    *
    * <p>Example: [1000, 2000-2002] -> {"1000/tcp":{}, "2000/tcp":{}, "2001/tcp":{}, "2002/tcp":{}})
    *
+   * @param ports the list of port numbers/ranges
    * @return the map
+   * @throws NumberFormatException if any of the ports are in an invalid format or out of range
    */
   @VisibleForTesting
   static ImmutableSortedMap<String, EmptyStruct> portListToPortMap(List<String> ports)
