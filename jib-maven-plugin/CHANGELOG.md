@@ -11,6 +11,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Using Azure Container Registry now works - define credentials in Maven settings ([#415](https://github.com/GoogleContainerTools/jib/issues/415))
+
 ## 0.9.0
 ### Added
 - Better feedback for build failures ([#197](https://github.com/google/jib/pull/197))
