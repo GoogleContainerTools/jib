@@ -142,5 +142,11 @@ public class JibExtensionTest {
             + "  format -> container.format\n"
             + "You may also wrap the parameters in a container{} block.";
     Mockito.verify(mockLogger).warn(expectedOutput);
+    Assert.assertEquals(
+        Arrays.asList("jvmFlag1", "jvmFlag2"), testJibExtension.getJvmFlags());
+    Assert.assertEquals("mainClass", testJibExtension.getMainClass());
+    Assert.assertEquals(
+        Arrays.asList("arg1", "arg2", "arg3"), testJibExtension.getArgs());
+    Assert.assertEquals(OCIManifestTemplate.class, testJibExtension.getFormat());
   }
 }

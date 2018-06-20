@@ -71,7 +71,7 @@ public class JibExtension {
   private final ListProperty<String> jvmFlags;
   private final Property<String> mainClass;
   private final ListProperty<String> args;
-  private final Property<ImageFormat> format;
+  @Nullable private Property<ImageFormat> format;
 
   private final Property<Boolean> useOnlyProjectCache;
 
@@ -85,7 +85,6 @@ public class JibExtension {
     jvmFlags = objectFactory.listProperty(String.class);
     mainClass = objectFactory.property(String.class);
     args = objectFactory.listProperty(String.class);
-    format = objectFactory.property(ImageFormat.class);
 
     useOnlyProjectCache = objectFactory.property(Boolean.class);
 
@@ -93,7 +92,6 @@ public class JibExtension {
     from.setImage(DEFAULT_FROM_IMAGE);
     jvmFlags.set(Collections.emptyList());
     args.set(Collections.emptyList());
-    format.set(ImageFormat.Docker);
     useOnlyProjectCache.set(DEFAULT_USE_ONLY_PROJECT_CACHE);
   }
 
@@ -102,7 +100,7 @@ public class JibExtension {
    *
    * @param logger The logger used to print the warnings
    */
-  public void handleDeprecatedParameters(BuildLogger logger) {
+  void handleDeprecatedParameters(BuildLogger logger) {
     StringBuilder deprecatedParams = new StringBuilder();
     if (!jvmFlags.get().isEmpty()) {
       deprecatedParams.append("  jvmFlags -> container.jvmFlags\n");
@@ -122,7 +120,7 @@ public class JibExtension {
         container.setArgs(args.get());
       }
     }
-    if (format.get() != ImageFormat.Docker) {
+    if (format != null) {
       deprecatedParams.append("  format -> container.format\n");
       container.setFormat(format.get());
     }
@@ -221,6 +219,7 @@ public class JibExtension {
 
   // TODO: Make @Internal (deprecated)
   @Input
+  @Nullable
   @Optional
   Class<? extends BuildableManifestTemplate> getFormat() {
     return container.getFormat();
