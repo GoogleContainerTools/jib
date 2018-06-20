@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Fetches credentials from inferred credential helper before Docker config ([#401](https://github.com/GoogleContainerTools/jib/issues/401))
 - Container creation date set to timestamp 0 ([#341](https://github.com/GoogleContainerTools/jib/issues/341))
 - Does not authenticate base image pull unless necessary - reduces build time by about 500ms ([#414](https://github.com/GoogleContainerTools/jib/pull/414))
+- `jvmFlags`, `mainClass`, `args`, and `format` are now grouped under `container` configuration object ([#384](https://github.com/GoogleContainerTools/jib/issues/384))
 
 ### Fixed
 
