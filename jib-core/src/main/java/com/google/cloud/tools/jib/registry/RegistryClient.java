@@ -28,9 +28,11 @@ import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URL;
+import java.util.logging.Logger;
 import javax.annotation.Nullable;
 
 /** Interfaces with a registry. */
@@ -74,9 +76,16 @@ public class RegistryClient {
     RegistryClient.userAgentSuffix = userAgentSuffix;
   }
 
-  /** @return the {@code User-Agent} header to send. */
+  /**
+   * @return the {@code User-Agent} header to send. The {@code User-Agent} can be disabled by
+   *     setting the environment variable {@code _JIB_DISABLE_USER_AGENT} to any non-empty string.
+   */
   @VisibleForTesting
   static String getUserAgent() {
+    if (!Strings.isNullOrEmpty(System.getenv("_JIB_DISABLE_USER_AGENT"))) {
+      return "";
+    }
+
     String version = RegistryClient.class.getPackage().getImplementationVersion();
     StringBuilder userAgentBuilder = new StringBuilder();
     userAgentBuilder.append("jib");
