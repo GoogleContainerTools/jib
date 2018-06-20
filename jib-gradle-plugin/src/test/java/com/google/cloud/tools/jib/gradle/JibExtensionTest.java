@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
@@ -26,9 +27,16 @@ import org.gradle.testfixtures.ProjectBuilder;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link JibExtension}. */
+@RunWith(MockitoJUnitRunner.class)
 public class JibExtensionTest {
+
+  @Mock private BuildLogger mockLogger;
 
   private JibExtension testJibExtension;
 
@@ -111,5 +119,28 @@ public class JibExtensionTest {
 
     testJibExtension.setUseOnlyProjectCache(true);
     Assert.assertTrue(testJibExtension.getUseOnlyProjectCache());
+  }
+
+  @Test
+  public void testHandleDeprecatedParameters() {
+    testJibExtension.handleDeprecatedParameters(mockLogger);
+    Mockito.verify(mockLogger, Mockito.never()).warn(Mockito.any());
+
+    testJibExtension.setJvmFlags(Arrays.asList("jvmFlag1", "jvmFlag2"));
+    testJibExtension.setMainClass("mainClass");
+    testJibExtension.setArgs(Arrays.asList("arg1", "arg2", "arg3"));
+    testJibExtension.setFormat(ImageFormat.OCI);
+
+    testJibExtension.handleDeprecatedParameters(mockLogger);
+
+    String expectedOutput =
+        "There are deprecated parameters used in the build configuration. Please make the "
+            + "following changes to your build.gradle to avoid issues in the future:\n"
+            + "  jvmFlags -> container.jvmFlags\n"
+            + "  mainClass -> container.mainClass\n"
+            + "  args -> container.args\n"
+            + "  format -> container.format\n"
+            + "You may also wrap the parameters in a container{} block.";
+    Mockito.verify(mockLogger).warn(expectedOutput);
   }
 }
