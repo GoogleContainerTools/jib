@@ -32,7 +32,6 @@ import com.google.common.base.Strings;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URL;
-import java.util.logging.Logger;
 import javax.annotation.Nullable;
 
 /** Interfaces with a registry. */
