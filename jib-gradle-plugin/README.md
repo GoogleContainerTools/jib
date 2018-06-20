@@ -180,7 +180,6 @@ Property | Type | Default | Description
 `args` | `List<String>` | *None* | Default main method arguments to run your application with.
 `format` | `String` | `Docker` | Use `OCI` to build an [OCI container image](https://www.opencontainers.org/).
 
-
 ### Example
 
 In this configuration, the image is:
