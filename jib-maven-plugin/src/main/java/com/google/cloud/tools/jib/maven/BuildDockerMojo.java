@@ -49,6 +49,9 @@ public class BuildDockerMojo extends JibPluginConfiguration {
 
   @Override
   public void execute() throws MojoExecutionException {
+    MavenBuildLogger mavenBuildLogger = new MavenBuildLogger(getLog());
+    handleDeprecatedParameters(mavenBuildLogger);
+
     if (!new DockerClient().isDockerInstalled()) {
       throw new MojoExecutionException(HELPFUL_SUGGESTIONS.forDockerNotInstalled());
     }
@@ -68,7 +71,6 @@ public class BuildDockerMojo extends JibPluginConfiguration {
     RegistryCredentials knownBaseRegistryCredentials =
         mavenSettingsServerCredentials.retrieve(baseImage.getRegistry());
 
-    MavenBuildLogger mavenBuildLogger = new MavenBuildLogger(getLog());
     MavenProjectProperties mavenProjectProperties =
         MavenProjectProperties.getForProject(getProject(), mavenBuildLogger);
     String mainClass = mavenProjectProperties.getMainClass(this);

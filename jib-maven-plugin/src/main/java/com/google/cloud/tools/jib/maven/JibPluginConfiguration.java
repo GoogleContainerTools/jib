@@ -16,9 +16,12 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +60,20 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     }
   }
 
+  /** Configuration for {@code container} parameter. */
+  public static class ContainerParameters {
+
+    @Parameter private List<String> jvmFlags = Collections.emptyList();
+
+    @Nullable @Parameter private String mainClass;
+
+    @Parameter private List<String> args = Collections.emptyList();
+
+    @Nullable
+    @Parameter(required = true)
+    private String format = "Docker";
+  }
+
   /**
    * @param image the image reference string to parse.
    * @param type name of the parameter being parsed (e.g. "to" or "from").
@@ -67,6 +84,44 @@ abstract class JibPluginConfiguration extends AbstractMojo {
       return ImageReference.parse(image);
     } catch (InvalidImageReferenceException ex) {
       throw new IllegalStateException("Parameter '" + type + "' is invalid", ex);
+    }
+  }
+
+  /**
+   * Warns about deprecated parameters in use.
+   *
+   * @param logger The logger used to print the warnings
+   */
+  void handleDeprecatedParameters(BuildLogger logger) {
+    StringBuilder deprecatedParams = new StringBuilder();
+    if (!jvmFlags.isEmpty()) {
+      deprecatedParams.append("  <jvmFlags> -> <container><jvmFlags>\n");
+      if (container.jvmFlags.isEmpty()) {
+        container.jvmFlags = jvmFlags;
+      }
+    }
+    if (!Strings.isNullOrEmpty(mainClass)) {
+      deprecatedParams.append("  <mainClass> -> <container><mainClass>\n");
+      if (Strings.isNullOrEmpty(container.mainClass)) {
+        container.mainClass = mainClass;
+      }
+    }
+    if (!args.isEmpty()) {
+      deprecatedParams.append("  <args> -> <container><args>\n");
+      if (container.args.isEmpty()) {
+        container.args = args;
+      }
+    }
+    if (!Strings.isNullOrEmpty(format)) {
+      deprecatedParams.append("  <format> -> <container><format>\n");
+      container.format = format;
+    }
+
+    if (deprecatedParams.length() > 0) {
+      logger.warn(
+          "There are deprecated parameters used in the build configuration. Please make the "
+              + "following changes to your pom.xml to avoid issues in the future:\n"
+              + deprecatedParams);
     }
   }
 
@@ -83,17 +138,17 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   @Parameter(property = "image")
   private ToConfiguration to = new ToConfiguration();
 
-  @Parameter private List<String> jvmFlags = Collections.emptyList();
+  @Parameter private ContainerParameters container = new ContainerParameters();
+
+  @Deprecated @Parameter private List<String> jvmFlags = Collections.emptyList();
 
   @Nullable @Parameter private Map<String, String> environment;
 
-  @Nullable @Parameter private String mainClass;
+  @Deprecated @Nullable @Parameter private String mainClass;
 
-  @Parameter private List<String> args = Collections.emptyList();
+  @Deprecated @Parameter private List<String> args = Collections.emptyList();
 
-  @Nullable
-  @Parameter(defaultValue = "Docker", required = true)
-  private String format;
+  @Deprecated @Nullable @Parameter private String format;
 
   @Parameter(defaultValue = "false", required = true)
   private boolean useOnlyProjectCache;
@@ -122,7 +177,7 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   }
 
   List<String> getJvmFlags() {
-    return jvmFlags;
+    return container.jvmFlags;
   }
 
   @Nullable
@@ -132,18 +187,38 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
   @Nullable
   String getMainClass() {
-    return mainClass;
+    return container.mainClass;
   }
 
   List<String> getArgs() {
-    return args;
+    return container.args;
   }
 
   String getFormat() {
-    return Preconditions.checkNotNull(format);
+    return Preconditions.checkNotNull(container.format);
   }
 
   boolean getUseOnlyProjectCache() {
     return useOnlyProjectCache;
+  }
+
+  @VisibleForTesting
+  void setJvmFlags(List<String> jvmFlags) {
+    this.jvmFlags = jvmFlags;
+  }
+
+  @VisibleForTesting
+  void setMainClass(String mainClass) {
+    this.mainClass = mainClass;
+  }
+
+  @VisibleForTesting
+  void setArgs(List<String> args) {
+    this.args = args;
+  }
+
+  @VisibleForTesting
+  void setFormat(String format) {
+    this.format = format;
   }
 }
