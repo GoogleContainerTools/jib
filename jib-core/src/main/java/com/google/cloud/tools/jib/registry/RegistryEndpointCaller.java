@@ -182,7 +182,6 @@ class RegistryEndpointCaller<T> {
         } else if (httpResponseException.getStatusCode()
             == HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT) {
           // 'Location' header can be relative or absolute.
-          // TODO: Add test after #407 is merged.
           URL redirectLocation =
               new URL(requestState.url, httpResponseException.getHeaders().getLocation());
           // TODO: Use copy-construct builder.
