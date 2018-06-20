@@ -69,7 +69,7 @@ public class ImageToJsonTranslator {
     // Sets the entrypoint.
     template.setContainerEntrypoint(image.getEntrypoint());
 
-    // Sets the entrypoint.
+    // Sets the main method arguments.
     template.setContainerCmd(image.getJavaArguments());
 
     // Serializes into JSON.

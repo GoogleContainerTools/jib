@@ -96,6 +96,8 @@ public class DockerContextTask extends DefaultTask {
     Preconditions.checkNotNull(jibExtension);
 
     GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
+    jibExtension.handleDeprecatedParameters(gradleBuildLogger);
+
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(getProject(), gradleBuildLogger);
     String mainClass = gradleProjectProperties.getMainClass(jibExtension);
