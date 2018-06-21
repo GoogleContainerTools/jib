@@ -24,8 +24,7 @@ import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.CacheReader;
 import com.google.cloud.tools.jib.cache.CacheWriter;
-import com.google.cloud.tools.jib.cache.CachedLayer;
-import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
+import com.google.cloud.tools.jib.cache.CachedLayerWithMetadata;
 import com.google.cloud.tools.jib.image.ReproducibleLayerBuilder;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -35,7 +34,8 @@ import java.nio.file.Path;
 import java.util.concurrent.Callable;
 
 /** Builds and caches application layers. */
-class BuildAndCacheApplicationLayerStep implements AsyncStep<CachedLayer>, Callable<CachedLayer> {
+class BuildAndCacheApplicationLayerStep
+    implements AsyncStep<CachedLayerWithMetadata>, Callable<CachedLayerWithMetadata> {
 
   private static final String DESCRIPTION = "Building application layers";
 
@@ -80,7 +80,7 @@ class BuildAndCacheApplicationLayerStep implements AsyncStep<CachedLayer>, Calla
   private final String extractionPath;
   private final Cache cache;
 
-  private final ListenableFuture<CachedLayer> listenableFuture;
+  private final ListenableFuture<CachedLayerWithMetadata> listenableFuture;
 
   private BuildAndCacheApplicationLayerStep(
       String layerType,
@@ -99,20 +99,20 @@ class BuildAndCacheApplicationLayerStep implements AsyncStep<CachedLayer>, Calla
   }
 
   @Override
-  public ListenableFuture<CachedLayer> getFuture() {
+  public ListenableFuture<CachedLayerWithMetadata> getFuture() {
     return listenableFuture;
   }
 
   @Override
-  public CachedLayer call()
-      throws IOException, LayerPropertyNotFoundException, CacheMetadataCorruptedException {
+  public CachedLayerWithMetadata call() throws IOException, CacheMetadataCorruptedException {
     String description = "Building " + layerType + " layer";
 
     buildConfiguration.getBuildLogger().lifecycle(description + "...");
 
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), description)) {
       // Don't build the layer if it exists already.
-      CachedLayer cachedLayer = new CacheReader(cache).getUpToDateLayerBySourceFiles(sourceFiles);
+      CachedLayerWithMetadata cachedLayer =
+          new CacheReader(cache).getUpToDateLayerBySourceFiles(sourceFiles);
       if (cachedLayer != null) {
         return cachedLayer;
       }
@@ -121,10 +121,11 @@ class BuildAndCacheApplicationLayerStep implements AsyncStep<CachedLayer>, Calla
           new ReproducibleLayerBuilder(sourceFiles, extractionPath);
 
       cachedLayer = new CacheWriter(cache).writeLayer(reproducibleLayerBuilder);
-      // TODO: Remove
+
       buildConfiguration
           .getBuildLogger()
           .debug(description + " built " + cachedLayer.getBlobDescriptor().getDigest());
+
       return cachedLayer;
     }
   }
