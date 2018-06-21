@@ -159,7 +159,7 @@ public class RegistryEndpointCallerTest {
   @Test
   public void testCall_unknown() throws IOException, RegistryException {
     Mockito.when(mockHttpResponse.getStatusCode())
-        .thenReturn(HttpStatusCodes.STATUS_CODE_MOVED_PERMANENTLY);
+        .thenReturn(HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
     HttpResponseException httpResponseException = new HttpResponseException(mockHttpResponse);
 
     Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
@@ -176,27 +176,17 @@ public class RegistryEndpointCallerTest {
 
   @Test
   public void testCall_temporaryRedirect() throws IOException, RegistryException {
-    // Mocks a response for temporary redirect to a new location.
-    Mockito.when(mockHttpResponse.getStatusCode())
-        .thenReturn(HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT);
-    Mockito.when(mockHttpResponse.getHeaders())
-        .thenReturn(new HttpHeaders().setLocation("https://newlocation"));
+    verifyRetriesWithNewLocation(HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT);
+  }
 
-    // Has mockConnection.send throw first, then succeed.
-    HttpResponseException httpResponseException = new HttpResponseException(mockHttpResponse);
-    Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
-        .thenThrow(httpResponseException)
-        .thenReturn(mockResponse);
-    Mockito.when(mockResponse.getBody()).thenReturn(Blobs.from("body"));
+  @Test
+  public void testCall_movedPermanently() throws IOException, RegistryException {
+    verifyRetriesWithNewLocation(HttpStatusCodes.STATUS_CODE_MOVED_PERMANENTLY);
+  }
 
-    Assert.assertEquals("body", testRegistryEndpointCaller.call());
-
-    // Checks that the URL was changed to the new location.
-    ArgumentCaptor<URL> urlArgumentCaptor = ArgumentCaptor.forClass(URL.class);
-    Mockito.verify(mockConnectionFactory, Mockito.times(2)).apply(urlArgumentCaptor.capture());
-    Assert.assertEquals(
-        new URL("https://apiRouteBase/api"), urlArgumentCaptor.getAllValues().get(0));
-    Assert.assertEquals(new URL("https://newlocation"), urlArgumentCaptor.getAllValues().get(1));
+  @Test
+  public void testCall_permanentRedirect() throws IOException, RegistryException {
+    verifyRetriesWithNewLocation(RegistryEndpointCaller.STATUS_CODE_PERMANENT_REDIRECT);
   }
 
   /** Verifies a request is retried with HTTP protocol if {@code exceptionClass} is thrown. */
@@ -267,5 +257,33 @@ public class RegistryEndpointCallerTest {
           CoreMatchers.containsString(
               "Tried to actionDescription but failed because: unknown: message"));
     }
+  }
+
+  /**
+   * Verifies that a response with {@code httpStatusCode} retries the request with the {@code
+   * Location} header.
+   */
+  private void verifyRetriesWithNewLocation(int httpStatusCode)
+      throws IOException, RegistryException {
+    // Mocks a response for temporary redirect to a new location.
+    Mockito.when(mockHttpResponse.getStatusCode()).thenReturn(httpStatusCode);
+    Mockito.when(mockHttpResponse.getHeaders())
+        .thenReturn(new HttpHeaders().setLocation("https://newlocation"));
+
+    // Has mockConnection.send throw first, then succeed.
+    HttpResponseException httpResponseException = new HttpResponseException(mockHttpResponse);
+    Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
+        .thenThrow(httpResponseException)
+        .thenReturn(mockResponse);
+    Mockito.when(mockResponse.getBody()).thenReturn(Blobs.from("body"));
+
+    Assert.assertEquals("body", testRegistryEndpointCaller.call());
+
+    // Checks that the URL was changed to the new location.
+    ArgumentCaptor<URL> urlArgumentCaptor = ArgumentCaptor.forClass(URL.class);
+    Mockito.verify(mockConnectionFactory, Mockito.times(2)).apply(urlArgumentCaptor.capture());
+    Assert.assertEquals(
+        new URL("https://apiRouteBase/api"), urlArgumentCaptor.getAllValues().get(0));
+    Assert.assertEquals(new URL("https://newlocation"), urlArgumentCaptor.getAllValues().get(1));
   }
 }
