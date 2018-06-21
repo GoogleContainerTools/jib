@@ -39,7 +39,7 @@ public class ManifestPusherIntegrationTest {
     RegistryClient registryClient = new RegistryClient(null, "gcr.io", "distroless/java", false);
     ManifestTemplate manifestTemplate = registryClient.pullManifest("latest");
 
-    registryClient = new RegistryClient(null, "localhost:5000", "busybox", false);
+    registryClient = new RegistryClient(null, "localhost:5000", "busybox", true);
     try {
       registryClient.pushManifest((V22ManifestTemplate) manifestTemplate, "latest");
       Assert.fail("Pushing manifest without its BLOBs should fail");
@@ -70,7 +70,7 @@ public class ManifestPusherIntegrationTest {
     expectedManifestTemplate.setContainerConfiguration(5, testContainerConfigurationBlobDigest);
 
     // Pushes the BLOBs.
-    RegistryClient registryClient = new RegistryClient(null, "localhost:5000", "testimage", false);
+    RegistryClient registryClient = new RegistryClient(null, "localhost:5000", "testimage", true);
     Assert.assertFalse(registryClient.pushBlob(testLayerBlobDigest, testLayerBlob));
     Assert.assertFalse(
         registryClient.pushBlob(

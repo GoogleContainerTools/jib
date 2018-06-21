@@ -17,11 +17,16 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Command;
+import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
+import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.Caches;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.concurrent.ExecutionException;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -38,7 +43,9 @@ public class BuildStepsIntegrationTest {
   @Rule public TemporaryFolder temporaryCacheDirectory = new TemporaryFolder();
 
   @Test
-  public void testSteps_forBuildToDockerRegistry() throws Exception {
+  public void testSteps_forBuildToDockerRegistry()
+      throws IOException, URISyntaxException, InterruptedException, CacheMetadataCorruptedException,
+          ExecutionException, CacheDirectoryNotOwnedException {
     SourceFilesConfiguration sourceFilesConfiguration = new TestSourceFilesConfiguration();
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder(logger)
@@ -46,6 +53,7 @@ public class BuildStepsIntegrationTest {
             .setTargetImage(ImageReference.of("localhost:5000", "testimage", "testtag"))
             .setMainClass("HelloWorld")
             .setJavaArguments(Collections.singletonList("An argument."))
+            .setAllowHttp(true)
             .build();
 
     Path cacheDirectory = temporaryCacheDirectory.newFolder().toPath();
@@ -56,11 +64,16 @@ public class BuildStepsIntegrationTest {
             Caches.newInitializer(cacheDirectory).setBaseCacheDirectory(cacheDirectory));
 
     long lastTime = System.nanoTime();
-    buildImageSteps.run();
-    logger.info("Initial build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
-    lastTime = System.nanoTime();
-    buildImageSteps.run();
-    logger.info("Secondary build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
+    try {
+      buildImageSteps.run();
+      logger.info("Initial build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
+      lastTime = System.nanoTime();
+      buildImageSteps.run();
+      logger.info("Secondary build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
+    } catch (ExecutionException ex) {
+      ex.printStackTrace();
+      throw ex;
+    }
 
     String imageReference = "localhost:5000/testimage:testtag";
     new Command("docker", "pull", imageReference).run();
@@ -69,7 +82,9 @@ public class BuildStepsIntegrationTest {
   }
 
   @Test
-  public void testSteps_forBuildToDockerDaemon() throws Exception {
+  public void testSteps_forBuildToDockerDaemon()
+      throws IOException, URISyntaxException, InterruptedException, CacheMetadataCorruptedException,
+          ExecutionException, CacheDirectoryNotOwnedException {
     SourceFilesConfiguration sourceFilesConfiguration = new TestSourceFilesConfiguration();
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder(logger)
