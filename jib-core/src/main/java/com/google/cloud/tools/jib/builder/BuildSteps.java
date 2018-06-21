@@ -184,15 +184,21 @@ public class BuildSteps {
 
     try (Timer timer = new Timer(buildConfiguration.getBuildLogger(), description)) {
       try (Caches caches = cachesInitializer.init()) {
-        Cache baseLayersCache = caches.getBaseCache();
+        Cache baseImageLayersCache = caches.getBaseCache();
         Cache applicationLayersCache = caches.getApplicationCache();
 
-        stepsRunnerConsumer.accept(
+        StepsRunner stepsRunner =
             new StepsRunner(
                 buildConfiguration,
                 sourceFilesConfiguration,
-                baseLayersCache,
-                applicationLayersCache));
+                baseImageLayersCache,
+                applicationLayersCache);
+        stepsRunnerConsumer.accept(stepsRunner);
+
+        // Writes the cached layers to the cache metadata.
+        baseImageLayersCache.addCachedLayersToMetadata(stepsRunner.getCachedBaseImageLayers());
+        applicationLayersCache.addCachedLayersWithMetadataToMetadata(
+            stepsRunner.getCachedApplicationLayers());
       }
     }
 

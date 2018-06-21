@@ -36,7 +36,7 @@ class PushLayersStep
 
   private final BuildConfiguration buildConfiguration;
   private final AuthenticatePushStep authenticatePushStep;
-  private final AsyncStep<? extends ImmutableList<? extends AsyncStep<CachedLayer>>>
+  private final AsyncStep<? extends ImmutableList<? extends AsyncStep<? extends CachedLayer>>>
       cachedLayerStepsStep;
 
   private final ListeningExecutorService listeningExecutorService;
@@ -46,7 +46,8 @@ class PushLayersStep
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
       AuthenticatePushStep authenticatePushStep,
-      AsyncStep<? extends ImmutableList<? extends AsyncStep<CachedLayer>>> cachedLayerStepsStep) {
+      AsyncStep<? extends ImmutableList<? extends AsyncStep<? extends CachedLayer>>>
+          cachedLayerStepsStep) {
     this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
     this.authenticatePushStep = authenticatePushStep;
@@ -65,12 +66,12 @@ class PushLayersStep
   @Override
   public ImmutableList<AsyncStep<PushBlobStep>> call() throws ExecutionException {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
-      ImmutableList<? extends AsyncStep<CachedLayer>> cachedLayerSteps =
+      ImmutableList<? extends AsyncStep<? extends CachedLayer>> cachedLayerSteps =
           NonBlockingSteps.get(cachedLayerStepsStep);
 
       // Constructs a PushBlobStep for each layer.
       ImmutableList.Builder<AsyncStep<PushBlobStep>> pushBlobStepsBuilder = ImmutableList.builder();
-      for (AsyncStep<CachedLayer> cachedLayerStep : cachedLayerSteps) {
+      for (AsyncStep<? extends CachedLayer> cachedLayerStep : cachedLayerSteps) {
         ListenableFuture<PushBlobStep> pushBlobStepFuture =
             Futures.whenAllSucceed(cachedLayerStep.getFuture())
                 .call(() -> makePushBlobStep(cachedLayerStep), listeningExecutorService);
@@ -81,7 +82,7 @@ class PushLayersStep
     }
   }
 
-  private PushBlobStep makePushBlobStep(AsyncStep<CachedLayer> cachedLayerStep)
+  private PushBlobStep makePushBlobStep(AsyncStep<? extends CachedLayer> cachedLayerStep)
       throws ExecutionException {
     CachedLayer cachedLayer = NonBlockingSteps.get(cachedLayerStep);
     return new PushBlobStep(

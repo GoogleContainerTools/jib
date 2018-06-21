@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.cache;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.cache.json.CacheMetadataTemplate;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
-import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -75,8 +74,7 @@ public class CacheMetadataTranslatorTest {
   }
 
   @Test
-  public void testFromTemplate()
-      throws URISyntaxException, IOException, CacheMetadataCorruptedException {
+  public void testFromTemplate() throws URISyntaxException, IOException {
     Path fakePath = Paths.get("fake/path");
 
     // Loads the expected JSON string.
@@ -112,12 +110,9 @@ public class CacheMetadataTranslatorTest {
   }
 
   @Test
-  public void testToTemplate()
-      throws LayerPropertyNotFoundException, URISyntaxException, IOException {
+  public void testToTemplate() throws URISyntaxException, IOException {
     Path jsonFile = PlatformSpecificMetadataJson.getMetadataJsonFile();
     String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
-
-    CacheMetadata cacheMetadata = new CacheMetadata();
 
     CachedLayer baseCachedLayer =
         new CachedLayer(mockPath, baseLayerBlobDescriptor, baseLayerDiffId);
@@ -130,8 +125,8 @@ public class CacheMetadataTranslatorTest {
     CachedLayerWithMetadata classesLayer =
         new CachedLayerWithMetadata(classesCachedLayer, classesLayerMetadata);
 
-    cacheMetadata.addLayer(baseLayer);
-    cacheMetadata.addLayer(classesLayer);
+    CacheMetadata cacheMetadata =
+        CacheMetadata.builder().addLayer(baseLayer).addLayer(classesLayer).build();
 
     CacheMetadataTemplate cacheMetadataTemplate = CacheMetadataTranslator.toTemplate(cacheMetadata);
 

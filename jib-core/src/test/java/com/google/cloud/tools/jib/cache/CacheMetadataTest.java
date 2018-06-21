@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.cache;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.ImageLayers;
-import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.common.collect.ImmutableList;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
@@ -45,12 +44,12 @@ public class CacheMetadataTest {
   }
 
   @Test
-  public void testAddLayer() throws LayerPropertyNotFoundException {
+  public void testAddLayer() {
     CachedLayerWithMetadata testCachedLayerWithMetadata =
         new CachedLayerWithMetadata(mockCachedLayer(), Mockito.mock(LayerMetadata.class));
 
-    CacheMetadata cacheMetadata = new CacheMetadata();
-    cacheMetadata.addLayer(testCachedLayerWithMetadata);
+    CacheMetadata cacheMetadata =
+        CacheMetadata.builder().addLayer(testCachedLayerWithMetadata).build();
 
     Assert.assertEquals(
         Collections.singletonList(testCachedLayerWithMetadata),
@@ -58,8 +57,7 @@ public class CacheMetadataTest {
   }
 
   @Test
-  public void testFilter_bySourceFiles()
-      throws LayerPropertyNotFoundException, CacheMetadataCorruptedException {
+  public void testFilter_bySourceFiles() throws CacheMetadataCorruptedException {
     List<CachedLayer> mockLayers =
         Stream.generate(CacheMetadataTest::mockCachedLayer).limit(6).collect(Collectors.toList());
 
@@ -87,10 +85,11 @@ public class CacheMetadataTest {
             new CachedLayerWithMetadata(
                 mockLayers.get(5), fakeExpectedSourceFilesResourcesLayerMetadata));
 
-    CacheMetadata cacheMetadata = new CacheMetadata();
+    CacheMetadata.Builder cacheMetadataBuilder = CacheMetadata.builder();
     for (CachedLayerWithMetadata cachedLayer : cachedLayers) {
-      cacheMetadata.addLayer(cachedLayer);
+      cacheMetadataBuilder.addLayer(cachedLayer);
     }
+    CacheMetadata cacheMetadata = cacheMetadataBuilder.build();
 
     ImageLayers<CachedLayerWithMetadata> filteredLayers =
         cacheMetadata
@@ -110,8 +109,7 @@ public class CacheMetadataTest {
   }
 
   @Test
-  public void testFilter_byEmptySourceFiles()
-      throws LayerPropertyNotFoundException, CacheMetadataCorruptedException {
+  public void testFilter_byEmptySourceFiles() throws CacheMetadataCorruptedException {
     List<CachedLayer> mockLayers =
         Stream.generate(CacheMetadataTest::mockCachedLayer).limit(2).collect(Collectors.toList());
 
@@ -126,10 +124,11 @@ public class CacheMetadataTest {
             new CachedLayerWithMetadata(mockLayers.get(0), fakeSourceFilesLayerMetadata),
             new CachedLayerWithMetadata(mockLayers.get(1), fakeEmptySourceFilesLayerMetadata));
 
-    CacheMetadata cacheMetadata = new CacheMetadata();
+    CacheMetadata.Builder cacheMetadataBuilder = CacheMetadata.builder();
     for (CachedLayerWithMetadata cachedLayer : cachedLayers) {
-      cacheMetadata.addLayer(cachedLayer);
+      cacheMetadataBuilder.addLayer(cachedLayer);
     }
+    CacheMetadata cacheMetadata = cacheMetadataBuilder.build();
 
     ImageLayers<CachedLayerWithMetadata> filteredLayers =
         cacheMetadata.filterLayers().bySourceFiles(ImmutableList.of()).filter();

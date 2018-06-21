@@ -31,7 +31,31 @@ import javax.annotation.Nullable;
  */
 class CacheMetadata {
 
-  private final ImageLayers.Builder<CachedLayerWithMetadata> layersBuilder = ImageLayers.builder();
+  static class Builder {
+
+    private final ImageLayers.Builder<CachedLayerWithMetadata> layersBuilder =
+        ImageLayers.builder();
+
+    private Builder(ImageLayers<CachedLayerWithMetadata> initialLayers) {
+      layersBuilder.addAll(initialLayers);
+    }
+
+    private Builder() {}
+
+    /**
+     * Adds a layer. This method is <b>NOT</b> thread-safe.
+     *
+     * @param layer the layer to add
+     */
+    Builder addLayer(CachedLayerWithMetadata layer) {
+      layersBuilder.add(layer);
+      return this;
+    }
+
+    CacheMetadata build() {
+      return new CacheMetadata(layersBuilder.build());
+    }
+  }
 
   /** Can be used to filter layers in the metadata. */
   static class LayerFilter {
@@ -83,17 +107,26 @@ class CacheMetadata {
     }
   }
 
-  // TODO: Remove explicit synchronization by refactoring build steps to not mutate a common
-  // CacheMetadata.
-  synchronized ImageLayers<CachedLayerWithMetadata> getLayers() {
-    return layersBuilder.build();
+  static Builder builder() {
+    return new Builder();
   }
 
-  synchronized void addLayer(CachedLayerWithMetadata layer) throws LayerPropertyNotFoundException {
-    layersBuilder.add(layer);
+  private final ImageLayers<CachedLayerWithMetadata> layers;
+
+  private CacheMetadata(ImageLayers<CachedLayerWithMetadata> layers) {
+    this.layers = layers;
   }
 
-  synchronized LayerFilter filterLayers() {
-    return new LayerFilter(layersBuilder.build());
+  ImageLayers<CachedLayerWithMetadata> getLayers() {
+    return layers;
+  }
+
+  LayerFilter filterLayers() {
+    return new LayerFilter(layers);
+  }
+
+  /** @return a {@link Builder} starts with all the layers in this metadata */
+  Builder newAppendingBuilder() {
+    return new Builder(layers);
   }
 }
