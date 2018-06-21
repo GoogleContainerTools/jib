@@ -120,7 +120,8 @@ class PushImageStep implements AsyncStep<Void>, Callable<Void> {
           new RegistryClient(
               NonBlockingSteps.get(authenticatePushStep),
               buildConfiguration.getTargetImageRegistry(),
-              buildConfiguration.getTargetImageRepository());
+              buildConfiguration.getTargetImageRepository(),
+              buildConfiguration.getAllowHttp());
 
       // Constructs the image.
       ImageToJsonTranslator imageToJsonTranslator =

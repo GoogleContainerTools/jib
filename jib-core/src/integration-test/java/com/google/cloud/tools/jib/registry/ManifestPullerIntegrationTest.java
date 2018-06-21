@@ -32,7 +32,7 @@ public class ManifestPullerIntegrationTest {
 
   @Test
   public void testPull_v21() throws IOException, RegistryException {
-    RegistryClient registryClient = new RegistryClient(null, "localhost:5000", "busybox");
+    RegistryClient registryClient = new RegistryClient(null, "localhost:5000", "busybox", false);
     V21ManifestTemplate manifestTemplate =
         registryClient.pullManifest("latest", V21ManifestTemplate.class);
 
@@ -42,7 +42,7 @@ public class ManifestPullerIntegrationTest {
 
   @Test
   public void testPull_v22() throws IOException, RegistryException {
-    RegistryClient registryClient = new RegistryClient(null, "gcr.io", "distroless/java");
+    RegistryClient registryClient = new RegistryClient(null, "gcr.io", "distroless/java", false);
     ManifestTemplate manifestTemplate = registryClient.pullManifest("latest");
 
     Assert.assertEquals(2, manifestTemplate.getSchemaVersion());
@@ -53,7 +53,7 @@ public class ManifestPullerIntegrationTest {
   @Test
   public void testPull_unknownManifest() throws RegistryException, IOException {
     try {
-      RegistryClient registryClient = new RegistryClient(null, "localhost:5000", "busybox");
+      RegistryClient registryClient = new RegistryClient(null, "localhost:5000", "busybox", false);
       registryClient.pullManifest("nonexistent-tag");
       Assert.fail("Trying to pull nonexistent image should have errored");
 

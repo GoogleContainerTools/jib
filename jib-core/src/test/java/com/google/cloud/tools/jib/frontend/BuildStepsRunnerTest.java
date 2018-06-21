@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.builder.BuildSteps;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
+import com.google.cloud.tools.jib.registry.InsecureRegistryException;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -138,6 +139,25 @@ public class BuildStepsRunnerTest {
     } catch (BuildStepsExecutionException ex) {
       Assert.assertEquals(TEST_HELPFUL_SUGGESTIONS.forUnknownHost(), ex.getMessage());
       Assert.assertEquals(mockUnknownHostException, ex.getCause());
+    }
+  }
+
+  @Test
+  public void testBuildImage_executionException_insecureRegistryException()
+      throws InterruptedException, ExecutionException, CacheDirectoryNotOwnedException,
+          CacheMetadataCorruptedException, IOException {
+    InsecureRegistryException mockInsecureRegistryException =
+        Mockito.mock(InsecureRegistryException.class);
+    Mockito.when(mockExecutionException.getCause()).thenReturn(mockInsecureRegistryException);
+    Mockito.doThrow(mockExecutionException).when(mockBuildSteps).run();
+
+    try {
+      testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
+      Assert.fail("buildImage should have thrown an exception");
+
+    } catch (BuildStepsExecutionException ex) {
+      Assert.assertEquals(TEST_HELPFUL_SUGGESTIONS.forInsecureRegistry(), ex.getMessage());
+      Assert.assertEquals(mockInsecureRegistryException, ex.getCause());
     }
   }
 

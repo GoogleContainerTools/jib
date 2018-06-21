@@ -34,6 +34,7 @@ import java.util.function.Function;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import org.apache.http.NoHttpResponseException;
+import org.apache.http.conn.HttpHostConnectException;
 
 /**
  * Makes requests to a registry endpoint.
@@ -73,6 +74,7 @@ class RegistryEndpointCaller<T> {
   private final String userAgent;
   private final RegistryEndpointProvider<T> registryEndpointProvider;
   private final RegistryEndpointProperties registryEndpointProperties;
+  private final boolean allowHttp;
 
   /**
    * Constructs with parameters for making the request.
@@ -82,6 +84,8 @@ class RegistryEndpointCaller<T> {
    * @param registryEndpointProvider the {@link RegistryEndpointProvider} to the endpoint
    * @param authorization optional authentication credentials to use
    * @param registryEndpointProperties properties of the registry endpoint request
+   * @param allowHttp if {@code true}, allows redirects and fallbacks to HTTP; otherwise, only
+   *     allows HTTPS
    * @throws MalformedURLException if the URL generated for the endpoint is malformed
    */
   RegistryEndpointCaller(
@@ -89,7 +93,8 @@ class RegistryEndpointCaller<T> {
       String apiRouteBase,
       RegistryEndpointProvider<T> registryEndpointProvider,
       @Nullable Authorization authorization,
-      RegistryEndpointProperties registryEndpointProperties)
+      RegistryEndpointProperties registryEndpointProperties,
+      boolean allowHttp)
       throws MalformedURLException {
     this(
         userAgent,
@@ -97,6 +102,7 @@ class RegistryEndpointCaller<T> {
         registryEndpointProvider,
         authorization,
         registryEndpointProperties,
+        allowHttp,
         Connection::new);
   }
 
@@ -107,6 +113,7 @@ class RegistryEndpointCaller<T> {
       RegistryEndpointProvider<T> registryEndpointProvider,
       @Nullable Authorization authorization,
       RegistryEndpointProperties registryEndpointProperties,
+      boolean allowHttp,
       Function<URL, Connection> connectionFactory)
       throws MalformedURLException {
     this.initialRequestState =
@@ -116,6 +123,7 @@ class RegistryEndpointCaller<T> {
     this.userAgent = userAgent;
     this.registryEndpointProvider = registryEndpointProvider;
     this.registryEndpointProperties = registryEndpointProperties;
+    this.allowHttp = allowHttp;
     this.connectionFactory = connectionFactory;
   }
 
@@ -142,15 +150,23 @@ class RegistryEndpointCaller<T> {
    */
   @Nullable
   private T call(RequestState requestState) throws IOException, RegistryException {
+    boolean isHttpProtocol = "http".equals(requestState.url.getProtocol());
+    if (!allowHttp && isHttpProtocol) {
+      throw new InsecureRegistryException(requestState.url);
+    }
+
     try (Connection connection = connectionFactory.apply(requestState.url)) {
-      Request request =
+      Request.Builder requestBuilder =
           Request.builder()
-              .setAuthorization(requestState.authorization)
               .setUserAgent(userAgent)
               .setAccept(registryEndpointProvider.getAccept())
-              .setBody(registryEndpointProvider.getContent())
-              .build();
-      Response response = connection.send(registryEndpointProvider.getHttpMethod(), request);
+              .setBody(registryEndpointProvider.getContent());
+      // Only sends authorization if using HTTPS.
+      if (!isHttpProtocol) {
+        requestBuilder.setAuthorization(requestState.authorization);
+      }
+      Response response =
+          connection.send(registryEndpointProvider.getHttpMethod(), requestBuilder.build());
 
       return registryEndpointProvider.handleResponse(response);
 
@@ -201,14 +217,19 @@ class RegistryEndpointCaller<T> {
         }
       }
 
+    } catch (HttpHostConnectException | SSLPeerUnverifiedException ex) {
+      // Tries to call with HTTP protocol if HTTPS failed to connect.
+      // Note that this will not succeed if 'allowHttp' is false.
+      if ("https".equals(requestState.url.getProtocol())) {
+        GenericUrl httpUrl = new GenericUrl(requestState.url);
+        httpUrl.setScheme("http");
+        return call(new RequestState(requestState.authorization, httpUrl.toURL()));
+      }
+
+      throw ex;
+
     } catch (NoHttpResponseException ex) {
       throw new RegistryNoResponseException(ex);
-
-    } catch (SSLPeerUnverifiedException ex) {
-      // Fall-back to HTTP
-      GenericUrl httpUrl = new GenericUrl(requestState.url);
-      httpUrl.setScheme("http");
-      return call(new RequestState(requestState.authorization, httpUrl.toURL()));
     }
   }
 }

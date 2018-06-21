@@ -68,7 +68,8 @@ public class BuildConfigurationTest {
             .setJavaArguments(expectedJavaArguments)
             .setJvmFlags(expectedJvmFlags)
             .setEnvironment(expectedEnvironment)
-            .setTargetFormat(OCIManifestTemplate.class);
+            .setTargetFormat(OCIManifestTemplate.class)
+            .setAllowHttp(true);
     BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
 
     Assert.assertEquals(expectedBaseImageServerUrl, buildConfiguration.getBaseImageRegistry());
@@ -88,6 +89,7 @@ public class BuildConfigurationTest {
     Assert.assertEquals(expectedJvmFlags, buildConfiguration.getJvmFlags());
     Assert.assertEquals(expectedEnvironment, buildConfiguration.getEnvironment());
     Assert.assertEquals(expectedTargetFormat, buildConfiguration.getTargetFormat());
+    Assert.assertTrue(buildConfiguration.getAllowHttp());
   }
 
   @Test
@@ -120,6 +122,7 @@ public class BuildConfigurationTest {
     Assert.assertEquals(Collections.emptyList(), buildConfiguration.getJvmFlags());
     Assert.assertEquals(Collections.emptyMap(), buildConfiguration.getEnvironment());
     Assert.assertEquals(V22ManifestTemplate.class, buildConfiguration.getTargetFormat());
+    Assert.assertFalse(buildConfiguration.getAllowHttp());
   }
 
   @Test

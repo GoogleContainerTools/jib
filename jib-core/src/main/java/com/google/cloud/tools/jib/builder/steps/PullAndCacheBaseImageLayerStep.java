@@ -73,7 +73,8 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer>, Callable
           new RegistryClient(
               pullAuthorization,
               buildConfiguration.getBaseImageRegistry(),
-              buildConfiguration.getBaseImageRepository());
+              buildConfiguration.getBaseImageRepository(),
+              buildConfiguration.getAllowHttp());
 
       // Checks if the layer already exists in the cache.
       CachedLayer cachedLayer = new CacheReader(cache).getLayer(layerDigest);

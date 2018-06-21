@@ -145,4 +145,9 @@ public class HelpfulSuggestions {
             + "' or "
             + authConfiguration);
   }
+
+  public String forInsecureRegistry() {
+    return suggest(
+        "use a registry that supports HTTPS or set the configuration parameter 'allowHttp'");
+  }
 }

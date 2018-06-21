@@ -26,6 +26,7 @@ import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.Caches;
 import com.google.cloud.tools.jib.cache.Caches.Initializer;
+import com.google.cloud.tools.jib.registry.InsecureRegistryException;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import com.google.common.annotations.VisibleForTesting;
@@ -207,30 +208,36 @@ public class BuildStepsRunner {
     } catch (ExecutionException executionException) {
       BuildConfiguration buildConfiguration = buildSteps.getBuildConfiguration();
 
-      if (executionException.getCause() instanceof HttpHostConnectException) {
+      Throwable exceptionDuringBuildSteps = executionException.getCause();
+
+      if (exceptionDuringBuildSteps instanceof HttpHostConnectException) {
         // Failed to connect to registry.
         throw new BuildStepsExecutionException(
-            helpfulSuggestions.forHttpHostConnect(), executionException.getCause());
+            helpfulSuggestions.forHttpHostConnect(), exceptionDuringBuildSteps);
 
-      } else if (executionException.getCause() instanceof RegistryUnauthorizedException) {
+      } else if (exceptionDuringBuildSteps instanceof RegistryUnauthorizedException) {
         handleRegistryUnauthorizedException(
-            (RegistryUnauthorizedException) executionException.getCause(),
+            (RegistryUnauthorizedException) exceptionDuringBuildSteps,
             buildConfiguration,
             helpfulSuggestions);
 
-      } else if (executionException.getCause() instanceof RegistryAuthenticationFailedException
-          && executionException.getCause().getCause() instanceof HttpResponseException) {
+      } else if (exceptionDuringBuildSteps instanceof RegistryAuthenticationFailedException
+          && exceptionDuringBuildSteps.getCause() instanceof HttpResponseException) {
         handleRegistryUnauthorizedException(
             new RegistryUnauthorizedException(
                 buildConfiguration.getTargetImageRegistry(),
                 buildConfiguration.getTargetImageRepository(),
-                (HttpResponseException) executionException.getCause().getCause()),
+                (HttpResponseException) exceptionDuringBuildSteps.getCause()),
             buildConfiguration,
             helpfulSuggestions);
 
-      } else if (executionException.getCause() instanceof UnknownHostException) {
+      } else if (exceptionDuringBuildSteps instanceof UnknownHostException) {
         throw new BuildStepsExecutionException(
-            helpfulSuggestions.forUnknownHost(), executionException.getCause());
+            helpfulSuggestions.forUnknownHost(), exceptionDuringBuildSteps);
+
+      } else if (exceptionDuringBuildSteps instanceof InsecureRegistryException) {
+        throw new BuildStepsExecutionException(
+            helpfulSuggestions.forInsecureRegistry(), exceptionDuringBuildSteps);
 
       } else {
         throw new BuildStepsExecutionException(

@@ -47,6 +47,7 @@ public class BuildConfiguration {
     private List<String> jvmFlags = new ArrayList<>();
     private Map<String, String> environmentMap = new HashMap<>();
     private Class<? extends BuildableManifestTemplate> targetFormat = V22ManifestTemplate.class;
+    private boolean allowHttp = false;
 
     private BuildLogger buildLogger;
 
@@ -117,6 +118,11 @@ public class BuildConfiguration {
       return this;
     }
 
+    public Builder setAllowHttp(boolean allowHttp) {
+      this.allowHttp = allowHttp;
+      return this;
+    }
+
     /** @return the corresponding build configuration */
     public BuildConfiguration build() {
       // Validates the parameters.
@@ -154,7 +160,8 @@ public class BuildConfiguration {
               ImmutableList.copyOf(javaArguments),
               ImmutableList.copyOf(jvmFlags),
               ImmutableMap.copyOf(environmentMap),
-              targetFormat);
+              targetFormat,
+              allowHttp);
 
         case 1:
           throw new IllegalStateException(errorMessages.get(0));
@@ -205,6 +212,7 @@ public class BuildConfiguration {
   private final ImmutableList<String> jvmFlags;
   private final ImmutableMap<String, String> environmentMap;
   private final Class<? extends BuildableManifestTemplate> targetFormat;
+  private final boolean allowHttp;
 
   public static Builder builder(BuildLogger buildLogger) {
     return new Builder(buildLogger);
@@ -223,7 +231,8 @@ public class BuildConfiguration {
       ImmutableList<String> javaArguments,
       ImmutableList<String> jvmFlags,
       ImmutableMap<String, String> environmentMap,
-      Class<? extends BuildableManifestTemplate> targetFormat) {
+      Class<? extends BuildableManifestTemplate> targetFormat,
+      boolean allowHttp) {
     this.buildLogger = buildLogger;
     this.baseImageReference = baseImageReference;
     this.baseImageCredentialHelperName = baseImageCredentialHelperName;
@@ -236,6 +245,7 @@ public class BuildConfiguration {
     this.jvmFlags = jvmFlags;
     this.environmentMap = environmentMap;
     this.targetFormat = targetFormat;
+    this.allowHttp = allowHttp;
   }
 
   public BuildLogger getBuildLogger() {
@@ -312,5 +322,9 @@ public class BuildConfiguration {
 
   public Class<? extends BuildableManifestTemplate> getTargetFormat() {
     return targetFormat;
+  }
+
+  public boolean getAllowHttp() {
+    return allowHttp;
   }
 }

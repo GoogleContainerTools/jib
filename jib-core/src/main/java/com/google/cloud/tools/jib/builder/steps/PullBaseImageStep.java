@@ -138,7 +138,8 @@ class PullBaseImageStep
         new RegistryClient(
             registryCredentials,
             buildConfiguration.getBaseImageRegistry(),
-            buildConfiguration.getBaseImageRepository());
+            buildConfiguration.getBaseImageRepository(),
+            buildConfiguration.getAllowHttp());
 
     ManifestTemplate manifestTemplate =
         registryClient.pullManifest(buildConfiguration.getBaseImageTag());
