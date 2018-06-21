@@ -66,18 +66,6 @@ class RegistryEndpointCaller<T> {
     }
   }
 
-  /**
-   * Converts the {@link URL}'s protocol to HTTP.
-   *
-   * @param url the URL to convert to HTTP
-   * @return the URL with protocol set to HTTP
-   */
-  private static URL urlWithHttp(URL url) {
-    GenericUrl httpUrl = new GenericUrl(url);
-    httpUrl.setScheme("http");
-    return httpUrl.toURL();
-  }
-
   /** Makes a {@link Connection} to the specified {@link URL}. */
   private final Function<URL, Connection> connectionFactory;
 
@@ -213,16 +201,14 @@ class RegistryEndpointCaller<T> {
         }
       }
 
-    } catch (SSLPeerUnverifiedException ex) {
-      // Tries to call with HTTP protocol if HTTPS failed to connect.
-      if ("https".equals(requestState.url.getProtocol())) {
-        return call(new RequestState(requestState.authorization, urlWithHttp(requestState.url)));
-      }
-
-      throw ex;
-
     } catch (NoHttpResponseException ex) {
       throw new RegistryNoResponseException(ex);
+
+    } catch (SSLPeerUnverifiedException ex) {
+      // Fall-back to HTTP
+      GenericUrl httpUrl = new GenericUrl(requestState.url);
+      httpUrl.setScheme("http");
+      return call(new RequestState(requestState.authorization, httpUrl.toURL()));
     }
   }
 }
