@@ -37,8 +37,7 @@ public class RegistryAuthenticatorTest {
   }
 
   @Test
-  public void testFromAuthenticationMethod_basic()
-      throws MalformedURLException, RegistryAuthenticationFailedException {
+  public void testFromAuthenticationMethod_basic() throws RegistryAuthenticationFailedException {
     Assert.assertNull(
         RegistryAuthenticator.fromAuthenticationMethod(
             "Basic realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
@@ -46,7 +45,7 @@ public class RegistryAuthenticatorTest {
   }
 
   @Test
-  public void testFromAuthenticationMethod_noBearer() throws MalformedURLException {
+  public void testFromAuthenticationMethod_noBearer() {
     try {
       RegistryAuthenticator.fromAuthenticationMethod(
           "realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"", "someimage");
@@ -60,7 +59,7 @@ public class RegistryAuthenticatorTest {
   }
 
   @Test
-  public void testFromAuthenticationMethod_noRealm() throws MalformedURLException {
+  public void testFromAuthenticationMethod_noRealm() {
     try {
       RegistryAuthenticator.fromAuthenticationMethod("Bearer scope=\"somescope\"", "someimage");
       Assert.fail("Authentication method without 'realm' should fail");
@@ -73,7 +72,7 @@ public class RegistryAuthenticatorTest {
   }
 
   @Test
-  public void testFromAuthenticationMethod_noService() throws MalformedURLException {
+  public void testFromAuthenticationMethod_noService() {
     try {
       RegistryAuthenticator.fromAuthenticationMethod(
           "Bearer realm=\"https://somerealm\"", "someimage");

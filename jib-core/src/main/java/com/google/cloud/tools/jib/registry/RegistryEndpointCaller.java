@@ -34,7 +34,6 @@ import java.util.function.Function;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import org.apache.http.NoHttpResponseException;
-import org.apache.http.conn.HttpHostConnectException;
 
 /**
  * Makes requests to a registry endpoint.
@@ -202,11 +201,11 @@ class RegistryEndpointCaller<T> {
             || httpResponseException.getStatusCode()
                 == HttpStatusCodes.STATUS_CODE_MOVED_PERMANENTLY
             || httpResponseException.getStatusCode() == STATUS_CODE_PERMANENT_REDIRECT) {
+          // 'Location' header can be relative or absolute.
+          URL redirectLocation =
+              new URL(requestState.url, httpResponseException.getHeaders().getLocation());
           // TODO: Use copy-construct builder.
-          return call(
-              new RequestState(
-                  requestState.authorization,
-                  new URL(httpResponseException.getHeaders().getLocation())));
+          return call(new RequestState(requestState.authorization, redirectLocation));
 
         } else {
           // Unknown
@@ -214,7 +213,7 @@ class RegistryEndpointCaller<T> {
         }
       }
 
-    } catch (HttpHostConnectException | SSLPeerUnverifiedException ex) {
+    } catch (SSLPeerUnverifiedException ex) {
       // Tries to call with HTTP protocol if HTTPS failed to connect.
       if ("https".equals(requestState.url.getProtocol())) {
         return call(new RequestState(requestState.authorization, urlWithHttp(requestState.url)));

@@ -23,23 +23,27 @@ import javax.annotation.Nullable;
 /** Static initializers for {@link RegistryAuthenticator}. */
 public abstract class RegistryAuthenticators {
 
-  public static RegistryAuthenticator forDockerHub(String repository)
-      throws RegistryAuthenticationFailedException {
-    try {
-      return new RegistryAuthenticator(
-          "https://auth.docker.io/token", "registry.docker.io", repository);
-
-    } catch (MalformedURLException ex) {
-      throw new RegistryAuthenticationFailedException(ex);
-    }
+  public static RegistryAuthenticator forDockerHub(String repository) {
+    return new RegistryAuthenticator(
+        "https://auth.docker.io/token", "registry.docker.io", repository);
   }
 
+  /**
+   * Gets a {@link RegistryAuthenticator} for a custom registry server and repository.
+   *
+   * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
+   * @param repository the image/repository name (also known as, namespace)
+   * @return the {@link RegistryAuthenticator} to authenticate pulls/pushes with the registry, or
+   *     {@code null} if no token authentication is necessary
+   * @throws RegistryAuthenticationFailedException if failed to create the registry authenticator
+   * @throws IOException if communicating with the endpoint fails
+   * @throws RegistryException if communicating with the endpoint fails
+   */
   @Nullable
   public static RegistryAuthenticator forOther(String serverUrl, String repository)
       throws RegistryAuthenticationFailedException, IOException, RegistryException {
     try {
-      RegistryClient registryClient = new RegistryClient(null, serverUrl, repository);
-      return registryClient.getRegistryAuthenticator();
+      return new RegistryClient(null, serverUrl, repository).getRegistryAuthenticator();
 
     } catch (MalformedURLException ex) {
       throw new RegistryAuthenticationFailedException(ex);

@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.registry;
 
+import com.google.api.client.http.GenericUrl;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
@@ -42,6 +43,7 @@ public class BlobPusherTest {
 
   @Mock private Blob mockBlob;
   @Mock private URL mockURL;
+  @Mock private Response mockResponse;
 
   private DescriptorDigest fakeDescriptorDigest;
   private BlobPusher testBlobPusher;
@@ -70,27 +72,25 @@ public class BlobPusherTest {
 
   @Test
   public void testInitializer_handleResponse_created() throws IOException, RegistryException {
-    Response mockResponse = Mockito.mock(Response.class);
-
     Mockito.when(mockResponse.getStatusCode()).thenReturn(201); // Created
     Assert.assertNull(testBlobPusher.initializer().handleResponse(mockResponse));
   }
 
   @Test
   public void testInitializer_handleResponse_accepted() throws IOException, RegistryException {
-    Response mockResponse = Mockito.mock(Response.class);
-
     Mockito.when(mockResponse.getStatusCode()).thenReturn(202); // Accepted
     Mockito.when(mockResponse.getHeader("Location"))
         .thenReturn(Collections.singletonList("location"));
-    Assert.assertEquals("location", testBlobPusher.initializer().handleResponse(mockResponse));
+    GenericUrl requestUrl = new GenericUrl("https://someurl");
+    Mockito.when(mockResponse.getRequestUrl()).thenReturn(requestUrl);
+    Assert.assertEquals(
+        new URL("https://someurl/location"),
+        testBlobPusher.initializer().handleResponse(mockResponse));
   }
 
   @Test
   public void testInitializer_handleResponse_accepted_multipleLocations()
       throws IOException, RegistryException {
-    Response mockResponse = Mockito.mock(Response.class);
-
     Mockito.when(mockResponse.getStatusCode()).thenReturn(202); // Accepted
     Mockito.when(mockResponse.getHeader("Location"))
         .thenReturn(Arrays.asList("location1", "location2"));
@@ -107,8 +107,6 @@ public class BlobPusherTest {
 
   @Test
   public void testInitializer_handleResponse_unrecognized() throws IOException, RegistryException {
-    Response mockResponse = Mockito.mock(Response.class);
-
     Mockito.when(mockResponse.getStatusCode()).thenReturn(-1); // Unrecognized
     try {
       testBlobPusher.initializer().handleResponse(mockResponse);
@@ -157,11 +155,13 @@ public class BlobPusherTest {
 
   @Test
   public void testWriter_handleResponse() throws IOException, RegistryException {
-    Response mockResponse = Mockito.mock(Response.class);
-
     Mockito.when(mockResponse.getHeader("Location"))
-        .thenReturn(Collections.singletonList("location"));
-    Assert.assertEquals("location", testBlobPusher.writer(mockURL).handleResponse(mockResponse));
+        .thenReturn(Collections.singletonList("https://somenewurl/location"));
+    GenericUrl requestUrl = new GenericUrl("https://someurl");
+    Mockito.when(mockResponse.getRequestUrl()).thenReturn(requestUrl);
+    Assert.assertEquals(
+        new URL("https://somenewurl/location"),
+        testBlobPusher.writer(mockURL).handleResponse(mockResponse));
   }
 
   @Test

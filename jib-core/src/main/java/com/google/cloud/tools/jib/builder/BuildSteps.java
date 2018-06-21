@@ -76,9 +76,7 @@ public class BuildSteps {
         stepsRunner ->
             stepsRunner
                 .runRetrieveTargetRegistryCredentialsStep()
-                .runRetrieveBaseRegistryCredentialsStep()
                 .runAuthenticatePushStep()
-                .runAuthenticatePullStep()
                 .runPullBaseImageStep()
                 .runPullAndCacheBaseImageLayersStep()
                 .runPushBaseImageLayersStep()
@@ -114,8 +112,6 @@ public class BuildSteps {
             SUCCESS_MESSAGE_FORMAT_FOR_DOCKER_DAEMON, buildConfiguration.getTargetImageReference()),
         stepsRunner ->
             stepsRunner
-                .runRetrieveBaseRegistryCredentialsStep()
-                .runAuthenticatePullStep()
                 .runPullBaseImageStep()
                 .runPullAndCacheBaseImageLayersStep()
                 .runBuildAndCacheApplicationLayerSteps()
@@ -188,15 +184,21 @@ public class BuildSteps {
 
     try (Timer timer = new Timer(buildConfiguration.getBuildLogger(), description)) {
       try (Caches caches = cachesInitializer.init()) {
-        Cache baseLayersCache = caches.getBaseCache();
+        Cache baseImageLayersCache = caches.getBaseCache();
         Cache applicationLayersCache = caches.getApplicationCache();
 
-        stepsRunnerConsumer.accept(
+        StepsRunner stepsRunner =
             new StepsRunner(
                 buildConfiguration,
                 sourceFilesConfiguration,
-                baseLayersCache,
-                applicationLayersCache));
+                baseImageLayersCache,
+                applicationLayersCache);
+        stepsRunnerConsumer.accept(stepsRunner);
+
+        // Writes the cached layers to the cache metadata.
+        baseImageLayersCache.addCachedLayersToMetadata(stepsRunner.getCachedBaseImageLayers());
+        applicationLayersCache.addCachedLayersWithMetadataToMetadata(
+            stepsRunner.getCachedApplicationLayers());
       }
     }
 

@@ -32,11 +32,6 @@ import org.apache.maven.project.MavenProject;
 /** {@link SourceFilesConfiguration} implementation based on inputs from a {@link MavenProject}. */
 class MavenSourceFilesConfiguration implements SourceFilesConfiguration {
 
-  // TODO: This should be shared with GradleSourceFilesConfiguration.
-  private static final String DEPENDENCIES_PATH_ON_IMAGE = "/app/libs/";
-  private static final String RESOURCES_PATH_ON_IMAGE = "/app/resources/";
-  private static final String CLASSES_PATH_ON_IMAGE = "/app/classes/";
-
   /**
    * Resolves the source files configuration for a Maven {@link MavenProject}.
    *
@@ -114,16 +109,16 @@ class MavenSourceFilesConfiguration implements SourceFilesConfiguration {
 
   @Override
   public String getDependenciesPathOnImage() {
-    return DEPENDENCIES_PATH_ON_IMAGE;
+    return DEFAULT_DEPENDENCIES_PATH_ON_IMAGE;
   }
 
   @Override
   public String getResourcesPathOnImage() {
-    return RESOURCES_PATH_ON_IMAGE;
+    return DEFAULT_RESOURCES_PATH_ON_IMAGE;
   }
 
   @Override
   public String getClassesPathOnImage() {
-    return CLASSES_PATH_ON_IMAGE;
+    return DEFAULT_CLASSES_PATH_ON_IMAGE;
   }
 }

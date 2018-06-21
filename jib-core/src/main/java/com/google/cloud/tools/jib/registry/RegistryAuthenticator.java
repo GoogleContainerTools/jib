@@ -49,14 +49,12 @@ public class RegistryAuthenticator {
    * @param repository the repository/image name
    * @return a new {@link RegistryAuthenticator} for authenticating with the registry service
    * @throws RegistryAuthenticationFailedException if authentication fails
-   * @throws MalformedURLException TODO: it doesn't really
    * @see <a
    *     href="https://docs.docker.com/registry/spec/auth/token/#how-to-authenticate">https://docs.docker.com/registry/spec/auth/token/#how-to-authenticate</a>
    */
   @Nullable
   static RegistryAuthenticator fromAuthenticationMethod(
-      String authenticationMethod, String repository)
-      throws RegistryAuthenticationFailedException, MalformedURLException {
+      String authenticationMethod, String repository) throws RegistryAuthenticationFailedException {
     // If the authentication method starts with 'Basic ', no registry authentication is needed.
     if (authenticationMethod.matches("^Basic .*")) {
       return null;
@@ -98,13 +96,29 @@ public class RegistryAuthenticator {
   private static class AuthenticationResponseTemplate implements JsonTemplate {
 
     @Nullable private String token;
+
+    /**
+     * {@code access_token} is accepted as an alias for {@code token}.
+     *
+     * @see <a
+     *     href="https://docs.docker.com/registry/spec/auth/token/#token-response-fields">https://docs.docker.com/registry/spec/auth/token/#token-response-fields</a>
+     */
+    @Nullable private String access_token;
+
+    /** @return {@link #token} if not null, or {@link #access_token} */
+    @Nullable
+    private String getToken() {
+      if (token != null) {
+        return token;
+      }
+      return access_token;
+    }
   }
 
   private final String authenticationUrlBase;
   @Nullable private Authorization authorization;
 
-  RegistryAuthenticator(String realm, String service, String repository)
-      throws MalformedURLException {
+  RegistryAuthenticator(String realm, String service, String repository) {
     authenticationUrlBase = realm + "?service=" + service + "&scope=repository:" + repository + ":";
   }
 
@@ -167,11 +181,11 @@ public class RegistryAuthenticator {
 
         AuthenticationResponseTemplate responseJson =
             JsonTemplateMapper.readJson(responseString, AuthenticationResponseTemplate.class);
-        if (responseJson.token == null) {
+        if (responseJson.getToken() == null) {
           throw new RegistryAuthenticationFailedException(
               "Did not get token in authentication response from " + authenticationUrl);
         }
-        return Authorizations.withBearerToken(responseJson.token);
+        return Authorizations.withBearerToken(responseJson.getToken());
       }
 
     } catch (IOException ex) {

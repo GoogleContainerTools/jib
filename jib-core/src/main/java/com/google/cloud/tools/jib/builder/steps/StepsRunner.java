@@ -17,15 +17,20 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.async.AsyncSteps;
+import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.cache.Cache;
+import com.google.cloud.tools.jib.cache.CachedLayer;
+import com.google.cloud.tools.jib.cache.CachedLayerWithMetadata;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import javax.annotation.Nullable;
@@ -45,9 +50,7 @@ public class StepsRunner {
   private final Cache baseLayersCache;
   private final Cache applicationLayersCache;
 
-  @Nullable private RetrieveRegistryCredentialsStep retrieveBaseRegistryCredentialsStep;
   @Nullable private RetrieveRegistryCredentialsStep retrieveTargetRegistryCredentialsStep;
-  @Nullable private AuthenticatePullStep authenticatePullStep;
   @Nullable private AuthenticatePushStep authenticatePushStep;
   @Nullable private PullBaseImageStep pullBaseImageStep;
   @Nullable private PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep;
@@ -73,12 +76,6 @@ public class StepsRunner {
     this.applicationLayersCache = applicationLayersCache;
   }
 
-  public StepsRunner runRetrieveBaseRegistryCredentialsStep() {
-    retrieveBaseRegistryCredentialsStep =
-        RetrieveRegistryCredentialsStep.forBaseImage(listeningExecutorService, buildConfiguration);
-    return this;
-  }
-
   public StepsRunner runRetrieveTargetRegistryCredentialsStep() {
     retrieveTargetRegistryCredentialsStep =
         RetrieveRegistryCredentialsStep.forTargetImage(
@@ -95,21 +92,8 @@ public class StepsRunner {
     return this;
   }
 
-  public StepsRunner runAuthenticatePullStep() {
-    authenticatePullStep =
-        new AuthenticatePullStep(
-            listeningExecutorService,
-            buildConfiguration,
-            Preconditions.checkNotNull(retrieveBaseRegistryCredentialsStep));
-    return this;
-  }
-
   public StepsRunner runPullBaseImageStep() {
-    pullBaseImageStep =
-        new PullBaseImageStep(
-            listeningExecutorService,
-            buildConfiguration,
-            Preconditions.checkNotNull(authenticatePullStep));
+    pullBaseImageStep = new PullBaseImageStep(listeningExecutorService, buildConfiguration);
     return this;
   }
 
@@ -119,7 +103,6 @@ public class StepsRunner {
             listeningExecutorService,
             buildConfiguration,
             baseLayersCache,
-            Preconditions.checkNotNull(authenticatePullStep),
             Preconditions.checkNotNull(pullBaseImageStep));
     return this;
   }
@@ -226,5 +209,37 @@ public class StepsRunner {
   public void waitOnBuildTarballAndLoadDockerStep()
       throws ExecutionException, InterruptedException {
     Preconditions.checkNotNull(buildTarballAndLoadDockerStep).getFuture().get();
+  }
+
+  /**
+   * @return the layers cached by {@link #pullAndCacheBaseImageLayersStep}
+   * @throws ExecutionException if {@link #pullAndCacheBaseImageLayersStep} threw an exception
+   *     during execution
+   */
+  public List<CachedLayer> getCachedBaseImageLayers() throws ExecutionException {
+    ImmutableList<PullAndCacheBaseImageLayerStep> pullAndCacheBaseImageLayerSteps =
+        NonBlockingSteps.get(Preconditions.checkNotNull(pullAndCacheBaseImageLayersStep));
+
+    List<CachedLayer> cachedLayers = new ArrayList<>(pullAndCacheBaseImageLayerSteps.size());
+    for (PullAndCacheBaseImageLayerStep pullAndCacheBaseImageLayerStep :
+        pullAndCacheBaseImageLayerSteps) {
+      cachedLayers.add(NonBlockingSteps.get(pullAndCacheBaseImageLayerStep));
+    }
+    return cachedLayers;
+  }
+
+  /**
+   * @return the layers cached by {@link #buildAndCacheApplicationLayerSteps}
+   * @throws ExecutionException if {@link #buildAndCacheApplicationLayerSteps} threw an exception
+   *     during execution
+   */
+  public List<CachedLayerWithMetadata> getCachedApplicationLayers() throws ExecutionException {
+    List<CachedLayerWithMetadata> cachedLayersWithMetadata =
+        new ArrayList<>(Preconditions.checkNotNull(buildAndCacheApplicationLayerSteps).size());
+    for (BuildAndCacheApplicationLayerStep buildAndCacheApplicationLayerStep :
+        buildAndCacheApplicationLayerSteps) {
+      cachedLayersWithMetadata.add(NonBlockingSteps.get(buildAndCacheApplicationLayerStep));
+    }
+    return cachedLayersWithMetadata;
   }
 }

@@ -32,6 +32,10 @@ class AuthenticationMethodRetriever implements RegistryEndpointProvider<Registry
 
   private final RegistryEndpointProperties registryEndpointProperties;
 
+  AuthenticationMethodRetriever(RegistryEndpointProperties registryEndpointProperties) {
+    this.registryEndpointProperties = registryEndpointProperties;
+  }
+
   @Nullable
   @Override
   public BlobHttpContent getContent() {
@@ -43,10 +47,15 @@ class AuthenticationMethodRetriever implements RegistryEndpointProvider<Registry
     return Collections.emptyList();
   }
 
+  /**
+   * The request did not error, meaning that the registry does not require authentication.
+   *
+   * @param response ignored
+   * @return {@code null}
+   */
   @Override
   @Nullable
   public RegistryAuthenticator handleResponse(Response response) {
-    // The registry does not require authentication.
     return null;
   }
 
@@ -88,14 +97,10 @@ class AuthenticationMethodRetriever implements RegistryEndpointProvider<Registry
       return RegistryAuthenticator.fromAuthenticationMethod(
           authenticationMethod, registryEndpointProperties.getImageName());
 
-    } catch (RegistryAuthenticationFailedException | MalformedURLException ex) {
+    } catch (RegistryAuthenticationFailedException ex) {
       throw new RegistryErrorExceptionBuilder(getActionDescription(), ex)
           .addReason("Failed get authentication method from 'WWW-Authenticate' header")
           .build();
     }
-  }
-
-  AuthenticationMethodRetriever(RegistryEndpointProperties registryEndpointProperties) {
-    this.registryEndpointProperties = registryEndpointProperties;
   }
 }

@@ -37,7 +37,6 @@ import java.util.function.Function;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import org.apache.http.NoHttpResponseException;
-import org.apache.http.conn.HttpHostConnectException;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
@@ -109,11 +108,6 @@ public class RegistryEndpointCallerTest {
     Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
     Mockito.when(mockHttpResponse.parseAsString()).thenReturn("");
     Mockito.when(mockHttpResponse.getHeaders()).thenReturn(new HttpHeaders());
-  }
-
-  @Test
-  public void testCall_retryWithHttp() throws IOException, RegistryException {
-    verifyRetriesWithHttp(HttpHostConnectException.class);
   }
 
   @Test

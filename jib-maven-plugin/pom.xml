@@ -140,6 +140,9 @@
               <includes>
                 <include>**/*IntegrationTest.java</include>
               </includes>
+              <systemPropertyVariables>
+                <_JIB_DISABLE_USER_AGENT>true</_JIB_DISABLE_USER_AGENT>
+              </systemPropertyVariables>
             </configuration>
             <executions>
               <execution>

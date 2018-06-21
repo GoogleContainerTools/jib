@@ -27,6 +27,8 @@ import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URL;
@@ -73,9 +75,17 @@ public class RegistryClient {
     RegistryClient.userAgentSuffix = userAgentSuffix;
   }
 
-  /** @return the {@code User-Agent} header to send. */
+  /**
+   * @return the {@code User-Agent} header to send. The {@code User-Agent} can be disabled by
+   *     setting the system property variable {@code _JIB_DISABLE_USER_AGENT} to any non-empty
+   *     string.
+   */
   @VisibleForTesting
   static String getUserAgent() {
+    if (!Strings.isNullOrEmpty(System.getProperty("_JIB_DISABLE_USER_AGENT"))) {
+      return "";
+    }
+
     String version = RegistryClient.class.getPackage().getImplementationVersion();
     StringBuilder userAgentBuilder = new StringBuilder();
     userAgentBuilder.append("jib");
@@ -91,6 +101,11 @@ public class RegistryClient {
   @Nullable private final Authorization authorization;
   private final RegistryEndpointProperties registryEndpointProperties;
 
+  /**
+   * @param authorization the {@link Authorization} to access the registry/repository
+   * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
+   * @param imageName the image/repository name (also known as, namespace)
+   */
   public RegistryClient(@Nullable Authorization authorization, String serverUrl, String imageName) {
     this.authorization = authorization;
     this.registryEndpointProperties = new RegistryEndpointProperties(serverUrl, imageName);
@@ -199,17 +214,17 @@ public class RegistryClient {
       try (Timer t2 = t.subTimer("pushBlob POST " + blobDigest)) {
 
         // POST /v2/<name>/blobs/uploads/?mount={blob.digest}
-        String locationHeader = callRegistryEndpoint(blobPusher.initializer());
-        if (locationHeader == null) {
+        URL patchLocation = callRegistryEndpoint(blobPusher.initializer());
+        if (patchLocation == null) {
           // The BLOB exists already.
           return true;
         }
-        URL patchLocation = new URL(locationHeader);
 
         t2.lap("pushBlob PATCH " + blobDigest);
 
         // PATCH <Location> with BLOB
-        URL putLocation = new URL(callRegistryEndpoint(blobPusher.writer(patchLocation)));
+        URL putLocation = callRegistryEndpoint(blobPusher.writer(patchLocation));
+        Preconditions.checkNotNull(putLocation);
 
         t2.lap("pushBlob PUT " + blobDigest);
 
