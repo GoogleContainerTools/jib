@@ -69,7 +69,7 @@ class RegistryEndpointCaller<T> {
   /**
    * Converts the {@link URL}'s protocol to HTTP.
    *
-   * @param url the URL to conver to HTTP
+   * @param url the URL to convert to HTTP
    * @return the URL with protocol set to HTTP
    */
   private static URL urlWithHttp(URL url) {
