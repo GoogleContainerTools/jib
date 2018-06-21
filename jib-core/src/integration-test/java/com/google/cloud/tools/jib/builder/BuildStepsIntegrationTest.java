@@ -64,16 +64,11 @@ public class BuildStepsIntegrationTest {
             Caches.newInitializer(cacheDirectory).setBaseCacheDirectory(cacheDirectory));
 
     long lastTime = System.nanoTime();
-    try {
-      buildImageSteps.run();
-      logger.info("Initial build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
-      lastTime = System.nanoTime();
-      buildImageSteps.run();
-      logger.info("Secondary build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
-    } catch (ExecutionException ex) {
-      ex.printStackTrace();
-      throw ex;
-    }
+    buildImageSteps.run();
+    logger.info("Initial build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
+    lastTime = System.nanoTime();
+    buildImageSteps.run();
+    logger.info("Secondary build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
 
     String imageReference = "localhost:5000/testimage:testtag";
     new Command("docker", "pull", imageReference).run();
