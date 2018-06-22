@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
@@ -37,6 +38,9 @@ import javax.lang.model.SourceVersion;
 public class BuildConfiguration {
 
   public static class Builder {
+
+    /** Pattern used for parsing information out of exposed port configurations. */
+    private static Pattern portPattern = Pattern.compile("(\\d+)(?:-(\\d+))?(/tcp|/udp)?");
 
     // All the parameters below are set to their default values.
     @Nullable private ImageReference baseImageReference;
@@ -203,7 +207,6 @@ public class BuildConfiguration {
     @VisibleForTesting
     ImmutableList<String> expandPortRanges(List<String> ports) throws NumberFormatException {
       ImmutableList.Builder<String> result = new ImmutableList.Builder<>();
-      Pattern portPattern = Pattern.compile("(\\d+)(-\\d+|)(\\/tcp|\\/udp|)");
 
       for (String port : ports) {
         // Make sure configuration is a single number or a range, with an optional protocol
@@ -227,9 +230,9 @@ public class BuildConfiguration {
         // Parse protocol
         int min = Integer.parseInt(matcher.group(1));
         int max = min;
-        if (!matcher.group(2).equals("")) {
+        if (!Strings.isNullOrEmpty(matcher.group(2))) {
           // Skip over the hyphen
-          max = Integer.parseInt(matcher.group(2).substring(1));
+          max = Integer.parseInt(matcher.group(2));
         }
         String protocol = matcher.group(3);
 
@@ -248,7 +251,7 @@ public class BuildConfiguration {
         // Add all numbers in range to list
         for (int portNum = min; portNum <= max; portNum++) {
           // TODO: Use a class w/ port number and protocol instead of a string
-          result.add(portNum + protocol);
+          result.add(portNum + (protocol == null ? "" : protocol));
         }
       }
 
