@@ -20,8 +20,13 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedMap;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.SortedMap;
 import javax.annotation.Nullable;
 
 /**
@@ -123,11 +128,12 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
   }
 
   public void setContainerExposedPorts(List<String> exposedPorts) {
-    SortedMap<String, Map<?, ?>> result = new TreeMap<>();
+    ImmutableSortedMap.Builder<String, Map<?, ?>> result =
+        new ImmutableSortedMap.Builder<>(String::compareTo);
     for (String port : exposedPorts) {
       result.put(port, Collections.emptyMap());
     }
-    config.ExposedPorts = ImmutableSortedMap.copyOf(result);
+    config.ExposedPorts = result.build();
   }
 
   public void addLayerDiffId(DescriptorDigest diffId) {
@@ -154,15 +160,15 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
   }
 
   @Nullable
-  List<String> getContainerExposedPorts() {
+  ImmutableList<String> getContainerExposedPorts() {
     if (config.ExposedPorts == null) {
       return null;
     }
-    List<String> ports = new ArrayList<>();
+    ImmutableList.Builder<String> ports = new ImmutableList.Builder<>();
     for (Map.Entry<String, Map<?, ?>> entry : config.ExposedPorts.entrySet()) {
       ports.add(entry.getKey());
     }
-    return ports;
+    return ports.build();
   }
 
   @VisibleForTesting
