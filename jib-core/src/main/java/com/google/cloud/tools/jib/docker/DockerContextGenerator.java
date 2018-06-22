@@ -46,6 +46,49 @@ import javax.annotation.Nullable;
  */
 public class DockerContextGenerator {
 
+  /**
+   * Formats a list for the Dockerfile's ENTRYPOINT or CMD.
+   *
+   * @see <a
+   *     href="https://docs.docker.com/engine/reference/builder/#exec-form-entrypoint-example">https://docs.docker.com/engine/reference/builder/#exec-form-entrypoint-example</a>
+   * @param items the list of items to join into an array.
+   * @return a string in the format: ["item1","item2",...]
+   */
+  @VisibleForTesting
+  static String joinAsJsonArray(List<String> items) {
+    StringBuilder resultString = new StringBuilder("[");
+    boolean firstComponent = true;
+    for (String item : items) {
+      if (!firstComponent) {
+        resultString.append(',');
+      }
+
+      // Escapes quotes.
+      item = item.replaceAll("\"", Matcher.quoteReplacement("\\\""));
+
+      resultString.append('"').append(item).append('"');
+      firstComponent = false;
+    }
+    resultString.append(']');
+
+    return resultString.toString();
+  }
+
+  /**
+   * Builds a list of Dockerfile "EXPOSE" instructions.
+   *
+   * @param exposedPorts the list of ports numbers/ranges to expose
+   * @return a string containing an EXPOSE instruction for each of the entries
+   */
+  @VisibleForTesting
+  static String makeExposeItems(List<String> exposedPorts) {
+    StringBuilder resultString = new StringBuilder();
+    for (String port : exposedPorts) {
+      resultString.append("EXPOSE ").append(port).append('\n');
+    }
+    return resultString.toString();
+  }
+
   private final SourceFilesConfiguration sourceFilesConfiguration;
 
   @Nullable private String baseImage;
@@ -177,48 +220,5 @@ public class DockerContextGenerator {
             joinAsJsonArray(
                 EntrypointBuilder.makeEntrypoint(sourceFilesConfiguration, jvmFlags, mainClass)))
         .replace("@@CMD@@", joinAsJsonArray(javaArguments));
-  }
-
-  /**
-   * Formats a list for the Dockerfile's ENTRYPOINT or CMD.
-   *
-   * @see <a
-   *     href="https://docs.docker.com/engine/reference/builder/#exec-form-entrypoint-example">https://docs.docker.com/engine/reference/builder/#exec-form-entrypoint-example</a>
-   * @param items the list of items to join into an array.
-   * @return a string in the format: ["item1","item2",...]
-   */
-  @VisibleForTesting
-  static String joinAsJsonArray(List<String> items) {
-    StringBuilder resultString = new StringBuilder("[");
-    boolean firstComponent = true;
-    for (String item : items) {
-      if (!firstComponent) {
-        resultString.append(',');
-      }
-
-      // Escapes quotes.
-      item = item.replaceAll("\"", Matcher.quoteReplacement("\\\""));
-
-      resultString.append('"').append(item).append('"');
-      firstComponent = false;
-    }
-    resultString.append(']');
-
-    return resultString.toString();
-  }
-
-  /**
-   * Builds a list of Dockerfile "EXPOSE" items.
-   *
-   * @param exposedPorts the list of ports numbers/ranges to expose
-   * @return a string containing an EXPOSE command for each of the entries
-   */
-  @VisibleForTesting
-  static String makeExposeItems(List<String> exposedPorts) {
-    StringBuilder resultString = new StringBuilder();
-    for (String port : exposedPorts) {
-      resultString.append("EXPOSE ").append(port).append("\n");
-    }
-    return resultString.toString();
   }
 }

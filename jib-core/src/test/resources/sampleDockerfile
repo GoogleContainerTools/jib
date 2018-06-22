@@ -4,7 +4,7 @@ COPY libs /app/libs/
 COPY resources /app/resources/
 COPY classes /app/classes/
 
-EXPOSE 1000
-EXPOSE 2000-2010
+EXPOSE 1000/tcp
+EXPOSE 2000-2010/udp
 ENTRYPOINT ["java","-flag","another\"Flag","-cp","/app/libs/*:/app/resources/:/app/classes/","SomeMainClass"]
 CMD ["arg1","arg2"]

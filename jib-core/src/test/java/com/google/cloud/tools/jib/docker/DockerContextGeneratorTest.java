@@ -141,7 +141,7 @@ public class DockerContextGeneratorTest {
     List<String> expectedJvmFlags = Arrays.asList("-flag", "another\"Flag");
     String expectedMainClass = "SomeMainClass";
     List<String> expectedJavaArguments = Arrays.asList("arg1", "arg2");
-    List<String> exposedPorts = Arrays.asList("1000", "2000-2010");
+    List<String> exposedPorts = Arrays.asList("1000/tcp", "2000-2010/udp");
 
     String dockerfile =
         new DockerContextGenerator(mockSourceFilesConfiguration)
