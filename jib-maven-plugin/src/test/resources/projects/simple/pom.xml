@@ -43,6 +43,10 @@
           </to>
           <container>
             <args>An argument.</args>
+            <exposedPorts>
+              <exposedPort>1000</exposedPort>
+              <exposedPort>2000-2003</exposedPort>
+            </exposedPorts>
           </container>
           <!-- Does not have tests use user-level cache for base image layers. -->
           <useOnlyProjectCache>true</useOnlyProjectCache>

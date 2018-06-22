@@ -102,6 +102,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
             .setJavaArguments(getArgs())
             .setJvmFlags(getJvmFlags())
             .setEnvironment(getEnvironment())
+            .setExposedPorts(getExposedPorts())
             .setTargetFormat(ImageFormat.valueOf(getFormat()).getManifestTemplateClass())
             .build();
 
