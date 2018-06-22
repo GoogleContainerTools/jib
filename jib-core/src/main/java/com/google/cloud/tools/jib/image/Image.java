@@ -31,7 +31,7 @@ public class Image<T extends Layer> {
 
     private ImmutableList<String> entrypoint = ImmutableList.of();
     private ImmutableList<String> javaArguments = ImmutableList.of();
-    private ImmutableList<String> exposedPorts = ImmutableList.of();
+    private ImmutableList<Integer> exposedPorts = ImmutableList.of();
 
     /**
      * Sets the environment with a map from environment variable names to values.
@@ -98,8 +98,8 @@ public class Image<T extends Layer> {
      *     appear in the configuration json (e.g. "portNum/tcp")
      * @return this
      */
-    public Builder<T> setExposedPorts(List<String> exposedPorts) {
-      this.exposedPorts = ImmutableList.copyOf(exposedPorts);
+    public Builder<T> setExposedPorts(ImmutableList<Integer> exposedPorts) {
+      this.exposedPorts = exposedPorts;
       return this;
     }
 
@@ -121,7 +121,7 @@ public class Image<T extends Layer> {
           environmentBuilder.build(),
           ImmutableList.copyOf(entrypoint),
           ImmutableList.copyOf(javaArguments),
-          ImmutableList.copyOf(exposedPorts));
+          exposedPorts);
     }
   }
 
@@ -142,14 +142,14 @@ public class Image<T extends Layer> {
   private final ImmutableList<String> javaArguments;
 
   /** Ports that the container listens on. */
-  private final ImmutableList<String> exposedPorts;
+  private final ImmutableList<Integer> exposedPorts;
 
   private Image(
       ImageLayers<T> layers,
       ImmutableList<String> environment,
       ImmutableList<String> entrypoint,
       ImmutableList<String> javaArguments,
-      ImmutableList<String> exposedPorts) {
+      ImmutableList<Integer> exposedPorts) {
     this.layers = layers;
     this.environmentBuilder = environment;
     this.entrypoint = entrypoint;
@@ -169,7 +169,7 @@ public class Image<T extends Layer> {
     return javaArguments;
   }
 
-  public ImmutableList<String> getExposedPorts() {
+  public ImmutableList<Integer> getExposedPorts() {
     return exposedPorts;
   }
 

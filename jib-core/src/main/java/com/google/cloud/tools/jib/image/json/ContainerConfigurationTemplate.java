@@ -20,7 +20,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableSortedMap;
 import java.util.*;
 import javax.annotation.Nullable;
@@ -123,10 +122,10 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     config.Cmd = cmd;
   }
 
-  public void setContainerExposedPorts(List<String> exposedPorts) {
+  public void setContainerExposedPorts(List<Integer> exposedPorts) {
     SortedMap<String, Map<?, ?>> result = new TreeMap<>();
-    for (String port : exposedPorts) {
-      result.put(port + "/tcp", Collections.emptyMap());
+    for (Integer port : exposedPorts) {
+      result.put(port.toString(), Collections.emptyMap());
     }
     config.ExposedPorts = ImmutableSortedMap.copyOf(result);
   }
@@ -155,14 +154,13 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
   }
 
   @Nullable
-  List<String> getContainerExposedPorts() {
+  List<Integer> getContainerExposedPorts() {
     if (config.ExposedPorts == null) {
       return null;
     }
-    List<String> ports = new ArrayList<>();
+    List<Integer> ports = new ArrayList<>();
     for (Map.Entry<String, Map<?, ?>> entry : config.ExposedPorts.entrySet()) {
-      // Remove the "/tcp"
-      ports.add(Splitter.on('/').splitToList(entry.getKey()).get(0));
+      ports.add(Integer.parseInt(entry.getKey()));
     }
     return ports;
   }

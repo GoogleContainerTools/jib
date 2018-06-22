@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.image.LayerCountMismatchException;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.ReferenceLayer;
 import com.google.cloud.tools.jib.image.ReferenceNoDiffIdLayer;
+import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -103,7 +104,8 @@ public class JsonToImageTranslator {
     }
 
     if (containerConfigurationTemplate.getContainerExposedPorts() != null) {
-      imageBuilder.setExposedPorts(containerConfigurationTemplate.getContainerExposedPorts());
+      imageBuilder.setExposedPorts(
+          ImmutableList.copyOf(containerConfigurationTemplate.getContainerExposedPorts()));
     }
 
     if (containerConfigurationTemplate.getContainerEnvironment() != null) {
