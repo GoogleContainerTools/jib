@@ -28,6 +28,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import javax.lang.model.SourceVersion;
 
@@ -201,6 +203,7 @@ public class BuildConfiguration {
     @VisibleForTesting
     ImmutableList<String> expandPortRanges(List<String> ports) throws NumberFormatException {
       ImmutableList.Builder<String> result = new ImmutableList.Builder<>();
+      Pattern portPattern = Pattern.compile("(\\d+)(-\\d+|)(\\/tcp|\\/udp|)");
 
       for (String port : ports) {
         // Make sure configuration is a single number or a range, with an optional protocol
@@ -210,7 +213,9 @@ public class BuildConfiguration {
         //   1000/tcp
         //   2000/udp
         //   500-600/tcp
-        if (!port.matches("^\\d+(-\\d+)?(\\/tcp|\\/udp)?$")) {
+        Matcher matcher = portPattern.matcher(port);
+
+        if (!matcher.matches()) {
           throw new NumberFormatException(
               "Invalid port configuration: '"
                   + port
@@ -220,16 +225,13 @@ public class BuildConfiguration {
         }
 
         // Parse protocol
-        List<String> splitProtocol = Splitter.on("/").splitToList(port);
-        String protocol = splitProtocol.size() > 1 ? "/" + splitProtocol.get(1) : "";
-
-        // Parse range (or treat as range of min-min if only single port configuration)
-        List<String> splitRange = Splitter.on("-").splitToList(splitProtocol.get(0));
-        int min = Integer.parseInt(splitRange.get(0));
+        int min = Integer.parseInt(matcher.group(1));
         int max = min;
-        if (splitRange.size() > 1) {
-          max = Integer.parseInt(splitRange.get(1));
+        if (!matcher.group(2).equals("")) {
+          // Skip over the hyphen
+          max = Integer.parseInt(matcher.group(2).substring(1));
         }
+        String protocol = matcher.group(3);
 
         // Error if configured as 'max-min' instead of 'min-max'
         if (min > max) {
@@ -245,6 +247,7 @@ public class BuildConfiguration {
 
         // Add all numbers in range to list
         for (int portNum = min; portNum <= max; portNum++) {
+          // TODO: Use a class w/ port number and protocol instead of a string
           result.add(portNum + protocol);
         }
       }
