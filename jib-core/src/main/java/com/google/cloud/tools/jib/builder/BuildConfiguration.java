@@ -42,12 +42,7 @@ public class BuildConfiguration {
     /**
      * Pattern used for parsing information out of exposed port configurations.
      *
-     * Examples:
-     *   100
-     *   200-210
-     *   1000/tcp
-     *   2000/udp
-     *   500-600/tcp
+     * <p>Examples: 100 200-210 1000/tcp 2000/udp 500-600/tcp
      */
     private static final Pattern portPattern = Pattern.compile("(\\d+)(?:-(\\d+))?(/tcp|/udp)?");
 
@@ -207,7 +202,7 @@ public class BuildConfiguration {
     /**
      * TODO: Move this to a class in frontend
      *
-     * Converts/validates a list of ports with ranges to an expanded form without ranges.
+     * <p>Converts/validates a list of ports with ranges to an expanded form without ranges.
      *
      * <p>Example: ["1000/tcp", "2000-2002/tcp"] -> ["1000/tcp", "2000/tcp", "2001/tcp", "2002/tcp"]
      *
