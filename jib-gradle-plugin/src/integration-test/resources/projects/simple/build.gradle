@@ -21,7 +21,7 @@ jib {
     }
     container {
         args = ['An argument.']
-        exposedPorts = ['1000', '2000-2003']
+        ports = ['1000', '2000-2003']
     }
 
     // Does not have tests use user-level cache for base image layers.

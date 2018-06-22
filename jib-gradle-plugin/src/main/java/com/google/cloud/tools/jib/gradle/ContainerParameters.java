@@ -35,7 +35,7 @@ public class ContainerParameters {
   @Nullable private String mainClass;
   private List<String> args = Collections.emptyList();
   private ImageFormat format = ImageFormat.Docker;
-  private List<String> exposedPorts = Collections.emptyList();
+  private List<String> ports = Collections.emptyList();
 
   @Input
   @Optional
@@ -80,11 +80,11 @@ public class ContainerParameters {
 
   @Input
   @Optional
-  public List<String> getExposedPorts() {
-    return exposedPorts;
+  public List<String> getPorts() {
+    return ports;
   }
 
-  public void setExposedPorts(List<String> exposedPorts) {
-    this.exposedPorts = exposedPorts;
+  public void setPorts(List<String> ports) {
+    this.ports = ports;
   }
 }

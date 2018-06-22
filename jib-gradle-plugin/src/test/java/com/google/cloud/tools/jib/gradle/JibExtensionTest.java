@@ -97,14 +97,14 @@ public class JibExtensionTest {
     Assert.assertNull(testJibExtension.getContainer().getMainClass());
     Assert.assertEquals(Collections.emptyList(), testJibExtension.getContainer().getArgs());
     Assert.assertEquals(V22ManifestTemplate.class, testJibExtension.getContainer().getFormat());
-    Assert.assertEquals(Collections.emptyList(), testJibExtension.getContainer().getExposedPorts());
+    Assert.assertEquals(Collections.emptyList(), testJibExtension.getContainer().getPorts());
 
     testJibExtension.container(
         container -> {
           container.setJvmFlags(Arrays.asList("jvmFlag1", "jvmFlag2"));
           container.setMainClass("mainClass");
           container.setArgs(Arrays.asList("arg1", "arg2", "arg3"));
-          container.setExposedPorts(Arrays.asList("1000", "2000-2010", "3000"));
+          container.setPorts(Arrays.asList("1000", "2000-2010", "3000"));
           container.setFormat(ImageFormat.OCI);
         });
     Assert.assertEquals(
@@ -113,8 +113,7 @@ public class JibExtensionTest {
     Assert.assertEquals(
         Arrays.asList("arg1", "arg2", "arg3"), testJibExtension.getContainer().getArgs());
     Assert.assertEquals(
-        Arrays.asList("1000", "2000-2010", "3000"),
-        testJibExtension.getContainer().getExposedPorts());
+        Arrays.asList("1000", "2000-2010", "3000"), testJibExtension.getContainer().getPorts());
     Assert.assertEquals(OCIManifestTemplate.class, testJibExtension.getContainer().getFormat());
   }
 

@@ -229,7 +229,7 @@ public class JibExtension {
   @Internal
   @Optional
   List<String> getExposedPorts() {
-    return container.getExposedPorts();
+    return container.getPorts();
   }
 
   @Input
