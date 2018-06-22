@@ -105,6 +105,7 @@ public class BuildDockerTask extends DefaultTask {
             .setMainClass(mainClass)
             .setJavaArguments(jibExtension.getArgs())
             .setJvmFlags(jibExtension.getJvmFlags())
+            .setExposedPorts(jibExtension.getExposedPorts())
             .build();
 
     // TODO: Instead of disabling logging, have authentication credentials be provided

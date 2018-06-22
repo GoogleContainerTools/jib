@@ -53,6 +53,7 @@ import org.gradle.api.tasks.Optional;
  *     jvmFlags = [‘-Xms512m’, ‘-Xdebug’]
  *     mainClass = ‘com.mycompany.myproject.Main’
  *     args = ['arg1', 'arg2']
+ *     exposedPorts = ['1000', '2000-2010', '3000']
  *     format = OCI
  *   }
  * }
@@ -223,6 +224,12 @@ public class JibExtension {
   @Optional
   Class<? extends BuildableManifestTemplate> getFormat() {
     return container.getFormat();
+  }
+
+  @Internal
+  @Optional
+  List<String> getExposedPorts() {
+    return container.getExposedPorts();
   }
 
   @Input
