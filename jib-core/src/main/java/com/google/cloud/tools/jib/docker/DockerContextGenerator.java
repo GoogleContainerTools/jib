@@ -83,8 +83,13 @@ public class DockerContextGenerator {
   @VisibleForTesting
   static String makeExposeItems(List<String> exposedPorts) {
     StringBuilder resultString = new StringBuilder();
+    boolean first = true;
     for (String port : exposedPorts) {
-      resultString.append("EXPOSE ").append(port).append('\n');
+      if (!first) {
+        resultString.append('\n');
+      }
+      resultString.append("EXPOSE ").append(port);
+      first = false;
     }
     return resultString.toString();
   }
@@ -214,7 +219,7 @@ public class DockerContextGenerator {
             "@@DEPENDENCIES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getDependenciesPathOnImage())
         .replace("@@RESOURCES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getResourcesPathOnImage())
         .replace("@@CLASSES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getClassesPathOnImage())
-        .replace("@@EXPOSED_PORTS@@", makeExposeItems(exposedPorts))
+        .replace("@@EXPOSE_INSTRUCTIONS@@", makeExposeItems(exposedPorts))
         .replace(
             "@@ENTRYPOINT@@",
             joinAsJsonArray(
