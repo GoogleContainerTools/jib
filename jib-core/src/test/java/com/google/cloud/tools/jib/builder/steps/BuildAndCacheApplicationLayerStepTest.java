@@ -23,7 +23,7 @@ import com.google.cloud.tools.jib.builder.TestSourceFilesConfiguration;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.CacheReader;
-import com.google.cloud.tools.jib.cache.CachedLayer;
+import com.google.cloud.tools.jib.cache.CachedLayerWithMetadata;
 import com.google.cloud.tools.jib.image.ImageLayers;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.common.collect.ImmutableList;
@@ -57,8 +57,8 @@ public class BuildAndCacheApplicationLayerStepTest {
     TestSourceFilesConfiguration testSourceFilesConfiguration = new TestSourceFilesConfiguration();
     Path temporaryCacheDirectory = temporaryFolder.newFolder().toPath();
 
-    ImageLayers.Builder<CachedLayer> applicationLayersBuilder = ImageLayers.builder();
-    ImageLayers<CachedLayer> applicationLayers;
+    ImageLayers.Builder<CachedLayerWithMetadata> applicationLayersBuilder = ImageLayers.builder();
+    ImageLayers<CachedLayerWithMetadata> applicationLayers;
 
     try (Cache cache = Cache.init(temporaryCacheDirectory)) {
       ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps =
@@ -74,6 +74,7 @@ public class BuildAndCacheApplicationLayerStepTest {
       }
 
       applicationLayers = applicationLayersBuilder.build();
+      cache.addCachedLayersWithMetadataToMetadata(applicationLayers.getLayers());
       Assert.assertEquals(3, applicationLayers.size());
     }
 

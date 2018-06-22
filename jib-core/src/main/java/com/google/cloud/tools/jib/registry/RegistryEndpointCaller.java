@@ -26,9 +26,11 @@ import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.json.ErrorEntryTemplate;
 import com.google.cloud.tools.jib.registry.json.ErrorResponseTemplate;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import org.apache.http.NoHttpResponseException;
@@ -40,6 +42,12 @@ import org.apache.http.NoHttpResponseException;
  */
 class RegistryEndpointCaller<T> {
 
+  /**
+   * @see <a
+   *     href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308">https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308</a>
+   */
+  @VisibleForTesting static final int STATUS_CODE_PERMANENT_REDIRECT = 308;
+
   private static final String DEFAULT_PROTOCOL = "https";
 
   /** Maintains the state of a request. This is used to retry requests with different parameters. */
@@ -50,14 +58,16 @@ class RegistryEndpointCaller<T> {
 
     /**
      * @param authorization authentication credentials
-     * @param url the endpoint URL to call, or {@code null} to use default from {@code
-     *     registryEndpointProvider}
+     * @param url the endpoint URL to call
      */
     private RequestState(@Nullable Authorization authorization, URL url) {
       this.authorization = authorization;
       this.url = url;
     }
   }
+
+  /** Makes a {@link Connection} to the specified {@link URL}. */
+  private final Function<URL, Connection> connectionFactory;
 
   private final RequestState initialRequestState;
   private final String userAgent;
@@ -81,6 +91,24 @@ class RegistryEndpointCaller<T> {
       @Nullable Authorization authorization,
       RegistryEndpointProperties registryEndpointProperties)
       throws MalformedURLException {
+    this(
+        userAgent,
+        apiRouteBase,
+        registryEndpointProvider,
+        authorization,
+        registryEndpointProperties,
+        Connection::new);
+  }
+
+  @VisibleForTesting
+  RegistryEndpointCaller(
+      String userAgent,
+      String apiRouteBase,
+      RegistryEndpointProvider<T> registryEndpointProvider,
+      @Nullable Authorization authorization,
+      RegistryEndpointProperties registryEndpointProperties,
+      Function<URL, Connection> connectionFactory)
+      throws MalformedURLException {
     this.initialRequestState =
         new RequestState(
             authorization,
@@ -88,6 +116,7 @@ class RegistryEndpointCaller<T> {
     this.userAgent = userAgent;
     this.registryEndpointProvider = registryEndpointProvider;
     this.registryEndpointProperties = registryEndpointProperties;
+    this.connectionFactory = connectionFactory;
   }
 
   /**
@@ -102,10 +131,18 @@ class RegistryEndpointCaller<T> {
     return call(initialRequestState);
   }
 
-  /** Calls the registry endpoint with a certain {@link RequestState}. */
+  /**
+   * Calls the registry endpoint with a certain {@link RequestState}.
+   *
+   * @param requestState the state of the request - determines how to make the request and how to
+   *     process the response
+   * @return an object representing the response, or {@code null}
+   * @throws IOException for most I/O exceptions when making the request
+   * @throws RegistryException for known exceptions when interacting with the registry
+   */
   @Nullable
   private T call(RequestState requestState) throws IOException, RegistryException {
-    try (Connection connection = new Connection(requestState.url)) {
+    try (Connection connection = connectionFactory.apply(requestState.url)) {
       Request request =
           Request.builder()
               .setAuthorization(requestState.authorization)
@@ -148,9 +185,11 @@ class RegistryEndpointCaller<T> {
               httpResponseException);
 
         } else if (httpResponseException.getStatusCode()
-            == HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT) {
+                == HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT
+            || httpResponseException.getStatusCode()
+                == HttpStatusCodes.STATUS_CODE_MOVED_PERMANENTLY
+            || httpResponseException.getStatusCode() == STATUS_CODE_PERMANENT_REDIRECT) {
           // 'Location' header can be relative or absolute.
-          // TODO: Add test after #407 is merged.
           URL redirectLocation =
               new URL(requestState.url, httpResponseException.getHeaders().getLocation());
           // TODO: Use copy-construct builder.

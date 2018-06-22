@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.cache.CachedLayer;
+import com.google.cloud.tools.jib.cache.CachedLayerWithMetadata;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.common.collect.ImmutableList;
@@ -56,9 +57,11 @@ public class BuildImageStepTest {
     testDescriptorDigest =
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-    CachedLayer testCachedLayer =
-        new CachedLayer(
-            Paths.get(""), new BlobDescriptor(testDescriptorDigest), testDescriptorDigest);
+    CachedLayerWithMetadata testCachedLayer =
+        new CachedLayerWithMetadata(
+            new CachedLayer(
+                Paths.get(""), new BlobDescriptor(testDescriptorDigest), testDescriptorDigest),
+            null);
 
     Mockito.when(mockBuildConfiguration.getBuildLogger()).thenReturn(mockBuildLogger);
     Mockito.when(mockBuildConfiguration.getEnvironment()).thenReturn(ImmutableMap.of());
