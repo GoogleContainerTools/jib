@@ -84,7 +84,8 @@ public class DockerContextGenerator {
   @VisibleForTesting
   static String makeExposeItems(List<String> exposedPorts) {
     return String.join(
-        "\n", exposedPorts.stream().map(port -> "EXPOSE " + port).collect(Collectors.toList()));
+        System.getProperty("line.separator"),
+        exposedPorts.stream().map(port -> "EXPOSE " + port).collect(Collectors.toList()));
   }
 
   private final SourceFilesConfiguration sourceFilesConfiguration;
