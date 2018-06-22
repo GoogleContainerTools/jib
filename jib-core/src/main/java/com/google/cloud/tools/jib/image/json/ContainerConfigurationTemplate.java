@@ -122,10 +122,10 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     config.Cmd = cmd;
   }
 
-  public void setContainerExposedPorts(List<Integer> exposedPorts) {
+  public void setContainerExposedPorts(List<String> exposedPorts) {
     SortedMap<String, Map<?, ?>> result = new TreeMap<>();
-    for (Integer port : exposedPorts) {
-      result.put(port.toString(), Collections.emptyMap());
+    for (String port : exposedPorts) {
+      result.put(port, Collections.emptyMap());
     }
     config.ExposedPorts = ImmutableSortedMap.copyOf(result);
   }
@@ -154,13 +154,13 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
   }
 
   @Nullable
-  List<Integer> getContainerExposedPorts() {
+  List<String> getContainerExposedPorts() {
     if (config.ExposedPorts == null) {
       return null;
     }
-    List<Integer> ports = new ArrayList<>();
+    List<String> ports = new ArrayList<>();
     for (Map.Entry<String, Map<?, ?>> entry : config.ExposedPorts.entrySet()) {
-      ports.add(Integer.parseInt(entry.getKey()));
+      ports.add(entry.getKey());
     }
     return ports;
   }

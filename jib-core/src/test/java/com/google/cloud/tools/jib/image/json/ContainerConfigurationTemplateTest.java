@@ -35,14 +35,14 @@ import org.junit.Test;
 /** Tests for {@link ContainerConfigurationTemplate}. */
 public class ContainerConfigurationTemplateTest {
 
-  private List<Integer> exposedPorts;
+  private List<String> exposedPorts;
 
   @Before
   public void setup() {
     exposedPorts = new ArrayList<>();
-    exposedPorts.add(1000);
-    exposedPorts.add(2000);
-    exposedPorts.add(3000);
+    exposedPorts.add("1000");
+    exposedPorts.add("2000/tcp");
+    exposedPorts.add("3000/udp");
   }
 
   @Test

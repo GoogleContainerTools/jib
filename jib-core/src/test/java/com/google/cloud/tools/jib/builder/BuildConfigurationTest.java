@@ -57,8 +57,7 @@ public class BuildConfigurationTest {
     List<String> expectedJavaArguments = Arrays.asList("arg1", "arg2");
     List<String> expectedJvmFlags = Arrays.asList("some", "jvm", "flags");
     Map<String, String> expectedEnvironment = ImmutableMap.of("key", "value");
-    List<String> inputPorts = ImmutableList.of("1000", "2000");
-    ImmutableList<Integer> expectedExposedPorts = ImmutableList.of(1000, 2000);
+    ImmutableList<String> expectedExposedPorts = ImmutableList.of("1000", "2000");
     Class<? extends BuildableManifestTemplate> expectedTargetFormat = OCIManifestTemplate.class;
 
     BuildConfiguration.Builder buildConfigurationBuilder =
@@ -77,7 +76,7 @@ public class BuildConfigurationTest {
             .setJavaArguments(expectedJavaArguments)
             .setJvmFlags(expectedJvmFlags)
             .setEnvironment(expectedEnvironment)
-            .setExposedPorts(inputPorts)
+            .setExposedPorts(expectedExposedPorts)
             .setTargetFormat(OCIManifestTemplate.class);
     BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
 
@@ -187,21 +186,41 @@ public class BuildConfigurationTest {
 
   @Test
   public void testExpandPortList() {
-    List<String> input = Arrays.asList("1000", "2000-2003", "3000-3000");
-    ImmutableList<Integer> expected =
-        new ImmutableList.Builder<Integer>().add(1000, 2000, 2001, 2002, 2003, 3000).build();
+    List<String> goodInputs =
+        Arrays.asList("1000", "2000-2003", "3000-3000", "4000/tcp", "5000/udp", "6000-6002/tcp");
+    ImmutableList<String> expected =
+        new ImmutableList.Builder<String>()
+            .add(
+                "1000",
+                "2000",
+                "2001",
+                "2002",
+                "2003",
+                "3000",
+                "4000/tcp",
+                "5000/udp",
+                "6000/tcp",
+                "6001/tcp",
+                "6002/tcp")
+            .build();
     BuildConfiguration.Builder builder = BuildConfiguration.builder(mockLogger);
-    ImmutableList<Integer> result = builder.expandPortRanges(input);
+    ImmutableList<String> result = builder.expandPortRanges(goodInputs);
     Assert.assertEquals(expected, result);
 
-    try {
-      builder.expandPortRanges(Collections.singletonList("abc"));
-      Assert.fail();
-    } catch (NumberFormatException ex) {
-      Assert.assertEquals(
-          "Invalid port configuration: 'abc'. Make sure the port is a single number or a range of "
-              + "two numbers separated with a '-'.",
-          ex.getMessage());
+    List<String> badInputs = Arrays.asList("abc", "/udp", "1000/abc", "a100/tcp", "20/udpabc");
+    for (String input : badInputs) {
+      try {
+        builder.expandPortRanges(Collections.singletonList(input));
+        Assert.fail();
+      } catch (NumberFormatException ex) {
+        Assert.assertEquals(
+            "Invalid port configuration: '"
+                + input
+                + "'. Make sure the port is a single number or a range of two numbers separated "
+                + "with a '-', with or without protocol specified (e.g. '<portNum>/tcp' or "
+                + "'<portNum>/udp').",
+            ex.getMessage());
+      }
     }
 
     try {

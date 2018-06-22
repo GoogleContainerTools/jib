@@ -190,34 +190,45 @@ public class BuildConfiguration {
     }
 
     /**
-     * Converts a list of port number/range strings to a list of integers
+     * Converts/validates a list of ports with ranges to an expanded form without ranges.
      *
-     * <p>Example: ["1000", "2000-2002"] -> [1000, 2000, 2001, 2002]
+     * <p>Example: ["1000/tcp", "2000-2002/tcp"] -> ["1000/tcp", "2000/tcp", "2001/tcp", "2002/tcp"]
      *
      * @param ports the list of port numbers/ranges
      * @return the ports as a list of integers
      * @throws NumberFormatException if any of the ports are in an invalid format or out of range
      */
     @VisibleForTesting
-    ImmutableList<Integer> expandPortRanges(List<String> ports) throws NumberFormatException {
-      ImmutableList.Builder<Integer> result = new ImmutableList.Builder<>();
+    ImmutableList<String> expandPortRanges(List<String> ports) throws NumberFormatException {
+      ImmutableList.Builder<String> result = new ImmutableList.Builder<>();
 
       for (String port : ports) {
-        // Make sure configuration is a single number or a range
-        if (!port.matches("\\d+") && !port.matches("\\d+-\\d+")) {
+        // Make sure configuration is a single number or a range, with an optional protocol
+        // Examples:
+        //   100
+        //   200-210
+        //   1000/tcp
+        //   2000/udp
+        //   500-600/tcp
+        if (!port.matches("^\\d+(-\\d+)?(\\/tcp|\\/udp)?$")) {
           throw new NumberFormatException(
               "Invalid port configuration: '"
                   + port
                   + "'. Make sure the port is a single number or a range of two numbers separated "
-                  + "with a '-'.");
+                  + "with a '-', with or without protocol specified (e.g. '<portNum>/tcp' or "
+                  + "'<portNum>/udp').");
         }
 
+        // Parse protocol
+        List<String> splitProtocol = Splitter.on("/").splitToList(port);
+        String protocol = splitProtocol.size() > 1 ? "/" + splitProtocol.get(1) : "";
+
         // Parse range (or treat as range of min-min if only single port configuration)
-        List<String> range = Splitter.on('-').splitToList(port);
-        int min = Integer.parseInt(range.get(0));
+        List<String> splitRange = Splitter.on("-").splitToList(splitProtocol.get(0));
+        int min = Integer.parseInt(splitRange.get(0));
         int max = min;
-        if (range.size() > 1) {
-          max = Integer.parseInt(range.get(1));
+        if (splitRange.size() > 1) {
+          max = Integer.parseInt(splitRange.get(1));
         }
 
         // Error if configured as 'max-min' instead of 'min-max'
@@ -234,7 +245,7 @@ public class BuildConfiguration {
 
         // Add all numbers in range to list
         for (int portNum = min; portNum <= max; portNum++) {
-          result.add(portNum);
+          result.add(portNum + protocol);
         }
       }
 
@@ -270,7 +281,7 @@ public class BuildConfiguration {
   private final ImmutableList<String> javaArguments;
   private final ImmutableList<String> jvmFlags;
   private final ImmutableMap<String, String> environmentMap;
-  private final ImmutableList<Integer> exposedPorts;
+  private final ImmutableList<String> exposedPorts;
   private final Class<? extends BuildableManifestTemplate> targetFormat;
 
   /** Instantiate with {@link Builder#build}. */
@@ -286,7 +297,7 @@ public class BuildConfiguration {
       ImmutableList<String> javaArguments,
       ImmutableList<String> jvmFlags,
       ImmutableMap<String, String> environmentMap,
-      ImmutableList<Integer> exposedPorts,
+      ImmutableList<String> exposedPorts,
       Class<? extends BuildableManifestTemplate> targetFormat) {
     this.buildLogger = buildLogger;
     this.baseImageReference = baseImageReference;
@@ -375,7 +386,7 @@ public class BuildConfiguration {
     return environmentMap;
   }
 
-  public ImmutableList<Integer> getExposedPorts() {
+  public ImmutableList<String> getExposedPorts() {
     return exposedPorts;
   }
 

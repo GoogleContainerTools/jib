@@ -56,7 +56,7 @@ public class ImageToJsonTranslatorTest {
 
     testImageBuilder.setJavaArguments(Arrays.asList("arg1", "arg2"));
 
-    testImageBuilder.setExposedPorts(ImmutableList.of(1000, 2000, 3000));
+    testImageBuilder.setExposedPorts(ImmutableList.of("1000", "2000/tcp", "3000/udp"));
 
     DescriptorDigest fakeDigest =
         DescriptorDigest.fromDigest(
