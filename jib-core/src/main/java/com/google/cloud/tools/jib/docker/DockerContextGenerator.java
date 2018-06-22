@@ -52,6 +52,7 @@ public class DockerContextGenerator {
   private List<String> jvmFlags = Collections.emptyList();
   private String mainClass = "";
   private List<String> javaArguments = Collections.emptyList();
+  private List<String> exposedPorts = Collections.emptyList();
 
   public DockerContextGenerator(SourceFilesConfiguration sourceFilesConfiguration) {
     this.sourceFilesConfiguration = sourceFilesConfiguration;
@@ -99,6 +100,17 @@ public class DockerContextGenerator {
    */
   public DockerContextGenerator setJavaArguments(List<String> javaArguments) {
     this.javaArguments = javaArguments;
+    return this;
+  }
+
+  /**
+   * Sets the exposed ports.
+   *
+   * @param exposedPorts the list of port numbers/port ranges to expose
+   * @return this
+   */
+  public DockerContextGenerator setExposedPorts(List<String> exposedPorts) {
+    this.exposedPorts = exposedPorts;
     return this;
   }
 
@@ -159,6 +171,7 @@ public class DockerContextGenerator {
             "@@DEPENDENCIES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getDependenciesPathOnImage())
         .replace("@@RESOURCES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getResourcesPathOnImage())
         .replace("@@CLASSES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getClassesPathOnImage())
+        .replace("@@EXPOSED_PORTS@@", makeExposeItems(exposedPorts))
         .replace(
             "@@ENTRYPOINT@@",
             joinAsJsonArray(
@@ -191,6 +204,21 @@ public class DockerContextGenerator {
     }
     resultString.append(']');
 
+    return resultString.toString();
+  }
+
+  /**
+   * Builds a list of Dockerfile "EXPOSE" items.
+   *
+   * @param exposedPorts the list of ports numbers/ranges to expose
+   * @return a string containing an EXPOSE command for each of the entries
+   */
+  @VisibleForTesting
+  static String makeExposeItems(List<String> exposedPorts) {
+    StringBuilder resultString = new StringBuilder();
+    for (String port : exposedPorts) {
+      resultString.append("EXPOSE ").append(port).append("\n");
+    }
     return resultString.toString();
   }
 }

@@ -4,5 +4,7 @@ COPY libs /app/libs/
 COPY resources /app/resources/
 COPY classes /app/classes/
 
+EXPOSE 1000
+EXPOSE 2000-2010
 ENTRYPOINT ["java","-flag","another\"Flag","-cp","/app/libs/*:/app/resources/:/app/classes/","SomeMainClass"]
 CMD ["arg1","arg2"]

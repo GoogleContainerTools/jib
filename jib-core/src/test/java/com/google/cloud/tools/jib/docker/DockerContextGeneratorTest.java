@@ -113,7 +113,7 @@ public class DockerContextGeneratorTest {
   }
 
   @Test
-  public void testMakeDockerList() {
+  public void testJoinAsJsonArray() {
     Assert.assertEquals(
         "[\"java\",\"-cp\",\"/app/libs/*:/app/resources/:/app/classes/\",\"\"]",
         DockerContextGenerator.joinAsJsonArray(
@@ -129,11 +129,19 @@ public class DockerContextGeneratorTest {
   }
 
   @Test
+  public void testMakeExposeItems() {
+    Assert.assertEquals(
+        "EXPOSE 1000\nEXPOSE 2000-2010\n",
+        DockerContextGenerator.makeExposeItems(ImmutableList.of("1000", "2000-2010")));
+  }
+
+  @Test
   public void testMakeDockerfile() throws IOException, URISyntaxException {
     String expectedBaseImage = "somebaseimage";
     List<String> expectedJvmFlags = Arrays.asList("-flag", "another\"Flag");
     String expectedMainClass = "SomeMainClass";
     List<String> expectedJavaArguments = Arrays.asList("arg1", "arg2");
+    List<String> exposedPorts = Arrays.asList("1000", "2000-2010");
 
     String dockerfile =
         new DockerContextGenerator(mockSourceFilesConfiguration)
@@ -141,6 +149,7 @@ public class DockerContextGeneratorTest {
             .setJvmFlags(expectedJvmFlags)
             .setMainClass(expectedMainClass)
             .setJavaArguments(expectedJavaArguments)
+            .setExposedPorts(exposedPorts)
             .makeDockerfile();
 
     Path sampleDockerfile = Paths.get(Resources.getResource("sampleDockerfile").toURI());
