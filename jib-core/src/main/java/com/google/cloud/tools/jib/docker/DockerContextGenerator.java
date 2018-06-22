@@ -31,6 +31,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -82,16 +83,8 @@ public class DockerContextGenerator {
    */
   @VisibleForTesting
   static String makeExposeItems(List<String> exposedPorts) {
-    StringBuilder resultString = new StringBuilder();
-    boolean first = true;
-    for (String port : exposedPorts) {
-      if (!first) {
-        resultString.append('\n');
-      }
-      resultString.append("EXPOSE ").append(port);
-      first = false;
-    }
-    return resultString.toString();
+    return String.join(
+        "\n", exposedPorts.stream().map(port -> "EXPOSE " + port).collect(Collectors.toList()));
   }
 
   private final SourceFilesConfiguration sourceFilesConfiguration;

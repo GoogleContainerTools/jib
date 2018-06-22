@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
@@ -37,6 +38,13 @@ import javax.lang.model.SourceVersion;
 public class BuildConfiguration {
 
   public static class Builder {
+
+    /**
+     * Pattern used for parsing information out of exposed port configurations.
+     *
+     * <p>Examples: 100, 200-210, 1000/tcp, 2000/udp, 500-600/tcp
+     */
+    private static final Pattern portPattern = Pattern.compile("(\\d+)(?:-(\\d+))?(/tcp|/udp)?");
 
     // All the parameters below are set to their default values.
     @Nullable private ImageReference baseImageReference;
@@ -192,7 +200,10 @@ public class BuildConfiguration {
     }
 
     /**
-     * Converts/validates a list of ports with ranges to an expanded form without ranges.
+
+     * TODO: Move this to a class in frontend
+     *
+     * <p>Converts/validates a list of ports with ranges to an expanded form without ranges.
      *
      * <p>Example: ["1000/tcp", "2000-2002/tcp"] -> ["1000/tcp", "2000/tcp", "2001/tcp", "2002/tcp"]
      *
@@ -203,16 +214,8 @@ public class BuildConfiguration {
     @VisibleForTesting
     ImmutableList<String> expandPortRanges(List<String> ports) throws NumberFormatException {
       ImmutableList.Builder<String> result = new ImmutableList.Builder<>();
-      Pattern portPattern = Pattern.compile("(\\d+)(-\\d+|)(\\/tcp|\\/udp|)");
 
       for (String port : ports) {
-        // Make sure configuration is a single number or a range, with an optional protocol
-        // Examples:
-        //   100
-        //   200-210
-        //   1000/tcp
-        //   2000/udp
-        //   500-600/tcp
         Matcher matcher = portPattern.matcher(port);
 
         if (!matcher.matches()) {
@@ -227,9 +230,8 @@ public class BuildConfiguration {
         // Parse protocol
         int min = Integer.parseInt(matcher.group(1));
         int max = min;
-        if (!matcher.group(2).equals("")) {
-          // Skip over the hyphen
-          max = Integer.parseInt(matcher.group(2).substring(1));
+        if (!Strings.isNullOrEmpty(matcher.group(2))) {
+          max = Integer.parseInt(matcher.group(2));
         }
         String protocol = matcher.group(3);
 
@@ -248,7 +250,7 @@ public class BuildConfiguration {
         // Add all numbers in range to list
         for (int portNum = min; portNum <= max; portNum++) {
           // TODO: Use a class w/ port number and protocol instead of a string
-          result.add(portNum + protocol);
+          result.add(portNum + (protocol == null ? "" : protocol));
         }
       }
 

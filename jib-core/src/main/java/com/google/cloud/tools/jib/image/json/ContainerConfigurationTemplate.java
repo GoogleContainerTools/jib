@@ -128,6 +128,7 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
   }
 
   public void setContainerExposedPorts(List<String> exposedPorts) {
+    // TODO: Do this conversion somewhere else
     ImmutableSortedMap.Builder<String, Map<?, ?>> result =
         new ImmutableSortedMap.Builder<>(String::compareTo);
     for (String port : exposedPorts) {
@@ -161,6 +162,7 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
 
   @Nullable
   ImmutableList<String> getContainerExposedPorts() {
+    // TODO: Do this conversion somewhere else
     if (config.ExposedPorts == null) {
       return null;
     }
