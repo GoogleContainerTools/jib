@@ -65,6 +65,7 @@ public class BuildImageStepTest {
     Mockito.when(mockBuildConfiguration.getBuildLogger()).thenReturn(mockBuildLogger);
     Mockito.when(mockBuildConfiguration.getEnvironment()).thenReturn(ImmutableMap.of());
     Mockito.when(mockBuildConfiguration.getJavaArguments()).thenReturn(ImmutableList.of());
+    Mockito.when(mockBuildConfiguration.getExposedPorts()).thenReturn(ImmutableList.of());
 
     Mockito.when(mockPullAndCacheBaseImageLayersStep.getFuture())
         .thenReturn(

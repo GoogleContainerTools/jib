@@ -51,6 +51,7 @@ public class ImageTest {
             .setEnvironmentVariable("VARIABLE", "VALUE")
             .setEntrypoint(Arrays.asList("some", "command"))
             .setJavaArguments(Arrays.asList("arg1", "arg2"))
+            .setExposedPorts(ImmutableList.of("1000", "2000"))
             .addLayer(mockLayer)
             .build();
 
@@ -59,5 +60,6 @@ public class ImageTest {
     Assert.assertEquals(expectedEnvironment, image.getEnvironment());
     Assert.assertEquals(Arrays.asList("some", "command"), image.getEntrypoint());
     Assert.assertEquals(Arrays.asList("arg1", "arg2"), image.getJavaArguments());
+    Assert.assertEquals(ImmutableList.of("1000", "2000"), image.getExposedPorts());
   }
 }
