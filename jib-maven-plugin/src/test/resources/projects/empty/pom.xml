@@ -32,10 +32,10 @@
             <image>gcr.io/jib-integration-testing/emptyimage:maven</image>
           </to>
           <container>
-            <exposedPorts>
-              <exposedPort>1000</exposedPort>
-              <exposedPort>2000-2003</exposedPort>
-            </exposedPorts>
+            <ports>
+              <port>1000</port>
+              <port>2000-2003</port>
+            </ports>
           </container>
           <!-- Does not have tests use user-level cache for base image layers. -->
           <useOnlyProjectCache>true</useOnlyProjectCache>
