@@ -200,7 +200,6 @@ public class BuildConfiguration {
     }
 
     /**
-
      * TODO: Move this to a class in frontend
      *
      * <p>Converts/validates a list of ports with ranges to an expanded form without ranges.
