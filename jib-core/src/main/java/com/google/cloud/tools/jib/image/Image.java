@@ -98,8 +98,8 @@ public class Image<T extends Layer> {
      *     appear in the configuration json (e.g. "portNum/tcp")
      * @return this
      */
-    public Builder<T> setExposedPorts(List<String> exposedPorts) {
-      this.exposedPorts = ImmutableList.copyOf(exposedPorts);
+    public Builder<T> setExposedPorts(ImmutableList<String> exposedPorts) {
+      this.exposedPorts = exposedPorts;
       return this;
     }
 
@@ -121,7 +121,7 @@ public class Image<T extends Layer> {
           environmentBuilder.build(),
           ImmutableList.copyOf(entrypoint),
           ImmutableList.copyOf(javaArguments),
-          ImmutableList.copyOf(exposedPorts));
+          exposedPorts);
     }
   }
 

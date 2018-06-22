@@ -27,7 +27,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.DigestException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -41,8 +43,8 @@ public class ContainerConfigurationTemplateTest {
   public void setup() {
     exposedPorts = new ArrayList<>();
     exposedPorts.add("1000");
-    exposedPorts.add("2000");
-    exposedPorts.add("3000");
+    exposedPorts.add("2000/tcp");
+    exposedPorts.add("3000/udp");
   }
 
   @Test
