@@ -210,6 +210,7 @@ Property | Type | Default | Description
 `jvmFlags` | list | *None* | Additional flags to pass into the JVM when running your application.
 `mainClass` | string | *Inferred\** | The main class to launch the application from.
 `args` | list | *None* | Default main method arguments to run your application with.
+`ports` | `List<String>` | *None* | Ports that the container exposes at runtime (similar to Docker's [EXPOSE](https://docs.docker.com/engine/reference/builder/#expose) instruction).
 `format` | string | `Docker` | Use `OCI` to build an [OCI container image](https://www.opencontainers.org/).
 
 ### Example
@@ -218,6 +219,7 @@ In this configuration, the image is:
 * Built from a base of `openjdk:alpine` (pulled from Docker Hub)
 * Pushed to `localhost:5000/my-image:built-with-jib`
 * Run by calling `java -Xms512m -Xdebug -Xmy:flag=jib-rules -cp app/libs/*:app/resources:app/classes mypackage.MyApp some args`
+* Exposes port 1000 for tcp (default), and ports 2000, 2001, 2002, and 2003 for udp
 * Built as OCI format
 
 ```xml
@@ -240,6 +242,10 @@ In this configuration, the image is:
       <arg>some</arg>
       <arg>args</arg>
     </args>
+    <ports>
+      <port>1000</port>
+      <port>2000-2003/udp</port>
+    </ports>
     <format>OCI</format>
   </container>
 </configuration>

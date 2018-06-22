@@ -178,6 +178,7 @@ Property | Type | Default | Description
 `jvmFlags` | `List<String>` | *None* | Additional flags to pass into the JVM when running your application.
 `mainClass` | `String` | *Inferred\** | The main class to launch your application from.
 `args` | `List<String>` | *None* | Default main method arguments to run your application with.
+`ports` | `List<String>` | *None* | Ports that the container exposes at runtime (similar to Docker's [EXPOSE](https://docs.docker.com/engine/reference/builder/#expose) instruction).
 `format` | `String` | `Docker` | Use `OCI` to build an [OCI container image](https://www.opencontainers.org/).
 
 ### Example
@@ -186,6 +187,7 @@ In this configuration, the image is:
 * Built from a base of `openjdk:alpine` (pulled from Docker Hub)
 * Pushed to `localhost:5000/my-image:built-with-jib`
 * Run by calling `java -Xms512m -Xdebug -Xmy:flag=jib-rules -cp app/libs/*:app/resources:app/classes mypackage.MyApp some args`
+* Exposes port 1000 for tcp (default), and ports 2000, 2001, 2002, and 2003 for udp
 * Built as OCI format
 
 ```groovy
@@ -201,6 +203,7 @@ jib {
     jvmFlags = ['-Xms512m', '-Xdebug', '-Xmy:flag=jib-rules']
     mainClass = 'mypackage.MyApp'
     args = ['some', 'args']
+    ports = ['1000', '2000-2003/udp']
     format = 'OCI'
   }
 }
