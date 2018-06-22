@@ -39,8 +39,17 @@ public class BuildConfiguration {
 
   public static class Builder {
 
-    /** Pattern used for parsing information out of exposed port configurations. */
-    private static Pattern portPattern = Pattern.compile("(\\d+)(?:-(\\d+))?(/tcp|/udp)?");
+    /**
+     * Pattern used for parsing information out of exposed port configurations.
+     *
+     * Examples:
+     *   100
+     *   200-210
+     *   1000/tcp
+     *   2000/udp
+     *   500-600/tcp
+     */
+    private static final Pattern portPattern = Pattern.compile("(\\d+)(?:-(\\d+))?(/tcp|/udp)?");
 
     // All the parameters below are set to their default values.
     @Nullable private ImageReference baseImageReference;
@@ -196,6 +205,8 @@ public class BuildConfiguration {
     }
 
     /**
+     * TODO: Move this to a class in frontend
+     *
      * Converts/validates a list of ports with ranges to an expanded form without ranges.
      *
      * <p>Example: ["1000/tcp", "2000-2002/tcp"] -> ["1000/tcp", "2000/tcp", "2001/tcp", "2002/tcp"]
@@ -209,13 +220,6 @@ public class BuildConfiguration {
       ImmutableList.Builder<String> result = new ImmutableList.Builder<>();
 
       for (String port : ports) {
-        // Make sure configuration is a single number or a range, with an optional protocol
-        // Examples:
-        //   100
-        //   200-210
-        //   1000/tcp
-        //   2000/udp
-        //   500-600/tcp
         Matcher matcher = portPattern.matcher(port);
 
         if (!matcher.matches()) {
@@ -231,7 +235,6 @@ public class BuildConfiguration {
         int min = Integer.parseInt(matcher.group(1));
         int max = min;
         if (!Strings.isNullOrEmpty(matcher.group(2))) {
-          // Skip over the hyphen
           max = Integer.parseInt(matcher.group(2));
         }
         String protocol = matcher.group(3);
