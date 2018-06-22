@@ -20,8 +20,13 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSortedMap;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.SortedMap;
 import javax.annotation.Nullable;
 
 /**
@@ -38,6 +43,7 @@ import javax.annotation.Nullable;
  *     "Env": ["/usr/bin/java"],
  *     "Entrypoint": ["PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"],
  *     "Cmd": ["arg1", "arg2"]
+ *     "ExposedPorts": { "6000/tcp":{}, "8000/tcp":{}, "9000/tcp":{} }
  *   },
  *   "rootfs": {
  *     "diff_ids": [
@@ -88,6 +94,9 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
 
     /** Arguments to pass into main. */
     @Nullable private List<String> Cmd;
+
+    /** Network ports the container exposes. */
+    @Nullable private SortedMap<String, Map<?, ?>> ExposedPorts;
   }
 
   /**
@@ -118,6 +127,16 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     config.Cmd = cmd;
   }
 
+  public void setContainerExposedPorts(List<String> exposedPorts) {
+    // TODO: Do this conversion somewhere else
+    ImmutableSortedMap.Builder<String, Map<?, ?>> result =
+        new ImmutableSortedMap.Builder<>(String::compareTo);
+    for (String port : exposedPorts) {
+      result.put(port, Collections.emptyMap());
+    }
+    config.ExposedPorts = result.build();
+  }
+
   public void addLayerDiffId(DescriptorDigest diffId) {
     rootfs.diff_ids.add(diffId);
   }
@@ -139,6 +158,19 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
   @Nullable
   List<String> getContainerCmd() {
     return config.Cmd;
+  }
+
+  @Nullable
+  ImmutableList<String> getContainerExposedPorts() {
+    // TODO: Do this conversion somewhere else
+    if (config.ExposedPorts == null) {
+      return null;
+    }
+    ImmutableList.Builder<String> ports = new ImmutableList.Builder<>();
+    for (Map.Entry<String, Map<?, ?>> entry : config.ExposedPorts.entrySet()) {
+      ports.add(entry.getKey());
+    }
+    return ports.build();
   }
 
   @VisibleForTesting

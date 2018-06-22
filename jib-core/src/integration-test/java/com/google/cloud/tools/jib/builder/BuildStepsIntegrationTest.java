@@ -21,7 +21,9 @@ import com.google.cloud.tools.jib.cache.Caches;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collections;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -46,6 +48,7 @@ public class BuildStepsIntegrationTest {
             .setTargetImage(ImageReference.of("localhost:5000", "testimage", "testtag"))
             .setMainClass("HelloWorld")
             .setJavaArguments(Collections.singletonList("An argument."))
+            .setExposedPorts(Arrays.asList("1000", "2000-2002/tcp", "3000/udp"))
             .build();
 
     Path cacheDirectory = temporaryCacheDirectory.newFolder().toPath();
@@ -64,6 +67,15 @@ public class BuildStepsIntegrationTest {
 
     String imageReference = "localhost:5000/testimage:testtag";
     new Command("docker", "pull", imageReference).run();
+    Assert.assertThat(
+        new Command("docker", "inspect", imageReference).run(),
+        CoreMatchers.containsString(
+            "            \"ExposedPorts\": {\n"
+                + "                \"1000\": {},\n"
+                + "                \"2000/tcp\": {},\n"
+                + "                \"2001/tcp\": {},\n"
+                + "                \"2002/tcp\": {},\n"
+                + "                \"3000/udp\": {}"));
     Assert.assertEquals(
         "Hello, world. An argument.\n", new Command("docker", "run", imageReference).run());
   }
@@ -77,6 +89,7 @@ public class BuildStepsIntegrationTest {
             .setTargetImage(ImageReference.of(null, "testdocker", null))
             .setMainClass("HelloWorld")
             .setJavaArguments(Collections.singletonList("An argument."))
+            .setExposedPorts(Arrays.asList("1000", "2000-2002/tcp", "3000/udp"))
             .build();
 
     Path cacheDirectory = temporaryCacheDirectory.newFolder().toPath();
@@ -87,6 +100,15 @@ public class BuildStepsIntegrationTest {
             Caches.newInitializer(cacheDirectory).setBaseCacheDirectory(cacheDirectory));
 
     buildDockerSteps.run();
+    Assert.assertThat(
+        new Command("docker", "inspect", "testdocker").run(),
+        CoreMatchers.containsString(
+            "            \"ExposedPorts\": {\n"
+                + "                \"1000\": {},\n"
+                + "                \"2000/tcp\": {},\n"
+                + "                \"2001/tcp\": {},\n"
+                + "                \"2002/tcp\": {},\n"
+                + "                \"3000/udp\": {}"));
     Assert.assertEquals(
         "Hello, world. An argument.\n", new Command("docker", "run", "testdocker").run());
   }

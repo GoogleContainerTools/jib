@@ -20,13 +20,17 @@ import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import javax.lang.model.SourceVersion;
 
@@ -34,6 +38,13 @@ import javax.lang.model.SourceVersion;
 public class BuildConfiguration {
 
   public static class Builder {
+
+    /**
+     * Pattern used for parsing information out of exposed port configurations.
+     *
+     * <p>Examples: 100, 200-210, 1000/tcp, 2000/udp, 500-600/tcp
+     */
+    private static final Pattern portPattern = Pattern.compile("(\\d+)(?:-(\\d+))?(/tcp|/udp)?");
 
     // All the parameters below are set to their default values.
     @Nullable private ImageReference baseImageReference;
@@ -46,6 +57,7 @@ public class BuildConfiguration {
     private List<String> javaArguments = new ArrayList<>();
     private List<String> jvmFlags = new ArrayList<>();
     private Map<String, String> environmentMap = new HashMap<>();
+    private List<String> exposedPorts = new ArrayList<>();
     private Class<? extends BuildableManifestTemplate> targetFormat = V22ManifestTemplate.class;
 
     private BuildLogger buildLogger;
@@ -112,6 +124,13 @@ public class BuildConfiguration {
       return this;
     }
 
+    public Builder setExposedPorts(@Nullable List<String> exposedPorts) {
+      if (exposedPorts != null) {
+        this.exposedPorts = exposedPorts;
+      }
+      return this;
+    }
+
     public Builder setTargetFormat(Class<? extends BuildableManifestTemplate> targetFormat) {
       this.targetFormat = targetFormat;
       return this;
@@ -154,6 +173,7 @@ public class BuildConfiguration {
               ImmutableList.copyOf(javaArguments),
               ImmutableList.copyOf(jvmFlags),
               ImmutableMap.copyOf(environmentMap),
+              expandPortRanges(exposedPorts),
               targetFormat);
 
         case 1:
@@ -178,6 +198,63 @@ public class BuildConfiguration {
           throw new IllegalStateException(errorMessage.toString());
       }
     }
+
+    /**
+     * TODO: Move this to a class in frontend
+     *
+     * <p>Converts/validates a list of ports with ranges to an expanded form without ranges.
+     *
+     * <p>Example: ["1000/tcp", "2000-2002/tcp"] -> ["1000/tcp", "2000/tcp", "2001/tcp", "2002/tcp"]
+     *
+     * @param ports the list of port numbers/ranges
+     * @return the ports as a list of integers
+     * @throws NumberFormatException if any of the ports are in an invalid format or out of range
+     */
+    @VisibleForTesting
+    ImmutableList<String> expandPortRanges(List<String> ports) throws NumberFormatException {
+      ImmutableList.Builder<String> result = new ImmutableList.Builder<>();
+
+      for (String port : ports) {
+        Matcher matcher = portPattern.matcher(port);
+
+        if (!matcher.matches()) {
+          throw new NumberFormatException(
+              "Invalid port configuration: '"
+                  + port
+                  + "'. Make sure the port is a single number or a range of two numbers separated "
+                  + "with a '-', with or without protocol specified (e.g. '<portNum>/tcp' or "
+                  + "'<portNum>/udp').");
+        }
+
+        // Parse protocol
+        int min = Integer.parseInt(matcher.group(1));
+        int max = min;
+        if (!Strings.isNullOrEmpty(matcher.group(2))) {
+          max = Integer.parseInt(matcher.group(2));
+        }
+        String protocol = matcher.group(3);
+
+        // Error if configured as 'max-min' instead of 'min-max'
+        if (min > max) {
+          throw new NumberFormatException(
+              "Invalid port range '" + port + "'; smaller number must come first.");
+        }
+
+        // Warn for possibly invalid port numbers
+        if (min < 1 || max > 65535) {
+          // TODO: Add details/use HelpfulSuggestions for these warnings
+          buildLogger.warn("Port number '" + port + "' is out of usual range (1-65535).");
+        }
+
+        // Add all numbers in range to list
+        for (int portNum = min; portNum <= max; portNum++) {
+          // TODO: Use a class w/ port number and protocol instead of a string
+          result.add(portNum + (protocol == null ? "" : protocol));
+        }
+      }
+
+      return result.build();
+    }
   }
 
   /**
@@ -193,6 +270,10 @@ public class BuildConfiguration {
     return true;
   }
 
+  public static Builder builder(BuildLogger buildLogger) {
+    return new Builder(buildLogger);
+  }
+
   private final BuildLogger buildLogger;
   private final ImageReference baseImageReference;
   @Nullable private final String baseImageCredentialHelperName;
@@ -204,11 +285,8 @@ public class BuildConfiguration {
   private final ImmutableList<String> javaArguments;
   private final ImmutableList<String> jvmFlags;
   private final ImmutableMap<String, String> environmentMap;
+  private final ImmutableList<String> exposedPorts;
   private final Class<? extends BuildableManifestTemplate> targetFormat;
-
-  public static Builder builder(BuildLogger buildLogger) {
-    return new Builder(buildLogger);
-  }
 
   /** Instantiate with {@link Builder#build}. */
   private BuildConfiguration(
@@ -223,6 +301,7 @@ public class BuildConfiguration {
       ImmutableList<String> javaArguments,
       ImmutableList<String> jvmFlags,
       ImmutableMap<String, String> environmentMap,
+      ImmutableList<String> exposedPorts,
       Class<? extends BuildableManifestTemplate> targetFormat) {
     this.buildLogger = buildLogger;
     this.baseImageReference = baseImageReference;
@@ -235,6 +314,7 @@ public class BuildConfiguration {
     this.javaArguments = javaArguments;
     this.jvmFlags = jvmFlags;
     this.environmentMap = environmentMap;
+    this.exposedPorts = exposedPorts;
     this.targetFormat = targetFormat;
   }
 
@@ -308,6 +388,10 @@ public class BuildConfiguration {
 
   public ImmutableMap<String, String> getEnvironment() {
     return environmentMap;
+  }
+
+  public ImmutableList<String> getExposedPorts() {
+    return exposedPorts;
   }
 
   public Class<? extends BuildableManifestTemplate> getTargetFormat() {
