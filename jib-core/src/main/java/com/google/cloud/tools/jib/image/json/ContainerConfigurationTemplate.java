@@ -18,12 +18,11 @@ package com.google.cloud.tools.jib.image.json;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
-import com.google.cloud.tools.jib.json.EmptyStruct;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.SortedMap;
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableSortedMap;
+import java.util.*;
 import javax.annotation.Nullable;
 
 /**
@@ -92,8 +91,8 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     /** Arguments to pass into main. */
     @Nullable private List<String> Cmd;
 
-    /** Network ports the container listens on. */
-    @Nullable private SortedMap<String, EmptyStruct> ExposedPorts;
+    /** Network ports the container exposes. */
+    @Nullable private SortedMap<String, Map<?, ?>> ExposedPorts;
   }
 
   /**
@@ -124,8 +123,12 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     config.Cmd = cmd;
   }
 
-  public void setContainerExposedPorts(SortedMap<String, EmptyStruct> exposedPorts) {
-    config.ExposedPorts = exposedPorts;
+  public void setContainerExposedPorts(List<String> exposedPorts) {
+    SortedMap<String, Map<?, ?>> result = new TreeMap<>();
+    for (String port : exposedPorts) {
+      result.put(port + "/tcp", Collections.emptyMap());
+    }
+    config.ExposedPorts = ImmutableSortedMap.copyOf(result);
   }
 
   public void addLayerDiffId(DescriptorDigest diffId) {
@@ -152,8 +155,16 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
   }
 
   @Nullable
-  SortedMap<String, EmptyStruct> getContainerExposedPorts() {
-    return config.ExposedPorts;
+  List<String> getContainerExposedPorts() {
+    if (config.ExposedPorts == null) {
+      return null;
+    }
+    List<String> ports = new ArrayList<>();
+    for (Map.Entry<String, Map<?, ?>> entry : config.ExposedPorts.entrySet()) {
+      // Remove the "/tcp"
+      ports.add(Splitter.on('/').splitToList(entry.getKey()).get(0));
+    }
+    return ports;
   }
 
   @VisibleForTesting

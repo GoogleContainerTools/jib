@@ -22,9 +22,7 @@ import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
-import com.google.cloud.tools.jib.json.EmptyStruct;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
-import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Resources;
 import java.io.ByteArrayOutputStream;
@@ -57,14 +55,7 @@ public class ImageToJsonTranslatorTest {
 
     testImageBuilder.setJavaArguments(Arrays.asList("arg1", "arg2"));
 
-    testImageBuilder.setExposedPorts(
-        ImmutableSortedMap.of(
-            "1000/tcp",
-            EmptyStruct.get(),
-            "2000/tcp",
-            EmptyStruct.get(),
-            "3000/tcp",
-            EmptyStruct.get()));
+    testImageBuilder.setExposedPorts(Arrays.asList("1000", "2000", "3000"));
 
     DescriptorDigest fakeDigest =
         DescriptorDigest.fromDigest(

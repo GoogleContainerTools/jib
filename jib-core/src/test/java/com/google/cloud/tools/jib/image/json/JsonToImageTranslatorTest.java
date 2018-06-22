@@ -22,9 +22,7 @@ import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerCountMismatchException;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
-import com.google.cloud.tools.jib.json.EmptyStruct;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
-import com.google.common.collect.ImmutableSortedMap;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -107,14 +105,6 @@ public class JsonToImageTranslatorTest {
         layers.get(0).getDiffId());
     Assert.assertEquals(Arrays.asList("some", "entrypoint", "command"), image.getEntrypoint());
     Assert.assertEquals(Arrays.asList("VAR1=VAL1", "VAR2=VAL2"), image.getEnvironment());
-    Assert.assertEquals(
-        ImmutableSortedMap.of(
-            "1000/tcp",
-            EmptyStruct.get(),
-            "2000/tcp",
-            EmptyStruct.get(),
-            "3000/tcp",
-            EmptyStruct.get()),
-        image.getExposedPorts());
+    Assert.assertEquals(Arrays.asList("1000", "2000", "3000"), image.getExposedPorts());
   }
 }

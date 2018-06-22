@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.image.json;
 
 import com.google.cloud.tools.jib.image.DescriptorDigest;
-import com.google.cloud.tools.jib.json.EmptyStruct;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.io.Resources;
 import java.io.ByteArrayOutputStream;
@@ -28,9 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.DigestException;
-import java.util.Arrays;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.*;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -38,14 +35,14 @@ import org.junit.Test;
 /** Tests for {@link ContainerConfigurationTemplate}. */
 public class ContainerConfigurationTemplateTest {
 
-  private SortedMap<String, EmptyStruct> exposedPorts;
+  private List<String> exposedPorts;
 
   @Before
   public void setup() {
-    exposedPorts = new TreeMap<>();
-    exposedPorts.put("1000/tcp", EmptyStruct.get());
-    exposedPorts.put("2000/tcp", EmptyStruct.get());
-    exposedPorts.put("3000/tcp", EmptyStruct.get());
+    exposedPorts = new ArrayList<>();
+    exposedPorts.add("1000");
+    exposedPorts.add("2000");
+    exposedPorts.add("3000");
   }
 
   @Test

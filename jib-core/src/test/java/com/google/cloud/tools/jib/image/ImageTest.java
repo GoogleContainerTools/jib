@@ -17,9 +17,7 @@
 package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
-import com.google.cloud.tools.jib.json.EmptyStruct;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSortedMap;
 import java.util.Arrays;
 import org.junit.Assert;
 import org.junit.Before;
@@ -53,8 +51,7 @@ public class ImageTest {
             .setEnvironmentVariable("VARIABLE", "VALUE")
             .setEntrypoint(Arrays.asList("some", "command"))
             .setJavaArguments(Arrays.asList("arg1", "arg2"))
-            .setExposedPorts(
-                ImmutableSortedMap.of("port1", EmptyStruct.get(), "port2", EmptyStruct.get()))
+            .setExposedPorts(Arrays.asList("port1", "port2"))
             .addLayer(mockLayer)
             .build();
 
@@ -63,8 +60,6 @@ public class ImageTest {
     Assert.assertEquals(expectedEnvironment, image.getEnvironment());
     Assert.assertEquals(Arrays.asList("some", "command"), image.getEntrypoint());
     Assert.assertEquals(Arrays.asList("arg1", "arg2"), image.getJavaArguments());
-    Assert.assertEquals(
-        ImmutableSortedMap.of("port1", EmptyStruct.get(), "port2", EmptyStruct.get()),
-        image.getExposedPorts());
+    Assert.assertEquals(Arrays.asList("port1", "port2"), image.getExposedPorts());
   }
 }

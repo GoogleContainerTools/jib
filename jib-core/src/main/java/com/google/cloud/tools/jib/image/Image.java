@@ -16,9 +16,7 @@
 
 package com.google.cloud.tools.jib.image;
 
-import com.google.cloud.tools.jib.json.EmptyStruct;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSortedMap;
 import java.util.List;
 import java.util.Map;
 
@@ -33,7 +31,7 @@ public class Image<T extends Layer> {
 
     private ImmutableList<String> entrypoint = ImmutableList.of();
     private ImmutableList<String> javaArguments = ImmutableList.of();
-    private ImmutableSortedMap<String, EmptyStruct> exposedPorts = ImmutableSortedMap.of();
+    private ImmutableList<String> exposedPorts = ImmutableList.of();
 
     /**
      * Sets the environment with a map from environment variable names to values.
@@ -100,8 +98,8 @@ public class Image<T extends Layer> {
      *     appear in the configuration json (e.g. "portNum/tcp")
      * @return this
      */
-    public Builder<T> setExposedPorts(Map<String, EmptyStruct> exposedPorts) {
-      this.exposedPorts = ImmutableSortedMap.copyOf(exposedPorts);
+    public Builder<T> setExposedPorts(List<String> exposedPorts) {
+      this.exposedPorts = ImmutableList.copyOf(exposedPorts);
       return this;
     }
 
@@ -123,7 +121,7 @@ public class Image<T extends Layer> {
           environmentBuilder.build(),
           ImmutableList.copyOf(entrypoint),
           ImmutableList.copyOf(javaArguments),
-          ImmutableSortedMap.copyOf(exposedPorts));
+          ImmutableList.copyOf(exposedPorts));
     }
   }
 
@@ -144,14 +142,14 @@ public class Image<T extends Layer> {
   private final ImmutableList<String> javaArguments;
 
   /** Ports that the container listens on. */
-  private final ImmutableSortedMap<String, EmptyStruct> exposedPorts;
+  private final ImmutableList<String> exposedPorts;
 
   private Image(
       ImageLayers<T> layers,
       ImmutableList<String> environment,
       ImmutableList<String> entrypoint,
       ImmutableList<String> javaArguments,
-      ImmutableSortedMap<String, EmptyStruct> exposedPorts) {
+      ImmutableList<String> exposedPorts) {
     this.layers = layers;
     this.environmentBuilder = environment;
     this.entrypoint = entrypoint;
@@ -171,7 +169,7 @@ public class Image<T extends Layer> {
     return javaArguments;
   }
 
-  public ImmutableSortedMap<String, EmptyStruct> getExposedPorts() {
+  public ImmutableList<String> getExposedPorts() {
     return exposedPorts;
   }
 
