@@ -24,10 +24,12 @@ import com.google.common.base.Preconditions;
 import com.google.common.io.MoreFiles;
 import com.google.common.io.Resources;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -160,8 +162,9 @@ public class DockerContextGenerator {
    *
    * @param targetDirectory the directory to generate the Docker context in.
    * @throws IOException if the export fails.
+   * @throws URISyntaxException if {@code DockerfileTemplate} path cannot be resolved.
    */
-  public void generate(Path targetDirectory) throws IOException {
+  public void generate(Path targetDirectory) throws IOException, URISyntaxException {
     Preconditions.checkNotNull(baseImage);
 
     // Deletes the targetDir if it exists.
@@ -189,11 +192,8 @@ public class DockerContextGenerator {
     FileOperations.copy(sourceFilesConfiguration.getClassesFiles(), classesDir);
 
     // Creates the Dockerfile.
-    System.out.println(
-        "Length before write: " + makeDockerfile().getBytes(StandardCharsets.UTF_8).length);
     Files.write(
         targetDirectory.resolve("Dockerfile"), makeDockerfile().getBytes(StandardCharsets.UTF_8));
-    System.out.println("Length after write: " + Files.size(targetDirectory.resolve("Dockerfile")));
   }
 
   /**
@@ -201,13 +201,16 @@ public class DockerContextGenerator {
    *
    * @return the {@code Dockerfile} contents.
    * @throws IOException if reading the Dockerfile template fails.
+   * @throws URISyntaxException if {@code DockerfileTemplate} path cannot be resolved.
    */
   @VisibleForTesting
-  String makeDockerfile() throws IOException {
+  String makeDockerfile() throws IOException, URISyntaxException {
     Preconditions.checkNotNull(baseImage);
 
     String dockerfileTemplate =
-        Resources.toString(Resources.getResource("DockerfileTemplate"), StandardCharsets.UTF_8);
+        new String(
+            Files.readAllBytes(Paths.get(Resources.getResource("DockerfileTemplate").toURI())),
+            StandardCharsets.UTF_8);
 
     return dockerfileTemplate
         .replace("@@BASE_IMAGE@@", baseImage)

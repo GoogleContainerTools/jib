@@ -153,8 +153,6 @@ public class DockerContextGeneratorTest {
             .makeDockerfile();
 
     Path sampleDockerfile = Paths.get(Resources.getResource("sampleDockerfile").toURI());
-    System.out.println("Length before read: " + Files.size(sampleDockerfile));
-    System.out.println("Length after read: " + Files.readAllBytes(sampleDockerfile).length);
     Assert.assertArrayEquals(
         Files.readAllBytes(sampleDockerfile), dockerfile.getBytes(StandardCharsets.UTF_8));
   }
