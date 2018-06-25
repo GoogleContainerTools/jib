@@ -207,10 +207,14 @@ public class DockerContextGenerator {
   String makeDockerfile() throws IOException, URISyntaxException {
     Preconditions.checkNotNull(baseImage);
 
+    System.out.println(
+        "Template length before read: "
+            + Files.size(Paths.get(Resources.getResource("DockerfileTemplate").toURI())));
     String dockerfileTemplate =
         new String(
             Files.readAllBytes(Paths.get(Resources.getResource("DockerfileTemplate").toURI())),
             StandardCharsets.UTF_8);
+    System.out.println("Template length after read: " + dockerfileTemplate.length());
 
     return dockerfileTemplate
         .replace("@@BASE_IMAGE@@", baseImage)
