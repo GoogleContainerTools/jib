@@ -72,7 +72,6 @@ public class BuildImageTask extends DefaultTask {
   public void buildImage() throws InvalidImageReferenceException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
-
     GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
     jibExtension.handleDeprecatedParameters(gradleBuildLogger);
 

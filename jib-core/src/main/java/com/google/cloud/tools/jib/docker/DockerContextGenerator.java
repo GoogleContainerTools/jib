@@ -196,19 +196,4 @@ public class DockerContextGenerator {
         .append(objectMapper.writeValueAsString(javaArguments));
     return dockerfile.toString();
   }
-
-  /**
-   * Builds a list of Dockerfile "EXPOSE" items.
-   *
-   * @param exposedPorts the list of ports numbers/ranges to expose
-   * @return a string containing an EXPOSE command for each of the entries
-   */
-  @VisibleForTesting
-  static String makeExposeItems(List<String> exposedPorts) {
-    StringBuilder resultString = new StringBuilder();
-    for (String port : exposedPorts) {
-      resultString.append("EXPOSE ").append(port).append("\n");
-    }
-    return resultString.toString();
-  }
 }
