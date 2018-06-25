@@ -75,20 +75,14 @@ public class BuildStepsRunner {
   // checked rather than in Caches.Initializer.
   private static Initializer getCacheInitializer(BuildConfiguration buildConfiguration)
       throws CacheDirectoryCreationException {
-    CacheConfiguration applicationLayersCacheConfiguration;
-    if (buildConfiguration.getApplicationLayersCacheConfiguration() == null) {
-      applicationLayersCacheConfiguration = CacheConfiguration.makeTemporary();
-    } else {
-      applicationLayersCacheConfiguration =
-          buildConfiguration.getApplicationLayersCacheConfiguration();
-    }
-
-    CacheConfiguration baseImageLayersCacheConfiguration;
-    if (buildConfiguration.getBaseImageLayersCacheConfiguration() == null) {
-      baseImageLayersCacheConfiguration = CacheConfiguration.forDefaultUserLevelCacheDirectory();
-    } else {
-      baseImageLayersCacheConfiguration = buildConfiguration.getBaseImageLayersCacheConfiguration();
-    }
+    CacheConfiguration applicationLayersCacheConfiguration =
+        buildConfiguration.getApplicationLayersCacheConfiguration() == null
+            ? CacheConfiguration.makeTemporary()
+            : buildConfiguration.getApplicationLayersCacheConfiguration();
+    CacheConfiguration baseImageLayersCacheConfiguration =
+        buildConfiguration.getBaseImageLayersCacheConfiguration() == null
+            ? CacheConfiguration.forDefaultUserLevelCacheDirectory()
+            : buildConfiguration.getBaseImageLayersCacheConfiguration();
 
     return new Caches.Initializer(
         baseImageLayersCacheConfiguration.getCacheDirectory(),
