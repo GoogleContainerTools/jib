@@ -24,7 +24,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.io.MoreFiles;
 import com.google.common.io.Resources;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
@@ -162,9 +161,8 @@ public class DockerContextGenerator {
    *
    * @param targetDirectory the directory to generate the Docker context in.
    * @throws IOException if the export fails.
-   * @throws URISyntaxException if {@code DockerfileTemplate} path cannot be resolved.
    */
-  public void generate(Path targetDirectory) throws IOException, URISyntaxException {
+  public void generate(Path targetDirectory) throws IOException {
     Preconditions.checkNotNull(baseImage);
 
     // Deletes the targetDir if it exists.
@@ -201,22 +199,14 @@ public class DockerContextGenerator {
    *
    * @return the {@code Dockerfile} contents.
    * @throws IOException if reading the Dockerfile template fails.
-   * @throws URISyntaxException if {@code DockerfileTemplate} path cannot be resolved.
    */
   @VisibleForTesting
-  String makeDockerfile() throws IOException, URISyntaxException {
+  String makeDockerfile() throws IOException {
     Preconditions.checkNotNull(baseImage);
 
-    System.out.println(
-        "Template length before read: "
-            + Files.size(Paths.get(Resources.getResource("DockerfileTemplate").toURI())));
-    String dockerfileTemplate =
-        new String(
-            Files.readAllBytes(Paths.get(Resources.getResource("DockerfileTemplate").toURI())),
-            StandardCharsets.UTF_8);
-    System.out.println("Template length after read: " + dockerfileTemplate.length());
+    Path dockerfileTemplate = Paths.get(Resources.getResource("DockerfileTemplate").getPath());
 
-    return dockerfileTemplate
+    return String.join("\n", Files.readAllLines(dockerfileTemplate))
         .replace("@@BASE_IMAGE@@", baseImage)
         .replace(
             "@@DEPENDENCIES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getDependenciesPathOnImage())

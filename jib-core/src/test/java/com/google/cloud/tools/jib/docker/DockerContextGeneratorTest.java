@@ -153,7 +153,8 @@ public class DockerContextGeneratorTest {
             .makeDockerfile();
 
     Path sampleDockerfile = Paths.get(Resources.getResource("sampleDockerfile").toURI());
-    Assert.assertArrayEquals(
-        Files.readAllBytes(sampleDockerfile), dockerfile.getBytes(StandardCharsets.UTF_8));
+    Assert.assertEquals(
+        String.join("\n", Files.readAllLines(sampleDockerfile)),
+        new String(dockerfile.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8));
   }
 }
