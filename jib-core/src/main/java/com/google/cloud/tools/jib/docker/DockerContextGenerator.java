@@ -57,22 +57,14 @@ public class DockerContextGenerator {
    */
   @VisibleForTesting
   static String joinAsJsonArray(List<String> items) {
-    StringBuilder resultString = new StringBuilder("[");
-    boolean firstComponent = true;
-    for (String item : items) {
-      if (!firstComponent) {
-        resultString.append(',');
-      }
-
-      // Escapes quotes.
-      item = item.replaceAll("\"", Matcher.quoteReplacement("\\\""));
-
-      resultString.append('"').append(item).append('"');
-      firstComponent = false;
-    }
-    resultString.append(']');
-
-    return resultString.toString();
+    return "["
+        + String.join(
+            ",",
+            items
+                .stream()
+                .map(item -> "\"" + item.replaceAll("\"", Matcher.quoteReplacement("\\\"")) + "\"")
+                .collect(Collectors.toList()))
+        + "]";
   }
 
   /**
