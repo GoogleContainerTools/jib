@@ -16,8 +16,6 @@
 
 package com.google.cloud.tools.jib.docker;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.cloud.tools.jib.builder.EntrypointBuilder;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.common.collect.ImmutableList;
@@ -111,22 +109,6 @@ public class DockerContextGeneratorTest {
     assertSameFiles(targetDirectory.resolve("libs"), testDependencies);
     assertSameFiles(targetDirectory.resolve("resources"), testResources);
     assertSameFiles(targetDirectory.resolve("classes"), testClasses);
-  }
-
-  @Test
-  public void testJoinAsJsonArray() throws JsonProcessingException {
-    Assert.assertEquals(
-        "[\"java\",\"-cp\",\"/app/libs/*:/app/resources/:/app/classes/\",\"\"]",
-        DockerContextGenerator.joinAsJsonArray(
-            ImmutableList.of("java", "-cp", "/app/libs/*:/app/resources/:/app/classes/", "")));
-
-    Assert.assertEquals(
-        "[\"java\",\"-flag\",\"another\\\"Flag\",\"-cp\",\"/app/libs/*:/app/resources/:/app/classes/\",\"AnotherMainClass\"]",
-        DockerContextGenerator.joinAsJsonArray(
-            EntrypointBuilder.makeEntrypoint(
-                mockSourceFilesConfiguration,
-                Arrays.asList("-flag", "another\"Flag"),
-                "AnotherMainClass")));
   }
 
   @Test

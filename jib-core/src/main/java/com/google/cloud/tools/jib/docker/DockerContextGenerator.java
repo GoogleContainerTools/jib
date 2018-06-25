@@ -48,19 +48,6 @@ import javax.annotation.Nullable;
 public class DockerContextGenerator {
 
   /**
-   * Formats a list for the Dockerfile's ENTRYPOINT or CMD.
-   *
-   * @see <a
-   *     href="https://docs.docker.com/engine/reference/builder/#exec-form-entrypoint-example">https://docs.docker.com/engine/reference/builder/#exec-form-entrypoint-example</a>
-   * @param items the list of items to join into an array.
-   * @return a string in the format: ["item1","item2",...]
-   */
-  @VisibleForTesting
-  static String joinAsJsonArray(List<String> items) throws JsonProcessingException {
-    return new ObjectMapper().writeValueAsString(items);
-  }
-
-  /**
    * Builds a list of Dockerfile "EXPOSE" instructions.
    *
    * @param exposedPorts the list of ports numbers/ranges to expose
@@ -198,6 +185,7 @@ public class DockerContextGenerator {
    */
   @VisibleForTesting
   String makeDockerfile() throws JsonProcessingException {
+    ObjectMapper objectMapper = new ObjectMapper();
     return "FROM "
         + Preconditions.checkNotNull(baseImage)
         + "\n\nCOPY libs "
@@ -209,9 +197,9 @@ public class DockerContextGenerator {
         + "\n\n"
         + makeExposeInstructions(exposedPorts)
         + "\nENTRYPOINT "
-        + joinAsJsonArray(
+        + objectMapper.writeValueAsString(
             EntrypointBuilder.makeEntrypoint(sourceFilesConfiguration, jvmFlags, mainClass))
         + "\nCMD "
-        + joinAsJsonArray(javaArguments);
+        + objectMapper.writeValueAsString(javaArguments);
   }
 }
