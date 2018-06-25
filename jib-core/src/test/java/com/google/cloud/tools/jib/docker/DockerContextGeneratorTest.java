@@ -136,7 +136,7 @@ public class DockerContextGeneratorTest {
   }
 
   @Test
-  public void testMakeDockerfile() throws IOException, URISyntaxException {
+  public void testMakeDockerfile() throws IOException {
     String expectedBaseImage = "somebaseimage";
     List<String> expectedJvmFlags = Arrays.asList("-flag", "another\"Flag");
     String expectedMainClass = "SomeMainClass";
@@ -152,9 +152,10 @@ public class DockerContextGeneratorTest {
             .setExposedPorts(exposedPorts)
             .makeDockerfile();
 
-    Path sampleDockerfile = Paths.get(Resources.getResource("sampleDockerfile").toURI());
-    Assert.assertEquals(
-        String.join("\n", Files.readAllLines(sampleDockerfile)),
-        new String(dockerfile.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8));
+    List<String> sampleDockerfile =
+        Resources.readLines(Resources.getResource("sampleDockerfile"), StandardCharsets.UTF_8);
+    Assert.assertArrayEquals(
+        String.join("\n", sampleDockerfile).getBytes(StandardCharsets.UTF_8),
+        dockerfile.getBytes(StandardCharsets.UTF_8));
   }
 }

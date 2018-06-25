@@ -28,7 +28,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -159,8 +158,8 @@ public class DockerContextGenerator {
   /**
    * Creates the Docker context in {@code #targetDirectory}.
    *
-   * @param targetDirectory the directory to generate the Docker context in.
-   * @throws IOException if the export fails.
+   * @param targetDirectory the directory to generate the Docker context in
+   * @throws IOException if the export fails
    */
   public void generate(Path targetDirectory) throws IOException {
     Preconditions.checkNotNull(baseImage);
@@ -197,16 +196,17 @@ public class DockerContextGenerator {
   /**
    * Makes a {@code Dockerfile} from the {@code DockerfileTemplate}.
    *
-   * @return the {@code Dockerfile} contents.
-   * @throws IOException if reading the Dockerfile template fails.
+   * @return the {@code Dockerfile} contents
+   * @throws IOException if reading the Dockerfile template fails
    */
   @VisibleForTesting
   String makeDockerfile() throws IOException {
     Preconditions.checkNotNull(baseImage);
 
-    Path dockerfileTemplate = Paths.get(Resources.getResource("DockerfileTemplate").getPath());
+    List<String> dockerfileTemplate =
+        Resources.readLines(Resources.getResource("DockerfileTemplate"), StandardCharsets.UTF_8);
 
-    return String.join("\n", Files.readAllLines(dockerfileTemplate))
+    return String.join("\n", dockerfileTemplate)
         .replace("@@BASE_IMAGE@@", baseImage)
         .replace(
             "@@DEPENDENCIES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getDependenciesPathOnImage())
