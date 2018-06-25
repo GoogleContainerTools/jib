@@ -17,10 +17,11 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
+import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
+import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
-import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.RegistryClient;
@@ -75,7 +76,9 @@ public class BuildDockerMojo extends JibPluginConfiguration {
         MavenProjectProperties.getForProject(getProject(), mavenBuildLogger);
     String mainClass = mavenProjectProperties.getMainClass(this);
 
-    BuildConfiguration buildConfiguration =
+    // Builds the BuildConfiguration.
+    // TODO: Consolidate with BuildImageMojo.
+    BuildConfiguration.Builder buildConfigurationBuilder =
         BuildConfiguration.builder(mavenBuildLogger)
             .setBaseImage(baseImage)
             .setBaseImageCredentialHelperName(getBaseImageCredentialHelperName())
@@ -84,8 +87,16 @@ public class BuildDockerMojo extends JibPluginConfiguration {
             .setMainClass(mainClass)
             .setJavaArguments(getArgs())
             .setJvmFlags(getJvmFlags())
-            .setEnvironment(getEnvironment())
-            .build();
+            .setEnvironment(getEnvironment());
+    CacheConfiguration applicationLayersCacheConfiguration =
+        CacheConfiguration.forPath(mavenProjectProperties.getCacheDirectory());
+    buildConfigurationBuilder.setApplicationLayersCacheConfiguration(
+        applicationLayersCacheConfiguration);
+    if (getUseOnlyProjectCache()) {
+      buildConfigurationBuilder.setBaseImageLayersCacheConfiguration(
+          applicationLayersCacheConfiguration);
+    }
+    BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
     MavenBuildLogger.disableHttpLogging();
@@ -94,10 +105,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
 
     try {
       BuildStepsRunner.forBuildToDockerDaemon(
-              buildConfiguration,
-              mavenProjectProperties.getSourceFilesConfiguration(),
-              mavenProjectProperties.getCacheDirectory(),
-              getUseOnlyProjectCache())
+              buildConfiguration, mavenProjectProperties.getSourceFilesConfiguration())
           .build(HELPFUL_SUGGESTIONS);
       getLog().info("");
 
