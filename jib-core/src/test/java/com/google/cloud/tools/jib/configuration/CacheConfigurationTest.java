@@ -22,21 +22,27 @@ import java.nio.file.Paths;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** Tests for {@link CacheLocation}. */
-public class CacheLocationTest {
+/** Tests for {@link CacheConfiguration}. */
+public class CacheConfigurationTest {
 
   @Test
   public void testAtPath() {
-    Assert.assertEquals(Paths.get("/path/to/cache"), CacheLocation.atPath(Paths.get("/path/to/cache")).getCacheDirectory());
+    CacheConfiguration cacheConfiguration = CacheConfiguration.forPath(Paths.get("/path/to/cache"));
+    Assert.assertEquals(Paths.get("/path/to/cache"), cacheConfiguration.getCacheDirectory());
+    Assert.assertTrue(cacheConfiguration.shouldEnsureOwnership());
   }
 
   @Test
   public void testMakeTemporary() throws IOException {
-    Assert.assertTrue(Files.exists(CacheLocation.makeTemporary().getCacheDirectory()));
+    CacheConfiguration cacheConfiguration = CacheConfiguration.makeTemporary();
+    Assert.assertTrue(Files.exists(cacheConfiguration.getCacheDirectory()));
+    Assert.assertFalse(cacheConfiguration.shouldEnsureOwnership());
   }
 
   @Test
   public void testAtDefaultUserLevelCacheDirectory() {
-    Assert.assertEquals(CacheLocation.DEFAULT_BASE_CACHE_DIRECTORY, CacheLocation.atDefaultUserLevelCacheDirectory().getCacheDirectory());
+    CacheConfiguration cacheConfiguration = CacheConfiguration.forDefaultUserLevelCacheDirectory();
+    Assert.assertEquals(CacheConfiguration.DEFAULT_BASE_CACHE_DIRECTORY, cacheConfiguration.getCacheDirectory());
+    Assert.assertTrue(cacheConfiguration.shouldEnsureOwnership());
   }
 }

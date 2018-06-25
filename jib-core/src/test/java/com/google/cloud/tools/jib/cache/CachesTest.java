@@ -37,7 +37,7 @@ public class CachesTest {
 
     try (Caches caches =
         Caches.newInitializer(tempApplicationCacheDirectory)
-            .setBaseCacheDirectory(tempBaseCacheDirectory)
+            .setBaseImageLayersCacheDirectory(tempBaseCacheDirectory)
             .init()) {
       Assert.assertEquals(tempBaseCacheDirectory, caches.getBaseCache().getCacheDirectory());
       Assert.assertEquals(

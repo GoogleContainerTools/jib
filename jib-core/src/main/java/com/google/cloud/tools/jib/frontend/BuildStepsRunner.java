@@ -44,22 +44,15 @@ public class BuildStepsRunner {
    *
    * @param buildConfiguration the configuration parameters for the build
    * @param sourceFilesConfiguration the source/destination file configuration for the image
-   * @param cacheDirectory the directory to use for the cache
-   * @param useOnlyProjectCache if {@code true}, sets the base layers cache directory to be the same
-   *     as the application layers cache directory
    * @return a {@link BuildStepsRunner} for building to a registry
    * @throws CacheDirectoryCreationException if the {@code cacheDirectory} could not be created
    */
   public static BuildStepsRunner forBuildImage(
       BuildConfiguration buildConfiguration,
-      SourceFilesConfiguration sourceFilesConfiguration,
-      Path cacheDirectory,
-      boolean useOnlyProjectCache)
-      throws CacheDirectoryCreationException {
-    Initializer cacheInitializer = getCacheInitializer(cacheDirectory, useOnlyProjectCache);
+      SourceFilesConfiguration sourceFilesConfiguration) throws IOException {
     return new BuildStepsRunner(
         BuildSteps.forBuildToDockerRegistry(
-            buildConfiguration, sourceFilesConfiguration, cacheInitializer));
+            buildConfiguration, sourceFilesConfiguration));
   }
 
   /**
@@ -67,39 +60,15 @@ public class BuildStepsRunner {
    *
    * @param buildConfiguration the configuration parameters for the build
    * @param sourceFilesConfiguration the source/destination file configuration for the image
-   * @param cacheDirectory the directory to use for the cache
-   * @param useOnlyProjectCache if {@code true}, sets the base layers cache directory to be the same
-   *     as the application layers cache directory
    * @return a {@link BuildStepsRunner} for building to a Docker daemon
    * @throws CacheDirectoryCreationException if the {@code cacheDirectory} could not be created
    */
   public static BuildStepsRunner forBuildToDockerDaemon(
       BuildConfiguration buildConfiguration,
-      SourceFilesConfiguration sourceFilesConfiguration,
-      Path cacheDirectory,
-      boolean useOnlyProjectCache)
-      throws CacheDirectoryCreationException {
-    Initializer cacheInitializer = getCacheInitializer(cacheDirectory, useOnlyProjectCache);
+      SourceFilesConfiguration sourceFilesConfiguration) {
     return new BuildStepsRunner(
         BuildSteps.forBuildToDockerDaemon(
-            buildConfiguration, sourceFilesConfiguration, cacheInitializer));
-  }
-
-  private static Initializer getCacheInitializer(Path cacheDirectory, boolean useOnlyProjectCache)
-      throws CacheDirectoryCreationException {
-    if (!Files.exists(cacheDirectory)) {
-      try {
-        Files.createDirectory(cacheDirectory);
-
-      } catch (IOException ex) {
-        throw new CacheDirectoryCreationException(cacheDirectory, ex);
-      }
-    }
-    Caches.Initializer cachesInitializer = Caches.newInitializer(cacheDirectory);
-    if (useOnlyProjectCache) {
-      cachesInitializer.setBaseCacheDirectory(cacheDirectory);
-    }
-    return cachesInitializer;
+            buildConfiguration, sourceFilesConfiguration));
   }
 
   private static void handleRegistryUnauthorizedException(

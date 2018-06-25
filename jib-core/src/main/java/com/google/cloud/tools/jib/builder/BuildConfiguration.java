@@ -16,8 +16,7 @@
 
 package com.google.cloud.tools.jib.builder;
 
-import com.google.cloud.tools.jib.cache.Cache;
-import com.google.cloud.tools.jib.configuration.CacheLocation;
+import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
@@ -61,8 +60,8 @@ public class BuildConfiguration {
     private Map<String, String> environmentMap = new HashMap<>();
     private List<String> exposedPorts = new ArrayList<>();
     private Class<? extends BuildableManifestTemplate> targetFormat = V22ManifestTemplate.class;
-    @Nullable private CacheLocation applicationLayersCacheLocation;
-    @Nullable private CacheLocation baseImageLayersCacheLocation;
+    @Nullable private CacheConfiguration applicationLayersCacheConfiguration;
+    @Nullable private CacheConfiguration baseImageLayersCacheConfiguration;
 
     private BuildLogger buildLogger;
 
@@ -143,22 +142,22 @@ public class BuildConfiguration {
     /**
      * Sets the location of the cache for storing application layers.
      *
-     * @param applicationLayersCacheLocation the application layers {@link CacheLocation}
+     * @param applicationLayersCacheConfiguration the application layers {@link CacheConfiguration}
      * @return this
      */
-    public Builder setApplicationLayersCacheLocation(@Nullable CacheLocation applicationLayersCacheLocation) {
-      this.applicationLayersCacheLocation = applicationLayersCacheLocation;
+    public Builder setApplicationLayersCacheConfiguration(@Nullable CacheConfiguration applicationLayersCacheConfiguration) {
+      this.applicationLayersCacheConfiguration = applicationLayersCacheConfiguration;
       return this;
     }
 
     /**
      * Sets the location of the cache for storing base image layers.
      *
-     * @param baseImageLayersCacheLocation the base image layers {@link CacheLocation}
+     * @param baseImageLayersCacheConfiguration the base image layers {@link CacheConfiguration}
      * @return this
      */
-    public Builder setBaseImageLayersCacheLocation(@Nullable CacheLocation baseImageLayersCacheLocation) {
-      this.baseImageLayersCacheLocation = baseImageLayersCacheLocation;
+    public Builder setBaseImageLayersCacheConfiguration(@Nullable CacheConfiguration baseImageLayersCacheConfiguration) {
+      this.baseImageLayersCacheConfiguration = baseImageLayersCacheConfiguration;
       return this;
     }
 
@@ -201,8 +200,8 @@ public class BuildConfiguration {
               ImmutableMap.copyOf(environmentMap),
               expandPortRanges(exposedPorts),
               targetFormat,
-              applicationLayersCacheLocation,
-              baseImageLayersCacheLocation);
+              applicationLayersCacheConfiguration,
+              baseImageLayersCacheConfiguration);
 
         case 1:
           throw new IllegalStateException(errorMessages.get(0));
@@ -315,8 +314,8 @@ public class BuildConfiguration {
   private final ImmutableMap<String, String> environmentMap;
   private final ImmutableList<String> exposedPorts;
   private final Class<? extends BuildableManifestTemplate> targetFormat;
-  @Nullable private final CacheLocation applicationLayersCacheLocation;
-  @Nullable private final CacheLocation baseImageLayersCacheLocation;
+  @Nullable private final CacheConfiguration applicationLayersCacheConfiguration;
+  @Nullable private final CacheConfiguration baseImageLayersCacheConfiguration;
 
   /** Instantiate with {@link Builder#build}. */
   private BuildConfiguration(
@@ -333,8 +332,8 @@ public class BuildConfiguration {
       ImmutableMap<String, String> environmentMap,
       ImmutableList<String> exposedPorts,
       Class<? extends BuildableManifestTemplate> targetFormat,
-      @Nullable CacheLocation applicationLayersCacheLocation,
-      @Nullable CacheLocation baseImageLayersCacheLocation) {
+      @Nullable CacheConfiguration applicationLayersCacheConfiguration,
+      @Nullable CacheConfiguration baseImageLayersCacheConfiguration) {
     this.buildLogger = buildLogger;
     this.baseImageReference = baseImageReference;
     this.baseImageCredentialHelperName = baseImageCredentialHelperName;
@@ -348,8 +347,8 @@ public class BuildConfiguration {
     this.environmentMap = environmentMap;
     this.exposedPorts = exposedPorts;
     this.targetFormat = targetFormat;
-    this.applicationLayersCacheLocation = applicationLayersCacheLocation;
-    this.baseImageLayersCacheLocation = baseImageLayersCacheLocation;
+    this.applicationLayersCacheConfiguration = applicationLayersCacheConfiguration;
+    this.baseImageLayersCacheConfiguration = baseImageLayersCacheConfiguration;
   }
 
   public BuildLogger getBuildLogger() {
@@ -435,18 +434,18 @@ public class BuildConfiguration {
   /**
    * Gets the location of the cache for storing application layers.
    *
-   * @return the application layers {@link CacheLocation}, or {@code null} if not set
+   * @return the application layers {@link CacheConfiguration}, or {@code null} if not set
    */
-  @Nullable public CacheLocation getApplicationLayersCacheLocation() {
-    return applicationLayersCacheLocation;
+  @Nullable public CacheConfiguration getApplicationLayersCacheConfiguration() {
+    return applicationLayersCacheConfiguration;
   }
 
   /**
    * Sets the location of the cache for storing base image layers.
    *
-   * @return the base image layers {@link CacheLocation}, or {@code null} if not set
+   * @return the base image layers {@link CacheConfiguration}, or {@code null} if not set
    */
-  @Nullable public CacheLocation getBaseImageLayersCacheLocation() {
-    return baseImageLayersCacheLocation;
+  @Nullable public CacheConfiguration getBaseImageLayersCacheConfiguration() {
+    return baseImageLayersCacheConfiguration;
   }
 }
