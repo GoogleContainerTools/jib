@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.docker;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.tools.jib.builder.EntrypointBuilder;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.filesystem.FileOperations;
@@ -29,7 +31,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -55,15 +56,8 @@ public class DockerContextGenerator {
    * @return a string in the format: ["item1","item2",...]
    */
   @VisibleForTesting
-  static String joinAsJsonArray(List<String> items) {
-    return "["
-        + String.join(
-            ",",
-            items
-                .stream()
-                .map(item -> "\"" + item.replaceAll("\"", Matcher.quoteReplacement("\\\"")) + "\"")
-                .collect(Collectors.toList()))
-        + "]";
+  static String joinAsJsonArray(List<String> items) throws JsonProcessingException {
+    return new ObjectMapper().writeValueAsString(items);
   }
 
   /**
@@ -203,7 +197,7 @@ public class DockerContextGenerator {
    * @return the {@code Dockerfile} contents
    */
   @VisibleForTesting
-  String makeDockerfile() {
+  String makeDockerfile() throws JsonProcessingException {
     return "FROM "
         + Preconditions.checkNotNull(baseImage)
         + "\n\nCOPY libs "

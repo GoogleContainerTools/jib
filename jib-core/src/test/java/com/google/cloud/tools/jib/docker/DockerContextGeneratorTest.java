@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.docker;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.cloud.tools.jib.builder.EntrypointBuilder;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
@@ -113,7 +114,7 @@ public class DockerContextGeneratorTest {
   }
 
   @Test
-  public void testJoinAsJsonArray() {
+  public void testJoinAsJsonArray() throws JsonProcessingException {
     Assert.assertEquals(
         "[\"java\",\"-cp\",\"/app/libs/*:/app/resources/:/app/classes/\",\"\"]",
         DockerContextGenerator.joinAsJsonArray(
