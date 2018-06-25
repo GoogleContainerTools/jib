@@ -22,9 +22,15 @@ import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import javax.lang.model.SourceVersion;
 
@@ -32,6 +38,13 @@ import javax.lang.model.SourceVersion;
 public class BuildConfiguration {
 
   public static class Builder {
+
+    /**
+     * Pattern used for parsing information out of exposed port configurations.
+     *
+     * <p>Examples: 100, 200-210, 1000/tcp, 2000/udp, 500-600/tcp
+     */
+    private static final Pattern portPattern = Pattern.compile("(\\d+)(?:-(\\d+))?(/tcp|/udp)?");
 
     // All the parameters below are set to their default values.
     @Nullable private ImageReference baseImageReference;
@@ -160,7 +173,7 @@ public class BuildConfiguration {
               ImmutableList.copyOf(javaArguments),
               ImmutableList.copyOf(jvmFlags),
               ImmutableMap.copyOf(environmentMap),
-              expandPortRanges(exposedPorts, buildLogger),
+              expandPortRanges(exposedPorts),
               targetFormat);
 
         case 1:
@@ -185,6 +198,63 @@ public class BuildConfiguration {
           throw new IllegalStateException(errorMessage.toString());
       }
     }
+
+    /**
+     * TODO: Move this to a class in frontend
+     *
+     * <p>Converts/validates a list of ports with ranges to an expanded form without ranges.
+     *
+     * <p>Example: ["1000/tcp", "2000-2002/tcp"] -> ["1000/tcp", "2000/tcp", "2001/tcp", "2002/tcp"]
+     *
+     * @param ports the list of port numbers/ranges
+     * @return the ports as a list of integers
+     * @throws NumberFormatException if any of the ports are in an invalid format or out of range
+     */
+    @VisibleForTesting
+    ImmutableList<String> expandPortRanges(List<String> ports) throws NumberFormatException {
+      ImmutableList.Builder<String> result = new ImmutableList.Builder<>();
+
+      for (String port : ports) {
+        Matcher matcher = portPattern.matcher(port);
+
+        if (!matcher.matches()) {
+          throw new NumberFormatException(
+              "Invalid port configuration: '"
+                  + port
+                  + "'. Make sure the port is a single number or a range of two numbers separated "
+                  + "with a '-', with or without protocol specified (e.g. '<portNum>/tcp' or "
+                  + "'<portNum>/udp').");
+        }
+
+        // Parse protocol
+        int min = Integer.parseInt(matcher.group(1));
+        int max = min;
+        if (!Strings.isNullOrEmpty(matcher.group(2))) {
+          max = Integer.parseInt(matcher.group(2));
+        }
+        String protocol = matcher.group(3);
+
+        // Error if configured as 'max-min' instead of 'min-max'
+        if (min > max) {
+          throw new NumberFormatException(
+              "Invalid port range '" + port + "'; smaller number must come first.");
+        }
+
+        // Warn for possibly invalid port numbers
+        if (min < 1 || max > 65535) {
+          // TODO: Add details/use HelpfulSuggestions for these warnings
+          buildLogger.warn("Port number '" + port + "' is out of usual range (1-65535).");
+        }
+
+        // Add all numbers in range to list
+        for (int portNum = min; portNum <= max; portNum++) {
+          // TODO: Use a class w/ port number and protocol instead of a string
+          result.add(portNum + (protocol == null ? "" : protocol));
+        }
+      }
+
+      return result.build();
+    }
   }
 
   /**
@@ -200,60 +270,8 @@ public class BuildConfiguration {
     return true;
   }
 
-  /**
-   * Converts a list of port numbers to the corresponding ExposedPorts map format.
-   *
-   * <p>Example: [1000, 2000-2002] -> {"1000/tcp":{}, "2000/tcp":{}, "2001/tcp":{}, "2002/tcp":{}})
-   *
-   * @param ports the list of port numbers/ranges
-   * @return the map
-   * @throws NumberFormatException if any of the ports are in an invalid format or out of range
-   */
-  @VisibleForTesting
-  static ImmutableList<String> expandPortRanges(List<String> ports, BuildLogger logger) {
-    List<String> result = new ArrayList<>();
-
-    for (String port : ports) {
-      // Remove all spaces
-      port = port.replace(" ", "");
-
-      if (port.matches("\\d+")) {
-        // Port is a single number
-        int portNum = Integer.parseInt(port);
-        if (portNum < 1 || portNum > 65535) {
-          logger.warn("Port number '" + port + "' is out of range (1-65535)");
-        }
-        result.add(port);
-
-      } else if (port.matches("\\d+-\\d+")) {
-        // Port is a range
-        List<String> range = Splitter.on('-').splitToList(port);
-        int min = Integer.parseInt(range.get(0));
-        int max = Integer.parseInt(range.get(1));
-
-        // Reverse range if configured as 'max-min' instead of 'min-max'
-        if (min > max) {
-          int swapTemp = max;
-          max = min;
-          min = swapTemp;
-        }
-
-        // Make sure range is valid (min-max, within port range)
-        if (min < 1 || max > 65535) {
-          logger.warn("Port range '" + port + "' exceeds normal port range (1-65535)");
-        }
-
-        for (int portNum = min; portNum <= max; portNum++) {
-          result.add("" + portNum);
-        }
-
-      } else {
-        // Port is neither a single number nor a range
-        logger.warn("Port '" + port + "' is not a port number");
-      }
-    }
-
-    return ImmutableList.copyOf(result);
+  public static Builder builder(BuildLogger buildLogger) {
+    return new Builder(buildLogger);
   }
 
   private final BuildLogger buildLogger;
@@ -269,10 +287,6 @@ public class BuildConfiguration {
   private final ImmutableMap<String, String> environmentMap;
   private final ImmutableList<String> exposedPorts;
   private final Class<? extends BuildableManifestTemplate> targetFormat;
-
-  public static Builder builder(BuildLogger buildLogger) {
-    return new Builder(buildLogger);
-  }
 
   /** Instantiate with {@link Builder#build}. */
   private BuildConfiguration(

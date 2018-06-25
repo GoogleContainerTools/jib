@@ -16,13 +16,14 @@
 
 package com.google.cloud.tools.jib.docker;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.tools.jib.builder.EntrypointBuilder;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.filesystem.FileOperations;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.io.MoreFiles;
-import com.google.common.io.Resources;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryNotEmptyException;
@@ -30,7 +31,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
-import java.util.regex.Matcher;
 import javax.annotation.Nullable;
 
 /**
@@ -117,8 +117,8 @@ public class DockerContextGenerator {
   /**
    * Creates the Docker context in {@code #targetDirectory}.
    *
-   * @param targetDirectory the directory to generate the Docker context in.
-   * @throws IOException if the export fails.
+   * @param targetDirectory the directory to generate the Docker context in
+   * @throws IOException if the export fails
    */
   public void generate(Path targetDirectory) throws IOException {
     Preconditions.checkNotNull(baseImage);
@@ -153,58 +153,48 @@ public class DockerContextGenerator {
   }
 
   /**
-   * Makes a {@code Dockerfile} from the {@code DockerfileTemplate}.
+   * Makes the contents of a {@code Dockerfile} using configuration data, in the following format:
    *
-   * @return the {@code Dockerfile} contents.
-   * @throws IOException if reading the Dockerfile template fails.
+   * <pre>{@code
+   * FROM [base image]
+   *
+   * COPY libs [path/to/dependencies]
+   * COPY resources [path/to/resources]
+   * COPY classes [path/to/classes]
+   *
+   * EXPOSE [port]
+   * [More EXPOSE instructions, if necessary]
+   * ENTRYPOINT java [jvm flags] -cp [classpaths] [main class]
+   * CMD [main class args]
+   * }</pre>
+   *
+   * @return the {@code Dockerfile} contents
    */
   @VisibleForTesting
-  String makeDockerfile() throws IOException {
-    Preconditions.checkNotNull(baseImage);
-
-    String dockerfileTemplate =
-        Resources.toString(Resources.getResource("DockerfileTemplate"), StandardCharsets.UTF_8);
-
-    return dockerfileTemplate
-        .replace("@@BASE_IMAGE@@", baseImage)
-        .replace(
-            "@@DEPENDENCIES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getDependenciesPathOnImage())
-        .replace("@@RESOURCES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getResourcesPathOnImage())
-        .replace("@@CLASSES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getClassesPathOnImage())
-        .replace("@@EXPOSED_PORTS@@", makeExposeItems(exposedPorts))
-        .replace(
-            "@@ENTRYPOINT@@",
-            joinAsJsonArray(
-                EntrypointBuilder.makeEntrypoint(sourceFilesConfiguration, jvmFlags, mainClass)))
-        .replace("@@CMD@@", joinAsJsonArray(javaArguments));
-  }
-
-  /**
-   * Formats a list for the Dockerfile's ENTRYPOINT or CMD.
-   *
-   * @see <a
-   *     href="https://docs.docker.com/engine/reference/builder/#exec-form-entrypoint-example">https://docs.docker.com/engine/reference/builder/#exec-form-entrypoint-example</a>
-   * @param items the list of items to join into an array.
-   * @return a string in the format: ["item1","item2",...]
-   */
-  @VisibleForTesting
-  static String joinAsJsonArray(List<String> items) {
-    StringBuilder resultString = new StringBuilder("[");
-    boolean firstComponent = true;
-    for (String item : items) {
-      if (!firstComponent) {
-        resultString.append(',');
-      }
-
-      // Escapes quotes.
-      item = item.replaceAll("\"", Matcher.quoteReplacement("\\\""));
-
-      resultString.append('"').append(item).append('"');
-      firstComponent = false;
+  String makeDockerfile() throws JsonProcessingException {
+    ObjectMapper objectMapper = new ObjectMapper();
+    StringBuilder dockerfile = new StringBuilder();
+    dockerfile
+        .append("FROM ")
+        .append(Preconditions.checkNotNull(baseImage))
+        .append("\n\nCOPY libs ")
+        .append(sourceFilesConfiguration.getDependenciesPathOnImage())
+        .append("\nCOPY resources ")
+        .append(sourceFilesConfiguration.getResourcesPathOnImage())
+        .append("\nCOPY classes ")
+        .append(sourceFilesConfiguration.getClassesPathOnImage())
+        .append("\n");
+    for (String port : exposedPorts) {
+      dockerfile.append("\nEXPOSE ").append(port);
     }
-    resultString.append(']');
-
-    return resultString.toString();
+    dockerfile
+        .append("\nENTRYPOINT ")
+        .append(
+            objectMapper.writeValueAsString(
+                EntrypointBuilder.makeEntrypoint(sourceFilesConfiguration, jvmFlags, mainClass)))
+        .append("\nCMD ")
+        .append(objectMapper.writeValueAsString(javaArguments));
+    return dockerfile.toString();
   }
 
   /**

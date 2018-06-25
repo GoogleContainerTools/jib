@@ -48,7 +48,7 @@ public class BuildStepsIntegrationTest {
             .setTargetImage(ImageReference.of("localhost:5000", "testimage", "testtag"))
             .setMainClass("HelloWorld")
             .setJavaArguments(Collections.singletonList("An argument."))
-            .setExposedPorts(Arrays.asList("1000", "2000-2003"))
+            .setExposedPorts(Arrays.asList("1000", "2000-2002/tcp", "3000/udp"))
             .build();
 
     Path cacheDirectory = temporaryCacheDirectory.newFolder().toPath();
@@ -71,11 +71,11 @@ public class BuildStepsIntegrationTest {
         new Command("docker", "inspect", imageReference).run(),
         CoreMatchers.containsString(
             "            \"ExposedPorts\": {\n"
-                + "                \"1000/tcp\": {},\n"
+                + "                \"1000\": {},\n"
                 + "                \"2000/tcp\": {},\n"
                 + "                \"2001/tcp\": {},\n"
                 + "                \"2002/tcp\": {},\n"
-                + "                \"2003/tcp\": {}"));
+                + "                \"3000/udp\": {}"));
     Assert.assertEquals(
         "Hello, world. An argument.\n", new Command("docker", "run", imageReference).run());
   }
@@ -89,7 +89,7 @@ public class BuildStepsIntegrationTest {
             .setTargetImage(ImageReference.of(null, "testdocker", null))
             .setMainClass("HelloWorld")
             .setJavaArguments(Collections.singletonList("An argument."))
-            .setExposedPorts(Arrays.asList("1000", "2000-2003"))
+            .setExposedPorts(Arrays.asList("1000", "2000-2002/tcp", "3000/udp"))
             .build();
 
     Path cacheDirectory = temporaryCacheDirectory.newFolder().toPath();
@@ -104,11 +104,11 @@ public class BuildStepsIntegrationTest {
         new Command("docker", "inspect", "testdocker").run(),
         CoreMatchers.containsString(
             "            \"ExposedPorts\": {\n"
-                + "                \"1000/tcp\": {},\n"
+                + "                \"1000\": {},\n"
                 + "                \"2000/tcp\": {},\n"
                 + "                \"2001/tcp\": {},\n"
                 + "                \"2002/tcp\": {},\n"
-                + "                \"2003/tcp\": {}"));
+                + "                \"3000/udp\": {}"));
     Assert.assertEquals(
         "Hello, world. An argument.\n", new Command("docker", "run", "testdocker").run());
   }

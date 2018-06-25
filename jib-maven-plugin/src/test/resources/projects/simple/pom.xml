@@ -44,8 +44,8 @@
           <container>
             <args>An argument.</args>
             <ports>
-              <port>1000</port>
-              <port>2000-2003</port>
+              <port>1000/tcp</port>
+              <port>2000-2003/udp</port>
             </ports>
           </container>
           <!-- Does not have tests use user-level cache for base image layers. -->
