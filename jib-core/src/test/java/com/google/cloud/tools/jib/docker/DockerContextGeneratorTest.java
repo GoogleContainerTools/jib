@@ -129,10 +129,10 @@ public class DockerContextGeneratorTest {
   }
 
   @Test
-  public void testMakeExposeItems() {
+  public void testMakeExposeInstructions() {
     Assert.assertEquals(
         "EXPOSE 1000\nEXPOSE 2000-2010",
-        DockerContextGenerator.makeExposeItems(ImmutableList.of("1000", "2000-2010")));
+        DockerContextGenerator.makeExposeInstructions(ImmutableList.of("1000", "2000-2010")));
   }
 
   @Test
@@ -152,6 +152,7 @@ public class DockerContextGeneratorTest {
             .setExposedPorts(exposedPorts)
             .makeDockerfile();
 
+    // Need to split/rejoin the string here to avoid cross-platform troubles
     List<String> sampleDockerfile =
         Resources.readLines(Resources.getResource("sampleDockerfile"), StandardCharsets.UTF_8);
     Assert.assertArrayEquals(

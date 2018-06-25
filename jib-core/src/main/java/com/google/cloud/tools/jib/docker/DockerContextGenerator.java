@@ -22,7 +22,6 @@ import com.google.cloud.tools.jib.filesystem.FileOperations;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.io.MoreFiles;
-import com.google.common.io.Resources;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryNotEmptyException;
@@ -74,7 +73,7 @@ public class DockerContextGenerator {
    * @return a string containing an EXPOSE instruction for each of the entries
    */
   @VisibleForTesting
-  static String makeExposeItems(List<String> exposedPorts) {
+  static String makeExposeInstructions(List<String> exposedPorts) {
     return String.join(
         "\n", exposedPorts.stream().map(port -> "EXPOSE " + port).collect(Collectors.toList()));
   }
@@ -186,29 +185,26 @@ public class DockerContextGenerator {
   }
 
   /**
-   * Makes a {@code Dockerfile} from the {@code DockerfileTemplate}.
+   * Makes the contents of a {@code Dockerfile} using configuration data.
    *
    * @return the {@code Dockerfile} contents
-   * @throws IOException if reading the Dockerfile template fails
    */
   @VisibleForTesting
-  String makeDockerfile() throws IOException {
-    Preconditions.checkNotNull(baseImage);
-
-    List<String> dockerfileTemplate =
-        Resources.readLines(Resources.getResource("DockerfileTemplate"), StandardCharsets.UTF_8);
-
-    return String.join("\n", dockerfileTemplate)
-        .replace("@@BASE_IMAGE@@", baseImage)
-        .replace(
-            "@@DEPENDENCIES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getDependenciesPathOnImage())
-        .replace("@@RESOURCES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getResourcesPathOnImage())
-        .replace("@@CLASSES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getClassesPathOnImage())
-        .replace("@@EXPOSE_INSTRUCTIONS@@", makeExposeItems(exposedPorts))
-        .replace(
-            "@@ENTRYPOINT@@",
-            joinAsJsonArray(
-                EntrypointBuilder.makeEntrypoint(sourceFilesConfiguration, jvmFlags, mainClass)))
-        .replace("@@CMD@@", joinAsJsonArray(javaArguments));
+  String makeDockerfile() {
+    return "FROM "
+        + Preconditions.checkNotNull(baseImage)
+        + "\n\nCOPY libs "
+        + sourceFilesConfiguration.getDependenciesPathOnImage()
+        + "\nCOPY resources "
+        + sourceFilesConfiguration.getResourcesPathOnImage()
+        + "\nCOPY classes "
+        + sourceFilesConfiguration.getClassesPathOnImage()
+        + "\n\n"
+        + makeExposeInstructions(exposedPorts)
+        + "\nENTRYPOINT "
+        + joinAsJsonArray(
+            EntrypointBuilder.makeEntrypoint(sourceFilesConfiguration, jvmFlags, mainClass))
+        + "\nCMD "
+        + joinAsJsonArray(javaArguments);
   }
 }
