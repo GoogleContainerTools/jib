@@ -183,12 +183,12 @@ Property | Type | Default | Description
 
 ### Example
 
-In this configuration, the image is:
-* Built from a base of `openjdk:alpine` (pulled from Docker Hub)
-* Pushed to `localhost:5000/my-image:built-with-jib`
-* Run by calling `java -Xms512m -Xdebug -Xmy:flag=jib-rules -cp app/libs/*:app/resources:app/classes mypackage.MyApp some args`
+In this configuration, the image:
+* Is built from a base of `openjdk:alpine` (pulled from Docker Hub)
+* Is pushed to `localhost:5000/my-image:built-with-jib`
+* Runs by calling `java -Xms512m -Xdebug -Xmy:flag=jib-rules -cp app/libs/*:app/resources:app/classes mypackage.MyApp some args`
 * Exposes port 1000 for tcp (default), and ports 2000, 2001, 2002, and 2003 for udp
-* Built as OCI format
+* Is built as OCI format
 
 ```groovy
 jib {
