@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.configuration;
 
-import java.io.IOException;
+import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import org.junit.Assert;
@@ -33,7 +33,7 @@ public class CacheConfigurationTest {
   }
 
   @Test
-  public void testMakeTemporary() throws IOException {
+  public void testMakeTemporary() throws CacheDirectoryCreationException {
     CacheConfiguration cacheConfiguration = CacheConfiguration.makeTemporary();
     Assert.assertTrue(Files.exists(cacheConfiguration.getCacheDirectory()));
     Assert.assertFalse(cacheConfiguration.shouldEnsureOwnership());
@@ -42,7 +42,8 @@ public class CacheConfigurationTest {
   @Test
   public void testAtDefaultUserLevelCacheDirectory() {
     CacheConfiguration cacheConfiguration = CacheConfiguration.forDefaultUserLevelCacheDirectory();
-    Assert.assertEquals(CacheConfiguration.DEFAULT_BASE_CACHE_DIRECTORY, cacheConfiguration.getCacheDirectory());
+    Assert.assertEquals(
+        CacheConfiguration.DEFAULT_BASE_CACHE_DIRECTORY, cacheConfiguration.getCacheDirectory());
     Assert.assertTrue(cacheConfiguration.shouldEnsureOwnership());
   }
 }

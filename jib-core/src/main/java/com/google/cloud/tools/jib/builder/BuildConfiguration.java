@@ -145,7 +145,8 @@ public class BuildConfiguration {
      * @param applicationLayersCacheConfiguration the application layers {@link CacheConfiguration}
      * @return this
      */
-    public Builder setApplicationLayersCacheConfiguration(@Nullable CacheConfiguration applicationLayersCacheConfiguration) {
+    public Builder setApplicationLayersCacheConfiguration(
+        @Nullable CacheConfiguration applicationLayersCacheConfiguration) {
       this.applicationLayersCacheConfiguration = applicationLayersCacheConfiguration;
       return this;
     }
@@ -156,7 +157,8 @@ public class BuildConfiguration {
      * @param baseImageLayersCacheConfiguration the base image layers {@link CacheConfiguration}
      * @return this
      */
-    public Builder setBaseImageLayersCacheConfiguration(@Nullable CacheConfiguration baseImageLayersCacheConfiguration) {
+    public Builder setBaseImageLayersCacheConfiguration(
+        @Nullable CacheConfiguration baseImageLayersCacheConfiguration) {
       this.baseImageLayersCacheConfiguration = baseImageLayersCacheConfiguration;
       return this;
     }
@@ -436,7 +438,8 @@ public class BuildConfiguration {
    *
    * @return the application layers {@link CacheConfiguration}, or {@code null} if not set
    */
-  @Nullable public CacheConfiguration getApplicationLayersCacheConfiguration() {
+  @Nullable
+  public CacheConfiguration getApplicationLayersCacheConfiguration() {
     return applicationLayersCacheConfiguration;
   }
 
@@ -445,7 +448,8 @@ public class BuildConfiguration {
    *
    * @return the base image layers {@link CacheConfiguration}, or {@code null} if not set
    */
-  @Nullable public CacheConfiguration getBaseImageLayersCacheConfiguration() {
+  @Nullable
+  public CacheConfiguration getBaseImageLayersCacheConfiguration() {
     return baseImageLayersCacheConfiguration;
   }
 }

@@ -19,11 +19,10 @@ package com.google.cloud.tools.jib.builder;
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.builder.steps.StepsRunner;
 import com.google.cloud.tools.jib.cache.Cache;
+import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.Caches;
-import com.google.cloud.tools.jib.cache.Caches.Initializer;
-import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
@@ -57,16 +56,18 @@ public class BuildSteps {
    *
    * @param buildConfiguration the configuration parameters for the build
    * @param sourceFilesConfiguration the source/destination file configuration for the image
+   * @param cachesInitializer the {@link Caches.Initializer} used to setup the cache
    * @return a new {@link BuildSteps} for building to a registry
    */
   public static BuildSteps forBuildToDockerRegistry(
       BuildConfiguration buildConfiguration,
-      SourceFilesConfiguration sourceFilesConfiguration) throws IOException {
+      SourceFilesConfiguration sourceFilesConfiguration,
+      Caches.Initializer cachesInitializer) {
     return new BuildSteps(
         DESCRIPTION_FOR_DOCKER_REGISTRY,
         buildConfiguration,
         sourceFilesConfiguration,
-        getCacheInitializer(buildConfiguration),
+        cachesInitializer,
         String.format(
             STARTUP_MESSAGE_FORMAT_FOR_DOCKER_REGISTRY,
             buildConfiguration.getTargetImageReference()),
@@ -94,16 +95,18 @@ public class BuildSteps {
    *
    * @param buildConfiguration the configuration parameters for the build
    * @param sourceFilesConfiguration the source/destination file configuration for the image
+   * @param cachesInitializer the {@link Caches.Initializer} used to setup the cache
    * @return a new {@link BuildSteps} for building to a Docker daemon
    */
   public static BuildSteps forBuildToDockerDaemon(
       BuildConfiguration buildConfiguration,
-      SourceFilesConfiguration sourceFilesConfiguration) throws IOException {
+      SourceFilesConfiguration sourceFilesConfiguration,
+      Caches.Initializer cachesInitializer) {
     return new BuildSteps(
         DESCRIPTION_FOR_DOCKER_DAEMON,
         buildConfiguration,
         sourceFilesConfiguration,
-        getCacheInitializer(buildConfiguration),
+        cachesInitializer,
         String.format(
             STARTUP_MESSAGE_FORMAT_FOR_DOCKER_DAEMON, buildConfiguration.getTargetImageReference()),
         String.format(
@@ -117,26 +120,6 @@ public class BuildSteps {
                 .runFinalizingBuildStep()
                 .runBuildTarballAndLoadDockerStep()
                 .waitOnBuildTarballAndLoadDockerStep());
-  }
-
-  // TODO: Move this up to somewhere where defaults for cache location are provided.
-  private static Initializer getCacheInitializer(BuildConfiguration buildConfiguration)
-      throws IOException {
-    CacheConfiguration applicationLayersCacheConfiguration;
-    if (buildConfiguration.getApplicationLayersCacheConfiguration() == null) {
-      applicationLayersCacheConfiguration = CacheConfiguration.makeTemporary();
-    } else {
-      applicationLayersCacheConfiguration = buildConfiguration.getApplicationLayersCacheConfiguration();
-    }
-
-    CacheConfiguration baseImageLayersCacheConfiguration;
-    if (buildConfiguration.getBaseImageLayersCacheConfiguration() == null) {
-      baseImageLayersCacheConfiguration = CacheConfiguration.forDefaultUserLevelCacheDirectory();
-    } else {
-      baseImageLayersCacheConfiguration = buildConfiguration.getBaseImageLayersCacheConfiguration();
-    }
-
-    return new Caches.Initializer(baseImageLayersCacheConfiguration.getCacheDirectory(), applicationLayersCacheConfiguration.shouldEnsureOwnership(), applicationLayersCacheConfiguration.getCacheDirectory(), applicationLayersCacheConfiguration.shouldEnsureOwnership());
   }
 
   /** Creates the container entrypoint for a given configuration. */
@@ -197,7 +180,7 @@ public class BuildSteps {
 
   public void run()
       throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
-          CacheDirectoryNotOwnedException {
+          CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
     buildConfiguration.getBuildLogger().lifecycle("");
 
     try (Timer timer = new Timer(buildConfiguration.getBuildLogger(), description)) {

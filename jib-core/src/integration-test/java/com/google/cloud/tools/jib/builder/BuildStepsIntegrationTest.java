@@ -56,7 +56,7 @@ public class BuildStepsIntegrationTest {
         BuildSteps.forBuildToDockerRegistry(
             buildConfiguration,
             sourceFilesConfiguration,
-            Caches.newInitializer(cacheDirectory).setBaseCacheDirectory(cacheDirectory));
+            new Caches.Initializer(cacheDirectory, false, cacheDirectory, false));
 
     long lastTime = System.nanoTime();
     buildImageSteps.run();
@@ -97,7 +97,7 @@ public class BuildStepsIntegrationTest {
         BuildSteps.forBuildToDockerDaemon(
             buildConfiguration,
             sourceFilesConfiguration,
-            Caches.newInitializer(cacheDirectory).setBaseCacheDirectory(cacheDirectory));
+            new Caches.Initializer(cacheDirectory, false, cacheDirectory, false));
 
     buildDockerSteps.run();
     Assert.assertThat(

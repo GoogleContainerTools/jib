@@ -16,13 +16,17 @@
 
 package com.google.cloud.tools.jib.configuration;
 
+import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.filesystem.UserCacheHome;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-/** Represents the location of the cache. Provides static methods for resolving a location for the cache. */
+/**
+ * Represents the location of the cache. Provides static methods for resolving a location for the
+ * cache.
+ */
 public class CacheConfiguration {
 
   /**
@@ -36,7 +40,8 @@ public class CacheConfiguration {
   /**
    * The cache is at an arbitrary path.
    *
-   * @param cacheDirectory the path to the cache directory. This must be a non-existent directory or a previously-used cache directory.
+   * @param cacheDirectory the path to the cache directory. This must be a non-existent directory or
+   *     a previously-used cache directory.
    * @return the corresponding {@link CacheConfiguration}
    */
   public static CacheConfiguration forPath(Path cacheDirectory) {
@@ -47,17 +52,23 @@ public class CacheConfiguration {
    * The cache is a temporary directory that is deleted afterwards.
    *
    * @return the corresponding {@link CacheConfiguration}
-   * @throws IOException if a temporary directory cannot be created
+   * @throws CacheDirectoryCreationException if a temporary directory cannot be created
    */
-  public static CacheConfiguration makeTemporary() throws IOException {
-    Path temporaryDirectory = Files.createTempDirectory(null);
-    temporaryDirectory.toFile().deleteOnExit();
-    return new CacheConfiguration(temporaryDirectory, false);
+  public static CacheConfiguration makeTemporary() throws CacheDirectoryCreationException {
+    try {
+      Path temporaryDirectory = Files.createTempDirectory(null);
+      temporaryDirectory.toFile().deleteOnExit();
+      return new CacheConfiguration(temporaryDirectory, false);
+
+    } catch (IOException ex) {
+      throw new CacheDirectoryCreationException(ex);
+    }
   }
 
   /**
-   * The cache is at the default user-level cache directory. This is usually to store base image layers, which can be shared between projects. The default user-level cache directory is {@code [user cache
-   * home]/google-cloud-tools-java/jib}.
+   * The cache is at the default user-level cache directory. This is usually to store base image
+   * layers, which can be shared between projects. The default user-level cache directory is {@code
+   * [user cache home]/google-cloud-tools-java/jib}.
    *
    * @return the corresponding {@link CacheConfiguration}
    */

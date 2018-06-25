@@ -21,7 +21,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import javax.annotation.Nullable;
 
 /**
  * Manages both the base image layers cache and the application image layers cache.
@@ -31,9 +30,7 @@ import javax.annotation.Nullable;
  */
 public class Caches implements Closeable {
 
-  /**
-   * Initializes a {@link Caches} with directory paths. Use {@link #newInitializer} to construct.
-   */
+  /** Initializes a {@link Caches} with directory paths. */
   public static class Initializer {
 
     /** A file to store in the default base image layers cache to check ownership by Jib. */
@@ -47,7 +44,7 @@ public class Caches implements Closeable {
      */
     @VisibleForTesting
     static void ensureOwnership(Path cacheDirectory)
-        throws CacheDirectoryNotOwnedException, IOException {
+        throws CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
       Path ownershipFile = cacheDirectory.resolve(OWNERSHIP_FILE_NAME);
 
       if (Files.exists(cacheDirectory)) {
@@ -57,9 +54,14 @@ public class Caches implements Closeable {
         }
 
       } else {
-        // Creates the cache directory and ownership file.
-        Files.createDirectories(cacheDirectory);
-        Files.createFile(ownershipFile);
+        try {
+          // Creates the cache directory and ownership file.
+          Files.createDirectories(cacheDirectory);
+          Files.createFile(ownershipFile);
+
+        } catch (IOException ex) {
+          throw new CacheDirectoryCreationException(cacheDirectory, ex);
+        }
       }
     }
 
@@ -69,22 +71,31 @@ public class Caches implements Closeable {
     private final boolean shouldEnsureOwnershipOfApplicationLayersCacheDirectory;
 
     /**
-     * @param baseImageLayersCacheDirectory cache for the application image layers - usually not local to
-     *     the application project
-     * @param shouldEnsureOwnershipOfBaseImageLayersCacheDirectory if {@code true}, ensures the base image layers cache directory is safe to write to
-     * @param applicationLayersCacheDirectory cache for the application image layers - usually local to
-     *     the application project
-     * @param shouldEnsureOwnershipOfApplicationLayersCacheDirectory if {@code true}, ensures the base image layers cache directory is safe to write to
+     * @param baseImageLayersCacheDirectory cache for the application image layers - usually not
+     *     local to the application project
+     * @param shouldEnsureOwnershipOfBaseImageLayersCacheDirectory if {@code true}, ensures the base
+     *     image layers cache directory is safe to write to
+     * @param applicationLayersCacheDirectory cache for the application image layers - usually local
+     *     to the application project
+     * @param shouldEnsureOwnershipOfApplicationLayersCacheDirectory if {@code true}, ensures the
+     *     base image layers cache directory is safe to write to
      */
-    public Initializer(Path baseImageLayersCacheDirectory, boolean shouldEnsureOwnershipOfBaseImageLayersCacheDirectory, Path applicationLayersCacheDirectory, boolean shouldEnsureOwnershipOfApplicationLayersCacheDirectory) {
+    public Initializer(
+        Path baseImageLayersCacheDirectory,
+        boolean shouldEnsureOwnershipOfBaseImageLayersCacheDirectory,
+        Path applicationLayersCacheDirectory,
+        boolean shouldEnsureOwnershipOfApplicationLayersCacheDirectory) {
       this.baseImageLayersCacheDirectory = baseImageLayersCacheDirectory;
-      this.shouldEnsureOwnershipOfBaseImageLayersCacheDirectory = shouldEnsureOwnershipOfBaseImageLayersCacheDirectory;
+      this.shouldEnsureOwnershipOfBaseImageLayersCacheDirectory =
+          shouldEnsureOwnershipOfBaseImageLayersCacheDirectory;
       this.applicationLayersCacheDirectory = applicationLayersCacheDirectory;
-      this.shouldEnsureOwnershipOfApplicationLayersCacheDirectory = shouldEnsureOwnershipOfApplicationLayersCacheDirectory;
+      this.shouldEnsureOwnershipOfApplicationLayersCacheDirectory =
+          shouldEnsureOwnershipOfApplicationLayersCacheDirectory;
     }
 
     public Caches init()
-        throws CacheMetadataCorruptedException, IOException, CacheDirectoryNotOwnedException {
+        throws CacheMetadataCorruptedException, CacheDirectoryNotOwnedException,
+            CacheDirectoryCreationException, IOException {
       if (shouldEnsureOwnershipOfBaseImageLayersCacheDirectory) {
         ensureOwnership(baseImageLayersCacheDirectory);
       }

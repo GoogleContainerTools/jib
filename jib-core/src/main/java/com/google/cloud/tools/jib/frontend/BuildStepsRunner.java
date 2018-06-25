@@ -22,17 +22,17 @@ import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.builder.BuildSteps;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
+import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.Caches;
 import com.google.cloud.tools.jib.cache.Caches.Initializer;
+import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.net.UnknownHostException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.concurrent.ExecutionException;
 import org.apache.http.conn.HttpHostConnectException;
 
@@ -48,11 +48,11 @@ public class BuildStepsRunner {
    * @throws CacheDirectoryCreationException if the {@code cacheDirectory} could not be created
    */
   public static BuildStepsRunner forBuildImage(
-      BuildConfiguration buildConfiguration,
-      SourceFilesConfiguration sourceFilesConfiguration) throws IOException {
+      BuildConfiguration buildConfiguration, SourceFilesConfiguration sourceFilesConfiguration)
+      throws CacheDirectoryCreationException {
     return new BuildStepsRunner(
         BuildSteps.forBuildToDockerRegistry(
-            buildConfiguration, sourceFilesConfiguration));
+            buildConfiguration, sourceFilesConfiguration, getCacheInitializer(buildConfiguration)));
   }
 
   /**
@@ -64,11 +64,36 @@ public class BuildStepsRunner {
    * @throws CacheDirectoryCreationException if the {@code cacheDirectory} could not be created
    */
   public static BuildStepsRunner forBuildToDockerDaemon(
-      BuildConfiguration buildConfiguration,
-      SourceFilesConfiguration sourceFilesConfiguration) {
+      BuildConfiguration buildConfiguration, SourceFilesConfiguration sourceFilesConfiguration)
+      throws CacheDirectoryCreationException {
     return new BuildStepsRunner(
         BuildSteps.forBuildToDockerDaemon(
-            buildConfiguration, sourceFilesConfiguration));
+            buildConfiguration, sourceFilesConfiguration, getCacheInitializer(buildConfiguration)));
+  }
+
+  // TODO: Move this up to somewhere where defaults for cache location are provided.
+  private static Initializer getCacheInitializer(BuildConfiguration buildConfiguration)
+      throws CacheDirectoryCreationException {
+    CacheConfiguration applicationLayersCacheConfiguration;
+    if (buildConfiguration.getApplicationLayersCacheConfiguration() == null) {
+      applicationLayersCacheConfiguration = CacheConfiguration.makeTemporary();
+    } else {
+      applicationLayersCacheConfiguration =
+          buildConfiguration.getApplicationLayersCacheConfiguration();
+    }
+
+    CacheConfiguration baseImageLayersCacheConfiguration;
+    if (buildConfiguration.getBaseImageLayersCacheConfiguration() == null) {
+      baseImageLayersCacheConfiguration = CacheConfiguration.forDefaultUserLevelCacheDirectory();
+    } else {
+      baseImageLayersCacheConfiguration = buildConfiguration.getBaseImageLayersCacheConfiguration();
+    }
+
+    return new Caches.Initializer(
+        baseImageLayersCacheConfiguration.getCacheDirectory(),
+        applicationLayersCacheConfiguration.shouldEnsureOwnership(),
+        applicationLayersCacheConfiguration.getCacheDirectory(),
+        applicationLayersCacheConfiguration.shouldEnsureOwnership());
   }
 
   private static void handleRegistryUnauthorizedException(
@@ -206,7 +231,7 @@ public class BuildStepsRunner {
             helpfulSuggestions.none(), executionException.getCause());
       }
 
-    } catch (InterruptedException | IOException ex) {
+    } catch (InterruptedException | IOException | CacheDirectoryCreationException ex) {
       // TODO: Add more suggestions for various build failures.
       throw new BuildStepsExecutionException(helpfulSuggestions.none(), ex);
 
