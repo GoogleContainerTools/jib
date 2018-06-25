@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.builder;
 
+import com.google.cloud.tools.jib.cache.Cache;
+import com.google.cloud.tools.jib.configuration.CacheLocation;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
@@ -59,6 +61,8 @@ public class BuildConfiguration {
     private Map<String, String> environmentMap = new HashMap<>();
     private List<String> exposedPorts = new ArrayList<>();
     private Class<? extends BuildableManifestTemplate> targetFormat = V22ManifestTemplate.class;
+    @Nullable private CacheLocation applicationLayersCacheLocation;
+    @Nullable private CacheLocation baseImageLayersCacheLocation;
 
     private BuildLogger buildLogger;
 
@@ -136,6 +140,28 @@ public class BuildConfiguration {
       return this;
     }
 
+    /**
+     * Sets the location of the cache for storing application layers.
+     *
+     * @param applicationLayersCacheLocation the application layers {@link CacheLocation}
+     * @return this
+     */
+    public Builder setApplicationLayersCacheLocation(@Nullable CacheLocation applicationLayersCacheLocation) {
+      this.applicationLayersCacheLocation = applicationLayersCacheLocation;
+      return this;
+    }
+
+    /**
+     * Sets the location of the cache for storing base image layers.
+     *
+     * @param baseImageLayersCacheLocation the base image layers {@link CacheLocation}
+     * @return this
+     */
+    public Builder setBaseImageLayersCacheLocation(@Nullable CacheLocation baseImageLayersCacheLocation) {
+      this.baseImageLayersCacheLocation = baseImageLayersCacheLocation;
+      return this;
+    }
+
     /** @return the corresponding build configuration */
     public BuildConfiguration build() {
       // Validates the parameters.
@@ -174,7 +200,9 @@ public class BuildConfiguration {
               ImmutableList.copyOf(jvmFlags),
               ImmutableMap.copyOf(environmentMap),
               expandPortRanges(exposedPorts),
-              targetFormat);
+              targetFormat,
+              applicationLayersCacheLocation,
+              baseImageLayersCacheLocation);
 
         case 1:
           throw new IllegalStateException(errorMessages.get(0));
@@ -287,6 +315,8 @@ public class BuildConfiguration {
   private final ImmutableMap<String, String> environmentMap;
   private final ImmutableList<String> exposedPorts;
   private final Class<? extends BuildableManifestTemplate> targetFormat;
+  @Nullable private final CacheLocation applicationLayersCacheLocation;
+  @Nullable private final CacheLocation baseImageLayersCacheLocation;
 
   /** Instantiate with {@link Builder#build}. */
   private BuildConfiguration(
@@ -302,7 +332,9 @@ public class BuildConfiguration {
       ImmutableList<String> jvmFlags,
       ImmutableMap<String, String> environmentMap,
       ImmutableList<String> exposedPorts,
-      Class<? extends BuildableManifestTemplate> targetFormat) {
+      Class<? extends BuildableManifestTemplate> targetFormat,
+      @Nullable CacheLocation applicationLayersCacheLocation,
+      @Nullable CacheLocation baseImageLayersCacheLocation) {
     this.buildLogger = buildLogger;
     this.baseImageReference = baseImageReference;
     this.baseImageCredentialHelperName = baseImageCredentialHelperName;
@@ -316,6 +348,8 @@ public class BuildConfiguration {
     this.environmentMap = environmentMap;
     this.exposedPorts = exposedPorts;
     this.targetFormat = targetFormat;
+    this.applicationLayersCacheLocation = applicationLayersCacheLocation;
+    this.baseImageLayersCacheLocation = baseImageLayersCacheLocation;
   }
 
   public BuildLogger getBuildLogger() {
@@ -396,5 +430,23 @@ public class BuildConfiguration {
 
   public Class<? extends BuildableManifestTemplate> getTargetFormat() {
     return targetFormat;
+  }
+
+  /**
+   * Gets the location of the cache for storing application layers.
+   *
+   * @return the application layers {@link CacheLocation}, or {@code null} if not set
+   */
+  @Nullable public CacheLocation getApplicationLayersCacheLocation() {
+    return applicationLayersCacheLocation;
+  }
+
+  /**
+   * Sets the location of the cache for storing base image layers.
+   *
+   * @return the base image layers {@link CacheLocation}, or {@code null} if not set
+   */
+  @Nullable public CacheLocation getBaseImageLayersCacheLocation() {
+    return baseImageLayersCacheLocation;
   }
 }

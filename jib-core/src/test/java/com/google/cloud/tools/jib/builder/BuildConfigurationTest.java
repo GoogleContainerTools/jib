@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder;
 
+import com.google.cloud.tools.jib.configuration.CacheLocation;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
@@ -23,6 +24,7 @@ import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -59,6 +61,8 @@ public class BuildConfigurationTest {
     Map<String, String> expectedEnvironment = ImmutableMap.of("key", "value");
     ImmutableList<String> expectedExposedPorts = ImmutableList.of("1000", "2000");
     Class<? extends BuildableManifestTemplate> expectedTargetFormat = OCIManifestTemplate.class;
+    CacheLocation expectedApplicationLayersCacheLocation = CacheLocation.atPath(Paths.get("application/layers"));
+    CacheLocation expectedBaseImageLayersCacheLocation = CacheLocation.atPath(Paths.get("base/image/layers"));
 
     BuildConfiguration.Builder buildConfigurationBuilder =
         BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
@@ -77,7 +81,9 @@ public class BuildConfigurationTest {
             .setJvmFlags(expectedJvmFlags)
             .setEnvironment(expectedEnvironment)
             .setExposedPorts(expectedExposedPorts)
-            .setTargetFormat(OCIManifestTemplate.class);
+            .setTargetFormat(OCIManifestTemplate.class)
+            .setApplicationLayersCacheLocation(expectedApplicationLayersCacheLocation)
+            .setBaseImageLayersCacheLocation(expectedBaseImageLayersCacheLocation);
     BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
 
     Assert.assertEquals(expectedBaseImageServerUrl, buildConfiguration.getBaseImageRegistry());
@@ -98,6 +104,8 @@ public class BuildConfigurationTest {
     Assert.assertEquals(expectedEnvironment, buildConfiguration.getEnvironment());
     Assert.assertEquals(expectedExposedPorts, buildConfiguration.getExposedPorts());
     Assert.assertEquals(expectedTargetFormat, buildConfiguration.getTargetFormat());
+    Assert.assertEquals(expectedApplicationLayersCacheLocation, buildConfiguration.getApplicationLayersCacheLocation());
+    Assert.assertEquals(expectedBaseImageLayersCacheLocation, buildConfiguration.getBaseImageLayersCacheLocation());
   }
 
   @Test
@@ -131,6 +139,8 @@ public class BuildConfigurationTest {
     Assert.assertEquals(Collections.emptyMap(), buildConfiguration.getEnvironment());
     Assert.assertEquals(Collections.emptyList(), buildConfiguration.getExposedPorts());
     Assert.assertEquals(V22ManifestTemplate.class, buildConfiguration.getTargetFormat());
+    Assert.assertNull(buildConfiguration.getApplicationLayersCacheLocation());
+    Assert.assertNull(buildConfiguration.getBaseImageLayersCacheLocation());
   }
 
   @Test
