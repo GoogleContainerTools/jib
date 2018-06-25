@@ -57,7 +57,7 @@ public class BuildConfigurationTest {
     List<String> expectedJavaArguments = Arrays.asList("arg1", "arg2");
     List<String> expectedJvmFlags = Arrays.asList("some", "jvm", "flags");
     Map<String, String> expectedEnvironment = ImmutableMap.of("key", "value");
-    List<String> expectedExposedPorts = Arrays.asList("1000", "2000");
+    ImmutableList<String> expectedExposedPorts = ImmutableList.of("1000", "2000");
     Class<? extends BuildableManifestTemplate> expectedTargetFormat = OCIManifestTemplate.class;
 
     BuildConfiguration.Builder buildConfigurationBuilder =
@@ -186,25 +186,58 @@ public class BuildConfigurationTest {
 
   @Test
   public void testExpandPortList() {
-    List<String> input = Arrays.asList("1000", "2000-2003", "3000 - 3000", "4002-4000");
+    List<String> goodInputs =
+        Arrays.asList("1000", "2000-2003", "3000-3000", "4000/tcp", "5000/udp", "6000-6002/tcp");
     ImmutableList<String> expected =
         new ImmutableList.Builder<String>()
-            .add("1000", "2000", "2001", "2002", "2003", "3000", "4000", "4001", "4002")
+            .add(
+                "1000",
+                "2000",
+                "2001",
+                "2002",
+                "2003",
+                "3000",
+                "4000/tcp",
+                "5000/udp",
+                "6000/tcp",
+                "6001/tcp",
+                "6002/tcp")
             .build();
-    ImmutableList<String> result = BuildConfiguration.expandPortRanges(input, mockLogger);
+    BuildConfiguration.Builder builder = BuildConfiguration.builder(mockLogger);
+    ImmutableList<String> result = builder.expandPortRanges(goodInputs);
     Assert.assertEquals(expected, result);
 
-    BuildConfiguration.expandPortRanges(Collections.singletonList("abc"), mockLogger);
-    Mockito.verify(mockLogger).warn("Port 'abc' is not a port number");
+    List<String> badInputs = Arrays.asList("abc", "/udp", "1000/abc", "a100/tcp", "20/udpabc");
+    for (String input : badInputs) {
+      try {
+        builder.expandPortRanges(Collections.singletonList(input));
+        Assert.fail();
+      } catch (NumberFormatException ex) {
+        Assert.assertEquals(
+            "Invalid port configuration: '"
+                + input
+                + "'. Make sure the port is a single number or a range of two numbers separated "
+                + "with a '-', with or without protocol specified (e.g. '<portNum>/tcp' or "
+                + "'<portNum>/udp').",
+            ex.getMessage());
+      }
+    }
 
-    BuildConfiguration.expandPortRanges(Collections.singletonList("0"), mockLogger);
-    Mockito.verify(mockLogger).warn("Port number '0' is out of range (1-65535)");
-    BuildConfiguration.expandPortRanges(Collections.singletonList("70000"), mockLogger);
-    Mockito.verify(mockLogger).warn("Port number '70000' is out of range (1-65535)");
+    try {
+      builder.expandPortRanges(Collections.singletonList("4002-4000"));
+      Assert.fail();
+    } catch (NumberFormatException ex) {
+      Assert.assertEquals(
+          "Invalid port range '4002-4000'; smaller number must come first.", ex.getMessage());
+    }
 
-    BuildConfiguration.expandPortRanges(Collections.singletonList("0-400"), mockLogger);
-    Mockito.verify(mockLogger).warn("Port range '0-400' exceeds normal port range (1-65535)");
-    BuildConfiguration.expandPortRanges(Collections.singletonList("500-70000"), mockLogger);
-    Mockito.verify(mockLogger).warn("Port range '500-70000' exceeds normal port range (1-65535)");
+    builder.expandPortRanges(Collections.singletonList("0"));
+    Mockito.verify(mockLogger).warn("Port number '0' is out of usual range (1-65535).");
+    builder.expandPortRanges(Collections.singletonList("70000"));
+    Mockito.verify(mockLogger).warn("Port number '70000' is out of usual range (1-65535).");
+    builder.expandPortRanges(Collections.singletonList("0-400"));
+    Mockito.verify(mockLogger).warn("Port number '0-400' is out of usual range (1-65535).");
+    builder.expandPortRanges(Collections.singletonList("1-70000"));
+    Mockito.verify(mockLogger).warn("Port number '1-70000' is out of usual range (1-65535).");
   }
 }

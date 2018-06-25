@@ -17,7 +17,7 @@ dependencies {
 jib {
     container {
         args = ['An argument.']
-        ports = ['1000', '2000-2003']
+        ports = ['1000/tcp', '2000-2003/udp']
     }
 
     // Does not have tests use user-level cache for base image layers.
