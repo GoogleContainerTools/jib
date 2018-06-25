@@ -45,6 +45,18 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class DockerContextGeneratorTest {
 
+  private static final String SAMPLE_DOCKERFILE =
+      "FROM somebaseimage\r\n"
+          + "\r\n"
+          + "COPY libs /app/libs/\r\n"
+          + "COPY resources /app/resources/\r\n"
+          + "COPY classes /app/classes/\r\n"
+          + "\r\n"
+          + "EXPOSE 1000/tcp\r\n"
+          + "EXPOSE 2000-2010/udp\r\n"
+          + "ENTRYPOINT [\"java\",\"-flag\",\"another\\\"Flag\",\"-cp\",\"/app/libs/*:/app/resources/:/app/classes/\",\"SomeMainClass\"]\r\n"
+          + "CMD [\"arg1\",\"arg2\"]\r\n";
+
   private static void assertSameFiles(Path directory1, Path directory2) throws IOException {
     Deque<Path> directory1Paths = new ArrayDeque<>(new DirectoryWalker(directory1).walk());
 
@@ -131,12 +143,12 @@ public class DockerContextGeneratorTest {
   @Test
   public void testMakeExposeItems() {
     Assert.assertEquals(
-        "EXPOSE 1000\nEXPOSE 2000-2010",
+        "EXPOSE 1000\r\nEXPOSE 2000-2010",
         DockerContextGenerator.makeExposeItems(ImmutableList.of("1000", "2000-2010")));
   }
 
   @Test
-  public void testMakeDockerfile() throws IOException, URISyntaxException {
+  public void testMakeDockerfile() {
     String expectedBaseImage = "somebaseimage";
     List<String> expectedJvmFlags = Arrays.asList("-flag", "another\"Flag");
     String expectedMainClass = "SomeMainClass";
@@ -152,8 +164,8 @@ public class DockerContextGeneratorTest {
             .setExposedPorts(exposedPorts)
             .makeDockerfile();
 
-    Path sampleDockerfile = Paths.get(Resources.getResource("sampleDockerfile").toURI());
     Assert.assertArrayEquals(
-        Files.readAllBytes(sampleDockerfile), dockerfile.getBytes(StandardCharsets.UTF_8));
+        SAMPLE_DOCKERFILE.getBytes(StandardCharsets.UTF_8),
+        dockerfile.getBytes(StandardCharsets.UTF_8));
   }
 }

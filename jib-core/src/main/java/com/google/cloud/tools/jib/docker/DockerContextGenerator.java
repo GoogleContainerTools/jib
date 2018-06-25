@@ -48,15 +48,15 @@ public class DockerContextGenerator {
 
   /** The template to generate the Dockerfile from. */
   private static final String DOCKERFILE_TEMPLATE =
-      "FROM @@BASE_IMAGE@@\n"
-          + "\n"
-          + "COPY libs @@DEPENDENCIES_PATH_ON_IMAGE@@\n"
-          + "COPY resources @@RESOURCES_PATH_ON_IMAGE@@\n"
-          + "COPY classes @@CLASSES_PATH_ON_IMAGE@@\n"
-          + "\n"
-          + "@@EXPOSE_INSTRUCTIONS@@\n"
-          + "ENTRYPOINT @@ENTRYPOINT@@\n"
-          + "CMD @@CMD@@\n";
+      "FROM @@BASE_IMAGE@@\r\n"
+          + "\r\n"
+          + "COPY libs @@DEPENDENCIES_PATH_ON_IMAGE@@\r\n"
+          + "COPY resources @@RESOURCES_PATH_ON_IMAGE@@\r\n"
+          + "COPY classes @@CLASSES_PATH_ON_IMAGE@@\r\n"
+          + "\r\n"
+          + "@@EXPOSE_INSTRUCTIONS@@\r\n"
+          + "ENTRYPOINT @@ENTRYPOINT@@\r\n"
+          + "CMD @@CMD@@\r\n";
 
   /**
    * Formats a list for the Dockerfile's ENTRYPOINT or CMD.
@@ -95,7 +95,7 @@ public class DockerContextGenerator {
   @VisibleForTesting
   static String makeExposeItems(List<String> exposedPorts) {
     return String.join(
-        "\n", exposedPorts.stream().map(port -> "EXPOSE " + port).collect(Collectors.toList()));
+        "\r\n", exposedPorts.stream().map(port -> "EXPOSE " + port).collect(Collectors.toList()));
   }
 
   private final SourceFilesConfiguration sourceFilesConfiguration;
@@ -208,10 +208,9 @@ public class DockerContextGenerator {
    * Makes a {@code Dockerfile} from the {@code DOCKERFILE_TEMPLATE}.
    *
    * @return the {@code Dockerfile} contents.
-   * @throws IOException if reading the Dockerfile template fails.
    */
   @VisibleForTesting
-  String makeDockerfile() throws IOException {
+  String makeDockerfile() {
     Preconditions.checkNotNull(baseImage);
 
     return DOCKERFILE_TEMPLATE
