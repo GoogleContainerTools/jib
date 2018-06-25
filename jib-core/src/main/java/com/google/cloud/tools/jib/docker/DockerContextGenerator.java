@@ -31,7 +31,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -46,18 +45,6 @@ import javax.annotation.Nullable;
  * </ul>
  */
 public class DockerContextGenerator {
-
-  /**
-   * Builds a list of Dockerfile "EXPOSE" instructions.
-   *
-   * @param exposedPorts the list of ports numbers/ranges to expose
-   * @return a string containing an EXPOSE instruction for each of the entries
-   */
-  @VisibleForTesting
-  static String makeExposeInstructions(List<String> exposedPorts) {
-    return String.join(
-        "\n", exposedPorts.stream().map(port -> "EXPOSE " + port).collect(Collectors.toList()));
-  }
 
   private final SourceFilesConfiguration sourceFilesConfiguration;
 
@@ -186,20 +173,27 @@ public class DockerContextGenerator {
   @VisibleForTesting
   String makeDockerfile() throws JsonProcessingException {
     ObjectMapper objectMapper = new ObjectMapper();
-    return "FROM "
-        + Preconditions.checkNotNull(baseImage)
-        + "\n\nCOPY libs "
-        + sourceFilesConfiguration.getDependenciesPathOnImage()
-        + "\nCOPY resources "
-        + sourceFilesConfiguration.getResourcesPathOnImage()
-        + "\nCOPY classes "
-        + sourceFilesConfiguration.getClassesPathOnImage()
-        + "\n\n"
-        + makeExposeInstructions(exposedPorts)
-        + "\nENTRYPOINT "
-        + objectMapper.writeValueAsString(
-            EntrypointBuilder.makeEntrypoint(sourceFilesConfiguration, jvmFlags, mainClass))
-        + "\nCMD "
-        + objectMapper.writeValueAsString(javaArguments);
+    StringBuilder dockerfile = new StringBuilder();
+    dockerfile
+        .append("FROM ")
+        .append(Preconditions.checkNotNull(baseImage))
+        .append("\n\nCOPY libs ")
+        .append(sourceFilesConfiguration.getDependenciesPathOnImage())
+        .append("\nCOPY resources ")
+        .append(sourceFilesConfiguration.getResourcesPathOnImage())
+        .append("\nCOPY classes ")
+        .append(sourceFilesConfiguration.getClassesPathOnImage())
+        .append("\n");
+    for (String port : exposedPorts) {
+      dockerfile.append("\nEXPOSE ").append(port);
+    }
+    dockerfile
+        .append("\nENTRYPOINT ")
+        .append(
+            objectMapper.writeValueAsString(
+                EntrypointBuilder.makeEntrypoint(sourceFilesConfiguration, jvmFlags, mainClass)))
+        .append("\nCMD ")
+        .append(objectMapper.writeValueAsString(javaArguments));
+    return dockerfile.toString();
   }
 }

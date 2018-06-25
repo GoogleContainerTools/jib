@@ -112,13 +112,6 @@ public class DockerContextGeneratorTest {
   }
 
   @Test
-  public void testMakeExposeInstructions() {
-    Assert.assertEquals(
-        "EXPOSE 1000\nEXPOSE 2000-2010",
-        DockerContextGenerator.makeExposeInstructions(ImmutableList.of("1000", "2000-2010")));
-  }
-
-  @Test
   public void testMakeDockerfile() throws IOException {
     String expectedBaseImage = "somebaseimage";
     List<String> expectedJvmFlags = Arrays.asList("-flag", "another\"Flag");
