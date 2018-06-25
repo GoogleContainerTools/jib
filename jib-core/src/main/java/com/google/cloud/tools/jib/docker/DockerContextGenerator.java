@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.filesystem.FileOperations;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.io.MoreFiles;
+import com.google.common.io.Resources;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryNotEmptyException;
@@ -45,18 +46,6 @@ import javax.annotation.Nullable;
  * </ul>
  */
 public class DockerContextGenerator {
-
-  /** The template to generate the Dockerfile from. */
-  private static final String DOCKERFILE_TEMPLATE =
-      "FROM @@BASE_IMAGE@@\n"
-          + "\n"
-          + "COPY libs @@DEPENDENCIES_PATH_ON_IMAGE@@\n"
-          + "COPY resources @@RESOURCES_PATH_ON_IMAGE@@\n"
-          + "COPY classes @@CLASSES_PATH_ON_IMAGE@@\n"
-          + "\n"
-          + "@@EXPOSE_INSTRUCTIONS@@\n"
-          + "ENTRYPOINT @@ENTRYPOINT@@\n"
-          + "CMD @@CMD@@\n";
 
   /**
    * Formats a list for the Dockerfile's ENTRYPOINT or CMD.
@@ -95,7 +84,8 @@ public class DockerContextGenerator {
   @VisibleForTesting
   static String makeExposeItems(List<String> exposedPorts) {
     return String.join(
-        "\n", exposedPorts.stream().map(port -> "EXPOSE " + port).collect(Collectors.toList()));
+        System.getProperty("line.separator"),
+        exposedPorts.stream().map(port -> "EXPOSE " + port).collect(Collectors.toList()));
   }
 
   private final SourceFilesConfiguration sourceFilesConfiguration;
@@ -205,7 +195,7 @@ public class DockerContextGenerator {
   }
 
   /**
-   * Makes a {@code Dockerfile} from the {@code DOCKERFILE_TEMPLATE}.
+   * Makes a {@code Dockerfile} from the {@code DockerfileTemplate}.
    *
    * @return the {@code Dockerfile} contents.
    * @throws IOException if reading the Dockerfile template fails.
@@ -214,7 +204,10 @@ public class DockerContextGenerator {
   String makeDockerfile() throws IOException {
     Preconditions.checkNotNull(baseImage);
 
-    return DOCKERFILE_TEMPLATE
+    String dockerfileTemplate =
+        Resources.toString(Resources.getResource("DockerfileTemplate"), StandardCharsets.UTF_8);
+
+    return dockerfileTemplate
         .replace("@@BASE_IMAGE@@", baseImage)
         .replace(
             "@@DEPENDENCIES_PATH_ON_IMAGE@@", sourceFilesConfiguration.getDependenciesPathOnImage())
