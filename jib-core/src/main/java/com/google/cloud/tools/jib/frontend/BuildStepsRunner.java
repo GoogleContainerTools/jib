@@ -71,7 +71,8 @@ public class BuildStepsRunner {
             buildConfiguration, sourceFilesConfiguration, getCacheInitializer(buildConfiguration)));
   }
 
-  // TODO: Move this up to somewhere where defaults for cache location are provided and ownership is checked rather than in Caches.Initializer.
+  // TODO: Move this up to somewhere where defaults for cache location are provided and ownership is
+  // checked rather than in Caches.Initializer.
   private static Initializer getCacheInitializer(BuildConfiguration buildConfiguration)
       throws CacheDirectoryCreationException {
     CacheConfiguration applicationLayersCacheConfiguration;
