@@ -131,7 +131,7 @@ public class DockerContextGeneratorTest {
   @Test
   public void testMakeExposeItems() {
     Assert.assertEquals(
-        "EXPOSE 1000" + System.getProperty("line.separator") + "EXPOSE 2000-2010",
+        "EXPOSE 1000\nEXPOSE 2000-2010",
         DockerContextGenerator.makeExposeItems(ImmutableList.of("1000", "2000-2010")));
   }
 
@@ -153,6 +153,8 @@ public class DockerContextGeneratorTest {
             .makeDockerfile();
 
     Path sampleDockerfile = Paths.get(Resources.getResource("sampleDockerfile").toURI());
+    System.out.println("Length before read: " + Files.size(sampleDockerfile));
+    System.out.println("Length after read: " + Files.readAllBytes(sampleDockerfile).length);
     Assert.assertArrayEquals(
         Files.readAllBytes(sampleDockerfile), dockerfile.getBytes(StandardCharsets.UTF_8));
   }

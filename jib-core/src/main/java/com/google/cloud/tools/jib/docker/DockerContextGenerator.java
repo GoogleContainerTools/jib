@@ -84,8 +84,7 @@ public class DockerContextGenerator {
   @VisibleForTesting
   static String makeExposeItems(List<String> exposedPorts) {
     return String.join(
-        System.getProperty("line.separator"),
-        exposedPorts.stream().map(port -> "EXPOSE " + port).collect(Collectors.toList()));
+        "\n", exposedPorts.stream().map(port -> "EXPOSE " + port).collect(Collectors.toList()));
   }
 
   private final SourceFilesConfiguration sourceFilesConfiguration;
@@ -190,8 +189,11 @@ public class DockerContextGenerator {
     FileOperations.copy(sourceFilesConfiguration.getClassesFiles(), classesDir);
 
     // Creates the Dockerfile.
+    System.out.println(
+        "Length before write: " + makeDockerfile().getBytes(StandardCharsets.UTF_8).length);
     Files.write(
         targetDirectory.resolve("Dockerfile"), makeDockerfile().getBytes(StandardCharsets.UTF_8));
+    System.out.println("Length after write: " + Files.size(targetDirectory.resolve("Dockerfile")));
   }
 
   /**
