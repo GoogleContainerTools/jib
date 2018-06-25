@@ -185,7 +185,20 @@ public class DockerContextGenerator {
   }
 
   /**
-   * Makes the contents of a {@code Dockerfile} using configuration data.
+   * Makes the contents of a {@code Dockerfile} using configuration data, in the following format:
+   *
+   * <pre>{@code
+   * FROM [base image]
+   *
+   * COPY libs [path/to/dependencies]
+   * COPY resources [path/to/resources]
+   * COPY classes [path/to/classes]
+   *
+   * EXPOSE [port]
+   * [More EXPOSE instructions, if necessary]
+   * ENTRYPOINT java [jvm flags] -cp [classpaths] [main class]
+   * CMD [main class args]
+   * }</pre>
    *
    * @return the {@code Dockerfile} contents
    */
