@@ -17,9 +17,10 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
+import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
+import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
-import com.google.cloud.tools.jib.frontend.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
 import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.ImageReference;
@@ -90,7 +91,8 @@ public class BuildImageMojo extends JibPluginConfiguration {
         MavenProjectProperties.getForProject(getProject(), mavenBuildLogger);
     String mainClass = mavenProjectProperties.getMainClass(this);
 
-    BuildConfiguration buildConfiguration =
+    // Builds the BuildConfiguration.
+    BuildConfiguration.Builder buildConfigurationBuilder =
         BuildConfiguration.builder(mavenBuildLogger)
             .setBaseImage(baseImage)
             .setBaseImageCredentialHelperName(getBaseImageCredentialHelperName())
@@ -103,8 +105,16 @@ public class BuildImageMojo extends JibPluginConfiguration {
             .setJvmFlags(getJvmFlags())
             .setEnvironment(getEnvironment())
             .setExposedPorts(getExposedPorts())
-            .setTargetFormat(ImageFormat.valueOf(getFormat()).getManifestTemplateClass())
-            .build();
+            .setTargetFormat(ImageFormat.valueOf(getFormat()).getManifestTemplateClass());
+    CacheConfiguration applicationLayersCacheConfiguration =
+        CacheConfiguration.forPath(mavenProjectProperties.getCacheDirectory());
+    buildConfigurationBuilder.setApplicationLayersCacheConfiguration(
+        applicationLayersCacheConfiguration);
+    if (getUseOnlyProjectCache()) {
+      buildConfigurationBuilder.setBaseImageLayersCacheConfiguration(
+          applicationLayersCacheConfiguration);
+    }
+    BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
     MavenBuildLogger.disableHttpLogging();
@@ -113,10 +123,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
 
     try {
       BuildStepsRunner.forBuildImage(
-              buildConfiguration,
-              mavenProjectProperties.getSourceFilesConfiguration(),
-              mavenProjectProperties.getCacheDirectory(),
-              getUseOnlyProjectCache())
+              buildConfiguration, mavenProjectProperties.getSourceFilesConfiguration())
           .build(HELPFUL_SUGGESTIONS);
       getLog().info("");
 
