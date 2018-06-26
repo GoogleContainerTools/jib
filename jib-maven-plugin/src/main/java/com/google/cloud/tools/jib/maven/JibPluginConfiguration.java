@@ -72,6 +72,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     @Nullable
     @Parameter(required = true)
     private String format = "Docker";
+
+    @Parameter private List<String> ports = Collections.emptyList();
   }
 
   /**
@@ -192,6 +194,10 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
   List<String> getArgs() {
     return container.args;
+  }
+
+  List<String> getExposedPorts() {
+    return container.ports;
   }
 
   String getFormat() {
