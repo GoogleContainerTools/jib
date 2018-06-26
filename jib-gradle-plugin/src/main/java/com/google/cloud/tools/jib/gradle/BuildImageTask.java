@@ -110,6 +110,7 @@ public class BuildImageTask extends DefaultTask {
             .setMainClass(mainClass)
             .setJavaArguments(jibExtension.getArgs())
             .setJvmFlags(jibExtension.getJvmFlags())
+            .setExposedPorts(jibExtension.getExposedPorts())
             .setTargetFormat(jibExtension.getFormat());
     CacheConfiguration applicationLayersCacheConfiguration =
         CacheConfiguration.forPath(gradleProjectProperties.getCacheDirectory());
