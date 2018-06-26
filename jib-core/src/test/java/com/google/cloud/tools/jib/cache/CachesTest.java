@@ -31,13 +31,13 @@ public class CachesTest {
 
   @Test
   public void testInitializer()
-      throws CacheMetadataCorruptedException, IOException, CacheDirectoryNotOwnedException {
+      throws CacheMetadataCorruptedException, IOException, CacheDirectoryNotOwnedException,
+          CacheDirectoryCreationException {
     Path tempBaseCacheDirectory = temporaryFolder.newFolder().toPath();
     Path tempApplicationCacheDirectory = temporaryFolder.newFolder().toPath();
 
     try (Caches caches =
-        Caches.newInitializer(tempApplicationCacheDirectory)
-            .setBaseCacheDirectory(tempBaseCacheDirectory)
+        new Caches.Initializer(tempBaseCacheDirectory, false, tempApplicationCacheDirectory, false)
             .init()) {
       Assert.assertEquals(tempBaseCacheDirectory, caches.getBaseCache().getCacheDirectory());
       Assert.assertEquals(
@@ -51,7 +51,7 @@ public class CachesTest {
   }
 
   @Test
-  public void testEnsureOwnership_notOwned() throws IOException {
+  public void testEnsureOwnership_notOwned() throws IOException, CacheDirectoryCreationException {
     Path cacheDirectory = temporaryFolder.newFolder().toPath();
 
     try {
@@ -64,7 +64,8 @@ public class CachesTest {
   }
 
   @Test
-  public void testEnsureOwnership_create() throws IOException, CacheDirectoryNotOwnedException {
+  public void testEnsureOwnership_create()
+      throws IOException, CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
     Path cacheDirectory = temporaryFolder.newFolder().toPath();
     Path nonexistentDirectory = cacheDirectory.resolve("somefolder");
 

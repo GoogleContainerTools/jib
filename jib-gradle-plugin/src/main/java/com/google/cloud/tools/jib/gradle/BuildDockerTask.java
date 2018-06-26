@@ -17,10 +17,11 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
+import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
+import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
-import com.google.cloud.tools.jib.frontend.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.ImageReference;
@@ -96,7 +97,9 @@ public class BuildDockerTask extends DefaultTask {
             ? ImageReference.of(null, getProject().getName(), getProject().getVersion().toString())
             : ImageReference.parse(jibExtension.getTargetImage());
 
-    BuildConfiguration buildConfiguration =
+    // Builds the BuildConfiguration.
+    // TODO: Consolidate with BuildImageTask.
+    BuildConfiguration.Builder buildConfigurationBuilder =
         BuildConfiguration.builder(gradleBuildLogger)
             .setBaseImage(ImageReference.parse(jibExtension.getBaseImage()))
             .setTargetImage(targetImage)
@@ -104,8 +107,16 @@ public class BuildDockerTask extends DefaultTask {
             .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
             .setMainClass(mainClass)
             .setJavaArguments(jibExtension.getArgs())
-            .setJvmFlags(jibExtension.getJvmFlags())
-            .build();
+            .setJvmFlags(jibExtension.getJvmFlags());
+    CacheConfiguration applicationLayersCacheConfiguration =
+        CacheConfiguration.forPath(gradleProjectProperties.getCacheDirectory());
+    buildConfigurationBuilder.setApplicationLayersCacheConfiguration(
+        applicationLayersCacheConfiguration);
+    if (jibExtension.getUseOnlyProjectCache()) {
+      buildConfigurationBuilder.setBaseImageLayersCacheConfiguration(
+          applicationLayersCacheConfiguration);
+    }
+    BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
     GradleBuildLogger.disableHttpLogging();
@@ -115,10 +126,7 @@ public class BuildDockerTask extends DefaultTask {
     // Uses a directory in the Gradle build cache as the Jib cache.
     try {
       BuildStepsRunner.forBuildToDockerDaemon(
-              buildConfiguration,
-              gradleProjectProperties.getSourceFilesConfiguration(),
-              gradleProjectProperties.getCacheDirectory(),
-              jibExtension.getUseOnlyProjectCache())
+              buildConfiguration, gradleProjectProperties.getSourceFilesConfiguration())
           .build(HELPFUL_SUGGESTIONS);
 
     } catch (CacheDirectoryCreationException | BuildStepsExecutionException ex) {

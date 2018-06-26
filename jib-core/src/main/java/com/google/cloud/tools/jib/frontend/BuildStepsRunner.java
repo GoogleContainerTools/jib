@@ -22,17 +22,17 @@ import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.builder.BuildSteps;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
+import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.Caches;
 import com.google.cloud.tools.jib.cache.Caches.Initializer;
+import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.net.UnknownHostException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.concurrent.ExecutionException;
 import org.apache.http.conn.HttpHostConnectException;
 
@@ -44,22 +44,15 @@ public class BuildStepsRunner {
    *
    * @param buildConfiguration the configuration parameters for the build
    * @param sourceFilesConfiguration the source/destination file configuration for the image
-   * @param cacheDirectory the directory to use for the cache
-   * @param useOnlyProjectCache if {@code true}, sets the base layers cache directory to be the same
-   *     as the application layers cache directory
    * @return a {@link BuildStepsRunner} for building to a registry
    * @throws CacheDirectoryCreationException if the {@code cacheDirectory} could not be created
    */
   public static BuildStepsRunner forBuildImage(
-      BuildConfiguration buildConfiguration,
-      SourceFilesConfiguration sourceFilesConfiguration,
-      Path cacheDirectory,
-      boolean useOnlyProjectCache)
+      BuildConfiguration buildConfiguration, SourceFilesConfiguration sourceFilesConfiguration)
       throws CacheDirectoryCreationException {
-    Initializer cacheInitializer = getCacheInitializer(cacheDirectory, useOnlyProjectCache);
     return new BuildStepsRunner(
         BuildSteps.forBuildToDockerRegistry(
-            buildConfiguration, sourceFilesConfiguration, cacheInitializer));
+            buildConfiguration, sourceFilesConfiguration, getCacheInitializer(buildConfiguration)));
   }
 
   /**
@@ -67,39 +60,35 @@ public class BuildStepsRunner {
    *
    * @param buildConfiguration the configuration parameters for the build
    * @param sourceFilesConfiguration the source/destination file configuration for the image
-   * @param cacheDirectory the directory to use for the cache
-   * @param useOnlyProjectCache if {@code true}, sets the base layers cache directory to be the same
-   *     as the application layers cache directory
    * @return a {@link BuildStepsRunner} for building to a Docker daemon
    * @throws CacheDirectoryCreationException if the {@code cacheDirectory} could not be created
    */
   public static BuildStepsRunner forBuildToDockerDaemon(
-      BuildConfiguration buildConfiguration,
-      SourceFilesConfiguration sourceFilesConfiguration,
-      Path cacheDirectory,
-      boolean useOnlyProjectCache)
+      BuildConfiguration buildConfiguration, SourceFilesConfiguration sourceFilesConfiguration)
       throws CacheDirectoryCreationException {
-    Initializer cacheInitializer = getCacheInitializer(cacheDirectory, useOnlyProjectCache);
     return new BuildStepsRunner(
         BuildSteps.forBuildToDockerDaemon(
-            buildConfiguration, sourceFilesConfiguration, cacheInitializer));
+            buildConfiguration, sourceFilesConfiguration, getCacheInitializer(buildConfiguration)));
   }
 
-  private static Initializer getCacheInitializer(Path cacheDirectory, boolean useOnlyProjectCache)
+  // TODO: Move this up to somewhere where defaults for cache location are provided and ownership is
+  // checked rather than in Caches.Initializer.
+  private static Initializer getCacheInitializer(BuildConfiguration buildConfiguration)
       throws CacheDirectoryCreationException {
-    if (!Files.exists(cacheDirectory)) {
-      try {
-        Files.createDirectory(cacheDirectory);
+    CacheConfiguration applicationLayersCacheConfiguration =
+        buildConfiguration.getApplicationLayersCacheConfiguration() == null
+            ? CacheConfiguration.makeTemporary()
+            : buildConfiguration.getApplicationLayersCacheConfiguration();
+    CacheConfiguration baseImageLayersCacheConfiguration =
+        buildConfiguration.getBaseImageLayersCacheConfiguration() == null
+            ? CacheConfiguration.forDefaultUserLevelCacheDirectory()
+            : buildConfiguration.getBaseImageLayersCacheConfiguration();
 
-      } catch (IOException ex) {
-        throw new CacheDirectoryCreationException(cacheDirectory, ex);
-      }
-    }
-    Caches.Initializer cachesInitializer = Caches.newInitializer(cacheDirectory);
-    if (useOnlyProjectCache) {
-      cachesInitializer.setBaseCacheDirectory(cacheDirectory);
-    }
-    return cachesInitializer;
+    return new Caches.Initializer(
+        baseImageLayersCacheConfiguration.getCacheDirectory(),
+        applicationLayersCacheConfiguration.shouldEnsureOwnership(),
+        applicationLayersCacheConfiguration.getCacheDirectory(),
+        applicationLayersCacheConfiguration.shouldEnsureOwnership());
   }
 
   private static void handleRegistryUnauthorizedException(
@@ -237,7 +226,7 @@ public class BuildStepsRunner {
             helpfulSuggestions.none(), executionException.getCause());
       }
 
-    } catch (InterruptedException | IOException ex) {
+    } catch (InterruptedException | IOException | CacheDirectoryCreationException ex) {
       // TODO: Add more suggestions for various build failures.
       throw new BuildStepsExecutionException(helpfulSuggestions.none(), ex);
 
