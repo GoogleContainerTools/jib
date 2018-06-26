@@ -16,14 +16,11 @@
 
 package com.google.cloud.tools.jib.configuration;
 
-import com.google.common.base.Splitter;
-import java.util.List;
-
 /** Holds port number and protocol for an exposed port. */
-public class ExposedPort {
+public class PortWithProtocol {
 
   /** Represents the protocol portion of the port. */
-  enum Protocol {
+  public enum Protocol {
     TCP,
     UDP
   }
@@ -31,30 +28,9 @@ public class ExposedPort {
   private int port;
   private Protocol protocol;
 
-  /**
-   * Creates a new {@link ExposedPort}
-   *
-   * @param port the port number
-   * @param protocol the type of traffic the port will be exposed to (e.g. tcp or udp)
-   */
-  public ExposedPort(int port, Protocol protocol) {
+  public PortWithProtocol(int port, Protocol protocol) {
     this.port = port;
     this.protocol = protocol;
-  }
-
-  /**
-   * @param configurationString the string to parse, in the format "port[/protocol]". Defaults to
-   *     TCP if protocol is not specified.
-   * @return an {@link ExposedPort} with values parsed from the string
-   */
-  public static ExposedPort fromString(String configurationString) {
-    List<String> parts = Splitter.on('/').splitToList(configurationString);
-    int port = Integer.parseInt(parts.get(0));
-    if (parts.size() > 1) {
-      return new ExposedPort(port, Enum.valueOf(Protocol.class, parts.get(1).toUpperCase()));
-    } else {
-      return new ExposedPort(port, Protocol.TCP);
-    }
   }
 
   public int getPort() {
@@ -65,7 +41,7 @@ public class ExposedPort {
     return protocol;
   }
 
-  /** @return the {@link ExposedPort} in string form "port/protocol" */
+  /** @return the {@link PortWithProtocol} in string form "port/protocol" */
   @Override
   public String toString() {
     return port + "/" + protocol.toString().toLowerCase();
