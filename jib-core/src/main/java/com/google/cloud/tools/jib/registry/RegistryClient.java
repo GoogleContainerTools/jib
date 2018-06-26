@@ -63,34 +63,47 @@ public class RegistryClient {
     return this;
   }
 
+  /** Immutable factory for creating {@link RegistryClient}s. */
+  public static class Factory {
+
+    private final RegistryEndpointProperties registryEndpointProperties;
+
+    private Factory(RegistryEndpointProperties registryEndpointProperties) {
+      this.registryEndpointProperties = registryEndpointProperties;
+    }
+
+    /**
+     * Creates a new {@link RegistryClient} with authentication credentials to use in requests.
+     *
+     * @param authorization the {@link Authorization} to access the registry/repository
+     * @return the new {@link RegistryClient}
+     */
+    public RegistryClient newWithAuthorization(@Nullable Authorization authorization) {
+      return new RegistryClient(authorization, registryEndpointProperties, false, makeUserAgent());
+    }
+
+    /**
+     * Creates a new {@link RegistryClient} that allows communication via HTTP.
+     *
+     * @return the new {@link RegistryClient}
+     */
+    public RegistryClient newAllowHttp() {
+      return new RegistryClient(null, registryEndpointProperties, true, makeUserAgent());
+    }
+  }
+
   @Nullable private static String userAgentSuffix;
 
   /**
-   * Creates a new {@link RegistryClient} with authentication credentials to use in requests.
-   *
-   * @param authorization the {@link Authorization} to access the registry/repository
    * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
    * @param imageName the image/repository name (also known as, namespace)
-   * @return the new {@link RegistryClient}
+   * @return the new {@link Factory}
    */
-  public static RegistryClient newWithAuthorization(
-      @Nullable Authorization authorization, String serverUrl, String imageName) {
-    return new RegistryClient(
-        authorization, new RegistryEndpointProperties(serverUrl, imageName), false);
+  public static Factory factory(String serverUrl, String imageName) {
+    return new Factory(new RegistryEndpointProperties(serverUrl, imageName));
   }
 
-  /**
-   * Creates a new {@link RegistryClient} that allows communication via HTTP.
-   *
-   * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
-   * @param imageName the image/repository name (also known as, namespace)
-   * @return the new {@link RegistryClient}
-   */
-  public static RegistryClient newAllowHttp(String serverUrl, String imageName) {
-    return new RegistryClient(null, new RegistryEndpointProperties(serverUrl, imageName), true);
-  }
-
-  // TODO: Inject via a RegistryClientFactory.
+  // TODO: Inject via a RegistryClient.Factory.
   /**
    * Sets a suffix to append to {@code User-Agent} headers.
    *
@@ -106,7 +119,7 @@ public class RegistryClient {
    *     string.
    */
   @VisibleForTesting
-  static String getUserAgent() {
+  static String makeUserAgent() {
     if (!Strings.isNullOrEmpty(System.getProperty("_JIB_DISABLE_USER_AGENT"))) {
       return "";
     }
@@ -126,9 +139,10 @@ public class RegistryClient {
   @Nullable private final Authorization authorization;
   private final RegistryEndpointProperties registryEndpointProperties;
   private final boolean allowHttp;
+  private final String userAgent;
 
   /**
-   * Instantiate with {@link #newWithAuthorization} or {@link #newAllowHttp}.
+   * Instantiate with {@link #factory}.
    *
    * @param authorization the {@link Authorization} to access the registry/repository
    * @param registryEndpointProperties properties of registry endpoint requests
@@ -138,10 +152,12 @@ public class RegistryClient {
   private RegistryClient(
       @Nullable Authorization authorization,
       RegistryEndpointProperties registryEndpointProperties,
-      boolean allowHttp) {
+      boolean allowHttp,
+      String userAgent) {
     this.authorization = authorization;
     this.registryEndpointProperties = registryEndpointProperties;
     this.allowHttp = allowHttp;
+    this.userAgent = userAgent;
   }
 
   /**
@@ -275,6 +291,11 @@ public class RegistryClient {
     return registryEndpointProperties.getServerUrl() + "/v2/";
   }
 
+  @VisibleForTesting
+  String getUserAgent() {
+    return userAgent;
+  }
+
   /**
    * Calls the registry endpoint.
    *
@@ -286,7 +307,7 @@ public class RegistryClient {
   private <T> T callRegistryEndpoint(RegistryEndpointProvider<T> registryEndpointProvider)
       throws IOException, RegistryException {
     return new RegistryEndpointCaller<>(
-            getUserAgent(),
+            userAgent,
             getApiRouteBase(),
             registryEndpointProvider,
             authorization,

@@ -134,15 +134,13 @@ class PullBaseImageStep
   private Image<Layer> pullBaseImage(@Nullable Authorization registryCredentials)
       throws IOException, RegistryException, LayerPropertyNotFoundException,
           LayerCountMismatchException {
+    RegistryClient.Factory registryClientFactory =
+        RegistryClient.factory(
+            buildConfiguration.getBaseImageRegistry(), buildConfiguration.getBaseImageRepository());
     RegistryClient registryClient =
         buildConfiguration.getAllowHttp()
-            ? RegistryClient.newAllowHttp(
-                buildConfiguration.getBaseImageRegistry(),
-                buildConfiguration.getBaseImageRepository())
-            : RegistryClient.newWithAuthorization(
-                registryCredentials,
-                buildConfiguration.getBaseImageRegistry(),
-                buildConfiguration.getBaseImageRepository());
+            ? registryClientFactory.newAllowHttp()
+            : registryClientFactory.newWithAuthorization(registryCredentials);
 
     ManifestTemplate manifestTemplate =
         registryClient.pullManifest(buildConfiguration.getBaseImageTag());
