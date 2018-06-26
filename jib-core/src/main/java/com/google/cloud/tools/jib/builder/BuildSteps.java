@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.builder;
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.builder.steps.StepsRunner;
 import com.google.cloud.tools.jib.cache.Cache;
+import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.Caches;
@@ -179,7 +180,7 @@ public class BuildSteps {
 
   public void run()
       throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
-          CacheDirectoryNotOwnedException {
+          CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
     buildConfiguration.getBuildLogger().lifecycle("");
 
     try (Timer timer = new Timer(buildConfiguration.getBuildLogger(), description)) {

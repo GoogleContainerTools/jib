@@ -14,15 +14,20 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.frontend;
+package com.google.cloud.tools.jib.cache;
 
-import com.google.cloud.tools.jib.cache.Cache;
 import java.nio.file.Path;
 
-/** Thrown when a directory could not be created to be used as the {@link Cache}. */
+/** Thrown when a directory to be used as the {@link Cache} could not be created. */
 public class CacheDirectoryCreationException extends Exception {
 
+  private static final String MESSAGE = "Could not create cache directory";
+
   CacheDirectoryCreationException(Path cacheDirectory, Throwable cause) {
-    super("Could not create cache directory: " + cacheDirectory, cause);
+    super(MESSAGE + ": " + cacheDirectory, cause);
+  }
+
+  public CacheDirectoryCreationException(Throwable cause) {
+    super(MESSAGE, cause);
   }
 }

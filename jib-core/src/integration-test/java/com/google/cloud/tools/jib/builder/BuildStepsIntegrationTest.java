@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Command;
+import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.Caches;
@@ -47,7 +48,7 @@ public class BuildStepsIntegrationTest {
   @Test
   public void testSteps_forBuildToDockerRegistry()
       throws IOException, URISyntaxException, InterruptedException, CacheMetadataCorruptedException,
-          ExecutionException, CacheDirectoryNotOwnedException {
+          ExecutionException, CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
     SourceFilesConfiguration sourceFilesConfiguration = new TestSourceFilesConfiguration();
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder(logger)
@@ -64,7 +65,7 @@ public class BuildStepsIntegrationTest {
         BuildSteps.forBuildToDockerRegistry(
             buildConfiguration,
             sourceFilesConfiguration,
-            Caches.newInitializer(cacheDirectory).setBaseCacheDirectory(cacheDirectory));
+            new Caches.Initializer(cacheDirectory, false, cacheDirectory, false));
 
     long lastTime = System.nanoTime();
     buildImageSteps.run();
@@ -91,7 +92,7 @@ public class BuildStepsIntegrationTest {
   @Test
   public void testSteps_forBuildToDockerDaemon()
       throws IOException, URISyntaxException, InterruptedException, CacheMetadataCorruptedException,
-          ExecutionException, CacheDirectoryNotOwnedException {
+          ExecutionException, CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
     SourceFilesConfiguration sourceFilesConfiguration = new TestSourceFilesConfiguration();
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder(logger)
@@ -107,7 +108,7 @@ public class BuildStepsIntegrationTest {
         BuildSteps.forBuildToDockerDaemon(
             buildConfiguration,
             sourceFilesConfiguration,
-            Caches.newInitializer(cacheDirectory).setBaseCacheDirectory(cacheDirectory));
+            new Caches.Initializer(cacheDirectory, false, cacheDirectory, false));
 
     buildDockerSteps.run();
     Assert.assertThat(
