@@ -21,11 +21,7 @@ import com.google.cloud.tools.jib.configuration.PortWithProtocol;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSortedMap;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.SortedMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -95,30 +91,5 @@ public class ExposedPorts {
     }
 
     return result.build();
-  }
-
-  /**
-   * @param exposedPorts a list of exposed ports
-   * @return a map of the ports in container config json form ({@code "port/protocol":{}})
-   */
-  public static ImmutableSortedMap<String, Map<?, ?>> listToMap(List<String> exposedPorts) {
-    ImmutableSortedMap.Builder<String, Map<?, ?>> result =
-        new ImmutableSortedMap.Builder<>(String::compareTo);
-    for (String port : exposedPorts) {
-      result.put(port, Collections.emptyMap());
-    }
-    return result.build();
-  }
-
-  /**
-   * @param portMap a map whose keyset consists of the exposed ports
-   * @return a list of the ports
-   */
-  public static ImmutableList<String> mapToList(SortedMap<String, Map<?, ?>> portMap) {
-    ImmutableList.Builder<String> ports = new ImmutableList.Builder<>();
-    for (Map.Entry<String, Map<?, ?>> entry : portMap.entrySet()) {
-      ports.add(entry.getKey());
-    }
-    return ports.build();
   }
 }
