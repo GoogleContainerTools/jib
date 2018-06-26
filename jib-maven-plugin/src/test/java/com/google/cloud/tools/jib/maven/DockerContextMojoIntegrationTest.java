@@ -22,6 +22,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -50,6 +51,16 @@ public class DockerContextMojoIntegrationTest {
 
     String imageName = "jib/integration-test";
     new Command("docker", "build", "-t", imageName, dockerContextDirectory.toString()).run();
+    Assert.assertThat(
+        new Command("docker", "inspect", imageName).run(),
+        CoreMatchers.containsString(
+            "            \"ExposedPorts\": {\n"
+                + "                \"1000/tcp\": {},\n"
+                + "                \"2000/udp\": {},\n"
+                + "                \"2001/udp\": {},\n"
+                + "                \"2002/udp\": {},\n"
+                + "                \"2003/udp\": {}"));
+
     Assert.assertEquals(
         "Hello, world. An argument.\n", new Command("docker", "run", imageName).run());
   }
