@@ -68,7 +68,10 @@ public class JibPlugin implements Plugin<Project> {
 
           } catch (UnknownTaskException ex) {
             throw new GradleException(
-                "Could not find task 'classes' - perhaps you did not apply the 'java' plugin?", ex);
+                "Could not find task 'classes' on project "
+                    + projectAfterEvaluation.getDisplayName()
+                    + " - perhaps you did not apply the 'java' plugin?",
+                ex);
           }
         });
   }
