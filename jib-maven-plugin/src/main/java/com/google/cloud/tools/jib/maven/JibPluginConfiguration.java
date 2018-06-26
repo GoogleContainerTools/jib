@@ -155,6 +155,9 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   @Parameter(defaultValue = "false", required = true)
   private boolean useOnlyProjectCache;
 
+  @Parameter(defaultValue = "false", required = true)
+  private boolean allowInsecureRegistries;
+
   MavenProject getProject() {
     return Preconditions.checkNotNull(project);
   }
@@ -206,6 +209,10 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
   boolean getUseOnlyProjectCache() {
     return useOnlyProjectCache;
+  }
+
+  boolean getAllowInsecureRegistries() {
+    return allowInsecureRegistries;
   }
 
   @VisibleForTesting
