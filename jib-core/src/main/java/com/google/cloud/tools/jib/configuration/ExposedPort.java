@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.configuration;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import java.util.List;
 
@@ -31,6 +30,17 @@ public class ExposedPort {
 
   private int port;
   private Protocol protocol;
+
+  /**
+   * Creates a new {@link ExposedPort}
+   *
+   * @param port the port number
+   * @param protocol the type of traffic the port will be exposed to (e.g. tcp or udp)
+   */
+  public ExposedPort(int port, Protocol protocol) {
+    this.port = port;
+    this.protocol = protocol;
+  }
 
   /**
    * @param configurationString the string to parse, in the format "port[/protocol]". Defaults to
@@ -59,11 +69,5 @@ public class ExposedPort {
   @Override
   public String toString() {
     return port + "/" + protocol.toString().toLowerCase();
-  }
-
-  @VisibleForTesting
-  ExposedPort(int port, Protocol protocol) {
-    this.port = port;
-    this.protocol = protocol;
   }
 }
