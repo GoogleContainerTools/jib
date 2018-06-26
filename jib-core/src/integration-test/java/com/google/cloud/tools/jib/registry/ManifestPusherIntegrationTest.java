@@ -37,10 +37,10 @@ public class ManifestPusherIntegrationTest {
   @Test
   public void testPush_missingBlobs() throws IOException, RegistryException {
     RegistryClient registryClient =
-        RegistryClient.newWithAuthorization(null, "gcr.io", "distroless/java");
+        RegistryClient.factory("gcr.io", "distroless/java").newWithAuthorization(null);
     ManifestTemplate manifestTemplate = registryClient.pullManifest("latest");
 
-    registryClient = RegistryClient.newAllowHttp("localhost:5000", "busybox");
+    registryClient = RegistryClient.factory("localhost:5000", "busybox").newAllowHttp();
     try {
       registryClient.pushManifest((V22ManifestTemplate) manifestTemplate, "latest");
       Assert.fail("Pushing manifest without its BLOBs should fail");
@@ -71,7 +71,8 @@ public class ManifestPusherIntegrationTest {
     expectedManifestTemplate.setContainerConfiguration(5, testContainerConfigurationBlobDigest);
 
     // Pushes the BLOBs.
-    RegistryClient registryClient = RegistryClient.newAllowHttp("localhost:5000", "testimage");
+    RegistryClient registryClient =
+        RegistryClient.factory("localhost:5000", "testimage").newAllowHttp();
     Assert.assertFalse(registryClient.pushBlob(testLayerBlobDigest, testLayerBlob));
     Assert.assertFalse(
         registryClient.pushBlob(
