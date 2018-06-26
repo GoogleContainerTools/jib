@@ -37,7 +37,8 @@ public class RegistryClientTest {
   @Before
   public void setUp() {
     testRegistryClient =
-        new RegistryClient(mockAuthorization, "some.server.url", "some image name", false);
+        RegistryClient.newWithAuthorization(
+            mockAuthorization, "some.server.url", "some image name");
   }
 
   @Test

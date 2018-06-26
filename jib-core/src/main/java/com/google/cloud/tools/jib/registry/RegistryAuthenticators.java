@@ -43,7 +43,8 @@ public abstract class RegistryAuthenticators {
   public static RegistryAuthenticator forOther(String serverUrl, String repository)
       throws RegistryAuthenticationFailedException, IOException, RegistryException {
     try {
-      return new RegistryClient(null, serverUrl, repository, false).getRegistryAuthenticator();
+      return RegistryClient.newWithAuthorization(null, serverUrl, repository)
+          .getRegistryAuthenticator();
 
     } catch (MalformedURLException ex) {
       throw new RegistryAuthenticationFailedException(ex);

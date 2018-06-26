@@ -65,6 +65,31 @@ public class RegistryClient {
 
   @Nullable private static String userAgentSuffix;
 
+  /**
+   * Creates a new {@link RegistryClient} with authentication credentials to use in requests.
+   *
+   * @param authorization the {@link Authorization} to access the registry/repository
+   * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
+   * @param imageName the image/repository name (also known as, namespace)
+   * @return the new {@link RegistryClient}
+   */
+  public static RegistryClient newWithAuthorization(
+      @Nullable Authorization authorization, String serverUrl, String imageName) {
+    return new RegistryClient(
+        authorization, new RegistryEndpointProperties(serverUrl, imageName), false);
+  }
+
+  /**
+   * Creates a new {@link RegistryClient} that allows communication via HTTP.
+   *
+   * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
+   * @param imageName the image/repository name (also known as, namespace)
+   * @return the new {@link RegistryClient}
+   */
+  public static RegistryClient newAllowHttp(String serverUrl, String imageName) {
+    return new RegistryClient(null, new RegistryEndpointProperties(serverUrl, imageName), true);
+  }
+
   // TODO: Inject via a RegistryClientFactory.
   /**
    * Sets a suffix to append to {@code User-Agent} headers.
@@ -103,19 +128,19 @@ public class RegistryClient {
   private final boolean allowHttp;
 
   /**
+   * Instantiate with {@link #newWithAuthorization} or {@link #newAllowHttp}.
+   *
    * @param authorization the {@link Authorization} to access the registry/repository
-   * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
-   * @param imageName the image/repository name (also known as, namespace)
+   * @param registryEndpointProperties properties of registry endpoint requests
    * @param allowHttp if {@code true}, allows redirects and fallbacks to HTTP; otherwise, only
    *     allows HTTPS
    */
-  public RegistryClient(
+  private RegistryClient(
       @Nullable Authorization authorization,
-      String serverUrl,
-      String imageName,
+      RegistryEndpointProperties registryEndpointProperties,
       boolean allowHttp) {
     this.authorization = authorization;
-    this.registryEndpointProperties = new RegistryEndpointProperties(serverUrl, imageName);
+    this.registryEndpointProperties = registryEndpointProperties;
     this.allowHttp = allowHttp;
   }
 

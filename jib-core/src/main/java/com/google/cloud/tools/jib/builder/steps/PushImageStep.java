@@ -117,11 +117,14 @@ class PushImageStep implements AsyncStep<Void>, Callable<Void> {
   private Void afterAllPushed() throws IOException, RegistryException, ExecutionException {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       RegistryClient registryClient =
-          new RegistryClient(
-              NonBlockingSteps.get(authenticatePushStep),
-              buildConfiguration.getTargetImageRegistry(),
-              buildConfiguration.getTargetImageRepository(),
-              buildConfiguration.getAllowHttp());
+          buildConfiguration.getAllowHttp()
+              ? RegistryClient.newAllowHttp(
+                  buildConfiguration.getTargetImageRegistry(),
+                  buildConfiguration.getTargetImageRepository())
+              : RegistryClient.newWithAuthorization(
+                  NonBlockingSteps.get(authenticatePushStep),
+                  buildConfiguration.getTargetImageRegistry(),
+                  buildConfiguration.getTargetImageRepository());
 
       // Constructs the image.
       ImageToJsonTranslator imageToJsonTranslator =
