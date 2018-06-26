@@ -68,12 +68,16 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
   public BlobDescriptor call() throws IOException, RegistryException, ExecutionException {
     try (Timer timer =
         new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION + blobDescriptor)) {
+      RegistryClient.Factory registryClientFactory =
+          RegistryClient.factory(
+              buildConfiguration.getTargetImageRegistry(),
+              buildConfiguration.getTargetImageRepository());
       RegistryClient registryClient =
-          new RegistryClient(
-                  NonBlockingSteps.get(authenticatePushStep),
-                  buildConfiguration.getTargetImageRegistry(),
-                  buildConfiguration.getTargetImageRepository())
-              .setTimer(timer);
+          buildConfiguration.getAllowHttp()
+              ? registryClientFactory.newAllowHttp()
+              : registryClientFactory.newWithAuthorization(
+                  NonBlockingSteps.get(authenticatePushStep));
+      registryClient.setTimer(timer);
 
       if (registryClient.checkBlob(blobDescriptor.getDigest()) != null) {
         buildConfiguration

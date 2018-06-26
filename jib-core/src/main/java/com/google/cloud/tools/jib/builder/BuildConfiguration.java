@@ -62,6 +62,7 @@ public class BuildConfiguration {
     private Class<? extends BuildableManifestTemplate> targetFormat = V22ManifestTemplate.class;
     @Nullable private CacheConfiguration applicationLayersCacheConfiguration;
     @Nullable private CacheConfiguration baseImageLayersCacheConfiguration;
+    private boolean allowHttp = false;
 
     private BuildLogger buildLogger;
 
@@ -163,6 +164,17 @@ public class BuildConfiguration {
       return this;
     }
 
+    /**
+     * Sets whether or not to allow communication over HTTP (as opposed to HTTPS).
+     *
+     * @param allowHttp if {@code true}, insecure connections will be allowed
+     * @return this
+     */
+    public Builder setAllowHttp(boolean allowHttp) {
+      this.allowHttp = allowHttp;
+      return this;
+    }
+
     /** @return the corresponding build configuration */
     public BuildConfiguration build() {
       // Validates the parameters.
@@ -203,7 +215,8 @@ public class BuildConfiguration {
               expandPortRanges(exposedPorts),
               targetFormat,
               applicationLayersCacheConfiguration,
-              baseImageLayersCacheConfiguration);
+              baseImageLayersCacheConfiguration,
+              allowHttp);
 
         case 1:
           throw new IllegalStateException(errorMessages.get(0));
@@ -318,6 +331,7 @@ public class BuildConfiguration {
   private final Class<? extends BuildableManifestTemplate> targetFormat;
   @Nullable private final CacheConfiguration applicationLayersCacheConfiguration;
   @Nullable private final CacheConfiguration baseImageLayersCacheConfiguration;
+  private final boolean allowHttp;
 
   /** Instantiate with {@link Builder#build}. */
   private BuildConfiguration(
@@ -335,7 +349,8 @@ public class BuildConfiguration {
       ImmutableList<String> exposedPorts,
       Class<? extends BuildableManifestTemplate> targetFormat,
       @Nullable CacheConfiguration applicationLayersCacheConfiguration,
-      @Nullable CacheConfiguration baseImageLayersCacheConfiguration) {
+      @Nullable CacheConfiguration baseImageLayersCacheConfiguration,
+      boolean allowHttp) {
     this.buildLogger = buildLogger;
     this.baseImageReference = baseImageReference;
     this.baseImageCredentialHelperName = baseImageCredentialHelperName;
@@ -351,6 +366,7 @@ public class BuildConfiguration {
     this.targetFormat = targetFormat;
     this.applicationLayersCacheConfiguration = applicationLayersCacheConfiguration;
     this.baseImageLayersCacheConfiguration = baseImageLayersCacheConfiguration;
+    this.allowHttp = allowHttp;
   }
 
   public BuildLogger getBuildLogger() {
@@ -444,12 +460,21 @@ public class BuildConfiguration {
   }
 
   /**
-   * Sets the location of the cache for storing base image layers.
+   * Gets the location of the cache for storing base image layers.
    *
    * @return the base image layers {@link CacheConfiguration}, or {@code null} if not set
    */
   @Nullable
   public CacheConfiguration getBaseImageLayersCacheConfiguration() {
     return baseImageLayersCacheConfiguration;
+  }
+
+  /**
+   * Gets whether or not to allow communication over HTTP (as opposed to HTTPS).
+   *
+   * @return {@code true} if insecure connections will be allowed; {@code false} otherwise
+   */
+  public boolean getAllowHttp() {
+    return allowHttp;
   }
 }
