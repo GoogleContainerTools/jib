@@ -54,6 +54,15 @@ public class JibPluginIntegrationTest {
     Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
 
     new Command("docker", "pull", imageReference).run();
+    Assert.assertThat(
+        new Command("docker", "inspect", imageReference).run(),
+        CoreMatchers.containsString(
+            "            \"ExposedPorts\": {\n"
+                + "                \"1000/tcp\": {},\n"
+                + "                \"2000/udp\": {},\n"
+                + "                \"2001/udp\": {},\n"
+                + "                \"2002/udp\": {},\n"
+                + "                \"2003/udp\": {}"));
     return new Command("docker", "run", imageReference).run();
   }
 
@@ -72,6 +81,15 @@ public class JibPluginIntegrationTest {
         buildResult.getOutput(), CoreMatchers.containsString("Built image to Docker daemon as "));
     Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
 
+    Assert.assertThat(
+        new Command("docker", "inspect", imageReference).run(),
+        CoreMatchers.containsString(
+            "            \"ExposedPorts\": {\n"
+                + "                \"1000/tcp\": {},\n"
+                + "                \"2000/udp\": {},\n"
+                + "                \"2001/udp\": {},\n"
+                + "                \"2002/udp\": {},\n"
+                + "                \"2003/udp\": {}"));
     return new Command("docker", "run", imageReference).run();
   }
 
@@ -168,6 +186,16 @@ public class JibPluginIntegrationTest {
                 .resolve("jib-docker-context")
                 .toString())
         .run();
+
+    Assert.assertThat(
+        new Command("docker", "inspect", imageName).run(),
+        CoreMatchers.containsString(
+            "            \"ExposedPorts\": {\n"
+                + "                \"1000/tcp\": {},\n"
+                + "                \"2000/udp\": {},\n"
+                + "                \"2001/udp\": {},\n"
+                + "                \"2002/udp\": {},\n"
+                + "                \"2003/udp\": {}"));
     Assert.assertEquals(
         "Hello, world. An argument.\n", new Command("docker", "run", imageName).run());
 
