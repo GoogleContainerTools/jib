@@ -17,9 +17,10 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
+import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
+import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
-import com.google.cloud.tools.jib.frontend.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.ImageReference;
@@ -97,7 +98,8 @@ public class BuildImageTask extends DefaultTask {
         GradleProjectProperties.getForProject(getProject(), gradleBuildLogger);
     String mainClass = gradleProjectProperties.getMainClass(jibExtension);
 
-    BuildConfiguration buildConfiguration =
+    // Builds the BuildConfiguration.
+    BuildConfiguration.Builder buildConfigurationBuilder =
         BuildConfiguration.builder(gradleBuildLogger)
             .setBaseImage(ImageReference.parse(jibExtension.getBaseImage()))
             .setTargetImage(ImageReference.parse(jibExtension.getTargetImage()))
@@ -109,8 +111,16 @@ public class BuildImageTask extends DefaultTask {
             .setJavaArguments(jibExtension.getArgs())
             .setJvmFlags(jibExtension.getJvmFlags())
             .setExposedPorts(jibExtension.getExposedPorts())
-            .setTargetFormat(jibExtension.getFormat())
-            .build();
+            .setTargetFormat(jibExtension.getFormat());
+    CacheConfiguration applicationLayersCacheConfiguration =
+        CacheConfiguration.forPath(gradleProjectProperties.getCacheDirectory());
+    buildConfigurationBuilder.setApplicationLayersCacheConfiguration(
+        applicationLayersCacheConfiguration);
+    if (jibExtension.getUseOnlyProjectCache()) {
+      buildConfigurationBuilder.setBaseImageLayersCacheConfiguration(
+          applicationLayersCacheConfiguration);
+    }
+    BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
     GradleBuildLogger.disableHttpLogging();
@@ -119,10 +129,7 @@ public class BuildImageTask extends DefaultTask {
 
     try {
       BuildStepsRunner.forBuildImage(
-              buildConfiguration,
-              gradleProjectProperties.getSourceFilesConfiguration(),
-              gradleProjectProperties.getCacheDirectory(),
-              jibExtension.getUseOnlyProjectCache())
+              buildConfiguration, gradleProjectProperties.getSourceFilesConfiguration())
           .build(HELPFUL_SUGGESTIONS);
 
     } catch (CacheDirectoryCreationException | BuildStepsExecutionException ex) {
