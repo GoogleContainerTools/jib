@@ -71,7 +71,7 @@ public class DockerContextMojo extends JibPluginConfiguration {
           .setExposedPorts(getExposedPorts())
           .generate(Paths.get(targetDir));
 
-      mavenBuildLogger.info("Created Docker context at " + targetDir);
+      mavenBuildLogger.lifecycle("Created Docker context at " + targetDir);
 
     } catch (InsecureRecursiveDeleteException ex) {
       throw new MojoExecutionException(
