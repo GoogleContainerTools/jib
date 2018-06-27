@@ -61,7 +61,7 @@ public class MainClassFinder {
       throws MainClassInferenceException {
     BuildLogger logger = projectProperties.getLogger();
     if (mainClass == null) {
-      logger.lifecycle(
+      logger.info(
           "Searching for main class... Add a 'mainClass' configuration to '"
               + projectProperties.getPluginName()
               + "' to improve build speed.");
