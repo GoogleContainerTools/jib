@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.docker.DockerContextGenerator;
+import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.ParameterValidator;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -114,6 +115,10 @@ public class DockerContextTask extends DefaultTask {
     String targetDir = getTargetDir();
 
     try {
+      // Validate port input, but don't save the output because we don't want the ranges expanded
+      // here.
+      ExposedPortsParser.parse(jibExtension.getExposedPorts(), gradleBuildLogger);
+
       new DockerContextGenerator(gradleProjectProperties.getSourceFilesConfiguration())
           .setBaseImage(jibExtension.getBaseImage())
           .setJvmFlags(ImmutableList.copyOf(jibExtension.getJvmFlags()))

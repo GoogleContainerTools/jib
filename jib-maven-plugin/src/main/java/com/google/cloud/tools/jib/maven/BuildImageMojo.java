@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
+import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
 import com.google.cloud.tools.jib.frontend.ParameterValidator;
 import com.google.cloud.tools.jib.image.ImageFormat;
@@ -112,7 +113,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
             .setJavaArguments(ImmutableList.copyOf(getArgs()))
             .setJvmFlags(ImmutableList.copyOf(getJvmFlags()))
             .setEnvironment(getEnvironment())
-            .setExposedPorts(ImmutableList.copyOf(getExposedPorts()))
+            .setExposedPorts(ExposedPortsParser.parse(getExposedPorts(), mavenBuildLogger))
             .setTargetFormat(ImageFormat.valueOf(getFormat()).getManifestTemplateClass())
             .setAllowHttp(getAllowInsecureRegistries());
     CacheConfiguration applicationLayersCacheConfiguration =

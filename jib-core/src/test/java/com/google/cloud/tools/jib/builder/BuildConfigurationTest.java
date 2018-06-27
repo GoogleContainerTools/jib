@@ -25,21 +25,13 @@ import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
 
-@RunWith(MockitoJUnitRunner.class)
 public class BuildConfigurationTest {
-
-  @Mock private BuildLogger mockLogger;
 
   @Test
   public void testBuilder() {
@@ -201,62 +193,5 @@ public class BuildConfigurationTest {
     Assert.assertFalse(BuildConfiguration.isValidJavaClass("123not.Valid"));
     Assert.assertFalse(BuildConfiguration.isValidJavaClass("{class}"));
     Assert.assertFalse(BuildConfiguration.isValidJavaClass("not valid"));
-  }
-
-  @Test
-  public void testExpandPortList() {
-    List<String> goodInputs =
-        Arrays.asList("1000", "2000-2003", "3000-3000", "4000/tcp", "5000/udp", "6000-6002/tcp");
-    ImmutableList<String> expected =
-        new ImmutableList.Builder<String>()
-            .add(
-                "1000",
-                "2000",
-                "2001",
-                "2002",
-                "2003",
-                "3000",
-                "4000/tcp",
-                "5000/udp",
-                "6000/tcp",
-                "6001/tcp",
-                "6002/tcp")
-            .build();
-    BuildConfiguration.Builder builder = BuildConfiguration.builder(mockLogger);
-    ImmutableList<String> result = builder.expandPortRanges(goodInputs);
-    Assert.assertEquals(expected, result);
-
-    List<String> badInputs = Arrays.asList("abc", "/udp", "1000/abc", "a100/tcp", "20/udpabc");
-    for (String input : badInputs) {
-      try {
-        builder.expandPortRanges(Collections.singletonList(input));
-        Assert.fail();
-      } catch (NumberFormatException ex) {
-        Assert.assertEquals(
-            "Invalid port configuration: '"
-                + input
-                + "'. Make sure the port is a single number or a range of two numbers separated "
-                + "with a '-', with or without protocol specified (e.g. '<portNum>/tcp' or "
-                + "'<portNum>/udp').",
-            ex.getMessage());
-      }
-    }
-
-    try {
-      builder.expandPortRanges(Collections.singletonList("4002-4000"));
-      Assert.fail();
-    } catch (NumberFormatException ex) {
-      Assert.assertEquals(
-          "Invalid port range '4002-4000'; smaller number must come first.", ex.getMessage());
-    }
-
-    builder.expandPortRanges(Collections.singletonList("0"));
-    Mockito.verify(mockLogger).warn("Port number '0' is out of usual range (1-65535).");
-    builder.expandPortRanges(Collections.singletonList("70000"));
-    Mockito.verify(mockLogger).warn("Port number '70000' is out of usual range (1-65535).");
-    builder.expandPortRanges(Collections.singletonList("0-400"));
-    Mockito.verify(mockLogger).warn("Port number '0-400' is out of usual range (1-65535).");
-    builder.expandPortRanges(Collections.singletonList("1-70000"));
-    Mockito.verify(mockLogger).warn("Port number '1-70000' is out of usual range (1-65535).");
   }
 }
