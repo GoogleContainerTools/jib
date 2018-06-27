@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -58,10 +57,10 @@ public class BuildConfiguration {
     @Nullable private String targetImageCredentialHelperName;
     @Nullable private RegistryCredentials knownTargetRegistryCredentials;
     @Nullable private String mainClass;
-    private List<String> javaArguments = new ArrayList<>();
-    private List<String> jvmFlags = new ArrayList<>();
+    private ImmutableList<String> javaArguments = ImmutableList.of();
+    private ImmutableList<String> jvmFlags = ImmutableList.of();
     private Map<String, String> environmentMap = new HashMap<>();
-    private List<String> exposedPorts = new ArrayList<>();
+    private ImmutableList<String> exposedPorts = ImmutableList.of();
     private Class<? extends BuildableManifestTemplate> targetFormat = V22ManifestTemplate.class;
     @Nullable private CacheConfiguration applicationLayersCacheConfiguration;
     @Nullable private CacheConfiguration baseImageLayersCacheConfiguration;
@@ -110,14 +109,14 @@ public class BuildConfiguration {
       return this;
     }
 
-    public Builder setJavaArguments(@Nullable List<String> javaArguments) {
+    public Builder setJavaArguments(@Nullable ImmutableList<String> javaArguments) {
       if (javaArguments != null) {
         this.javaArguments = javaArguments;
       }
       return this;
     }
 
-    public Builder setJvmFlags(@Nullable List<String> jvmFlags) {
+    public Builder setJvmFlags(@Nullable ImmutableList<String> jvmFlags) {
       if (jvmFlags != null) {
         this.jvmFlags = jvmFlags;
       }
@@ -131,7 +130,7 @@ public class BuildConfiguration {
       return this;
     }
 
-    public Builder setExposedPorts(@Nullable List<String> exposedPorts) {
+    public Builder setExposedPorts(@Nullable ImmutableList<String> exposedPorts) {
       if (exposedPorts != null) {
         this.exposedPorts = exposedPorts;
       }
@@ -212,8 +211,8 @@ public class BuildConfiguration {
               targetImageCredentialHelperName,
               knownTargetRegistryCredentials,
               mainClass,
-              copyToImmutableListWithoutNulls(javaArguments),
-              copyToImmutableListWithoutNulls(jvmFlags),
+              javaArguments,
+              jvmFlags,
               ImmutableMap.copyOf(environmentMap),
               expandPortRanges(exposedPorts),
               targetFormat,
@@ -304,11 +303,6 @@ public class BuildConfiguration {
 
       return result.build();
     }
-
-    private ImmutableList<String> copyToImmutableListWithoutNulls(List<String> list) {
-      return ImmutableList.copyOf(
-          list.stream().filter(Objects::nonNull).collect(Collectors.toList()));
-    }
   }
 
   /**
@@ -322,6 +316,16 @@ public class BuildConfiguration {
       }
     }
     return true;
+  }
+
+  /**
+   * @param list the list to copy
+   * @return an {@code ImmutableList} containing all non-null, non-empty elements of the original
+   *     list
+   */
+  public static ImmutableList<String> filterNullOrEmpty(List<String> list) {
+    return ImmutableList.copyOf(
+        list.stream().filter(s -> !Strings.isNullOrEmpty(s)).collect(Collectors.toList()));
   }
 
   public static Builder builder(BuildLogger buildLogger) {

@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.DockerContextGenerator;
 import com.google.common.base.Preconditions;
 import com.google.common.io.InsecureRecursiveDeleteException;
@@ -107,10 +108,10 @@ public class DockerContextTask extends DefaultTask {
     try {
       new DockerContextGenerator(gradleProjectProperties.getSourceFilesConfiguration())
           .setBaseImage(jibExtension.getBaseImage())
-          .setJvmFlags(jibExtension.getJvmFlags())
+          .setJvmFlags(BuildConfiguration.filterNullOrEmpty(jibExtension.getJvmFlags()))
           .setMainClass(mainClass)
-          .setJavaArguments(jibExtension.getArgs())
-          .setExposedPorts(jibExtension.getExposedPorts())
+          .setJavaArguments(BuildConfiguration.filterNullOrEmpty(jibExtension.getArgs()))
+          .setExposedPorts(BuildConfiguration.filterNullOrEmpty(jibExtension.getExposedPorts()))
           .generate(Paths.get(targetDir));
 
       gradleBuildLogger.lifecycle("Created Docker context at " + targetDir);

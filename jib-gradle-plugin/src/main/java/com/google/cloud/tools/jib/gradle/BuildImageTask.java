@@ -108,9 +108,9 @@ public class BuildImageTask extends DefaultTask {
             .setTargetImageCredentialHelperName(jibExtension.getTo().getCredHelper())
             .setKnownTargetRegistryCredentials(knownTargetRegistryCredentials)
             .setMainClass(mainClass)
-            .setJavaArguments(jibExtension.getArgs())
-            .setJvmFlags(jibExtension.getJvmFlags())
-            .setExposedPorts(jibExtension.getExposedPorts())
+            .setJavaArguments(BuildConfiguration.filterNullOrEmpty(jibExtension.getArgs()))
+            .setJvmFlags(BuildConfiguration.filterNullOrEmpty(jibExtension.getJvmFlags()))
+            .setExposedPorts(BuildConfiguration.filterNullOrEmpty(jibExtension.getExposedPorts()))
             .setTargetFormat(jibExtension.getFormat())
             .setAllowHttp(jibExtension.getAllowInsecureRegistries());
     CacheConfiguration applicationLayersCacheConfiguration =

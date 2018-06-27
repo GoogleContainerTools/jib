@@ -56,8 +56,8 @@ public class BuildConfigurationTest {
     RegistryCredentials expectedKnownTargetRegistryCredentials =
         Mockito.mock(RegistryCredentials.class);
     String expectedMainClass = "mainclass";
-    List<String> expectedJavaArguments = Arrays.asList("arg1", "arg2");
-    List<String> expectedJvmFlags = Arrays.asList("some", "jvm", "flags");
+    ImmutableList<String> expectedJavaArguments = ImmutableList.of("arg1", "arg2");
+    ImmutableList<String> expectedJvmFlags = ImmutableList.of("some", "jvm", "flags");
     Map<String, String> expectedEnvironment = ImmutableMap.of("key", "value");
     ImmutableList<String> expectedExposedPorts = ImmutableList.of("1000", "2000");
     Class<? extends BuildableManifestTemplate> expectedTargetFormat = OCIManifestTemplate.class;
@@ -206,9 +206,9 @@ public class BuildConfigurationTest {
             .setBaseImage(ImageReference.of("someserver", "baseimage", "baseimagetag"))
             .setTargetImage(ImageReference.of("someotherserver", "targetimage", "targettag"))
             .setMainClass("mainclass")
-            .setJavaArguments(inputJavaArguments)
-            .setJvmFlags(inputJvmFlags)
-            .setExposedPorts(inputExposedPorts);
+            .setJavaArguments(BuildConfiguration.filterNullOrEmpty(inputJavaArguments))
+            .setJvmFlags(BuildConfiguration.filterNullOrEmpty(inputJvmFlags))
+            .setExposedPorts(BuildConfiguration.filterNullOrEmpty(inputExposedPorts));
     BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
 
     Assert.assertEquals(expectedJavaArguments, buildConfiguration.getJavaArguments());

@@ -23,14 +23,13 @@ import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.filesystem.FileOperations;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.MoreFiles;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
 import javax.annotation.Nullable;
 
 /**
@@ -49,10 +48,10 @@ public class DockerContextGenerator {
   private final SourceFilesConfiguration sourceFilesConfiguration;
 
   @Nullable private String baseImage;
-  private List<String> jvmFlags = Collections.emptyList();
+  private ImmutableList<String> jvmFlags = ImmutableList.of();
   private String mainClass = "";
-  private List<String> javaArguments = Collections.emptyList();
-  private List<String> exposedPorts = Collections.emptyList();
+  private ImmutableList<String> javaArguments = ImmutableList.of();
+  private ImmutableList<String> exposedPorts = ImmutableList.of();
 
   public DockerContextGenerator(SourceFilesConfiguration sourceFilesConfiguration) {
     this.sourceFilesConfiguration = sourceFilesConfiguration;
@@ -76,7 +75,7 @@ public class DockerContextGenerator {
    * @param jvmFlags the jvm flags.
    * @return this
    */
-  public DockerContextGenerator setJvmFlags(List<String> jvmFlags) {
+  public DockerContextGenerator setJvmFlags(ImmutableList<String> jvmFlags) {
     this.jvmFlags = jvmFlags;
     return this;
   }
@@ -98,7 +97,7 @@ public class DockerContextGenerator {
    * @param javaArguments the list of arguments to pass into main.
    * @return this
    */
-  public DockerContextGenerator setJavaArguments(List<String> javaArguments) {
+  public DockerContextGenerator setJavaArguments(ImmutableList<String> javaArguments) {
     this.javaArguments = javaArguments;
     return this;
   }
@@ -109,7 +108,7 @@ public class DockerContextGenerator {
    * @param exposedPorts the list of port numbers/port ranges to expose
    * @return this
    */
-  public DockerContextGenerator setExposedPorts(List<String> exposedPorts) {
+  public DockerContextGenerator setExposedPorts(ImmutableList<String> exposedPorts) {
     this.exposedPorts = exposedPorts;
     return this;
   }

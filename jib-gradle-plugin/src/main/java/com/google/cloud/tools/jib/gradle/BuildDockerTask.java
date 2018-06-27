@@ -106,9 +106,9 @@ public class BuildDockerTask extends DefaultTask {
             .setBaseImageCredentialHelperName(jibExtension.getFrom().getCredHelper())
             .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
             .setMainClass(mainClass)
-            .setJavaArguments(jibExtension.getArgs())
-            .setJvmFlags(jibExtension.getJvmFlags())
-            .setExposedPorts(jibExtension.getExposedPorts())
+            .setJavaArguments(BuildConfiguration.filterNullOrEmpty(jibExtension.getArgs()))
+            .setJvmFlags(BuildConfiguration.filterNullOrEmpty(jibExtension.getJvmFlags()))
+            .setExposedPorts(BuildConfiguration.filterNullOrEmpty(jibExtension.getExposedPorts()))
             .setAllowHttp(jibExtension.getAllowInsecureRegistries());
     CacheConfiguration applicationLayersCacheConfiguration =
         CacheConfiguration.forPath(gradleProjectProperties.getCacheDirectory());

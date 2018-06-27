@@ -101,10 +101,10 @@ public class BuildImageMojo extends JibPluginConfiguration {
             .setTargetImageCredentialHelperName(getTargetImageCredentialHelperName())
             .setKnownTargetRegistryCredentials(knownTargetRegistryCredentials)
             .setMainClass(mainClass)
-            .setJavaArguments(getArgs())
-            .setJvmFlags(getJvmFlags())
+            .setJavaArguments(BuildConfiguration.filterNullOrEmpty(getArgs()))
+            .setJvmFlags(BuildConfiguration.filterNullOrEmpty(getJvmFlags()))
             .setEnvironment(getEnvironment())
-            .setExposedPorts(getExposedPorts())
+            .setExposedPorts(BuildConfiguration.filterNullOrEmpty(getExposedPorts()))
             .setTargetFormat(ImageFormat.valueOf(getFormat()).getManifestTemplateClass())
             .setAllowHttp(getAllowInsecureRegistries());
     CacheConfiguration applicationLayersCacheConfiguration =

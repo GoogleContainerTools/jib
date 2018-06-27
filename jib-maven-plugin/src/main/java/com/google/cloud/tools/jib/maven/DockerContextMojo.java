@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.DockerContextGenerator;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -60,10 +61,10 @@ public class DockerContextMojo extends JibPluginConfiguration {
     try {
       new DockerContextGenerator(mavenProjectProperties.getSourceFilesConfiguration())
           .setBaseImage(getBaseImage())
-          .setJvmFlags(getJvmFlags())
+          .setJvmFlags(BuildConfiguration.filterNullOrEmpty(getJvmFlags()))
           .setMainClass(mainClass)
-          .setJavaArguments(getArgs())
-          .setExposedPorts(getExposedPorts())
+          .setJavaArguments(BuildConfiguration.filterNullOrEmpty(getArgs()))
+          .setExposedPorts(BuildConfiguration.filterNullOrEmpty(getExposedPorts()))
           .generate(Paths.get(targetDir));
 
       mavenBuildLogger.lifecycle("Created Docker context at " + targetDir);

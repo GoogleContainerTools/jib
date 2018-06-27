@@ -27,7 +27,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayDeque;
-import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
 import org.junit.Assert;
@@ -114,10 +113,10 @@ public class DockerContextGeneratorTest {
   @Test
   public void testMakeDockerfile() throws IOException {
     String expectedBaseImage = "somebaseimage";
-    List<String> expectedJvmFlags = Arrays.asList("-flag", "another\"Flag");
+    ImmutableList<String> expectedJvmFlags = ImmutableList.of("-flag", "another\"Flag");
     String expectedMainClass = "SomeMainClass";
-    List<String> expectedJavaArguments = Arrays.asList("arg1", "arg2");
-    List<String> exposedPorts = Arrays.asList("1000/tcp", "2000-2010/udp");
+    ImmutableList<String> expectedJavaArguments = ImmutableList.of("arg1", "arg2");
+    ImmutableList<String> exposedPorts = ImmutableList.of("1000/tcp", "2000-2010/udp");
 
     String dockerfile =
         new DockerContextGenerator(mockSourceFilesConfiguration)
