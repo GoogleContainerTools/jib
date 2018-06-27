@@ -16,10 +16,11 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.DockerContextGenerator;
+import com.google.cloud.tools.jib.frontend.ParameterValidator;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.InsecureRecursiveDeleteException;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -52,6 +53,12 @@ public class DockerContextMojo extends JibPluginConfiguration {
     MavenBuildLogger mavenBuildLogger = new MavenBuildLogger(getLog());
     handleDeprecatedParameters(mavenBuildLogger);
 
+    ParameterValidator.checkListForNullOrEmpty(getArgs(), "<container><args>", mavenBuildLogger);
+    ParameterValidator.checkListForNullOrEmpty(
+        getJvmFlags(), "<container><jvmFlags>", mavenBuildLogger);
+    ParameterValidator.checkListForNullOrEmpty(
+        getExposedPorts(), "<container><ports>", mavenBuildLogger);
+
     Preconditions.checkNotNull(targetDir);
 
     MavenProjectProperties mavenProjectProperties =
@@ -61,10 +68,10 @@ public class DockerContextMojo extends JibPluginConfiguration {
     try {
       new DockerContextGenerator(mavenProjectProperties.getSourceFilesConfiguration())
           .setBaseImage(getBaseImage())
-          .setJvmFlags(BuildConfiguration.filterNullOrEmpty(getJvmFlags()))
+          .setJvmFlags(ImmutableList.copyOf(getJvmFlags()))
           .setMainClass(mainClass)
-          .setJavaArguments(BuildConfiguration.filterNullOrEmpty(getArgs()))
-          .setExposedPorts(BuildConfiguration.filterNullOrEmpty(getExposedPorts()))
+          .setJavaArguments(ImmutableList.copyOf(getArgs()))
+          .setExposedPorts(ImmutableList.copyOf(getExposedPorts()))
           .generate(Paths.get(targetDir));
 
       mavenBuildLogger.lifecycle("Created Docker context at " + targetDir);

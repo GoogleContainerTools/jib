@@ -192,31 +192,6 @@ public class BuildConfigurationTest {
   }
 
   @Test
-  public void testBuilder_nullElements() {
-    List<String> inputJavaArguments = Arrays.asList("arg1", null, "arg2");
-    List<String> inputJvmFlags = Arrays.asList(null, "some", "jvm", "flags", null);
-    List<String> inputExposedPorts = Arrays.asList(null, null);
-
-    List<String> expectedJavaArguments = Arrays.asList("arg1", "arg2");
-    List<String> expectedJvmFlags = Arrays.asList("some", "jvm", "flags");
-    List<String> expectedExposedPorts = Collections.emptyList();
-
-    BuildConfiguration.Builder buildConfigurationBuilder =
-        BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
-            .setBaseImage(ImageReference.of("someserver", "baseimage", "baseimagetag"))
-            .setTargetImage(ImageReference.of("someotherserver", "targetimage", "targettag"))
-            .setMainClass("mainclass")
-            .setJavaArguments(BuildConfiguration.filterNullOrEmpty(inputJavaArguments))
-            .setJvmFlags(BuildConfiguration.filterNullOrEmpty(inputJvmFlags))
-            .setExposedPorts(BuildConfiguration.filterNullOrEmpty(inputExposedPorts));
-    BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
-
-    Assert.assertEquals(expectedJavaArguments, buildConfiguration.getJavaArguments());
-    Assert.assertEquals(expectedJvmFlags, buildConfiguration.getJvmFlags());
-    Assert.assertEquals(expectedExposedPorts, buildConfiguration.getExposedPorts());
-  }
-
-  @Test
   public void testValidJavaClassRegex() {
     Assert.assertTrue(BuildConfiguration.isValidJavaClass("my.Class"));
     Assert.assertTrue(BuildConfiguration.isValidJavaClass("my.java_Class$valid"));

@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.lang.model.SourceVersion;
 
@@ -316,16 +315,6 @@ public class BuildConfiguration {
       }
     }
     return true;
-  }
-
-  /**
-   * @param list the list to copy
-   * @return an {@code ImmutableList} containing all non-null, non-empty elements of the original
-   *     list
-   */
-  public static ImmutableList<String> filterNullOrEmpty(List<String> list) {
-    return ImmutableList.copyOf(
-        list.stream().filter(s -> !Strings.isNullOrEmpty(s)).collect(Collectors.toList()));
   }
 
   public static Builder builder(BuildLogger buildLogger) {

@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
+import com.google.cloud.tools.jib.frontend.ParameterValidator;
 import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.RegistryClient;
@@ -29,6 +30,7 @@ import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import java.util.Arrays;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -67,6 +69,12 @@ public class BuildImageMojo extends JibPluginConfiguration {
               + "'.");
     }
 
+    ParameterValidator.checkListForNullOrEmpty(getArgs(), "<container><args>", mavenBuildLogger);
+    ParameterValidator.checkListForNullOrEmpty(
+        getJvmFlags(), "<container><jvmFlags>", mavenBuildLogger);
+    ParameterValidator.checkListForNullOrEmpty(
+        getExposedPorts(), "<container><ports>", mavenBuildLogger);
+
     // Parses 'from' into image reference.
     ImageReference baseImage = parseImageReference(getBaseImage(), "from");
 
@@ -101,10 +109,10 @@ public class BuildImageMojo extends JibPluginConfiguration {
             .setTargetImageCredentialHelperName(getTargetImageCredentialHelperName())
             .setKnownTargetRegistryCredentials(knownTargetRegistryCredentials)
             .setMainClass(mainClass)
-            .setJavaArguments(BuildConfiguration.filterNullOrEmpty(getArgs()))
-            .setJvmFlags(BuildConfiguration.filterNullOrEmpty(getJvmFlags()))
+            .setJavaArguments(ImmutableList.copyOf(getArgs()))
+            .setJvmFlags(ImmutableList.copyOf(getJvmFlags()))
             .setEnvironment(getEnvironment())
-            .setExposedPorts(BuildConfiguration.filterNullOrEmpty(getExposedPorts()))
+            .setExposedPorts(ImmutableList.copyOf(getExposedPorts()))
             .setTargetFormat(ImageFormat.valueOf(getFormat()).getManifestTemplateClass())
             .setAllowHttp(getAllowInsecureRegistries());
     CacheConfiguration applicationLayersCacheConfiguration =
