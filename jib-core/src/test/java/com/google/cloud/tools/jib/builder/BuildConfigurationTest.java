@@ -208,7 +208,6 @@ public class BuildConfigurationTest {
             .setMainClass("mainclass")
             .setJavaArguments(inputJavaArguments)
             .setJvmFlags(inputJvmFlags)
-            .setEnvironment(ImmutableMap.of("key", "value"))
             .setExposedPorts(inputExposedPorts);
     BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
 
