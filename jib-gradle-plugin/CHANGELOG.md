@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 
 - Using Azure Container Registry now works - define credentials in `jib.to.auth`/`jib.from.auth` ([#415](https://github.com/GoogleContainerTools/jib/issues/415))
 - Supports `access_token` as alias to `token` in registry authentication ([#420](https://github.com/GoogleContainerTools/jib/pull/420))
+- Empty list elements no longer cause builds to fail ([#456](https://github.com/GoogleContainerTools/jib/pull/456))
 
 ## 0.9.0
 
