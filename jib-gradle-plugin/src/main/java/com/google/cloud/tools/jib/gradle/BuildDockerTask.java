@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
+import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.ImageReference;
@@ -108,7 +109,8 @@ public class BuildDockerTask extends DefaultTask {
             .setMainClass(mainClass)
             .setJavaArguments(jibExtension.getArgs())
             .setJvmFlags(jibExtension.getJvmFlags())
-            .setExposedPorts(jibExtension.getExposedPorts())
+            .setExposedPorts(
+                ExposedPortsParser.parse(jibExtension.getExposedPorts(), gradleBuildLogger))
             .setAllowHttp(jibExtension.getAllowInsecureRegistries());
     CacheConfiguration applicationLayersCacheConfiguration =
         CacheConfiguration.forPath(gradleProjectProperties.getCacheDirectory());
