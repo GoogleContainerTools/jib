@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ExposedPorts {
+public class ExposedPortsParser {
 
   /**
    * Pattern used for parsing information out of exposed port configurations.
@@ -48,7 +48,7 @@ public class ExposedPorts {
    * @throws NumberFormatException if any of the ports are in an invalid format or out of range
    */
   @VisibleForTesting
-  public static ImmutableList<String> expandPortRanges(List<String> ports, BuildLogger buildLogger)
+  public static ImmutableList<String> parse(List<String> ports, BuildLogger buildLogger)
       throws NumberFormatException {
     ImmutableList.Builder<String> result = new ImmutableList.Builder<>();
 
@@ -85,8 +85,9 @@ public class ExposedPorts {
       }
 
       // Add all numbers in range to list
+      String portString = (protocol == null ? "" : protocol);
       for (int portNum = min; portNum <= max; portNum++) {
-        result.add(portNum + (protocol == null ? "" : protocol));
+        result.add(portNum + portString);
       }
     }
 

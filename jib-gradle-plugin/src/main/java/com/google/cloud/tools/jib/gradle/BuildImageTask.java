@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
+import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.ImageReference;
@@ -110,7 +111,8 @@ public class BuildImageTask extends DefaultTask {
             .setMainClass(mainClass)
             .setJavaArguments(jibExtension.getArgs())
             .setJvmFlags(jibExtension.getJvmFlags())
-            .setExposedPorts(jibExtension.getExposedPorts())
+            .setExposedPorts(
+                ExposedPortsParser.parse(jibExtension.getExposedPorts(), gradleBuildLogger))
             .setTargetFormat(jibExtension.getFormat());
     CacheConfiguration applicationLayersCacheConfiguration =
         CacheConfiguration.forPath(gradleProjectProperties.getCacheDirectory());

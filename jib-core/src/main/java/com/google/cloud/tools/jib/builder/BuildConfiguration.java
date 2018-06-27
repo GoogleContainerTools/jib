@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
-import com.google.cloud.tools.jib.frontend.ExposedPorts;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
@@ -190,7 +189,7 @@ public class BuildConfiguration {
               ImmutableList.copyOf(javaArguments),
               ImmutableList.copyOf(jvmFlags),
               ImmutableMap.copyOf(environmentMap),
-              ExposedPorts.expandPortRanges(exposedPorts, buildLogger),
+              ImmutableList.copyOf(exposedPorts),
               targetFormat,
               applicationLayersCacheConfiguration,
               baseImageLayersCacheConfiguration);

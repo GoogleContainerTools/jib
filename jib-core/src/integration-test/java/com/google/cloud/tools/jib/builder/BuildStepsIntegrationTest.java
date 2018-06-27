@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.cache.Caches;
+import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
 import java.nio.file.Path;
@@ -48,7 +49,9 @@ public class BuildStepsIntegrationTest {
             .setTargetImage(ImageReference.of("localhost:5000", "testimage", "testtag"))
             .setMainClass("HelloWorld")
             .setJavaArguments(Collections.singletonList("An argument."))
-            .setExposedPorts(Arrays.asList("1000", "2000-2002/tcp", "3000/udp"))
+            .setExposedPorts(
+                ExposedPortsParser.parse(
+                    Arrays.asList("1000", "2000-2002/tcp", "3000/udp"), logger))
             .build();
 
     Path cacheDirectory = temporaryCacheDirectory.newFolder().toPath();
@@ -89,7 +92,9 @@ public class BuildStepsIntegrationTest {
             .setTargetImage(ImageReference.of(null, "testdocker", null))
             .setMainClass("HelloWorld")
             .setJavaArguments(Collections.singletonList("An argument."))
-            .setExposedPorts(Arrays.asList("1000", "2000-2002/tcp", "3000/udp"))
+            .setExposedPorts(
+                ExposedPortsParser.parse(
+                    Arrays.asList("1000", "2000-2002/tcp", "3000/udp"), logger))
             .build();
 
     Path cacheDirectory = temporaryCacheDirectory.newFolder().toPath();

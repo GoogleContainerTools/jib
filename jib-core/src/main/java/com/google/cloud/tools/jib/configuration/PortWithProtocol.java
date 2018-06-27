@@ -21,8 +21,8 @@ public class PortWithProtocol {
 
   /** Represents the protocol portion of the port. */
   public enum Protocol {
-    TCP,
-    UDP
+    tcp,
+    udp
   }
 
   private int port;
@@ -44,6 +44,6 @@ public class PortWithProtocol {
   /** @return the {@link PortWithProtocol} in string form "port/protocol" */
   @Override
   public String toString() {
-    return port + "/" + protocol.toString().toLowerCase();
+    return port + "/" + protocol.toString();
   }
 }

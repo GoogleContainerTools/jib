@@ -24,10 +24,10 @@ public class PortWithProtocolTest {
 
   @Test
   public void testToString() {
-    PortWithProtocol portWithProtocol = new PortWithProtocol(2020, PortWithProtocol.Protocol.TCP);
+    PortWithProtocol portWithProtocol = new PortWithProtocol(2020, PortWithProtocol.Protocol.tcp);
     Assert.assertEquals("2020/tcp", portWithProtocol.toString());
 
-    portWithProtocol = new PortWithProtocol(12345, PortWithProtocol.Protocol.UDP);
+    portWithProtocol = new PortWithProtocol(12345, PortWithProtocol.Protocol.udp);
     Assert.assertEquals("12345/udp", portWithProtocol.toString());
   }
 }
