@@ -37,13 +37,25 @@ public class ParameterValidatorTest {
     List<String> goodInput = Arrays.asList("a", "b", "c");
     ParameterValidator.checkListForNullOrEmpty(goodInput, "list", mockLogger);
 
-    List<String> warnInput = Arrays.asList("a", "", "c");
+    List<String> warnInput = Arrays.asList("a", "", "");
     ParameterValidator.checkListForNullOrEmpty(warnInput, "list", mockLogger);
-    Mockito.verify(mockLogger).warn("Empty string found in list parameter 'list'.");
+    Mockito.verify(mockLogger, Mockito.times(1))
+        .warn("Empty string found in list parameter 'list'.");
 
     try {
       List<String> errorInput = Arrays.asList("a", null, "c");
       ParameterValidator.checkListForNullOrEmpty(errorInput, "list", mockLogger);
+      Assert.fail();
+    } catch (IllegalStateException ex) {
+      Assert.assertEquals(
+          "Null element found in list parameter 'list'. Make sure your configuration is free of "
+              + "null parameters.",
+          ex.getMessage());
+    }
+
+    try {
+      List<String> warnAndErrorInput = Arrays.asList("", null, "c");
+      ParameterValidator.checkListForNullOrEmpty(warnAndErrorInput, "list", mockLogger);
       Assert.fail();
     } catch (IllegalStateException ex) {
       Assert.assertEquals(

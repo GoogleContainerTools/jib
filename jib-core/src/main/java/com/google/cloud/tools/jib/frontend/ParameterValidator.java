@@ -32,15 +32,24 @@ public class ParameterValidator {
    */
   public static void checkListForNullOrEmpty(
       List<String> list, String parameterName, BuildLogger logger) {
+    boolean foundNull = false;
+    boolean foundWarning = false;
     for (String element : list) {
       if (element == null) {
-        throw new IllegalStateException(
-            "Null element found in list parameter '"
-                + parameterName
-                + "'. Make sure your configuration is free of null parameters.");
+        foundNull = true;
+        break;
       } else if (element.equals("")) {
-        logger.warn("Empty string found in list parameter '" + parameterName + "'.");
+        foundWarning = true;
       }
+    }
+
+    if (foundNull) {
+      throw new IllegalStateException(
+          "Null element found in list parameter '"
+              + parameterName
+              + "'. Make sure your configuration is free of null parameters.");
+    } else if (foundWarning) {
+      logger.warn("Empty string found in list parameter '" + parameterName + "'.");
     }
   }
 
