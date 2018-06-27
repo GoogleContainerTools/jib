@@ -36,6 +36,8 @@ public class ParameterValidatorTest {
   public void testCheckListForNullOrEmpty() {
     List<String> goodInput = Arrays.asList("a", "b", "c");
     ParameterValidator.checkListForNullOrEmpty(goodInput, "list", mockLogger);
+    Mockito.verify(mockLogger, Mockito.never())
+        .warn("Empty string found in list parameter 'list'.");
 
     List<String> warnInput = Arrays.asList("a", "", "");
     ParameterValidator.checkListForNullOrEmpty(warnInput, "list", mockLogger);
