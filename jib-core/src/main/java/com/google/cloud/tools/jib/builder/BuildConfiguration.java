@@ -25,13 +25,16 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.lang.model.SourceVersion;
 
@@ -209,8 +212,8 @@ public class BuildConfiguration {
               targetImageCredentialHelperName,
               knownTargetRegistryCredentials,
               mainClass,
-              ImmutableList.copyOf(javaArguments),
-              ImmutableList.copyOf(jvmFlags),
+              copyToImmutableListWithoutNulls(javaArguments),
+              copyToImmutableListWithoutNulls(jvmFlags),
               ImmutableMap.copyOf(environmentMap),
               expandPortRanges(exposedPorts),
               targetFormat,
@@ -257,6 +260,10 @@ public class BuildConfiguration {
       ImmutableList.Builder<String> result = new ImmutableList.Builder<>();
 
       for (String port : ports) {
+        if (port == null) {
+          continue;
+        }
+
         Matcher matcher = portPattern.matcher(port);
 
         if (!matcher.matches()) {
@@ -296,6 +303,11 @@ public class BuildConfiguration {
       }
 
       return result.build();
+    }
+
+    private ImmutableList<String> copyToImmutableListWithoutNulls(List<String> list) {
+      return ImmutableList.copyOf(
+          list.stream().filter(Objects::nonNull).collect(Collectors.toList()));
     }
   }
 

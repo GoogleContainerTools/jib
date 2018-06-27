@@ -192,6 +192,45 @@ public class BuildConfigurationTest {
   }
 
   @Test
+  public void testBuilder_nullElements() {
+    String expectedBaseImageServerUrl = "someserver";
+    String expectedBaseImageName = "baseimage";
+    String expectedBaseImageTag = "baseimagetag";
+    String expectedTargetServerUrl = "someotherserver";
+    String expectedTargetImageName = "targetimage";
+    String expectedTargetTag = "targettag";
+    String expectedMainClass = "mainclass";
+    Map<String, String> expectedEnvironment = ImmutableMap.of("key", "value");
+
+    List<String> inputJavaArguments = Arrays.asList("arg1", null, "arg2");
+    List<String> inputJvmFlags = Arrays.asList(null, "some", "jvm", "flags", null);
+    List<String> inputExposedPorts = Arrays.asList(null, null);
+
+    List<String> expectedJavaArguments = Arrays.asList("arg1", "arg2");
+    List<String> expectedJvmFlags = Arrays.asList("some", "jvm", "flags");
+    List<String> expectedExposedPorts = Collections.emptyList();
+
+    BuildConfiguration.Builder buildConfigurationBuilder =
+        BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
+            .setBaseImage(
+                ImageReference.of(
+                    expectedBaseImageServerUrl, expectedBaseImageName, expectedBaseImageTag))
+            .setTargetImage(
+                ImageReference.of(
+                    expectedTargetServerUrl, expectedTargetImageName, expectedTargetTag))
+            .setMainClass(expectedMainClass)
+            .setJavaArguments(inputJavaArguments)
+            .setJvmFlags(inputJvmFlags)
+            .setEnvironment(expectedEnvironment)
+            .setExposedPorts(inputExposedPorts);
+    BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
+
+    Assert.assertEquals(expectedJavaArguments, buildConfiguration.getJavaArguments());
+    Assert.assertEquals(expectedJvmFlags, buildConfiguration.getJvmFlags());
+    Assert.assertEquals(expectedExposedPorts, buildConfiguration.getExposedPorts());
+  }
+
+  @Test
   public void testValidJavaClassRegex() {
     Assert.assertTrue(BuildConfiguration.isValidJavaClass("my.Class"));
     Assert.assertTrue(BuildConfiguration.isValidJavaClass("my.java_Class$valid"));
