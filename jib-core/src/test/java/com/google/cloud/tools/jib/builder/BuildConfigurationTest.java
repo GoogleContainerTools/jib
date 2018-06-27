@@ -79,7 +79,8 @@ public class BuildConfigurationTest {
             .setExposedPorts(expectedExposedPorts)
             .setTargetFormat(OCIManifestTemplate.class)
             .setApplicationLayersCacheConfiguration(expectedApplicationLayersCacheConfiguration)
-            .setBaseImageLayersCacheConfiguration(expectedBaseImageLayersCacheConfiguration);
+            .setBaseImageLayersCacheConfiguration(expectedBaseImageLayersCacheConfiguration)
+            .setAllowHttp(true);
     BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
 
     Assert.assertEquals(expectedBaseImageServerUrl, buildConfiguration.getBaseImageRegistry());
@@ -106,6 +107,7 @@ public class BuildConfigurationTest {
     Assert.assertEquals(
         expectedBaseImageLayersCacheConfiguration,
         buildConfiguration.getBaseImageLayersCacheConfiguration());
+    Assert.assertTrue(buildConfiguration.getAllowHttp());
   }
 
   @Test
@@ -141,6 +143,7 @@ public class BuildConfigurationTest {
     Assert.assertEquals(V22ManifestTemplate.class, buildConfiguration.getTargetFormat());
     Assert.assertNull(buildConfiguration.getApplicationLayersCacheConfiguration());
     Assert.assertNull(buildConfiguration.getBaseImageLayersCacheConfiguration());
+    Assert.assertFalse(buildConfiguration.getAllowHttp());
   }
 
   @Test

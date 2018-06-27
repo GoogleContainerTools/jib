@@ -17,13 +17,19 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Command;
+import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
+import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
+import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.Caches;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.concurrent.ExecutionException;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.ClassRule;
@@ -41,7 +47,9 @@ public class BuildStepsIntegrationTest {
   @Rule public TemporaryFolder temporaryCacheDirectory = new TemporaryFolder();
 
   @Test
-  public void testSteps_forBuildToDockerRegistry() throws Exception {
+  public void testSteps_forBuildToDockerRegistry()
+      throws IOException, URISyntaxException, InterruptedException, CacheMetadataCorruptedException,
+          ExecutionException, CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
     SourceFilesConfiguration sourceFilesConfiguration = new TestSourceFilesConfiguration();
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder(logger)
@@ -52,6 +60,7 @@ public class BuildStepsIntegrationTest {
             .setExposedPorts(
                 ExposedPortsParser.parse(
                     Arrays.asList("1000", "2000-2002/tcp", "3000/udp"), logger))
+            .setAllowHttp(true)
             .build();
 
     Path cacheDirectory = temporaryCacheDirectory.newFolder().toPath();
@@ -84,7 +93,9 @@ public class BuildStepsIntegrationTest {
   }
 
   @Test
-  public void testSteps_forBuildToDockerDaemon() throws Exception {
+  public void testSteps_forBuildToDockerDaemon()
+      throws IOException, URISyntaxException, InterruptedException, CacheMetadataCorruptedException,
+          ExecutionException, CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
     SourceFilesConfiguration sourceFilesConfiguration = new TestSourceFilesConfiguration();
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder(logger)

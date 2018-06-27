@@ -43,10 +43,16 @@ public abstract class RegistryAuthenticators {
   public static RegistryAuthenticator forOther(String serverUrl, String repository)
       throws RegistryAuthenticationFailedException, IOException, RegistryException {
     try {
-      return new RegistryClient(null, serverUrl, repository).getRegistryAuthenticator();
+      return RegistryClient.factory(serverUrl, repository)
+          .newWithAuthorization(null)
+          .getRegistryAuthenticator();
 
     } catch (MalformedURLException ex) {
       throw new RegistryAuthenticationFailedException(ex);
+
+    } catch (InsecureRegistryException ex) {
+      // HTTP is not allowed, so just return null.
+      return null;
     }
   }
 }
