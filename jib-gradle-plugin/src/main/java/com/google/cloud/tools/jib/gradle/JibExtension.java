@@ -64,11 +64,13 @@ public class JibExtension {
   // Defines default configuration values.
   private static final String DEFAULT_FROM_IMAGE = "gcr.io/distroless/java";
   private static final boolean DEFAULT_USE_ONLY_PROJECT_CACHE = false;
+  private static final boolean DEFAULT_ALLOW_INSECURE_REGISTIRIES = false;
 
   private final ImageConfiguration from;
   private final ImageConfiguration to;
   private final ContainerParameters container;
   private final Property<Boolean> useOnlyProjectCache;
+  private final Property<Boolean> allowInsecureRegistries;
 
   // TODO: Deprecated parameters; remove these 4
   private final ListProperty<String> jvmFlags;
@@ -89,12 +91,14 @@ public class JibExtension {
     format = objectFactory.property(ImageFormat.class);
 
     useOnlyProjectCache = objectFactory.property(Boolean.class);
+    allowInsecureRegistries = objectFactory.property(Boolean.class);
 
     // Sets defaults.
     from.setImage(DEFAULT_FROM_IMAGE);
     jvmFlags.set(Collections.emptyList());
     args.set(Collections.emptyList());
     useOnlyProjectCache.set(DEFAULT_USE_ONLY_PROJECT_CACHE);
+    allowInsecureRegistries.set(DEFAULT_ALLOW_INSECURE_REGISTIRIES);
   }
 
   /**
@@ -168,6 +172,10 @@ public class JibExtension {
     this.useOnlyProjectCache.set(useOnlyProjectCache);
   }
 
+  public void setAllowInsecureRegistries(boolean allowInsecureRegistries) {
+    this.allowInsecureRegistries.set(allowInsecureRegistries);
+  }
+
   @Internal
   String getBaseImage() {
     return Preconditions.checkNotNull(from.getImage());
@@ -236,5 +244,11 @@ public class JibExtension {
   @Optional
   boolean getUseOnlyProjectCache() {
     return useOnlyProjectCache.get();
+  }
+
+  @Input
+  @Optional
+  boolean getAllowInsecureRegistries() {
+    return allowInsecureRegistries.get();
   }
 }

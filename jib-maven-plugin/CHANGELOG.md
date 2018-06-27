@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - `<container><ports>` parameter to define container's exposed ports (similar to Dockerfile `EXPOSE`) ([#383](https://github.com/GoogleContainerTools/jib/issues/383))
+- Can set `allowInsecureRegistries` parameter to `true` to use registries that only support HTTP ([#388](https://github.com/GoogleContainerTools/jib/issues/388)) 
 
 ### Changed
 
