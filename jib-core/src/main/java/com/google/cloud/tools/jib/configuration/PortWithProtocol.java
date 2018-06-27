@@ -21,12 +21,23 @@ public class PortWithProtocol {
 
   /** Represents the protocol portion of the port. */
   public enum Protocol {
-    tcp,
-    udp
+    TCP("tcp"),
+    UDP("udp");
+
+    private final String stringRepresentation;
+
+    Protocol(String stringRepresentation) {
+      this.stringRepresentation = stringRepresentation;
+    }
+
+    @Override
+    public String toString() {
+      return stringRepresentation;
+    }
   }
 
-  private int port;
-  private Protocol protocol;
+  private final int port;
+  private final Protocol protocol;
 
   public PortWithProtocol(int port, Protocol protocol) {
     this.port = port;
@@ -39,11 +50,5 @@ public class PortWithProtocol {
 
   public Protocol getProtocol() {
     return protocol;
-  }
-
-  /** @return the {@link PortWithProtocol} in string form "port/protocol" */
-  @Override
-  public String toString() {
-    return port + "/" + protocol.toString();
   }
 }

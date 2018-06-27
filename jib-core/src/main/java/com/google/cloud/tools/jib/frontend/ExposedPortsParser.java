@@ -93,4 +93,6 @@ public class ExposedPortsParser {
 
     return result.build();
   }
+
+  private ExposedPortsParser() {}
 }
