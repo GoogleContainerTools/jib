@@ -113,7 +113,7 @@ public class DockerContextTask extends DefaultTask {
           .setExposedPorts(jibExtension.getExposedPorts())
           .generate(Paths.get(targetDir));
 
-      gradleBuildLogger.info("Created Docker context at " + targetDir);
+      gradleBuildLogger.lifecycle("Created Docker context at " + targetDir);
 
     } catch (InsecureRecursiveDeleteException ex) {
       throw new GradleException(
