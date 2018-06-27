@@ -261,7 +261,7 @@ The user would be able to define patterns to match against both dependencies and
 
 #### Option 3 - in custom layers
 
-Similar to the above *[Option 2 - Multiple custom layers](fix link)*:
+Similar to the above *[Option 2 - Multiple custom layers](#option-2---multiple-custom-layers)*:
 
 ```xml
 <additionalLayers>
