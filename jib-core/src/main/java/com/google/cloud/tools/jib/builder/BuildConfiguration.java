@@ -202,7 +202,7 @@ public class BuildConfiguration {
               javaArguments,
               jvmFlags,
               ImmutableMap.copyOf(environmentMap),
-              ImmutableList.copyOf(exposedPorts),
+              exposedPorts,
               targetFormat,
               applicationLayersCacheConfiguration,
               baseImageLayersCacheConfiguration,

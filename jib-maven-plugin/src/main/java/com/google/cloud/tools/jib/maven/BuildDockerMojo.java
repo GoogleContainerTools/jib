@@ -60,11 +60,12 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       throw new MojoExecutionException(HELPFUL_SUGGESTIONS.forDockerNotInstalled());
     }
 
-    ParameterValidator.checkListForNullOrEmpty(getArgs(), "<container><args>", mavenBuildLogger);
     ParameterValidator.checkListForNullOrEmpty(
-        getJvmFlags(), "<container><jvmFlags>", mavenBuildLogger);
+        getArgs(), "<container><args>", mavenBuildLogger, MojoExecutionException::new);
     ParameterValidator.checkListForNullOrEmpty(
-        getExposedPorts(), "<container><ports>", mavenBuildLogger);
+        getJvmFlags(), "<container><jvmFlags>", mavenBuildLogger, MojoExecutionException::new);
+    ParameterValidator.checkListForNullOrEmpty(
+        getExposedPorts(), "<container><ports>", mavenBuildLogger, MojoExecutionException::new);
 
     // Parses 'from' and 'to' into image reference.
     ImageReference baseImage = parseImageReference(getBaseImage(), "from");

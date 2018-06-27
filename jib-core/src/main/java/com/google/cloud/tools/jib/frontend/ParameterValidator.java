@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.frontend;
 
 import com.google.cloud.tools.jib.builder.BuildLogger;
 import java.util.List;
+import java.util.function.Function;
 
 /** Used for validating configuration parameters. */
 public class ParameterValidator {
@@ -29,26 +30,26 @@ public class ParameterValidator {
    * @param list the list to check
    * @param parameterName the name of the configuration parameter being checked
    * @param logger used for displaying messages
+   * @param exception a function returning the exception to be thrown when a null element is found
+   * @param <T> the exception type for null elements
+   * @throws T if a null element is found
    */
-  public static void checkListForNullOrEmpty(
-      List<String> list, String parameterName, BuildLogger logger) {
-    boolean foundNull = false;
+  public static <T extends Throwable> void checkListForNullOrEmpty(
+      List<String> list, String parameterName, BuildLogger logger, Function<String, T> exception)
+      throws T {
     boolean foundWarning = false;
     for (String element : list) {
       if (element == null) {
-        foundNull = true;
-        break;
+        throw exception.apply(
+            "Null element found in list parameter '"
+                + parameterName
+                + "'. Make sure your configuration is free of null parameters.");
       } else if (element.equals("")) {
         foundWarning = true;
       }
     }
 
-    if (foundNull) {
-      throw new IllegalStateException(
-          "Null element found in list parameter '"
-              + parameterName
-              + "'. Make sure your configuration is free of null parameters.");
-    } else if (foundWarning) {
+    if (foundWarning) {
       logger.warn("Empty string found in list parameter '" + parameterName + "'.");
     }
   }

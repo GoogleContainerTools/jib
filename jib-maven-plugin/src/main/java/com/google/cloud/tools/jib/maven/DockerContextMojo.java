@@ -54,11 +54,12 @@ public class DockerContextMojo extends JibPluginConfiguration {
     MavenBuildLogger mavenBuildLogger = new MavenBuildLogger(getLog());
     handleDeprecatedParameters(mavenBuildLogger);
 
-    ParameterValidator.checkListForNullOrEmpty(getArgs(), "<container><args>", mavenBuildLogger);
     ParameterValidator.checkListForNullOrEmpty(
-        getJvmFlags(), "<container><jvmFlags>", mavenBuildLogger);
+        getArgs(), "<container><args>", mavenBuildLogger, MojoExecutionException::new);
     ParameterValidator.checkListForNullOrEmpty(
-        getExposedPorts(), "<container><ports>", mavenBuildLogger);
+        getJvmFlags(), "<container><jvmFlags>", mavenBuildLogger, MojoExecutionException::new);
+    ParameterValidator.checkListForNullOrEmpty(
+        getExposedPorts(), "<container><ports>", mavenBuildLogger, MojoExecutionException::new);
 
     Preconditions.checkNotNull(targetDir);
 

@@ -85,11 +85,17 @@ public class BuildDockerTask extends DefaultTask {
     jibExtension.handleDeprecatedParameters(gradleBuildLogger);
 
     ParameterValidator.checkListForNullOrEmpty(
-        jibExtension.getArgs(), "jib.container.args", gradleBuildLogger);
+        jibExtension.getArgs(), "jib.container.args", gradleBuildLogger, GradleException::new);
     ParameterValidator.checkListForNullOrEmpty(
-        jibExtension.getJvmFlags(), "jib.container.jvmFlags", gradleBuildLogger);
+        jibExtension.getJvmFlags(),
+        "jib.container.jvmFlags",
+        gradleBuildLogger,
+        GradleException::new);
     ParameterValidator.checkListForNullOrEmpty(
-        jibExtension.getExposedPorts(), "jib.container.ports", gradleBuildLogger);
+        jibExtension.getExposedPorts(),
+        "jib.container.ports",
+        gradleBuildLogger,
+        GradleException::new);
 
     RegistryCredentials knownBaseRegistryCredentials = null;
     Authorization fromAuthorization = jibExtension.getFrom().getImageAuthorization();
