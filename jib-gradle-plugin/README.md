@@ -284,12 +284,6 @@ jib {
 
 See the [Jib project README](/../../#how-jib-works).
 
-## Known Limitations
-
-These limitations will be fixed in later releases.
-
-* Pushing to Azure Container Registry is not currently supported.
-
 ## Frequently Asked Questions (FAQ)
 
 See the [Jib project README](/../../#frequently-asked-questions-faq).
