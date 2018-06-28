@@ -18,7 +18,9 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.docker.DockerContextGenerator;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
+import com.google.cloud.tools.jib.frontend.ParameterValidator;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.InsecureRecursiveDeleteException;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -99,6 +101,19 @@ public class DockerContextTask extends DefaultTask {
     GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
     jibExtension.handleDeprecatedParameters(gradleBuildLogger);
 
+    ParameterValidator.checkListForNullOrEmpty(
+        jibExtension.getArgs(), "jib.container.args", gradleBuildLogger, GradleException::new);
+    ParameterValidator.checkListForNullOrEmpty(
+        jibExtension.getJvmFlags(),
+        "jib.container.jvmFlags",
+        gradleBuildLogger,
+        GradleException::new);
+    ParameterValidator.checkListForNullOrEmpty(
+        jibExtension.getExposedPorts(),
+        "jib.container.ports",
+        gradleBuildLogger,
+        GradleException::new);
+
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(getProject(), gradleBuildLogger);
     String mainClass = gradleProjectProperties.getMainClass(jibExtension);
@@ -112,10 +127,10 @@ public class DockerContextTask extends DefaultTask {
 
       new DockerContextGenerator(gradleProjectProperties.getSourceFilesConfiguration())
           .setBaseImage(jibExtension.getBaseImage())
-          .setJvmFlags(jibExtension.getJvmFlags())
+          .setJvmFlags(ImmutableList.copyOf(jibExtension.getJvmFlags()))
           .setMainClass(mainClass)
-          .setJavaArguments(jibExtension.getArgs())
-          .setExposedPorts(jibExtension.getExposedPorts())
+          .setJavaArguments(ImmutableList.copyOf(jibExtension.getArgs()))
+          .setExposedPorts(ImmutableList.copyOf(jibExtension.getExposedPorts()))
           .generate(Paths.get(targetDir));
 
       gradleBuildLogger.lifecycle("Created Docker context at " + targetDir);

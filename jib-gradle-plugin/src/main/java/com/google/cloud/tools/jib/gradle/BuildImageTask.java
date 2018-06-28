@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
+import com.google.cloud.tools.jib.frontend.ParameterValidator;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
@@ -30,6 +31,7 @@ import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -84,6 +86,19 @@ public class BuildImageTask extends DefaultTask {
                   "'jib.to.image'", "build.gradle", "gradle jib --image <your image name>"));
     }
 
+    ParameterValidator.checkListForNullOrEmpty(
+        jibExtension.getArgs(), "jib.container.args", gradleBuildLogger, GradleException::new);
+    ParameterValidator.checkListForNullOrEmpty(
+        jibExtension.getJvmFlags(),
+        "jib.container.jvmFlags",
+        gradleBuildLogger,
+        GradleException::new);
+    ParameterValidator.checkListForNullOrEmpty(
+        jibExtension.getExposedPorts(),
+        "jib.container.ports",
+        gradleBuildLogger,
+        GradleException::new);
+
     RegistryCredentials knownBaseRegistryCredentials = null;
     RegistryCredentials knownTargetRegistryCredentials = null;
     Authorization fromAuthorization = jibExtension.getFrom().getImageAuthorization();
@@ -109,8 +124,8 @@ public class BuildImageTask extends DefaultTask {
             .setTargetImageCredentialHelperName(jibExtension.getTo().getCredHelper())
             .setKnownTargetRegistryCredentials(knownTargetRegistryCredentials)
             .setMainClass(mainClass)
-            .setJavaArguments(jibExtension.getArgs())
-            .setJvmFlags(jibExtension.getJvmFlags())
+            .setJavaArguments(ImmutableList.copyOf(jibExtension.getArgs()))
+            .setJvmFlags(ImmutableList.copyOf(jibExtension.getJvmFlags()))
             .setExposedPorts(
                 ExposedPortsParser.parse(jibExtension.getExposedPorts(), gradleBuildLogger))
             .setTargetFormat(jibExtension.getFormat())

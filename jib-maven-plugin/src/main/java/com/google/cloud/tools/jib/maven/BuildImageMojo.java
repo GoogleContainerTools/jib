@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
+import com.google.cloud.tools.jib.frontend.ParameterValidator;
 import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.RegistryClient;
@@ -30,6 +31,7 @@ import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import java.util.Arrays;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -68,6 +70,13 @@ public class BuildImageMojo extends JibPluginConfiguration {
               + "'.");
     }
 
+    ParameterValidator.checkListForNullOrEmpty(
+        getArgs(), "<container><args>", mavenBuildLogger, MojoExecutionException::new);
+    ParameterValidator.checkListForNullOrEmpty(
+        getJvmFlags(), "<container><jvmFlags>", mavenBuildLogger, MojoExecutionException::new);
+    ParameterValidator.checkListForNullOrEmpty(
+        getExposedPorts(), "<container><ports>", mavenBuildLogger, MojoExecutionException::new);
+
     // Parses 'from' into image reference.
     ImageReference baseImage = parseImageReference(getBaseImage(), "from");
 
@@ -102,8 +111,8 @@ public class BuildImageMojo extends JibPluginConfiguration {
             .setTargetImageCredentialHelperName(getTargetImageCredentialHelperName())
             .setKnownTargetRegistryCredentials(knownTargetRegistryCredentials)
             .setMainClass(mainClass)
-            .setJavaArguments(getArgs())
-            .setJvmFlags(getJvmFlags())
+            .setJavaArguments(ImmutableList.copyOf(getArgs()))
+            .setJvmFlags(ImmutableList.copyOf(getJvmFlags()))
             .setEnvironment(getEnvironment())
             .setExposedPorts(ExposedPortsParser.parse(getExposedPorts(), mavenBuildLogger))
             .setTargetFormat(ImageFormat.valueOf(getFormat()).getManifestTemplateClass())

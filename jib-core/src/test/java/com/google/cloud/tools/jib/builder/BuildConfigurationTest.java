@@ -25,9 +25,7 @@ import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
@@ -50,8 +48,8 @@ public class BuildConfigurationTest {
     RegistryCredentials expectedKnownTargetRegistryCredentials =
         Mockito.mock(RegistryCredentials.class);
     String expectedMainClass = "mainclass";
-    List<String> expectedJavaArguments = Arrays.asList("arg1", "arg2");
-    List<String> expectedJvmFlags = Arrays.asList("some", "jvm", "flags");
+    ImmutableList<String> expectedJavaArguments = ImmutableList.of("arg1", "arg2");
+    ImmutableList<String> expectedJvmFlags = ImmutableList.of("some", "jvm", "flags");
     Map<String, String> expectedEnvironment = ImmutableMap.of("key", "value");
     ImmutableList<String> expectedExposedPorts = ImmutableList.of("1000", "2000");
     Class<? extends BuildableManifestTemplate> expectedTargetFormat = OCIManifestTemplate.class;

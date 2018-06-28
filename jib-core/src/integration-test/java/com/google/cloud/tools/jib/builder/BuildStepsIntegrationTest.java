@@ -24,11 +24,11 @@ import com.google.cloud.tools.jib.cache.Caches;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
@@ -56,7 +56,7 @@ public class BuildStepsIntegrationTest {
             .setBaseImage(ImageReference.of("gcr.io", "distroless/java", "latest"))
             .setTargetImage(ImageReference.of("localhost:5000", "testimage", "testtag"))
             .setMainClass("HelloWorld")
-            .setJavaArguments(Collections.singletonList("An argument."))
+            .setJavaArguments(ImmutableList.of("An argument."))
             .setExposedPorts(
                 ExposedPortsParser.parse(
                     Arrays.asList("1000", "2000-2002/tcp", "3000/udp"), logger))
@@ -102,7 +102,7 @@ public class BuildStepsIntegrationTest {
             .setBaseImage(ImageReference.of("gcr.io", "distroless/java", "latest"))
             .setTargetImage(ImageReference.of(null, "testdocker", null))
             .setMainClass("HelloWorld")
-            .setJavaArguments(Collections.singletonList("An argument."))
+            .setJavaArguments(ImmutableList.of("An argument."))
             .setExposedPorts(
                 ExposedPortsParser.parse(
                     Arrays.asList("1000", "2000-2002/tcp", "3000/udp"), logger))

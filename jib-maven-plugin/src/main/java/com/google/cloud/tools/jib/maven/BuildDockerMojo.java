@@ -24,12 +24,14 @@ import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
+import com.google.cloud.tools.jib.frontend.ParameterValidator;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
@@ -57,6 +59,13 @@ public class BuildDockerMojo extends JibPluginConfiguration {
     if (!new DockerClient().isDockerInstalled()) {
       throw new MojoExecutionException(HELPFUL_SUGGESTIONS.forDockerNotInstalled());
     }
+
+    ParameterValidator.checkListForNullOrEmpty(
+        getArgs(), "<container><args>", mavenBuildLogger, MojoExecutionException::new);
+    ParameterValidator.checkListForNullOrEmpty(
+        getJvmFlags(), "<container><jvmFlags>", mavenBuildLogger, MojoExecutionException::new);
+    ParameterValidator.checkListForNullOrEmpty(
+        getExposedPorts(), "<container><ports>", mavenBuildLogger, MojoExecutionException::new);
 
     // Parses 'from' and 'to' into image reference.
     ImageReference baseImage = parseImageReference(getBaseImage(), "from");
@@ -86,8 +95,8 @@ public class BuildDockerMojo extends JibPluginConfiguration {
             .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
             .setTargetImage(targetImage)
             .setMainClass(mainClass)
-            .setJavaArguments(getArgs())
-            .setJvmFlags(getJvmFlags())
+            .setJavaArguments(ImmutableList.copyOf(getArgs()))
+            .setJvmFlags(ImmutableList.copyOf(getJvmFlags()))
             .setEnvironment(getEnvironment())
             .setExposedPorts(ExposedPortsParser.parse(getExposedPorts(), mavenBuildLogger))
             .setAllowHttp(getAllowInsecureRegistries());

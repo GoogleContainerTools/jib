@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -44,10 +45,10 @@ public class BuildConfiguration {
     @Nullable private String targetImageCredentialHelperName;
     @Nullable private RegistryCredentials knownTargetRegistryCredentials;
     @Nullable private String mainClass;
-    private List<String> javaArguments = new ArrayList<>();
-    private List<String> jvmFlags = new ArrayList<>();
+    private ImmutableList<String> javaArguments = ImmutableList.of();
+    private ImmutableList<String> jvmFlags = ImmutableList.of();
     private Map<String, String> environmentMap = new HashMap<>();
-    private List<String> exposedPorts = new ArrayList<>();
+    private ImmutableList<String> exposedPorts = ImmutableList.of();
     private Class<? extends BuildableManifestTemplate> targetFormat = V22ManifestTemplate.class;
     @Nullable private CacheConfiguration applicationLayersCacheConfiguration;
     @Nullable private CacheConfiguration baseImageLayersCacheConfiguration;
@@ -96,14 +97,14 @@ public class BuildConfiguration {
       return this;
     }
 
-    public Builder setJavaArguments(@Nullable List<String> javaArguments) {
+    public Builder setJavaArguments(@Nullable ImmutableList<String> javaArguments) {
       if (javaArguments != null) {
         this.javaArguments = javaArguments;
       }
       return this;
     }
 
-    public Builder setJvmFlags(@Nullable List<String> jvmFlags) {
+    public Builder setJvmFlags(@Nullable ImmutableList<String> jvmFlags) {
       if (jvmFlags != null) {
         this.jvmFlags = jvmFlags;
       }
@@ -117,7 +118,7 @@ public class BuildConfiguration {
       return this;
     }
 
-    public Builder setExposedPorts(@Nullable List<String> exposedPorts) {
+    public Builder setExposedPorts(@Nullable ImmutableList<String> exposedPorts) {
       if (exposedPorts != null) {
         this.exposedPorts = exposedPorts;
       }
@@ -198,10 +199,10 @@ public class BuildConfiguration {
               targetImageCredentialHelperName,
               knownTargetRegistryCredentials,
               mainClass,
-              ImmutableList.copyOf(javaArguments),
-              ImmutableList.copyOf(jvmFlags),
+              javaArguments,
+              jvmFlags,
               ImmutableMap.copyOf(environmentMap),
-              ImmutableList.copyOf(exposedPorts),
+              exposedPorts,
               targetFormat,
               applicationLayersCacheConfiguration,
               baseImageLayersCacheConfiguration,
