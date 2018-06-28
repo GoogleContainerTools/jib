@@ -37,8 +37,9 @@ class GradleSourceFilesConfiguration implements SourceFilesConfiguration {
   private static final String MAIN_SOURCE_SET_NAME = "main";
 
   /** Resolves the source files configuration for a Gradle {@link Project}. */
-  static GradleSourceFilesConfiguration getForProject(Project project) throws IOException {
-    return new GradleSourceFilesConfiguration(project);
+  static GradleSourceFilesConfiguration getForProject(
+      Project project, GradleBuildLogger gradleBuildLogger) throws IOException {
+    return new GradleSourceFilesConfiguration(project, gradleBuildLogger);
   }
 
   private final ImmutableList<Path> dependenciesFiles;
@@ -46,7 +47,8 @@ class GradleSourceFilesConfiguration implements SourceFilesConfiguration {
   private final ImmutableList<Path> classesFiles;
 
   /** Instantiate with {@link #getForProject}. */
-  private GradleSourceFilesConfiguration(Project project) throws IOException {
+  private GradleSourceFilesConfiguration(Project project, GradleBuildLogger gradleBuildLogger)
+      throws IOException {
     JavaPluginConvention javaPluginConvention =
         project.getConvention().getPlugin(JavaPluginConvention.class);
 
@@ -59,9 +61,18 @@ class GradleSourceFilesConfiguration implements SourceFilesConfiguration {
     // Adds each file in each classes output directory to the classes files list.
     FileCollection classesOutputDirectories = mainSourceSet.getOutput().getClassesDirs();
     for (File classesOutputDirectory : classesOutputDirectories) {
+      if (Files.notExists(classesOutputDirectory.toPath())) {
+        // Warns that output directory was not found.
+        gradleBuildLogger.warn(
+            "Could not find build output directory '" + classesOutputDirectory + "'");
+        continue;
+      }
       try (Stream<Path> classFileStream = Files.list(classesOutputDirectory.toPath())) {
         classFileStream.forEach(classesFiles::add);
       }
+    }
+    if (classesFiles.isEmpty()) {
+      gradleBuildLogger.warn("No classes files were found - did you compile your project?");
     }
 
     // Adds each file in the resources output directory to the resources files list.
