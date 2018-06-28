@@ -38,7 +38,7 @@ public class FileOperations {
             // Creates the same path in the destDir.
             Path destPath = destDir.resolve(sourceFile.getParent().relativize(path));
             if (Files.isDirectory(path)) {
-              Files.createDirectory(destPath);
+              Files.createDirectories(destPath);
             } else {
               Files.copy(path, destPath);
             }

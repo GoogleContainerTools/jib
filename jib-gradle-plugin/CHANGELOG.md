@@ -14,11 +14,14 @@ All notable changes to this project will be documented in this file.
 - Container creation date set to timestamp 0 ([#341](https://github.com/GoogleContainerTools/jib/issues/341))
 - Does not authenticate base image pull unless necessary - reduces build time by about 500ms ([#414](https://github.com/GoogleContainerTools/jib/pull/414))
 - `jvmFlags`, `mainClass`, `args`, and `format` are now grouped under `container` configuration object ([#384](https://github.com/GoogleContainerTools/jib/issues/384))
+- Warns instead of errors when classes not found ([#462](https://github.com/GoogleContainerTools/jib/pull/462))
 
 ### Fixed 
 
 - Using Azure Container Registry now works - define credentials in `jib.to.auth`/`jib.from.auth` ([#415](https://github.com/GoogleContainerTools/jib/issues/415))
 - Supports `access_token` as alias to `token` in registry authentication ([#420](https://github.com/GoogleContainerTools/jib/pull/420))
+- Docker context export for Groovy project ([#459](https://github.com/GoogleContainerTools/jib/pull/459))
+- Visibility of `jib.to.image` ([#460](https://github.com/GoogleContainerTools/jib/pull/460))
 
 ## 0.9.0
 

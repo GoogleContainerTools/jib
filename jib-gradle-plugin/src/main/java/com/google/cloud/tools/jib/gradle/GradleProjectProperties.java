@@ -44,13 +44,12 @@ class GradleProjectProperties implements ProjectProperties {
       Project project, GradleBuildLogger gradleBuildLogger) {
     try {
       return new GradleProjectProperties(
-          project, gradleBuildLogger, GradleSourceFilesConfiguration.getForProject(project));
+          project,
+          gradleBuildLogger,
+          GradleSourceFilesConfiguration.getForProject(project, gradleBuildLogger));
+
     } catch (IOException ex) {
-      throw new GradleException(
-          "Obtaining project build output files failed; make sure you have compiled your project "
-              + "before trying to build the image. (Did you accidentally run \"gradle clean "
-              + "jib\" instead of \"gradle clean compileJava jib\"?)",
-          ex);
+      throw new GradleException("Obtaining project build output files failed", ex);
     }
   }
 

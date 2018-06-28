@@ -109,9 +109,7 @@ public class JibPluginIntegrationTest {
       Assert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
-              "Obtaining project build output files failed; make sure you have compiled your "
-                  + "project before trying to build the image. (Did you accidentally run \"gradle "
-                  + "clean jib\" instead of \"gradle clean compileJava jib\"?)"));
+              "No classes files were found - did you compile your project?"));
     }
 
     Assert.assertEquals(

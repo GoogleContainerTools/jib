@@ -38,6 +38,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -65,17 +66,18 @@ public class GradleSourceFilesConfigurationTest {
     }
   }
 
+  @Mock private Project mockProject;
+  @Mock private Convention mockConvention;
+  @Mock private JavaPluginConvention mockJavaPluginConvention;
+  @Mock private SourceSetContainer mockSourceSetContainer;
+  @Mock private SourceSet mockMainSourceSet;
+  @Mock private SourceSetOutput mockMainSourceSetOutput;
+  @Mock private GradleBuildLogger mockGradleBuildLogger;
+
   private GradleSourceFilesConfiguration testGradleSourceFilesConfiguration;
 
   @Before
   public void setUp() throws URISyntaxException, IOException {
-    Project mockProject = Mockito.mock(Project.class);
-    Convention mockConvention = Mockito.mock(Convention.class);
-    JavaPluginConvention mockJavaPluginConvention = Mockito.mock(JavaPluginConvention.class);
-    SourceSetContainer mockSourceSetContainer = Mockito.mock(SourceSetContainer.class);
-    SourceSet mockMainSourceSet = Mockito.mock(SourceSet.class);
-    SourceSetOutput mockMainSourceSetOutput = Mockito.mock(SourceSetOutput.class);
-
     Set<File> classesFiles =
         ImmutableSet.of(Paths.get(Resources.getResource("application/classes").toURI()).toFile());
     FileCollection classesFileCollection = new TestFileCollection(classesFiles);
@@ -103,7 +105,8 @@ public class GradleSourceFilesConfigurationTest {
     Mockito.when(mockMainSourceSetOutput.getResourcesDir()).thenReturn(resourcesOutputDir);
     Mockito.when(mockMainSourceSet.getRuntimeClasspath()).thenReturn(runtimeFileCollection);
 
-    testGradleSourceFilesConfiguration = GradleSourceFilesConfiguration.getForProject(mockProject);
+    testGradleSourceFilesConfiguration =
+        GradleSourceFilesConfiguration.getForProject(mockProject, mockGradleBuildLogger);
   }
 
   @Test
@@ -130,6 +133,21 @@ public class GradleSourceFilesConfigurationTest {
     Assert.assertEquals(
         expectedResourcesFiles, testGradleSourceFilesConfiguration.getResourcesFiles());
     Assert.assertEquals(expectedClassesFiles, testGradleSourceFilesConfiguration.getClassesFiles());
+  }
+
+  @Test
+  public void test_noClassesFiles() throws IOException {
+    File nonexistentFile = new File("/nonexistent/file");
+    Mockito.when(mockMainSourceSetOutput.getClassesDirs())
+        .thenReturn(new TestFileCollection(ImmutableSet.of(nonexistentFile)));
+
+    testGradleSourceFilesConfiguration =
+        GradleSourceFilesConfiguration.getForProject(mockProject, mockGradleBuildLogger);
+
+    Mockito.verify(mockGradleBuildLogger)
+        .warn("Could not find build output directory '" + nonexistentFile + "'");
+    Mockito.verify(mockGradleBuildLogger)
+        .warn("No classes files were found - did you compile your project?");
   }
 
   @Test
