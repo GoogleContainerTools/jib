@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.cache;
 
-import com.google.cloud.tools.jib.filesystem.UserCacheHome;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.Closeable;
 import java.io.IOException;
@@ -31,17 +30,8 @@ import java.nio.file.Path;
  */
 public class Caches implements Closeable {
 
-  /**
-   * Initializes a {@link Caches} with directory paths. Use {@link #newInitializer} to construct.
-   */
+  /** Initializes a {@link Caches} with directory paths. */
   public static class Initializer {
-
-    /**
-     * The default directory for caching the base image layers, in {@code [user cache
-     * home]/google-cloud-tools-java/jib}.
-     */
-    private static final Path DEFAULT_BASE_CACHE_DIRECTORY =
-        UserCacheHome.getCacheHome().resolve("google-cloud-tools-java").resolve("jib");
 
     /** A file to store in the default base image layers cache to check ownership by Jib. */
     private static final String OWNERSHIP_FILE_NAME = ".jib";
@@ -54,7 +44,7 @@ public class Caches implements Closeable {
      */
     @VisibleForTesting
     static void ensureOwnership(Path cacheDirectory)
-        throws CacheDirectoryNotOwnedException, IOException {
+        throws CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
       Path ownershipFile = cacheDirectory.resolve(OWNERSHIP_FILE_NAME);
 
       if (Files.exists(cacheDirectory)) {
@@ -64,41 +54,57 @@ public class Caches implements Closeable {
         }
 
       } else {
-        // Creates the cache directory and ownership file.
-        Files.createDirectories(cacheDirectory);
-        Files.createFile(ownershipFile);
+        try {
+          // Creates the cache directory and ownership file.
+          Files.createDirectories(cacheDirectory);
+          Files.createFile(ownershipFile);
+
+        } catch (IOException ex) {
+          throw new CacheDirectoryCreationException(cacheDirectory, ex);
+        }
       }
     }
 
-    private final Path applicationCacheDirectory;
-    private Path baseCacheDirectory = DEFAULT_BASE_CACHE_DIRECTORY;
+    private final Path baseImageLayersCacheDirectory;
+    private final boolean shouldEnsureOwnershipOfBaseImageLayersCacheDirectory;
+    private final Path applicationLayersCacheDirectory;
+    private final boolean shouldEnsureOwnershipOfApplicationLayersCacheDirectory;
 
-    private Initializer(Path applicationCacheDirectory) {
-      this.applicationCacheDirectory = applicationCacheDirectory;
-    }
-
-    public Initializer setBaseCacheDirectory(Path baseCacheDirectory) {
-      this.baseCacheDirectory = baseCacheDirectory;
-      return this;
+    /**
+     * @param baseImageLayersCacheDirectory cache for the application image layers - usually not
+     *     local to the application project
+     * @param shouldEnsureOwnershipOfBaseImageLayersCacheDirectory if {@code true}, ensures the base
+     *     image layers cache directory is safe to write to
+     * @param applicationLayersCacheDirectory cache for the application image layers - usually local
+     *     to the application project
+     * @param shouldEnsureOwnershipOfApplicationLayersCacheDirectory if {@code true}, ensures the
+     *     base image layers cache directory is safe to write to
+     */
+    public Initializer(
+        Path baseImageLayersCacheDirectory,
+        boolean shouldEnsureOwnershipOfBaseImageLayersCacheDirectory,
+        Path applicationLayersCacheDirectory,
+        boolean shouldEnsureOwnershipOfApplicationLayersCacheDirectory) {
+      this.baseImageLayersCacheDirectory = baseImageLayersCacheDirectory;
+      this.shouldEnsureOwnershipOfBaseImageLayersCacheDirectory =
+          shouldEnsureOwnershipOfBaseImageLayersCacheDirectory;
+      this.applicationLayersCacheDirectory = applicationLayersCacheDirectory;
+      this.shouldEnsureOwnershipOfApplicationLayersCacheDirectory =
+          shouldEnsureOwnershipOfApplicationLayersCacheDirectory;
     }
 
     public Caches init()
-        throws CacheMetadataCorruptedException, IOException, CacheDirectoryNotOwnedException {
-      if (DEFAULT_BASE_CACHE_DIRECTORY.equals(baseCacheDirectory)) {
-        ensureOwnership(DEFAULT_BASE_CACHE_DIRECTORY);
+        throws CacheMetadataCorruptedException, CacheDirectoryNotOwnedException,
+            CacheDirectoryCreationException, IOException {
+      if (shouldEnsureOwnershipOfBaseImageLayersCacheDirectory) {
+        ensureOwnership(baseImageLayersCacheDirectory);
+      }
+      if (shouldEnsureOwnershipOfApplicationLayersCacheDirectory) {
+        ensureOwnership(applicationLayersCacheDirectory);
       }
 
-      return new Caches(baseCacheDirectory, applicationCacheDirectory);
+      return new Caches(baseImageLayersCacheDirectory, applicationLayersCacheDirectory);
     }
-  }
-
-  /**
-   * @param applicationCacheDirectory Cache for the application image layers - should be local to
-   *     the application project
-   * @return a new {@link Initializer} to initialize the caches.
-   */
-  public static Initializer newInitializer(Path applicationCacheDirectory) {
-    return new Initializer(applicationCacheDirectory);
   }
 
   private final Cache baseCache;

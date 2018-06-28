@@ -27,6 +27,8 @@ import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URL;
@@ -61,9 +63,47 @@ public class RegistryClient {
     return this;
   }
 
+  /** Immutable factory for creating {@link RegistryClient}s. */
+  public static class Factory {
+
+    private final RegistryEndpointProperties registryEndpointProperties;
+
+    private Factory(RegistryEndpointProperties registryEndpointProperties) {
+      this.registryEndpointProperties = registryEndpointProperties;
+    }
+
+    /**
+     * Creates a new {@link RegistryClient} with authentication credentials to use in requests.
+     *
+     * @param authorization the {@link Authorization} to access the registry/repository
+     * @return the new {@link RegistryClient}
+     */
+    public RegistryClient newWithAuthorization(@Nullable Authorization authorization) {
+      return new RegistryClient(authorization, registryEndpointProperties, false, makeUserAgent());
+    }
+
+    /**
+     * Creates a new {@link RegistryClient} that allows communication via HTTP.
+     *
+     * @return the new {@link RegistryClient}
+     */
+    public RegistryClient newAllowHttp() {
+      return new RegistryClient(null, registryEndpointProperties, true, makeUserAgent());
+    }
+  }
+
   @Nullable private static String userAgentSuffix;
 
-  // TODO: Inject via a RegistryClientFactory.
+  /**
+   * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
+   * @param imageName the image/repository name (also known as, namespace)
+   * @return the new {@link Factory}
+   */
+  public static Factory factory(String serverUrl, String imageName) {
+    return new Factory(new RegistryEndpointProperties(serverUrl, imageName));
+  }
+
+  // TODO: Inject via a RegistryClient.Factory.
   /**
    * Sets a suffix to append to {@code User-Agent} headers.
    *
@@ -73,9 +113,17 @@ public class RegistryClient {
     RegistryClient.userAgentSuffix = userAgentSuffix;
   }
 
-  /** @return the {@code User-Agent} header to send. */
+  /**
+   * @return the {@code User-Agent} header to send. The {@code User-Agent} can be disabled by
+   *     setting the system property variable {@code _JIB_DISABLE_USER_AGENT} to any non-empty
+   *     string.
+   */
   @VisibleForTesting
-  static String getUserAgent() {
+  static String makeUserAgent() {
+    if (!Strings.isNullOrEmpty(System.getProperty("_JIB_DISABLE_USER_AGENT"))) {
+      return "";
+    }
+
     String version = RegistryClient.class.getPackage().getImplementationVersion();
     StringBuilder userAgentBuilder = new StringBuilder();
     userAgentBuilder.append("jib");
@@ -90,15 +138,26 @@ public class RegistryClient {
 
   @Nullable private final Authorization authorization;
   private final RegistryEndpointProperties registryEndpointProperties;
+  private final boolean allowHttp;
+  private final String userAgent;
 
   /**
+   * Instantiate with {@link #factory}.
+   *
    * @param authorization the {@link Authorization} to access the registry/repository
-   * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
-   * @param imageName the image/repository name (also known as, namespace)
+   * @param registryEndpointProperties properties of registry endpoint requests
+   * @param allowHttp if {@code true}, allows redirects and fallbacks to HTTP; otherwise, only
+   *     allows HTTPS
    */
-  public RegistryClient(@Nullable Authorization authorization, String serverUrl, String imageName) {
+  private RegistryClient(
+      @Nullable Authorization authorization,
+      RegistryEndpointProperties registryEndpointProperties,
+      boolean allowHttp,
+      String userAgent) {
     this.authorization = authorization;
-    this.registryEndpointProperties = new RegistryEndpointProperties(serverUrl, imageName);
+    this.registryEndpointProperties = registryEndpointProperties;
+    this.allowHttp = allowHttp;
+    this.userAgent = userAgent;
   }
 
   /**
@@ -204,17 +263,17 @@ public class RegistryClient {
       try (Timer t2 = t.subTimer("pushBlob POST " + blobDigest)) {
 
         // POST /v2/<name>/blobs/uploads/?mount={blob.digest}
-        String locationHeader = callRegistryEndpoint(blobPusher.initializer());
-        if (locationHeader == null) {
+        URL patchLocation = callRegistryEndpoint(blobPusher.initializer());
+        if (patchLocation == null) {
           // The BLOB exists already.
           return true;
         }
-        URL patchLocation = new URL(locationHeader);
 
         t2.lap("pushBlob PATCH " + blobDigest);
 
         // PATCH <Location> with BLOB
-        URL putLocation = new URL(callRegistryEndpoint(blobPusher.writer(patchLocation)));
+        URL putLocation = callRegistryEndpoint(blobPusher.writer(patchLocation));
+        Preconditions.checkNotNull(putLocation);
 
         t2.lap("pushBlob PUT " + blobDigest);
 
@@ -232,6 +291,11 @@ public class RegistryClient {
     return registryEndpointProperties.getServerUrl() + "/v2/";
   }
 
+  @VisibleForTesting
+  String getUserAgent() {
+    return userAgent;
+  }
+
   /**
    * Calls the registry endpoint.
    *
@@ -243,11 +307,12 @@ public class RegistryClient {
   private <T> T callRegistryEndpoint(RegistryEndpointProvider<T> registryEndpointProvider)
       throws IOException, RegistryException {
     return new RegistryEndpointCaller<>(
-            getUserAgent(),
+            userAgent,
             getApiRouteBase(),
             registryEndpointProvider,
             authorization,
-            registryEndpointProperties)
+            registryEndpointProperties,
+            allowHttp)
         .call();
   }
 }

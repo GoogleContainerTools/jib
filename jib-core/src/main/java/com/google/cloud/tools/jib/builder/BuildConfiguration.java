@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder;
 
+import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
@@ -46,7 +47,11 @@ public class BuildConfiguration {
     private List<String> javaArguments = new ArrayList<>();
     private List<String> jvmFlags = new ArrayList<>();
     private Map<String, String> environmentMap = new HashMap<>();
+    private List<String> exposedPorts = new ArrayList<>();
     private Class<? extends BuildableManifestTemplate> targetFormat = V22ManifestTemplate.class;
+    @Nullable private CacheConfiguration applicationLayersCacheConfiguration;
+    @Nullable private CacheConfiguration baseImageLayersCacheConfiguration;
+    private boolean allowHttp = false;
 
     private BuildLogger buildLogger;
 
@@ -112,8 +117,50 @@ public class BuildConfiguration {
       return this;
     }
 
+    public Builder setExposedPorts(@Nullable List<String> exposedPorts) {
+      if (exposedPorts != null) {
+        this.exposedPorts = exposedPorts;
+      }
+      return this;
+    }
+
     public Builder setTargetFormat(Class<? extends BuildableManifestTemplate> targetFormat) {
       this.targetFormat = targetFormat;
+      return this;
+    }
+
+    /**
+     * Sets the location of the cache for storing application layers.
+     *
+     * @param applicationLayersCacheConfiguration the application layers {@link CacheConfiguration}
+     * @return this
+     */
+    public Builder setApplicationLayersCacheConfiguration(
+        @Nullable CacheConfiguration applicationLayersCacheConfiguration) {
+      this.applicationLayersCacheConfiguration = applicationLayersCacheConfiguration;
+      return this;
+    }
+
+    /**
+     * Sets the location of the cache for storing base image layers.
+     *
+     * @param baseImageLayersCacheConfiguration the base image layers {@link CacheConfiguration}
+     * @return this
+     */
+    public Builder setBaseImageLayersCacheConfiguration(
+        @Nullable CacheConfiguration baseImageLayersCacheConfiguration) {
+      this.baseImageLayersCacheConfiguration = baseImageLayersCacheConfiguration;
+      return this;
+    }
+
+    /**
+     * Sets whether or not to allow communication over HTTP (as opposed to HTTPS).
+     *
+     * @param allowHttp if {@code true}, insecure connections will be allowed
+     * @return this
+     */
+    public Builder setAllowHttp(boolean allowHttp) {
+      this.allowHttp = allowHttp;
       return this;
     }
 
@@ -154,7 +201,11 @@ public class BuildConfiguration {
               ImmutableList.copyOf(javaArguments),
               ImmutableList.copyOf(jvmFlags),
               ImmutableMap.copyOf(environmentMap),
-              targetFormat);
+              ImmutableList.copyOf(exposedPorts),
+              targetFormat,
+              applicationLayersCacheConfiguration,
+              baseImageLayersCacheConfiguration,
+              allowHttp);
 
         case 1:
           throw new IllegalStateException(errorMessages.get(0));
@@ -193,6 +244,10 @@ public class BuildConfiguration {
     return true;
   }
 
+  public static Builder builder(BuildLogger buildLogger) {
+    return new Builder(buildLogger);
+  }
+
   private final BuildLogger buildLogger;
   private final ImageReference baseImageReference;
   @Nullable private final String baseImageCredentialHelperName;
@@ -204,11 +259,11 @@ public class BuildConfiguration {
   private final ImmutableList<String> javaArguments;
   private final ImmutableList<String> jvmFlags;
   private final ImmutableMap<String, String> environmentMap;
+  private final ImmutableList<String> exposedPorts;
   private final Class<? extends BuildableManifestTemplate> targetFormat;
-
-  public static Builder builder(BuildLogger buildLogger) {
-    return new Builder(buildLogger);
-  }
+  @Nullable private final CacheConfiguration applicationLayersCacheConfiguration;
+  @Nullable private final CacheConfiguration baseImageLayersCacheConfiguration;
+  private final boolean allowHttp;
 
   /** Instantiate with {@link Builder#build}. */
   private BuildConfiguration(
@@ -223,7 +278,11 @@ public class BuildConfiguration {
       ImmutableList<String> javaArguments,
       ImmutableList<String> jvmFlags,
       ImmutableMap<String, String> environmentMap,
-      Class<? extends BuildableManifestTemplate> targetFormat) {
+      ImmutableList<String> exposedPorts,
+      Class<? extends BuildableManifestTemplate> targetFormat,
+      @Nullable CacheConfiguration applicationLayersCacheConfiguration,
+      @Nullable CacheConfiguration baseImageLayersCacheConfiguration,
+      boolean allowHttp) {
     this.buildLogger = buildLogger;
     this.baseImageReference = baseImageReference;
     this.baseImageCredentialHelperName = baseImageCredentialHelperName;
@@ -235,7 +294,11 @@ public class BuildConfiguration {
     this.javaArguments = javaArguments;
     this.jvmFlags = jvmFlags;
     this.environmentMap = environmentMap;
+    this.exposedPorts = exposedPorts;
     this.targetFormat = targetFormat;
+    this.applicationLayersCacheConfiguration = applicationLayersCacheConfiguration;
+    this.baseImageLayersCacheConfiguration = baseImageLayersCacheConfiguration;
+    this.allowHttp = allowHttp;
   }
 
   public BuildLogger getBuildLogger() {
@@ -310,7 +373,40 @@ public class BuildConfiguration {
     return environmentMap;
   }
 
+  public ImmutableList<String> getExposedPorts() {
+    return exposedPorts;
+  }
+
   public Class<? extends BuildableManifestTemplate> getTargetFormat() {
     return targetFormat;
+  }
+
+  /**
+   * Gets the location of the cache for storing application layers.
+   *
+   * @return the application layers {@link CacheConfiguration}, or {@code null} if not set
+   */
+  @Nullable
+  public CacheConfiguration getApplicationLayersCacheConfiguration() {
+    return applicationLayersCacheConfiguration;
+  }
+
+  /**
+   * Gets the location of the cache for storing base image layers.
+   *
+   * @return the base image layers {@link CacheConfiguration}, or {@code null} if not set
+   */
+  @Nullable
+  public CacheConfiguration getBaseImageLayersCacheConfiguration() {
+    return baseImageLayersCacheConfiguration;
+  }
+
+  /**
+   * Gets whether or not to allow communication over HTTP (as opposed to HTTPS).
+   *
+   * @return {@code true} if insecure connections will be allowed; {@code false} otherwise
+   */
+  public boolean getAllowHttp() {
+    return allowHttp;
   }
 }

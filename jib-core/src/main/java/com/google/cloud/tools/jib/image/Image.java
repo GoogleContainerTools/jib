@@ -31,6 +31,7 @@ public class Image<T extends Layer> {
 
     private ImmutableList<String> entrypoint = ImmutableList.of();
     private ImmutableList<String> javaArguments = ImmutableList.of();
+    private ImmutableList<String> exposedPorts = ImmutableList.of();
 
     /**
      * Sets the environment with a map from environment variable names to values.
@@ -91,6 +92,18 @@ public class Image<T extends Layer> {
     }
 
     /**
+     * Sets the items in the "ExposedPorts" field in the container configuration.
+     *
+     * @param exposedPorts the map of exposed ports to add, with the key in the format it would
+     *     appear in the configuration json (e.g. "portNum/tcp")
+     * @return this
+     */
+    public Builder<T> setExposedPorts(ImmutableList<String> exposedPorts) {
+      this.exposedPorts = exposedPorts;
+      return this;
+    }
+
+    /**
      * Adds a layer to the image.
      *
      * @param layer the layer to add
@@ -107,7 +120,8 @@ public class Image<T extends Layer> {
           imageLayersBuilder.build(),
           environmentBuilder.build(),
           ImmutableList.copyOf(entrypoint),
-          ImmutableList.copyOf(javaArguments));
+          ImmutableList.copyOf(javaArguments),
+          exposedPorts);
     }
   }
 
@@ -127,15 +141,20 @@ public class Image<T extends Layer> {
   /** Arguments to pass into main when running the image. */
   private final ImmutableList<String> javaArguments;
 
+  /** Ports that the container listens on. */
+  private final ImmutableList<String> exposedPorts;
+
   private Image(
       ImageLayers<T> layers,
       ImmutableList<String> environment,
       ImmutableList<String> entrypoint,
-      ImmutableList<String> javaArguments) {
+      ImmutableList<String> javaArguments,
+      ImmutableList<String> exposedPorts) {
     this.layers = layers;
     this.environmentBuilder = environment;
     this.entrypoint = entrypoint;
     this.javaArguments = javaArguments;
+    this.exposedPorts = exposedPorts;
   }
 
   public ImmutableList<String> getEnvironment() {
@@ -148,6 +167,10 @@ public class Image<T extends Layer> {
 
   public ImmutableList<String> getJavaArguments() {
     return javaArguments;
+  }
+
+  public ImmutableList<String> getExposedPorts() {
+    return exposedPorts;
   }
 
   public ImmutableList<T> getLayers() {

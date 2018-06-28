@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,12 +14,16 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.image;
+package com.google.cloud.tools.jib.registry;
 
-/** Exception thrown when accessing non-existent properties of layers. */
-public class LayerPropertyNotFoundException extends RuntimeException {
+import java.net.URL;
 
-  LayerPropertyNotFoundException(String message) {
-    super(message);
+/**
+ * Throw when attempting to access an insecure registry when only secure connections are allowed.
+ */
+public class InsecureRegistryException extends RegistryException {
+
+  InsecureRegistryException(URL insecureUrl) {
+    super("Only secure connections are allowed, but tried to reach URL " + insecureUrl);
   }
 }

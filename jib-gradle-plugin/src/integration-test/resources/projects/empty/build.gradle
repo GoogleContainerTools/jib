@@ -17,6 +17,9 @@ jib {
         image = 'gcr.io/jib-integration-testing/emptyimage:gradle'
         credHelper = 'gcr'
     }
+    container {
+        ports = ['1000/tcp', '2000-2003/udp']
+    }
     // Does not have tests use user-level cache for base image layers.
     useOnlyProjectCache = true
 }

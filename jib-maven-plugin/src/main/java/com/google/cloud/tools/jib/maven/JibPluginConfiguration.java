@@ -72,6 +72,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     @Nullable
     @Parameter(required = true)
     private String format = "Docker";
+
+    @Parameter private List<String> ports = Collections.emptyList();
   }
 
   /**
@@ -153,6 +155,9 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   @Parameter(defaultValue = "false", required = true)
   private boolean useOnlyProjectCache;
 
+  @Parameter(defaultValue = "false", required = true)
+  private boolean allowInsecureRegistries;
+
   MavenProject getProject() {
     return Preconditions.checkNotNull(project);
   }
@@ -194,12 +199,20 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     return container.args;
   }
 
+  List<String> getExposedPorts() {
+    return container.ports;
+  }
+
   String getFormat() {
     return Preconditions.checkNotNull(container.format);
   }
 
   boolean getUseOnlyProjectCache() {
     return useOnlyProjectCache;
+  }
+
+  boolean getAllowInsecureRegistries() {
+    return allowInsecureRegistries;
   }
 
   @VisibleForTesting

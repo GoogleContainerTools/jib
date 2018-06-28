@@ -32,32 +32,44 @@ public class RegistryClientTest {
 
   @Mock private Authorization mockAuthorization;
 
-  private RegistryClient testRegistryClient;
+  private RegistryClient.Factory testRegistryClientFactory;
 
   @Before
   public void setUp() {
-    testRegistryClient =
-        new RegistryClient(mockAuthorization, "some.server.url", "some image name");
+    testRegistryClientFactory = RegistryClient.factory("some.server.url", "some image name");
   }
 
   @Test
   public void testGetUserAgent_null() {
-    Assert.assertTrue(RegistryClient.getUserAgent().startsWith("jib"));
+    Assert.assertTrue(
+        testRegistryClientFactory
+            .newWithAuthorization(mockAuthorization)
+            .getUserAgent()
+            .startsWith("jib"));
 
     RegistryClient.setUserAgentSuffix(null);
-    Assert.assertTrue(RegistryClient.getUserAgent().startsWith("jib"));
+    Assert.assertTrue(
+        testRegistryClientFactory
+            .newWithAuthorization(mockAuthorization)
+            .getUserAgent()
+            .startsWith("jib"));
   }
 
   @Test
   public void testGetUserAgent() {
     RegistryClient.setUserAgentSuffix("some user agent suffix");
 
-    Assert.assertTrue(RegistryClient.getUserAgent().startsWith("jib "));
-    Assert.assertTrue(RegistryClient.getUserAgent().endsWith(" some user agent suffix"));
+    Assert.assertTrue(testRegistryClientFactory.newAllowHttp().getUserAgent().startsWith("jib "));
+    Assert.assertTrue(
+        testRegistryClientFactory
+            .newAllowHttp()
+            .getUserAgent()
+            .endsWith(" some user agent suffix"));
   }
 
   @Test
   public void testGetApiRouteBase() {
-    Assert.assertEquals("some.server.url/v2/", testRegistryClient.getApiRouteBase());
+    Assert.assertEquals(
+        "some.server.url/v2/", testRegistryClientFactory.newAllowHttp().getApiRouteBase());
   }
 }

@@ -26,12 +26,15 @@ import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.json.ErrorEntryTemplate;
 import com.google.cloud.tools.jib.registry.json.ErrorResponseTemplate;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import org.apache.http.NoHttpResponseException;
+import org.apache.http.conn.HttpHostConnectException;
 
 /**
  * Makes requests to a registry endpoint.
@@ -39,6 +42,12 @@ import org.apache.http.NoHttpResponseException;
  * @param <T> the type returned by calling the endpoint
  */
 class RegistryEndpointCaller<T> {
+
+  /**
+   * @see <a
+   *     href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308">https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308</a>
+   */
+  @VisibleForTesting static final int STATUS_CODE_PERMANENT_REDIRECT = 308;
 
   private static final String DEFAULT_PROTOCOL = "https";
 
@@ -50,8 +59,7 @@ class RegistryEndpointCaller<T> {
 
     /**
      * @param authorization authentication credentials
-     * @param url the endpoint URL to call, or {@code null} to use default from {@code
-     *     registryEndpointProvider}
+     * @param url the endpoint URL to call
      */
     private RequestState(@Nullable Authorization authorization, URL url) {
       this.authorization = authorization;
@@ -59,10 +67,14 @@ class RegistryEndpointCaller<T> {
     }
   }
 
+  /** Makes a {@link Connection} to the specified {@link URL}. */
+  private final Function<URL, Connection> connectionFactory;
+
   private final RequestState initialRequestState;
   private final String userAgent;
   private final RegistryEndpointProvider<T> registryEndpointProvider;
   private final RegistryEndpointProperties registryEndpointProperties;
+  private final boolean allowHttp;
 
   /**
    * Constructs with parameters for making the request.
@@ -72,6 +84,8 @@ class RegistryEndpointCaller<T> {
    * @param registryEndpointProvider the {@link RegistryEndpointProvider} to the endpoint
    * @param authorization optional authentication credentials to use
    * @param registryEndpointProperties properties of the registry endpoint request
+   * @param allowHttp if {@code true}, allows redirects and fallbacks to HTTP; otherwise, only
+   *     allows HTTPS
    * @throws MalformedURLException if the URL generated for the endpoint is malformed
    */
   RegistryEndpointCaller(
@@ -79,7 +93,28 @@ class RegistryEndpointCaller<T> {
       String apiRouteBase,
       RegistryEndpointProvider<T> registryEndpointProvider,
       @Nullable Authorization authorization,
-      RegistryEndpointProperties registryEndpointProperties)
+      RegistryEndpointProperties registryEndpointProperties,
+      boolean allowHttp)
+      throws MalformedURLException {
+    this(
+        userAgent,
+        apiRouteBase,
+        registryEndpointProvider,
+        authorization,
+        registryEndpointProperties,
+        allowHttp,
+        Connection::new);
+  }
+
+  @VisibleForTesting
+  RegistryEndpointCaller(
+      String userAgent,
+      String apiRouteBase,
+      RegistryEndpointProvider<T> registryEndpointProvider,
+      @Nullable Authorization authorization,
+      RegistryEndpointProperties registryEndpointProperties,
+      boolean allowHttp,
+      Function<URL, Connection> connectionFactory)
       throws MalformedURLException {
     this.initialRequestState =
         new RequestState(
@@ -88,6 +123,8 @@ class RegistryEndpointCaller<T> {
     this.userAgent = userAgent;
     this.registryEndpointProvider = registryEndpointProvider;
     this.registryEndpointProperties = registryEndpointProperties;
+    this.allowHttp = allowHttp;
+    this.connectionFactory = connectionFactory;
   }
 
   /**
@@ -102,18 +139,34 @@ class RegistryEndpointCaller<T> {
     return call(initialRequestState);
   }
 
-  /** Calls the registry endpoint with a certain {@link RequestState}. */
+  /**
+   * Calls the registry endpoint with a certain {@link RequestState}.
+   *
+   * @param requestState the state of the request - determines how to make the request and how to
+   *     process the response
+   * @return an object representing the response, or {@code null}
+   * @throws IOException for most I/O exceptions when making the request
+   * @throws RegistryException for known exceptions when interacting with the registry
+   */
   @Nullable
   private T call(RequestState requestState) throws IOException, RegistryException {
-    try (Connection connection = new Connection(requestState.url)) {
-      Request request =
+    boolean isHttpProtocol = "http".equals(requestState.url.getProtocol());
+    if (!allowHttp && isHttpProtocol) {
+      throw new InsecureRegistryException(requestState.url);
+    }
+
+    try (Connection connection = connectionFactory.apply(requestState.url)) {
+      Request.Builder requestBuilder =
           Request.builder()
-              .setAuthorization(requestState.authorization)
               .setUserAgent(userAgent)
               .setAccept(registryEndpointProvider.getAccept())
-              .setBody(registryEndpointProvider.getContent())
-              .build();
-      Response response = connection.send(registryEndpointProvider.getHttpMethod(), request);
+              .setBody(registryEndpointProvider.getContent());
+      // Only sends authorization if using HTTPS.
+      if (!isHttpProtocol) {
+        requestBuilder.setAuthorization(requestState.authorization);
+      }
+      Response response =
+          connection.send(registryEndpointProvider.getHttpMethod(), requestBuilder.build());
 
       return registryEndpointProvider.handleResponse(response);
 
@@ -148,12 +201,15 @@ class RegistryEndpointCaller<T> {
               httpResponseException);
 
         } else if (httpResponseException.getStatusCode()
-            == HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT) {
+                == HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT
+            || httpResponseException.getStatusCode()
+                == HttpStatusCodes.STATUS_CODE_MOVED_PERMANENTLY
+            || httpResponseException.getStatusCode() == STATUS_CODE_PERMANENT_REDIRECT) {
+          // 'Location' header can be relative or absolute.
+          URL redirectLocation =
+              new URL(requestState.url, httpResponseException.getHeaders().getLocation());
           // TODO: Use copy-construct builder.
-          return call(
-              new RequestState(
-                  requestState.authorization,
-                  new URL(httpResponseException.getHeaders().getLocation())));
+          return call(new RequestState(requestState.authorization, redirectLocation));
 
         } else {
           // Unknown
@@ -161,14 +217,19 @@ class RegistryEndpointCaller<T> {
         }
       }
 
+    } catch (HttpHostConnectException | SSLPeerUnverifiedException ex) {
+      // Tries to call with HTTP protocol if HTTPS failed to connect.
+      // Note that this will not succeed if 'allowHttp' is false.
+      if ("https".equals(requestState.url.getProtocol())) {
+        GenericUrl httpUrl = new GenericUrl(requestState.url);
+        httpUrl.setScheme("http");
+        return call(new RequestState(requestState.authorization, httpUrl.toURL()));
+      }
+
+      throw ex;
+
     } catch (NoHttpResponseException ex) {
       throw new RegistryNoResponseException(ex);
-
-    } catch (SSLPeerUnverifiedException ex) {
-      // Fall-back to HTTP
-      GenericUrl httpUrl = new GenericUrl(requestState.url);
-      httpUrl.setScheme("http");
-      return call(new RequestState(requestState.authorization, httpUrl.toURL()));
     }
   }
 }

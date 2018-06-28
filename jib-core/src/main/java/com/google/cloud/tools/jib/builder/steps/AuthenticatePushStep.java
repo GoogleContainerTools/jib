@@ -77,6 +77,7 @@ class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authori
             String.format(DESCRIPTION, buildConfiguration.getTargetImageRegistry()))) {
       Authorization registryCredentials =
           NonBlockingSteps.get(retrieveTargetRegistryCredentialsStep);
+
       RegistryAuthenticator registryAuthenticator =
           RegistryAuthenticators.forOther(
               buildConfiguration.getTargetImageRegistry(),

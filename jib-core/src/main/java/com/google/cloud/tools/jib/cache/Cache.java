@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.cache;
 
 import com.google.cloud.tools.jib.cache.json.CacheMetadataTemplate;
-import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.BufferedOutputStream;
@@ -27,16 +26,10 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
-import javax.annotation.Nullable;
+import java.util.List;
 
 /** Manages a cache. Implementation is thread-safe. */
 public class Cache implements Closeable {
-
-  /** The path to the root of the cache. */
-  private final Path cacheDirectory;
-
-  /** The metadata that corresponds to the cache at {@link #cacheDirectory}. */
-  private final CacheMetadata cacheMetadata;
 
   /**
    * Initializes a cache with a directory. This also loads the cache metadata if it exists in the
@@ -62,7 +55,7 @@ public class Cache implements Closeable {
     Path cacheMetadataJsonFile = cacheDirectory.resolve(CacheFiles.METADATA_FILENAME);
 
     if (!Files.exists(cacheMetadataJsonFile)) {
-      return new CacheMetadata();
+      return CacheMetadata.builder().build();
     }
 
     try {
@@ -76,9 +69,19 @@ public class Cache implements Closeable {
     }
   }
 
+  /** The path to the root of the cache. */
+  private final Path cacheDirectory;
+
+  /** The metadata that corresponds to the cache at {@link #cacheDirectory}. */
+  private final CacheMetadata cacheMetadata;
+
+  /** Builds the updated cache metadata to save back to the cache. */
+  private final CacheMetadata.Builder cacheMetadataBuilder;
+
   private Cache(Path cacheDirectory, CacheMetadata cacheMetadata) {
     this.cacheDirectory = cacheDirectory;
     this.cacheMetadata = cacheMetadata;
+    cacheMetadataBuilder = cacheMetadata.newAppendingBuilder();
   }
 
   /**
@@ -92,15 +95,26 @@ public class Cache implements Closeable {
   }
 
   /**
-   * Adds the cached layer to the cache metadata.
+   * Adds the cached layer to the cache metadata. This is <b>NOT</b> thread-safe.
    *
-   * @param cachedLayer the layer to add.
-   * @param layerMetadata the metadata to add the layer to.
-   * @throws LayerPropertyNotFoundException if adding the layer fails.
+   * @param cachedLayers the layers to add
    */
-  void addLayerToMetadata(CachedLayer cachedLayer, @Nullable LayerMetadata layerMetadata)
-      throws LayerPropertyNotFoundException {
-    cacheMetadata.addLayer(new CachedLayerWithMetadata(cachedLayer, layerMetadata));
+  public void addCachedLayersToMetadata(List<CachedLayer> cachedLayers) {
+    for (CachedLayer cachedLayer : cachedLayers) {
+      cacheMetadataBuilder.addLayer(new CachedLayerWithMetadata(cachedLayer, null));
+    }
+  }
+
+  /**
+   * Adds the cached layer to the cache metadata. This is <b>NOT</b> thread-safe.
+   *
+   * @param cachedLayersWithMetadata the layers to add
+   */
+  public void addCachedLayersWithMetadataToMetadata(
+      List<CachedLayerWithMetadata> cachedLayersWithMetadata) {
+    for (CachedLayerWithMetadata cachedLayerWithMetadata : cachedLayersWithMetadata) {
+      cacheMetadataBuilder.addLayer(cachedLayerWithMetadata);
+    }
   }
 
   @VisibleForTesting
@@ -113,11 +127,17 @@ public class Cache implements Closeable {
     return cacheMetadata;
   }
 
+  @VisibleForTesting
+  CacheMetadata getUpdatedMetadata() {
+    return cacheMetadataBuilder.build();
+  }
+
   /** Saves the updated cache metadata back to the cache. */
   private void saveCacheMetadata(Path cacheDirectory) throws IOException {
     Path cacheMetadataJsonFile = cacheDirectory.resolve(CacheFiles.METADATA_FILENAME);
 
-    CacheMetadataTemplate cacheMetadataJson = CacheMetadataTranslator.toTemplate(cacheMetadata);
+    CacheMetadataTemplate cacheMetadataJson =
+        CacheMetadataTranslator.toTemplate(cacheMetadataBuilder.build());
 
     try (OutputStream fileOutputStream =
         new BufferedOutputStream(Files.newOutputStream(cacheMetadataJsonFile))) {

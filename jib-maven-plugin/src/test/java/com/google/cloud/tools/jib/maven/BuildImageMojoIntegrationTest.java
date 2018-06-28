@@ -72,6 +72,15 @@ public class BuildImageMojoIntegrationTest {
         timeOne > timeTwo);
 
     new Command("docker", "pull", imageReference).run();
+    Assert.assertThat(
+        new Command("docker", "inspect", imageReference).run(),
+        CoreMatchers.containsString(
+            "            \"ExposedPorts\": {\n"
+                + "                \"1000/tcp\": {},\n"
+                + "                \"2000/udp\": {},\n"
+                + "                \"2001/udp\": {},\n"
+                + "                \"2002/udp\": {},\n"
+                + "                \"2003/udp\": {}"));
     return new Command("docker", "run", imageReference).run();
   }
 

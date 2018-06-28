@@ -102,6 +102,10 @@ public class JsonToImageTranslator {
       imageBuilder.setJavaArguments(containerConfigurationTemplate.getContainerCmd());
     }
 
+    if (containerConfigurationTemplate.getContainerExposedPorts() != null) {
+      imageBuilder.setExposedPorts(containerConfigurationTemplate.getContainerExposedPorts());
+    }
+
     if (containerConfigurationTemplate.getContainerEnvironment() != null) {
       for (String environmentVariable : containerConfigurationTemplate.getContainerEnvironment()) {
         imageBuilder.addEnvironmentVariableDefinition(environmentVariable);

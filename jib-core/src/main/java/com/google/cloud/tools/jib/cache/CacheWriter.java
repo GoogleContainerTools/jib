@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.cache;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
-import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.ReproducibleLayerBuilder;
 import com.google.cloud.tools.jib.image.UnwrittenLayer;
 import com.google.common.io.ByteStreams;
@@ -49,13 +48,12 @@ public class CacheWriter {
    * Builds an {@link UnwrittenLayer} from a {@link ReproducibleLayerBuilder} and compresses and
    * writes the {@link UnwrittenLayer}'s uncompressed layer content BLOB to cache.
    *
-   * @param reproducibleLayerBuilder the layer builder.
-   * @return the cached layer.
-   * @throws IOException if writing the layer to file fails.
-   * @throws LayerPropertyNotFoundException if adding the layer to the cache metadata fails.
+   * @param reproducibleLayerBuilder the layer builder
+   * @return the cached layer with accompanying {@link LayerMetadata}
+   * @throws IOException if writing the layer to file fails
    */
-  public CachedLayer writeLayer(ReproducibleLayerBuilder reproducibleLayerBuilder)
-      throws IOException, LayerPropertyNotFoundException {
+  public CachedLayerWithMetadata writeLayer(ReproducibleLayerBuilder reproducibleLayerBuilder)
+      throws IOException {
     UnwrittenLayer unwrittenLayer = reproducibleLayerBuilder.build();
 
     // Writes to a temporary file first because the UnwrittenLayer needs to be written first to
@@ -88,8 +86,7 @@ public class CacheWriter {
       LayerMetadata layerMetadata =
           LayerMetadata.from(
               reproducibleLayerBuilder.getSourceFiles(), FileTime.from(Instant.now()));
-      cache.addLayerToMetadata(cachedLayer, layerMetadata);
-      return cachedLayer;
+      return new CachedLayerWithMetadata(cachedLayer, layerMetadata);
     }
   }
 
@@ -106,26 +103,21 @@ public class CacheWriter {
   }
 
   /**
-   * @param layerDigest the digest of the layer to retrieve.
-   * @param countingOutputStream the output stream the BLOB was written to.
+   * Gets the layer that was cached by writing the contents to a file in the cache. The returned
+   * {@link CachedLayer} should be added to the cache metadata.
+   *
+   * @param layerSize the size of the layer
+   * @param layerDigest the digest of the layer to retrieve
    * @return a {@link CachedLayer} from a layer digest and the {@link CountingOutputStream} the
-   *     layer BLOB was written to.
-   * @throws IOException if closing the output stream or getting the layer diff ID fails.
-   * @throws LayerPropertyNotFoundException if adding the layer to the cache metadata fails.
+   *     layer BLOB was written to
+   * @throws IOException if closing the output stream or getting the layer diff ID fails
    */
-  public CachedLayer getCachedLayer(
-      DescriptorDigest layerDigest, CountingOutputStream countingOutputStream)
-      throws IOException, LayerPropertyNotFoundException {
+  public CachedLayer getCachedLayer(long layerSize, DescriptorDigest layerDigest)
+      throws IOException {
     Path layerFile = getLayerFile(layerDigest);
-    countingOutputStream.close();
 
-    CachedLayer cachedLayer =
-        new CachedLayer(
-            layerFile,
-            new BlobDescriptor(countingOutputStream.getCount(), layerDigest),
-            getDiffId(layerFile));
-    cache.addLayerToMetadata(cachedLayer, null);
-    return cachedLayer;
+    return new CachedLayer(
+        layerFile, new BlobDescriptor(layerSize, layerDigest), getDiffId(layerFile));
   }
 
   /**

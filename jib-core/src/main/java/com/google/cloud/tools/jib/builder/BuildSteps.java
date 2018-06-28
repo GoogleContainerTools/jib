@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.builder;
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.builder.steps.StepsRunner;
 import com.google.cloud.tools.jib.cache.Cache;
+import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.Caches;
@@ -179,20 +180,26 @@ public class BuildSteps {
 
   public void run()
       throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
-          CacheDirectoryNotOwnedException {
+          CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
     buildConfiguration.getBuildLogger().lifecycle("");
 
     try (Timer timer = new Timer(buildConfiguration.getBuildLogger(), description)) {
       try (Caches caches = cachesInitializer.init()) {
-        Cache baseLayersCache = caches.getBaseCache();
+        Cache baseImageLayersCache = caches.getBaseCache();
         Cache applicationLayersCache = caches.getApplicationCache();
 
-        stepsRunnerConsumer.accept(
+        StepsRunner stepsRunner =
             new StepsRunner(
                 buildConfiguration,
                 sourceFilesConfiguration,
-                baseLayersCache,
-                applicationLayersCache));
+                baseImageLayersCache,
+                applicationLayersCache);
+        stepsRunnerConsumer.accept(stepsRunner);
+
+        // Writes the cached layers to the cache metadata.
+        baseImageLayersCache.addCachedLayersToMetadata(stepsRunner.getCachedBaseImageLayers());
+        applicationLayersCache.addCachedLayersWithMetadataToMetadata(
+            stepsRunner.getCachedApplicationLayers());
       }
     }
 

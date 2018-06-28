@@ -25,7 +25,6 @@ import com.google.cloud.tools.jib.cache.CacheWriter;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
-import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryException;
 import com.google.common.io.CountingOutputStream;
@@ -67,14 +66,17 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer>, Callable
   }
 
   @Override
-  public CachedLayer call() throws IOException, RegistryException, LayerPropertyNotFoundException {
+  public CachedLayer call() throws IOException, RegistryException {
     try (Timer ignored =
         new Timer(buildConfiguration.getBuildLogger(), String.format(DESCRIPTION, layerDigest))) {
-      RegistryClient registryClient =
-          new RegistryClient(
-              pullAuthorization,
+      RegistryClient.Factory registryClientFactory =
+          RegistryClient.factory(
               buildConfiguration.getBaseImageRegistry(),
               buildConfiguration.getBaseImageRepository());
+      RegistryClient registryClient =
+          buildConfiguration.getAllowHttp()
+              ? registryClientFactory.newAllowHttp()
+              : registryClientFactory.newWithAuthorization(pullAuthorization);
 
       // Checks if the layer already exists in the cache.
       CachedLayer cachedLayer = new CacheReader(cache).getLayer(layerDigest);
@@ -85,7 +87,8 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer>, Callable
       CacheWriter cacheWriter = new CacheWriter(cache);
       CountingOutputStream layerOutputStream = cacheWriter.getLayerOutputStream(layerDigest);
       registryClient.pullBlob(layerDigest, layerOutputStream);
-      return cacheWriter.getCachedLayer(layerDigest, layerOutputStream);
+      layerOutputStream.close();
+      return cacheWriter.getCachedLayer(layerOutputStream.getCount(), layerDigest);
     }
   }
 }

@@ -21,6 +21,7 @@ import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.api.UnknownTaskException;
 import org.gradle.util.GradleVersion;
 
 public class JibPlugin implements Plugin<Project> {
@@ -58,11 +59,20 @@ public class JibPlugin implements Plugin<Project> {
     // Has all tasks depend on the 'classes' task.
     project.afterEvaluate(
         projectAfterEvaluation -> {
-          Task classesTask = projectAfterEvaluation.getTasks().getByPath("classes");
+          try {
+            Task classesTask = projectAfterEvaluation.getTasks().getByPath("classes");
 
-          buildImageTask.dependsOn(classesTask);
-          dockerContextTask.dependsOn(classesTask);
-          buildDockerTask.dependsOn(classesTask);
+            buildImageTask.dependsOn(classesTask);
+            dockerContextTask.dependsOn(classesTask);
+            buildDockerTask.dependsOn(classesTask);
+
+          } catch (UnknownTaskException ex) {
+            throw new GradleException(
+                "Could not find task 'classes' on project "
+                    + projectAfterEvaluation.getDisplayName()
+                    + " - perhaps you did not apply the 'java' plugin?",
+                ex);
+          }
         });
   }
 
