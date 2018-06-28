@@ -189,19 +189,19 @@ public class JibExtension {
 
   @Nested
   @Optional
-  ImageConfiguration getFrom() {
+  public ImageConfiguration getFrom() {
     return from;
   }
 
   @Nested
   @Optional
-  ImageConfiguration getTo() {
+  public ImageConfiguration getTo() {
     return to;
   }
 
   @Nested
   @Optional
-  ContainerParameters getContainer() {
+  public ContainerParameters getContainer() {
     return container;
   }
 
