@@ -137,14 +137,15 @@ public class GradleSourceFilesConfigurationTest {
 
   @Test
   public void test_noClassesFiles() throws IOException {
+    File nonexistentFile = new File("/nonexistent/file");
     Mockito.when(mockMainSourceSetOutput.getClassesDirs())
-        .thenReturn(new TestFileCollection(ImmutableSet.of(new File("/nonexistent/file"))));
+        .thenReturn(new TestFileCollection(ImmutableSet.of(nonexistentFile)));
 
     testGradleSourceFilesConfiguration =
         GradleSourceFilesConfiguration.getForProject(mockProject, mockGradleBuildLogger);
 
     Mockito.verify(mockGradleBuildLogger)
-        .warn("Could not find build output directory '/nonexistent/file'");
+        .warn("Could not find build output directory '" + nonexistentFile + "'");
     Mockito.verify(mockGradleBuildLogger)
         .warn("No classes files were found - did you compile your project?");
   }
