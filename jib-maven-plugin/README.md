@@ -21,7 +21,7 @@ These features are not currently supported but will be added in later releases.
 You can containerize your application easily with one command:
 
 ```shell
-mvn compile com.google.cloud.tools:jib-maven-plugin:0.9.0:build -Dimage=<MY IMAGE>
+mvn compile com.google.cloud.tools:jib-maven-plugin:0.9.1:build -Dimage=<MY IMAGE>
 ```
 
 *If you encounter authentication issues, see [Authentication Methods](#authentication-methods).*
@@ -41,7 +41,7 @@ In your Maven Java project, add the plugin to your `pom.xml`:
       <plugin>
         <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
-        <version>0.9.0</version>
+        <version>0.9.1</version>
         <configuration>
           <to>
             <image>myimage</image>
