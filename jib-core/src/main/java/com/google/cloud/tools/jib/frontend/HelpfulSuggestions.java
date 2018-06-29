@@ -70,6 +70,10 @@ public class HelpfulSuggestions {
     return suggest("make sure that the registry you configured exists/is spelled properly");
   }
 
+  public String forCacheNeedsClean() {
+    return suggest("run `clean` to clear your build cache");
+  }
+
   public String forCacheDirectoryNotOwned(Path cacheDirectory) {
     return suggest(
         "check that '"
