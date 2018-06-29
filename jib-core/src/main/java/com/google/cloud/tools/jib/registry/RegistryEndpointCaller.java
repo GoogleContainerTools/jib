@@ -208,7 +208,6 @@ class RegistryEndpointCaller<T> {
           // 'Location' header can be relative or absolute.
           URL redirectLocation =
               new URL(requestState.url, httpResponseException.getHeaders().getLocation());
-          // TODO: Use copy-construct builder.
           return call(new RequestState(requestState.authorization, redirectLocation));
 
         } else {
