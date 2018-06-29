@@ -58,8 +58,8 @@ public class BuildDockerMojoTest {
     Assert.assertEquals("project-version", result.getTag());
     Mockito.verify(mockBuildLogger)
         .lifecycle(
-            "Using default docker tag project-name:project-version. If you'd like to specify a "
-                + "different tag, you can set the <to><image> parameter in your pom.xml, or use "
-                + "the -Dimage=<MY IMAGE> commandline flag.");
+            "Tagging image with generated image reference project-name:project-version. If you'd "
+                + "like to specify a different tag, you can set the <to><image> parameter in your "
+                + "pom.xml, or use the -Dimage=<MY IMAGE> commandline flag.");
   }
 }
