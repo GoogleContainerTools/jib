@@ -35,16 +35,13 @@ public class HelpfulSuggestionsTest {
   @Test
   public void testSuggestions_smoke() {
     Assert.assertEquals(
-        "messagePrefix, perhaps you should run 'clearCacheCommand' to clear the cache",
-        TEST_HELPFUL_SUGGESTIONS.forCacheMetadataCorrupted());
-    Assert.assertEquals(
         "messagePrefix, perhaps you should make sure your Internet is up and that the registry you are pushing to exists",
         TEST_HELPFUL_SUGGESTIONS.forHttpHostConnect());
     Assert.assertEquals(
         "messagePrefix, perhaps you should make sure that the registry you configured exists/is spelled properly",
         TEST_HELPFUL_SUGGESTIONS.forUnknownHost());
     Assert.assertEquals(
-        "messagePrefix, perhaps you should run `clean` to clear your build cache",
+        "messagePrefix, perhaps you should run 'clearCacheCommand' to clear your build cache",
         TEST_HELPFUL_SUGGESTIONS.forCacheNeedsClean());
     Assert.assertEquals(
         "messagePrefix, perhaps you should check that 'cacheDirectory' is not used by another application or set the `useOnlyProjectCache` configuration",
