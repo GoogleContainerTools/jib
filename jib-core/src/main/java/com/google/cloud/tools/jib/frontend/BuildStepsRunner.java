@@ -190,9 +190,8 @@ public class BuildStepsRunner {
       buildLogger.lifecycle(buildSteps.getSuccessMessage());
 
     } catch (CacheMetadataCorruptedException cacheMetadataCorruptedException) {
-      // TODO: Have this be different for Maven and Gradle.
       throw new BuildStepsExecutionException(
-          helpfulSuggestions.forCacheMetadataCorrupted(), cacheMetadataCorruptedException);
+          helpfulSuggestions.forCacheNeedsClean(), cacheMetadataCorruptedException);
 
     } catch (ExecutionException executionException) {
       BuildConfiguration buildConfiguration = buildSteps.getBuildConfiguration();

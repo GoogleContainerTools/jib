@@ -234,4 +234,14 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   void setFormat(String format) {
     this.format = format;
   }
+
+  @VisibleForTesting
+  void setProject(MavenProject project) {
+    this.project = project;
+  }
+
+  @VisibleForTesting
+  void setTargetImage(@Nullable String targetImage) {
+    this.to.image = targetImage;
+  }
 }

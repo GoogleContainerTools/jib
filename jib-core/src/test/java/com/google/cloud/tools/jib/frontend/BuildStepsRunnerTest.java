@@ -102,7 +102,7 @@ public class BuildStepsRunnerTest {
       Assert.fail("buildImage should have thrown an exception");
 
     } catch (BuildStepsExecutionException ex) {
-      Assert.assertEquals(TEST_HELPFUL_SUGGESTIONS.forCacheMetadataCorrupted(), ex.getMessage());
+      Assert.assertEquals(TEST_HELPFUL_SUGGESTIONS.forCacheNeedsClean(), ex.getMessage());
       Assert.assertEquals(mockCacheMetadataCorruptedException, ex.getCause());
     }
   }
