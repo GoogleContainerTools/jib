@@ -58,7 +58,7 @@ addFile 'path/to/file', '/path/on/image'
 addFile 'another/file', '/another/path/on/image'
 ```
 
-All of the files would be added to a single new layer.
+*Directories will be handled using [rsync](https://linux.die.net/man/1/rsync) source-path semantics, where, for example, `addFile 'path/to/directory', '/path/on/image'` would put all the files in `path/to/directory` into the directory `/path/on/image/directory`, but `addFile 'path/to/directory', '/path/on/image'` (trailing slash) would put all the files into the directory `/path/on/image`.* 
 
 For separating application layers into thinner layers, the solution will only separate dependencies for simplicity. Jib will *automatically* separate `-SNAPSHOT` dependencies and dependencies with the same group as the project into a separate layer.
 
@@ -70,9 +70,11 @@ In the future, we may consider allowing the user to configure this in the form o
 
 This would match dependencies that are in the `com.yourcompany` package and `SNAPSHOT` dependencies and place these in a new volatile-dependencies layer.
 
+\* 
+
 ### Alternative (Rejected) Proposal
 
-The alternative proposal was rejected because we deemed that layering should be an implementation detail that should not be exposed to the user.
+**The alternative proposal was rejected** because we deemed that layering should be an implementation detail that should not be exposed to the user.
 
 Currently (`v0.9.1`), Jib's configuration looks like:
 
