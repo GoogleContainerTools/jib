@@ -25,11 +25,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import javax.annotation.Nullable;
 import javax.lang.model.SourceVersion;
 
@@ -100,7 +98,7 @@ public class BuildConfiguration {
 
     public Builder setJavaArguments(@Nullable List<String> javaArguments) {
       if (javaArguments != null) {
-        Preconditions.checkArgument(Iterables.all(javaArguments, Objects::nonNull));
+        Preconditions.checkArgument(!javaArguments.contains(null));
         this.javaArguments = ImmutableList.copyOf(javaArguments);
       }
       return this;
@@ -108,7 +106,7 @@ public class BuildConfiguration {
 
     public Builder setJvmFlags(@Nullable List<String> jvmFlags) {
       if (jvmFlags != null) {
-        Preconditions.checkArgument(Iterables.all(jvmFlags, Objects::nonNull));
+        Preconditions.checkArgument(!jvmFlags.contains(null));
         this.jvmFlags = ImmutableList.copyOf(jvmFlags);
       }
       return this;
@@ -116,7 +114,8 @@ public class BuildConfiguration {
 
     public Builder setEnvironment(@Nullable Map<String, String> environmentMap) {
       if (environmentMap != null) {
-        Preconditions.checkArgument(Iterables.all(environmentMap.values(), Objects::nonNull));
+        Preconditions.checkArgument(
+            !environmentMap.containsKey(null) && !environmentMap.containsValue(null));
         this.environmentMap = ImmutableMap.copyOf(environmentMap);
       }
       return this;
@@ -124,7 +123,7 @@ public class BuildConfiguration {
 
     public Builder setExposedPorts(@Nullable List<String> exposedPorts) {
       if (exposedPorts != null) {
-        Preconditions.checkArgument(Iterables.all(exposedPorts, Objects::nonNull));
+        Preconditions.checkArgument(!exposedPorts.contains(null));
         this.exposedPorts = ImmutableList.copyOf(exposedPorts);
       }
       return this;
