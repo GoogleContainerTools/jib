@@ -44,6 +44,9 @@ public class HelpfulSuggestionsTest {
         "messagePrefix, perhaps you should make sure that the registry you configured exists/is spelled properly",
         TEST_HELPFUL_SUGGESTIONS.forUnknownHost());
     Assert.assertEquals(
+        "messagePrefix, perhaps you should run `clean` to clear your build cache",
+        TEST_HELPFUL_SUGGESTIONS.forCacheNeedsClean());
+    Assert.assertEquals(
         "messagePrefix, perhaps you should check that 'cacheDirectory' is not used by another application or set the `useOnlyProjectCache` configuration",
         TEST_HELPFUL_SUGGESTIONS.forCacheDirectoryNotOwned(Paths.get("cacheDirectory")));
     Assert.assertEquals(

@@ -238,8 +238,16 @@ public class BuildStepsRunner {
       throw new BuildStepsExecutionException(helpfulSuggestions.none(), ex);
 
     } catch (CacheDirectoryNotOwnedException ex) {
-      throw new BuildStepsExecutionException(
-          helpfulSuggestions.forCacheDirectoryNotOwned(ex.getCacheDirectory()), ex);
+      String helpfulSuggestion =
+          helpfulSuggestions.forCacheDirectoryNotOwned(ex.getCacheDirectory());
+      CacheConfiguration applicationLayersCacheConfiguration =
+          buildSteps.getBuildConfiguration().getApplicationLayersCacheConfiguration();
+      if (applicationLayersCacheConfiguration != null
+          && ex.getCacheDirectory()
+              .equals(applicationLayersCacheConfiguration.getCacheDirectory())) {
+        helpfulSuggestion = helpfulSuggestions.forCacheNeedsClean();
+      }
+      throw new BuildStepsExecutionException(helpfulSuggestion, ex);
     }
   }
 }

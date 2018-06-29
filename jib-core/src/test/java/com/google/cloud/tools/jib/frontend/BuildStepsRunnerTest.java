@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
+import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.registry.InsecureRegistryException;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import com.google.common.collect.ImmutableList;
@@ -277,6 +278,31 @@ public class BuildStepsRunnerTest {
   }
 
   @Test
+  public void testBuildImage_cacheDirectoryNotOwnedException_needsClean()
+      throws InterruptedException, ExecutionException, CacheDirectoryNotOwnedException,
+          CacheMetadataCorruptedException, IOException, CacheDirectoryCreationException {
+    Path expectedCacheDirectory = Paths.get("some/path");
+
+    CacheDirectoryNotOwnedException mockCacheDirectoryNotOwnedException =
+        Mockito.mock(CacheDirectoryNotOwnedException.class);
+    Mockito.when(mockCacheDirectoryNotOwnedException.getCacheDirectory())
+        .thenReturn(expectedCacheDirectory);
+    Mockito.doThrow(mockCacheDirectoryNotOwnedException).when(mockBuildSteps).run();
+
+    Mockito.when(mockBuildConfiguration.getApplicationLayersCacheConfiguration())
+        .thenReturn(CacheConfiguration.forPath(expectedCacheDirectory));
+
+    try {
+      testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
+      Assert.fail("buildImage should have thrown an exception");
+
+    } catch (BuildStepsExecutionException ex) {
+      Assert.assertEquals(TEST_HELPFUL_SUGGESTIONS.forCacheNeedsClean(), ex.getMessage());
+      Assert.assertEquals(mockCacheDirectoryNotOwnedException, ex.getCause());
+    }
+  }
+
+  @Test
   public void testBuildImage_cacheDirectoryNotOwnedException()
       throws InterruptedException, ExecutionException, CacheDirectoryNotOwnedException,
           CacheMetadataCorruptedException, IOException, CacheDirectoryCreationException {
@@ -287,6 +313,9 @@ public class BuildStepsRunnerTest {
     Mockito.when(mockCacheDirectoryNotOwnedException.getCacheDirectory())
         .thenReturn(expectedCacheDirectory);
     Mockito.doThrow(mockCacheDirectoryNotOwnedException).when(mockBuildSteps).run();
+
+    Mockito.when(mockBuildConfiguration.getApplicationLayersCacheConfiguration())
+        .thenReturn(CacheConfiguration.forPath(Paths.get("another/path")));
 
     try {
       testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
