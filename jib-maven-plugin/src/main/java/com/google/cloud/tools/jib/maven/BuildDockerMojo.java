@@ -113,16 +113,17 @@ public class BuildDockerMojo extends JibPluginConfiguration {
   }
 
   /**
-   * Returns an {@link ImageReference} retrieved from the build configuration, or the project name/
-   * version if no target image is configured.
+   * Returns an {@link ImageReference} parsed from the configured target image, or one of the form
+   *     {@code project-name:project-version} if target image is not configured
    *
    * @param mavenBuildLogger the logger used to notify users of the target image parameter
    * @return an {@link ImageReference} parsed from the configured target image, or one of the form
-   *     "project-name:project-version" if target image is not configured
+   *     {@code project-name:project-version} if target image is not configured
    */
   ImageReference getDockerTag(MavenBuildLogger mavenBuildLogger) {
     if (Strings.isNullOrEmpty(getTargetImage())) {
       // TODO: Validate that project name and version are valid repository/tag
+      // TODO: Use HelpfulSuggestions
       mavenBuildLogger.lifecycle(
           "Tagging image with generated image reference "
               + getProject().getName()

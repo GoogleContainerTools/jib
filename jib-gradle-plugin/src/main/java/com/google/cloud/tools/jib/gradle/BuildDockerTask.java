@@ -140,18 +140,19 @@ public class BuildDockerTask extends DefaultTask {
   }
 
   /**
-   * Returns an {@link ImageReference} retrieved from the build configuration, or the project name/
-   * version if no target image is configured.
+   * Returns an {@link ImageReference} parsed from the configured target image, or one of the form
+   *     {@code project-name:project-version} if target image is not configured
    *
    * @param gradleBuildLogger the logger used to notify users of the target image parameter
    * @return an {@link ImageReference} parsed from the configured target image, or one of the form
-   *     "project-name:project-version" if target image is not configured
+   *     {@code project-name:project-version} if target image is not configured
    */
   ImageReference getDockerTag(GradleBuildLogger gradleBuildLogger)
       throws InvalidImageReferenceException {
     Preconditions.checkNotNull(jibExtension);
     if (Strings.isNullOrEmpty(jibExtension.getTargetImage())) {
       // TODO: Validate that project name and version are valid repository/tag
+      // TODO: Use HelpfulSuggestions
       gradleBuildLogger.lifecycle(
           "Tagging image with generated image reference "
               + getProject().getName()
