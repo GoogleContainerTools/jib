@@ -1,5 +1,5 @@
 [![experimental](http://badges.github.io/stability-badges/dist/experimental.svg)](http://github.com/badges/stability-badges)
-[![Gradle Plugin Portal](https://img.shields.io/badge/gradle%20plugin-v0.9.0-blue.svg)](https://plugins.gradle.org/plugin/com.google.cloud.tools.jib)
+[![Gradle Plugin Portal](https://img.shields.io/badge/gradle%20plugin-v0.9.1-blue.svg)](https://plugins.gradle.org/plugin/com.google.cloud.tools.jib)
 [![Gitter version](https://img.shields.io/gitter/room/gitterHQ/gitter.svg)](https://gitter.im/google/jib)
 
 # Jib - Containerize your Gradle Java project
@@ -26,7 +26,7 @@ In your Gradle Java project, add the plugin to your `build.gradle`:
 
 ```groovy
 plugins {
-  id 'com.google.cloud.tools.jib' version '0.9.0'
+  id 'com.google.cloud.tools.jib' version '0.9.1'
 }
 ```
 
@@ -143,10 +143,7 @@ Field | Type | Default | Description
 --- | --- | --- | ---
 `from` | [`from`](#from-closure) | See [`from`](#from-closure) | Configures the base image to build your application on top of.
 `to` | [`to`](#to-closure) | *Required* | Configures the target image to build your application to.
-`jvmFlags` | `List<String>` | *None* | Additional flags to pass into the JVM when running your application.
-`mainClass` | `String` | *Inferred\** | The main class to launch your application from.
-`args` | `List<String>` | *None* | Default main method arguments to run your application with.
-`format` | `String` | `Docker` | Use `OCI` to build an [OCI container image](https://www.opencontainers.org/).
+`container` | [`container`](#container-closure) | See [`container`](#container-closure) | Configures the container that is run from your built image.
 `useProjectOnlyCache` | `boolean` | `false` | If set to true, Jib does not share a cache between different Maven projects.
 
 *\* Uses the main class defined in the `jar` task or tries to find a valid main class.*
@@ -174,14 +171,24 @@ Property | Type
 `username` | `String`
 `password` | `String`
 
+<a name="container-closure"></a>`container` is a closure with the following properties:
+
+Property | Type | Default | Description
+--- | --- | --- | ---
+`jvmFlags` | `List<String>` | *None* | Additional flags to pass into the JVM when running your application.
+`mainClass` | `String` | *Inferred\** | The main class to launch your application from.
+`args` | `List<String>` | *None* | Default main method arguments to run your application with.
+`ports` | `List<String>` | *None* | Ports that the container exposes at runtime (similar to Docker's [EXPOSE](https://docs.docker.com/engine/reference/builder/#expose) instruction).
+`format` | `String` | `Docker` | Use `OCI` to build an [OCI container image](https://www.opencontainers.org/).
+
 ### Example
 
-In this configuration, the image is:
-* Built from a base of `openjdk:alpine` (pulled from Docker Hub)
-* Pushed to `localhost:5000/my-image:built-with-jib`
+In this configuration, the image:
+* Is built from a base of `openjdk:alpine` (pulled from Docker Hub)
+* Is pushed to `localhost:5000/my-image:built-with-jib`
 * Runs by calling `java -Xms512m -Xdebug -Xmy:flag=jib-rules -cp app/libs/*:app/resources:app/classes mypackage.MyApp some args`
-* Reproducible
-* Built as OCI format
+* Exposes port 1000 for tcp (default), and ports 2000, 2001, 2002, and 2003 for udp
+* Is built as OCI format
 
 ```groovy
 jib {
@@ -192,10 +199,13 @@ jib {
     image = 'localhost:5000/my-image/built-with-jib'
     credHelper = 'osxkeychain'
   }
-  jvmFlags = ['-Xms512m', '-Xdebug', '-Xmy:flag=jib-rules']
-  args = ['some', 'args']
-  mainClass = 'mypackage.MyApp'
-  format = 'OCI'
+  container {
+    jvmFlags = ['-Xms512m', '-Xdebug', '-Xmy:flag=jib-rules']
+    mainClass = 'mypackage.MyApp'
+    args = ['some', 'args']
+    ports = ['1000', '2000-2003/udp']
+    format = 'OCI'
+  }
 }
 ```
 
@@ -218,7 +228,7 @@ Some common credential helpers include:
 Configure credential helpers to use by specifying them as a `credHelper` for their respective image in the `jib` extension.
 
 *Example configuration:* 
-```xml
+```groovy
 jib {
   from {
     image = 'aws_account_id.dkr.ecr.region.amazonaws.com/my-base-image'
@@ -235,7 +245,7 @@ jib {
 
 You can specify credentials directly in the extension for the `from` and/or `to` images.
 
-```xml
+```groovy
 jib {
   from {
     image = 'aws_account_id.dkr.ecr.region.amazonaws.com/my-base-image'
@@ -258,7 +268,7 @@ These credentials can be stored in `gradle.properties`, retrieved from a command
 
 For example, you can use a key file for authentication (for GCR, see [Using a JSON key file](https://cloud.google.com/container-registry/docs/advanced-authentication#using_a_json_key_file)):
 
-```xml
+```groovy
 jib {
   to {
     image = 'gcr.io/my-gcp-project/my-app'
@@ -273,12 +283,6 @@ jib {
 ## How Jib Works
 
 See the [Jib project README](/../../#how-jib-works).
-
-## Known Limitations
-
-These limitations will be fixed in later releases.
-
-* Pushing to Azure Container Registry is not currently supported.
 
 ## Frequently Asked Questions (FAQ)
 
