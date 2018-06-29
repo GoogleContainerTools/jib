@@ -118,7 +118,7 @@ class BuildAndCacheApplicationLayerStep
       }
 
       ReproducibleLayerBuilder reproducibleLayerBuilder =
-          new ReproducibleLayerBuilder(sourceFiles, extractionPath);
+          new ReproducibleLayerBuilder().addFiles(sourceFiles, extractionPath);
 
       cachedLayer = new CacheWriter(cache).writeLayer(reproducibleLayerBuilder);
 

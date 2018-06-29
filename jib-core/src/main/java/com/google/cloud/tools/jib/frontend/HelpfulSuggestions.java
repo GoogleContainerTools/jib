@@ -58,10 +58,6 @@ public class HelpfulSuggestions {
     this.targetImageAuthConfiguration = targetImageAuthConfiguration;
   }
 
-  public String forCacheMetadataCorrupted() {
-    return suggest("run '" + clearCacheCommand + "' to clear the cache");
-  }
-
   public String forHttpHostConnect() {
     return suggest("make sure your Internet is up and that the registry you are pushing to exists");
   }
@@ -71,7 +67,7 @@ public class HelpfulSuggestions {
   }
 
   public String forCacheNeedsClean() {
-    return suggest("run `clean` to clear your build cache");
+    return suggest("run '" + clearCacheCommand + "' to clear your build cache");
   }
 
   public String forCacheDirectoryNotOwned(Path cacheDirectory) {
