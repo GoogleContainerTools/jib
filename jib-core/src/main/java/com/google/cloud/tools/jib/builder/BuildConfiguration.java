@@ -21,11 +21,11 @@ import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -44,10 +44,10 @@ public class BuildConfiguration {
     @Nullable private String targetImageCredentialHelperName;
     @Nullable private RegistryCredentials knownTargetRegistryCredentials;
     @Nullable private String mainClass;
-    private List<String> javaArguments = new ArrayList<>();
-    private List<String> jvmFlags = new ArrayList<>();
-    private Map<String, String> environmentMap = new HashMap<>();
-    private List<String> exposedPorts = new ArrayList<>();
+    private ImmutableList<String> javaArguments = ImmutableList.of();
+    private ImmutableList<String> jvmFlags = ImmutableList.of();
+    private ImmutableMap<String, String> environmentMap = ImmutableMap.of();
+    private ImmutableList<String> exposedPorts = ImmutableList.of();
     private Class<? extends BuildableManifestTemplate> targetFormat = V22ManifestTemplate.class;
     @Nullable private CacheConfiguration applicationLayersCacheConfiguration;
     @Nullable private CacheConfiguration baseImageLayersCacheConfiguration;
@@ -98,28 +98,33 @@ public class BuildConfiguration {
 
     public Builder setJavaArguments(@Nullable List<String> javaArguments) {
       if (javaArguments != null) {
-        this.javaArguments = javaArguments;
+        Preconditions.checkArgument(!javaArguments.contains(null));
+        this.javaArguments = ImmutableList.copyOf(javaArguments);
       }
       return this;
     }
 
     public Builder setJvmFlags(@Nullable List<String> jvmFlags) {
       if (jvmFlags != null) {
-        this.jvmFlags = jvmFlags;
+        Preconditions.checkArgument(!jvmFlags.contains(null));
+        this.jvmFlags = ImmutableList.copyOf(jvmFlags);
       }
       return this;
     }
 
     public Builder setEnvironment(@Nullable Map<String, String> environmentMap) {
       if (environmentMap != null) {
-        this.environmentMap = environmentMap;
+        Preconditions.checkArgument(
+            !environmentMap.containsKey(null) && !environmentMap.containsValue(null));
+        this.environmentMap = ImmutableMap.copyOf(environmentMap);
       }
       return this;
     }
 
     public Builder setExposedPorts(@Nullable List<String> exposedPorts) {
       if (exposedPorts != null) {
-        this.exposedPorts = exposedPorts;
+        Preconditions.checkArgument(!exposedPorts.contains(null));
+        this.exposedPorts = ImmutableList.copyOf(exposedPorts);
       }
       return this;
     }
@@ -198,10 +203,10 @@ public class BuildConfiguration {
               targetImageCredentialHelperName,
               knownTargetRegistryCredentials,
               mainClass,
-              ImmutableList.copyOf(javaArguments),
-              ImmutableList.copyOf(jvmFlags),
-              ImmutableMap.copyOf(environmentMap),
-              ImmutableList.copyOf(exposedPorts),
+              javaArguments,
+              jvmFlags,
+              environmentMap,
+              exposedPorts,
               targetFormat,
               applicationLayersCacheConfiguration,
               baseImageLayersCacheConfiguration,
