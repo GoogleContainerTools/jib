@@ -83,7 +83,6 @@ class FinalizingStep implements AsyncStep<Void>, Callable<Void> {
     Futures.whenAllSucceed(unwrappedDependencies)
         .call(
             () -> {
-              // TODO: Have this be more descriptive?
               buildConfiguration.getBuildLogger().lifecycle("Finalizing...");
               return null;
             },
