@@ -114,7 +114,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
 
   /**
    * Returns an {@link ImageReference} parsed from the configured target image, or one of the form
-   *     {@code project-name:project-version} if target image is not configured
+   * {@code project-name:project-version} if target image is not configured
    *
    * @param mavenBuildLogger the logger used to notify users of the target image parameter
    * @return an {@link ImageReference} parsed from the configured target image, or one of the form
