@@ -92,11 +92,7 @@ public class BuildDockerTask extends DefaultTask {
         GradleProjectProperties.getForProject(getProject(), gradleBuildLogger);
     String mainClass = gradleProjectProperties.getMainClass(jibExtension);
 
-    // TODO: Validate that project name and version are valid repository/tag
-    ImageReference targetImage =
-        Strings.isNullOrEmpty(jibExtension.getTargetImage())
-            ? ImageReference.of(null, getProject().getName(), getProject().getVersion().toString())
-            : ImageReference.parse(jibExtension.getTargetImage());
+    ImageReference targetImage = getDockerTag(gradleBuildLogger);
 
     // Builds the BuildConfiguration.
     // TODO: Consolidate with BuildImageTask.
@@ -141,5 +137,28 @@ public class BuildDockerTask extends DefaultTask {
   BuildDockerTask setJibExtension(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
     return this;
+  }
+
+  /**
+   * @param gradleBuildLogger the logger used to notify users of the target image parameter
+   * @return an {@link ImageReference} parsed from the configured target image, or one of the form
+   *     "project-name:project-version" if target image is not configured
+   */
+  ImageReference getDockerTag(GradleBuildLogger gradleBuildLogger)
+      throws InvalidImageReferenceException {
+    Preconditions.checkNotNull(jibExtension);
+    if (Strings.isNullOrEmpty(jibExtension.getTargetImage())) {
+      // TODO: Validate that project name and version are valid repository/tag
+      gradleBuildLogger.lifecycle(
+          "Using default docker tag "
+              + getProject().getName()
+              + ":"
+              + getProject().getVersion().toString()
+              + ". If you'd like to specify a different tag, you can set the jib.to.image "
+              + "parameter in your build.gradle, or use the --image=<MY IMAGE> commandline flag.");
+      return ImageReference.of(null, getProject().getName(), getProject().getVersion().toString());
+    } else {
+      return ImageReference.parse(jibExtension.getTargetImage());
+    }
   }
 }

@@ -60,12 +60,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
 
     // Parses 'from' and 'to' into image reference.
     ImageReference baseImage = parseImageReference(getBaseImage(), "from");
-
-    // TODO: Validate that project name and version are valid repository/tag
-    ImageReference targetImage =
-        Strings.isNullOrEmpty(getTargetImage())
-            ? ImageReference.of(null, getProject().getName(), getProject().getVersion())
-            : parseImageReference(getTargetImage(), "to");
+    ImageReference targetImage = getDockerTag(mavenBuildLogger);
 
     // Checks Maven settings for registry credentials.
     MavenSettingsServerCredentials mavenSettingsServerCredentials =
@@ -114,6 +109,27 @@ public class BuildDockerMojo extends JibPluginConfiguration {
 
     } catch (CacheDirectoryCreationException | BuildStepsExecutionException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex.getCause());
+    }
+  }
+
+  /**
+   * @param mavenBuildLogger the logger used to notify users of the target image parameter
+   * @return an {@link ImageReference} parsed from the configured target image, or one of the form
+   *     "project-name:project-version" if target image is not configured
+   */
+  ImageReference getDockerTag(MavenBuildLogger mavenBuildLogger) {
+    if (Strings.isNullOrEmpty(getTargetImage())) {
+      // TODO: Validate that project name and version are valid repository/tag
+      mavenBuildLogger.lifecycle(
+          "Using default docker tag "
+              + getProject().getName()
+              + ":"
+              + getProject().getVersion()
+              + ". If you'd like to specify a different tag, you can set the <to><image> parameter "
+              + "in your pom.xml, or use the -Dimage=<MY IMAGE> commandline flag.");
+      return ImageReference.of(null, getProject().getName(), getProject().getVersion());
+    } else {
+      return parseImageReference(getTargetImage(), "to");
     }
   }
 }
