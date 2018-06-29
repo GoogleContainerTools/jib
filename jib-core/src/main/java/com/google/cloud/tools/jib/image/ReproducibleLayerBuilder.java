@@ -18,11 +18,11 @@ package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.tar.TarStreamBuilder;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -34,21 +34,82 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
  */
 public class ReproducibleLayerBuilder {
 
+  /** Represents an entry in the layer. */
+  private static class LayerEntry {
+
+    /**
+     * The source files to build from. Source files that are directories will have all subfiles in
+     * the directory added (but not the directory itself).
+     *
+     * <p>The source files are specified as a list instead of a set to define the order in which
+     * they are added.
+     */
+    private final ImmutableList<Path> sourceFiles;
+
+    /** The Unix-style path of the file in the partial filesystem changeset. */
+    private final String extractionPath;
+
+    private LayerEntry(ImmutableList<Path> sourceFiles, String extractionPath) {
+      this.sourceFiles = sourceFiles;
+      this.extractionPath = extractionPath;
+    }
+
+    /**
+     * Builds the {@link TarArchiveEntry}s for adding this {@link LayerEntry} to a tarball archive.
+     *
+     * @return the list of {@link TarArchiveEntry}
+     * @throws IOException if walking a source file that is a directory failed
+     */
+    private List<TarArchiveEntry> buildAsTarArchiveEntries() throws IOException {
+      List<TarArchiveEntry> tarArchiveEntries = new ArrayList<>();
+
+      for (Path sourceFile : sourceFiles) {
+        if (Files.isDirectory(sourceFile)) {
+          new DirectoryWalker(sourceFile)
+              .filterRoot()
+              .walk(
+                  path -> {
+                    /*
+                     * Builds the same file path as in the source file for extraction. The iteration
+                     * is necessary because the path needs to be in Unix-style.
+                     */
+                    StringBuilder subExtractionPath = new StringBuilder(extractionPath);
+                    Path sourceFileRelativePath = sourceFile.getParent().relativize(path);
+                    for (Path sourceFileRelativePathComponent : sourceFileRelativePath) {
+                      subExtractionPath.append('/').append(sourceFileRelativePathComponent);
+                    }
+                    tarArchiveEntries.add(
+                        new TarArchiveEntry(path.toFile(), subExtractionPath.toString()));
+                  });
+
+        } else {
+          TarArchiveEntry tarArchiveEntry =
+              new TarArchiveEntry(
+                  sourceFile.toFile(), extractionPath + "/" + sourceFile.getFileName());
+          tarArchiveEntries.add(tarArchiveEntry);
+        }
+      }
+
+      return tarArchiveEntries;
+    }
+  }
+
+  private final List<LayerEntry> layerEntries = new ArrayList<>();
+
+  public ReproducibleLayerBuilder() {}
+
   /**
-   * The source files to build the layer from. Source files that are directories will have all
-   * subfiles in the directory added (but not the directory itself).
+   * Adds the {@code sourceFiles} to be extracted on the image at {@code extractionPath}. The order
+   * in which files are added matters.
    *
-   * <p>The source files are specified as a list instead of a set to define the order in which they
-   * are added.
+   * @param sourceFiles the source files to build from
+   * @param extractionPath the Unix-style path to add the source files to in the container image
+   *     filesystem
+   * @return this
    */
-  private final List<Path> sourceFiles;
-
-  /** The Unix-style path of the file in the partial filesystem changeset. */
-  private final String extractionPath;
-
-  public ReproducibleLayerBuilder(List<Path> sourceFiles, String extractionPath) {
-    this.sourceFiles = new ArrayList<>(sourceFiles);
-    this.extractionPath = extractionPath;
+  public ReproducibleLayerBuilder addFiles(List<Path> sourceFiles, String extractionPath) {
+    this.layerEntries.add(new LayerEntry(ImmutableList.copyOf(sourceFiles), extractionPath));
+    return this;
   }
 
   /**
@@ -60,31 +121,9 @@ public class ReproducibleLayerBuilder {
   public UnwrittenLayer build() throws IOException {
     List<TarArchiveEntry> filesystemEntries = new ArrayList<>();
 
-    for (Path sourceFile : sourceFiles) {
-      if (Files.isDirectory(sourceFile)) {
-        new DirectoryWalker(sourceFile)
-            .filterRoot()
-            .walk(
-                path -> {
-                  /*
-                   * Builds the same file path as in the source file for extraction. The iteration
-                   * is necessary because the path needs to be in Unix-style.
-                   */
-                  StringBuilder subExtractionPath = new StringBuilder(extractionPath);
-                  Path sourceFileRelativePath = sourceFile.getParent().relativize(path);
-                  for (Path sourceFileRelativePathComponent : sourceFileRelativePath) {
-                    subExtractionPath.append('/').append(sourceFileRelativePathComponent);
-                  }
-                  filesystemEntries.add(
-                      new TarArchiveEntry(path.toFile(), subExtractionPath.toString()));
-                });
-
-      } else {
-        TarArchiveEntry tarArchiveEntry =
-            new TarArchiveEntry(
-                sourceFile.toFile(), extractionPath + "/" + sourceFile.getFileName());
-        filesystemEntries.add(tarArchiveEntry);
-      }
+    // Adds all the layer entries as tar entries.
+    for (LayerEntry layerEntry : layerEntries) {
+      filesystemEntries.addAll(layerEntry.buildAsTarArchiveEntries());
     }
 
     // Adds all the files to a tar stream.
@@ -105,6 +144,12 @@ public class ReproducibleLayerBuilder {
   }
 
   public List<Path> getSourceFiles() {
-    return Collections.unmodifiableList(sourceFiles);
+    List<Path> allSourceFiles = new ArrayList<>();
+
+    for (LayerEntry layerEntry : layerEntries) {
+      allSourceFiles.addAll(layerEntry.sourceFiles);
+    }
+
+    return allSourceFiles;
   }
 }
