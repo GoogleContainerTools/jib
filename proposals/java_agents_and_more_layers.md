@@ -58,7 +58,7 @@ addFile 'path/to/file', '/path/on/image'
 addFile 'another/file', '/another/path/on/image'
 ```
 
-*Directories will be handled using [rsync](https://linux.die.net/man/1/rsync) source-path semantics, where, for example, `addFile 'path/to/directory', '/path/on/image'` would put all the files in `path/to/directory` into the directory `/path/on/image/directory`, but `addFile 'path/to/directory/', '/path/on/image'` (trailing slash) would put all the files into the directory `/path/on/image`.* 
+*The semantics of `from` and `to` will mostly be similar to [Dockerfile `COPY`](https://docs.docker.com/engine/reference/builder/#copy). However, glob matching won't be supported.* 
 
 For separating application layers into thinner layers, the solution will only separate dependencies for simplicity. Jib will *automatically* separate `-SNAPSHOT` dependencies and dependencies with the same group as the project into a separate layer.
 
