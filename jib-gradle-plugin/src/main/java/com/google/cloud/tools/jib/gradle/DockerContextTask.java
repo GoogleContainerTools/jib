@@ -30,6 +30,7 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.Task;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.OutputDirectory;
@@ -74,6 +75,7 @@ public class DockerContextTask extends DefaultTask {
    * @return the output directory for the Docker context is by default {@code build/jib-docker-
    *     context}.
    */
+  @Input
   @OutputDirectory
   public String getTargetDir() {
     if (targetDir == null) {
