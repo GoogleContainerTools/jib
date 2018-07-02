@@ -103,7 +103,7 @@ public class RegistryEndpointCallerTest {
             "apiRouteBase",
             new TestRegistryEndpointProvider(),
             Authorizations.withBasicToken("token"),
-            new RegistryEndpointProperties("serverUrl", "imageName"),
+            new RegistryEndpointRequestProperties("serverUrl", "imageName"),
             false,
             mockConnectionFactory);
 
@@ -233,7 +233,7 @@ public class RegistryEndpointCallerTest {
             "apiRouteBase",
             new TestRegistryEndpointProvider(),
             Authorizations.withBasicToken("token"),
-            new RegistryEndpointProperties("serverUrl", "imageName"),
+            new RegistryEndpointRequestProperties("serverUrl", "imageName"),
             true,
             mockConnectionFactory);
     Assert.assertEquals("body", testRegistryEndpointCallerInsecure.call());
