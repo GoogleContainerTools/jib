@@ -39,8 +39,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class BlobPullerTest {
 
-  private final RegistryEndpointProperties fakeRegistryEndpointProperties =
-      new RegistryEndpointProperties("someServerUrl", "someImageName");
+  private final RegistryEndpointRequestProperties fakeRegistryEndpointRequestProperties =
+      new RegistryEndpointRequestProperties("someServerUrl", "someImageName");
   private DescriptorDigest fakeDigest;
 
   private final ByteArrayOutputStream layerContentOutputStream = new ByteArrayOutputStream();
@@ -55,7 +55,8 @@ public class BlobPullerTest {
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
-    testBlobPuller = new BlobPuller(fakeRegistryEndpointProperties, fakeDigest, layerOutputStream);
+    testBlobPuller =
+        new BlobPuller(fakeRegistryEndpointRequestProperties, fakeDigest, layerOutputStream);
   }
 
   @Test
@@ -67,7 +68,7 @@ public class BlobPullerTest {
     Mockito.when(mockResponse.getBody()).thenReturn(testBlob);
 
     BlobPuller blobPuller =
-        new BlobPuller(fakeRegistryEndpointProperties, testBlobDigest, layerOutputStream);
+        new BlobPuller(fakeRegistryEndpointRequestProperties, testBlobDigest, layerOutputStream);
     blobPuller.handleResponse(mockResponse);
     Assert.assertEquals(
         "some BLOB content",

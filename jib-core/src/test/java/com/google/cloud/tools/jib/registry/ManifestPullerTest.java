@@ -46,11 +46,11 @@ public class ManifestPullerTest {
 
   @Mock private Response mockResponse;
 
-  private final RegistryEndpointProperties fakeRegistryEndpointProperties =
-      new RegistryEndpointProperties("someServerUrl", "someImageName");
+  private final RegistryEndpointRequestProperties fakeRegistryEndpointRequestProperties =
+      new RegistryEndpointRequestProperties("someServerUrl", "someImageName");
   private final ManifestPuller<ManifestTemplate> testManifestPuller =
       new ManifestPuller<>(
-          fakeRegistryEndpointProperties, "test-image-tag", ManifestTemplate.class);
+          fakeRegistryEndpointRequestProperties, "test-image-tag", ManifestTemplate.class);
 
   @Test
   public void testHandleResponse_v21()
@@ -60,7 +60,7 @@ public class ManifestPullerTest {
     Mockito.when(mockResponse.getBody()).thenReturn(Blobs.from(v21ManifestFile));
     ManifestTemplate manifestTemplate =
         new ManifestPuller<>(
-                fakeRegistryEndpointProperties, "test-image-tag", V21ManifestTemplate.class)
+                fakeRegistryEndpointRequestProperties, "test-image-tag", V21ManifestTemplate.class)
             .handleResponse(mockResponse);
 
     Assert.assertThat(manifestTemplate, CoreMatchers.instanceOf(V21ManifestTemplate.class));
@@ -74,7 +74,7 @@ public class ManifestPullerTest {
     Mockito.when(mockResponse.getBody()).thenReturn(Blobs.from(v22ManifestFile));
     ManifestTemplate manifestTemplate =
         new ManifestPuller<>(
-                fakeRegistryEndpointProperties, "test-image-tag", V22ManifestTemplate.class)
+                fakeRegistryEndpointRequestProperties, "test-image-tag", V22ManifestTemplate.class)
             .handleResponse(mockResponse);
 
     Assert.assertThat(manifestTemplate, CoreMatchers.instanceOf(V22ManifestTemplate.class));
@@ -153,17 +153,17 @@ public class ManifestPullerTest {
     Assert.assertEquals(
         Collections.singletonList(OCIManifestTemplate.MANIFEST_MEDIA_TYPE),
         new ManifestPuller<>(
-                fakeRegistryEndpointProperties, "test-image-tag", OCIManifestTemplate.class)
+                fakeRegistryEndpointRequestProperties, "test-image-tag", OCIManifestTemplate.class)
             .getAccept());
     Assert.assertEquals(
         Collections.singletonList(V22ManifestTemplate.MANIFEST_MEDIA_TYPE),
         new ManifestPuller<>(
-                fakeRegistryEndpointProperties, "test-image-tag", V22ManifestTemplate.class)
+                fakeRegistryEndpointRequestProperties, "test-image-tag", V22ManifestTemplate.class)
             .getAccept());
     Assert.assertEquals(
         Collections.singletonList(V21ManifestTemplate.MEDIA_TYPE),
         new ManifestPuller<>(
-                fakeRegistryEndpointProperties, "test-image-tag", V21ManifestTemplate.class)
+                fakeRegistryEndpointRequestProperties, "test-image-tag", V21ManifestTemplate.class)
             .getAccept());
   }
 }

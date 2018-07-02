@@ -39,15 +39,15 @@ import javax.annotation.Nullable;
 /** Pulls an image's manifest. */
 class ManifestPuller<T extends ManifestTemplate> implements RegistryEndpointProvider<T> {
 
-  private final RegistryEndpointProperties registryEndpointProperties;
+  private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   private final String imageTag;
   private final Class<T> manifestTemplateClass;
 
   ManifestPuller(
-      RegistryEndpointProperties registryEndpointProperties,
+      RegistryEndpointRequestProperties registryEndpointRequestProperties,
       String imageTag,
       Class<T> manifestTemplateClass) {
-    this.registryEndpointProperties = registryEndpointProperties;
+    this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     this.imageTag = imageTag;
     this.manifestTemplateClass = manifestTemplateClass;
   }
@@ -85,7 +85,7 @@ class ManifestPuller<T extends ManifestTemplate> implements RegistryEndpointProv
   @Override
   public URL getApiRoute(String apiRouteBase) throws MalformedURLException {
     return new URL(
-        apiRouteBase + registryEndpointProperties.getImageName() + "/manifests/" + imageTag);
+        apiRouteBase + registryEndpointRequestProperties.getImageName() + "/manifests/" + imageTag);
   }
 
   @Override
@@ -96,9 +96,9 @@ class ManifestPuller<T extends ManifestTemplate> implements RegistryEndpointProv
   @Override
   public String getActionDescription() {
     return "pull image manifest for "
-        + registryEndpointProperties.getServerUrl()
+        + registryEndpointRequestProperties.getServerUrl()
         + "/"
-        + registryEndpointProperties.getImageName()
+        + registryEndpointRequestProperties.getImageName()
         + ":"
         + imageTag;
   }

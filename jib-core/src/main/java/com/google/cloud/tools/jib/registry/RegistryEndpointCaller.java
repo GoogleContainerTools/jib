@@ -73,7 +73,7 @@ class RegistryEndpointCaller<T> {
   private final RequestState initialRequestState;
   private final String userAgent;
   private final RegistryEndpointProvider<T> registryEndpointProvider;
-  private final RegistryEndpointProperties registryEndpointProperties;
+  private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   private final boolean allowHttp;
 
   /**
@@ -83,7 +83,7 @@ class RegistryEndpointCaller<T> {
    * @param apiRouteBase the endpoint's API root, without the protocol
    * @param registryEndpointProvider the {@link RegistryEndpointProvider} to the endpoint
    * @param authorization optional authentication credentials to use
-   * @param registryEndpointProperties properties of the registry endpoint request
+   * @param registryEndpointRequestProperties properties of the registry endpoint request
    * @param allowHttp if {@code true}, allows redirects and fallbacks to HTTP; otherwise, only
    *     allows HTTPS
    * @throws MalformedURLException if the URL generated for the endpoint is malformed
@@ -93,7 +93,7 @@ class RegistryEndpointCaller<T> {
       String apiRouteBase,
       RegistryEndpointProvider<T> registryEndpointProvider,
       @Nullable Authorization authorization,
-      RegistryEndpointProperties registryEndpointProperties,
+      RegistryEndpointRequestProperties registryEndpointRequestProperties,
       boolean allowHttp)
       throws MalformedURLException {
     this(
@@ -101,7 +101,7 @@ class RegistryEndpointCaller<T> {
         apiRouteBase,
         registryEndpointProvider,
         authorization,
-        registryEndpointProperties,
+        registryEndpointRequestProperties,
         allowHttp,
         Connection::new);
   }
@@ -112,7 +112,7 @@ class RegistryEndpointCaller<T> {
       String apiRouteBase,
       RegistryEndpointProvider<T> registryEndpointProvider,
       @Nullable Authorization authorization,
-      RegistryEndpointProperties registryEndpointProperties,
+      RegistryEndpointRequestProperties registryEndpointRequestProperties,
       boolean allowHttp,
       Function<URL, Connection> connectionFactory)
       throws MalformedURLException {
@@ -122,7 +122,7 @@ class RegistryEndpointCaller<T> {
             registryEndpointProvider.getApiRoute(DEFAULT_PROTOCOL + "://" + apiRouteBase));
     this.userAgent = userAgent;
     this.registryEndpointProvider = registryEndpointProvider;
-    this.registryEndpointProperties = registryEndpointProperties;
+    this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     this.allowHttp = allowHttp;
     this.connectionFactory = connectionFactory;
   }
@@ -196,8 +196,8 @@ class RegistryEndpointCaller<T> {
         } else if (httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_UNAUTHORIZED
             || httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
           throw new RegistryUnauthorizedException(
-              registryEndpointProperties.getServerUrl(),
-              registryEndpointProperties.getImageName(),
+              registryEndpointRequestProperties.getServerUrl(),
+              registryEndpointRequestProperties.getImageName(),
               httpResponseException);
 
         } else if (httpResponseException.getStatusCode()

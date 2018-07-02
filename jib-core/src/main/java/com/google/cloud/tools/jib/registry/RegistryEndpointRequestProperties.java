@@ -17,8 +17,7 @@
 package com.google.cloud.tools.jib.registry;
 
 /** Properties of registry endpoint requests. */
-// TODO: Probably rename to RegistryEndpointRequestProperties.
-class RegistryEndpointProperties {
+class RegistryEndpointRequestProperties {
 
   private final String serverUrl;
   private final String imageName;
@@ -27,7 +26,7 @@ class RegistryEndpointProperties {
    * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
    * @param imageName the image/repository name (also known as, namespace)
    */
-  RegistryEndpointProperties(String serverUrl, String imageName) {
+  RegistryEndpointRequestProperties(String serverUrl, String imageName) {
     this.serverUrl = serverUrl;
     this.imageName = imageName;
   }
