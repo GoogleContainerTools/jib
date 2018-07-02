@@ -67,9 +67,6 @@ public class BuildDockerMojo extends JibPluginConfiguration {
         new MavenSettingsServerCredentials(Preconditions.checkNotNull(session).getSettings());
     RegistryCredentials knownBaseRegistryCredentials =
         mavenSettingsServerCredentials.retrieve(baseImage.getRegistry());
-    if (knownBaseRegistryCredentials != null) {
-      mavenBuildLogger.lifecycle("Using credentials from Maven settings for base image registry.");
-    }
 
     MavenProjectProperties mavenProjectProperties =
         MavenProjectProperties.getForProject(getProject(), mavenBuildLogger);
