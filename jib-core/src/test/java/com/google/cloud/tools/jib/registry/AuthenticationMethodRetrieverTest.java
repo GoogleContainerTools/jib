@@ -38,10 +38,10 @@ public class AuthenticationMethodRetrieverTest {
   @Mock private HttpResponseException mockHttpResponseException;
   @Mock private HttpHeaders mockHeaders;
 
-  private final RegistryEndpointProperties fakeRegistryEndpointProperties =
-      new RegistryEndpointProperties("someServerUrl", "someImageName");
+  private final RegistryEndpointRequestProperties fakeRegistryEndpointRequestProperties =
+      new RegistryEndpointRequestProperties("someServerUrl", "someImageName");
   private final AuthenticationMethodRetriever testAuthenticationMethodRetriever =
-      new AuthenticationMethodRetriever(fakeRegistryEndpointProperties);
+      new AuthenticationMethodRetriever(fakeRegistryEndpointRequestProperties);
 
   @Test
   public void testGetContent() {
