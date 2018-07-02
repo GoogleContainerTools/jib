@@ -1,1 +1,1 @@
-These docs generate [googlecontainertools.github.io/jib](https://googlecontainertools.github.io/jib/).
+These are unreleased docs that will be moved to `docs/` when the next version is released.
