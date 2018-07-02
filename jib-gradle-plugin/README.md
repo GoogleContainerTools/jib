@@ -145,7 +145,7 @@ Field | Type | Default | Description
 `to` | [`to`](#to-closure) | *Required* | Configures the target image to build your application to.
 `container` | [`container`](#container-closure) | See [`container`](#container-closure) | Configures the container that is run from your built image.
 `useProjectOnlyCache` | `boolean` | `false` | If set to true, Jib does not share a cache between different Maven projects.
-`allowInsecureRegistries` | boolean | `false` | If set to true, Jib uses HTTP as a fallback for registries that do not support HTTPS. Leaving this parameter set to `false` is strongly recommended, since communication with insecure registries is unencrypted and visible to others on the network.
+`allowInsecureRegistries` | boolean | `false` | If set to true, Jib uses HTTP as a fallback for registries that do not support HTTPS. Leaving this parameter set to false is strongly recommended, since communication with insecure registries is unencrypted and visible to others on the network.
 
 <a name="from-closure"></a>`from` is a closure with the following properties:
 
