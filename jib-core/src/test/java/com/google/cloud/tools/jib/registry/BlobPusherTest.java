@@ -55,7 +55,7 @@ public class BlobPusherTest {
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
     testBlobPusher =
         new BlobPusher(
-            new RegistryEndpointProperties("someServerUrl", "someImageName"),
+            new RegistryEndpointRequestProperties("someServerUrl", "someImageName"),
             fakeDescriptorDigest,
             mockBlob);
   }
