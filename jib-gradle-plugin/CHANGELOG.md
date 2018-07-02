@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Can configure `jibExportDockerContext` output directory with `jibExportDockerContext.targetDir` ([#492](https://github.com/GoogleContainerTools/jib/pull/492))
+
 ### Changed
 
 ### Fixed
