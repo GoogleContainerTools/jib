@@ -76,7 +76,7 @@ class BuildAndCacheApplicationLayerStep
                       sourceFilesConfiguration.getClassesPathOnImage(),
                       cache));
 
-      // Adds the extra layer ot be built if configured.
+      // Adds the extra layer to be built, if configured.
       if (buildConfiguration.getExtraFilesLayerConfiguration() != null) {
         buildLayerStepsBuilder.add(
             new BuildAndCacheApplicationLayerStep(
