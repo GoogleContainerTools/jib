@@ -44,8 +44,8 @@ public class BlobCheckerTest {
 
   @Mock private Response mockResponse;
 
-  private final RegistryEndpointProperties fakeRegistryEndpointProperties =
-      new RegistryEndpointProperties("someServerUrl", "someImageName");
+  private final RegistryEndpointRequestProperties fakeRegistryEndpointRequestProperties =
+      new RegistryEndpointRequestProperties("someServerUrl", "someImageName");
 
   private BlobChecker testBlobChecker;
   private DescriptorDigest fakeDigest;
@@ -55,7 +55,7 @@ public class BlobCheckerTest {
     fakeDigest =
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-    testBlobChecker = new BlobChecker(fakeRegistryEndpointProperties, fakeDigest);
+    testBlobChecker = new BlobChecker(fakeRegistryEndpointRequestProperties, fakeDigest);
   }
 
   @Test
