@@ -66,10 +66,10 @@ public class RegistryClient {
   /** Immutable factory for creating {@link RegistryClient}s. */
   public static class Factory {
 
-    private final RegistryEndpointProperties registryEndpointProperties;
+    private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
 
-    private Factory(RegistryEndpointProperties registryEndpointProperties) {
-      this.registryEndpointProperties = registryEndpointProperties;
+    private Factory(RegistryEndpointRequestProperties registryEndpointRequestProperties) {
+      this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     }
 
     /**
@@ -79,7 +79,8 @@ public class RegistryClient {
      * @return the new {@link RegistryClient}
      */
     public RegistryClient newWithAuthorization(@Nullable Authorization authorization) {
-      return new RegistryClient(authorization, registryEndpointProperties, false, makeUserAgent());
+      return new RegistryClient(
+          authorization, registryEndpointRequestProperties, false, makeUserAgent());
     }
 
     /**
@@ -88,7 +89,7 @@ public class RegistryClient {
      * @return the new {@link RegistryClient}
      */
     public RegistryClient newAllowHttp() {
-      return new RegistryClient(null, registryEndpointProperties, true, makeUserAgent());
+      return new RegistryClient(null, registryEndpointRequestProperties, true, makeUserAgent());
     }
   }
 
@@ -100,7 +101,7 @@ public class RegistryClient {
    * @return the new {@link Factory}
    */
   public static Factory factory(String serverUrl, String imageName) {
-    return new Factory(new RegistryEndpointProperties(serverUrl, imageName));
+    return new Factory(new RegistryEndpointRequestProperties(serverUrl, imageName));
   }
 
   // TODO: Inject via a RegistryClient.Factory.
@@ -137,7 +138,7 @@ public class RegistryClient {
   }
 
   @Nullable private final Authorization authorization;
-  private final RegistryEndpointProperties registryEndpointProperties;
+  private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   private final boolean allowHttp;
   private final String userAgent;
 
@@ -145,17 +146,17 @@ public class RegistryClient {
    * Instantiate with {@link #factory}.
    *
    * @param authorization the {@link Authorization} to access the registry/repository
-   * @param registryEndpointProperties properties of registry endpoint requests
+   * @param registryEndpointRequestProperties properties of registry endpoint requests
    * @param allowHttp if {@code true}, allows redirects and fallbacks to HTTP; otherwise, only
    *     allows HTTPS
    */
   private RegistryClient(
       @Nullable Authorization authorization,
-      RegistryEndpointProperties registryEndpointProperties,
+      RegistryEndpointRequestProperties registryEndpointRequestProperties,
       boolean allowHttp,
       String userAgent) {
     this.authorization = authorization;
-    this.registryEndpointProperties = registryEndpointProperties;
+    this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     this.allowHttp = allowHttp;
     this.userAgent = userAgent;
   }
@@ -170,7 +171,8 @@ public class RegistryClient {
   public RegistryAuthenticator getRegistryAuthenticator() throws IOException, RegistryException {
     // Gets the WWW-Authenticate header (eg. 'WWW-Authenticate: Bearer
     // realm="https://gcr.io/v2/token",service="gcr.io"')
-    return callRegistryEndpoint(new AuthenticationMethodRetriever(registryEndpointProperties));
+    return callRegistryEndpoint(
+        new AuthenticationMethodRetriever(registryEndpointRequestProperties));
   }
 
   /**
@@ -187,7 +189,7 @@ public class RegistryClient {
   public <T extends ManifestTemplate> T pullManifest(
       String imageTag, Class<T> manifestTemplateClass) throws IOException, RegistryException {
     ManifestPuller<T> manifestPuller =
-        new ManifestPuller<>(registryEndpointProperties, imageTag, manifestTemplateClass);
+        new ManifestPuller<>(registryEndpointRequestProperties, imageTag, manifestTemplateClass);
     T manifestTemplate = callRegistryEndpoint(manifestPuller);
     if (manifestTemplate == null) {
       throw new IllegalStateException("ManifestPuller#handleResponse does not return null");
@@ -210,7 +212,7 @@ public class RegistryClient {
   public void pushManifest(BuildableManifestTemplate manifestTemplate, String imageTag)
       throws IOException, RegistryException {
     callRegistryEndpoint(
-        new ManifestPusher(registryEndpointProperties, manifestTemplate, imageTag));
+        new ManifestPusher(registryEndpointRequestProperties, manifestTemplate, imageTag));
   }
 
   /**
@@ -223,7 +225,7 @@ public class RegistryClient {
   @Nullable
   public BlobDescriptor checkBlob(DescriptorDigest blobDigest)
       throws IOException, RegistryException {
-    BlobChecker blobChecker = new BlobChecker(registryEndpointProperties, blobDigest);
+    BlobChecker blobChecker = new BlobChecker(registryEndpointRequestProperties, blobDigest);
     return callRegistryEndpoint(blobChecker);
   }
 
@@ -240,7 +242,7 @@ public class RegistryClient {
   public Void pullBlob(DescriptorDigest blobDigest, OutputStream destinationOutputStream)
       throws RegistryException, IOException {
     BlobPuller blobPuller =
-        new BlobPuller(registryEndpointProperties, blobDigest, destinationOutputStream);
+        new BlobPuller(registryEndpointRequestProperties, blobDigest, destinationOutputStream);
     return callRegistryEndpoint(blobPuller);
   }
 
@@ -257,7 +259,7 @@ public class RegistryClient {
    */
   public boolean pushBlob(DescriptorDigest blobDigest, Blob blob)
       throws IOException, RegistryException {
-    BlobPusher blobPusher = new BlobPusher(registryEndpointProperties, blobDigest, blob);
+    BlobPusher blobPusher = new BlobPusher(registryEndpointRequestProperties, blobDigest, blob);
 
     try (Timer t = parentTimer.subTimer("pushBlob")) {
       try (Timer t2 = t.subTimer("pushBlob POST " + blobDigest)) {
@@ -288,7 +290,7 @@ public class RegistryClient {
   /** @return the registry endpoint's API root, without the protocol */
   @VisibleForTesting
   String getApiRouteBase() {
-    return registryEndpointProperties.getServerUrl() + "/v2/";
+    return registryEndpointRequestProperties.getServerUrl() + "/v2/";
   }
 
   @VisibleForTesting
@@ -311,7 +313,7 @@ public class RegistryClient {
             getApiRouteBase(),
             registryEndpointProvider,
             authorization,
-            registryEndpointProperties,
+            registryEndpointRequestProperties,
             allowHttp)
         .call();
   }

@@ -53,7 +53,7 @@ public class ManifestPusherTest {
 
     testManifestPusher =
         new ManifestPusher(
-            new RegistryEndpointProperties("someServerUrl", "someImageName"),
+            new RegistryEndpointRequestProperties("someServerUrl", "someImageName"),
             fakeManifestTemplate,
             "test-image-tag");
   }
