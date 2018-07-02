@@ -44,7 +44,7 @@ import javax.annotation.Nullable;
  */
 class BlobPusher {
 
-  private final RegistryEndpointProperties registryEndpointProperties;
+  private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   private final DescriptorDigest blobDigest;
   private final Blob blob;
 
@@ -87,7 +87,7 @@ class BlobPusher {
     public URL getApiRoute(String apiRouteBase) throws MalformedURLException {
       return new URL(
           apiRouteBase
-              + registryEndpointProperties.getImageName()
+              + registryEndpointRequestProperties.getImageName()
               + "/blobs/uploads/?mount="
               + blobDigest);
     }
@@ -189,10 +189,10 @@ class BlobPusher {
   }
 
   BlobPusher(
-      RegistryEndpointProperties registryEndpointProperties,
+      RegistryEndpointRequestProperties registryEndpointRequestProperties,
       DescriptorDigest blobDigest,
       Blob blob) {
-    this.registryEndpointProperties = registryEndpointProperties;
+    this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     this.blobDigest = blobDigest;
     this.blob = blob;
   }
@@ -234,9 +234,9 @@ class BlobPusher {
    */
   private String getActionDescription() {
     return "push BLOB for "
-        + registryEndpointProperties.getServerUrl()
+        + registryEndpointRequestProperties.getServerUrl()
         + "/"
-        + registryEndpointProperties.getImageName()
+        + registryEndpointRequestProperties.getImageName()
         + " with digest "
         + blobDigest;
   }

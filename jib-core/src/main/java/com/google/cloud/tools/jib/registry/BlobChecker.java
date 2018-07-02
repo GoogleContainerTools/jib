@@ -39,11 +39,13 @@ import javax.annotation.Nullable;
  */
 class BlobChecker implements RegistryEndpointProvider<BlobDescriptor> {
 
-  private final RegistryEndpointProperties registryEndpointProperties;
+  private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   private final DescriptorDigest blobDigest;
 
-  BlobChecker(RegistryEndpointProperties registryEndpointProperties, DescriptorDigest blobDigest) {
-    this.registryEndpointProperties = registryEndpointProperties;
+  BlobChecker(
+      RegistryEndpointRequestProperties registryEndpointRequestProperties,
+      DescriptorDigest blobDigest) {
+    this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     this.blobDigest = blobDigest;
   }
 
@@ -106,7 +108,7 @@ class BlobChecker implements RegistryEndpointProvider<BlobDescriptor> {
   @Override
   public URL getApiRoute(String apiRouteBase) throws MalformedURLException {
     return new URL(
-        apiRouteBase + registryEndpointProperties.getImageName() + "/blobs/" + blobDigest);
+        apiRouteBase + registryEndpointRequestProperties.getImageName() + "/blobs/" + blobDigest);
   }
 
   @Nullable
@@ -128,9 +130,9 @@ class BlobChecker implements RegistryEndpointProvider<BlobDescriptor> {
   @Override
   public String getActionDescription() {
     return "check BLOB exists for "
-        + registryEndpointProperties.getServerUrl()
+        + registryEndpointRequestProperties.getServerUrl()
         + "/"
-        + registryEndpointProperties.getImageName()
+        + registryEndpointRequestProperties.getImageName()
         + " with digest "
         + blobDigest;
   }
