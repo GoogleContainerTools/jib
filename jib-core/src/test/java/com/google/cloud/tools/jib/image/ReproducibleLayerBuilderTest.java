@@ -33,8 +33,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileTime;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.hamcrest.CoreMatchers;
@@ -49,6 +49,29 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class ReproducibleLayerBuilderTest {
 
+  /**
+   * Verifies the correctness of the next {@link TarArchiveEntry} in the {@link
+   * TarArchiveInputStream}.
+   *
+   * @param tarArchiveInputStream the {@link TarArchiveInputStream} to read from
+   * @param expectedExtractionPath the expected extraction path of the next entry
+   * @param expectedFile the file to match against the contents of the next entry
+   * @throws IOException if an I/O exception occurs
+   */
+  private static void verifyNextTarArchiveEntry(
+      TarArchiveInputStream tarArchiveInputStream, String expectedExtractionPath, Path expectedFile)
+      throws IOException {
+    TarArchiveEntry header = tarArchiveInputStream.getNextTarEntry();
+    Assert.assertEquals(expectedExtractionPath, header.getName());
+
+    String expectedString = new String(Files.readAllBytes(expectedFile), StandardCharsets.UTF_8);
+
+    String extractedString =
+        CharStreams.toString(new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
+
+    Assert.assertEquals(expectedString, extractedString);
+  }
+
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
@@ -56,10 +79,10 @@ public class ReproducibleLayerBuilderTest {
     Path layerDirectory = Paths.get(Resources.getResource("layer").toURI());
     Path blobA = Paths.get(Resources.getResource("blobA").toURI());
 
-    String extractionPathBase = "extract/here";
     ReproducibleLayerBuilder layerBuilder =
-        new ReproducibleLayerBuilder(
-            new ArrayList<>(Arrays.asList(layerDirectory, blobA)), extractionPathBase);
+        new ReproducibleLayerBuilder()
+            .addFiles(Arrays.asList(layerDirectory, blobA), "extract/here/apple")
+            .addFiles(Collections.singletonList(blobA), "extract/here/banana");
 
     // Writes the layer tar to a temporary file.
     UnwrittenLayer unwrittenLayer = layerBuilder.build();
@@ -73,24 +96,15 @@ public class ReproducibleLayerBuilderTest {
     try (TarArchiveInputStream tarArchiveInputStream =
         new TarArchiveInputStream(Files.newInputStream(temporaryFile))) {
       // Verifies that blobA was added.
-      TarArchiveEntry header = tarArchiveInputStream.getNextTarEntry();
-      Assert.assertEquals("extract/here/blobA", header.getName());
-
-      String expectedBlobAString = new String(Files.readAllBytes(blobA), StandardCharsets.UTF_8);
-
-      String extractedBlobAString =
-          CharStreams.toString(
-              new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
-
-      Assert.assertEquals(expectedBlobAString, extractedBlobAString);
+      verifyNextTarArchiveEntry(tarArchiveInputStream, "extract/here/apple/blobA", blobA);
 
       // Verifies that all the files have been added to the tarball stream.
       ImmutableList<Path> layerDirectoryPaths =
           new DirectoryWalker(layerDirectory).filter(path -> !path.equals(layerDirectory)).walk();
       for (Path path : layerDirectoryPaths) {
-        header = tarArchiveInputStream.getNextTarEntry();
+        TarArchiveEntry header = tarArchiveInputStream.getNextTarEntry();
 
-        StringBuilder expectedExtractionPath = new StringBuilder("extract/here");
+        StringBuilder expectedExtractionPath = new StringBuilder("extract/here/apple");
         for (Path pathComponent : layerDirectory.getParent().relativize(path)) {
           expectedExtractionPath.append("/").append(pathComponent);
         }
@@ -110,6 +124,9 @@ public class ReproducibleLayerBuilderTest {
           Assert.assertEquals(expectedFileString, extractedFileString);
         }
       }
+
+      // Verifies that blobA was added to the other location.
+      verifyNextTarArchiveEntry(tarArchiveInputStream, "extract/here/banana/blobA", blobA);
     }
   }
 
@@ -136,11 +153,13 @@ public class ReproducibleLayerBuilderTest {
 
     // create layers of exact same content but ordered differently and with different timestamps
     Blob layer =
-        new ReproducibleLayerBuilder(Arrays.asList(fileA1, fileB1), extractionPath)
+        new ReproducibleLayerBuilder()
+            .addFiles(Arrays.asList(fileA1, fileB1), extractionPath)
             .build()
             .getBlob();
     Blob reproduced =
-        new ReproducibleLayerBuilder(Arrays.asList(fileB2, fileA2), extractionPath)
+        new ReproducibleLayerBuilder()
+            .addFiles(Arrays.asList(fileB2, fileA2), extractionPath)
             .build()
             .getBlob();
 

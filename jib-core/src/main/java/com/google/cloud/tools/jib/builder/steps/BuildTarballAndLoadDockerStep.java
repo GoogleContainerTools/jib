@@ -82,7 +82,6 @@ class BuildTarballAndLoadDockerStep implements AsyncStep<Void>, Callable<Void> {
         .get();
   }
 
-  // TODO: Refactor into testable components
   private Void afterPushBaseImageLayerFuturesFuture()
       throws ExecutionException, InterruptedException, IOException {
     Image<CachedLayer> image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
