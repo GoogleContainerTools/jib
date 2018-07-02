@@ -85,8 +85,14 @@ public class BuildImageMojo extends JibPluginConfiguration {
         new MavenSettingsServerCredentials(Preconditions.checkNotNull(session).getSettings());
     RegistryCredentials knownBaseRegistryCredentials =
         mavenSettingsServerCredentials.retrieve(baseImage.getRegistry());
+    if (knownBaseRegistryCredentials != null) {
+      mavenBuildLogger.lifecycle("Using Maven settings for for base image registry credentials.");
+    }
     RegistryCredentials knownTargetRegistryCredentials =
         mavenSettingsServerCredentials.retrieve(targetImage.getRegistry());
+    if (knownBaseRegistryCredentials != null) {
+      mavenBuildLogger.lifecycle("Using Maven settings for target image registry credentials.");
+    }
 
     MavenProjectProperties mavenProjectProperties =
         MavenProjectProperties.getForProject(getProject(), mavenBuildLogger);
