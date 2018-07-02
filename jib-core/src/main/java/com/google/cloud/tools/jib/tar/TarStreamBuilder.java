@@ -80,6 +80,7 @@ public class TarStreamBuilder {
               ByteStreams.copy(contentStream, tarArchiveOutputStream);
             }
           }
+          // Note that this will skip files that don't exist.
         });
   }
 

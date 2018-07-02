@@ -41,7 +41,7 @@ class BuildAndCacheApplicationLayerStep
 
   /**
    * Makes a list of {@link BuildAndCacheApplicationLayerStep} for dependencies, resources, and
-   * classes layers.
+   * classes layers. Optionally adds an extra layer if configured to do so.
    */
   static ImmutableList<BuildAndCacheApplicationLayerStep> makeList(
       ListeningExecutorService listeningExecutorService,
@@ -49,28 +49,46 @@ class BuildAndCacheApplicationLayerStep
       SourceFilesConfiguration sourceFilesConfiguration,
       Cache cache) {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
-      return ImmutableList.of(
-          new BuildAndCacheApplicationLayerStep(
-              "dependencies",
-              listeningExecutorService,
-              buildConfiguration,
-              sourceFilesConfiguration.getDependenciesFiles(),
-              sourceFilesConfiguration.getDependenciesPathOnImage(),
-              cache),
-          new BuildAndCacheApplicationLayerStep(
-              "resources",
-              listeningExecutorService,
-              buildConfiguration,
-              sourceFilesConfiguration.getResourcesFiles(),
-              sourceFilesConfiguration.getResourcesPathOnImage(),
-              cache),
-          new BuildAndCacheApplicationLayerStep(
-              "classes",
-              listeningExecutorService,
-              buildConfiguration,
-              sourceFilesConfiguration.getClassesFiles(),
-              sourceFilesConfiguration.getClassesPathOnImage(),
-              cache));
+      ImmutableList.Builder<BuildAndCacheApplicationLayerStep> buildLayerStepsBuilder =
+          ImmutableList.<BuildAndCacheApplicationLayerStep>builder()
+              .add(
+                  new BuildAndCacheApplicationLayerStep(
+                      "dependencies",
+                      listeningExecutorService,
+                      buildConfiguration,
+                      sourceFilesConfiguration.getDependenciesFiles(),
+                      sourceFilesConfiguration.getDependenciesPathOnImage(),
+                      cache))
+              .add(
+                  new BuildAndCacheApplicationLayerStep(
+                      "resources",
+                      listeningExecutorService,
+                      buildConfiguration,
+                      sourceFilesConfiguration.getResourcesFiles(),
+                      sourceFilesConfiguration.getResourcesPathOnImage(),
+                      cache))
+              .add(
+                  new BuildAndCacheApplicationLayerStep(
+                      "classes",
+                      listeningExecutorService,
+                      buildConfiguration,
+                      sourceFilesConfiguration.getClassesFiles(),
+                      sourceFilesConfiguration.getClassesPathOnImage(),
+                      cache));
+
+      // Adds the extra layer ot be built if configured.
+      if (buildConfiguration.getExtraFilesLayerConfiguration() != null) {
+        buildLayerStepsBuilder.add(
+            new BuildAndCacheApplicationLayerStep(
+                "extra files",
+                listeningExecutorService,
+                buildConfiguration,
+                buildConfiguration.getExtraFilesLayerConfiguration().getSourceFiles(),
+                buildConfiguration.getExtraFilesLayerConfiguration().getDestinationOnImage(),
+                cache));
+      }
+
+      return buildLayerStepsBuilder.build();
     }
   }
 
