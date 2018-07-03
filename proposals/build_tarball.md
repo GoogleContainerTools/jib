@@ -29,15 +29,9 @@ whether to build to a Docker daemon or build to a tarball.
 
 The following changes will be made to the code:
 1. Add a private output path configuration parameter to `BuildConfiguration`
-2. Rename:
-   - `BuildTarballAndLoadDockerStep` to `BuildTarballStep`
-   - `runBuildTarballAndLoadDockerStep` to `runBuildTarballStep`
-   - `waitOnBuildTarballAndLoadDockerStep` to `waitOnBuildTarballStep`
-3. Add a boolean parameter `doDockerLoad` to `runBuildTarballStep` and `BuildTarballStep`'s
-constructor
-   - Alternatively, parameterize an action to more explicitly define the behavior
-4. Check the value of `doDockerLoad` in `BuildTarballStep#afterPushBaseImageLayerFuturesFuture()`
-   - If true, run the existing `new DockerClient().load(...)`
-   - If false, write the tarball blob to a file at the output location
-5. Add `BuildSteps#forBuildToTarball()`, which would pass in the required messages/boolean parameter
-6. Add a new task and mojo that would call `BuildSteps.forBuildToTarball()`
+2. Break `BuildTarballAndLoadDockerStep` into two step - `BuildTarballStep` and `LoadDockerStep`
+3. Add a new step `WriteTarFileStep` for writing a Blob to disk
+4. Add `BuildSteps#forBuildToTarball()`, which would contain the same steps as
+`forBuildToDockerDaemon()` up until after the `BuildTarballStep`, where it would run a
+`WriteTarFileStep` instead of a `LoadDockerStep`
+5. Add a new task and mojo that would call `BuildSteps.forBuildToTarball()`
