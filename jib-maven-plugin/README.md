@@ -24,7 +24,13 @@ You can containerize your application easily with one command:
 mvn compile com.google.cloud.tools:jib-maven-plugin:0.9.1:build -Dimage=<MY IMAGE>
 ```
 
-*If you encounter authentication issues, see [Authentication Methods](#authentication-methods).*
+This builds and pushes a container image for your application to a container registry. *If you encounter authentication issues, see [Authentication Methods](#authentication-methods).*
+
+To build to a Docker daemon, use:
+
+```shell
+mvn compile com.google.cloud.tools:jib-maven-plugin:0.9.1:dockerBuild
+```
 
 If you would like to set up Jib as part of your Maven build, follow the guide below.
 
