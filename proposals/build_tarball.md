@@ -41,3 +41,4 @@ constructor
    - If false, write the tarball blob to a file at the output location
 5. Add `BuildSteps#forBuildToTarball()`, which would pass in the required messages/boolean parameter
 6. Add a new task and mojo that would call `BuildSteps.forBuildToTarball()`
+7. (Optional/future) Expose configuration parameter to users
