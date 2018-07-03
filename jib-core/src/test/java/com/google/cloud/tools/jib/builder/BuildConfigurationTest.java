@@ -61,7 +61,7 @@ public class BuildConfigurationTest {
     CacheConfiguration expectedBaseImageLayersCacheConfiguration =
         CacheConfiguration.forPath(Paths.get("base/image/layers"));
     LayerConfiguration expectedExtraFilesLayerConfiguration =
-        new LayerConfiguration(Collections.emptyList(), "destination");
+        LayerConfiguration.builder().addEntry(Collections.emptyList(), "destination").build();
 
     BuildConfiguration.Builder buildConfigurationBuilder =
         BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
