@@ -17,7 +17,7 @@
 package com.google.cloud.tools.jib.frontend;
 
 import com.google.cloud.tools.jib.builder.BuildLogger;
-import com.google.cloud.tools.jib.configuration.PortWithProtocol;
+import com.google.cloud.tools.jib.configuration.PortsWithProtocol;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -35,7 +35,7 @@ public class ExposedPortsParser {
   private static final Pattern portPattern = Pattern.compile("(\\d+)(?:-(\\d+))?(/tcp|/udp)?");
 
   /**
-   * TODO: Return list of {@link PortWithProtocol}s instead of strings
+   * TODO: Return list of {@link PortsWithProtocol}s instead of strings
    *
    * <p>Converts/validates a list of ports with ranges to an expanded form without ranges.
    *
