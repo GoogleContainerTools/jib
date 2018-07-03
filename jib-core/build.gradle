@@ -1,7 +1,7 @@
 plugins {
     id 'java'
     id 'checkstyle'
-    id 'com.github.sherter.google-java-format' version '0.6'
+    id 'com.github.sherter.google-java-format' version '0.7.1'
     id 'net.ltgt.apt' version '0.13'
     id 'net.ltgt.errorprone' version '0.0.13'
 }
@@ -92,7 +92,7 @@ tasks.withType(Test) {
 
 /* GOOGLE JAVA FORMAT */
 googleJavaFormat {
-    toolVersion = '1.5'
+    toolVersion = '1.6'
 }
 check.dependsOn verifyGoogleJavaFormat
 /* GOOGLE JAVA FORMAT */
