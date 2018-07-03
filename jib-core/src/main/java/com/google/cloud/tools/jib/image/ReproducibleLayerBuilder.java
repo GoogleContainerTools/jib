@@ -40,7 +40,8 @@ public class ReproducibleLayerBuilder {
    * @return the list of {@link TarArchiveEntry}
    * @throws IOException if walking a source file that is a directory failed
    */
-  private static List<TarArchiveEntry> buildAsTarArchiveEntries(LayerEntry layerEntry) throws IOException {
+  private static List<TarArchiveEntry> buildAsTarArchiveEntries(LayerEntry layerEntry)
+      throws IOException {
     List<TarArchiveEntry> tarArchiveEntries = new ArrayList<>();
 
     for (Path sourceFile : layerEntry.getSourceFiles()) {
@@ -53,7 +54,8 @@ public class ReproducibleLayerBuilder {
                    * Builds the same file path as in the source file for extraction. The iteration
                    * is necessary because the path needs to be in Unix-style.
                    */
-                  StringBuilder subExtractionPath = new StringBuilder(layerEntry.getExtractionPath());
+                  StringBuilder subExtractionPath =
+                      new StringBuilder(layerEntry.getExtractionPath());
                   Path sourceFileRelativePath = sourceFile.getParent().relativize(path);
                   for (Path sourceFileRelativePathComponent : sourceFileRelativePath) {
                     subExtractionPath.append('/').append(sourceFileRelativePathComponent);
@@ -65,7 +67,8 @@ public class ReproducibleLayerBuilder {
       } else {
         TarArchiveEntry tarArchiveEntry =
             new TarArchiveEntry(
-                sourceFile.toFile(), layerEntry.getExtractionPath() + "/" + sourceFile.getFileName());
+                sourceFile.toFile(),
+                layerEntry.getExtractionPath() + "/" + sourceFile.getFileName());
         tarArchiveEntries.add(tarArchiveEntry);
       }
     }

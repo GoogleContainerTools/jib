@@ -17,11 +17,7 @@
 package com.google.cloud.tools.jib.configuration;
 
 import com.google.cloud.tools.jib.image.LayerEntry;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import java.nio.file.Path;
-import java.util.List;
-import jdk.nashorn.internal.ir.annotations.Immutable;
 
 /** Configures how to build a layer in the container image. */
 public class LayerConfiguration {

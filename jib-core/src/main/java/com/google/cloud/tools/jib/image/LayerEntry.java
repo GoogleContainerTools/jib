@@ -19,15 +19,18 @@ package com.google.cloud.tools.jib.image;
 import com.google.common.collect.ImmutableList;
 import java.nio.file.Path;
 
-/** Represents an entry in the layer. A layer consists of many entries that can be converted into tar archive entries. */
+/**
+ * Represents an entry in the layer. A layer consists of many entries that can be converted into tar
+ * archive entries.
+ */
 public class LayerEntry {
 
   /**
-   * The source files to build from. Source files that are directories will have all subfiles in
-   * the directory added (but not the directory itself).
+   * The source files to build from. Source files that are directories will have all subfiles in the
+   * directory added (but not the directory itself).
    *
-   * <p>The source files are specified as a list instead of a set to define the order in which
-   * they are added.
+   * <p>The source files are specified as a list instead of a set to define the order in which they
+   * are added.
    */
   private final ImmutableList<Path> sourceFiles;
 
