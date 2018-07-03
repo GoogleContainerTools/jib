@@ -38,7 +38,15 @@ You can containerize your application easily with one command:
 gradle jib --image=<MY IMAGE>
 ```
 
+This builds and pushes a container image for your application to a container registry.
+
 *If you encounter authentication issues, see [Authentication Methods](#authentication-methods).*
+
+To build to a Docker daemon, use:
+
+```shell
+gradle jibDockerBuild
+```
 
 If you would like to set up Jib as part of your Gradle build, follow the guide below.
 
