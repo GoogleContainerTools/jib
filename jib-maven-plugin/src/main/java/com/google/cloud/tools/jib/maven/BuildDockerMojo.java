@@ -36,9 +36,8 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 
 /** Builds a container image and exports to the default Docker daemon. */
 @Mojo(
-  name = BuildDockerMojo.GOAL_NAME,
-  requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM
-)
+    name = BuildDockerMojo.GOAL_NAME,
+    requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM)
 public class BuildDockerMojo extends JibPluginConfiguration {
 
   @VisibleForTesting static final String GOAL_NAME = "dockerBuild";
