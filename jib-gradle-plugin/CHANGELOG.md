@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- Set `jibExportDockerContext` output directory with command line option `--targetDir` ([]())
+- Set `jibExportDockerContext` output directory with command line option `--targetDir` ([#499](https://github.com/GoogleContainerTools/jib/pull/499))
 
 ## 0.9.1
 
