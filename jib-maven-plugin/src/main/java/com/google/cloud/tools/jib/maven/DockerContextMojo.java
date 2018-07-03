@@ -32,19 +32,17 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 
 /** Exports to a Docker context. */
 @Mojo(
-  name = DockerContextMojo.GOAL_NAME,
-  requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM
-)
+    name = DockerContextMojo.GOAL_NAME,
+    requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM)
 public class DockerContextMojo extends JibPluginConfiguration {
 
   @VisibleForTesting static final String GOAL_NAME = "exportDockerContext";
 
   @Nullable
   @Parameter(
-    property = "jib.dockerDir",
-    defaultValue = "${project.build.directory}/jib-docker-context",
-    required = true
-  )
+      property = "jib.dockerDir",
+      defaultValue = "${project.build.directory}/jib-docker-context",
+      required = true)
   private String targetDir;
 
   @Override
