@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.CacheReader;
 import com.google.cloud.tools.jib.cache.CacheWriter;
 import com.google.cloud.tools.jib.cache.CachedLayerWithMetadata;
+import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.image.ReproducibleLayerBuilder;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -56,24 +57,24 @@ class BuildAndCacheApplicationLayerStep
                       "dependencies",
                       listeningExecutorService,
                       buildConfiguration,
-                      sourceFilesConfiguration.getDependenciesFiles(),
-                      sourceFilesConfiguration.getDependenciesPathOnImage(),
+                      LayerConfiguration.builder().addEntry(sourceFilesConfiguration.getDependenciesFiles(),
+                      sourceFilesConfiguration.getDependenciesPathOnImage()).build(),
                       cache))
               .add(
                   new BuildAndCacheApplicationLayerStep(
                       "resources",
                       listeningExecutorService,
                       buildConfiguration,
-                      sourceFilesConfiguration.getResourcesFiles(),
-                      sourceFilesConfiguration.getResourcesPathOnImage(),
+                      LayerConfiguration.builder().addEntry(sourceFilesConfiguration.getResourcesFiles(),
+                          sourceFilesConfiguration.getResourcesPathOnImage()).build(),
                       cache))
               .add(
                   new BuildAndCacheApplicationLayerStep(
                       "classes",
                       listeningExecutorService,
                       buildConfiguration,
-                      sourceFilesConfiguration.getClassesFiles(),
-                      sourceFilesConfiguration.getClassesPathOnImage(),
+                      LayerConfiguration.builder().addEntry(sourceFilesConfiguration.getClassesFiles(),
+                          sourceFilesConfiguration.getClassesPathOnImage()).build(),
                       cache));
 
       // Adds the extra layer to be built, if configured.
@@ -83,8 +84,7 @@ class BuildAndCacheApplicationLayerStep
                 "extra files",
                 listeningExecutorService,
                 buildConfiguration,
-                buildConfiguration.getExtraFilesLayerConfiguration().getSourceFiles(),
-                buildConfiguration.getExtraFilesLayerConfiguration().getDestinationOnImage(),
+                buildConfiguration.getExtraFilesLayerConfiguration(),
                 cache));
       }
 
@@ -94,8 +94,7 @@ class BuildAndCacheApplicationLayerStep
 
   private final String layerType;
   private final BuildConfiguration buildConfiguration;
-  private final ImmutableList<Path> sourceFiles;
-  private final String extractionPath;
+  private final LayerConfiguration layerConfiguration;
   private final Cache cache;
 
   private final ListenableFuture<CachedLayerWithMetadata> listenableFuture;
@@ -104,13 +103,11 @@ class BuildAndCacheApplicationLayerStep
       String layerType,
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
-      ImmutableList<Path> sourceFiles,
-      String extractionPath,
+      LayerConfiguration layerConfiguration,
       Cache cache) {
     this.layerType = layerType;
     this.buildConfiguration = buildConfiguration;
-    this.sourceFiles = sourceFiles;
-    this.extractionPath = extractionPath;
+    this.layerConfiguration = layerConfiguration;
     this.cache = cache;
 
     listenableFuture = listeningExecutorService.submit(this);
