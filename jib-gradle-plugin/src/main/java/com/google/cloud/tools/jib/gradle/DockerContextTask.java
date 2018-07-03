@@ -72,11 +72,22 @@ public class DockerContextTask extends DefaultTask {
   }
 
   /**
-   * @return the output directory for the Docker context is by default {@code build/jib-docker-
-   *     context}.
+   * The output directory to check for task up-to-date.
+   *
+   * @return the output directory
+   */
+  @OutputDirectory
+  public String getOutputDirectory() {
+    return getTargetDir();
+  }
+
+  /**
+   * Returns the output directory for the Docker context. By default, it is {@code
+   * build/jib-docker-context}.
+   *
+   * @return the output directory
    */
   @Input
-  @OutputDirectory
   public String getTargetDir() {
     if (targetDir == null) {
       return getProject().getBuildDir().toPath().resolve("jib-docker-context").toString();
@@ -85,11 +96,11 @@ public class DockerContextTask extends DefaultTask {
   }
 
   /**
-   * The output directory can be overriden with the {@code --jib.dockerDir} command line option.
+   * The output directory can be overriden with the {@code --targetDir} command line option.
    *
    * @param targetDir the output directory.
    */
-  @Option(option = "jib.dockerDir", description = "Directory to output the Docker context to")
+  @Option(option = "targetDir", description = "Directory to output the Docker context to")
   public void setTargetDir(String targetDir) {
     this.targetDir = targetDir;
   }
