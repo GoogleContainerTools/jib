@@ -18,8 +18,7 @@ user may load it into a Docker daemon via `docker load`, either manually or via 
 ## Intended Workflow
 
 The user will be able to output a `docker load`able image tarball by running `gradle jibBuildTar`
-for Gradle or `mvn jib:buildTar` for Maven. In the future, we may want to make the output path
-configurable.
+for Gradle or `mvn jib:buildTar` for Maven.
 
 ## Implementation
 
@@ -42,4 +41,3 @@ constructor
    - If false, write the tarball blob to a file at the output location
 5. Add `BuildSteps#forBuildToTarball()`, which would pass in the required messages/boolean parameter
 6. Add a new task and mojo that would call `BuildSteps.forBuildToTarball()`
-7. (Optional/future) Expose configuration parameter to users
