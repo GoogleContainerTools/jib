@@ -4,11 +4,11 @@
 
 Currently, Jib can build a container image to either a registry or a Docker daemon. Recently, there
 have been requests for the ability to build an image tarball directly to the filesystem so that the
-user may load it into docker via `docker load`, either manually or via a build system.
+user may load it into a Docker daemon via `docker load`, either manually or via a build system.
 
 ## Goals
 
-* Build the image into a tarball
+* Build the image and output as a tarball
 * Minimize extra configuration
 
 ## Constraints
@@ -36,6 +36,7 @@ The following changes will be made to the code:
    - `waitOnBuildTarballAndLoadDockerStep` to `waitOnBuildTarballStep`
 3. Add a boolean parameter `doDockerLoad` to `runBuildTarballStep` and `BuildTarballStep`'s
 constructor
+   - Alternatively, use in an action to more explicitly define the behavior
 4. Check the value of `doDockerLoad` in `BuildTarballStep#afterPushBaseImageLayerFuturesFuture()`
    - If true, run the existing `new DockerClient().load(...)`
    - If false, write the tarball blob to a file at the output location
