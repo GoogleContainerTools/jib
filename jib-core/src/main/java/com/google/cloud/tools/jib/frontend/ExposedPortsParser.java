@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.frontend;
 
 import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.configuration.PortsWithProtocol;
+import com.google.cloud.tools.jib.configuration.PortsWithProtocol.Protocol;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -35,9 +36,7 @@ public class ExposedPortsParser {
   private static final Pattern portPattern = Pattern.compile("(\\d+)(?:-(\\d+))?(/tcp|/udp)?");
 
   /**
-   * TODO: Return list of {@link PortsWithProtocol}s instead of strings
-   *
-   * <p>Converts/validates a list of ports with ranges to an expanded form without ranges.
+   * Converts/validates a list of ports with ranges to an expanded form without ranges.
    *
    * <p>Example: {@code ["1000/tcp", "2000-2002/tcp"] -> ["1000/tcp", "2000/tcp", "2001/tcp",
    * "2002/tcp"]}
@@ -48,9 +47,9 @@ public class ExposedPortsParser {
    * @throws NumberFormatException if any of the ports are in an invalid format or out of range
    */
   @VisibleForTesting
-  public static ImmutableList<String> parse(List<String> ports, BuildLogger buildLogger)
+  public static ImmutableList<PortsWithProtocol> parse(List<String> ports, BuildLogger buildLogger)
       throws NumberFormatException {
-    ImmutableList.Builder<String> result = new ImmutableList.Builder<>();
+    ImmutableList.Builder<PortsWithProtocol> result = new ImmutableList.Builder<>();
 
     for (String port : ports) {
       Matcher matcher = portPattern.matcher(port);
@@ -70,7 +69,7 @@ public class ExposedPortsParser {
       if (!Strings.isNullOrEmpty(matcher.group(2))) {
         max = Integer.parseInt(matcher.group(2));
       }
-      String protocol = matcher.group(3);
+      String protocol = matcher.group(3) == null ? "" : matcher.group(3);
 
       // Error if configured as 'max-min' instead of 'min-max'
       if (min > max) {
@@ -84,11 +83,9 @@ public class ExposedPortsParser {
         buildLogger.warn("Port number '" + port + "' is out of usual range (1-65535).");
       }
 
-      // Add all numbers in range to list
-      String portString = (protocol == null ? "" : protocol);
-      for (int portNum = min; portNum <= max; portNum++) {
-        result.add(portNum + portString);
-      }
+      result.add(
+          PortsWithProtocol.forRange(
+              min, max, "/udp".equals(protocol) ? Protocol.UDP : Protocol.TCP));
     }
 
     return result.build();

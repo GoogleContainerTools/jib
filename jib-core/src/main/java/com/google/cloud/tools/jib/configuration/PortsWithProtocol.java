@@ -79,6 +79,27 @@ public class PortsWithProtocol {
     return protocol;
   }
 
+  @Override
+  public boolean equals(Object other) {
+    if (other == null || other.getClass() != PortsWithProtocol.class) {
+      return false;
+    }
+    PortsWithProtocol otherPort = (PortsWithProtocol) other;
+    return minPort == otherPort.minPort
+        && maxPort == otherPort.maxPort
+        && protocol == otherPort.protocol;
+  }
+
+  @Override
+  public int hashCode() {
+    return (protocol == Protocol.TCP ? 1 : -1) * minPort + (maxPort << 16);
+  }
+
+  @Override
+  public String toString() {
+    return minPort + (maxPort == minPort ? "" : "-" + maxPort) + "/" + protocol;
+  }
+
   private PortsWithProtocol(int minPort, int maxPort, Protocol protocol) {
     this.minPort = minPort;
     this.maxPort = maxPort;

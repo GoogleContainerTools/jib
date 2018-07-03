@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
+import com.google.cloud.tools.jib.configuration.PortsWithProtocol;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
@@ -47,7 +48,7 @@ public class BuildConfiguration {
     private ImmutableList<String> javaArguments = ImmutableList.of();
     private ImmutableList<String> jvmFlags = ImmutableList.of();
     private ImmutableMap<String, String> environmentMap = ImmutableMap.of();
-    private ImmutableList<String> exposedPorts = ImmutableList.of();
+    private ImmutableList<PortsWithProtocol> exposedPorts = ImmutableList.of();
     private Class<? extends BuildableManifestTemplate> targetFormat = V22ManifestTemplate.class;
     @Nullable private CacheConfiguration applicationLayersCacheConfiguration;
     @Nullable private CacheConfiguration baseImageLayersCacheConfiguration;
@@ -121,7 +122,7 @@ public class BuildConfiguration {
       return this;
     }
 
-    public Builder setExposedPorts(@Nullable List<String> exposedPorts) {
+    public Builder setExposedPorts(@Nullable List<PortsWithProtocol> exposedPorts) {
       if (exposedPorts != null) {
         Preconditions.checkArgument(!exposedPorts.contains(null));
         this.exposedPorts = ImmutableList.copyOf(exposedPorts);
@@ -264,7 +265,7 @@ public class BuildConfiguration {
   private final ImmutableList<String> javaArguments;
   private final ImmutableList<String> jvmFlags;
   private final ImmutableMap<String, String> environmentMap;
-  private final ImmutableList<String> exposedPorts;
+  private final ImmutableList<PortsWithProtocol> exposedPorts;
   private final Class<? extends BuildableManifestTemplate> targetFormat;
   @Nullable private final CacheConfiguration applicationLayersCacheConfiguration;
   @Nullable private final CacheConfiguration baseImageLayersCacheConfiguration;
@@ -283,7 +284,7 @@ public class BuildConfiguration {
       ImmutableList<String> javaArguments,
       ImmutableList<String> jvmFlags,
       ImmutableMap<String, String> environmentMap,
-      ImmutableList<String> exposedPorts,
+      ImmutableList<PortsWithProtocol> exposedPorts,
       Class<? extends BuildableManifestTemplate> targetFormat,
       @Nullable CacheConfiguration applicationLayersCacheConfiguration,
       @Nullable CacheConfiguration baseImageLayersCacheConfiguration,
@@ -378,7 +379,7 @@ public class BuildConfiguration {
     return environmentMap;
   }
 
-  public ImmutableList<String> getExposedPorts() {
+  public ImmutableList<PortsWithProtocol> getExposedPorts() {
     return exposedPorts;
   }
 

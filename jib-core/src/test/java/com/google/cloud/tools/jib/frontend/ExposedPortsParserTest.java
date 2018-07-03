@@ -17,6 +17,8 @@
 package com.google.cloud.tools.jib.frontend;
 
 import com.google.cloud.tools.jib.builder.BuildLogger;
+import com.google.cloud.tools.jib.configuration.PortsWithProtocol;
+import com.google.cloud.tools.jib.configuration.PortsWithProtocol.Protocol;
 import com.google.common.collect.ImmutableList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -38,22 +40,17 @@ public class ExposedPortsParserTest {
   public void testExpandPortList() {
     List<String> goodInputs =
         Arrays.asList("1000", "2000-2003", "3000-3000", "4000/tcp", "5000/udp", "6000-6002/tcp");
-    ImmutableList<String> expected =
-        new ImmutableList.Builder<String>()
+    ImmutableList<PortsWithProtocol> expected =
+        new ImmutableList.Builder<PortsWithProtocol>()
             .add(
-                "1000",
-                "2000",
-                "2001",
-                "2002",
-                "2003",
-                "3000",
-                "4000/tcp",
-                "5000/udp",
-                "6000/tcp",
-                "6001/tcp",
-                "6002/tcp")
+                PortsWithProtocol.forSingle(1000, Protocol.TCP),
+                PortsWithProtocol.forRange(2000, 2003, Protocol.TCP),
+                PortsWithProtocol.forSingle(3000, Protocol.TCP),
+                PortsWithProtocol.forSingle(4000, Protocol.TCP),
+                PortsWithProtocol.forSingle(5000, Protocol.UDP),
+                PortsWithProtocol.forRange(6000, 6002, Protocol.TCP))
             .build();
-    ImmutableList<String> result = ExposedPortsParser.parse(goodInputs, mockLogger);
+    ImmutableList<PortsWithProtocol> result = ExposedPortsParser.parse(goodInputs, mockLogger);
     Assert.assertEquals(expected, result);
 
     List<String> badInputs = Arrays.asList("abc", "/udp", "1000/abc", "a100/tcp", "20/udpabc");

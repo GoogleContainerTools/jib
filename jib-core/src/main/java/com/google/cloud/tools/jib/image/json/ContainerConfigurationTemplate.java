@@ -17,9 +17,12 @@
 package com.google.cloud.tools.jib.image.json;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.google.cloud.tools.jib.configuration.PortsWithProtocol;
+import com.google.cloud.tools.jib.configuration.PortsWithProtocol.Protocol;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedMap;
 import java.util.ArrayList;
@@ -127,12 +130,17 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     config.Cmd = cmd;
   }
 
-  public void setContainerExposedPorts(List<String> exposedPorts) {
+  public void setContainerExposedPorts(List<PortsWithProtocol> exposedPorts) {
     // TODO: Do this conversion somewhere else
     ImmutableSortedMap.Builder<String, Map<?, ?>> result =
         new ImmutableSortedMap.Builder<>(String::compareTo);
-    for (String port : exposedPorts) {
-      result.put(port, Collections.emptyMap());
+    for (PortsWithProtocol port : exposedPorts) {
+      result.put(
+          port.getMinPort()
+              + (port.getMaxPort() != port.getMinPort() ? port.getMaxPort() + "" : "")
+              + "/"
+              + port.getProtocol().toString(),
+          Collections.emptyMap());
     }
     config.ExposedPorts = result.build();
   }
@@ -161,14 +169,18 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
   }
 
   @Nullable
-  ImmutableList<String> getContainerExposedPorts() {
+  ImmutableList<PortsWithProtocol> getContainerExposedPorts() {
     // TODO: Do this conversion somewhere else
     if (config.ExposedPorts == null) {
       return null;
     }
-    ImmutableList.Builder<String> ports = new ImmutableList.Builder<>();
+    ImmutableList.Builder<PortsWithProtocol> ports = new ImmutableList.Builder<>();
     for (Map.Entry<String, Map<?, ?>> entry : config.ExposedPorts.entrySet()) {
-      ports.add(entry.getKey());
+      List<String> split = Splitter.on('/').splitToList(entry.getKey());
+      int port = Integer.parseInt(split.get(0));
+      String protocol = split.size() <= 1 ? "" : split.get(1);
+      ports.add(
+          PortsWithProtocol.forSingle(port, "udp".equals(protocol) ? Protocol.UDP : Protocol.TCP));
     }
     return ports.build();
   }
