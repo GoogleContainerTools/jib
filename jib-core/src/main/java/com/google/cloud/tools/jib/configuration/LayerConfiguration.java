@@ -17,7 +17,10 @@
 package com.google.cloud.tools.jib.configuration;
 
 import com.google.cloud.tools.jib.image.LayerEntry;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import java.nio.file.Path;
+import java.util.List;
 
 /** Configures how to build a layer in the container image. */
 public class LayerConfiguration {
@@ -32,11 +35,18 @@ public class LayerConfiguration {
     /**
      * Adds an entry to the layer.
      *
-     * @param layerEntry the entry
+     * <p>The source files are specified as a list instead of a set to define the order in which
+     * they are added.
+     *
+     * @param sourceFiles the source files to build from. Source files that are directories will
+     *     have all subfiles in the directory added (but not the directory itself)
+     * @param destinationOnImage Unix-style path to add the source files to in the container image
+     *     filesystem
      * @return this
      */
-    public Builder addLayerEntry(LayerEntry layerEntry) {
-      this.layerEntries.add(layerEntry);
+    public Builder addEntry(List<Path> sourceFiles, String destinationOnImage) {
+      Preconditions.checkArgument(!sourceFiles.contains(null));
+      this.layerEntries.add(new LayerEntry(ImmutableList.copyOf(sourceFiles), destinationOnImage));
       return this;
     }
 
