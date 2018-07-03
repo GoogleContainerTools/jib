@@ -36,7 +36,7 @@ The following changes will be made to the code:
    - `waitOnBuildTarballAndLoadDockerStep` to `waitOnBuildTarballStep`
 3. Add a boolean parameter `doDockerLoad` to `runBuildTarballStep` and `BuildTarballStep`'s
 constructor
-   - Alternatively, use in an action to more explicitly define the behavior
+   - Alternatively, parameterize an action to more explicitly define the behavior
 4. Check the value of `doDockerLoad` in `BuildTarballStep#afterPushBaseImageLayerFuturesFuture()`
    - If true, run the existing `new DockerClient().load(...)`
    - If false, write the tarball blob to a file at the output location
