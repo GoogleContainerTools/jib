@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.cache;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.ImageLayers;
+import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -74,16 +75,17 @@ public class CacheReader {
   /**
    * Finds the file that stores the content BLOB for an application layer.
    *
-   * @param sourceFiles the source files the layer must be built from.
+   * @param layerEntries the entries for the layer content
    * @return the newest cached layer file that matches the {@code layerType} and {@code
    *     sourceFiles}, or {@code null} if there is no match.
    * @throws CacheMetadataCorruptedException if getting the cache metadata fails.
    */
   @Nullable
-  public Path getLayerFile(ImmutableList<Path> sourceFiles) throws CacheMetadataCorruptedException {
+  public Path getLayerFile(ImmutableList<LayerEntry> layerEntries)
+      throws CacheMetadataCorruptedException {
     CacheMetadata cacheMetadata = cache.getMetadata();
     ImageLayers<CachedLayerWithMetadata> cachedLayers =
-        cacheMetadata.filterLayers().bySourceFiles(sourceFiles).filter();
+        cacheMetadata.filterLayers().byLayerEntries(layerEntries).filter();
 
     // Finds the newest cached layer for the layer type.
     FileTime newestLastModifiedTime = FileTime.from(Instant.MIN);
@@ -111,27 +113,29 @@ public class CacheReader {
    * will not have been modified since creation of any up-to-date layer (ie. all up-to-date layers
    * should have the same file contents).
    *
-   * @param sourceFiles the layer's source files.
+   * @param layerEntries the layer's content entries
    * @return an up-to-date layer containing the source files.
    * @throws IOException if reading the source files fails.
    * @throws CacheMetadataCorruptedException if reading the cache metadata fails.
    */
   @Nullable
-  public CachedLayerWithMetadata getUpToDateLayerBySourceFiles(ImmutableList<Path> sourceFiles)
-      throws IOException, CacheMetadataCorruptedException {
+  public CachedLayerWithMetadata getUpToDateLayerByLayerEntries(
+      ImmutableList<LayerEntry> layerEntries) throws IOException, CacheMetadataCorruptedException {
     // Grabs all the layers that have matching source files.
     ImageLayers<CachedLayerWithMetadata> cachedLayersWithSourceFiles =
-        cache.getMetadata().filterLayers().bySourceFiles(sourceFiles).filter();
+        cache.getMetadata().filterLayers().byLayerEntries(layerEntries).filter();
     if (cachedLayersWithSourceFiles.isEmpty()) {
       return null;
     }
 
     // Determines the latest modification time for the source files.
     FileTime sourceFilesLastModifiedTime = FileTime.from(Instant.MIN);
-    for (Path path : sourceFiles) {
-      FileTime lastModifiedTime = getLastModifiedTime(path);
-      if (lastModifiedTime.compareTo(sourceFilesLastModifiedTime) > 0) {
-        sourceFilesLastModifiedTime = lastModifiedTime;
+    for (LayerEntry layerEntry : layerEntries) {
+      for (Path path : layerEntry.getSourceFiles()) {
+        FileTime lastModifiedTime = getLastModifiedTime(path);
+        if (lastModifiedTime.compareTo(sourceFilesLastModifiedTime) > 0) {
+          sourceFilesLastModifiedTime = lastModifiedTime;
+        }
       }
     }
 

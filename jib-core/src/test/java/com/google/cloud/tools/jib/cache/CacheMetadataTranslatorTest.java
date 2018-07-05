@@ -19,7 +19,9 @@ package com.google.cloud.tools.jib.cache;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.cache.json.CacheMetadataTemplate;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import com.google.common.collect.ImmutableList;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -104,7 +106,9 @@ public class CacheMetadataTranslatorTest {
     Assert.assertEquals(classesLayerBlobDescriptor, classesLayer.getBlobDescriptor());
     Assert.assertEquals(classesLayerDiffId, classesLayer.getDiffId());
     Assert.assertNotNull(classesLayer.getMetadata());
-    Assert.assertEquals(classesLayerSourceFiles, classesLayer.getMetadata().getSourceFiles());
+    Assert.assertEquals(
+        classesLayerSourceFiles,
+        classesLayer.getMetadata().getEntries().get(0).getSourceFilesStrings());
     Assert.assertEquals(
         classesLayerLastModifiedTime, classesLayer.getMetadata().getLastModifiedTime());
   }
@@ -121,7 +125,15 @@ public class CacheMetadataTranslatorTest {
     CachedLayer classesCachedLayer =
         new CachedLayer(mockPath, classesLayerBlobDescriptor, classesLayerDiffId);
     LayerMetadata classesLayerMetadata =
-        new LayerMetadata(classesLayerSourceFiles, classesLayerLastModifiedTime);
+        LayerMetadata.from(
+            ImmutableList.of(
+                new LayerEntry(
+                    classesLayerSourceFiles
+                        .stream()
+                        .map(Paths::get)
+                        .collect(ImmutableList.toImmutableList()),
+                    "/app/classes")),
+            classesLayerLastModifiedTime);
     CachedLayerWithMetadata classesLayer =
         new CachedLayerWithMetadata(classesCachedLayer, classesLayerMetadata);
 
