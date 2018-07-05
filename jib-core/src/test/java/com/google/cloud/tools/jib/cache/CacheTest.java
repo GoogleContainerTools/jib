@@ -59,7 +59,7 @@ public class CacheTest {
     Path cacheDirectory = temporaryCacheDirectory.newFolder().toPath();
 
     Path resourceMetadataJsonPath =
-        Paths.get(getClass().getClassLoader().getResource("json/metadata.json").toURI());
+        Paths.get(getClass().getClassLoader().getResource("json/metadata-v2.json").toURI());
     Path testMetadataJsonPath = cacheDirectory.resolve(CacheFiles.METADATA_FILENAME);
     Files.copy(resourceMetadataJsonPath, testMetadataJsonPath);
 

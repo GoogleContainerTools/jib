@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.json.JsonTemplate;
 import java.nio.file.attribute.FileTime;
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Inner JSON template for extra properties for an application layer, as part of {@link
@@ -31,15 +32,17 @@ public class CacheMetadataLayerPropertiesObjectTemplate implements JsonTemplate 
   public static class LayerEntryTemplate implements JsonTemplate {
 
     /** The paths to the source files that the layer was constructed from. */
-    private List<String> sourceFiles;
+    @Nullable private List<String> sourceFiles;
 
     /** The intended path to extract the source files to in the container. */
-    private String extractionPath;
+    @Nullable private String extractionPath;
 
+    @Nullable
     public List<String> getSourceFiles() {
       return sourceFiles;
     }
 
+    @Nullable
     public String getExtractionPath() {
       return extractionPath;
     }
@@ -48,6 +51,8 @@ public class CacheMetadataLayerPropertiesObjectTemplate implements JsonTemplate 
       this.sourceFiles = sourceFiles;
       this.extractionPath = extractionPath;
     }
+
+    public LayerEntryTemplate() {}
   }
 
   /** The content entries for the layer. */

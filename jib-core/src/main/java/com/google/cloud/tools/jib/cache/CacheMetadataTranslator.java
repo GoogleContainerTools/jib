@@ -32,13 +32,14 @@ import java.util.stream.Collectors;
 public class CacheMetadataTranslator {
 
   /** Translates {@link CacheMetadataTemplate} to {@link CacheMetadata}. */
-  static CacheMetadata fromTemplate(CacheMetadataTemplate template, Path cacheDirectory) {
+  static CacheMetadata fromTemplate(CacheMetadataTemplate template, Path cacheDirectory)
+      throws CacheMetadataCorruptedException {
     CacheMetadata.Builder cacheMetadataBuilder = CacheMetadata.builder();
 
     // Converts each layer object in the template to a cache metadata layer.
     for (CacheMetadataLayerObjectTemplate layerObjectTemplate : template.getLayers()) {
       if (layerObjectTemplate.getDigest() == null || layerObjectTemplate.getDiffId() == null) {
-        throw new IllegalStateException(
+        throw new CacheMetadataCorruptedException(
             "Cannot translate cache metadata layer without a digest or diffId");
       }
 
@@ -57,6 +58,11 @@ public class CacheMetadataTranslator {
             ImmutableList.builderWithExpectedSize(
                 propertiesObjectTemplate.getLayerEntries().size());
         for (LayerEntryTemplate layerEntryTemplate : propertiesObjectTemplate.getLayerEntries()) {
+          if (layerEntryTemplate.getSourceFiles() == null
+              || layerEntryTemplate.getExtractionPath() == null) {
+            throw new CacheMetadataCorruptedException(
+                "Cannot translate cache metadata layer entry without source files or extraction path");
+          }
           layerEntries.add(
               new LayerEntry(
                   layerEntryTemplate

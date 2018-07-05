@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.cache;
 
 import com.google.cloud.tools.jib.image.LayerEntry;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
@@ -32,8 +33,8 @@ class LayerMetadata {
   /** Entry into the layer metadata. */
   static class LayerMetadataEntry {
 
-    private final List<String> sourceFilesStrings;
-    private final String extractionPath;
+    private List<String> sourceFilesStrings;
+    private String extractionPath;
 
     List<String> getSourceFilesStrings() {
       return sourceFilesStrings;
@@ -43,7 +44,16 @@ class LayerMetadata {
       return extractionPath;
     }
 
-    private LayerMetadataEntry(List<String> sourceFilesStrings, String extractionPath) {
+    //    void setSourceFilesStrings(List<String> sourceFilesStrings) {
+    //      this.sourceFilesStrings = sourceFilesStrings;
+    //    }
+    //
+    //    void setExtractionPath(String extractionPath) {
+    //      this.extractionPath = extractionPath;
+    //    }
+
+    @VisibleForTesting
+    LayerMetadataEntry(List<String> sourceFilesStrings, String extractionPath) {
       this.sourceFilesStrings = sourceFilesStrings;
       this.extractionPath = extractionPath;
     }
@@ -82,5 +92,10 @@ class LayerMetadata {
 
   public FileTime getLastModifiedTime() {
     return lastModifiedTime;
+  }
+
+  @VisibleForTesting
+  void setEntries(ImmutableList<LayerMetadataEntry> entries) {
+    this.entries = entries;
   }
 }

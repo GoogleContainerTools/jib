@@ -21,8 +21,10 @@ import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.image.ReproducibleLayerBuilder;
 import com.google.cloud.tools.jib.image.UnwrittenLayer;
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharStreams;
 import com.google.common.io.CountingOutputStream;
 import com.google.common.io.Resources;
@@ -36,7 +38,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
-import java.util.List;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import org.junit.Assert;
@@ -86,11 +87,12 @@ public class CacheWriterTest {
 
     UnwrittenLayer unwrittenLayer = new UnwrittenLayer(Blobs.from(resourceBlob));
 
-    List<Path> fakeSourceFiles = Collections.singletonList(Paths.get("some", "source", "file"));
+    ImmutableList<Path> fakeSourceFiles = ImmutableList.of(Paths.get("some", "source", "file"));
     ReproducibleLayerBuilder mockReproducibleLayerBuilder =
         Mockito.mock(ReproducibleLayerBuilder.class);
     Mockito.when(mockReproducibleLayerBuilder.build()).thenReturn(unwrittenLayer);
-    Mockito.when(mockReproducibleLayerBuilder.getSourceFiles()).thenReturn(fakeSourceFiles);
+    Mockito.when(mockReproducibleLayerBuilder.getLayerEntries())
+        .thenReturn(ImmutableList.of(new LayerEntry(fakeSourceFiles, "extractionPath")));
 
     CachedLayerWithMetadata cachedLayerWithMetadata =
         cacheWriter.writeLayer(mockReproducibleLayerBuilder);
@@ -101,7 +103,9 @@ public class CacheWriterTest {
     Assert.assertNotNull(layerInMetadata.getMetadata());
     Assert.assertEquals(
         Collections.singletonList(Paths.get("some", "source", "file").toString()),
-        layerInMetadata.getMetadata().getSourceFiles());
+        layerInMetadata.getMetadata().getEntries().get(0).getSourceFilesStrings());
+    Assert.assertEquals(
+        "extractionPath", layerInMetadata.getMetadata().getEntries().get(0).getExtractionPath());
 
     verifyCachedLayerIsExpected(expectedLayer, cachedLayerWithMetadata);
   }
