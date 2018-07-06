@@ -19,8 +19,8 @@ package com.google.cloud.tools.jib.docker;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.tools.jib.builder.EntrypointBuilder;
-import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.filesystem.FileOperations;
+import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.io.MoreFiles;
@@ -46,7 +46,9 @@ import javax.annotation.Nullable;
  */
 public class DockerContextGenerator {
 
-  private final SourceFilesConfiguration sourceFilesConfiguration;
+  private final LayerEntry dependenciesLayerEntry;
+  private final LayerEntry resourcesLayerEntry;
+  private final LayerEntry classesLayerEntry;
 
   @Nullable private String baseImage;
   private List<String> jvmFlags = Collections.emptyList();
@@ -54,8 +56,13 @@ public class DockerContextGenerator {
   private List<String> javaArguments = Collections.emptyList();
   private List<String> exposedPorts = Collections.emptyList();
 
-  public DockerContextGenerator(SourceFilesConfiguration sourceFilesConfiguration) {
-    this.sourceFilesConfiguration = sourceFilesConfiguration;
+  public DockerContextGenerator(
+      LayerEntry dependenciesLayerEntry,
+      LayerEntry resourcesLayerEntry,
+      LayerEntry classesLayerEntry) {
+    this.dependenciesLayerEntry = dependenciesLayerEntry;
+    this.resourcesLayerEntry = resourcesLayerEntry;
+    this.classesLayerEntry = classesLayerEntry;
   }
 
   /**
@@ -143,9 +150,9 @@ public class DockerContextGenerator {
     Files.createDirectory(classesDir);
 
     // Copies dependencies.
-    FileOperations.copy(sourceFilesConfiguration.getDependenciesFiles(), dependenciesDir);
-    FileOperations.copy(sourceFilesConfiguration.getResourcesFiles(), resourcesDIr);
-    FileOperations.copy(sourceFilesConfiguration.getClassesFiles(), classesDir);
+    FileOperations.copy(dependenciesLayerEntry.getSourceFiles(), dependenciesDir);
+    FileOperations.copy(resourcesLayerEntry.getSourceFiles(), resourcesDIr);
+    FileOperations.copy(classesLayerEntry.getSourceFiles(), classesDir);
 
     // Creates the Dockerfile.
     Files.write(
@@ -178,11 +185,11 @@ public class DockerContextGenerator {
         .append("FROM ")
         .append(Preconditions.checkNotNull(baseImage))
         .append("\n\nCOPY libs ")
-        .append(sourceFilesConfiguration.getDependenciesPathOnImage())
+        .append(dependenciesLayerEntry.getExtractionPath())
         .append("\nCOPY resources ")
-        .append(sourceFilesConfiguration.getResourcesPathOnImage())
+        .append(resourcesLayerEntry.getExtractionPath())
         .append("\nCOPY classes ")
-        .append(sourceFilesConfiguration.getClassesPathOnImage())
+        .append(classesLayerEntry.getExtractionPath())
         .append("\n");
     for (String port : exposedPorts) {
       dockerfile.append("\nEXPOSE ").append(port);
@@ -191,7 +198,12 @@ public class DockerContextGenerator {
         .append("\nENTRYPOINT ")
         .append(
             objectMapper.writeValueAsString(
-                EntrypointBuilder.makeEntrypoint(sourceFilesConfiguration, jvmFlags, mainClass)))
+                EntrypointBuilder.makeEntrypoint(
+                    dependenciesLayerEntry.getExtractionPath(),
+                    resourcesLayerEntry.getExtractionPath(),
+                    classesLayerEntry.getExtractionPath(),
+                    jvmFlags,
+                    mainClass)))
         .append("\nCMD ")
         .append(objectMapper.writeValueAsString(javaArguments));
     return dockerfile.toString();

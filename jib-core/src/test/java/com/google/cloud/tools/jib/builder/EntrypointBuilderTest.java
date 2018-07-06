@@ -20,7 +20,6 @@ import java.util.Arrays;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 /** Tests for {@link EntrypointBuilder}. */
 public class EntrypointBuilderTest {
@@ -33,16 +32,6 @@ public class EntrypointBuilderTest {
     List<String> expectedJvmFlags = Arrays.asList("-flag", "anotherFlag");
     String expectedMainClass = "SomeMainClass";
 
-    SourceFilesConfiguration mockSourceFilesConfiguration =
-        Mockito.mock(SourceFilesConfiguration.class);
-
-    Mockito.when(mockSourceFilesConfiguration.getDependenciesPathOnImage())
-        .thenReturn(expectedDependenciesPath);
-    Mockito.when(mockSourceFilesConfiguration.getResourcesPathOnImage())
-        .thenReturn(expectedResourcesPath);
-    Mockito.when(mockSourceFilesConfiguration.getClassesPathOnImage())
-        .thenReturn(expectedClassesPath);
-
     Assert.assertEquals(
         Arrays.asList(
             "java",
@@ -52,6 +41,10 @@ public class EntrypointBuilderTest {
             "/app/libs/*:/app/resources/:/app/classes/",
             "SomeMainClass"),
         EntrypointBuilder.makeEntrypoint(
-            mockSourceFilesConfiguration, expectedJvmFlags, expectedMainClass));
+            expectedDependenciesPath,
+            expectedResourcesPath,
+            expectedClassesPath,
+            expectedJvmFlags,
+            expectedMainClass));
   }
 }

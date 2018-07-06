@@ -44,16 +44,14 @@ public class BuildStepsRunner {
    * Creates a runner to build an image. Creates a directory for the cache, if needed.
    *
    * @param buildConfiguration the configuration parameters for the build
-   * @param sourceFilesConfiguration the source/destination file configuration for the image
    * @return a {@link BuildStepsRunner} for building to a registry
    * @throws CacheDirectoryCreationException if the {@code cacheDirectory} could not be created
    */
-  public static BuildStepsRunner forBuildImage(
-      BuildConfiguration buildConfiguration, SourceFilesConfiguration sourceFilesConfiguration)
+  public static BuildStepsRunner forBuildImage(BuildConfiguration buildConfiguration)
       throws CacheDirectoryCreationException {
     return new BuildStepsRunner(
         BuildSteps.forBuildToDockerRegistry(
-            buildConfiguration, sourceFilesConfiguration, getCacheInitializer(buildConfiguration)));
+            buildConfiguration, getCacheInitializer(buildConfiguration)));
   }
 
   /**
@@ -69,7 +67,7 @@ public class BuildStepsRunner {
       throws CacheDirectoryCreationException {
     return new BuildStepsRunner(
         BuildSteps.forBuildToDockerDaemon(
-            buildConfiguration, sourceFilesConfiguration, getCacheInitializer(buildConfiguration)));
+            buildConfiguration, getCacheInitializer(buildConfiguration)));
   }
 
   // TODO: Move this up to somewhere where defaults for cache location are provided and ownership is
@@ -167,21 +165,34 @@ public class BuildStepsRunner {
       buildLogger.info("Containerizing application with the following files:");
 
       buildLogger.info("\tClasses:");
+      // TODO: Don't use the indexes.
       buildSteps
-          .getSourceFilesConfiguration()
-          .getClassesFiles()
+          .getBuildConfiguration()
+          .getLayerConfigurations()
+          .get(2)
+          .getLayerEntries()
+          .get(0)
+          .getSourceFiles()
           .forEach(classesFile -> buildLogger.info("\t\t" + classesFile));
 
       buildLogger.info("\tResources:");
       buildSteps
-          .getSourceFilesConfiguration()
-          .getResourcesFiles()
+          .getBuildConfiguration()
+          .getLayerConfigurations()
+          .get(1)
+          .getLayerEntries()
+          .get(0)
+          .getSourceFiles()
           .forEach(resourceFile -> buildLogger.info("\t\t" + resourceFile));
 
       buildLogger.info("\tDependencies:");
       buildSteps
-          .getSourceFilesConfiguration()
-          .getDependenciesFiles()
+          .getBuildConfiguration()
+          .getLayerConfigurations()
+          .get(0)
+          .getLayerEntries()
+          .get(0)
+          .getSourceFiles()
           .forEach(dependencyFile -> buildLogger.info("\t\t" + dependencyFile));
 
       buildSteps.run();

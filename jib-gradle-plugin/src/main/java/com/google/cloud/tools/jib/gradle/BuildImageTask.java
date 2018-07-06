@@ -114,7 +114,8 @@ public class BuildImageTask extends DefaultTask {
             .setExposedPorts(
                 ExposedPortsParser.parse(jibExtension.getExposedPorts(), gradleBuildLogger))
             .setTargetFormat(jibExtension.getFormat())
-            .setAllowHttp(jibExtension.getAllowInsecureRegistries());
+            .setAllowHttp(jibExtension.getAllowInsecureRegistries())
+            .setLayerConfigurations(gradleProjectProperties.getLayerConfigurations());
     CacheConfiguration applicationLayersCacheConfiguration =
         CacheConfiguration.forPath(gradleProjectProperties.getCacheDirectory());
     buildConfigurationBuilder.setApplicationLayersCacheConfiguration(
@@ -131,8 +132,7 @@ public class BuildImageTask extends DefaultTask {
     RegistryClient.setUserAgentSuffix(USER_AGENT_SUFFIX);
 
     try {
-      BuildStepsRunner.forBuildImage(
-              buildConfiguration, gradleProjectProperties.getSourceFilesConfiguration())
+      BuildStepsRunner.forBuildImage(buildConfiguration)
           .build(HELPFUL_SUGGESTIONS);
 
     } catch (CacheDirectoryCreationException | BuildStepsExecutionException ex) {

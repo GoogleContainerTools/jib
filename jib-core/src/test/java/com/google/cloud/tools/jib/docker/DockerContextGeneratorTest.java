@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.docker;
 
-import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
+import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 import java.io.IOException;
@@ -31,13 +31,10 @@ import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link DockerContextGenerator}. */
@@ -60,21 +57,9 @@ public class DockerContextGeneratorTest {
 
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  @Mock private SourceFilesConfiguration mockSourceFilesConfiguration;
-
-  @Before
-  public void setUpMocks() {
-    String expectedDependenciesPath = "/app/libs/";
-    String expectedResourcesPath = "/app/resources/";
-    String expectedClassesPath = "/app/classes/";
-
-    Mockito.when(mockSourceFilesConfiguration.getDependenciesPathOnImage())
-        .thenReturn(expectedDependenciesPath);
-    Mockito.when(mockSourceFilesConfiguration.getResourcesPathOnImage())
-        .thenReturn(expectedResourcesPath);
-    Mockito.when(mockSourceFilesConfiguration.getClassesPathOnImage())
-        .thenReturn(expectedClassesPath);
-  }
+  private String expectedDependenciesPath = "/app/libs/";
+  private String expectedResourcesPath = "/app/resources/";
+  private String expectedClassesPath = "/app/classes/";
 
   @Test
   public void testGenerate() throws IOException, URISyntaxException {
@@ -87,11 +72,6 @@ public class DockerContextGeneratorTest {
     ImmutableList<Path> expectedResourcesFiles =
         new DirectoryWalker(testResources).filterRoot().walk();
     ImmutableList<Path> expectedClassesFiles = new DirectoryWalker(testClasses).filterRoot().walk();
-    Mockito.when(mockSourceFilesConfiguration.getDependenciesFiles())
-        .thenReturn(expectedDependenciesFiles);
-    Mockito.when(mockSourceFilesConfiguration.getResourcesFiles())
-        .thenReturn(expectedResourcesFiles);
-    Mockito.when(mockSourceFilesConfiguration.getClassesFiles()).thenReturn(expectedClassesFiles);
 
     Path targetDirectory = temporaryFolder.newFolder().toPath();
 
@@ -101,7 +81,10 @@ public class DockerContextGeneratorTest {
      */
     Files.delete(targetDirectory);
 
-    new DockerContextGenerator(mockSourceFilesConfiguration)
+    new DockerContextGenerator(
+            new LayerEntry(expectedDependenciesFiles, expectedDependenciesPath),
+            new LayerEntry(expectedResourcesFiles, expectedResourcesPath),
+            new LayerEntry(expectedClassesFiles, expectedClassesPath))
         .setBaseImage("somebaseimage")
         .generate(targetDirectory);
 
@@ -120,7 +103,10 @@ public class DockerContextGeneratorTest {
     List<String> exposedPorts = Arrays.asList("1000/tcp", "2000-2010/udp");
 
     String dockerfile =
-        new DockerContextGenerator(mockSourceFilesConfiguration)
+        new DockerContextGenerator(
+                new LayerEntry(ImmutableList.of(), expectedDependenciesPath),
+                new LayerEntry(ImmutableList.of(), expectedResourcesPath),
+                new LayerEntry(ImmutableList.of(), expectedClassesPath))
             .setBaseImage(expectedBaseImage)
             .setJvmFlags(expectedJvmFlags)
             .setMainClass(expectedMainClass)

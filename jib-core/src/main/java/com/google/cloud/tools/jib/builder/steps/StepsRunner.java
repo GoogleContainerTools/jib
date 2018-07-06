@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.async.AsyncSteps;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
-import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.cache.CachedLayerWithMetadata;
@@ -46,7 +45,6 @@ public class StepsRunner {
   private final ListeningExecutorService listeningExecutorService =
       MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
   private final BuildConfiguration buildConfiguration;
-  private final SourceFilesConfiguration sourceFilesConfiguration;
   private final Cache baseLayersCache;
   private final Cache applicationLayersCache;
 
@@ -66,12 +64,8 @@ public class StepsRunner {
   @Nullable private BuildTarballAndLoadDockerStep buildTarballAndLoadDockerStep;
 
   public StepsRunner(
-      BuildConfiguration buildConfiguration,
-      SourceFilesConfiguration sourceFilesConfiguration,
-      Cache baseLayersCache,
-      Cache applicationLayersCache) {
+      BuildConfiguration buildConfiguration, Cache baseLayersCache, Cache applicationLayersCache) {
     this.buildConfiguration = buildConfiguration;
-    this.sourceFilesConfiguration = sourceFilesConfiguration;
     this.baseLayersCache = baseLayersCache;
     this.applicationLayersCache = applicationLayersCache;
   }
@@ -120,10 +114,7 @@ public class StepsRunner {
   public StepsRunner runBuildAndCacheApplicationLayerSteps() {
     buildAndCacheApplicationLayerSteps =
         BuildAndCacheApplicationLayerStep.makeList(
-            listeningExecutorService,
-            buildConfiguration,
-            sourceFilesConfiguration,
-            applicationLayersCache);
+            listeningExecutorService, buildConfiguration, applicationLayersCache);
     return this;
   }
 

@@ -17,7 +17,7 @@
 package com.google.cloud.tools.jib.frontend;
 
 import com.google.cloud.tools.jib.builder.BuildLogger;
-import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
+import com.google.common.collect.ImmutableList;
 import java.nio.file.Path;
 import javax.annotation.Nullable;
 
@@ -31,7 +31,7 @@ public interface ProjectProperties {
 
   String getPluginName();
 
-  SourceFilesConfiguration getSourceFilesConfiguration();
+  ImmutableList<Path> getClassesLayerSourceFiles();
 
   Path getCacheDirectory();
 

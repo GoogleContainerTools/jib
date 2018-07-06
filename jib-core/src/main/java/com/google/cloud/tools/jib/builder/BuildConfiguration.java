@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
+import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
@@ -52,6 +53,7 @@ public class BuildConfiguration {
     @Nullable private CacheConfiguration applicationLayersCacheConfiguration;
     @Nullable private CacheConfiguration baseImageLayersCacheConfiguration;
     private boolean allowHttp = false;
+    private ImmutableList<LayerConfiguration> layerConfigurations = ImmutableList.of();
 
     private BuildLogger buildLogger;
 
@@ -169,6 +171,17 @@ public class BuildConfiguration {
       return this;
     }
 
+    /**
+     * Sets the layers to build.
+     *
+     * @param layerConfigurations the configurations for the layers
+     * @return this
+     */
+    public Builder setLayerConfigurations(List<LayerConfiguration> layerConfigurations) {
+      this.layerConfigurations = ImmutableList.copyOf(layerConfigurations);
+      return this;
+    }
+
     /** @return the corresponding build configuration */
     public BuildConfiguration build() {
       // Validates the parameters.
@@ -210,7 +223,8 @@ public class BuildConfiguration {
               targetFormat,
               applicationLayersCacheConfiguration,
               baseImageLayersCacheConfiguration,
-              allowHttp);
+              allowHttp,
+              layerConfigurations);
 
         case 1:
           throw new IllegalStateException(errorMessages.get(0));
@@ -269,6 +283,7 @@ public class BuildConfiguration {
   @Nullable private final CacheConfiguration applicationLayersCacheConfiguration;
   @Nullable private final CacheConfiguration baseImageLayersCacheConfiguration;
   private final boolean allowHttp;
+  private final ImmutableList<LayerConfiguration> layerConfigurations;
 
   /** Instantiate with {@link Builder#build}. */
   private BuildConfiguration(
@@ -287,7 +302,8 @@ public class BuildConfiguration {
       Class<? extends BuildableManifestTemplate> targetFormat,
       @Nullable CacheConfiguration applicationLayersCacheConfiguration,
       @Nullable CacheConfiguration baseImageLayersCacheConfiguration,
-      boolean allowHttp) {
+      boolean allowHttp,
+      ImmutableList<LayerConfiguration> layerConfigurations) {
     this.buildLogger = buildLogger;
     this.baseImageReference = baseImageReference;
     this.baseImageCredentialHelperName = baseImageCredentialHelperName;
@@ -304,6 +320,7 @@ public class BuildConfiguration {
     this.applicationLayersCacheConfiguration = applicationLayersCacheConfiguration;
     this.baseImageLayersCacheConfiguration = baseImageLayersCacheConfiguration;
     this.allowHttp = allowHttp;
+    this.layerConfigurations = layerConfigurations;
   }
 
   public BuildLogger getBuildLogger() {
@@ -413,5 +430,14 @@ public class BuildConfiguration {
    */
   public boolean getAllowHttp() {
     return allowHttp;
+  }
+
+  /**
+   * Gets the configurations for building the container.
+   *
+   * @return the list of layer configurations
+   */
+  public ImmutableList<LayerConfiguration> getLayerConfigurations() {
+    return layerConfigurations;
   }
 }

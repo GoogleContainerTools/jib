@@ -19,12 +19,12 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
-import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.CacheReader;
 import com.google.cloud.tools.jib.cache.CacheWriter;
 import com.google.cloud.tools.jib.cache.CachedLayerWithMetadata;
+import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.image.ReproducibleLayerBuilder;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -46,31 +46,22 @@ class BuildAndCacheApplicationLayerStep
   static ImmutableList<BuildAndCacheApplicationLayerStep> makeList(
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
-      SourceFilesConfiguration sourceFilesConfiguration,
       Cache cache) {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
-      return ImmutableList.of(
-          new BuildAndCacheApplicationLayerStep(
-              "dependencies",
-              listeningExecutorService,
-              buildConfiguration,
-              sourceFilesConfiguration.getDependenciesFiles(),
-              sourceFilesConfiguration.getDependenciesPathOnImage(),
-              cache),
-          new BuildAndCacheApplicationLayerStep(
-              "resources",
-              listeningExecutorService,
-              buildConfiguration,
-              sourceFilesConfiguration.getResourcesFiles(),
-              sourceFilesConfiguration.getResourcesPathOnImage(),
-              cache),
-          new BuildAndCacheApplicationLayerStep(
-              "classes",
-              listeningExecutorService,
-              buildConfiguration,
-              sourceFilesConfiguration.getClassesFiles(),
-              sourceFilesConfiguration.getClassesPathOnImage(),
-              cache));
+      ImmutableList.Builder<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps =
+          ImmutableList.builderWithExpectedSize(buildConfiguration.getLayerConfigurations().size());
+      for (LayerConfiguration layerConfiguration : buildConfiguration.getLayerConfigurations()) {
+        buildAndCacheApplicationLayerSteps.add(
+            new BuildAndCacheApplicationLayerStep(
+                layerConfiguration.getLabel(),
+                listeningExecutorService,
+                buildConfiguration,
+                // TODO: Don't use 0 - use all the layer entries.
+                layerConfiguration.getLayerEntries().get(0).getSourceFiles(),
+                layerConfiguration.getLayerEntries().get(0).getExtractionPath(),
+                cache));
+      }
+      return buildAndCacheApplicationLayerSteps.build();
     }
   }
 

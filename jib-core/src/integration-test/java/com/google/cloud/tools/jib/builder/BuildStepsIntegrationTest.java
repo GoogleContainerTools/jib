@@ -21,24 +21,38 @@ import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.Caches;
+import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
+import com.google.common.collect.ImmutableList;
+import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Stream;
 import org.hamcrest.CoreMatchers;
-import org.junit.Assert;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.TemporaryFolder;
 
 /** Integration tests for {@link BuildSteps}. */
 public class BuildStepsIntegrationTest {
+
+  private static final String EXTRACTION_PATH = "/some/extraction/path/";
+
+  /** Lists the files in the {@code resourcePath} resources directory. */
+  private static ImmutableList<Path> getFilesList(String resourcePath)
+      throws URISyntaxException, IOException {
+    try (Stream<Path> fileStream =
+        Files.list(Paths.get(Resources.getResource(resourcePath).toURI()))) {
+      return fileStream.collect(ImmutableList.toImmutableList());
+    }
+  }
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
 
@@ -46,11 +60,27 @@ public class BuildStepsIntegrationTest {
 
   @Rule public TemporaryFolder temporaryCacheDirectory = new TemporaryFolder();
 
+  private ImmutableList<LayerConfiguration> fakeLayerConfigurations;
+
+  @Before
+  public void setUp() throws IOException, URISyntaxException {
+    fakeLayerConfigurations =
+        ImmutableList.of(
+            LayerConfiguration.builder()
+                .addEntry(getFilesList("application/dependencies"), EXTRACTION_PATH + "libs/")
+                .build(),
+            LayerConfiguration.builder()
+                .addEntry(getFilesList("application/resources"), EXTRACTION_PATH + "resources/")
+                .build(),
+            LayerConfiguration.builder()
+                .addEntry(getFilesList("application/classes"), EXTRACTION_PATH + "classes/")
+                .build());
+  }
+
   @Test
   public void testSteps_forBuildToDockerRegistry()
-      throws IOException, URISyntaxException, InterruptedException, CacheMetadataCorruptedException,
-          ExecutionException, CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
-    SourceFilesConfiguration sourceFilesConfiguration = new TestSourceFilesConfiguration();
+      throws IOException, InterruptedException, CacheMetadataCorruptedException, ExecutionException,
+          CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder(logger)
             .setBaseImage(ImageReference.of("gcr.io", "distroless/java", "latest"))
@@ -61,13 +91,13 @@ public class BuildStepsIntegrationTest {
                 ExposedPortsParser.parse(
                     Arrays.asList("1000", "2000-2002/tcp", "3000/udp"), logger))
             .setAllowHttp(true)
+            .setLayerConfigurations(fakeLayerConfigurations)
             .build();
 
     Path cacheDirectory = temporaryCacheDirectory.newFolder().toPath();
     BuildSteps buildImageSteps =
         BuildSteps.forBuildToDockerRegistry(
             buildConfiguration,
-            sourceFilesConfiguration,
             new Caches.Initializer(cacheDirectory, false, cacheDirectory, false));
 
     long lastTime = System.nanoTime();
@@ -94,9 +124,8 @@ public class BuildStepsIntegrationTest {
 
   @Test
   public void testSteps_forBuildToDockerDaemon()
-      throws IOException, URISyntaxException, InterruptedException, CacheMetadataCorruptedException,
-          ExecutionException, CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
-    SourceFilesConfiguration sourceFilesConfiguration = new TestSourceFilesConfiguration();
+      throws IOException, InterruptedException, CacheMetadataCorruptedException, ExecutionException,
+          CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder(logger)
             .setBaseImage(ImageReference.of("gcr.io", "distroless/java", "latest"))
@@ -112,7 +141,6 @@ public class BuildStepsIntegrationTest {
     BuildSteps buildDockerSteps =
         BuildSteps.forBuildToDockerDaemon(
             buildConfiguration,
-            sourceFilesConfiguration,
             new Caches.Initializer(cacheDirectory, false, cacheDirectory, false));
 
     buildDockerSteps.run();

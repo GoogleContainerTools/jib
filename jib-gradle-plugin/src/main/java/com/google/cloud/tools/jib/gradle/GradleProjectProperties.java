@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
+import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
 import com.google.cloud.tools.jib.frontend.MainClassFinder;
 import com.google.cloud.tools.jib.frontend.MainClassInferenceException;
@@ -28,6 +29,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
+
+import com.google.common.collect.ImmutableList;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -46,7 +49,7 @@ class GradleProjectProperties implements ProjectProperties {
       return new GradleProjectProperties(
           project,
           gradleBuildLogger,
-          GradleSourceFilesConfiguration.getForProject(project, gradleBuildLogger));
+          GradleLayerConfigurations.getForProject(project, gradleBuildLogger));
 
     } catch (IOException ex) {
       throw new GradleException("Obtaining project build output files failed", ex);
@@ -55,21 +58,21 @@ class GradleProjectProperties implements ProjectProperties {
 
   private final Project project;
   private final GradleBuildLogger gradleBuildLogger;
-  private final SourceFilesConfiguration sourceFilesConfiguration;
+  private final GradleLayerConfigurations gradleLayerConfigurations;
 
   @VisibleForTesting
   GradleProjectProperties(
       Project project,
       GradleBuildLogger gradleBuildLogger,
-      SourceFilesConfiguration sourceFilesConfiguration) {
+      GradleLayerConfigurations gradleLayerConfigurations) {
     this.project = project;
     this.gradleBuildLogger = gradleBuildLogger;
-    this.sourceFilesConfiguration = sourceFilesConfiguration;
+    this.gradleLayerConfigurations = gradleLayerConfigurations;
   }
 
   @Override
-  public SourceFilesConfiguration getSourceFilesConfiguration() {
-    return sourceFilesConfiguration;
+  public ImmutableList<Path> getClassesLayerSourceFiles() {
+    return gradleLayerConfigurations.getClassesLayerConfiguration().getLayerEntries().get(0).getSourceFiles();
   }
 
   @Override

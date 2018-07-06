@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Modifier;
@@ -74,9 +75,10 @@ public class MainClassFinder {
 
         try {
           // Adds each file in the classes output directory to the classes files list.
-          Set<Path> visitedRoots = new HashSet<>();
+          ImmutableList<Path> classesFiles = projectProperties.getClassesLayerSourceFiles();
           List<String> mainClasses = new ArrayList<>();
-          for (Path classPath : projectProperties.getSourceFilesConfiguration().getClassesFiles()) {
+          Set<Path> visitedRoots = new HashSet<>();
+          for (Path classPath : classesFiles) {
             Path root = classPath.getParent();
             if (visitedRoots.contains(root)) {
               continue;

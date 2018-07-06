@@ -27,18 +27,23 @@ public class EntrypointBuilder {
    *
    * <p>The entrypoint is {@code java [jvm flags] -cp [classpaths] [main class]}.
    *
-   * @param sourceFilesConfiguration configuration defining where files are copied onto the image
+   * @param dependenciesExtractionPath extraction path of dependencies
+   * @param resourcesExtractionPath extraction path of resources
+   * @param classesExtractionPath extraction path of classes
    * @param jvmFlags the JVM flags to start the container with
    * @param mainClass the name of the main class to run on startup
    * @return a list of the entrypoint tokens
    */
   public static ImmutableList<String> makeEntrypoint(
-      SourceFilesConfiguration sourceFilesConfiguration, List<String> jvmFlags, String mainClass) {
+      String dependenciesExtractionPath,
+      String resourcesExtractionPath,
+      String classesExtractionPath,
+      List<String> jvmFlags,
+      String mainClass) {
+    // TODO: Entrypoint should be built and added to BuildConfiguration rather than built here.
     ImmutableList<String> classPaths =
         ImmutableList.of(
-            sourceFilesConfiguration.getDependenciesPathOnImage() + "*",
-            sourceFilesConfiguration.getResourcesPathOnImage(),
-            sourceFilesConfiguration.getClassesPathOnImage());
+            dependenciesExtractionPath + "*", resourcesExtractionPath, classesExtractionPath);
 
     String classPathsString = String.join(":", classPaths);
 

@@ -17,12 +17,14 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
+import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.common.collect.ImmutableList;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 import org.gradle.api.Project;
@@ -30,27 +32,19 @@ import org.gradle.api.file.FileCollection;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.SourceSet;
 
-/** {@link SourceFilesConfiguration} implementation based on inputs from a {@link Project}. */
-class GradleSourceFilesConfiguration implements SourceFilesConfiguration {
+import javax.xml.transform.Source;
+
+/** Builds {@link LayerConfiguration}s based on inputs from a {@link Project}. */
+class GradleLayerConfigurations {
 
   /** Name of the `main` {@link SourceSet} to use as source files. */
   private static final String MAIN_SOURCE_SET_NAME = "main";
 
   /** Resolves the source files configuration for a Gradle {@link Project}. */
-  static GradleSourceFilesConfiguration getForProject(
+  static GradleLayerConfigurations getForProject(
       Project project, GradleBuildLogger gradleBuildLogger) throws IOException {
-    return new GradleSourceFilesConfiguration(project, gradleBuildLogger);
-  }
-
-  private final ImmutableList<Path> dependenciesFiles;
-  private final ImmutableList<Path> resourcesFiles;
-  private final ImmutableList<Path> classesFiles;
-
-  /** Instantiate with {@link #getForProject}. */
-  private GradleSourceFilesConfiguration(Project project, GradleBuildLogger gradleBuildLogger)
-      throws IOException {
     JavaPluginConvention javaPluginConvention =
-        project.getConvention().getPlugin(JavaPluginConvention.class);
+            project.getConvention().getPlugin(JavaPluginConvention.class);
 
     SourceSet mainSourceSet = javaPluginConvention.getSourceSets().getByName(MAIN_SOURCE_SET_NAME);
 
@@ -64,7 +58,7 @@ class GradleSourceFilesConfiguration implements SourceFilesConfiguration {
       if (Files.notExists(classesOutputDirectory.toPath())) {
         // Warns that output directory was not found.
         gradleBuildLogger.warn(
-            "Could not find build output directory '" + classesOutputDirectory + "'");
+                "Could not find build output directory '" + classesOutputDirectory + "'");
         continue;
       }
       try (Stream<Path> classFileStream = Files.list(classesOutputDirectory.toPath())) {
@@ -96,38 +90,27 @@ class GradleSourceFilesConfiguration implements SourceFilesConfiguration {
     }
 
     // Sorts all files by path for consistent ordering.
-    this.dependenciesFiles = ImmutableList.sortedCopyOf(dependenciesFiles);
-    this.resourcesFiles = ImmutableList.sortedCopyOf(resourcesFiles);
-    this.classesFiles = ImmutableList.sortedCopyOf(classesFiles);
+    Collections.sort(dependenciesFiles);
+    Collections.sort(resourcesFiles);
+    Collections.sort(classesFiles);
+
+    return new GradleLayerConfigurations(
+    LayerConfiguration.builder().addEntry(dependenciesFiles, SourceFilesConfiguration.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE).build(),
+    LayerConfiguration.builder().addEntry(resourcesFiles, SourceFilesConfiguration.DEFAULT_RESOURCES_PATH_ON_IMAGE).build(),
+    LayerConfiguration.builder().addEntry(classesFiles, SourceFilesConfiguration.DEFAULT_CLASSES_PATH_ON_IMAGE).build());
   }
 
-  @Override
-  public ImmutableList<Path> getDependenciesFiles() {
-    return dependenciesFiles;
+  private final LayerConfiguration dependenciesLayerConfiguration;
+  private final LayerConfiguration resourcesLayerConfiguration;
+  private final LayerConfiguration classesLayerConfiguration;
+
+  private GradleLayerConfigurations(LayerConfiguration dependenciesLayerConfiguration, LayerConfiguration resourcesLayerConfiguration, LayerConfiguration classesLayerConfiguration) {
+    this.dependenciesLayerConfiguration = dependenciesLayerConfiguration;
+    this.resourcesLayerConfiguration = resourcesLayerConfiguration;
+    this.classesLayerConfiguration = classesLayerConfiguration;
   }
 
-  @Override
-  public ImmutableList<Path> getResourcesFiles() {
-    return resourcesFiles;
-  }
-
-  @Override
-  public ImmutableList<Path> getClassesFiles() {
-    return classesFiles;
-  }
-
-  @Override
-  public String getDependenciesPathOnImage() {
-    return DEFAULT_DEPENDENCIES_PATH_ON_IMAGE;
-  }
-
-  @Override
-  public String getResourcesPathOnImage() {
-    return DEFAULT_RESOURCES_PATH_ON_IMAGE;
-  }
-
-  @Override
-  public String getClassesPathOnImage() {
-    return DEFAULT_CLASSES_PATH_ON_IMAGE;
+  LayerConfiguration getClassesLayerConfiguration() {
+    return classesLayerConfiguration;
   }
 }

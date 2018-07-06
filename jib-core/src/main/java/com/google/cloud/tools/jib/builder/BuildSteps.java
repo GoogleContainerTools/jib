@@ -55,18 +55,14 @@ public class BuildSteps {
    * All the steps to build an image to a Docker registry.
    *
    * @param buildConfiguration the configuration parameters for the build
-   * @param sourceFilesConfiguration the source/destination file configuration for the image
    * @param cachesInitializer the {@link Caches.Initializer} used to setup the cache
    * @return a new {@link BuildSteps} for building to a registry
    */
   public static BuildSteps forBuildToDockerRegistry(
-      BuildConfiguration buildConfiguration,
-      SourceFilesConfiguration sourceFilesConfiguration,
-      Caches.Initializer cachesInitializer) {
+      BuildConfiguration buildConfiguration, Caches.Initializer cachesInitializer) {
     return new BuildSteps(
         DESCRIPTION_FOR_DOCKER_REGISTRY,
         buildConfiguration,
-        sourceFilesConfiguration,
         cachesInitializer,
         String.format(
             STARTUP_MESSAGE_FORMAT_FOR_DOCKER_REGISTRY,
@@ -82,7 +78,7 @@ public class BuildSteps {
                 .runPullAndCacheBaseImageLayersStep()
                 .runPushBaseImageLayersStep()
                 .runBuildAndCacheApplicationLayerSteps()
-                .runBuildImageStep(getEntrypoint(buildConfiguration, sourceFilesConfiguration))
+                .runBuildImageStep(getEntrypoint(buildConfiguration))
                 .runPushContainerConfigurationStep()
                 .runPushApplicationLayersStep()
                 .runFinalizingPushStep()
@@ -94,18 +90,14 @@ public class BuildSteps {
    * All the steps to build to Docker daemon
    *
    * @param buildConfiguration the configuration parameters for the build
-   * @param sourceFilesConfiguration the source/destination file configuration for the image
    * @param cachesInitializer the {@link Caches.Initializer} used to setup the cache
    * @return a new {@link BuildSteps} for building to a Docker daemon
    */
   public static BuildSteps forBuildToDockerDaemon(
-      BuildConfiguration buildConfiguration,
-      SourceFilesConfiguration sourceFilesConfiguration,
-      Caches.Initializer cachesInitializer) {
+      BuildConfiguration buildConfiguration, Caches.Initializer cachesInitializer) {
     return new BuildSteps(
         DESCRIPTION_FOR_DOCKER_DAEMON,
         buildConfiguration,
-        sourceFilesConfiguration,
         cachesInitializer,
         String.format(
             STARTUP_MESSAGE_FORMAT_FOR_DOCKER_DAEMON, buildConfiguration.getTargetImageReference()),
@@ -116,24 +108,40 @@ public class BuildSteps {
                 .runPullBaseImageStep()
                 .runPullAndCacheBaseImageLayersStep()
                 .runBuildAndCacheApplicationLayerSteps()
-                .runBuildImageStep(getEntrypoint(buildConfiguration, sourceFilesConfiguration))
+                .runBuildImageStep(getEntrypoint(buildConfiguration))
                 .runFinalizingBuildStep()
                 .runBuildTarballAndLoadDockerStep()
                 .waitOnBuildTarballAndLoadDockerStep());
   }
 
   /** Creates the container entrypoint for a given configuration. */
-  private static ImmutableList<String> getEntrypoint(
-      BuildConfiguration buildConfiguration, SourceFilesConfiguration sourceFilesConfiguration) {
+  private static ImmutableList<String> getEntrypoint(BuildConfiguration buildConfiguration) {
+    // TODO: Don't use indexes.
     return EntrypointBuilder.makeEntrypoint(
-        sourceFilesConfiguration,
+        buildConfiguration
+            .getLayerConfigurations()
+            .get(0)
+            .getLayerEntries()
+            .get(0)
+            .getExtractionPath(),
+        buildConfiguration
+            .getLayerConfigurations()
+            .get(1)
+            .getLayerEntries()
+            .get(0)
+            .getExtractionPath(),
+        buildConfiguration
+            .getLayerConfigurations()
+            .get(2)
+            .getLayerEntries()
+            .get(0)
+            .getExtractionPath(),
         buildConfiguration.getJvmFlags(),
         buildConfiguration.getMainClass());
   }
 
   private final String description;
   private final BuildConfiguration buildConfiguration;
-  private final SourceFilesConfiguration sourceFilesConfiguration;
   private final Caches.Initializer cachesInitializer;
   private final String startupMessage;
   private final String successMessage;
@@ -148,14 +156,12 @@ public class BuildSteps {
   private BuildSteps(
       String description,
       BuildConfiguration buildConfiguration,
-      SourceFilesConfiguration sourceFilesConfiguration,
       Caches.Initializer cachesInitializer,
       String startupMessage,
       String successMessage,
       StepsRunnerConsumer stepsRunnerConsumer) {
     this.description = description;
     this.buildConfiguration = buildConfiguration;
-    this.sourceFilesConfiguration = sourceFilesConfiguration;
     this.cachesInitializer = cachesInitializer;
     this.startupMessage = startupMessage;
     this.successMessage = successMessage;
@@ -164,10 +170,6 @@ public class BuildSteps {
 
   public BuildConfiguration getBuildConfiguration() {
     return buildConfiguration;
-  }
-
-  public SourceFilesConfiguration getSourceFilesConfiguration() {
-    return sourceFilesConfiguration;
   }
 
   public String getStartupMessage() {
@@ -189,11 +191,7 @@ public class BuildSteps {
         Cache applicationLayersCache = caches.getApplicationCache();
 
         StepsRunner stepsRunner =
-            new StepsRunner(
-                buildConfiguration,
-                sourceFilesConfiguration,
-                baseImageLayersCache,
-                applicationLayersCache);
+            new StepsRunner(buildConfiguration, baseImageLayersCache, applicationLayersCache);
         stepsRunnerConsumer.accept(stepsRunner);
 
         // Writes the cached layers to the cache metadata.
@@ -206,8 +204,6 @@ public class BuildSteps {
     buildConfiguration.getBuildLogger().lifecycle("");
     buildConfiguration
         .getBuildLogger()
-        .lifecycle(
-            "Container entrypoint set to "
-                + getEntrypoint(buildConfiguration, sourceFilesConfiguration));
+        .lifecycle("Container entrypoint set to " + getEntrypoint(buildConfiguration));
   }
 }

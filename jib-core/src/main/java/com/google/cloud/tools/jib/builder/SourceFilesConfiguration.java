@@ -16,51 +16,14 @@
 
 package com.google.cloud.tools.jib.builder;
 
-import com.google.common.collect.ImmutableList;
-import java.nio.file.Path;
-
 /**
  * Immutable configuration that defines where the source files for each of the application layers
  * are.
  */
+// TODO: Move these constants to another place.
 public interface SourceFilesConfiguration {
 
   String DEFAULT_DEPENDENCIES_PATH_ON_IMAGE = "/app/libs/";
   String DEFAULT_RESOURCES_PATH_ON_IMAGE = "/app/resources/";
   String DEFAULT_CLASSES_PATH_ON_IMAGE = "/app/classes/";
-
-  /**
-   * @return the source files for the dependencies layer. These files should be in a deterministic
-   *     order.
-   */
-  ImmutableList<Path> getDependenciesFiles();
-
-  /**
-   * @return the source files for the resources layer. These files should be in a deterministic
-   *     order.
-   */
-  ImmutableList<Path> getResourcesFiles();
-
-  /**
-   * @return the source files for the classes layer. These files should be in a deterministic order.
-   */
-  ImmutableList<Path> getClassesFiles();
-
-  /**
-   * @return the Unix-style path where the dependencies source files are placed in the container
-   *     filesystem. Must end with slash.
-   */
-  String getDependenciesPathOnImage();
-
-  /**
-   * @return the Unix-style path where the resources source files are placed in the container
-   *     filesystem. Must end with slash.
-   */
-  String getResourcesPathOnImage();
-
-  /**
-   * @return the Unix-style path where the classes source files are placed in the container
-   *     filesystem. Must end with slash.
-   */
-  String getClassesPathOnImage();
 }
