@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.configuration;
 
 import com.google.common.base.Preconditions;
+import java.util.Objects;
 
 /** Holds port number and protocol for an exposed port. */
 public class PortsWithProtocol {
@@ -95,7 +96,7 @@ public class PortsWithProtocol {
 
   @Override
   public int hashCode() {
-    return (protocol == Protocol.TCP ? 1 : -1) * minPort + (maxPort << 16);
+    return Objects.hash(minPort, maxPort, protocol);
   }
 
   @Override
