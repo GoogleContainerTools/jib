@@ -85,7 +85,7 @@ public class PortsWithProtocol {
     if (other == this) {
       return true;
     }
-    if (other == null || other.getClass() != PortsWithProtocol.class) {
+    if (other == null || !(other instanceof PortsWithProtocol)) {
       return false;
     }
     PortsWithProtocol otherPort = (PortsWithProtocol) other;
