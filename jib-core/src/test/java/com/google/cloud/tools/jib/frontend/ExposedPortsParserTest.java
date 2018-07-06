@@ -27,7 +27,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link ExposedPortsParser}. */
@@ -77,13 +76,15 @@ public class ExposedPortsParserTest {
           "Invalid port range '4002-4000'; smaller number must come first.", ex.getMessage());
     }
 
-    ExposedPortsParser.parse(Collections.singletonList("0"), mockLogger);
-    Mockito.verify(mockLogger).warn("Port number '0' is out of usual range (1-65535).");
-    ExposedPortsParser.parse(Collections.singletonList("70000"), mockLogger);
-    Mockito.verify(mockLogger).warn("Port number '70000' is out of usual range (1-65535).");
-    ExposedPortsParser.parse(Collections.singletonList("0-400"), mockLogger);
-    Mockito.verify(mockLogger).warn("Port number '0-400' is out of usual range (1-65535).");
-    ExposedPortsParser.parse(Collections.singletonList("1-70000"), mockLogger);
-    Mockito.verify(mockLogger).warn("Port number '1-70000' is out of usual range (1-65535).");
+    badInputs = Arrays.asList("0", "70000", "0-400", "1-70000");
+    for (String input : badInputs) {
+      try {
+        ExposedPortsParser.parse(Collections.singletonList(input), mockLogger);
+        Assert.fail();
+      } catch (NumberFormatException ex) {
+        Assert.assertEquals(
+            "Port number '" + input + "' is out of usual range (1-65535).", ex.getMessage());
+      }
+    }
   }
 }

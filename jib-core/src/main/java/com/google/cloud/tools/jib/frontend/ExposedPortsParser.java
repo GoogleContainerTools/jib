@@ -32,7 +32,7 @@ public class ExposedPortsParser {
    *
    * <p>Example matches: 100, 200-210, 1000/tcp, 2000/udp, 500-600/tcp
    */
-  private static final Pattern portPattern = Pattern.compile("(\\d+)(?:-(\\d+))?(/tcp|/udp)?");
+  private static final Pattern portPattern = Pattern.compile("(\\d+)(?:-(\\d+))?(?:/(tcp|udp))?");
 
   /**
    * Converts/validates a list of strings representing port ranges to a list of single {@link
@@ -77,13 +77,13 @@ public class ExposedPortsParser {
 
       // Warn for possibly invalid port numbers
       if (min < 1 || max > 65535) {
-        // TODO: Add details/use HelpfulSuggestions for these warnings
-        buildLogger.warn("Port number '" + port + "' is out of usual range (1-65535).");
+        throw new NumberFormatException(
+            "Port number '" + port + "' is out of usual range (1-65535).");
       }
 
       result.add(
           PortsWithProtocol.forRange(
-              min, max, "/udp".equals(protocol) ? Protocol.UDP : Protocol.TCP));
+              min, max, "udp".equals(protocol) ? Protocol.UDP : Protocol.TCP));
     }
 
     return result.build();
