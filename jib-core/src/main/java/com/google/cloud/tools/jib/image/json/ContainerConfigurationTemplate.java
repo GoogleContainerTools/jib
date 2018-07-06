@@ -135,12 +135,9 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     ImmutableSortedMap.Builder<String, Map<?, ?>> result =
         new ImmutableSortedMap.Builder<>(String::compareTo);
     for (PortsWithProtocol port : exposedPorts) {
-      result.put(
-          port.getMinPort()
-              + (port.getMaxPort() != port.getMinPort() ? port.getMaxPort() + "" : "")
-              + "/"
-              + port.getProtocol().toString(),
-          Collections.emptyMap());
+      for (int i = port.getMinPort(); i <= port.getMaxPort(); i++) {
+        result.put(i + "/" + port.getProtocol().toString(), Collections.emptyMap());
+      }
     }
     config.ExposedPorts = result.build();
   }

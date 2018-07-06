@@ -83,7 +83,7 @@ public class BuildStepsIntegrationTest {
         new Command("docker", "inspect", imageReference).run(),
         CoreMatchers.containsString(
             "            \"ExposedPorts\": {\n"
-                + "                \"1000\": {},\n"
+                + "                \"1000/tcp\": {},\n"
                 + "                \"2000/tcp\": {},\n"
                 + "                \"2001/tcp\": {},\n"
                 + "                \"2002/tcp\": {},\n"
@@ -120,7 +120,7 @@ public class BuildStepsIntegrationTest {
         new Command("docker", "inspect", "testdocker").run(),
         CoreMatchers.containsString(
             "            \"ExposedPorts\": {\n"
-                + "                \"1000\": {},\n"
+                + "                \"1000/tcp\": {},\n"
                 + "                \"2000/tcp\": {},\n"
                 + "                \"2001/tcp\": {},\n"
                 + "                \"2002/tcp\": {},\n"
