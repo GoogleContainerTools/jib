@@ -29,9 +29,9 @@ whether to build to a Docker daemon or build to a tarball.
 
 The following changes will be made to the code:
 1. Add a private output path configuration parameter to `BuildConfiguration`
-2. Break `BuildTarballAndLoadDockerStep` into two step - `BuildTarballStep` and `LoadDockerStep`
+2. Rename `BuildTarballAndLoadDockerStep` to `LoadDockerStep`
 3. Add a new step `WriteTarFileStep` for writing a Blob to disk
 4. Add `BuildSteps#forBuildToTarball()`, which would contain the same steps as
-`forBuildToDockerDaemon()` up until after the `BuildTarballStep`, where it would run a
+`forBuildToDockerDaemon()` up until after the `FinalizingStep`, where it would run a
 `WriteTarFileStep` instead of a `LoadDockerStep`
 5. Add a new task and mojo that would call `BuildSteps.forBuildToTarball()`
