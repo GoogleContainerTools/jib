@@ -30,19 +30,19 @@ public class ExposedPortsParser {
   /**
    * Pattern used for parsing information out of exposed port configurations.
    *
-   * <p>Examples: 100, 200-210, 1000/tcp, 2000/udp, 500-600/tcp
+   * <p>Example matches: 100, 200-210, 1000/tcp, 2000/udp, 500-600/tcp
    */
   private static final Pattern portPattern = Pattern.compile("(\\d+)(?:-(\\d+))?(/tcp|/udp)?");
 
   /**
-   * Converts/validates a list of ports with ranges to an expanded form without ranges.
+   * Converts/validates a list of strings representing port ranges to a list of single {@link
+   * PortsWithProtocol}s for each port contained in the ranges.
    *
-   * <p>Example: {@code ["1000/tcp", "2000-2002/tcp"] -> ["1000/tcp", "2000/tcp", "2001/tcp",
-   * "2002/tcp"]}
+   * <p>E.g. "1000-1002/tcp" gets expanded to 3 independent {@link PortsWithProtocol}s.
    *
    * @param ports the list of port numbers/ranges
    * @param buildLogger used to log warning messages
-   * @return the ports as a list of integers
+   * @return the ports as a list of {@link PortsWithProtocol}
    * @throws NumberFormatException if any of the ports are in an invalid format or out of range
    */
   public static ImmutableList<PortsWithProtocol> parse(List<String> ports, BuildLogger buildLogger)

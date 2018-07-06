@@ -95,8 +95,7 @@ public class Image<T extends Layer> {
     /**
      * Sets the items in the "ExposedPorts" field in the container configuration.
      *
-     * @param exposedPorts the map of exposed ports to add, with the key in the format it would
-     *     appear in the configuration json (e.g. "portNum/tcp")
+     * @param exposedPorts the list of exposed ports to add
      * @return this
      */
     public Builder<T> setExposedPorts(ImmutableList<PortsWithProtocol> exposedPorts) {

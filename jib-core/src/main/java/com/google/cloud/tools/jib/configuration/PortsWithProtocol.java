@@ -81,6 +81,9 @@ public class PortsWithProtocol {
 
   @Override
   public boolean equals(Object other) {
+    if (other == this) {
+      return true;
+    }
     if (other == null || other.getClass() != PortsWithProtocol.class) {
       return false;
     }
