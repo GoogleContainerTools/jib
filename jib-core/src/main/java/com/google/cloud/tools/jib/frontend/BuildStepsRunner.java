@@ -58,12 +58,11 @@ public class BuildStepsRunner {
    * Creates a runner to build to the Docker daemon. Creates a directory for the cache, if needed.
    *
    * @param buildConfiguration the configuration parameters for the build
-   * @param sourceFilesConfiguration the source/destination file configuration for the image
    * @return a {@link BuildStepsRunner} for building to a Docker daemon
    * @throws CacheDirectoryCreationException if the {@code cacheDirectory} could not be created
    */
   public static BuildStepsRunner forBuildToDockerDaemon(
-      BuildConfiguration buildConfiguration, SourceFilesConfiguration sourceFilesConfiguration)
+      BuildConfiguration buildConfiguration)
       throws CacheDirectoryCreationException {
     return new BuildStepsRunner(
         BuildSteps.forBuildToDockerDaemon(

@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
+import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
 import java.io.File;
 import java.io.IOException;
@@ -32,8 +33,6 @@ import org.gradle.api.file.FileCollection;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.SourceSet;
 
-import javax.xml.transform.Source;
-
 /** Builds {@link LayerConfiguration}s based on inputs from a {@link Project}. */
 class GradleLayerConfigurations {
 
@@ -44,7 +43,7 @@ class GradleLayerConfigurations {
   static GradleLayerConfigurations getForProject(
       Project project, GradleBuildLogger gradleBuildLogger) throws IOException {
     JavaPluginConvention javaPluginConvention =
-            project.getConvention().getPlugin(JavaPluginConvention.class);
+        project.getConvention().getPlugin(JavaPluginConvention.class);
 
     SourceSet mainSourceSet = javaPluginConvention.getSourceSets().getByName(MAIN_SOURCE_SET_NAME);
 
@@ -58,7 +57,7 @@ class GradleLayerConfigurations {
       if (Files.notExists(classesOutputDirectory.toPath())) {
         // Warns that output directory was not found.
         gradleBuildLogger.warn(
-                "Could not find build output directory '" + classesOutputDirectory + "'");
+            "Could not find build output directory '" + classesOutputDirectory + "'");
         continue;
       }
       try (Stream<Path> classFileStream = Files.list(classesOutputDirectory.toPath())) {
@@ -95,22 +94,45 @@ class GradleLayerConfigurations {
     Collections.sort(classesFiles);
 
     return new GradleLayerConfigurations(
-    LayerConfiguration.builder().addEntry(dependenciesFiles, SourceFilesConfiguration.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE).build(),
-    LayerConfiguration.builder().addEntry(resourcesFiles, SourceFilesConfiguration.DEFAULT_RESOURCES_PATH_ON_IMAGE).build(),
-    LayerConfiguration.builder().addEntry(classesFiles, SourceFilesConfiguration.DEFAULT_CLASSES_PATH_ON_IMAGE).build());
+        LayerConfiguration.builder()
+            .addEntry(
+                dependenciesFiles, SourceFilesConfiguration.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
+            .build(),
+        LayerConfiguration.builder()
+            .addEntry(resourcesFiles, SourceFilesConfiguration.DEFAULT_RESOURCES_PATH_ON_IMAGE)
+            .build(),
+        LayerConfiguration.builder()
+            .addEntry(classesFiles, SourceFilesConfiguration.DEFAULT_CLASSES_PATH_ON_IMAGE)
+            .build());
   }
 
   private final LayerConfiguration dependenciesLayerConfiguration;
   private final LayerConfiguration resourcesLayerConfiguration;
   private final LayerConfiguration classesLayerConfiguration;
 
-  private GradleLayerConfigurations(LayerConfiguration dependenciesLayerConfiguration, LayerConfiguration resourcesLayerConfiguration, LayerConfiguration classesLayerConfiguration) {
+  private GradleLayerConfigurations(
+      LayerConfiguration dependenciesLayerConfiguration,
+      LayerConfiguration resourcesLayerConfiguration,
+      LayerConfiguration classesLayerConfiguration) {
     this.dependenciesLayerConfiguration = dependenciesLayerConfiguration;
     this.resourcesLayerConfiguration = resourcesLayerConfiguration;
     this.classesLayerConfiguration = classesLayerConfiguration;
   }
 
-  LayerConfiguration getClassesLayerConfiguration() {
-    return classesLayerConfiguration;
+  ImmutableList<LayerConfiguration> getLayerConfigurations() {
+    return ImmutableList.of(
+        dependenciesLayerConfiguration, resourcesLayerConfiguration, classesLayerConfiguration);
+  }
+
+  LayerEntry getDependenciesLayerEntry() {
+    return dependenciesLayerConfiguration.getLayerEntries().get(0);
+  }
+
+  LayerEntry getResourcesLayerEntry() {
+    return resourcesLayerConfiguration.getLayerEntries().get(0);
+  }
+
+  LayerEntry getClassesLayerEntry() {
+    return classesLayerConfiguration.getLayerEntries().get(0);
   }
 }

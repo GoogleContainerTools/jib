@@ -123,7 +123,10 @@ public class DockerContextTask extends DefaultTask {
       // here.
       ExposedPortsParser.parse(jibExtension.getExposedPorts(), gradleBuildLogger);
 
-      new DockerContextGenerator(gradleProjectProperties.getSourceFilesConfiguration())
+      new DockerContextGenerator(
+              gradleProjectProperties.getResourcesLayerEntry(),
+              gradleProjectProperties.getResourcesLayerEntry(),
+              gradleProjectProperties.getClassesLayerEntry())
           .setBaseImage(jibExtension.getBaseImage())
           .setJvmFlags(jibExtension.getJvmFlags())
           .setMainClass(mainClass)

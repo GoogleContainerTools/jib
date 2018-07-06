@@ -132,8 +132,7 @@ public class BuildImageTask extends DefaultTask {
     RegistryClient.setUserAgentSuffix(USER_AGENT_SUFFIX);
 
     try {
-      BuildStepsRunner.forBuildImage(buildConfiguration)
-          .build(HELPFUL_SUGGESTIONS);
+      BuildStepsRunner.forBuildImage(buildConfiguration).build(HELPFUL_SUGGESTIONS);
 
     } catch (CacheDirectoryCreationException | BuildStepsExecutionException ex) {
       throw new GradleException(ex.getMessage(), ex.getCause());

@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.util.Collections;
@@ -42,7 +41,7 @@ public class GradleProjectPropertiesTest {
   @Mock private Jar mockJar2;
   @Mock private Project mockProject;
   @Mock private GradleBuildLogger mockGradleBuildLogger;
-  @Mock private SourceFilesConfiguration mockSourceFilesConfiguration;
+  @Mock private GradleLayerConfigurations mockGradleLayerConfigurations;
 
   private Manifest manifest;
   private GradleProjectProperties gradleProjectProperties;
@@ -54,7 +53,7 @@ public class GradleProjectPropertiesTest {
 
     gradleProjectProperties =
         new GradleProjectProperties(
-            mockProject, mockGradleBuildLogger, mockSourceFilesConfiguration);
+            mockProject, mockGradleBuildLogger, mockGradleLayerConfigurations);
   }
 
   @Test

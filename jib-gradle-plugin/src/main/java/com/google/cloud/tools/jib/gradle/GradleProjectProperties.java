@@ -17,20 +17,19 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.builder.BuildLogger;
-import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
 import com.google.cloud.tools.jib.frontend.MainClassFinder;
 import com.google.cloud.tools.jib.frontend.MainClassInferenceException;
 import com.google.cloud.tools.jib.frontend.ProjectProperties;
+import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
-
-import com.google.common.collect.ImmutableList;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -71,8 +70,23 @@ class GradleProjectProperties implements ProjectProperties {
   }
 
   @Override
-  public ImmutableList<Path> getClassesLayerSourceFiles() {
-    return gradleLayerConfigurations.getClassesLayerConfiguration().getLayerEntries().get(0).getSourceFiles();
+  public ImmutableList<LayerConfiguration> getLayerConfigurations() {
+    return gradleLayerConfigurations.getLayerConfigurations();
+  }
+
+  @Override
+  public LayerEntry getDependenciesLayerEntry() {
+    return gradleLayerConfigurations.getDependenciesLayerEntry();
+  }
+
+  @Override
+  public LayerEntry getResourcesLayerEntry() {
+    return gradleLayerConfigurations.getResourcesLayerEntry();
+  }
+
+  @Override
+  public LayerEntry getClassesLayerEntry() {
+    return gradleLayerConfigurations.getClassesLayerEntry();
   }
 
   @Override

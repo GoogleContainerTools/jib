@@ -125,9 +125,7 @@ public class BuildDockerTask extends DefaultTask {
 
     // Uses a directory in the Gradle build cache as the Jib cache.
     try {
-      BuildStepsRunner.forBuildToDockerDaemon(
-              buildConfiguration, gradleProjectProperties.getSourceFilesConfiguration())
-          .build(HELPFUL_SUGGESTIONS);
+      BuildStepsRunner.forBuildToDockerDaemon(buildConfiguration).build(HELPFUL_SUGGESTIONS);
 
     } catch (CacheDirectoryCreationException | BuildStepsExecutionException ex) {
       throw new GradleException(ex.getMessage(), ex.getCause());

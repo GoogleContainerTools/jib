@@ -42,9 +42,9 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Test for {@link GradleSourceFilesConfiguration}. */
+/** Test for {@link GradleLayerConfigurations}. */
 @RunWith(MockitoJUnitRunner.class)
-public class GradleSourceFilesConfigurationTest {
+public class GradleLayerConfigurationsTest {
 
   /** Implementation of {@link FileCollection} that just holds a set of {@link File}s. */
   private static class TestFileCollection extends AbstractFileCollection {
@@ -74,7 +74,7 @@ public class GradleSourceFilesConfigurationTest {
   @Mock private SourceSetOutput mockMainSourceSetOutput;
   @Mock private GradleBuildLogger mockGradleBuildLogger;
 
-  private GradleSourceFilesConfiguration testGradleSourceFilesConfiguration;
+  private GradleLayerConfigurations testGradleLayerConfigurations;
 
   @Before
   public void setUp() throws URISyntaxException, IOException {
@@ -105,8 +105,8 @@ public class GradleSourceFilesConfigurationTest {
     Mockito.when(mockMainSourceSetOutput.getResourcesDir()).thenReturn(resourcesOutputDir);
     Mockito.when(mockMainSourceSet.getRuntimeClasspath()).thenReturn(runtimeFileCollection);
 
-    testGradleSourceFilesConfiguration =
-        GradleSourceFilesConfiguration.getForProject(mockProject, mockGradleBuildLogger);
+    testGradleLayerConfigurations =
+        GradleLayerConfigurations.getForProject(mockProject, mockGradleBuildLogger);
   }
 
   @Test
@@ -129,10 +129,14 @@ public class GradleSourceFilesConfigurationTest {
             Paths.get(Resources.getResource("application/classes").toURI()).resolve("some.class"));
 
     Assert.assertEquals(
-        expectedDependenciesFiles, testGradleSourceFilesConfiguration.getDependenciesFiles());
+        expectedDependenciesFiles,
+        testGradleLayerConfigurations.getDependenciesLayerEntry().getSourceFiles());
     Assert.assertEquals(
-        expectedResourcesFiles, testGradleSourceFilesConfiguration.getResourcesFiles());
-    Assert.assertEquals(expectedClassesFiles, testGradleSourceFilesConfiguration.getClassesFiles());
+        expectedResourcesFiles,
+        testGradleLayerConfigurations.getResourcesLayerEntry().getSourceFiles());
+    Assert.assertEquals(
+        expectedClassesFiles,
+        testGradleLayerConfigurations.getClassesLayerEntry().getSourceFiles());
   }
 
   @Test
@@ -141,8 +145,8 @@ public class GradleSourceFilesConfigurationTest {
     Mockito.when(mockMainSourceSetOutput.getClassesDirs())
         .thenReturn(new TestFileCollection(ImmutableSet.of(nonexistentFile)));
 
-    testGradleSourceFilesConfiguration =
-        GradleSourceFilesConfiguration.getForProject(mockProject, mockGradleBuildLogger);
+    testGradleLayerConfigurations =
+        GradleLayerConfigurations.getForProject(mockProject, mockGradleBuildLogger);
 
     Mockito.verify(mockGradleBuildLogger)
         .warn("Could not find build output directory '" + nonexistentFile + "'");
@@ -153,10 +157,12 @@ public class GradleSourceFilesConfigurationTest {
   @Test
   public void test_correctPathsOnImage() {
     Assert.assertEquals(
-        "/app/libs/", testGradleSourceFilesConfiguration.getDependenciesPathOnImage());
+        "/app/libs/",
+        testGradleLayerConfigurations.getDependenciesLayerEntry().getExtractionPath());
     Assert.assertEquals(
-        "/app/resources/", testGradleSourceFilesConfiguration.getResourcesPathOnImage());
+        "/app/resources/",
+        testGradleLayerConfigurations.getResourcesLayerEntry().getExtractionPath());
     Assert.assertEquals(
-        "/app/classes/", testGradleSourceFilesConfiguration.getClassesPathOnImage());
+        "/app/classes/", testGradleLayerConfigurations.getClassesLayerEntry().getExtractionPath());
   }
 }

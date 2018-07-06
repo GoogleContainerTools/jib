@@ -75,7 +75,7 @@ public class MainClassFinder {
 
         try {
           // Adds each file in the classes output directory to the classes files list.
-          ImmutableList<Path> classesFiles = projectProperties.getClassesLayerSourceFiles();
+          ImmutableList<Path> classesFiles = projectProperties.getClassesLayerEntry().getSourceFiles();
           List<String> mainClasses = new ArrayList<>();
           Set<Path> visitedRoots = new HashSet<>();
           for (Path classPath : classesFiles) {
