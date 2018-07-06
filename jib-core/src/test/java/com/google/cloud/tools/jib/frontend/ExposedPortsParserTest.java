@@ -37,7 +37,7 @@ public class ExposedPortsParserTest {
   @Mock private BuildLogger mockLogger;
 
   @Test
-  public void testExpandPortList() {
+  public void testParse() {
     List<String> goodInputs =
         Arrays.asList("1000", "2000-2003", "3000-3000", "4000/tcp", "5000/udp", "6000-6002/tcp");
     ImmutableList<PortsWithProtocol> expected =
