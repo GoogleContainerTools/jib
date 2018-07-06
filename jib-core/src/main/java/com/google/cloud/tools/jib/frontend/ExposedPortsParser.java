@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.frontend;
 import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.configuration.PortsWithProtocol;
 import com.google.cloud.tools.jib.configuration.PortsWithProtocol.Protocol;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
@@ -46,7 +45,6 @@ public class ExposedPortsParser {
    * @return the ports as a list of integers
    * @throws NumberFormatException if any of the ports are in an invalid format or out of range
    */
-  @VisibleForTesting
   public static ImmutableList<PortsWithProtocol> parse(List<String> ports, BuildLogger buildLogger)
       throws NumberFormatException {
     ImmutableList.Builder<PortsWithProtocol> result = new ImmutableList.Builder<>();
