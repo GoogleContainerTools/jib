@@ -58,6 +58,7 @@ interface RegistryEndpointProvider<T> {
    * @param httpResponseException the {@link HttpResponseException} to handle
    * @throws HttpResponseException {@code httpResponseException} if {@code httpResponseException}
    *     could not be handled
+   * @throws RegistryErrorException if there is an error with a remote registry
    */
   @Nullable
   default T handleHttpResponseException(HttpResponseException httpResponseException)
