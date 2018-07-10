@@ -45,7 +45,12 @@ import java.util.List;
  *         "diffId": "sha256:a3f3e99c29370df48e7377c8f9baa744a3958058a766793f821dadcb144a8372"
  *       }
  *       "properties": {
- *         "sourceFiles": ["build/classes"],
+ *         "layerEntries": [
+ *           {
+ *             "sourceFiles": ["build/classes"],
+ *             "extractionPath": "/app/classes"
+ *           },
+ *         ],
  *         "lastModifiedTime": 255073580723571
  *       }
  *     },

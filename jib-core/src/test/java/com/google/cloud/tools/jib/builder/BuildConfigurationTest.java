@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
+import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.configuration.PortWithProtocol;
 import com.google.cloud.tools.jib.configuration.PortWithProtocol.Protocol;
 import com.google.cloud.tools.jib.image.ImageReference;
@@ -63,6 +64,8 @@ public class BuildConfigurationTest {
         CacheConfiguration.forPath(Paths.get("application/layers"));
     CacheConfiguration expectedBaseImageLayersCacheConfiguration =
         CacheConfiguration.forPath(Paths.get("base/image/layers"));
+    LayerConfiguration expectedExtraFilesLayerConfiguration =
+        LayerConfiguration.builder().addEntry(Collections.emptyList(), "destination").build();
 
     BuildConfiguration.Builder buildConfigurationBuilder =
         BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
@@ -84,7 +87,8 @@ public class BuildConfigurationTest {
             .setTargetFormat(OCIManifestTemplate.class)
             .setApplicationLayersCacheConfiguration(expectedApplicationLayersCacheConfiguration)
             .setBaseImageLayersCacheConfiguration(expectedBaseImageLayersCacheConfiguration)
-            .setAllowHttp(true);
+            .setAllowHttp(true)
+            .setExtraFilesLayerConfiguration(expectedExtraFilesLayerConfiguration);
     BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
 
     Assert.assertEquals(expectedBaseImageServerUrl, buildConfiguration.getBaseImageRegistry());
@@ -112,6 +116,8 @@ public class BuildConfigurationTest {
         expectedBaseImageLayersCacheConfiguration,
         buildConfiguration.getBaseImageLayersCacheConfiguration());
     Assert.assertTrue(buildConfiguration.getAllowHttp());
+    Assert.assertEquals(
+        expectedExtraFilesLayerConfiguration, buildConfiguration.getExtraFilesLayerConfiguration());
   }
 
   @Test
@@ -148,6 +154,7 @@ public class BuildConfigurationTest {
     Assert.assertNull(buildConfiguration.getApplicationLayersCacheConfiguration());
     Assert.assertNull(buildConfiguration.getBaseImageLayersCacheConfiguration());
     Assert.assertFalse(buildConfiguration.getAllowHttp());
+    Assert.assertNull(buildConfiguration.getExtraFilesLayerConfiguration());
   }
 
   @Test

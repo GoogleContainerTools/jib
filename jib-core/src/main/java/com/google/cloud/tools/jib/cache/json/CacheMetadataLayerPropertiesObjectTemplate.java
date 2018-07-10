@@ -18,8 +18,9 @@ package com.google.cloud.tools.jib.cache.json;
 
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import java.nio.file.attribute.FileTime;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Inner JSON template for extra properties for an application layer, as part of {@link
@@ -27,22 +28,50 @@ import java.util.List;
  */
 public class CacheMetadataLayerPropertiesObjectTemplate implements JsonTemplate {
 
-  /** The paths to the source files that the layer was constructed from. */
-  private List<String> sourceFiles = new ArrayList<>();
+  /** Represents a pair of source files and extraction path. */
+  public static class LayerEntryTemplate implements JsonTemplate {
+
+    /** The paths to the source files that the layer was constructed from. */
+    @Nullable private List<String> sourceFiles;
+
+    /** The intended path to extract the source files to in the container. */
+    @Nullable private String extractionPath;
+
+    @Nullable
+    public List<String> getSourceFiles() {
+      return sourceFiles;
+    }
+
+    @Nullable
+    public String getExtractionPath() {
+      return extractionPath;
+    }
+
+    public LayerEntryTemplate(List<String> sourceFiles, String extractionPath) {
+      this.sourceFiles = sourceFiles;
+      this.extractionPath = extractionPath;
+    }
+
+    public LayerEntryTemplate() {}
+  }
+
+  /** The content entries for the layer. */
+  private List<LayerEntryTemplate> layerEntries = Collections.emptyList();
 
   /** The last time the layer was constructed. */
   private long lastModifiedTime;
 
-  public List<String> getSourceFiles() {
-    return sourceFiles;
+  public List<LayerEntryTemplate> getLayerEntries() {
+    return layerEntries;
   }
 
   public FileTime getLastModifiedTime() {
     return FileTime.fromMillis(lastModifiedTime);
   }
 
-  public CacheMetadataLayerPropertiesObjectTemplate setSourceFiles(List<String> sourceFiles) {
-    this.sourceFiles = sourceFiles;
+  public CacheMetadataLayerPropertiesObjectTemplate setLayerEntries(
+      List<LayerEntryTemplate> layerEntries) {
+    this.layerEntries = layerEntries;
     return this;
   }
 
