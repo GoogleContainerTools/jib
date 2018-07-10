@@ -21,7 +21,6 @@ import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.builder.BuildSteps;
-import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
@@ -61,8 +60,7 @@ public class BuildStepsRunner {
    * @return a {@link BuildStepsRunner} for building to a Docker daemon
    * @throws CacheDirectoryCreationException if the {@code cacheDirectory} could not be created
    */
-  public static BuildStepsRunner forBuildToDockerDaemon(
-      BuildConfiguration buildConfiguration)
+  public static BuildStepsRunner forBuildToDockerDaemon(BuildConfiguration buildConfiguration)
       throws CacheDirectoryCreationException {
     return new BuildStepsRunner(
         BuildSteps.forBuildToDockerDaemon(
