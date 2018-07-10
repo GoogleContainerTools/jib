@@ -76,7 +76,7 @@ public class ReproducibleLayerBuilder {
     return tarArchiveEntries;
   }
 
-  private final List<LayerEntry> layerEntries = new ArrayList<>();
+  private final ImmutableList.Builder<LayerEntry> layerEntries = ImmutableList.builder();
 
   public ReproducibleLayerBuilder() {}
 
@@ -104,7 +104,7 @@ public class ReproducibleLayerBuilder {
     List<TarArchiveEntry> filesystemEntries = new ArrayList<>();
 
     // Adds all the layer entries as tar entries.
-    for (LayerEntry layerEntry : layerEntries) {
+    for (LayerEntry layerEntry : layerEntries.build()) {
       filesystemEntries.addAll(buildAsTarArchiveEntries(layerEntry));
     }
 
@@ -125,13 +125,7 @@ public class ReproducibleLayerBuilder {
     return new UnwrittenLayer(tarStreamBuilder.toBlob());
   }
 
-  public List<Path> getSourceFiles() {
-    List<Path> allSourceFiles = new ArrayList<>();
-
-    for (LayerEntry layerEntry : layerEntries) {
-      allSourceFiles.addAll(layerEntry.getSourceFiles());
-    }
-
-    return allSourceFiles;
+  public ImmutableList<LayerEntry> getLayerEntries() {
+    return layerEntries.build();
   }
 }

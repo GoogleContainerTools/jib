@@ -16,7 +16,9 @@
 
 package com.google.cloud.tools.jib.cache;
 
+import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
@@ -28,35 +30,64 @@ import java.util.List;
  */
 class LayerMetadata {
 
-  static LayerMetadata from(List<Path> sourceFiles, FileTime lastModifiedTime) {
-    List<String> sourceFilesStrings = new ArrayList<>(sourceFiles.size());
-    for (Path sourceFile : sourceFiles) {
-      sourceFilesStrings.add(sourceFile.toString());
+  /** Entry into the layer metadata. */
+  static class LayerMetadataEntry {
+
+    private List<String> sourceFilesStrings;
+    private String extractionPath;
+
+    List<String> getSourceFilesStrings() {
+      return sourceFilesStrings;
     }
-    return new LayerMetadata(sourceFilesStrings, lastModifiedTime);
+
+    String getExtractionPath() {
+      return extractionPath;
+    }
+
+    @VisibleForTesting
+    LayerMetadataEntry(List<String> sourceFilesStrings, String extractionPath) {
+      this.sourceFilesStrings = sourceFilesStrings;
+      this.extractionPath = extractionPath;
+    }
   }
 
-  /** The paths to the source files that the layer was constructed from. */
-  private List<String> sourceFiles;
+  static LayerMetadata from(ImmutableList<LayerEntry> layerEntries, FileTime lastModifiedTime) {
+    ImmutableList.Builder<LayerMetadataEntry> entries =
+        ImmutableList.builderWithExpectedSize(layerEntries.size());
+
+    for (LayerEntry layerEntry : layerEntries) {
+      List<Path> sourceFiles = layerEntry.getSourceFiles();
+      List<String> sourceFilesStrings = new ArrayList<>(sourceFiles.size());
+      for (Path sourceFile : sourceFiles) {
+        sourceFilesStrings.add(sourceFile.toString());
+      }
+      entries.add(new LayerMetadataEntry(sourceFilesStrings, layerEntry.getExtractionPath()));
+    }
+
+    return new LayerMetadata(entries.build(), lastModifiedTime);
+  }
+
+  /** The entries that define the layer contents. */
+  private ImmutableList<LayerMetadataEntry> entries;
 
   /** The last time the layer was constructed. */
   private final FileTime lastModifiedTime;
 
-  LayerMetadata(List<String> sourceFiles, FileTime lastModifiedTime) {
-    this.sourceFiles = sourceFiles;
+  LayerMetadata(ImmutableList<LayerMetadataEntry> entries, FileTime lastModifiedTime) {
+    this.entries = entries;
     this.lastModifiedTime = lastModifiedTime;
   }
 
-  List<String> getSourceFiles() {
-    return sourceFiles;
+  ImmutableList<LayerMetadataEntry> getEntries() {
+    return entries;
   }
 
-  public FileTime getLastModifiedTime() {
+  FileTime getLastModifiedTime() {
     return lastModifiedTime;
   }
 
   @VisibleForTesting
-  void setSourceFiles(List<String> sourceFiles) {
-    this.sourceFiles = sourceFiles;
+  void setEntries(ImmutableList<LayerMetadataEntry> entries) {
+    this.entries = entries;
   }
 }

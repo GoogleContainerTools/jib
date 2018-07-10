@@ -58,8 +58,11 @@ public class CacheMetadataTemplateTest {
     // Adds an application layer.
     CacheMetadataLayerPropertiesObjectTemplate propertiesTemplate =
         new CacheMetadataLayerPropertiesObjectTemplate()
-            .setSourceFiles(
-                Collections.singletonList(Paths.get("some", "source", "path").toString()))
+            .setLayerEntries(
+                Collections.singletonList(
+                    new CacheMetadataLayerPropertiesObjectTemplate.LayerEntryTemplate(
+                        Collections.singletonList(Paths.get("some", "source", "path").toString()),
+                        "some/extraction/path")))
             .setLastModifiedTime(FileTime.fromMillis(255073580723571L));
     CacheMetadataLayerObjectTemplate classesLayerTemplate =
         new CacheMetadataLayerObjectTemplate()
@@ -121,7 +124,10 @@ public class CacheMetadataTemplateTest {
     Assert.assertNotNull(classesLayerTemplate.getProperties());
     Assert.assertEquals(
         Collections.singletonList(Paths.get("some", "source", "path").toString()),
-        classesLayerTemplate.getProperties().getSourceFiles());
+        classesLayerTemplate.getProperties().getLayerEntries().get(0).getSourceFiles());
+    Assert.assertEquals(
+        "some/extraction/path",
+        classesLayerTemplate.getProperties().getLayerEntries().get(0).getExtractionPath());
     Assert.assertEquals(
         FileTime.fromMillis(255073580723571L),
         classesLayerTemplate.getProperties().getLastModifiedTime());

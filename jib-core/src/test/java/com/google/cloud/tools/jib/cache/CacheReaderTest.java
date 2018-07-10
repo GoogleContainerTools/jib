@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.cache;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.ImageLayers;
+import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 import java.io.IOException;
@@ -94,7 +95,11 @@ public class CacheReaderTest {
 
       Assert.assertEquals(
           expectedFile,
-          cacheReader.getLayerFile(ImmutableList.of(Paths.get("some", "source", "directory"))));
+          cacheReader.getLayerFile(
+              ImmutableList.of(
+                  new LayerEntry(
+                      ImmutableList.of(Paths.get("some", "source", "directory")),
+                      "some/extraction/path"))));
       Assert.assertNull(cacheReader.getLayerFile(ImmutableList.of()));
     }
   }
@@ -131,7 +136,10 @@ public class CacheReaderTest {
 
       classesCachedLayer
           .getMetadata()
-          .setSourceFiles(Collections.singletonList(testSourceFiles.toString()));
+          .setEntries(
+              ImmutableList.of(
+                  new LayerMetadata.LayerMetadataEntry(
+                      Collections.singletonList(testSourceFiles.toString()), "extractionPath")));
     }
 
     try (Cache cache = Cache.init(testCacheFolder)) {
@@ -140,18 +148,24 @@ public class CacheReaderTest {
       Assert.assertEquals(
           classesCachedLayer.getBlobDescriptor(),
           cacheReader
-              .getUpToDateLayerBySourceFiles(ImmutableList.of(testSourceFiles))
+              .getUpToDateLayerByLayerEntries(
+                  ImmutableList.of(
+                      new LayerEntry(ImmutableList.of(testSourceFiles), "extractionPath")))
               .getBlobDescriptor());
 
       // Changes a file and checks that the change is detected.
       Files.setLastModifiedTime(
           testSourceFiles.resolve("a").resolve("b").resolve("bar"), newerLastModifiedTime);
       Assert.assertNull(
-          cacheReader.getUpToDateLayerBySourceFiles(ImmutableList.of(testSourceFiles)));
+          cacheReader.getUpToDateLayerByLayerEntries(
+              ImmutableList.of(
+                  new LayerEntry(ImmutableList.of(testSourceFiles), "extractionPath"))));
 
       // Any non-cached directory should be deemed modified.
       Assert.assertNull(
-          cacheReader.getUpToDateLayerBySourceFiles(ImmutableList.of(resourceSourceFiles)));
+          cacheReader.getUpToDateLayerByLayerEntries(
+              ImmutableList.of(
+                  new LayerEntry(ImmutableList.of(resourceSourceFiles), "extractionPath"))));
     }
   }
 }
