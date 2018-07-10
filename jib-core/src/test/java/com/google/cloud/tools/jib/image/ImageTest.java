@@ -17,8 +17,8 @@
 package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
-import com.google.cloud.tools.jib.configuration.PortWithProtocol;
-import com.google.cloud.tools.jib.configuration.PortWithProtocol.Protocol;
+import com.google.cloud.tools.jib.configuration.Port;
+import com.google.cloud.tools.jib.configuration.Port.Protocol;
 import com.google.common.collect.ImmutableList;
 import java.util.Arrays;
 import org.junit.Assert;
@@ -54,9 +54,7 @@ public class ImageTest {
             .setEntrypoint(Arrays.asList("some", "command"))
             .setJavaArguments(Arrays.asList("arg1", "arg2"))
             .setExposedPorts(
-                ImmutableList.of(
-                    new PortWithProtocol(1000, Protocol.TCP),
-                    new PortWithProtocol(2000, Protocol.TCP)))
+                ImmutableList.of(new Port(1000, Protocol.TCP), new Port(2000, Protocol.TCP)))
             .addLayer(mockLayer)
             .build();
 
@@ -66,8 +64,7 @@ public class ImageTest {
     Assert.assertEquals(Arrays.asList("some", "command"), image.getEntrypoint());
     Assert.assertEquals(Arrays.asList("arg1", "arg2"), image.getJavaArguments());
     Assert.assertEquals(
-        ImmutableList.of(
-            new PortWithProtocol(1000, Protocol.TCP), new PortWithProtocol(2000, Protocol.TCP)),
+        ImmutableList.of(new Port(1000, Protocol.TCP), new Port(2000, Protocol.TCP)),
         image.getExposedPorts());
   }
 }

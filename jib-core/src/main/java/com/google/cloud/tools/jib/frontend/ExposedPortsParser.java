@@ -16,9 +16,8 @@
 
 package com.google.cloud.tools.jib.frontend;
 
-import com.google.cloud.tools.jib.builder.BuildLogger;
-import com.google.cloud.tools.jib.configuration.PortWithProtocol;
-import com.google.cloud.tools.jib.configuration.PortWithProtocol.Protocol;
+import com.google.cloud.tools.jib.configuration.Port;
+import com.google.cloud.tools.jib.configuration.Port.Protocol;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
@@ -37,19 +36,17 @@ public class ExposedPortsParser {
 
   /**
    * Converts/validates a list of strings representing port ranges to an expanded list of {@link
-   * PortWithProtocol}s.
+   * Port}s.
    *
-   * <p>For example: ["1000", "2000-2002"] will expand to a list of {@link PortWithProtocol}s with
-   * the port numbers [1000, 2000, 2001, 2002]
+   * <p>For example: ["1000", "2000-2002"] will expand to a list of {@link Port}s with the port
+   * numbers [1000, 2000, 2001, 2002]
    *
    * @param ports the list of port numbers/ranges
-   * @param buildLogger used to log warning messages
-   * @return the ports as a list of {@link PortWithProtocol}
+   * @return the ports as a list of {@link Port}
    * @throws NumberFormatException if any of the ports are in an invalid format or out of range
    */
-  public static ImmutableList<PortWithProtocol> parse(List<String> ports, BuildLogger buildLogger)
-      throws NumberFormatException {
-    ImmutableList.Builder<PortWithProtocol> result = new ImmutableList.Builder<>();
+  public static ImmutableList<Port> parse(List<String> ports) throws NumberFormatException {
+    ImmutableList.Builder<Port> result = new ImmutableList.Builder<>();
 
     for (String port : ports) {
       Matcher matcher = portPattern.matcher(port);
@@ -69,7 +66,8 @@ public class ExposedPortsParser {
       if (!Strings.isNullOrEmpty(matcher.group(2))) {
         max = Integer.parseInt(matcher.group(2));
       }
-      Protocol protocol = "udp".equals(matcher.group(3)) ? Protocol.UDP : Protocol.TCP;
+      Protocol protocol =
+          Protocol.UDP.toString().equals(matcher.group(3)) ? Protocol.UDP : Protocol.TCP;
 
       // Error if configured as 'max-min' instead of 'min-max'
       if (min > max) {
@@ -84,7 +82,7 @@ public class ExposedPortsParser {
       }
 
       for (int portNumber = min; portNumber <= max; portNumber++) {
-        result.add(new PortWithProtocol(portNumber, protocol));
+        result.add(new Port(portNumber, protocol));
       }
     }
 

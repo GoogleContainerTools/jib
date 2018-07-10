@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.configuration;
 import java.util.Objects;
 
 /** Holds port number and protocol for an exposed port. */
-public class PortWithProtocol {
+public class Port {
 
   /** Represents the protocol portion of the port. */
   public enum Protocol {
@@ -41,7 +41,7 @@ public class PortWithProtocol {
   private final int port;
   private final Protocol protocol;
 
-  public PortWithProtocol(int port, Protocol protocol) {
+  public Port(int port, Protocol protocol) {
     this.port = port;
     this.protocol = protocol;
   }
@@ -59,10 +59,10 @@ public class PortWithProtocol {
     if (other == this) {
       return true;
     }
-    if (other == null || !(other instanceof PortWithProtocol)) {
+    if (other == null || !(other instanceof Port)) {
       return false;
     }
-    PortWithProtocol otherPort = (PortWithProtocol) other;
+    Port otherPort = (Port) other;
     return port == otherPort.port && protocol == otherPort.protocol;
   }
 

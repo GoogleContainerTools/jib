@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.image;
 
-import com.google.cloud.tools.jib.configuration.PortWithProtocol;
+import com.google.cloud.tools.jib.configuration.Port;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +32,7 @@ public class Image<T extends Layer> {
 
     private ImmutableList<String> entrypoint = ImmutableList.of();
     private ImmutableList<String> javaArguments = ImmutableList.of();
-    private ImmutableList<PortWithProtocol> exposedPorts = ImmutableList.of();
+    private ImmutableList<Port> exposedPorts = ImmutableList.of();
 
     /**
      * Sets the environment with a map from environment variable names to values.
@@ -98,7 +98,7 @@ public class Image<T extends Layer> {
      * @param exposedPorts the list of exposed ports to add
      * @return this
      */
-    public Builder<T> setExposedPorts(ImmutableList<PortWithProtocol> exposedPorts) {
+    public Builder<T> setExposedPorts(ImmutableList<Port> exposedPorts) {
       this.exposedPorts = exposedPorts;
       return this;
     }
@@ -142,14 +142,14 @@ public class Image<T extends Layer> {
   private final ImmutableList<String> javaArguments;
 
   /** Ports that the container listens on. */
-  private final ImmutableList<PortWithProtocol> exposedPorts;
+  private final ImmutableList<Port> exposedPorts;
 
   private Image(
       ImageLayers<T> layers,
       ImmutableList<String> environment,
       ImmutableList<String> entrypoint,
       ImmutableList<String> javaArguments,
-      ImmutableList<PortWithProtocol> exposedPorts) {
+      ImmutableList<Port> exposedPorts) {
     this.layers = layers;
     this.environmentBuilder = environment;
     this.entrypoint = entrypoint;
@@ -169,7 +169,7 @@ public class Image<T extends Layer> {
     return javaArguments;
   }
 
-  public ImmutableList<PortWithProtocol> getExposedPorts() {
+  public ImmutableList<Port> getExposedPorts() {
     return exposedPorts;
   }
 

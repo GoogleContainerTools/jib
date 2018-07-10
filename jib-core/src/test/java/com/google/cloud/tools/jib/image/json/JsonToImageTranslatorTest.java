@@ -17,8 +17,8 @@
 package com.google.cloud.tools.jib.image.json;
 
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
-import com.google.cloud.tools.jib.configuration.PortWithProtocol;
-import com.google.cloud.tools.jib.configuration.PortWithProtocol.Protocol;
+import com.google.cloud.tools.jib.configuration.Port;
+import com.google.cloud.tools.jib.configuration.Port.Protocol;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
@@ -110,9 +110,9 @@ public class JsonToImageTranslatorTest {
     Assert.assertEquals(Arrays.asList("VAR1=VAL1", "VAR2=VAL2"), image.getEnvironment());
     Assert.assertEquals(
         ImmutableList.of(
-            new PortWithProtocol(1000, Protocol.TCP),
-            new PortWithProtocol(2000, Protocol.TCP),
-            new PortWithProtocol(3000, Protocol.UDP)),
+            new Port(1000, Protocol.TCP),
+            new Port(2000, Protocol.TCP),
+            new Port(3000, Protocol.UDP)),
         image.getExposedPorts());
   }
 }

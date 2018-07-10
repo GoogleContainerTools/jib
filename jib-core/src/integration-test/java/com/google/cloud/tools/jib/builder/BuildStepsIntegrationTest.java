@@ -58,8 +58,7 @@ public class BuildStepsIntegrationTest {
             .setMainClass("HelloWorld")
             .setJavaArguments(Collections.singletonList("An argument."))
             .setExposedPorts(
-                ExposedPortsParser.parse(
-                    Arrays.asList("1000", "2000-2002/tcp", "3000/udp"), logger))
+                ExposedPortsParser.parse(Arrays.asList("1000", "2000-2002/tcp", "3000/udp")))
             .setAllowHttp(true)
             .build();
 
@@ -104,8 +103,7 @@ public class BuildStepsIntegrationTest {
             .setMainClass("HelloWorld")
             .setJavaArguments(Collections.singletonList("An argument."))
             .setExposedPorts(
-                ExposedPortsParser.parse(
-                    Arrays.asList("1000", "2000-2002/tcp", "3000/udp"), logger))
+                ExposedPortsParser.parse(Arrays.asList("1000", "2000-2002/tcp", "3000/udp")))
             .build();
 
     Path cacheDirectory = temporaryCacheDirectory.newFolder().toPath();
