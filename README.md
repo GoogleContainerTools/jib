@@ -1,4 +1,5 @@
 [![experimental](http://badges.github.io/stability-badges/dist/experimental.svg)](http://github.com/badges/stability-badges)
+[![Analytics](https://cloud-tools-for-java-metrics.appspot.com/UA-121724379-2/github?useReferer)](https://github.com/igrigorik/ga-beacon)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/jib-maven-plugin/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/jib-maven-plugin)
 [![Gradle Plugin Portal](https://img.shields.io/badge/gradle%20plugin-v0.9.2-blue.svg)](https://plugins.gradle.org/plugin/com.google.cloud.tools.jib)
 [![Gitter version](https://img.shields.io/gitter/room/gitterHQ/gitter.svg)](https://gitter.im/google/jib)
@@ -48,6 +49,3 @@ See the [Frequently Asked Questions (FAQ) wiki page](/../../wiki/Frequently-Aske
 
 * Chat with us on [gitter](https://gitter.im/google/jib)
 * [jib-users mailing list](https://groups.google.com/forum/#!forum/jib-users)
-
-<!-- We are using this to collect Google Analytics data. This is from https://github.com/igrigorik/ga-beacon. -->
-![Analytics](https://cloud-tools-for-java-metrics.appspot.com/UA-121724379-2/wiki?pixel&useReferer)
