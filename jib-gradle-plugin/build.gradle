@@ -1,7 +1,7 @@
 plugins {
     id 'java-gradle-plugin'
     id 'checkstyle'
-    id 'com.github.sherter.google-java-format' version '0.6'
+    id 'com.github.sherter.google-java-format' version '0.7.1'
 
     // For local install
     id 'maven'
@@ -110,7 +110,7 @@ tasks.withType(Test) {
 
 /* GOOGLE JAVA FORMAT */
 googleJavaFormat {
-    toolVersion = '1.5'
+    toolVersion = '1.6'
 }
 check.dependsOn verifyGoogleJavaFormat
 /* GOOGLE JAVA FORMAT */
@@ -132,6 +132,20 @@ checkstyle {
     maxWarnings = 0
 }
 /* CHECKSTYLE */
+
+/* JAR */
+// Necessary for adding version information into the JAR.
+jar {
+    manifest {
+        attributes 'Implementation-Title': project.name,
+                'Implementation-Version': version,
+                'Built-By': System.getProperty('user.name'),
+                'Built-Date': new Date(),
+                'Built-JDK': System.getProperty('java.version'),
+                'Built-Gradle': gradle.gradleVersion
+    }
+}
+/* JAR */
 
 /* RELEASE */
 // Prepare release

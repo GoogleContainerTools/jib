@@ -16,40 +16,66 @@
 
 package com.google.cloud.tools.jib.configuration;
 
+import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.nio.file.Path;
 import java.util.List;
 
 /** Configures how to build a layer in the container image. */
-// TODO: Consolidate with ReproducibleLayerBuilder#LayerEntry.
 public class LayerConfiguration {
 
-  private final ImmutableList<Path> sourceFiles;
-  private final String destinationOnImage;
+  /** Builds a {@link LayerConfiguration}. */
+  public static class Builder {
+
+    private final ImmutableList.Builder<LayerEntry> layerEntries = ImmutableList.builder();
+
+    private Builder() {}
+
+    /**
+     * Adds an entry to the layer.
+     *
+     * <p>The source files are specified as a list instead of a set to define the order in which
+     * they are added.
+     *
+     * @param sourceFiles the source files to build from. Source files that are directories will
+     *     have all subfiles in the directory added (but not the directory itself)
+     * @param destinationOnImage Unix-style path to add the source files to in the container image
+     *     filesystem
+     * @return this
+     */
+    public Builder addEntry(List<Path> sourceFiles, String destinationOnImage) {
+      Preconditions.checkArgument(!sourceFiles.contains(null));
+      this.layerEntries.add(new LayerEntry(ImmutableList.copyOf(sourceFiles), destinationOnImage));
+      return this;
+    }
+
+    /**
+     * Returns the built {@link LayerConfiguration}.
+     *
+     * @return the built {@link LayerConfiguration}
+     */
+    public LayerConfiguration build() {
+      return new LayerConfiguration(layerEntries.build());
+    }
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  private final ImmutableList<LayerEntry> layerEntries;
 
   /**
    * Constructs a new layer configuration.
    *
-   * <p>The source files are specified as a list instead of a set to define the order in which they
-   * are added.
-   *
-   * @param sourceFiles the source files to build from. Source files that are directories will have
-   *     all subfiles in the directory added (but not the directory itself)
-   * @param destinationOnImage Unix-style path to add the source files to in the container image
-   *     filesystem
+   * @param layerEntries the list of {@link LayerEntry}s
    */
-  public LayerConfiguration(List<Path> sourceFiles, String destinationOnImage) {
-    Preconditions.checkArgument(!sourceFiles.contains(null));
-    this.sourceFiles = ImmutableList.copyOf(sourceFiles);
-    this.destinationOnImage = destinationOnImage;
+  private LayerConfiguration(ImmutableList<LayerEntry> layerEntries) {
+    this.layerEntries = layerEntries;
   }
 
-  public ImmutableList<Path> getSourceFiles() {
-    return sourceFiles;
-  }
-
-  public String getDestinationOnImage() {
-    return destinationOnImage;
+  public ImmutableList<LayerEntry> getLayerEntries() {
+    return layerEntries;
   }
 }
