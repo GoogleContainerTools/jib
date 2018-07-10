@@ -22,7 +22,6 @@ import com.google.cloud.tools.jib.configuration.PortsWithProtocol.Protocol;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedMap;
 import java.util.ArrayList;
@@ -30,6 +29,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 /**
@@ -63,6 +64,14 @@ import javax.annotation.Nullable;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ContainerConfigurationTemplate implements JsonTemplate {
+
+  /**
+   * Pattern used for parsing information out of exposed port configurations. Only accepts single
+   * ports with protocol.
+   *
+   * <p>Example matches: 100, 1000/tcp, 2000/udp
+   */
+  private static final Pattern portPattern = Pattern.compile("(\\d+)(?:/(tcp|udp))?");
 
   /**
    * A combined date and time at which the image was created. Constant to maintain reproducibility
@@ -175,11 +184,17 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     }
     ImmutableList.Builder<PortsWithProtocol> ports = new ImmutableList.Builder<>();
     for (Map.Entry<String, Map<?, ?>> entry : config.ExposedPorts.entrySet()) {
-      List<String> split = Splitter.on('/').splitToList(entry.getKey());
-      int port = Integer.parseInt(split.get(0));
-      String protocol = split.size() <= 1 ? "" : split.get(1);
+      String port = entry.getKey();
+      Matcher matcher = portPattern.matcher(port);
+      if (!matcher.matches()) {
+        throw new NumberFormatException("Invalid port configuration: '" + port + "'.");
+      }
+
+      int portNumber = Integer.parseInt(matcher.group(1));
+      String protocol = matcher.group(2);
       ports.add(
-          PortsWithProtocol.forSingle(port, "udp".equals(protocol) ? Protocol.UDP : Protocol.TCP));
+          PortsWithProtocol.forSingle(
+              portNumber, "udp".equals(protocol) ? Protocol.UDP : Protocol.TCP));
     }
     return ports.build();
   }

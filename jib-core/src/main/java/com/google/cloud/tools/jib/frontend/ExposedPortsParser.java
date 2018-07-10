@@ -35,10 +35,8 @@ public class ExposedPortsParser {
   private static final Pattern portPattern = Pattern.compile("(\\d+)(?:-(\\d+))?(?:/(tcp|udp))?");
 
   /**
-   * Converts/validates a list of strings representing port ranges to a list of single {@link
-   * PortsWithProtocol}s for each port contained in the ranges.
-   *
-   * <p>E.g. "1000-1002/tcp" gets expanded to 3 independent {@link PortsWithProtocol}s.
+   * Converts/validates a list of strings representing port ranges to a list of {@link
+   * PortsWithProtocol}s.
    *
    * @param ports the list of port numbers/ranges
    * @param buildLogger used to log warning messages
@@ -67,7 +65,7 @@ public class ExposedPortsParser {
       if (!Strings.isNullOrEmpty(matcher.group(2))) {
         max = Integer.parseInt(matcher.group(2));
       }
-      String protocol = matcher.group(3) == null ? "" : matcher.group(3);
+      String protocol = matcher.group(3);
 
       // Error if configured as 'max-min' instead of 'min-max'
       if (min > max) {
