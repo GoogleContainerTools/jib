@@ -19,20 +19,27 @@ package com.google.cloud.tools.jib.cache;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.cache.json.CacheMetadataLayerObjectTemplate;
 import com.google.cloud.tools.jib.cache.json.CacheMetadataLayerPropertiesObjectTemplate;
+import com.google.cloud.tools.jib.cache.json.CacheMetadataLayerPropertiesObjectTemplate.LayerEntryTemplate;
 import com.google.cloud.tools.jib.cache.json.CacheMetadataTemplate;
+import com.google.cloud.tools.jib.image.LayerEntry;
+import com.google.common.collect.ImmutableList;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /** Translates {@link CacheMetadata} to and from {@link CacheMetadataTemplate}. */
 public class CacheMetadataTranslator {
 
   /** Translates {@link CacheMetadataTemplate} to {@link CacheMetadata}. */
-  static CacheMetadata fromTemplate(CacheMetadataTemplate template, Path cacheDirectory) {
+  static CacheMetadata fromTemplate(CacheMetadataTemplate template, Path cacheDirectory)
+      throws CacheMetadataCorruptedException {
     CacheMetadata.Builder cacheMetadataBuilder = CacheMetadata.builder();
 
     // Converts each layer object in the template to a cache metadata layer.
     for (CacheMetadataLayerObjectTemplate layerObjectTemplate : template.getLayers()) {
       if (layerObjectTemplate.getDigest() == null || layerObjectTemplate.getDiffId() == null) {
-        throw new IllegalStateException(
+        throw new CacheMetadataCorruptedException(
             "Cannot translate cache metadata layer without a digest or diffId");
       }
 
@@ -46,10 +53,29 @@ public class CacheMetadataTranslator {
       // Constructs the cache metadata layer from a cached layer and layer metadata.
       LayerMetadata layerMetadata = null;
       if (propertiesObjectTemplate != null) {
+        // Converts the layer entry templates to layer entries.
+        ImmutableList.Builder<LayerEntry> layerEntries =
+            ImmutableList.builderWithExpectedSize(
+                propertiesObjectTemplate.getLayerEntries().size());
+        for (LayerEntryTemplate layerEntryTemplate : propertiesObjectTemplate.getLayerEntries()) {
+          if (layerEntryTemplate.getSourceFiles() == null
+              || layerEntryTemplate.getExtractionPath() == null) {
+            throw new CacheMetadataCorruptedException(
+                "Cannot translate cache metadata layer entry without source files or extraction path");
+          }
+          layerEntries.add(
+              new LayerEntry(
+                  layerEntryTemplate
+                      .getSourceFiles()
+                      .stream()
+                      .map(Paths::get)
+                      .collect(ImmutableList.toImmutableList()),
+                  layerEntryTemplate.getExtractionPath()));
+        }
+
         layerMetadata =
-            new LayerMetadata(
-                propertiesObjectTemplate.getSourceFiles(),
-                propertiesObjectTemplate.getLastModifiedTime());
+            LayerMetadata.from(
+                layerEntries.build(), propertiesObjectTemplate.getLastModifiedTime());
       }
 
       CachedLayer cachedLayer =
@@ -78,9 +104,22 @@ public class CacheMetadataTranslator {
               .setDiffId(cachedLayerWithMetadata.getDiffId());
 
       if (cachedLayerWithMetadata.getMetadata() != null) {
+        // Constructs the layer entry templates to add to the layer object template.
+        List<LayerEntryTemplate> layerEntryTemplates =
+            cachedLayerWithMetadata
+                .getMetadata()
+                .getEntries()
+                .stream()
+                .map(
+                    layerMetadataEntry ->
+                        new LayerEntryTemplate(
+                            layerMetadataEntry.getSourceFilesStrings(),
+                            layerMetadataEntry.getExtractionPath()))
+                .collect(Collectors.toList());
+
         layerObjectTemplate.setProperties(
             new CacheMetadataLayerPropertiesObjectTemplate()
-                .setSourceFiles(cachedLayerWithMetadata.getMetadata().getSourceFiles())
+                .setLayerEntries(layerEntryTemplates)
                 .setLastModifiedTime(cachedLayerWithMetadata.getMetadata().getLastModifiedTime()));
       }
 
