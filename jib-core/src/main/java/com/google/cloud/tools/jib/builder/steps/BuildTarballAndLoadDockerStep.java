@@ -87,6 +87,7 @@ class BuildTarballAndLoadDockerStep implements AsyncStep<Void>, Callable<Void> {
     Image<CachedLayer> image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
 
     // Load the image to docker daemon.
+    buildConfiguration.getBuildLogger().lifecycle("Loading to Docker daemon...");
     new DockerClient()
         .load(
             new ImageToTarballTranslator(image)
