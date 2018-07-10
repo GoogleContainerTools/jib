@@ -17,8 +17,8 @@
 package com.google.cloud.tools.jib.image.json;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.google.cloud.tools.jib.configuration.PortsWithProtocol;
-import com.google.cloud.tools.jib.configuration.PortsWithProtocol.Protocol;
+import com.google.cloud.tools.jib.configuration.PortWithProtocol;
+import com.google.cloud.tools.jib.configuration.PortWithProtocol.Protocol;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
@@ -139,16 +139,12 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     config.Cmd = cmd;
   }
 
-  public void setContainerExposedPorts(List<PortsWithProtocol> exposedPorts) {
+  public void setContainerExposedPorts(List<PortWithProtocol> exposedPorts) {
     // TODO: Do this conversion somewhere else
     ImmutableSortedMap.Builder<String, Map<?, ?>> result =
         new ImmutableSortedMap.Builder<>(String::compareTo);
-    for (PortsWithProtocol portsWithProtocol : exposedPorts) {
-      for (int port = portsWithProtocol.getMinPort();
-          port <= portsWithProtocol.getMaxPort();
-          port++) {
-        result.put(port + "/" + portsWithProtocol.getProtocol(), Collections.emptyMap());
-      }
+    for (PortWithProtocol portWithProtocol : exposedPorts) {
+      result.put(portWithProtocol.toString(), Collections.emptyMap());
     }
     config.ExposedPorts = result.build();
   }
@@ -177,12 +173,12 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
   }
 
   @Nullable
-  ImmutableList<PortsWithProtocol> getContainerExposedPorts() {
+  ImmutableList<PortWithProtocol> getContainerExposedPorts() {
     // TODO: Do this conversion somewhere else
     if (config.ExposedPorts == null) {
       return null;
     }
-    ImmutableList.Builder<PortsWithProtocol> ports = new ImmutableList.Builder<>();
+    ImmutableList.Builder<PortWithProtocol> ports = new ImmutableList.Builder<>();
     for (Map.Entry<String, Map<?, ?>> entry : config.ExposedPorts.entrySet()) {
       String port = entry.getKey();
       Matcher matcher = portPattern.matcher(port);
@@ -193,8 +189,7 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
       int portNumber = Integer.parseInt(matcher.group(1));
       String protocol = matcher.group(2);
       ports.add(
-          PortsWithProtocol.forSingle(
-              portNumber, "udp".equals(protocol) ? Protocol.UDP : Protocol.TCP));
+          new PortWithProtocol(portNumber, "udp".equals(protocol) ? Protocol.UDP : Protocol.TCP));
     }
     return ports.build();
   }

@@ -17,8 +17,8 @@
 package com.google.cloud.tools.jib.frontend;
 
 import com.google.cloud.tools.jib.builder.BuildLogger;
-import com.google.cloud.tools.jib.configuration.PortsWithProtocol;
-import com.google.cloud.tools.jib.configuration.PortsWithProtocol.Protocol;
+import com.google.cloud.tools.jib.configuration.PortWithProtocol;
+import com.google.cloud.tools.jib.configuration.PortWithProtocol.Protocol;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
@@ -35,17 +35,20 @@ public class ExposedPortsParser {
   private static final Pattern portPattern = Pattern.compile("(\\d+)(?:-(\\d+))?(?:/(tcp|udp))?");
 
   /**
-   * Converts/validates a list of strings representing port ranges to a list of {@link
-   * PortsWithProtocol}s.
+   * Converts/validates a list of strings representing port ranges to an expanded list of {@link
+   * PortWithProtocol}s.
+   *
+   * <p>For example: ["1000", "2000-2002"] will expand to a list of {@link PortWithProtocol}s with
+   * the port numbers [1000, 2000, 2001, 2002]
    *
    * @param ports the list of port numbers/ranges
    * @param buildLogger used to log warning messages
-   * @return the ports as a list of {@link PortsWithProtocol}
+   * @return the ports as a list of {@link PortWithProtocol}
    * @throws NumberFormatException if any of the ports are in an invalid format or out of range
    */
-  public static ImmutableList<PortsWithProtocol> parse(List<String> ports, BuildLogger buildLogger)
+  public static ImmutableList<PortWithProtocol> parse(List<String> ports, BuildLogger buildLogger)
       throws NumberFormatException {
-    ImmutableList.Builder<PortsWithProtocol> result = new ImmutableList.Builder<>();
+    ImmutableList.Builder<PortWithProtocol> result = new ImmutableList.Builder<>();
 
     for (String port : ports) {
       Matcher matcher = portPattern.matcher(port);
@@ -79,8 +82,8 @@ public class ExposedPortsParser {
             "Port number '" + port + "' is out of usual range (1-65535).");
       }
 
-      result.add(
-          PortsWithProtocol.forRange(
+      result.addAll(
+          PortWithProtocol.expandRange(
               min, max, "udp".equals(protocol) ? Protocol.UDP : Protocol.TCP));
     }
 

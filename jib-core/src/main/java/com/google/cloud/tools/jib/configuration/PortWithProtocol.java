@@ -17,10 +17,12 @@
 package com.google.cloud.tools.jib.configuration;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import java.util.List;
 import java.util.Objects;
 
 /** Holds port number and protocol for an exposed port. */
-public class PortsWithProtocol {
+public class PortWithProtocol {
 
   /** Represents the protocol portion of the port. */
   public enum Protocol {
@@ -40,40 +42,33 @@ public class PortsWithProtocol {
   }
 
   /**
-   * Creates a new {@link PortsWithProtocol} with the specified range and protocol.
+   * Creates a list of {@link PortWithProtocol}s over the specified range with the given protocol.
    *
    * @param minPort the minimum port number
    * @param maxPort the maximum port number
    * @param protocol the protocol
-   * @return the {@link PortsWithProtocol}
+   * @return the list of {@link PortWithProtocol}
    */
-  public static PortsWithProtocol forRange(int minPort, int maxPort, Protocol protocol) {
+  public static List<PortWithProtocol> expandRange(int minPort, int maxPort, Protocol protocol) {
     Preconditions.checkArgument(
         minPort <= maxPort, "minPort must be less than or equal to maxPort in port range");
-    return new PortsWithProtocol(minPort, maxPort, protocol);
+    ImmutableList.Builder<PortWithProtocol> result = new ImmutableList.Builder<>();
+    for (int port = minPort; port <= maxPort; port++) {
+      result.add(new PortWithProtocol(port, protocol));
+    }
+    return result.build();
   }
 
-  /**
-   * Creates a new {@link PortsWithProtocol} with the port number and protocol.
-   *
-   * @param port the port number
-   * @param protocol the protocol
-   * @return the {@link PortsWithProtocol}
-   */
-  public static PortsWithProtocol forSingle(int port, Protocol protocol) {
-    return new PortsWithProtocol(port, port, protocol);
-  }
-
-  private final int minPort;
-  private final int maxPort;
+  private final int port;
   private final Protocol protocol;
 
-  public int getMinPort() {
-    return minPort;
+  public PortWithProtocol(int port, Protocol protocol) {
+    this.port = port;
+    this.protocol = protocol;
   }
 
-  public int getMaxPort() {
-    return maxPort;
+  public int getPort() {
+    return port;
   }
 
   public Protocol getProtocol() {
@@ -85,28 +80,20 @@ public class PortsWithProtocol {
     if (other == this) {
       return true;
     }
-    if (other == null || !(other instanceof PortsWithProtocol)) {
+    if (other == null || !(other instanceof PortWithProtocol)) {
       return false;
     }
-    PortsWithProtocol otherPort = (PortsWithProtocol) other;
-    return minPort == otherPort.minPort
-        && maxPort == otherPort.maxPort
-        && protocol == otherPort.protocol;
+    PortWithProtocol otherPort = (PortWithProtocol) other;
+    return port == otherPort.port && protocol == otherPort.protocol;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(minPort, maxPort, protocol);
+    return Objects.hash(port, protocol);
   }
 
   @Override
   public String toString() {
-    return minPort + (maxPort == minPort ? "" : "-" + maxPort) + "/" + protocol;
-  }
-
-  private PortsWithProtocol(int minPort, int maxPort, Protocol protocol) {
-    this.minPort = minPort;
-    this.maxPort = maxPort;
-    this.protocol = protocol;
+    return port + "/" + protocol;
   }
 }

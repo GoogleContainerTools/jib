@@ -17,8 +17,8 @@
 package com.google.cloud.tools.jib.frontend;
 
 import com.google.cloud.tools.jib.builder.BuildLogger;
-import com.google.cloud.tools.jib.configuration.PortsWithProtocol;
-import com.google.cloud.tools.jib.configuration.PortsWithProtocol.Protocol;
+import com.google.cloud.tools.jib.configuration.PortWithProtocol;
+import com.google.cloud.tools.jib.configuration.PortWithProtocol.Protocol;
 import com.google.common.collect.ImmutableList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -38,18 +38,23 @@ public class ExposedPortsParserTest {
   @Test
   public void testParse() {
     List<String> goodInputs =
-        Arrays.asList("1000", "2000-2003", "3000-3000", "4000/tcp", "5000/udp", "6000-6002/tcp");
-    ImmutableList<PortsWithProtocol> expected =
-        new ImmutableList.Builder<PortsWithProtocol>()
+        Arrays.asList("1000", "2000-2003", "3000-3000", "4000/tcp", "5000/udp", "6000-6002/udp");
+    ImmutableList<PortWithProtocol> expected =
+        new ImmutableList.Builder<PortWithProtocol>()
             .add(
-                PortsWithProtocol.forSingle(1000, Protocol.TCP),
-                PortsWithProtocol.forRange(2000, 2003, Protocol.TCP),
-                PortsWithProtocol.forSingle(3000, Protocol.TCP),
-                PortsWithProtocol.forSingle(4000, Protocol.TCP),
-                PortsWithProtocol.forSingle(5000, Protocol.UDP),
-                PortsWithProtocol.forRange(6000, 6002, Protocol.TCP))
+                new PortWithProtocol(1000, Protocol.TCP),
+                new PortWithProtocol(2000, Protocol.TCP),
+                new PortWithProtocol(2001, Protocol.TCP),
+                new PortWithProtocol(2002, Protocol.TCP),
+                new PortWithProtocol(2003, Protocol.TCP),
+                new PortWithProtocol(3000, Protocol.TCP),
+                new PortWithProtocol(4000, Protocol.TCP),
+                new PortWithProtocol(5000, Protocol.UDP),
+                new PortWithProtocol(6000, Protocol.UDP),
+                new PortWithProtocol(6001, Protocol.UDP),
+                new PortWithProtocol(6002, Protocol.UDP))
             .build();
-    ImmutableList<PortsWithProtocol> result = ExposedPortsParser.parse(goodInputs, mockLogger);
+    ImmutableList<PortWithProtocol> result = ExposedPortsParser.parse(goodInputs, mockLogger);
     Assert.assertEquals(expected, result);
 
     List<String> badInputs = Arrays.asList("abc", "/udp", "1000/abc", "a100/tcp", "20/udpabc");

@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.image.json;
 
-import com.google.cloud.tools.jib.configuration.PortsWithProtocol;
-import com.google.cloud.tools.jib.configuration.PortsWithProtocol.Protocol;
+import com.google.cloud.tools.jib.configuration.PortWithProtocol;
+import com.google.cloud.tools.jib.configuration.PortWithProtocol.Protocol;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.io.Resources;
@@ -39,14 +39,14 @@ import org.junit.Test;
 /** Tests for {@link ContainerConfigurationTemplate}. */
 public class ContainerConfigurationTemplateTest {
 
-  private List<PortsWithProtocol> exposedPorts;
+  private List<PortWithProtocol> exposedPorts;
 
   @Before
   public void setup() {
     exposedPorts = new ArrayList<>();
-    exposedPorts.add(PortsWithProtocol.forSingle(1000, Protocol.TCP));
-    exposedPorts.add(PortsWithProtocol.forSingle(2000, Protocol.TCP));
-    exposedPorts.add(PortsWithProtocol.forSingle(3000, Protocol.UDP));
+    exposedPorts.add(new PortWithProtocol(1000, Protocol.TCP));
+    exposedPorts.add(new PortWithProtocol(2000, Protocol.TCP));
+    exposedPorts.add(new PortWithProtocol(3000, Protocol.UDP));
   }
 
   @Test
