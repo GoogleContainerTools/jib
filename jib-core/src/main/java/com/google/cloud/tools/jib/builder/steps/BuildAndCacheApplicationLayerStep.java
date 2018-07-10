@@ -26,12 +26,12 @@ import com.google.cloud.tools.jib.cache.CacheReader;
 import com.google.cloud.tools.jib.cache.CacheWriter;
 import com.google.cloud.tools.jib.cache.CachedLayerWithMetadata;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
+import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.image.ReproducibleLayerBuilder;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.concurrent.Callable;
 
 /** Builds and caches application layers. */
@@ -57,24 +57,33 @@ class BuildAndCacheApplicationLayerStep
                       "dependencies",
                       listeningExecutorService,
                       buildConfiguration,
-                      LayerConfiguration.builder().addEntry(sourceFilesConfiguration.getDependenciesFiles(),
-                      sourceFilesConfiguration.getDependenciesPathOnImage()).build(),
+                      LayerConfiguration.builder()
+                          .addEntry(
+                              sourceFilesConfiguration.getDependenciesFiles(),
+                              sourceFilesConfiguration.getDependenciesPathOnImage())
+                          .build(),
                       cache))
               .add(
                   new BuildAndCacheApplicationLayerStep(
                       "resources",
                       listeningExecutorService,
                       buildConfiguration,
-                      LayerConfiguration.builder().addEntry(sourceFilesConfiguration.getResourcesFiles(),
-                          sourceFilesConfiguration.getResourcesPathOnImage()).build(),
+                      LayerConfiguration.builder()
+                          .addEntry(
+                              sourceFilesConfiguration.getResourcesFiles(),
+                              sourceFilesConfiguration.getResourcesPathOnImage())
+                          .build(),
                       cache))
               .add(
                   new BuildAndCacheApplicationLayerStep(
                       "classes",
                       listeningExecutorService,
                       buildConfiguration,
-                      LayerConfiguration.builder().addEntry(sourceFilesConfiguration.getClassesFiles(),
-                          sourceFilesConfiguration.getClassesPathOnImage()).build(),
+                      LayerConfiguration.builder()
+                          .addEntry(
+                              sourceFilesConfiguration.getClassesFiles(),
+                              sourceFilesConfiguration.getClassesPathOnImage())
+                          .build(),
                       cache));
 
       // Adds the extra layer to be built, if configured.
@@ -127,13 +136,17 @@ class BuildAndCacheApplicationLayerStep
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), description)) {
       // Don't build the layer if it exists already.
       CachedLayerWithMetadata cachedLayer =
-          new CacheReader(cache).getUpToDateLayerBySourceFiles(sourceFiles);
+          new CacheReader(cache)
+              .getUpToDateLayerByLayerEntries(layerConfiguration.getLayerEntries());
       if (cachedLayer != null) {
         return cachedLayer;
       }
 
-      ReproducibleLayerBuilder reproducibleLayerBuilder =
-          new ReproducibleLayerBuilder().addFiles(sourceFiles, extractionPath);
+      ReproducibleLayerBuilder reproducibleLayerBuilder = new ReproducibleLayerBuilder();
+      for (LayerEntry layerEntry : layerConfiguration.getLayerEntries()) {
+        reproducibleLayerBuilder.addFiles(
+            layerEntry.getSourceFiles(), layerEntry.getExtractionPath());
+      }
 
       cachedLayer = new CacheWriter(cache).writeLayer(reproducibleLayerBuilder);
 
