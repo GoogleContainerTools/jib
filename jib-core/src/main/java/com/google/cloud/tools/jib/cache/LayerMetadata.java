@@ -44,14 +44,6 @@ class LayerMetadata {
       return extractionPath;
     }
 
-    //    void setSourceFilesStrings(List<String> sourceFilesStrings) {
-    //      this.sourceFilesStrings = sourceFilesStrings;
-    //    }
-    //
-    //    void setExtractionPath(String extractionPath) {
-    //      this.extractionPath = extractionPath;
-    //    }
-
     @VisibleForTesting
     LayerMetadataEntry(List<String> sourceFilesStrings, String extractionPath) {
       this.sourceFilesStrings = sourceFilesStrings;
@@ -90,7 +82,7 @@ class LayerMetadata {
     return entries;
   }
 
-  public FileTime getLastModifiedTime() {
+  FileTime getLastModifiedTime() {
     return lastModifiedTime;
   }
 
