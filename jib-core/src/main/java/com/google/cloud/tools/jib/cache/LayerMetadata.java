@@ -82,7 +82,7 @@ class LayerMetadata {
     return entries;
   }
 
-  public FileTime getLastModifiedTime() {
+  FileTime getLastModifiedTime() {
     return lastModifiedTime;
   }
 
