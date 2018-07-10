@@ -4,6 +4,7 @@ plugins {
     id 'com.github.sherter.google-java-format' version '0.7.1'
     id 'net.ltgt.apt' version '0.13'
     id 'net.ltgt.errorprone' version '0.0.13'
+    id 'biz.aQute.bnd.builder' version '4.0.0'
 }
 
 group 'com.google.cloud.tools'
@@ -34,7 +35,7 @@ configurations {
 dependencies {
     // Make sure these are consistent with jib-maven-plugin.
     compile 'com.google.http-client:google-http-client:1.23.0'
-    compile 'org.apache.commons:commons-compress:1.15'
+    compile 'org.apache.commons:commons-compress:1.17'
     compile 'com.google.guava:guava:23.5-jre'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.9.2'
     compile 'org.slf4j:slf4j-api:1.7.25'
@@ -51,6 +52,14 @@ dependencies {
 jar {
     manifest {
         attributes 'Implementation-Version': version
+        
+        // OSGi metadata
+        attributes 'Bundle-SymbolicName': 'com.google.cloud.tools.jib'
+        attributes 'Bundle-Name': 'Jib library for building Docker and OCI images'
+        attributes 'Bundle-Vendor': 'Google LLC'
+        attributes 'Bundle-DocURL': 'https://github.com/GoogleContainerTools/jib'
+        attributes 'Bundle-License': 'https://www.apache.org/licenses/LICENSE-2.0'
+        attributes 'Export-Package': 'com.google.cloud.tools.jib.*'
     }
 }
 
