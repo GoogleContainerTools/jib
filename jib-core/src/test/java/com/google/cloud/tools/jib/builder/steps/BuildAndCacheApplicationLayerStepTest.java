@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.CacheReader;
 import com.google.cloud.tools.jib.cache.CachedLayerWithMetadata;
 import com.google.cloud.tools.jib.image.ImageLayers;
+import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -81,33 +82,41 @@ public class BuildAndCacheApplicationLayerStepTest {
     // Re-initialize cache with the updated metadata.
     Cache cache = Cache.init(temporaryCacheDirectory);
 
+    ImmutableList<LayerEntry> dependenciesLayerEntry =
+        ImmutableList.of(
+            new LayerEntry(
+                testSourceFilesConfiguration.getDependenciesFiles(),
+                testSourceFilesConfiguration.getDependenciesPathOnImage()));
+    ImmutableList<LayerEntry> resourcesLayerEntry =
+        ImmutableList.of(
+            new LayerEntry(
+                testSourceFilesConfiguration.getResourcesFiles(),
+                testSourceFilesConfiguration.getResourcesPathOnImage()));
+    ImmutableList<LayerEntry> classesLayerEntry =
+        ImmutableList.of(
+            new LayerEntry(
+                testSourceFilesConfiguration.getClassesFiles(),
+                testSourceFilesConfiguration.getClassesPathOnImage()));
+
     // Verifies that the cached layers are up-to-date.
     CacheReader cacheReader = new CacheReader(cache);
     Assert.assertEquals(
         applicationLayers.get(0).getBlobDescriptor(),
-        cacheReader
-            .getUpToDateLayerBySourceFiles(testSourceFilesConfiguration.getDependenciesFiles())
-            .getBlobDescriptor());
+        cacheReader.getUpToDateLayerByLayerEntries(dependenciesLayerEntry).getBlobDescriptor());
     Assert.assertEquals(
         applicationLayers.get(1).getBlobDescriptor(),
-        cacheReader
-            .getUpToDateLayerBySourceFiles(testSourceFilesConfiguration.getResourcesFiles())
-            .getBlobDescriptor());
+        cacheReader.getUpToDateLayerByLayerEntries(resourcesLayerEntry).getBlobDescriptor());
     Assert.assertEquals(
         applicationLayers.get(2).getBlobDescriptor(),
-        cacheReader
-            .getUpToDateLayerBySourceFiles(testSourceFilesConfiguration.getClassesFiles())
-            .getBlobDescriptor());
+        cacheReader.getUpToDateLayerByLayerEntries(classesLayerEntry).getBlobDescriptor());
 
     // Verifies that the cache reader gets the same layers as the newest application layers.
     Assert.assertEquals(
         applicationLayers.get(0).getContentFile(),
-        cacheReader.getLayerFile(testSourceFilesConfiguration.getDependenciesFiles()));
+        cacheReader.getLayerFile(dependenciesLayerEntry));
     Assert.assertEquals(
-        applicationLayers.get(1).getContentFile(),
-        cacheReader.getLayerFile(testSourceFilesConfiguration.getResourcesFiles()));
+        applicationLayers.get(1).getContentFile(), cacheReader.getLayerFile(resourcesLayerEntry));
     Assert.assertEquals(
-        applicationLayers.get(2).getContentFile(),
-        cacheReader.getLayerFile(testSourceFilesConfiguration.getClassesFiles()));
+        applicationLayers.get(2).getContentFile(), cacheReader.getLayerFile(classesLayerEntry));
   }
 }

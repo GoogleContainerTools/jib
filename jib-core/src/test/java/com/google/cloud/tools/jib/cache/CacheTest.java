@@ -21,7 +21,6 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -58,8 +57,7 @@ public class CacheTest {
       throws URISyntaxException, IOException, CacheMetadataCorruptedException {
     Path cacheDirectory = temporaryCacheDirectory.newFolder().toPath();
 
-    Path resourceMetadataJsonPath =
-        Paths.get(getClass().getClassLoader().getResource("json/metadata.json").toURI());
+    Path resourceMetadataJsonPath = PlatformSpecificMetadataJson.getMetadataJsonFile();
     Path testMetadataJsonPath = cacheDirectory.resolve(CacheFiles.METADATA_FILENAME);
     Files.copy(resourceMetadataJsonPath, testMetadataJsonPath);
 
