@@ -74,13 +74,13 @@ public class TarStreamBuilder {
     archiveMap.put(
         entry,
         tarArchiveOutputStream -> {
+          // Note that this will skip files that don't exist.
           if (entry.isFile()) {
             try (InputStream contentStream =
                 new BufferedInputStream(Files.newInputStream(entry.getFile().toPath()))) {
               ByteStreams.copy(contentStream, tarArchiveOutputStream);
             }
           }
-          // Note that this will skip files that don't exist.
         });
   }
 

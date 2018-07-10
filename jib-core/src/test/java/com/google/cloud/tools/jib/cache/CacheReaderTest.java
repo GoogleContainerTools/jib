@@ -142,12 +142,12 @@ public class CacheReaderTest {
     try (Cache cache = Cache.init(testCacheFolder)) {
       CacheReader cacheReader = new CacheReader(cache);
 
-      ImmutableList<LayerEntry> layerEntryFilter =
+      ImmutableList<LayerEntry> upToDateLayerEntries =
           ImmutableList.of(
               new LayerEntry(ImmutableList.of(testSourceFiles), "/some/extraction/path"));
 
       CachedLayerWithMetadata upToDateLayer =
-          cacheReader.getUpToDateLayerByLayerEntries(layerEntryFilter);
+          cacheReader.getUpToDateLayerByLayerEntries(upToDateLayerEntries);
       Assert.assertNotNull(upToDateLayer);
       Assert.assertEquals(
           classesCachedLayer.getBlobDescriptor(), upToDateLayer.getBlobDescriptor());
@@ -155,7 +155,7 @@ public class CacheReaderTest {
       // Changes a file and checks that the change is detected.
       Files.setLastModifiedTime(
           testSourceFiles.resolve("a").resolve("b").resolve("bar"), newerLastModifiedTime);
-      Assert.assertNull(cacheReader.getUpToDateLayerByLayerEntries(layerEntryFilter));
+      Assert.assertNull(cacheReader.getUpToDateLayerByLayerEntries(upToDateLayerEntries));
       Assert.assertNull(
           cacheReader.getUpToDateLayerByLayerEntries(
               ImmutableList.of(
