@@ -1,5 +1,4 @@
 [![experimental](http://badges.github.io/stability-badges/dist/experimental.svg)](http://github.com/badges/stability-badges)
-[![Analytics](https://cloud-tools-for-java-metrics.appspot.com/UA-121724379-2/github?useReferer)](https://github.com/igrigorik/ga-beacon)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/jib-maven-plugin/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/jib-maven-plugin)
 [![Gitter version](https://img.shields.io/gitter/room/gitterHQ/gitter.svg)](https://gitter.im/google/jib)
 
@@ -328,3 +327,6 @@ See the [Jib project README](/../../#frequently-asked-questions-faq).
 ## Community
 
 See the [Jib project README](/../../#community).
+
+<!-- We are using this to collect Google Analytics data. This is from https://github.com/igrigorik/ga-beacon. -->
+![Analytics](https://cloud-tools-for-java-metrics.appspot.com/UA-121724379-2/wiki?pixel&useReferer)
