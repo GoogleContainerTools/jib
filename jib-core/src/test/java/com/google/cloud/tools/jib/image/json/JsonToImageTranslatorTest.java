@@ -63,21 +63,21 @@ public class JsonToImageTranslatorTest {
   @Test
   public void testToImage_v22()
       throws IOException, LayerPropertyNotFoundException, LayerCountMismatchException,
-          DigestException, URISyntaxException {
+          DigestException, URISyntaxException, BadConfigurationFormatException {
     testToImage_buildable("json/v22manifest.json", V22ManifestTemplate.class);
   }
 
   @Test
   public void testToImage_oci()
       throws IOException, LayerPropertyNotFoundException, LayerCountMismatchException,
-          DigestException, URISyntaxException {
+          DigestException, URISyntaxException, BadConfigurationFormatException {
     testToImage_buildable("json/ocimanifest.json", OCIManifestTemplate.class);
   }
 
   private <T extends BuildableManifestTemplate> void testToImage_buildable(
       String jsonFilename, Class<T> manifestTemplateClass)
       throws IOException, LayerPropertyNotFoundException, LayerCountMismatchException,
-          DigestException, URISyntaxException {
+          DigestException, URISyntaxException, BadConfigurationFormatException {
     // Loads the container configuration JSON.
     Path containerConfigurationJsonFile =
         Paths.get(getClass().getClassLoader().getResource("json/containerconfig.json").toURI());

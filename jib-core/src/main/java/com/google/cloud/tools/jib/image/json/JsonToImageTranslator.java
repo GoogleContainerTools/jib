@@ -17,6 +17,8 @@
 package com.google.cloud.tools.jib.image.json;
 
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
+import com.google.cloud.tools.jib.configuration.Port;
+import com.google.cloud.tools.jib.configuration.Port.Protocol;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.DigestOnlyLayer;
 import com.google.cloud.tools.jib.image.Image;
@@ -25,11 +27,24 @@ import com.google.cloud.tools.jib.image.LayerCountMismatchException;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.ReferenceLayer;
 import com.google.cloud.tools.jib.image.ReferenceNoDiffIdLayer;
+import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.annotation.Nullable;
 
 /** Translates {@link V21ManifestTemplate} and {@link V22ManifestTemplate} into {@link Image}. */
 public class JsonToImageTranslator {
+
+  /**
+   * Pattern used for parsing information out of exposed port configurations. Only accepts single
+   * ports with protocol.
+   *
+   * <p>Example matches: 100, 1000/tcp, 2000/udp
+   */
+  private static final Pattern portPattern = Pattern.compile("(\\d+)(?:/(tcp|udp))?");
 
   /**
    * Translates {@link V21ManifestTemplate} to {@link Image}.
@@ -60,11 +75,13 @@ public class JsonToImageTranslator {
    * @throws LayerCountMismatchException if the manifest and configuration contain conflicting layer
    *     information.
    * @throws LayerPropertyNotFoundException if adding image layers fails.
+   * @throws BadConfigurationFormatException if the container configuration is in a bad format
    */
   public static Image<Layer> toImage(
       BuildableManifestTemplate manifestTemplate,
       ContainerConfigurationTemplate containerConfigurationTemplate)
-      throws LayerCountMismatchException, LayerPropertyNotFoundException {
+      throws LayerCountMismatchException, LayerPropertyNotFoundException,
+          BadConfigurationFormatException {
     List<ReferenceNoDiffIdLayer> layers = new ArrayList<>();
     for (BuildableManifestTemplate.ContentDescriptorTemplate layerObjectTemplate :
         manifestTemplate.getLayers()) {
@@ -103,7 +120,8 @@ public class JsonToImageTranslator {
     }
 
     if (containerConfigurationTemplate.getContainerExposedPorts() != null) {
-      imageBuilder.setExposedPorts(containerConfigurationTemplate.getContainerExposedPorts());
+      imageBuilder.setExposedPorts(
+          portMapToList(containerConfigurationTemplate.getContainerExposedPorts()));
     }
 
     if (containerConfigurationTemplate.getContainerEnvironment() != null) {
@@ -113,6 +131,33 @@ public class JsonToImageTranslator {
     }
 
     return imageBuilder.build();
+  }
+
+  /**
+   * Converts a map of exposed ports as strings to a list of {@link Port}s (e.g. {@code
+   * {"1000/tcp":{}}} -> {@code Port(1000, Protocol.TCP)}).
+   *
+   * @param portMap the map to convert
+   * @return a list of {@link Port}s
+   */
+  private static ImmutableList<Port> portMapToList(@Nullable Map<String, Map<?, ?>> portMap)
+      throws BadConfigurationFormatException {
+    if (portMap == null) {
+      return ImmutableList.of();
+    }
+    ImmutableList.Builder<Port> ports = new ImmutableList.Builder<>();
+    for (Map.Entry<String, Map<?, ?>> entry : portMap.entrySet()) {
+      String port = entry.getKey();
+      Matcher matcher = portPattern.matcher(port);
+      if (!matcher.matches()) {
+        throw new BadConfigurationFormatException("Invalid port configuration: '" + port + "'.");
+      }
+
+      int portNumber = Integer.parseInt(matcher.group(1));
+      String protocol = matcher.group(2);
+      ports.add(new Port(portNumber, "udp".equals(protocol) ? Protocol.UDP : Protocol.TCP));
+    }
+    return ports.build();
   }
 
   private JsonToImageTranslator() {}

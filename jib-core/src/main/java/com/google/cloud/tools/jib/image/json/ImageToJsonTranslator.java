@@ -19,10 +19,15 @@ package com.google.cloud.tools.jib.image.json;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.cache.CachedLayer;
+import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import com.google.common.collect.ImmutableSortedMap;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Translates an {@link Image} into a manifest or container configuration JSON BLOB.
@@ -37,6 +42,23 @@ import java.lang.reflect.InvocationTargetException;
  * }</pre>
  */
 public class ImageToJsonTranslator {
+
+  /**
+   * Converts a list of {@link Port}s to the corresponding container config format for exposed ports
+   * (e.g. {@code Port(1000, Protocol.TCP)} -> {@code {"1000/tcp":{}}}).
+   *
+   * @param exposedPorts the list of {@link Port}s to translate
+   * @return a sorted map with the string representation of the ports as keys and empty maps as
+   *     values
+   */
+  private static Map<String, Map<?, ?>> portListToMap(List<Port> exposedPorts) {
+    ImmutableSortedMap.Builder<String, Map<?, ?>> result =
+        new ImmutableSortedMap.Builder<>(String::compareTo);
+    for (Port port : exposedPorts) {
+      result.put(port.getPort() + "/" + port.getProtocol(), Collections.emptyMap());
+    }
+    return result.build();
+  }
 
   private final Image<CachedLayer> image;
 
@@ -73,7 +95,7 @@ public class ImageToJsonTranslator {
     template.setContainerCmd(image.getJavaArguments());
 
     // Sets the exposed ports.
-    template.setContainerExposedPorts(image.getExposedPorts());
+    template.setContainerExposedPorts(portListToMap(image.getExposedPorts()));
 
     // Serializes into JSON.
     return JsonTemplateMapper.toBlob(template);
