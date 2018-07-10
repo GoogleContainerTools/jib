@@ -16,9 +16,6 @@
 
 package com.google.cloud.tools.jib.configuration;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import java.util.List;
 import java.util.Objects;
 
 /** Holds port number and protocol for an exposed port. */
@@ -39,24 +36,6 @@ public class PortWithProtocol {
     public String toString() {
       return stringRepresentation;
     }
-  }
-
-  /**
-   * Creates a list of {@link PortWithProtocol}s over the specified range with the given protocol.
-   *
-   * @param minPort the minimum port number
-   * @param maxPort the maximum port number
-   * @param protocol the protocol
-   * @return the list of {@link PortWithProtocol}
-   */
-  public static List<PortWithProtocol> expandRange(int minPort, int maxPort, Protocol protocol) {
-    Preconditions.checkArgument(
-        minPort <= maxPort, "minPort must be less than or equal to maxPort in port range");
-    ImmutableList.Builder<PortWithProtocol> result = new ImmutableList.Builder<>();
-    for (int port = minPort; port <= maxPort; port++) {
-      result.add(new PortWithProtocol(port, protocol));
-    }
-    return result.build();
   }
 
   private final int port;

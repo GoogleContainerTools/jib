@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/** Utility for parsing exposed ports from plugin configuration */
 public class ExposedPortsParser {
 
   /**
@@ -68,7 +69,7 @@ public class ExposedPortsParser {
       if (!Strings.isNullOrEmpty(matcher.group(2))) {
         max = Integer.parseInt(matcher.group(2));
       }
-      String protocol = matcher.group(3);
+      Protocol protocol = "udp".equals(matcher.group(3)) ? Protocol.UDP : Protocol.TCP;
 
       // Error if configured as 'max-min' instead of 'min-max'
       if (min > max) {
@@ -82,9 +83,9 @@ public class ExposedPortsParser {
             "Port number '" + port + "' is out of usual range (1-65535).");
       }
 
-      result.addAll(
-          PortWithProtocol.expandRange(
-              min, max, "udp".equals(protocol) ? Protocol.UDP : Protocol.TCP));
+      for (int portNumber = min; portNumber <= max; portNumber++) {
+        result.add(new PortWithProtocol(portNumber, protocol));
+      }
     }
 
     return result.build();
