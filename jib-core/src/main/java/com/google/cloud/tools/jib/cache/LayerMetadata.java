@@ -21,7 +21,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -33,10 +32,10 @@ class LayerMetadata {
   /** Entry into the layer metadata. */
   static class LayerMetadataEntry {
 
-    private final List<String> sourceFilesStrings;
-    private final String extractionPath;
+    private ImmutableList<String> sourceFilesStrings;
+    private String extractionPath;
 
-    List<String> getSourceFilesStrings() {
+    ImmutableList<String> getSourceFilesStrings() {
       return sourceFilesStrings;
     }
 
@@ -44,7 +43,7 @@ class LayerMetadata {
       return extractionPath;
     }
 
-    private LayerMetadataEntry(List<String> sourceFilesStrings, String extractionPath) {
+    private LayerMetadataEntry(ImmutableList<String> sourceFilesStrings, String extractionPath) {
       this.sourceFilesStrings = sourceFilesStrings;
       this.extractionPath = extractionPath;
     }
@@ -56,11 +55,13 @@ class LayerMetadata {
 
     for (LayerEntry layerEntry : layerEntries) {
       List<Path> sourceFiles = layerEntry.getSourceFiles();
-      List<String> sourceFilesStrings = new ArrayList<>(sourceFiles.size());
+      ImmutableList.Builder<String> sourceFilesStrings =
+          ImmutableList.builderWithExpectedSize(sourceFiles.size());
       for (Path sourceFile : sourceFiles) {
         sourceFilesStrings.add(sourceFile.toString());
       }
-      entries.add(new LayerMetadataEntry(sourceFilesStrings, layerEntry.getExtractionPath()));
+      entries.add(
+          new LayerMetadataEntry(sourceFilesStrings.build(), layerEntry.getExtractionPath()));
     }
 
     return new LayerMetadata(entries.build(), lastModifiedTime);
@@ -86,7 +87,7 @@ class LayerMetadata {
   }
 
   @VisibleForTesting
-  void setEntry(List<String> sourceFilesStrings, String extractionPath) {
+  void setEntry(ImmutableList<String> sourceFilesStrings, String extractionPath) {
     entries = ImmutableList.of(new LayerMetadataEntry(sourceFilesStrings, extractionPath));
   }
 }

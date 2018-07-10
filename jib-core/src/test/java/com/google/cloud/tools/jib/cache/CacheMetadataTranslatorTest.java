@@ -44,16 +44,18 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class CacheMetadataTranslatorTest {
 
+  private static final List<String> CLASSES_LAYER_SOURCE_FILES =
+      Collections.singletonList(Paths.get("some", "source", "path").toString());
+  private static final String CLASSES_LAYER_EXTRACTION_PATH = "some/extraction/path";
+  private static final FileTime CLASSES_LAYER_LAST_MODIFIED_TIME =
+      FileTime.fromMillis(255073580723571L);
+
   @Mock private Path mockPath;
 
   private BlobDescriptor baseLayerBlobDescriptor;
   private DescriptorDigest baseLayerDiffId;
   private BlobDescriptor classesLayerBlobDescriptor;
   private DescriptorDigest classesLayerDiffId;
-
-  private final List<String> classesLayerSourceFiles =
-      Collections.singletonList(Paths.get("some", "source", "path").toString());
-  private final FileTime classesLayerLastModifiedTime = FileTime.fromMillis(255073580723571L);
 
   @Before
   public void setUp() throws DigestException {
@@ -76,7 +78,8 @@ public class CacheMetadataTranslatorTest {
   }
 
   @Test
-  public void testFromTemplate() throws URISyntaxException, IOException {
+  public void testFromTemplate()
+      throws URISyntaxException, IOException, CacheMetadataCorruptedException {
     Path fakePath = Paths.get("fake/path");
 
     // Loads the expected JSON string.
@@ -107,10 +110,13 @@ public class CacheMetadataTranslatorTest {
     Assert.assertEquals(classesLayerDiffId, classesLayer.getDiffId());
     Assert.assertNotNull(classesLayer.getMetadata());
     Assert.assertEquals(
-        classesLayerSourceFiles,
+        CLASSES_LAYER_SOURCE_FILES,
         classesLayer.getMetadata().getEntries().get(0).getSourceFilesStrings());
     Assert.assertEquals(
-        classesLayerLastModifiedTime, classesLayer.getMetadata().getLastModifiedTime());
+        CLASSES_LAYER_EXTRACTION_PATH,
+        classesLayer.getMetadata().getEntries().get(0).getExtractionPath());
+    Assert.assertEquals(
+        CLASSES_LAYER_LAST_MODIFIED_TIME, classesLayer.getMetadata().getLastModifiedTime());
   }
 
   @Test
@@ -128,12 +134,12 @@ public class CacheMetadataTranslatorTest {
         LayerMetadata.from(
             ImmutableList.of(
                 new LayerEntry(
-                    classesLayerSourceFiles
+                    CLASSES_LAYER_SOURCE_FILES
                         .stream()
                         .map(Paths::get)
                         .collect(ImmutableList.toImmutableList()),
-                    "/app/classes")),
-            classesLayerLastModifiedTime);
+                    CLASSES_LAYER_EXTRACTION_PATH)),
+            CLASSES_LAYER_LAST_MODIFIED_TIME);
     CachedLayerWithMetadata classesLayer =
         new CachedLayerWithMetadata(classesCachedLayer, classesLayerMetadata);
 

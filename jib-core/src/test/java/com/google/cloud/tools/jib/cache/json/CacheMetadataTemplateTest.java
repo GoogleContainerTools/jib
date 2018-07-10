@@ -63,7 +63,7 @@ public class CacheMetadataTemplateTest {
                 Collections.singletonList(
                     new LayerEntryTemplate(
                         Collections.singletonList(Paths.get("some", "source", "path").toString()),
-                        "/extraction/path")))
+                        "some/extraction/path")))
             .setLastModifiedTime(FileTime.fromMillis(255073580723571L));
     CacheMetadataLayerObjectTemplate classesLayerTemplate =
         new CacheMetadataLayerObjectTemplate()
@@ -128,7 +128,7 @@ public class CacheMetadataTemplateTest {
         Collections.singletonList(Paths.get("some", "source", "path").toString()),
         classesLayerTemplate.getProperties().getLayerEntries().get(0).getSourceFiles());
     Assert.assertEquals(
-        "/extraction/path",
+        "some/extraction/path",
         classesLayerTemplate.getProperties().getLayerEntries().get(0).getExtractionPath());
     Assert.assertEquals(
         FileTime.fromMillis(255073580723571L),

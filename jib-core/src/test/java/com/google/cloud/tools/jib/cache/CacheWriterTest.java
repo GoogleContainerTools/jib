@@ -86,7 +86,7 @@ public class CacheWriterTest {
     CacheWriter cacheWriter = new CacheWriter(testCache);
 
     UnwrittenLayer unwrittenLayer = new UnwrittenLayer(Blobs.from(resourceBlob));
-    ;
+
     ReproducibleLayerBuilder mockReproducibleLayerBuilder =
         Mockito.mock(ReproducibleLayerBuilder.class);
     Mockito.when(mockReproducibleLayerBuilder.build()).thenReturn(unwrittenLayer);

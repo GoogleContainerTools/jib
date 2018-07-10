@@ -98,7 +98,7 @@ public class CacheReaderTest {
               ImmutableList.of(
                   new LayerEntry(
                       ImmutableList.of(Paths.get("some", "source", "directory")),
-                      "/some/extraction/path"))));
+                      "some/extraction/path"))));
       Assert.assertNull(cacheReader.getLayerFile(ImmutableList.of()));
     }
   }
@@ -156,6 +156,10 @@ public class CacheReaderTest {
       Files.setLastModifiedTime(
           testSourceFiles.resolve("a").resolve("b").resolve("bar"), newerLastModifiedTime);
       Assert.assertNull(cacheReader.getUpToDateLayerByLayerEntries(layerEntryFilter));
+      Assert.assertNull(
+          cacheReader.getUpToDateLayerByLayerEntries(
+              ImmutableList.of(
+                  new LayerEntry(ImmutableList.of(testSourceFiles), "extractionPath"))));
 
       // Any non-cached directory should be deemed modified.
       Assert.assertNull(
