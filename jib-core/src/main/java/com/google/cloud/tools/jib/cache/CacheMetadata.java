@@ -94,9 +94,9 @@ class CacheMetadata {
                         metadataEntry.getSourceFilesStrings().stream(),
                         (sourceFile, sourceFileString) ->
                             !sourceFile.equals(Paths.get(sourceFileString)))
-                    .anyMatch(isNotEqual -> isNotEqual);
+                    .anyMatch(sourceFileIsDifferent -> sourceFileIsDifferent);
               })
-          .noneMatch(isNotEqual -> isNotEqual);
+          .noneMatch(layerEntryIsDifferent -> layerEntryIsDifferent);
     }
 
     private final ImageLayers<CachedLayerWithMetadata> layers;
