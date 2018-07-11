@@ -8,6 +8,12 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
+
+- Fixed handling case-insensitive `Basic` authentication method ([#546](https://github.com/GoogleContainerTools/jib/pull/546))
+
+## 0.9.3
+
+### Fixed
 - Using Docker config for finding registry credentials (was not ignoring extra fields and handling `https` protocol) ([#524](https://github.com/GoogleContainerTools/jib/pull/524))
 
 ## 0.9.2
