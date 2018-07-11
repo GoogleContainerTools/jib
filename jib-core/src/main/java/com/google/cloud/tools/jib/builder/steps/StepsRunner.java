@@ -63,7 +63,7 @@ public class StepsRunner {
   @Nullable private BuildImageStep buildImageStep;
   @Nullable private PushContainerConfigurationStep pushContainerConfigurationStep;
   @Nullable private PushImageStep pushImageStep;
-  @Nullable private BuildTarballAndLoadDockerStep buildTarballAndLoadDockerStep;
+  @Nullable private LoadDockerStep loadDockerStep;
 
   public StepsRunner(
       BuildConfiguration buildConfiguration,
@@ -192,8 +192,8 @@ public class StepsRunner {
   }
 
   public StepsRunner runBuildTarballAndLoadDockerStep() {
-    buildTarballAndLoadDockerStep =
-        new BuildTarballAndLoadDockerStep(
+    loadDockerStep =
+        new LoadDockerStep(
             listeningExecutorService,
             buildConfiguration,
             Preconditions.checkNotNull(pullAndCacheBaseImageLayersStep),
@@ -208,7 +208,7 @@ public class StepsRunner {
 
   public void waitOnBuildTarballAndLoadDockerStep()
       throws ExecutionException, InterruptedException {
-    Preconditions.checkNotNull(buildTarballAndLoadDockerStep).getFuture().get();
+    Preconditions.checkNotNull(loadDockerStep).getFuture().get();
   }
 
   /**
