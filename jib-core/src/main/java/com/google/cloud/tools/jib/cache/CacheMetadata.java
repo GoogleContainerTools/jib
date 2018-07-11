@@ -78,31 +78,31 @@ class CacheMetadata {
       if (layerEntries.size() != metadataEntries.size()) {
         return false;
       }
-      return !pairwiseCompareAnyTrue(
+      return pairwiseCompareAllPass(
           layerEntries,
           metadataEntries,
           (layerEntry, metadataEntry) -> {
             // Checks extraction path not equal.
             if (!layerEntry.getExtractionPath().equals(metadataEntry.getExtractionPath())) {
-              return true;
+              return false;
             }
 
             // Checks for any source file not equal.
             if (layerEntry.getSourceFiles().size()
                 != metadataEntry.getSourceFilesStrings().size()) {
-              return true;
+              return false;
             }
-            return pairwiseCompareAnyTrue(
+            return pairwiseCompareAllPass(
                 layerEntry.getSourceFiles(),
                 metadataEntry.getSourceFilesStrings(),
-                (sourceFile, sourceFileString) -> !sourceFile.equals(Paths.get(sourceFileString)));
+                (sourceFile, sourceFileString) -> sourceFile.equals(Paths.get(sourceFileString)));
           });
     }
 
-    private static <A, B> boolean pairwiseCompareAnyTrue(
+    private static <A, B> boolean pairwiseCompareAllPass(
         List<A> listA, List<B> listB, BiPredicate<A, B> compare) {
       return Streams.zip(listA.stream(), listB.stream(), compare::test)
-          .anyMatch(Predicate.isEqual(true));
+          .noneMatch(Predicate.isEqual(false));
     }
 
     private final ImageLayers<CachedLayerWithMetadata> layers;
