@@ -17,20 +17,12 @@
 package com.google.cloud.tools.jib.image.json;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.google.cloud.tools.jib.configuration.Port;
-import com.google.cloud.tools.jib.configuration.Port.Protocol;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSortedMap;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.SortedMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 /**
@@ -64,14 +56,6 @@ import javax.annotation.Nullable;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ContainerConfigurationTemplate implements JsonTemplate {
-
-  /**
-   * Pattern used for parsing information out of exposed port configurations. Only accepts single
-   * ports with protocol.
-   *
-   * <p>Example matches: 100, 1000/tcp, 2000/udp
-   */
-  private static final Pattern portPattern = Pattern.compile("(\\d+)(?:/(tcp|udp))?");
 
   /**
    * A combined date and time at which the image was created. Constant to maintain reproducibility
@@ -108,7 +92,7 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     @Nullable private List<String> Cmd;
 
     /** Network ports the container exposes. */
-    @Nullable private SortedMap<String, Map<?, ?>> ExposedPorts;
+    @Nullable private Map<String, Map<?, ?>> ExposedPorts;
   }
 
   /**
@@ -139,14 +123,8 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     config.Cmd = cmd;
   }
 
-  public void setContainerExposedPorts(List<Port> exposedPorts) {
-    // TODO: Do this conversion somewhere else
-    ImmutableSortedMap.Builder<String, Map<?, ?>> result =
-        new ImmutableSortedMap.Builder<>(String::compareTo);
-    for (Port port : exposedPorts) {
-      result.put(port.getPort() + "/" + port.getProtocol(), Collections.emptyMap());
-    }
-    config.ExposedPorts = result.build();
+  public void setContainerExposedPorts(Map<String, Map<?, ?>> exposedPorts) {
+    config.ExposedPorts = exposedPorts;
   }
 
   public void addLayerDiffId(DescriptorDigest diffId) {
@@ -173,24 +151,8 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
   }
 
   @Nullable
-  ImmutableList<Port> getContainerExposedPorts() {
-    // TODO: Do this conversion somewhere else
-    if (config.ExposedPorts == null) {
-      return null;
-    }
-    ImmutableList.Builder<Port> ports = new ImmutableList.Builder<>();
-    for (Map.Entry<String, Map<?, ?>> entry : config.ExposedPorts.entrySet()) {
-      String port = entry.getKey();
-      Matcher matcher = portPattern.matcher(port);
-      if (!matcher.matches()) {
-        throw new NumberFormatException("Invalid port configuration: '" + port + "'.");
-      }
-
-      int portNumber = Integer.parseInt(matcher.group(1));
-      String protocol = matcher.group(2);
-      ports.add(new Port(portNumber, "udp".equals(protocol) ? Protocol.UDP : Protocol.TCP));
-    }
-    return ports.build();
+  Map<String, Map<?, ?>> getContainerExposedPorts() {
+    return config.ExposedPorts;
   }
 
   @VisibleForTesting

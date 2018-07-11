@@ -26,6 +26,8 @@ import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Resources;
 import java.io.ByteArrayOutputStream;
@@ -37,6 +39,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.DigestException;
 import java.util.Arrays;
+import java.util.Map;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -98,6 +101,15 @@ public class ImageToJsonTranslatorTest {
   @Test
   public void testGetManifest_oci() throws URISyntaxException, IOException {
     testGetManifest(OCIManifestTemplate.class, "json/translated_ocimanifest.json");
+  }
+
+  @Test
+  public void testPortListToMap() {
+    ImmutableList<Port> input =
+        ImmutableList.of(new Port(1000, Protocol.TCP), new Port(2000, Protocol.UDP));
+    ImmutableSortedMap<String, Map<?, ?>> expected =
+        ImmutableSortedMap.of("1000/tcp", ImmutableMap.of(), "2000/udp", ImmutableMap.of());
+    Assert.assertEquals(expected, ImageToJsonTranslator.portListToMap(input));
   }
 
   /** Tests translation of image to {@link BuildableManifestTemplate}. */

@@ -66,8 +66,7 @@ public class ExposedPortsParser {
       if (!Strings.isNullOrEmpty(matcher.group(2))) {
         max = Integer.parseInt(matcher.group(2));
       }
-      Protocol protocol =
-          Protocol.UDP.toString().equals(matcher.group(3)) ? Protocol.UDP : Protocol.TCP;
+      Protocol protocol = Protocol.getFromString(matcher.group(3));
 
       // Error if configured as 'max-min' instead of 'min-max'
       if (min > max) {

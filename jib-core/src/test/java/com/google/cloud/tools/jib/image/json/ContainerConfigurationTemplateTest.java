@@ -16,10 +16,10 @@
 
 package com.google.cloud.tools.jib.image.json;
 
-import com.google.cloud.tools.jib.configuration.Port;
-import com.google.cloud.tools.jib.configuration.Port.Protocol;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.io.Resources;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -29,25 +29,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.DigestException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 /** Tests for {@link ContainerConfigurationTemplate}. */
 public class ContainerConfigurationTemplateTest {
-
-  private List<Port> exposedPorts;
-
-  @Before
-  public void setup() {
-    exposedPorts = new ArrayList<>();
-    exposedPorts.add(new Port(1000, Protocol.TCP));
-    exposedPorts.add(new Port(2000, Protocol.TCP));
-    exposedPorts.add(new Port(3000, Protocol.UDP));
-  }
 
   @Test
   public void testToJson() throws IOException, URISyntaxException, DigestException {
@@ -61,7 +48,14 @@ public class ContainerConfigurationTemplateTest {
     containerConfigJson.setContainerEnvironment(Arrays.asList("VAR1=VAL1", "VAR2=VAL2"));
     containerConfigJson.setContainerEntrypoint(Arrays.asList("some", "entrypoint", "command"));
     containerConfigJson.setContainerCmd(Arrays.asList("arg1", "arg2"));
-    containerConfigJson.setContainerExposedPorts(exposedPorts);
+    containerConfigJson.setContainerExposedPorts(
+        ImmutableSortedMap.of(
+            "1000/tcp",
+            ImmutableMap.of(),
+            "2000/tcp",
+            ImmutableMap.of(),
+            "3000/udp",
+            ImmutableMap.of()));
 
     containerConfigJson.addLayerDiffId(
         DescriptorDigest.fromDigest(
