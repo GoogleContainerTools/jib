@@ -70,7 +70,7 @@ public class BuildDockerMojoIntegrationTest {
   @Test
   public void testExecute_simple() throws VerificationException, IOException, InterruptedException {
     Assert.assertEquals(
-        "Hello, world. An argument.\n",
+        "Hello, world. An argument.\nfoo\ncat\n",
         buildToDockerDaemonAndRun(
             simpleTestProject.getProjectRoot(),
             "gcr.io/jib-integration-testing/simpleimage:maven"));
