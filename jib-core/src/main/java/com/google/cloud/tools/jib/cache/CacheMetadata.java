@@ -23,6 +23,9 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Streams;
 import java.nio.file.Paths;
+import java.util.List;
+import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 /**
@@ -75,28 +78,31 @@ class CacheMetadata {
       if (layerEntries.size() != metadataEntries.size()) {
         return false;
       }
-      return Streams.zip(
-              layerEntries.stream(),
-              metadataEntries.stream(),
-              (layerEntry, metadataEntry) -> {
-                // Checks extraction path not equal.
-                if (!layerEntry.getExtractionPath().equals(metadataEntry.getExtractionPath())) {
-                  return true;
-                }
+      return pairwiseCompareAllPass(
+          layerEntries,
+          metadataEntries,
+          (layerEntry, metadataEntry) -> {
+            // Checks extraction path not equal.
+            if (!layerEntry.getExtractionPath().equals(metadataEntry.getExtractionPath())) {
+              return false;
+            }
 
-                // Checks source files not equal.
-                if (layerEntry.getSourceFiles().size()
-                    != metadataEntry.getSourceFilesStrings().size()) {
-                  return true;
-                }
-                return Streams.zip(
-                        layerEntry.getSourceFiles().stream(),
-                        metadataEntry.getSourceFilesStrings().stream(),
-                        (sourceFile, sourceFileString) ->
-                            !sourceFile.equals(Paths.get(sourceFileString)))
-                    .anyMatch(isNotEqual -> isNotEqual);
-              })
-          .noneMatch(isNotEqual -> isNotEqual);
+            // Checks for any source file not equal.
+            if (layerEntry.getSourceFiles().size()
+                != metadataEntry.getSourceFilesStrings().size()) {
+              return false;
+            }
+            return pairwiseCompareAllPass(
+                layerEntry.getSourceFiles(),
+                metadataEntry.getSourceFilesStrings(),
+                (sourceFile, sourceFileString) -> sourceFile.equals(Paths.get(sourceFileString)));
+          });
+    }
+
+    private static <A, B> boolean pairwiseCompareAllPass(
+        List<A> listA, List<B> listB, BiPredicate<A, B> compare) {
+      return Streams.zip(listA.stream(), listB.stream(), compare::test)
+          .allMatch(Predicate.isEqual(true));
     }
 
     private final ImageLayers<CachedLayerWithMetadata> layers;
