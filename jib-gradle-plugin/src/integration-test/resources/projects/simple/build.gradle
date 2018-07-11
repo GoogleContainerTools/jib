@@ -15,6 +15,7 @@ dependencies {
 }
 
 jib {
+    from.image = 'gcr.io/distroless/java:debug'
     to {
         image = 'gcr.io/jib-integration-testing/simpleimage:gradle'
         credHelper = 'gcr'
