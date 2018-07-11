@@ -191,7 +191,7 @@ public class StepsRunner {
     return this;
   }
 
-  public StepsRunner runBuildTarballAndLoadDockerStep() {
+  public StepsRunner runLoadDockerStep() {
     loadDockerStep =
         new LoadDockerStep(
             listeningExecutorService,
@@ -206,8 +206,7 @@ public class StepsRunner {
     Preconditions.checkNotNull(pushImageStep).getFuture().get();
   }
 
-  public void waitOnBuildTarballAndLoadDockerStep()
-      throws ExecutionException, InterruptedException {
+  public void waitOnLoadDockerStep() throws ExecutionException, InterruptedException {
     Preconditions.checkNotNull(loadDockerStep).getFuture().get();
   }
 
