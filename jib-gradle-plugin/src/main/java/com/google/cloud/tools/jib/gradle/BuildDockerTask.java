@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
+import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
@@ -31,6 +32,11 @@ import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -72,7 +78,7 @@ public class BuildDockerTask extends DefaultTask {
   }
 
   @TaskAction
-  public void buildDocker() throws InvalidImageReferenceException {
+  public void buildDocker() throws InvalidImageReferenceException, IOException {
     if (!new DockerClient().isDockerInstalled()) {
       throw new GradleException(HELPFUL_SUGGESTIONS.forDockerNotInstalled());
     }
@@ -107,6 +113,15 @@ public class BuildDockerTask extends DefaultTask {
             .setJvmFlags(jibExtension.getJvmFlags())
             .setExposedPorts(ExposedPortsParser.parse(jibExtension.getExposedPorts()))
             .setAllowHttp(jibExtension.getAllowInsecureRegistries());
+    if (Files.exists(jibExtension.getExtraDirectory())) {
+      try (Stream<Path> extraFilesLayerDirectoryFiles =
+          Files.list(jibExtension.getExtraDirectory())) {
+        buildConfigurationBuilder.setExtraFilesLayerConfiguration(
+            LayerConfiguration.builder()
+                .addEntry(extraFilesLayerDirectoryFiles.collect(Collectors.toList()), "/")
+                .build());
+      }
+    }
     CacheConfiguration applicationLayersCacheConfiguration =
         CacheConfiguration.forPath(gradleProjectProperties.getCacheDirectory());
     buildConfigurationBuilder.setApplicationLayersCacheConfiguration(

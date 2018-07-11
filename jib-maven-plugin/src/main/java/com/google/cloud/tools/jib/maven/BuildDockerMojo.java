@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
+import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
@@ -30,6 +31,11 @@ import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
@@ -85,6 +91,18 @@ public class BuildDockerMojo extends JibPluginConfiguration {
             .setEnvironment(getEnvironment())
             .setExposedPorts(ExposedPortsParser.parse(getExposedPorts()))
             .setAllowHttp(getAllowInsecureRegistries());
+    if (getExtraDirectory() != null && Files.exists(getExtraDirectory())) {
+      try (Stream<Path> extraFilesLayerDirectoryFiles = Files.list(getExtraDirectory())) {
+        buildConfigurationBuilder.setExtraFilesLayerConfiguration(
+            LayerConfiguration.builder()
+                .addEntry(extraFilesLayerDirectoryFiles.collect(Collectors.toList()), "/")
+                .build());
+
+      } catch (IOException ex) {
+        throw new MojoExecutionException(
+            "Failed to list directory for extra files: " + getExtraDirectory(), ex);
+      }
+    }
     CacheConfiguration applicationLayersCacheConfiguration =
         CacheConfiguration.forPath(mavenProjectProperties.getCacheDirectory());
     buildConfigurationBuilder.setApplicationLayersCacheConfiguration(

@@ -22,6 +22,8 @@ import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -158,6 +160,10 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   @Parameter(defaultValue = "false", required = true)
   private boolean allowInsecureRegistries;
 
+  @Nullable
+  @Parameter(defaultValue = "${project.basedir}/src/main/jib", required = true)
+  private String extraDirectory;
+
   MavenProject getProject() {
     return Preconditions.checkNotNull(project);
   }
@@ -215,6 +221,12 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     return allowInsecureRegistries;
   }
 
+  @Nullable
+  Path getExtraDirectory() {
+    // TODO: Should inform user about nonexistent directory if using custom directory.
+    return Paths.get(extraDirectory);
+  }
+
   @VisibleForTesting
   void setJvmFlags(List<String> jvmFlags) {
     this.jvmFlags = jvmFlags;
@@ -243,5 +255,10 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   @VisibleForTesting
   void setTargetImage(@Nullable String targetImage) {
     this.to.image = targetImage;
+  }
+
+  @VisibleForTesting
+  void setExtraDirectory(String extraDirectory) {
+    this.extraDirectory = extraDirectory;
   }
 }
