@@ -27,6 +27,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -55,6 +56,7 @@ public class BuildConfiguration {
     @Nullable private CacheConfiguration baseImageLayersCacheConfiguration;
     private boolean allowHttp = false;
     @Nullable private LayerConfiguration extraFilesLayerConfiguration;
+    @Nullable private Path tarOutputPath;
 
     private BuildLogger buildLogger;
 
@@ -184,6 +186,17 @@ public class BuildConfiguration {
       return this;
     }
 
+    /**
+     * Sets the output path for a build image tarball operation.
+     *
+     * @param tarOutputPath the output path
+     * @return this
+     */
+    public Builder setTarOutputPath(@Nullable Path tarOutputPath) {
+      this.tarOutputPath = tarOutputPath;
+      return this;
+    }
+
     /** @return the corresponding build configuration */
     public BuildConfiguration build() {
       // Validates the parameters.
@@ -226,7 +239,8 @@ public class BuildConfiguration {
               applicationLayersCacheConfiguration,
               baseImageLayersCacheConfiguration,
               allowHttp,
-              extraFilesLayerConfiguration);
+              extraFilesLayerConfiguration,
+              tarOutputPath);
 
         case 1:
           throw new IllegalStateException(errorMessages.get(0));
@@ -286,6 +300,7 @@ public class BuildConfiguration {
   @Nullable private final CacheConfiguration baseImageLayersCacheConfiguration;
   private final boolean allowHttp;
   @Nullable private final LayerConfiguration extraFilesLayerConfiguration;
+  @Nullable private final Path tarOutputPath;
 
   /** Instantiate with {@link Builder#build}. */
   private BuildConfiguration(
@@ -305,7 +320,8 @@ public class BuildConfiguration {
       @Nullable CacheConfiguration applicationLayersCacheConfiguration,
       @Nullable CacheConfiguration baseImageLayersCacheConfiguration,
       boolean allowHttp,
-      @Nullable LayerConfiguration extraFilesLayerConfiguration) {
+      @Nullable LayerConfiguration extraFilesLayerConfiguration,
+      @Nullable Path tarOutputPath) {
     this.buildLogger = buildLogger;
     this.baseImageReference = baseImageReference;
     this.baseImageCredentialHelperName = baseImageCredentialHelperName;
@@ -323,6 +339,7 @@ public class BuildConfiguration {
     this.baseImageLayersCacheConfiguration = baseImageLayersCacheConfiguration;
     this.allowHttp = allowHttp;
     this.extraFilesLayerConfiguration = extraFilesLayerConfiguration;
+    this.tarOutputPath = tarOutputPath;
   }
 
   public BuildLogger getBuildLogger() {
@@ -442,5 +459,10 @@ public class BuildConfiguration {
   @Nullable
   public LayerConfiguration getExtraFilesLayerConfiguration() {
     return extraFilesLayerConfiguration;
+  }
+
+  @Nullable
+  public Path getTarOutputPath() {
+    return tarOutputPath;
   }
 }
