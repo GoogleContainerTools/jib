@@ -160,6 +160,7 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   @Parameter(defaultValue = "false", required = true)
   private boolean allowInsecureRegistries;
 
+  @Nullable
   @Parameter(defaultValue = "${project.basedir}/src/main/jib", required = true)
   private String extraDirectory;
 
@@ -220,6 +221,7 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     return allowInsecureRegistries;
   }
 
+  @Nullable
   Path getExtraDirectory() {
     // TODO: Should inform user about nonexistent directory if using custom directory.
     return Paths.get(extraDirectory);
