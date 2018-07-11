@@ -76,13 +76,14 @@ public class JsonToImageTranslator {
    * @throws LayerCountMismatchException if the manifest and configuration contain conflicting layer
    *     information.
    * @throws LayerPropertyNotFoundException if adding image layers fails.
-   * @throws BadConfigurationFormatException if the container configuration is in a bad format
+   * @throws BadContainerConfigurationFormatException if the container configuration is in a bad
+   *     format
    */
   public static Image<Layer> toImage(
       BuildableManifestTemplate manifestTemplate,
       ContainerConfigurationTemplate containerConfigurationTemplate)
       throws LayerCountMismatchException, LayerPropertyNotFoundException,
-          BadConfigurationFormatException {
+          BadContainerConfigurationFormatException {
     List<ReferenceNoDiffIdLayer> layers = new ArrayList<>();
     for (BuildableManifestTemplate.ContentDescriptorTemplate layerObjectTemplate :
         manifestTemplate.getLayers()) {
@@ -143,7 +144,7 @@ public class JsonToImageTranslator {
    */
   @VisibleForTesting
   static ImmutableList<Port> portMapToList(@Nullable Map<String, Map<?, ?>> portMap)
-      throws BadConfigurationFormatException {
+      throws BadContainerConfigurationFormatException {
     if (portMap == null) {
       return ImmutableList.of();
     }
@@ -152,14 +153,13 @@ public class JsonToImageTranslator {
       String port = entry.getKey();
       Matcher matcher = portPattern.matcher(port);
       if (!matcher.matches()) {
-        throw new BadConfigurationFormatException("Invalid port configuration: '" + port + "'.");
+        throw new BadContainerConfigurationFormatException(
+            "Invalid port configuration: '" + port + "'.");
       }
 
       int portNumber = Integer.parseInt(matcher.group(1));
       String protocol = matcher.group(2);
-      ports.add(
-          new Port(
-              portNumber, Protocol.UDP.toString().equals(protocol) ? Protocol.UDP : Protocol.TCP));
+      ports.add(new Port(portNumber, Protocol.getFromString(protocol)));
     }
     return ports.build();
   }

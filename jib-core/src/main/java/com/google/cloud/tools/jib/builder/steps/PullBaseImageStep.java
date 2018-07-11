@@ -27,7 +27,7 @@ import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerCountMismatchException;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
-import com.google.cloud.tools.jib.image.json.BadConfigurationFormatException;
+import com.google.cloud.tools.jib.image.json.BadContainerConfigurationFormatException;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
 import com.google.cloud.tools.jib.image.json.JsonToImageTranslator;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
@@ -98,7 +98,7 @@ class PullBaseImageStep
   @Override
   public BaseImageWithAuthorization call()
       throws IOException, RegistryException, LayerPropertyNotFoundException,
-          LayerCountMismatchException, ExecutionException, BadConfigurationFormatException,
+          LayerCountMismatchException, ExecutionException, BadContainerConfigurationFormatException,
           RegistryAuthenticationFailedException {
     buildConfiguration
         .getBuildLogger()
@@ -158,11 +158,12 @@ class PullBaseImageStep
    * @throws LayerCountMismatchException if the manifest and configuration contain conflicting layer
    *     information
    * @throws LayerPropertyNotFoundException if adding image layers fails
-   * @throws BadConfigurationFormatException if the container configuration is in a bad format
+   * @throws BadContainerConfigurationFormatException if the container configuration is in a bad
+   *     format
    */
   private Image<Layer> pullBaseImage(@Nullable Authorization registryCredentials)
       throws IOException, RegistryException, LayerPropertyNotFoundException,
-          LayerCountMismatchException, BadConfigurationFormatException {
+          LayerCountMismatchException, BadContainerConfigurationFormatException {
     RegistryClient registryClient =
         RegistryClient.factory(
                 buildConfiguration.getBaseImageRegistry(),

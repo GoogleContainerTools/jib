@@ -66,19 +66,19 @@ public class JsonToImageTranslatorTest {
   @Test
   public void testToImage_v22()
       throws IOException, LayerPropertyNotFoundException, LayerCountMismatchException,
-          DigestException, URISyntaxException, BadConfigurationFormatException {
+          DigestException, URISyntaxException, BadContainerConfigurationFormatException {
     testToImage_buildable("json/v22manifest.json", V22ManifestTemplate.class);
   }
 
   @Test
   public void testToImage_oci()
       throws IOException, LayerPropertyNotFoundException, LayerCountMismatchException,
-          DigestException, URISyntaxException, BadConfigurationFormatException {
+          DigestException, URISyntaxException, BadContainerConfigurationFormatException {
     testToImage_buildable("json/ocimanifest.json", OCIManifestTemplate.class);
   }
 
   @Test
-  public void testPortMapToList() throws BadConfigurationFormatException {
+  public void testPortMapToList() throws BadContainerConfigurationFormatException {
     ImmutableSortedMap<String, Map<?, ?>> input =
         ImmutableSortedMap.of(
             "1000",
@@ -104,7 +104,7 @@ public class JsonToImageTranslatorTest {
       try {
         JsonToImageTranslator.portMapToList(badInput);
         Assert.fail();
-      } catch (BadConfigurationFormatException ignored) {
+      } catch (BadContainerConfigurationFormatException ignored) {
       }
     }
   }
@@ -112,7 +112,7 @@ public class JsonToImageTranslatorTest {
   private <T extends BuildableManifestTemplate> void testToImage_buildable(
       String jsonFilename, Class<T> manifestTemplateClass)
       throws IOException, LayerPropertyNotFoundException, LayerCountMismatchException,
-          DigestException, URISyntaxException, BadConfigurationFormatException {
+          DigestException, URISyntaxException, BadContainerConfigurationFormatException {
     // Loads the container configuration JSON.
     Path containerConfigurationJsonFile =
         Paths.get(getClass().getClassLoader().getResource("json/containerconfig.json").toURI());

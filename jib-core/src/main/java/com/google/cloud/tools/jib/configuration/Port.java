@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.configuration;
 
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /** Holds port number and protocol for an exposed port. */
 public class Port {
@@ -35,6 +36,20 @@ public class Port {
     @Override
     public String toString() {
       return stringRepresentation;
+    }
+
+    /**
+     * Returns the {@link Protocol} given its string representation.
+     *
+     * @param protocolString the case insensitive string (e.g. "tcp", "udp")
+     * @return the {@link Protocol} with the corresponding name, or {@code Protocol#TCP} by default
+     *     if invalid
+     */
+    public static Protocol getFromString(@Nullable String protocolString) {
+      if (protocolString == null) {
+        return TCP;
+      }
+      return UDP.toString().toLowerCase().equals(protocolString.toLowerCase()) ? UDP : TCP;
     }
   }
 

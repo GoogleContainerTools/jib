@@ -17,10 +17,10 @@
 package com.google.cloud.tools.jib.image.json;
 
 /** Exception thrown when trying to parse a bad image configuration format. */
-public class BadConfigurationFormatException extends Exception {
+public class BadContainerConfigurationFormatException extends Exception {
 
   // TODO: Potentially provide Path or source object to problem configuration file
-  BadConfigurationFormatException(String message) {
+  BadContainerConfigurationFormatException(String message) {
     super(message);
   }
 }
