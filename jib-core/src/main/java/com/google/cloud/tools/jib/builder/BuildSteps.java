@@ -118,8 +118,8 @@ public class BuildSteps {
                 .runBuildAndCacheApplicationLayerSteps()
                 .runBuildImageStep(getEntrypoint(buildConfiguration, sourceFilesConfiguration))
                 .runFinalizingBuildStep()
-                .runBuildTarballAndLoadDockerStep()
-                .waitOnBuildTarballAndLoadDockerStep());
+                .runLoadDockerStep()
+                .waitOnLoadDockerStep());
   }
 
   /** Creates the container entrypoint for a given configuration. */
