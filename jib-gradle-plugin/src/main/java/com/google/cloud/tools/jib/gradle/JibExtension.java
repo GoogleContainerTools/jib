@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -66,11 +67,16 @@ public class JibExtension {
   private static final boolean DEFAULT_USE_ONLY_PROJECT_CACHE = false;
   private static final boolean DEFAULT_ALLOW_INSECURE_REGISTIRIES = false;
 
+  private static Path resolveDefaultExtraDirectory(Path projectDirectory) {
+    return projectDirectory.resolve("src").resolve("main").resolve("jib");
+  }
+
   private final ImageConfiguration from;
   private final ImageConfiguration to;
   private final ContainerParameters container;
   private final Property<Boolean> useOnlyProjectCache;
   private final Property<Boolean> allowInsecureRegistries;
+  private final Property<Path> extraDirectory;
 
   // TODO: Deprecated parameters; remove these 4
   private final ListProperty<String> jvmFlags;
@@ -92,6 +98,7 @@ public class JibExtension {
 
     useOnlyProjectCache = objectFactory.property(Boolean.class);
     allowInsecureRegistries = objectFactory.property(Boolean.class);
+    extraDirectory = objectFactory.property(Path.class);
 
     // Sets defaults.
     from.setImage(DEFAULT_FROM_IMAGE);
@@ -99,6 +106,7 @@ public class JibExtension {
     args.set(Collections.emptyList());
     useOnlyProjectCache.set(DEFAULT_USE_ONLY_PROJECT_CACHE);
     allowInsecureRegistries.set(DEFAULT_ALLOW_INSECURE_REGISTIRIES);
+    extraDirectory.set(resolveDefaultExtraDirectory(project.getProjectDir().toPath()));
   }
 
   /**
@@ -176,6 +184,10 @@ public class JibExtension {
     this.allowInsecureRegistries.set(allowInsecureRegistries);
   }
 
+  public void setExtraDirectory(Path extraDirectory) {
+    this.extraDirectory.set(extraDirectory);
+  }
+
   @Internal
   String getBaseImage() {
     return Preconditions.checkNotNull(from.getImage());
@@ -250,5 +262,11 @@ public class JibExtension {
   @Optional
   boolean getAllowInsecureRegistries() {
     return allowInsecureRegistries.get();
+  }
+
+  @Internal
+  @Optional
+  Path getExtraDirectory() {
+    return extraDirectory.get();
   }
 }
