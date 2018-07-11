@@ -61,6 +61,7 @@ public class DockerContextMojo extends JibPluginConfiguration {
       // here.
       ExposedPortsParser.parse(getExposedPorts());
 
+      // TODO: Add support for extra files layer.
       new DockerContextGenerator(mavenProjectProperties.getSourceFilesConfiguration())
           .setBaseImage(getBaseImage())
           .setJvmFlags(getJvmFlags())

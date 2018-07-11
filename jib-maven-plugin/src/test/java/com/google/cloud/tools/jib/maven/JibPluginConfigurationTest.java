@@ -17,9 +17,8 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.builder.BuildLogger;
+import java.nio.file.Paths;
 import java.util.Arrays;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -38,7 +37,7 @@ public class JibPluginConfigurationTest {
     JibPluginConfiguration testPluginConfiguration =
         new JibPluginConfiguration() {
           @Override
-          public void execute() throws MojoExecutionException, MojoFailureException {}
+          public void execute() {}
         };
 
     testPluginConfiguration.handleDeprecatedParameters(mockLogger);
@@ -48,6 +47,7 @@ public class JibPluginConfigurationTest {
     testPluginConfiguration.setMainClass("mainClass");
     testPluginConfiguration.setArgs(Arrays.asList("arg1", "arg2", "arg3"));
     testPluginConfiguration.setFormat("OCI");
+    testPluginConfiguration.setExtraDirectory("some/path");
 
     testPluginConfiguration.handleDeprecatedParameters(mockLogger);
 
@@ -64,5 +64,6 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals("mainClass", testPluginConfiguration.getMainClass());
     Assert.assertEquals(Arrays.asList("arg1", "arg2", "arg3"), testPluginConfiguration.getArgs());
     Assert.assertEquals("OCI", testPluginConfiguration.getFormat());
+    Assert.assertEquals(Paths.get("some/path"), testPluginConfiguration.getExtraDirectory());
   }
 }

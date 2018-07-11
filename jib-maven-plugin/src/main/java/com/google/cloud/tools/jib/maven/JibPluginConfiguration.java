@@ -23,6 +23,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -160,7 +161,7 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   private boolean allowInsecureRegistries;
 
   @Parameter(defaultValue = "${project.basedir}/src/main/jib", required = true)
-  private Path extraDirectory;
+  private String extraDirectory;
 
   MavenProject getProject() {
     return Preconditions.checkNotNull(project);
@@ -220,7 +221,7 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   }
 
   Path getExtraDirectory() {
-    return extraDirectory;
+    return Paths.get(extraDirectory);
   }
 
   @VisibleForTesting
@@ -254,7 +255,7 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   }
 
   @VisibleForTesting
-  void setExtraDirectory(Path extraDirectory) {
+  void setExtraDirectory(String extraDirectory) {
     this.extraDirectory = extraDirectory;
   }
 }
