@@ -19,7 +19,8 @@ package com.google.cloud.tools.jib.image.json;
 /** Exception thrown when trying to parse a bad image configuration format. */
 public class BadConfigurationFormatException extends Exception {
 
-  public BadConfigurationFormatException(String message) {
+  // TODO: Potentially provide Path or source object to problem configuration file
+  BadConfigurationFormatException(String message) {
     super(message);
   }
 }

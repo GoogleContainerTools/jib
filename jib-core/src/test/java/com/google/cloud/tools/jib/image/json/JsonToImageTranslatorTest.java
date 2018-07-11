@@ -98,7 +98,8 @@ public class JsonToImageTranslatorTest {
         ImmutableList.of(
             ImmutableMap.of("abc", ImmutableMap.of()),
             ImmutableMap.of("1000-2000", ImmutableMap.of()),
-            ImmutableMap.of("/udp", ImmutableMap.of()));
+            ImmutableMap.of("/udp", ImmutableMap.of()),
+            ImmutableMap.of("123/xxx", ImmutableMap.of()));
     for (Map<String, Map<?, ?>> badInput : badInputs) {
       try {
         JsonToImageTranslator.portMapToList(badInput);
