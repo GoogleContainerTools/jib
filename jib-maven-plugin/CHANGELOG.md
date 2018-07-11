@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Incubating feature to build `src/main/jib` as extra layer in image ([]())
+- Incubating feature to build `src/main/jib` as extra layer in image ([#565](https://github.com/GoogleContainerTools/jib/pull/565))
 
 ### Changed
 
