@@ -87,12 +87,15 @@ public class CacheWriterTest {
 
     UnwrittenLayer unwrittenLayer = new UnwrittenLayer(Blobs.from(resourceBlob));
 
-    ImmutableList<Path> fakeSourceFiles = ImmutableList.of(Paths.get("some", "source", "file"));
     ReproducibleLayerBuilder mockReproducibleLayerBuilder =
         Mockito.mock(ReproducibleLayerBuilder.class);
     Mockito.when(mockReproducibleLayerBuilder.build()).thenReturn(unwrittenLayer);
     Mockito.when(mockReproducibleLayerBuilder.getLayerEntries())
-        .thenReturn(ImmutableList.of(new LayerEntry(fakeSourceFiles, "extractionPath")));
+        .thenReturn(
+            ImmutableList.of(
+                new LayerEntry(
+                    ImmutableList.of(Paths.get("some", "source", "file")),
+                    "/some/extraction/path")));
 
     CachedLayerWithMetadata cachedLayerWithMetadata =
         cacheWriter.writeLayer(mockReproducibleLayerBuilder);
@@ -101,11 +104,13 @@ public class CacheWriterTest {
 
     CachedLayerWithMetadata layerInMetadata = testCache.getUpdatedMetadata().getLayers().get(0);
     Assert.assertNotNull(layerInMetadata.getMetadata());
+    Assert.assertEquals(1, layerInMetadata.getMetadata().getEntries().size());
     Assert.assertEquals(
         Collections.singletonList(Paths.get("some", "source", "file").toString()),
         layerInMetadata.getMetadata().getEntries().get(0).getSourceFilesStrings());
     Assert.assertEquals(
-        "extractionPath", layerInMetadata.getMetadata().getEntries().get(0).getExtractionPath());
+        "/some/extraction/path",
+        layerInMetadata.getMetadata().getEntries().get(0).getExtractionPath());
 
     verifyCachedLayerIsExpected(expectedLayer, cachedLayerWithMetadata);
   }
