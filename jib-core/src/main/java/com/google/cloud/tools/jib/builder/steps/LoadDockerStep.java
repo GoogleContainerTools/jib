@@ -32,7 +32,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 /** Adds image layers to a tarball and loads into Docker daemon. */
-class BuildTarballAndLoadDockerStep implements AsyncStep<Void>, Callable<Void> {
+class LoadDockerStep implements AsyncStep<Void>, Callable<Void> {
 
   private final BuildConfiguration buildConfiguration;
   private final PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep;
@@ -42,7 +42,7 @@ class BuildTarballAndLoadDockerStep implements AsyncStep<Void>, Callable<Void> {
   private final ListeningExecutorService listeningExecutorService;
   private final ListenableFuture<Void> listenableFuture;
 
-  BuildTarballAndLoadDockerStep(
+  LoadDockerStep(
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
       PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep,
