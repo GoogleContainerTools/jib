@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
@@ -65,6 +66,7 @@ public class BuildConfigurationTest {
         CacheConfiguration.forPath(Paths.get("base/image/layers"));
     LayerConfiguration expectedExtraFilesLayerConfiguration =
         LayerConfiguration.builder().addEntry(Collections.emptyList(), "destination").build();
+    Path expectedTarOutputPath = Paths.get("tar", "output", "path");
 
     BuildConfiguration.Builder buildConfigurationBuilder =
         BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
@@ -87,7 +89,8 @@ public class BuildConfigurationTest {
             .setApplicationLayersCacheConfiguration(expectedApplicationLayersCacheConfiguration)
             .setBaseImageLayersCacheConfiguration(expectedBaseImageLayersCacheConfiguration)
             .setAllowHttp(true)
-            .setExtraFilesLayerConfiguration(expectedExtraFilesLayerConfiguration);
+            .setExtraFilesLayerConfiguration(expectedExtraFilesLayerConfiguration)
+            .setTarOutputPath(expectedTarOutputPath);
     BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
 
     Assert.assertEquals(expectedBaseImageServerUrl, buildConfiguration.getBaseImageRegistry());
@@ -117,6 +120,7 @@ public class BuildConfigurationTest {
     Assert.assertTrue(buildConfiguration.getAllowHttp());
     Assert.assertEquals(
         expectedExtraFilesLayerConfiguration, buildConfiguration.getExtraFilesLayerConfiguration());
+    Assert.assertEquals(expectedTarOutputPath, buildConfiguration.getTarOutputPath());
   }
 
   @Test
@@ -154,6 +158,7 @@ public class BuildConfigurationTest {
     Assert.assertNull(buildConfiguration.getBaseImageLayersCacheConfiguration());
     Assert.assertFalse(buildConfiguration.getAllowHttp());
     Assert.assertNull(buildConfiguration.getExtraFilesLayerConfiguration());
+    Assert.assertNull(buildConfiguration.getTarOutputPath());
   }
 
   @Test
@@ -179,7 +184,7 @@ public class BuildConfigurationTest {
 
     } catch (IllegalStateException ex) {
       Assert.assertEquals(
-          "target image is required but not set and main class is required but not set",
+          "target image or tarball output path is required but not set and main class is required but not set",
           ex.getMessage());
     }
 
@@ -190,7 +195,7 @@ public class BuildConfigurationTest {
 
     } catch (IllegalStateException ex) {
       Assert.assertEquals(
-          "base image is required but not set, target image is required but not set, and main class is required but not set",
+          "base image is required but not set, target image or tarball output path is required but not set, and main class is required but not set",
           ex.getMessage());
     }
   }
