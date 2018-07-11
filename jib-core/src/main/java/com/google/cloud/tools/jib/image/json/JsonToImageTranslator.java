@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.image.LayerCountMismatchException;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.ReferenceLayer;
 import com.google.cloud.tools.jib.image.ReferenceNoDiffIdLayer;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.List;
@@ -140,7 +141,8 @@ public class JsonToImageTranslator {
    * @param portMap the map to convert
    * @return a list of {@link Port}s
    */
-  private static ImmutableList<Port> portMapToList(@Nullable Map<String, Map<?, ?>> portMap)
+  @VisibleForTesting
+  static ImmutableList<Port> portMapToList(@Nullable Map<String, Map<?, ?>> portMap)
       throws BadConfigurationFormatException {
     if (portMap == null) {
       return ImmutableList.of();

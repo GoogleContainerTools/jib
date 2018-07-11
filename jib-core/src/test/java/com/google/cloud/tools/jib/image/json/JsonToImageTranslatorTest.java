@@ -26,6 +26,7 @@ import com.google.cloud.tools.jib.image.LayerCountMismatchException;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -33,6 +34,7 @@ import java.nio.file.Paths;
 import java.security.DigestException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -72,6 +74,37 @@ public class JsonToImageTranslatorTest {
       throws IOException, LayerPropertyNotFoundException, LayerCountMismatchException,
           DigestException, URISyntaxException, BadConfigurationFormatException {
     testToImage_buildable("json/ocimanifest.json", OCIManifestTemplate.class);
+  }
+
+  @Test
+  public void testPortMapToList() throws BadConfigurationFormatException {
+    ImmutableMap<String, Map<?, ?>> input =
+        ImmutableMap.of(
+            "1000",
+            ImmutableMap.of(),
+            "2000/tcp",
+            ImmutableMap.of(),
+            "3000/udp",
+            ImmutableMap.of());
+    ImmutableList<Port> expected =
+        ImmutableList.of(
+            new Port(1000, Protocol.TCP),
+            new Port(2000, Protocol.TCP),
+            new Port(3000, Protocol.UDP));
+    Assert.assertEquals(expected, JsonToImageTranslator.portMapToList(input));
+
+    ImmutableList<Map<String, Map<?, ?>>> badInputs =
+        ImmutableList.of(
+            ImmutableMap.of("abc", ImmutableMap.of()),
+            ImmutableMap.of("1000-2000", ImmutableMap.of()),
+            ImmutableMap.of("/udp", ImmutableMap.of()));
+    for (Map<String, Map<?, ?>> badInput : badInputs) {
+      try {
+        JsonToImageTranslator.portMapToList(badInput);
+        Assert.fail();
+      } catch (BadConfigurationFormatException ignored) {
+      }
+    }
   }
 
   private <T extends BuildableManifestTemplate> void testToImage_buildable(

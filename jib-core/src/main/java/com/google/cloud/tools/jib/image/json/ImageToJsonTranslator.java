@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSortedMap;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
@@ -51,7 +52,8 @@ public class ImageToJsonTranslator {
    * @return a sorted map with the string representation of the ports as keys and empty maps as
    *     values
    */
-  private static Map<String, Map<?, ?>> portListToMap(List<Port> exposedPorts) {
+  @VisibleForTesting
+  static Map<String, Map<?, ?>> portListToMap(List<Port> exposedPorts) {
     ImmutableSortedMap.Builder<String, Map<?, ?>> result =
         new ImmutableSortedMap.Builder<>(String::compareTo);
     for (Port port : exposedPorts) {
