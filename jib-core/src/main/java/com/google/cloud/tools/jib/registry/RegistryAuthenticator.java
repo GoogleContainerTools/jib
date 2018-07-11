@@ -61,8 +61,8 @@ public class RegistryAuthenticator {
       return null;
     }
 
-    // Checks that the authentication method starts with 'Bearer '.
-    if (!authenticationMethod.matches("^Bearer .*")) {
+    // Checks that the authentication method starts with 'bearer ' (case insensitive).
+    if (!authenticationMethod.matches("^(?i)(bearer) .*")) {
       throw newRegistryAuthenticationFailedException(authenticationMethod, "Bearer");
     }
 
