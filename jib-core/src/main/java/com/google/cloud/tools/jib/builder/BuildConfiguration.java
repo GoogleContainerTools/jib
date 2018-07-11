@@ -461,6 +461,11 @@ public class BuildConfiguration {
     return extraFilesLayerConfiguration;
   }
 
+  /**
+   * Gets the target path for a build image tarball operation.
+   *
+   * @return the path
+   */
   @Nullable
   public Path getTarOutputPath() {
     return tarOutputPath;
