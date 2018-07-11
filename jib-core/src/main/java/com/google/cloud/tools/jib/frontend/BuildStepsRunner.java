@@ -83,11 +83,16 @@ public class BuildStepsRunner {
    * @throws CacheDirectoryCreationException if the {@code cacheDirectory} could not be created
    */
   public static BuildStepsRunner forBuildTar(
-      Path outputPath, BuildConfiguration buildConfiguration, SourceFilesConfiguration sourceFilesConfiguration)
+      Path outputPath,
+      BuildConfiguration buildConfiguration,
+      SourceFilesConfiguration sourceFilesConfiguration)
       throws CacheDirectoryCreationException {
     return new BuildStepsRunner(
         BuildSteps.forBuildToTar(
-            outputPath, buildConfiguration, sourceFilesConfiguration, getCacheInitializer(buildConfiguration)));
+            outputPath,
+            buildConfiguration,
+            sourceFilesConfiguration,
+            getCacheInitializer(buildConfiguration)));
   }
 
   // TODO: Move this up to somewhere where defaults for cache location are provided and ownership is

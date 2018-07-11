@@ -48,6 +48,8 @@ public class BuildStepsIntegrationTest {
 
   @Rule public TemporaryFolder temporaryCacheDirectory = new TemporaryFolder();
 
+  @Rule public TemporaryFolder temporaryTarOutput = new TemporaryFolder();
+
   private SourceFilesConfiguration sourceFilesConfiguration;
 
   @Before
@@ -146,6 +148,32 @@ public class BuildStepsIntegrationTest {
                 + "                \"3000/udp\": {}"));
     Assert.assertEquals(
         "Hello, world. An argument.\n", new Command("docker", "run", "testdocker").run());
+  }
+
+  @Test
+  public void testSteps_forBuildToTarball()
+      throws IOException, InterruptedException, CacheMetadataCorruptedException, ExecutionException,
+          CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
+    BuildConfiguration buildConfiguration =
+        BuildConfiguration.builder(logger)
+            .setBaseImage(ImageReference.of("gcr.io", "distroless/java", "latest"))
+            .setTargetImage(ImageReference.of(null, "testtar", null))
+            .setMainClass("HelloWorld")
+            .setJavaArguments(Collections.singletonList("An argument."))
+            .build();
+
+    Path outputPath = temporaryTarOutput.newFolder().toPath().resolve("test.tar");
+    Path cacheDirectory = temporaryCacheDirectory.newFolder().toPath();
+    BuildSteps.forBuildToTar(
+            outputPath,
+            buildConfiguration,
+            sourceFilesConfiguration,
+            new Caches.Initializer(cacheDirectory, false, cacheDirectory, false))
+        .run();
+
+    new Command("docker", "load", "--input", outputPath.toString()).run();
+    Assert.assertEquals(
+        "Hello, world. An argument.\n", new Command("docker", "run", "testtar").run());
   }
 
   private BuildSteps getBuildSteps(BuildConfiguration buildConfiguration) throws IOException {
