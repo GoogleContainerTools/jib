@@ -24,14 +24,17 @@ import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.CacheReader;
 import com.google.cloud.tools.jib.cache.CachedLayerWithMetadata;
+import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.image.ImageLayers;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.Resources;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.concurrent.ExecutionException;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -58,6 +61,18 @@ public class BuildAndCacheApplicationLayerStepTest {
     TestSourceFilesConfiguration testSourceFilesConfiguration = new TestSourceFilesConfiguration();
     Path temporaryCacheDirectory = temporaryFolder.newFolder().toPath();
 
+    // Adds an extra file layer.
+    ImmutableList<Path> extraFilesLayerSourceFiles =
+        ImmutableList.of(
+            Paths.get(Resources.getResource("fileA").toURI()),
+            Paths.get(Resources.getResource("fileB").toURI()));
+    String extraFilesLayerExtractionPath = "/extra";
+    Mockito.when(mockBuildConfiguration.getExtraFilesLayerConfiguration())
+        .thenReturn(
+            LayerConfiguration.builder()
+                .addEntry(extraFilesLayerSourceFiles, extraFilesLayerExtractionPath)
+                .build());
+
     ImageLayers.Builder<CachedLayerWithMetadata> applicationLayersBuilder = ImageLayers.builder();
     ImageLayers<CachedLayerWithMetadata> applicationLayers;
 
@@ -76,7 +91,7 @@ public class BuildAndCacheApplicationLayerStepTest {
 
       applicationLayers = applicationLayersBuilder.build();
       cache.addCachedLayersWithMetadataToMetadata(applicationLayers.getLayers());
-      Assert.assertEquals(3, applicationLayers.size());
+      Assert.assertEquals(4, applicationLayers.size());
     }
 
     // Re-initialize cache with the updated metadata.
@@ -97,6 +112,8 @@ public class BuildAndCacheApplicationLayerStepTest {
             new LayerEntry(
                 testSourceFilesConfiguration.getClassesFiles(),
                 testSourceFilesConfiguration.getClassesPathOnImage()));
+    ImmutableList<LayerEntry> extraFilesLayerEntry =
+        ImmutableList.of(new LayerEntry(extraFilesLayerSourceFiles, extraFilesLayerExtractionPath));
 
     // Verifies that the cached layers are up-to-date.
     CacheReader cacheReader = new CacheReader(cache);
@@ -109,6 +126,9 @@ public class BuildAndCacheApplicationLayerStepTest {
     Assert.assertEquals(
         applicationLayers.get(2).getBlobDescriptor(),
         cacheReader.getUpToDateLayerByLayerEntries(classesLayerEntry).getBlobDescriptor());
+    Assert.assertEquals(
+        applicationLayers.get(3).getBlobDescriptor(),
+        cacheReader.getUpToDateLayerByLayerEntries(extraFilesLayerEntry).getBlobDescriptor());
 
     // Verifies that the cache reader gets the same layers as the newest application layers.
     Assert.assertEquals(
@@ -118,5 +138,7 @@ public class BuildAndCacheApplicationLayerStepTest {
         applicationLayers.get(1).getContentFile(), cacheReader.getLayerFile(resourcesLayerEntry));
     Assert.assertEquals(
         applicationLayers.get(2).getContentFile(), cacheReader.getLayerFile(classesLayerEntry));
+    Assert.assertEquals(
+        applicationLayers.get(3).getContentFile(), cacheReader.getLayerFile(extraFilesLayerEntry));
   }
 }
