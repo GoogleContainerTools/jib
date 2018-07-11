@@ -123,6 +123,7 @@ public class DockerContextTask extends DefaultTask {
       // here.
       ExposedPortsParser.parse(jibExtension.getExposedPorts());
 
+      // TODO: Add support for extra files layer.
       new DockerContextGenerator(gradleProjectProperties.getSourceFilesConfiguration())
           .setBaseImage(jibExtension.getBaseImage())
           .setJvmFlags(jibExtension.getJvmFlags())
