@@ -91,9 +91,7 @@ public class WriteTarFileStep implements AsyncStep<Void>, Callable<Void> {
     Image<CachedLayer> image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
 
     // Build the image to a tarball
-    buildConfiguration
-        .getBuildLogger()
-        .lifecycle("Building image to tar file '" + outputPath.toString() + "'...");
+    buildConfiguration.getBuildLogger().lifecycle("Building image to tar file...");
     if (!Files.exists(Files.createDirectories(outputPath.getParent()))) {
       Files.createDirectories(Files.createDirectories(outputPath.getParent()));
     }
