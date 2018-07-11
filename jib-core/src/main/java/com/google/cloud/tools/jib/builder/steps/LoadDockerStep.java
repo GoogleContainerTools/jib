@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.docker.ImageToTarballTranslator;
 import com.google.cloud.tools.jib.image.Image;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -91,7 +92,8 @@ class LoadDockerStep implements AsyncStep<Void>, Callable<Void> {
     new DockerClient()
         .load(
             new ImageToTarballTranslator(image)
-                .toTarballBlob(buildConfiguration.getTargetImageReference()));
+                .toTarballBlob(
+                    Preconditions.checkNotNull(buildConfiguration.getTargetImageReference())));
 
     return null;
   }

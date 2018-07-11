@@ -204,8 +204,8 @@ public class BuildConfiguration {
       if (baseImageReference == null) {
         errorMessages.add("base image is required but not set");
       }
-      if (targetImageReference == null) {
-        errorMessages.add("target image is required but not set");
+      if (targetImageReference == null && tarOutputPath == null) {
+        errorMessages.add("target image or tarball output path is required but not set");
       }
       if (mainClass == null) {
         errorMessages.add("main class is required but not set");
@@ -213,7 +213,9 @@ public class BuildConfiguration {
 
       switch (errorMessages.size()) {
         case 0: // No errors
-          if (baseImageReference == null || targetImageReference == null || mainClass == null) {
+          if (baseImageReference == null
+              || (targetImageReference == null && tarOutputPath == null)
+              || mainClass == null) {
             throw new IllegalStateException("Required fields should not be null");
           }
           if (baseImageReference.usesDefaultTag()) {
@@ -287,7 +289,7 @@ public class BuildConfiguration {
   private final ImageReference baseImageReference;
   @Nullable private final String baseImageCredentialHelperName;
   @Nullable private final RegistryCredentials knownBaseRegistryCredentials;
-  private final ImageReference targetImageReference;
+  @Nullable private final ImageReference targetImageReference;
   @Nullable private final String targetImageCredentialHelperName;
   @Nullable private final RegistryCredentials knownTargetRegistryCredentials;
   private final String mainClass;
@@ -308,7 +310,7 @@ public class BuildConfiguration {
       ImageReference baseImageReference,
       @Nullable String baseImageCredentialHelperName,
       @Nullable RegistryCredentials knownBaseRegistryCredentials,
-      ImageReference targetImageReference,
+      @Nullable ImageReference targetImageReference,
       @Nullable String targetImageCredentialHelperName,
       @Nullable RegistryCredentials knownTargetRegistryCredentials,
       String mainClass,
@@ -372,20 +374,21 @@ public class BuildConfiguration {
     return knownBaseRegistryCredentials;
   }
 
+  @Nullable
   public ImageReference getTargetImageReference() {
     return targetImageReference;
   }
 
   public String getTargetImageRegistry() {
-    return targetImageReference.getRegistry();
+    return Preconditions.checkNotNull(targetImageReference).getRegistry();
   }
 
   public String getTargetImageRepository() {
-    return targetImageReference.getRepository();
+    return Preconditions.checkNotNull(targetImageReference).getRepository();
   }
 
   public String getTargetImageTag() {
-    return targetImageReference.getTag();
+    return Preconditions.checkNotNull(targetImageReference).getTag();
   }
 
   @Nullable

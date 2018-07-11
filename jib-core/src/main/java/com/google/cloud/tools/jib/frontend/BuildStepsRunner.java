@@ -51,6 +51,10 @@ public class BuildStepsRunner {
   public static BuildStepsRunner forBuildImage(
       BuildConfiguration buildConfiguration, SourceFilesConfiguration sourceFilesConfiguration)
       throws CacheDirectoryCreationException {
+    if (buildConfiguration.getTargetImageReference() == null) {
+      throw new IllegalStateException(
+          "Build to Docker registry requires target image to be configured.");
+    }
     return new BuildStepsRunner(
         BuildSteps.forBuildToDockerRegistry(
             buildConfiguration, sourceFilesConfiguration, getCacheInitializer(buildConfiguration)));
@@ -67,6 +71,10 @@ public class BuildStepsRunner {
   public static BuildStepsRunner forBuildToDockerDaemon(
       BuildConfiguration buildConfiguration, SourceFilesConfiguration sourceFilesConfiguration)
       throws CacheDirectoryCreationException {
+    if (buildConfiguration.getTargetImageReference() == null) {
+      throw new IllegalStateException(
+          "Build to Docker daemon requires target image to be configured.");
+    }
     return new BuildStepsRunner(
         BuildSteps.forBuildToDockerDaemon(
             buildConfiguration, sourceFilesConfiguration, getCacheInitializer(buildConfiguration)));

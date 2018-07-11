@@ -184,7 +184,7 @@ public class BuildConfigurationTest {
 
     } catch (IllegalStateException ex) {
       Assert.assertEquals(
-          "target image is required but not set and main class is required but not set",
+          "target image or tarball output path is required but not set and main class is required but not set",
           ex.getMessage());
     }
 
@@ -195,7 +195,7 @@ public class BuildConfigurationTest {
 
     } catch (IllegalStateException ex) {
       Assert.assertEquals(
-          "base image is required but not set, target image is required but not set, and main class is required but not set",
+          "base image is required but not set, target image or tarball output path is required but not set, and main class is required but not set",
           ex.getMessage());
     }
   }
