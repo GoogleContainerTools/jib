@@ -9,6 +9,12 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Fixed regression that broke pulling base images from registries that required token authentication ([#549](https://github.com/GoogleContainerTools/jib/pull/549))
+
+## 0.9.3
+
+### Fixed
+
 - Using Docker config for finding registry credentials (was not ignoring extra fields and handling `https` protocol) ([#524](https://github.com/GoogleContainerTools/jib/pull/524))
 
 ## 0.9.2
