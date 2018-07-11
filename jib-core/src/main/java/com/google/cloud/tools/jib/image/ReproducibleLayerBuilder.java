@@ -108,9 +108,11 @@ public class ReproducibleLayerBuilder {
       filesystemEntries.addAll(buildAsTarArchiveEntries(layerEntry));
     }
 
+    // Sorts the entries by name.
+    filesystemEntries.sort(Comparator.comparing(TarArchiveEntry::getName));
+
     // Adds all the files to a tar stream.
     TarStreamBuilder tarStreamBuilder = new TarStreamBuilder();
-    filesystemEntries.sort(Comparator.comparing(TarArchiveEntry::getName));
     for (TarArchiveEntry entry : filesystemEntries) {
       // Strips out all non-reproducible elements from tar archive entries.
       entry.setModTime(0);
