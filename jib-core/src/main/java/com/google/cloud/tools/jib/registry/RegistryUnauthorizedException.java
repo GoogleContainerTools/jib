@@ -33,7 +33,7 @@ public class RegistryUnauthorizedException extends RegistryException {
    */
   public RegistryUnauthorizedException(
       String registry, String repository, HttpResponseException cause) {
-    super(cause);
+    super("Unauthorized for " + registry + "/" + repository, cause);
     this.registry = registry;
     this.repository = repository;
   }

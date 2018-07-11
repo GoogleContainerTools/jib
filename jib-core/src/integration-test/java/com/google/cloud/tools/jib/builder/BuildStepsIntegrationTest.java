@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.Caches;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -32,6 +33,7 @@ import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -46,29 +48,28 @@ public class BuildStepsIntegrationTest {
 
   @Rule public TemporaryFolder temporaryCacheDirectory = new TemporaryFolder();
 
+  private SourceFilesConfiguration sourceFilesConfiguration;
+
+  @Before
+  public void setUp() throws IOException, URISyntaxException {
+    sourceFilesConfiguration = new TestSourceFilesConfiguration();
+  }
+
   @Test
   public void testSteps_forBuildToDockerRegistry()
-      throws IOException, URISyntaxException, InterruptedException, CacheMetadataCorruptedException,
-          ExecutionException, CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
-    SourceFilesConfiguration sourceFilesConfiguration = new TestSourceFilesConfiguration();
-    BuildConfiguration buildConfiguration =
-        BuildConfiguration.builder(logger)
-            .setBaseImage(ImageReference.of("gcr.io", "distroless/java", "latest"))
-            .setTargetImage(ImageReference.of("localhost:5000", "testimage", "testtag"))
-            .setMainClass("HelloWorld")
-            .setJavaArguments(Collections.singletonList("An argument."))
-            .setExposedPorts(
-                ExposedPortsParser.parse(
-                    Arrays.asList("1000", "2000-2002/tcp", "3000/udp"), logger))
-            .setAllowHttp(true)
-            .build();
-
-    Path cacheDirectory = temporaryCacheDirectory.newFolder().toPath();
+      throws IOException, InterruptedException, CacheMetadataCorruptedException, ExecutionException,
+          CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
     BuildSteps buildImageSteps =
-        BuildSteps.forBuildToDockerRegistry(
-            buildConfiguration,
-            sourceFilesConfiguration,
-            new Caches.Initializer(cacheDirectory, false, cacheDirectory, false));
+        getBuildSteps(
+            BuildConfiguration.builder(logger)
+                .setBaseImage(ImageReference.of("gcr.io", "distroless/java", "latest"))
+                .setTargetImage(ImageReference.of("localhost:5000", "testimage", "testtag"))
+                .setMainClass("HelloWorld")
+                .setJavaArguments(Collections.singletonList("An argument."))
+                .setExposedPorts(
+                    ExposedPortsParser.parse(Arrays.asList("1000", "2000-2002/tcp", "3000/udp")))
+                .setAllowHttp(true)
+                .build());
 
     long lastTime = System.nanoTime();
     buildImageSteps.run();
@@ -83,7 +84,7 @@ public class BuildStepsIntegrationTest {
         new Command("docker", "inspect", imageReference).run(),
         CoreMatchers.containsString(
             "            \"ExposedPorts\": {\n"
-                + "                \"1000\": {},\n"
+                + "                \"1000/tcp\": {},\n"
                 + "                \"2000/tcp\": {},\n"
                 + "                \"2001/tcp\": {},\n"
                 + "                \"2002/tcp\": {},\n"
@@ -93,10 +94,30 @@ public class BuildStepsIntegrationTest {
   }
 
   @Test
+  public void testSteps_forBuildToDockerRegistry_dockerHubBaseImage()
+      throws InvalidImageReferenceException, IOException, InterruptedException, ExecutionException,
+          CacheDirectoryCreationException, CacheMetadataCorruptedException,
+          CacheDirectoryNotOwnedException {
+    getBuildSteps(
+            BuildConfiguration.builder(logger)
+                .setBaseImage(ImageReference.parse("openjdk:8-jre-alpine"))
+                .setTargetImage(ImageReference.of("localhost:5000", "testimage", "testtag"))
+                .setMainClass("HelloWorld")
+                .setJavaArguments(Collections.singletonList("An argument."))
+                .setAllowHttp(true)
+                .build())
+        .run();
+
+    String imageReference = "localhost:5000/testimage:testtag";
+    new Command("docker", "pull", imageReference).run();
+    Assert.assertEquals(
+        "Hello, world. An argument.\n", new Command("docker", "run", imageReference).run());
+  }
+
+  @Test
   public void testSteps_forBuildToDockerDaemon()
-      throws IOException, URISyntaxException, InterruptedException, CacheMetadataCorruptedException,
-          ExecutionException, CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
-    SourceFilesConfiguration sourceFilesConfiguration = new TestSourceFilesConfiguration();
+      throws IOException, InterruptedException, CacheMetadataCorruptedException, ExecutionException,
+          CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder(logger)
             .setBaseImage(ImageReference.of("gcr.io", "distroless/java", "latest"))
@@ -104,28 +125,34 @@ public class BuildStepsIntegrationTest {
             .setMainClass("HelloWorld")
             .setJavaArguments(Collections.singletonList("An argument."))
             .setExposedPorts(
-                ExposedPortsParser.parse(
-                    Arrays.asList("1000", "2000-2002/tcp", "3000/udp"), logger))
+                ExposedPortsParser.parse(Arrays.asList("1000", "2000-2002/tcp", "3000/udp")))
             .build();
 
     Path cacheDirectory = temporaryCacheDirectory.newFolder().toPath();
-    BuildSteps buildDockerSteps =
-        BuildSteps.forBuildToDockerDaemon(
+    BuildSteps.forBuildToDockerDaemon(
             buildConfiguration,
             sourceFilesConfiguration,
-            new Caches.Initializer(cacheDirectory, false, cacheDirectory, false));
+            new Caches.Initializer(cacheDirectory, false, cacheDirectory, false))
+        .run();
 
-    buildDockerSteps.run();
     Assert.assertThat(
         new Command("docker", "inspect", "testdocker").run(),
         CoreMatchers.containsString(
             "            \"ExposedPorts\": {\n"
-                + "                \"1000\": {},\n"
+                + "                \"1000/tcp\": {},\n"
                 + "                \"2000/tcp\": {},\n"
                 + "                \"2001/tcp\": {},\n"
                 + "                \"2002/tcp\": {},\n"
                 + "                \"3000/udp\": {}"));
     Assert.assertEquals(
         "Hello, world. An argument.\n", new Command("docker", "run", "testdocker").run());
+  }
+
+  private BuildSteps getBuildSteps(BuildConfiguration buildConfiguration) throws IOException {
+    Path cacheDirectory = temporaryCacheDirectory.newFolder().toPath();
+    return BuildSteps.forBuildToDockerRegistry(
+        buildConfiguration,
+        sourceFilesConfiguration,
+        new Caches.Initializer(cacheDirectory, false, cacheDirectory, false));
   }
 }

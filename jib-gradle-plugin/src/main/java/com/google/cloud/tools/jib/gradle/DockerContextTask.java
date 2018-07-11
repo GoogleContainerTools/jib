@@ -121,7 +121,7 @@ public class DockerContextTask extends DefaultTask {
     try {
       // Validate port input, but don't save the output because we don't want the ranges expanded
       // here.
-      ExposedPortsParser.parse(jibExtension.getExposedPorts(), gradleBuildLogger);
+      ExposedPortsParser.parse(jibExtension.getExposedPorts());
 
       new DockerContextGenerator(gradleProjectProperties.getSourceFilesConfiguration())
           .setBaseImage(jibExtension.getBaseImage())

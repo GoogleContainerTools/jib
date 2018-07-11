@@ -42,6 +42,16 @@ public class RegistryAuthenticatorTest {
         RegistryAuthenticator.fromAuthenticationMethod(
             "Basic realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
             "someimage"));
+
+    Assert.assertNull(
+        RegistryAuthenticator.fromAuthenticationMethod(
+            "BASIC realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
+            "someimage"));
+
+    Assert.assertNull(
+        RegistryAuthenticator.fromAuthenticationMethod(
+            "bASIC realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
+            "someimage"));
   }
 
   @Test

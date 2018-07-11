@@ -19,6 +19,8 @@ package com.google.cloud.tools.jib.image.json;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.cache.CachedLayer;
+import com.google.cloud.tools.jib.configuration.Port;
+import com.google.cloud.tools.jib.configuration.Port.Protocol;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
@@ -56,7 +58,11 @@ public class ImageToJsonTranslatorTest {
 
     testImageBuilder.setJavaArguments(Arrays.asList("arg1", "arg2"));
 
-    testImageBuilder.setExposedPorts(ImmutableList.of("1000", "2000/tcp", "3000/udp"));
+    testImageBuilder.setExposedPorts(
+        ImmutableList.of(
+            new Port(1000, Protocol.TCP),
+            new Port(2000, Protocol.TCP),
+            new Port(3000, Protocol.UDP)));
 
     DescriptorDigest fakeDigest =
         DescriptorDigest.fromDigest(
