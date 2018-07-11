@@ -49,7 +49,7 @@ public class Port {
       if (protocolString == null) {
         return TCP;
       }
-      return UDP.toString().toLowerCase().equals(protocolString.toLowerCase()) ? UDP : TCP;
+      return UDP.toString().equalsIgnoreCase(protocolString) ? UDP : TCP;
     }
   }
 
