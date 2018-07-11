@@ -55,7 +55,7 @@ public class BuildSteps {
   private static final String DESCRIPTION_FOR_TARBALL = "Building image tarball";
   private static final String STARTUP_MESSAGE_FORMAT_FOR_TARBALL =
       "Containerizing application to file at '%s'...";
-  // String parameter (target image reference) in cyan.
+  // String parameter (target file) in cyan.
   private static final String SUCCESS_MESSAGE_FORMAT_FOR_TARBALL =
       "Built image tarball at \u001B[36m%s\u001B[0m";
 
