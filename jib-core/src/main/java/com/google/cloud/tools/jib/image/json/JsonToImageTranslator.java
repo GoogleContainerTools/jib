@@ -157,7 +157,9 @@ public class JsonToImageTranslator {
 
       int portNumber = Integer.parseInt(matcher.group(1));
       String protocol = matcher.group(2);
-      ports.add(new Port(portNumber, "udp".equals(protocol) ? Protocol.UDP : Protocol.TCP));
+      ports.add(
+          new Port(
+              portNumber, Protocol.UDP.toString().equals(protocol) ? Protocol.UDP : Protocol.TCP));
     }
     return ports.build();
   }

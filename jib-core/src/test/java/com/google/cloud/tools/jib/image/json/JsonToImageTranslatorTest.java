@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSortedMap;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -78,8 +79,8 @@ public class JsonToImageTranslatorTest {
 
   @Test
   public void testPortMapToList() throws BadConfigurationFormatException {
-    ImmutableMap<String, Map<?, ?>> input =
-        ImmutableMap.of(
+    ImmutableSortedMap<String, Map<?, ?>> input =
+        ImmutableSortedMap.of(
             "1000",
             ImmutableMap.of(),
             "2000/tcp",
