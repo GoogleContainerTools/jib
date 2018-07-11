@@ -102,7 +102,7 @@ class CacheMetadata {
     private static <A, B> boolean pairwiseCompareAllPass(
         List<A> listA, List<B> listB, BiPredicate<A, B> compare) {
       return Streams.zip(listA.stream(), listB.stream(), compare::test)
-          .noneMatch(Predicate.isEqual(false));
+          .allMatch(Predicate.isEqual(true));
     }
 
     private final ImageLayers<CachedLayerWithMetadata> layers;
