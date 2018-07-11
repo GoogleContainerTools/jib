@@ -29,7 +29,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.security.DigestException;
-import java.util.Collections;
 import java.util.Comparator;
 import org.junit.Assert;
 import org.junit.Before;
@@ -134,28 +133,29 @@ public class CacheReaderTest {
       Assert.assertEquals(3, cachedLayers.size());
       classesCachedLayer = cachedLayers.get(2);
 
+      Assert.assertNotNull(classesCachedLayer.getMetadata());
       classesCachedLayer
           .getMetadata()
-          .setEntries(
-              ImmutableList.of(
-                  new LayerMetadata.LayerMetadataEntry(
-                      Collections.singletonList(testSourceFiles.toString()), "extractionPath")));
+          .setEntry(ImmutableList.of(testSourceFiles.toString()), "/some/extraction/path");
     }
 
     try (Cache cache = Cache.init(testCacheFolder)) {
       CacheReader cacheReader = new CacheReader(cache);
 
+      ImmutableList<LayerEntry> upToDateLayerEntries =
+          ImmutableList.of(
+              new LayerEntry(ImmutableList.of(testSourceFiles), "/some/extraction/path"));
+
+      CachedLayerWithMetadata upToDateLayer =
+          cacheReader.getUpToDateLayerByLayerEntries(upToDateLayerEntries);
+      Assert.assertNotNull(upToDateLayer);
       Assert.assertEquals(
-          classesCachedLayer.getBlobDescriptor(),
-          cacheReader
-              .getUpToDateLayerByLayerEntries(
-                  ImmutableList.of(
-                      new LayerEntry(ImmutableList.of(testSourceFiles), "extractionPath")))
-              .getBlobDescriptor());
+          classesCachedLayer.getBlobDescriptor(), upToDateLayer.getBlobDescriptor());
 
       // Changes a file and checks that the change is detected.
       Files.setLastModifiedTime(
           testSourceFiles.resolve("a").resolve("b").resolve("bar"), newerLastModifiedTime);
+      Assert.assertNull(cacheReader.getUpToDateLayerByLayerEntries(upToDateLayerEntries));
       Assert.assertNull(
           cacheReader.getUpToDateLayerByLayerEntries(
               ImmutableList.of(
@@ -165,7 +165,7 @@ public class CacheReaderTest {
       Assert.assertNull(
           cacheReader.getUpToDateLayerByLayerEntries(
               ImmutableList.of(
-                  new LayerEntry(ImmutableList.of(resourceSourceFiles), "extractionPath"))));
+                  new LayerEntry(ImmutableList.of(resourceSourceFiles), "/some/extraction/path"))));
     }
   }
 }

@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.CacheReader;
 import com.google.cloud.tools.jib.cache.CacheWriter;
 import com.google.cloud.tools.jib.cache.CachedLayerWithMetadata;
+import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.image.ReproducibleLayerBuilder;
 import com.google.common.collect.ImmutableList;
@@ -41,7 +42,7 @@ class BuildAndCacheApplicationLayerStep
 
   /**
    * Makes a list of {@link BuildAndCacheApplicationLayerStep} for dependencies, resources, and
-   * classes layers.
+   * classes layers. Optionally adds an extra layer if configured to do so.
    */
   static ImmutableList<BuildAndCacheApplicationLayerStep> makeList(
       ListeningExecutorService listeningExecutorService,
@@ -49,40 +50,60 @@ class BuildAndCacheApplicationLayerStep
       SourceFilesConfiguration sourceFilesConfiguration,
       Cache cache) {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
-      return ImmutableList.of(
-          new BuildAndCacheApplicationLayerStep(
-              "dependencies",
-              listeningExecutorService,
-              buildConfiguration,
-              ImmutableList.of(
-                  new LayerEntry(
-                      sourceFilesConfiguration.getDependenciesFiles(),
-                      sourceFilesConfiguration.getDependenciesPathOnImage())),
-              cache),
-          new BuildAndCacheApplicationLayerStep(
-              "resources",
-              listeningExecutorService,
-              buildConfiguration,
-              ImmutableList.of(
-                  new LayerEntry(
-                      sourceFilesConfiguration.getResourcesFiles(),
-                      sourceFilesConfiguration.getResourcesPathOnImage())),
-              cache),
-          new BuildAndCacheApplicationLayerStep(
-              "classes",
-              listeningExecutorService,
-              buildConfiguration,
-              ImmutableList.of(
-                  new LayerEntry(
-                      sourceFilesConfiguration.getClassesFiles(),
-                      sourceFilesConfiguration.getClassesPathOnImage())),
-              cache));
+      ImmutableList.Builder<BuildAndCacheApplicationLayerStep> buildLayerStepsBuilder =
+          ImmutableList.<BuildAndCacheApplicationLayerStep>builder()
+              .add(
+                  new BuildAndCacheApplicationLayerStep(
+                      "dependencies",
+                      listeningExecutorService,
+                      buildConfiguration,
+                      LayerConfiguration.builder()
+                          .addEntry(
+                              sourceFilesConfiguration.getDependenciesFiles(),
+                              sourceFilesConfiguration.getDependenciesPathOnImage())
+                          .build(),
+                      cache))
+              .add(
+                  new BuildAndCacheApplicationLayerStep(
+                      "resources",
+                      listeningExecutorService,
+                      buildConfiguration,
+                      LayerConfiguration.builder()
+                          .addEntry(
+                              sourceFilesConfiguration.getResourcesFiles(),
+                              sourceFilesConfiguration.getResourcesPathOnImage())
+                          .build(),
+                      cache))
+              .add(
+                  new BuildAndCacheApplicationLayerStep(
+                      "classes",
+                      listeningExecutorService,
+                      buildConfiguration,
+                      LayerConfiguration.builder()
+                          .addEntry(
+                              sourceFilesConfiguration.getClassesFiles(),
+                              sourceFilesConfiguration.getClassesPathOnImage())
+                          .build(),
+                      cache));
+
+      // Adds the extra layer to be built, if configured.
+      if (buildConfiguration.getExtraFilesLayerConfiguration() != null) {
+        buildLayerStepsBuilder.add(
+            new BuildAndCacheApplicationLayerStep(
+                "extra files",
+                listeningExecutorService,
+                buildConfiguration,
+                buildConfiguration.getExtraFilesLayerConfiguration(),
+                cache));
+      }
+
+      return buildLayerStepsBuilder.build();
     }
   }
 
   private final String layerType;
   private final BuildConfiguration buildConfiguration;
-  private final ImmutableList<LayerEntry> layerEntries;
+  private final LayerConfiguration layerConfiguration;
   private final Cache cache;
 
   private final ListenableFuture<CachedLayerWithMetadata> listenableFuture;
@@ -91,11 +112,11 @@ class BuildAndCacheApplicationLayerStep
       String layerType,
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
-      ImmutableList<LayerEntry> layerEntries,
+      LayerConfiguration layerConfiguration,
       Cache cache) {
     this.layerType = layerType;
     this.buildConfiguration = buildConfiguration;
-    this.layerEntries = layerEntries;
+    this.layerConfiguration = layerConfiguration;
     this.cache = cache;
 
     listenableFuture = listeningExecutorService.submit(this);
@@ -115,13 +136,14 @@ class BuildAndCacheApplicationLayerStep
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), description)) {
       // Don't build the layer if it exists already.
       CachedLayerWithMetadata cachedLayer =
-          new CacheReader(cache).getUpToDateLayerByLayerEntries(layerEntries);
+          new CacheReader(cache)
+              .getUpToDateLayerByLayerEntries(layerConfiguration.getLayerEntries());
       if (cachedLayer != null) {
         return cachedLayer;
       }
 
       ReproducibleLayerBuilder reproducibleLayerBuilder = new ReproducibleLayerBuilder();
-      for (LayerEntry layerEntry : layerEntries) {
+      for (LayerEntry layerEntry : layerConfiguration.getLayerEntries()) {
         reproducibleLayerBuilder.addFiles(
             layerEntry.getSourceFiles(), layerEntry.getExtractionPath());
       }
