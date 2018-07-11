@@ -98,7 +98,8 @@ class PullBaseImageStep
   @Override
   public BaseImageWithAuthorization call()
       throws IOException, RegistryException, LayerPropertyNotFoundException,
-          LayerCountMismatchException, ExecutionException, BadConfigurationFormatException, RegistryAuthenticationFailedException {
+          LayerCountMismatchException, ExecutionException, BadConfigurationFormatException,
+          RegistryAuthenticationFailedException {
     buildConfiguration
         .getBuildLogger()
         .lifecycle("Getting base image " + buildConfiguration.getBaseImageReference() + "...");
