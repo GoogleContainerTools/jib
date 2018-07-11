@@ -264,7 +264,7 @@ public class JibExtension {
     return allowInsecureRegistries.get();
   }
 
-  @Internal
+  @Input
   @Optional
   Path getExtraDirectory() {
     return extraDirectory.get();
