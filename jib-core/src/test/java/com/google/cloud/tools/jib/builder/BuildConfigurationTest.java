@@ -18,6 +18,8 @@ package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
+import com.google.cloud.tools.jib.configuration.Port;
+import com.google.cloud.tools.jib.configuration.Port.Protocol;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
@@ -54,7 +56,8 @@ public class BuildConfigurationTest {
     List<String> expectedJavaArguments = Arrays.asList("arg1", "arg2");
     List<String> expectedJvmFlags = Arrays.asList("some", "jvm", "flags");
     Map<String, String> expectedEnvironment = ImmutableMap.of("key", "value");
-    ImmutableList<String> expectedExposedPorts = ImmutableList.of("1000", "2000");
+    ImmutableList<Port> expectedExposedPorts =
+        ImmutableList.of(new Port(1000, Protocol.TCP), new Port(2000, Protocol.TCP));
     Class<? extends BuildableManifestTemplate> expectedTargetFormat = OCIManifestTemplate.class;
     CacheConfiguration expectedApplicationLayersCacheConfiguration =
         CacheConfiguration.forPath(Paths.get("application/layers"));

@@ -16,41 +16,37 @@
 
 package com.google.cloud.tools.jib.frontend;
 
-import com.google.cloud.tools.jib.builder.BuildLogger;
-import com.google.cloud.tools.jib.configuration.PortsWithProtocol;
-import com.google.common.annotations.VisibleForTesting;
+import com.google.cloud.tools.jib.configuration.Port;
+import com.google.cloud.tools.jib.configuration.Port.Protocol;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/** Utility for parsing exposed ports from plugin configuration */
 public class ExposedPortsParser {
 
   /**
    * Pattern used for parsing information out of exposed port configurations.
    *
-   * <p>Examples: 100, 200-210, 1000/tcp, 2000/udp, 500-600/tcp
+   * <p>Example matches: 100, 200-210, 1000/tcp, 2000/udp, 500-600/tcp
    */
-  private static final Pattern portPattern = Pattern.compile("(\\d+)(?:-(\\d+))?(/tcp|/udp)?");
+  private static final Pattern portPattern = Pattern.compile("(\\d+)(?:-(\\d+))?(?:/(tcp|udp))?");
 
   /**
-   * TODO: Return list of {@link PortsWithProtocol}s instead of strings
+   * Converts/validates a list of strings representing port ranges to an expanded list of {@link
+   * Port}s.
    *
-   * <p>Converts/validates a list of ports with ranges to an expanded form without ranges.
-   *
-   * <p>Example: {@code ["1000/tcp", "2000-2002/tcp"] -> ["1000/tcp", "2000/tcp", "2001/tcp",
-   * "2002/tcp"]}
+   * <p>For example: ["1000", "2000-2002"] will expand to a list of {@link Port}s with the port
+   * numbers [1000, 2000, 2001, 2002]
    *
    * @param ports the list of port numbers/ranges
-   * @param buildLogger used to log warning messages
-   * @return the ports as a list of integers
+   * @return the ports as a list of {@link Port}
    * @throws NumberFormatException if any of the ports are in an invalid format or out of range
    */
-  @VisibleForTesting
-  public static ImmutableList<String> parse(List<String> ports, BuildLogger buildLogger)
-      throws NumberFormatException {
-    ImmutableList.Builder<String> result = new ImmutableList.Builder<>();
+  public static ImmutableList<Port> parse(List<String> ports) throws NumberFormatException {
+    ImmutableList.Builder<Port> result = new ImmutableList.Builder<>();
 
     for (String port : ports) {
       Matcher matcher = portPattern.matcher(port);
@@ -70,7 +66,8 @@ public class ExposedPortsParser {
       if (!Strings.isNullOrEmpty(matcher.group(2))) {
         max = Integer.parseInt(matcher.group(2));
       }
-      String protocol = matcher.group(3);
+      Protocol protocol =
+          Protocol.UDP.toString().equals(matcher.group(3)) ? Protocol.UDP : Protocol.TCP;
 
       // Error if configured as 'max-min' instead of 'min-max'
       if (min > max) {
@@ -80,14 +77,12 @@ public class ExposedPortsParser {
 
       // Warn for possibly invalid port numbers
       if (min < 1 || max > 65535) {
-        // TODO: Add details/use HelpfulSuggestions for these warnings
-        buildLogger.warn("Port number '" + port + "' is out of usual range (1-65535).");
+        throw new NumberFormatException(
+            "Port number '" + port + "' is out of usual range (1-65535).");
       }
 
-      // Add all numbers in range to list
-      String portString = (protocol == null ? "" : protocol);
-      for (int portNum = min; portNum <= max; portNum++) {
-        result.add(portNum + portString);
+      for (int portNumber = min; portNumber <= max; portNumber++) {
+        result.add(new Port(portNumber, protocol));
       }
     }
 

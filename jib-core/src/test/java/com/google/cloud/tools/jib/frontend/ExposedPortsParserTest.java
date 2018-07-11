@@ -17,6 +17,8 @@
 package com.google.cloud.tools.jib.frontend;
 
 import com.google.cloud.tools.jib.builder.BuildLogger;
+import com.google.cloud.tools.jib.configuration.Port;
+import com.google.cloud.tools.jib.configuration.Port.Protocol;
 import com.google.common.collect.ImmutableList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -25,7 +27,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link ExposedPortsParser}. */
@@ -35,31 +36,31 @@ public class ExposedPortsParserTest {
   @Mock private BuildLogger mockLogger;
 
   @Test
-  public void testExpandPortList() {
+  public void testParse() {
     List<String> goodInputs =
-        Arrays.asList("1000", "2000-2003", "3000-3000", "4000/tcp", "5000/udp", "6000-6002/tcp");
-    ImmutableList<String> expected =
-        new ImmutableList.Builder<String>()
+        Arrays.asList("1000", "2000-2003", "3000-3000", "4000/tcp", "5000/udp", "6000-6002/udp");
+    ImmutableList<Port> expected =
+        new ImmutableList.Builder<Port>()
             .add(
-                "1000",
-                "2000",
-                "2001",
-                "2002",
-                "2003",
-                "3000",
-                "4000/tcp",
-                "5000/udp",
-                "6000/tcp",
-                "6001/tcp",
-                "6002/tcp")
+                new Port(1000, Protocol.TCP),
+                new Port(2000, Protocol.TCP),
+                new Port(2001, Protocol.TCP),
+                new Port(2002, Protocol.TCP),
+                new Port(2003, Protocol.TCP),
+                new Port(3000, Protocol.TCP),
+                new Port(4000, Protocol.TCP),
+                new Port(5000, Protocol.UDP),
+                new Port(6000, Protocol.UDP),
+                new Port(6001, Protocol.UDP),
+                new Port(6002, Protocol.UDP))
             .build();
-    ImmutableList<String> result = ExposedPortsParser.parse(goodInputs, mockLogger);
+    ImmutableList<Port> result = ExposedPortsParser.parse(goodInputs);
     Assert.assertEquals(expected, result);
 
     List<String> badInputs = Arrays.asList("abc", "/udp", "1000/abc", "a100/tcp", "20/udpabc");
     for (String input : badInputs) {
       try {
-        ExposedPortsParser.parse(Collections.singletonList(input), mockLogger);
+        ExposedPortsParser.parse(Collections.singletonList(input));
         Assert.fail();
       } catch (NumberFormatException ex) {
         Assert.assertEquals(
@@ -73,20 +74,22 @@ public class ExposedPortsParserTest {
     }
 
     try {
-      ExposedPortsParser.parse(Collections.singletonList("4002-4000"), mockLogger);
+      ExposedPortsParser.parse(Collections.singletonList("4002-4000"));
       Assert.fail();
     } catch (NumberFormatException ex) {
       Assert.assertEquals(
           "Invalid port range '4002-4000'; smaller number must come first.", ex.getMessage());
     }
 
-    ExposedPortsParser.parse(Collections.singletonList("0"), mockLogger);
-    Mockito.verify(mockLogger).warn("Port number '0' is out of usual range (1-65535).");
-    ExposedPortsParser.parse(Collections.singletonList("70000"), mockLogger);
-    Mockito.verify(mockLogger).warn("Port number '70000' is out of usual range (1-65535).");
-    ExposedPortsParser.parse(Collections.singletonList("0-400"), mockLogger);
-    Mockito.verify(mockLogger).warn("Port number '0-400' is out of usual range (1-65535).");
-    ExposedPortsParser.parse(Collections.singletonList("1-70000"), mockLogger);
-    Mockito.verify(mockLogger).warn("Port number '1-70000' is out of usual range (1-65535).");
+    badInputs = Arrays.asList("0", "70000", "0-400", "1-70000");
+    for (String input : badInputs) {
+      try {
+        ExposedPortsParser.parse(Collections.singletonList(input));
+        Assert.fail();
+      } catch (NumberFormatException ex) {
+        Assert.assertEquals(
+            "Port number '" + input + "' is out of usual range (1-65535).", ex.getMessage());
+      }
+    }
   }
 }

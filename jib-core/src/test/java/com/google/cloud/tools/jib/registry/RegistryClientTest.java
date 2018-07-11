@@ -43,14 +43,16 @@ public class RegistryClientTest {
   public void testGetUserAgent_null() {
     Assert.assertTrue(
         testRegistryClientFactory
-            .newWithAuthorization(mockAuthorization)
+            .setAuthorization(mockAuthorization)
+            .newRegistryClient()
             .getUserAgent()
             .startsWith("jib"));
 
     RegistryClient.setUserAgentSuffix(null);
     Assert.assertTrue(
         testRegistryClientFactory
-            .newWithAuthorization(mockAuthorization)
+            .setAuthorization(mockAuthorization)
+            .newRegistryClient()
             .getUserAgent()
             .startsWith("jib"));
   }
@@ -59,10 +61,16 @@ public class RegistryClientTest {
   public void testGetUserAgent() {
     RegistryClient.setUserAgentSuffix("some user agent suffix");
 
-    Assert.assertTrue(testRegistryClientFactory.newAllowHttp().getUserAgent().startsWith("jib "));
     Assert.assertTrue(
         testRegistryClientFactory
-            .newAllowHttp()
+            .setAllowHttp(true)
+            .newRegistryClient()
+            .getUserAgent()
+            .startsWith("jib "));
+    Assert.assertTrue(
+        testRegistryClientFactory
+            .setAllowHttp(true)
+            .newRegistryClient()
             .getUserAgent()
             .endsWith(" some user agent suffix"));
   }
@@ -70,6 +78,7 @@ public class RegistryClientTest {
   @Test
   public void testGetApiRouteBase() {
     Assert.assertEquals(
-        "some.server.url/v2/", testRegistryClientFactory.newAllowHttp().getApiRouteBase());
+        "some.server.url/v2/",
+        testRegistryClientFactory.setAllowHttp(true).newRegistryClient().getApiRouteBase());
   }
 }
