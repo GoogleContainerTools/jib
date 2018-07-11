@@ -39,7 +39,9 @@ public class BlobPusherIntegrationTest {
             "52a9e4d4ba4333ce593707f98564fee1e6d898db0d3602408c0b2a6a424d357c");
 
     RegistryClient registryClient =
-        RegistryClient.factory("localhost:5000", "testimage").newAllowHttp();
+        RegistryClient.factory("localhost:5000", "testimage")
+            .setAllowHttp(true)
+            .newRegistryClient();
     Assert.assertFalse(registryClient.pushBlob(testBlobDigest, testBlob));
   }
 }

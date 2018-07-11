@@ -63,33 +63,50 @@ public class RegistryClient {
     return this;
   }
 
-  /** Immutable factory for creating {@link RegistryClient}s. */
+  /** Factory for creating {@link RegistryClient}s. */
   public static class Factory {
 
     private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
+
+    private boolean allowHttp = false;
+    @Nullable private Authorization authorization;
 
     private Factory(RegistryEndpointRequestProperties registryEndpointRequestProperties) {
       this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     }
 
     /**
-     * Creates a new {@link RegistryClient} with authentication credentials to use in requests.
+     * Sets whether or not {@code HTTP} should be allowed (credentials should not be sent when set
+     * to {@code true}). Defaults to {@code false}.
      *
-     * @param authorization the {@link Authorization} to access the registry/repository
-     * @return the new {@link RegistryClient}
+     * @param allowHttp if {@code true}, allows {@code HTTP} connections; otherwise, only {@code
+     *     HTTPS} connections are allowed
+     * @return this
      */
-    public RegistryClient newWithAuthorization(@Nullable Authorization authorization) {
-      return new RegistryClient(
-          authorization, registryEndpointRequestProperties, false, makeUserAgent());
+    public Factory setAllowHttp(boolean allowHttp) {
+      this.allowHttp = allowHttp;
+      return this;
     }
 
     /**
-     * Creates a new {@link RegistryClient} that allows communication via HTTP.
+     * Sets the authentication credentials to use to authenticate with the registry.
+     *
+     * @param authorization the {@link Authorization} to access the registry/repository
+     * @return this
+     */
+    public Factory setAuthorization(@Nullable Authorization authorization) {
+      this.authorization = authorization;
+      return this;
+    }
+
+    /**
+     * Creates a new {@link RegistryClient}.
      *
      * @return the new {@link RegistryClient}
      */
-    public RegistryClient newAllowHttp() {
-      return new RegistryClient(null, registryEndpointRequestProperties, true, makeUserAgent());
+    public RegistryClient newRegistryClient() {
+      return new RegistryClient(
+          authorization, registryEndpointRequestProperties, allowHttp, makeUserAgent());
     }
   }
 
