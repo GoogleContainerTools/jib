@@ -100,7 +100,7 @@ public class BuildStepsIntegrationTest {
           CacheDirectoryNotOwnedException {
     getBuildSteps(
             BuildConfiguration.builder(logger)
-                .setBaseImage(ImageReference.parse("openjdk:8-alpine"))
+                .setBaseImage(ImageReference.parse("openjdk:8-jre-alpine"))
                 .setTargetImage(ImageReference.of("localhost:5000", "testimage", "testtag"))
                 .setMainClass("HelloWorld")
                 .setJavaArguments(Collections.singletonList("An argument."))
