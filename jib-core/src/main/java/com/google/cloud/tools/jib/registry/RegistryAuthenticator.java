@@ -55,8 +55,9 @@ public class RegistryAuthenticator {
   @Nullable
   static RegistryAuthenticator fromAuthenticationMethod(
       String authenticationMethod, String repository) throws RegistryAuthenticationFailedException {
-    // If the authentication method starts with 'Basic ', no registry authentication is needed.
-    if (authenticationMethod.matches("^Basic .*")) {
+    // If the authentication method starts with 'basic ' (case insensitive), no registry
+    // authentication is needed.
+    if (authenticationMethod.matches("^(?i)(basic) .*")) {
       return null;
     }
 
