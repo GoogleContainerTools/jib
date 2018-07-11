@@ -266,7 +266,6 @@ public class JibExtension {
   }
 
   @Input
-  @Optional
   File getExtraDirectory() {
     // TODO: Should inform user about nonexistent directory if using custom directory.
     return extraDirectory.get();
