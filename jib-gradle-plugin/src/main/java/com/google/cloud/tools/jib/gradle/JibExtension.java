@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.io.File;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
@@ -76,7 +77,7 @@ public class JibExtension {
   private final ContainerParameters container;
   private final Property<Boolean> useOnlyProjectCache;
   private final Property<Boolean> allowInsecureRegistries;
-  private final Property<Path> extraDirectory;
+  private final Property<File> extraDirectory;
 
   // TODO: Deprecated parameters; remove these 4
   private final ListProperty<String> jvmFlags;
@@ -98,7 +99,7 @@ public class JibExtension {
 
     useOnlyProjectCache = objectFactory.property(Boolean.class);
     allowInsecureRegistries = objectFactory.property(Boolean.class);
-    extraDirectory = objectFactory.property(Path.class);
+    extraDirectory = objectFactory.property(File.class);
 
     // Sets defaults.
     from.setImage(DEFAULT_FROM_IMAGE);
@@ -106,7 +107,7 @@ public class JibExtension {
     args.set(Collections.emptyList());
     useOnlyProjectCache.set(DEFAULT_USE_ONLY_PROJECT_CACHE);
     allowInsecureRegistries.set(DEFAULT_ALLOW_INSECURE_REGISTIRIES);
-    extraDirectory.set(resolveDefaultExtraDirectory(project.getProjectDir().toPath()));
+    extraDirectory.set(resolveDefaultExtraDirectory(project.getProjectDir().toPath()).toFile());
   }
 
   /**
@@ -184,7 +185,7 @@ public class JibExtension {
     this.allowInsecureRegistries.set(allowInsecureRegistries);
   }
 
-  public void setExtraDirectory(Path extraDirectory) {
+  public void setExtraDirectory(File extraDirectory) {
     this.extraDirectory.set(extraDirectory);
   }
 
@@ -265,8 +266,7 @@ public class JibExtension {
   }
 
   @Input
-  @Optional
-  Path getExtraDirectory() {
+  File getExtraDirectory() {
     // TODO: Should inform user about nonexistent directory if using custom directory.
     return extraDirectory.get();
   }

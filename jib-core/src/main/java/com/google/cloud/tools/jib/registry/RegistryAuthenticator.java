@@ -41,6 +41,68 @@ import javax.annotation.Nullable;
  */
 public class RegistryAuthenticator {
 
+  /** Initializer for {@link RegistryAuthenticator}. */
+  public static class Initializer {
+
+    private final String serverUrl;
+    private final String repository;
+    private boolean allowHttp = false;
+
+    /**
+     * Instantiates a new initializer for {@link RegistryAuthenticator}.
+     *
+     * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
+     * @param repository the image/repository name (also known as, namespace)
+     */
+    private Initializer(String serverUrl, String repository) {
+      this.serverUrl = serverUrl;
+      this.repository = repository;
+    }
+
+    public Initializer setAllowHttp(boolean allowHttp) {
+      this.allowHttp = allowHttp;
+      return this;
+    }
+
+    /**
+     * Gets a {@link RegistryAuthenticator} for a custom registry server and repository.
+     *
+     * @return the {@link RegistryAuthenticator} to authenticate pulls/pushes with the registry, or
+     *     {@code null} if no token authentication is necessary
+     * @throws RegistryAuthenticationFailedException if failed to create the registry authenticator
+     * @throws IOException if communicating with the endpoint fails
+     * @throws RegistryException if communicating with the endpoint fails
+     */
+    @Nullable
+    public RegistryAuthenticator initialize()
+        throws RegistryAuthenticationFailedException, IOException, RegistryException {
+      try {
+        return RegistryClient.factory(serverUrl, repository)
+            .setAllowHttp(allowHttp)
+            .newRegistryClient()
+            .getRegistryAuthenticator();
+
+      } catch (MalformedURLException ex) {
+        throw new RegistryAuthenticationFailedException(ex);
+
+      } catch (InsecureRegistryException ex) {
+        // HTTP is not allowed, so just return null.
+        return null;
+      }
+    }
+  }
+
+  /**
+   * Gets a new initializer for {@link RegistryAuthenticator}.
+   *
+   * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
+   * @param repository the image/repository name (also known as, namespace)
+   * @return the new {@link Initializer}
+   */
+  public static Initializer initializer(String serverUrl, String repository) {
+    return new Initializer(serverUrl, repository);
+  }
+
   // TODO: Replace with a WWW-Authenticate header parser.
   /**
    * Instantiates from parsing a {@code WWW-Authenticate} header.
