@@ -92,9 +92,7 @@ public class WriteTarFileStep implements AsyncStep<Void>, Callable<Void> {
 
     // Build the image to a tarball
     buildConfiguration.getBuildLogger().lifecycle("Building image to tar file...");
-    if (Files.exists(outputPath.getParent())) {
-      Files.createDirectories(outputPath.getParent());
-    }
+    Files.createDirectories(outputPath.getParent());
     try (OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(outputPath))) {
       new ImageToTarballTranslator(image)
           .toTarballBlob(buildConfiguration.getTargetImageReference())
