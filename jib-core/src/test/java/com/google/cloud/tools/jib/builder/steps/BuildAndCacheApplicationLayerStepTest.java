@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
+import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.builder.TestBuildLogger;
 import com.google.cloud.tools.jib.builder.TestSourceFilesConfiguration;
 import com.google.cloud.tools.jib.cache.Cache;
@@ -37,6 +38,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.ExecutionException;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -49,30 +51,35 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class BuildAndCacheApplicationLayerStepTest {
 
+  private static final String EXTRA_FILES_LAYER_EXTRACTION_PATH = "/extra";
+
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Mock private BuildConfiguration mockBuildConfiguration;
+  private Path temporaryCacheDirectory;
 
-  @Test
-  public void testRun()
-      throws LayerPropertyNotFoundException, IOException, CacheMetadataCorruptedException,
-          URISyntaxException, ExecutionException {
+  @Before
+  public void setUp() throws IOException, URISyntaxException {
     Mockito.when(mockBuildConfiguration.getBuildLogger()).thenReturn(new TestBuildLogger());
-    TestSourceFilesConfiguration testSourceFilesConfiguration = new TestSourceFilesConfiguration();
-    Path temporaryCacheDirectory = temporaryFolder.newFolder().toPath();
+    temporaryCacheDirectory = temporaryFolder.newFolder().toPath();
+  }
 
-    // Adds an extra file layer.
+  private ImmutableList<Path> configureExtraFilesLayer() throws URISyntaxException {
     ImmutableList<Path> extraFilesLayerSourceFiles =
         ImmutableList.of(
             Paths.get(Resources.getResource("fileA").toURI()),
             Paths.get(Resources.getResource("fileB").toURI()));
-    String extraFilesLayerExtractionPath = "/extra";
     Mockito.when(mockBuildConfiguration.getExtraFilesLayerConfiguration())
         .thenReturn(
             LayerConfiguration.builder()
-                .addEntry(extraFilesLayerSourceFiles, extraFilesLayerExtractionPath)
+                .addEntry(extraFilesLayerSourceFiles, EXTRA_FILES_LAYER_EXTRACTION_PATH)
                 .build());
+    return extraFilesLayerSourceFiles;
+  }
 
+  private ImageLayers<CachedLayerWithMetadata> configureAvailableLayers(
+      SourceFilesConfiguration testSourceFilesConfiguration)
+      throws CacheMetadataCorruptedException, IOException, ExecutionException {
     ImageLayers.Builder<CachedLayerWithMetadata> applicationLayersBuilder = ImageLayers.builder();
     ImageLayers<CachedLayerWithMetadata> applicationLayers;
 
@@ -91,8 +98,30 @@ public class BuildAndCacheApplicationLayerStepTest {
 
       applicationLayers = applicationLayersBuilder.build();
       cache.addCachedLayersWithMetadataToMetadata(applicationLayers.getLayers());
-      Assert.assertEquals(5, applicationLayers.size());
     }
+    return applicationLayers;
+  }
+
+  @Test
+  public void testRun()
+      throws LayerPropertyNotFoundException, IOException, CacheMetadataCorruptedException,
+          URISyntaxException, ExecutionException {
+
+    TestSourceFilesConfiguration testSourceFilesConfiguration =
+        TestSourceFilesConfiguration.builder()
+            .withDependencies()
+            .withSnapshotDependencies()
+            .withClasses()
+            .withResources()
+            .build();
+
+    // Adds an extra file layer.
+    ImmutableList<Path> extraFilesLayerSourceFiles = configureExtraFilesLayer();
+
+    // Populate the cache
+    ImageLayers<CachedLayerWithMetadata> applicationLayers =
+        configureAvailableLayers(testSourceFilesConfiguration);
+    Assert.assertEquals(5, applicationLayers.size());
 
     // Re-initialize cache with the updated metadata.
     Cache cache = Cache.init(temporaryCacheDirectory);
@@ -118,7 +147,8 @@ public class BuildAndCacheApplicationLayerStepTest {
                 testSourceFilesConfiguration.getClassesFiles(),
                 testSourceFilesConfiguration.getClassesPathOnImage()));
     ImmutableList<LayerEntry> extraFilesLayerEntry =
-        ImmutableList.of(new LayerEntry(extraFilesLayerSourceFiles, extraFilesLayerExtractionPath));
+        ImmutableList.of(
+            new LayerEntry(extraFilesLayerSourceFiles, EXTRA_FILES_LAYER_EXTRACTION_PATH));
 
     // Verifies that the cached layers are up-to-date.
     CacheReader cacheReader = new CacheReader(cache);
@@ -127,15 +157,15 @@ public class BuildAndCacheApplicationLayerStepTest {
         cacheReader.getUpToDateLayerByLayerEntries(dependenciesLayerEntry).getBlobDescriptor());
     Assert.assertEquals(
         applicationLayers.get(1).getBlobDescriptor(),
+        cacheReader.getUpToDateLayerByLayerEntries(resourcesLayerEntry).getBlobDescriptor());
+    Assert.assertEquals(
+        applicationLayers.get(2).getBlobDescriptor(),
+        cacheReader.getUpToDateLayerByLayerEntries(classesLayerEntry).getBlobDescriptor());
+    Assert.assertEquals(
+        applicationLayers.get(3).getBlobDescriptor(),
         cacheReader
             .getUpToDateLayerByLayerEntries(snapshotDependenciesLayerEntry)
             .getBlobDescriptor());
-    Assert.assertEquals(
-        applicationLayers.get(2).getBlobDescriptor(),
-        cacheReader.getUpToDateLayerByLayerEntries(resourcesLayerEntry).getBlobDescriptor());
-    Assert.assertEquals(
-        applicationLayers.get(3).getBlobDescriptor(),
-        cacheReader.getUpToDateLayerByLayerEntries(classesLayerEntry).getBlobDescriptor());
     Assert.assertEquals(
         applicationLayers.get(4).getBlobDescriptor(),
         cacheReader.getUpToDateLayerByLayerEntries(extraFilesLayerEntry).getBlobDescriptor());
@@ -145,13 +175,70 @@ public class BuildAndCacheApplicationLayerStepTest {
         applicationLayers.get(0).getContentFile(),
         cacheReader.getLayerFile(dependenciesLayerEntry));
     Assert.assertEquals(
-        applicationLayers.get(1).getContentFile(),
+        applicationLayers.get(1).getContentFile(), cacheReader.getLayerFile(resourcesLayerEntry));
+    Assert.assertEquals(
+        applicationLayers.get(2).getContentFile(), cacheReader.getLayerFile(classesLayerEntry));
+    Assert.assertEquals(
+        applicationLayers.get(3).getContentFile(),
         cacheReader.getLayerFile(snapshotDependenciesLayerEntry));
     Assert.assertEquals(
-        applicationLayers.get(2).getContentFile(), cacheReader.getLayerFile(resourcesLayerEntry));
-    Assert.assertEquals(
-        applicationLayers.get(3).getContentFile(), cacheReader.getLayerFile(classesLayerEntry));
-    Assert.assertEquals(
         applicationLayers.get(4).getContentFile(), cacheReader.getLayerFile(extraFilesLayerEntry));
+  }
+
+  @Test
+  public void testRun_emptyLayersIgnored()
+      throws IOException, URISyntaxException, CacheMetadataCorruptedException, ExecutionException {
+
+    TestSourceFilesConfiguration testSourceFilesConfiguration =
+        TestSourceFilesConfiguration.builder()
+            .withDependencies()
+            .withClasses()
+            .withResources()
+            .build();
+
+    // Populate the cache
+    ImageLayers<CachedLayerWithMetadata> applicationLayers =
+        configureAvailableLayers(testSourceFilesConfiguration);
+    Assert.assertEquals(3, applicationLayers.size());
+
+    ImmutableList<LayerEntry> dependenciesLayerEntry =
+        ImmutableList.of(
+            new LayerEntry(
+                testSourceFilesConfiguration.getDependenciesFiles(),
+                testSourceFilesConfiguration.getDependenciesPathOnImage()));
+    ImmutableList<LayerEntry> resourcesLayerEntry =
+        ImmutableList.of(
+            new LayerEntry(
+                testSourceFilesConfiguration.getResourcesFiles(),
+                testSourceFilesConfiguration.getResourcesPathOnImage()));
+    ImmutableList<LayerEntry> classesLayerEntry =
+        ImmutableList.of(
+            new LayerEntry(
+                testSourceFilesConfiguration.getClassesFiles(),
+                testSourceFilesConfiguration.getClassesPathOnImage()));
+
+    // Re-initialize cache with the updated metadata.
+    Cache cache = Cache.init(temporaryCacheDirectory);
+
+    // Verifies that the cached layers are up-to-date.
+    CacheReader cacheReader = new CacheReader(cache);
+    Assert.assertEquals(
+        applicationLayers.get(0).getBlobDescriptor(),
+        cacheReader.getUpToDateLayerByLayerEntries(dependenciesLayerEntry).getBlobDescriptor());
+    Assert.assertEquals(
+        applicationLayers.get(1).getBlobDescriptor(),
+        cacheReader.getUpToDateLayerByLayerEntries(resourcesLayerEntry).getBlobDescriptor());
+    Assert.assertEquals(
+        applicationLayers.get(2).getBlobDescriptor(),
+        cacheReader.getUpToDateLayerByLayerEntries(classesLayerEntry).getBlobDescriptor());
+
+    // Verifies that the cache reader gets the same layers as the newest application layers.
+    Assert.assertEquals(
+        applicationLayers.get(0).getContentFile(),
+        cacheReader.getLayerFile(dependenciesLayerEntry));
+    Assert.assertEquals(
+        applicationLayers.get(1).getContentFile(), cacheReader.getLayerFile(resourcesLayerEntry));
+    Assert.assertEquals(
+        applicationLayers.get(2).getContentFile(), cacheReader.getLayerFile(classesLayerEntry));
   }
 }

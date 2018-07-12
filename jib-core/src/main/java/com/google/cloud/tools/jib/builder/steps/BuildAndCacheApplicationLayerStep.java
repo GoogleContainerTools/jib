@@ -65,17 +65,6 @@ class BuildAndCacheApplicationLayerStep
                       cache))
               .add(
                   new BuildAndCacheApplicationLayerStep(
-                      "snapshot-dependencies",
-                      listeningExecutorService,
-                      buildConfiguration,
-                      LayerConfiguration.builder()
-                          .addEntry(
-                              sourceFilesConfiguration.getSnapshotDependenciesFiles(),
-                              sourceFilesConfiguration.getDependenciesPathOnImage())
-                          .build(),
-                      cache))
-              .add(
-                  new BuildAndCacheApplicationLayerStep(
                       "resources",
                       listeningExecutorService,
                       buildConfiguration,
@@ -97,6 +86,20 @@ class BuildAndCacheApplicationLayerStep
                           .build(),
                       cache));
 
+      // Adds a snapshot dependencies layer, if snapshot files present.
+      if (!sourceFilesConfiguration.getSnapshotDependenciesFiles().isEmpty()) {
+        buildLayerStepsBuilder.add(
+            new BuildAndCacheApplicationLayerStep(
+                "snapshot-dependencies",
+                listeningExecutorService,
+                buildConfiguration,
+                LayerConfiguration.builder()
+                    .addEntry(
+                        sourceFilesConfiguration.getSnapshotDependenciesFiles(),
+                        sourceFilesConfiguration.getDependenciesPathOnImage())
+                    .build(),
+                cache));
+      }
       // Adds the extra layer to be built, if configured.
       if (buildConfiguration.getExtraFilesLayerConfiguration() != null) {
         buildLayerStepsBuilder.add(
