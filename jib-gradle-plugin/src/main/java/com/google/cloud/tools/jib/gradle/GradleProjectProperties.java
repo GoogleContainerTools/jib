@@ -22,15 +22,23 @@ import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
 import com.google.cloud.tools.jib.frontend.MainClassFinder;
 import com.google.cloud.tools.jib.frontend.MainClassInferenceException;
 import com.google.cloud.tools.jib.frontend.ProjectProperties;
+import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.Nullable;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.api.file.FileCollection;
 import org.gradle.jvm.tasks.Jar;
 
 /** Obtains information about a Gradle {@link Project} that uses Jib. */
@@ -117,6 +125,59 @@ class GradleProjectProperties implements ProjectProperties {
       return MainClassFinder.resolveMainClass(jibExtension.getMainClass(), this);
     } catch (MainClassInferenceException ex) {
       throw new GradleException(ex.getMessage(), ex);
+    }
+  }
+
+  /**
+   * Returns an {@link ImageReference} parsed from the configured target image, or one of the form
+   * {@code project-name:project-version} if target image is not configured
+   *
+   * @param jibExtension the plugin configuration parameters to generate the name from
+   * @param gradleBuildLogger the logger used to notify users of the target image parameter
+   * @return an {@link ImageReference} parsed from the configured target image, or one of the form
+   *     {@code project-name:project-version} if target image is not configured
+   */
+  ImageReference getGeneratedTargetDockerTag(
+      JibExtension jibExtension, GradleBuildLogger gradleBuildLogger)
+      throws InvalidImageReferenceException {
+    Preconditions.checkNotNull(jibExtension);
+    if (Strings.isNullOrEmpty(jibExtension.getTargetImage())) {
+      // TODO: Validate that project name and version are valid repository/tag
+      // TODO: Use HelpfulSuggestions
+      gradleBuildLogger.lifecycle(
+          "Tagging image with generated image reference "
+              + project.getName()
+              + ":"
+              + project.getVersion().toString()
+              + ". If you'd like to specify a different tag, you can set the jib.to.image "
+              + "parameter in your build.gradle, or use the --image=<MY IMAGE> commandline flag.");
+      return ImageReference.of(null, project.getName(), project.getVersion().toString());
+    } else {
+      return ImageReference.parse(jibExtension.getTargetImage());
+    }
+  }
+
+  /**
+   * Returns the input files for a task.
+   *
+   * @param extraDirectory the image's configured extra directory
+   * @param project the gradle project
+   * @return the input files to the task are all the output files for all the dependencies of the
+   *     {@code classes} task
+   */
+  static FileCollection getInputFiles(File extraDirectory, Project project) {
+    Task classesTask = project.getTasks().getByPath("classes");
+    Set<? extends Task> classesDependencies =
+        classesTask.getTaskDependencies().getDependencies(classesTask);
+
+    List<FileCollection> dependencyFileCollections = new ArrayList<>();
+    for (Task task : classesDependencies) {
+      dependencyFileCollections.add(task.getOutputs().getFiles());
+    }
+    if (Files.exists(extraDirectory.toPath())) {
+      return project.files(dependencyFileCollections, extraDirectory);
+    } else {
+      return project.files(dependencyFileCollections);
     }
   }
 }

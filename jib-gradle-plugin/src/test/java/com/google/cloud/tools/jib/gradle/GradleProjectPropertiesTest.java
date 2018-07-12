@@ -17,6 +17,8 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
+import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.util.Collections;
@@ -43,6 +45,8 @@ public class GradleProjectPropertiesTest {
   @Mock private Project mockProject;
   @Mock private GradleBuildLogger mockGradleBuildLogger;
   @Mock private SourceFilesConfiguration mockSourceFilesConfiguration;
+  @Mock private JibExtension mockJibExtension;
+  @Mock private GradleBuildLogger mockBuildLogger;
 
   private Manifest manifest;
   private GradleProjectProperties gradleProjectProperties;
@@ -76,5 +80,31 @@ public class GradleProjectPropertiesTest {
     Mockito.when(mockProject.getTasksByName("jar", false))
         .thenReturn(ImmutableSet.of(mockJar, mockJar2));
     Assert.assertEquals(null, gradleProjectProperties.getMainClassFromJar());
+  }
+
+  @Test
+  public void testGetDockerTag_configured() throws InvalidImageReferenceException {
+    Mockito.when(mockJibExtension.getTargetImage()).thenReturn("a/b:c");
+    ImageReference result =
+        gradleProjectProperties.getGeneratedTargetDockerTag(mockJibExtension, mockBuildLogger);
+    Assert.assertEquals("a/b", result.getRepository());
+    Assert.assertEquals("c", result.getTag());
+    Mockito.verify(mockBuildLogger, Mockito.never()).lifecycle(Mockito.any());
+  }
+
+  @Test
+  public void testGetDockerTag_notConfigured() throws InvalidImageReferenceException {
+    Mockito.when(mockProject.getName()).thenReturn("project-name");
+    Mockito.when(mockProject.getVersion()).thenReturn("project-version");
+    Mockito.when(mockJibExtension.getTargetImage()).thenReturn(null);
+    ImageReference result =
+        gradleProjectProperties.getGeneratedTargetDockerTag(mockJibExtension, mockBuildLogger);
+    Assert.assertEquals("project-name", result.getRepository());
+    Assert.assertEquals("project-version", result.getTag());
+    Mockito.verify(mockBuildLogger)
+        .lifecycle(
+            "Tagging image with generated image reference project-name:project-version. If you'd "
+                + "like to specify a different tag, you can set the jib.to.image parameter in your "
+                + "build.gradle, or use the --image=<MY IMAGE> commandline flag.");
   }
 }

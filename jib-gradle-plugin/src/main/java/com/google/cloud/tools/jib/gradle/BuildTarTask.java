@@ -20,7 +20,6 @@ import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
-import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
@@ -34,23 +33,27 @@ import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
+import org.gradle.api.file.FileCollection;
+import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Nested;
+import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.options.Option;
 
-/** Builds a container image and exports to the default Docker daemon. */
-public class BuildDockerTask extends DefaultTask {
+/** Builds a container image to a tarball. */
+public class BuildTarTask extends DefaultTask {
 
   /** {@code User-Agent} header suffix to send to the registry. */
   private static final String USER_AGENT_SUFFIX = "jib-gradle-plugin";
 
   private static final HelpfulSuggestions HELPFUL_SUGGESTIONS =
-      HelpfulSuggestionsProvider.get("Build to Docker daemon failed");
+      HelpfulSuggestionsProvider.get("Building image tarball failed");
 
   @Nullable private JibExtension jibExtension;
 
@@ -76,12 +79,37 @@ public class BuildDockerTask extends DefaultTask {
     Preconditions.checkNotNull(jibExtension).getTo().setImage(targetImage);
   }
 
-  @TaskAction
-  public void buildDocker() throws InvalidImageReferenceException, IOException {
-    if (!new DockerClient().isDockerInstalled()) {
-      throw new GradleException(HELPFUL_SUGGESTIONS.forDockerNotInstalled());
-    }
+  /**
+   * @return the input files to this task are all the output files for all the dependencies of the
+   *     {@code classes} task.
+   */
+  @InputFiles
+  public FileCollection getInputFiles() {
+    return GradleProjectProperties.getInputFiles(
+        Preconditions.checkNotNull(jibExtension).getExtraDirectory(), getProject());
+  }
 
+  /**
+   * The output file to check for task up-to-date.
+   *
+   * @return the output path
+   */
+  @OutputFile
+  public String getOutputFile() {
+    return getTargetPath();
+  }
+
+  /**
+   * Returns the output directory for the tarball. By default, it is {@code build/jib-image.tar}.
+   *
+   * @return the output directory
+   */
+  private String getTargetPath() {
+    return getProject().getBuildDir().toPath().resolve("jib-image.tar").toString();
+  }
+
+  @TaskAction
+  public void buildTar() throws InvalidImageReferenceException, IOException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
     GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
@@ -100,7 +128,7 @@ public class BuildDockerTask extends DefaultTask {
         gradleProjectProperties.getGeneratedTargetDockerTag(jibExtension, gradleBuildLogger);
 
     // Builds the BuildConfiguration.
-    // TODO: Consolidate with BuildImageTask.
+    // TODO: Consolidate with BuildImageTask/BuildDockerTask.
     BuildConfiguration.Builder buildConfigurationBuilder =
         BuildConfiguration.builder(gradleBuildLogger)
             .setBaseImage(ImageReference.parse(jibExtension.getBaseImage()))
@@ -138,8 +166,10 @@ public class BuildDockerTask extends DefaultTask {
 
     // Uses a directory in the Gradle build cache as the Jib cache.
     try {
-      BuildStepsRunner.forBuildToDockerDaemon(
-              buildConfiguration, gradleProjectProperties.getSourceFilesConfiguration())
+      BuildStepsRunner.forBuildTar(
+              Paths.get(getTargetPath()),
+              buildConfiguration,
+              gradleProjectProperties.getSourceFilesConfiguration())
           .build(HELPFUL_SUGGESTIONS);
 
     } catch (CacheDirectoryCreationException | BuildStepsExecutionException ex) {
@@ -147,7 +177,7 @@ public class BuildDockerTask extends DefaultTask {
     }
   }
 
-  BuildDockerTask setJibExtension(JibExtension jibExtension) {
+  BuildTarTask setJibExtension(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
     return this;
   }
