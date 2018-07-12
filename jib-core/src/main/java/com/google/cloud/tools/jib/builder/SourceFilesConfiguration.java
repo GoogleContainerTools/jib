@@ -26,6 +26,7 @@ import java.nio.file.Path;
 public interface SourceFilesConfiguration {
 
   String DEFAULT_DEPENDENCIES_PATH_ON_IMAGE = "/app/libs/";
+  String DEFAULT_SNAPSHOT_DEPENDENCIES_PATH_ON_IMAGE = "/app/snapshot-libs/";
   String DEFAULT_RESOURCES_PATH_ON_IMAGE = "/app/resources/";
   String DEFAULT_CLASSES_PATH_ON_IMAGE = "/app/classes/";
 
@@ -34,6 +35,12 @@ public interface SourceFilesConfiguration {
    *     order.
    */
   ImmutableList<Path> getDependenciesFiles();
+
+  /**
+   * @return the source files for snapshot dependencies. These files should be in a deterministic
+   *     order
+   */
+  ImmutableList<Path> getSnapshotDependenciesFiles();
 
   /**
    * @return the source files for the resources layer. These files should be in a deterministic
@@ -51,6 +58,12 @@ public interface SourceFilesConfiguration {
    *     filesystem. Must end with slash.
    */
   String getDependenciesPathOnImage();
+
+  /**
+   * @return the Unix-style path where the snapshot dependencies sources files are place in the
+   *     container filesystem. Must end with slash.
+   */
+  String getSnapshotDependenciesPathOnImage();
 
   /**
    * @return the Unix-style path where the resources source files are placed in the container

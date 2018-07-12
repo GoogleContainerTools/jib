@@ -28,6 +28,7 @@ public class EntrypointBuilderTest {
   @Test
   public void testMakeEntrypoint() {
     String expectedDependenciesPath = "/app/libs/";
+    String expectedSnapshotDependenciesPath = "/app/snapshot-libs/";
     String expectedResourcesPath = "/app/resources/";
     String expectedClassesPath = "/app/classes/";
     List<String> expectedJvmFlags = Arrays.asList("-flag", "anotherFlag");
@@ -38,6 +39,8 @@ public class EntrypointBuilderTest {
 
     Mockito.when(mockSourceFilesConfiguration.getDependenciesPathOnImage())
         .thenReturn(expectedDependenciesPath);
+    Mockito.when(mockSourceFilesConfiguration.getSnapshotDependenciesPathOnImage())
+        .thenReturn(expectedSnapshotDependenciesPath);
     Mockito.when(mockSourceFilesConfiguration.getResourcesPathOnImage())
         .thenReturn(expectedResourcesPath);
     Mockito.when(mockSourceFilesConfiguration.getClassesPathOnImage())
@@ -49,7 +52,7 @@ public class EntrypointBuilderTest {
             "-flag",
             "anotherFlag",
             "-cp",
-            "/app/libs/*:/app/resources/:/app/classes/",
+            "/app/libs/*:/app/snapshot-libs/*:/app/resources/:/app/classes/",
             "SomeMainClass"),
         EntrypointBuilder.makeEntrypoint(
             mockSourceFilesConfiguration, expectedJvmFlags, expectedMainClass));

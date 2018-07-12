@@ -1,10 +1,11 @@
 FROM somebaseimage
 
 COPY libs /app/libs/
+COPY snapshot-libs /app/snapshot-libs/
 COPY resources /app/resources/
 COPY classes /app/classes/
 
 EXPOSE 1000/tcp
 EXPOSE 2000-2010/udp
-ENTRYPOINT ["java","-flag","another\"Flag","-cp","/app/libs/*:/app/resources/:/app/classes/","SomeMainClass"]
+ENTRYPOINT ["java","-flag","another\"Flag","-cp","/app/libs/*:/app/snapshot-libs/*:/app/resources/:/app/classes/","SomeMainClass"]
 CMD ["arg1","arg2"]

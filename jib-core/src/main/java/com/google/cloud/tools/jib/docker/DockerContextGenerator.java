@@ -136,14 +136,18 @@ public class DockerContextGenerator {
 
     // Creates the directories.
     Path dependenciesDir = targetDirectory.resolve("libs");
+    Path snapshotDependenciesDir = targetDirectory.resolve("snapshot-libs");
     Path resourcesDIr = targetDirectory.resolve("resources");
     Path classesDir = targetDirectory.resolve("classes");
     Files.createDirectory(dependenciesDir);
+    Files.createDirectories(snapshotDependenciesDir);
     Files.createDirectory(resourcesDIr);
     Files.createDirectory(classesDir);
 
     // Copies dependencies.
     FileOperations.copy(sourceFilesConfiguration.getDependenciesFiles(), dependenciesDir);
+    FileOperations.copy(
+        sourceFilesConfiguration.getSnapshotDependenciesFiles(), snapshotDependenciesDir);
     FileOperations.copy(sourceFilesConfiguration.getResourcesFiles(), resourcesDIr);
     FileOperations.copy(sourceFilesConfiguration.getClassesFiles(), classesDir);
 
@@ -179,6 +183,8 @@ public class DockerContextGenerator {
         .append(Preconditions.checkNotNull(baseImage))
         .append("\n\nCOPY libs ")
         .append(sourceFilesConfiguration.getDependenciesPathOnImage())
+        .append("\nCOPY snapshot-libs ")
+        .append(sourceFilesConfiguration.getSnapshotDependenciesPathOnImage())
         .append("\nCOPY resources ")
         .append(sourceFilesConfiguration.getResourcesPathOnImage())
         .append("\nCOPY classes ")

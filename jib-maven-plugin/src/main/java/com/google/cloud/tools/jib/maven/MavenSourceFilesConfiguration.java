@@ -44,6 +44,7 @@ class MavenSourceFilesConfiguration implements SourceFilesConfiguration {
   }
 
   private final ImmutableList<Path> dependenciesFiles;
+  private final ImmutableList<Path> snapshotDependenciesFiles;
   private final ImmutableList<Path> resourcesFiles;
   private final ImmutableList<Path> classesFiles;
 
@@ -53,12 +54,17 @@ class MavenSourceFilesConfiguration implements SourceFilesConfiguration {
     Path classesOutputDirectory = Paths.get(project.getBuild().getOutputDirectory());
 
     List<Path> dependenciesFiles = new ArrayList<>();
+    List<Path> snapshotDependenciesFiles = new ArrayList<>();
     List<Path> resourcesFiles = new ArrayList<>();
     List<Path> classesFiles = new ArrayList<>();
 
     // Gets all the dependencies.
     for (Artifact artifact : project.getArtifacts()) {
-      dependenciesFiles.add(artifact.getFile().toPath());
+      if (artifact.isSnapshot()) {
+        snapshotDependenciesFiles.add(artifact.getFile().toPath());
+      } else {
+        dependenciesFiles.add(artifact.getFile().toPath());
+      }
     }
 
     // Gets the classes files in the 'classes' output directory. It finds the files that are classes
@@ -88,6 +94,7 @@ class MavenSourceFilesConfiguration implements SourceFilesConfiguration {
 
     // Sort all files by path for consistent ordering.
     this.dependenciesFiles = ImmutableList.sortedCopyOf(dependenciesFiles);
+    this.snapshotDependenciesFiles = ImmutableList.sortedCopyOf(snapshotDependenciesFiles);
     this.resourcesFiles = ImmutableList.sortedCopyOf(resourcesFiles);
     this.classesFiles = ImmutableList.sortedCopyOf(classesFiles);
   }
@@ -95,6 +102,11 @@ class MavenSourceFilesConfiguration implements SourceFilesConfiguration {
   @Override
   public ImmutableList<Path> getDependenciesFiles() {
     return dependenciesFiles;
+  }
+
+  @Override
+  public ImmutableList<Path> getSnapshotDependenciesFiles() {
+    return snapshotDependenciesFiles;
   }
 
   @Override
@@ -110,6 +122,11 @@ class MavenSourceFilesConfiguration implements SourceFilesConfiguration {
   @Override
   public String getDependenciesPathOnImage() {
     return DEFAULT_DEPENDENCIES_PATH_ON_IMAGE;
+  }
+
+  @Override
+  public String getSnapshotDependenciesPathOnImage() {
+    return DEFAULT_SNAPSHOT_DEPENDENCIES_PATH_ON_IMAGE;
   }
 
   @Override

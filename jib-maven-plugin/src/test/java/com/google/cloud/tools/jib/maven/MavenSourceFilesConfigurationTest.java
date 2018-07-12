@@ -17,19 +17,20 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.model.Build;
 import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -40,25 +41,30 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class MavenSourceFilesConfigurationTest {
 
+  @Rule public TestRepository testRepository = new TestRepository();
+
   @Mock private MavenProject mockMavenProject;
   @Mock private Build mockBuild;
 
   private MavenSourceFilesConfiguration testMavenSourceFilesConfiguration;
 
   @Before
-  public void setUp() throws IOException, URISyntaxException {
+  public void setUp() throws IOException, URISyntaxException, ComponentLookupException {
     Path sourcePath = Paths.get(Resources.getResource("application/source").toURI());
     Path outputPath = Paths.get(Resources.getResource("application/output").toURI());
 
     Mockito.when(mockMavenProject.getBuild()).thenReturn(mockBuild);
     Mockito.when(mockBuild.getSourceDirectory()).thenReturn(sourcePath.toString());
     Mockito.when(mockBuild.getOutputDirectory()).thenReturn(outputPath.toString());
+
     Set<Artifact> artifacts =
-        new HashSet<>(
-            Arrays.asList(
-                makeArtifact(Paths.get("application", "dependencies", "libraryB.jar")),
-                makeArtifact(Paths.get("application", "dependencies", "libraryA.jar")),
-                makeArtifact(Paths.get("application", "dependencies", "dependency-1.0.0.jar"))));
+        ImmutableSet.of(
+            makeArtifact(Paths.get("application", "dependencies", "libraryB.jar")),
+            makeArtifact(Paths.get("application", "dependencies", "libraryA.jar")),
+            // maven reads and populates "Artifacts" with it's own processing, so read some from
+            // a repository
+            testRepository.findArtifact("com.test", "dependency", "1.0.0"),
+            testRepository.findArtifact("com.test", "dependencyX", "1.0.0-SNAPSHOT"));
     Mockito.when(mockMavenProject.getArtifacts()).thenReturn(artifacts);
 
     testMavenSourceFilesConfiguration =
@@ -69,9 +75,12 @@ public class MavenSourceFilesConfigurationTest {
   public void test_correctFiles() throws URISyntaxException {
     ImmutableList<Path> expectedDependenciesFiles =
         ImmutableList.of(
-            Paths.get("application", "dependencies", "dependency-1.0.0.jar"),
+            testRepository.artifactPathOnDisk("com.test", "dependency", "1.0.0"),
             Paths.get("application", "dependencies", "libraryA.jar"),
             Paths.get("application", "dependencies", "libraryB.jar"));
+    ImmutableList<Path> expectedSnapshotDependenciesFiles =
+        ImmutableList.of(
+            testRepository.artifactPathOnDisk("com.test", "dependencyX", "1.0.0-SNAPSHOT"));
     ImmutableList<Path> expectedResourcesFiles =
         ImmutableList.of(
             Paths.get(Resources.getResource("application/output/directory").toURI()),
@@ -87,6 +96,9 @@ public class MavenSourceFilesConfigurationTest {
     Assert.assertEquals(
         expectedDependenciesFiles, testMavenSourceFilesConfiguration.getDependenciesFiles());
     Assert.assertEquals(
+        expectedSnapshotDependenciesFiles,
+        testMavenSourceFilesConfiguration.getSnapshotDependenciesFiles());
+    Assert.assertEquals(
         expectedResourcesFiles, testMavenSourceFilesConfiguration.getResourcesFiles());
     Assert.assertEquals(expectedClassesFiles, testMavenSourceFilesConfiguration.getClassesFiles());
   }
@@ -95,6 +107,9 @@ public class MavenSourceFilesConfigurationTest {
   public void test_correctPathsOnImage() {
     Assert.assertEquals(
         "/app/libs/", testMavenSourceFilesConfiguration.getDependenciesPathOnImage());
+    Assert.assertEquals(
+        "/app/snapshot-libs/",
+        testMavenSourceFilesConfiguration.getSnapshotDependenciesPathOnImage());
     Assert.assertEquals(
         "/app/resources/", testMavenSourceFilesConfiguration.getResourcesPathOnImage());
     Assert.assertEquals("/app/classes/", testMavenSourceFilesConfiguration.getClassesPathOnImage());

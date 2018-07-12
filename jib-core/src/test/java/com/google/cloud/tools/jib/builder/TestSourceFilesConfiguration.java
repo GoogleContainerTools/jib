@@ -31,11 +31,13 @@ public class TestSourceFilesConfiguration implements SourceFilesConfiguration {
   private static final String EXTRACTION_PATH = "/some/extraction/path/";
 
   private final ImmutableList<Path> dependenciesSourceFiles;
+  private final ImmutableList<Path> snapshotDependenciesSourceFiles;
   private final ImmutableList<Path> resourcesSourceFiles;
   private final ImmutableList<Path> classesSourceFiles;
 
   public TestSourceFilesConfiguration() throws URISyntaxException, IOException {
     dependenciesSourceFiles = getFilesList("application/dependencies");
+    snapshotDependenciesSourceFiles = getFilesList("application/snapshot-dependencies");
     resourcesSourceFiles = getFilesList("application/resources");
     classesSourceFiles = getFilesList("application/classes");
   }
@@ -43,6 +45,11 @@ public class TestSourceFilesConfiguration implements SourceFilesConfiguration {
   @Override
   public ImmutableList<Path> getDependenciesFiles() {
     return dependenciesSourceFiles;
+  }
+
+  @Override
+  public ImmutableList<Path> getSnapshotDependenciesFiles() {
+    return snapshotDependenciesSourceFiles;
   }
 
   @Override
@@ -58,6 +65,11 @@ public class TestSourceFilesConfiguration implements SourceFilesConfiguration {
   @Override
   public String getDependenciesPathOnImage() {
     return EXTRACTION_PATH + "libs/";
+  }
+
+  @Override
+  public String getSnapshotDependenciesPathOnImage() {
+    return EXTRACTION_PATH + "snapshot-libs/";
   }
 
   @Override

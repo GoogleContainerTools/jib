@@ -65,6 +65,17 @@ class BuildAndCacheApplicationLayerStep
                       cache))
               .add(
                   new BuildAndCacheApplicationLayerStep(
+                      "snapshot-dependencies",
+                      listeningExecutorService,
+                      buildConfiguration,
+                      LayerConfiguration.builder()
+                          .addEntry(
+                              sourceFilesConfiguration.getSnapshotDependenciesFiles(),
+                              sourceFilesConfiguration.getSnapshotDependenciesPathOnImage())
+                          .build(),
+                      cache))
+              .add(
+                  new BuildAndCacheApplicationLayerStep(
                       "resources",
                       listeningExecutorService,
                       buildConfiguration,

@@ -43,6 +43,7 @@ class GradleSourceFilesConfiguration implements SourceFilesConfiguration {
   }
 
   private final ImmutableList<Path> dependenciesFiles;
+  private final ImmutableList<Path> snapshotDependenciesFiles;
   private final ImmutableList<Path> resourcesFiles;
   private final ImmutableList<Path> classesFiles;
 
@@ -55,6 +56,7 @@ class GradleSourceFilesConfiguration implements SourceFilesConfiguration {
     SourceSet mainSourceSet = javaPluginConvention.getSourceSets().getByName(MAIN_SOURCE_SET_NAME);
 
     List<Path> dependenciesFiles = new ArrayList<>();
+    List<Path> snapshotDependenciesFiles = new ArrayList<>();
     List<Path> resourcesFiles = new ArrayList<>();
     List<Path> classesFiles = new ArrayList<>();
 
@@ -92,11 +94,16 @@ class GradleSourceFilesConfiguration implements SourceFilesConfiguration {
       if (resourcesOutputDirectory.equals(dependencyFile.toPath())) {
         continue;
       }
-      dependenciesFiles.add(dependencyFile.toPath());
+      if (dependencyFile.getName().contains("SNAPSHOT")) {
+        snapshotDependenciesFiles.add(dependencyFile.toPath());
+      } else {
+        dependenciesFiles.add(dependencyFile.toPath());
+      }
     }
 
     // Sorts all files by path for consistent ordering.
     this.dependenciesFiles = ImmutableList.sortedCopyOf(dependenciesFiles);
+    this.snapshotDependenciesFiles = ImmutableList.sortedCopyOf(snapshotDependenciesFiles);
     this.resourcesFiles = ImmutableList.sortedCopyOf(resourcesFiles);
     this.classesFiles = ImmutableList.sortedCopyOf(classesFiles);
   }
@@ -104,6 +111,11 @@ class GradleSourceFilesConfiguration implements SourceFilesConfiguration {
   @Override
   public ImmutableList<Path> getDependenciesFiles() {
     return dependenciesFiles;
+  }
+
+  @Override
+  public ImmutableList<Path> getSnapshotDependenciesFiles() {
+    return snapshotDependenciesFiles;
   }
 
   @Override
@@ -119,6 +131,11 @@ class GradleSourceFilesConfiguration implements SourceFilesConfiguration {
   @Override
   public String getDependenciesPathOnImage() {
     return DEFAULT_DEPENDENCIES_PATH_ON_IMAGE;
+  }
+
+  @Override
+  public String getSnapshotDependenciesPathOnImage() {
+    return DEFAULT_SNAPSHOT_DEPENDENCIES_PATH_ON_IMAGE;
   }
 
   @Override

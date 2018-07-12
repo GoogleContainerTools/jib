@@ -93,6 +93,11 @@ public class GradleSourceFilesConfigurationTest {
     allFiles.add(
         Paths.get(Resources.getResource("application/dependencies/dependency-1.0.0.jar").toURI())
             .toFile());
+    allFiles.add(
+        Paths.get(
+                Resources.getResource("application/dependencies/dependencyX-1.0.0-SNAPSHOT.jar")
+                    .toURI())
+            .toFile());
     FileCollection runtimeFileCollection = new TestFileCollection(allFiles);
 
     Mockito.when(mockProject.getConvention()).thenReturn(mockConvention);
@@ -117,6 +122,11 @@ public class GradleSourceFilesConfigurationTest {
                 Resources.getResource("application/dependencies/dependency-1.0.0.jar").toURI()),
             Paths.get(Resources.getResource("application/dependencies/libraryA.jar").toURI()),
             Paths.get(Resources.getResource("application/dependencies/libraryB.jar").toURI()));
+    ImmutableList<Path> expectedSnapshotDependenciesFiles =
+        ImmutableList.of(
+            Paths.get(
+                Resources.getResource("application/dependencies/dependencyX-1.0.0-SNAPSHOT.jar")
+                    .toURI()));
     ImmutableList<Path> expectedResourcesFiles =
         ImmutableList.of(
             Paths.get(Resources.getResource("application/resources").toURI()).resolve("resourceA"),
@@ -130,6 +140,9 @@ public class GradleSourceFilesConfigurationTest {
 
     Assert.assertEquals(
         expectedDependenciesFiles, testGradleSourceFilesConfiguration.getDependenciesFiles());
+    Assert.assertEquals(
+        expectedSnapshotDependenciesFiles,
+        testGradleSourceFilesConfiguration.getSnapshotDependenciesFiles());
     Assert.assertEquals(
         expectedResourcesFiles, testGradleSourceFilesConfiguration.getResourcesFiles());
     Assert.assertEquals(expectedClassesFiles, testGradleSourceFilesConfiguration.getClassesFiles());
@@ -154,6 +167,9 @@ public class GradleSourceFilesConfigurationTest {
   public void test_correctPathsOnImage() {
     Assert.assertEquals(
         "/app/libs/", testGradleSourceFilesConfiguration.getDependenciesPathOnImage());
+    Assert.assertEquals(
+        "/app/snapshot-libs/",
+        testGradleSourceFilesConfiguration.getSnapshotDependenciesPathOnImage());
     Assert.assertEquals(
         "/app/resources/", testGradleSourceFilesConfiguration.getResourcesPathOnImage());
     Assert.assertEquals(
