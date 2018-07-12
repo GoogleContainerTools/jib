@@ -37,7 +37,6 @@ import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticator;
-import com.google.cloud.tools.jib.registry.RegistryAuthenticators;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryException;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
@@ -128,9 +127,11 @@ class PullBaseImageStep
           // The registry requires us to authenticate using the Docker Token Authentication.
           // See https://docs.docker.com/registry/spec/auth/token
           RegistryAuthenticator registryAuthenticator =
-              RegistryAuthenticators.forOther(
-                  buildConfiguration.getBaseImageRegistry(),
-                  buildConfiguration.getBaseImageRepository());
+              RegistryAuthenticator.initializer(
+                      buildConfiguration.getBaseImageRegistry(),
+                      buildConfiguration.getBaseImageRepository())
+                  .setAllowHttp(buildConfiguration.getAllowHttp())
+                  .initialize();
           if (registryAuthenticator == null) {
             buildConfiguration
                 .getBuildLogger()
