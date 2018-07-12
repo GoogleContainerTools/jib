@@ -48,7 +48,11 @@ public class BuildTarMojoIntegrationTest {
             "docker",
             "load",
             "--input",
-            simpleTestProject.getProjectRoot().resolve("target").resolve("jib.tar").toString())
+            simpleTestProject
+                .getProjectRoot()
+                .resolve("target")
+                .resolve("jib-image.tar")
+                .toString())
         .run();
     Assert.assertEquals(
         "Hello, world. An argument.\nfoo\ncat\n",

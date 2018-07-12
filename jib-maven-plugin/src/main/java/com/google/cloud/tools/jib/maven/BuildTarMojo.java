@@ -39,7 +39,9 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
-/** Builds a container image and exports to disk at {@code ${project.build.directory}/jib.tar}. */
+/**
+ * Builds a container image and exports to disk at {@code ${project.build.directory}/jib-image.tar}.
+ */
 @Mojo(
     name = BuildTarMojo.GOAL_NAME,
     requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM)
@@ -63,7 +65,7 @@ public class BuildTarMojo extends JibPluginConfiguration {
         MavenProjectProperties.getForProject(getProject(), mavenBuildLogger);
     ImageReference baseImage = parseImageReference(getBaseImage(), "from");
     ImageReference targetImage =
-        mavenProjectProperties.getDockerTag(getTargetImage(), mavenBuildLogger);
+        mavenProjectProperties.getGeneratedTargetDockerTag(getTargetImage(), mavenBuildLogger);
 
     // Checks Maven settings for registry credentials.
     MavenSettingsServerCredentials mavenSettingsServerCredentials =
@@ -116,7 +118,7 @@ public class BuildTarMojo extends JibPluginConfiguration {
 
     try {
       BuildStepsRunner.forBuildTar(
-              Paths.get(getProject().getBuild().getDirectory()).resolve("jib.tar"),
+              Paths.get(getProject().getBuild().getDirectory()).resolve("jib-image.tar"),
               buildConfiguration,
               mavenProjectProperties.getSourceFilesConfiguration())
           .build(HELPFUL_SUGGESTIONS);

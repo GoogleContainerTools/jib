@@ -154,7 +154,8 @@ class MavenProjectProperties implements ProjectProperties {
    * @return an {@link ImageReference} parsed from the configured target image, or one of the form
    *     {@code project-name:project-version} if target image is not configured
    */
-  ImageReference getDockerTag(@Nullable String targetImage, MavenBuildLogger mavenBuildLogger) {
+  ImageReference getGeneratedTargetDockerTag(
+      @Nullable String targetImage, MavenBuildLogger mavenBuildLogger) {
     if (Strings.isNullOrEmpty(targetImage)) {
       // TODO: Validate that project name and version are valid repository/tag
       // TODO: Use HelpfulSuggestions

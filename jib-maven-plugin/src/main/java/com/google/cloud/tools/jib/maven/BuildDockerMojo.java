@@ -67,7 +67,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
         MavenProjectProperties.getForProject(getProject(), mavenBuildLogger);
     ImageReference baseImage = parseImageReference(getBaseImage(), "from");
     ImageReference targetImage =
-        mavenProjectProperties.getDockerTag(getTargetImage(), mavenBuildLogger);
+        mavenProjectProperties.getGeneratedTargetDockerTag(getTargetImage(), mavenBuildLogger);
 
     // Checks Maven settings for registry credentials.
     MavenSettingsServerCredentials mavenSettingsServerCredentials =

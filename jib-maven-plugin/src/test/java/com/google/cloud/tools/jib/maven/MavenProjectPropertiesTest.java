@@ -117,7 +117,8 @@ public class MavenProjectPropertiesTest {
 
   @Test
   public void testGetDockerTag_configured() {
-    ImageReference result = mavenProjectProperties.getDockerTag("a/b:c", mockBuildLogger);
+    ImageReference result =
+        mavenProjectProperties.getGeneratedTargetDockerTag("a/b:c", mockBuildLogger);
     Assert.assertEquals("a/b", result.getRepository());
     Assert.assertEquals("c", result.getTag());
     Mockito.verify(mockBuildLogger, Mockito.never()).lifecycle(Mockito.any());
@@ -125,7 +126,8 @@ public class MavenProjectPropertiesTest {
 
   @Test
   public void testGetDockerTag_notConfigured() {
-    ImageReference result = mavenProjectProperties.getDockerTag(null, mockBuildLogger);
+    ImageReference result =
+        mavenProjectProperties.getGeneratedTargetDockerTag(null, mockBuildLogger);
     Assert.assertEquals("project-name", result.getRepository());
     Assert.assertEquals("project-version", result.getTag());
     Mockito.verify(mockBuildLogger)
