@@ -123,6 +123,20 @@
       <version>2.12.0</version>
       <scope>test</scope>
     </dependency>
+
+    <dependency>
+      <groupId>org.apache.maven.plugin-testing</groupId>
+      <artifactId>maven-plugin-testing-harness</artifactId>
+      <version>3.3.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-compat</artifactId>
+      <version>3.5.4</version>
+      <scope>test</scope>
+  </dependency>
+
   </dependencies>
 
   <profiles>

@@ -28,21 +28,80 @@ import java.util.stream.Stream;
 /** Implementation of {@link SourceFilesConfiguration} that uses test resources. */
 public class TestSourceFilesConfiguration implements SourceFilesConfiguration {
 
+  public static class Builder {
+    private ImmutableList<Path> dependenciesSourceFiles = ImmutableList.of();
+    private ImmutableList<Path> snapshotDependenciesSourceFiles = ImmutableList.of();
+    private ImmutableList<Path> resourcesSourceFiles = ImmutableList.of();
+    private ImmutableList<Path> classesSourceFiles = ImmutableList.of();
+
+    public Builder withDependencies() throws IOException, URISyntaxException {
+      dependenciesSourceFiles = getFilesList("application/dependencies");
+      return this;
+    }
+
+    public Builder withSnapshotDependencies() throws IOException, URISyntaxException {
+      snapshotDependenciesSourceFiles = getFilesList("application/snapshot-dependencies");
+      return this;
+    }
+
+    public Builder withResources() throws IOException, URISyntaxException {
+      resourcesSourceFiles = getFilesList("application/resources");
+      return this;
+    }
+
+    public Builder withClasses() throws IOException, URISyntaxException {
+      classesSourceFiles = getFilesList("application/classes");
+      return this;
+    }
+
+    public TestSourceFilesConfiguration build() {
+      return new TestSourceFilesConfiguration(
+          dependenciesSourceFiles,
+          snapshotDependenciesSourceFiles,
+          resourcesSourceFiles,
+          classesSourceFiles);
+    }
+
+    /** Lists the files in the {@code resourcePath} resources directory. */
+    private ImmutableList<Path> getFilesList(String resourcePath)
+        throws URISyntaxException, IOException {
+      try (Stream<Path> fileStream =
+          Files.list(Paths.get(Resources.getResource(resourcePath).toURI()))) {
+        return fileStream.collect(ImmutableList.toImmutableList());
+      }
+    }
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
   private static final String EXTRACTION_PATH = "/some/extraction/path/";
 
   private final ImmutableList<Path> dependenciesSourceFiles;
+  private final ImmutableList<Path> snapshotDependenciesSourceFiles;
   private final ImmutableList<Path> resourcesSourceFiles;
   private final ImmutableList<Path> classesSourceFiles;
 
-  public TestSourceFilesConfiguration() throws URISyntaxException, IOException {
-    dependenciesSourceFiles = getFilesList("application/dependencies");
-    resourcesSourceFiles = getFilesList("application/resources");
-    classesSourceFiles = getFilesList("application/classes");
+  private TestSourceFilesConfiguration(
+      ImmutableList<Path> dependenciesSourceFiles,
+      ImmutableList<Path> snapshotDependenciesSourceFiles,
+      ImmutableList<Path> resourcesSourceFiles,
+      ImmutableList<Path> classesSourceFiles) {
+    this.dependenciesSourceFiles = dependenciesSourceFiles;
+    this.snapshotDependenciesSourceFiles = snapshotDependenciesSourceFiles;
+    this.resourcesSourceFiles = resourcesSourceFiles;
+    this.classesSourceFiles = classesSourceFiles;
   }
 
   @Override
   public ImmutableList<Path> getDependenciesFiles() {
     return dependenciesSourceFiles;
+  }
+
+  @Override
+  public ImmutableList<Path> getSnapshotDependenciesFiles() {
+    return snapshotDependenciesSourceFiles;
   }
 
   @Override
@@ -68,14 +127,5 @@ public class TestSourceFilesConfiguration implements SourceFilesConfiguration {
   @Override
   public String getClassesPathOnImage() {
     return EXTRACTION_PATH + "classes/";
-  }
-
-  /** Lists the files in the {@code resourcePath} resources directory. */
-  private ImmutableList<Path> getFilesList(String resourcePath)
-      throws URISyntaxException, IOException {
-    try (Stream<Path> fileStream =
-        Files.list(Paths.get(Resources.getResource(resourcePath).toURI()))) {
-      return fileStream.collect(ImmutableList.toImmutableList());
-    }
   }
 }
