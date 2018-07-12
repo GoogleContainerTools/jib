@@ -36,6 +36,12 @@ public interface SourceFilesConfiguration {
   ImmutableList<Path> getDependenciesFiles();
 
   /**
+   * @return the source files for snapshot dependencies. These files should be in a deterministic
+   *     order
+   */
+  ImmutableList<Path> getSnapshotDependenciesFiles();
+
+  /**
    * @return the source files for the resources layer. These files should be in a deterministic
    *     order.
    */
@@ -48,7 +54,7 @@ public interface SourceFilesConfiguration {
 
   /**
    * @return the Unix-style path where the dependencies source files are placed in the container
-   *     filesystem. Must end with slash.
+   *     filesystem. Must end with slash. This includes both regular and snapshot dependencies.
    */
   String getDependenciesPathOnImage();
 
