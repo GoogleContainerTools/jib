@@ -65,14 +65,11 @@ public class DockerContextGeneratorTest {
   @Before
   public void setUpMocks() {
     String expectedDependenciesPath = "/app/libs/";
-    String expectedSnapshotDependenciesPath = "/app/snapshot-libs/";
     String expectedResourcesPath = "/app/resources/";
     String expectedClassesPath = "/app/classes/";
 
     Mockito.when(mockSourceFilesConfiguration.getDependenciesPathOnImage())
         .thenReturn(expectedDependenciesPath);
-    Mockito.when(mockSourceFilesConfiguration.getSnapshotDependenciesPathOnImage())
-        .thenReturn(expectedSnapshotDependenciesPath);
     Mockito.when(mockSourceFilesConfiguration.getResourcesPathOnImage())
         .thenReturn(expectedResourcesPath);
     Mockito.when(mockSourceFilesConfiguration.getClassesPathOnImage())

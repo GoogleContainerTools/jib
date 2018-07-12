@@ -108,9 +108,6 @@ public class MavenSourceFilesConfigurationTest {
     Assert.assertEquals(
         "/app/libs/", testMavenSourceFilesConfiguration.getDependenciesPathOnImage());
     Assert.assertEquals(
-        "/app/snapshot-libs/",
-        testMavenSourceFilesConfiguration.getSnapshotDependenciesPathOnImage());
-    Assert.assertEquals(
         "/app/resources/", testMavenSourceFilesConfiguration.getResourcesPathOnImage());
     Assert.assertEquals("/app/classes/", testMavenSourceFilesConfiguration.getClassesPathOnImage());
   }

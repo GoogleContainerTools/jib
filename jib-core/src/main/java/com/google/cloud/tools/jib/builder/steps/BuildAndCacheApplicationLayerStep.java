@@ -71,7 +71,7 @@ class BuildAndCacheApplicationLayerStep
                       LayerConfiguration.builder()
                           .addEntry(
                               sourceFilesConfiguration.getSnapshotDependenciesFiles(),
-                              sourceFilesConfiguration.getSnapshotDependenciesPathOnImage())
+                              sourceFilesConfiguration.getDependenciesPathOnImage())
                           .build(),
                       cache))
               .add(

@@ -106,7 +106,7 @@ public class BuildAndCacheApplicationLayerStepTest {
         ImmutableList.of(
             new LayerEntry(
                 testSourceFilesConfiguration.getSnapshotDependenciesFiles(),
-                testSourceFilesConfiguration.getSnapshotDependenciesPathOnImage()));
+                testSourceFilesConfiguration.getDependenciesPathOnImage()));
     ImmutableList<LayerEntry> resourcesLayerEntry =
         ImmutableList.of(
             new LayerEntry(

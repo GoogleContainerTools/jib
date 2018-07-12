@@ -125,11 +125,6 @@ class MavenSourceFilesConfiguration implements SourceFilesConfiguration {
   }
 
   @Override
-  public String getSnapshotDependenciesPathOnImage() {
-    return DEFAULT_SNAPSHOT_DEPENDENCIES_PATH_ON_IMAGE;
-  }
-
-  @Override
   public String getResourcesPathOnImage() {
     return DEFAULT_RESOURCES_PATH_ON_IMAGE;
   }

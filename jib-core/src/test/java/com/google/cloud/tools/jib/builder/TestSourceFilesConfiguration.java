@@ -68,11 +68,6 @@ public class TestSourceFilesConfiguration implements SourceFilesConfiguration {
   }
 
   @Override
-  public String getSnapshotDependenciesPathOnImage() {
-    return EXTRACTION_PATH + "snapshot-libs/";
-  }
-
-  @Override
   public String getResourcesPathOnImage() {
     return EXTRACTION_PATH + "resources/";
   }

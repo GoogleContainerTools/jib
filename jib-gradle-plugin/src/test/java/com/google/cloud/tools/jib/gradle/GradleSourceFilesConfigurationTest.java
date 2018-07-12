@@ -168,9 +168,6 @@ public class GradleSourceFilesConfigurationTest {
     Assert.assertEquals(
         "/app/libs/", testGradleSourceFilesConfiguration.getDependenciesPathOnImage());
     Assert.assertEquals(
-        "/app/snapshot-libs/",
-        testGradleSourceFilesConfiguration.getSnapshotDependenciesPathOnImage());
-    Assert.assertEquals(
         "/app/resources/", testGradleSourceFilesConfiguration.getResourcesPathOnImage());
     Assert.assertEquals(
         "/app/classes/", testGradleSourceFilesConfiguration.getClassesPathOnImage());

@@ -184,7 +184,7 @@ public class DockerContextGenerator {
         .append("\n\nCOPY libs ")
         .append(sourceFilesConfiguration.getDependenciesPathOnImage())
         .append("\nCOPY snapshot-libs ")
-        .append(sourceFilesConfiguration.getSnapshotDependenciesPathOnImage())
+        .append(sourceFilesConfiguration.getDependenciesPathOnImage())
         .append("\nCOPY resources ")
         .append(sourceFilesConfiguration.getResourcesPathOnImage())
         .append("\nCOPY classes ")

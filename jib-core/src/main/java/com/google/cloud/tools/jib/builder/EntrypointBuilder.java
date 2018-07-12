@@ -37,7 +37,6 @@ public class EntrypointBuilder {
     ImmutableList<String> classPaths =
         ImmutableList.of(
             sourceFilesConfiguration.getDependenciesPathOnImage() + "*",
-            sourceFilesConfiguration.getSnapshotDependenciesPathOnImage() + "*",
             sourceFilesConfiguration.getResourcesPathOnImage(),
             sourceFilesConfiguration.getClassesPathOnImage());
 
