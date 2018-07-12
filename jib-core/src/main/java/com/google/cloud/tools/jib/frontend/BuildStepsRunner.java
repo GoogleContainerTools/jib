@@ -74,12 +74,12 @@ public class BuildStepsRunner {
   }
 
   /**
-   * Creates a runner to build to an image tarball. Creates a directory for the cache, if needed.
+   * Creates a runner to build an image tarball. Creates a directory for the cache, if needed.
    *
    * @param outputPath the path to output the tarball to
    * @param buildConfiguration the configuration parameters for the build
    * @param sourceFilesConfiguration the source/destination file configuration for the image
-   * @return a {@link BuildStepsRunner} for building to a Docker daemon
+   * @return a {@link BuildStepsRunner} for building a tarball
    * @throws CacheDirectoryCreationException if the {@code cacheDirectory} could not be created
    */
   public static BuildStepsRunner forBuildTar(
