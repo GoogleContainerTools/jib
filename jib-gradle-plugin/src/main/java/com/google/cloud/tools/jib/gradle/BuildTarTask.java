@@ -46,6 +46,7 @@ import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.options.Option;
 
+/** Builds a container image to a tarball. */
 public class BuildTarTask extends DefaultTask {
 
   /** {@code User-Agent} header suffix to send to the registry. */
