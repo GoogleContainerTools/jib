@@ -155,10 +155,10 @@ class GradleProjectProperties implements ProjectProperties {
   }
 
   /**
-   * Returns the input files for the task.
+   * Returns the input files for a task.
    *
    * @param project the gradle project
-   * @return the input files to this task are all the output files for all the dependencies of the
+   * @return the input files to the task are all the output files for all the dependencies of the
    *     {@code classes} task
    */
   static FileCollection getInputFiles(Project project) {
