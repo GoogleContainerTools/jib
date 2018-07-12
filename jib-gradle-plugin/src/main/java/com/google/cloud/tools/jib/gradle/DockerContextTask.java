@@ -56,7 +56,8 @@ public class DockerContextTask extends DefaultTask {
    */
   @InputFiles
   public FileCollection getInputFiles() {
-    return GradleProjectProperties.getInputFiles(getProject());
+    return GradleProjectProperties.getInputFiles(
+        Preconditions.checkNotNull(jibExtension).getExtraDirectory(), getProject());
   }
 
   /**

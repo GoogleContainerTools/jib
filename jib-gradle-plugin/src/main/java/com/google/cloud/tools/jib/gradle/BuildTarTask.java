@@ -84,7 +84,8 @@ public class BuildTarTask extends DefaultTask {
    */
   @InputFiles
   public FileCollection getInputFiles() {
-    return GradleProjectProperties.getInputFiles(getProject());
+    return GradleProjectProperties.getInputFiles(
+        Preconditions.checkNotNull(jibExtension).getExtraDirectory(), getProject());
   }
 
   /**
@@ -98,12 +99,12 @@ public class BuildTarTask extends DefaultTask {
   }
 
   /**
-   * Returns the output directory for the tarball. By default, it is {@code build/jib.tar}.
+   * Returns the output directory for the tarball. By default, it is {@code build/jib-image.tar}.
    *
    * @return the output directory
    */
   private String getTargetPath() {
-    return getProject().getBuildDir().toPath().resolve("jib.tar").toString();
+    return getProject().getBuildDir().toPath().resolve("jib-image.tar").toString();
   }
 
   @TaskAction

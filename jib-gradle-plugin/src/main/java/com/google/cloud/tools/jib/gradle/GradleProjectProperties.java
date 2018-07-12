@@ -27,7 +27,9 @@ import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -158,11 +160,12 @@ class GradleProjectProperties implements ProjectProperties {
   /**
    * Returns the input files for a task.
    *
+   * @param extraDirectory the image's configured extra directory
    * @param project the gradle project
    * @return the input files to the task are all the output files for all the dependencies of the
    *     {@code classes} task
    */
-  static FileCollection getInputFiles(Project project) {
+  static FileCollection getInputFiles(File extraDirectory, Project project) {
     Task classesTask = project.getTasks().getByPath("classes");
     Set<? extends Task> classesDependencies =
         classesTask.getTaskDependencies().getDependencies(classesTask);
@@ -171,6 +174,10 @@ class GradleProjectProperties implements ProjectProperties {
     for (Task task : classesDependencies) {
       dependencyFileCollections.add(task.getOutputs().getFiles());
     }
-    return project.files(dependencyFileCollections);
+    if (Files.exists(extraDirectory.toPath())) {
+      return project.files(dependencyFileCollections, extraDirectory);
+    } else {
+      return project.files(dependencyFileCollections);
+    }
   }
 }

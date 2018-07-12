@@ -161,7 +161,7 @@ public class JibPluginIntegrationTest {
   public void testBuildTar_simple() throws IOException, InterruptedException {
     String imageReference = "gcr.io/jib-integration-testing/simpleimage:gradle";
     String outputPath =
-        simpleTestProject.getProjectRoot().resolve("build").resolve("jib.tar").toString();
+        simpleTestProject.getProjectRoot().resolve("build").resolve("jib-image.tar").toString();
     BuildResult buildResult = simpleTestProject.build("clean", JibPlugin.BUILD_TAR_TASK_NAME);
 
     BuildTask classesTask = buildResult.task(":classes");
