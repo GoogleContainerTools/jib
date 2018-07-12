@@ -27,7 +27,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.MockitoJUnitRunner;
 
 /** Test for {@link MavenProjectProperties}. */
@@ -49,7 +48,6 @@ public class MavenProjectPropertiesTest {
 
   @Before
   public void setup() {
-    MockitoAnnotations.initMocks(this);
     Mockito.when(mockMavenProject.getName()).thenReturn("project-name");
     Mockito.when(mockMavenProject.getVersion()).thenReturn("project-version");
     mavenProjectProperties =
