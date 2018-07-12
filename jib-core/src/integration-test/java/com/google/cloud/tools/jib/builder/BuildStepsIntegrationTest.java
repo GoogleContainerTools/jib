@@ -54,7 +54,13 @@ public class BuildStepsIntegrationTest {
 
   @Before
   public void setUp() throws IOException, URISyntaxException {
-    sourceFilesConfiguration = new TestSourceFilesConfiguration();
+    sourceFilesConfiguration =
+        TestSourceFilesConfiguration.builder()
+            .withClasses()
+            .withDependencies()
+            .withSnapshotDependencies()
+            .withResources()
+            .build();
   }
 
   @Test
