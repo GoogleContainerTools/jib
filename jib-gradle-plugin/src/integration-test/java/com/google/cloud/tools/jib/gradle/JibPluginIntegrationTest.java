@@ -158,6 +158,30 @@ public class JibPluginIntegrationTest {
   }
 
   @Test
+  public void testBuildTar_simple() throws IOException, InterruptedException {
+    String imageReference = "gcr.io/jib-integration-testing/simpleimage:gradle";
+    String outputPath =
+        simpleTestProject.getProjectRoot().resolve("build").resolve("jib.tar").toString();
+    BuildResult buildResult = simpleTestProject.build("clean", JibPlugin.BUILD_TAR_TASK_NAME);
+
+    BuildTask classesTask = buildResult.task(":classes");
+    BuildTask jibBuildTarTask = buildResult.task(":" + JibPlugin.BUILD_TAR_TASK_NAME);
+
+    Assert.assertNotNull(classesTask);
+    Assert.assertEquals(TaskOutcome.SUCCESS, classesTask.getOutcome());
+    Assert.assertNotNull(jibBuildTarTask);
+    Assert.assertEquals(TaskOutcome.SUCCESS, jibBuildTarTask.getOutcome());
+    Assert.assertThat(
+        buildResult.getOutput(), CoreMatchers.containsString("Built image tarball at "));
+    Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(outputPath));
+
+    new Command("docker", "load", "--input", outputPath).run();
+    Assert.assertEquals(
+        "Hello, world. An argument.\nfoo\ncat\n",
+        new Command("docker", "run", imageReference).run());
+  }
+
+  @Test
   public void testDockerContext() throws IOException, InterruptedException {
     BuildResult buildResult =
         simpleTestProject.build("clean", JibPlugin.DOCKER_CONTEXT_TASK_NAME, "--info");
