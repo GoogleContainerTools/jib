@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 ## [unreleased]
 
 ### Added
+- Snapshot dependencies are added as their own layer ([#584](https://github.com/GoogleContainerTools/jib/pull/584))
 
 ### Changed
 

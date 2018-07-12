@@ -74,10 +74,12 @@ public class MavenSourceFilesConfigurationTest {
   @Test
   public void test_correctFiles() throws URISyntaxException {
     ImmutableList<Path> expectedDependenciesFiles =
-        ImmutableList.of(
-            testRepository.artifactPathOnDisk("com.test", "dependency", "1.0.0"),
-            Paths.get("application", "dependencies", "libraryA.jar"),
-            Paths.get("application", "dependencies", "libraryB.jar"));
+        // on windows, these files may be in a different order, so sort
+        ImmutableList.sortedCopyOf(
+            ImmutableList.of(
+                testRepository.artifactPathOnDisk("com.test", "dependency", "1.0.0"),
+                Paths.get("application", "dependencies", "libraryA.jar"),
+                Paths.get("application", "dependencies", "libraryB.jar")));
     ImmutableList<Path> expectedSnapshotDependenciesFiles =
         ImmutableList.of(
             testRepository.artifactPathOnDisk("com.test", "dependencyX", "1.0.0-SNAPSHOT"));
