@@ -17,6 +17,9 @@
 package com.google.cloud.tools.jib.registry;
 
 import com.google.cloud.tools.jib.http.Authorization;
+import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import java.io.IOException;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -24,9 +27,15 @@ import org.junit.Test;
 public class RegistryAuthenticatorIntegrationTest {
 
   @Test
-  public void testAuthenticate() throws RegistryAuthenticationFailedException {
+  public void testAuthenticate()
+      throws RegistryAuthenticationFailedException, InvalidImageReferenceException, IOException,
+          RegistryException {
+    ImageReference dockerHubImageReference = ImageReference.parse("library/busybox");
     RegistryAuthenticator registryAuthenticator =
-        RegistryAuthenticators.forDockerHub("library/busybox");
+        RegistryAuthenticator.initializer(
+                dockerHubImageReference.getRegistry(), dockerHubImageReference.getRepository())
+            .initialize();
+    Assert.assertNotNull(registryAuthenticator);
     Authorization authorization = registryAuthenticator.authenticatePull();
 
     // Checks that some token was received.
