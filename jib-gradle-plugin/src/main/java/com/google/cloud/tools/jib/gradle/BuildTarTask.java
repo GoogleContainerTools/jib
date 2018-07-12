@@ -93,7 +93,7 @@ public class BuildTarTask extends DefaultTask {
    * @return the output path
    */
   @OutputFile
-  public String getOutputDirectory() {
+  public String getOutputFile() {
     return getTargetPath();
   }
 
@@ -123,7 +123,7 @@ public class BuildTarTask extends DefaultTask {
         GradleProjectProperties.getForProject(getProject(), gradleBuildLogger);
     String mainClass = gradleProjectProperties.getMainClass(jibExtension);
     ImageReference targetImage =
-        gradleProjectProperties.getDockerTag(jibExtension, gradleBuildLogger);
+        gradleProjectProperties.getGeneratedTargetDockerTag(jibExtension, gradleBuildLogger);
 
     // Builds the BuildConfiguration.
     // TODO: Consolidate with BuildImageTask/BuildDockerTask.

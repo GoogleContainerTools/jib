@@ -85,7 +85,8 @@ public class GradleProjectPropertiesTest {
   @Test
   public void testGetDockerTag_configured() throws InvalidImageReferenceException {
     Mockito.when(mockJibExtension.getTargetImage()).thenReturn("a/b:c");
-    ImageReference result = gradleProjectProperties.getDockerTag(mockJibExtension, mockBuildLogger);
+    ImageReference result =
+        gradleProjectProperties.getGeneratedTargetDockerTag(mockJibExtension, mockBuildLogger);
     Assert.assertEquals("a/b", result.getRepository());
     Assert.assertEquals("c", result.getTag());
     Mockito.verify(mockBuildLogger, Mockito.never()).lifecycle(Mockito.any());
@@ -96,7 +97,8 @@ public class GradleProjectPropertiesTest {
     Mockito.when(mockProject.getName()).thenReturn("project-name");
     Mockito.when(mockProject.getVersion()).thenReturn("project-version");
     Mockito.when(mockJibExtension.getTargetImage()).thenReturn(null);
-    ImageReference result = gradleProjectProperties.getDockerTag(mockJibExtension, mockBuildLogger);
+    ImageReference result =
+        gradleProjectProperties.getGeneratedTargetDockerTag(mockJibExtension, mockBuildLogger);
     Assert.assertEquals("project-name", result.getRepository());
     Assert.assertEquals("project-version", result.getTag());
     Mockito.verify(mockBuildLogger)

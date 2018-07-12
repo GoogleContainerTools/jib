@@ -135,7 +135,8 @@ class GradleProjectProperties implements ProjectProperties {
    * @return an {@link ImageReference} parsed from the configured target image, or one of the form
    *     {@code project-name:project-version} if target image is not configured
    */
-  ImageReference getDockerTag(JibExtension jibExtension, GradleBuildLogger gradleBuildLogger)
+  ImageReference getGeneratedTargetDockerTag(
+      JibExtension jibExtension, GradleBuildLogger gradleBuildLogger)
       throws InvalidImageReferenceException {
     Preconditions.checkNotNull(jibExtension);
     if (Strings.isNullOrEmpty(jibExtension.getTargetImage())) {
