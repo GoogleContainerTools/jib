@@ -51,7 +51,6 @@ public class BuildDockerMojoIntegrationTest {
     verifier.setAutoclean(false);
     verifier.executeGoal("package");
 
-    // Builds twice, and checks if the second build took less time.
     verifier.executeGoal("jib:" + BuildDockerMojo.GOAL_NAME);
     verifier.verifyErrorFreeLog();
 

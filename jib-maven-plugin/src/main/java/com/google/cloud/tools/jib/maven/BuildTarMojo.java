@@ -20,7 +20,6 @@ import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
-import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
@@ -33,34 +32,31 @@ import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
-/** Builds a container image and exports to the default Docker daemon. */
+/** Builds a container image and exports to disk at {@code ${project.build.directory}/jib.tar}. */
 @Mojo(
-    name = BuildDockerMojo.GOAL_NAME,
+    name = BuildTarMojo.GOAL_NAME,
     requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM)
-public class BuildDockerMojo extends JibPluginConfiguration {
+public class BuildTarMojo extends JibPluginConfiguration {
 
-  @VisibleForTesting static final String GOAL_NAME = "dockerBuild";
+  @VisibleForTesting static final String GOAL_NAME = "buildTar";
 
   /** {@code User-Agent} header suffix to send to the registry. */
   private static final String USER_AGENT_SUFFIX = "jib-maven-plugin";
 
   private static final HelpfulSuggestions HELPFUL_SUGGESTIONS =
-      HelpfulSuggestionsProvider.get("Build to Docker daemon failed");
+      HelpfulSuggestionsProvider.get("Building tarball failed");
 
   @Override
   public void execute() throws MojoExecutionException {
     MavenBuildLogger mavenBuildLogger = new MavenBuildLogger(getLog());
     handleDeprecatedParameters(mavenBuildLogger);
-
-    if (!new DockerClient().isDockerInstalled()) {
-      throw new MojoExecutionException(HELPFUL_SUGGESTIONS.forDockerNotInstalled());
-    }
 
     // Parses 'from' and 'to' into image reference.
     MavenProjectProperties mavenProjectProperties =
@@ -119,8 +115,10 @@ public class BuildDockerMojo extends JibPluginConfiguration {
     RegistryClient.setUserAgentSuffix(USER_AGENT_SUFFIX);
 
     try {
-      BuildStepsRunner.forBuildToDockerDaemon(
-              buildConfiguration, mavenProjectProperties.getSourceFilesConfiguration())
+      BuildStepsRunner.forBuildTar(
+              Paths.get(getProject().getBuild().getDirectory()).resolve("jib.tar"),
+              buildConfiguration,
+              mavenProjectProperties.getSourceFilesConfiguration())
           .build(HELPFUL_SUGGESTIONS);
       getLog().info("");
 
