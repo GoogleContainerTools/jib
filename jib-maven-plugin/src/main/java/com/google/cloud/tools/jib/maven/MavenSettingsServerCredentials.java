@@ -64,6 +64,11 @@ class MavenSettingsServerCredentials {
     }
 
     if (settingsDecrypter != null) {
+      // SettingsDecrypter and SettingsDecryptionResult do not document the meanings of the return
+      // results. SettingsDecryptionResult#getServers() does note that the list of decrypted servers
+      // can be empty.  We handle the results as follows:
+      //    - if there are any ERROR or FATAL problems reported, then decryption failed
+      //    - if no decrypted servers returned then treat as if no decryption was required
       SettingsDecryptionRequest request = new DefaultSettingsDecryptionRequest(registryServer);
       SettingsDecryptionResult result = settingsDecrypter.decrypt(request);
       // un-encrypted passwords are passed through, so a problem indicates a real issue
