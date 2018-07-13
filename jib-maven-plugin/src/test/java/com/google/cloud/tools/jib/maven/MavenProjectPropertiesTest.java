@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
+import com.google.cloud.tools.jib.image.ImageReference;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
@@ -36,6 +37,7 @@ public class MavenProjectPropertiesTest {
   @Mock private MavenBuildLogger mockMavenBuildLogger;
   @Mock private SourceFilesConfiguration mockSourcesFilesConfiguration;
   @Mock private Plugin mockJarPlugin;
+  @Mock private MavenBuildLogger mockBuildLogger;
 
   private Xpp3Dom jarPluginConfiguration;
   private Xpp3Dom archive;
@@ -46,6 +48,8 @@ public class MavenProjectPropertiesTest {
 
   @Before
   public void setup() {
+    Mockito.when(mockMavenProject.getName()).thenReturn("project-name");
+    Mockito.when(mockMavenProject.getVersion()).thenReturn("project-version");
     mavenProjectProperties =
         new MavenProjectProperties(
             mockMavenProject, mockMavenBuildLogger, mockSourcesFilesConfiguration);
@@ -109,5 +113,27 @@ public class MavenProjectPropertiesTest {
   @Test
   public void testGetMainClassFromJar_missingPlugin() {
     Assert.assertEquals(null, mavenProjectProperties.getMainClassFromJar());
+  }
+
+  @Test
+  public void testGetDockerTag_configured() {
+    ImageReference result =
+        mavenProjectProperties.getGeneratedTargetDockerTag("a/b:c", mockBuildLogger);
+    Assert.assertEquals("a/b", result.getRepository());
+    Assert.assertEquals("c", result.getTag());
+    Mockito.verify(mockBuildLogger, Mockito.never()).lifecycle(Mockito.any());
+  }
+
+  @Test
+  public void testGetDockerTag_notConfigured() {
+    ImageReference result =
+        mavenProjectProperties.getGeneratedTargetDockerTag(null, mockBuildLogger);
+    Assert.assertEquals("project-name", result.getRepository());
+    Assert.assertEquals("project-version", result.getTag());
+    Mockito.verify(mockBuildLogger)
+        .lifecycle(
+            "Tagging image with generated image reference project-name:project-version. If you'd "
+                + "like to specify a different tag, you can set the <to><image> parameter in your "
+                + "pom.xml, or use the -Dimage=<MY IMAGE> commandline flag.");
   }
 }
