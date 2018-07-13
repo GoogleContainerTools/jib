@@ -45,7 +45,6 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
     name = BuildDockerMojo.GOAL_NAME,
     requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM)
 public class BuildDockerMojo extends JibPluginConfiguration {
-
   @VisibleForTesting static final String GOAL_NAME = "dockerBuild";
 
   /** {@code User-Agent} header suffix to send to the registry. */
@@ -69,7 +68,8 @@ public class BuildDockerMojo extends JibPluginConfiguration {
 
     // Checks Maven settings for registry credentials.
     MavenSettingsServerCredentials mavenSettingsServerCredentials =
-        new MavenSettingsServerCredentials(Preconditions.checkNotNull(session).getSettings());
+        new MavenSettingsServerCredentials(
+            Preconditions.checkNotNull(session).getSettings(), settingsDecrypter);
     RegistryCredentials knownBaseRegistryCredentials =
         mavenSettingsServerCredentials.retrieve(baseImage.getRegistry());
 

@@ -19,8 +19,13 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
+import java.util.Collections;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.settings.Server;
 import org.apache.maven.settings.Settings;
+import org.apache.maven.settings.building.SettingsProblem;
+import org.apache.maven.settings.crypto.SettingsDecrypter;
+import org.apache.maven.settings.crypto.SettingsDecryptionResult;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,11 +45,11 @@ public class MavenSettingsServerCredentialsTest {
 
   @Before
   public void setUp() {
-    testMavenSettingsServerCredentials = new MavenSettingsServerCredentials(mockSettings);
+    testMavenSettingsServerCredentials = new MavenSettingsServerCredentials(mockSettings, null);
   }
 
   @Test
-  public void testRetrieve_found() {
+  public void testRetrieve_found() throws MojoExecutionException {
     Mockito.when(mockSettings.getServer("server1")).thenReturn(mockServer1);
 
     Mockito.when(mockServer1.getUsername()).thenReturn("server1 username");
@@ -66,7 +71,7 @@ public class MavenSettingsServerCredentialsTest {
   }
 
   @Test
-  public void testRetrieve_notFound() {
+  public void testRetrieve_notFound() throws MojoExecutionException {
     RegistryCredentials registryCredentials =
         testMavenSettingsServerCredentials.retrieve("serverUnknown");
 
@@ -74,9 +79,77 @@ public class MavenSettingsServerCredentialsTest {
   }
 
   @Test
-  public void testRetrieve_withNullServer() {
+  public void testRetrieve_withNullServer() throws MojoExecutionException {
     RegistryCredentials registryCredentials = testMavenSettingsServerCredentials.retrieve(null);
 
     Assert.assertNull(registryCredentials);
+  }
+
+  @Test
+  public void testWithDecrypter_success() throws MojoExecutionException {
+    SettingsDecryptionResult mockResult = Mockito.mock(SettingsDecryptionResult.class);
+    Mockito.when(mockResult.getProblems()).thenReturn(Collections.emptyList());
+    Mockito.when(mockResult.getServer()).thenReturn(mockServer1);
+
+    // don't actually perform encryption/decryption
+    SettingsDecrypter mockDecrypter = Mockito.mock(SettingsDecrypter.class);
+    Mockito.when(mockDecrypter.decrypt(Mockito.any())).thenReturn(mockResult);
+    testMavenSettingsServerCredentials =
+        new MavenSettingsServerCredentials(mockSettings, mockDecrypter);
+
+    // essentially the same as testRetrieve_found()
+    Mockito.when(mockSettings.getServer("server1")).thenReturn(mockServer1);
+    Mockito.when(mockServer1.getUsername()).thenReturn("server1 username");
+    Mockito.when(mockServer1.getPassword()).thenReturn("server1 password");
+
+    RegistryCredentials registryCredentials =
+        testMavenSettingsServerCredentials.retrieve("server1");
+
+    Assert.assertNotNull(registryCredentials);
+    Assert.assertEquals(
+        MavenSettingsServerCredentials.CREDENTIAL_SOURCE,
+        registryCredentials.getCredentialSource());
+
+    Authorization retrievedServer1Authorization = registryCredentials.getAuthorization();
+    Assert.assertNotNull(retrievedServer1Authorization);
+    Assert.assertEquals(
+        Authorizations.withBasicCredentials("server1 username", "server1 password").toString(),
+        retrievedServer1Authorization.toString());
+
+    Mockito.verify(mockDecrypter).decrypt(Mockito.any());
+    Mockito.verify(mockResult).getProblems();
+    Mockito.verify(mockResult, Mockito.atLeastOnce()).getServer();
+  }
+
+  @Test
+  public void testWithDecrypter_failure() {
+
+    SettingsProblem mockProblem = Mockito.mock(SettingsProblem.class);
+    Mockito.when(mockProblem.getSeverity()).thenReturn(SettingsProblem.Severity.ERROR);
+    // Maven's SettingsProblem has a more structured toString, but irrelevant here
+    Mockito.when(mockProblem.toString()).thenReturn("MockProblemText");
+
+    SettingsDecryptionResult mockResult = Mockito.mock(SettingsDecryptionResult.class);
+    Mockito.when(mockResult.getProblems()).thenReturn(Collections.singletonList(mockProblem));
+
+    // return an result with problems
+    SettingsDecrypter mockDecrypter = Mockito.mock(SettingsDecrypter.class);
+    Mockito.when(mockDecrypter.decrypt(Mockito.any())).thenReturn(mockResult);
+    testMavenSettingsServerCredentials =
+        new MavenSettingsServerCredentials(mockSettings, mockDecrypter);
+
+    // essentially the same as testRetrieve_found()
+    Mockito.when(mockSettings.getServer("server1")).thenReturn(mockServer1);
+
+    try {
+      testMavenSettingsServerCredentials.retrieve("server1");
+      Assert.fail("decryption should have failed");
+    } catch (MojoExecutionException ex) {
+      Assert.assertEquals(
+          ex.getMessage(), "Unable to decrypt settings for server1: MockProblemText");
+      Mockito.verify(mockDecrypter).decrypt(Mockito.any());
+      Mockito.verify(mockResult).getProblems();
+      Mockito.verifyNoMoreInteractions(mockResult); // getServer() should never be called
+    }
   }
 }
