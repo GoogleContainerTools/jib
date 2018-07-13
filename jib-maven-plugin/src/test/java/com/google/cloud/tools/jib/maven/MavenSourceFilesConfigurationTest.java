@@ -27,7 +27,6 @@ import java.util.Set;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.model.Build;
 import org.apache.maven.project.MavenProject;
-import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -49,7 +48,7 @@ public class MavenSourceFilesConfigurationTest {
   private MavenSourceFilesConfiguration testMavenSourceFilesConfiguration;
 
   @Before
-  public void setUp() throws IOException, URISyntaxException, ComponentLookupException {
+  public void setUp() throws IOException, URISyntaxException {
     Path sourcePath = Paths.get(Resources.getResource("application/source").toURI());
     Path outputPath = Paths.get(Resources.getResource("application/output").toURI());
 
