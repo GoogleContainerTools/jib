@@ -53,7 +53,7 @@ public class BuildTarMojo extends JibPluginConfiguration {
   private static final String USER_AGENT_SUFFIX = "jib-maven-plugin";
 
   private static final HelpfulSuggestions HELPFUL_SUGGESTIONS =
-      HelpfulSuggestionsProvider.get("Building tarball failed");
+      HelpfulSuggestionsProvider.get("Building image tarball failed");
 
   @Override
   public void execute() throws MojoExecutionException {
