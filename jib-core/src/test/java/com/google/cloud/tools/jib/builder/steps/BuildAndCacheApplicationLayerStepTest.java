@@ -59,7 +59,7 @@ public class BuildAndCacheApplicationLayerStepTest {
   private Path temporaryCacheDirectory;
 
   @Before
-  public void setUp() throws IOException, URISyntaxException {
+  public void setUp() throws IOException {
     Mockito.when(mockBuildConfiguration.getBuildLogger()).thenReturn(new TestBuildLogger());
     temporaryCacheDirectory = temporaryFolder.newFolder().toPath();
   }

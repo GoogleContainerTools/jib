@@ -90,16 +90,14 @@ public class RegistryAuthenticatorTest {
   }
 
   @Test
-  public void testFromAuthenticationMethod_noService() {
-    try {
-      RegistryAuthenticator.fromAuthenticationMethod(
-          "Bearer realm=\"https://somerealm\"", "someimage");
-      Assert.fail("Authentication method without 'service' should fail");
+  public void testFromAuthenticationMethod_noService()
+      throws MalformedURLException, RegistryAuthenticationFailedException {
+    RegistryAuthenticator registryAuthenticator =
+        RegistryAuthenticator.fromAuthenticationMethod(
+            "Bearer realm=\"https://somerealm\"", "someimage");
 
-    } catch (RegistryAuthenticationFailedException ex) {
-      Assert.assertEquals(
-          "Failed to authenticate with the registry because: 'service' was not found in the 'WWW-Authenticate' header, tried to parse: Bearer realm=\"https://somerealm\"",
-          ex.getMessage());
-    }
+    Assert.assertEquals(
+        new URL("https://somerealm?service=someimage&scope=repository:someimage:scope"),
+        registryAuthenticator.getAuthenticationUrl("scope"));
   }
 }
