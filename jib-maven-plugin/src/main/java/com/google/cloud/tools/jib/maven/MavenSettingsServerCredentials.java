@@ -71,7 +71,7 @@ class MavenSettingsServerCredentials {
         if (problem.getSeverity() == SettingsProblem.Severity.ERROR
             || problem.getSeverity() == SettingsProblem.Severity.FATAL) {
           throw new MojoExecutionException(
-              "Unable to decrypt settings for " + registry + ": " + problem);
+              "Unable to decrypt password for " + registry + ": " + problem);
         }
       }
       if (result.getServer() != null) {

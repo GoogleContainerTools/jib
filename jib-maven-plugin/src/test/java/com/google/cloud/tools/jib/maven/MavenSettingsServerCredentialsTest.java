@@ -146,7 +146,7 @@ public class MavenSettingsServerCredentialsTest {
       Assert.fail("decryption should have failed");
     } catch (MojoExecutionException ex) {
       Assert.assertEquals(
-          ex.getMessage(), "Unable to decrypt settings for server1: MockProblemText");
+          ex.getMessage(), "Unable to decrypt password for server1: MockProblemText");
       Mockito.verify(mockDecrypter).decrypt(Mockito.any());
       Mockito.verify(mockResult).getProblems();
       Mockito.verifyNoMoreInteractions(mockResult); // getServer() should never be called
