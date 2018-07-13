@@ -1,0 +1,4 @@
+#NOTE: This is an Aether internal implementation file, its format can be changed without prior notice.
+#Wed Jul 11 18:33:40 EDT 2018
+dependency-1.0.0.pom>=
+dependency-1.0.0.jar>=
