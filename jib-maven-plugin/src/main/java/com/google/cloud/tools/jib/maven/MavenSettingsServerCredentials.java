@@ -38,7 +38,7 @@ class MavenSettingsServerCredentials {
   @VisibleForTesting static final String CREDENTIAL_SOURCE = "Maven settings";
 
   private final Settings settings;
-  private final SettingsDecrypter settingsDecrypter;
+  @Nullable private final SettingsDecrypter settingsDecrypter;
 
   MavenSettingsServerCredentials(Settings settings, @Nullable SettingsDecrypter settingsDecrypter) {
     this.settings = settings;
