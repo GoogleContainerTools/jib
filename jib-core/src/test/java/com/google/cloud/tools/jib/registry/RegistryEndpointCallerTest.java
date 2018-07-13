@@ -172,7 +172,9 @@ public class RegistryEndpointCallerTest {
       Assert.fail("Call should have failed");
 
     } catch (RegistryCredentialsNotSentException ex) {
-      Assert.assertEquals("Credentials for serverUrl/imageName were not sent", ex.getMessage());
+      Assert.assertEquals(
+          "Required credentials for serverUrl/imageName were not sent because the connection was over HTTP",
+          ex.getMessage());
     }
   }
 

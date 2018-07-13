@@ -26,6 +26,11 @@ public class RegistryCredentialsNotSentException extends RegistryException {
    * @param repository the image repository
    */
   RegistryCredentialsNotSentException(String registry, String repository) {
-    super("Credentials for " + registry + "/" + repository + " were not sent");
+    super(
+        "Required credentials for "
+            + registry
+            + "/"
+            + repository
+            + " were not sent because the connection was over HTTP");
   }
 }
