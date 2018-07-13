@@ -15,7 +15,7 @@ Jib builds Docker and OCI images for your Java applications and is available as 
 [Maven](https://maven.apache.org/): See documentation for [jib-maven-plugin](jib-maven-plugin).\
 [Gradle](https://gradle.org/): See documentation for [jib-gradle-plugin](jib-gradle-plugin).
 
-*Jib as a container-building library for Java is work-in-progress. Watch for updates.*
+*Jib as a container-building library for Java is work-in-progress. [Watch for updates.](https://github.com/GoogleContainerTools/jib/issues/337)*
 
 ## Goals
 
