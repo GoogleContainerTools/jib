@@ -44,6 +44,7 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
     name = BuildDockerMojo.GOAL_NAME,
     requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM)
 public class BuildDockerMojo extends JibPluginConfiguration {
+
   @VisibleForTesting static final String GOAL_NAME = "dockerBuild";
 
   /** {@code User-Agent} header suffix to send to the registry. */
