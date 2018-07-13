@@ -52,7 +52,8 @@ class RegistryEndpointCaller<T> {
   private static final String DEFAULT_PROTOCOL = "https";
 
   /** Maintains the state of a request. This is used to retry requests with different parameters. */
-  private static class RequestState {
+  @VisibleForTesting
+  static class RequestState {
 
     @Nullable private final Authorization authorization;
     private final URL url;
@@ -61,7 +62,8 @@ class RegistryEndpointCaller<T> {
      * @param authorization authentication credentials
      * @param url the endpoint URL to call
      */
-    private RequestState(@Nullable Authorization authorization, URL url) {
+    @VisibleForTesting
+    RequestState(@Nullable Authorization authorization, URL url) {
       this.authorization = authorization;
       this.url = url;
     }
@@ -148,8 +150,9 @@ class RegistryEndpointCaller<T> {
    * @throws IOException for most I/O exceptions when making the request
    * @throws RegistryException for known exceptions when interacting with the registry
    */
+  @VisibleForTesting
   @Nullable
-  private T call(RequestState requestState) throws IOException, RegistryException {
+  T call(RequestState requestState) throws IOException, RegistryException {
     boolean isHttpProtocol = "http".equals(requestState.url.getProtocol());
     if (!allowHttp && isHttpProtocol) {
       throw new InsecureRegistryException(requestState.url);
@@ -193,12 +196,27 @@ class RegistryEndpointCaller<T> {
 
           throw registryErrorExceptionBuilder.build();
 
-        } else if (httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_UNAUTHORIZED
-            || httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
+        } else if (httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
           throw new RegistryUnauthorizedException(
               registryEndpointRequestProperties.getServerUrl(),
               registryEndpointRequestProperties.getImageName(),
               httpResponseException);
+
+        } else if (httpResponseException.getStatusCode()
+            == HttpStatusCodes.STATUS_CODE_UNAUTHORIZED) {
+          if (isHttpProtocol) {
+            // Using HTTP, so credentials weren't sent.
+            throw new RegistryCredentialsNotSentException(
+                registryEndpointRequestProperties.getServerUrl(),
+                registryEndpointRequestProperties.getImageName());
+
+          } else {
+            // Using HTTPS, so credentials are missing.
+            throw new RegistryUnauthorizedException(
+                registryEndpointRequestProperties.getServerUrl(),
+                registryEndpointRequestProperties.getImageName(),
+                httpResponseException);
+          }
 
         } else if (httpResponseException.getStatusCode()
                 == HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT
