@@ -39,6 +39,22 @@ class MavenSettingsServerCredentials {
 
   @VisibleForTesting static final String CREDENTIAL_SOURCE = "Maven settings";
 
+  // pattern cribbed directly from
+  // https://github.com/sonatype/plexus-cipher/blob/master/src/main/java/org/sonatype/plexus/components/cipher/DefaultPlexusCipher.java
+  private static final Pattern ENCRYPTED_STRING_PATTERN =
+      Pattern.compile(".*?[^\\\\]?\\{(.*?[^\\\\])\\}.*");
+
+  /**
+   * Return true if the given string appears to have been encrypted with the <a
+   * href="https://maven.apache.org/guides/mini/guide-encryption.html#How_to_encrypt_server_passwords">Maven
+   * password encryption</a>. Such passwords appear between unescaped braces.
+   */
+  @VisibleForTesting
+  static boolean isEncrypted(String password) {
+    Matcher matcher = ENCRYPTED_STRING_PATTERN.matcher(password);
+    return matcher.matches() || matcher.find();
+  }
+
   private final Settings settings;
   @Nullable private final SettingsDecrypter settingsDecrypter;
   private final MavenBuildLogger mavenBuildLogger;
@@ -107,21 +123,5 @@ class MavenSettingsServerCredentials {
         CREDENTIAL_SOURCE,
         Authorizations.withBasicCredentials(
             registryServer.getUsername(), registryServer.getPassword()));
-  }
-
-  // pattern cribbed directly from
-  // https://github.com/sonatype/plexus-cipher/blob/master/src/main/java/org/sonatype/plexus/components/cipher/DefaultPlexusCipher.java
-  private static final Pattern ENCRYPTED_STRING_PATTERN =
-      Pattern.compile(".*?[^\\\\]?\\{(.*?[^\\\\])\\}.*");
-
-  /**
-   * Return true if the given string appears to have been encrypted with the <a
-   * href="https://maven.apache.org/guides/mini/guide-encryption.html#How_to_encrypt_server_passwords">Maven
-   * password encryption</a>. Such passwords appear between unescaped braces.
-   */
-  @VisibleForTesting
-  static boolean isEncrypted(String password) {
-    Matcher matcher = ENCRYPTED_STRING_PATTERN.matcher(password);
-    return matcher.matches() || matcher.find();
   }
 }
