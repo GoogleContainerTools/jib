@@ -45,7 +45,15 @@ See also [rules_docker](https://github.com/bazelbuild/rules_docker) for a simila
 
 See the [Frequently Asked Questions (FAQ) wiki page](/../../wiki/Frequently-Asked-Questions-(FAQ)).
 
-## Community
+## Get involved with the community
 
+We welcome contributions! Here's how you can contribute:
+
+* Browse [issues](https://github.com/GoogleContainerTools/jib/issues) or file [an issue](https://github.com/GoogleContainerTools/jib/issues/new)
 * Chat with us on [gitter](https://gitter.im/google/jib)
-* [jib-users mailing list](https://groups.google.com/forum/#!forum/jib-users)
+* Join the [jib-users mailing list](https://groups.google.com/forum/#!forum/jib-users)
+* Contribute:
+  * Try to fix [good first issues](https://github.com/GoogleContainerTools/jib/labels/good%20first%20issue)
+  * Help out on [issues that need help](https://github.com/GoogleContainerTools/jib/labels/help%20wanted)
+  * Join in on [discussion issues](https://github.com/GoogleContainerTools/jib/labels/discuss)
+<!--  * Read the [style guide] -->
