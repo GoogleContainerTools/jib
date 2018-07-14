@@ -137,11 +137,8 @@ public class RegistryAuthenticator {
 
     Pattern servicePattern = Pattern.compile("service=\"(.*?)\"");
     Matcher serviceMatcher = servicePattern.matcher(authenticationMethod);
-    // use the provided registry as the service (e.g., for OpenShift)
-    String service = repository;
-    if (serviceMatcher.find()) {
-      service = serviceMatcher.group(1);
-    }
+    // use the provided registry as the service when missing (e.g., for OpenShift)
+    String service = serviceMatcher.find() ? serviceMatcher.group(1) : repository;
 
     return new RegistryAuthenticator(realm, service, repository);
   }
