@@ -108,6 +108,7 @@ public class RegistryAuthenticator {
    * Instantiates from parsing a {@code WWW-Authenticate} header.
    *
    * @param authenticationMethod the {@code WWW-Authenticate} header value
+   * @param registryEndpointRequestProperties the registry request properties
    * @param repository the repository/image name
    * @return a new {@link RegistryAuthenticator} for authenticating with the registry service
    * @throws RegistryAuthenticationFailedException if authentication fails
@@ -116,7 +117,9 @@ public class RegistryAuthenticator {
    */
   @Nullable
   static RegistryAuthenticator fromAuthenticationMethod(
-      String authenticationMethod, String repository) throws RegistryAuthenticationFailedException {
+      String authenticationMethod,
+      RegistryEndpointRequestProperties registryEndpointRequestProperties)
+      throws RegistryAuthenticationFailedException {
     // If the authentication method starts with 'basic ' (case insensitive), no registry
     // authentication is needed.
     if (authenticationMethod.matches("^(?i)(basic) .*")) {
@@ -137,10 +140,14 @@ public class RegistryAuthenticator {
 
     Pattern servicePattern = Pattern.compile("service=\"(.*?)\"");
     Matcher serviceMatcher = servicePattern.matcher(authenticationMethod);
-    // use the provided registry as the service when missing (e.g., for OpenShift)
-    String service = serviceMatcher.find() ? serviceMatcher.group(1) : repository;
+    // use the provided registry location when missing service (e.g., for OpenShift)
+    String service =
+        serviceMatcher.find()
+            ? serviceMatcher.group(1)
+            : registryEndpointRequestProperties.getServerUrl();
 
-    return new RegistryAuthenticator(realm, service, repository);
+    return new RegistryAuthenticator(
+        realm, service, registryEndpointRequestProperties.getImageName());
   }
 
   private static RegistryAuthenticationFailedException newRegistryAuthenticationFailedException(
