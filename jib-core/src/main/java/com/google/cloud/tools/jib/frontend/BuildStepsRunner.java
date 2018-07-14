@@ -30,6 +30,7 @@ import com.google.cloud.tools.jib.cache.Caches.Initializer;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.registry.InsecureRegistryException;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
+import com.google.cloud.tools.jib.registry.RegistryCredentialsNotSentException;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
@@ -231,6 +232,10 @@ public class BuildStepsRunner {
             (RegistryUnauthorizedException) exceptionDuringBuildSteps,
             buildConfiguration,
             helpfulSuggestions);
+
+      } else if (exceptionDuringBuildSteps instanceof RegistryCredentialsNotSentException) {
+        throw new BuildStepsExecutionException(
+            helpfulSuggestions.forCredentialsNotSent(), exceptionDuringBuildSteps);
 
       } else if (exceptionDuringBuildSteps instanceof RegistryAuthenticationFailedException
           && exceptionDuringBuildSteps.getCause() instanceof HttpResponseException) {

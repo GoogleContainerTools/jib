@@ -26,6 +26,7 @@ import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Connection;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import com.google.cloud.tools.jib.registry.RegistryEndpointCaller.RequestState;
 import com.google.cloud.tools.jib.registry.json.ErrorEntryTemplate;
 import com.google.cloud.tools.jib.registry.json.ErrorResponseTemplate;
 import java.io.IOException;
@@ -141,6 +142,40 @@ public class RegistryEndpointCallerTest {
   @Test
   public void testCall_unauthorized() throws IOException, RegistryException {
     verifyThrowsRegistryUnauthorizedException(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED);
+  }
+
+  @Test
+  public void testCall_credentialsNotSent() throws IOException, RegistryException {
+    // Mocks a response for temporary redirect to a new location.
+    Mockito.when(mockHttpResponse.getStatusCode())
+        .thenReturn(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED);
+    Mockito.when(mockHttpResponse.getHeaders())
+        .thenReturn(new HttpHeaders().setLocation("http://location"));
+
+    HttpResponseException httpResponseException = new HttpResponseException(mockHttpResponse);
+    Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
+        .thenThrow(httpResponseException)
+        .thenReturn(mockResponse);
+
+    RegistryEndpointCaller<String> testRegistryEndpointCallerInsecure =
+        new RegistryEndpointCaller<>(
+            "userAgent",
+            "apiRouteBase",
+            new TestRegistryEndpointProvider(),
+            Authorizations.withBasicToken("token"),
+            new RegistryEndpointRequestProperties("serverUrl", "imageName"),
+            true,
+            mockConnectionFactory);
+    try {
+      testRegistryEndpointCallerInsecure.call(
+          new RequestState(Authorizations.withBasicToken("token"), new URL("http://location")));
+      Assert.fail("Call should have failed");
+
+    } catch (RegistryCredentialsNotSentException ex) {
+      Assert.assertEquals(
+          "Required credentials for serverUrl/imageName were not sent because the connection was over HTTP",
+          ex.getMessage());
+    }
   }
 
   @Test
