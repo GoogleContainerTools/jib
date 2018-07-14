@@ -19,6 +19,8 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.annotations.VisibleForTesting;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.settings.Server;
@@ -39,10 +41,22 @@ class MavenSettingsServerCredentials {
 
   private final Settings settings;
   @Nullable private final SettingsDecrypter settingsDecrypter;
+  private final MavenBuildLogger mavenBuildLogger;
 
-  MavenSettingsServerCredentials(Settings settings, @Nullable SettingsDecrypter settingsDecrypter) {
+  /**
+   * Create new instance.
+   *
+   * @param settings the Maven settings object
+   * @param settingsDecrypter the Maven decrypter component
+   * @param mavenBuildLogger the Maven build log
+   */
+  MavenSettingsServerCredentials(
+      Settings settings,
+      @Nullable SettingsDecrypter settingsDecrypter,
+      MavenBuildLogger mavenBuildLogger) {
     this.settings = settings;
     this.settingsDecrypter = settingsDecrypter;
+    this.mavenBuildLogger = mavenBuildLogger;
   }
 
   /**
@@ -82,11 +96,32 @@ class MavenSettingsServerCredentials {
       if (result.getServer() != null) {
         registryServer = result.getServer();
       }
+    } else if (isEncrypted(registryServer.getPassword())) {
+      mavenBuildLogger.warn(
+          "Server password for registry "
+              + registry
+              + " appears to be encrypted, but there is no decrypter available");
     }
 
     return new RegistryCredentials(
         CREDENTIAL_SOURCE,
         Authorizations.withBasicCredentials(
             registryServer.getUsername(), registryServer.getPassword()));
+  }
+
+  // pattern cribbed directly from
+  // https://github.com/sonatype/plexus-cipher/blob/master/src/main/java/org/sonatype/plexus/components/cipher/DefaultPlexusCipher.java
+  private static final Pattern ENCRYPTED_STRING_PATTERN =
+      Pattern.compile(".*?[^\\\\]?\\{(.*?[^\\\\])\\}.*");
+
+  /**
+   * Return true if the given string appears to have been encrypted with the <a
+   * href="https://maven.apache.org/guides/mini/guide-encryption.html#How_to_encrypt_server_passwords">Maven
+   * password encryption</a>. Such passwords appear between unescaped braces.
+   */
+  @VisibleForTesting
+  static boolean isEncrypted(String password) {
+    Matcher matcher = ENCRYPTED_STRING_PATTERN.matcher(password);
+    return matcher.matches() || matcher.find();
   }
 }
