@@ -30,9 +30,11 @@ import java.util.Map;
 import javax.annotation.Nullable;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.settings.crypto.SettingsDecrypter;
 
 /** Defines the configuration parameters for Jib. Jib {@link Mojo}s should extend this class. */
 abstract class JibPluginConfiguration extends AbstractMojo {
@@ -163,6 +165,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   @Nullable
   @Parameter(defaultValue = "${project.basedir}/src/main/jib", required = true)
   private String extraDirectory;
+
+  @Nullable @Component protected SettingsDecrypter settingsDecrypter;
 
   MavenProject getProject() {
     return Preconditions.checkNotNull(project);
