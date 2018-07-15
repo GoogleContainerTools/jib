@@ -57,4 +57,4 @@ We welcome contributions! Here's how you can contribute:
   * Help out on [issues that need help](https://github.com/GoogleContainerTools/jib/labels/help%20wanted)
   * Join in on [discussion issues](https://github.com/GoogleContainerTools/jib/labels/discuss)
 <!--  * Read the [style guide] -->
-*Make sure to follow the [Code of Conduct] when contributing so we can foster an open and welcoming community.*
+*Make sure to follow the [Code of Conduct](https://github.com/GoogleContainerTools/jib/blob/master/CODE_OF_CONDUCT.md) when contributing so we can foster an open and welcoming community.*
