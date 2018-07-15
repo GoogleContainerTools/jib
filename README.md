@@ -49,7 +49,7 @@ See the [Frequently Asked Questions (FAQ) wiki page](/../../wiki/Frequently-Aske
 
 We welcome contributions! Here's how you can contribute:
 
-* Browse [issues](https://github.com/GoogleContainerTools/jib/issues) or file [an issue](https://github.com/GoogleContainerTools/jib/issues/new)
+* [Browse issues](https://github.com/GoogleContainerTools/jib/issues) or [file an issue](https://github.com/GoogleContainerTools/jib/issues/new)
 * Chat with us on [gitter](https://gitter.im/google/jib)
 * Join the [jib-users mailing list](https://groups.google.com/forum/#!forum/jib-users)
 * Contribute:
@@ -57,3 +57,4 @@ We welcome contributions! Here's how you can contribute:
   * Help out on [issues that need help](https://github.com/GoogleContainerTools/jib/labels/help%20wanted)
   * Join in on [discussion issues](https://github.com/GoogleContainerTools/jib/labels/discuss)
 <!--  * Read the [style guide] -->
+*Make sure to follow the [Code of Conduct] when contributing so we can foster an open and welcoming community.*
