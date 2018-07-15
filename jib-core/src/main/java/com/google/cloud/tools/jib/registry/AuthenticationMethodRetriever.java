@@ -96,7 +96,7 @@ class AuthenticationMethodRetriever implements RegistryEndpointProvider<Registry
     // Parses the header to retrieve the components.
     try {
       return RegistryAuthenticator.fromAuthenticationMethod(
-          authenticationMethod, registryEndpointRequestProperties.getImageName());
+          authenticationMethod, registryEndpointRequestProperties);
 
     } catch (RegistryAuthenticationFailedException ex) {
       throw new RegistryErrorExceptionBuilder(getActionDescription(), ex)
