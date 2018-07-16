@@ -12,10 +12,7 @@ For the Gradle plugin, see the [jib-gradle-plugin project](../jib-gradle-plugin)
 
 ## Upcoming Features
 
-These features are not currently supported but will be added in later releases.
-
-* Support for WAR format
-* Run and debug the built container
+See [Milestones](https://github.com/GoogleContainerTools/jib/milestones) for planned features. [Get involved with the community](https://github.com/GoogleContainerTools/jib/tree/master#get-involved-with-the-community) for the latest updates.
 
 ## Quickstart
 
