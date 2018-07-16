@@ -118,10 +118,14 @@ public class TarStreamBuilderTest {
 
     // Verify multi-byte characters are written/read correctly
     TarArchiveEntry headerFile = tarArchiveInputStream.getNextTarEntry();
-    Assert.assertEquals(fileCContents, headerFile.getName());
+    Assert.assertArrayEquals(
+        fileCContents.getBytes(StandardCharsets.UTF_8),
+        headerFile.getName().getBytes(StandardCharsets.UTF_8));
     String fileString =
         CharStreams.toString(new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
-    Assert.assertEquals(fileCContents, fileString);
+    Assert.assertArrayEquals(
+        fileCContents.getBytes(StandardCharsets.UTF_8),
+        fileString.getBytes(StandardCharsets.UTF_8));
 
     headerFile = tarArchiveInputStream.getNextTarEntry();
     Assert.assertEquals("crepecake", headerFile.getName());
