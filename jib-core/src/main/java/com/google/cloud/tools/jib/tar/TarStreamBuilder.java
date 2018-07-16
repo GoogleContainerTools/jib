@@ -53,7 +53,7 @@ public class TarStreamBuilder {
    */
   private void writeEntriesAsTarArchive(OutputStream tarByteStream) throws IOException {
     try (TarArchiveOutputStream tarArchiveOutputStream =
-        new TarArchiveOutputStream(tarByteStream)) {
+        new TarArchiveOutputStream(tarByteStream, StandardCharsets.UTF_8.name())) {
       // Enables PAX extended headers to support long file names.
       tarArchiveOutputStream.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
       for (Map.Entry<TarArchiveEntry, TarArchiveOutputStreamConsumer> entry :
