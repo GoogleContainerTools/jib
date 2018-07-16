@@ -20,7 +20,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -134,7 +133,8 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     return rootfs.diff_ids;
   }
 
-  @Nullable String getCreated() {
+  @Nullable
+  String getCreated() {
     return created;
   }
 
