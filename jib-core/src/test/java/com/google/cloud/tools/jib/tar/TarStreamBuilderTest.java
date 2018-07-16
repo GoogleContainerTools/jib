@@ -43,11 +43,9 @@ public class TarStreamBuilderTest {
 
   private Path fileA;
   private Path fileB;
-  private Path fileC;
   private Path directoryA;
   private String fileAContents;
   private String fileBContents;
-  private String fileCContents;
   private TarStreamBuilder testTarStreamBuilder = new TarStreamBuilder();
 
   @Before
@@ -55,12 +53,10 @@ public class TarStreamBuilderTest {
     // Gets the test resource files.
     fileA = Paths.get(Resources.getResource("fileA").toURI());
     fileB = Paths.get(Resources.getResource("fileB").toURI());
-    fileC = Paths.get(Resources.getResource("fileC").toURI());
     directoryA = Paths.get(Resources.getResource("directoryA").toURI());
 
     fileAContents = new String(Files.readAllBytes(fileA), StandardCharsets.UTF_8);
     fileBContents = new String(Files.readAllBytes(fileB), StandardCharsets.UTF_8);
-    fileCContents = new String(Files.readAllBytes(fileC), StandardCharsets.UTF_8);
   }
 
   @Test
@@ -101,7 +97,7 @@ public class TarStreamBuilderTest {
 
   @Test
   public void testToBlob_multiByte() throws IOException {
-    testTarStreamBuilder.addEntry(fileCContents, fileCContents);
+    testTarStreamBuilder.addEntry("日本語", "日本語");
     testTarStreamBuilder.addEntry("asdf", "crepecake");
     Blob blob = testTarStreamBuilder.toBlob();
 
@@ -119,13 +115,12 @@ public class TarStreamBuilderTest {
     // Verify multi-byte characters are written/read correctly
     TarArchiveEntry headerFile = tarArchiveInputStream.getNextTarEntry();
     Assert.assertArrayEquals(
-        fileCContents.getBytes(StandardCharsets.UTF_8),
+        "日本語".getBytes(StandardCharsets.UTF_8),
         headerFile.getName().getBytes(StandardCharsets.UTF_8));
     String fileString =
         CharStreams.toString(new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
     Assert.assertArrayEquals(
-        fileCContents.getBytes(StandardCharsets.UTF_8),
-        fileString.getBytes(StandardCharsets.UTF_8));
+        "日本語".getBytes(StandardCharsets.UTF_8), fileString.getBytes(StandardCharsets.UTF_8));
 
     headerFile = tarArchiveInputStream.getNextTarEntry();
     Assert.assertEquals("crepecake", headerFile.getName());
