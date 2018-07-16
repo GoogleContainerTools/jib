@@ -92,11 +92,9 @@ public class TarStreamBuilder {
    */
   public void addEntry(String contents, String name) {
     TarArchiveEntry entry = new TarArchiveEntry(name);
-    entry.setSize(contents.length());
-    archiveMap.put(
-        entry,
-        tarArchiveOutputStream ->
-            tarArchiveOutputStream.write(contents.getBytes(StandardCharsets.UTF_8)));
+    byte[] contentsBytes = contents.getBytes(StandardCharsets.UTF_8);
+    entry.setSize(contentsBytes.length);
+    archiveMap.put(entry, tarArchiveOutputStream -> tarArchiveOutputStream.write(contentsBytes));
   }
 
   /** @return a new {@link Blob} that can stream the uncompressed tarball archive BLOB. */
