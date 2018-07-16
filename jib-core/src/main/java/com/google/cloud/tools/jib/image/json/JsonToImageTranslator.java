@@ -29,6 +29,8 @@ import com.google.cloud.tools.jib.image.ReferenceLayer;
 import com.google.cloud.tools.jib.image.ReferenceNoDiffIdLayer;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -111,6 +113,15 @@ public class JsonToImageTranslator {
       DescriptorDigest diffId = diffIds.get(layerIndex);
 
       imageBuilder.addLayer(new ReferenceLayer(noDiffIdLayer.getBlobDescriptor(), diffId));
+    }
+
+    if (containerConfigurationTemplate.getCreated() != null) {
+      try {
+        imageBuilder.setCreated(Instant.parse(containerConfigurationTemplate.getCreated()));
+      } catch (DateTimeParseException ex) {
+        throw new BadContainerConfigurationFormatException(
+            "Invalid image creation time: " + containerConfigurationTemplate.getCreated());
+      }
     }
 
     if (containerConfigurationTemplate.getContainerEntrypoint() != null) {

@@ -28,6 +28,8 @@ import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.nio.file.Paths;
+import java.time.Instant;
+import java.time.temporal.TemporalAccessor;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -40,6 +42,7 @@ public class BuildConfigurationTest {
 
   @Test
   public void testBuilder() {
+    Instant expectedCreationTime = Instant.ofEpochSecond(10000);
     String expectedBaseImageServerUrl = "someserver";
     String expectedBaseImageName = "baseimage";
     String expectedBaseImageTag = "baseimagetag";
@@ -68,6 +71,7 @@ public class BuildConfigurationTest {
 
     BuildConfiguration.Builder buildConfigurationBuilder =
         BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
+            .setCreationTime(expectedCreationTime)
             .setBaseImage(
                 ImageReference.of(
                     expectedBaseImageServerUrl, expectedBaseImageName, expectedBaseImageTag))
@@ -90,6 +94,7 @@ public class BuildConfigurationTest {
             .setExtraFilesLayerConfiguration(expectedExtraFilesLayerConfiguration);
     BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
 
+    Assert.assertEquals(expectedCreationTime, buildConfiguration.getCreationTime());
     Assert.assertEquals(expectedBaseImageServerUrl, buildConfiguration.getBaseImageRegistry());
     Assert.assertEquals(expectedBaseImageName, buildConfiguration.getBaseImageRepository());
     Assert.assertEquals(expectedBaseImageTag, buildConfiguration.getBaseImageTag());
@@ -141,6 +146,7 @@ public class BuildConfigurationTest {
             .setMainClass(expectedMainClass)
             .build();
 
+    Assert.assertEquals(buildConfiguration.getCreationTime(), Instant.EPOCH);
     Assert.assertNull(buildConfiguration.getBaseImageCredentialHelperName());
     Assert.assertNull(buildConfiguration.getKnownBaseRegistryCredentials());
     Assert.assertNull(buildConfiguration.getTargetImageCredentialHelperName());

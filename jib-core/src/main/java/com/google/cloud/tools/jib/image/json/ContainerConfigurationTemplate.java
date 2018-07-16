@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -57,14 +58,8 @@ import javax.annotation.Nullable;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ContainerConfigurationTemplate implements JsonTemplate {
 
-  /**
-   * A combined date and time at which the image was created. Constant to maintain reproducibility
-   * and avoid Docker's weird "292 years old" bug.
-   *
-   * @see <a
-   *     href="https://github.com/GoogleContainerTools/jib/issues/341">https://github.com/GoogleContainerTools/jib/issues/341</a>
-   */
-  private String created = "1970-01-01T00:00:00Z";
+  /** ISO-8601 formatted combined date and time at which the image was created. */
+  @Nullable private String created;
 
   /** The CPU architecture to run the binaries in this container. */
   private String architecture = "amd64";
@@ -111,6 +106,10 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     private final List<DescriptorDigest> diff_ids = new ArrayList<>();
   }
 
+  public void setCreated(String created) {
+    this.created = created;
+  }
+
   public void setContainerEnvironment(List<String> environment) {
     config.Env = environment;
   }
@@ -133,6 +132,10 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
 
   List<DescriptorDigest> getDiffIds() {
     return rootfs.diff_ids;
+  }
+
+  @Nullable String getCreated() {
+    return created;
   }
 
   @Nullable
