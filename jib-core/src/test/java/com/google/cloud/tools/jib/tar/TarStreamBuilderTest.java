@@ -97,7 +97,7 @@ public class TarStreamBuilderTest {
 
   @Test
   public void testToBlob_multiByte() throws IOException {
-    testTarStreamBuilder.addEntry("日本語", "日本語");
+    testTarStreamBuilder.addEntry("日本語", "test");
     testTarStreamBuilder.addEntry("asdf", "crepecake");
     Blob blob = testTarStreamBuilder.toBlob();
 
@@ -114,13 +114,10 @@ public class TarStreamBuilderTest {
 
     // Verify multi-byte characters are written/read correctly
     TarArchiveEntry headerFile = tarArchiveInputStream.getNextTarEntry();
-    Assert.assertArrayEquals(
-        "日本語".getBytes(StandardCharsets.UTF_8),
-        headerFile.getName().getBytes(StandardCharsets.UTF_8));
+    Assert.assertEquals("test", headerFile.getName());
     String fileString =
         CharStreams.toString(new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
-    Assert.assertArrayEquals(
-        "日本語".getBytes(StandardCharsets.UTF_8), fileString.getBytes(StandardCharsets.UTF_8));
+    Assert.assertEquals("日本語", fileString);
 
     headerFile = tarArchiveInputStream.getNextTarEntry();
     Assert.assertEquals("crepecake", headerFile.getName());
