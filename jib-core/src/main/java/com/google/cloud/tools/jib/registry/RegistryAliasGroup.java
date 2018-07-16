@@ -17,7 +17,10 @@
 package com.google.cloud.tools.jib.registry;
 
 import com.google.common.collect.ImmutableList;
-import java.util.ArrayDeque;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class RegistryAliasGroup {
 
@@ -33,17 +36,16 @@ public class RegistryAliasGroup {
    * @param registry the registry for which the alias group is requested
    * @return non-empty list of registries where {@code registry} is the first element
    */
-  public static ImmutableList<String> getAliasesGroup(String registry) {
+  public static List<String> getAliasesGroup(String registry) {
     for (ImmutableList<String> aliasGroup : REGISTRY_ALIAS_GROUPS) {
       if (aliasGroup.contains(registry)) {
         // Found a group. Move the requested "registry" to the front before returning it.
-        ArrayDeque<String> requestedRegistryAtHead = new ArrayDeque<>(aliasGroup);
-        requestedRegistryAtHead.remove(registry);
-        requestedRegistryAtHead.addFirst(registry);
-        return ImmutableList.copyOf(requestedRegistryAtHead);
+        Stream<String> self = Stream.of(registry);
+        Stream<String> withoutSelf = aliasGroup.stream().filter(alias -> !registry.equals(alias));
+        return Stream.concat(self, withoutSelf).collect(Collectors.toList());
       }
     }
 
-    return ImmutableList.of(registry);
+    return Collections.singletonList(registry);
   }
 }

@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.registry;
 
-import com.google.common.collect.ImmutableList;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -24,7 +24,7 @@ public class RegistryAliasGroupTest {
 
   @Test
   public void testGetAliasesGroup_noKnownAliases() {
-    ImmutableList<String> singleton = RegistryAliasGroup.getAliasesGroup("something.gcr.io");
+    List<String> singleton = RegistryAliasGroup.getAliasesGroup("something.gcr.io");
     Assert.assertEquals(1, singleton.size());
     Assert.assertEquals("something.gcr.io", singleton.get(0));
   }
