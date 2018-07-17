@@ -165,7 +165,7 @@ class RegistryEndpointCaller<T> {
               .setAccept(registryEndpointProvider.getAccept())
               .setBody(registryEndpointProvider.getContent());
       // Only sends authorization if using HTTPS.
-      if (!isHttpProtocol) {
+      if (!isHttpProtocol || Boolean.getBoolean("sendCredentialsOverHttp")) {
         requestBuilder.setAuthorization(requestState.authorization);
       }
       Response response =
