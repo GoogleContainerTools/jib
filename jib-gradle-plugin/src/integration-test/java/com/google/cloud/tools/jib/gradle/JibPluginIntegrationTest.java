@@ -98,6 +98,16 @@ public class JibPluginIntegrationTest {
   public void testBuild_empty() throws IOException, InterruptedException {
     Assert.assertEquals(
         "", buildAndRun(emptyTestProject, "gcr.io/jib-integration-testing/emptyimage:gradle"));
+    Assert.assertEquals(
+        new Command(
+                "docker",
+                "inspect",
+                "-f",
+                "{{.Created}}",
+                "gcr.io/jib-integration-testing/emptyimage:gradle")
+            .run()
+            .trim(),
+        "1970-01-01T00:00:00Z");
   }
 
   @Test
@@ -142,6 +152,16 @@ public class JibPluginIntegrationTest {
         "",
         buildToDockerDaemonAndRun(
             emptyTestProject, "gcr.io/jib-integration-testing/emptyimage:gradle"));
+    Assert.assertEquals(
+        new Command(
+                "docker",
+                "inspect",
+                "-f",
+                "{{.Created}}",
+                "gcr.io/jib-integration-testing/emptyimage:gradle")
+            .run()
+            .trim(),
+        "1970-01-01T00:00:00Z");
   }
 
   @Test
@@ -253,7 +273,7 @@ public class JibPluginIntegrationTest {
       Assert.assertEquals(TaskOutcome.SUCCESS, reexecutedJibDockerContextTask.getOutcome());
 
     } catch (UnexpectedBuildFailure ex) {
-      // THis might happen on systems without SecureDirectoryStream, so we just ignore it.
+      // This might happen on systems without SecureDirectoryStream, so we just ignore it.
       // See com.google.common.io.MoreFiles#deleteDirectoryContents.
       Assert.assertThat(
           ex.getMessage(),
@@ -274,10 +294,15 @@ public class JibPluginIntegrationTest {
   private static void assertSimpleCreationTimeIsAfter(Instant before)
       throws IOException, InterruptedException {
     String inspect =
-        new Command("docker", "inspect", "gcr.io/jib-integration-testing/simpleimage:gradle").run();
-    int beginQuote = inspect.indexOf("\"Created\": \"") + 12;
-    int endQuote = inspect.indexOf("\"", beginQuote + 1);
-    Instant parsed = Instant.parse(inspect.substring(beginQuote, endQuote));
+        new Command(
+                "docker",
+                "inspect",
+                "-f",
+                "{{.Created}}",
+                "gcr.io/jib-integration-testing/simpleimage:gradle")
+            .run()
+            .trim();
+    Instant parsed = Instant.parse(inspect);
     Assert.assertTrue(parsed.isAfter(before) || parsed.equals(before));
   }
 }

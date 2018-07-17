@@ -140,8 +140,7 @@ public class BuildImageTask extends DefaultTask {
     }
     if (jibExtension.getUseCurrentTimestamp()) {
       gradleBuildLogger.warn(
-          "Setting image creation time with current timestamp; your image may not be "
-              + "reproducible.");
+          "Setting image creation time to current time; your image may not be reproducible.");
       buildConfigurationBuilder.setCreationTime(Instant.now());
     }
 
