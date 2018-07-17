@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.registry;
 
+import java.util.Arrays;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
@@ -31,15 +32,15 @@ public class RegistryAliasGroupTest {
 
   @Test
   public void testGetAliasesGroup_registryHubDockerCom() {
-    Assert.assertArrayEquals(
-        RegistryAliasGroup.getAliasesGroup("registry.hub.docker.com").toArray(new String[0]),
-        new String[] {"registry.hub.docker.com", "index.docker.io"});
+    Assert.assertEquals(
+        Arrays.asList("registry.hub.docker.com", "index.docker.io"),
+        RegistryAliasGroup.getAliasesGroup("registry.hub.docker.com"));
   }
 
   @Test
   public void testGetAliasesGroup_indexDockerIo() {
-    Assert.assertArrayEquals(
-        RegistryAliasGroup.getAliasesGroup("index.docker.io").toArray(new String[0]),
-        new String[] {"index.docker.io", "registry.hub.docker.com"});
+    Assert.assertEquals(
+        Arrays.asList("index.docker.io", "registry.hub.docker.com"),
+        RegistryAliasGroup.getAliasesGroup("index.docker.io"));
   }
 }
