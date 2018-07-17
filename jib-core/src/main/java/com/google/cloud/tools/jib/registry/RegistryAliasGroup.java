@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/** Provides known aliases for a given registry. */
 public class RegistryAliasGroup {
 
   private static final ImmutableList<ImmutableSet<String>> REGISTRY_ALIAS_GROUPS =

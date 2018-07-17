@@ -21,6 +21,7 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
+/** Tests for {@link RegistryAliasGroup}. */
 public class RegistryAliasGroupTest {
 
   @Test
