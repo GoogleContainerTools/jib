@@ -99,6 +99,7 @@ public class JibPluginIntegrationTest {
     Assert.assertEquals(
         "", buildAndRun(emptyTestProject, "gcr.io/jib-integration-testing/emptyimage:gradle"));
     Assert.assertEquals(
+        "1970-01-01T00:00:00Z",
         new Command(
                 "docker",
                 "inspect",
@@ -106,8 +107,7 @@ public class JibPluginIntegrationTest {
                 "{{.Created}}",
                 "gcr.io/jib-integration-testing/emptyimage:gradle")
             .run()
-            .trim(),
-        "1970-01-01T00:00:00Z");
+            .trim());
   }
 
   @Test
@@ -153,6 +153,7 @@ public class JibPluginIntegrationTest {
         buildToDockerDaemonAndRun(
             emptyTestProject, "gcr.io/jib-integration-testing/emptyimage:gradle"));
     Assert.assertEquals(
+        "1970-01-01T00:00:00Z",
         new Command(
                 "docker",
                 "inspect",
@@ -160,8 +161,7 @@ public class JibPluginIntegrationTest {
                 "{{.Created}}",
                 "gcr.io/jib-integration-testing/emptyimage:gradle")
             .run()
-            .trim(),
-        "1970-01-01T00:00:00Z");
+            .trim());
   }
 
   @Test
