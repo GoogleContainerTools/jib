@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.registry.credentials;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import com.google.cloud.tools.jib.registry.RegistryAliasGroup;
 import com.google.cloud.tools.jib.registry.credentials.json.DockerConfigTemplate;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
@@ -86,6 +87,17 @@ public class DockerConfigCredentialRetriever {
       return null;
     }
 
+    for (String registry : RegistryAliasGroup.getAliasesGroup(registry)) {
+      Authorization authorization = retrieve(dockerConfigTemplate, registry);
+      if (authorization != null) {
+        return authorization;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private Authorization retrieve(DockerConfigTemplate dockerConfigTemplate, String registry) {
     // First, tries to find defined auth.
     String auth = dockerConfigTemplate.getAuthFor(registry);
     if (auth != null) {
