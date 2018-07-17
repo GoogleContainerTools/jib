@@ -135,4 +135,30 @@ public class DockerConfigCredentialRetrieverTest {
     Authorization authorization = dockerConfigCredentialRetriever.retrieve();
     Assert.assertEquals(mockAuthorization, authorization);
   }
+
+  @Test
+  public void testRetrieve_suffixMatching() throws IOException, URISyntaxException {
+    Path dockerConfigFile =
+        Paths.get(Resources.getResource("json/dockerconfig_index_docker_io_v1.json").toURI());
+
+    DockerConfigCredentialRetriever dockerConfigCredentialRetriever =
+        new DockerConfigCredentialRetriever(
+            "index.docker.io", dockerConfigFile, mockDockerCredentialHelperFactory);
+
+    Authorization authorization = dockerConfigCredentialRetriever.retrieve();
+    Assert.assertEquals("token for index.docker.io/v1/", authorization.getToken());
+  }
+
+  @Test
+  public void testRetrieve_suffixMatchingFromAlias() throws IOException, URISyntaxException {
+    Path dockerConfigFile =
+        Paths.get(Resources.getResource("json/dockerconfig_index_docker_io_v1.json").toURI());
+
+    DockerConfigCredentialRetriever dockerConfigCredentialRetriever =
+        new DockerConfigCredentialRetriever(
+            "registry.hub.docker.com", dockerConfigFile, mockDockerCredentialHelperFactory);
+
+    Authorization authorization = dockerConfigCredentialRetriever.retrieve();
+    Assert.assertEquals("token for index.docker.io/v1/", authorization.getToken());
+  }
 }
