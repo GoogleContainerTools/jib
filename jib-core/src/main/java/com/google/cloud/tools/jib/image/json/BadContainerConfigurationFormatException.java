@@ -23,4 +23,8 @@ public class BadContainerConfigurationFormatException extends Exception {
   BadContainerConfigurationFormatException(String message) {
     super(message);
   }
+
+  BadContainerConfigurationFormatException(String message, Throwable cause) {
+    super(message, cause);
+  }
 }

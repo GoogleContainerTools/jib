@@ -45,6 +45,7 @@ public class ContainerConfigurationTemplateTest {
     // Creates the JSON object to serialize.
     ContainerConfigurationTemplate containerConfigJson = new ContainerConfigurationTemplate();
 
+    containerConfigJson.setCreated("1970-01-01T00:00:20Z");
     containerConfigJson.setContainerEnvironment(Arrays.asList("VAR1=VAL1", "VAR2=VAL2"));
     containerConfigJson.setContainerEntrypoint(Arrays.asList("some", "entrypoint", "command"));
     containerConfigJson.setContainerCmd(Arrays.asList("arg1", "arg2"));
@@ -77,15 +78,13 @@ public class ContainerConfigurationTemplateTest {
     ContainerConfigurationTemplate containerConfigJson =
         JsonTemplateMapper.readJsonFromFile(jsonFile, ContainerConfigurationTemplate.class);
 
+    Assert.assertEquals("1970-01-01T00:00:20Z", containerConfigJson.getCreated());
     Assert.assertEquals(
         Arrays.asList("VAR1=VAL1", "VAR2=VAL2"), containerConfigJson.getContainerEnvironment());
-
     Assert.assertEquals(
         Arrays.asList("some", "entrypoint", "command"),
         containerConfigJson.getContainerEntrypoint());
-
     Assert.assertEquals(Arrays.asList("arg1", "arg2"), containerConfigJson.getContainerCmd());
-
     Assert.assertEquals(
         DescriptorDigest.fromDigest(
             "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad"),
