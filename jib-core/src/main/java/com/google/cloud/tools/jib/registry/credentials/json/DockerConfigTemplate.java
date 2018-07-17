@@ -19,8 +19,12 @@ package com.google.cloud.tools.jib.registry.credentials.json;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 /**
@@ -77,21 +81,45 @@ public class DockerConfigTemplate implements JsonTemplate {
   private final Map<String, String> credHelpers = new HashMap<>();
 
   /**
+   * Returns the base64-encoded {@code Basic} authorization for {@code registry}, or {@code null} if
+   * none exists. The order of lookup preference:
+   *
+   * <ol>
+   *   <li>Exact registry name
+   *   <li>https:// + registry name
+   *   <li>registry name + arbitrary suffix
+   *   <li>https:// + registry name + arbitrary suffix
+   * </ol>
+   *
    * @param registry the registry to get the authorization for
    * @return the base64-encoded {@code Basic} authorization for {@code registry}, or {@code null} if
    *     none exists
    */
   @Nullable
   public String getAuthFor(String registry) {
-    AuthTemplate registryAuth = auths.get(registry);
-    if (registryAuth == null) {
-      // The registry could be prefixed with the HTTPS protocol.
-      registryAuth = auths.get("https://" + registry);
-    }
-    if (registryAuth != null) {
-      return registryAuth.auth;
-    }
-    return null;
+    Predicate<String> exactMatch = registry::equals;
+    Predicate<String> withHttps = ("https://" + registry)::equals;
+    Predicate<String> startsWith = name -> name.startsWith(registry);
+    Predicate<String> startsWithAndWithHttps = name -> name.startsWith("https://" + registry);
+    AuthTemplate authTemplate =
+        getAuthTemplate(Arrays.asList(exactMatch, withHttps, startsWith, startsWithAndWithHttps));
+
+    return authTemplate != null ? authTemplate.auth : null;
+  }
+
+  /** Returns the first {@link AuthTemplate} matching the given predicates (short-circuiting). */
+  private AuthTemplate getAuthTemplate(List<Predicate<String>> registryMatches) {
+    return registryMatches
+        .stream()
+        .map(this::getAuthTemplate)
+        .filter(Objects::nonNull)
+        .findFirst()
+        .orElse(null);
+  }
+
+  /** Returns {@link AuthTemplate} matching the given predicate. */
+  private AuthTemplate getAuthTemplate(Predicate<String> registryMatch) {
+    return auths.keySet().stream().filter(registryMatch).map(auths::get).findFirst().orElse(null);
   }
 
   /**
