@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.registry;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,10 +25,10 @@ import java.util.stream.Stream;
 
 public class RegistryAliasGroup {
 
-  private static final ImmutableList<ImmutableList<String>> REGISTRY_ALIAS_GROUPS =
+  private static final ImmutableList<ImmutableSet<String>> REGISTRY_ALIAS_GROUPS =
       ImmutableList.of(
           // Docker Hub alias group
-          ImmutableList.of("registry.hub.docker.com", "index.docker.io"));
+          ImmutableSet.of("registry.hub.docker.com", "index.docker.io"));
 
   /**
    * Returns the list of registry aliases for the given {@code registry}, including {@code registry}
@@ -37,7 +38,7 @@ public class RegistryAliasGroup {
    * @return non-empty list of registries where {@code registry} is the first element
    */
   public static List<String> getAliasesGroup(String registry) {
-    for (ImmutableList<String> aliasGroup : REGISTRY_ALIAS_GROUPS) {
+    for (ImmutableSet<String> aliasGroup : REGISTRY_ALIAS_GROUPS) {
       if (aliasGroup.contains(registry)) {
         // Found a group. Move the requested "registry" to the front before returning it.
         Stream<String> self = Stream.of(registry);
