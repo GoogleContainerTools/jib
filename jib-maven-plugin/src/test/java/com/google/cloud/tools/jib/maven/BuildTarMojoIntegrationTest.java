@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.Command;
 import java.io.IOException;
+import java.time.Instant;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
 import org.junit.Assert;
@@ -37,6 +38,7 @@ public class BuildTarMojoIntegrationTest {
    */
   @Test
   public void testExecute_simple() throws VerificationException, IOException, InterruptedException {
+    Instant before = Instant.now();
     Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
     verifier.setAutoclean(false);
     verifier.executeGoal("package");
@@ -57,5 +59,17 @@ public class BuildTarMojoIntegrationTest {
     Assert.assertEquals(
         "Hello, world. An argument.\nfoo\ncat\n",
         new Command("docker", "run", "gcr.io/jib-integration-testing/simpleimage:maven").run());
+
+    Instant buildTime =
+        Instant.parse(
+            new Command(
+                    "docker",
+                    "inspect",
+                    "-f",
+                    "{{.Created}}",
+                    "gcr.io/jib-integration-testing/simpleimage:maven")
+                .run()
+                .trim());
+    Assert.assertTrue(buildTime.isAfter(before) || buildTime.equals(before));
   }
 }
