@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.configuration.Port.Protocol;
 import com.google.common.collect.ImmutableList;
+import java.time.Instant;
 import java.util.Arrays;
 import org.junit.Assert;
 import org.junit.Before;
@@ -49,6 +50,7 @@ public class ImageTest {
 
     Image<Layer> image =
         Image.builder()
+            .setCreated(Instant.ofEpochSecond(10000))
             .setEnvironmentVariable("crepecake", "is great")
             .setEnvironmentVariable("VARIABLE", "VALUE")
             .setEntrypoint(Arrays.asList("some", "command"))
@@ -60,6 +62,7 @@ public class ImageTest {
 
     Assert.assertEquals(
         mockDescriptorDigest, image.getLayers().get(0).getBlobDescriptor().getDigest());
+    Assert.assertEquals(Instant.ofEpochSecond(10000), image.getCreated());
     Assert.assertEquals(expectedEnvironment, image.getEnvironment());
     Assert.assertEquals(Arrays.asList("some", "command"), image.getEntrypoint());
     Assert.assertEquals(Arrays.asList("arg1", "arg2"), image.getJavaArguments());

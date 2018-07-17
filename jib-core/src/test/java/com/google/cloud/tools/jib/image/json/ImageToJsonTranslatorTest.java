@@ -38,6 +38,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.DigestException;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Map;
 import org.junit.Assert;
@@ -54,13 +55,11 @@ public class ImageToJsonTranslatorTest {
   public void setUp() throws DigestException, LayerPropertyNotFoundException {
     Image.Builder<CachedLayer> testImageBuilder = Image.builder();
 
+    testImageBuilder.setCreated(Instant.ofEpochSecond(20));
     testImageBuilder.setEnvironmentVariable("VAR1", "VAL1");
     testImageBuilder.setEnvironmentVariable("VAR2", "VAL2");
-
     testImageBuilder.setEntrypoint(Arrays.asList("some", "entrypoint", "command"));
-
     testImageBuilder.setJavaArguments(Arrays.asList("arg1", "arg2"));
-
     testImageBuilder.setExposedPorts(
         ImmutableList.of(
             new Port(1000, Protocol.TCP),
