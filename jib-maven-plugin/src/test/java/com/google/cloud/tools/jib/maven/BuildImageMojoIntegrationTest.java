@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.Command;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.Arrays;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
@@ -101,11 +102,24 @@ public class BuildImageMojoIntegrationTest {
                   + "clean jib:build\" instead of \"mvn clean compile jib:build\"?)"));
     }
 
+    Instant before = Instant.now();
     Assert.assertEquals(
         "Hello, world. An argument.\nfoo\ncat\n",
         buildAndRun(
             simpleTestProject.getProjectRoot(),
             "gcr.io/jib-integration-testing/simpleimage:maven"));
+
+    Instant buildTime =
+        Instant.parse(
+            new Command(
+                    "docker",
+                    "inspect",
+                    "-f",
+                    "{{.Created}}",
+                    "gcr.io/jib-integration-testing/simpleimage:maven")
+                .run()
+                .trim());
+    Assert.assertTrue(buildTime.isAfter(before) || buildTime.equals(before));
   }
 
   @Test
@@ -114,6 +128,16 @@ public class BuildImageMojoIntegrationTest {
         "",
         buildAndRun(
             emptyTestProject.getProjectRoot(), "gcr.io/jib-integration-testing/emptyimage:maven"));
+    Assert.assertEquals(
+        "1970-01-01T00:00:00Z",
+        new Command(
+                "docker",
+                "inspect",
+                "-f",
+                "{{.Created}}",
+                "gcr.io/jib-integration-testing/emptyimage:maven")
+            .run()
+            .trim());
   }
 
   @Test
