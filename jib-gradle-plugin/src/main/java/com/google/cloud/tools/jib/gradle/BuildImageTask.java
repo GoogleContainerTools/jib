@@ -91,6 +91,11 @@ public class BuildImageTask extends DefaultTask {
                   "'jib.to.image'", "build.gradle", "gradle jib --image <your image name>"));
     }
 
+    if (Boolean.getBoolean("sendCredentialsOverHttp")) {
+      gradleBuildLogger.warn(
+          "Authentication over HTTP is enabled. It is strongly recommended that you do not enable "
+              + "this on a public network!");
+    }
     RegistryCredentials knownBaseRegistryCredentials = null;
     RegistryCredentials knownTargetRegistryCredentials = null;
     Authorization fromAuthorization = jibExtension.getFrom().getImageAuthorization();
