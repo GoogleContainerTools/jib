@@ -29,6 +29,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.nio.file.Paths;
 import java.security.DigestException;
+import java.time.Instant;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import org.junit.Assert;
@@ -63,6 +64,7 @@ public class BuildImageStepTest {
             null);
 
     Mockito.when(mockBuildConfiguration.getBuildLogger()).thenReturn(mockBuildLogger);
+    Mockito.when(mockBuildConfiguration.getCreationTime()).thenReturn(Instant.EPOCH);
     Mockito.when(mockBuildConfiguration.getEnvironment()).thenReturn(ImmutableMap.of());
     Mockito.when(mockBuildConfiguration.getJavaArguments()).thenReturn(ImmutableList.of());
     Mockito.when(mockBuildConfiguration.getExposedPorts()).thenReturn(ImmutableList.of());
