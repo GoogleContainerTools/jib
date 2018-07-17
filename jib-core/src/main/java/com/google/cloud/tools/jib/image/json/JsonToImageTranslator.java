@@ -120,7 +120,7 @@ public class JsonToImageTranslator {
         imageBuilder.setCreated(Instant.parse(containerConfigurationTemplate.getCreated()));
       } catch (DateTimeParseException ex) {
         throw new BadContainerConfigurationFormatException(
-            "Invalid image creation time: " + containerConfigurationTemplate.getCreated());
+            "Invalid image creation time: " + containerConfigurationTemplate.getCreated(), ex);
       }
     }
 

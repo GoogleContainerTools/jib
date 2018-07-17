@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableList;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /** Represents an image. */
 public class Image<T extends Layer> {
@@ -31,7 +32,7 @@ public class Image<T extends Layer> {
     private final ImageLayers.Builder<T> imageLayersBuilder = ImageLayers.builder();
     private final ImmutableList.Builder<String> environmentBuilder = ImmutableList.builder();
 
-    private Instant created = Instant.EPOCH;
+    @Nullable private Instant created;
     private ImmutableList<String> entrypoint = ImmutableList.of();
     private ImmutableList<String> javaArguments = ImmutableList.of();
     private ImmutableList<Port> exposedPorts = ImmutableList.of();
@@ -144,7 +145,7 @@ public class Image<T extends Layer> {
   }
 
   /** The image creation time. */
-  private final Instant created;
+  @Nullable private final Instant created;
 
   /** The layers of the image, in the order in which they are applied. */
   private final ImageLayers<T> layers;
@@ -162,7 +163,7 @@ public class Image<T extends Layer> {
   private final ImmutableList<Port> exposedPorts;
 
   private Image(
-      Instant created,
+      @Nullable Instant created,
       ImageLayers<T> layers,
       ImmutableList<String> environment,
       ImmutableList<String> entrypoint,
@@ -176,6 +177,7 @@ public class Image<T extends Layer> {
     this.exposedPorts = exposedPorts;
   }
 
+  @Nullable
   public Instant getCreated() {
     return created;
   }

@@ -105,7 +105,7 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     private final List<DescriptorDigest> diff_ids = new ArrayList<>();
   }
 
-  public void setCreated(String created) {
+  public void setCreated(@Nullable String created) {
     this.created = created;
   }
 

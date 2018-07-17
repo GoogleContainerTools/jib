@@ -88,7 +88,7 @@ public class ImageToJsonTranslator {
     }
 
     // Sets the creation time. Instant#toString() returns an ISO-8601 formatted string.
-    template.setCreated(image.getCreated().toString());
+    template.setCreated(image.getCreated() == null ? null : image.getCreated().toString());
 
     // Adds the environment variables.
     template.setContainerEnvironment(image.getEnvironment());
