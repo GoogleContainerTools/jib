@@ -88,6 +88,11 @@ public class BuildDockerTask extends DefaultTask {
     GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
     jibExtension.handleDeprecatedParameters(gradleBuildLogger);
 
+    if (Boolean.getBoolean("sendCredentialsOverHttp")) {
+      gradleBuildLogger.warn(
+          "Authentication over HTTP is enabled. It is strongly recommended that you do not enable "
+              + "this on a public network!");
+    }
     RegistryCredentials knownBaseRegistryCredentials = null;
     Authorization fromAuthorization = jibExtension.getFrom().getImageAuthorization();
     if (fromAuthorization != null) {
