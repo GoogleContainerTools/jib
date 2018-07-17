@@ -33,6 +33,7 @@ import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -117,6 +118,12 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       buildConfigurationBuilder.setBaseImageLayersCacheConfiguration(
           applicationLayersCacheConfiguration);
     }
+    if (getUseCurrentTimestamp()) {
+      mavenBuildLogger.warn(
+          "Setting image creation time to current time; your image may not be reproducible.");
+      buildConfigurationBuilder.setCreationTime(Instant.now());
+    }
+
     BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
