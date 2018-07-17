@@ -68,6 +68,11 @@ public class BuildTarMojo extends JibPluginConfiguration {
         mavenProjectProperties.getGeneratedTargetDockerTag(getTargetImage(), mavenBuildLogger);
 
     // Checks Maven settings for registry credentials.
+    if (Boolean.getBoolean("sendCredentialsOverHttp")) {
+      mavenBuildLogger.warn(
+          "Authentication over HTTP is enabled. It is strongly recommended that you do not enable "
+              + "this on a public network!");
+    }
     MavenSettingsServerCredentials mavenSettingsServerCredentials =
         new MavenSettingsServerCredentials(
             Preconditions.checkNotNull(session).getSettings(), settingsDecrypter, mavenBuildLogger);
