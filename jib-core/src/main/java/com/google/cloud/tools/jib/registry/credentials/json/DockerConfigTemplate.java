@@ -19,12 +19,13 @@ package com.google.cloud.tools.jib.registry.credentials.json;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /**
@@ -97,20 +98,13 @@ public class DockerConfigTemplate implements JsonTemplate {
    */
   @Nullable
   public String getAuthFor(String registry) {
-    Predicate<String> exactMatch = registry::equals;
-    Predicate<String> withHttps = ("https://" + registry)::equals;
-    Predicate<String> startsWith = name -> name.startsWith(registry);
-    Predicate<String> startsWithAndWithHttps = name -> name.startsWith("https://" + registry);
-    AuthTemplate authTemplate =
-        getAuthTemplate(Arrays.asList(exactMatch, withHttps, startsWith, startsWithAndWithHttps));
-
+    AuthTemplate authTemplate = getAuthTemplate(getRegistryMatchersFor(registry));
     return authTemplate != null ? authTemplate.auth : null;
   }
 
   /** Returns the first {@link AuthTemplate} matching the given predicates (short-circuiting). */
-  private AuthTemplate getAuthTemplate(List<Predicate<String>> registryMatches) {
+  private AuthTemplate getAuthTemplate(Stream<Predicate<String>> registryMatches) {
     return registryMatches
-        .stream()
         .map(this::getAuthTemplate)
         .filter(Objects::nonNull)
         .findFirst()
@@ -131,14 +125,34 @@ public class DockerConfigTemplate implements JsonTemplate {
   public String getCredentialHelperFor(String registry) {
     if (credsStore != null) {
       // The registry could be prefixed with the HTTPS protocol.
-      if (auths.containsKey(registry) || auths.containsKey("https://" + registry)) {
+      if (auths.keySet().stream().anyMatch(
+          key -> key.startsWith(registry) || key.startsWith("https://" + registry))) {
         return credsStore;
       }
     }
-    if (credHelpers.containsKey(registry)) {
-      return credHelpers.get(registry);
-    }
-    return null;
+
+    return getCredentialHelper(getRegistryMatchersFor(registry));
+  }
+
+  private String getCredentialHelper(Stream<Predicate<String>> registryMatches) {
+    return registryMatches
+        .map(this::getCredentialHelper)
+        .filter(Objects::nonNull)
+        .findFirst()
+        .orElse(null);
+  }
+
+  private String getCredentialHelper(Predicate<String> registryMatch) {
+    Set<String> keys = credHelpers.keySet();
+    return keys.stream().filter(registryMatch).map(credHelpers::get).findFirst().orElse(null);
+  }
+
+  private Stream<Predicate<String>> getRegistryMatchersFor(String registry) {
+    Predicate<String> exactMatch = registry::equals;
+    Predicate<String> withHttps = ("https://" + registry)::equals;
+    Predicate<String> startsWith = name -> name.startsWith(registry);
+    Predicate<String> startsWithAndWithHttps = name -> name.startsWith("https://" + registry);
+    return Stream.of(exactMatch, withHttps, startsWith, startsWithAndWithHttps);
   }
 
   @VisibleForTesting
