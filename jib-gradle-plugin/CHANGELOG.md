@@ -8,6 +8,8 @@ All notable changes to this project will be documented in this file.
 
 - `jibBuildTar` task to build an image tarball at `build/jib-image.tar`, which can be loaded into docker using `docker load` ([#514](https://github.com/GoogleContainerTools/jib/issues/514))
 
+- For Docker Hub, also tries registry aliases when getting a credential from the Docker config
+
 ### Changed
 
 ### Fixed
