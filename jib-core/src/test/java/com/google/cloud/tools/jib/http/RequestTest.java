@@ -23,9 +23,16 @@ import org.junit.Test;
 public class RequestTest {
 
   @Test
+  public void testGetHttpTimeout() {
+    Request request = Request.builder().build();
+
+    Assert.assertNull(request.getHttpTimeout());
+  }
+
+  @Test
   public void testSetHttpTimeout() {
     Request request = Request.builder().setHttpTimeout(3000).build();
 
-    Assert.assertEquals(3000, request.getHttpTimeout());
+    Assert.assertEquals(Integer.valueOf(3000), request.getHttpTimeout());
   }
 }

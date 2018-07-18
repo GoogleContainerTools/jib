@@ -28,7 +28,7 @@ import java.util.function.BiFunction;
 public class MockConnection extends Connection {
 
   private BiFunction<String, Request, Response> responseSupplier;
-  private int httpTimeout;
+  private Integer httpTimeout;
 
   public MockConnection(BiFunction<String, Request, Response> responseSupplier) {
     super(new GenericUrl("ftp://non-exisiting.example.url.ever").toURL());
@@ -41,7 +41,7 @@ public class MockConnection extends Connection {
     return responseSupplier.apply(httpMethod, request);
   }
 
-  public int getRequestedHttpTimeout() {
+  public Integer getRequestedHttpTimeout() {
     return httpTimeout;
   }
 }

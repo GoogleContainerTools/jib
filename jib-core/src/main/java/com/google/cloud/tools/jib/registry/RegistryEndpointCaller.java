@@ -69,9 +69,13 @@ class RegistryEndpointCaller<T> {
     }
   }
 
-  private static int getHttpTimeout() {
-    int httpTimeout = Integer.getInteger("jib.httpTimeout", 20000);
-    return httpTimeout >= 0 ? httpTimeout : 20000;
+  @Nullable
+  private static Integer getHttpTimeout() {
+    Integer httpTimeout = Integer.getInteger("jib.httpTimeout");
+    if (httpTimeout != null && httpTimeout >= 0) {
+      return httpTimeout;
+    }
+    return null;
   }
 
   /** Makes a {@link Connection} to the specified {@link URL}. */

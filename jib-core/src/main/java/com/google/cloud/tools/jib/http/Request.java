@@ -30,13 +30,13 @@ public class Request {
   @Nullable private final BlobHttpContent body;
 
   /** HTTP connection and read timeout. */
-  private final int httpTimeout;
+  @Nullable private final Integer httpTimeout;
 
   public static class Builder {
 
     private final HttpHeaders headers = new HttpHeaders().setAccept("*/*");
     @Nullable private BlobHttpContent body;
-    private int httpTimeout = 20000; // ms
+    @Nullable private Integer httpTimeout;
 
     public Request build() {
       return new Request(this);
@@ -83,7 +83,7 @@ public class Request {
      * @param httpTimeout timeout in milliseconds
      * @return this
      */
-    public Builder setHttpTimeout(int httpTimeout) {
+    public Builder setHttpTimeout(@Nullable Integer httpTimeout) {
       this.httpTimeout = httpTimeout;
       return this;
     }
@@ -119,7 +119,8 @@ public class Request {
     return body;
   }
 
-  int getHttpTimeout() {
+  @Nullable
+  Integer getHttpTimeout() {
     return httpTimeout;
   }
 }

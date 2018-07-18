@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -55,15 +54,60 @@ public class ConnectionTest {
 
   @InjectMocks private final Connection testConnection = new Connection(fakeUrl.toURL());
 
-  @Before
-  public void setUpMocksAndFakes() throws IOException {
+  @Test
+  public void testGet() throws IOException {
+    setUpMocksAndFakes(null);
+    testSend(HttpMethods.GET, Connection::get);
+  }
+
+  @Test
+  public void testPost() throws IOException {
+    setUpMocksAndFakes(null);
+    testSend(HttpMethods.POST, Connection::post);
+  }
+
+  @Test
+  public void testPut() throws IOException {
+    setUpMocksAndFakes(null);
+    testSend(HttpMethods.PUT, Connection::put);
+  }
+
+  @Test
+  public void testHttpTimeout_doNotSetByDefault() throws IOException {
+    setUpMocksAndFakes(null);
+    try (Connection connection = testConnection) {
+      connection.send(HttpMethods.GET, fakeRequest);
+    }
+
+    Mockito.verify(mockHttpRequest, Mockito.never()).setConnectTimeout(Mockito.anyInt());
+    Mockito.verify(mockHttpRequest, Mockito.never()).setReadTimeout(Mockito.anyInt());
+  }
+
+  @Test
+  public void testHttpTimeout() throws IOException {
+    setUpMocksAndFakes(5982);
+    try (Connection connection = testConnection) {
+      connection.send(HttpMethods.GET, fakeRequest);
+    }
+
+    Mockito.verify(mockHttpRequest).setConnectTimeout(5982);
+    Mockito.verify(mockHttpRequest).setReadTimeout(5982);
+  }
+
+  @FunctionalInterface
+  private interface SendFunction {
+
+    Response send(Connection connection, Request request) throws IOException;
+  }
+
+  private void setUpMocksAndFakes(Integer httpTimeout) throws IOException {
     fakeRequest =
         Request.builder()
             .setAccept(Arrays.asList("fake.accept", "another.fake.accept"))
             .setUserAgent("fake user agent")
             .setBody(new BlobHttpContent(Blobs.from("crepecake"), "fake.content.type"))
             .setAuthorization(Authorizations.withBasicCredentials("fake-username", "fake-secret"))
-            .setHttpTimeout(54982)
+            .setHttpTimeout(httpTimeout)
             .build();
 
     Mockito.when(
@@ -73,40 +117,11 @@ public class ConnectionTest {
 
     Mockito.when(mockHttpRequest.setHeaders(Mockito.any(HttpHeaders.class)))
         .thenReturn(mockHttpRequest);
-    Mockito.when(mockHttpRequest.setConnectTimeout(Mockito.anyInt())).thenReturn(mockHttpRequest);
-    Mockito.when(mockHttpRequest.setReadTimeout(Mockito.anyInt())).thenReturn(mockHttpRequest);
-    Mockito.when(mockHttpRequest.execute()).thenReturn(mockHttpResponse);
-  }
-
-  @Test
-  public void testGet() throws IOException {
-    testSend(HttpMethods.GET, Connection::get);
-  }
-
-  @Test
-  public void testPost() throws IOException {
-    testSend(HttpMethods.POST, Connection::post);
-  }
-
-  @Test
-  public void testPut() throws IOException {
-    testSend(HttpMethods.PUT, Connection::put);
-  }
-
-  @Test
-  public void testHttpTimeout() throws IOException {
-    try (Connection connection = testConnection) {
-      connection.send(HttpMethods.GET, fakeRequest);
+    if (httpTimeout != null) {
+      Mockito.when(mockHttpRequest.setConnectTimeout(Mockito.anyInt())).thenReturn(mockHttpRequest);
+      Mockito.when(mockHttpRequest.setReadTimeout(Mockito.anyInt())).thenReturn(mockHttpRequest);
     }
-
-    Mockito.verify(mockHttpRequest).setConnectTimeout(54982);
-    Mockito.verify(mockHttpRequest).setReadTimeout(54982);
-  }
-
-  @FunctionalInterface
-  private interface SendFunction {
-
-    Response send(Connection connection, Request request) throws IOException;
+    Mockito.when(mockHttpRequest.execute()).thenReturn(mockHttpResponse);
   }
 
   private void testSend(String httpMethod, SendFunction sendFunction) throws IOException {

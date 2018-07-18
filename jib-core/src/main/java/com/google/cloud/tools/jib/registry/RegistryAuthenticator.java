@@ -103,9 +103,13 @@ public class RegistryAuthenticator {
     return new Initializer(serverUrl, repository);
   }
 
-  private static int getHttpTimeout() {
-    int httpTimeout = Integer.getInteger("jib.httpTimeout", 20000);
-    return httpTimeout >= 0 ? httpTimeout : 20000;
+  @Nullable
+  private static Integer getHttpTimeout() {
+    Integer httpTimeout = Integer.getInteger("jib.httpTimeout");
+    if (httpTimeout != null && httpTimeout >= 0) {
+      return httpTimeout;
+    }
+    return null;
   }
 
   // TODO: Replace with a WWW-Authenticate header parser.
