@@ -60,6 +60,7 @@ public class BuildTarMojo extends JibPluginConfiguration {
   public void execute() throws MojoExecutionException {
     MavenBuildLogger mavenBuildLogger = new MavenBuildLogger(getLog());
     handleDeprecatedParameters(mavenBuildLogger);
+    checkHttpTimeoutSystemProperty(mavenBuildLogger);
 
     // Parses 'from' and 'to' into image reference.
     MavenProjectProperties mavenProjectProperties =

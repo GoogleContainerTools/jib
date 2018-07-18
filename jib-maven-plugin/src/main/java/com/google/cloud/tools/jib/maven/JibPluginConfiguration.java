@@ -95,6 +95,17 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     }
   }
 
+  static void checkHttpTimeoutSystemProperty(BuildLogger logger) {
+    try {
+      String value = System.getProperty("jib.httpTimeout");
+      if (value != null && Integer.parseInt(value) < 0) {
+        logger.warn("Ignoring negative value of jib.httpTimeout; using the default timeout.");
+      }
+    } catch (NumberFormatException ex) {
+      logger.warn("Ignoring non-integer value of jib.httpTimeout; using the default timeout.");
+    }
+  }
+
   /**
    * Warns about deprecated parameters in use.
    *
