@@ -101,6 +101,17 @@ public class DockerConfigTemplate implements JsonTemplate {
   }
 
   /**
+   * Returns {@code credsStore} or {@code credHelpers} for the given {@code registry}. If there
+   * exists a matching registry entry in {@code auths}, returns {@code credStore}; otherwise,
+   * a matching entry in {@code credHelpers} is returned based on the following lookup order:
+   *
+   * <ol>
+   *   <li>Exact registry name
+   *   <li>https:// + registry name
+   *   <li>registry name + arbitrary suffix
+   *   <li>https:// + registry name + arbitrary suffix
+   * </ol>
+   *
    * @param registry the registry to get the credential helpers for
    * @return {@code credsStore} if {@code registry} is present in {@code auths}; otherwise, searches
    *     {@code credHelpers}; otherwise, {@code null} if not found
@@ -114,20 +125,7 @@ public class DockerConfigTemplate implements JsonTemplate {
         return credsStore;
       }
     }
-
     return findFirstInMapByKey(credHelpers, getRegistryMatchersFor(registry));
-  }
-
-  private static <K, T> T findFirstInMapByKey(Map<K, T> map, Stream<Predicate<K>> keyMatches) {
-    return keyMatches
-        .map(keyMatch -> findFirstInMapByKey(map, keyMatch))
-        .filter(Objects::nonNull)
-        .findFirst()
-        .orElse(null);
-  }
-
-  private static <K, T> T findFirstInMapByKey(Map<K, T> map, Predicate<K> keyMatch) {
-    return map.keySet().stream().filter(keyMatch).map(map::get).findFirst().orElse(null);
   }
 
   private Stream<Predicate<String>> getRegistryMatchersFor(String registry) {
@@ -136,6 +134,20 @@ public class DockerConfigTemplate implements JsonTemplate {
     Predicate<String> startsWith = name -> name.startsWith(registry);
     Predicate<String> startsWithAndWithHttps = name -> name.startsWith("https://" + registry);
     return Stream.of(exactMatch, withHttps, startsWith, startsWithAndWithHttps);
+  }
+
+  /** Returns the first value matching the given key predicates (short-circuiting). */
+  private static <K, T> T findFirstInMapByKey(Map<K, T> map, Stream<Predicate<K>> keyMatches) {
+    return keyMatches
+        .map(keyMatch -> findFirstInMapByKey(map, keyMatch))
+        .filter(Objects::nonNull)
+        .findFirst()
+        .orElse(null);
+  }
+
+  /** Returns the first value matching the given key predicate. */
+  private static <K, T> T findFirstInMapByKey(Map<K, T> map, Predicate<K> keyMatch) {
+    return map.keySet().stream().filter(keyMatch).map(map::get).findFirst().orElse(null);
   }
 
   @VisibleForTesting
