@@ -232,6 +232,9 @@ public class BuildConfigurationTest {
       Assert.assertNull(ex.getMessage());
     }
 
+    // Can accept empty environment
+    BuildConfiguration.builder(Mockito.mock(BuildLogger.class)).setEnvironment(ImmutableMap.of());
+
     // Environment keys element should not be null.
     Map<String, String> environmentMap = Maps.newHashMap();
     environmentMap.put(null, "value");
