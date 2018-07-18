@@ -97,7 +97,8 @@ public class HelpfulSuggestions {
   }
 
   public String forCredentialsNotSent() {
-    return suggest("use a registry that supports HTTPS so credentials can be sent safely");
+    return suggest(
+        "use a registry that supports HTTPS so credentials can be sent safely, or set the 'sendCredentialsOverHttp' system property to true");
   }
 
   public String forDockerContextInsecureRecursiveDelete(String directory) {

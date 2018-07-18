@@ -42,6 +42,7 @@
             <image>gcr.io/jib-integration-testing/simpleimage:maven</image>
           </to>
           <container>
+            <useCurrentTimestamp>true</useCurrentTimestamp>
             <args>An argument.</args>
             <ports>
               <port>1000/tcp</port>

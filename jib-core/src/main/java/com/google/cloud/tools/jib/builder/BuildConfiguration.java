@@ -27,6 +27,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,7 @@ public class BuildConfiguration {
   public static class Builder {
 
     // All the parameters below are set to their default values.
+    private Instant creationTime = Instant.EPOCH;
     @Nullable private ImageReference baseImageReference;
     @Nullable private String baseImageCredentialHelperName;
     @Nullable private RegistryCredentials knownBaseRegistryCredentials;
@@ -184,6 +186,17 @@ public class BuildConfiguration {
       return this;
     }
 
+    /**
+     * Sets the image creation time.
+     *
+     * @param creationTime the creation time
+     * @return this
+     */
+    public Builder setCreationTime(Instant creationTime) {
+      this.creationTime = creationTime;
+      return this;
+    }
+
     /** @return the corresponding build configuration */
     public BuildConfiguration build() {
       // Validates the parameters.
@@ -211,6 +224,7 @@ public class BuildConfiguration {
           }
           return new BuildConfiguration(
               buildLogger,
+              creationTime,
               baseImageReference,
               baseImageCredentialHelperName,
               knownBaseRegistryCredentials,
@@ -270,6 +284,7 @@ public class BuildConfiguration {
   }
 
   private final BuildLogger buildLogger;
+  private final Instant creationTime;
   private final ImageReference baseImageReference;
   @Nullable private final String baseImageCredentialHelperName;
   @Nullable private final RegistryCredentials knownBaseRegistryCredentials;
@@ -290,6 +305,7 @@ public class BuildConfiguration {
   /** Instantiate with {@link Builder#build}. */
   private BuildConfiguration(
       BuildLogger buildLogger,
+      Instant creationTime,
       ImageReference baseImageReference,
       @Nullable String baseImageCredentialHelperName,
       @Nullable RegistryCredentials knownBaseRegistryCredentials,
@@ -307,6 +323,7 @@ public class BuildConfiguration {
       boolean allowHttp,
       @Nullable LayerConfiguration extraFilesLayerConfiguration) {
     this.buildLogger = buildLogger;
+    this.creationTime = creationTime;
     this.baseImageReference = baseImageReference;
     this.baseImageCredentialHelperName = baseImageCredentialHelperName;
     this.knownBaseRegistryCredentials = knownBaseRegistryCredentials;
@@ -327,6 +344,10 @@ public class BuildConfiguration {
 
   public BuildLogger getBuildLogger() {
     return buildLogger;
+  }
+
+  public Instant getCreationTime() {
+    return creationTime;
   }
 
   public ImageReference getBaseImageReference() {
