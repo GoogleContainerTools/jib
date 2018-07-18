@@ -96,7 +96,7 @@ public class DockerConfigTemplate implements JsonTemplate {
    */
   @Nullable
   public String getAuthFor(String registry) {
-    AuthTemplate authTemplate = getFirstInMapByKey(auths, getRegistryMatchersFor(registry));
+    AuthTemplate authTemplate = findFirstInMapByKey(auths, getRegistryMatchersFor(registry));
     return authTemplate != null ? authTemplate.auth : null;
   }
 
@@ -115,18 +115,18 @@ public class DockerConfigTemplate implements JsonTemplate {
       }
     }
 
-    return getFirstInMapByKey(credHelpers, getRegistryMatchersFor(registry));
+    return findFirstInMapByKey(credHelpers, getRegistryMatchersFor(registry));
   }
 
-  private static <K, T> T getFirstInMapByKey(Map<K, T> map, Stream<Predicate<K>> keyMatches) {
+  private static <K, T> T findFirstInMapByKey(Map<K, T> map, Stream<Predicate<K>> keyMatches) {
     return keyMatches
-        .map(keyMatch -> getFirstInMapByKey(map, keyMatch))
+        .map(keyMatch -> findFirstInMapByKey(map, keyMatch))
         .filter(Objects::nonNull)
         .findFirst()
         .orElse(null);
   }
 
-  private static <K, T> T getFirstInMapByKey(Map<K, T> map, Predicate<K> keyMatch) {
+  private static <K, T> T findFirstInMapByKey(Map<K, T> map, Predicate<K> keyMatch) {
     return map.keySet().stream().filter(keyMatch).map(map::get).findFirst().orElse(null);
   }
 
