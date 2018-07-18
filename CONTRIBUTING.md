@@ -35,14 +35,14 @@ To build, use the provided `build.sh` which builds and tests each of the compone
    use your corporate email address here, not your personal address.
 2. Fork the repository into your own Github account.
 3. Please include unit tests (and integration tests if applicable) for all new code.
-4. Make sure all existing tests pass.
+4. Make sure all existing tests pass (but see the note below about integration tests).
    * In `jib-core`, run `./gradlew clean goJF build integrationTest`
-   * In `jib-gradle-plugin`, run `./gradlew clean goJF build`
+   * In `jib-gradle-plugin`, run `./gradlew clean goJF build integrationTest`
    * In `jib-maven-plugin`, run `./mvnw clean fmt:format verify -Pintegration-tests`
 5. Associate the change with an existing issue or file a [new issue](../../issues).
 6. Create a pull request!
 
-\* *Note that you will not be able to run the integration tests for `jib-gradle-plugin` or `jib-maven-plugin` because those push to our integration-testing GCP project. If you would like to run integration tests, change all uses of the `jib-integration-testing` project to your own GCP project and run `./gradlew integrationTest` for `jib-gradle-plugin` and `./mvnw verify -Pintegration-tests` for `jib-maven-plugin`.*
+**Note** that you will not be able to run the integration tests for `jib-gradle-plugin` or `jib-maven-plugin` because those push to our integration-testing GCP project. If you would like to run integration tests, change all uses of the `jib-integration-testing` project to your own GCP project and run `./gradlew integrationTest` for `jib-gradle-plugin` and `./mvnw verify -Pintegration-tests` for `jib-maven-plugin`.
 
 ## Debugging the Jib Maven Plugin (`jib-maven-plugin`)
 
@@ -50,12 +50,12 @@ To build, use the provided `build.sh` which builds and tests each of the compone
 
 To use a local build of the `jib-maven-plugin`:
 
-  1. build and install `jib-core` into your local `~/.m2/repository`
-     with `(cd jib-core && ./gradlew build install)`
-  1. build and install `jib-maven-plugin` into your local `~/.m2/repository`
-     with `(cd jib-maven-plugin && ./mvnw install)`
-  1. modify your test project's `pom.xml` to reference the `-SNAPSHOT`
-     version of the `com.google.cloud.tools.jib` plugin
+  1. bBild and install `jib-core` into your local `~/.m2/repository`
+     with `(cd jib-core && ./gradlew build install)`.
+  1. Build and install `jib-maven-plugin` into your local `~/.m2/repository`
+     with `(cd jib-maven-plugin && ./mvnw install)`.
+  1. Modify your test project's `pom.xml` to reference the `-SNAPSHOT`
+     version of the `com.google.cloud.tools.jib` plugin.
 
 If developing from within Eclipse with M2Eclipse (the Maven tooling for Eclipse):
 
@@ -68,8 +68,7 @@ If developing from within Eclipse with M2Eclipse (the Maven tooling for Eclipse)
 
 Run `mvnDebug jib:build` and attach to port 8000.
 
-If developing from within Eclipse with M2Eclipse (the Maven tooling for Eclipse), just launch the _Maven Build_ with _Debug_.
-
+If developing with Eclipse and M2Eclipse (the Maven tooling for Eclipse), just launch the _Maven Build_ with _Debug_.
 
 ## Debugging the Jib Gradle Plugin (`jib-gradle-plugin`)
 
@@ -77,10 +76,9 @@ If developing from within Eclipse with M2Eclipse (the Maven tooling for Eclipse)
 
 To use a local build of the `jib-gradle-plugin`:
 
-  1. build and install `jib-core` into your local `~/.m2/repository` with `(cd jib-core && ./gradlew build install)`
-  1. build and install `jib-gradle-plugin` into your local `~/.m2/repository` with `(cd jib-gradle-plugin && ./gradlew build install)`
-  1. modify your test project's `build.gradle` to look like the following:
-
+  1. Build and install `jib-gradle-plugin` into your local `~/.m2/repository` with `(cd jib-gradle-plugin && ./gradlew build install)`; this also builds `jib-core`. Alternatively, use the provided `build.sh` which performs an `install`.
+  1. Modify your test project's `build.gradle` to look like the following:
+        ```groovy
         buildscript {
             repositories {
                 mavenLocal() // resolve in ~/.m2/repository
@@ -92,19 +90,20 @@ To use a local build of the `jib-gradle-plugin`:
         }
 
         plugins {
-        // id 'com.google.cloud.tools.jib' version '0.9.6'
+            // id 'com.google.cloud.tools.jib' version '0.9.6'
         }
 
         // Applies the java plugin after Jib to make sure it works in this order.
         apply plugin: 'com.google.cloud.tools.jib' // must explicitly apply local
         apply plugin: 'java'
+        ```
 
 ### Attaching a debugger
 
 Attach a debugger to a Gradle instance by running Gradle as follows:
 
 ```shell
-$ ./gradlew jib \
+./gradlew jib \
   --no-daemon \
   -Dorg.gradle.jvmargs='-Xdebug -Xrunjdwp:transport=dt_socket,server=y,address=5005,suspend=y'
 ```
