@@ -15,6 +15,16 @@ You generally only need to submit a CLA once, so if you've already submitted one
 (even if it was for a different project), you probably don't need to do it
 again.
 
+## Building Jib
+
+Jib comes as 3 components:
+
+  - `jib-core`: a library
+  - `jib-maven-plugin`: a Maven plugin that uses `jib-core`
+  - `jib-gradle-plugin`: a Gradle plugin that uses `jib-core`
+
+To build, use the provided `build.sh` which builds and tests each of the components into your local `~/.m2/repository`.  Note that this script does not run integration tests.
+
 ## Code Reviews
 
 1. Set your git user.email property to the address used for step 1. E.g.
@@ -27,9 +37,75 @@ again.
 3. Please include unit tests (and integration tests if applicable) for all new code.
 4. Make sure all existing tests pass.
    * In `jib-core`, run `./gradlew clean goJF build integrationTest`
-   * In `jib-gradle-plugin`, run `./gradlew clean goJF build` *
-   * In `jib-maven-plugin`, run `./mvnw clean fmt:format verify` *
+   * In `jib-gradle-plugin`, run `./gradlew clean goJF build`
+   * In `jib-maven-plugin`, run `./mvnw clean fmt:format verify -Pintegration-tests`
 5. Associate the change with an existing issue or file a [new issue](../../issues).
 6. Create a pull request!
 
 \* *Note that you will not be able to run the integration tests for `jib-gradle-plugin` or `jib-maven-plugin` because those push to our integration-testing GCP project. If you would like to run integration tests, change all uses of the `jib-integration-testing` project to your own GCP project and run `./gradlew integrationTest` for `jib-gradle-plugin` and `./mvnw verify -Pintegration-tests` for `jib-maven-plugin`.*
+
+## Debugging the Jib Maven Plugin (`jib-maven-plugin`)
+
+### Build and use a local snapshot 
+
+To use a local build of the `jib-maven-plugin`:
+
+  1. build and install `jib-core` into your local `~/.m2/repository`
+     with `(cd jib-core && ./gradlew build install)`
+  1. build and install `jib-maven-plugin` into your local `~/.m2/repository`
+     with `(cd jib-maven-plugin && ./mvnw install)`
+  1. modify your test project's `pom.xml` to reference the `-SNAPSHOT`
+     version of the `com.google.cloud.tools.jib` plugin
+
+If developing from within Eclipse with M2Eclipse (the Maven tooling for Eclipse):
+
+  1. modify your test project's `pom.xml` to reference the `-SNAPSHOT`
+     version of the `com.google.cloud.tools.jib` plugin
+  2. create and launch a _Maven Build_ launch configuration for the
+     test project, and ensure the _Resolve Workspace artifacts_ is checked
+
+### Attaching a debugger
+
+Run `mvnDebug jib:build` and attach to port 8000.
+
+If developing from within Eclipse with M2Eclipse (the Maven tooling for Eclipse), just launch the _Maven Build_ with _Debug_.
+
+
+## Debugging the Jib Gradle Plugin (`jib-gradle-plugin`)
+
+### Build and use a local snapshot 
+
+To use a local build of the `jib-gradle-plugin`:
+
+  1. build and install `jib-core` into your local `~/.m2/repository` with `(cd jib-core && ./gradlew build install)`
+  1. build and install `jib-gradle-plugin` into your local `~/.m2/repository` with `(cd jib-gradle-plugin && ./gradlew build install)`
+  1. modify your test project's `build.gradle` to look like the following:
+
+        buildscript {
+            repositories {
+                mavenLocal() // resolve in ~/.m2/repository
+                mavenCentral()
+            }
+            dependencies {
+                classpath 'com.google.cloud.tools:jib-gradle-plugin:0.9.7-SNAPSHOT'
+            }
+        }
+
+        plugins {
+        // id 'com.google.cloud.tools.jib' version '0.9.6'
+        }
+
+        // Applies the java plugin after Jib to make sure it works in this order.
+        apply plugin: 'com.google.cloud.tools.jib' // must explicitly apply local
+        apply plugin: 'java'
+
+### Attaching a debugger
+
+Attach a debugger to a Gradle instance by running Gradle as follows:
+
+```shell
+$ ./gradlew jib \
+  --no-daemon \
+  -Dorg.gradle.jvmargs='-Xdebug -Xrunjdwp:transport=dt_socket,server=y,address=5005,suspend=y'
+```
+
