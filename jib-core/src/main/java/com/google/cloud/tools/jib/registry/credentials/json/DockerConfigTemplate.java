@@ -20,10 +20,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -98,22 +96,8 @@ public class DockerConfigTemplate implements JsonTemplate {
    */
   @Nullable
   public String getAuthFor(String registry) {
-    AuthTemplate authTemplate = getAuthTemplate(getRegistryMatchersFor(registry));
+    AuthTemplate authTemplate = getFirstInMapByKey(auths, getRegistryMatchersFor(registry));
     return authTemplate != null ? authTemplate.auth : null;
-  }
-
-  /** Returns the first {@link AuthTemplate} matching the given predicates (short-circuiting). */
-  private AuthTemplate getAuthTemplate(Stream<Predicate<String>> registryMatches) {
-    return registryMatches
-        .map(this::getAuthTemplate)
-        .filter(Objects::nonNull)
-        .findFirst()
-        .orElse(null);
-  }
-
-  /** Returns {@link AuthTemplate} matching the given predicate. */
-  private AuthTemplate getAuthTemplate(Predicate<String> registryMatch) {
-    return auths.keySet().stream().filter(registryMatch).map(auths::get).findFirst().orElse(null);
   }
 
   /**
@@ -131,20 +115,19 @@ public class DockerConfigTemplate implements JsonTemplate {
       }
     }
 
-    return getCredentialHelper(getRegistryMatchersFor(registry));
+    return getFirstInMapByKey(credHelpers, getRegistryMatchersFor(registry));
   }
 
-  private String getCredentialHelper(Stream<Predicate<String>> registryMatches) {
-    return registryMatches
-        .map(this::getCredentialHelper)
+  private static <K, T> T getFirstInMapByKey(Map<K, T> map, Stream<Predicate<K>> keyMatches) {
+    return keyMatches
+        .map(keyMatch -> getFirstInMapByKey(map, keyMatch))
         .filter(Objects::nonNull)
         .findFirst()
         .orElse(null);
   }
 
-  private String getCredentialHelper(Predicate<String> registryMatch) {
-    Set<String> keys = credHelpers.keySet();
-    return keys.stream().filter(registryMatch).map(credHelpers::get).findFirst().orElse(null);
+  private static <K, T> T getFirstInMapByKey(Map<K, T> map, Predicate<K> keyMatch) {
+    return map.keySet().stream().filter(keyMatch).map(map::get).findFirst().orElse(null);
   }
 
   private Stream<Predicate<String>> getRegistryMatchersFor(String registry) {
