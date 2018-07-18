@@ -121,6 +121,8 @@ public class Connection implements Closeable {
         requestFactory
             .buildRequest(httpMethod, url, request.getHttpContent())
             .setHeaders(request.getHeaders())
+            .setConnectTimeout(request.getHttpTimeout())
+            .setReadTimeout(request.getHttpTimeout())
             .execute();
     return new Response(httpResponse);
   }

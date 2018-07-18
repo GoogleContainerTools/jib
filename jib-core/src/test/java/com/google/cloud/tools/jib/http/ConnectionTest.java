@@ -63,6 +63,7 @@ public class ConnectionTest {
             .setUserAgent("fake user agent")
             .setBody(new BlobHttpContent(Blobs.from("crepecake"), "fake.content.type"))
             .setAuthorization(Authorizations.withBasicCredentials("fake-username", "fake-secret"))
+            .setHttpTimeout(54982)
             .build();
 
     Mockito.when(
@@ -72,6 +73,8 @@ public class ConnectionTest {
 
     Mockito.when(mockHttpRequest.setHeaders(Mockito.any(HttpHeaders.class)))
         .thenReturn(mockHttpRequest);
+    Mockito.when(mockHttpRequest.setConnectTimeout(Mockito.anyInt())).thenReturn(mockHttpRequest);
+    Mockito.when(mockHttpRequest.setReadTimeout(Mockito.anyInt())).thenReturn(mockHttpRequest);
     Mockito.when(mockHttpRequest.execute()).thenReturn(mockHttpResponse);
   }
 
@@ -88,6 +91,16 @@ public class ConnectionTest {
   @Test
   public void testPut() throws IOException {
     testSend(HttpMethods.PUT, Connection::put);
+  }
+
+  @Test
+  public void testHttpTimeout() throws IOException {
+    try (Connection connection = testConnection) {
+      connection.send(HttpMethods.GET, fakeRequest);
+    }
+
+    Mockito.verify(mockHttpRequest).setConnectTimeout(54982);
+    Mockito.verify(mockHttpRequest).setReadTimeout(54982);
   }
 
   @FunctionalInterface

@@ -20,10 +20,12 @@ import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
+import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Connection;
+import com.google.cloud.tools.jib.http.MockConnection;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.RegistryEndpointCaller.RequestState;
@@ -251,6 +253,57 @@ public class RegistryEndpointCallerTest {
     } catch (InsecureRegistryException ex) {
       // pass
     }
+  }
+
+  @Test
+  public void testHttpTimeout_default20000() throws IOException, RegistryException {
+    Assert.assertNull(System.getProperty("jib.httpTimeout"));
+    MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
+    Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
+
+    Mockito.when(mockResponse.getBody()).thenReturn(Mockito.mock(Blob.class));
+    testRegistryEndpointCallerSecure.call();
+
+    Assert.assertEquals(20000, mockConnection.getRequestedHttpTimeout());
+  }
+
+  @Test
+  public void testHttpTimeout_stringValue() throws IOException, RegistryException {
+    System.setProperty("jib.httpTimeout", "random string");
+
+    MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
+    Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
+
+    Mockito.when(mockResponse.getBody()).thenReturn(Mockito.mock(Blob.class));
+    testRegistryEndpointCallerSecure.call();
+
+    Assert.assertEquals(20000, mockConnection.getRequestedHttpTimeout());
+  }
+
+  @Test
+  public void testHttpTimeout_negativeValue() throws IOException, RegistryException {
+    System.setProperty("jib.httpTimeout", "-1");
+
+    MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
+    Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
+
+    Mockito.when(mockResponse.getBody()).thenReturn(Mockito.mock(Blob.class));
+    testRegistryEndpointCallerSecure.call();
+
+    Assert.assertEquals(20000, mockConnection.getRequestedHttpTimeout());
+  }
+
+  @Test
+  public void testHttpTimeout_0accepted() throws IOException, RegistryException {
+    System.setProperty("jib.httpTimeout", "0");
+
+    MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
+    Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
+
+    Mockito.when(mockResponse.getBody()).thenReturn(Mockito.mock(Blob.class));
+    testRegistryEndpointCallerSecure.call();
+
+    Assert.assertEquals(0, mockConnection.getRequestedHttpTimeout());
   }
 
   /** Verifies a request is retried with HTTP protocol if {@code exceptionClass} is thrown. */

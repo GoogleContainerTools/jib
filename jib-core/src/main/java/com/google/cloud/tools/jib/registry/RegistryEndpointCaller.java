@@ -69,6 +69,11 @@ class RegistryEndpointCaller<T> {
     }
   }
 
+  private static int getHttpTimeout() {
+    int httpTimeout = Integer.getInteger("jib.httpTimeout", 20000);
+    return httpTimeout >= 0 ? httpTimeout : 20000;
+  }
+
   /** Makes a {@link Connection} to the specified {@link URL}. */
   private final Function<URL, Connection> connectionFactory;
 
@@ -162,6 +167,7 @@ class RegistryEndpointCaller<T> {
       Request.Builder requestBuilder =
           Request.builder()
               .setUserAgent(userAgent)
+              .setHttpTimeout(getHttpTimeout())
               .setAccept(registryEndpointProvider.getAccept())
               .setBody(registryEndpointProvider.getContent());
       // Only sends authorization if using HTTPS.
