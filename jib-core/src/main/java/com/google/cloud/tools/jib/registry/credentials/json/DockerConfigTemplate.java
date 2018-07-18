@@ -120,10 +120,9 @@ public class DockerConfigTemplate implements JsonTemplate {
   public String getCredentialHelperFor(String registry) {
     if (credsStore != null) {
       // The registry could be prefixed with the HTTPS protocol and/or have suffixes.
-      if (auths
-          .keySet()
-          .stream()
-          .anyMatch(key -> key.startsWith(registry) || key.startsWith("https://" + registry))) {
+      Predicate<String> registryMatch =
+          key -> key.startsWith(registry) || key.startsWith("https://" + registry);
+      if (auths.keySet().stream().anyMatch(registryMatch)) {
         return credsStore;
       }
     }
