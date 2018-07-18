@@ -83,7 +83,7 @@ Within _KeyStore Explorer_, select _File > Save As..._ and save the new keystore
 
 ##### Maven
 
-The following snippet shows how to configure Maven to use this new keystore file. You can configure your username and password for the registry with [the `~/.m2/settings.xml` mechanism](https://github.com/GoogleContainerTools/jib/blob/master/jib-maven-plugin/README.md#using-maven-settings).
+The following snippet shows how to configure Maven to use this new keystore file:
 
 ```shell
 $ ./mvnw -Djavax.net.ssl.trustStore=path/to/keystore.jks \
@@ -91,15 +91,19 @@ $ ./mvnw -Djavax.net.ssl.trustStore=path/to/keystore.jks \
   -Dimage=<host>:<port>/<image> jib:build
 ```
 
+You may choose to configure your registry credentials with [the `~/.m2/settings.xml` mechanism](https://github.com/GoogleContainerTools/jib/blob/master/jib-maven-plugin/README.md#using-maven-settings).
+
 ##### Gradle
 
-You may need to [explicitly configure your `username` and `password`](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#using-specific-credentials) for the registry.
+The following snippet shows how to configure Gradle to use this new keystore file:
 
 ```shell
 $ ./gradlew jib \
   -Djavax.net.ssl.trustStore=path/to/keystore.jks \
   -Djavax.net.ssl.trustStorePassword=password
 ```
+
+You may choose to explicitly configure your registry credentials [in your build.gradle](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#using-specific-credentials).
 
 #### Option 2: Modify the JRE `cacerts`
 
