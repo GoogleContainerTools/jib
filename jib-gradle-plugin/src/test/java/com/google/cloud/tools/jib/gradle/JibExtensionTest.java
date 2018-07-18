@@ -165,7 +165,7 @@ public class JibExtensionTest {
     Mockito.verify(mockLogger, Mockito.never()).warn(Mockito.any());
   }
 
- @Test
+  @Test
   public void testCheckHttpTimeoutSystemProperty_stringValue() {
     System.setProperty("jib.httpTimeout", "random string");
     JibExtension.checkHttpTimeoutSystemProperty(mockLogger);
