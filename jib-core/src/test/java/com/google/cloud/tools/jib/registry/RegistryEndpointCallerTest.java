@@ -257,11 +257,11 @@ public class RegistryEndpointCallerTest {
 
   @Test
   public void testHttpTimeout_default20000() throws IOException, RegistryException {
-    Assert.assertNull(System.getProperty("jib.httpTimeout"));
     MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
     Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
-
     Mockito.when(mockResponse.getBody()).thenReturn(Mockito.mock(Blob.class));
+
+    Assert.assertNull(System.getProperty("jib.httpTimeout"));
     testRegistryEndpointCallerSecure.call();
 
     Assert.assertEquals(20000, mockConnection.getRequestedHttpTimeout());
@@ -269,12 +269,11 @@ public class RegistryEndpointCallerTest {
 
   @Test
   public void testHttpTimeout_stringValue() throws IOException, RegistryException {
-    System.setProperty("jib.httpTimeout", "random string");
-
     MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
     Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
-
     Mockito.when(mockResponse.getBody()).thenReturn(Mockito.mock(Blob.class));
+
+    System.setProperty("jib.httpTimeout", "random string");
     testRegistryEndpointCallerSecure.call();
 
     Assert.assertEquals(20000, mockConnection.getRequestedHttpTimeout());
@@ -282,12 +281,11 @@ public class RegistryEndpointCallerTest {
 
   @Test
   public void testHttpTimeout_negativeValue() throws IOException, RegistryException {
-    System.setProperty("jib.httpTimeout", "-1");
-
     MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
     Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
-
     Mockito.when(mockResponse.getBody()).thenReturn(Mockito.mock(Blob.class));
+
+    System.setProperty("jib.httpTimeout", "-1");
     testRegistryEndpointCallerSecure.call();
 
     Assert.assertEquals(20000, mockConnection.getRequestedHttpTimeout());
