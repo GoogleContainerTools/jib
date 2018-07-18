@@ -54,6 +54,7 @@ We welcome contributions! Here's how you can contribute:
 * Chat with us on [gitter](https://gitter.im/google/jib)
 * Join the [jib-users mailing list](https://groups.google.com/forum/#!forum/jib-users)
 * Contribute:
+  * *Read the [contributing guide](https://github.com/GoogleContainerTools/jib/blob/master/CONTRIBUTING.md) before starting work on an issue*
   * Try to fix [good first issues](https://github.com/GoogleContainerTools/jib/labels/good%20first%20issue)
   * Help out on [issues that need help](https://github.com/GoogleContainerTools/jib/labels/help%20wanted)
   * Join in on [discussion issues](https://github.com/GoogleContainerTools/jib/labels/discuss)

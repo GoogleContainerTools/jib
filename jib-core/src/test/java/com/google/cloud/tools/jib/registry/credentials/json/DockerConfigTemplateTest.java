@@ -73,4 +73,71 @@ public class DockerConfigTemplateTest {
         "dull-registry: starting with name and with https",
         dockerConfig.getAuthFor("dull-registry"));
   }
+
+  @Test
+  public void testGetAuthFor_correctSuffixMatching() throws URISyntaxException, IOException {
+    Path json = Paths.get(Resources.getResource("json/dockerconfig_extra_matches.json").toURI());
+
+    DockerConfigTemplate dockerConfig =
+        JsonTemplateMapper.readJsonFromFile(json, DockerConfigTemplate.class);
+
+    Assert.assertNull(dockerConfig.getAuthFor("example"));
+  }
+
+  @Test
+  public void testGetCredentialHelperFor() throws URISyntaxException, IOException {
+    Path json = Paths.get(Resources.getResource("json/dockerconfig.json").toURI());
+
+    DockerConfigTemplate dockerConfig =
+        JsonTemplateMapper.readJsonFromFile(json, DockerConfigTemplate.class);
+
+    Assert.assertEquals(
+        "some credential store", dockerConfig.getCredentialHelperFor("just registry"));
+  }
+
+  @Test
+  public void testGetCredentialHelperFor_withHttps() throws URISyntaxException, IOException {
+    Path json = Paths.get(Resources.getResource("json/dockerconfig.json").toURI());
+
+    DockerConfigTemplate dockerConfig =
+        JsonTemplateMapper.readJsonFromFile(json, DockerConfigTemplate.class);
+
+    Assert.assertEquals(
+        "some credential store", dockerConfig.getCredentialHelperFor("with.protocol"));
+  }
+
+  @Test
+  public void testGetCredentialHelperFor_withSuffix() throws URISyntaxException, IOException {
+    Path json = Paths.get(Resources.getResource("json/dockerconfig.json").toURI());
+
+    DockerConfigTemplate dockerConfig =
+        JsonTemplateMapper.readJsonFromFile(json, DockerConfigTemplate.class);
+
+    Assert.assertEquals(
+        "some credential store", dockerConfig.getCredentialHelperFor("with.suffix"));
+  }
+
+  @Test
+  public void testGetCredentialHelperFor_withProtocolAndSuffix()
+      throws URISyntaxException, IOException {
+    Path json = Paths.get(Resources.getResource("json/dockerconfig.json").toURI());
+
+    DockerConfigTemplate dockerConfig =
+        JsonTemplateMapper.readJsonFromFile(json, DockerConfigTemplate.class);
+
+    Assert.assertEquals(
+        "some credential store", dockerConfig.getCredentialHelperFor("with.protocol.and.suffix"));
+  }
+
+  @Test
+  public void testGetCredentialHelperFor_correctSuffixMatching()
+      throws URISyntaxException, IOException {
+    Path json = Paths.get(Resources.getResource("json/dockerconfig.json").toURI());
+
+    DockerConfigTemplate dockerConfig =
+        JsonTemplateMapper.readJsonFromFile(json, DockerConfigTemplate.class);
+
+    Assert.assertNull(dockerConfig.getCredentialHelperFor("example"));
+    Assert.assertNull(dockerConfig.getCredentialHelperFor("another.example"));
+  }
 }
