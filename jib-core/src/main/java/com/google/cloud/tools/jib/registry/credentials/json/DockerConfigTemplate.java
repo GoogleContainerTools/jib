@@ -105,8 +105,8 @@ public class DockerConfigTemplate implements JsonTemplate {
    * <ol>
    *   <li>Exact registry name
    *   <li>https:// + registry name
-   *   <li>registry name + arbitrary suffix
-   *   <li>https:// + registry name + arbitrary suffix
+   *   <li>registry name + / + arbitrary suffix
+   *   <li>https:// + registry name + / arbitrary suffix
    * </ol>
    *
    * @param registry the registry to get the authorization for
@@ -127,8 +127,8 @@ public class DockerConfigTemplate implements JsonTemplate {
    * <ol>
    *   <li>Exact registry name
    *   <li>https:// + registry name
-   *   <li>registry name + arbitrary suffix
-   *   <li>https:// + registry name + arbitrary suffix
+   *   <li>registry name + / + arbitrary suffix
+   *   <li>https:// + registry name + / + arbitrary suffix
    * </ol>
    *
    * @param registry the registry to get the credential helpers for
