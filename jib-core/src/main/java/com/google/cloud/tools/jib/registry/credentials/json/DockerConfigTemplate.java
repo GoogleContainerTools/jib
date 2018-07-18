@@ -77,7 +77,8 @@ public class DockerConfigTemplate implements JsonTemplate {
    * predicates).
    */
   private static <K, T> T findFirstInMapByKey(Map<K, T> map, List<Predicate<K>> keyMatches) {
-    return keyMatches.stream()
+    return keyMatches
+        .stream()
         .map(keyMatch -> findFirstInMapByKey(map, keyMatch))
         .filter(Objects::nonNull)
         .findFirst()
