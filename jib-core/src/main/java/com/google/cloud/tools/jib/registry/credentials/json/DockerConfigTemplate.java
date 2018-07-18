@@ -19,11 +19,12 @@ package com.google.cloud.tools.jib.registry.credentials.json;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /**
@@ -69,6 +70,23 @@ public class DockerConfigTemplate implements JsonTemplate {
   private static class AuthTemplate implements JsonTemplate {
 
     @Nullable private String auth;
+  }
+
+  /**
+   * Returns the first value matching the given key predicates (short-circuiting in the order of
+   * predicates).
+   */
+  private static <K, T> T findFirstInMapByKey(Map<K, T> map, List<Predicate<K>> keyMatches) {
+    return keyMatches.stream()
+        .map(keyMatch -> findFirstInMapByKey(map, keyMatch))
+        .filter(Objects::nonNull)
+        .findFirst()
+        .orElse(null);
+  }
+
+  /** Returns the first value matching the given key predicate. */
+  private static <K, T> T findFirstInMapByKey(Map<K, T> map, Predicate<K> keyMatch) {
+    return map.keySet().stream().filter(keyMatch).map(map::get).findFirst().orElse(null);
   }
 
   /** Maps from registry to its {@link AuthTemplate}. */
@@ -118,37 +136,19 @@ public class DockerConfigTemplate implements JsonTemplate {
    */
   @Nullable
   public String getCredentialHelperFor(String registry) {
-    if (credsStore != null) {
-      // The registry could be prefixed with the HTTPS protocol and/or have suffixes.
-      Predicate<String> registryMatch =
-          key -> key.startsWith(registry) || key.startsWith("https://" + registry);
-      if (auths.keySet().stream().anyMatch(registryMatch)) {
-        return credsStore;
-      }
+    List<Predicate<String>> registryMatchers = getRegistryMatchersFor(registry);
+    if (credsStore != null && findFirstInMapByKey(auths, registryMatchers) != null) {
+      return credsStore;
     }
-    return findFirstInMapByKey(credHelpers, getRegistryMatchersFor(registry));
+    return findFirstInMapByKey(credHelpers, registryMatchers);
   }
 
-  private Stream<Predicate<String>> getRegistryMatchersFor(String registry) {
+  private List<Predicate<String>> getRegistryMatchersFor(String registry) {
     Predicate<String> exactMatch = registry::equals;
     Predicate<String> withHttps = ("https://" + registry)::equals;
-    Predicate<String> startsWith = name -> name.startsWith(registry);
-    Predicate<String> startsWithAndWithHttps = name -> name.startsWith("https://" + registry);
-    return Stream.of(exactMatch, withHttps, startsWith, startsWithAndWithHttps);
-  }
-
-  /** Returns the first value matching the given key predicates (short-circuiting). */
-  private static <K, T> T findFirstInMapByKey(Map<K, T> map, Stream<Predicate<K>> keyMatches) {
-    return keyMatches
-        .map(keyMatch -> findFirstInMapByKey(map, keyMatch))
-        .filter(Objects::nonNull)
-        .findFirst()
-        .orElse(null);
-  }
-
-  /** Returns the first value matching the given key predicate. */
-  private static <K, T> T findFirstInMapByKey(Map<K, T> map, Predicate<K> keyMatch) {
-    return map.keySet().stream().filter(keyMatch).map(map::get).findFirst().orElse(null);
+    Predicate<String> withSuffix = name -> name.startsWith(registry + "/");
+    Predicate<String> WithHttpsAndSuffix = name -> name.startsWith("https://" + registry + "/");
+    return Arrays.asList(exactMatch, withHttps, withSuffix, WithHttpsAndSuffix);
   }
 
   @VisibleForTesting

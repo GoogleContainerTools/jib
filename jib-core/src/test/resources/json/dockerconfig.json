@@ -7,7 +7,9 @@
     "just registry":{},
     "https://with.protocol":{},
     "with.suffix/suffix/":{},
-    "https://with.protocol.and.suffix/v10/":{}
+    "https://with.protocol.and.suffix/v10/":{},
+
+    "example.com":{"auth":"should not match example"}
   },
   "credsStore":"some credential store",
   "credHelpers":{
@@ -19,6 +21,8 @@
     "https://with.protocol.in.helpers":"credHelper for https://with.protocol.in.helpers",
     "with.suffix.in.helpers/v2/":"credHelper for with.suffix.in.helpers/v2/",
     "https://with.protocol.and.suffix.in.helpers/suffix":
-        "credHelper for https://with.protocol.and.suffix.in.helpers/suffix"
+        "credHelper for https://with.protocol.and.suffix.in.helpers/suffix",
+
+    "another.example.com.in.helpers":"should not match example"
   }
 }
