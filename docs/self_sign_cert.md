@@ -79,11 +79,11 @@ Now we save the updated keystore. We can either save to a new keystore and confi
 
 This option creates a _new_ list of CA Certificates and configures your build tool to use ths new list as the JRE's list of approved CA certificates, called the _trust store_.
 
-Within _KeyStore Explorer_, select _File > Save As..._ and save the new keystore file as a _JKS_ file alongside your build location. You will be prompted for a password; we use `password` in the examples below.
+Within _KeyStore Explorer_, select _File > Save As..._ and save the new keystore file as a _JKS_ file within your project location. You will be prompted for a password; we use `password` in the examples below.
 
 ##### Maven
 
-The following snippet shows how to configure Maven to use this new keystore file. You can configure the registry's username and password with [the `~/.m2/settings.xml` mechanism](https://github.com/GoogleContainerTools/jib/blob/master/jib-maven-plugin/README.md#using-maven-settings).
+The following snippet shows how to configure Maven to use this new keystore file. You can configure your username and password for the registry with [the `~/.m2/settings.xml` mechanism](https://github.com/GoogleContainerTools/jib/blob/master/jib-maven-plugin/README.md#using-maven-settings).
 
 ```shell
 $ ./mvnw -Djavax.net.ssl.trustStore=path/to/keystore.jks \
@@ -93,7 +93,7 @@ $ ./mvnw -Djavax.net.ssl.trustStore=path/to/keystore.jks \
 
 ##### Gradle
 
-You may need to explicitly configure the auth [`username` and `password`](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#using-specific-credentials).
+You may need to [explicitly configure your `username` and `password`](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#using-specific-credentials) for the registry.
 
 ```shell
 $ ./gradlew jib \
@@ -103,7 +103,7 @@ $ ./gradlew jib \
 
 #### Option 2: Modify the JRE `cacerts`
 
-The other approach modifies the JRE's list of CA Certificates to include the registry's self-signed certificate.  The certificate will be trusted at the JRE level, affecting all Java applications running on it. You must re-import the certificate when you upgrade or update to a new JRE.
+The other approach modifies the JRE's list of CA Certificates to include the registry's self-signed certificate.  The certificate will be trusted at the JRE level, affecting all Java applications running on it. You must re-import the certificate when you update to a new JRE.
 
 Basically you instruct KeyStore Explorer to save your modified `cacerts` and replace what was previously configured with the JRE.  Depending on your operating system and permissions, you may need to save to a new file and then replace the original `lib/security/cacerts` file with administrative privileges.
 
