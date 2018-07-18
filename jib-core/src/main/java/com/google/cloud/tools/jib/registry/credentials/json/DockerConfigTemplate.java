@@ -72,6 +72,24 @@ public class DockerConfigTemplate implements JsonTemplate {
     @Nullable private String auth;
   }
 
+  /**
+   * Returns the first value matching the given key predicates (short-circuiting in the order of
+   * predicates).
+   */
+  private static <K, T> T findFirstInMapByKey(Map<K, T> map, List<Predicate<K>> keyMatches) {
+    return keyMatches
+        .stream()
+        .map(keyMatch -> findFirstInMapByKey(map, keyMatch))
+        .filter(Objects::nonNull)
+        .findFirst()
+        .orElse(null);
+  }
+
+  /** Returns the first value matching the given key predicate. */
+  private static <K, T> T findFirstInMapByKey(Map<K, T> map, Predicate<K> keyMatch) {
+    return map.keySet().stream().filter(keyMatch).map(map::get).findFirst().orElse(null);
+  }
+
   /** Maps from registry to its {@link AuthTemplate}. */
   private final Map<String, AuthTemplate> auths = new HashMap<>();
 
@@ -87,8 +105,8 @@ public class DockerConfigTemplate implements JsonTemplate {
    * <ol>
    *   <li>Exact registry name
    *   <li>https:// + registry name
-   *   <li>registry name + arbitrary suffix
-   *   <li>https:// + registry name + arbitrary suffix
+   *   <li>registry name + / + arbitrary suffix
+   *   <li>https:// + registry name + / arbitrary suffix
    * </ol>
    *
    * @param registry the registry to get the authorization for
@@ -97,48 +115,41 @@ public class DockerConfigTemplate implements JsonTemplate {
    */
   @Nullable
   public String getAuthFor(String registry) {
-    Predicate<String> exactMatch = registry::equals;
-    Predicate<String> withHttps = ("https://" + registry)::equals;
-    Predicate<String> startsWith = name -> name.startsWith(registry);
-    Predicate<String> startsWithAndWithHttps = name -> name.startsWith("https://" + registry);
-    AuthTemplate authTemplate =
-        getAuthTemplate(Arrays.asList(exactMatch, withHttps, startsWith, startsWithAndWithHttps));
-
+    AuthTemplate authTemplate = findFirstInMapByKey(auths, getRegistryMatchersFor(registry));
     return authTemplate != null ? authTemplate.auth : null;
   }
 
-  /** Returns the first {@link AuthTemplate} matching the given predicates (short-circuiting). */
-  private AuthTemplate getAuthTemplate(List<Predicate<String>> registryMatches) {
-    return registryMatches
-        .stream()
-        .map(this::getAuthTemplate)
-        .filter(Objects::nonNull)
-        .findFirst()
-        .orElse(null);
-  }
-
-  /** Returns {@link AuthTemplate} matching the given predicate. */
-  private AuthTemplate getAuthTemplate(Predicate<String> registryMatch) {
-    return auths.keySet().stream().filter(registryMatch).map(auths::get).findFirst().orElse(null);
-  }
-
   /**
+   * Returns {@code credsStore} or {@code credHelpers} for the given {@code registry}. If there
+   * exists a matching registry entry in {@code auths}, returns {@code credStore}; otherwise, a
+   * matching entry in {@code credHelpers} is returned based on the following lookup order:
+   *
+   * <ol>
+   *   <li>Exact registry name
+   *   <li>https:// + registry name
+   *   <li>registry name + / + arbitrary suffix
+   *   <li>https:// + registry name + / + arbitrary suffix
+   * </ol>
+   *
    * @param registry the registry to get the credential helpers for
    * @return {@code credsStore} if {@code registry} is present in {@code auths}; otherwise, searches
    *     {@code credHelpers}; otherwise, {@code null} if not found
    */
   @Nullable
   public String getCredentialHelperFor(String registry) {
-    if (credsStore != null) {
-      // The registry could be prefixed with the HTTPS protocol.
-      if (auths.containsKey(registry) || auths.containsKey("https://" + registry)) {
-        return credsStore;
-      }
+    List<Predicate<String>> registryMatchers = getRegistryMatchersFor(registry);
+    if (credsStore != null && findFirstInMapByKey(auths, registryMatchers) != null) {
+      return credsStore;
     }
-    if (credHelpers.containsKey(registry)) {
-      return credHelpers.get(registry);
-    }
-    return null;
+    return findFirstInMapByKey(credHelpers, registryMatchers);
+  }
+
+  private List<Predicate<String>> getRegistryMatchersFor(String registry) {
+    Predicate<String> exactMatch = registry::equals;
+    Predicate<String> withHttps = ("https://" + registry)::equals;
+    Predicate<String> withSuffix = name -> name.startsWith(registry + "/");
+    Predicate<String> WithHttpsAndSuffix = name -> name.startsWith("https://" + registry + "/");
+    return Arrays.asList(exactMatch, withHttps, withSuffix, WithHttpsAndSuffix);
   }
 
   @VisibleForTesting
