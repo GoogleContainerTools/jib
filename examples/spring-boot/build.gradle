@@ -1,0 +1,58 @@
+buildscript {
+    ext {
+        springBootVersion = '2.0.3.RELEASE'
+    }
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+    }
+}
+plugins {
+    id "com.google.cloud.tools.jib" version "0.9.6"
+}
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+
+dependencies {
+    compile('org.springframework.boot:spring-boot-starter-web')
+    testCompile('org.springframework.boot:spring-boot-starter-test')
+}
+
+
+jib.to.image = 'CUSTOM_REGISTRY_URL/YOUR_USER_NAME/hellojib:jib'
+
+// If you want custom base image and push registry, use below configuration replace above
+
+//jib {
+//    from {
+//        image = 'registry.hub.docker.com/openjdk:8-jdk-alpine'
+//    }
+//    to {
+//        image = 'CUSTOM_REGISTRY_URL/YOUR_USER_NAME/hellojib:jib'
+//        auth {
+//            username = 'YOUR_USERNAME'
+//            password = 'YOUR_PASSWORD'
+//        }
+//    }
+//    container {
+//        jvmFlags = ['-Djava.security.egd=file:/dev/./urandom', '-Duser.timezone=GMT+08', '-Xdebug']
+//        mainClass = 'com.example.jib.JibApplication'
+//        args = ['some args']
+//        ports = ['8080']
+//    }
+//}
