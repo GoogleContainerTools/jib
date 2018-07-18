@@ -27,10 +27,12 @@ import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import org.junit.Assert;
@@ -197,6 +199,66 @@ public class BuildConfigurationTest {
       Assert.assertEquals(
           "base image is required but not set, target image is required but not set, and main class is required but not set",
           ex.getMessage());
+    }
+  }
+
+  @Test
+  @SuppressWarnings("JdkObsolete")
+  public void testBuilder_nullValues() {
+    // Java arguments element should not be null.
+    try {
+      BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
+          .setJavaArguments(Arrays.asList("first", null));
+      Assert.fail("The IllegalArgumentException should be thrown.");
+    } catch (IllegalArgumentException ex) {
+      Assert.assertNull(ex.getMessage());
+    }
+
+    // JVM flags element should not be null.
+    try {
+      BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
+          .setJvmFlags(Arrays.asList("first", null));
+      Assert.fail("The IllegalArgumentException should be thrown.");
+    } catch (IllegalArgumentException ex) {
+      Assert.assertNull(ex.getMessage());
+    }
+
+    // Exposed ports element should not be null.
+    try {
+      BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
+          .setExposedPorts(Arrays.asList(new Port(1000, Protocol.TCP), null));
+      Assert.fail("The IllegalArgumentException should be thrown.");
+    } catch (IllegalArgumentException ex) {
+      Assert.assertNull(ex.getMessage());
+    }
+
+    // Environment keys element should not be null.
+    Map<String, String> environmentMap = Maps.newHashMap();
+    environmentMap.put(null, "value");
+
+    try {
+      BuildConfiguration.builder(Mockito.mock(BuildLogger.class)).setEnvironment(environmentMap);
+      Assert.fail("The IllegalArgumentException should be thrown.");
+    } catch (IllegalArgumentException ex) {
+      Assert.assertNull(ex.getMessage());
+    }
+
+    // Environment values element should not be null.
+    environmentMap = Maps.newHashMap();
+    environmentMap.put("key", null);
+    try {
+      BuildConfiguration.builder(Mockito.mock(BuildLogger.class)).setEnvironment(environmentMap);
+      Assert.fail("The IllegalArgumentException should be thrown.");
+    } catch (IllegalArgumentException ex) {
+      Assert.assertNull(ex.getMessage());
+    }
+
+    // Environment map can accept TreeMap and Hashtable
+    try {
+      BuildConfiguration.builder(Mockito.mock(BuildLogger.class)).setEnvironment(Maps.newTreeMap());
+      BuildConfiguration.builder(Mockito.mock(BuildLogger.class)).setEnvironment(new Hashtable<>());
+    } catch (NullPointerException ex) {
+      throw new AssertionError("The NullPointerException should not be thrown.", ex);
     }
   }
 
