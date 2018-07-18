@@ -83,6 +83,7 @@ public class BuildImageTask extends DefaultTask {
     Preconditions.checkNotNull(jibExtension);
     GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
     jibExtension.handleDeprecatedParameters(gradleBuildLogger);
+    JibExtension.checkHttpTimeoutSystemProperty(gradleBuildLogger);
 
     if (Strings.isNullOrEmpty(jibExtension.getTargetImage())) {
       throw new GradleException(

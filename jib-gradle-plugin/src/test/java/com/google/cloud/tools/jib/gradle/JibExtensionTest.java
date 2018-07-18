@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import org.gradle.api.Project;
 import org.gradle.testfixtures.ProjectBuilder;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,6 +48,11 @@ public class JibExtensionTest {
         fakeProject
             .getExtensions()
             .create(JibPlugin.JIB_EXTENSION_NAME, JibExtension.class, fakeProject);
+  }
+
+  @After
+  public void tearDown() {
+    System.clearProperty("jib.httpTimeout");
   }
 
   @Test
@@ -150,5 +156,28 @@ public class JibExtensionTest {
     Assert.assertEquals("mainClass", testJibExtension.getMainClass());
     Assert.assertEquals(Arrays.asList("arg1", "arg2", "arg3"), testJibExtension.getArgs());
     Assert.assertEquals(OCIManifestTemplate.class, testJibExtension.getFormat());
+  }
+
+  @Test
+  public void testCheckHttpTimeoutSystemProperty() {
+    Assert.assertNull(System.getProperty("jib.httpTimeout"));
+    JibExtension.checkHttpTimeoutSystemProperty(mockLogger);
+    Mockito.verify(mockLogger, Mockito.never()).warn(Mockito.any());
+  }
+
+ @Test
+  public void testCheckHttpTimeoutSystemProperty_stringValue() {
+    System.setProperty("jib.httpTimeout", "random string");
+    JibExtension.checkHttpTimeoutSystemProperty(mockLogger);
+    Mockito.verify(mockLogger)
+        .warn("Ignoring non-integer value of jib.httpTimeout; using the default timeout.");
+  }
+
+  @Test
+  public void testCheckHttpTimeoutSystemProperty_negativeValue() {
+    System.setProperty("jib.httpTimeout", "-80");
+    JibExtension.checkHttpTimeoutSystemProperty(mockLogger);
+    Mockito.verify(mockLogger)
+        .warn("Ignoring negative value of jib.httpTimeout; using the default timeout.");
   }
 }

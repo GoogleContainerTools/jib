@@ -87,6 +87,7 @@ public class BuildDockerTask extends DefaultTask {
     Preconditions.checkNotNull(jibExtension);
     GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
     jibExtension.handleDeprecatedParameters(gradleBuildLogger);
+    JibExtension.checkHttpTimeoutSystemProperty(gradleBuildLogger);
 
     if (Boolean.getBoolean("sendCredentialsOverHttp")) {
       gradleBuildLogger.warn(
