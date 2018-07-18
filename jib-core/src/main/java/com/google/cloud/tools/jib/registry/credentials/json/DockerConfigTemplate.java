@@ -102,8 +102,8 @@ public class DockerConfigTemplate implements JsonTemplate {
 
   /**
    * Returns {@code credsStore} or {@code credHelpers} for the given {@code registry}. If there
-   * exists a matching registry entry in {@code auths}, returns {@code credStore}; otherwise,
-   * a matching entry in {@code credHelpers} is returned based on the following lookup order:
+   * exists a matching registry entry in {@code auths}, returns {@code credStore}; otherwise, a
+   * matching entry in {@code credHelpers} is returned based on the following lookup order:
    *
    * <ol>
    *   <li>Exact registry name
@@ -119,9 +119,11 @@ public class DockerConfigTemplate implements JsonTemplate {
   @Nullable
   public String getCredentialHelperFor(String registry) {
     if (credsStore != null) {
-      // The registry could be prefixed with the HTTPS protocol.
-      if (auths.keySet().stream().anyMatch(
-          key -> key.startsWith(registry) || key.startsWith("https://" + registry))) {
+      // The registry could be prefixed with the HTTPS protocol and/or have suffixes.
+      if (auths
+          .keySet()
+          .stream()
+          .anyMatch(key -> key.startsWith(registry) || key.startsWith("https://" + registry))) {
         return credsStore;
       }
     }
