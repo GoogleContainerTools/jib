@@ -270,6 +270,8 @@ public class RegistryEndpointCallerTest {
     Assert.assertNull(System.getProperty("jib.httpTimeout"));
     testRegistryEndpointCallerSecure.call();
 
+    // We fall back to the default timeout:
+    // https://github.com/GoogleContainerTools/jib/pull/656#discussion_r203562639
     Assert.assertNull(mockConnection.getRequestedHttpTimeout());
   }
 
@@ -294,7 +296,9 @@ public class RegistryEndpointCallerTest {
     System.setProperty("jib.httpTimeout", "-1");
     testRegistryEndpointCallerSecure.call();
 
-    Assert.assertNull(mockConnection.getRequestedHttpTimeout());
+    // We let the negative value pass through:
+    // https://github.com/GoogleContainerTools/jib/pull/656#discussion_r203562639
+    Assert.assertEquals(Integer.valueOf(-1), mockConnection.getRequestedHttpTimeout());
   }
 
   @Test
