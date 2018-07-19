@@ -28,6 +28,7 @@ import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.registry.InsecureRegistryException;
+import com.google.cloud.tools.jib.registry.RegistryCredentialsNotSentException;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -65,6 +66,7 @@ public class BuildStepsRunnerTest {
   @Mock private SourceFilesConfiguration mockSourceFilesConfiguration;
   @Mock private BuildLogger mockBuildLogger;
   @Mock private RegistryUnauthorizedException mockRegistryUnauthorizedException;
+  @Mock private RegistryCredentialsNotSentException mockRegistryCredentialsNotSentException;
   @Mock private HttpResponseException mockHttpResponseException;
   @Mock private ExecutionException mockExecutionException;
   @Mock private BuildConfiguration mockBuildConfiguration;
@@ -213,6 +215,24 @@ public class BuildStepsRunnerTest {
           TEST_HELPFUL_SUGGESTIONS.forNoCredentialHelpersDefinedForBaseImage("someregistry"),
           ex.getMessage());
       Assert.assertEquals(mockRegistryUnauthorizedException, ex.getCause());
+    }
+  }
+
+  @Test
+  public void testBuildImage_executionException_registryCredentialsNotSentException()
+      throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
+          CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
+    Mockito.when(mockExecutionException.getCause())
+        .thenReturn(mockRegistryCredentialsNotSentException);
+    Mockito.doThrow(mockExecutionException).when(mockBuildSteps).run();
+
+    try {
+      testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
+      Assert.fail("buildImage should have thrown an exception");
+
+    } catch (BuildStepsExecutionException ex) {
+      Assert.assertEquals(TEST_HELPFUL_SUGGESTIONS.forCredentialsNotSent(), ex.getMessage());
+      Assert.assertEquals(mockRegistryCredentialsNotSentException, ex.getCause());
     }
   }
 

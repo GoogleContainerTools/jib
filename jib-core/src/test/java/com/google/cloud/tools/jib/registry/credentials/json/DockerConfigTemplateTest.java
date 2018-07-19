@@ -39,6 +39,8 @@ public class DockerConfigTemplateTest {
 
     Assert.assertEquals("some auth", dockerConfigTemplate.getAuthFor("some registry"));
     Assert.assertEquals("some other auth", dockerConfigTemplate.getAuthFor("some other registry"));
+    Assert.assertEquals("token", dockerConfigTemplate.getAuthFor("registry"));
+    Assert.assertEquals("token", dockerConfigTemplate.getAuthFor("https://registry"));
     Assert.assertEquals(null, dockerConfigTemplate.getAuthFor("just registry"));
 
     Assert.assertEquals(

@@ -20,20 +20,23 @@ import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.cache.CachedLayer;
-import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.docker.ImageToTarballTranslator;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
-/** Adds image layers to a tarball and loads into Docker daemon. */
-class BuildTarballAndLoadDockerStep implements AsyncStep<Void>, Callable<Void> {
+public class WriteTarFileStep implements AsyncStep<Void>, Callable<Void> {
 
+  private final Path outputPath;
   private final BuildConfiguration buildConfiguration;
   private final PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep;
   private final ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps;
@@ -42,14 +45,16 @@ class BuildTarballAndLoadDockerStep implements AsyncStep<Void>, Callable<Void> {
   private final ListeningExecutorService listeningExecutorService;
   private final ListenableFuture<Void> listenableFuture;
 
-  BuildTarballAndLoadDockerStep(
+  WriteTarFileStep(
       ListeningExecutorService listeningExecutorService,
+      Path outputPath,
       BuildConfiguration buildConfiguration,
       PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep,
       ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps,
       BuildImageStep buildImageStep) {
     this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
+    this.outputPath = outputPath;
     this.pullAndCacheBaseImageLayersStep = pullAndCacheBaseImageLayersStep;
     this.buildAndCacheApplicationLayerSteps = buildAndCacheApplicationLayerSteps;
     this.buildImageStep = buildImageStep;
@@ -82,15 +87,17 @@ class BuildTarballAndLoadDockerStep implements AsyncStep<Void>, Callable<Void> {
         .get();
   }
 
-  private Void afterPushBaseImageLayerFuturesFuture()
-      throws ExecutionException, InterruptedException, IOException {
+  private Void afterPushBaseImageLayerFuturesFuture() throws ExecutionException, IOException {
     Image<CachedLayer> image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
 
-    // Load the image to docker daemon.
-    new DockerClient()
-        .load(
-            new ImageToTarballTranslator(image)
-                .toTarballBlob(buildConfiguration.getTargetImageReference()));
+    // Build the image to a tarball
+    buildConfiguration.getBuildLogger().lifecycle("Building image to tar file...");
+    Files.createDirectories(outputPath.getParent());
+    try (OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(outputPath))) {
+      new ImageToTarballTranslator(image)
+          .toTarballBlob(buildConfiguration.getTargetImageReference())
+          .writeTo(outputStream);
+    }
 
     return null;
   }

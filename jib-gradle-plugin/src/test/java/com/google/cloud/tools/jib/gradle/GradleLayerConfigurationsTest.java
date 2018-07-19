@@ -93,6 +93,11 @@ public class GradleLayerConfigurationsTest {
     allFiles.add(
         Paths.get(Resources.getResource("application/dependencies/dependency-1.0.0.jar").toURI())
             .toFile());
+    allFiles.add(
+        Paths.get(
+                Resources.getResource("application/dependencies/dependencyX-1.0.0-SNAPSHOT.jar")
+                    .toURI())
+            .toFile());
     FileCollection runtimeFileCollection = new TestFileCollection(allFiles);
 
     Mockito.when(mockProject.getConvention()).thenReturn(mockConvention);
@@ -106,7 +111,7 @@ public class GradleLayerConfigurationsTest {
     Mockito.when(mockMainSourceSet.getRuntimeClasspath()).thenReturn(runtimeFileCollection);
 
     testGradleLayerConfigurations =
-        GradleLayerConfigurations.getForProject(mockProject, mockGradleBuildLogger);
+        GradleLayerConfigurations.getForProject(mockProject, mockGradleBuildLogger, Paths.get("nonexistent/path"));
   }
 
   @Test
@@ -117,6 +122,11 @@ public class GradleLayerConfigurationsTest {
                 Resources.getResource("application/dependencies/dependency-1.0.0.jar").toURI()),
             Paths.get(Resources.getResource("application/dependencies/libraryA.jar").toURI()),
             Paths.get(Resources.getResource("application/dependencies/libraryB.jar").toURI()));
+    ImmutableList<Path> expectedSnapshotDependenciesFiles =
+        ImmutableList.of(
+            Paths.get(
+                Resources.getResource("application/dependencies/dependencyX-1.0.0-SNAPSHOT.jar")
+                    .toURI()));
     ImmutableList<Path> expectedResourcesFiles =
         ImmutableList.of(
             Paths.get(Resources.getResource("application/resources").toURI()).resolve("resourceA"),
@@ -127,16 +137,23 @@ public class GradleLayerConfigurationsTest {
             Paths.get(Resources.getResource("application/classes").toURI())
                 .resolve("HelloWorld.class"),
             Paths.get(Resources.getResource("application/classes").toURI()).resolve("some.class"));
+    ImmutableList<Path> expectedExtraFiles = ImmutableList.of();
 
     Assert.assertEquals(
         expectedDependenciesFiles,
         testGradleLayerConfigurations.getDependenciesLayerEntry().getSourceFiles());
+    Assert.assertEquals(
+        expectedSnapshotDependenciesFiles,
+        testGradleLayerConfigurations.getSnapshotDependenciesLayerEntry().getSourceFiles());
     Assert.assertEquals(
         expectedResourcesFiles,
         testGradleLayerConfigurations.getResourcesLayerEntry().getSourceFiles());
     Assert.assertEquals(
         expectedClassesFiles,
         testGradleLayerConfigurations.getClassesLayerEntry().getSourceFiles());
+    Assert.assertEquals(
+        expectedExtraFiles,
+        testGradleLayerConfigurations.getExtraFilesLayerEntry().getSourceFiles());
   }
 
   @Test
@@ -146,12 +163,28 @@ public class GradleLayerConfigurationsTest {
         .thenReturn(new TestFileCollection(ImmutableSet.of(nonexistentFile)));
 
     testGradleLayerConfigurations =
-        GradleLayerConfigurations.getForProject(mockProject, mockGradleBuildLogger);
+        GradleLayerConfigurations.getForProject(mockProject, mockGradleBuildLogger, Paths.get("nonexistent/path"));
 
     Mockito.verify(mockGradleBuildLogger)
         .warn("Could not find build output directory '" + nonexistentFile + "'");
     Mockito.verify(mockGradleBuildLogger)
         .warn("No classes files were found - did you compile your project?");
+  }
+
+  @Test
+  public void test_extraFiles() throws URISyntaxException, IOException {
+    Path extraFilesDirectory = Paths.get(Resources.getResource("layer").toURI());
+
+    testGradleLayerConfigurations = GradleLayerConfigurations.getForProject(mockProject, mockGradleBuildLogger, extraFilesDirectory);
+
+    ImmutableList<Path> expectedExtraFiles = ImmutableList.of(
+        Paths.get(Resources.getResource("layer/a/b/bar").toURI()),
+        Paths.get(Resources.getResource("layer/c/cat").toURI()),
+        Paths.get(Resources.getResource("layer/foo").toURI()));
+
+    Assert.assertEquals(
+        expectedExtraFiles,
+        testGradleLayerConfigurations.getExtraFilesLayerEntry().getSourceFiles());
   }
 
   @Test

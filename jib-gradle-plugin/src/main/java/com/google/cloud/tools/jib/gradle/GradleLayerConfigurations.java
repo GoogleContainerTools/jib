@@ -27,6 +27,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.gradle.api.Project;
 import org.gradle.api.file.FileCollection;
@@ -39,17 +40,28 @@ class GradleLayerConfigurations {
   /** Name of the `main` {@link SourceSet} to use as source files. */
   private static final String MAIN_SOURCE_SET_NAME = "main";
 
-  /** Resolves the source files configuration for a Gradle {@link Project}. */
+  /**
+   * Resolves the source files configuration for a Gradle {@link Project}.
+   *
+   * @param project
+   * @param gradleBuildLogger
+   * @param extraDirectory
+   * @return
+   * @throws IOException
+   */
   static GradleLayerConfigurations getForProject(
-      Project project, GradleBuildLogger gradleBuildLogger) throws IOException {
+      Project project, GradleBuildLogger gradleBuildLogger, Path extraDirectory)
+      throws IOException {
     JavaPluginConvention javaPluginConvention =
         project.getConvention().getPlugin(JavaPluginConvention.class);
 
     SourceSet mainSourceSet = javaPluginConvention.getSourceSets().getByName(MAIN_SOURCE_SET_NAME);
 
     List<Path> dependenciesFiles = new ArrayList<>();
+    List<Path> snapshotDependenciesFiles = new ArrayList<>();
     List<Path> resourcesFiles = new ArrayList<>();
     List<Path> classesFiles = new ArrayList<>();
+    List<Path> extraFiles = new ArrayList<>();
 
     // Adds each file in each classes output directory to the classes files list.
     FileCollection classesOutputDirectories = mainSourceSet.getOutput().getClassesDirs();
@@ -85,13 +97,26 @@ class GradleLayerConfigurations {
       if (resourcesOutputDirectory.equals(dependencyFile.toPath())) {
         continue;
       }
-      dependenciesFiles.add(dependencyFile.toPath());
+      if (dependencyFile.getName().contains("SNAPSHOT")) {
+        snapshotDependenciesFiles.add(dependencyFile.toPath());
+      } else {
+        dependenciesFiles.add(dependencyFile.toPath());
+      }
+    }
+
+    // Adds all the extra files.
+    if (Files.exists(extraDirectory)) {
+      try (Stream<Path> extraFilesLayerDirectoryFiles = Files.list(extraDirectory)) {
+        extraFiles = extraFilesLayerDirectoryFiles.collect(Collectors.toList());
+      }
     }
 
     // Sorts all files by path for consistent ordering.
     Collections.sort(dependenciesFiles);
+    Collections.sort(snapshotDependenciesFiles);
     Collections.sort(resourcesFiles);
     Collections.sort(classesFiles);
+    Collections.sort(extraFiles);
 
     return new GradleLayerConfigurations(
         LayerConfiguration.builder()
@@ -99,33 +124,53 @@ class GradleLayerConfigurations {
                 dependenciesFiles, SourceFilesConfiguration.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
             .build(),
         LayerConfiguration.builder()
+            .addEntry(
+                snapshotDependenciesFiles,
+                SourceFilesConfiguration.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
+            .build(),
+        LayerConfiguration.builder()
             .addEntry(resourcesFiles, SourceFilesConfiguration.DEFAULT_RESOURCES_PATH_ON_IMAGE)
             .build(),
         LayerConfiguration.builder()
             .addEntry(classesFiles, SourceFilesConfiguration.DEFAULT_CLASSES_PATH_ON_IMAGE)
-            .build());
+            .build(),
+        LayerConfiguration.builder().addEntry(extraFiles, "/").build());
   }
 
   private final LayerConfiguration dependenciesLayerConfiguration;
+  private final LayerConfiguration snapshotDependenciesLayerConfiguration;
   private final LayerConfiguration resourcesLayerConfiguration;
   private final LayerConfiguration classesLayerConfiguration;
+  private final LayerConfiguration extraFilesLayerConfiguration;
 
   private GradleLayerConfigurations(
       LayerConfiguration dependenciesLayerConfiguration,
+      LayerConfiguration snapshotDependenciesLayerConfiguration,
       LayerConfiguration resourcesLayerConfiguration,
-      LayerConfiguration classesLayerConfiguration) {
+      LayerConfiguration classesLayerConfiguration,
+      LayerConfiguration extraFilesLayerConfiguration) {
     this.dependenciesLayerConfiguration = dependenciesLayerConfiguration;
+    this.snapshotDependenciesLayerConfiguration = snapshotDependenciesLayerConfiguration;
     this.resourcesLayerConfiguration = resourcesLayerConfiguration;
     this.classesLayerConfiguration = classesLayerConfiguration;
+    this.extraFilesLayerConfiguration = extraFilesLayerConfiguration;
   }
 
   ImmutableList<LayerConfiguration> getLayerConfigurations() {
     return ImmutableList.of(
-        dependenciesLayerConfiguration, resourcesLayerConfiguration, classesLayerConfiguration);
+        dependenciesLayerConfiguration,
+        snapshotDependenciesLayerConfiguration,
+        resourcesLayerConfiguration,
+        classesLayerConfiguration,
+        extraFilesLayerConfiguration);
   }
 
   LayerEntry getDependenciesLayerEntry() {
     return dependenciesLayerConfiguration.getLayerEntries().get(0);
+  }
+
+  LayerEntry getSnapshotDependenciesLayerEntry() {
+    return snapshotDependenciesLayerConfiguration.getLayerEntries().get(0);
   }
 
   LayerEntry getResourcesLayerEntry() {
@@ -134,5 +179,9 @@ class GradleLayerConfigurations {
 
   LayerEntry getClassesLayerEntry() {
     return classesLayerConfiguration.getLayerEntries().get(0);
+  }
+
+  LayerEntry getExtraFilesLayerEntry() {
+    return extraFilesLayerConfiguration.getLayerEntries().get(0);
   }
 }

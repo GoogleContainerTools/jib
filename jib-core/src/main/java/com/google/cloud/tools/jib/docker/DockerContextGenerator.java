@@ -47,8 +47,10 @@ import javax.annotation.Nullable;
 public class DockerContextGenerator {
 
   private final LayerEntry dependenciesLayerEntry;
+  private final LayerEntry snapshotDependenciesLayerEntry;
   private final LayerEntry resourcesLayerEntry;
   private final LayerEntry classesLayerEntry;
+  private final LayerEntry extraFilesLayerEntry;
 
   @Nullable private String baseImage;
   private List<String> jvmFlags = Collections.emptyList();
@@ -58,11 +60,15 @@ public class DockerContextGenerator {
 
   public DockerContextGenerator(
       LayerEntry dependenciesLayerEntry,
+      LayerEntry snapshotDependenciesLayerEntry,
       LayerEntry resourcesLayerEntry,
-      LayerEntry classesLayerEntry) {
+      LayerEntry classesLayerEntry,
+      LayerEntry extraFilesLayerEntry) {
     this.dependenciesLayerEntry = dependenciesLayerEntry;
+    this.snapshotDependenciesLayerEntry = snapshotDependenciesLayerEntry;
     this.resourcesLayerEntry = resourcesLayerEntry;
     this.classesLayerEntry = classesLayerEntry;
+    this.extraFilesLayerEntry = extraFilesLayerEntry;
   }
 
   /**
@@ -121,6 +127,7 @@ public class DockerContextGenerator {
     return this;
   }
 
+  // TODO: Don't generate empty layers.
   /**
    * Creates the Docker context in {@code #targetDirectory}.
    *
@@ -143,16 +150,22 @@ public class DockerContextGenerator {
 
     // Creates the directories.
     Path dependenciesDir = targetDirectory.resolve("libs");
+    Path snapshotDependenciesDir = targetDirectory.resolve("snapshot-libs");
     Path resourcesDIr = targetDirectory.resolve("resources");
     Path classesDir = targetDirectory.resolve("classes");
+    Path extraFilesDir = targetDirectory.resolve("root");
     Files.createDirectory(dependenciesDir);
+    Files.createDirectory(snapshotDependenciesDir);
     Files.createDirectory(resourcesDIr);
     Files.createDirectory(classesDir);
+    Files.createDirectory(extraFilesDir);
 
     // Copies dependencies.
     FileOperations.copy(dependenciesLayerEntry.getSourceFiles(), dependenciesDir);
+    FileOperations.copy(snapshotDependenciesLayerEntry.getSourceFiles(), snapshotDependenciesDir);
     FileOperations.copy(resourcesLayerEntry.getSourceFiles(), resourcesDIr);
     FileOperations.copy(classesLayerEntry.getSourceFiles(), classesDir);
+    FileOperations.copy(extraFilesLayerEntry.getSourceFiles(), extraFilesDir);
 
     // Creates the Dockerfile.
     Files.write(
@@ -185,12 +198,19 @@ public class DockerContextGenerator {
         .append("FROM ")
         .append(Preconditions.checkNotNull(baseImage))
         .append("\n\nCOPY libs ")
-        .append(dependenciesLayerEntry.getExtractionPath())
+        .append(dependenciesLayerEntry.getExtractionPath());
+    if (!snapshotDependenciesLayerEntry.getSourceFiles().isEmpty()) {
+      dockerfile.append("\nCOPY snapshot-libs ").append(dependenciesLayerEntry.getExtractionPath());
+    }
+    dockerfile
         .append("\nCOPY resources ")
         .append(resourcesLayerEntry.getExtractionPath())
         .append("\nCOPY classes ")
-        .append(classesLayerEntry.getExtractionPath())
-        .append("\n");
+        .append(classesLayerEntry.getExtractionPath());
+    if (!extraFilesLayerEntry.getSourceFiles().isEmpty()) {
+      dockerfile.append("\nCOPY root ").append(extraFilesLayerEntry.getExtractionPath());
+    }
+    dockerfile.append("\n");
     for (String port : exposedPorts) {
       dockerfile.append("\nEXPOSE ").append(port);
     }

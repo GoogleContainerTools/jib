@@ -50,7 +50,7 @@ public class BlobPullerTest {
   private BlobPuller testBlobPuller;
 
   @Before
-  public void setUpFakes() throws DigestException, IOException {
+  public void setUpFakes() throws DigestException {
     fakeDigest =
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");

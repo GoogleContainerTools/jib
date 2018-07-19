@@ -1,7 +1,9 @@
 [![experimental](http://badges.github.io/stability-badges/dist/experimental.svg)](http://github.com/badges/stability-badges)
+[![Analytics](https://cloud-tools-for-java-metrics.appspot.com/UA-121724379-2/index)](https://github.com/igrigorik/ga-beacon)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/jib-maven-plugin/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/jib-maven-plugin)
-[![Gradle Plugin Portal](https://img.shields.io/badge/gradle%20plugin-v0.9.1-blue.svg)](https://plugins.gradle.org/plugin/com.google.cloud.tools.jib)
+[![Gradle Plugin Portal](https://img.shields.io/badge/gradle%20plugin-v0.9.6-blue.svg)](https://plugins.gradle.org/plugin/com.google.cloud.tools.jib)
 [![Gitter version](https://img.shields.io/gitter/room/gitterHQ/gitter.svg)](https://gitter.im/google/jib)
+[![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=Google%20container%20tool%20for%20dockerizing%20Java%20applications&url=https://github.com/GoogleContainerTools/jib&via=JibContainerBuilder&hashtags=java,docker,kubernetes,maven,gradle,microservices,jib)
 
 # Jib
 
@@ -9,12 +11,12 @@
 
 ## What is Jib?
 
-Jib builds Docker and OCI images for your Java applications and is available as plugins for [Maven](jib-maven-plugin) and [Gradle](jib-gradle-plugin).
+Jib builds Docker and [OCI](https://github.com/opencontainers/image-spec) images for your Java applications and is available as plugins for [Maven](jib-maven-plugin) and [Gradle](jib-gradle-plugin).
 
 [Maven](https://maven.apache.org/): See documentation for [jib-maven-plugin](jib-maven-plugin).\
 [Gradle](https://gradle.org/): See documentation for [jib-gradle-plugin](jib-gradle-plugin).
 
-*Jib as a container-building library for Java is work-in-progress. Watch for updates.*
+*Jib as a container-building library for Java is work-in-progress. [Watch for updates.](https://github.com/GoogleContainerTools/jib/issues/337)*
 
 ## Goals
 
@@ -36,7 +38,7 @@ See documentation for using [jib-gradle-plugin](jib-gradle-plugin#quickstart).
 
 ## How Jib Works
 
-Whereas traditionally a Java application is built as a single image layer with the application JAR, Jib's build strategy separates the Java application into multiple layers for more granular incremental builds. When you change your code, only your changes are rebuilt, not your entire application. These layers, by default, are layered on top of a [distroless](https://github.com/GoogleCloudPlatform/distroless) base image. 
+Whereas traditionally a Java application is built as a single image layer with the application JAR, Jib's build strategy separates the Java application into multiple layers for more granular incremental builds. When you change your code, only your changes are rebuilt, not your entire application. These layers, by default, are layered on top of a [distroless](https://github.com/GoogleCloudPlatform/distroless) base image. For more information, check out the [official blog post](https://cloudplatform.googleblog.com/2018/07/introducing-jib-build-java-docker-images-better.html).
 
 See also [rules_docker](https://github.com/bazelbuild/rules_docker) for a similar existing container image build tool for the [Bazel build system](https://github.com/bazelbuild/bazel).
 
@@ -44,7 +46,16 @@ See also [rules_docker](https://github.com/bazelbuild/rules_docker) for a simila
 
 See the [Frequently Asked Questions (FAQ) wiki page](/../../wiki/Frequently-Asked-Questions-(FAQ)).
 
-## Community
+## Get involved with the community
 
+We welcome contributions! Here's how you can contribute:
+
+* [Browse issues](https://github.com/GoogleContainerTools/jib/issues) or [file an issue](https://github.com/GoogleContainerTools/jib/issues/new)
 * Chat with us on [gitter](https://gitter.im/google/jib)
-* [jib-users mailing list](https://groups.google.com/forum/#!forum/jib-users)
+* Join the [jib-users mailing list](https://groups.google.com/forum/#!forum/jib-users)
+* Contribute:
+  * Try to fix [good first issues](https://github.com/GoogleContainerTools/jib/labels/good%20first%20issue)
+  * Help out on [issues that need help](https://github.com/GoogleContainerTools/jib/labels/help%20wanted)
+  * Join in on [discussion issues](https://github.com/GoogleContainerTools/jib/labels/discuss)
+<!--  * Read the [style guide] -->
+*Make sure to follow the [Code of Conduct](https://github.com/GoogleContainerTools/jib/blob/master/CODE_OF_CONDUCT.md) when contributing so we can foster an open and welcoming community.*

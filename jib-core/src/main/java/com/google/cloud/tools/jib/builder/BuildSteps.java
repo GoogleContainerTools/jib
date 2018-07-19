@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.Caches;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.concurrent.ExecutionException;
 
 /** Steps for building an image. */
@@ -50,6 +51,13 @@ public class BuildSteps {
   // String parameter (target image reference) in cyan.
   private static final String SUCCESS_MESSAGE_FORMAT_FOR_DOCKER_DAEMON =
       "Built image to Docker daemon as \u001B[36m%s\u001B[0m";
+
+  private static final String DESCRIPTION_FOR_TARBALL = "Building image tarball";
+  private static final String STARTUP_MESSAGE_FORMAT_FOR_TARBALL =
+      "Containerizing application to file at '%s'...";
+  // String parameter (target file) in cyan.
+  private static final String SUCCESS_MESSAGE_FORMAT_FOR_TARBALL =
+      "Built image tarball at \u001B[36m%s\u001B[0m";
 
   /**
    * All the steps to build an image to a Docker registry.
@@ -110,32 +118,46 @@ public class BuildSteps {
                 .runBuildAndCacheApplicationLayerSteps()
                 .runBuildImageStep(getEntrypoint(buildConfiguration))
                 .runFinalizingBuildStep()
-                .runBuildTarballAndLoadDockerStep()
-                .waitOnBuildTarballAndLoadDockerStep());
+                .runLoadDockerStep()
+                .waitOnLoadDockerStep());
+  }
+
+  /**
+   * All the steps to build an image tarball.
+   *
+   * @param outputPath the path to output the tarball to
+   * @param buildConfiguration the configuration parameters for the build
+   * @param cachesInitializer the {@link Caches.Initializer} used to setup the cache
+   * @return a new {@link BuildSteps} for building a tarball
+   */
+  public static BuildSteps forBuildToTar(
+      Path outputPath,
+      BuildConfiguration buildConfiguration,
+      Caches.Initializer cachesInitializer) {
+    return new BuildSteps(
+        DESCRIPTION_FOR_TARBALL,
+        buildConfiguration,
+        cachesInitializer,
+        String.format(STARTUP_MESSAGE_FORMAT_FOR_TARBALL, outputPath.toString()),
+        String.format(SUCCESS_MESSAGE_FORMAT_FOR_TARBALL, outputPath.toString()),
+        stepsRunner ->
+            stepsRunner
+                .runPullBaseImageStep()
+                .runPullAndCacheBaseImageLayersStep()
+                .runBuildAndCacheApplicationLayerSteps()
+                .runBuildImageStep(getEntrypoint(buildConfiguration))
+                .runFinalizingBuildStep()
+                .runWriteTarFileStep(outputPath)
+                .waitOnWriteTarFileStep());
   }
 
   /** Creates the container entrypoint for a given configuration. */
   private static ImmutableList<String> getEntrypoint(BuildConfiguration buildConfiguration) {
-    // TODO: Don't use indexes.
+    // TODO: Have classpaths be provided.
     return EntrypointBuilder.makeEntrypoint(
-        buildConfiguration
-            .getLayerConfigurations()
-            .get(0)
-            .getLayerEntries()
-            .get(0)
-            .getExtractionPath(),
-        buildConfiguration
-            .getLayerConfigurations()
-            .get(1)
-            .getLayerEntries()
-            .get(0)
-            .getExtractionPath(),
-        buildConfiguration
-            .getLayerConfigurations()
-            .get(2)
-            .getLayerEntries()
-            .get(0)
-            .getExtractionPath(),
+        SourceFilesConfiguration.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE,
+        SourceFilesConfiguration.DEFAULT_RESOURCES_PATH_ON_IMAGE,
+        SourceFilesConfiguration.DEFAULT_CLASSES_PATH_ON_IMAGE,
         buildConfiguration.getJvmFlags(),
         buildConfiguration.getMainClass());
   }

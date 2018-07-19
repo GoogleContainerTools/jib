@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
+import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
@@ -26,6 +27,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +40,7 @@ public class BuildConfiguration {
   public static class Builder {
 
     // All the parameters below are set to their default values.
+    private Instant creationTime = Instant.EPOCH;
     @Nullable private ImageReference baseImageReference;
     @Nullable private String baseImageCredentialHelperName;
     @Nullable private RegistryCredentials knownBaseRegistryCredentials;
@@ -48,7 +51,7 @@ public class BuildConfiguration {
     private ImmutableList<String> javaArguments = ImmutableList.of();
     private ImmutableList<String> jvmFlags = ImmutableList.of();
     private ImmutableMap<String, String> environmentMap = ImmutableMap.of();
-    private ImmutableList<String> exposedPorts = ImmutableList.of();
+    private ImmutableList<Port> exposedPorts = ImmutableList.of();
     private Class<? extends BuildableManifestTemplate> targetFormat = V22ManifestTemplate.class;
     @Nullable private CacheConfiguration applicationLayersCacheConfiguration;
     @Nullable private CacheConfiguration baseImageLayersCacheConfiguration;
@@ -123,7 +126,7 @@ public class BuildConfiguration {
       return this;
     }
 
-    public Builder setExposedPorts(@Nullable List<String> exposedPorts) {
+    public Builder setExposedPorts(@Nullable List<Port> exposedPorts) {
       if (exposedPorts != null) {
         Preconditions.checkArgument(!exposedPorts.contains(null));
         this.exposedPorts = ImmutableList.copyOf(exposedPorts);
@@ -182,6 +185,17 @@ public class BuildConfiguration {
       return this;
     }
 
+    /**
+     * Sets the image creation time.
+     *
+     * @param creationTime the creation time
+     * @return this
+     */
+    public Builder setCreationTime(Instant creationTime) {
+      this.creationTime = creationTime;
+      return this;
+    }
+
     /** @return the corresponding build configuration */
     public BuildConfiguration build() {
       // Validates the parameters.
@@ -209,6 +223,7 @@ public class BuildConfiguration {
           }
           return new BuildConfiguration(
               buildLogger,
+              creationTime,
               baseImageReference,
               baseImageCredentialHelperName,
               knownBaseRegistryCredentials,
@@ -268,6 +283,7 @@ public class BuildConfiguration {
   }
 
   private final BuildLogger buildLogger;
+  private final Instant creationTime;
   private final ImageReference baseImageReference;
   @Nullable private final String baseImageCredentialHelperName;
   @Nullable private final RegistryCredentials knownBaseRegistryCredentials;
@@ -278,7 +294,7 @@ public class BuildConfiguration {
   private final ImmutableList<String> javaArguments;
   private final ImmutableList<String> jvmFlags;
   private final ImmutableMap<String, String> environmentMap;
-  private final ImmutableList<String> exposedPorts;
+  private final ImmutableList<Port> exposedPorts;
   private final Class<? extends BuildableManifestTemplate> targetFormat;
   @Nullable private final CacheConfiguration applicationLayersCacheConfiguration;
   @Nullable private final CacheConfiguration baseImageLayersCacheConfiguration;
@@ -288,6 +304,7 @@ public class BuildConfiguration {
   /** Instantiate with {@link Builder#build}. */
   private BuildConfiguration(
       BuildLogger buildLogger,
+      Instant creationTime,
       ImageReference baseImageReference,
       @Nullable String baseImageCredentialHelperName,
       @Nullable RegistryCredentials knownBaseRegistryCredentials,
@@ -298,13 +315,14 @@ public class BuildConfiguration {
       ImmutableList<String> javaArguments,
       ImmutableList<String> jvmFlags,
       ImmutableMap<String, String> environmentMap,
-      ImmutableList<String> exposedPorts,
+      ImmutableList<Port> exposedPorts,
       Class<? extends BuildableManifestTemplate> targetFormat,
       @Nullable CacheConfiguration applicationLayersCacheConfiguration,
       @Nullable CacheConfiguration baseImageLayersCacheConfiguration,
       boolean allowHttp,
       ImmutableList<LayerConfiguration> layerConfigurations) {
     this.buildLogger = buildLogger;
+    this.creationTime = creationTime;
     this.baseImageReference = baseImageReference;
     this.baseImageCredentialHelperName = baseImageCredentialHelperName;
     this.knownBaseRegistryCredentials = knownBaseRegistryCredentials;
@@ -325,6 +343,10 @@ public class BuildConfiguration {
 
   public BuildLogger getBuildLogger() {
     return buildLogger;
+  }
+
+  public Instant getCreationTime() {
+    return creationTime;
   }
 
   public ImageReference getBaseImageReference() {
@@ -395,7 +417,7 @@ public class BuildConfiguration {
     return environmentMap;
   }
 
-  public ImmutableList<String> getExposedPorts() {
+  public ImmutableList<Port> getExposedPorts() {
     return exposedPorts;
   }
 

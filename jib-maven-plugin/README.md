@@ -1,27 +1,25 @@
 [![experimental](http://badges.github.io/stability-badges/dist/experimental.svg)](http://github.com/badges/stability-badges)
+[![Analytics](https://cloud-tools-for-java-metrics.appspot.com/UA-121724379-2/jib-maven-plugin)](https://github.com/igrigorik/ga-beacon)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/jib-maven-plugin/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/jib-maven-plugin)
 [![Gitter version](https://img.shields.io/gitter/room/gitterHQ/gitter.svg)](https://gitter.im/google/jib)
 
 # Jib - Containerize your Maven project
 
-Jib is a [Maven](https://maven.apache.org/) plugin for building Docker and OCI images for your Java applications.
+Jib is a [Maven](https://maven.apache.org/) plugin for building Docker and [OCI](https://github.com/opencontainers/image-spec) images for your Java applications.
 
 For information about the project, see the [Jib project README](../README.md).
 For the Gradle plugin, see the [jib-gradle-plugin project](../jib-gradle-plugin).
 
 ## Upcoming Features
 
-These features are not currently supported but will be added in later releases.
-
-* Support for WAR format
-* Run and debug the built container
+See [Milestones](https://github.com/GoogleContainerTools/jib/milestones) for planned features. [Get involved with the community](https://github.com/GoogleContainerTools/jib/tree/master#get-involved-with-the-community) for the latest updates.
 
 ## Quickstart
 
 You can containerize your application easily with one command:
 
 ```shell
-mvn compile com.google.cloud.tools:jib-maven-plugin:0.9.1:build -Dimage=<MY IMAGE>
+mvn compile com.google.cloud.tools:jib-maven-plugin:0.9.6:build -Dimage=<MY IMAGE>
 ```
 
 This builds and pushes a container image for your application to a container registry. *If you encounter authentication issues, see [Authentication Methods](#authentication-methods).*
@@ -29,7 +27,7 @@ This builds and pushes a container image for your application to a container reg
 To build to a Docker daemon, use:
 
 ```shell
-mvn compile com.google.cloud.tools:jib-maven-plugin:0.9.1:dockerBuild
+mvn compile com.google.cloud.tools:jib-maven-plugin:0.9.6:dockerBuild
 ```
 
 If you would like to set up Jib as part of your Maven build, follow the guide below.
@@ -47,7 +45,7 @@ In your Maven Java project, add the plugin to your `pom.xml`:
       <plugin>
         <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
-        <version>0.9.1</version>
+        <version>0.9.6</version>
         <configuration>
           <to>
             <image>myimage</image>
@@ -107,7 +105,7 @@ For example, to build the image `my-docker-id/my-app`, the configuration would b
 </configuration>
 ```
 
-#### *TODO: Add more examples for common registries.* 
+#### *TODO: Add more examples for common registries.*
 
 ### Build your image
 
@@ -180,7 +178,7 @@ You can then build your image with Docker:
 
 ```shell
 docker build -t myimage my/docker/context/
-``` 
+```
 
 ## Extended Usage
 
@@ -276,7 +274,7 @@ Some common credential helpers include:
 
 Configure credential helpers to use by specifying them as a `credHelper` for their respective image.
 
-*Example configuration:* 
+*Example configuration:*
 ```xml
 <configuration>
   ...
@@ -294,7 +292,7 @@ Configure credential helpers to use by specifying them as a `credHelper` for the
 
 #### Using Maven Settings
 
-Registry credentials can be added to your [Maven settings](https://maven.apache.org/settings.html). These credentials will be used if credentials could not be found in any specified Docker credential helpers. 
+Registry credentials can be added to your [Maven settings](https://maven.apache.org/settings.html). These credentials will be used if credentials could not be found in any specified Docker credential helpers.
 
 If you're considering putting credentials in Maven, we highly *recommend* using [maven password encryption](https://maven.apache.org/guides/mini/guide-encryption.html).
 
@@ -313,7 +311,7 @@ If you're considering putting credentials in Maven, we highly *recommend* using 
 </settings>
 ```
 
-* The `id` field should be the registry server these credentials are for. 
+* The `id` field should be the registry server these credentials are for.
 * We *do not* recommend putting your raw password in `settings.xml`.
 
 ## How Jib Works

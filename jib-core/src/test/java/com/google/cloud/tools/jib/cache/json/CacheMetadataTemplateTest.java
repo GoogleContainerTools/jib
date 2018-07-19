@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.cache.json;
 
 import com.google.cloud.tools.jib.cache.PlatformSpecificMetadataJson;
+import com.google.cloud.tools.jib.cache.json.CacheMetadataLayerPropertiesObjectTemplate.LayerEntryTemplate;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import java.io.ByteArrayOutputStream;
@@ -58,8 +59,11 @@ public class CacheMetadataTemplateTest {
     // Adds an application layer.
     CacheMetadataLayerPropertiesObjectTemplate propertiesTemplate =
         new CacheMetadataLayerPropertiesObjectTemplate()
-            .setSourceFiles(
-                Collections.singletonList(Paths.get("some", "source", "path").toString()))
+            .setLayerEntries(
+                Collections.singletonList(
+                    new LayerEntryTemplate(
+                        Collections.singletonList(Paths.get("some", "source", "path").toString()),
+                        "some/extraction/path")))
             .setLastModifiedTime(FileTime.fromMillis(255073580723571L));
     CacheMetadataLayerObjectTemplate classesLayerTemplate =
         new CacheMetadataLayerObjectTemplate()
@@ -119,9 +123,13 @@ public class CacheMetadataTemplateTest {
             "sha256:a3f3e99c29370df48e7377c8f9baa744a3958058a766793f821dadcb144a8372"),
         classesLayerTemplate.getDiffId());
     Assert.assertNotNull(classesLayerTemplate.getProperties());
+    Assert.assertEquals(1, classesLayerTemplate.getProperties().getLayerEntries().size());
     Assert.assertEquals(
         Collections.singletonList(Paths.get("some", "source", "path").toString()),
-        classesLayerTemplate.getProperties().getSourceFiles());
+        classesLayerTemplate.getProperties().getLayerEntries().get(0).getSourceFiles());
+    Assert.assertEquals(
+        "some/extraction/path",
+        classesLayerTemplate.getProperties().getLayerEntries().get(0).getExtractionPath());
     Assert.assertEquals(
         FileTime.fromMillis(255073580723571L),
         classesLayerTemplate.getProperties().getLastModifiedTime());

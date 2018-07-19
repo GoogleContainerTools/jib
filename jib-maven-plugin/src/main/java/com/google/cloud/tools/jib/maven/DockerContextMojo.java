@@ -59,8 +59,9 @@ public class DockerContextMojo extends JibPluginConfiguration {
     try {
       // Validate port input, but don't save the output because we don't want the ranges expanded
       // here.
-      ExposedPortsParser.parse(getExposedPorts(), mavenBuildLogger);
+      ExposedPortsParser.parse(getExposedPorts());
 
+      // TODO: Add support for extra files layer.
       new DockerContextGenerator(mavenProjectProperties.getSourceFilesConfiguration())
           .setBaseImage(getBaseImage())
           .setJvmFlags(getJvmFlags())

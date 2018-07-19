@@ -53,7 +53,7 @@ public class TarStreamBuilder {
    */
   private void writeEntriesAsTarArchive(OutputStream tarByteStream) throws IOException {
     try (TarArchiveOutputStream tarArchiveOutputStream =
-        new TarArchiveOutputStream(tarByteStream)) {
+        new TarArchiveOutputStream(tarByteStream, StandardCharsets.UTF_8.name())) {
       // Enables PAX extended headers to support long file names.
       tarArchiveOutputStream.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
       for (Map.Entry<TarArchiveEntry, TarArchiveOutputStreamConsumer> entry :
@@ -74,6 +74,7 @@ public class TarStreamBuilder {
     archiveMap.put(
         entry,
         tarArchiveOutputStream -> {
+          // Note that this will skip files that don't exist.
           if (entry.isFile()) {
             try (InputStream contentStream =
                 new BufferedInputStream(Files.newInputStream(entry.getFile().toPath()))) {
@@ -91,11 +92,9 @@ public class TarStreamBuilder {
    */
   public void addEntry(String contents, String name) {
     TarArchiveEntry entry = new TarArchiveEntry(name);
-    entry.setSize(contents.length());
-    archiveMap.put(
-        entry,
-        tarArchiveOutputStream ->
-            tarArchiveOutputStream.write(contents.getBytes(StandardCharsets.UTF_8)));
+    byte[] contentsBytes = contents.getBytes(StandardCharsets.UTF_8);
+    entry.setSize(contentsBytes.length);
+    archiveMap.put(entry, tarArchiveOutputStream -> tarArchiveOutputStream.write(contentsBytes));
   }
 
   /** @return a new {@link Blob} that can stream the uncompressed tarball archive BLOB. */

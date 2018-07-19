@@ -17,6 +17,9 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
+import com.google.cloud.tools.jib.configuration.LayerConfiguration;
+import com.google.cloud.tools.jib.configuration.Port;
+import com.google.cloud.tools.jib.configuration.Port.Protocol;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
@@ -25,6 +28,7 @@ import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -37,6 +41,7 @@ public class BuildConfigurationTest {
 
   @Test
   public void testBuilder() {
+    Instant expectedCreationTime = Instant.ofEpochSecond(10000);
     String expectedBaseImageServerUrl = "someserver";
     String expectedBaseImageName = "baseimage";
     String expectedBaseImageTag = "baseimagetag";
@@ -53,15 +58,20 @@ public class BuildConfigurationTest {
     List<String> expectedJavaArguments = Arrays.asList("arg1", "arg2");
     List<String> expectedJvmFlags = Arrays.asList("some", "jvm", "flags");
     Map<String, String> expectedEnvironment = ImmutableMap.of("key", "value");
-    ImmutableList<String> expectedExposedPorts = ImmutableList.of("1000", "2000");
+    ImmutableList<Port> expectedExposedPorts =
+        ImmutableList.of(new Port(1000, Protocol.TCP), new Port(2000, Protocol.TCP));
     Class<? extends BuildableManifestTemplate> expectedTargetFormat = OCIManifestTemplate.class;
     CacheConfiguration expectedApplicationLayersCacheConfiguration =
         CacheConfiguration.forPath(Paths.get("application/layers"));
     CacheConfiguration expectedBaseImageLayersCacheConfiguration =
         CacheConfiguration.forPath(Paths.get("base/image/layers"));
+    List<LayerConfiguration> expectedLayerConfigurations =
+        Arrays.asList(
+            LayerConfiguration.builder().addEntry(Collections.emptyList(), "destination").build());
 
     BuildConfiguration.Builder buildConfigurationBuilder =
         BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
+            .setCreationTime(expectedCreationTime)
             .setBaseImage(
                 ImageReference.of(
                     expectedBaseImageServerUrl, expectedBaseImageName, expectedBaseImageTag))
@@ -80,9 +90,11 @@ public class BuildConfigurationTest {
             .setTargetFormat(OCIManifestTemplate.class)
             .setApplicationLayersCacheConfiguration(expectedApplicationLayersCacheConfiguration)
             .setBaseImageLayersCacheConfiguration(expectedBaseImageLayersCacheConfiguration)
-            .setAllowHttp(true);
+            .setAllowHttp(true)
+            .setLayerConfigurations(expectedLayerConfigurations);
     BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
 
+    Assert.assertEquals(expectedCreationTime, buildConfiguration.getCreationTime());
     Assert.assertEquals(expectedBaseImageServerUrl, buildConfiguration.getBaseImageRegistry());
     Assert.assertEquals(expectedBaseImageName, buildConfiguration.getBaseImageRepository());
     Assert.assertEquals(expectedBaseImageTag, buildConfiguration.getBaseImageTag());
@@ -108,6 +120,7 @@ public class BuildConfigurationTest {
         expectedBaseImageLayersCacheConfiguration,
         buildConfiguration.getBaseImageLayersCacheConfiguration());
     Assert.assertTrue(buildConfiguration.getAllowHttp());
+    Assert.assertEquals(expectedLayerConfigurations, buildConfiguration.getLayerConfigurations());
   }
 
   @Test
@@ -132,6 +145,7 @@ public class BuildConfigurationTest {
             .setMainClass(expectedMainClass)
             .build();
 
+    Assert.assertEquals(buildConfiguration.getCreationTime(), Instant.EPOCH);
     Assert.assertNull(buildConfiguration.getBaseImageCredentialHelperName());
     Assert.assertNull(buildConfiguration.getKnownBaseRegistryCredentials());
     Assert.assertNull(buildConfiguration.getTargetImageCredentialHelperName());
@@ -144,6 +158,7 @@ public class BuildConfigurationTest {
     Assert.assertNull(buildConfiguration.getApplicationLayersCacheConfiguration());
     Assert.assertNull(buildConfiguration.getBaseImageLayersCacheConfiguration());
     Assert.assertFalse(buildConfiguration.getAllowHttp());
+    Assert.assertEquals(Collections.emptyList(), buildConfiguration.getLayerConfigurations());
   }
 
   @Test

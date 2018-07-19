@@ -27,7 +27,9 @@ again.
 3. Please include unit tests (and integration tests if applicable) for all new code.
 4. Make sure all existing tests pass.
    * In `jib-core`, run `./gradlew clean goJF build integrationTest`
-   * In `jib-gradle-plugin`, run `./gradlew clean goJF build integrationTest`
-   * In `jib-maven-plugin`, run `./mvnw clean fmt:format verify -Pintegration-tests`
+   * In `jib-gradle-plugin`, run `./gradlew clean goJF build` *
+   * In `jib-maven-plugin`, run `./mvnw clean fmt:format verify` *
 5. Associate the change with an existing issue or file a [new issue](../../issues).
 6. Create a pull request!
+
+\* *Note that you will not be able to run the integration tests for `jib-gradle-plugin` or `jib-maven-plugin` because those push to our integration-testing GCP project. If you would like to run integration tests, change all uses of the `jib-integration-testing` project to your own GCP project and run `./gradlew integrationTest` for `jib-gradle-plugin` and `./mvnw verify -Pintegration-tests` for `jib-maven-plugin`.*

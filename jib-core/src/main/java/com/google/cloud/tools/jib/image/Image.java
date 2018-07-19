@@ -16,9 +16,12 @@
 
 package com.google.cloud.tools.jib.image;
 
+import com.google.cloud.tools.jib.configuration.Port;
 import com.google.common.collect.ImmutableList;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /** Represents an image. */
 public class Image<T extends Layer> {
@@ -29,9 +32,21 @@ public class Image<T extends Layer> {
     private final ImageLayers.Builder<T> imageLayersBuilder = ImageLayers.builder();
     private final ImmutableList.Builder<String> environmentBuilder = ImmutableList.builder();
 
+    @Nullable private Instant created;
     private ImmutableList<String> entrypoint = ImmutableList.of();
     private ImmutableList<String> javaArguments = ImmutableList.of();
-    private ImmutableList<String> exposedPorts = ImmutableList.of();
+    private ImmutableList<Port> exposedPorts = ImmutableList.of();
+
+    /**
+     * Sets the image creation time.
+     *
+     * @param created the creation time
+     * @return this
+     */
+    public Builder<T> setCreated(Instant created) {
+      this.created = created;
+      return this;
+    }
 
     /**
      * Sets the environment with a map from environment variable names to values.
@@ -94,11 +109,10 @@ public class Image<T extends Layer> {
     /**
      * Sets the items in the "ExposedPorts" field in the container configuration.
      *
-     * @param exposedPorts the map of exposed ports to add, with the key in the format it would
-     *     appear in the configuration json (e.g. "portNum/tcp")
+     * @param exposedPorts the list of exposed ports to add
      * @return this
      */
-    public Builder<T> setExposedPorts(ImmutableList<String> exposedPorts) {
+    public Builder<T> setExposedPorts(ImmutableList<Port> exposedPorts) {
       this.exposedPorts = exposedPorts;
       return this;
     }
@@ -117,6 +131,7 @@ public class Image<T extends Layer> {
 
     public Image<T> build() {
       return new Image<>(
+          created,
           imageLayersBuilder.build(),
           environmentBuilder.build(),
           ImmutableList.copyOf(entrypoint),
@@ -128,6 +143,9 @@ public class Image<T extends Layer> {
   public static <T extends Layer> Builder<T> builder() {
     return new Builder<>();
   }
+
+  /** The image creation time. */
+  @Nullable private final Instant created;
 
   /** The layers of the image, in the order in which they are applied. */
   private final ImageLayers<T> layers;
@@ -142,19 +160,26 @@ public class Image<T extends Layer> {
   private final ImmutableList<String> javaArguments;
 
   /** Ports that the container listens on. */
-  private final ImmutableList<String> exposedPorts;
+  private final ImmutableList<Port> exposedPorts;
 
   private Image(
+      @Nullable Instant created,
       ImageLayers<T> layers,
       ImmutableList<String> environment,
       ImmutableList<String> entrypoint,
       ImmutableList<String> javaArguments,
-      ImmutableList<String> exposedPorts) {
+      ImmutableList<Port> exposedPorts) {
+    this.created = created;
     this.layers = layers;
     this.environmentBuilder = environment;
     this.entrypoint = entrypoint;
     this.javaArguments = javaArguments;
     this.exposedPorts = exposedPorts;
+  }
+
+  @Nullable
+  public Instant getCreated() {
+    return created;
   }
 
   public ImmutableList<String> getEnvironment() {
@@ -169,7 +194,7 @@ public class Image<T extends Layer> {
     return javaArguments;
   }
 
-  public ImmutableList<String> getExposedPorts() {
+  public ImmutableList<Port> getExposedPorts() {
     return exposedPorts;
   }
 

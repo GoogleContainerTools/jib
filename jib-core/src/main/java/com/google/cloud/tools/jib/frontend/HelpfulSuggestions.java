@@ -96,6 +96,10 @@ public class HelpfulSuggestions {
     return suggest("make sure your credentials for '" + registry + "' are set up correctly");
   }
 
+  public String forCredentialsNotSent() {
+    return suggest("use a registry that supports HTTPS so credentials can be sent safely");
+  }
+
   public String forDockerContextInsecureRecursiveDelete(String directory) {
     return suggest("clear " + directory + " manually before creating the Docker context");
   }
@@ -106,6 +110,11 @@ public class HelpfulSuggestions {
 
   public String forDockerNotInstalled() {
     return suggest("make sure Docker is installed and you have correct privileges to run it");
+  }
+
+  public String forInsecureRegistry() {
+    return suggest(
+        "use a registry that supports HTTPS or set the configuration parameter 'allowInsecureRegistries'");
   }
 
   /**
@@ -144,10 +153,5 @@ public class HelpfulSuggestions {
             + credHelperConfiguration
             + "' or "
             + authConfiguration);
-  }
-
-  public String forInsecureRegistry() {
-    return suggest(
-        "use a registry that supports HTTPS or set the configuration parameter 'allowInsecureRegistries'");
   }
 }

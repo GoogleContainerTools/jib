@@ -1,20 +1,18 @@
 [![experimental](http://badges.github.io/stability-badges/dist/experimental.svg)](http://github.com/badges/stability-badges)
-[![Gradle Plugin Portal](https://img.shields.io/badge/gradle%20plugin-v0.9.1-blue.svg)](https://plugins.gradle.org/plugin/com.google.cloud.tools.jib)
+[![Analytics](https://cloud-tools-for-java-metrics.appspot.com/UA-121724379-2/jib-gradle-plugin)](https://github.com/igrigorik/ga-beacon)
+[![Gradle Plugin Portal](https://img.shields.io/badge/gradle%20plugin-v0.9.6-blue.svg)](https://plugins.gradle.org/plugin/com.google.cloud.tools.jib)
 [![Gitter version](https://img.shields.io/gitter/room/gitterHQ/gitter.svg)](https://gitter.im/google/jib)
 
 # Jib - Containerize your Gradle Java project
 
-Jib is [Gradle](https://gradle.org/) plugin for building Docker and OCI images for your Java applications.
+Jib is [Gradle](https://gradle.org/) plugin for building Docker and [OCI](https://github.com/opencontainers/image-spec) images for your Java applications.
 
 For information about the project, see the [Jib project README](../README.md).
 For the Maven plugin, see the [jib-maven-plugin project](../jib-maven-plugin).
 
 ## Upcoming Features
 
-These features are not currently supported but will be added in later releases.
-
-* Support for WAR format
-* Run and debug the built container
+See [Milestones](https://github.com/GoogleContainerTools/jib/milestones) for planned features. [Get involved with the community](https://github.com/GoogleContainerTools/jib/tree/master#get-involved-with-the-community) for the latest updates.
 
 ## Quickstart
 
@@ -26,7 +24,7 @@ In your Gradle Java project, add the plugin to your `build.gradle`:
 
 ```groovy
 plugins {
-  id 'com.google.cloud.tools.jib' version '0.9.1'
+  id 'com.google.cloud.tools.jib' version '0.9.6'
 }
 ```
 

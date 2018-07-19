@@ -22,7 +22,9 @@ import java.nio.file.Path;
 /** Methods for getting static cache filename properties. */
 class CacheFiles {
 
-  static final String METADATA_FILENAME = "metadata.json";
+  /** Increment the version prefix when the metadata format changes. */
+  static final String METADATA_FILENAME = "metadata-v2.json";
+
   private static final String LAYER_FILE_EXTENSION = ".tar.gz";
 
   static Path getMetadataFile(Path cacheDirectory) {

@@ -18,6 +18,8 @@ package com.google.cloud.tools.jib.image.json;
 
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.io.Resources;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -27,25 +29,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.DigestException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 /** Tests for {@link ContainerConfigurationTemplate}. */
 public class ContainerConfigurationTemplateTest {
-
-  private List<String> exposedPorts;
-
-  @Before
-  public void setup() {
-    exposedPorts = new ArrayList<>();
-    exposedPorts.add("1000");
-    exposedPorts.add("2000/tcp");
-    exposedPorts.add("3000/udp");
-  }
 
   @Test
   public void testToJson() throws IOException, URISyntaxException, DigestException {
@@ -56,10 +45,18 @@ public class ContainerConfigurationTemplateTest {
     // Creates the JSON object to serialize.
     ContainerConfigurationTemplate containerConfigJson = new ContainerConfigurationTemplate();
 
+    containerConfigJson.setCreated("1970-01-01T00:00:20Z");
     containerConfigJson.setContainerEnvironment(Arrays.asList("VAR1=VAL1", "VAR2=VAL2"));
     containerConfigJson.setContainerEntrypoint(Arrays.asList("some", "entrypoint", "command"));
     containerConfigJson.setContainerCmd(Arrays.asList("arg1", "arg2"));
-    containerConfigJson.setContainerExposedPorts(exposedPorts);
+    containerConfigJson.setContainerExposedPorts(
+        ImmutableSortedMap.of(
+            "1000/tcp",
+            ImmutableMap.of(),
+            "2000/tcp",
+            ImmutableMap.of(),
+            "3000/udp",
+            ImmutableMap.of()));
 
     containerConfigJson.addLayerDiffId(
         DescriptorDigest.fromDigest(
@@ -81,15 +78,13 @@ public class ContainerConfigurationTemplateTest {
     ContainerConfigurationTemplate containerConfigJson =
         JsonTemplateMapper.readJsonFromFile(jsonFile, ContainerConfigurationTemplate.class);
 
+    Assert.assertEquals("1970-01-01T00:00:20Z", containerConfigJson.getCreated());
     Assert.assertEquals(
         Arrays.asList("VAR1=VAL1", "VAR2=VAL2"), containerConfigJson.getContainerEnvironment());
-
     Assert.assertEquals(
         Arrays.asList("some", "entrypoint", "command"),
         containerConfigJson.getContainerEntrypoint());
-
     Assert.assertEquals(Arrays.asList("arg1", "arg2"), containerConfigJson.getContainerCmd());
-
     Assert.assertEquals(
         DescriptorDigest.fromDigest(
             "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad"),

@@ -30,6 +30,7 @@ public class JibPlugin implements Plugin<Project> {
 
   @VisibleForTesting static final String JIB_EXTENSION_NAME = "jib";
   @VisibleForTesting static final String BUILD_IMAGE_TASK_NAME = "jib";
+  @VisibleForTesting static final String BUILD_TAR_TASK_NAME = "jibBuildTar";
   @VisibleForTesting static final String BUILD_DOCKER_TASK_NAME = "jibDockerBuild";
   @VisibleForTesting static final String DOCKER_CONTEXT_TASK_NAME = "jibExportDockerContext";
 
@@ -55,6 +56,11 @@ public class JibPlugin implements Plugin<Project> {
             .getTasks()
             .create(BUILD_DOCKER_TASK_NAME, BuildDockerTask.class)
             .setJibExtension(jibExtension);
+    Task buildTarTask =
+        project
+            .getTasks()
+            .create(BUILD_TAR_TASK_NAME, BuildTarTask.class)
+            .setJibExtension(jibExtension);
 
     // Has all tasks depend on the 'classes' task.
     project.afterEvaluate(
@@ -65,6 +71,7 @@ public class JibPlugin implements Plugin<Project> {
             buildImageTask.dependsOn(classesTask);
             dockerContextTask.dependsOn(classesTask);
             buildDockerTask.dependsOn(classesTask);
+            buildTarTask.dependsOn(classesTask);
 
           } catch (UnknownTaskException ex) {
             throw new GradleException(

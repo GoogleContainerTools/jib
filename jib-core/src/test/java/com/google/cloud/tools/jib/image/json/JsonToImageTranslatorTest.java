@@ -17,6 +17,8 @@
 package com.google.cloud.tools.jib.image.json;
 
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
+import com.google.cloud.tools.jib.configuration.Port;
+import com.google.cloud.tools.jib.configuration.Port.Protocol;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
@@ -24,13 +26,17 @@ import com.google.cloud.tools.jib.image.LayerCountMismatchException;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSortedMap;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.DigestException;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -61,21 +67,53 @@ public class JsonToImageTranslatorTest {
   @Test
   public void testToImage_v22()
       throws IOException, LayerPropertyNotFoundException, LayerCountMismatchException,
-          DigestException, URISyntaxException {
+          DigestException, URISyntaxException, BadContainerConfigurationFormatException {
     testToImage_buildable("json/v22manifest.json", V22ManifestTemplate.class);
   }
 
   @Test
   public void testToImage_oci()
       throws IOException, LayerPropertyNotFoundException, LayerCountMismatchException,
-          DigestException, URISyntaxException {
+          DigestException, URISyntaxException, BadContainerConfigurationFormatException {
     testToImage_buildable("json/ocimanifest.json", OCIManifestTemplate.class);
+  }
+
+  @Test
+  public void testPortMapToList() throws BadContainerConfigurationFormatException {
+    ImmutableSortedMap<String, Map<?, ?>> input =
+        ImmutableSortedMap.of(
+            "1000",
+            ImmutableMap.of(),
+            "2000/tcp",
+            ImmutableMap.of(),
+            "3000/udp",
+            ImmutableMap.of());
+    ImmutableList<Port> expected =
+        ImmutableList.of(
+            new Port(1000, Protocol.TCP),
+            new Port(2000, Protocol.TCP),
+            new Port(3000, Protocol.UDP));
+    Assert.assertEquals(expected, JsonToImageTranslator.portMapToList(input));
+
+    ImmutableList<Map<String, Map<?, ?>>> badInputs =
+        ImmutableList.of(
+            ImmutableMap.of("abc", ImmutableMap.of()),
+            ImmutableMap.of("1000-2000", ImmutableMap.of()),
+            ImmutableMap.of("/udp", ImmutableMap.of()),
+            ImmutableMap.of("123/xxx", ImmutableMap.of()));
+    for (Map<String, Map<?, ?>> badInput : badInputs) {
+      try {
+        JsonToImageTranslator.portMapToList(badInput);
+        Assert.fail();
+      } catch (BadContainerConfigurationFormatException ignored) {
+      }
+    }
   }
 
   private <T extends BuildableManifestTemplate> void testToImage_buildable(
       String jsonFilename, Class<T> manifestTemplateClass)
       throws IOException, LayerPropertyNotFoundException, LayerCountMismatchException,
-          DigestException, URISyntaxException {
+          DigestException, URISyntaxException, BadContainerConfigurationFormatException {
     // Loads the container configuration JSON.
     Path containerConfigurationJsonFile =
         Paths.get(getClass().getClassLoader().getResource("json/containerconfig.json").toURI());
@@ -104,8 +142,14 @@ public class JsonToImageTranslatorTest {
         DescriptorDigest.fromDigest(
             "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad"),
         layers.get(0).getDiffId());
+    Assert.assertEquals(Instant.ofEpochSecond(20), image.getCreated());
     Assert.assertEquals(Arrays.asList("some", "entrypoint", "command"), image.getEntrypoint());
     Assert.assertEquals(Arrays.asList("VAR1=VAL1", "VAR2=VAL2"), image.getEnvironment());
-    Assert.assertEquals(ImmutableList.of("1000", "2000/tcp", "3000/udp"), image.getExposedPorts());
+    Assert.assertEquals(
+        ImmutableList.of(
+            new Port(1000, Protocol.TCP),
+            new Port(2000, Protocol.TCP),
+            new Port(3000, Protocol.UDP)),
+        image.getExposedPorts());
   }
 }

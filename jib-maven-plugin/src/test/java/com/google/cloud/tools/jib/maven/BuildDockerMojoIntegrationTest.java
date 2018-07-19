@@ -51,7 +51,6 @@ public class BuildDockerMojoIntegrationTest {
     verifier.setAutoclean(false);
     verifier.executeGoal("package");
 
-    // Builds twice, and checks if the second build took less time.
     verifier.executeGoal("jib:" + BuildDockerMojo.GOAL_NAME);
     verifier.verifyErrorFreeLog();
 
@@ -70,7 +69,7 @@ public class BuildDockerMojoIntegrationTest {
   @Test
   public void testExecute_simple() throws VerificationException, IOException, InterruptedException {
     Assert.assertEquals(
-        "Hello, world. An argument.\n",
+        "Hello, world. An argument.\nfoo\ncat\n",
         buildToDockerDaemonAndRun(
             simpleTestProject.getProjectRoot(),
             "gcr.io/jib-integration-testing/simpleimage:maven"));

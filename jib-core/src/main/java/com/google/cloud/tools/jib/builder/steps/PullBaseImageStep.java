@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerCountMismatchException;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
+import com.google.cloud.tools.jib.image.json.BadContainerConfigurationFormatException;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
 import com.google.cloud.tools.jib.image.json.JsonToImageTranslator;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
@@ -34,6 +35,8 @@ import com.google.cloud.tools.jib.image.json.UnknownManifestFormatException;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
+import com.google.cloud.tools.jib.registry.RegistryAuthenticator;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryException;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
@@ -94,7 +97,8 @@ class PullBaseImageStep
   @Override
   public BaseImageWithAuthorization call()
       throws IOException, RegistryException, LayerPropertyNotFoundException,
-          LayerCountMismatchException, ExecutionException {
+          LayerCountMismatchException, ExecutionException, BadContainerConfigurationFormatException,
+          RegistryAuthenticationFailedException {
     buildConfiguration
         .getBuildLogger()
         .lifecycle("Getting base image " + buildConfiguration.getBaseImageReference() + "...");
@@ -114,8 +118,33 @@ class PullBaseImageStep
 
         Authorization registryCredentials =
             NonBlockingSteps.get(retrieveBaseRegistryCredentialsStep);
-        return new BaseImageWithAuthorization(
-            pullBaseImage(registryCredentials), registryCredentials);
+
+        try {
+          return new BaseImageWithAuthorization(
+              pullBaseImage(registryCredentials), registryCredentials);
+
+        } catch (RegistryUnauthorizedException registryUnauthorizedException) {
+          // The registry requires us to authenticate using the Docker Token Authentication.
+          // See https://docs.docker.com/registry/spec/auth/token
+          RegistryAuthenticator registryAuthenticator =
+              RegistryAuthenticator.initializer(
+                      buildConfiguration.getBaseImageRegistry(),
+                      buildConfiguration.getBaseImageRepository())
+                  .setAllowHttp(buildConfiguration.getAllowHttp())
+                  .initialize();
+          if (registryAuthenticator == null) {
+            buildConfiguration
+                .getBuildLogger()
+                .error(
+                    "Failed to retrieve authentication challenge for registry that required token authentication");
+            throw registryUnauthorizedException;
+          }
+          registryCredentials =
+              registryAuthenticator.setAuthorization(registryCredentials).authenticatePull();
+
+          return new BaseImageWithAuthorization(
+              pullBaseImage(registryCredentials), registryCredentials);
+        }
       }
     }
   }
@@ -130,17 +159,19 @@ class PullBaseImageStep
    * @throws LayerCountMismatchException if the manifest and configuration contain conflicting layer
    *     information
    * @throws LayerPropertyNotFoundException if adding image layers fails
+   * @throws BadContainerConfigurationFormatException if the container configuration is in a bad
+   *     format
    */
   private Image<Layer> pullBaseImage(@Nullable Authorization registryCredentials)
       throws IOException, RegistryException, LayerPropertyNotFoundException,
-          LayerCountMismatchException {
-    RegistryClient.Factory registryClientFactory =
-        RegistryClient.factory(
-            buildConfiguration.getBaseImageRegistry(), buildConfiguration.getBaseImageRepository());
+          LayerCountMismatchException, BadContainerConfigurationFormatException {
     RegistryClient registryClient =
-        buildConfiguration.getAllowHttp()
-            ? registryClientFactory.newAllowHttp()
-            : registryClientFactory.newWithAuthorization(registryCredentials);
+        RegistryClient.factory(
+                buildConfiguration.getBaseImageRegistry(),
+                buildConfiguration.getBaseImageRepository())
+            .setAllowHttp(buildConfiguration.getAllowHttp())
+            .setAuthorization(registryCredentials)
+            .newRegistryClient();
 
     ManifestTemplate manifestTemplate =
         registryClient.pullManifest(buildConfiguration.getBaseImageTag());

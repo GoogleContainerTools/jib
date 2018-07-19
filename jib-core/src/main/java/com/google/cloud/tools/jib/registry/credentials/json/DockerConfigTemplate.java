@@ -62,6 +62,7 @@ import javax.annotation.Nullable;
 public class DockerConfigTemplate implements JsonTemplate {
 
   /** Template for an {@code auth} defined for a registry under {@code auths}. */
+  @JsonIgnoreProperties(ignoreUnknown = true)
   private static class AuthTemplate implements JsonTemplate {
 
     @Nullable private String auth;
@@ -82,10 +83,15 @@ public class DockerConfigTemplate implements JsonTemplate {
    */
   @Nullable
   public String getAuthFor(String registry) {
-    if (!auths.containsKey(registry)) {
-      return null;
+    AuthTemplate registryAuth = auths.get(registry);
+    if (registryAuth == null) {
+      // The registry could be prefixed with the HTTPS protocol.
+      registryAuth = auths.get("https://" + registry);
     }
-    return auths.get(registry).auth;
+    if (registryAuth != null) {
+      return registryAuth.auth;
+    }
+    return null;
   }
 
   /**

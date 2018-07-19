@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
+import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
@@ -30,7 +31,12 @@ import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -81,7 +87,8 @@ public class BuildImageMojo extends JibPluginConfiguration {
 
     // Checks Maven settings for registry credentials.
     MavenSettingsServerCredentials mavenSettingsServerCredentials =
-        new MavenSettingsServerCredentials(Preconditions.checkNotNull(session).getSettings());
+        new MavenSettingsServerCredentials(
+            Preconditions.checkNotNull(session).getSettings(), settingsDecrypter, mavenBuildLogger);
     RegistryCredentials knownBaseRegistryCredentials =
         mavenSettingsServerCredentials.retrieve(baseImage.getRegistry());
     RegistryCredentials knownTargetRegistryCredentials =
@@ -104,9 +111,21 @@ public class BuildImageMojo extends JibPluginConfiguration {
             .setJavaArguments(getArgs())
             .setJvmFlags(getJvmFlags())
             .setEnvironment(getEnvironment())
-            .setExposedPorts(ExposedPortsParser.parse(getExposedPorts(), mavenBuildLogger))
+            .setExposedPorts(ExposedPortsParser.parse(getExposedPorts()))
             .setTargetFormat(ImageFormat.valueOf(getFormat()).getManifestTemplateClass())
             .setAllowHttp(getAllowInsecureRegistries());
+    if (getExtraDirectory() != null && Files.exists(getExtraDirectory())) {
+      try (Stream<Path> extraFilesLayerDirectoryFiles = Files.list(getExtraDirectory())) {
+        buildConfigurationBuilder.setExtraFilesLayerConfiguration(
+            LayerConfiguration.builder()
+                .addEntry(extraFilesLayerDirectoryFiles.collect(Collectors.toList()), "/")
+                .build());
+
+      } catch (IOException ex) {
+        throw new MojoExecutionException(
+            "Failed to list directory for extra files: " + getExtraDirectory(), ex);
+      }
+    }
     CacheConfiguration applicationLayersCacheConfiguration =
         CacheConfiguration.forPath(mavenProjectProperties.getCacheDirectory());
     buildConfigurationBuilder.setApplicationLayersCacheConfiguration(

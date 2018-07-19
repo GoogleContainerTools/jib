@@ -45,9 +45,13 @@ public interface ProjectProperties {
 
   LayerEntry getDependenciesLayerEntry();
 
+  LayerEntry getSnapshotDependenciesLayerEntry();
+
   LayerEntry getResourcesLayerEntry();
 
   LayerEntry getClassesLayerEntry();
+
+  LayerEntry getExtraFilesLayerEntry();
 
   /**
    * @param prefix the prefix message for the {@link HelpfulSuggestions}.

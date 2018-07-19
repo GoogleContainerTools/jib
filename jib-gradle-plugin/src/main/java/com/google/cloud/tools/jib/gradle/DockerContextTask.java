@@ -22,13 +22,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.io.InsecureRecursiveDeleteException;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
-import org.gradle.api.Task;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
@@ -60,15 +56,8 @@ public class DockerContextTask extends DefaultTask {
    */
   @InputFiles
   public FileCollection getInputFiles() {
-    Task classesTask = getProject().getTasks().getByPath("classes");
-    Set<? extends Task> classesDependencies =
-        classesTask.getTaskDependencies().getDependencies(classesTask);
-
-    List<FileCollection> dependencyFileCollections = new ArrayList<>();
-    for (Task task : classesDependencies) {
-      dependencyFileCollections.add(task.getOutputs().getFiles());
-    }
-    return getProject().files(dependencyFileCollections);
+    return GradleProjectProperties.getInputFiles(
+        Preconditions.checkNotNull(jibExtension).getExtraDirectory(), getProject());
   }
 
   /**
@@ -115,18 +104,19 @@ public class DockerContextTask extends DefaultTask {
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(getProject(), gradleBuildLogger);
     String mainClass = gradleProjectProperties.getMainClass(jibExtension);
-
     String targetDir = getTargetDir();
 
     try {
       // Validate port input, but don't save the output because we don't want the ranges expanded
       // here.
-      ExposedPortsParser.parse(jibExtension.getExposedPorts(), gradleBuildLogger);
+      ExposedPortsParser.parse(jibExtension.getExposedPorts());
 
       new DockerContextGenerator(
+              gradleProjectProperties.getDependenciesLayerEntry(),
+              gradleProjectProperties.getSnapshotDependenciesLayerEntry(),
               gradleProjectProperties.getResourcesLayerEntry(),
-              gradleProjectProperties.getResourcesLayerEntry(),
-              gradleProjectProperties.getClassesLayerEntry())
+              gradleProjectProperties.getClassesLayerEntry(),
+              gradleProjectProperties.getExtraFilesLayerEntry())
           .setBaseImage(jibExtension.getBaseImage())
           .setJvmFlags(jibExtension.getJvmFlags())
           .setMainClass(mainClass)
