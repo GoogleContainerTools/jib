@@ -77,6 +77,8 @@ public class DockerConfigCredentialRetriever {
   }
 
   /**
+   * Retrieves credentials for a registry. Tries all possible known aliases.
+   *
    * @return {@link Authorization} found for {@code registry}, or {@code null} if not found
    * @throws IOException if failed to parse the config JSON
    */
@@ -98,6 +100,13 @@ public class DockerConfigCredentialRetriever {
     return null;
   }
 
+  /**
+   * Retrieves credentials for a registry alias from a {@link DockerConfig}.
+   *
+   * @param dockerConfig the {@link DockerConfig} to retrieve from
+   * @param registryAlias the registry alias to use
+   * @return the retrieved credentials, or {@code null} if none are found
+   */
   @Nullable
   private Authorization retrieve(DockerConfig dockerConfig, String registryAlias) {
     // First, tries to find defined auth.
