@@ -6,4 +6,4 @@ You can find simple usage for java in [helloworld](helloworld)
 
 ### SpringBoot Example 
 
-You can find usage by Gradle or Maven with SpringBoot in [SpringBoot](spring-boot-draft#Quickstart)
+You can find usage by Gradle or Maven with SpringBoot in [spring-boot](spring-boot-draft#Quickstart)
