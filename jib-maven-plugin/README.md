@@ -204,7 +204,7 @@ Field | Type | Default | Description
 `to` | [`to`](#to-object) | *Required* | Configures the target image to build your application to.
 `container` | [`container`](#container-object) | See [`container`](#container-object) | Configures the container that is run from your image.
 `useOnlyProjectCache` | boolean | `false` | If set to true, Jib does not share a cache between different Gradle projects.
-`allowInsecureRegistries` | boolean | `false` | If set to true, Jib uses HTTP as a fallback for registries that do not support HTTPS. Leaving this parameter set to false is strongly recommended, since communication with insecure registries is unencrypted and visible to others on the network.
+`allowInsecureRegistries` | boolean | `false` | If set to true, Jib uses HTTP as a fallback for registries that do not support HTTPS or whose certificates cannot be verified. Leaving this parameter set to `false` is strongly recommended, since communication with insecure registries is unencrypted and visible to others on the network.
 
 <a name="from-object"></a>`from` is an object with the following properties:
 
@@ -229,7 +229,7 @@ Property | Type | Default | Description
 `args` | list | *None* | Default main method arguments to run your application with.
 `ports` | list | *None* | Ports that the container exposes at runtime (similar to Docker's [EXPOSE](https://docs.docker.com/engine/reference/builder/#expose) instruction).
 `format` | string | `Docker` | Use `OCI` to build an [OCI container image](https://www.opencontainers.org/).
-`useCurrentTimestamp` | boolean | `false` | By default, Jib wipes all timestamps to guarantee reproducibility. If this parameter is set to true, Jib will set the image's creation timestamp to the time of the build, which sacrifices reproducibility for easily being able to tell when your image was created.
+`useCurrentTimestamp` | boolean | `false` | By default, Jib wipes all timestamps to guarantee reproducibility. If this parameter is set to `true`, Jib will set the image's creation timestamp to the time of the build, which sacrifices reproducibility for easily being able to tell when your image was created.
 
 *\* Uses `mainClass` from `maven-jar-plugin` or tries to find a valid main class.*
 

@@ -162,8 +162,8 @@ Field | Type | Default | Description
 `from` | [`from`](#from-closure) | See [`from`](#from-closure) | Configures the base image to build your application on top of.
 `to` | [`to`](#to-closure) | *Required* | Configures the target image to build your application to.
 `container` | [`container`](#container-closure) | See [`container`](#container-closure) | Configures the container that is run from your built image.
-`useProjectOnlyCache` | `boolean` | `false` | If set to true, Jib does not share a cache between different Maven projects.
-`allowInsecureRegistries` | `boolean` | `false` | If set to true, Jib uses HTTP as a fallback for registries that do not support HTTPS. Leaving this parameter set to false is strongly recommended, since communication with insecure registries is unencrypted and visible to others on the network.
+`useProjectOnlyCache` | `boolean` | `false` | If set to `true`, Jib does not share a cache between different Maven projects.
+`allowInsecureRegistries` | `boolean` | `false` | If set to true, Jib uses HTTP as a fallback for registries that do not support HTTPS or whose certificates cannot be verified. Leaving this parameter set to `false` is strongly recommended, since communication with insecure registries is unencrypted and visible to others on the network.
 
 <a name="from-closure"></a>`from` is a closure with the following properties:
 
@@ -197,7 +197,7 @@ Property | Type | Default | Description
 `args` | `List<String>` | *None* | Default main method arguments to run your application with.
 `ports` | `List<String>` | *None* | Ports that the container exposes at runtime (similar to Docker's [EXPOSE](https://docs.docker.com/engine/reference/builder/#expose) instruction).
 `format` | `String` | `Docker` | Use `OCI` to build an [OCI container image](https://www.opencontainers.org/).
-`useCurrentTimestamp` | `boolean` | `false` | By default, Jib wipes all timestamps to guarantee reproducibility. If this parameter is set to true, Jib will set the image's creation timestamp to the time of the build, which sacrifices reproducibility for easily being able to tell when your image was created.
+`useCurrentTimestamp` | `boolean` | `false` | By default, Jib wipes all timestamps to guarantee reproducibility. If this parameter is set to `true`, Jib will set the image's creation timestamp to the time of the build, which sacrifices reproducibility for easily being able to tell when your image was created.
 
 *\* Uses the main class defined in the `jar` task or tries to find a valid main class.*
 
