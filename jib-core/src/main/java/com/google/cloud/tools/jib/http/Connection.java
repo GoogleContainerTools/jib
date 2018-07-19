@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.http;
 
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpMethods;
+import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.apache.ApacheHttpTransport;
@@ -117,11 +118,16 @@ public class Connection implements Closeable {
    * @throws IOException if building the HTTP request fails.
    */
   public Response send(String httpMethod, Request request) throws IOException {
-    httpResponse =
+    HttpRequest httpRequest =
         requestFactory
             .buildRequest(httpMethod, url, request.getHttpContent())
-            .setHeaders(request.getHeaders())
-            .execute();
+            .setHeaders(request.getHeaders());
+    if (request.getHttpTimeout() != null) {
+      httpRequest.setConnectTimeout(request.getHttpTimeout());
+      httpRequest.setReadTimeout(request.getHttpTimeout());
+    }
+
+    httpResponse = httpRequest.execute();
     return new Response(httpResponse);
   }
 }

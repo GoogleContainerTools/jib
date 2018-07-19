@@ -162,6 +162,7 @@ class RegistryEndpointCaller<T> {
       Request.Builder requestBuilder =
           Request.builder()
               .setUserAgent(userAgent)
+              .setHttpTimeout(Integer.getInteger("jib.httpTimeout"))
               .setAccept(registryEndpointProvider.getAccept())
               .setBody(registryEndpointProvider.getContent());
       // Only sends authorization if using HTTPS.
