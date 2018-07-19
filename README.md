@@ -44,7 +44,7 @@ See also [rules_docker](https://github.com/bazelbuild/rules_docker) for a simila
 
 ## Frequently Asked Questions (FAQ)
 
-See the [Frequently Asked Questions (FAQ) wiki page](/../../wiki/Frequently-Asked-Questions-(FAQ)).
+See the [Frequently Asked Questions (FAQ) page](docs/faq.md).
 
 ## Get involved with the community
 
