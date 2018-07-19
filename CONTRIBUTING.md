@@ -52,10 +52,9 @@ To build, use the provided `build.sh` which builds and tests each of the compone
 
 To use a local build of the `jib-maven-plugin`:
 
-  1. Build and install `jib-core` into your local `~/.m2/repository`
-     with `(cd jib-core && ./gradlew build install)`.
   1. Build and install `jib-maven-plugin` into your local `~/.m2/repository`
-     with `(cd jib-maven-plugin && ./mvnw install)`.
+     with `(cd jib-maven-plugin && ./mvnw install)`; this also builds `jib-core`.
+     Alternatively, use the provided `build.sh` which performs an `install`.
   1. Modify your test project's `pom.xml` to reference the `-SNAPSHOT`
      version of the `com.google.cloud.tools.jib` plugin.
 
@@ -78,7 +77,9 @@ If developing with Eclipse and M2Eclipse (the Maven tooling for Eclipse), just l
 
 To use a local build of the `jib-gradle-plugin`:
 
-  1. Build and install `jib-gradle-plugin` into your local `~/.m2/repository` with `(cd jib-gradle-plugin && ./gradlew build install)`; this also builds `jib-core`. Alternatively, use the provided `build.sh` which performs an `install`.
+  1. Build and install `jib-gradle-plugin` into your local `~/.m2/repository`
+     with `(cd jib-gradle-plugin && ./gradlew build install)`; this also builds `jib-core`.
+     Alternatively, use the provided `build.sh` which performs an `install`.
   1. Modify your test project's `build.gradle` to look like the following:
         ```groovy
         buildscript {
