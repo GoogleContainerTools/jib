@@ -72,18 +72,6 @@ public class JibExtension {
     return projectDirectory.resolve("src").resolve("main").resolve("jib");
   }
 
-  /** Errors on invalid values for the {@code jib.httpTimeout} system property. */
-  static void checkHttpTimeoutSystemProperty() {
-    try {
-      String value = System.getProperty("jib.httpTimeout");
-      if (value != null && Integer.parseInt(value) < 0) {
-        throw new IllegalArgumentException("negative value of jib.httpTimeout");
-      }
-    } catch (NumberFormatException ex) {
-      throw new IllegalArgumentException("non-integer value of jib.httpTimeout");
-    }
-  }
-
   private final ImageConfiguration from;
   private final ImageConfiguration to;
   private final ContainerParameters container;

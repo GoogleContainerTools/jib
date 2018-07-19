@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.builder.BuildLogger;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,11 +31,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class JibPluginConfigurationTest {
 
   @Mock private BuildLogger mockLogger;
-
-  @After
-  public void tearDown() {
-    System.clearProperty("jib.httpTimeout");
-  }
 
   @Test
   public void testHandleDeprecatedParameters() {
@@ -71,33 +65,5 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals(Arrays.asList("arg1", "arg2", "arg3"), testPluginConfiguration.getArgs());
     Assert.assertEquals("OCI", testPluginConfiguration.getFormat());
     Assert.assertEquals(Paths.get("some/path"), testPluginConfiguration.getExtraDirectory());
-  }
-
-  @Test
-  public void testCheckHttpTimeoutSystemProperty_ok() {
-    Assert.assertNull(System.getProperty("jib.httpTimeout"));
-    JibPluginConfiguration.checkHttpTimeoutSystemProperty();
-  }
-
-  @Test
-  public void testCheckHttpTimeoutSystemProperty_stringValue() {
-    System.setProperty("jib.httpTimeout", "random string");
-    try {
-      JibPluginConfiguration.checkHttpTimeoutSystemProperty();
-      Assert.fail("Should error with a non-integer timeout");
-    } catch (IllegalArgumentException ex) {
-      Assert.assertEquals("non-integer value of jib.httpTimeout", ex.getMessage());
-    }
-  }
-
-  @Test
-  public void testCheckHttpTimeoutSystemProperty_negativeValue() {
-    System.setProperty("jib.httpTimeout", "-80");
-    try {
-      JibPluginConfiguration.checkHttpTimeoutSystemProperty();
-      Assert.fail("Should error with a negative timeout");
-    } catch (IllegalArgumentException ex) {
-      Assert.assertEquals("negative value of jib.httpTimeout", ex.getMessage());
-    }
   }
 }

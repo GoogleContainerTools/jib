@@ -24,7 +24,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import org.gradle.api.Project;
 import org.gradle.testfixtures.ProjectBuilder;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,11 +47,6 @@ public class JibExtensionTest {
         fakeProject
             .getExtensions()
             .create(JibPlugin.JIB_EXTENSION_NAME, JibExtension.class, fakeProject);
-  }
-
-  @After
-  public void tearDown() {
-    System.clearProperty("jib.httpTimeout");
   }
 
   @Test
@@ -156,33 +150,5 @@ public class JibExtensionTest {
     Assert.assertEquals("mainClass", testJibExtension.getMainClass());
     Assert.assertEquals(Arrays.asList("arg1", "arg2", "arg3"), testJibExtension.getArgs());
     Assert.assertEquals(OCIManifestTemplate.class, testJibExtension.getFormat());
-  }
-
-  @Test
-  public void testCheckHttpTimeoutSystemProperty_ok() {
-    Assert.assertNull(System.getProperty("jib.httpTimeout"));
-    JibExtension.checkHttpTimeoutSystemProperty();
-  }
-
-  @Test
-  public void testCheckHttpTimeoutSystemProperty_stringValue() {
-    System.setProperty("jib.httpTimeout", "random string");
-    try {
-      JibExtension.checkHttpTimeoutSystemProperty();
-      Assert.fail("Should error with a non-integer timeout");
-    } catch (IllegalArgumentException ex) {
-      Assert.assertEquals("non-integer value of jib.httpTimeout", ex.getMessage());
-    }
-  }
-
-  @Test
-  public void testCheckHttpTimeoutSystemProperty_negativeValue() {
-    System.setProperty("jib.httpTimeout", "-80");
-    try {
-      JibExtension.checkHttpTimeoutSystemProperty();
-      Assert.fail("Should error with a negative timeout");
-    } catch (IllegalArgumentException ex) {
-      Assert.assertEquals("negative value of jib.httpTimeout", ex.getMessage());
-    }
   }
 }

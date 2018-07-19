@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
+import com.google.cloud.tools.jib.frontend.SystemPropertyValidator;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
@@ -87,7 +88,7 @@ public class BuildDockerTask extends DefaultTask {
     Preconditions.checkNotNull(jibExtension);
     GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
     jibExtension.handleDeprecatedParameters(gradleBuildLogger);
-    JibExtension.checkHttpTimeoutSystemProperty();
+    SystemPropertyValidator.checkHttpTimeoutProperty(GradleException::new);
 
     if (Boolean.getBoolean("sendCredentialsOverHttp")) {
       gradleBuildLogger.warn(
