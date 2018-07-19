@@ -41,7 +41,7 @@ public class DockerContextMojo extends JibPluginConfiguration {
 
   @Nullable
   @Parameter(
-      property = "jib.dockerDir",
+      property = "jibTargetDir",
       defaultValue = "${project.build.directory}/jib-docker-context",
       required = true)
   private String targetDir;
