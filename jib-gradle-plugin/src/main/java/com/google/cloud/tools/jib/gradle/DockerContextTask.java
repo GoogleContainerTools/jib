@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.docker.DockerContextGenerator;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
+import com.google.cloud.tools.jib.frontend.SystemPropertyValidator;
 import com.google.common.base.Preconditions;
 import com.google.common.io.InsecureRecursiveDeleteException;
 import java.io.IOException;
@@ -100,6 +101,7 @@ public class DockerContextTask extends DefaultTask {
 
     GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
     jibExtension.handleDeprecatedParameters(gradleBuildLogger);
+    SystemPropertyValidator.checkHttpTimeoutProperty(GradleException::new);
 
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(getProject(), gradleBuildLogger);

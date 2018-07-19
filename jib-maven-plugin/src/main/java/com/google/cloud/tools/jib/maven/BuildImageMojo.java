@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
+import com.google.cloud.tools.jib.frontend.SystemPropertyValidator;
 import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.RegistryClient;
@@ -61,6 +62,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
   public void execute() throws MojoExecutionException, MojoFailureException {
     MavenBuildLogger mavenBuildLogger = new MavenBuildLogger(getLog());
     handleDeprecatedParameters(mavenBuildLogger);
+    SystemPropertyValidator.checkHttpTimeoutProperty(MojoExecutionException::new);
 
     // Validates 'format'.
     if (Arrays.stream(ImageFormat.values()).noneMatch(value -> value.name().equals(getFormat()))) {
