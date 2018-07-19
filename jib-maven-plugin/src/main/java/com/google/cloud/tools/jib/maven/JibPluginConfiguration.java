@@ -95,11 +95,7 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     }
   }
 
-  /**
-   * Warns about invalid values for the {@code jib.httpTimeout} system property.
-   *
-   * @param logger The logger used to print the warnings
-   */
+  /** Errors about invalid values for the {@code jib.httpTimeout} system property. */
   static void checkHttpTimeoutSystemProperty() {
     try {
       String value = System.getProperty("jib.httpTimeout");
