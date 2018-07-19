@@ -63,7 +63,7 @@ public class DockerConfigCredentialRetriever {
   DockerConfigCredentialRetriever(String registry, Path dockerConfigFile) {
     this.registry = registry;
     this.dockerConfigFile = dockerConfigFile;
-    this.dockerCredentialHelperFactory = new DockerCredentialHelperFactory(registry);
+    this.dockerCredentialHelperFactory = new DockerCredentialHelperFactory();
   }
 
   @VisibleForTesting
@@ -87,8 +87,10 @@ public class DockerConfigCredentialRetriever {
       return null;
     }
 
-    for (String registry : RegistryAliasGroup.getAliasesGroup(registry)) {
-      Authorization authorization = retrieve(dockerConfigTemplate, registry);
+    DockerConfig dockerConfig = new DockerConfig(dockerConfigTemplate);
+
+    for (String registryAlias : RegistryAliasGroup.getAliasesGroup(registry)) {
+      Authorization authorization = retrieve(dockerConfig, registryAlias);
       if (authorization != null) {
         return authorization;
       }
@@ -97,20 +99,20 @@ public class DockerConfigCredentialRetriever {
   }
 
   @Nullable
-  private Authorization retrieve(DockerConfigTemplate dockerConfigTemplate, String registry) {
+  private Authorization retrieve(DockerConfig dockerConfig, String registryAlias) {
     // First, tries to find defined auth.
-    String auth = dockerConfigTemplate.getAuthFor(registry);
+    String auth = dockerConfig.getAuthFor(registryAlias);
     if (auth != null) {
       return Authorizations.withBasicToken(auth);
     }
 
     // Then, tries to use a defined credHelpers credential helper.
-    String credentialHelperSuffix = dockerConfigTemplate.getCredentialHelperFor(registry);
-    if (credentialHelperSuffix != null) {
+    DockerCredentialHelper dockerCredentialHelper =
+        dockerConfig.getCredentialHelperFor(dockerCredentialHelperFactory, registryAlias);
+    if (dockerCredentialHelper != null) {
       try {
-        return dockerCredentialHelperFactory
-            .withCredentialHelperSuffix(credentialHelperSuffix)
-            .retrieve();
+        // Tries with the given registry alias (NOT the original registry).
+        return dockerCredentialHelper.retrieve();
 
       } catch (IOException
           | NonexistentServerUrlDockerCredentialHelperException

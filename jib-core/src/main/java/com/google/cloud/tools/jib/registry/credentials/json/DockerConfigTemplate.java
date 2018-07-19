@@ -19,12 +19,8 @@ package com.google.cloud.tools.jib.registry.credentials.json;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 /**
@@ -67,27 +63,14 @@ public class DockerConfigTemplate implements JsonTemplate {
 
   /** Template for an {@code auth} defined for a registry under {@code auths}. */
   @JsonIgnoreProperties(ignoreUnknown = true)
-  private static class AuthTemplate implements JsonTemplate {
+  public static class AuthTemplate implements JsonTemplate {
 
     @Nullable private String auth;
-  }
 
-  /**
-   * Returns the first value matching the given key predicates (short-circuiting in the order of
-   * predicates).
-   */
-  private static <K, T> T findFirstInMapByKey(Map<K, T> map, List<Predicate<K>> keyMatches) {
-    return keyMatches
-        .stream()
-        .map(keyMatch -> findFirstInMapByKey(map, keyMatch))
-        .filter(Objects::nonNull)
-        .findFirst()
-        .orElse(null);
-  }
-
-  /** Returns the first value matching the given key predicate. */
-  private static <K, T> T findFirstInMapByKey(Map<K, T> map, Predicate<K> keyMatch) {
-    return map.keySet().stream().filter(keyMatch).map(map::get).findFirst().orElse(null);
+    @Nullable
+    public String getAuth() {
+      return auth;
+    }
   }
 
   /** Maps from registry to its {@link AuthTemplate}. */
@@ -98,58 +81,17 @@ public class DockerConfigTemplate implements JsonTemplate {
   /** Maps from registry to credential helper name. */
   private final Map<String, String> credHelpers = new HashMap<>();
 
-  /**
-   * Returns the base64-encoded {@code Basic} authorization for {@code registry}, or {@code null} if
-   * none exists. The order of lookup preference:
-   *
-   * <ol>
-   *   <li>Exact registry name
-   *   <li>https:// + registry name
-   *   <li>registry name + / + arbitrary suffix
-   *   <li>https:// + registry name + / arbitrary suffix
-   * </ol>
-   *
-   * @param registry the registry to get the authorization for
-   * @return the base64-encoded {@code Basic} authorization for {@code registry}, or {@code null} if
-   *     none exists
-   */
-  @Nullable
-  public String getAuthFor(String registry) {
-    AuthTemplate authTemplate = findFirstInMapByKey(auths, getRegistryMatchersFor(registry));
-    return authTemplate != null ? authTemplate.auth : null;
+  public Map<String, AuthTemplate> getAuths() {
+    return auths;
   }
 
-  /**
-   * Returns {@code credsStore} or {@code credHelpers} for the given {@code registry}. If there
-   * exists a matching registry entry in {@code auths}, returns {@code credStore}; otherwise, a
-   * matching entry in {@code credHelpers} is returned based on the following lookup order:
-   *
-   * <ol>
-   *   <li>Exact registry name
-   *   <li>https:// + registry name
-   *   <li>registry name + / + arbitrary suffix
-   *   <li>https:// + registry name + / + arbitrary suffix
-   * </ol>
-   *
-   * @param registry the registry to get the credential helpers for
-   * @return {@code credsStore} if {@code registry} is present in {@code auths}; otherwise, searches
-   *     {@code credHelpers}; otherwise, {@code null} if not found
-   */
   @Nullable
-  public String getCredentialHelperFor(String registry) {
-    List<Predicate<String>> registryMatchers = getRegistryMatchersFor(registry);
-    if (credsStore != null && findFirstInMapByKey(auths, registryMatchers) != null) {
-      return credsStore;
-    }
-    return findFirstInMapByKey(credHelpers, registryMatchers);
+  public String getCredsStore() {
+    return credsStore;
   }
 
-  private List<Predicate<String>> getRegistryMatchersFor(String registry) {
-    Predicate<String> exactMatch = registry::equals;
-    Predicate<String> withHttps = ("https://" + registry)::equals;
-    Predicate<String> withSuffix = name -> name.startsWith(registry + "/");
-    Predicate<String> WithHttpsAndSuffix = name -> name.startsWith("https://" + registry + "/");
-    return Arrays.asList(exactMatch, withHttps, withSuffix, WithHttpsAndSuffix);
+  public Map<String, String> getCredHelpers() {
+    return credHelpers;
   }
 
   @VisibleForTesting

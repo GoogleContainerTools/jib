@@ -85,8 +85,8 @@ public class RetrieveRegistryCredentialsStepTest {
   public void testCall_useCredentialHelper()
       throws IOException, NonexistentDockerCredentialHelperException {
     Mockito.when(
-            mockDockerCredentialHelperFactory.withCredentialHelperSuffix(
-                "someOtherCredentialHelper"))
+            mockDockerCredentialHelperFactory.newDockerCredentialHelper(
+                "someRegistry", "someOtherCredentialHelper"))
         .thenReturn(mockDockerCredentialHelper);
 
     Assert.assertEquals(
@@ -117,7 +117,8 @@ public class RetrieveRegistryCredentialsStepTest {
       throws IOException, NonexistentDockerCredentialHelperException {
     // Credential helper does not have credentials.
     Mockito.when(
-            mockDockerCredentialHelperFactory.withCredentialHelperSuffix("someCredentialHelper"))
+            mockDockerCredentialHelperFactory.newDockerCredentialHelper(
+                "someRegistry", "someCredentialHelper"))
         .thenReturn(mockNonexistentServerUrlDockerCredentialHelper);
 
     Mockito.when(mockDockerConfigCredentialRetriever.retrieve()).thenReturn(mockAuthorization);
@@ -134,9 +135,12 @@ public class RetrieveRegistryCredentialsStepTest {
   @Test
   public void testCall_inferCommonCredentialHelpers()
       throws IOException, NonexistentDockerCredentialHelperException {
-    Mockito.when(mockDockerCredentialHelperFactory.withCredentialHelperSuffix("gcr"))
+    Mockito.when(
+            mockDockerCredentialHelperFactory.newDockerCredentialHelper("something.gcr.io", "gcr"))
         .thenReturn(mockDockerCredentialHelper);
-    Mockito.when(mockDockerCredentialHelperFactory.withCredentialHelperSuffix("ecr-login"))
+    Mockito.when(
+            mockDockerCredentialHelperFactory.newDockerCredentialHelper(
+                "something.amazonaws.com", "ecr-login"))
         .thenReturn(mockNonexistentDockerCredentialHelper);
 
     Assert.assertEquals(
