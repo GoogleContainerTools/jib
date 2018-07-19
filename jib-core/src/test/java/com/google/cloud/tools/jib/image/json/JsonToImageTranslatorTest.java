@@ -33,6 +33,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.DigestException;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -141,6 +142,7 @@ public class JsonToImageTranslatorTest {
         DescriptorDigest.fromDigest(
             "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad"),
         layers.get(0).getDiffId());
+    Assert.assertEquals(Instant.ofEpochSecond(20), image.getCreated());
     Assert.assertEquals(Arrays.asList("some", "entrypoint", "command"), image.getEntrypoint());
     Assert.assertEquals(Arrays.asList("VAR1=VAL1", "VAR2=VAL2"), image.getEnvironment());
     Assert.assertEquals(
