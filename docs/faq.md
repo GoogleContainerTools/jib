@@ -2,7 +2,7 @@
 
 ## Frequently Asked Questions (FAQ)
 
-If a question you have is not answered below, please [submit an issue](../issues/new).
+If a question you have is not answered below, please [submit an issue](/../../issues/new).
 
 [But, I'm not a Java developer.](#but-im-not-a-java-developer)\
 [What image format does Jib use?](#what-image-format-does-jib-use)\
@@ -28,11 +28,11 @@ Jib currently builds into the [Docker V2.2](https://docs.docker.com/registry/spe
 
 #### Maven
 
-See [Extended Usage](../tree/master/jib-maven-plugin#extended-usage) for the `<container><format>` configuration.
+See [Extended Usage](../jib-maven-plugin#extended-usage) for the `<container><format>` configuration.
 
 #### Gradle
 
-See [Extended Usage](../tree/master/jib-gradle-plugin#extended-usage) for the `container.format` configuration.
+See [Extended Usage](../jib-gradle-plugin#extended-usage) for the `container.format` configuration.
 
 ### Can I define a custom entrypoint?
 
@@ -72,7 +72,7 @@ However, if you need to run commands, you can build a custom image and configure
 
 #### Maven
 
-In [`jib-maven-plugin`](../tree/master/jib-maven-plugin), you can then use this custom base image by adding the following configuration:
+In [`jib-maven-plugin`](../jib-maven-plugin), you can then use this custom base image by adding the following configuration:
 
 ```xml
 <configuration>
@@ -84,7 +84,7 @@ In [`jib-maven-plugin`](../tree/master/jib-maven-plugin), you can then use this 
 
 #### Gradle
 
-In [`jib-gradle-plugin`](../tree/master/jib-gradle-plugin), you can then use this custom base image by adding the following configuration:
+In [`jib-gradle-plugin`](../jib-gradle-plugin), you can then use this custom base image by adding the following configuration:
 
 ```groovy
 jib.from.image = 'custom-base-image'
@@ -98,7 +98,7 @@ We currently support adding a custom directory with an **incubating** feature. T
 
 ### Can I build to a local Docker daemon?
 
-See [`jib:dockerBuild` for Maven](../tree/master/jib-maven-plugin#build-to-docker-daemon) and [`jibDockerBuild` for Gradle](../tree/master/jib-gradle-plugin#build-to-docker-daemon).
+See [`jib:dockerBuild` for Maven](../jib-maven-plugin#build-to-docker-daemon) and [`jibDockerBuild` for Gradle](../jib-gradle-plugin#build-to-docker-daemon).
 
 You can also [`docker pull`](https://docs.docker.com/engine/reference/commandline/pull/) the image built with Jib to have it available in your local Docker daemon.
 
@@ -179,6 +179,3 @@ To tag the image with a timestamp, simply set the timestamp as the tag for `to.i
 ```groovy
 jib.to.image = 'gcr.io/my-gcp-project/my-app:' + System.nanoTime()
 ```
-
-<!-- We are using this to collect Google Analytics data. This is from https://github.com/igrigorik/ga-beacon. -->
-![Analytics](https://cloud-tools-for-java-metrics.appspot.com/UA-121724379-2/wiki?pixel&useReferer)
