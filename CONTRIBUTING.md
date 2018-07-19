@@ -44,13 +44,15 @@ To build, use the provided `build.sh` which builds and tests each of the compone
 
 **Note** that you will not be able to run the integration tests for `jib-gradle-plugin` or `jib-maven-plugin` because those push to our integration-testing GCP project. If you would like to run integration tests, change all uses of the `jib-integration-testing` project to your own GCP project and run `./gradlew integrationTest` for `jib-gradle-plugin` and `./mvnw verify -Pintegration-tests` for `jib-maven-plugin`.
 
+# Development Tips
+
 ## Debugging the Jib Maven Plugin (`jib-maven-plugin`)
 
 ### Build and use a local snapshot 
 
 To use a local build of the `jib-maven-plugin`:
 
-  1. bBild and install `jib-core` into your local `~/.m2/repository`
+  1. Build and install `jib-core` into your local `~/.m2/repository`
      with `(cd jib-core && ./gradlew build install)`.
   1. Build and install `jib-maven-plugin` into your local `~/.m2/repository`
      with `(cd jib-maven-plugin && ./mvnw install)`.
@@ -59,10 +61,10 @@ To use a local build of the `jib-maven-plugin`:
 
 If developing from within Eclipse with M2Eclipse (the Maven tooling for Eclipse):
 
-  1. modify your test project's `pom.xml` to reference the `-SNAPSHOT`
-     version of the `com.google.cloud.tools.jib` plugin
-  2. create and launch a _Maven Build_ launch configuration for the
-     test project, and ensure the _Resolve Workspace artifacts_ is checked
+  1. Modify your test project's `pom.xml` to reference the `-SNAPSHOT`
+     version of the `com.google.cloud.tools.jib` plugin.
+  2. Create and launch a _Maven Build_ launch configuration for the
+     test project, and ensure the _Resolve Workspace artifacts_ is checked.
 
 ### Attaching a debugger
 
