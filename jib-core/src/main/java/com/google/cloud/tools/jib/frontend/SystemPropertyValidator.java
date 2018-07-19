@@ -31,13 +31,15 @@ public class SystemPropertyValidator {
    */
   public static <T extends Throwable> void checkHttpTimeoutProperty(
       Function<String, T> exceptionFactory) throws T {
+    String value = System.getProperty("jib.httpTimeout");
     try {
-      String value = System.getProperty("jib.httpTimeout");
       if (value != null && Integer.parseInt(value) < 0) {
-        throw exceptionFactory.apply("negative value of jib.httpTimeout");
+        throw exceptionFactory.apply("jib.httpTimeout cannot be negative: " + value);
       }
     } catch (NumberFormatException ex) {
-      throw exceptionFactory.apply("non-integer value of jib.httpTimeout");
+      throw exceptionFactory.apply("jib.httpTimeout must be an integer: " + value);
     }
   }
+
+  private SystemPropertyValidator() {}
 }

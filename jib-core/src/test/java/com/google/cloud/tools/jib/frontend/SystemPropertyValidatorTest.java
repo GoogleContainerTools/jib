@@ -41,7 +41,7 @@ public class SystemPropertyValidatorTest {
       SystemPropertyValidator.checkHttpTimeoutProperty(Exception::new);
       Assert.fail("Should error with a non-integer timeout");
     } catch (Exception ex) {
-      Assert.assertEquals("non-integer value of jib.httpTimeout", ex.getMessage());
+      Assert.assertEquals("jib.httpTimeout must be an integer: random string", ex.getMessage());
     }
   }
 
@@ -52,7 +52,7 @@ public class SystemPropertyValidatorTest {
       SystemPropertyValidator.checkHttpTimeoutProperty(Exception::new);
       Assert.fail("Should error with a negative timeout");
     } catch (Exception ex) {
-      Assert.assertEquals("negative value of jib.httpTimeout", ex.getMessage());
+      Assert.assertEquals("jib.httpTimeout cannot be negative: -80", ex.getMessage());
     }
   }
 }
