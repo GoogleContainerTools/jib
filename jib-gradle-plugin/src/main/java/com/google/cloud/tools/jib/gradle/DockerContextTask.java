@@ -100,7 +100,7 @@ public class DockerContextTask extends DefaultTask {
 
     GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
     jibExtension.handleDeprecatedParameters(gradleBuildLogger);
-    JibExtension.checkHttpTimeoutSystemProperty(gradleBuildLogger);
+    JibExtension.checkHttpTimeoutSystemProperty();
 
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(getProject(), gradleBuildLogger);
