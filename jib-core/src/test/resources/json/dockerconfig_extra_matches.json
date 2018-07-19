@@ -1,0 +1,17 @@
+{
+  "auths":{
+    "https://my-registry/v1/":{"auth":"my-registry: starting with name and with https"},
+    "my-registry/v4/":{"auth":"my-registry: starting with name"},
+    "https://my-registry":{"auth":"my-registry: with https"},
+    "my-registry":{"auth":"my-registry: exact match"},
+
+    "https://cool-registry":{"auth":"cool-registry: with https"},
+    "cool-registry/v8/":{"auth":"cool-registry: starting with registry"},
+    "https://cool-registry/v1/":{"auth":"cool-registry: starting with name and with https"},
+
+    "https://awesome-registry/v9/":{"auth":"awesome-registry: starting with name and with https"},
+    "awesome-registry/v9/":{"auth":"awesome-registry: starting with name"},
+
+    "https://dull-registry/v3/":{"auth":"dull-registry: starting with name and with https"}
+  }
+}

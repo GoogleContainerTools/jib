@@ -67,6 +67,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   /** Configuration for {@code container} parameter. */
   public static class ContainerParameters {
 
+    @Parameter private boolean useCurrentTimestamp = false;
+
     @Parameter private List<String> jvmFlags = Collections.emptyList();
 
     @Nullable @Parameter private String mainClass;
@@ -189,6 +191,10 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   @Nullable
   String getTargetImageCredentialHelperName() {
     return Preconditions.checkNotNull(to).credHelper;
+  }
+
+  boolean getUseCurrentTimestamp() {
+    return container.useCurrentTimestamp;
   }
 
   List<String> getJvmFlags() {

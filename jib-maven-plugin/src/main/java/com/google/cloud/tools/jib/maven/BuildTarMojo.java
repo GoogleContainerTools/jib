@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -68,6 +69,11 @@ public class BuildTarMojo extends JibPluginConfiguration {
         mavenProjectProperties.getGeneratedTargetDockerTag(getTargetImage(), mavenBuildLogger);
 
     // Checks Maven settings for registry credentials.
+    if (Boolean.getBoolean("sendCredentialsOverHttp")) {
+      mavenBuildLogger.warn(
+          "Authentication over HTTP is enabled. It is strongly recommended that you do not enable "
+              + "this on a public network!");
+    }
     MavenSettingsServerCredentials mavenSettingsServerCredentials =
         new MavenSettingsServerCredentials(
             Preconditions.checkNotNull(session).getSettings(), settingsDecrypter, mavenBuildLogger);
@@ -110,6 +116,12 @@ public class BuildTarMojo extends JibPluginConfiguration {
       buildConfigurationBuilder.setBaseImageLayersCacheConfiguration(
           applicationLayersCacheConfiguration);
     }
+    if (getUseCurrentTimestamp()) {
+      mavenBuildLogger.warn(
+          "Setting image creation time to current time; your image may not be reproducible.");
+      buildConfigurationBuilder.setCreationTime(Instant.now());
+    }
+
     BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
 
     // TODO: Instead of disabling logging, have authentication credentials be provided

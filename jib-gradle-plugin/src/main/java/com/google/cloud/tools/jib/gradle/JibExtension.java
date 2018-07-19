@@ -253,6 +253,12 @@ public class JibExtension {
     return container.getPorts();
   }
 
+  @Internal
+  @Optional
+  boolean getUseCurrentTimestamp() {
+    return container.getUseCurrentTimestamp();
+  }
+
   @Input
   @Optional
   boolean getUseOnlyProjectCache() {

@@ -9,6 +9,10 @@ All notable changes to this project will be documented in this file.
 - `jibBuildTar` task to build an image tarball at `build/jib-image.tar`, which can be loaded into docker using `docker load` ([#514](https://github.com/GoogleContainerTools/jib/issues/514))
 - For Docker Hub, also tries registry aliases when getting a credential from the Docker config
 - Docker context generation now includes snapshot dependencies and extra files ([]())
+- `container.useCurrentTimestamp` parameter to set the image creation time to the build time ([#413](https://github.com/GoogleContainerTools/jib/issues/413))
+- Authentication over HTTP using the `sendCredentialsOverHttp` system property ([#599](https://github.com/GoogleContainerTools/jib/issues/599))
+- HTTP connection and read timeouts for registry interactions configurable with the `jib.httpTimeout` system property ([#656](https://github.com/GoogleContainerTools/jib/pull/656))
+- Docker context export command-line option `--targetDir` to `--jibTargetDir` ([#662](https://github.com/GoogleContainerTools/jib/issues/662))
 
 ### Changed
 
@@ -17,6 +21,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - Using multi-byte characters in container configuration ([#626](https://github.com/GoogleContainerTools/jib/issues/626))
+- For Docker Hub, also tries registry aliases when getting a credential from the Docker config ([#605](https://github.com/GoogleContainerTools/jib/pull/605))
 
 ## 0.9.6
 

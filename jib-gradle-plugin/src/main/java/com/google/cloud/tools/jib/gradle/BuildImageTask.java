@@ -31,6 +31,7 @@ import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
+import java.time.Instant;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -85,6 +86,11 @@ public class BuildImageTask extends DefaultTask {
                   "'jib.to.image'", "build.gradle", "gradle jib --image <your image name>"));
     }
 
+    if (Boolean.getBoolean("sendCredentialsOverHttp")) {
+      gradleBuildLogger.warn(
+          "Authentication over HTTP is enabled. It is strongly recommended that you do not enable "
+              + "this on a public network!");
+    }
     RegistryCredentials knownBaseRegistryCredentials = null;
     RegistryCredentials knownTargetRegistryCredentials = null;
     Authorization fromAuthorization = jibExtension.getFrom().getImageAuthorization();
@@ -124,6 +130,12 @@ public class BuildImageTask extends DefaultTask {
       buildConfigurationBuilder.setBaseImageLayersCacheConfiguration(
           applicationLayersCacheConfiguration);
     }
+    if (jibExtension.getUseCurrentTimestamp()) {
+      gradleBuildLogger.warn(
+          "Setting image creation time to current time; your image may not be reproducible.");
+      buildConfigurationBuilder.setCreationTime(Instant.now());
+    }
+
     BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
 
     // TODO: Instead of disabling logging, have authentication credentials be provided

@@ -109,7 +109,6 @@ public class RegistryAuthenticator {
    *
    * @param authenticationMethod the {@code WWW-Authenticate} header value
    * @param registryEndpointRequestProperties the registry request properties
-   * @param repository the repository/image name
    * @return a new {@link RegistryAuthenticator} for authenticating with the registry service
    * @throws RegistryAuthenticationFailedException if authentication fails
    * @see <a
@@ -240,7 +239,8 @@ public class RegistryAuthenticator {
       URL authenticationUrl = getAuthenticationUrl(scope);
 
       try (Connection connection = new Connection(authenticationUrl)) {
-        Request.Builder requestBuilder = Request.builder();
+        Request.Builder requestBuilder =
+            Request.builder().setHttpTimeout(Integer.getInteger("jib.httpTimeout"));
         if (authorization != null) {
           requestBuilder.setAuthorization(authorization);
         }
