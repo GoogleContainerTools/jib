@@ -49,7 +49,7 @@ public class DockerContextMojo extends JibPluginConfiguration {
   public void execute() throws MojoExecutionException, MojoFailureException {
     MavenBuildLogger mavenBuildLogger = new MavenBuildLogger(getLog());
     handleDeprecatedParameters(mavenBuildLogger);
-    checkHttpTimeoutSystemProperty(mavenBuildLogger);
+    checkHttpTimeoutSystemProperty();
 
     Preconditions.checkNotNull(targetDir);
 

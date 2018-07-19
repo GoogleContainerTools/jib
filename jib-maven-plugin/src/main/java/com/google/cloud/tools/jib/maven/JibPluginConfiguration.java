@@ -100,14 +100,14 @@ abstract class JibPluginConfiguration extends AbstractMojo {
    *
    * @param logger The logger used to print the warnings
    */
-  static void checkHttpTimeoutSystemProperty(BuildLogger logger) {
+  static void checkHttpTimeoutSystemProperty() {
     try {
       String value = System.getProperty("jib.httpTimeout");
       if (value != null && Integer.parseInt(value) < 0) {
-        logger.warn("Ignoring negative value of jib.httpTimeout; using the default timeout.");
+        throw new IllegalArgumentException("negative value of jib.httpTimeout");
       }
     } catch (NumberFormatException ex) {
-      logger.warn("Ignoring non-integer value of jib.httpTimeout; using the default timeout.");
+      throw new IllegalArgumentException("non-integer value of jib.httpTimeout");
     }
   }
 

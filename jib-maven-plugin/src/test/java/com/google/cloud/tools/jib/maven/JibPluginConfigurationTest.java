@@ -74,25 +74,30 @@ public class JibPluginConfigurationTest {
   }
 
   @Test
-  public void testCheckHttpTimeoutSystemProperty() {
+  public void testCheckHttpTimeoutSystemProperty_ok() {
     Assert.assertNull(System.getProperty("jib.httpTimeout"));
-    JibPluginConfiguration.checkHttpTimeoutSystemProperty(mockLogger);
-    Mockito.verify(mockLogger, Mockito.never()).warn(Mockito.any());
+    JibPluginConfiguration.checkHttpTimeoutSystemProperty();
   }
 
   @Test
   public void testCheckHttpTimeoutSystemProperty_stringValue() {
     System.setProperty("jib.httpTimeout", "random string");
-    JibPluginConfiguration.checkHttpTimeoutSystemProperty(mockLogger);
-    Mockito.verify(mockLogger)
-        .warn("Ignoring non-integer value of jib.httpTimeout; using the default timeout.");
+    try {
+      JibPluginConfiguration.checkHttpTimeoutSystemProperty();
+      Assert.fail("Should error with a non-integer timeout");
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals("non-integer value of jib.httpTimeout", ex.getMessage());
+    }
   }
 
   @Test
   public void testCheckHttpTimeoutSystemProperty_negativeValue() {
     System.setProperty("jib.httpTimeout", "-80");
-    JibPluginConfiguration.checkHttpTimeoutSystemProperty(mockLogger);
-    Mockito.verify(mockLogger)
-        .warn("Ignoring negative value of jib.httpTimeout; using the default timeout.");
+    try {
+      JibPluginConfiguration.checkHttpTimeoutSystemProperty();
+      Assert.fail("Should error with a negative timeout");
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals("negative value of jib.httpTimeout", ex.getMessage());
+    }
   }
 }

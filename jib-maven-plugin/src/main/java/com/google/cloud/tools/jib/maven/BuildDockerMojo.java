@@ -58,7 +58,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
   public void execute() throws MojoExecutionException {
     MavenBuildLogger mavenBuildLogger = new MavenBuildLogger(getLog());
     handleDeprecatedParameters(mavenBuildLogger);
-    checkHttpTimeoutSystemProperty(mavenBuildLogger);
+    checkHttpTimeoutSystemProperty();
 
     if (!new DockerClient().isDockerInstalled()) {
       throw new MojoExecutionException(HELPFUL_SUGGESTIONS.forDockerNotInstalled());
