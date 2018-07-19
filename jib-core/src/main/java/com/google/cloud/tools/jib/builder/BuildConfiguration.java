@@ -27,10 +27,12 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import javax.annotation.Nullable;
 import javax.lang.model.SourceVersion;
 
@@ -120,7 +122,8 @@ public class BuildConfiguration {
     public Builder setEnvironment(@Nullable Map<String, String> environmentMap) {
       if (environmentMap != null) {
         Preconditions.checkArgument(
-            !environmentMap.containsKey(null) && !environmentMap.containsValue(null));
+            !Iterables.any(environmentMap.keySet(), Objects::isNull)
+                && !Iterables.any(environmentMap.values(), Objects::isNull));
         this.environmentMap = ImmutableMap.copyOf(environmentMap);
       }
       return this;
