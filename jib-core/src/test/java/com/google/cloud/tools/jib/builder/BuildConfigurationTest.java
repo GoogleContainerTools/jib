@@ -27,14 +27,15 @@ import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -232,37 +233,33 @@ public class BuildConfigurationTest {
       Assert.assertNull(ex.getMessage());
     }
 
-    // Can accept empty environment
-    BuildConfiguration.builder(Mockito.mock(BuildLogger.class)).setEnvironment(ImmutableMap.of());
-
     // Environment keys element should not be null.
-    Map<String, String> environmentMap = Maps.newHashMap();
-    environmentMap.put(null, "value");
+    Map<String, String> nullKeyMap = new HashMap<>();
+    nullKeyMap.put(null, "value");
 
     try {
-      BuildConfiguration.builder(Mockito.mock(BuildLogger.class)).setEnvironment(environmentMap);
+      BuildConfiguration.builder(Mockito.mock(BuildLogger.class)).setEnvironment(nullKeyMap);
       Assert.fail("The IllegalArgumentException should be thrown.");
     } catch (IllegalArgumentException ex) {
       Assert.assertNull(ex.getMessage());
     }
 
     // Environment values element should not be null.
-    environmentMap = Maps.newHashMap();
-    environmentMap.put("key", null);
+    Map<String, String> nullValueMap = new HashMap<>();
+    nullValueMap.put("key", null);
     try {
-      BuildConfiguration.builder(Mockito.mock(BuildLogger.class)).setEnvironment(environmentMap);
+      BuildConfiguration.builder(Mockito.mock(BuildLogger.class)).setEnvironment(nullValueMap);
       Assert.fail("The IllegalArgumentException should be thrown.");
     } catch (IllegalArgumentException ex) {
       Assert.assertNull(ex.getMessage());
     }
 
-    // Environment map can accept TreeMap and Hashtable
-    try {
-      BuildConfiguration.builder(Mockito.mock(BuildLogger.class)).setEnvironment(Maps.newTreeMap());
-      BuildConfiguration.builder(Mockito.mock(BuildLogger.class)).setEnvironment(new Hashtable<>());
-    } catch (NullPointerException ex) {
-      throw new AssertionError("The NullPointerException should not be thrown.", ex);
-    }
+    // Can accept empty environment.
+    BuildConfiguration.builder(Mockito.mock(BuildLogger.class)).setEnvironment(ImmutableMap.of());
+
+    // Environment map can accept TreeMap and Hashtable.
+    BuildConfiguration.builder(Mockito.mock(BuildLogger.class)).setEnvironment(new TreeMap<>());
+    BuildConfiguration.builder(Mockito.mock(BuildLogger.class)).setEnvironment(new Hashtable<>());
   }
 
   @Test
