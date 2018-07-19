@@ -109,7 +109,7 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Authorization>, Calla
         registry,
         credentialHelperSuffix,
         knownRegistryCredentials,
-        new DockerCredentialHelperFactory(registry),
+        new DockerCredentialHelperFactory(),
         new DockerConfigCredentialRetriever(registry));
   }
 
@@ -195,7 +195,7 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Authorization>, Calla
     try {
       Authorization authorization =
           dockerCredentialHelperFactory
-              .withCredentialHelperSuffix(credentialHelperSuffix)
+              .newDockerCredentialHelper(registry, credentialHelperSuffix)
               .retrieve();
       logGotCredentialsFrom("docker-credential-" + credentialHelperSuffix);
       return authorization;

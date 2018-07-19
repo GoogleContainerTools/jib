@@ -36,7 +36,6 @@ public class DockerConfigCredentialRetrieverTest {
 
   @Mock private Authorization mockAuthorization;
   @Mock private DockerCredentialHelper mockDockerCredentialHelper;
-
   @Mock private DockerCredentialHelperFactory mockDockerCredentialHelperFactory;
 
   private Path dockerConfigFile;
@@ -71,7 +70,8 @@ public class DockerConfigCredentialRetrieverTest {
   @Test
   public void testRetrieve_useCredsStore() throws IOException {
     Mockito.when(
-            mockDockerCredentialHelperFactory.withCredentialHelperSuffix("some credential store"))
+            mockDockerCredentialHelperFactory.newDockerCredentialHelper(
+                "just registry", "some credential store"))
         .thenReturn(mockDockerCredentialHelper);
 
     DockerConfigCredentialRetriever dockerConfigCredentialRetriever =
@@ -85,7 +85,8 @@ public class DockerConfigCredentialRetrieverTest {
   @Test
   public void testRetrieve_useCredsStore_withProtocol() throws IOException {
     Mockito.when(
-            mockDockerCredentialHelperFactory.withCredentialHelperSuffix("some credential store"))
+            mockDockerCredentialHelperFactory.newDockerCredentialHelper(
+                "https://with.protocol", "some credential store"))
         .thenReturn(mockDockerCredentialHelper);
 
     DockerConfigCredentialRetriever dockerConfigCredentialRetriever =
@@ -99,8 +100,8 @@ public class DockerConfigCredentialRetrieverTest {
   @Test
   public void testRetrieve_useCredHelper() throws IOException {
     Mockito.when(
-            mockDockerCredentialHelperFactory.withCredentialHelperSuffix(
-                "another credential helper"))
+            mockDockerCredentialHelperFactory.newDockerCredentialHelper(
+                "another registry", "another credential helper"))
         .thenReturn(mockDockerCredentialHelper);
 
     DockerConfigCredentialRetriever dockerConfigCredentialRetriever =
@@ -121,11 +122,9 @@ public class DockerConfigCredentialRetrieverTest {
 
   @Test
   public void testRetrieve_credentialFromAlias() throws IOException {
-    Mockito.when(mockDockerCredentialHelperFactory.withCredentialHelperSuffix(Mockito.anyString()))
-        .thenReturn(Mockito.mock(DockerCredentialHelper.class));
     Mockito.when(
-            mockDockerCredentialHelperFactory.withCredentialHelperSuffix(
-                "index.docker.io credential helper"))
+            mockDockerCredentialHelperFactory.newDockerCredentialHelper(
+                "index.docker.io", "index.docker.io credential helper"))
         .thenReturn(mockDockerCredentialHelper);
 
     DockerConfigCredentialRetriever dockerConfigCredentialRetriever =
