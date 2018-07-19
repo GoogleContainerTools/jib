@@ -320,7 +320,7 @@ See the [Jib project README](/../../#how-jib-works).
 
 ## Frequently Asked Questions (FAQ)
 
-See the [Jib project FAQ](/../docs/faq.md).
+See the [Jib project FAQ](../docs/faq.md).
 
 ## Community
 
