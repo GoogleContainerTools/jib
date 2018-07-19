@@ -1,5 +1,7 @@
 SpringBoot Demo for using Jib
 
+Tips: this is just a draft, please contribute if you have good suggestion.
+
 ### Quickstart
 
 1.Modify configuration:
