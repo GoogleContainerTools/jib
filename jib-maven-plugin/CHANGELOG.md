@@ -12,6 +12,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Docker context export parameter `-Djib.dockerDir` to `-Djib.targetDir` for consistency ([#662](https://github.com/GoogleContainerTools/jib/issues/662))
+
 ### Fixed
 
 - Using multi-byte characters in container configuration ([#626](https://github.com/GoogleContainerTools/jib/issues/626))

@@ -134,7 +134,7 @@ public class DockerContextTask extends DefaultTask {
     } catch (IOException ex) {
       throw new GradleException(
           HelpfulSuggestionsProvider.get("Export Docker context failed")
-              .suggest("check if the command-line option `--jib.dockerDir` is set correctly"),
+              .suggest("check if the command-line option `--targetDir` is set correctly"),
           ex);
     }
   }
