@@ -103,15 +103,6 @@ public class RegistryAuthenticator {
     return new Initializer(serverUrl, repository);
   }
 
-  @Nullable
-  private static Integer getHttpTimeout() {
-    Integer httpTimeout = Integer.getInteger("jib.httpTimeout");
-    if (httpTimeout != null && httpTimeout >= 0) {
-      return httpTimeout;
-    }
-    return null;
-  }
-
   // TODO: Replace with a WWW-Authenticate header parser.
   /**
    * Instantiates from parsing a {@code WWW-Authenticate} header.
@@ -248,7 +239,8 @@ public class RegistryAuthenticator {
       URL authenticationUrl = getAuthenticationUrl(scope);
 
       try (Connection connection = new Connection(authenticationUrl)) {
-        Request.Builder requestBuilder = Request.builder().setHttpTimeout(getHttpTimeout());
+        Request.Builder requestBuilder =
+            Request.builder().setHttpTimeout(Integer.getInteger("jib.httpTimeout"));
         if (authorization != null) {
           requestBuilder.setAuthorization(authorization);
         }

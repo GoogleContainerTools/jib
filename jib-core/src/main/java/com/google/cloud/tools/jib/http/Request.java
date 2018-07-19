@@ -78,7 +78,8 @@ public class Request {
     }
 
     /**
-     * Sets the HTTP connection and read timeout in milliseconds.
+     * Sets the HTTP connection and read timeout in milliseconds. {@code null} uses the default
+     * timeout and {@code 0} an infinite timeout.
      *
      * @param httpTimeout timeout in milliseconds
      * @return this
