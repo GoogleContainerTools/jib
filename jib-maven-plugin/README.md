@@ -134,6 +134,20 @@ eval $(minikube docker-env)
 mvn compile jib:dockerBuild
 ```
 
+#### Build an image tarball
+
+You can build and save your image to disk as a tarball with:
+
+```shell
+mvn compile jib:buildTar
+```
+
+This builds and saves your image to `target/jib-image.tar`, which you can load into docker with:
+
+```shell
+docker load --input target/jib-image.tar
+```
+
 ### Bind to a lifecycle
 
 You can also bind `jib:build` to a Maven lifecycle, such as `package`, by adding the following execution to your `jib-maven-plugin` definition:
@@ -168,10 +182,10 @@ Jib can also export a Docker context so that you can build with Docker, if neede
 mvn compile jib:exportDockerContext
 ```
 
-The Docker context will be created at `target/jib-docker-context` by default. You can change this directory with the `targetDir` configuration option or the `jib.dockerDir` parameter:
+The Docker context will be created at `target/jib-docker-context` by default. You can change this directory with the `targetDir` configuration option or the `jibTargetDir` parameter:
 
 ```shell
-mvn compile jib:exportDockerContext -Djib.dockerDir=my/docker/context/
+mvn compile jib:exportDockerContext -DjibTargetDir=my/docker/context/
 ```
 
 You can then build your image with Docker:
@@ -213,8 +227,9 @@ Property | Type | Default | Description
 `jvmFlags` | list | *None* | Additional flags to pass into the JVM when running your application.
 `mainClass` | string | *Inferred\** | The main class to launch the application from.
 `args` | list | *None* | Default main method arguments to run your application with.
-`ports` | `List<String>` | *None* | Ports that the container exposes at runtime (similar to Docker's [EXPOSE](https://docs.docker.com/engine/reference/builder/#expose) instruction).
+`ports` | list | *None* | Ports that the container exposes at runtime (similar to Docker's [EXPOSE](https://docs.docker.com/engine/reference/builder/#expose) instruction).
 `format` | string | `Docker` | Use `OCI` to build an [OCI container image](https://www.opencontainers.org/).
+`useCurrentTimestamp` | boolean | `false` | By default, Jib wipes all timestamps to guarantee reproducibility. If this parameter is set to true, Jib will set the image's creation timestamp to the time of the build, which sacrifices reproducibility for easily being able to tell when your image was created.
 
 *\* Uses `mainClass` from `maven-jar-plugin` or tries to find a valid main class.*
 
