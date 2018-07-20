@@ -4,10 +4,11 @@
           xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
                           https://maven.apache.org/xsd/settings-1.0.0.xsd">
     <servers>
+        <!--replace below configuration as yourself-->
         <server>
-            <id>CUSTOM_REGISTRY_URL</id>
-            <username>YOUR_USER_NAME</username>
-            <password>PASSWORD_ENCRYPT_BY_MAVEN</password>
+            <id>registry.hub.docker.com/hellojib/hellojib:jib</id>
+            <username>hellojib</username>
+            <password>{hXGhaewM6RYHG6jQDZjHyA3WVprcYjPQpto1ST8OJwI=}</password>
         </server>
     </servers>
 </settings>

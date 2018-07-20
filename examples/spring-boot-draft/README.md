@@ -1,42 +1,56 @@
 SpringBoot Demo for using Jib
 
-Tips: this is just a draft, please contribute if you have good suggestion.
+## Tips: this is just a draft 
+
+Please contribute if you have good suggestion/contribute if you have suggested edits .
 
 ### Quickstart
 
-1.Modify configuration:
+1. Login docker registry with password `hellojib`:
+ 
+```
+docker login -u hellojib
+```
 
-Modify `CUSTOM_REGISTRY_URL`, `YOUR_USER_NAME`, `YOUR_PASSWORD`, `PASSWORD_ENCRYPT_BY_MAVEN` as yourself, and change `credHelper` to match your platform .
+1. Modify configuration:
 
-2.Build the image:
+Modify  `credHelper` to match your platform .
+
+1. Build the image:
 
 Run `gradle jib` or `mvn compile jib:build` under project dictionary .
 
-3.Run container:
+1. Run container:
 
-Run `docker run --name hellojib -p 8080:8080 YOUR_USER_NAME/hellojib:jib` .
+Run `docker run --name hellojib -p 8080:8080 hellojib/hellojib:jib` .
 
-4.Access application:
+1. Access application:
 
-Run `curl localhost:8080` and it will return `"Hello Jib"`, run container success .
+Run `curl localhost:8080` and it will return `"Hello Jib"` .
 
 ### Custom base image and push registry
 
-You will need to add custom configuration like below, configuration reference here for [Gradle](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#extended-usage) or  [Maven](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#extended-usage):
+You will need to add custom configuration (examples below). See the configuration reference for [Gradle](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#extended-usage) or  [Maven](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#extended-usage) for more details:
 
 - Gradle
+
+build.gradle
 
 ```gradle
 jib {
     from {
         image = 'registry.hub.docker.com/openjdk:8-jdk-alpine'
+        credHelper = 'osxkeychain'
     }
     to {
-        image = 'CUSTOM_REGISTRY_URL/YOUR_USER_NAME/hellojib:jib'
-        auth {
-            username = 'YOUR_USERNAME'
-            password = 'YOUR_PASSWORD'
-        }
+        image = 'CUSTOM_REGISTRY_URL/YOUR_USER_NAME//hellojib:jib'
+        credHelper = 'osxkeychain'
+        // Or use auth like below if you are not login
+        // Defined in gradle.properties (but not work correctly now, you need to replace your credentials directly(not recommend))
+        //auth {
+        //    username = dockerUsername
+        //    password = dockerPassword
+        //}
     }
     container {
         jvmFlags = ['-Djava.security.egd=file:/dev/./urandom', '-Duser.timezone=GMT+08', '-Xdebug']
@@ -45,6 +59,13 @@ jib {
         ports = ['8080']
     }
 }
+```
+
+gradle.properties
+
+```gradle
+dockerUsername=YOUR_USERNAME
+docekrPassword=YOUR_PASSWORD
 ```
 
 - Maven 

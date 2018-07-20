@@ -51,7 +51,7 @@
                 <version>${jib-maven-plugin.version}</version>
                 <configuration>
                     <to>
-                        <image>CUSTOM_REGISTRY_URL/YOUR_USER_NAME/hellojib:jib</image>
+                        <image>registry.hub.docker.com/hellojib/hellojib:jib</image>
                         <credHelper>osxkeychain</credHelper>
                     </to>
 
@@ -61,7 +61,7 @@
                         <!--<credHelper>osxkeychain</credHelper>-->
                     <!--</from>-->
                     <!--<to>-->
-                        <!--<image>CUSTOM_REGISTRY_URL/YOUR_USER_NAME/hellojib:jib</image>-->
+                        <!--<image>registry.hub.docker.com/hellojib/hellojib:jib</image>-->
                         <!--<credHelper>osxkeychain</credHelper>-->
                     <!--</to>-->
                     <!--<container>-->
@@ -77,7 +77,6 @@
                         <!--<ports>-->
                             <!--<port>8080</port>-->
                         <!--</ports>-->
-                        <!--<format>OCI</format>-->
                     <!--</container>-->
                 </configuration>
             </plugin>

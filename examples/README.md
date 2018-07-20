@@ -2,8 +2,8 @@
 
 ### Simple Example 
 
-You can find simple usage for java in [helloworld](helloworld)
+You can find simple usage for Java in [helloworld](helloworld).
 
-### SpringBoot Example 
+<!-- ### SpringBoot Example 
 
-You can find usage by Gradle or Maven with SpringBoot in [spring-boot](spring-boot-draft#Quickstart)
+You can find usage by Gradle or Maven with SpringBoot in [spring-boot](spring-boot-draft#Quickstart) -->
