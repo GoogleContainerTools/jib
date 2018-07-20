@@ -101,7 +101,10 @@ class PullBaseImageStep
           RegistryAuthenticationFailedException {
     buildConfiguration
         .getBuildLogger()
-        .lifecycle("Getting base image " + buildConfiguration.getBaseImageReference() + "...");
+        .lifecycle(
+            "Getting base image "
+                + buildConfiguration.getBaseImageReference()
+                + " with no auth...");
 
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       // First, try with no credentials.
@@ -109,6 +112,11 @@ class PullBaseImageStep
         return new BaseImageWithAuthorization(pullBaseImage(null), null);
 
       } catch (RegistryUnauthorizedException ex) {
+        buildConfiguration
+            .getBuildLogger()
+            .lifecycle(
+                "Trying again for " + buildConfiguration.getBaseImageReference() + " with auth...");
+
         // If failed, then, retrieve base registry credentials and try with retrieved credentials.
         // TODO: Refactor the logic in RetrieveRegistryCredentialsStep out to
         // registry.credentials.RegistryCredentialsRetriever to avoid this direct executor hack.
