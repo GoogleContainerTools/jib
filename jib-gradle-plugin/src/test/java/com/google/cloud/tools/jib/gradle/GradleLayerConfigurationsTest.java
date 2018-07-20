@@ -198,9 +198,15 @@ public class GradleLayerConfigurationsTest {
         "/app/libs/",
         testGradleLayerConfigurations.getDependenciesLayerEntry().getExtractionPath());
     Assert.assertEquals(
+        "/app/libs/",
+        testGradleLayerConfigurations.getSnapshotDependenciesLayerEntry().getExtractionPath());
+    Assert.assertEquals(
         "/app/resources/",
         testGradleLayerConfigurations.getResourcesLayerEntry().getExtractionPath());
     Assert.assertEquals(
         "/app/classes/", testGradleLayerConfigurations.getClassesLayerEntry().getExtractionPath());
+    Assert.assertEquals(
+        "/",
+        testGradleLayerConfigurations.getExtraFilesLayerEntry().getExtractionPath());
   }
 }

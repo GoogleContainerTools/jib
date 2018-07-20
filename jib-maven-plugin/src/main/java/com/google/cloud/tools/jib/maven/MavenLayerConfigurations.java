@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google Inc.
+ * Copyright 2018 Google LLC. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,49 +14,40 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.gradle;
+package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointBuilder;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.gradle.api.Project;
-import org.gradle.api.file.FileCollection;
-import org.gradle.api.plugins.JavaPluginConvention;
-import org.gradle.api.tasks.SourceSet;
+import org.apache.maven.artifact.Artifact;
+import org.apache.maven.project.MavenProject;
 
-/** Builds {@link LayerConfiguration}s based on inputs from a {@link Project}. */
-class GradleLayerConfigurations {
-
-  /** Name of the `main` {@link SourceSet} to use as source files. */
-  private static final String MAIN_SOURCE_SET_NAME = "main";
+/** Builds {@link LayerConfiguration}s based on inputs from a {@link MavenProject}. */
+class MavenLayerConfigurations {
 
   /**
-   * Resolves the source files configuration for a Gradle {@link Project}.
+   * Resolves the source files configuration for a Maven {@link MavenProject}.
    *
-   * @param project the Gradle {@link Project}
-   * @param gradleBuildLogger the build logger for providing feedback about the resolution
+   * @param project the {@link MavenProject}
    * @param extraDirectory path to the directory for the extra files layer
-   * @return a {@link GradleLayerConfigurations} for building the layers for the Gradle {@link
-   *     Project}
-   * @throws IOException if an I/O exception occurred during resolution
+   * @return a new {@link MavenLayerConfigurations} for the project
+   * @throws IOException if collecting the project files fails
    */
-  static GradleLayerConfigurations getForProject(
-      Project project, GradleBuildLogger gradleBuildLogger, Path extraDirectory)
+  static MavenLayerConfigurations getForProject(MavenProject project, Path extraDirectory)
       throws IOException {
-    JavaPluginConvention javaPluginConvention =
-        project.getConvention().getPlugin(JavaPluginConvention.class);
-
-    SourceSet mainSourceSet = javaPluginConvention.getSourceSets().getByName(MAIN_SOURCE_SET_NAME);
+    Path classesSourceDirectory = Paths.get(project.getBuild().getSourceDirectory());
+    Path classesOutputDirectory = Paths.get(project.getBuild().getOutputDirectory());
 
     List<Path> dependenciesFiles = new ArrayList<>();
     List<Path> snapshotDependenciesFiles = new ArrayList<>();
@@ -64,62 +55,58 @@ class GradleLayerConfigurations {
     List<Path> classesFiles = new ArrayList<>();
     List<Path> extraFiles = new ArrayList<>();
 
-    // Adds each file in each classes output directory to the classes files list.
-    FileCollection classesOutputDirectories = mainSourceSet.getOutput().getClassesDirs();
-    for (File classesOutputDirectory : classesOutputDirectories) {
-      if (Files.notExists(classesOutputDirectory.toPath())) {
-        // Warns that output directory was not found.
-        gradleBuildLogger.warn(
-            "Could not find build output directory '" + classesOutputDirectory + "'");
-        continue;
-      }
-      try (Stream<Path> classFileStream = Files.list(classesOutputDirectory.toPath())) {
-        classFileStream.forEach(classesFiles::add);
-      }
-    }
-    if (classesFiles.isEmpty()) {
-      gradleBuildLogger.warn("No classes files were found - did you compile your project?");
-    }
-
-    // Adds each file in the resources output directory to the resources files list.
-    Path resourcesOutputDirectory = mainSourceSet.getOutput().getResourcesDir().toPath();
-    if (Files.exists(resourcesOutputDirectory)) {
-      try (Stream<Path> resourceFileStream = Files.list(resourcesOutputDirectory)) {
-        resourceFileStream.forEach(resourcesFiles::add);
-      }
-    }
-
-    // Adds all other files to the dependencies files list.
-    FileCollection allFiles = mainSourceSet.getRuntimeClasspath();
-    // Removes the classes output directories.
-    allFiles = allFiles.minus(classesOutputDirectories);
-    for (File dependencyFile : allFiles) {
-      // Removes the resources output directory.
-      if (resourcesOutputDirectory.equals(dependencyFile.toPath())) {
-        continue;
-      }
-      if (dependencyFile.getName().contains("SNAPSHOT")) {
-        snapshotDependenciesFiles.add(dependencyFile.toPath());
+    // Gets all the dependencies.
+    for (Artifact artifact : project.getArtifacts()) {
+      if (artifact.isSnapshot()) {
+        snapshotDependenciesFiles.add(artifact.getFile().toPath());
       } else {
-        dependenciesFiles.add(dependencyFile.toPath());
+        dependenciesFiles.add(artifact.getFile().toPath());
       }
+    }
+
+    // Gets the classes files in the 'classes' output directory. It finds the files that are classes
+    // files by matching them against the .java source files. All other files are deemed resources.
+    try (Stream<Path> classFileStream = Files.list(classesOutputDirectory)) {
+      classFileStream.forEach(
+          classFile -> {
+            /*
+             * Adds classFile to classesFiles if it is a .class file or is a directory that also
+             * exists in the classes source directory; otherwise, adds file to resourcesFiles.
+             */
+            if (Files.isDirectory(classFile)
+                && Files.exists(
+                    classesSourceDirectory.resolve(classesOutputDirectory.relativize(classFile)))) {
+              classesFiles.add(classFile);
+              return;
+            }
+
+            if (FileSystems.getDefault().getPathMatcher("glob:**.class").matches(classFile)) {
+              classesFiles.add(classFile);
+              return;
+            }
+
+            resourcesFiles.add(classFile);
+          });
     }
 
     // Adds all the extra files.
     if (Files.exists(extraDirectory)) {
       try (Stream<Path> extraFilesLayerDirectoryFiles = Files.list(extraDirectory)) {
         extraFiles = extraFilesLayerDirectoryFiles.collect(Collectors.toList());
+
+      } catch (IOException ex) {
+        throw new IOException("Failed to list directory for extra files: " + extraDirectory, ex);
       }
     }
 
-    // Sorts all files by path for consistent ordering.
+    // Sort all files by path for consistent ordering.
     Collections.sort(dependenciesFiles);
     Collections.sort(snapshotDependenciesFiles);
     Collections.sort(resourcesFiles);
     Collections.sort(classesFiles);
     Collections.sort(extraFiles);
 
-    return new GradleLayerConfigurations(
+    return new MavenLayerConfigurations(
         LayerConfiguration.builder()
             .addEntry(dependenciesFiles, JavaEntrypointBuilder.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
             .build(),
@@ -142,9 +129,8 @@ class GradleLayerConfigurations {
   private final LayerConfiguration classesLayerConfiguration;
   private final LayerConfiguration extraFilesLayerConfiguration;
 
-  // TODO: Consolidate with MavenLayerConfigurations.
   /** Instantiate with {@link #getForProject}. */
-  private GradleLayerConfigurations(
+  private MavenLayerConfigurations(
       LayerConfiguration dependenciesLayerConfiguration,
       LayerConfiguration snapshotDependenciesLayerConfiguration,
       LayerConfiguration resourcesLayerConfiguration,
@@ -157,6 +143,11 @@ class GradleLayerConfigurations {
     this.extraFilesLayerConfiguration = extraFilesLayerConfiguration;
   }
 
+  /**
+   * Gets the list of {@link LayerConfiguration}s to use to build the container image.
+   *
+   * @return the list of {@link LayerConfiguration}s
+   */
   ImmutableList<LayerConfiguration> getLayerConfigurations() {
     return ImmutableList.of(
         dependenciesLayerConfiguration,
