@@ -109,6 +109,20 @@ eval $(minikube docker-env)
 gradle jibDockerBuild
 ```
 
+#### Build an image tarball
+
+You can build and save your image to disk as a tarball with:
+
+```shell
+gradle jibBuildTar
+```
+
+This builds and saves your image to `build/jib-image.tar`, which you can load into docker with:
+
+```shell
+docker load --input build/jib-image.tar
+```
+
 ### Run `jib` with each build
 
 You can also have `jib` run with each build by attaching it to the `build` task:
@@ -127,10 +141,10 @@ Jib can also export a Docker context so that you can build with Docker, if neede
 gradle jibExportDockerContext
 ```
 
-The Docker context will be created at `build/jib-docker-context` by default. You can change this directory with the `targetDir` configuration option or the `---targetDir` parameter:
+The Docker context will be created at `build/jib-docker-context` by default. You can change this directory with the `targetDir` configuration option or the `--jibTargetDir` parameter:
 
 ```shell
-gradle jibExportDockerContext --targetDir=my/docker/context/
+gradle jibExportDockerContext --jibTargetDir=my/docker/context/
 ```
 
 You can then build your image with Docker:
@@ -148,8 +162,8 @@ Field | Type | Default | Description
 `from` | [`from`](#from-closure) | See [`from`](#from-closure) | Configures the base image to build your application on top of.
 `to` | [`to`](#to-closure) | *Required* | Configures the target image to build your application to.
 `container` | [`container`](#container-closure) | See [`container`](#container-closure) | Configures the container that is run from your built image.
-`useProjectOnlyCache` | `boolean` | `false` | If set to true, Jib does not share a cache between different Maven projects.
-`allowInsecureRegistries` | boolean | `false` | If set to true, Jib uses HTTP as a fallback for registries that do not support HTTPS. Leaving this parameter set to false is strongly recommended, since communication with insecure registries is unencrypted and visible to others on the network.
+`useProjectOnlyCache` | `boolean` | `false` | If set to `true`, Jib does not share a cache between different Maven projects.
+`allowInsecureRegistries` | `boolean` | `false` | If set to true, Jib uses HTTP as a fallback for registries that do not support HTTPS or whose certificates cannot be verified. Leaving this parameter set to `false` is strongly recommended, since communication with insecure registries is unencrypted and visible to others on the network.
 
 <a name="from-closure"></a>`from` is a closure with the following properties:
 
@@ -183,6 +197,13 @@ Property | Type | Default | Description
 `args` | `List<String>` | *None* | Default main method arguments to run your application with.
 `ports` | `List<String>` | *None* | Ports that the container exposes at runtime (similar to Docker's [EXPOSE](https://docs.docker.com/engine/reference/builder/#expose) instruction).
 `format` | `String` | `Docker` | Use `OCI` to build an [OCI container image](https://www.opencontainers.org/).
+`useCurrentTimestamp` | `boolean` | `false` | By default, Jib wipes all timestamps to guarantee reproducibility. If this parameter is set to `true`, Jib will set the image's creation timestamp to the time of the build, which sacrifices reproducibility for easily being able to tell when your image was created.
+
+You can also configure HTTP connection/read timeouts for registry interactions using the `jib.httpTimeout` system property, configured in milliseconds via commandline (the default is `20000`; you can also set it to `0` for infinite timeout):
+
+```shell
+gradle jib -Djib.httpTimeout=3000
+```
 
 *\* Uses the main class defined in the `jar` task or tries to find a valid main class.*
 
