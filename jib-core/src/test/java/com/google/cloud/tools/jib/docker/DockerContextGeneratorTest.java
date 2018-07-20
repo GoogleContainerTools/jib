@@ -79,16 +79,22 @@ public class DockerContextGeneratorTest {
   @Test
   public void testGenerate() throws IOException, URISyntaxException {
     Path testDependencies = Paths.get(Resources.getResource("application/dependencies").toURI());
+    Path testSnapshotDependencies =
+        Paths.get(Resources.getResource("application/snapshot-dependencies").toURI());
     Path testResources = Paths.get(Resources.getResource("application/resources").toURI());
     Path testClasses = Paths.get(Resources.getResource("application/classes").toURI());
 
     ImmutableList<Path> expectedDependenciesFiles =
         new DirectoryWalker(testDependencies).filterRoot().walk();
+    ImmutableList<Path> expectedSnapshotDependenciesFiles =
+        new DirectoryWalker(testSnapshotDependencies).filterRoot().walk();
     ImmutableList<Path> expectedResourcesFiles =
         new DirectoryWalker(testResources).filterRoot().walk();
     ImmutableList<Path> expectedClassesFiles = new DirectoryWalker(testClasses).filterRoot().walk();
     Mockito.when(mockSourceFilesConfiguration.getDependenciesFiles())
         .thenReturn(expectedDependenciesFiles);
+    Mockito.when(mockSourceFilesConfiguration.getSnapshotDependenciesFiles())
+        .thenReturn(expectedSnapshotDependenciesFiles);
     Mockito.when(mockSourceFilesConfiguration.getResourcesFiles())
         .thenReturn(expectedResourcesFiles);
     Mockito.when(mockSourceFilesConfiguration.getClassesFiles()).thenReturn(expectedClassesFiles);
@@ -107,6 +113,7 @@ public class DockerContextGeneratorTest {
 
     Assert.assertTrue(Files.exists(targetDirectory.resolve("Dockerfile")));
     assertSameFiles(targetDirectory.resolve("libs"), testDependencies);
+    assertSameFiles(targetDirectory.resolve("snapshot-libs"), testSnapshotDependencies);
     assertSameFiles(targetDirectory.resolve("resources"), testResources);
     assertSameFiles(targetDirectory.resolve("classes"), testClasses);
   }

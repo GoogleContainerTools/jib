@@ -1,7 +1,7 @@
 plugins {
     id 'java-gradle-plugin'
     id 'checkstyle'
-    id 'com.github.sherter.google-java-format' version '0.6'
+    id 'com.github.sherter.google-java-format' version '0.7.1'
 
     // For local install
     id 'maven'
@@ -20,6 +20,7 @@ group 'com.google.cloud.tools'
 
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
+compileJava.options.encoding = 'UTF-8'
 
 repositories {
     // Use jcenter for gradle plugin portal releases.
@@ -57,9 +58,9 @@ configurations {
 dependencies {
     // These are copied over from jib-core and are necessary for the jib-core sourcesets.
     compile 'com.google.http-client:google-http-client:1.23.0'
-    compile 'org.apache.commons:commons-compress:1.15'
+    compile 'org.apache.commons:commons-compress:1.17'
     compile 'com.google.guava:guava:23.5-jre'
-    compile 'com.fasterxml.jackson.core:jackson-databind:2.9.2'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.9.6'
     compile 'org.slf4j:slf4j-api:1.7.25'
     compile 'org.javassist:javassist:3.22.0-GA'
 
@@ -110,7 +111,7 @@ tasks.withType(Test) {
 
 /* GOOGLE JAVA FORMAT */
 googleJavaFormat {
-    toolVersion = '1.5'
+    toolVersion = '1.6'
 }
 check.dependsOn verifyGoogleJavaFormat
 /* GOOGLE JAVA FORMAT */
@@ -132,6 +133,20 @@ checkstyle {
     maxWarnings = 0
 }
 /* CHECKSTYLE */
+
+/* JAR */
+// Necessary for adding version information into the JAR.
+jar {
+    manifest {
+        attributes 'Implementation-Title': project.name,
+                'Implementation-Version': version,
+                'Built-By': System.getProperty('user.name'),
+                'Built-Date': new Date(),
+                'Built-JDK': System.getProperty('java.version'),
+                'Built-Gradle': gradle.gradleVersion
+    }
+}
+/* JAR */
 
 /* RELEASE */
 // Prepare release

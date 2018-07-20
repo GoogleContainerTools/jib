@@ -1,0 +1,5 @@
+{
+  "auths":{
+    "index.docker.io/v1/":{"auth":"token for index.docker.io/v1/"}
+  }
+}

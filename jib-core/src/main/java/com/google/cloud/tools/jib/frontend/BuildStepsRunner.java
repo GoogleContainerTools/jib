@@ -30,10 +30,12 @@ import com.google.cloud.tools.jib.cache.Caches.Initializer;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.registry.InsecureRegistryException;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
+import com.google.cloud.tools.jib.registry.RegistryCredentialsNotSentException;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.nio.file.Path;
 import java.util.concurrent.ExecutionException;
 import org.apache.http.conn.HttpHostConnectException;
 
@@ -70,6 +72,28 @@ public class BuildStepsRunner {
     return new BuildStepsRunner(
         BuildSteps.forBuildToDockerDaemon(
             buildConfiguration, sourceFilesConfiguration, getCacheInitializer(buildConfiguration)));
+  }
+
+  /**
+   * Creates a runner to build an image tarball. Creates a directory for the cache, if needed.
+   *
+   * @param outputPath the path to output the tarball to
+   * @param buildConfiguration the configuration parameters for the build
+   * @param sourceFilesConfiguration the source/destination file configuration for the image
+   * @return a {@link BuildStepsRunner} for building a tarball
+   * @throws CacheDirectoryCreationException if the {@code cacheDirectory} could not be created
+   */
+  public static BuildStepsRunner forBuildTar(
+      Path outputPath,
+      BuildConfiguration buildConfiguration,
+      SourceFilesConfiguration sourceFilesConfiguration)
+      throws CacheDirectoryCreationException {
+    return new BuildStepsRunner(
+        BuildSteps.forBuildToTar(
+            outputPath,
+            buildConfiguration,
+            sourceFilesConfiguration,
+            getCacheInitializer(buildConfiguration)));
   }
 
   // TODO: Move this up to somewhere where defaults for cache location are provided and ownership is
@@ -208,6 +232,10 @@ public class BuildStepsRunner {
             (RegistryUnauthorizedException) exceptionDuringBuildSteps,
             buildConfiguration,
             helpfulSuggestions);
+
+      } else if (exceptionDuringBuildSteps instanceof RegistryCredentialsNotSentException) {
+        throw new BuildStepsExecutionException(
+            helpfulSuggestions.forCredentialsNotSent(), exceptionDuringBuildSteps);
 
       } else if (exceptionDuringBuildSteps instanceof RegistryAuthenticationFailedException
           && exceptionDuringBuildSteps.getCause() instanceof HttpResponseException) {

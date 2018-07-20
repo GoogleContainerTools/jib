@@ -27,6 +27,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -63,7 +64,8 @@ public class StepsRunner {
   @Nullable private BuildImageStep buildImageStep;
   @Nullable private PushContainerConfigurationStep pushContainerConfigurationStep;
   @Nullable private PushImageStep pushImageStep;
-  @Nullable private BuildTarballAndLoadDockerStep buildTarballAndLoadDockerStep;
+  @Nullable private LoadDockerStep loadDockerStep;
+  @Nullable private WriteTarFileStep writeTarFileStep;
 
   public StepsRunner(
       BuildConfiguration buildConfiguration,
@@ -191,10 +193,22 @@ public class StepsRunner {
     return this;
   }
 
-  public StepsRunner runBuildTarballAndLoadDockerStep() {
-    buildTarballAndLoadDockerStep =
-        new BuildTarballAndLoadDockerStep(
+  public StepsRunner runLoadDockerStep() {
+    loadDockerStep =
+        new LoadDockerStep(
             listeningExecutorService,
+            buildConfiguration,
+            Preconditions.checkNotNull(pullAndCacheBaseImageLayersStep),
+            Preconditions.checkNotNull(buildAndCacheApplicationLayerSteps),
+            Preconditions.checkNotNull(buildImageStep));
+    return this;
+  }
+
+  public StepsRunner runWriteTarFileStep(Path outputPath) {
+    writeTarFileStep =
+        new WriteTarFileStep(
+            listeningExecutorService,
+            outputPath,
             buildConfiguration,
             Preconditions.checkNotNull(pullAndCacheBaseImageLayersStep),
             Preconditions.checkNotNull(buildAndCacheApplicationLayerSteps),
@@ -206,9 +220,12 @@ public class StepsRunner {
     Preconditions.checkNotNull(pushImageStep).getFuture().get();
   }
 
-  public void waitOnBuildTarballAndLoadDockerStep()
-      throws ExecutionException, InterruptedException {
-    Preconditions.checkNotNull(buildTarballAndLoadDockerStep).getFuture().get();
+  public void waitOnLoadDockerStep() throws ExecutionException, InterruptedException {
+    Preconditions.checkNotNull(loadDockerStep).getFuture().get();
+  }
+
+  public void waitOnWriteTarFileStep() throws ExecutionException, InterruptedException {
+    Preconditions.checkNotNull(writeTarFileStep).getFuture().get();
   }
 
   /**

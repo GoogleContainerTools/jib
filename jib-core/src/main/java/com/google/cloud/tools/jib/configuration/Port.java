@@ -16,8 +16,11 @@
 
 package com.google.cloud.tools.jib.configuration;
 
+import java.util.Objects;
+import javax.annotation.Nullable;
+
 /** Holds port number and protocol for an exposed port. */
-public class PortWithProtocol {
+public class Port {
 
   /** Represents the protocol portion of the port. */
   public enum Protocol {
@@ -34,12 +37,26 @@ public class PortWithProtocol {
     public String toString() {
       return stringRepresentation;
     }
+
+    /**
+     * Returns the {@link Protocol} given its string representation.
+     *
+     * @param protocolString the case insensitive string (e.g. "tcp", "udp")
+     * @return the {@link Protocol} with the corresponding name, or {@code Protocol#TCP} by default
+     *     if invalid
+     */
+    public static Protocol getFromString(@Nullable String protocolString) {
+      if (protocolString == null) {
+        return TCP;
+      }
+      return UDP.toString().equalsIgnoreCase(protocolString) ? UDP : TCP;
+    }
   }
 
   private final int port;
   private final Protocol protocol;
 
-  public PortWithProtocol(int port, Protocol protocol) {
+  public Port(int port, Protocol protocol) {
     this.port = port;
     this.protocol = protocol;
   }
@@ -50,5 +67,27 @@ public class PortWithProtocol {
 
   public Protocol getProtocol() {
     return protocol;
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    if (other == this) {
+      return true;
+    }
+    if (other == null || !(other instanceof Port)) {
+      return false;
+    }
+    Port otherPort = (Port) other;
+    return port == otherPort.port && protocol == otherPort.protocol;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(port, protocol);
+  }
+
+  @Override
+  public String toString() {
+    return port + "/" + protocol;
   }
 }

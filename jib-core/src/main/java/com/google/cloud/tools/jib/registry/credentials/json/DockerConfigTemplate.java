@@ -62,9 +62,15 @@ import javax.annotation.Nullable;
 public class DockerConfigTemplate implements JsonTemplate {
 
   /** Template for an {@code auth} defined for a registry under {@code auths}. */
-  private static class AuthTemplate implements JsonTemplate {
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  public static class AuthTemplate implements JsonTemplate {
 
     @Nullable private String auth;
+
+    @Nullable
+    public String getAuth() {
+      return auth;
+    }
   }
 
   /** Maps from registry to its {@link AuthTemplate}. */
@@ -75,36 +81,17 @@ public class DockerConfigTemplate implements JsonTemplate {
   /** Maps from registry to credential helper name. */
   private final Map<String, String> credHelpers = new HashMap<>();
 
-  /**
-   * @param registry the registry to get the authorization for
-   * @return the base64-encoded {@code Basic} authorization for {@code registry}, or {@code null} if
-   *     none exists
-   */
-  @Nullable
-  public String getAuthFor(String registry) {
-    if (!auths.containsKey(registry)) {
-      return null;
-    }
-    return auths.get(registry).auth;
+  public Map<String, AuthTemplate> getAuths() {
+    return auths;
   }
 
-  /**
-   * @param registry the registry to get the credential helpers for
-   * @return {@code credsStore} if {@code registry} is present in {@code auths}; otherwise, searches
-   *     {@code credHelpers}; otherwise, {@code null} if not found
-   */
   @Nullable
-  public String getCredentialHelperFor(String registry) {
-    if (credsStore != null) {
-      // The registry could be prefixed with the HTTPS protocol.
-      if (auths.containsKey(registry) || auths.containsKey("https://" + registry)) {
-        return credsStore;
-      }
-    }
-    if (credHelpers.containsKey(registry)) {
-      return credHelpers.get(registry);
-    }
-    return null;
+  public String getCredsStore() {
+    return credsStore;
+  }
+
+  public Map<String, String> getCredHelpers() {
+    return credHelpers;
   }
 
   @VisibleForTesting

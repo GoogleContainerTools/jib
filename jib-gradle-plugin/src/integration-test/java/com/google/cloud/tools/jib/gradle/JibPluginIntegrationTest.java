@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.cloud.tools.jib.Command;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.time.Instant;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.BuildTask;
 import org.gradle.testkit.runner.TaskOutcome;
@@ -97,6 +98,16 @@ public class JibPluginIntegrationTest {
   public void testBuild_empty() throws IOException, InterruptedException {
     Assert.assertEquals(
         "", buildAndRun(emptyTestProject, "gcr.io/jib-integration-testing/emptyimage:gradle"));
+    Assert.assertEquals(
+        "1970-01-01T00:00:00Z",
+        new Command(
+                "docker",
+                "inspect",
+                "-f",
+                "{{.Created}}",
+                "gcr.io/jib-integration-testing/emptyimage:gradle")
+            .run()
+            .trim());
   }
 
   @Test
@@ -112,9 +123,11 @@ public class JibPluginIntegrationTest {
               "No classes files were found - did you compile your project?"));
     }
 
+    Instant beforeBuild = Instant.now();
     Assert.assertEquals(
-        "Hello, world. An argument.\n",
+        "Hello, world. An argument.\nfoo\ncat\n",
         buildAndRun(simpleTestProject, "gcr.io/jib-integration-testing/simpleimage:gradle"));
+    assertSimpleCreationTimeIsAfter(beforeBuild);
   }
 
   @Test
@@ -139,14 +152,26 @@ public class JibPluginIntegrationTest {
         "",
         buildToDockerDaemonAndRun(
             emptyTestProject, "gcr.io/jib-integration-testing/emptyimage:gradle"));
+    Assert.assertEquals(
+        "1970-01-01T00:00:00Z",
+        new Command(
+                "docker",
+                "inspect",
+                "-f",
+                "{{.Created}}",
+                "gcr.io/jib-integration-testing/emptyimage:gradle")
+            .run()
+            .trim());
   }
 
   @Test
   public void testDockerDaemon_simple() throws IOException, InterruptedException {
+    Instant beforeBuild = Instant.now();
     Assert.assertEquals(
-        "Hello, world. An argument.\n",
+        "Hello, world. An argument.\nfoo\ncat\n",
         buildToDockerDaemonAndRun(
             simpleTestProject, "gcr.io/jib-integration-testing/simpleimage:gradle"));
+    assertSimpleCreationTimeIsAfter(beforeBuild);
   }
 
   @Test
@@ -155,6 +180,32 @@ public class JibPluginIntegrationTest {
         "Hello, world. An argument.\n",
         buildToDockerDaemonAndRun(
             defaultTargetTestProject, "default-target-name:default-target-version"));
+  }
+
+  @Test
+  public void testBuildTar_simple() throws IOException, InterruptedException {
+    String imageReference = "gcr.io/jib-integration-testing/simpleimage:gradle";
+    String outputPath =
+        simpleTestProject.getProjectRoot().resolve("build").resolve("jib-image.tar").toString();
+    Instant beforeBuild = Instant.now();
+    BuildResult buildResult = simpleTestProject.build("clean", JibPlugin.BUILD_TAR_TASK_NAME);
+
+    BuildTask classesTask = buildResult.task(":classes");
+    BuildTask jibBuildTarTask = buildResult.task(":" + JibPlugin.BUILD_TAR_TASK_NAME);
+
+    Assert.assertNotNull(classesTask);
+    Assert.assertEquals(TaskOutcome.SUCCESS, classesTask.getOutcome());
+    Assert.assertNotNull(jibBuildTarTask);
+    Assert.assertEquals(TaskOutcome.SUCCESS, jibBuildTarTask.getOutcome());
+    Assert.assertThat(
+        buildResult.getOutput(), CoreMatchers.containsString("Built image tarball at "));
+    Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(outputPath));
+
+    new Command("docker", "load", "--input", outputPath).run();
+    Assert.assertEquals(
+        "Hello, world. An argument.\nfoo\ncat\n",
+        new Command("docker", "run", imageReference).run());
+    assertSimpleCreationTimeIsAfter(beforeBuild);
   }
 
   @Test
@@ -222,12 +273,36 @@ public class JibPluginIntegrationTest {
       Assert.assertEquals(TaskOutcome.SUCCESS, reexecutedJibDockerContextTask.getOutcome());
 
     } catch (UnexpectedBuildFailure ex) {
-      // THis might happen on systems without SecureDirectoryStream, so we just ignore it.
+      // This might happen on systems without SecureDirectoryStream, so we just ignore it.
       // See com.google.common.io.MoreFiles#deleteDirectoryContents.
       Assert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
               "Export Docker context failed because cannot clear directory"));
     }
+  }
+
+  /**
+   * Asserts that the creation time of the simple test project is set. If the time parsed from the
+   * {@code docker inspect} command occurs before the specified time (i.e. if it is 1970), then the
+   * assertion will fail.
+   *
+   * @param before the specified time to compare the resulting image's creation time to
+   * @throws IOException if the {@code docker inspect} command fails to run
+   * @throws InterruptedException if the {@code docker inspect} command is interrupted
+   */
+  private static void assertSimpleCreationTimeIsAfter(Instant before)
+      throws IOException, InterruptedException {
+    String inspect =
+        new Command(
+                "docker",
+                "inspect",
+                "-f",
+                "{{.Created}}",
+                "gcr.io/jib-integration-testing/simpleimage:gradle")
+            .run()
+            .trim();
+    Instant parsed = Instant.parse(inspect);
+    Assert.assertTrue(parsed.isAfter(before) || parsed.equals(before));
   }
 }

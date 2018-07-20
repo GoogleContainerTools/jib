@@ -22,15 +22,19 @@ import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.settings.crypto.SettingsDecrypter;
 
 /** Defines the configuration parameters for Jib. Jib {@link Mojo}s should extend this class. */
 abstract class JibPluginConfiguration extends AbstractMojo {
@@ -62,6 +66,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
   /** Configuration for {@code container} parameter. */
   public static class ContainerParameters {
+
+    @Parameter private boolean useCurrentTimestamp = false;
 
     @Parameter private List<String> jvmFlags = Collections.emptyList();
 
@@ -158,6 +164,12 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   @Parameter(defaultValue = "false", required = true)
   private boolean allowInsecureRegistries;
 
+  @Nullable
+  @Parameter(defaultValue = "${project.basedir}/src/main/jib", required = true)
+  private String extraDirectory;
+
+  @Nullable @Component protected SettingsDecrypter settingsDecrypter;
+
   MavenProject getProject() {
     return Preconditions.checkNotNull(project);
   }
@@ -179,6 +191,10 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   @Nullable
   String getTargetImageCredentialHelperName() {
     return Preconditions.checkNotNull(to).credHelper;
+  }
+
+  boolean getUseCurrentTimestamp() {
+    return container.useCurrentTimestamp;
   }
 
   List<String> getJvmFlags() {
@@ -215,6 +231,12 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     return allowInsecureRegistries;
   }
 
+  @Nullable
+  Path getExtraDirectory() {
+    // TODO: Should inform user about nonexistent directory if using custom directory.
+    return Paths.get(extraDirectory);
+  }
+
   @VisibleForTesting
   void setJvmFlags(List<String> jvmFlags) {
     this.jvmFlags = jvmFlags;
@@ -243,5 +265,10 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   @VisibleForTesting
   void setTargetImage(@Nullable String targetImage) {
     this.to.image = targetImage;
+  }
+
+  @VisibleForTesting
+  void setExtraDirectory(String extraDirectory) {
+    this.extraDirectory = extraDirectory;
   }
 }

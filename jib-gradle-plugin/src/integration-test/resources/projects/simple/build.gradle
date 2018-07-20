@@ -20,6 +20,7 @@ jib {
         credHelper = 'gcr'
     }
     container {
+        useCurrentTimestamp = true
         args = ['An argument.']
         ports = ['1000/tcp', '2000-2003/udp']
     }

@@ -17,12 +17,15 @@
 package com.google.cloud.tools.jib.cache;
 
 import com.google.cloud.tools.jib.image.ImageLayers;
+import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
-import java.nio.file.Path;
+import com.google.common.collect.Streams;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 /**
@@ -60,17 +63,59 @@ class CacheMetadata {
   /** Can be used to filter layers in the metadata. */
   static class LayerFilter {
 
+    /**
+     * Checks if the layer entries matches the metadata layer entries
+     *
+     * @param layerEntries the layer entries to check
+     * @param metadataEntries the metadata entries to match against
+     * @return {@code true} if the layer entries match the metadata entries; {@code false} otherwise
+     */
+    @VisibleForTesting
+    static boolean doLayerEntriesMatchMetadataEntries(
+        ImmutableList<LayerEntry> layerEntries,
+        ImmutableList<LayerMetadata.LayerMetadataEntry> metadataEntries) {
+      // Checks the layer entries are the same as the metadata layer entries.
+      if (layerEntries.size() != metadataEntries.size()) {
+        return false;
+      }
+      return pairwiseCompareAllPass(
+          layerEntries,
+          metadataEntries,
+          (layerEntry, metadataEntry) -> {
+            // Checks extraction path not equal.
+            if (!layerEntry.getExtractionPath().equals(metadataEntry.getExtractionPath())) {
+              return false;
+            }
+
+            // Checks for any source file not equal.
+            if (layerEntry.getSourceFiles().size()
+                != metadataEntry.getSourceFilesStrings().size()) {
+              return false;
+            }
+            return pairwiseCompareAllPass(
+                layerEntry.getSourceFiles(),
+                metadataEntry.getSourceFilesStrings(),
+                (sourceFile, sourceFileString) -> sourceFile.equals(Paths.get(sourceFileString)));
+          });
+    }
+
+    private static <A, B> boolean pairwiseCompareAllPass(
+        List<A> listA, List<B> listB, BiPredicate<A, B> compare) {
+      return Streams.zip(listA.stream(), listB.stream(), compare::test)
+          .allMatch(Predicate.isEqual(true));
+    }
+
     private final ImageLayers<CachedLayerWithMetadata> layers;
 
-    @Nullable private ImmutableList<Path> sourceFiles;
+    @Nullable private ImmutableList<LayerEntry> layerEntries;
 
     private LayerFilter(ImageLayers<CachedLayerWithMetadata> layers) {
       this.layers = layers;
     }
 
-    /** Filters to a certain list of source files. */
-    LayerFilter bySourceFiles(ImmutableList<Path> sourceFiles) {
-      this.sourceFiles = sourceFiles;
+    /** Filters to a certain list of {@link LayerEntry}s. */
+    LayerFilter byLayerEntries(ImmutableList<LayerEntry> layerEntries) {
+      this.layerEntries = layerEntries;
       return this;
     }
 
@@ -80,19 +125,16 @@ class CacheMetadata {
         ImageLayers.Builder<CachedLayerWithMetadata> filteredLayersBuilder = ImageLayers.builder();
 
         for (CachedLayerWithMetadata layer : layers) {
-          if (sourceFiles != null) {
+          if (layerEntries != null) {
             if (layer.getMetadata() == null) {
+              // There is no metadata, so it doesn't pass the filter.
               continue;
             }
-            List<String> cachedLayerSourceFilePaths = layer.getMetadata().getSourceFiles();
-            if (cachedLayerSourceFilePaths != null) {
-              List<Path> cachedLayerSourceFiles = new ArrayList<>();
-              for (String sourceFile : cachedLayerSourceFilePaths) {
-                cachedLayerSourceFiles.add(Paths.get(sourceFile));
-              }
-              if (!cachedLayerSourceFiles.equals(sourceFiles)) {
-                continue;
-              }
+
+            if (!doLayerEntriesMatchMetadataEntries(
+                layerEntries, layer.getMetadata().getEntries())) {
+              // The layer entries do not match.
+              continue;
             }
           }
 

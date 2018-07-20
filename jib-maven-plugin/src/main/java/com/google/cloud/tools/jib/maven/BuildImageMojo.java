@@ -19,10 +19,12 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
+import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
+import com.google.cloud.tools.jib.frontend.SystemPropertyValidator;
 import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.RegistryClient;
@@ -30,7 +32,13 @@ import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Instant;
 import java.util.Arrays;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -38,9 +46,8 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 
 /** Builds a container image. */
 @Mojo(
-  name = BuildImageMojo.GOAL_NAME,
-  requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM
-)
+    name = BuildImageMojo.GOAL_NAME,
+    requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM)
 public class BuildImageMojo extends JibPluginConfiguration {
 
   @VisibleForTesting static final String GOAL_NAME = "build";
@@ -55,6 +62,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
   public void execute() throws MojoExecutionException, MojoFailureException {
     MavenBuildLogger mavenBuildLogger = new MavenBuildLogger(getLog());
     handleDeprecatedParameters(mavenBuildLogger);
+    SystemPropertyValidator.checkHttpTimeoutProperty(MojoExecutionException::new);
 
     // Validates 'format'.
     if (Arrays.stream(ImageFormat.values()).noneMatch(value -> value.name().equals(getFormat()))) {
@@ -81,8 +89,14 @@ public class BuildImageMojo extends JibPluginConfiguration {
     ImageReference targetImage = parseImageReference(getTargetImage(), "to");
 
     // Checks Maven settings for registry credentials.
+    if (Boolean.getBoolean("sendCredentialsOverHttp")) {
+      mavenBuildLogger.warn(
+          "Authentication over HTTP is enabled. It is strongly recommended that you do not enable "
+              + "this on a public network!");
+    }
     MavenSettingsServerCredentials mavenSettingsServerCredentials =
-        new MavenSettingsServerCredentials(Preconditions.checkNotNull(session).getSettings());
+        new MavenSettingsServerCredentials(
+            Preconditions.checkNotNull(session).getSettings(), settingsDecrypter, mavenBuildLogger);
     RegistryCredentials knownBaseRegistryCredentials =
         mavenSettingsServerCredentials.retrieve(baseImage.getRegistry());
     RegistryCredentials knownTargetRegistryCredentials =
@@ -105,9 +119,21 @@ public class BuildImageMojo extends JibPluginConfiguration {
             .setJavaArguments(getArgs())
             .setJvmFlags(getJvmFlags())
             .setEnvironment(getEnvironment())
-            .setExposedPorts(ExposedPortsParser.parse(getExposedPorts(), mavenBuildLogger))
+            .setExposedPorts(ExposedPortsParser.parse(getExposedPorts()))
             .setTargetFormat(ImageFormat.valueOf(getFormat()).getManifestTemplateClass())
             .setAllowHttp(getAllowInsecureRegistries());
+    if (getExtraDirectory() != null && Files.exists(getExtraDirectory())) {
+      try (Stream<Path> extraFilesLayerDirectoryFiles = Files.list(getExtraDirectory())) {
+        buildConfigurationBuilder.setExtraFilesLayerConfiguration(
+            LayerConfiguration.builder()
+                .addEntry(extraFilesLayerDirectoryFiles.collect(Collectors.toList()), "/")
+                .build());
+
+      } catch (IOException ex) {
+        throw new MojoExecutionException(
+            "Failed to list directory for extra files: " + getExtraDirectory(), ex);
+      }
+    }
     CacheConfiguration applicationLayersCacheConfiguration =
         CacheConfiguration.forPath(mavenProjectProperties.getCacheDirectory());
     buildConfigurationBuilder.setApplicationLayersCacheConfiguration(
@@ -116,6 +142,12 @@ public class BuildImageMojo extends JibPluginConfiguration {
       buildConfigurationBuilder.setBaseImageLayersCacheConfiguration(
           applicationLayersCacheConfiguration);
     }
+    if (getUseCurrentTimestamp()) {
+      mavenBuildLogger.warn(
+          "Setting image creation time to current time; your image may not be reproducible.");
+      buildConfigurationBuilder.setCreationTime(Instant.now());
+    }
+
     BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
 
     // TODO: Instead of disabling logging, have authentication credentials be provided

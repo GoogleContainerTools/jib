@@ -31,11 +31,22 @@ import org.gradle.api.tasks.Optional;
  */
 public class ContainerParameters {
 
+  private boolean useCurrentTimestamp = false;
   private List<String> jvmFlags = Collections.emptyList();
   @Nullable private String mainClass;
   private List<String> args = Collections.emptyList();
   private ImageFormat format = ImageFormat.Docker;
   private List<String> ports = Collections.emptyList();
+
+  @Input
+  @Optional
+  public boolean getUseCurrentTimestamp() {
+    return useCurrentTimestamp;
+  }
+
+  public void setUseCurrentTimestamp(boolean useCurrentTimestamp) {
+    this.useCurrentTimestamp = useCurrentTimestamp;
+  }
 
   @Input
   @Optional

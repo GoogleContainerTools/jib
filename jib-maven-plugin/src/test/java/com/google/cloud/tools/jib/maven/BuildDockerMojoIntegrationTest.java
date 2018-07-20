@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.Command;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Instant;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
 import org.hamcrest.CoreMatchers;
@@ -51,7 +52,6 @@ public class BuildDockerMojoIntegrationTest {
     verifier.setAutoclean(false);
     verifier.executeGoal("package");
 
-    // Builds twice, and checks if the second build took less time.
     verifier.executeGoal("jib:" + BuildDockerMojo.GOAL_NAME);
     verifier.verifyErrorFreeLog();
 
@@ -69,11 +69,23 @@ public class BuildDockerMojoIntegrationTest {
 
   @Test
   public void testExecute_simple() throws VerificationException, IOException, InterruptedException {
+    Instant before = Instant.now();
     Assert.assertEquals(
-        "Hello, world. An argument.\n",
+        "Hello, world. An argument.\nfoo\ncat\n",
         buildToDockerDaemonAndRun(
             simpleTestProject.getProjectRoot(),
             "gcr.io/jib-integration-testing/simpleimage:maven"));
+    Instant buildTime =
+        Instant.parse(
+            new Command(
+                    "docker",
+                    "inspect",
+                    "-f",
+                    "{{.Created}}",
+                    "gcr.io/jib-integration-testing/simpleimage:maven")
+                .run()
+                .trim());
+    Assert.assertTrue(buildTime.isAfter(before) || buildTime.equals(before));
   }
 
   @Test
@@ -82,6 +94,16 @@ public class BuildDockerMojoIntegrationTest {
         "",
         buildToDockerDaemonAndRun(
             emptyTestProject.getProjectRoot(), "gcr.io/jib-integration-testing/emptyimage:maven"));
+    Assert.assertEquals(
+        "1970-01-01T00:00:00Z",
+        new Command(
+                "docker",
+                "inspect",
+                "-f",
+                "{{.Created}}",
+                "gcr.io/jib-integration-testing/emptyimage:maven")
+            .run()
+            .trim());
   }
 
   @Test

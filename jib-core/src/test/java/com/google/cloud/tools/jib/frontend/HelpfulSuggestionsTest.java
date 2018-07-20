@@ -68,5 +68,8 @@ public class HelpfulSuggestionsTest {
         "messagePrefix, perhaps you should add a parameter configuration parameter to your buildFile or set the parameter via the commandline (e.g. 'command').",
         TEST_HELPFUL_SUGGESTIONS.forToNotConfigured("parameter", "buildFile", "command"));
     Assert.assertEquals("messagePrefix", TEST_HELPFUL_SUGGESTIONS.none());
+    Assert.assertEquals(
+        "messagePrefix, perhaps you should use a registry that supports HTTPS so credentials can be sent safely, or set the 'sendCredentialsOverHttp' system property to true",
+        TEST_HELPFUL_SUGGESTIONS.forCredentialsNotSent());
   }
 }

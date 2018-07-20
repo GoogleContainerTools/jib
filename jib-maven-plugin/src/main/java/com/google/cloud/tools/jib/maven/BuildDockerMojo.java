@@ -19,26 +19,32 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
+import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
+import com.google.cloud.tools.jib.frontend.SystemPropertyValidator;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Instant;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
 /** Builds a container image and exports to the default Docker daemon. */
 @Mojo(
-  name = BuildDockerMojo.GOAL_NAME,
-  requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM
-)
+    name = BuildDockerMojo.GOAL_NAME,
+    requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM)
 public class BuildDockerMojo extends JibPluginConfiguration {
 
   @VisibleForTesting static final String GOAL_NAME = "dockerBuild";
@@ -53,23 +59,31 @@ public class BuildDockerMojo extends JibPluginConfiguration {
   public void execute() throws MojoExecutionException {
     MavenBuildLogger mavenBuildLogger = new MavenBuildLogger(getLog());
     handleDeprecatedParameters(mavenBuildLogger);
+    SystemPropertyValidator.checkHttpTimeoutProperty(MojoExecutionException::new);
 
     if (!new DockerClient().isDockerInstalled()) {
       throw new MojoExecutionException(HELPFUL_SUGGESTIONS.forDockerNotInstalled());
     }
 
     // Parses 'from' and 'to' into image reference.
+    MavenProjectProperties mavenProjectProperties =
+        MavenProjectProperties.getForProject(getProject(), mavenBuildLogger);
     ImageReference baseImage = parseImageReference(getBaseImage(), "from");
-    ImageReference targetImage = getDockerTag(mavenBuildLogger);
+    ImageReference targetImage =
+        mavenProjectProperties.getGeneratedTargetDockerTag(getTargetImage(), mavenBuildLogger);
 
     // Checks Maven settings for registry credentials.
+    if (Boolean.getBoolean("sendCredentialsOverHttp")) {
+      mavenBuildLogger.warn(
+          "Authentication over HTTP is enabled. It is strongly recommended that you do not enable "
+              + "this on a public network!");
+    }
     MavenSettingsServerCredentials mavenSettingsServerCredentials =
-        new MavenSettingsServerCredentials(Preconditions.checkNotNull(session).getSettings());
+        new MavenSettingsServerCredentials(
+            Preconditions.checkNotNull(session).getSettings(), settingsDecrypter, mavenBuildLogger);
     RegistryCredentials knownBaseRegistryCredentials =
         mavenSettingsServerCredentials.retrieve(baseImage.getRegistry());
 
-    MavenProjectProperties mavenProjectProperties =
-        MavenProjectProperties.getForProject(getProject(), mavenBuildLogger);
     String mainClass = mavenProjectProperties.getMainClass(this);
 
     // Builds the BuildConfiguration.
@@ -84,8 +98,20 @@ public class BuildDockerMojo extends JibPluginConfiguration {
             .setJavaArguments(getArgs())
             .setJvmFlags(getJvmFlags())
             .setEnvironment(getEnvironment())
-            .setExposedPorts(ExposedPortsParser.parse(getExposedPorts(), mavenBuildLogger))
+            .setExposedPorts(ExposedPortsParser.parse(getExposedPorts()))
             .setAllowHttp(getAllowInsecureRegistries());
+    if (getExtraDirectory() != null && Files.exists(getExtraDirectory())) {
+      try (Stream<Path> extraFilesLayerDirectoryFiles = Files.list(getExtraDirectory())) {
+        buildConfigurationBuilder.setExtraFilesLayerConfiguration(
+            LayerConfiguration.builder()
+                .addEntry(extraFilesLayerDirectoryFiles.collect(Collectors.toList()), "/")
+                .build());
+
+      } catch (IOException ex) {
+        throw new MojoExecutionException(
+            "Failed to list directory for extra files: " + getExtraDirectory(), ex);
+      }
+    }
     CacheConfiguration applicationLayersCacheConfiguration =
         CacheConfiguration.forPath(mavenProjectProperties.getCacheDirectory());
     buildConfigurationBuilder.setApplicationLayersCacheConfiguration(
@@ -94,6 +120,12 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       buildConfigurationBuilder.setBaseImageLayersCacheConfiguration(
           applicationLayersCacheConfiguration);
     }
+    if (getUseCurrentTimestamp()) {
+      mavenBuildLogger.warn(
+          "Setting image creation time to current time; your image may not be reproducible.");
+      buildConfigurationBuilder.setCreationTime(Instant.now());
+    }
+
     BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
@@ -109,31 +141,6 @@ public class BuildDockerMojo extends JibPluginConfiguration {
 
     } catch (CacheDirectoryCreationException | BuildStepsExecutionException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex.getCause());
-    }
-  }
-
-  /**
-   * Returns an {@link ImageReference} parsed from the configured target image, or one of the form
-   * {@code project-name:project-version} if target image is not configured
-   *
-   * @param mavenBuildLogger the logger used to notify users of the target image parameter
-   * @return an {@link ImageReference} parsed from the configured target image, or one of the form
-   *     {@code project-name:project-version} if target image is not configured
-   */
-  ImageReference getDockerTag(MavenBuildLogger mavenBuildLogger) {
-    if (Strings.isNullOrEmpty(getTargetImage())) {
-      // TODO: Validate that project name and version are valid repository/tag
-      // TODO: Use HelpfulSuggestions
-      mavenBuildLogger.lifecycle(
-          "Tagging image with generated image reference "
-              + getProject().getName()
-              + ":"
-              + getProject().getVersion()
-              + ". If you'd like to specify a different tag, you can set the <to><image> parameter "
-              + "in your pom.xml, or use the -Dimage=<MY IMAGE> commandline flag.");
-      return ImageReference.of(null, getProject().getName(), getProject().getVersion());
-    } else {
-      return parseImageReference(getTargetImage(), "to");
     }
   }
 }

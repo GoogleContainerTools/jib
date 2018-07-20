@@ -22,7 +22,9 @@ import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
 import com.google.cloud.tools.jib.frontend.MainClassFinder;
 import com.google.cloud.tools.jib.frontend.MainClassInferenceException;
 import com.google.cloud.tools.jib.frontend.ProjectProperties;
+import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -140,6 +142,33 @@ class MavenProjectProperties implements ProjectProperties {
       return MainClassFinder.resolveMainClass(jibPluginConfiguration.getMainClass(), this);
     } catch (MainClassInferenceException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex);
+    }
+  }
+
+  /**
+   * Returns an {@link ImageReference} parsed from the configured target image, or one of the form
+   * {@code project-name:project-version} if target image is not configured
+   *
+   * @param targetImage the configured target image reference (can be empty)
+   * @param mavenBuildLogger the logger used to notify users of the target image parameter
+   * @return an {@link ImageReference} parsed from the configured target image, or one of the form
+   *     {@code project-name:project-version} if target image is not configured
+   */
+  ImageReference getGeneratedTargetDockerTag(
+      @Nullable String targetImage, MavenBuildLogger mavenBuildLogger) {
+    if (Strings.isNullOrEmpty(targetImage)) {
+      // TODO: Validate that project name and version are valid repository/tag
+      // TODO: Use HelpfulSuggestions
+      mavenBuildLogger.lifecycle(
+          "Tagging image with generated image reference "
+              + project.getName()
+              + ":"
+              + project.getVersion()
+              + ". If you'd like to specify a different tag, you can set the <to><image> parameter "
+              + "in your pom.xml, or use the -Dimage=<MY IMAGE> commandline flag.");
+      return ImageReference.of(null, project.getName(), project.getVersion());
+    } else {
+      return JibPluginConfiguration.parseImageReference(targetImage, "to");
     }
   }
 }

@@ -95,6 +95,39 @@ public class TarStreamBuilderTest {
     verifyBlobWithCompression();
   }
 
+  @Test
+  public void testToBlob_multiByte() throws IOException {
+    testTarStreamBuilder.addEntry("日本語", "test");
+    testTarStreamBuilder.addEntry("asdf", "crepecake");
+    Blob blob = testTarStreamBuilder.toBlob();
+
+    // Writes the BLOB and captures the output.
+    ByteArrayOutputStream tarByteOutputStream = new ByteArrayOutputStream();
+    OutputStream compressorStream = new GZIPOutputStream(tarByteOutputStream);
+    blob.writeTo(compressorStream);
+
+    // Rearrange the output into input for verification.
+    ByteArrayInputStream byteArrayInputStream =
+        new ByteArrayInputStream(tarByteOutputStream.toByteArray());
+    InputStream tarByteInputStream = new GZIPInputStream(byteArrayInputStream);
+    TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(tarByteInputStream);
+
+    // Verify multi-byte characters are written/read correctly
+    TarArchiveEntry headerFile = tarArchiveInputStream.getNextTarEntry();
+    Assert.assertEquals("test", headerFile.getName());
+    String fileString =
+        CharStreams.toString(new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
+    Assert.assertEquals("日本語", fileString);
+
+    headerFile = tarArchiveInputStream.getNextTarEntry();
+    Assert.assertEquals("crepecake", headerFile.getName());
+    fileString =
+        CharStreams.toString(new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
+    Assert.assertEquals("asdf", fileString);
+
+    Assert.assertNull(tarArchiveInputStream.getNextTarEntry());
+  }
+
   /** Creates a TarStreamBuilder using TarArchiveEntries. */
   private void setUpWithTarEntries() {
     // Prepares a test TarStreamBuilder.

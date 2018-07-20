@@ -99,6 +99,7 @@ class BuildImageStep
           buildAndCacheApplicationLayerSteps) {
         imageBuilder.addLayer(NonBlockingSteps.get(buildAndCacheApplicationLayerStep));
       }
+      imageBuilder.setCreated(buildConfiguration.getCreationTime());
       imageBuilder.setEnvironment(buildConfiguration.getEnvironment());
       imageBuilder.setEntrypoint(entrypoint);
       imageBuilder.setJavaArguments(buildConfiguration.getJavaArguments());
