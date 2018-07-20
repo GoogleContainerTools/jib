@@ -27,6 +27,7 @@ All notable changes to this project will be documented in this file.
 
 - Using multi-byte characters in container configuration ([#626](https://github.com/GoogleContainerTools/jib/issues/626))
 - For Docker Hub, also tries registry aliases when getting a credential from the Docker config ([#605](https://github.com/GoogleContainerTools/jib/pull/605))
+- Decrypting credentials from Maven settings ([#592](https://github.com/GoogleContainerTools/jib/issues/592))
 
 ## 0.9.6
 
