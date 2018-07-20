@@ -198,7 +198,23 @@ See more at [Using Google Container Registry (GCR) with Minikube](https://ryanes
 
 ### Why is my image created 48 years ago?
 
-For reproducibility purposes, Jib sets the creation time of the container images to 0 (January 1st, 1970). If you would like to forgo reproducibility and use a real creation time, set the `container.useCurrentTimestamp` parameter to `true` in your build configuration.
+For reproducibility purposes, Jib sets the creation time of the container images to 0 (January 1st, 1970). If you would like to forgo reproducibility and use the real creation time, set the `useCurrentTimestamp` parameter to `true` in your build configuration.
+
+#### Maven
+
+```xml
+<configuration>
+  <container>
+    <useCurrentTimestamp>true</useCurrentTimestamp>
+  </container>
+</configuration>
+```
+
+#### Gradle
+
+```groovy
+jib.container.useCurrentTimestamp = true
+```
 
 ### I would like to run my application with a javaagent.
 
