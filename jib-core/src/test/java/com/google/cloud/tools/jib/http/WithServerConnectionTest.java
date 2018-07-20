@@ -16,67 +16,28 @@
 
 package com.google.cloud.tools.jib.http;
 
-import java.io.ByteArrayOutputStream;
-import java.io.Closeable;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import org.junit.Assert;
 import org.junit.Test;
 
 /** Tests for {@link Connection} using an actual local server. */
 public class WithServerConnectionTest {
 
-  private static class WebServer implements Closeable {
-
-    private ServerSocket serverSocket;
-    private boolean stop;
-
-    private WebServer() throws IOException {
-      serverSocket = new ServerSocket(8087);
-      new Thread(this::serve200).start();
-    }
-
-    private void serve200() {
-      try {
-        while (!stop) {
-          try (Socket socket = serverSocket.accept();
-              OutputStream out = socket.getOutputStream()) {
-            out.write("HTTP/1.1 200 OK\n\nHello World!".getBytes(StandardCharsets.UTF_8));
-          }
-        }
-      } catch (IOException e) {
-      }
-    }
-
-    @Override
-    public void close() throws IOException {
-      stop = true;
-      serverSocket.close();
-    }
-  }
-
   @Test
-  public void testGet() throws IOException {
-    try (WebServer server = new WebServer();
-        Connection connection = new Connection(new URL("http://localhost:8087"))) {
+  public void testGet() throws IOException, InterruptedException {
+    try (TestWebServer server = new TestWebServer();
+        Connection connection = new Connection(new URL(server.getEndpoint()))) {
       Response response = connection.send("GET", new Request.Builder().build());
 
       Assert.assertEquals(200, response.getStatusCode());
-
-      ByteArrayOutputStream out = new ByteArrayOutputStream();
-      response.getBody().writeTo(out);
-      Assert.assertEquals("Hello World!", new String(out.toByteArray(), StandardCharsets.UTF_8));
     }
   }
 
   @Test
-  public void testErrorOnSecondSend() throws IOException {
-    try (WebServer server = new WebServer();
-        Connection connection = new Connection(new URL("http://localhost:8087"))) {
+  public void testErrorOnSecondSend() throws IOException, InterruptedException {
+    try (TestWebServer server = new TestWebServer();
+        Connection connection = new Connection(new URL(server.getEndpoint()))) {
       connection.send("GET", new Request.Builder().build());
       try {
         connection.send("GET", new Request.Builder().build());
