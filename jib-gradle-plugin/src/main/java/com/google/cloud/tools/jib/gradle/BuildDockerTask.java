@@ -32,7 +32,6 @@ import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.base.Preconditions;
-import java.io.IOException;
 import java.time.Instant;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
@@ -75,7 +74,7 @@ public class BuildDockerTask extends DefaultTask {
   }
 
   @TaskAction
-  public void buildDocker() throws InvalidImageReferenceException, IOException {
+  public void buildDocker() throws InvalidImageReferenceException {
     if (!new DockerClient().isDockerInstalled()) {
       throw new GradleException(HELPFUL_SUGGESTIONS.forDockerNotInstalled());
     }
@@ -112,7 +111,6 @@ public class BuildDockerTask extends DefaultTask {
             .setTargetImage(targetImage)
             .setBaseImageCredentialHelperName(jibExtension.getFrom().getCredHelper())
             .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
-            .setMainClass(mainClass)
             .setJavaArguments(jibExtension.getArgs())
             .setExposedPorts(ExposedPortsParser.parse(jibExtension.getExposedPorts()))
             .setAllowHttp(jibExtension.getAllowInsecureRegistries())

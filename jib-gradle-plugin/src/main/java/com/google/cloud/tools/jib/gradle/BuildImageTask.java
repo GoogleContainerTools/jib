@@ -32,7 +32,6 @@ import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import java.io.IOException;
 import java.time.Instant;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
@@ -75,7 +74,7 @@ public class BuildImageTask extends DefaultTask {
   }
 
   @TaskAction
-  public void buildImage() throws InvalidImageReferenceException, IOException {
+  public void buildImage() throws InvalidImageReferenceException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
     GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
@@ -119,7 +118,6 @@ public class BuildImageTask extends DefaultTask {
             .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
             .setTargetImageCredentialHelperName(jibExtension.getTo().getCredHelper())
             .setKnownTargetRegistryCredentials(knownTargetRegistryCredentials)
-            .setMainClass(mainClass)
             .setJavaArguments(jibExtension.getArgs())
             .setExposedPorts(ExposedPortsParser.parse(jibExtension.getExposedPorts()))
             .setTargetFormat(jibExtension.getFormat())
