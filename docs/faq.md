@@ -29,7 +29,11 @@ If you built your image directly to the Docker daemon using `jib:dockerBuild` (M
 
 If you built your image to a registry using `jib:build` (Maven) or `jib` (Gradle), you will need to pull the image using `docker pull <image name>` before using `docker run`.
 
-To run your image on Kubernetes, see [steps 4-6 of the Kubernetes Engine deployment tutorial](https://cloud.google.com/kubernetes-engine/docs/tutorials/hello-app#step_4_create_a_container_cluster).
+To run your image on Kubernetes, you can use kubectl:
+
+```shell
+kubectl run jib-deployment --image=<image name>
+```
 
 ### How do I set parameters for my image at runtime?
 
@@ -160,7 +164,7 @@ There are several ways of doing this:
 - Use [`jib:dockerBuild` for Maven](../jib-maven-plugin#build-to-docker-daemon) or [`jibDockerBuild` for Gradle](../jib-gradle-plugin#build-to-docker-daemon) to build directly to your local Docker daemon.
 - Use [`jib:buildTar` for Maven]() or [`jibBuildTar` for Gradle]() to build the image to a tarball, then use `docker load --input` to load the image into Docker (the tarball built with these commands will be located in `target/jib-image.tar` for Maven and `build/jib-image.tar` for Gradle by default).
 - [`docker pull`](https://docs.docker.com/engine/reference/commandline/pull/) the image built with Jib to have it available in your local Docker daemon.
-- [Run a local Docker registry](https://docs.docker.com/registry/deploying/) and point Jib to push to the local registry.
+- Alternatively, instead of using a Docker daemon, you can [run a local Docker registry](https://docs.docker.com/registry/deploying/) and point Jib to push to the local registry.
 
 ### I am seeing `ImagePullBackoff` on my pods (in [minikube](https://github.com/kubernetes/minikube)).
 
