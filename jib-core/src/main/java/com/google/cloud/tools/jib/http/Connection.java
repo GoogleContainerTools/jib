@@ -36,12 +36,12 @@ import org.apache.http.NoHttpResponseException;
  *
  * <p>Example usage:
  *
- * <pre>
+ * <pre>{@code
  * try (Connection connection = new Connection(url)) {
  *   Response response = connection.get(request);
  *   // ... process the response
  * }
- * </pre>
+ * }</pre>
  */
 public class Connection implements Closeable {
 
