@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 0.9.7
+
+### Added
+
 - Snapshot dependencies are added as their own layer ([#584](https://github.com/GoogleContainerTools/jib/pull/584))
 - `jib:buildTar` goal to build an image tarball at `target/jib-image.tar`, which can be loaded into docker using `docker load` ([#514](https://github.com/GoogleContainerTools/jib/issues/514))
 - `<container><useCurrentTimestamp>` parameter to set the image creation time to the build time ([#413](https://github.com/GoogleContainerTools/jib/issues/413))
@@ -19,6 +27,7 @@ All notable changes to this project will be documented in this file.
 
 - Using multi-byte characters in container configuration ([#626](https://github.com/GoogleContainerTools/jib/issues/626))
 - For Docker Hub, also tries registry aliases when getting a credential from the Docker config ([#605](https://github.com/GoogleContainerTools/jib/pull/605))
+- Decrypting credentials from Maven settings ([#592](https://github.com/GoogleContainerTools/jib/issues/592))
 
 ## 0.9.6
 

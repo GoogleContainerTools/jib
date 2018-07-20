@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.base.Strings;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.CharStreams;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -132,5 +133,15 @@ public class DockerCredentialHelper {
 
       throw ex;
     }
+  }
+
+  @VisibleForTesting
+  String getServerUrl() {
+    return serverUrl;
+  }
+
+  @VisibleForTesting
+  String getCredentialHelperSuffix() {
+    return credentialHelperSuffix;
   }
 }

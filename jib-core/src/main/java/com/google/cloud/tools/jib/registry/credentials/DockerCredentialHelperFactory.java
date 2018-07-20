@@ -19,17 +19,15 @@ package com.google.cloud.tools.jib.registry.credentials;
 /** Factory class for constructing {@link DockerCredentialHelper}. */
 public class DockerCredentialHelperFactory {
 
-  private final String registry;
-
-  public DockerCredentialHelperFactory(String registry) {
-    this.registry = registry;
-  }
+  public DockerCredentialHelperFactory() {}
 
   /**
+   * @param registry the {@code ServerURL} stored by the credential helper
    * @param credentialHelperSuffix the suffix of the docker-credential-[suffix] command to be run.
    * @return a {@link DockerCredentialHelper} retrieved from the command.
    */
-  public DockerCredentialHelper withCredentialHelperSuffix(String credentialHelperSuffix) {
+  public DockerCredentialHelper newDockerCredentialHelper(
+      String registry, String credentialHelperSuffix) {
     return new DockerCredentialHelper(registry, credentialHelperSuffix);
   }
 }
