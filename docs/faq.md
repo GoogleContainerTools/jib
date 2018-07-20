@@ -35,9 +35,13 @@ To run your image on Kubernetes, you can use kubectl:
 kubectl run jib-deployment --image=<image name>
 ```
 
+For more information, see [steps 4-6 of the Kubernetes Engine deployment tutorial](https://cloud.google.com/kubernetes-engine/docs/tutorials/hello-app#step_4_create_a_container_cluster).
+
 ### How do I set parameters for my image at runtime?
 
 #### JVM Flags
+
+For the default `distroless/java` base image, you can use the `JAVA_TOOL_OPTIONS` environment variable (note that other JRE images may require using other environment variables):
 
 Using Docker: `docker run -e "JAVA_TOOL_OPTIONS=<JVM flags>" <image name>`
 
@@ -54,7 +58,7 @@ spec:
       value: <JVM flags>
 ```
 
-#### Environment Variables
+#### Other Environment Variables
 
 Using Docker: `docker run -e "NAME=VALUE" <image name>`
 
@@ -162,9 +166,9 @@ We currently support adding a custom directory with an **incubating** feature. T
 There are several ways of doing this:
 
 - Use [`jib:dockerBuild` for Maven](../jib-maven-plugin#build-to-docker-daemon) or [`jibDockerBuild` for Gradle](../jib-gradle-plugin#build-to-docker-daemon) to build directly to your local Docker daemon.
-- Use [`jib:buildTar` for Maven]() or [`jibBuildTar` for Gradle]() to build the image to a tarball, then use `docker load --input` to load the image into Docker (the tarball built with these commands will be located in `target/jib-image.tar` for Maven and `build/jib-image.tar` for Gradle by default).
+- Use [`jib:buildTar` for Maven](../jib-maven-plugin#build-an-image-tarball) or [`jibBuildTar` for Gradle](../jib-gradle-plugin#build-an-image-tarball) to build the image to a tarball, then use `docker load --input` to load the image into Docker (the tarball built with these commands will be located in `target/jib-image.tar` for Maven and `build/jib-image.tar` for Gradle by default).
 - [`docker pull`](https://docs.docker.com/engine/reference/commandline/pull/) the image built with Jib to have it available in your local Docker daemon.
-- Alternatively, instead of using a Docker daemon, you can [run a local Docker registry](https://docs.docker.com/registry/deploying/) and point Jib to push to the local registry.
+- Alternatively, instead of using a Docker daemon, you can run a local container registry, such as [Docker registry](https://docs.docker.com/registry/deploying/) or other repository managers, and point Jib to push to the local registry.
 
 ### I am seeing `ImagePullBackoff` on my pods (in [minikube](https://github.com/kubernetes/minikube)).
 
