@@ -12,19 +12,19 @@ Please contribute if you have good suggestion/contribute if you have suggested e
 docker login -u hellojib
 ```
 
-1. Modify configuration:
+2. Modify configuration:
 
 Modify  `credHelper` to match your platform .
 
-1. Build the image:
+3. Build the image:
 
 Run `gradle jib` or `mvn compile jib:build` under project dictionary .
 
-1. Run container:
+4. Run container:
 
 Run `docker run --name hellojib -p 8080:8080 hellojib/hellojib:jib` .
 
-1. Access application:
+5. Access application:
 
 Run `curl localhost:8080` and it will return `"Hello Jib"` .
 
