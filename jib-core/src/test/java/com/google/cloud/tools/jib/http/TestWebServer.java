@@ -22,11 +22,14 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 /** Simple local web server for testing. */
 public class TestWebServer implements Closeable {
 
   private final ServerSocket serverSocket;
+  private final List<Socket> sockets = new ArrayList<>();
 
   public TestWebServer() throws IOException, InterruptedException {
     serverSocket = new ServerSocket(0);
@@ -42,6 +45,12 @@ public class TestWebServer implements Closeable {
   @Override
   public void close() throws IOException {
     serverSocket.close();
+    for (Socket socket : sockets) {
+      socket.close();
+      try (Socket toClose = socket) {
+      } catch (IOException ex) {
+      }
+    }
   }
 
   private void waitUntilReady() throws IOException, InterruptedException {
@@ -59,10 +68,10 @@ public class TestWebServer implements Closeable {
   private void serve200() {
     try {
       while (true) {
-        try (Socket socket = serverSocket.accept();
-            OutputStream out = socket.getOutputStream()) {
-          out.write("HTTP/1.1 200 OK\n\nHello World!".getBytes(StandardCharsets.UTF_8));
-        }
+        Socket socket = serverSocket.accept();
+        sockets.add(socket);
+        OutputStream out = socket.getOutputStream();
+        out.write("HTTP/1.1 200 OK\n\nHello World!\n\n".getBytes(StandardCharsets.UTF_8));
       }
     } catch (IOException ex) {
     }
