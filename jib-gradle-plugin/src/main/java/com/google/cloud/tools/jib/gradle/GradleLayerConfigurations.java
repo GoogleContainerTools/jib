@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
+import com.google.cloud.tools.jib.frontend.JavaEntrypointBuilder;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
@@ -43,11 +43,12 @@ class GradleLayerConfigurations {
   /**
    * Resolves the source files configuration for a Gradle {@link Project}.
    *
-   * @param project
-   * @param gradleBuildLogger
-   * @param extraDirectory
-   * @return
-   * @throws IOException
+   * @param project the Gradle {@link Project}
+   * @param gradleBuildLogger the build logger for providing feedback about the resolution
+   * @param extraDirectory path to the directory for the extra files layer
+   * @return a {@link GradleLayerConfigurations} for building the layers for the Gradle {@link
+   *     Project}
+   * @throws IOException if an I/O exception occurred during resolution
    */
   static GradleLayerConfigurations getForProject(
       Project project, GradleBuildLogger gradleBuildLogger, Path extraDirectory)
@@ -121,18 +122,18 @@ class GradleLayerConfigurations {
     return new GradleLayerConfigurations(
         LayerConfiguration.builder()
             .addEntry(
-                dependenciesFiles, SourceFilesConfiguration.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
+                dependenciesFiles, JavaEntrypointBuilder.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
             .build(),
         LayerConfiguration.builder()
             .addEntry(
                 snapshotDependenciesFiles,
-                SourceFilesConfiguration.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
+                JavaEntrypointBuilder.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
             .build(),
         LayerConfiguration.builder()
-            .addEntry(resourcesFiles, SourceFilesConfiguration.DEFAULT_RESOURCES_PATH_ON_IMAGE)
+            .addEntry(resourcesFiles, JavaEntrypointBuilder.DEFAULT_RESOURCES_PATH_ON_IMAGE)
             .build(),
         LayerConfiguration.builder()
-            .addEntry(classesFiles, SourceFilesConfiguration.DEFAULT_CLASSES_PATH_ON_IMAGE)
+            .addEntry(classesFiles, JavaEntrypointBuilder.DEFAULT_CLASSES_PATH_ON_IMAGE)
             .build(),
         LayerConfiguration.builder().addEntry(extraFiles, "/").build());
   }

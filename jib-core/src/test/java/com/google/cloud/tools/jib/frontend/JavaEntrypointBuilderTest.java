@@ -14,24 +14,29 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.builder;
+package com.google.cloud.tools.jib.frontend;
 
 import java.util.Arrays;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** Tests for {@link EntrypointBuilder}. */
-public class EntrypointBuilderTest {
+/** Tests for {@link JavaEntrypointBuilder}. */
+public class JavaEntrypointBuilderTest {
 
   @Test
   public void testMakeEntrypoint() {
-    String expectedDependenciesPath = "/app/libs/";
+    String expectedDependenciesPath = "/app/libs/*";
     String expectedResourcesPath = "/app/resources/";
     String expectedClassesPath = "/app/classes/";
     List<String> expectedJvmFlags = Arrays.asList("-flag", "anotherFlag");
     String expectedMainClass = "SomeMainClass";
 
+    List<String> entrypoint =
+        JavaEntrypointBuilder.makeEntrypoint(
+            Arrays.asList(expectedDependenciesPath, expectedResourcesPath, expectedClassesPath),
+            expectedJvmFlags,
+            expectedMainClass);
     Assert.assertEquals(
         Arrays.asList(
             "java",
@@ -40,11 +45,11 @@ public class EntrypointBuilderTest {
             "-cp",
             "/app/libs/*:/app/resources/:/app/classes/",
             "SomeMainClass"),
-        EntrypointBuilder.makeEntrypoint(
-            expectedDependenciesPath,
-            expectedResourcesPath,
-            expectedClassesPath,
-            expectedJvmFlags,
-            expectedMainClass));
+        entrypoint);
+
+    // Checks that this is also the default entrypoint.
+    Assert.assertEquals(
+        JavaEntrypointBuilder.makeDefaultEntrypoint(expectedJvmFlags, expectedMainClass),
+        entrypoint);
   }
 }

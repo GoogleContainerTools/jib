@@ -21,7 +21,6 @@ import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.builder.BuildSteps;
-import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
@@ -63,7 +62,6 @@ public class BuildStepsRunnerTest {
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Mock private BuildSteps mockBuildSteps;
-  @Mock private SourceFilesConfiguration mockSourceFilesConfiguration;
   @Mock private BuildLogger mockBuildLogger;
   @Mock private RegistryUnauthorizedException mockRegistryUnauthorizedException;
   @Mock private RegistryCredentialsNotSentException mockRegistryCredentialsNotSentException;

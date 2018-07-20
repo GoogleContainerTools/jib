@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
+import com.google.cloud.tools.jib.frontend.JavaEntrypointBuilder;
 import com.google.cloud.tools.jib.frontend.SystemPropertyValidator;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.ImageReference;
@@ -105,7 +106,8 @@ public class BuildImageTask extends DefaultTask {
     }
 
     GradleProjectProperties gradleProjectProperties =
-        GradleProjectProperties.getForProject(getProject(), gradleBuildLogger);
+        GradleProjectProperties.getForProject(
+            getProject(), gradleBuildLogger, jibExtension.getExtraDirectory().toPath());
     String mainClass = gradleProjectProperties.getMainClass(jibExtension);
 
     // Builds the BuildConfiguration.
@@ -119,11 +121,11 @@ public class BuildImageTask extends DefaultTask {
             .setKnownTargetRegistryCredentials(knownTargetRegistryCredentials)
             .setMainClass(mainClass)
             .setJavaArguments(jibExtension.getArgs())
-            .setJvmFlags(jibExtension.getJvmFlags())
             .setExposedPorts(ExposedPortsParser.parse(jibExtension.getExposedPorts()))
             .setTargetFormat(jibExtension.getFormat())
             .setAllowHttp(jibExtension.getAllowInsecureRegistries())
-            .setLayerConfigurations(gradleProjectProperties.getLayerConfigurations());
+            .setLayerConfigurations(gradleProjectProperties.getLayerConfigurations())
+            .setEntrypoint(JavaEntrypointBuilder.makeDefaultEntrypoint(jibExtension.getJvmFlags(), mainClass));
     CacheConfiguration applicationLayersCacheConfiguration =
         CacheConfiguration.forPath(gradleProjectProperties.getCacheDirectory());
     buildConfigurationBuilder.setApplicationLayersCacheConfiguration(

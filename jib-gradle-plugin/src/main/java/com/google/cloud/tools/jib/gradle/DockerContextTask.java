@@ -104,7 +104,8 @@ public class DockerContextTask extends DefaultTask {
     SystemPropertyValidator.checkHttpTimeoutProperty(GradleException::new);
 
     GradleProjectProperties gradleProjectProperties =
-        GradleProjectProperties.getForProject(getProject(), gradleBuildLogger);
+        GradleProjectProperties.getForProject(
+            getProject(), gradleBuildLogger, jibExtension.getExtraDirectory().toPath());
     String mainClass = gradleProjectProperties.getMainClass(jibExtension);
     String targetDir = getTargetDir();
 

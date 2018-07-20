@@ -23,7 +23,6 @@ import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.Caches;
-import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.ExecutionException;
@@ -86,7 +85,7 @@ public class BuildSteps {
                 .runPullAndCacheBaseImageLayersStep()
                 .runPushBaseImageLayersStep()
                 .runBuildAndCacheApplicationLayerSteps()
-                .runBuildImageStep(getEntrypoint(buildConfiguration))
+                .runBuildImageStep()
                 .runPushContainerConfigurationStep()
                 .runPushApplicationLayersStep()
                 .runFinalizingPushStep()
@@ -116,7 +115,7 @@ public class BuildSteps {
                 .runPullBaseImageStep()
                 .runPullAndCacheBaseImageLayersStep()
                 .runBuildAndCacheApplicationLayerSteps()
-                .runBuildImageStep(getEntrypoint(buildConfiguration))
+                .runBuildImageStep()
                 .runFinalizingBuildStep()
                 .runLoadDockerStep()
                 .waitOnLoadDockerStep());
@@ -145,21 +144,10 @@ public class BuildSteps {
                 .runPullBaseImageStep()
                 .runPullAndCacheBaseImageLayersStep()
                 .runBuildAndCacheApplicationLayerSteps()
-                .runBuildImageStep(getEntrypoint(buildConfiguration))
+                .runBuildImageStep()
                 .runFinalizingBuildStep()
                 .runWriteTarFileStep(outputPath)
                 .waitOnWriteTarFileStep());
-  }
-
-  /** Creates the container entrypoint for a given configuration. */
-  private static ImmutableList<String> getEntrypoint(BuildConfiguration buildConfiguration) {
-    // TODO: Have classpaths be provided.
-    return EntrypointBuilder.makeEntrypoint(
-        SourceFilesConfiguration.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE,
-        SourceFilesConfiguration.DEFAULT_RESOURCES_PATH_ON_IMAGE,
-        SourceFilesConfiguration.DEFAULT_CLASSES_PATH_ON_IMAGE,
-        buildConfiguration.getJvmFlags(),
-        buildConfiguration.getMainClass());
   }
 
   private final String description;
@@ -226,6 +214,6 @@ public class BuildSteps {
     buildConfiguration.getBuildLogger().lifecycle("");
     buildConfiguration
         .getBuildLogger()
-        .lifecycle("Container entrypoint set to " + getEntrypoint(buildConfiguration));
+        .lifecycle("Container entrypoint set to " + buildConfiguration.getEntrypoint());
   }
 }

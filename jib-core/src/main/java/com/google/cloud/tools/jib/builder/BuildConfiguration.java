@@ -51,7 +51,6 @@ public class BuildConfiguration {
     @Nullable private RegistryCredentials knownTargetRegistryCredentials;
     @Nullable private String mainClass;
     private ImmutableList<String> javaArguments = ImmutableList.of();
-    private ImmutableList<String> jvmFlags = ImmutableList.of();
     private ImmutableMap<String, String> environmentMap = ImmutableMap.of();
     private ImmutableList<Port> exposedPorts = ImmutableList.of();
     private Class<? extends BuildableManifestTemplate> targetFormat = V22ManifestTemplate.class;
@@ -59,6 +58,7 @@ public class BuildConfiguration {
     @Nullable private CacheConfiguration baseImageLayersCacheConfiguration;
     private boolean allowHttp = false;
     private ImmutableList<LayerConfiguration> layerConfigurations = ImmutableList.of();
+    private ImmutableList<String> entrypoint = ImmutableList.of();
 
     private BuildLogger buildLogger;
 
@@ -107,14 +107,6 @@ public class BuildConfiguration {
       if (javaArguments != null) {
         Preconditions.checkArgument(!javaArguments.contains(null));
         this.javaArguments = ImmutableList.copyOf(javaArguments);
-      }
-      return this;
-    }
-
-    public Builder setJvmFlags(@Nullable List<String> jvmFlags) {
-      if (jvmFlags != null) {
-        Preconditions.checkArgument(!jvmFlags.contains(null));
-        this.jvmFlags = ImmutableList.copyOf(jvmFlags);
       }
       return this;
     }
@@ -199,6 +191,20 @@ public class BuildConfiguration {
       return this;
     }
 
+    /**
+     * Sets the container entrypoint.
+     *
+     * @param entrypoint the command to run when the container starts
+     * @return this
+     */
+    public Builder setEntrypoint(@Nullable List<String> entrypoint) {
+      if (entrypoint != null) {
+        Preconditions.checkArgument(!entrypoint.contains(null));
+        this.entrypoint = ImmutableList.copyOf(entrypoint);
+      }
+      return this;
+    }
+
     /** @return the corresponding build configuration */
     public BuildConfiguration build() {
       // Validates the parameters.
@@ -235,14 +241,14 @@ public class BuildConfiguration {
               knownTargetRegistryCredentials,
               mainClass,
               javaArguments,
-              jvmFlags,
               environmentMap,
               exposedPorts,
               targetFormat,
               applicationLayersCacheConfiguration,
               baseImageLayersCacheConfiguration,
               allowHttp,
-              layerConfigurations);
+              layerConfigurations,
+              entrypoint);
 
         case 1:
           throw new IllegalStateException(errorMessages.get(0));
@@ -295,7 +301,6 @@ public class BuildConfiguration {
   @Nullable private final RegistryCredentials knownTargetRegistryCredentials;
   private final String mainClass;
   private final ImmutableList<String> javaArguments;
-  private final ImmutableList<String> jvmFlags;
   private final ImmutableMap<String, String> environmentMap;
   private final ImmutableList<Port> exposedPorts;
   private final Class<? extends BuildableManifestTemplate> targetFormat;
@@ -303,6 +308,7 @@ public class BuildConfiguration {
   @Nullable private final CacheConfiguration baseImageLayersCacheConfiguration;
   private final boolean allowHttp;
   private final ImmutableList<LayerConfiguration> layerConfigurations;
+  private final ImmutableList<String> entrypoint;
 
   /** Instantiate with {@link Builder#build}. */
   private BuildConfiguration(
@@ -316,14 +322,14 @@ public class BuildConfiguration {
       @Nullable RegistryCredentials knownTargetRegistryCredentials,
       String mainClass,
       ImmutableList<String> javaArguments,
-      ImmutableList<String> jvmFlags,
       ImmutableMap<String, String> environmentMap,
       ImmutableList<Port> exposedPorts,
       Class<? extends BuildableManifestTemplate> targetFormat,
       @Nullable CacheConfiguration applicationLayersCacheConfiguration,
       @Nullable CacheConfiguration baseImageLayersCacheConfiguration,
       boolean allowHttp,
-      ImmutableList<LayerConfiguration> layerConfigurations) {
+      ImmutableList<LayerConfiguration> layerConfigurations,
+      ImmutableList<String> entrypoint) {
     this.buildLogger = buildLogger;
     this.creationTime = creationTime;
     this.baseImageReference = baseImageReference;
@@ -334,7 +340,6 @@ public class BuildConfiguration {
     this.knownTargetRegistryCredentials = knownTargetRegistryCredentials;
     this.mainClass = mainClass;
     this.javaArguments = javaArguments;
-    this.jvmFlags = jvmFlags;
     this.environmentMap = environmentMap;
     this.exposedPorts = exposedPorts;
     this.targetFormat = targetFormat;
@@ -342,6 +347,7 @@ public class BuildConfiguration {
     this.baseImageLayersCacheConfiguration = baseImageLayersCacheConfiguration;
     this.allowHttp = allowHttp;
     this.layerConfigurations = layerConfigurations;
+    this.entrypoint = entrypoint;
   }
 
   public BuildLogger getBuildLogger() {
@@ -412,10 +418,6 @@ public class BuildConfiguration {
     return javaArguments;
   }
 
-  public ImmutableList<String> getJvmFlags() {
-    return jvmFlags;
-  }
-
   public ImmutableMap<String, String> getEnvironment() {
     return environmentMap;
   }
@@ -464,5 +466,14 @@ public class BuildConfiguration {
    */
   public ImmutableList<LayerConfiguration> getLayerConfigurations() {
     return layerConfigurations;
+  }
+
+  /**
+   * Gets the container entrypoint.
+   *
+   * @return the list of entrypoint tokens
+   */
+  public ImmutableList<String> getEntrypoint() {
+    return entrypoint;
   }
 }

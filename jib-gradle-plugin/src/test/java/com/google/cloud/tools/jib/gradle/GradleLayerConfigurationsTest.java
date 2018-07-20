@@ -111,7 +111,8 @@ public class GradleLayerConfigurationsTest {
     Mockito.when(mockMainSourceSet.getRuntimeClasspath()).thenReturn(runtimeFileCollection);
 
     testGradleLayerConfigurations =
-        GradleLayerConfigurations.getForProject(mockProject, mockGradleBuildLogger, Paths.get("nonexistent/path"));
+        GradleLayerConfigurations.getForProject(
+            mockProject, mockGradleBuildLogger, Paths.get("nonexistent/path"));
   }
 
   @Test
@@ -163,7 +164,8 @@ public class GradleLayerConfigurationsTest {
         .thenReturn(new TestFileCollection(ImmutableSet.of(nonexistentFile)));
 
     testGradleLayerConfigurations =
-        GradleLayerConfigurations.getForProject(mockProject, mockGradleBuildLogger, Paths.get("nonexistent/path"));
+        GradleLayerConfigurations.getForProject(
+            mockProject, mockGradleBuildLogger, Paths.get("nonexistent/path"));
 
     Mockito.verify(mockGradleBuildLogger)
         .warn("Could not find build output directory '" + nonexistentFile + "'");
@@ -175,12 +177,15 @@ public class GradleLayerConfigurationsTest {
   public void test_extraFiles() throws URISyntaxException, IOException {
     Path extraFilesDirectory = Paths.get(Resources.getResource("layer").toURI());
 
-    testGradleLayerConfigurations = GradleLayerConfigurations.getForProject(mockProject, mockGradleBuildLogger, extraFilesDirectory);
+    testGradleLayerConfigurations =
+        GradleLayerConfigurations.getForProject(
+            mockProject, mockGradleBuildLogger, extraFilesDirectory);
 
-    ImmutableList<Path> expectedExtraFiles = ImmutableList.of(
-        Paths.get(Resources.getResource("layer/a/b/bar").toURI()),
-        Paths.get(Resources.getResource("layer/c/cat").toURI()),
-        Paths.get(Resources.getResource("layer/foo").toURI()));
+    ImmutableList<Path> expectedExtraFiles =
+        ImmutableList.of(
+            Paths.get(Resources.getResource("layer/a").toURI()),
+            Paths.get(Resources.getResource("layer/c").toURI()),
+            Paths.get(Resources.getResource("layer/foo").toURI()));
 
     Assert.assertEquals(
         expectedExtraFiles,

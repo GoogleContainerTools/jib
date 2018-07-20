@@ -120,14 +120,13 @@ public class StepsRunner {
     return this;
   }
 
-  public StepsRunner runBuildImageStep(ImmutableList<String> entrypoint) {
+  public StepsRunner runBuildImageStep() {
     buildImageStep =
         new BuildImageStep(
             listeningExecutorService,
             buildConfiguration,
             Preconditions.checkNotNull(pullAndCacheBaseImageLayersStep),
-            Preconditions.checkNotNull(buildAndCacheApplicationLayerSteps),
-            entrypoint);
+            Preconditions.checkNotNull(buildAndCacheApplicationLayerSteps));
     return this;
   }
 

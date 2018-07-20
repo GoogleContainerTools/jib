@@ -59,7 +59,6 @@ public class BuildConfigurationTest {
         Mockito.mock(RegistryCredentials.class);
     String expectedMainClass = "mainclass";
     List<String> expectedJavaArguments = Arrays.asList("arg1", "arg2");
-    List<String> expectedJvmFlags = Arrays.asList("some", "jvm", "flags");
     Map<String, String> expectedEnvironment = ImmutableMap.of("key", "value");
     ImmutableList<Port> expectedExposedPorts =
         ImmutableList.of(new Port(1000, Protocol.TCP), new Port(2000, Protocol.TCP));
@@ -69,8 +68,9 @@ public class BuildConfigurationTest {
     CacheConfiguration expectedBaseImageLayersCacheConfiguration =
         CacheConfiguration.forPath(Paths.get("base/image/layers"));
     List<LayerConfiguration> expectedLayerConfigurations =
-        Arrays.asList(
+        Collections.singletonList(
             LayerConfiguration.builder().addEntry(Collections.emptyList(), "destination").build());
+    List<String> expectedEntrypoint = Arrays.asList("some", "entrypoint");
 
     BuildConfiguration.Builder buildConfigurationBuilder =
         BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
@@ -87,14 +87,14 @@ public class BuildConfigurationTest {
             .setKnownTargetRegistryCredentials(expectedKnownTargetRegistryCredentials)
             .setMainClass(expectedMainClass)
             .setJavaArguments(expectedJavaArguments)
-            .setJvmFlags(expectedJvmFlags)
             .setEnvironment(expectedEnvironment)
             .setExposedPorts(expectedExposedPorts)
             .setTargetFormat(OCIManifestTemplate.class)
             .setApplicationLayersCacheConfiguration(expectedApplicationLayersCacheConfiguration)
             .setBaseImageLayersCacheConfiguration(expectedBaseImageLayersCacheConfiguration)
             .setAllowHttp(true)
-            .setLayerConfigurations(expectedLayerConfigurations);
+            .setLayerConfigurations(expectedLayerConfigurations)
+            .setEntrypoint(expectedEntrypoint);
     BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
 
     Assert.assertEquals(expectedCreationTime, buildConfiguration.getCreationTime());
@@ -112,7 +112,6 @@ public class BuildConfigurationTest {
         buildConfiguration.getTargetImageCredentialHelperName());
     Assert.assertEquals(expectedMainClass, buildConfiguration.getMainClass());
     Assert.assertEquals(expectedJavaArguments, buildConfiguration.getJavaArguments());
-    Assert.assertEquals(expectedJvmFlags, buildConfiguration.getJvmFlags());
     Assert.assertEquals(expectedEnvironment, buildConfiguration.getEnvironment());
     Assert.assertEquals(expectedExposedPorts, buildConfiguration.getExposedPorts());
     Assert.assertEquals(expectedTargetFormat, buildConfiguration.getTargetFormat());
@@ -124,6 +123,7 @@ public class BuildConfigurationTest {
         buildConfiguration.getBaseImageLayersCacheConfiguration());
     Assert.assertTrue(buildConfiguration.getAllowHttp());
     Assert.assertEquals(expectedLayerConfigurations, buildConfiguration.getLayerConfigurations());
+    Assert.assertEquals(expectedEntrypoint, buildConfiguration.getEntrypoint());
   }
 
   @Test
@@ -154,7 +154,6 @@ public class BuildConfigurationTest {
     Assert.assertNull(buildConfiguration.getTargetImageCredentialHelperName());
     Assert.assertNull(buildConfiguration.getKnownTargetRegistryCredentials());
     Assert.assertEquals(Collections.emptyList(), buildConfiguration.getJavaArguments());
-    Assert.assertEquals(Collections.emptyList(), buildConfiguration.getJvmFlags());
     Assert.assertEquals(Collections.emptyMap(), buildConfiguration.getEnvironment());
     Assert.assertEquals(Collections.emptyList(), buildConfiguration.getExposedPorts());
     Assert.assertEquals(V22ManifestTemplate.class, buildConfiguration.getTargetFormat());
@@ -162,6 +161,7 @@ public class BuildConfigurationTest {
     Assert.assertNull(buildConfiguration.getBaseImageLayersCacheConfiguration());
     Assert.assertFalse(buildConfiguration.getAllowHttp());
     Assert.assertEquals(Collections.emptyList(), buildConfiguration.getLayerConfigurations());
+    Assert.assertEquals(Collections.emptyList(), buildConfiguration.getEntrypoint());
   }
 
   @Test
@@ -215,10 +215,10 @@ public class BuildConfigurationTest {
       Assert.assertNull(ex.getMessage());
     }
 
-    // JVM flags element should not be null.
+    // Entrypoint element should not be null.
     try {
       BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
-          .setJvmFlags(Arrays.asList("first", null));
+          .setEntrypoint(Arrays.asList("first", null));
       Assert.fail("The IllegalArgumentException should be thrown.");
     } catch (IllegalArgumentException ex) {
       Assert.assertNull(ex.getMessage());

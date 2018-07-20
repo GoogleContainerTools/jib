@@ -14,48 +14,51 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.builder;
+package com.google.cloud.tools.jib.frontend;
 
-import com.google.common.collect.ImmutableList;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /** Builds an image entrypoint for the Java application. */
-public class EntrypointBuilder {
+public class JavaEntrypointBuilder {
+
+  public static final String DEFAULT_DEPENDENCIES_PATH_ON_IMAGE = "/app/libs/";
+  public static final String DEFAULT_RESOURCES_PATH_ON_IMAGE = "/app/resources/";
+  public static final String DEFAULT_CLASSES_PATH_ON_IMAGE = "/app/classes/";
+
+  public static List<String> makeDefaultEntrypoint(List<String> jvmFlags, String mainClass) {
+    return makeEntrypoint(
+        Arrays.asList(
+            DEFAULT_DEPENDENCIES_PATH_ON_IMAGE + "*",
+            DEFAULT_RESOURCES_PATH_ON_IMAGE,
+            DEFAULT_CLASSES_PATH_ON_IMAGE),
+        jvmFlags,
+        mainClass);
+  }
 
   /**
    * Builds the container entrypoint.
    *
    * <p>The entrypoint is {@code java [jvm flags] -cp [classpaths] [main class]}.
    *
-   * @param dependenciesExtractionPath extraction path of dependencies
-   * @param resourcesExtractionPath extraction path of resources
-   * @param classesExtractionPath extraction path of classes
+   * @param classpathElements paths to add to the classpath (will be separated by {@code :}
    * @param jvmFlags the JVM flags to start the container with
    * @param mainClass the name of the main class to run on startup
    * @return a list of the entrypoint tokens
    */
-  public static ImmutableList<String> makeEntrypoint(
-      String dependenciesExtractionPath,
-      String resourcesExtractionPath,
-      String classesExtractionPath,
-      List<String> jvmFlags,
-      String mainClass) {
-    // TODO: Entrypoint should be built and added to BuildConfiguration rather than built here.
-    ImmutableList<String> classPaths =
-        ImmutableList.of(
-            dependenciesExtractionPath + "*", resourcesExtractionPath, classesExtractionPath);
+  public static List<String> makeEntrypoint(
+      List<String> classpathElements, List<String> jvmFlags, String mainClass) {
+    String classpathString = String.join(":", classpathElements);
 
-    String classPathsString = String.join(":", classPaths);
-
-    ImmutableList.Builder<String> entrypointBuilder =
-        ImmutableList.builderWithExpectedSize(4 + jvmFlags.size());
+    List<String> entrypointBuilder = new ArrayList<>(4 + jvmFlags.size());
     entrypointBuilder.add("java");
     entrypointBuilder.addAll(jvmFlags);
     entrypointBuilder.add("-cp");
-    entrypointBuilder.add(classPathsString);
+    entrypointBuilder.add(classpathString);
     entrypointBuilder.add(mainClass);
-    return entrypointBuilder.build();
+    return entrypointBuilder;
   }
 
-  private EntrypointBuilder() {}
+  private JavaEntrypointBuilder() {}
 }

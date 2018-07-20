@@ -18,8 +18,8 @@ package com.google.cloud.tools.jib.docker;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.cloud.tools.jib.builder.EntrypointBuilder;
 import com.google.cloud.tools.jib.filesystem.FileOperations;
+import com.google.cloud.tools.jib.frontend.JavaEntrypointBuilder;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -58,6 +58,7 @@ public class DockerContextGenerator {
   private List<String> javaArguments = Collections.emptyList();
   private List<String> exposedPorts = Collections.emptyList();
 
+  // TODO: Just take the LayerConfigurations.
   public DockerContextGenerator(
       LayerEntry dependenciesLayerEntry,
       LayerEntry snapshotDependenciesLayerEntry,
@@ -218,12 +219,7 @@ public class DockerContextGenerator {
         .append("\nENTRYPOINT ")
         .append(
             objectMapper.writeValueAsString(
-                EntrypointBuilder.makeEntrypoint(
-                    dependenciesLayerEntry.getExtractionPath(),
-                    resourcesLayerEntry.getExtractionPath(),
-                    classesLayerEntry.getExtractionPath(),
-                    jvmFlags,
-                    mainClass)))
+                JavaEntrypointBuilder.makeDefaultEntrypoint(jvmFlags, mainClass)))
         .append("\nCMD ")
         .append(objectMapper.writeValueAsString(javaArguments));
     return dockerfile.toString();
