@@ -54,8 +54,7 @@ public class ImageReference {
    *
    * <p>A separator is either an underscore, a dot, two underscores, or any number of dashes.
    */
-  private static final String REPOSITORY_COMPONENT_REGEX =
-      "[a-z\\d]+(?:(?:[_.]|__|-+)[a-z\\d]+)*";
+  private static final String REPOSITORY_COMPONENT_REGEX = "[a-z\\d]+(?:(?:[_.]|__|-+)[a-z\\d]+)*";
 
   /** Matches all repetitions of {@code REPOSITORY_COMPONENT_REGEX} separated by a backslash. */
   private static final String REPOSITORY_REGEX =
