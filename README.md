@@ -1,13 +1,12 @@
 [![experimental](http://badges.github.io/stability-badges/dist/experimental.svg)](http://github.com/badges/stability-badges)
+![Build Status](https://storage.googleapis.com/cloud-tools-for-java-kokoro-build-badges/jib-ubuntu-master-orb.svg)
+![Build Status](https://storage.googleapis.com/cloud-tools-for-java-kokoro-build-badges/jib-windows-master-orb.svg)
+![Build Status](https://storage.googleapis.com/cloud-tools-for-java-kokoro-build-badges/jib-macos-master-orb.svg)
 [![Analytics](https://cloud-tools-for-java-metrics.appspot.com/UA-121724379-2/index)](https://github.com/igrigorik/ga-beacon)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/jib-maven-plugin/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/jib-maven-plugin)
 [![Gradle Plugin Portal](https://img.shields.io/badge/gradle%20plugin-v0.9.6-blue.svg)](https://plugins.gradle.org/plugin/com.google.cloud.tools.jib)
 [![Gitter version](https://img.shields.io/gitter/room/gitterHQ/gitter.svg)](https://gitter.im/google/jib)
 [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=Google%20container%20tool%20for%20dockerizing%20Java%20applications&url=https://github.com/GoogleContainerTools/jib&via=JibContainerBuilder&hashtags=java,docker,kubernetes,maven,gradle,microservices,jib)
-
-| Ubuntu | Windows | Mac |
-| --- | --- | --- |
-| ![Build Status](https://storage.googleapis.com/cloud-tools-for-java-kokoro-build-badges/jib-ubuntu-master-orb.png) | ![Build Status](https://storage.googleapis.com/cloud-tools-for-java-kokoro-build-badges/jib-windows-master-orb.png) | ![Build Status](https://storage.googleapis.com/cloud-tools-for-java-kokoro-build-badges/jib-macos-master-orb.png) |
 
 # Jib
 
