@@ -57,7 +57,6 @@ public class BuildConfigurationTest {
     String expectedTargetImageCredentialHelperName = "anotherCredentialHelper";
     RegistryCredentials expectedKnownTargetRegistryCredentials =
         Mockito.mock(RegistryCredentials.class);
-    String expectedMainClass = "mainclass";
     List<String> expectedJavaArguments = Arrays.asList("arg1", "arg2");
     Map<String, String> expectedEnvironment = ImmutableMap.of("key", "value");
     ImmutableList<Port> expectedExposedPorts =
@@ -85,7 +84,6 @@ public class BuildConfigurationTest {
                     expectedTargetServerUrl, expectedTargetImageName, expectedTargetTag))
             .setTargetImageCredentialHelperName(expectedTargetImageCredentialHelperName)
             .setKnownTargetRegistryCredentials(expectedKnownTargetRegistryCredentials)
-            .setMainClass(expectedMainClass)
             .setJavaArguments(expectedJavaArguments)
             .setEnvironment(expectedEnvironment)
             .setExposedPorts(expectedExposedPorts)
@@ -110,7 +108,6 @@ public class BuildConfigurationTest {
     Assert.assertEquals(
         expectedTargetImageCredentialHelperName,
         buildConfiguration.getTargetImageCredentialHelperName());
-    Assert.assertEquals(expectedMainClass, buildConfiguration.getMainClass());
     Assert.assertEquals(expectedJavaArguments, buildConfiguration.getJavaArguments());
     Assert.assertEquals(expectedEnvironment, buildConfiguration.getEnvironment());
     Assert.assertEquals(expectedExposedPorts, buildConfiguration.getExposedPorts());
@@ -135,7 +132,6 @@ public class BuildConfigurationTest {
     String expectedTargetServerUrl = "someotherserver";
     String expectedTargetImageName = "targetimage";
     String expectedTargetTag = "targettag";
-    String expectedMainClass = "mainclass";
 
     BuildConfiguration buildConfiguration =
         BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
@@ -145,7 +141,6 @@ public class BuildConfigurationTest {
             .setTargetImage(
                 ImageReference.of(
                     expectedTargetServerUrl, expectedTargetImageName, expectedTargetTag))
-            .setMainClass(expectedMainClass)
             .build();
 
     Assert.assertEquals(buildConfiguration.getCreationTime(), Instant.EPOCH);
@@ -166,19 +161,7 @@ public class BuildConfigurationTest {
 
   @Test
   public void testBuilder_missingValues() {
-    // Main class is missing
-    try {
-      BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
-          .setBaseImage(Mockito.mock(ImageReference.class))
-          .setTargetImage(Mockito.mock(ImageReference.class))
-          .build();
-      Assert.fail("Build configuration should not be built with missing values");
-
-    } catch (IllegalStateException ex) {
-      Assert.assertEquals("main class is required but not set", ex.getMessage());
-    }
-
-    // Main class and target image are missing
+    // Target image is missing
     try {
       BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
           .setBaseImage(Mockito.mock(ImageReference.class))
@@ -186,9 +169,7 @@ public class BuildConfigurationTest {
       Assert.fail("Build configuration should not be built with missing values");
 
     } catch (IllegalStateException ex) {
-      Assert.assertEquals(
-          "target image is required but not set and main class is required but not set",
-          ex.getMessage());
+      Assert.assertEquals("target image is required but not set", ex.getMessage());
     }
 
     // All required fields missing
@@ -198,7 +179,7 @@ public class BuildConfigurationTest {
 
     } catch (IllegalStateException ex) {
       Assert.assertEquals(
-          "base image is required but not set, target image is required but not set, and main class is required but not set",
+          "base image is required but not set and target image is required but not set",
           ex.getMessage());
     }
   }

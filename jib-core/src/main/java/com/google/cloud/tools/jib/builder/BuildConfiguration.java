@@ -49,7 +49,6 @@ public class BuildConfiguration {
     @Nullable private ImageReference targetImageReference;
     @Nullable private String targetImageCredentialHelperName;
     @Nullable private RegistryCredentials knownTargetRegistryCredentials;
-    @Nullable private String mainClass;
     private ImmutableList<String> javaArguments = ImmutableList.of();
     private ImmutableMap<String, String> environmentMap = ImmutableMap.of();
     private ImmutableList<Port> exposedPorts = ImmutableList.of();
@@ -95,11 +94,6 @@ public class BuildConfiguration {
     public Builder setKnownTargetRegistryCredentials(
         @Nullable RegistryCredentials knownRegistryCrendentials) {
       knownTargetRegistryCredentials = knownRegistryCrendentials;
-      return this;
-    }
-
-    public Builder setMainClass(@Nullable String mainClass) {
-      this.mainClass = mainClass;
       return this;
     }
 
@@ -215,13 +209,10 @@ public class BuildConfiguration {
       if (targetImageReference == null) {
         errorMessages.add("target image is required but not set");
       }
-      if (mainClass == null) {
-        errorMessages.add("main class is required but not set");
-      }
 
       switch (errorMessages.size()) {
         case 0: // No errors
-          if (baseImageReference == null || targetImageReference == null || mainClass == null) {
+          if (baseImageReference == null || targetImageReference == null) {
             throw new IllegalStateException("Required fields should not be null");
           }
           if (baseImageReference.usesDefaultTag()) {
@@ -239,7 +230,6 @@ public class BuildConfiguration {
               targetImageReference,
               targetImageCredentialHelperName,
               knownTargetRegistryCredentials,
-              mainClass,
               javaArguments,
               environmentMap,
               exposedPorts,
@@ -299,7 +289,6 @@ public class BuildConfiguration {
   private final ImageReference targetImageReference;
   @Nullable private final String targetImageCredentialHelperName;
   @Nullable private final RegistryCredentials knownTargetRegistryCredentials;
-  private final String mainClass;
   private final ImmutableList<String> javaArguments;
   private final ImmutableMap<String, String> environmentMap;
   private final ImmutableList<Port> exposedPorts;
@@ -320,7 +309,6 @@ public class BuildConfiguration {
       ImageReference targetImageReference,
       @Nullable String targetImageCredentialHelperName,
       @Nullable RegistryCredentials knownTargetRegistryCredentials,
-      String mainClass,
       ImmutableList<String> javaArguments,
       ImmutableMap<String, String> environmentMap,
       ImmutableList<Port> exposedPorts,
@@ -338,7 +326,6 @@ public class BuildConfiguration {
     this.targetImageReference = targetImageReference;
     this.targetImageCredentialHelperName = targetImageCredentialHelperName;
     this.knownTargetRegistryCredentials = knownTargetRegistryCredentials;
-    this.mainClass = mainClass;
     this.javaArguments = javaArguments;
     this.environmentMap = environmentMap;
     this.exposedPorts = exposedPorts;
@@ -408,10 +395,6 @@ public class BuildConfiguration {
   @Nullable
   public RegistryCredentials getKnownTargetRegistryCredentials() {
     return knownTargetRegistryCredentials;
-  }
-
-  public String getMainClass() {
-    return mainClass;
   }
 
   public ImmutableList<String> getJavaArguments() {

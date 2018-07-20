@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.frontend.JavaEntrypointBuilder;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
+import com.google.cloud.tools.jib.frontend.JavaEntrypointBuilder;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
 import java.io.File;
@@ -121,13 +121,11 @@ class GradleLayerConfigurations {
 
     return new GradleLayerConfigurations(
         LayerConfiguration.builder()
-            .addEntry(
-                dependenciesFiles, JavaEntrypointBuilder.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
+            .addEntry(dependenciesFiles, JavaEntrypointBuilder.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
             .build(),
         LayerConfiguration.builder()
             .addEntry(
-                snapshotDependenciesFiles,
-                JavaEntrypointBuilder.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
+                snapshotDependenciesFiles, JavaEntrypointBuilder.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
             .build(),
         LayerConfiguration.builder()
             .addEntry(resourcesFiles, JavaEntrypointBuilder.DEFAULT_RESOURCES_PATH_ON_IMAGE)

@@ -145,8 +145,8 @@ public class BuildTarTask extends DefaultTask {
             .setExposedPorts(ExposedPortsParser.parse(jibExtension.getExposedPorts()))
             .setAllowHttp(jibExtension.getAllowInsecureRegistries())
             .setLayerConfigurations(gradleProjectProperties.getLayerConfigurations())
-            .setEntrypoint(JavaEntrypointBuilder
-                .makeDefaultEntrypoint(jibExtension.getJvmFlags(), mainClass));
+            .setEntrypoint(
+                JavaEntrypointBuilder.makeDefaultEntrypoint(jibExtension.getJvmFlags(), mainClass));
     CacheConfiguration applicationLayersCacheConfiguration =
         CacheConfiguration.forPath(gradleProjectProperties.getCacheDirectory());
     buildConfigurationBuilder.setApplicationLayersCacheConfiguration(
