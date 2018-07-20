@@ -5,9 +5,10 @@
 If a question you have is not answered below, please [submit an issue](/../../issues/new).
 
 [But, I'm not a Java developer.](#but-im-not-a-java-developer)\
+[How do I run the image I built?](#how-do-i-run-the-image-i-built)\
+[How do I set parameters for my image at runtime?](#how-do-i-set-parameters-for-my-image-at-runtime)\
 [What image format does Jib use?](#what-image-format-does-jib-use)\
 [Can I define a custom entrypoint?](#can-i-define-a-custom-entrypoint)\
-[But I just want to set some JVM flags when running the image?](#but-i-just-want-to-set-some-jvm-flags-when-running-the-image)\
 [Where is the application in the container filesystem?](#where-is-the-application-in-the-container-filesystem)\
 [I need to RUN commands like `apt-get`.](#i-need-to-run-commands-like-apt-get)\
 [Can I ADD a custom directory to the image?](#can-i-add-a-custom-directory-to-the-image)\
@@ -21,6 +22,70 @@ If a question you have is not answered below, please [submit an issue](/../../is
 ### But, I'm not a Java developer.
 
 See [rules_docker](https://github.com/bazelbuild/rules_docker) for a similar existing container image build tool for the [Bazel build system](https://github.com/bazelbuild/bazel). The tool can build images for languages such as Python, NodeJS, Java, Scala, Groovy, C, Go, Rust, and D.
+
+### How do I run the image I built?
+
+If you built your image directly to the Docker daemon using `jib:dockerBuild` (Maven) or `jibDockerBuild` (Gradle), you simply need to use `docker run <image name>`.
+
+If you built your image to a registry using `jib:build` (Maven) or `jib` (Gradle), you will need to pull the image using `docker pull <image name>` before using `docker run`.
+
+To run your image on Kubernetes, see [steps 4-6 of the Kubernetes Engine deployment tutorial](https://cloud.google.com/kubernetes-engine/docs/tutorials/hello-app#step_4_create_a_container_cluster).
+
+### How do I set parameters for my image at runtime?
+
+#### JVM Flags
+
+Using Docker: `docker run -e "JAVA_TOOL_OPTIONS=<JVM flags>" <image name>`
+
+Using Kubernetes:
+```yaml
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: <name>
+    image: <image name>
+    env:
+    - name: JAVA_TOOL_OPTIONS
+      value: <JVM flags>
+```
+
+#### Environment Variables
+
+Using Docker: `docker run -e "NAME=VALUE" <image name>`
+
+Using Kubernetes:
+```yaml
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: <name>
+    image: <image name>
+    env:
+    - name: NAME
+      value: VALUE
+```
+
+#### Arguments to Main
+
+Using Docker: `docker run <image name> <arg1> <arg2> <arg3>`
+
+Using Kubernetes:
+```yaml
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: <name>
+    image: <image name>
+    args:
+    - <arg1>
+    - <arg2>
+    - <arg3>
+```
+
+For more information, see the [`JAVA_TOOL_OPTIONS` environment variable](https://docs.oracle.com/javase/8/docs/technotes/guides/troubleshoot/envvars002.html), the [`docker run -e` reference](https://docs.docker.com/engine/reference/run/#env-environment-variables), and [defining environment variables for a container in Kubernetes](https://kubernetes.io/docs/tasks/inject-data-application/define-environment-variable-container/).
 
 ### What image format does Jib use?
 
@@ -43,14 +108,6 @@ When running the image, you can override this default entrypoint with your own c
 See [`docker run --entrypoint` reference](https://docs.docker.com/engine/reference/run/#entrypoint-default-command-to-execute-at-runtime) for running the image with Docker and overriding the entrypoint command.
 
 See [Define a Command and Arguments for a Container](https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/) for running the image in a [Kubernetes](https://kubernetes.io/) Pod and overriding the entrypoint command.
-
-### But I just want to set some JVM flags when running the image?
-
-When running the image, you can pass in additional JVM flags via the [`JAVA_TOOL_OPTIONS` environment variable](https://docs.oracle.com/javase/8/docs/technotes/guides/troubleshoot/envvars002.html).
-
-See [`docker run -e` reference](https://docs.docker.com/engine/reference/run/#env-environment-variables) for running the image with Docker and setting environment variables.
-
-See [Define Environment Variables for a Container](https://kubernetes.io/docs/tasks/inject-data-application/define-environment-variable-container/) for running the image in a [Kubernetes](https://kubernetes.io/) Pod and setting environment variables.
 
 ### Where is the application in the container filesystem?
 
@@ -98,11 +155,12 @@ We currently support adding a custom directory with an **incubating** feature. T
 
 ### Can I build to a local Docker daemon?
 
-See [`jib:dockerBuild` for Maven](../jib-maven-plugin#build-to-docker-daemon) and [`jibDockerBuild` for Gradle](../jib-gradle-plugin#build-to-docker-daemon).
+There are several ways of doing this:
 
-You can also [`docker pull`](https://docs.docker.com/engine/reference/commandline/pull/) the image built with Jib to have it available in your local Docker daemon.
-
-You can also [run a local Docker registry](https://docs.docker.com/registry/deploying/) and point Jib to push to the local registry.
+- Use [`jib:dockerBuild` for Maven](../jib-maven-plugin#build-to-docker-daemon) or [`jibDockerBuild` for Gradle](../jib-gradle-plugin#build-to-docker-daemon) to build directly to your local Docker daemon.
+- Use [`jib:buildTar` for Maven]() or [`jibBuildTar` for Gradle]() to build the image to a tarball, then use `docker load --input` to load the image into Docker (the tarball built with these commands will be located in `target/jib-image.tar` for Maven and `build/jib-image.tar` for Gradle by default).
+- [`docker pull`](https://docs.docker.com/engine/reference/commandline/pull/) the image built with Jib to have it available in your local Docker daemon.
+- [Run a local Docker registry](https://docs.docker.com/registry/deploying/) and point Jib to push to the local registry.
 
 ### I am seeing `ImagePullBackoff` on my pods (in [minikube](https://github.com/kubernetes/minikube)).
 
@@ -140,7 +198,7 @@ See more at [Using Google Container Registry (GCR) with Minikube](https://ryanes
 
 ### Why is my image created 48 years ago?
 
-For reproducibility purposes, Jib sets the creation time of the container images to 0 (January 1st, 1970). If you would like to forgo reproducibility and use a real creation time, set [work in progress](https://github.com/GoogleContainerTools/jib/issues/413).
+For reproducibility purposes, Jib sets the creation time of the container images to 0 (January 1st, 1970). If you would like to forgo reproducibility and use a real creation time, set the `container.useCurrentTimestamp` parameter to `true` in your build configuration.
 
 ### I would like to run my application with a javaagent.
 
