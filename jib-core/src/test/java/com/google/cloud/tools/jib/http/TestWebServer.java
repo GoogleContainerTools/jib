@@ -46,8 +46,7 @@ public class TestWebServer implements Closeable {
 
   private void waitUntilReady() throws IOException, InterruptedException {
     while (!Thread.interrupted()) {
-      try (Socket socket =
-          new Socket(serverSocket.getInetAddress(), serverSocket.getLocalPort())) {
+      try (Socket socket = new Socket(serverSocket.getInetAddress(), serverSocket.getLocalPort())) {
         if (socket.isBound()) {
           return;
         }
