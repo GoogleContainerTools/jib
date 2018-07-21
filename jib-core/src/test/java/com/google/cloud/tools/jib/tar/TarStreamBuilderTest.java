@@ -143,7 +143,7 @@ public class TarStreamBuilderTest {
   }
 
   /** Creates a TarStreamBuilder using Strings. */
-  private void setUpWithStrings() throws IOException {
+  private void setUpWithStrings() {
     // Prepares a test TarStreamBuilder.
     testTarStreamBuilder.addEntry(fileAContents, "some/path/to/resourceFileA");
     testTarStreamBuilder.addEntry(fileBContents, "crepecake");
@@ -154,7 +154,7 @@ public class TarStreamBuilderTest {
   }
 
   /** Creates a TarStreamBuilder using Strings and TarArchiveEntries. */
-  private void setUpWithStringsAndTarEntries() throws IOException {
+  private void setUpWithStringsAndTarEntries() {
     // Prepares a test TarStreamBuilder.
     testTarStreamBuilder.addEntry(fileAContents, "some/path/to/resourceFileA");
     testTarStreamBuilder.addEntry(new TarArchiveEntry(fileB.toFile(), "crepecake"));
