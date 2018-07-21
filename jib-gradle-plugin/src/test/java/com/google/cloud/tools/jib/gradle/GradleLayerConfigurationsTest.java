@@ -206,7 +206,6 @@ public class GradleLayerConfigurationsTest {
     Assert.assertEquals(
         "/app/classes/", testGradleLayerConfigurations.getClassesLayerEntry().getExtractionPath());
     Assert.assertEquals(
-        "/",
-        testGradleLayerConfigurations.getExtraFilesLayerEntry().getExtractionPath());
+        "/", testGradleLayerConfigurations.getExtraFilesLayerEntry().getExtractionPath());
   }
 }

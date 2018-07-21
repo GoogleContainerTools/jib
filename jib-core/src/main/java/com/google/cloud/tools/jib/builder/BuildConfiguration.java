@@ -188,7 +188,7 @@ public class BuildConfiguration {
     /**
      * Sets the container entrypoint.
      *
-     * @param entrypoint the command to run when the container starts
+     * @param entrypoint the tokenized command to run when the container starts
      * @return this
      */
     public Builder setEntrypoint(@Nullable List<String> entrypoint) {
@@ -443,7 +443,7 @@ public class BuildConfiguration {
   }
 
   /**
-   * Gets the configurations for building the container.
+   * Gets the configurations for building the layers.
    *
    * @return the list of layer configurations
    */

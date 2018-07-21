@@ -34,7 +34,7 @@ public class LayerConfiguration {
     private Builder() {}
 
     /**
-     * Sets an optional label for this layer.
+     * Sets a label for this layer.
      *
      * @param label the label
      * @return this

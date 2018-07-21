@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.frontend.JavaEntrypointBuilder;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.MoreFiles;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -36,21 +37,67 @@ import javax.annotation.Nullable;
 /**
  * Generates a Docker context that mimics how Jib builds the image.
  *
- * <p>The image consists of a base image layer and three application layers under the directories:
+ * <p>The image consists of a base image layer and 5 application layers under the directories:
  *
  * <ul>
- *   <li>libs/ (dependency jars)
- *   <li>resources/
- *   <li>classes
+ *   <li>{@code libs/} (dependency jars)
+ *   <li>{@code snapshot-libs/} (snapshot dependency jars)
+ *   <li>{@code resources/} (resource files)
+ *   <li>{@code classes/} ({@code .class} files)
+ *   <li>{@code root/} (extra files)
  * </ul>
+ *
+ * Empty application layers are omitted.
  */
 public class DockerContextGenerator {
 
-  private final LayerEntry dependenciesLayerEntry;
-  private final LayerEntry snapshotDependenciesLayerEntry;
-  private final LayerEntry resourcesLayerEntry;
-  private final LayerEntry classesLayerEntry;
-  private final LayerEntry extraFilesLayerEntry;
+  private static final String DEPENDENCIES_LAYER_DIRECTORY = "libs";
+  private static final String SNAPSHOT_DEPENDENCIES_LAYER_DIRECTORY = "snapshot-libs";
+  private static final String RESOURCES_LAYER_DIRECTORY = "resources";
+  private static final String CLASSES_LAYER_DIRECTORY = "classes";
+  private static final String EXTRA_FILES_LAYER_DIRECTORY = "root";
+
+  /** Represents a Dockerfile {@code COPY} directive. */
+  private static class CopyDirective {
+
+    /** The source files to put into the context. */
+    private final ImmutableList<Path> sourceFiles;
+
+    /** The directory in the context to put the source files for the layer */
+    private final String directoryInContext;
+
+    /** The extraction path in the image. */
+    private final String extractionPath;
+
+    private CopyDirective(
+        ImmutableList<Path> sourceFiles, String directoryInContext, String extractionPath) {
+      this.sourceFiles = sourceFiles;
+      this.directoryInContext = directoryInContext;
+      this.extractionPath = extractionPath;
+    }
+  }
+
+  /**
+   * Adds a copy directive for the {@code layerEntry} if it's not empty.
+   *
+   * @param listBuilder the {@link ImmutableList.Builder} to add to
+   * @param layerEntry the layer entry
+   * @param directoryInContext the directory in the context to put the source files for the layer
+   */
+  private static void addIfNotEmpty(
+      ImmutableList.Builder<CopyDirective> listBuilder,
+      LayerEntry layerEntry,
+      String directoryInContext) {
+    if (layerEntry.getSourceFiles().isEmpty()) {
+      return;
+    }
+
+    listBuilder.add(
+        new CopyDirective(
+            layerEntry.getSourceFiles(), directoryInContext, layerEntry.getExtractionPath()));
+  }
+
+  private final ImmutableList<CopyDirective> copyDirectives;
 
   @Nullable private String baseImage;
   private List<String> jvmFlags = Collections.emptyList();
@@ -65,11 +112,16 @@ public class DockerContextGenerator {
       LayerEntry resourcesLayerEntry,
       LayerEntry classesLayerEntry,
       LayerEntry extraFilesLayerEntry) {
-    this.dependenciesLayerEntry = dependenciesLayerEntry;
-    this.snapshotDependenciesLayerEntry = snapshotDependenciesLayerEntry;
-    this.resourcesLayerEntry = resourcesLayerEntry;
-    this.classesLayerEntry = classesLayerEntry;
-    this.extraFilesLayerEntry = extraFilesLayerEntry;
+    ImmutableList.Builder<CopyDirective> copyDirectivesBuilder = ImmutableList.builder();
+    addIfNotEmpty(copyDirectivesBuilder, dependenciesLayerEntry, DEPENDENCIES_LAYER_DIRECTORY);
+    addIfNotEmpty(
+        copyDirectivesBuilder,
+        snapshotDependenciesLayerEntry,
+        SNAPSHOT_DEPENDENCIES_LAYER_DIRECTORY);
+    addIfNotEmpty(copyDirectivesBuilder, resourcesLayerEntry, RESOURCES_LAYER_DIRECTORY);
+    addIfNotEmpty(copyDirectivesBuilder, classesLayerEntry, CLASSES_LAYER_DIRECTORY);
+    addIfNotEmpty(copyDirectivesBuilder, extraFilesLayerEntry, EXTRA_FILES_LAYER_DIRECTORY);
+    copyDirectives = copyDirectivesBuilder.build();
   }
 
   /**
@@ -149,24 +201,14 @@ public class DockerContextGenerator {
 
     Files.createDirectory(targetDirectory);
 
-    // Creates the directories.
-    Path dependenciesDir = targetDirectory.resolve("libs");
-    Path snapshotDependenciesDir = targetDirectory.resolve("snapshot-libs");
-    Path resourcesDIr = targetDirectory.resolve("resources");
-    Path classesDir = targetDirectory.resolve("classes");
-    Path extraFilesDir = targetDirectory.resolve("root");
-    Files.createDirectory(dependenciesDir);
-    Files.createDirectory(snapshotDependenciesDir);
-    Files.createDirectory(resourcesDIr);
-    Files.createDirectory(classesDir);
-    Files.createDirectory(extraFilesDir);
+    for (CopyDirective copyDirective : copyDirectives) {
+      // Creates the directories.
+      Path directoryInContext = targetDirectory.resolve(copyDirective.directoryInContext);
+      Files.createDirectory(directoryInContext);
 
-    // Copies dependencies.
-    FileOperations.copy(dependenciesLayerEntry.getSourceFiles(), dependenciesDir);
-    FileOperations.copy(snapshotDependenciesLayerEntry.getSourceFiles(), snapshotDependenciesDir);
-    FileOperations.copy(resourcesLayerEntry.getSourceFiles(), resourcesDIr);
-    FileOperations.copy(classesLayerEntry.getSourceFiles(), classesDir);
-    FileOperations.copy(extraFilesLayerEntry.getSourceFiles(), extraFilesDir);
+      // Copies dependencies.
+      FileOperations.copy(copyDirective.sourceFiles, directoryInContext);
+    }
 
     // Creates the Dockerfile.
     Files.write(
@@ -180,8 +222,10 @@ public class DockerContextGenerator {
    * FROM [base image]
    *
    * COPY libs [path/to/dependencies]
+   * COPY snapshot-libs [path/to/dependencies]
    * COPY resources [path/to/resources]
    * COPY classes [path/to/classes]
+   * COPY root [path/to/classes]
    *
    * EXPOSE [port]
    * [More EXPOSE instructions, if necessary]
@@ -195,21 +239,13 @@ public class DockerContextGenerator {
   String makeDockerfile() throws JsonProcessingException {
     ObjectMapper objectMapper = new ObjectMapper();
     StringBuilder dockerfile = new StringBuilder();
-    dockerfile
-        .append("FROM ")
-        .append(Preconditions.checkNotNull(baseImage))
-        .append("\n\nCOPY libs ")
-        .append(dependenciesLayerEntry.getExtractionPath());
-    if (!snapshotDependenciesLayerEntry.getSourceFiles().isEmpty()) {
-      dockerfile.append("\nCOPY snapshot-libs ").append(dependenciesLayerEntry.getExtractionPath());
-    }
-    dockerfile
-        .append("\nCOPY resources ")
-        .append(resourcesLayerEntry.getExtractionPath())
-        .append("\nCOPY classes ")
-        .append(classesLayerEntry.getExtractionPath());
-    if (!extraFilesLayerEntry.getSourceFiles().isEmpty()) {
-      dockerfile.append("\nCOPY root ").append(extraFilesLayerEntry.getExtractionPath());
+    dockerfile.append("FROM ").append(Preconditions.checkNotNull(baseImage)).append("\n");
+    for (CopyDirective copyDirective : copyDirectives) {
+      dockerfile
+          .append("\nCOPY ")
+          .append(copyDirective.directoryInContext)
+          .append(" ")
+          .append(copyDirective.extractionPath);
     }
     dockerfile.append("\n");
     for (String port : exposedPorts) {

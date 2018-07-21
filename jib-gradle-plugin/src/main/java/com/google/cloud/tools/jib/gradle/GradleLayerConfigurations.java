@@ -40,6 +40,12 @@ class GradleLayerConfigurations {
   /** Name of the `main` {@link SourceSet} to use as source files. */
   private static final String MAIN_SOURCE_SET_NAME = "main";
 
+  private static final String DEPENDENCIES_LAYER_LABEL = "dependencies";
+  private static final String SNAPSHOT_DEPENDENCIES_LAYER_LABEL = "snapshot dependencies";
+  private static final String RESOURCES_LAYER_LABEL = "resources";
+  private static final String CLASSES_LAYER_LABEL = "classes";
+  private static final String EXTRA_FILES_LAYER_LABEL = "extra files";
+
   /**
    * Resolves the source files configuration for a Gradle {@link Project}.
    *
@@ -122,18 +128,22 @@ class GradleLayerConfigurations {
     return new GradleLayerConfigurations(
         LayerConfiguration.builder()
             .addEntry(dependenciesFiles, JavaEntrypointBuilder.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
+            .setLabel(DEPENDENCIES_LAYER_LABEL)
             .build(),
         LayerConfiguration.builder()
             .addEntry(
                 snapshotDependenciesFiles, JavaEntrypointBuilder.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
+            .setLabel(SNAPSHOT_DEPENDENCIES_LAYER_LABEL)
             .build(),
         LayerConfiguration.builder()
             .addEntry(resourcesFiles, JavaEntrypointBuilder.DEFAULT_RESOURCES_PATH_ON_IMAGE)
+            .setLabel(RESOURCES_LAYER_LABEL)
             .build(),
         LayerConfiguration.builder()
             .addEntry(classesFiles, JavaEntrypointBuilder.DEFAULT_CLASSES_PATH_ON_IMAGE)
+            .setLabel(CLASSES_LAYER_LABEL)
             .build(),
-        LayerConfiguration.builder().addEntry(extraFiles, "/").build());
+        LayerConfiguration.builder().addEntry(extraFiles, "/").setLabel(EXTRA_FILES_LAYER_LABEL).build());
   }
 
   private final LayerConfiguration dependenciesLayerConfiguration;

@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.Caches;
 import com.google.cloud.tools.jib.cache.Caches.Initializer;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
+import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.registry.InsecureRegistryException;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.registry.RegistryCredentialsNotSentException;
@@ -154,6 +155,13 @@ public class BuildStepsRunner {
     }
   }
 
+  private static String capitalizeFirstLetter(String string) {
+    if (string.length() == 0) {
+      return string;
+    }
+    return Character.toUpperCase(string.charAt(0)) + string.substring(1);
+  }
+
   private final BuildSteps buildSteps;
 
   @VisibleForTesting
@@ -178,36 +186,13 @@ public class BuildStepsRunner {
       // Logs the different source files used.
       buildLogger.info("Containerizing application with the following files:");
 
-      buildLogger.info("\tClasses:");
-      // TODO: IMPORTANT: Don't use the indexes.
-      buildSteps
-          .getBuildConfiguration()
-          .getLayerConfigurations()
-          .get(2)
-          .getLayerEntries()
-          .get(0)
-          .getSourceFiles()
-          .forEach(classesFile -> buildLogger.info("\t\t" + classesFile));
-
-      buildLogger.info("\tResources:");
-      buildSteps
-          .getBuildConfiguration()
-          .getLayerConfigurations()
-          .get(1)
-          .getLayerEntries()
-          .get(0)
-          .getSourceFiles()
-          .forEach(resourceFile -> buildLogger.info("\t\t" + resourceFile));
-
-      buildLogger.info("\tDependencies:");
-      buildSteps
-          .getBuildConfiguration()
-          .getLayerConfigurations()
-          .get(0)
-          .getLayerEntries()
-          .get(0)
-          .getSourceFiles()
-          .forEach(dependencyFile -> buildLogger.info("\t\t" + dependencyFile));
+      for (LayerConfiguration layerConfiguration :
+          buildSteps.getBuildConfiguration().getLayerConfigurations()) {
+        buildLogger.info("\t" + capitalizeFirstLetter(layerConfiguration.getLabel()) + ":");
+        for (Path sourceFile : layerConfiguration.getLayerEntries().get(0).getSourceFiles()) {
+          buildLogger.info("\t\t" + sourceFile);
+        }
+      }
 
       buildSteps.run();
 
