@@ -43,7 +43,7 @@ class MavenLayerConfigurations {
   private static final String EXTRA_FILES_LAYER_LABEL = "extra files";
 
   /**
-   * Resolves the source files configuration for a Maven {@link MavenProject}.
+   * Resolves the source files configuration for a {@link MavenProject}.
    *
    * @param project the {@link MavenProject}
    * @param extraDirectory path to the directory for the extra files layer
@@ -130,7 +130,10 @@ class MavenLayerConfigurations {
             .addEntry(classesFiles, JavaEntrypointBuilder.DEFAULT_CLASSES_PATH_ON_IMAGE)
             .setLabel(CLASSES_LAYER_LABEL)
             .build(),
-        LayerConfiguration.builder().addEntry(extraFiles, "/").setLabel(EXTRA_FILES_LAYER_LABEL).build());
+        LayerConfiguration.builder()
+            .addEntry(extraFiles, "/")
+            .setLabel(EXTRA_FILES_LAYER_LABEL)
+            .build());
   }
 
   private final LayerConfiguration dependenciesLayerConfiguration;
