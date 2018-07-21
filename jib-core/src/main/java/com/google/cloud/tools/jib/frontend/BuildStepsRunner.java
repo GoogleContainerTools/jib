@@ -28,6 +28,7 @@ import com.google.cloud.tools.jib.cache.Caches;
 import com.google.cloud.tools.jib.cache.Caches.Initializer;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
+import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.registry.InsecureRegistryException;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.registry.RegistryCredentialsNotSentException;
@@ -189,8 +190,11 @@ public class BuildStepsRunner {
       for (LayerConfiguration layerConfiguration :
           buildSteps.getBuildConfiguration().getLayerConfigurations()) {
         buildLogger.info("\t" + capitalizeFirstLetter(layerConfiguration.getLabel()) + ":");
-        for (Path sourceFile : layerConfiguration.getLayerEntries().get(0).getSourceFiles()) {
-          buildLogger.info("\t\t" + sourceFile);
+
+        for (LayerEntry layerEntry : layerConfiguration.getLayerEntries()) {
+          for (Path sourceFile : layerEntry.getSourceFiles()) {
+            buildLogger.info("\t\t" + sourceFile);
+          }
         }
       }
 
