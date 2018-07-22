@@ -143,7 +143,10 @@ class GradleLayerConfigurations {
             .addEntry(classesFiles, JavaEntrypointBuilder.DEFAULT_CLASSES_PATH_ON_IMAGE)
             .setLabel(CLASSES_LAYER_LABEL)
             .build(),
-        LayerConfiguration.builder().addEntry(extraFiles, "/").setLabel(EXTRA_FILES_LAYER_LABEL).build());
+        LayerConfiguration.builder()
+            .addEntry(extraFiles, "/")
+            .setLabel(EXTRA_FILES_LAYER_LABEL)
+            .build());
   }
 
   private final LayerConfiguration dependenciesLayerConfiguration;
