@@ -21,18 +21,23 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 
 /** Simple local web server for testing. */
 class TestWebServer implements Closeable {
 
   private final ServerSocket serverSocket;
+  private final List<Socket> socketsToClose = new ArrayList<>();
+  private final ExecutorService executorService = Executors.newSingleThreadExecutor();
   private final Semaphore threadStarted = new Semaphore(0);
-  private volatile boolean stop = false;
 
   TestWebServer() throws IOException, InterruptedException {
     serverSocket = new ServerSocket(0);
-    new Thread(this::serve200).start();
+    executorService.submit(this::serve200);
     threadStarted.acquire();
   }
 
@@ -43,17 +48,24 @@ class TestWebServer implements Closeable {
 
   @Override
   public void close() throws IOException {
-    stop = true;
     serverSocket.close();
+    for (Socket socket : socketsToClose) {
+      try (Socket toClose = socket) {
+      } catch (IOException ex) {
+      }
+    }
+    executorService.shutdown();
   }
 
-  private void serve200() {
+  private Void serve200() throws IOException {
     threadStarted.release();
-    while (!stop) {
-      try (Socket socket = serverSocket.accept()) {
+    while (true) {
+      Socket socket = serverSocket.accept();
+      socketsToClose.add(socket);
+      try {
         String response = "HTTP/1.1 200 OK\nContent-Length:12\n\nHello World!\n\n";
         socket.getOutputStream().write(response.getBytes(StandardCharsets.UTF_8));
-      } catch (IOException e) {
+      } catch (IOException ex) {
       }
     }
   }
