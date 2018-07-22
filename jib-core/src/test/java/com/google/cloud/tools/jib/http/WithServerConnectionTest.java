@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.http;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import org.junit.Assert;
@@ -31,6 +32,10 @@ public class WithServerConnectionTest {
       Response response = connection.send("GET", new Request.Builder().build());
 
       Assert.assertEquals(200, response.getStatusCode());
+
+      ByteArrayOutputStream out = new ByteArrayOutputStream();
+      response.getBody().writeTo(out);
+      Assert.assertEquals("Hello World!", out.toString("UTF-8"));
     }
   }
 

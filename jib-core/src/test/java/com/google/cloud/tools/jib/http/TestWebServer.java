@@ -24,17 +24,22 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
 
 /** Simple local web server for testing. */
 public class TestWebServer implements Closeable {
 
   private final ServerSocket serverSocket;
   private final List<Socket> sockets = new ArrayList<>();
+  private final ExecutorService executorService = Executors.newSingleThreadExecutor();
+  private final Semaphore threadStarted = new Semaphore(0);
 
   public TestWebServer() throws IOException, InterruptedException {
     serverSocket = new ServerSocket(0);
-    new Thread(this::serve200).start();
-    waitUntilReady();
+    executorService.submit(this::serve200);
+    threadStarted.acquire();
   }
 
   public String getEndpoint() {
@@ -46,34 +51,22 @@ public class TestWebServer implements Closeable {
   public void close() throws IOException {
     serverSocket.close();
     for (Socket socket : sockets) {
-      socket.close();
       try (Socket toClose = socket) {
       } catch (IOException ex) {
       }
     }
+    executorService.shutdown();
   }
 
-  private void waitUntilReady() throws IOException, InterruptedException {
-    while (!Thread.interrupted()) {
-      try (Socket socket = new Socket(serverSocket.getInetAddress(), serverSocket.getLocalPort())) {
-        if (socket.isBound()) {
-          return;
-        }
+  private Void serve200() throws IOException, InterruptedException {
+    threadStarted.release();
+    while (true) {
+      Socket socket = serverSocket.accept();
+      sockets.add(socket);
+      try (OutputStream out = socket.getOutputStream()) {
+        out.write("HTTP/1.1 200 OK\n\nHello World!".getBytes(StandardCharsets.UTF_8));
+      } catch (IOException e) {
       }
-      Thread.sleep(50);
-    }
-    Thread.currentThread().interrupt();
-  }
-
-  private void serve200() {
-    try {
-      while (true) {
-        Socket socket = serverSocket.accept();
-        sockets.add(socket);
-        OutputStream out = socket.getOutputStream();
-        out.write("HTTP/1.1 200 OK\n\nHello World!\n\n".getBytes(StandardCharsets.UTF_8));
-      }
-    } catch (IOException ex) {
     }
   }
 }
