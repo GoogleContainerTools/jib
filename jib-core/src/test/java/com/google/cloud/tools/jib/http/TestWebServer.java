@@ -29,20 +29,20 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 
 /** Simple local web server for testing. */
-public class TestWebServer implements Closeable {
+class TestWebServer implements Closeable {
 
   private final ServerSocket serverSocket;
   private final List<Socket> sockets = new ArrayList<>();
   private final ExecutorService executorService = Executors.newSingleThreadExecutor();
   private final Semaphore threadStarted = new Semaphore(0);
 
-  public TestWebServer() throws IOException, InterruptedException {
+  TestWebServer() throws IOException, InterruptedException {
     serverSocket = new ServerSocket(0);
     executorService.submit(this::serve200);
     threadStarted.acquire();
   }
 
-  public String getEndpoint() {
+  String getEndpoint() {
     String host = serverSocket.getInetAddress().getHostAddress();
     return "http://" + host + ":" + serverSocket.getLocalPort();
   }
