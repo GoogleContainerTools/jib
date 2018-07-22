@@ -21,7 +21,8 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
@@ -30,7 +31,6 @@ import java.util.concurrent.Semaphore;
 class TestWebServer implements Closeable {
 
   private final ServerSocket serverSocket;
-  private final ConcurrentLinkedQueue<Socket> socketsToClose = new ConcurrentLinkedQueue<>();
   private final ExecutorService executorService = Executors.newSingleThreadExecutor();
   private final Semaphore threadStarted = new Semaphore(0);
 
@@ -48,23 +48,26 @@ class TestWebServer implements Closeable {
   @Override
   public void close() throws IOException {
     serverSocket.close();
-    for (Socket socket : socketsToClose) {
-      try (Socket toClose = socket) {
-        toClose.close();
-      } catch (IOException ex) {
-      }
-    }
     executorService.shutdown();
   }
 
   private Void serve200() throws IOException {
     threadStarted.release();
-    while (true) {
-      try (Socket socket = serverSocket.accept()) {
+    List<Socket> socketsToClose = new ArrayList<>();
+    try {
+      while (true) {
+        Socket socket = serverSocket.accept();
+        socketsToClose.add(socket);
         try {
           String response = "HTTP/1.1 200 OK\nContent-Length:12\n\nHello World!";
           socket.getOutputStream().write(response.getBytes(StandardCharsets.UTF_8));
-          socket.shutdownOutput();
+          socket.getOutputStream().flush();
+        } catch (IOException ex) {
+        }
+      }
+    } finally {
+      for (Socket socket : socketsToClose) {
+        try (Socket toClose = socket) {
         } catch (IOException ex) {
         }
       }
