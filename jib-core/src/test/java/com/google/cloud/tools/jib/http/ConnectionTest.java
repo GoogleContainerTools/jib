@@ -42,7 +42,6 @@ public class ConnectionTest {
 
   @Mock private HttpRequestFactory mockHttpRequestFactory;
   @Mock private HttpRequest mockHttpRequest;
-  @Mock private HttpResponse mockHttpResponse;
 
   private final ArgumentCaptor<HttpHeaders> httpHeadersArgumentCaptor =
       ArgumentCaptor.forClass(HttpHeaders.class);
@@ -51,6 +50,7 @@ public class ConnectionTest {
 
   private final GenericUrl fakeUrl = new GenericUrl("http://crepecake/fake/url");
   private Request fakeRequest;
+  private HttpResponse mockHttpResponse;
 
   @InjectMocks private final Connection testConnection = new Connection(fakeUrl.toURL());
 
@@ -121,6 +121,7 @@ public class ConnectionTest {
       Mockito.when(mockHttpRequest.setConnectTimeout(Mockito.anyInt())).thenReturn(mockHttpRequest);
       Mockito.when(mockHttpRequest.setReadTimeout(Mockito.anyInt())).thenReturn(mockHttpRequest);
     }
+    mockHttpResponse = Mockito.mock(HttpResponse.class);
     Mockito.when(mockHttpRequest.execute()).thenReturn(mockHttpResponse);
   }
 
