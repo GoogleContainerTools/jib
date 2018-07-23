@@ -10,7 +10,7 @@ buildscript {
     }
 }
 plugins {
-    id 'com.google.cloud.tools.jib' version '0.9.6'
+    id 'com.google.cloud.tools.jib' version '0.9.7'
 }
 
 apply plugin: 'java'
@@ -46,7 +46,7 @@ jib.to.image = 'registry.hub.docker.com/hellojib/hellojib:jib'
 //        image = 'registry.hub.docker.com/hellojib/hellojib:jib'
 //        credHelper = 'osxkeychain'
 //        // Or use auth like below if you are not login
-//        // Defined in gradle.properties (but not work correctly now, you need to replace your credentials directly(not recommend))
+//        // Defined in gradle.properties
 //        //auth {
 //        //    username = dockerUsername
 //        //    password = dockerPassword

@@ -46,7 +46,7 @@ jib {
         image = 'CUSTOM_REGISTRY_URL/YOUR_USER_NAME//hellojib:jib'
         credHelper = 'osxkeychain'
         // Or use auth like below if you are not login
-        // Defined in gradle.properties (but not work correctly now, you need to replace your credentials directly(not recommend))
+        // Defined in gradle.properties
         //auth {
         //    username = dockerUsername
         //    password = dockerPassword
@@ -65,7 +65,7 @@ gradle.properties
 
 ```gradle
 dockerUsername=YOUR_USERNAME
-docekrPassword=YOUR_PASSWORD
+dockerPassword=YOUR_PASSWORD
 ```
 
 - Maven 
@@ -101,7 +101,6 @@ pom.xml
                         <ports>
                             <port>8080</port>
                         </ports>
-                        <format>OCI</format>
                     </container>
                 </configuration>
             </plugin>
@@ -109,7 +108,7 @@ pom.xml
     </build>
 ```
 
-settings.xml
+settings.xml(`${MAVEN_HOME}/conf/settings.xml`)(You should config this is you are not login)
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -120,8 +119,8 @@ settings.xml
     <servers>
         <server>
             <id>CUSTOM_REGISTRY_URL</id>
-            <username>YOUR_USER_NAME</username>
-            <password>PASSWORD_ENCRYPT_BY_MAVEN</password>
+            <username>YOUR_USERNAME</username>
+            <password>YOUR_PASSWORD</password>
         </server>
     </servers>
 </settings>
