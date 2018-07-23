@@ -41,7 +41,9 @@ public class ManifestPusherIntegrationTest {
     ManifestTemplate manifestTemplate = registryClient.pullManifest("latest");
 
     registryClient =
-        RegistryClient.factory("localhost:5000", "busybox").setAllowHttp(true).newRegistryClient();
+        RegistryClient.factory("localhost:5000", "busybox")
+            .setAllowInsecureRegistries(true)
+            .newRegistryClient();
     try {
       registryClient.pushManifest((V22ManifestTemplate) manifestTemplate, "latest");
       Assert.fail("Pushing manifest without its BLOBs should fail");
@@ -74,7 +76,7 @@ public class ManifestPusherIntegrationTest {
     // Pushes the BLOBs.
     RegistryClient registryClient =
         RegistryClient.factory("localhost:5000", "testimage")
-            .setAllowHttp(true)
+            .setAllowInsecureRegistries(true)
             .newRegistryClient();
     Assert.assertFalse(registryClient.pushBlob(testLayerBlobDigest, testLayerBlob));
     Assert.assertFalse(

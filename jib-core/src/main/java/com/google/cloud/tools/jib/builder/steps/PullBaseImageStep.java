@@ -137,7 +137,7 @@ class PullBaseImageStep
               RegistryAuthenticator.initializer(
                       buildConfiguration.getBaseImageRegistry(),
                       buildConfiguration.getBaseImageRepository())
-                  .setAllowHttp(buildConfiguration.getAllowHttp())
+                  .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
                   .initialize();
           if (registryAuthenticator == null) {
             buildConfiguration
@@ -176,7 +176,7 @@ class PullBaseImageStep
         RegistryClient.factory(
                 buildConfiguration.getBaseImageRegistry(),
                 buildConfiguration.getBaseImageRepository())
-            .setAllowHttp(buildConfiguration.getAllowHttp())
+            .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
             .setAuthorization(registryCredentials)
             .newRegistryClient();
 
