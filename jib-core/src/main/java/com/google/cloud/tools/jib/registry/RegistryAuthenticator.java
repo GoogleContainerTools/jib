@@ -86,7 +86,7 @@ public class RegistryAuthenticator {
         throw new RegistryAuthenticationFailedException(ex);
 
       } catch (InsecureRegistryException ex) {
-        // Cannot skip certificate validation or use HTTP, so just return null.
+        // HTTP is not allowed, so just return null.
         return null;
       }
     }
