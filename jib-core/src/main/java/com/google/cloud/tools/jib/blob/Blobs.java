@@ -33,7 +33,12 @@ public class Blobs {
     return new FileBlob(file);
   }
 
-  /** Creates a {@link StringBlob} with UTF-8 encoding. */
+  /**
+   * Creates a {@link StringBlob} with UTF-8 encoding.
+   *
+   * @param content the string to create the blob from
+   * @return the {@link StringBlob}
+   */
   public static Blob from(String content) {
     return new StringBlob(content);
   }
