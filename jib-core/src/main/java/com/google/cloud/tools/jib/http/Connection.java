@@ -23,6 +23,7 @@ import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.apache.ApacheHttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.common.base.Preconditions;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.URL;
@@ -30,7 +31,8 @@ import javax.annotation.Nullable;
 import org.apache.http.NoHttpResponseException;
 
 /**
- * Sends an HTTP {@link Request} and stores the {@link Response}.
+ * Sends an HTTP {@link Request} and stores the {@link Response}. Clients should not send more than
+ * one request.
  *
  * <p>Example usage:
  *
@@ -118,6 +120,8 @@ public class Connection implements Closeable {
    * @throws IOException if building the HTTP request fails.
    */
   public Response send(String httpMethod, Request request) throws IOException {
+    Preconditions.checkState(httpResponse == null, "Connection can send only one request");
+
     HttpRequest httpRequest =
         requestFactory
             .buildRequest(httpMethod, url, request.getHttpContent())
