@@ -123,7 +123,7 @@ class RegistryEndpointCaller<T> {
   }
 
   /**
-   * Calls the registry endpoint with a certain {@link RequestState}.
+   * Calls the registry endpoint with a certain {@link URL}.
    *
    * @param url the endpoint URL to call
    * @return an object representing the response, or {@code null}
