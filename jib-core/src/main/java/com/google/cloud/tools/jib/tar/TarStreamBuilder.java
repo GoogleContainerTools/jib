@@ -65,17 +65,16 @@ public class TarStreamBuilder {
   }
 
   /**
-   * Adds a JSON string to the archive. Note that this should be used with raw strings and not file
-   * contents; for adding files to the archive, use {@code TarStreamBuilder#addEntry(TarArchiveEntry
-   * entry)}.
+   * Adds a blob to the archive. Note that this should be used with raw bytes and not file contents;
+   * for adding files to the archive, use {@code TarStreamBuilder#addEntry(TarArchiveEntry entry)}.
    *
-   * @param jsonString the string to add to the tarball
-   * @param name the name of the entry (i.e. filename)
+   * @param contents the bytes to add to the tarball
+   * @param name the UTF-8 encoded name of the entry (i.e. filename)
    */
-  public void addTextEntryInUtf8(String jsonString, String name) {
+  public void addByteEntry(byte[] contents, String name) {
     TarArchiveEntry entry = new TarArchiveEntry(name);
-    entry.setSize(jsonString.getBytes(StandardCharsets.UTF_8).length);
-    archiveMap.put(entry, Blobs.from(jsonString));
+    entry.setSize(contents.length);
+    archiveMap.put(entry, Blobs.from(outputStream -> outputStream.write(contents)));
   }
 
   /** @return a new {@link Blob} that can stream the uncompressed tarball archive BLOB. */
