@@ -18,8 +18,6 @@ package com.google.cloud.tools.jib.tar;
 
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
-import com.google.common.io.ByteSource;
-import com.google.common.io.MoreFiles;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -32,10 +30,10 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 public class TarStreamBuilder {
 
   /**
-   * Maps from {@link TarArchiveEntry} to a {@link ByteSource}. The order of the entries is the
-   * order they belong in the tarball.
+   * Maps from {@link TarArchiveEntry} to a {@link Blob}. The order of the entries is the order they
+   * belong in the tarball.
    */
-  private final LinkedHashMap<TarArchiveEntry, ByteSource> archiveMap = new LinkedHashMap<>();
+  private final LinkedHashMap<TarArchiveEntry, Blob> archiveMap = new LinkedHashMap<>();
 
   /**
    * Writes each entry in the filesystem to the tarball archive stream.
@@ -48,9 +46,9 @@ public class TarStreamBuilder {
         new TarArchiveOutputStream(tarByteStream, StandardCharsets.UTF_8.name())) {
       // Enables PAX extended headers to support long file names.
       tarArchiveOutputStream.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
-      for (Map.Entry<TarArchiveEntry, ByteSource> entry : archiveMap.entrySet()) {
+      for (Map.Entry<TarArchiveEntry, Blob> entry : archiveMap.entrySet()) {
         tarArchiveOutputStream.putArchiveEntry(entry.getKey());
-        tarArchiveOutputStream.write(entry.getValue().read());
+        entry.getValue().writeTo(tarArchiveOutputStream);
         tarArchiveOutputStream.closeArchiveEntry();
       }
     }
@@ -63,20 +61,21 @@ public class TarStreamBuilder {
    */
   public void addEntry(TarArchiveEntry entry) {
     archiveMap.put(
-        entry,
-        entry.isFile() ? MoreFiles.asByteSource(entry.getFile().toPath()) : ByteSource.empty());
+        entry, entry.isFile() ? Blobs.from(entry.getFile().toPath()) : Blobs.from(ignored -> {}));
   }
 
   /**
-   * Adds a blob to the archive.
+   * Adds a JSON string to the archive. Note that this should be used with raw strings and not file
+   * contents; for adding files to the archive, use {@code TarStreamBuilder#addEntry(TarArchiveEntry
+   * entry)}.
    *
-   * @param contents the blob contents to add to the tarball
+   * @param jsonString the string to add to the tarball
    * @param name the name of the entry (i.e. filename)
    */
-  public void addEntry(byte[] contents, String name) {
+  public void addEntry(String jsonString, String name) {
     TarArchiveEntry entry = new TarArchiveEntry(name);
-    entry.setSize(contents.length);
-    archiveMap.put(entry, ByteSource.wrap(contents));
+    entry.setSize(jsonString.getBytes(StandardCharsets.UTF_8).length);
+    archiveMap.put(entry, Blobs.from(jsonString));
   }
 
   /** @return a new {@link Blob} that can stream the uncompressed tarball archive BLOB. */
