@@ -48,7 +48,7 @@ public class Blobs {
   }
 
   /**
-   * Writes the BLOB to a string with UTF-8 encoding.
+   * Writes the BLOB to a string with UTF-8 decoding.
    *
    * @param blob the BLOB to write
    * @return the BLOB contents as a string
