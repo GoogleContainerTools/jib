@@ -121,7 +121,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
             .setEnvironment(getEnvironment())
             .setExposedPorts(ExposedPortsParser.parse(getExposedPorts()))
             .setTargetFormat(ImageFormat.valueOf(getFormat()).getManifestTemplateClass())
-            .setAllowHttp(getAllowInsecureRegistries());
+            .setAllowInsecureRegistries(getAllowInsecureRegistries());
     if (getExtraDirectory() != null && Files.exists(getExtraDirectory())) {
       try (Stream<Path> extraFilesLayerDirectoryFiles = Files.list(getExtraDirectory())) {
         buildConfigurationBuilder.setExtraFilesLayerConfiguration(

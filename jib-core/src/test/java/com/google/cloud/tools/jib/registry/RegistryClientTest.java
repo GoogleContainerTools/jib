@@ -63,13 +63,13 @@ public class RegistryClientTest {
 
     Assert.assertTrue(
         testRegistryClientFactory
-            .setAllowHttp(true)
+            .setAllowInsecureRegistries(true)
             .newRegistryClient()
             .getUserAgent()
             .startsWith("jib "));
     Assert.assertTrue(
         testRegistryClientFactory
-            .setAllowHttp(true)
+            .setAllowInsecureRegistries(true)
             .newRegistryClient()
             .getUserAgent()
             .endsWith(" some user agent suffix"));
@@ -79,6 +79,9 @@ public class RegistryClientTest {
   public void testGetApiRouteBase() {
     Assert.assertEquals(
         "some.server.url/v2/",
-        testRegistryClientFactory.setAllowHttp(true).newRegistryClient().getApiRouteBase());
+        testRegistryClientFactory
+            .setAllowInsecureRegistries(true)
+            .newRegistryClient()
+            .getApiRouteBase());
   }
 }
