@@ -52,18 +52,14 @@ class TestWebServer implements Closeable {
 
   private Void serve200() throws IOException {
     threadStarted.release();
-    while (true) {
-      try (Socket socket = serverSocket.accept()) {
-        try {
-          String response = "HTTP/1.1 200 OK\nContent-Length:12\n\nHello World!";
-          socket.getOutputStream().write(response.getBytes(StandardCharsets.UTF_8));
-          socket.getOutputStream().flush();
+    try (Socket socket = serverSocket.accept()) {
+      String response = "HTTP/1.1 200 OK\nContent-Length:12\n\nHello World!";
+      socket.getOutputStream().write(response.getBytes(StandardCharsets.UTF_8));
+      socket.getOutputStream().flush();
 
-          InputStream in = socket.getInputStream();
-          for (int ch = in.read(); ch != -1; ch = in.read()) ;
-        } catch (IOException ex) {
-        }
-      }
+      InputStream in = socket.getInputStream();
+      for (int ch = in.read(); ch != -1; ch = in.read()) ;
     }
+    return null;
   }
 }
