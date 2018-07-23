@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.docker.DockerContextGenerator;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
+import com.google.cloud.tools.jib.frontend.SystemPropertyValidator;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.io.InsecureRecursiveDeleteException;
@@ -40,7 +41,7 @@ public class DockerContextMojo extends JibPluginConfiguration {
 
   @Nullable
   @Parameter(
-      property = "jib.dockerDir",
+      property = "jibTargetDir",
       defaultValue = "${project.build.directory}/jib-docker-context",
       required = true)
   private String targetDir;
@@ -49,6 +50,7 @@ public class DockerContextMojo extends JibPluginConfiguration {
   public void execute() throws MojoExecutionException, MojoFailureException {
     MavenBuildLogger mavenBuildLogger = new MavenBuildLogger(getLog());
     handleDeprecatedParameters(mavenBuildLogger);
+    SystemPropertyValidator.checkHttpTimeoutProperty(MojoExecutionException::new);
 
     Preconditions.checkNotNull(targetDir);
 

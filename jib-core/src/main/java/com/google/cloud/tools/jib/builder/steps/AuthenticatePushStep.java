@@ -81,7 +81,7 @@ class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authori
           RegistryAuthenticator.initializer(
                   buildConfiguration.getTargetImageRegistry(),
                   buildConfiguration.getTargetImageRepository())
-              .setAllowHttp(buildConfiguration.getAllowHttp())
+              .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
               .initialize();
       if (registryAuthenticator == null) {
         return registryCredentials;

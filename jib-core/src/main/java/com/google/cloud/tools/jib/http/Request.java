@@ -27,12 +27,16 @@ public class Request {
   private final HttpHeaders headers;
 
   /** The HTTP request body. */
-  @Nullable private BlobHttpContent body;
+  @Nullable private final BlobHttpContent body;
+
+  /** HTTP connection and read timeout. */
+  @Nullable private final Integer httpTimeout;
 
   public static class Builder {
 
     private final HttpHeaders headers = new HttpHeaders().setAccept("*/*");
     @Nullable private BlobHttpContent body;
+    @Nullable private Integer httpTimeout;
 
     public Request build() {
       return new Request(this);
@@ -74,6 +78,18 @@ public class Request {
     }
 
     /**
+     * Sets the HTTP connection and read timeout in milliseconds. {@code null} uses the default
+     * timeout and {@code 0} an infinite timeout.
+     *
+     * @param httpTimeout timeout in milliseconds
+     * @return this
+     */
+    public Builder setHttpTimeout(@Nullable Integer httpTimeout) {
+      this.httpTimeout = httpTimeout;
+      return this;
+    }
+
+    /**
      * Sets the body and its corresponding {@code Content-Type} header.
      *
      * @param blobHttpContent the body content
@@ -92,6 +108,7 @@ public class Request {
   private Request(Builder builder) {
     this.headers = builder.headers;
     this.body = builder.body;
+    this.httpTimeout = builder.httpTimeout;
   }
 
   HttpHeaders getHeaders() {
@@ -101,5 +118,10 @@ public class Request {
   @Nullable
   BlobHttpContent getHttpContent() {
     return body;
+  }
+
+  @Nullable
+  Integer getHttpTimeout() {
+    return httpTimeout;
   }
 }

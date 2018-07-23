@@ -14,9 +14,10 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.registry.credentials.json;
+package com.google.cloud.tools.jib.registry.credentials;
 
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import com.google.cloud.tools.jib.registry.credentials.json.DockerConfigTemplate;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -25,8 +26,8 @@ import java.nio.file.Paths;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** Tests for {@link DockerConfigTemplate}. */
-public class DockerConfigTemplateTest {
+/** Tests for {@link DockerConfig}. */
+public class DockerConfigTest {
 
   @Test
   public void test_fromJson() throws URISyntaxException, IOException {
@@ -34,36 +35,39 @@ public class DockerConfigTemplateTest {
     Path jsonFile = Paths.get(Resources.getResource("json/dockerconfig.json").toURI());
 
     // Deserializes into a docker config JSON object.
-    DockerConfigTemplate dockerConfigTemplate =
-        JsonTemplateMapper.readJsonFromFile(jsonFile, DockerConfigTemplate.class);
+    DockerConfig dockerConfig =
+        new DockerConfig(JsonTemplateMapper.readJsonFromFile(jsonFile, DockerConfigTemplate.class));
 
-    Assert.assertEquals("some auth", dockerConfigTemplate.getAuthFor("some registry"));
-    Assert.assertEquals("some other auth", dockerConfigTemplate.getAuthFor("some other registry"));
-    Assert.assertEquals("token", dockerConfigTemplate.getAuthFor("registry"));
-    Assert.assertEquals("token", dockerConfigTemplate.getAuthFor("https://registry"));
-    Assert.assertEquals(null, dockerConfigTemplate.getAuthFor("just registry"));
+    Assert.assertEquals("some auth", dockerConfig.getAuthFor("some registry"));
+    Assert.assertEquals("some other auth", dockerConfig.getAuthFor("some other registry"));
+    Assert.assertEquals("token", dockerConfig.getAuthFor("registry"));
+    Assert.assertEquals("token", dockerConfig.getAuthFor("https://registry"));
+    Assert.assertNull(dockerConfig.getAuthFor("just registry"));
 
-    Assert.assertEquals(
-        "some credential store", dockerConfigTemplate.getCredentialHelperFor("some registry"));
     Assert.assertEquals(
         "some credential store",
-        dockerConfigTemplate.getCredentialHelperFor("some other registry"));
+        dockerConfig.getCredentialHelperFor("some registry").getCredentialHelperSuffix());
     Assert.assertEquals(
-        "some credential store", dockerConfigTemplate.getCredentialHelperFor("just registry"));
+        "some credential store",
+        dockerConfig.getCredentialHelperFor("some other registry").getCredentialHelperSuffix());
     Assert.assertEquals(
-        "some credential store", dockerConfigTemplate.getCredentialHelperFor("with.protocol"));
+        "some credential store",
+        dockerConfig.getCredentialHelperFor("just registry").getCredentialHelperSuffix());
+    Assert.assertEquals(
+        "some credential store",
+        dockerConfig.getCredentialHelperFor("with.protocol").getCredentialHelperSuffix());
     Assert.assertEquals(
         "another credential helper",
-        dockerConfigTemplate.getCredentialHelperFor("another registry"));
-    Assert.assertEquals(null, dockerConfigTemplate.getCredentialHelperFor("unknonwn registry"));
+        dockerConfig.getCredentialHelperFor("another registry").getCredentialHelperSuffix());
+    Assert.assertNull(dockerConfig.getCredentialHelperFor("unknonwn registry"));
   }
 
   @Test
   public void testGetAuthFor_orderOfMatchPreference() throws URISyntaxException, IOException {
     Path json = Paths.get(Resources.getResource("json/dockerconfig_extra_matches.json").toURI());
 
-    DockerConfigTemplate dockerConfig =
-        JsonTemplateMapper.readJsonFromFile(json, DockerConfigTemplate.class);
+    DockerConfig dockerConfig =
+        new DockerConfig(JsonTemplateMapper.readJsonFromFile(json, DockerConfigTemplate.class));
 
     Assert.assertEquals("my-registry: exact match", dockerConfig.getAuthFor("my-registry"));
     Assert.assertEquals("cool-registry: with https", dockerConfig.getAuthFor("cool-registry"));
@@ -78,8 +82,8 @@ public class DockerConfigTemplateTest {
   public void testGetAuthFor_correctSuffixMatching() throws URISyntaxException, IOException {
     Path json = Paths.get(Resources.getResource("json/dockerconfig_extra_matches.json").toURI());
 
-    DockerConfigTemplate dockerConfig =
-        JsonTemplateMapper.readJsonFromFile(json, DockerConfigTemplate.class);
+    DockerConfig dockerConfig =
+        new DockerConfig(JsonTemplateMapper.readJsonFromFile(json, DockerConfigTemplate.class));
 
     Assert.assertNull(dockerConfig.getAuthFor("example"));
   }
@@ -88,33 +92,36 @@ public class DockerConfigTemplateTest {
   public void testGetCredentialHelperFor() throws URISyntaxException, IOException {
     Path json = Paths.get(Resources.getResource("json/dockerconfig.json").toURI());
 
-    DockerConfigTemplate dockerConfig =
-        JsonTemplateMapper.readJsonFromFile(json, DockerConfigTemplate.class);
+    DockerConfig dockerConfig =
+        new DockerConfig(JsonTemplateMapper.readJsonFromFile(json, DockerConfigTemplate.class));
 
     Assert.assertEquals(
-        "some credential store", dockerConfig.getCredentialHelperFor("just registry"));
+        "some credential store",
+        dockerConfig.getCredentialHelperFor("just registry").getCredentialHelperSuffix());
   }
 
   @Test
   public void testGetCredentialHelperFor_withHttps() throws URISyntaxException, IOException {
     Path json = Paths.get(Resources.getResource("json/dockerconfig.json").toURI());
 
-    DockerConfigTemplate dockerConfig =
-        JsonTemplateMapper.readJsonFromFile(json, DockerConfigTemplate.class);
+    DockerConfig dockerConfig =
+        new DockerConfig(JsonTemplateMapper.readJsonFromFile(json, DockerConfigTemplate.class));
 
     Assert.assertEquals(
-        "some credential store", dockerConfig.getCredentialHelperFor("with.protocol"));
+        "some credential store",
+        dockerConfig.getCredentialHelperFor("with.protocol").getCredentialHelperSuffix());
   }
 
   @Test
   public void testGetCredentialHelperFor_withSuffix() throws URISyntaxException, IOException {
     Path json = Paths.get(Resources.getResource("json/dockerconfig.json").toURI());
 
-    DockerConfigTemplate dockerConfig =
-        JsonTemplateMapper.readJsonFromFile(json, DockerConfigTemplate.class);
+    DockerConfig dockerConfig =
+        new DockerConfig(JsonTemplateMapper.readJsonFromFile(json, DockerConfigTemplate.class));
 
     Assert.assertEquals(
-        "some credential store", dockerConfig.getCredentialHelperFor("with.suffix"));
+        "some credential store",
+        dockerConfig.getCredentialHelperFor("with.suffix").getCredentialHelperSuffix());
   }
 
   @Test
@@ -122,11 +129,14 @@ public class DockerConfigTemplateTest {
       throws URISyntaxException, IOException {
     Path json = Paths.get(Resources.getResource("json/dockerconfig.json").toURI());
 
-    DockerConfigTemplate dockerConfig =
-        JsonTemplateMapper.readJsonFromFile(json, DockerConfigTemplate.class);
+    DockerConfig dockerConfig =
+        new DockerConfig(JsonTemplateMapper.readJsonFromFile(json, DockerConfigTemplate.class));
 
     Assert.assertEquals(
-        "some credential store", dockerConfig.getCredentialHelperFor("with.protocol.and.suffix"));
+        "some credential store",
+        dockerConfig
+            .getCredentialHelperFor("with.protocol.and.suffix")
+            .getCredentialHelperSuffix());
   }
 
   @Test
@@ -134,8 +144,8 @@ public class DockerConfigTemplateTest {
       throws URISyntaxException, IOException {
     Path json = Paths.get(Resources.getResource("json/dockerconfig.json").toURI());
 
-    DockerConfigTemplate dockerConfig =
-        JsonTemplateMapper.readJsonFromFile(json, DockerConfigTemplate.class);
+    DockerConfig dockerConfig =
+        new DockerConfig(JsonTemplateMapper.readJsonFromFile(json, DockerConfigTemplate.class));
 
     Assert.assertNull(dockerConfig.getCredentialHelperFor("example"));
     Assert.assertNull(dockerConfig.getCredentialHelperFor("another.example"));

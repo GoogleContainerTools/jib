@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
+import com.google.cloud.tools.jib.frontend.SystemPropertyValidator;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
@@ -115,6 +116,7 @@ public class BuildTarTask extends DefaultTask {
     Preconditions.checkNotNull(jibExtension);
     GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
     jibExtension.handleDeprecatedParameters(gradleBuildLogger);
+    SystemPropertyValidator.checkHttpTimeoutProperty(GradleException::new);
 
     if (Boolean.getBoolean("sendCredentialsOverHttp")) {
       gradleBuildLogger.warn(
@@ -145,7 +147,7 @@ public class BuildTarTask extends DefaultTask {
             .setJavaArguments(jibExtension.getArgs())
             .setJvmFlags(jibExtension.getJvmFlags())
             .setExposedPorts(ExposedPortsParser.parse(jibExtension.getExposedPorts()))
-            .setAllowHttp(jibExtension.getAllowInsecureRegistries());
+            .setAllowInsecureRegistries(jibExtension.getAllowInsecureRegistries());
     if (Files.exists(jibExtension.getExtraDirectory().toPath())) {
       try (Stream<Path> extraFilesLayerDirectoryFiles =
           Files.list(jibExtension.getExtraDirectory().toPath())) {

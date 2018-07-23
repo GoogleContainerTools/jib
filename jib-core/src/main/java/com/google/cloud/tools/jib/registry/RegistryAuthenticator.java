@@ -46,7 +46,7 @@ public class RegistryAuthenticator {
 
     private final String serverUrl;
     private final String repository;
-    private boolean allowHttp = false;
+    private boolean allowInsecureRegistries = false;
 
     /**
      * Instantiates a new initializer for {@link RegistryAuthenticator}.
@@ -59,8 +59,8 @@ public class RegistryAuthenticator {
       this.repository = repository;
     }
 
-    public Initializer setAllowHttp(boolean allowHttp) {
-      this.allowHttp = allowHttp;
+    public Initializer setAllowInsecureRegistries(boolean allowInsecureRegistries) {
+      this.allowInsecureRegistries = allowInsecureRegistries;
       return this;
     }
 
@@ -78,7 +78,7 @@ public class RegistryAuthenticator {
         throws RegistryAuthenticationFailedException, IOException, RegistryException {
       try {
         return RegistryClient.factory(serverUrl, repository)
-            .setAllowHttp(allowHttp)
+            .setAllowInsecureRegistries(allowInsecureRegistries)
             .newRegistryClient()
             .getRegistryAuthenticator();
 
@@ -239,7 +239,8 @@ public class RegistryAuthenticator {
       URL authenticationUrl = getAuthenticationUrl(scope);
 
       try (Connection connection = new Connection(authenticationUrl)) {
-        Request.Builder requestBuilder = Request.builder();
+        Request.Builder requestBuilder =
+            Request.builder().setHttpTimeout(Integer.getInteger("jib.httpTimeout"));
         if (authorization != null) {
           requestBuilder.setAuthorization(authorization);
         }

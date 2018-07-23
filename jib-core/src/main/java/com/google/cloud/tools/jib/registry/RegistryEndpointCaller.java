@@ -76,7 +76,7 @@ class RegistryEndpointCaller<T> {
   private final String userAgent;
   private final RegistryEndpointProvider<T> registryEndpointProvider;
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
-  private final boolean allowHttp;
+  private final boolean allowInsecureRegistries;
 
   /**
    * Constructs with parameters for making the request.
@@ -86,8 +86,7 @@ class RegistryEndpointCaller<T> {
    * @param registryEndpointProvider the {@link RegistryEndpointProvider} to the endpoint
    * @param authorization optional authentication credentials to use
    * @param registryEndpointRequestProperties properties of the registry endpoint request
-   * @param allowHttp if {@code true}, allows redirects and fallbacks to HTTP; otherwise, only
-   *     allows HTTPS
+   * @param allowInsecureRegistries if {@code true}, insecure connections will be allowed
    * @throws MalformedURLException if the URL generated for the endpoint is malformed
    */
   RegistryEndpointCaller(
@@ -96,7 +95,7 @@ class RegistryEndpointCaller<T> {
       RegistryEndpointProvider<T> registryEndpointProvider,
       @Nullable Authorization authorization,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
-      boolean allowHttp)
+      boolean allowInsecureRegistries)
       throws MalformedURLException {
     this(
         userAgent,
@@ -104,7 +103,7 @@ class RegistryEndpointCaller<T> {
         registryEndpointProvider,
         authorization,
         registryEndpointRequestProperties,
-        allowHttp,
+        allowInsecureRegistries,
         Connection::new);
   }
 
@@ -115,7 +114,7 @@ class RegistryEndpointCaller<T> {
       RegistryEndpointProvider<T> registryEndpointProvider,
       @Nullable Authorization authorization,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
-      boolean allowHttp,
+      boolean allowInsecureRegistries,
       Function<URL, Connection> connectionFactory)
       throws MalformedURLException {
     this.initialRequestState =
@@ -125,7 +124,7 @@ class RegistryEndpointCaller<T> {
     this.userAgent = userAgent;
     this.registryEndpointProvider = registryEndpointProvider;
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
-    this.allowHttp = allowHttp;
+    this.allowInsecureRegistries = allowInsecureRegistries;
     this.connectionFactory = connectionFactory;
   }
 
@@ -154,7 +153,7 @@ class RegistryEndpointCaller<T> {
   @Nullable
   T call(RequestState requestState) throws IOException, RegistryException {
     boolean isHttpProtocol = "http".equals(requestState.url.getProtocol());
-    if (!allowHttp && isHttpProtocol) {
+    if (!allowInsecureRegistries && isHttpProtocol) {
       throw new InsecureRegistryException(requestState.url);
     }
 
@@ -162,6 +161,7 @@ class RegistryEndpointCaller<T> {
       Request.Builder requestBuilder =
           Request.builder()
               .setUserAgent(userAgent)
+              .setHttpTimeout(Integer.getInteger("jib.httpTimeout"))
               .setAccept(registryEndpointProvider.getAccept())
               .setBody(registryEndpointProvider.getContent());
       // Only sends authorization if using HTTPS.
@@ -236,7 +236,7 @@ class RegistryEndpointCaller<T> {
 
     } catch (HttpHostConnectException | SSLPeerUnverifiedException ex) {
       // Tries to call with HTTP protocol if HTTPS failed to connect.
-      // Note that this will not succeed if 'allowHttp' is false.
+      // Note that this will not succeed if 'allowInsecureRegistries' is false.
       if ("https".equals(requestState.url.getProtocol())) {
         GenericUrl httpUrl = new GenericUrl(requestState.url);
         httpUrl.setScheme("http");

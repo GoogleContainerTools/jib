@@ -39,7 +39,7 @@ public class DockerCredentialHelperIntegrationTest {
         .run(Files.readAllBytes(Paths.get(Resources.getResource("credentials.json").toURI())));
 
     DockerCredentialHelper dockerCredentialHelper =
-        new DockerCredentialHelperFactory("myregistry").withCredentialHelperSuffix("gcr");
+        new DockerCredentialHelperFactory().newDockerCredentialHelper("myregistry", "gcr");
 
     Authorization authorization = dockerCredentialHelper.retrieve();
 
@@ -52,7 +52,7 @@ public class DockerCredentialHelperIntegrationTest {
       throws IOException, NonexistentServerUrlDockerCredentialHelperException {
     try {
       DockerCredentialHelper fakeDockerCredentialHelper =
-          new DockerCredentialHelperFactory("").withCredentialHelperSuffix("fake-cloud-provider");
+          new DockerCredentialHelperFactory().newDockerCredentialHelper("", "fake-cloud-provider");
 
       fakeDockerCredentialHelper.retrieve();
 
@@ -69,7 +69,7 @@ public class DockerCredentialHelperIntegrationTest {
       throws IOException, NonexistentDockerCredentialHelperException {
     try {
       DockerCredentialHelper fakeDockerCredentialHelper =
-          new DockerCredentialHelperFactory("fake.server.url").withCredentialHelperSuffix("gcr");
+          new DockerCredentialHelperFactory().newDockerCredentialHelper("fake.server.url", "gcr");
 
       fakeDockerCredentialHelper.retrieve();
 

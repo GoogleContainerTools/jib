@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
+import com.google.cloud.tools.jib.frontend.SystemPropertyValidator;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
@@ -58,6 +59,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
   public void execute() throws MojoExecutionException {
     MavenBuildLogger mavenBuildLogger = new MavenBuildLogger(getLog());
     handleDeprecatedParameters(mavenBuildLogger);
+    SystemPropertyValidator.checkHttpTimeoutProperty(MojoExecutionException::new);
 
     if (!new DockerClient().isDockerInstalled()) {
       throw new MojoExecutionException(HELPFUL_SUGGESTIONS.forDockerNotInstalled());
@@ -97,7 +99,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
             .setJvmFlags(getJvmFlags())
             .setEnvironment(getEnvironment())
             .setExposedPorts(ExposedPortsParser.parse(getExposedPorts()))
-            .setAllowHttp(getAllowInsecureRegistries());
+            .setAllowInsecureRegistries(getAllowInsecureRegistries());
     if (getExtraDirectory() != null && Files.exists(getExtraDirectory())) {
       try (Stream<Path> extraFilesLayerDirectoryFiles = Files.list(getExtraDirectory())) {
         buildConfigurationBuilder.setExtraFilesLayerConfiguration(

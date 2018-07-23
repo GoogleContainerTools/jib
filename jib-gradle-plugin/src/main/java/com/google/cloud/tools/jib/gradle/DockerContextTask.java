@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.docker.DockerContextGenerator;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
+import com.google.cloud.tools.jib.frontend.SystemPropertyValidator;
 import com.google.common.base.Preconditions;
 import com.google.common.io.InsecureRecursiveDeleteException;
 import java.io.IOException;
@@ -85,11 +86,11 @@ public class DockerContextTask extends DefaultTask {
   }
 
   /**
-   * The output directory can be overriden with the {@code --targetDir} command line option.
+   * The output directory can be overriden with the {@code --jibTargetDir} command line option.
    *
    * @param targetDir the output directory.
    */
-  @Option(option = "targetDir", description = "Directory to output the Docker context to")
+  @Option(option = "jibTargetDir", description = "Directory to output the Docker context to")
   public void setTargetDir(String targetDir) {
     this.targetDir = targetDir;
   }
@@ -100,6 +101,7 @@ public class DockerContextTask extends DefaultTask {
 
     GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
     jibExtension.handleDeprecatedParameters(gradleBuildLogger);
+    SystemPropertyValidator.checkHttpTimeoutProperty(GradleException::new);
 
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(getProject(), gradleBuildLogger);
@@ -134,7 +136,7 @@ public class DockerContextTask extends DefaultTask {
     } catch (IOException ex) {
       throw new GradleException(
           HelpfulSuggestionsProvider.get("Export Docker context failed")
-              .suggest("check if the command-line option `--jib.dockerDir` is set correctly"),
+              .suggest("check if the command-line option `--jibTargetDir` is set correctly"),
           ex);
     }
   }
