@@ -31,8 +31,10 @@ import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.registry.InsecureRegistryException;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.registry.RegistryCredentialsNotSentException;
+import com.google.cloud.tools.jib.registry.RegistryErrorException;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Verify;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
@@ -254,6 +256,14 @@ public class BuildStepsRunner {
       } else if (exceptionDuringBuildSteps instanceof InsecureRegistryException) {
         throw new BuildStepsExecutionException(
             helpfulSuggestions.forInsecureRegistry(), exceptionDuringBuildSteps);
+
+      } else if (exceptionDuringBuildSteps instanceof RegistryErrorException) {
+        // RegistryErrorExceptions have good messages
+        RegistryErrorException registryErrorException =
+            (RegistryErrorException) exceptionDuringBuildSteps;
+        String message =
+            Verify.verifyNotNull(registryErrorException.getMessage()); // keep null-away happy
+        throw new BuildStepsExecutionException(message, exceptionDuringBuildSteps);
 
       } else {
         throw new BuildStepsExecutionException(
