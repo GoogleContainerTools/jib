@@ -18,11 +18,10 @@ package com.google.cloud.tools.jib.http;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
@@ -53,21 +52,15 @@ class TestWebServer implements Closeable {
 
   private Void serve200() throws IOException {
     threadStarted.release();
-    List<Socket> socketsToClose = new ArrayList<>();
-    try {
-      while (true) {
-        Socket socket = serverSocket.accept();
-        socketsToClose.add(socket);
+    while (true) {
+      try (Socket socket = serverSocket.accept()) {
         try {
           String response = "HTTP/1.1 200 OK\nContent-Length:12\n\nHello World!";
           socket.getOutputStream().write(response.getBytes(StandardCharsets.UTF_8));
           socket.getOutputStream().flush();
-        } catch (IOException ex) {
-        }
-      }
-    } finally {
-      for (Socket socket : socketsToClose) {
-        try (Socket toClose = socket) {
+
+          InputStream in = socket.getInputStream();
+          for (int ch = in.read(); ch != -1; ch = in.read()) ;
         } catch (IOException ex) {
         }
       }
