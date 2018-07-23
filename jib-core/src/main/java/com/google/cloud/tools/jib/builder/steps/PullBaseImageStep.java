@@ -109,6 +109,13 @@ class PullBaseImageStep
         return new BaseImageWithAuthorization(pullBaseImage(null), null);
 
       } catch (RegistryUnauthorizedException ex) {
+        buildConfiguration
+            .getBuildLogger()
+            .lifecycle(
+                "The base image requires auth. Trying again for "
+                    + buildConfiguration.getBaseImageReference()
+                    + "...");
+
         // If failed, then, retrieve base registry credentials and try with retrieved credentials.
         // TODO: Refactor the logic in RetrieveRegistryCredentialsStep out to
         // registry.credentials.RegistryCredentialsRetriever to avoid this direct executor hack.
