@@ -119,7 +119,7 @@ public class BuildDockerTask extends DefaultTask {
             .setJavaArguments(jibExtension.getArgs())
             .setJvmFlags(jibExtension.getJvmFlags())
             .setExposedPorts(ExposedPortsParser.parse(jibExtension.getExposedPorts()))
-            .setAllowHttp(jibExtension.getAllowInsecureRegistries());
+            .setAllowInsecureRegistries(jibExtension.getAllowInsecureRegistries());
     if (Files.exists(jibExtension.getExtraDirectory().toPath())) {
       try (Stream<Path> extraFilesLayerDirectoryFiles =
           Files.list(jibExtension.getExtraDirectory().toPath())) {

@@ -40,7 +40,7 @@ public class BlobPusherIntegrationTest {
 
     RegistryClient registryClient =
         RegistryClient.factory("localhost:5000", "testimage")
-            .setAllowHttp(true)
+            .setAllowInsecureRegistries(true)
             .newRegistryClient();
     Assert.assertFalse(registryClient.pushBlob(testBlobDigest, testBlob));
   }

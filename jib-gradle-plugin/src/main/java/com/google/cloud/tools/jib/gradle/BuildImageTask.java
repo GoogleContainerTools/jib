@@ -127,7 +127,7 @@ public class BuildImageTask extends DefaultTask {
             .setJvmFlags(jibExtension.getJvmFlags())
             .setExposedPorts(ExposedPortsParser.parse(jibExtension.getExposedPorts()))
             .setTargetFormat(jibExtension.getFormat())
-            .setAllowHttp(jibExtension.getAllowInsecureRegistries());
+            .setAllowInsecureRegistries(jibExtension.getAllowInsecureRegistries());
     if (Files.exists(jibExtension.getExtraDirectory().toPath())) {
       try (Stream<Path> extraFilesLayerDirectoryFiles =
           Files.list(jibExtension.getExtraDirectory().toPath())) {
