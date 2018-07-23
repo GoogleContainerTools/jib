@@ -51,30 +51,13 @@ class RegistryEndpointCaller<T> {
 
   private static final String DEFAULT_PROTOCOL = "https";
 
-  /** Maintains the state of a request. This is used to retry requests with different parameters. */
-  @VisibleForTesting
-  static class RequestState {
-
-    @Nullable private final Authorization authorization;
-    private final URL url;
-
-    /**
-     * @param authorization authentication credentials
-     * @param url the endpoint URL to call
-     */
-    @VisibleForTesting
-    RequestState(@Nullable Authorization authorization, URL url) {
-      this.authorization = authorization;
-      this.url = url;
-    }
-  }
-
   /** Makes a {@link Connection} to the specified {@link URL}. */
   private final Function<URL, Connection> connectionFactory;
 
-  private final RequestState initialRequestState;
+  private final URL initialRequestUrl;
   private final String userAgent;
   private final RegistryEndpointProvider<T> registryEndpointProvider;
+  @Nullable private final Authorization authorization;
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   private final boolean allowInsecureRegistries;
 
@@ -117,12 +100,11 @@ class RegistryEndpointCaller<T> {
       boolean allowInsecureRegistries,
       Function<URL, Connection> connectionFactory)
       throws MalformedURLException {
-    this.initialRequestState =
-        new RequestState(
-            authorization,
-            registryEndpointProvider.getApiRoute(DEFAULT_PROTOCOL + "://" + apiRouteBase));
+    this.initialRequestUrl =
+        registryEndpointProvider.getApiRoute(DEFAULT_PROTOCOL + "://" + apiRouteBase);
     this.userAgent = userAgent;
     this.registryEndpointProvider = registryEndpointProvider;
+    this.authorization = authorization;
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     this.allowInsecureRegistries = allowInsecureRegistries;
     this.connectionFactory = connectionFactory;
@@ -137,27 +119,26 @@ class RegistryEndpointCaller<T> {
    */
   @Nullable
   T call() throws IOException, RegistryException {
-    return call(initialRequestState);
+    return call(initialRequestUrl);
   }
 
   /**
    * Calls the registry endpoint with a certain {@link RequestState}.
    *
-   * @param requestState the state of the request - determines how to make the request and how to
-   *     process the response
+   * @param url the endpoint URL to call
    * @return an object representing the response, or {@code null}
    * @throws IOException for most I/O exceptions when making the request
    * @throws RegistryException for known exceptions when interacting with the registry
    */
   @VisibleForTesting
   @Nullable
-  T call(RequestState requestState) throws IOException, RegistryException {
-    boolean isHttpProtocol = "http".equals(requestState.url.getProtocol());
+  T call(URL url) throws IOException, RegistryException {
+    boolean isHttpProtocol = "http".equals(url.getProtocol());
     if (!allowInsecureRegistries && isHttpProtocol) {
-      throw new InsecureRegistryException(requestState.url);
+      throw new InsecureRegistryException(url);
     }
 
-    try (Connection connection = connectionFactory.apply(requestState.url)) {
+    try (Connection connection = connectionFactory.apply(url)) {
       Request.Builder requestBuilder =
           Request.builder()
               .setUserAgent(userAgent)
@@ -166,7 +147,7 @@ class RegistryEndpointCaller<T> {
               .setBody(registryEndpointProvider.getContent());
       // Only sends authorization if using HTTPS.
       if (!isHttpProtocol || Boolean.getBoolean("sendCredentialsOverHttp")) {
-        requestBuilder.setAuthorization(requestState.authorization);
+        requestBuilder.setAuthorization(authorization);
       }
       Response response =
           connection.send(registryEndpointProvider.getHttpMethod(), requestBuilder.build());
@@ -224,9 +205,8 @@ class RegistryEndpointCaller<T> {
                 == HttpStatusCodes.STATUS_CODE_MOVED_PERMANENTLY
             || httpResponseException.getStatusCode() == STATUS_CODE_PERMANENT_REDIRECT) {
           // 'Location' header can be relative or absolute.
-          URL redirectLocation =
-              new URL(requestState.url, httpResponseException.getHeaders().getLocation());
-          return call(new RequestState(requestState.authorization, redirectLocation));
+          URL redirectLocation = new URL(url, httpResponseException.getHeaders().getLocation());
+          return call(redirectLocation);
 
         } else {
           // Unknown
@@ -237,10 +217,10 @@ class RegistryEndpointCaller<T> {
     } catch (HttpHostConnectException | SSLPeerUnverifiedException ex) {
       // Tries to call with HTTP protocol if HTTPS failed to connect.
       // Note that this will not succeed if 'allowInsecureRegistries' is false.
-      if ("https".equals(requestState.url.getProtocol())) {
-        GenericUrl httpUrl = new GenericUrl(requestState.url);
+      if ("https".equals(url.getProtocol())) {
+        GenericUrl httpUrl = new GenericUrl(url);
         httpUrl.setScheme("http");
-        return call(new RequestState(requestState.authorization, httpUrl.toURL()));
+        return call(httpUrl.toURL());
       }
 
       throw ex;
