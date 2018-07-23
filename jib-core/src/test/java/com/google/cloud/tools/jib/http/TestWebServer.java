@@ -57,6 +57,7 @@ class TestWebServer implements Closeable {
         try {
           String response = "HTTP/1.1 200 OK\nContent-Length:12\n\nHello World!";
           socket.getOutputStream().write(response.getBytes(StandardCharsets.UTF_8));
+          socket.getOutputStream().flush();
 
           InputStream in = socket.getInputStream();
           for (int ch = in.read(); ch != -1; ch = in.read()) ;
