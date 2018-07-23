@@ -59,7 +59,7 @@ public class TarStreamBuilder {
    *
    * @param entry the {@link TarArchiveEntry}
    */
-  public void addEntry(TarArchiveEntry entry) {
+  public void addTarArchiveEntry(TarArchiveEntry entry) {
     archiveMap.put(
         entry, entry.isFile() ? Blobs.from(entry.getFile().toPath()) : Blobs.from(ignored -> {}));
   }
@@ -72,7 +72,7 @@ public class TarStreamBuilder {
    * @param jsonString the string to add to the tarball
    * @param name the name of the entry (i.e. filename)
    */
-  public void addEntry(String jsonString, String name) {
+  public void addTextEntryInUtf8(String jsonString, String name) {
     TarArchiveEntry entry = new TarArchiveEntry(name);
     entry.setSize(jsonString.getBytes(StandardCharsets.UTF_8).length);
     archiveMap.put(entry, Blobs.from(jsonString));

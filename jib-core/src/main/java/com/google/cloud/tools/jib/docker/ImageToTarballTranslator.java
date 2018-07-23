@@ -57,19 +57,20 @@ public class ImageToTarballTranslator {
       Path layerContentFile = layer.getContentFile();
       String layerName = layerContentFile.getFileName().toString();
 
-      tarStreamBuilder.addEntry(new TarArchiveEntry(layerContentFile.toFile(), layerName));
+      tarStreamBuilder.addTarArchiveEntry(
+          new TarArchiveEntry(layerContentFile.toFile(), layerName));
       manifestTemplate.addLayerFile(layerName);
     }
 
     // Adds the container configuration to the tarball.
     Blob containerConfigurationBlob =
         new ImageToJsonTranslator(image).getContainerConfigurationBlob();
-    tarStreamBuilder.addEntry(
+    tarStreamBuilder.addTextEntryInUtf8(
         Blobs.writeToString(containerConfigurationBlob), CONTAINER_CONFIGURATION_JSON_FILE_NAME);
 
     // Adds the manifest to tarball.
     manifestTemplate.setRepoTags(imageReference.toStringWithTag());
-    tarStreamBuilder.addEntry(
+    tarStreamBuilder.addTextEntryInUtf8(
         Blobs.writeToString(JsonTemplateMapper.toBlob(manifestTemplate)), MANIFEST_JSON_FILE_NAME);
 
     return tarStreamBuilder.toBlob();

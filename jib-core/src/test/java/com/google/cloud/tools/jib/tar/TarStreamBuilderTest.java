@@ -97,8 +97,8 @@ public class TarStreamBuilderTest {
 
   @Test
   public void testToBlob_multiByte() throws IOException {
-    testTarStreamBuilder.addEntry("日本語", "test");
-    testTarStreamBuilder.addEntry("asdf", "crepecake");
+    testTarStreamBuilder.addTextEntryInUtf8("日本語", "test");
+    testTarStreamBuilder.addTextEntryInUtf8("asdf", "crepecake");
     Blob blob = testTarStreamBuilder.toBlob();
 
     // Writes the BLOB and captures the output.
@@ -131,11 +131,12 @@ public class TarStreamBuilderTest {
   /** Creates a TarStreamBuilder using TarArchiveEntries. */
   private void setUpWithTarEntries() {
     // Prepares a test TarStreamBuilder.
-    testTarStreamBuilder.addEntry(
+    testTarStreamBuilder.addTarArchiveEntry(
         new TarArchiveEntry(fileA.toFile(), "some/path/to/resourceFileA"));
-    testTarStreamBuilder.addEntry(new TarArchiveEntry(fileB.toFile(), "crepecake"));
-    testTarStreamBuilder.addEntry(new TarArchiveEntry(directoryA.toFile(), "some/path/to"));
-    testTarStreamBuilder.addEntry(
+    testTarStreamBuilder.addTarArchiveEntry(new TarArchiveEntry(fileB.toFile(), "crepecake"));
+    testTarStreamBuilder.addTarArchiveEntry(
+        new TarArchiveEntry(directoryA.toFile(), "some/path/to"));
+    testTarStreamBuilder.addTarArchiveEntry(
         new TarArchiveEntry(
             fileA.toFile(),
             "some/really/long/path/that/exceeds/100/characters/abcdefghijklmnopqrstuvwxyz0123456789012345678901234567890"));
@@ -144,10 +145,11 @@ public class TarStreamBuilderTest {
   /** Creates a TarStreamBuilder using Strings. */
   private void setUpWithStrings() {
     // Prepares a test TarStreamBuilder.
-    testTarStreamBuilder.addEntry(fileAContents, "some/path/to/resourceFileA");
-    testTarStreamBuilder.addEntry(fileBContents, "crepecake");
-    testTarStreamBuilder.addEntry(new TarArchiveEntry(directoryA.toFile(), "some/path/to"));
-    testTarStreamBuilder.addEntry(
+    testTarStreamBuilder.addTextEntryInUtf8(fileAContents, "some/path/to/resourceFileA");
+    testTarStreamBuilder.addTextEntryInUtf8(fileBContents, "crepecake");
+    testTarStreamBuilder.addTarArchiveEntry(
+        new TarArchiveEntry(directoryA.toFile(), "some/path/to"));
+    testTarStreamBuilder.addTextEntryInUtf8(
         fileAContents,
         "some/really/long/path/that/exceeds/100/characters/abcdefghijklmnopqrstuvwxyz0123456789012345678901234567890");
   }
@@ -155,10 +157,11 @@ public class TarStreamBuilderTest {
   /** Creates a TarStreamBuilder using Strings and TarArchiveEntries. */
   private void setUpWithStringsAndTarEntries() {
     // Prepares a test TarStreamBuilder.
-    testTarStreamBuilder.addEntry(fileAContents, "some/path/to/resourceFileA");
-    testTarStreamBuilder.addEntry(new TarArchiveEntry(fileB.toFile(), "crepecake"));
-    testTarStreamBuilder.addEntry(new TarArchiveEntry(directoryA.toFile(), "some/path/to"));
-    testTarStreamBuilder.addEntry(
+    testTarStreamBuilder.addTextEntryInUtf8(fileAContents, "some/path/to/resourceFileA");
+    testTarStreamBuilder.addTarArchiveEntry(new TarArchiveEntry(fileB.toFile(), "crepecake"));
+    testTarStreamBuilder.addTarArchiveEntry(
+        new TarArchiveEntry(directoryA.toFile(), "some/path/to"));
+    testTarStreamBuilder.addTextEntryInUtf8(
         fileAContents,
         "some/really/long/path/that/exceeds/100/characters/abcdefghijklmnopqrstuvwxyz0123456789012345678901234567890");
   }
