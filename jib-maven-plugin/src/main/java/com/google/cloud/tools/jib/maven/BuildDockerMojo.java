@@ -99,7 +99,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
             .setJvmFlags(getJvmFlags())
             .setEnvironment(getEnvironment())
             .setExposedPorts(ExposedPortsParser.parse(getExposedPorts()))
-            .setAllowHttp(getAllowInsecureRegistries());
+            .setAllowInsecureRegistries(getAllowInsecureRegistries());
     if (getExtraDirectory() != null && Files.exists(getExtraDirectory())) {
       try (Stream<Path> extraFilesLayerDirectoryFiles = Files.list(getExtraDirectory())) {
         buildConfigurationBuilder.setExtraFilesLayerConfiguration(

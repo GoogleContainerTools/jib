@@ -76,7 +76,7 @@ public class BuildStepsIntegrationTest {
                 .setJavaArguments(Collections.singletonList("An argument."))
                 .setExposedPorts(
                     ExposedPortsParser.parse(Arrays.asList("1000", "2000-2002/tcp", "3000/udp")))
-                .setAllowHttp(true)
+                .setAllowInsecureRegistries(true)
                 .build());
 
     long lastTime = System.nanoTime();
@@ -112,7 +112,7 @@ public class BuildStepsIntegrationTest {
                 .setTargetImage(ImageReference.of("localhost:5000", "testimage", "testtag"))
                 .setMainClass("HelloWorld")
                 .setJavaArguments(Collections.singletonList("An argument."))
-                .setAllowHttp(true)
+                .setAllowInsecureRegistries(true)
                 .build())
         .run();
 

@@ -33,7 +33,9 @@ public class ManifestPullerIntegrationTest {
   @Test
   public void testPull_v21() throws IOException, RegistryException {
     RegistryClient registryClient =
-        RegistryClient.factory("localhost:5000", "busybox").setAllowHttp(true).newRegistryClient();
+        RegistryClient.factory("localhost:5000", "busybox")
+            .setAllowInsecureRegistries(true)
+            .newRegistryClient();
     V21ManifestTemplate manifestTemplate =
         registryClient.pullManifest("latest", V21ManifestTemplate.class);
 
@@ -57,7 +59,7 @@ public class ManifestPullerIntegrationTest {
     try {
       RegistryClient registryClient =
           RegistryClient.factory("localhost:5000", "busybox")
-              .setAllowHttp(true)
+              .setAllowInsecureRegistries(true)
               .newRegistryClient();
       registryClient.pullManifest("nonexistent-tag");
       Assert.fail("Trying to pull nonexistent image should have errored");

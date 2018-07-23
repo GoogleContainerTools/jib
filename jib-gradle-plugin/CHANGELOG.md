@@ -9,6 +9,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Fixed slow image reference parsing ([#680](https://github.com/GoogleContainerTools/jib/pull/680))
+
 ## 0.9.7
 
 ### Added

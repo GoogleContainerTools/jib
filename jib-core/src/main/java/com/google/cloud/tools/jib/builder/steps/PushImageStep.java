@@ -120,7 +120,7 @@ class PushImageStep implements AsyncStep<Void>, Callable<Void> {
           RegistryClient.factory(
                   buildConfiguration.getTargetImageRegistry(),
                   buildConfiguration.getTargetImageRepository())
-              .setAllowHttp(buildConfiguration.getAllowHttp())
+              .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
               .setAuthorization(NonBlockingSteps.get(authenticatePushStep))
               .newRegistryClient();
 
