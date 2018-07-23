@@ -101,10 +101,7 @@ class PullBaseImageStep
           RegistryAuthenticationFailedException {
     buildConfiguration
         .getBuildLogger()
-        .lifecycle(
-            "Getting base image "
-                + buildConfiguration.getBaseImageReference()
-                + " with no auth...");
+        .lifecycle("Getting base image " + buildConfiguration.getBaseImageReference() + "...");
 
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       // First, try with no credentials.
@@ -115,7 +112,9 @@ class PullBaseImageStep
         buildConfiguration
             .getBuildLogger()
             .lifecycle(
-                "Trying again for " + buildConfiguration.getBaseImageReference() + " with auth...");
+                "The base image requires auth. Trying again for "
+                    + buildConfiguration.getBaseImageReference()
+                    + "...");
 
         // If failed, then, retrieve base registry credentials and try with retrieved credentials.
         // TODO: Refactor the logic in RetrieveRegistryCredentialsStep out to
