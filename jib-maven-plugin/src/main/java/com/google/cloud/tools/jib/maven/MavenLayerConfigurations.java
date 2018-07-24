@@ -17,7 +17,7 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
-import com.google.cloud.tools.jib.frontend.JavaEntrypointBuilder;
+import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -114,20 +114,20 @@ class MavenLayerConfigurations {
 
     return new MavenLayerConfigurations(
         LayerConfiguration.builder()
-            .addEntry(dependenciesFiles, JavaEntrypointBuilder.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
+            .addEntry(dependenciesFiles, JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
             .setLabel(DEPENDENCIES_LAYER_LABEL)
             .build(),
         LayerConfiguration.builder()
             .addEntry(
-                snapshotDependenciesFiles, JavaEntrypointBuilder.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
+                snapshotDependenciesFiles, JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
             .setLabel(SNAPSHOT_DEPENDENCIES_LAYER_LABEL)
             .build(),
         LayerConfiguration.builder()
-            .addEntry(resourcesFiles, JavaEntrypointBuilder.DEFAULT_RESOURCES_PATH_ON_IMAGE)
+            .addEntry(resourcesFiles, JavaEntrypointConstructor.DEFAULT_RESOURCES_PATH_ON_IMAGE)
             .setLabel(RESOURCES_LAYER_LABEL)
             .build(),
         LayerConfiguration.builder()
-            .addEntry(classesFiles, JavaEntrypointBuilder.DEFAULT_CLASSES_PATH_ON_IMAGE)
+            .addEntry(classesFiles, JavaEntrypointConstructor.DEFAULT_CLASSES_PATH_ON_IMAGE)
             .setLabel(CLASSES_LAYER_LABEL)
             .build(),
         LayerConfiguration.builder()

@@ -24,7 +24,7 @@ import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
-import com.google.cloud.tools.jib.frontend.JavaEntrypointBuilder;
+import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.frontend.SystemPropertyValidator;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.RegistryClient;
@@ -94,7 +94,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
             .setExposedPorts(ExposedPortsParser.parse(getExposedPorts()))
             .setAllowHttp(getAllowInsecureRegistries())
             .setLayerConfigurations(mavenProjectProperties.getLayerConfigurations())
-            .setEntrypoint(JavaEntrypointBuilder.makeDefaultEntrypoint(getJvmFlags(), mainClass));
+            .setEntrypoint(JavaEntrypointConstructor.makeDefaultEntrypoint(getJvmFlags(), mainClass));
     CacheConfiguration applicationLayersCacheConfiguration =
         CacheConfiguration.forPath(mavenProjectProperties.getCacheDirectory());
     buildConfigurationBuilder.setApplicationLayersCacheConfiguration(

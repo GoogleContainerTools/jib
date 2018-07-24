@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.docker;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.tools.jib.filesystem.FileOperations;
-import com.google.cloud.tools.jib.frontend.JavaEntrypointBuilder;
+import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -255,7 +255,7 @@ public class DockerContextGenerator {
         .append("\nENTRYPOINT ")
         .append(
             objectMapper.writeValueAsString(
-                JavaEntrypointBuilder.makeDefaultEntrypoint(jvmFlags, mainClass)))
+                JavaEntrypointConstructor.makeDefaultEntrypoint(jvmFlags, mainClass)))
         .append("\nCMD ")
         .append(objectMapper.writeValueAsString(javaArguments));
     return dockerfile.toString();

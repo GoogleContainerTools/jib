@@ -20,8 +20,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/** Builds an image entrypoint for the Java application. */
-public class JavaEntrypointBuilder {
+/** Constructs an image entrypoint for the Java application. */
+public class JavaEntrypointConstructor {
 
   public static final String DEFAULT_DEPENDENCIES_PATH_ON_IMAGE = "/app/libs/";
   public static final String DEFAULT_RESOURCES_PATH_ON_IMAGE = "/app/resources/";
@@ -38,7 +38,7 @@ public class JavaEntrypointBuilder {
   }
 
   /**
-   * Builds the container entrypoint.
+   * Constructs the container entrypoint.
    *
    * <p>The entrypoint is {@code java [jvm flags] -cp [classpaths] [main class]}.
    *
@@ -60,5 +60,5 @@ public class JavaEntrypointBuilder {
     return entrypointBuilder;
   }
 
-  private JavaEntrypointBuilder() {}
+  private JavaEntrypointConstructor() {}
 }

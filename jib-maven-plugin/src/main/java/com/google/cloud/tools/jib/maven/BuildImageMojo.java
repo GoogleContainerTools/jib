@@ -23,7 +23,7 @@ import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
-import com.google.cloud.tools.jib.frontend.JavaEntrypointBuilder;
+import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.frontend.SystemPropertyValidator;
 import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.ImageReference;
@@ -116,7 +116,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
             .setTargetFormat(ImageFormat.valueOf(getFormat()).getManifestTemplateClass())
             .setAllowHttp(getAllowInsecureRegistries())
             .setLayerConfigurations(mavenProjectProperties.getLayerConfigurations())
-            .setEntrypoint(JavaEntrypointBuilder.makeDefaultEntrypoint(getJvmFlags(), mainClass));
+            .setEntrypoint(JavaEntrypointConstructor.makeDefaultEntrypoint(getJvmFlags(), mainClass));
     CacheConfiguration applicationLayersCacheConfiguration =
         CacheConfiguration.forPath(mavenProjectProperties.getCacheDirectory());
     buildConfigurationBuilder.setApplicationLayersCacheConfiguration(
