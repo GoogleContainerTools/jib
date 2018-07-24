@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.registry;
 
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpMethods;
-import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
@@ -70,7 +69,7 @@ class BlobPusher {
     @Override
     public URL handleResponse(Response response) throws RegistryErrorException {
       switch (response.getStatusCode()) {
-        case HttpStatusCodes.STATUS_CODE_CREATED:
+        case HttpURLConnection.HTTP_CREATED:
           // The BLOB exists in the registry.
           return null;
 

@@ -24,6 +24,6 @@ import java.net.URL;
 public class InsecureRegistryException extends RegistryException {
 
   InsecureRegistryException(URL insecureUrl) {
-    super("Only secure connections are allowed, but tried to reach URL " + insecureUrl);
+    super("Only secure connections are allowed, but failed to verify the server at " + insecureUrl);
   }
 }
