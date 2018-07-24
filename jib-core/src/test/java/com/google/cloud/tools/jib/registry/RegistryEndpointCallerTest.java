@@ -28,7 +28,6 @@ import com.google.cloud.tools.jib.http.Connection;
 import com.google.cloud.tools.jib.http.MockConnection;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
-import com.google.cloud.tools.jib.registry.RegistryEndpointCaller.RequestState;
 import com.google.cloud.tools.jib.registry.json.ErrorEntryTemplate;
 import com.google.cloud.tools.jib.registry.json.ErrorResponseTemplate;
 import java.io.IOException;
@@ -175,8 +174,7 @@ public class RegistryEndpointCallerTest {
             true,
             mockConnectionFactory);
     try {
-      testRegistryEndpointCallerInsecure.call(
-          new RequestState(Authorizations.withBasicToken("token"), new URL("http://location")));
+      testRegistryEndpointCallerInsecure.call(new URL("http://location"));
       Assert.fail("Call should have failed");
 
     } catch (RegistryCredentialsNotSentException ex) {
