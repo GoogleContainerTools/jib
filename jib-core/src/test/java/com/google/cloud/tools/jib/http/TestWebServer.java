@@ -24,6 +24,7 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 
 /** Simple local web server for testing. */
@@ -35,7 +36,7 @@ class TestWebServer implements Closeable {
 
   TestWebServer() throws IOException, InterruptedException {
     serverSocket = new ServerSocket(0);
-    executorService.submit(this::serve200);
+    ignoreReturn(executorService.submit(this::serve200));
     threadStarted.acquire();
   }
 
@@ -61,5 +62,9 @@ class TestWebServer implements Closeable {
       for (int ch = in.read(); ch != -1; ch = in.read()) ;
     }
     return null;
+  }
+
+  private void ignoreReturn(Future<Void> future) {
+    // do nothing; to make Error Prone happy
   }
 }
