@@ -49,15 +49,16 @@ public class BuildConfiguration {
     @Nullable private ImageReference targetImageReference;
     @Nullable private String targetImageCredentialHelperName;
     @Nullable private RegistryCredentials knownTargetRegistryCredentials;
-    private ImmutableList<String> javaArguments = ImmutableList.of();
-    private ImmutableMap<String, String> environmentMap = ImmutableMap.of();
-    private ImmutableList<Port> exposedPorts = ImmutableList.of();
+    // TODO: Shoule rename to not be java-specific.
+    @Nullable private ImmutableList<String> javaArguments;
+    @Nullable private ImmutableMap<String, String> environmentMap;
+    @Nullable private ImmutableList<Port> exposedPorts;
     private Class<? extends BuildableManifestTemplate> targetFormat = V22ManifestTemplate.class;
     @Nullable private CacheConfiguration applicationLayersCacheConfiguration;
     @Nullable private CacheConfiguration baseImageLayersCacheConfiguration;
     private boolean allowHttp = false;
     private ImmutableList<LayerConfiguration> layerConfigurations = ImmutableList.of();
-    private ImmutableList<String> entrypoint = ImmutableList.of();
+    @Nullable private ImmutableList<String> entrypoint;
 
     private BuildLogger buildLogger;
 
@@ -106,7 +107,9 @@ public class BuildConfiguration {
     }
 
     public Builder setEnvironment(@Nullable Map<String, String> environmentMap) {
-      if (environmentMap != null) {
+      if (environmentMap == null) {
+        this.environmentMap = null;
+      } else {
         Preconditions.checkArgument(
             !Iterables.any(environmentMap.keySet(), Objects::isNull)
                 && !Iterables.any(environmentMap.values(), Objects::isNull));
@@ -116,7 +119,9 @@ public class BuildConfiguration {
     }
 
     public Builder setExposedPorts(@Nullable List<Port> exposedPorts) {
-      if (exposedPorts != null) {
+      if (exposedPorts == null) {
+        this.exposedPorts = null;
+      } else {
         Preconditions.checkArgument(!exposedPorts.contains(null));
         this.exposedPorts = ImmutableList.copyOf(exposedPorts);
       }
@@ -192,7 +197,9 @@ public class BuildConfiguration {
      * @return this
      */
     public Builder setEntrypoint(@Nullable List<String> entrypoint) {
-      if (entrypoint != null) {
+      if (entrypoint == null) {
+        this.entrypoint = null;
+      } else {
         Preconditions.checkArgument(!entrypoint.contains(null));
         this.entrypoint = ImmutableList.copyOf(entrypoint);
       }
@@ -289,15 +296,15 @@ public class BuildConfiguration {
   private final ImageReference targetImageReference;
   @Nullable private final String targetImageCredentialHelperName;
   @Nullable private final RegistryCredentials knownTargetRegistryCredentials;
-  private final ImmutableList<String> javaArguments;
-  private final ImmutableMap<String, String> environmentMap;
-  private final ImmutableList<Port> exposedPorts;
+  @Nullable private final ImmutableList<String> javaArguments;
+  @Nullable private final ImmutableMap<String, String> environmentMap;
+  @Nullable private final ImmutableList<Port> exposedPorts;
   private final Class<? extends BuildableManifestTemplate> targetFormat;
   @Nullable private final CacheConfiguration applicationLayersCacheConfiguration;
   @Nullable private final CacheConfiguration baseImageLayersCacheConfiguration;
   private final boolean allowHttp;
   private final ImmutableList<LayerConfiguration> layerConfigurations;
-  private final ImmutableList<String> entrypoint;
+  @Nullable private final ImmutableList<String> entrypoint;
 
   /** Instantiate with {@link Builder#build}. */
   private BuildConfiguration(
@@ -309,15 +316,15 @@ public class BuildConfiguration {
       ImageReference targetImageReference,
       @Nullable String targetImageCredentialHelperName,
       @Nullable RegistryCredentials knownTargetRegistryCredentials,
-      ImmutableList<String> javaArguments,
-      ImmutableMap<String, String> environmentMap,
-      ImmutableList<Port> exposedPorts,
+      @Nullable ImmutableList<String> javaArguments,
+      @Nullable ImmutableMap<String, String> environmentMap,
+      @Nullable ImmutableList<Port> exposedPorts,
       Class<? extends BuildableManifestTemplate> targetFormat,
       @Nullable CacheConfiguration applicationLayersCacheConfiguration,
       @Nullable CacheConfiguration baseImageLayersCacheConfiguration,
       boolean allowHttp,
       ImmutableList<LayerConfiguration> layerConfigurations,
-      ImmutableList<String> entrypoint) {
+      @Nullable ImmutableList<String> entrypoint) {
     this.buildLogger = buildLogger;
     this.creationTime = creationTime;
     this.baseImageReference = baseImageReference;
@@ -397,14 +404,32 @@ public class BuildConfiguration {
     return knownTargetRegistryCredentials;
   }
 
+  /**
+   * Gets the arguments to pass to the entrypoint.
+   *
+   * @return the list of arguments, or {@code null} if not set
+   */
+  @Nullable
   public ImmutableList<String> getJavaArguments() {
     return javaArguments;
   }
 
+  /**
+   * Gets the map from environment variable names to values for the container.
+   *
+   * @return the map of environment variables, or {@code null} if not set
+   */
+  @Nullable
   public ImmutableMap<String, String> getEnvironment() {
     return environmentMap;
   }
 
+  /**
+   * Gets the ports to expose on the container.
+   *
+   * @return the list of exposed ports, or {@code null} if not set
+   */
+  @Nullable
   public ImmutableList<Port> getExposedPorts() {
     return exposedPorts;
   }
@@ -454,8 +479,9 @@ public class BuildConfiguration {
   /**
    * Gets the container entrypoint.
    *
-   * @return the list of entrypoint tokens
+   * @return the list of entrypoint tokens, or {@code null} if not set
    */
+  @Nullable
   public ImmutableList<String> getEntrypoint() {
     return entrypoint;
   }

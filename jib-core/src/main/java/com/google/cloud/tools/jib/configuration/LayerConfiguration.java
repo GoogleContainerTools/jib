@@ -77,7 +77,7 @@ public class LayerConfiguration {
   }
 
   private final ImmutableList<LayerEntry> layerEntries;
-  private String label;
+  private final String label;
 
   /**
    * Constructs a new layer configuration.

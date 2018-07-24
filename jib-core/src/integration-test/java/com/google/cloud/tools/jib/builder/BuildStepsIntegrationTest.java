@@ -62,7 +62,7 @@ public class BuildStepsIntegrationTest {
 
   private static final TestBuildLogger logger = new TestBuildLogger();
 
-  @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   private ImmutableList<LayerConfiguration> fakeLayerConfigurations;
 

@@ -148,15 +148,15 @@ public class BuildConfigurationTest {
     Assert.assertNull(buildConfiguration.getKnownBaseRegistryCredentials());
     Assert.assertNull(buildConfiguration.getTargetImageCredentialHelperName());
     Assert.assertNull(buildConfiguration.getKnownTargetRegistryCredentials());
-    Assert.assertEquals(Collections.emptyList(), buildConfiguration.getJavaArguments());
-    Assert.assertEquals(Collections.emptyMap(), buildConfiguration.getEnvironment());
-    Assert.assertEquals(Collections.emptyList(), buildConfiguration.getExposedPorts());
+    Assert.assertNull(buildConfiguration.getJavaArguments());
+    Assert.assertNull(buildConfiguration.getEnvironment());
+    Assert.assertNull(buildConfiguration.getExposedPorts());
     Assert.assertEquals(V22ManifestTemplate.class, buildConfiguration.getTargetFormat());
     Assert.assertNull(buildConfiguration.getApplicationLayersCacheConfiguration());
     Assert.assertNull(buildConfiguration.getBaseImageLayersCacheConfiguration());
     Assert.assertFalse(buildConfiguration.getAllowHttp());
     Assert.assertEquals(Collections.emptyList(), buildConfiguration.getLayerConfigurations());
-    Assert.assertEquals(Collections.emptyList(), buildConfiguration.getEntrypoint());
+    Assert.assertNull(buildConfiguration.getEntrypoint());
   }
 
   @Test
