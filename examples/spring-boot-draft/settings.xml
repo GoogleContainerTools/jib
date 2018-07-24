@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+                          https://maven.apache.org/xsd/settings-1.0.0.xsd">
+    <servers>
+        <!--replace below configuration as yourself-->
+        <server>
+            <id>registry.hub.docker.com/hellojib/hellojib:jib</id>
+            <username>hellojib</username>
+            <password>{hXGhaewM6RYHG6jQDZjHyA3WVprcYjPQpto1ST8OJwI=}</password>
+        </server>
+    </servers>
+</settings>
