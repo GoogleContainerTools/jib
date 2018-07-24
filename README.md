@@ -54,7 +54,6 @@ We welcome contributions! Here's how you can contribute:
 * [Browse issues](https://github.com/GoogleContainerTools/jib/issues) or [file an issue](https://github.com/GoogleContainerTools/jib/issues/new)
 * Chat with us on [gitter](https://gitter.im/google/jib)
 * Join the [jib-users mailing list](https://groups.google.com/forum/#!forum/jib-users)
-* [Tweet about us](https://twitter.com/intent/tweet?text=Google%20container%20tool%20for%20dockerizing%20Java%20applications&url=https://github.com/GoogleContainerTools/jib&via=JibContainerBuilder&hashtags=java,docker,kubernetes,maven,gradle,microservices,jib)
 * Contribute:
   * *Read the [contributing guide](https://github.com/GoogleContainerTools/jib/blob/master/CONTRIBUTING.md) before starting work on an issue*
   * Try to fix [good first issues](https://github.com/GoogleContainerTools/jib/labels/good%20first%20issue)
