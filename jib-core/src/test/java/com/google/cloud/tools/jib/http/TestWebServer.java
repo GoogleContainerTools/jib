@@ -31,6 +31,7 @@ import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -47,7 +48,7 @@ class TestWebServer implements Closeable {
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
     this.https = https;
     serverSocket = createServerSocket(https);
-    executorService.submit(this::serve200);
+    ignoreReturn(executorService.submit(this::serve200));
     threadStarted.acquire();
   }
 
@@ -95,5 +96,9 @@ class TestWebServer implements Closeable {
       for (int ch = in.read(); ch != -1; ch = in.read()) ;
     }
     return null;
+  }
+
+  private void ignoreReturn(Future<Void> future) {
+    // do nothing; to make Error Prone happy
   }
 }
