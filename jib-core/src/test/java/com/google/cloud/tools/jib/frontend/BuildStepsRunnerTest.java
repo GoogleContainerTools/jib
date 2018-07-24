@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.frontend;
 
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.cloud.tools.jib.builder.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.builder.BuildSteps;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;

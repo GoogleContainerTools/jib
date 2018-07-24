@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.async.AsyncStep;
-import com.google.cloud.tools.jib.builder.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;

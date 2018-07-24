@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.builder.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;

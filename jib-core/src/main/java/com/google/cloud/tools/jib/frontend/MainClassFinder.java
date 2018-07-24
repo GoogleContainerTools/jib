@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.frontend;
 
-import com.google.cloud.tools.jib.builder.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.common.annotations.VisibleForTesting;
