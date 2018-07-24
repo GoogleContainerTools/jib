@@ -5,14 +5,6 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-### Changed
-
-### Fixed
-
-## 0.9.8
-
-### Added
-
 - Docker context generation now includes snapshot dependencies and extra files ([#516](https://github.com/GoogleContainerTools/jib/pull/516/files))
 
 ### Changed
