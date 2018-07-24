@@ -49,7 +49,7 @@ public class BuildConfiguration {
     @Nullable private ImageReference targetImageReference;
     @Nullable private String targetImageCredentialHelperName;
     @Nullable private RegistryCredentials knownTargetRegistryCredentials;
-    // TODO: Shoule rename to not be java-specific.
+    // TODO: Should rename to not be java-specific.
     @Nullable private ImmutableList<String> javaArguments;
     @Nullable private ImmutableMap<String, String> environmentMap;
     @Nullable private ImmutableList<Port> exposedPorts;
