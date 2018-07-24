@@ -66,7 +66,7 @@ public class TarStreamBuilder {
 
   /**
    * Adds a blob to the archive. Note that this should be used with raw bytes and not file contents;
-   * for adding files to the archive, use {@code TarStreamBuilder#addEntry(TarArchiveEntry entry)}.
+   * for adding files to the archive, use {@code TarStreamBuilder#addTarArchiveEntry()}.
    *
    * @param contents the bytes to add to the tarball
    * @param name the name of the entry (i.e. filename)
