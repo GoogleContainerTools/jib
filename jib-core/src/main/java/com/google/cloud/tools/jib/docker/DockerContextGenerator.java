@@ -180,7 +180,6 @@ public class DockerContextGenerator {
     return this;
   }
 
-  // TODO: Don't generate empty layers.
   /**
    * Creates the Docker context in {@code #targetDirectory}.
    *

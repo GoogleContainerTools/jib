@@ -50,7 +50,7 @@ import org.junit.rules.TemporaryFolder;
 public class BuildStepsIntegrationTest {
 
   /** Lists the files in the {@code resourcePath} resources directory. */
-  private static ImmutableList<Path> getFilesList(String resourcePath)
+  private static ImmutableList<Path> getResourceFilesList(String resourcePath)
       throws URISyntaxException, IOException {
     try (Stream<Path> fileStream =
         Files.list(Paths.get(Resources.getResource(resourcePath).toURI()))) {
@@ -71,13 +71,13 @@ public class BuildStepsIntegrationTest {
     fakeLayerConfigurations =
         ImmutableList.of(
             LayerConfiguration.builder()
-                .addEntry(getFilesList("application/dependencies"), "/app/libs/")
+                .addEntry(getResourceFilesList("application/dependencies"), "/app/libs/")
                 .build(),
             LayerConfiguration.builder()
-                .addEntry(getFilesList("application/resources"), "/app/resources/")
+                .addEntry(getResourceFilesList("application/resources"), "/app/resources/")
                 .build(),
             LayerConfiguration.builder()
-                .addEntry(getFilesList("application/classes"), "/app/classes/")
+                .addEntry(getResourceFilesList("application/classes"), "/app/classes/")
                 .build());
   }
 
@@ -99,7 +99,6 @@ public class BuildStepsIntegrationTest {
                     JavaEntrypointConstructor.makeDefaultEntrypoint(
                         Collections.emptyList(), "HelloWorld"))
                 .build());
-    buildImageSteps.run();
 
     long lastTime = System.nanoTime();
     buildImageSteps.run();

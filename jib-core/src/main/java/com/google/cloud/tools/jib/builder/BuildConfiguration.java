@@ -254,19 +254,8 @@ public class BuildConfiguration {
           throw new IllegalStateException(errorMessages.get(0) + " and " + errorMessages.get(1));
 
         default:
-          // Appends the descriptions in correct grammar.
-          StringBuilder errorMessage = new StringBuilder(errorMessages.get(0));
-          for (int errorMessageIndex = 1;
-              errorMessageIndex < errorMessages.size();
-              errorMessageIndex++) {
-            if (errorMessageIndex == errorMessages.size() - 1) {
-              errorMessage.append(", and ");
-            } else {
-              errorMessage.append(", ");
-            }
-            errorMessage.append(errorMessages.get(errorMessageIndex));
-          }
-          throw new IllegalStateException(errorMessage.toString());
+          // Should never reach here.
+          throw new IllegalStateException();
       }
     }
   }
