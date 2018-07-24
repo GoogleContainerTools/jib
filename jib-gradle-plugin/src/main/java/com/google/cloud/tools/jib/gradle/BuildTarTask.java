@@ -141,10 +141,11 @@ public class BuildTarTask extends DefaultTask {
             .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
             .setJavaArguments(jibExtension.getArgs())
             .setExposedPorts(ExposedPortsParser.parse(jibExtension.getExposedPorts()))
-        .setAllowInsecureRegistries(jibExtension.getAllowInsecureRegistries())
+            .setAllowInsecureRegistries(jibExtension.getAllowInsecureRegistries())
             .setLayerConfigurations(gradleProjectProperties.getLayerConfigurations())
             .setEntrypoint(
-                JavaEntrypointConstructor.makeDefaultEntrypoint(jibExtension.getJvmFlags(), mainClass));
+                JavaEntrypointConstructor.makeDefaultEntrypoint(
+                    jibExtension.getJvmFlags(), mainClass));
     CacheConfiguration applicationLayersCacheConfiguration =
         CacheConfiguration.forPath(gradleProjectProperties.getCacheDirectory());
     buildConfigurationBuilder.setApplicationLayersCacheConfiguration(

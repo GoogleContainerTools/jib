@@ -127,12 +127,14 @@ class GradleLayerConfigurations {
 
     return new GradleLayerConfigurations(
         LayerConfiguration.builder()
-            .addEntry(dependenciesFiles, JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
+            .addEntry(
+                dependenciesFiles, JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
             .setLabel(DEPENDENCIES_LAYER_LABEL)
             .build(),
         LayerConfiguration.builder()
             .addEntry(
-                snapshotDependenciesFiles, JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
+                snapshotDependenciesFiles,
+                JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
             .setLabel(SNAPSHOT_DEPENDENCIES_LAYER_LABEL)
             .build(),
         LayerConfiguration.builder()

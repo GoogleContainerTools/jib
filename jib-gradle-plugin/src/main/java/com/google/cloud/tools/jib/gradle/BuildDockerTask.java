@@ -116,7 +116,8 @@ public class BuildDockerTask extends DefaultTask {
             .setAllowInsecureRegistries(jibExtension.getAllowInsecureRegistries())
             .setLayerConfigurations(gradleProjectProperties.getLayerConfigurations())
             .setEntrypoint(
-                JavaEntrypointConstructor.makeDefaultEntrypoint(jibExtension.getJvmFlags(), mainClass));
+                JavaEntrypointConstructor.makeDefaultEntrypoint(
+                    jibExtension.getJvmFlags(), mainClass));
     CacheConfiguration applicationLayersCacheConfiguration =
         CacheConfiguration.forPath(gradleProjectProperties.getCacheDirectory());
     buildConfigurationBuilder.setApplicationLayersCacheConfiguration(
