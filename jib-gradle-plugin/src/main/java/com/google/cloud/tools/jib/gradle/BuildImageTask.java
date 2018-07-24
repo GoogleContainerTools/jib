@@ -121,7 +121,7 @@ public class BuildImageTask extends DefaultTask {
             .setJavaArguments(jibExtension.getArgs())
             .setExposedPorts(ExposedPortsParser.parse(jibExtension.getExposedPorts()))
             .setTargetFormat(jibExtension.getFormat())
-            .setAllowHttp(jibExtension.getAllowInsecureRegistries())
+        .setAllowInsecureRegistries(jibExtension.getAllowInsecureRegistries())
             .setLayerConfigurations(gradleProjectProperties.getLayerConfigurations())
             .setEntrypoint(
                 JavaEntrypointConstructor.makeDefaultEntrypoint(jibExtension.getJvmFlags(), mainClass));

@@ -90,7 +90,7 @@ public class BuildConfigurationTest {
             .setTargetFormat(OCIManifestTemplate.class)
             .setApplicationLayersCacheConfiguration(expectedApplicationLayersCacheConfiguration)
             .setBaseImageLayersCacheConfiguration(expectedBaseImageLayersCacheConfiguration)
-            .setAllowHttp(true)
+            .setAllowInsecureRegistries(true)
             .setLayerConfigurations(expectedLayerConfigurations)
             .setEntrypoint(expectedEntrypoint);
     BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
@@ -118,7 +118,7 @@ public class BuildConfigurationTest {
     Assert.assertEquals(
         expectedBaseImageLayersCacheConfiguration,
         buildConfiguration.getBaseImageLayersCacheConfiguration());
-    Assert.assertTrue(buildConfiguration.getAllowHttp());
+    Assert.assertTrue(buildConfiguration.getAllowInsecureRegistries());
     Assert.assertEquals(expectedLayerConfigurations, buildConfiguration.getLayerConfigurations());
     Assert.assertEquals(expectedEntrypoint, buildConfiguration.getEntrypoint());
   }
@@ -154,7 +154,7 @@ public class BuildConfigurationTest {
     Assert.assertEquals(V22ManifestTemplate.class, buildConfiguration.getTargetFormat());
     Assert.assertNull(buildConfiguration.getApplicationLayersCacheConfiguration());
     Assert.assertNull(buildConfiguration.getBaseImageLayersCacheConfiguration());
-    Assert.assertFalse(buildConfiguration.getAllowHttp());
+    Assert.assertFalse(buildConfiguration.getAllowInsecureRegistries());
     Assert.assertEquals(Collections.emptyList(), buildConfiguration.getLayerConfigurations());
     Assert.assertNull(buildConfiguration.getEntrypoint());
   }

@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Only builds non-empty layers ([#516](https://github.com/GoogleContainerTools/jib/pull/516/files))
+- Fixed slow image reference parsing ([#680](https://github.com/GoogleContainerTools/jib/pull/680))
 
 ## 0.9.7
 

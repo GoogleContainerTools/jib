@@ -106,7 +106,7 @@ class DockerConfig {
   DockerCredentialHelper getCredentialHelperFor(
       DockerCredentialHelperFactory dockerCredentialHelperFactory, String registry) {
     List<Predicate<String>> registryMatchers = getRegistryMatchersFor(registry);
-    Map.Entry<String, AuthTemplate> firstMatchInAuths =
+    Map.Entry<String, ?> firstMatchInAuths =
         findFirstInMapByKey(dockerConfigTemplate.getAuths(), registryMatchers);
     if (dockerConfigTemplate.getCredsStore() != null && firstMatchInAuths != null) {
       return dockerCredentialHelperFactory.newDockerCredentialHelper(

@@ -21,8 +21,8 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** Tests for {@link JavaEntrypointBuilder}. */
-public class JavaEntrypointBuilderTest {
+/** Tests for {@link JavaEntrypointConstructor}. */
+public class JavaEntrypointConstructorTest {
 
   @Test
   public void testMakeEntrypoint() {
@@ -33,7 +33,7 @@ public class JavaEntrypointBuilderTest {
     String expectedMainClass = "SomeMainClass";
 
     List<String> entrypoint =
-        JavaEntrypointBuilder.makeEntrypoint(
+        JavaEntrypointConstructor.makeEntrypoint(
             Arrays.asList(expectedDependenciesPath, expectedResourcesPath, expectedClassesPath),
             expectedJvmFlags,
             expectedMainClass);
@@ -49,7 +49,7 @@ public class JavaEntrypointBuilderTest {
 
     // Checks that this is also the default entrypoint.
     Assert.assertEquals(
-        JavaEntrypointBuilder.makeDefaultEntrypoint(expectedJvmFlags, expectedMainClass),
+        JavaEntrypointConstructor.makeDefaultEntrypoint(expectedJvmFlags, expectedMainClass),
         entrypoint);
   }
 }

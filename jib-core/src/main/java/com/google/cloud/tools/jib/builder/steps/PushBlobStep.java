@@ -72,7 +72,7 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
           RegistryClient.factory(
                   buildConfiguration.getTargetImageRegistry(),
                   buildConfiguration.getTargetImageRepository())
-              .setAllowHttp(buildConfiguration.getAllowHttp())
+              .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
               .setAuthorization(NonBlockingSteps.get(authenticatePushStep))
               .newRegistryClient();
       registryClient.setTimer(timer);

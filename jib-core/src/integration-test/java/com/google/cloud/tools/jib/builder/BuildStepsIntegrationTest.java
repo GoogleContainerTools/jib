@@ -23,7 +23,7 @@ import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.Caches;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
-import com.google.cloud.tools.jib.frontend.JavaEntrypointBuilder;
+import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
@@ -93,10 +93,10 @@ public class BuildStepsIntegrationTest {
                 .setJavaArguments(Collections.singletonList("An argument."))
                 .setExposedPorts(
                     ExposedPortsParser.parse(Arrays.asList("1000", "2000-2002/tcp", "3000/udp")))
-                .setAllowHttp(true)
+                .setAllowInsecureRegistries(true)
                 .setLayerConfigurations(fakeLayerConfigurations)
                 .setEntrypoint(
-                    JavaEntrypointBuilder.makeDefaultEntrypoint(
+                    JavaEntrypointConstructor.makeDefaultEntrypoint(
                         Collections.emptyList(), "HelloWorld"))
                 .build());
     buildImageSteps.run();
@@ -133,10 +133,10 @@ public class BuildStepsIntegrationTest {
                 .setBaseImage(ImageReference.parse("openjdk:8-jre-alpine"))
                 .setTargetImage(ImageReference.of("localhost:5000", "testimage", "testtag"))
                 .setJavaArguments(Collections.singletonList("An argument."))
-                .setAllowHttp(true)
+                .setAllowInsecureRegistries(true)
                 .setLayerConfigurations(fakeLayerConfigurations)
                 .setEntrypoint(
-                    JavaEntrypointBuilder.makeDefaultEntrypoint(
+                    JavaEntrypointConstructor.makeDefaultEntrypoint(
                         Collections.emptyList(), "HelloWorld"))
                 .build())
         .run();
@@ -160,7 +160,8 @@ public class BuildStepsIntegrationTest {
                 ExposedPortsParser.parse(Arrays.asList("1000", "2000-2002/tcp", "3000/udp")))
             .setLayerConfigurations(fakeLayerConfigurations)
             .setEntrypoint(
-                JavaEntrypointBuilder.makeDefaultEntrypoint(Collections.emptyList(), "HelloWorld"))
+                JavaEntrypointConstructor.makeDefaultEntrypoint(
+                    Collections.emptyList(), "HelloWorld"))
             .build();
 
     Path cacheDirectory = temporaryFolder.newFolder().toPath();
@@ -193,7 +194,8 @@ public class BuildStepsIntegrationTest {
             .setJavaArguments(Collections.singletonList("An argument."))
             .setLayerConfigurations(fakeLayerConfigurations)
             .setEntrypoint(
-                JavaEntrypointBuilder.makeDefaultEntrypoint(Collections.emptyList(), "HelloWorld"))
+                JavaEntrypointConstructor.makeDefaultEntrypoint(
+                    Collections.emptyList(), "HelloWorld"))
             .build();
 
     Path outputPath = temporaryFolder.newFolder().toPath().resolve("test.tar");

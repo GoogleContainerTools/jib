@@ -42,6 +42,10 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class DockerContextGeneratorTest {
 
+  private static final String EXPECTED_DEPENDENCIES_PATH = "/app/libs/";
+  private static final String EXPECTED_RESOURCES_PATH = "/app/resources/";
+  private static final String EXPECTED_CLASSES_PATH = "/app/classes/";
+
   private static void assertSameFiles(Path directory1, Path directory2) throws IOException {
     Deque<Path> directory1Paths = new ArrayDeque<>(new DirectoryWalker(directory1).walk());
 
@@ -62,11 +66,7 @@ public class DockerContextGeneratorTest {
     }
   }
 
-  @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
-
-  private String expectedDependenciesPath = "/app/libs/";
-  private String expectedResourcesPath = "/app/resources/";
-  private String expectedClassesPath = "/app/classes/";
+  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
   public void testGenerate() throws IOException, URISyntaxException {
@@ -93,10 +93,10 @@ public class DockerContextGeneratorTest {
     Files.delete(targetDirectory);
 
     new DockerContextGenerator(
-            new LayerEntry(expectedDependenciesFiles, expectedDependenciesPath),
-            new LayerEntry(expectedSnapshotDependenciesFiles, expectedDependenciesPath),
-            new LayerEntry(expectedResourcesFiles, expectedResourcesPath),
-            new LayerEntry(expectedClassesFiles, expectedClassesPath),
+            new LayerEntry(expectedDependenciesFiles, EXPECTED_DEPENDENCIES_PATH),
+            new LayerEntry(expectedSnapshotDependenciesFiles, EXPECTED_DEPENDENCIES_PATH),
+            new LayerEntry(expectedResourcesFiles, EXPECTED_RESOURCES_PATH),
+            new LayerEntry(expectedClassesFiles, EXPECTED_CLASSES_PATH),
             new LayerEntry(expectedExtraFiles, "/"))
         .setBaseImage("somebaseimage")
         .generate(targetDirectory);
@@ -119,10 +119,10 @@ public class DockerContextGeneratorTest {
 
     String dockerfile =
         new DockerContextGenerator(
-                new LayerEntry(ImmutableList.of(Paths.get("ignored")), expectedDependenciesPath),
-                new LayerEntry(ImmutableList.of(Paths.get("ignored")), expectedDependenciesPath),
-                new LayerEntry(ImmutableList.of(Paths.get("ignored")), expectedResourcesPath),
-                new LayerEntry(ImmutableList.of(Paths.get("ignored")), expectedClassesPath),
+                new LayerEntry(ImmutableList.of(Paths.get("ignored")), EXPECTED_DEPENDENCIES_PATH),
+                new LayerEntry(ImmutableList.of(Paths.get("ignored")), EXPECTED_DEPENDENCIES_PATH),
+                new LayerEntry(ImmutableList.of(Paths.get("ignored")), EXPECTED_RESOURCES_PATH),
+                new LayerEntry(ImmutableList.of(Paths.get("ignored")), EXPECTED_CLASSES_PATH),
                 new LayerEntry(ImmutableList.of(Paths.get("ignored")), "/"))
             .setBaseImage(expectedBaseImage)
             .setJvmFlags(expectedJvmFlags)

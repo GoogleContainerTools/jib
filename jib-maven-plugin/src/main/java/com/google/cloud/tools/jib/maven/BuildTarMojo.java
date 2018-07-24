@@ -90,9 +90,25 @@ public class BuildTarMojo extends JibPluginConfiguration {
             .setJavaArguments(getArgs())
             .setEnvironment(getEnvironment())
             .setExposedPorts(ExposedPortsParser.parse(getExposedPorts()))
+<<<<<<< HEAD
             .setAllowHttp(getAllowInsecureRegistries())
             .setLayerConfigurations(mavenProjectProperties.getLayerConfigurations())
             .setEntrypoint(JavaEntrypointConstructor.makeDefaultEntrypoint(getJvmFlags(), mainClass));
+=======
+            .setAllowInsecureRegistries(getAllowInsecureRegistries());
+    if (getExtraDirectory() != null && Files.exists(getExtraDirectory())) {
+      try (Stream<Path> extraFilesLayerDirectoryFiles = Files.list(getExtraDirectory())) {
+        buildConfigurationBuilder.setExtraFilesLayerConfiguration(
+            LayerConfiguration.builder()
+                .addEntry(extraFilesLayerDirectoryFiles.collect(Collectors.toList()), "/")
+                .build());
+
+      } catch (IOException ex) {
+        throw new MojoExecutionException(
+            "Failed to list directory for extra files: " + getExtraDirectory(), ex);
+      }
+    }
+>>>>>>> master
     CacheConfiguration applicationLayersCacheConfiguration =
         CacheConfiguration.forPath(mavenProjectProperties.getCacheDirectory());
     buildConfigurationBuilder.setApplicationLayersCacheConfiguration(

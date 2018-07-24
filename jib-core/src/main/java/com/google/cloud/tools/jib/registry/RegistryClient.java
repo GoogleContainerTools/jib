@@ -68,7 +68,7 @@ public class RegistryClient {
 
     private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
 
-    private boolean allowHttp = false;
+    private boolean allowInsecureRegistries = false;
     @Nullable private Authorization authorization;
 
     private Factory(RegistryEndpointRequestProperties registryEndpointRequestProperties) {
@@ -76,15 +76,14 @@ public class RegistryClient {
     }
 
     /**
-     * Sets whether or not {@code HTTP} should be allowed (credentials should not be sent when set
-     * to {@code true}). Defaults to {@code false}.
+     * Sets whether or not to allow insecure registries (ignoring certificate validation failure or
+     * communicating over HTTP if all else fail).
      *
-     * @param allowHttp if {@code true}, allows {@code HTTP} connections; otherwise, only {@code
-     *     HTTPS} connections are allowed
+     * @param allowInsecureRegistries if {@code true}, insecure connections will be allowed
      * @return this
      */
-    public Factory setAllowHttp(boolean allowHttp) {
-      this.allowHttp = allowHttp;
+    public Factory setAllowInsecureRegistries(boolean allowInsecureRegistries) {
+      this.allowInsecureRegistries = allowInsecureRegistries;
       return this;
     }
 
@@ -106,7 +105,10 @@ public class RegistryClient {
      */
     public RegistryClient newRegistryClient() {
       return new RegistryClient(
-          authorization, registryEndpointRequestProperties, allowHttp, makeUserAgent());
+          authorization,
+          registryEndpointRequestProperties,
+          allowInsecureRegistries,
+          makeUserAgent());
     }
   }
 
@@ -159,7 +161,7 @@ public class RegistryClient {
 
   @Nullable private final Authorization authorization;
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
-  private final boolean allowHttp;
+  private final boolean allowInsecureRegistries;
   private final String userAgent;
 
   /**
@@ -167,17 +169,16 @@ public class RegistryClient {
    *
    * @param authorization the {@link Authorization} to access the registry/repository
    * @param registryEndpointRequestProperties properties of registry endpoint requests
-   * @param allowHttp if {@code true}, allows redirects and fallbacks to HTTP; otherwise, only
-   *     allows HTTPS
+   * @param allowInsecureRegistries if {@code true}, insecure connections will be allowed
    */
   private RegistryClient(
       @Nullable Authorization authorization,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
-      boolean allowHttp,
+      boolean allowInsecureRegistries,
       String userAgent) {
     this.authorization = authorization;
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
-    this.allowHttp = allowHttp;
+    this.allowInsecureRegistries = allowInsecureRegistries;
     this.userAgent = userAgent;
   }
 
@@ -334,7 +335,7 @@ public class RegistryClient {
             registryEndpointProvider,
             authorization,
             registryEndpointRequestProperties,
-            allowHttp)
+            allowInsecureRegistries)
         .call();
   }
 }

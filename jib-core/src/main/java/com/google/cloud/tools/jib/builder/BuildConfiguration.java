@@ -56,7 +56,7 @@ public class BuildConfiguration {
     private Class<? extends BuildableManifestTemplate> targetFormat = V22ManifestTemplate.class;
     @Nullable private CacheConfiguration applicationLayersCacheConfiguration;
     @Nullable private CacheConfiguration baseImageLayersCacheConfiguration;
-    private boolean allowHttp = false;
+    private boolean allowInsecureRegistries = false;
     private ImmutableList<LayerConfiguration> layerConfigurations = ImmutableList.of();
     @Nullable private ImmutableList<String> entrypoint;
 
@@ -160,11 +160,11 @@ public class BuildConfiguration {
     /**
      * Sets whether or not to allow communication over HTTP (as opposed to HTTPS).
      *
-     * @param allowHttp if {@code true}, insecure connections will be allowed
+     * @param allowInsecureRegistries if {@code true}, insecure connections will be allowed
      * @return this
      */
-    public Builder setAllowHttp(boolean allowHttp) {
-      this.allowHttp = allowHttp;
+    public Builder setAllowInsecureRegistries(boolean allowInsecureRegistries) {
+      this.allowInsecureRegistries = allowInsecureRegistries;
       return this;
     }
 
@@ -243,7 +243,7 @@ public class BuildConfiguration {
               targetFormat,
               applicationLayersCacheConfiguration,
               baseImageLayersCacheConfiguration,
-              allowHttp,
+              allowInsecureRegistries,
               layerConfigurations,
               entrypoint);
 
@@ -302,7 +302,7 @@ public class BuildConfiguration {
   private final Class<? extends BuildableManifestTemplate> targetFormat;
   @Nullable private final CacheConfiguration applicationLayersCacheConfiguration;
   @Nullable private final CacheConfiguration baseImageLayersCacheConfiguration;
-  private final boolean allowHttp;
+  private final boolean allowInsecureRegistries;
   private final ImmutableList<LayerConfiguration> layerConfigurations;
   @Nullable private final ImmutableList<String> entrypoint;
 
@@ -322,7 +322,7 @@ public class BuildConfiguration {
       Class<? extends BuildableManifestTemplate> targetFormat,
       @Nullable CacheConfiguration applicationLayersCacheConfiguration,
       @Nullable CacheConfiguration baseImageLayersCacheConfiguration,
-      boolean allowHttp,
+      boolean allowInsecureRegistries,
       ImmutableList<LayerConfiguration> layerConfigurations,
       @Nullable ImmutableList<String> entrypoint) {
     this.buildLogger = buildLogger;
@@ -339,7 +339,7 @@ public class BuildConfiguration {
     this.targetFormat = targetFormat;
     this.applicationLayersCacheConfiguration = applicationLayersCacheConfiguration;
     this.baseImageLayersCacheConfiguration = baseImageLayersCacheConfiguration;
-    this.allowHttp = allowHttp;
+    this.allowInsecureRegistries = allowInsecureRegistries;
     this.layerConfigurations = layerConfigurations;
     this.entrypoint = entrypoint;
   }
@@ -459,12 +459,13 @@ public class BuildConfiguration {
   }
 
   /**
-   * Gets whether or not to allow communication over HTTP (as opposed to HTTPS).
+   * Gets whether or not to allow insecure registries (ignoring certificate validation failure or
+   * communicating over HTTP if all else fail).
    *
    * @return {@code true} if insecure connections will be allowed; {@code false} otherwise
    */
-  public boolean getAllowHttp() {
-    return allowHttp;
+  public boolean getAllowInsecureRegistries() {
+    return allowInsecureRegistries;
   }
 
   /**
