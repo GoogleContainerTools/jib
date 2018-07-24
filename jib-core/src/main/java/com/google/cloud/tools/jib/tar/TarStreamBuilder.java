@@ -69,7 +69,7 @@ public class TarStreamBuilder {
    * for adding files to the archive, use {@code TarStreamBuilder#addEntry(TarArchiveEntry entry)}.
    *
    * @param contents the bytes to add to the tarball
-   * @param name the UTF-8 encoded name of the entry (i.e. filename)
+   * @param name the name of the entry (i.e. filename)
    */
   public void addByteEntry(byte[] contents, String name) {
     TarArchiveEntry entry = new TarArchiveEntry(name);
