@@ -93,7 +93,7 @@ To use a local build of the `jib-gradle-plugin`:
         }
 
         plugins {
-            // id 'com.google.cloud.tools.jib' version '0.9.6'
+            // id 'com.google.cloud.tools.jib' version '0.9.7'
         }
 
         // Applies the java plugin after Jib to make sure it works in this order.

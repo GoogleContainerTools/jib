@@ -6,7 +6,7 @@
   <version>1</version>
 
   <properties>
-    <jib-maven-plugin.version>0.9.6</jib-maven-plugin.version>
+    <jib-maven-plugin.version>0.9.7</jib-maven-plugin.version>
   </properties>
 
   <dependencies>
