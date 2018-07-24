@@ -66,16 +66,16 @@ class TestWebServer implements Closeable {
   private ServerSocket createServerSocket(boolean https)
       throws IOException, GeneralSecurityException, URISyntaxException {
     if (https) {
-      KeyStore ks = KeyStore.getInstance("JKS");
+      KeyStore keyStore = KeyStore.getInstance("JKS");
       // generated with: keytool -genkey -keyalg RSA -keystore ./TestWebServer-keystore
       Path keyStoreFile = Paths.get(Resources.getResource("TestWebServer-keystore").toURI());
       try (InputStream in = Files.newInputStream(keyStoreFile)) {
-        ks.load(in, "password".toCharArray());
+        keyStore.load(in, "password".toCharArray());
       }
 
       KeyManagerFactory keyManagerFactory =
           KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-      keyManagerFactory.init(ks, "password".toCharArray());
+      keyManagerFactory.init(keyStore, "password".toCharArray());
 
       SSLContext sslContext = SSLContext.getInstance("TLS");
       sslContext.init(keyManagerFactory.getKeyManagers(), null, null);
