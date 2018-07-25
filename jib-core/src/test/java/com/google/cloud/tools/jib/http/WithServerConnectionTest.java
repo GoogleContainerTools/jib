@@ -18,7 +18,11 @@ package com.google.cloud.tools.jib.http;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
+import javax.net.ssl.SSLPeerUnverifiedException;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -26,23 +30,27 @@ import org.junit.Test;
 public class WithServerConnectionTest {
 
   @Test
-  public void testGet() throws IOException, InterruptedException {
-    try (TestWebServer server = new TestWebServer();
-        Connection connection = new Connection(new URL(server.getEndpoint()))) {
+  public void testGet()
+      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
+    try (TestWebServer server = new TestWebServer(false);
+        Connection connection =
+            Connection.getConnectionFactory().apply(new URL(server.getEndpoint()))) {
       Response response = connection.send("GET", new Request.Builder().build());
 
       Assert.assertEquals(200, response.getStatusCode());
 
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       response.getBody().writeTo(out);
-      Assert.assertEquals("Hello World!", out.toString("UTF-8"));
+      Assert.assertEquals("Hello World!", new String(out.toByteArray(), StandardCharsets.UTF_8));
     }
   }
 
   @Test
-  public void testErrorOnSecondSend() throws IOException, InterruptedException {
-    try (TestWebServer server = new TestWebServer();
-        Connection connection = new Connection(new URL(server.getEndpoint()))) {
+  public void testErrorOnSecondSend()
+      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
+    try (TestWebServer server = new TestWebServer(false);
+        Connection connection =
+            Connection.getConnectionFactory().apply(new URL(server.getEndpoint()))) {
       connection.send("GET", new Request.Builder().build());
       try {
         connection.send("GET", new Request.Builder().build());
@@ -50,6 +58,37 @@ public class WithServerConnectionTest {
       } catch (IllegalStateException ex) {
         Assert.assertEquals("Connection can send only one request", ex.getMessage());
       }
+    }
+  }
+
+  @Test
+  public void testSecureConnectionOnInsecureHttpsServer()
+      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
+    try (TestWebServer server = new TestWebServer(true);
+        Connection connection =
+            Connection.getConnectionFactory().apply(new URL(server.getEndpoint()))) {
+      try {
+        connection.send("GET", new Request.Builder().build());
+        Assert.fail("Should fail if cannot verify peer");
+      } catch (SSLPeerUnverifiedException ex) {
+        Assert.assertNotNull(ex.getMessage());
+      }
+    }
+  }
+
+  @Test
+  public void testInsecureConnection()
+      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
+    try (TestWebServer server = new TestWebServer(true);
+        Connection connection =
+            Connection.getInsecureConnectionFactory().apply(new URL(server.getEndpoint()))) {
+      Response response = connection.send("GET", new Request.Builder().build());
+
+      Assert.assertEquals(200, response.getStatusCode());
+
+      ByteArrayOutputStream out = new ByteArrayOutputStream();
+      response.getBody().writeTo(out);
+      Assert.assertEquals("Hello World!", new String(out.toByteArray(), StandardCharsets.UTF_8));
     }
   }
 }

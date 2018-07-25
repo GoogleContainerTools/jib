@@ -16,39 +16,73 @@
 
 package com.google.cloud.tools.jib.http;
 
+import com.google.common.io.Resources;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.GeneralSecurityException;
+import java.security.KeyStore;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
 
 /** Simple local web server for testing. */
 class TestWebServer implements Closeable {
 
+  private final boolean https;
   private final ServerSocket serverSocket;
   private final ExecutorService executorService = Executors.newSingleThreadExecutor();
   private final Semaphore threadStarted = new Semaphore(0);
 
-  TestWebServer() throws IOException, InterruptedException {
-    serverSocket = new ServerSocket(0);
+  TestWebServer(boolean https)
+      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
+    this.https = https;
+    serverSocket = createServerSocket(https);
     ignoreReturn(executorService.submit(this::serve200));
     threadStarted.acquire();
   }
 
   String getEndpoint() {
     String host = serverSocket.getInetAddress().getHostAddress();
-    return "http://" + host + ":" + serverSocket.getLocalPort();
+    return (https ? "https" : "http") + "://" + host + ":" + serverSocket.getLocalPort();
   }
 
   @Override
   public void close() throws IOException {
     serverSocket.close();
     executorService.shutdown();
+  }
+
+  private ServerSocket createServerSocket(boolean https)
+      throws IOException, GeneralSecurityException, URISyntaxException {
+    if (https) {
+      KeyStore keyStore = KeyStore.getInstance("JKS");
+      // generated with: keytool -genkey -keyalg RSA -keystore ./TestWebServer-keystore
+      Path keyStoreFile = Paths.get(Resources.getResource("TestWebServer-keystore").toURI());
+      try (InputStream in = Files.newInputStream(keyStoreFile)) {
+        keyStore.load(in, "password".toCharArray());
+      }
+
+      KeyManagerFactory keyManagerFactory =
+          KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+      keyManagerFactory.init(keyStore, "password".toCharArray());
+
+      SSLContext sslContext = SSLContext.getInstance("TLS");
+      sslContext.init(keyManagerFactory.getKeyManagers(), null, null);
+      return sslContext.getServerSocketFactory().createServerSocket(0);
+    } else {
+      return new ServerSocket(0);
+    }
   }
 
   private Void serve200() throws IOException {
