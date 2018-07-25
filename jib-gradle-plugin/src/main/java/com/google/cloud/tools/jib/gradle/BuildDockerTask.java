@@ -98,7 +98,7 @@ public class BuildDockerTask extends DefaultTask {
 
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(
-            getProject(), gradleBuildLogger, jibExtension.getExtraDirectory().toPath());
+            getProject(), gradleBuildLogger, jibExtension.getExtraDirectoryPath());
     String mainClass = gradleProjectProperties.getMainClass(jibExtension);
     ImageReference targetImage =
         gradleProjectProperties.getGeneratedTargetDockerTag(jibExtension, gradleBuildLogger);
