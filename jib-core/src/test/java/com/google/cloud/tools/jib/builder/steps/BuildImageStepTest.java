@@ -48,7 +48,6 @@ public class BuildImageStepTest {
   @Mock private BuildConfiguration mockBuildConfiguration;
   @Mock private BuildLogger mockBuildLogger;
   @Mock private PullBaseImageStep mockPullBaseImageStep;
-  @Mock private Image<Layer> mockBaseImage;
   @Mock private PullAndCacheBaseImageLayersStep mockPullAndCacheBaseImageLayersStep;
   @Mock private PullAndCacheBaseImageLayerStep mockPullAndCacheBaseImageLayerStep;
   @Mock private BuildAndCacheApplicationLayerStep mockBuildAndCacheApplicationLayerStep;
@@ -73,6 +72,8 @@ public class BuildImageStepTest {
     Mockito.when(mockBuildConfiguration.getExposedPorts()).thenReturn(ImmutableList.of());
     Mockito.when(mockBuildConfiguration.getEntrypoint()).thenReturn(ImmutableList.of());
 
+    Image<Layer> baseImage =
+        Image.builder().setEnvironment(ImmutableMap.of("NAME", "VALUE")).build();
     Mockito.when(mockPullAndCacheBaseImageLayerStep.getFuture())
         .thenReturn(Futures.immediateFuture(testCachedLayer));
     Mockito.when(mockPullAndCacheBaseImageLayersStep.getFuture())
@@ -85,7 +86,7 @@ public class BuildImageStepTest {
     Mockito.when(mockPullBaseImageStep.getFuture())
         .thenReturn(
             Futures.immediateFuture(
-                new PullBaseImageStep.BaseImageWithAuthorization(mockBaseImage, null)));
+                new PullBaseImageStep.BaseImageWithAuthorization(baseImage, null)));
     Mockito.when(mockBuildAndCacheApplicationLayerStep.getFuture())
         .thenReturn(Futures.immediateFuture(testCachedLayer));
   }
@@ -111,8 +112,6 @@ public class BuildImageStepTest {
   public void test_propagateBaseImageConfiguration()
       throws ExecutionException, InterruptedException {
     Mockito.when(mockBuildConfiguration.getEnvironment()).thenReturn(null);
-    Mockito.when(mockBaseImage.getEnvironment()).thenReturn(ImmutableMap.of("NAME", "VALUE"));
-
     BuildImageStep buildImageStep =
         new BuildImageStep(
             MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()),
