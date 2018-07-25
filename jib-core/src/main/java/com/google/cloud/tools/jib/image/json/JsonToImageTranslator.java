@@ -51,8 +51,7 @@ public class JsonToImageTranslator {
 
   /**
    * Pattern used for parsing environment variables in the format {@code NAME=VALUE}. {@code NAME}
-   * should start with a letter and contain only letters (uppercase and lower) and numbers. {@code
-   * VALUE} can contain anything.
+   * should not contain an '='.
    *
    * <p>Example matches: NAME=VALUE, A12345=$$$$$
    */
