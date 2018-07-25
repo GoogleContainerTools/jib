@@ -71,6 +71,7 @@ public class BuildImageStepTest {
     Mockito.when(mockBuildConfiguration.getEnvironment()).thenReturn(ImmutableMap.of());
     Mockito.when(mockBuildConfiguration.getJavaArguments()).thenReturn(ImmutableList.of());
     Mockito.when(mockBuildConfiguration.getExposedPorts()).thenReturn(ImmutableList.of());
+    Mockito.when(mockBuildConfiguration.getEntrypoint()).thenReturn(ImmutableList.of());
 
     Mockito.when(mockPullAndCacheBaseImageLayerStep.getFuture())
         .thenReturn(Futures.immediateFuture(testCachedLayer));
@@ -100,8 +101,7 @@ public class BuildImageStepTest {
             ImmutableList.of(
                 mockBuildAndCacheApplicationLayerStep,
                 mockBuildAndCacheApplicationLayerStep,
-                mockBuildAndCacheApplicationLayerStep),
-            ImmutableList.of());
+                mockBuildAndCacheApplicationLayerStep));
     Image<CachedLayer> image = buildImageStep.getFuture().get().getFuture().get();
     Assert.assertEquals(
         testDescriptorDigest, image.getLayers().asList().get(0).getBlobDescriptor().getDigest());
@@ -122,8 +122,7 @@ public class BuildImageStepTest {
             ImmutableList.of(
                 mockBuildAndCacheApplicationLayerStep,
                 mockBuildAndCacheApplicationLayerStep,
-                mockBuildAndCacheApplicationLayerStep),
-            ImmutableList.of());
+                mockBuildAndCacheApplicationLayerStep));
     Image<CachedLayer> image = buildImageStep.getFuture().get().getFuture().get();
     Assert.assertEquals(ImmutableMap.of("NAME", "VALUE"), image.getEnvironmentAsMap());
   }

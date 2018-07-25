@@ -104,7 +104,8 @@ public class DockerContextTask extends DefaultTask {
     SystemPropertyValidator.checkHttpTimeoutProperty(GradleException::new);
 
     GradleProjectProperties gradleProjectProperties =
-        GradleProjectProperties.getForProject(getProject(), gradleBuildLogger);
+        GradleProjectProperties.getForProject(
+            getProject(), gradleBuildLogger, jibExtension.getExtraDirectory().toPath());
     String mainClass = gradleProjectProperties.getMainClass(jibExtension);
     String targetDir = getTargetDir();
 
@@ -113,8 +114,12 @@ public class DockerContextTask extends DefaultTask {
       // here.
       ExposedPortsParser.parse(jibExtension.getExposedPorts());
 
-      // TODO: Add support for extra files layer.
-      new DockerContextGenerator(gradleProjectProperties.getSourceFilesConfiguration())
+      new DockerContextGenerator(
+              gradleProjectProperties.getDependenciesLayerEntry(),
+              gradleProjectProperties.getSnapshotDependenciesLayerEntry(),
+              gradleProjectProperties.getResourcesLayerEntry(),
+              gradleProjectProperties.getClassesLayerEntry(),
+              gradleProjectProperties.getExtraFilesLayerEntry())
           .setBaseImage(jibExtension.getBaseImage())
           .setJvmFlags(jibExtension.getJvmFlags())
           .setMainClass(mainClass)

@@ -109,19 +109,19 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     this.created = created;
   }
 
-  public void setContainerEnvironment(List<String> environment) {
+  public void setContainerEnvironment(@Nullable List<String> environment) {
     config.Env = environment;
   }
 
-  public void setContainerEntrypoint(List<String> command) {
+  public void setContainerEntrypoint(@Nullable List<String> command) {
     config.Entrypoint = command;
   }
 
-  public void setContainerCmd(List<String> cmd) {
+  public void setContainerCmd(@Nullable List<String> cmd) {
     config.Cmd = cmd;
   }
 
-  public void setContainerExposedPorts(Map<String, Map<?, ?>> exposedPorts) {
+  public void setContainerExposedPorts(@Nullable Map<String, Map<?, ?>> exposedPorts) {
     config.ExposedPorts = exposedPorts;
   }
 

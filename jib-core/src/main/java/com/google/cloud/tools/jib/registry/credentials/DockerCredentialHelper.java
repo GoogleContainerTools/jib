@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import com.google.common.io.CharStreams;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -104,7 +105,8 @@ public class DockerCredentialHelper {
         try {
           DockerCredentialsTemplate dockerCredentials =
               JsonTemplateMapper.readJson(output, DockerCredentialsTemplate.class);
-          if (dockerCredentials.Username == null || dockerCredentials.Secret == null) {
+          if (Strings.isNullOrEmpty(dockerCredentials.Username)
+              || Strings.isNullOrEmpty(dockerCredentials.Secret)) {
             throw new NonexistentServerUrlDockerCredentialHelperException(
                 credentialHelper, serverUrl, output);
           }

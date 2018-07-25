@@ -14,35 +14,29 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.builder;
+package com.google.cloud.tools.jib.frontend;
 
 import java.util.Arrays;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
-import org.mockito.Mockito;
 
-/** Tests for {@link EntrypointBuilder}. */
-public class EntrypointBuilderTest {
+/** Tests for {@link JavaEntrypointConstructor}. */
+public class JavaEntrypointConstructorTest {
 
   @Test
   public void testMakeEntrypoint() {
-    String expectedDependenciesPath = "/app/libs/";
+    String expectedDependenciesPath = "/app/libs/*";
     String expectedResourcesPath = "/app/resources/";
     String expectedClassesPath = "/app/classes/";
     List<String> expectedJvmFlags = Arrays.asList("-flag", "anotherFlag");
     String expectedMainClass = "SomeMainClass";
 
-    SourceFilesConfiguration mockSourceFilesConfiguration =
-        Mockito.mock(SourceFilesConfiguration.class);
-
-    Mockito.when(mockSourceFilesConfiguration.getDependenciesPathOnImage())
-        .thenReturn(expectedDependenciesPath);
-    Mockito.when(mockSourceFilesConfiguration.getResourcesPathOnImage())
-        .thenReturn(expectedResourcesPath);
-    Mockito.when(mockSourceFilesConfiguration.getClassesPathOnImage())
-        .thenReturn(expectedClassesPath);
-
+    List<String> entrypoint =
+        JavaEntrypointConstructor.makeEntrypoint(
+            Arrays.asList(expectedDependenciesPath, expectedResourcesPath, expectedClassesPath),
+            expectedJvmFlags,
+            expectedMainClass);
     Assert.assertEquals(
         Arrays.asList(
             "java",
@@ -51,7 +45,11 @@ public class EntrypointBuilderTest {
             "-cp",
             "/app/libs/*:/app/resources/:/app/classes/",
             "SomeMainClass"),
-        EntrypointBuilder.makeEntrypoint(
-            mockSourceFilesConfiguration, expectedJvmFlags, expectedMainClass));
+        entrypoint);
+
+    // Checks that this is also the default entrypoint.
+    Assert.assertEquals(
+        JavaEntrypointConstructor.makeDefaultEntrypoint(expectedJvmFlags, expectedMainClass),
+        entrypoint);
   }
 }

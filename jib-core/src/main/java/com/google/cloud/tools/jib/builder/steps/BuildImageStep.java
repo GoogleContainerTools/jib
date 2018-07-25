@@ -42,7 +42,6 @@ class BuildImageStep
   private final PullBaseImageStep pullBaseImageStep;
   private final PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep;
   private final ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps;
-  private final ImmutableList<String> entrypoint;
 
   private final ListeningExecutorService listeningExecutorService;
   private final ListenableFuture<AsyncStep<Image<CachedLayer>>> listenableFuture;
@@ -52,14 +51,12 @@ class BuildImageStep
       BuildConfiguration buildConfiguration,
       PullBaseImageStep pullBaseImageStep,
       PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep,
-      ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps,
-      ImmutableList<String> entrypoint) {
+      ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps) {
     this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
     this.pullBaseImageStep = pullBaseImageStep;
     this.pullAndCacheBaseImageLayersStep = pullAndCacheBaseImageLayersStep;
     this.buildAndCacheApplicationLayerSteps = buildAndCacheApplicationLayerSteps;
-    this.entrypoint = entrypoint;
 
     listenableFuture =
         Futures.whenAllSucceed(
@@ -112,7 +109,7 @@ class BuildImageStep
         imageBuilder.setEnvironment(buildConfiguration.getEnvironment());
       }
       imageBuilder.setCreated(buildConfiguration.getCreationTime());
-      imageBuilder.setEntrypoint(entrypoint);
+      imageBuilder.setEntrypoint(buildConfiguration.getEntrypoint());
       imageBuilder.setJavaArguments(buildConfiguration.getJavaArguments());
       imageBuilder.setExposedPorts(buildConfiguration.getExposedPorts());
 

@@ -32,12 +32,12 @@ public class Image<T extends Layer> {
   public static class Builder<T extends Layer> {
 
     private final ImageLayers.Builder<T> imageLayersBuilder = ImageLayers.builder();
-    private final ImmutableList.Builder<String> environmentBuilder = ImmutableList.builder();
+    private ImmutableList.Builder<String> environmentBuilder = ImmutableList.builder();
 
     @Nullable private Instant created;
-    private ImmutableList<String> entrypoint = ImmutableList.of();
-    private ImmutableList<String> javaArguments = ImmutableList.of();
-    private ImmutableList<Port> exposedPorts = ImmutableList.of();
+    @Nullable private ImmutableList<String> entrypoint;
+    @Nullable private ImmutableList<String> javaArguments;
+    @Nullable private ImmutableList<Port> exposedPorts;
 
     /**
      * Sets the image creation time.
@@ -56,9 +56,13 @@ public class Image<T extends Layer> {
      * @param environment the map of environment variables
      * @return this
      */
-    public Builder<T> setEnvironment(Map<String, String> environment) {
-      for (Map.Entry<String, String> environmentVariable : environment.entrySet()) {
-        setEnvironmentVariable(environmentVariable.getKey(), environmentVariable.getValue());
+    public Builder<T> setEnvironment(@Nullable Map<String, String> environment) {
+      if (environment == null) {
+        this.environmentBuilder = ImmutableList.builder();
+      } else {
+        for (Map.Entry<String, String> environmentVariable : environment.entrySet()) {
+          setEnvironmentVariable(environmentVariable.getKey(), environmentVariable.getValue());
+        }
       }
       return this;
     }
@@ -92,8 +96,12 @@ public class Image<T extends Layer> {
      * @param entrypoint the list of entrypoint tokens
      * @return this
      */
-    public Builder<T> setEntrypoint(List<String> entrypoint) {
-      this.entrypoint = ImmutableList.copyOf(entrypoint);
+    public Builder<T> setEntrypoint(@Nullable List<String> entrypoint) {
+      if (entrypoint == null) {
+        this.entrypoint = null;
+      } else {
+        this.entrypoint = ImmutableList.copyOf(entrypoint);
+      }
       return this;
     }
 
@@ -103,8 +111,12 @@ public class Image<T extends Layer> {
      * @param javaArguments the list of main args to add
      * @return this
      */
-    public Builder<T> setJavaArguments(List<String> javaArguments) {
-      this.javaArguments = ImmutableList.copyOf(javaArguments);
+    public Builder<T> setJavaArguments(@Nullable List<String> javaArguments) {
+      if (javaArguments == null) {
+        this.javaArguments = null;
+      } else {
+        this.javaArguments = ImmutableList.copyOf(javaArguments);
+      }
       return this;
     }
 
@@ -114,8 +126,12 @@ public class Image<T extends Layer> {
      * @param exposedPorts the list of exposed ports to add
      * @return this
      */
-    public Builder<T> setExposedPorts(ImmutableList<Port> exposedPorts) {
-      this.exposedPorts = exposedPorts;
+    public Builder<T> setExposedPorts(@Nullable ImmutableList<Port> exposedPorts) {
+      if (exposedPorts == null) {
+        this.exposedPorts = null;
+      } else {
+        this.exposedPorts = exposedPorts;
+      }
       return this;
     }
 
@@ -136,8 +152,8 @@ public class Image<T extends Layer> {
           created,
           imageLayersBuilder.build(),
           environmentBuilder.build(),
-          ImmutableList.copyOf(entrypoint),
-          ImmutableList.copyOf(javaArguments),
+          entrypoint,
+          javaArguments,
           exposedPorts);
     }
   }
@@ -153,24 +169,24 @@ public class Image<T extends Layer> {
   private final ImageLayers<T> layers;
 
   /** Environment variable definitions for running the image, in the format {@code NAME=VALUE}. */
-  private final ImmutableList<String> environment;
+  @Nullable private final ImmutableList<String> environment;
 
   /** Initial command to run when running the image. */
-  private final ImmutableList<String> entrypoint;
+  @Nullable private final ImmutableList<String> entrypoint;
 
   /** Arguments to pass into main when running the image. */
-  private final ImmutableList<String> javaArguments;
+  @Nullable private final ImmutableList<String> javaArguments;
 
   /** Ports that the container listens on. */
-  private final ImmutableList<Port> exposedPorts;
+  @Nullable private final ImmutableList<Port> exposedPorts;
 
   private Image(
       @Nullable Instant created,
       ImageLayers<T> layers,
-      ImmutableList<String> environment,
-      ImmutableList<String> entrypoint,
-      ImmutableList<String> javaArguments,
-      ImmutableList<Port> exposedPorts) {
+      @Nullable ImmutableList<String> environment,
+      @Nullable ImmutableList<String> entrypoint,
+      @Nullable ImmutableList<String> javaArguments,
+      @Nullable ImmutableList<Port> exposedPorts) {
     this.created = created;
     this.layers = layers;
     this.environment = environment;
@@ -184,6 +200,7 @@ public class Image<T extends Layer> {
     return created;
   }
 
+  @Nullable
   public ImmutableList<String> getEnvironment() {
     return environment;
   }
@@ -194,7 +211,11 @@ public class Image<T extends Layer> {
    *
    * @return the map
    */
+  @Nullable
   public ImmutableMap<String, String> getEnvironmentAsMap() {
+    if (environment == null) {
+      return null;
+    }
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
     for (String variable : environment) {
       List<String> keyValue = Splitter.on('=').splitToList(variable);
@@ -203,14 +224,17 @@ public class Image<T extends Layer> {
     return builder.build();
   }
 
+  @Nullable
   public ImmutableList<String> getEntrypoint() {
     return entrypoint;
   }
 
+  @Nullable
   public ImmutableList<String> getJavaArguments() {
     return javaArguments;
   }
 
+  @Nullable
   public ImmutableList<Port> getExposedPorts() {
     return exposedPorts;
   }

@@ -246,7 +246,7 @@ public class JibPluginIntegrationTest {
                 + "                \"2002/udp\": {},\n"
                 + "                \"2003/udp\": {}"));
     Assert.assertEquals(
-        "Hello, world. An argument.\n", new Command("docker", "run", imageName).run());
+        "Hello, world. An argument.\nfoo\ncat\n", new Command("docker", "run", imageName).run());
 
     // Checks that generating the Docker context again is skipped.
     BuildTask upToDateJibDockerContextTask =
