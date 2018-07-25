@@ -21,7 +21,6 @@ import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import java.io.File;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
@@ -77,7 +76,7 @@ public class JibExtension {
   private final ContainerParameters container;
   private final Property<Boolean> useOnlyProjectCache;
   private final Property<Boolean> allowInsecureRegistries;
-  private final Property<File> extraDirectory;
+  private final Property<Path> extraDirectory;
 
   // TODO: Deprecated parameters; remove these 4
   private final ListProperty<String> jvmFlags;
@@ -99,7 +98,7 @@ public class JibExtension {
 
     useOnlyProjectCache = objectFactory.property(Boolean.class);
     allowInsecureRegistries = objectFactory.property(Boolean.class);
-    extraDirectory = objectFactory.property(File.class);
+    extraDirectory = objectFactory.property(Path.class);
 
     // Sets defaults.
     from.setImage(DEFAULT_FROM_IMAGE);
@@ -107,7 +106,7 @@ public class JibExtension {
     args.set(Collections.emptyList());
     useOnlyProjectCache.set(DEFAULT_USE_ONLY_PROJECT_CACHE);
     allowInsecureRegistries.set(DEFAULT_ALLOW_INSECURE_REGISTIRIES);
-    extraDirectory.set(resolveDefaultExtraDirectory(project.getProjectDir().toPath()).toFile());
+    extraDirectory.set(resolveDefaultExtraDirectory(project.getProjectDir().toPath()));
   }
 
   /**
@@ -185,7 +184,7 @@ public class JibExtension {
     this.allowInsecureRegistries.set(allowInsecureRegistries);
   }
 
-  public void setExtraDirectory(File extraDirectory) {
+  public void setExtraDirectory(Path extraDirectory) {
     this.extraDirectory.set(extraDirectory);
   }
 
@@ -272,7 +271,14 @@ public class JibExtension {
   }
 
   @Input
-  File getExtraDirectory() {
+  String getExtraDirectory() {
+    // Gradle warns about @Input annotations on File objects, so we have to expose a getter for a
+    // String to make them go away.
+    return extraDirectory.get().toString();
+  }
+
+  @Internal
+  Path getExtraDirectoryPath() {
     // TODO: Should inform user about nonexistent directory if using custom directory.
     return extraDirectory.get();
   }
