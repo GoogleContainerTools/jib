@@ -41,7 +41,7 @@ public class WithServerConnectionTest {
 
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       response.getBody().writeTo(out);
-      Assert.assertEquals("Hello World!", out.toString(StandardCharsets.UTF_8.name()));
+      Assert.assertEquals("Hello World!", new String(out.toByteArray(), StandardCharsets.UTF_8));
     }
   }
 
@@ -88,7 +88,7 @@ public class WithServerConnectionTest {
 
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       response.getBody().writeTo(out);
-      Assert.assertEquals("Hello World!", out.toString(StandardCharsets.UTF_8.name()));
+      Assert.assertEquals("Hello World!", new String(out.toByteArray(), StandardCharsets.UTF_8));
     }
   }
 }
