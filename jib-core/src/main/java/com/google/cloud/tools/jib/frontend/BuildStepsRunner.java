@@ -18,16 +18,17 @@ package com.google.cloud.tools.jib.frontend;
 
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.builder.BuildSteps;
-import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.Caches;
 import com.google.cloud.tools.jib.cache.Caches.Initializer;
+import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
+import com.google.cloud.tools.jib.configuration.LayerConfiguration;
+import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.registry.InsecureRegistryException;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.registry.RegistryCredentialsNotSentException;
@@ -48,32 +49,28 @@ public class BuildStepsRunner {
    * Creates a runner to build an image. Creates a directory for the cache, if needed.
    *
    * @param buildConfiguration the configuration parameters for the build
-   * @param sourceFilesConfiguration the source/destination file configuration for the image
    * @return a {@link BuildStepsRunner} for building to a registry
    * @throws CacheDirectoryCreationException if the {@code cacheDirectory} could not be created
    */
-  public static BuildStepsRunner forBuildImage(
-      BuildConfiguration buildConfiguration, SourceFilesConfiguration sourceFilesConfiguration)
+  public static BuildStepsRunner forBuildImage(BuildConfiguration buildConfiguration)
       throws CacheDirectoryCreationException {
     return new BuildStepsRunner(
         BuildSteps.forBuildToDockerRegistry(
-            buildConfiguration, sourceFilesConfiguration, getCacheInitializer(buildConfiguration)));
+            buildConfiguration, getCacheInitializer(buildConfiguration)));
   }
 
   /**
    * Creates a runner to build to the Docker daemon. Creates a directory for the cache, if needed.
    *
    * @param buildConfiguration the configuration parameters for the build
-   * @param sourceFilesConfiguration the source/destination file configuration for the image
    * @return a {@link BuildStepsRunner} for building to a Docker daemon
    * @throws CacheDirectoryCreationException if the {@code cacheDirectory} could not be created
    */
-  public static BuildStepsRunner forBuildToDockerDaemon(
-      BuildConfiguration buildConfiguration, SourceFilesConfiguration sourceFilesConfiguration)
+  public static BuildStepsRunner forBuildToDockerDaemon(BuildConfiguration buildConfiguration)
       throws CacheDirectoryCreationException {
     return new BuildStepsRunner(
         BuildSteps.forBuildToDockerDaemon(
-            buildConfiguration, sourceFilesConfiguration, getCacheInitializer(buildConfiguration)));
+            buildConfiguration, getCacheInitializer(buildConfiguration)));
   }
 
   /**
@@ -81,21 +78,14 @@ public class BuildStepsRunner {
    *
    * @param outputPath the path to output the tarball to
    * @param buildConfiguration the configuration parameters for the build
-   * @param sourceFilesConfiguration the source/destination file configuration for the image
    * @return a {@link BuildStepsRunner} for building a tarball
    * @throws CacheDirectoryCreationException if the {@code cacheDirectory} could not be created
    */
-  public static BuildStepsRunner forBuildTar(
-      Path outputPath,
-      BuildConfiguration buildConfiguration,
-      SourceFilesConfiguration sourceFilesConfiguration)
+  public static BuildStepsRunner forBuildTar(Path outputPath, BuildConfiguration buildConfiguration)
       throws CacheDirectoryCreationException {
     return new BuildStepsRunner(
         BuildSteps.forBuildToTar(
-            outputPath,
-            buildConfiguration,
-            sourceFilesConfiguration,
-            getCacheInitializer(buildConfiguration)));
+            outputPath, buildConfiguration, getCacheInitializer(buildConfiguration)));
   }
 
   // TODO: Move this up to somewhere where defaults for cache location are provided and ownership is
@@ -168,6 +158,13 @@ public class BuildStepsRunner {
     }
   }
 
+  private static String capitalizeFirstLetter(String string) {
+    if (string.length() == 0) {
+      return string;
+    }
+    return Character.toUpperCase(string.charAt(0)) + string.substring(1);
+  }
+
   private final BuildSteps buildSteps;
 
   @VisibleForTesting
@@ -192,23 +189,16 @@ public class BuildStepsRunner {
       // Logs the different source files used.
       buildLogger.info("Containerizing application with the following files:");
 
-      buildLogger.info("\tClasses:");
-      buildSteps
-          .getSourceFilesConfiguration()
-          .getClassesFiles()
-          .forEach(classesFile -> buildLogger.info("\t\t" + classesFile));
+      for (LayerConfiguration layerConfiguration :
+          buildSteps.getBuildConfiguration().getLayerConfigurations()) {
+        buildLogger.info("\t" + capitalizeFirstLetter(layerConfiguration.getLabel()) + ":");
 
-      buildLogger.info("\tResources:");
-      buildSteps
-          .getSourceFilesConfiguration()
-          .getResourcesFiles()
-          .forEach(resourceFile -> buildLogger.info("\t\t" + resourceFile));
-
-      buildLogger.info("\tDependencies:");
-      buildSteps
-          .getSourceFilesConfiguration()
-          .getDependenciesFiles()
-          .forEach(dependencyFile -> buildLogger.info("\t\t" + dependencyFile));
+        for (LayerEntry layerEntry : layerConfiguration.getLayerEntries()) {
+          for (Path sourceFile : layerEntry.getSourceFiles()) {
+            buildLogger.info("\t\t" + sourceFile);
+          }
+        }
+      }
 
       buildSteps.run();
 

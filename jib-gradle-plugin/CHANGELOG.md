@@ -5,10 +5,11 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Docker context generation now includes snapshot dependencies and extra files ([#516](https://github.com/GoogleContainerTools/jib/pull/516/files))
+
 ### Changed
 
-### Fixed
-
+- Only builds non-empty layers ([#516](https://github.com/GoogleContainerTools/jib/pull/516/files))
 - Fixed slow image reference parsing ([#680](https://github.com/GoogleContainerTools/jib/pull/680))
 
 ## 0.9.7
@@ -20,6 +21,7 @@ All notable changes to this project will be documented in this file.
 - `container.useCurrentTimestamp` parameter to set the image creation time to the build time ([#413](https://github.com/GoogleContainerTools/jib/issues/413))
 - Authentication over HTTP using the `sendCredentialsOverHttp` system property ([#599](https://github.com/GoogleContainerTools/jib/issues/599))
 - HTTP connection and read timeouts for registry interactions configurable with the `jib.httpTimeout` system property ([#656](https://github.com/GoogleContainerTools/jib/pull/656))
+- Docker context export command-line option `--targetDir` to `--jibTargetDir` ([#662](https://github.com/GoogleContainerTools/jib/issues/662))
 
 ### Changed
 

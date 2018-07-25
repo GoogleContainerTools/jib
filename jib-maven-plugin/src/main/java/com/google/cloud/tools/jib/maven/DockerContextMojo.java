@@ -26,7 +26,6 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import javax.annotation.Nullable;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
@@ -47,7 +46,7 @@ public class DockerContextMojo extends JibPluginConfiguration {
   private String targetDir;
 
   @Override
-  public void execute() throws MojoExecutionException, MojoFailureException {
+  public void execute() throws MojoExecutionException {
     MavenBuildLogger mavenBuildLogger = new MavenBuildLogger(getLog());
     handleDeprecatedParameters(mavenBuildLogger);
     SystemPropertyValidator.checkHttpTimeoutProperty(MojoExecutionException::new);
@@ -55,7 +54,7 @@ public class DockerContextMojo extends JibPluginConfiguration {
     Preconditions.checkNotNull(targetDir);
 
     MavenProjectProperties mavenProjectProperties =
-        MavenProjectProperties.getForProject(getProject(), mavenBuildLogger);
+        MavenProjectProperties.getForProject(getProject(), mavenBuildLogger, getExtraDirectory());
     String mainClass = mavenProjectProperties.getMainClass(this);
 
     try {
@@ -63,8 +62,12 @@ public class DockerContextMojo extends JibPluginConfiguration {
       // here.
       ExposedPortsParser.parse(getExposedPorts());
 
-      // TODO: Add support for extra files layer.
-      new DockerContextGenerator(mavenProjectProperties.getSourceFilesConfiguration())
+      new DockerContextGenerator(
+              mavenProjectProperties.getDependenciesLayerEntry(),
+              mavenProjectProperties.getSnapshotDependenciesLayerEntry(),
+              mavenProjectProperties.getResourcesLayerEntry(),
+              mavenProjectProperties.getClassesLayerEntry(),
+              mavenProjectProperties.getExtraFilesLayerEntry())
           .setBaseImage(getBaseImage())
           .setJvmFlags(getJvmFlags())
           .setMainClass(mainClass)

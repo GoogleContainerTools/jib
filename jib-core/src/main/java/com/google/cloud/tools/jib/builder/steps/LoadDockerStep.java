@@ -18,8 +18,8 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
-import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.cache.CachedLayer;
+import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.docker.ImageToTarballTranslator;
 import com.google.cloud.tools.jib.image.Image;

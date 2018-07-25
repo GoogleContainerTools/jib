@@ -29,6 +29,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Translates an {@link Image} into a manifest or container configuration JSON BLOB.
@@ -48,12 +49,16 @@ public class ImageToJsonTranslator {
    * Converts a list of {@link Port}s to the corresponding container config format for exposed ports
    * (e.g. {@code Port(1000, Protocol.TCP)} -> {@code {"1000/tcp":{}}}).
    *
-   * @param exposedPorts the list of {@link Port}s to translate
+   * @param exposedPorts the list of {@link Port}s to translate, or {@code null}
    * @return a sorted map with the string representation of the ports as keys and empty maps as
-   *     values
+   *     values, or {@code null} if {@code exposedPorts} is {@code null}
    */
   @VisibleForTesting
-  static Map<String, Map<?, ?>> portListToMap(List<Port> exposedPorts) {
+  @Nullable
+  static Map<String, Map<?, ?>> portListToMap(@Nullable List<Port> exposedPorts) {
+    if (exposedPorts == null) {
+      return null;
+    }
     ImmutableSortedMap.Builder<String, Map<?, ?>> result =
         new ImmutableSortedMap.Builder<>(String::compareTo);
     for (Port port : exposedPorts) {

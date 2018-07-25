@@ -21,16 +21,24 @@ import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.Caches;
+import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
+import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
+import com.google.common.collect.ImmutableList;
+import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Stream;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
@@ -42,25 +50,36 @@ import org.junit.rules.TemporaryFolder;
 /** Integration tests for {@link BuildSteps}. */
 public class BuildStepsIntegrationTest {
 
+  /** Lists the files in the {@code resourcePath} resources directory. */
+  private static ImmutableList<Path> getResourceFilesList(String resourcePath)
+      throws URISyntaxException, IOException {
+    try (Stream<Path> fileStream =
+        Files.list(Paths.get(Resources.getResource(resourcePath).toURI()))) {
+      return fileStream.collect(ImmutableList.toImmutableList());
+    }
+  }
+
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
 
   private static final TestBuildLogger logger = new TestBuildLogger();
 
-  @Rule public TemporaryFolder temporaryCacheDirectory = new TemporaryFolder();
+  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  @Rule public TemporaryFolder temporaryTarOutput = new TemporaryFolder();
-
-  private SourceFilesConfiguration sourceFilesConfiguration;
+  private ImmutableList<LayerConfiguration> fakeLayerConfigurations;
 
   @Before
   public void setUp() throws IOException, URISyntaxException {
-    sourceFilesConfiguration =
-        TestSourceFilesConfiguration.builder()
-            .withClasses()
-            .withDependencies()
-            .withSnapshotDependencies()
-            .withResources()
-            .build();
+    fakeLayerConfigurations =
+        ImmutableList.of(
+            LayerConfiguration.builder()
+                .addEntry(getResourceFilesList("application/dependencies"), "/app/libs/")
+                .build(),
+            LayerConfiguration.builder()
+                .addEntry(getResourceFilesList("application/resources"), "/app/resources/")
+                .build(),
+            LayerConfiguration.builder()
+                .addEntry(getResourceFilesList("application/classes"), "/app/classes/")
+                .build());
   }
 
   @Test
@@ -72,11 +91,14 @@ public class BuildStepsIntegrationTest {
             BuildConfiguration.builder(logger)
                 .setBaseImage(ImageReference.of("gcr.io", "distroless/java", "latest"))
                 .setTargetImage(ImageReference.of("localhost:5000", "testimage", "testtag"))
-                .setMainClass("HelloWorld")
                 .setJavaArguments(Collections.singletonList("An argument."))
                 .setExposedPorts(
                     ExposedPortsParser.parse(Arrays.asList("1000", "2000-2002/tcp", "3000/udp")))
                 .setAllowInsecureRegistries(true)
+                .setLayerConfigurations(fakeLayerConfigurations)
+                .setEntrypoint(
+                    JavaEntrypointConstructor.makeDefaultEntrypoint(
+                        Collections.emptyList(), "HelloWorld"))
                 .build());
 
     long lastTime = System.nanoTime();
@@ -110,9 +132,12 @@ public class BuildStepsIntegrationTest {
             BuildConfiguration.builder(logger)
                 .setBaseImage(ImageReference.parse("openjdk:8-jre-alpine"))
                 .setTargetImage(ImageReference.of("localhost:5000", "testimage", "testtag"))
-                .setMainClass("HelloWorld")
                 .setJavaArguments(Collections.singletonList("An argument."))
                 .setAllowInsecureRegistries(true)
+                .setLayerConfigurations(fakeLayerConfigurations)
+                .setEntrypoint(
+                    JavaEntrypointConstructor.makeDefaultEntrypoint(
+                        Collections.emptyList(), "HelloWorld"))
                 .build())
         .run();
 
@@ -130,16 +155,18 @@ public class BuildStepsIntegrationTest {
         BuildConfiguration.builder(logger)
             .setBaseImage(ImageReference.of("gcr.io", "distroless/java", "latest"))
             .setTargetImage(ImageReference.of(null, "testdocker", null))
-            .setMainClass("HelloWorld")
             .setJavaArguments(Collections.singletonList("An argument."))
             .setExposedPorts(
                 ExposedPortsParser.parse(Arrays.asList("1000", "2000-2002/tcp", "3000/udp")))
+            .setLayerConfigurations(fakeLayerConfigurations)
+            .setEntrypoint(
+                JavaEntrypointConstructor.makeDefaultEntrypoint(
+                    Collections.emptyList(), "HelloWorld"))
             .build();
 
-    Path cacheDirectory = temporaryCacheDirectory.newFolder().toPath();
+    Path cacheDirectory = temporaryFolder.newFolder().toPath();
     BuildSteps.forBuildToDockerDaemon(
             buildConfiguration,
-            sourceFilesConfiguration,
             new Caches.Initializer(cacheDirectory, false, cacheDirectory, false))
         .run();
 
@@ -164,16 +191,18 @@ public class BuildStepsIntegrationTest {
         BuildConfiguration.builder(logger)
             .setBaseImage(ImageReference.of("gcr.io", "distroless/java", "latest"))
             .setTargetImage(ImageReference.of(null, "testtar", null))
-            .setMainClass("HelloWorld")
             .setJavaArguments(Collections.singletonList("An argument."))
+            .setLayerConfigurations(fakeLayerConfigurations)
+            .setEntrypoint(
+                JavaEntrypointConstructor.makeDefaultEntrypoint(
+                    Collections.emptyList(), "HelloWorld"))
             .build();
 
-    Path outputPath = temporaryTarOutput.newFolder().toPath().resolve("test.tar");
-    Path cacheDirectory = temporaryCacheDirectory.newFolder().toPath();
+    Path outputPath = temporaryFolder.newFolder().toPath().resolve("test.tar");
+    Path cacheDirectory = temporaryFolder.newFolder().toPath();
     BuildSteps.forBuildToTar(
             outputPath,
             buildConfiguration,
-            sourceFilesConfiguration,
             new Caches.Initializer(cacheDirectory, false, cacheDirectory, false))
         .run();
 
@@ -183,10 +212,8 @@ public class BuildStepsIntegrationTest {
   }
 
   private BuildSteps getBuildSteps(BuildConfiguration buildConfiguration) throws IOException {
-    Path cacheDirectory = temporaryCacheDirectory.newFolder().toPath();
+    Path cacheDirectory = temporaryFolder.newFolder().toPath();
     return BuildSteps.forBuildToDockerRegistry(
-        buildConfiguration,
-        sourceFilesConfiguration,
-        new Caches.Initializer(cacheDirectory, false, cacheDirectory, false));
+        buildConfiguration, new Caches.Initializer(cacheDirectory, false, cacheDirectory, false));
   }
 }

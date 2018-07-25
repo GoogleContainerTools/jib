@@ -18,13 +18,12 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.async.AsyncStep;
-import com.google.cloud.tools.jib.builder.BuildConfiguration;
-import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.CacheReader;
 import com.google.cloud.tools.jib.cache.CacheWriter;
 import com.google.cloud.tools.jib.cache.CachedLayerWithMetadata;
+import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.image.ReproducibleLayerBuilder;
@@ -47,71 +46,28 @@ class BuildAndCacheApplicationLayerStep
   static ImmutableList<BuildAndCacheApplicationLayerStep> makeList(
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
-      SourceFilesConfiguration sourceFilesConfiguration,
       Cache cache) {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
-      ImmutableList.Builder<BuildAndCacheApplicationLayerStep> buildLayerStepsBuilder =
-          ImmutableList.<BuildAndCacheApplicationLayerStep>builder()
-              .add(
-                  new BuildAndCacheApplicationLayerStep(
-                      "dependencies",
-                      listeningExecutorService,
-                      buildConfiguration,
-                      LayerConfiguration.builder()
-                          .addEntry(
-                              sourceFilesConfiguration.getDependenciesFiles(),
-                              sourceFilesConfiguration.getDependenciesPathOnImage())
-                          .build(),
-                      cache))
-              .add(
-                  new BuildAndCacheApplicationLayerStep(
-                      "resources",
-                      listeningExecutorService,
-                      buildConfiguration,
-                      LayerConfiguration.builder()
-                          .addEntry(
-                              sourceFilesConfiguration.getResourcesFiles(),
-                              sourceFilesConfiguration.getResourcesPathOnImage())
-                          .build(),
-                      cache))
-              .add(
-                  new BuildAndCacheApplicationLayerStep(
-                      "classes",
-                      listeningExecutorService,
-                      buildConfiguration,
-                      LayerConfiguration.builder()
-                          .addEntry(
-                              sourceFilesConfiguration.getClassesFiles(),
-                              sourceFilesConfiguration.getClassesPathOnImage())
-                          .build(),
-                      cache));
+      ImmutableList.Builder<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps =
+          ImmutableList.builderWithExpectedSize(buildConfiguration.getLayerConfigurations().size());
+      for (LayerConfiguration layerConfiguration : buildConfiguration.getLayerConfigurations()) {
+        // Skips the layer if empty.
+        if (layerConfiguration
+            .getLayerEntries()
+            .stream()
+            .allMatch(layerEntry -> layerEntry.getSourceFiles().isEmpty())) {
+          continue;
+        }
 
-      // Adds a snapshot dependencies layer, if snapshot files present.
-      if (!sourceFilesConfiguration.getSnapshotDependenciesFiles().isEmpty()) {
-        buildLayerStepsBuilder.add(
+        buildAndCacheApplicationLayerSteps.add(
             new BuildAndCacheApplicationLayerStep(
-                "snapshot-dependencies",
+                layerConfiguration.getLabel(),
                 listeningExecutorService,
                 buildConfiguration,
-                LayerConfiguration.builder()
-                    .addEntry(
-                        sourceFilesConfiguration.getSnapshotDependenciesFiles(),
-                        sourceFilesConfiguration.getDependenciesPathOnImage())
-                    .build(),
+                layerConfiguration,
                 cache));
       }
-      // Adds the extra layer to be built, if configured.
-      if (buildConfiguration.getExtraFilesLayerConfiguration() != null) {
-        buildLayerStepsBuilder.add(
-            new BuildAndCacheApplicationLayerStep(
-                "extra files",
-                listeningExecutorService,
-                buildConfiguration,
-                buildConfiguration.getExtraFilesLayerConfiguration(),
-                cache));
-      }
-
-      return buildLayerStepsBuilder.build();
+      return buildAndCacheApplicationLayerSteps.build();
     }
   }
 

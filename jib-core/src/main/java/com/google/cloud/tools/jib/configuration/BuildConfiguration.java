@@ -14,11 +14,9 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.builder;
+package com.google.cloud.tools.jib.configuration;
 
-import com.google.cloud.tools.jib.configuration.CacheConfiguration;
-import com.google.cloud.tools.jib.configuration.LayerConfiguration;
-import com.google.cloud.tools.jib.configuration.Port;
+import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
@@ -49,16 +47,16 @@ public class BuildConfiguration {
     @Nullable private ImageReference targetImageReference;
     @Nullable private String targetImageCredentialHelperName;
     @Nullable private RegistryCredentials knownTargetRegistryCredentials;
-    @Nullable private String mainClass;
-    private ImmutableList<String> javaArguments = ImmutableList.of();
-    private ImmutableList<String> jvmFlags = ImmutableList.of();
-    private ImmutableMap<String, String> environmentMap = ImmutableMap.of();
-    private ImmutableList<Port> exposedPorts = ImmutableList.of();
+    // TODO: Should rename to not be java-specific.
+    @Nullable private ImmutableList<String> javaArguments;
+    @Nullable private ImmutableMap<String, String> environmentMap;
+    @Nullable private ImmutableList<Port> exposedPorts;
     private Class<? extends BuildableManifestTemplate> targetFormat = V22ManifestTemplate.class;
     @Nullable private CacheConfiguration applicationLayersCacheConfiguration;
     @Nullable private CacheConfiguration baseImageLayersCacheConfiguration;
     private boolean allowInsecureRegistries = false;
-    @Nullable private LayerConfiguration extraFilesLayerConfiguration;
+    private ImmutableList<LayerConfiguration> layerConfigurations = ImmutableList.of();
+    @Nullable private ImmutableList<String> entrypoint;
 
     private BuildLogger buildLogger;
 
@@ -98,11 +96,6 @@ public class BuildConfiguration {
       return this;
     }
 
-    public Builder setMainClass(@Nullable String mainClass) {
-      this.mainClass = mainClass;
-      return this;
-    }
-
     public Builder setJavaArguments(@Nullable List<String> javaArguments) {
       if (javaArguments != null) {
         Preconditions.checkArgument(!javaArguments.contains(null));
@@ -111,16 +104,10 @@ public class BuildConfiguration {
       return this;
     }
 
-    public Builder setJvmFlags(@Nullable List<String> jvmFlags) {
-      if (jvmFlags != null) {
-        Preconditions.checkArgument(!jvmFlags.contains(null));
-        this.jvmFlags = ImmutableList.copyOf(jvmFlags);
-      }
-      return this;
-    }
-
     public Builder setEnvironment(@Nullable Map<String, String> environmentMap) {
-      if (environmentMap != null) {
+      if (environmentMap == null) {
+        this.environmentMap = null;
+      } else {
         Preconditions.checkArgument(
             !Iterables.any(environmentMap.keySet(), Objects::isNull)
                 && !Iterables.any(environmentMap.values(), Objects::isNull));
@@ -130,7 +117,9 @@ public class BuildConfiguration {
     }
 
     public Builder setExposedPorts(@Nullable List<Port> exposedPorts) {
-      if (exposedPorts != null) {
+      if (exposedPorts == null) {
+        this.exposedPorts = null;
+      } else {
         Preconditions.checkArgument(!exposedPorts.contains(null));
         this.exposedPorts = ImmutableList.copyOf(exposedPorts);
       }
@@ -178,14 +167,13 @@ public class BuildConfiguration {
     }
 
     /**
-     * Sets the {@link LayerConfiguration} for an extra layer.
+     * Sets the layers to build.
      *
-     * @param extraFilesLayerConfiguration the layer configuration for the extra layer
+     * @param layerConfigurations the configurations for the layers
      * @return this
      */
-    public Builder setExtraFilesLayerConfiguration(
-        @Nullable LayerConfiguration extraFilesLayerConfiguration) {
-      this.extraFilesLayerConfiguration = extraFilesLayerConfiguration;
+    public Builder setLayerConfigurations(List<LayerConfiguration> layerConfigurations) {
+      this.layerConfigurations = ImmutableList.copyOf(layerConfigurations);
       return this;
     }
 
@@ -200,6 +188,22 @@ public class BuildConfiguration {
       return this;
     }
 
+    /**
+     * Sets the container entrypoint.
+     *
+     * @param entrypoint the tokenized command to run when the container starts
+     * @return this
+     */
+    public Builder setEntrypoint(@Nullable List<String> entrypoint) {
+      if (entrypoint == null) {
+        this.entrypoint = null;
+      } else {
+        Preconditions.checkArgument(!entrypoint.contains(null));
+        this.entrypoint = ImmutableList.copyOf(entrypoint);
+      }
+      return this;
+    }
+
     /** @return the corresponding build configuration */
     public BuildConfiguration build() {
       // Validates the parameters.
@@ -210,13 +214,10 @@ public class BuildConfiguration {
       if (targetImageReference == null) {
         errorMessages.add("target image is required but not set");
       }
-      if (mainClass == null) {
-        errorMessages.add("main class is required but not set");
-      }
 
       switch (errorMessages.size()) {
         case 0: // No errors
-          if (baseImageReference == null || targetImageReference == null || mainClass == null) {
+          if (baseImageReference == null || targetImageReference == null) {
             throw new IllegalStateException("Required fields should not be null");
           }
           if (baseImageReference.usesDefaultTag()) {
@@ -234,16 +235,15 @@ public class BuildConfiguration {
               targetImageReference,
               targetImageCredentialHelperName,
               knownTargetRegistryCredentials,
-              mainClass,
               javaArguments,
-              jvmFlags,
               environmentMap,
               exposedPorts,
               targetFormat,
               applicationLayersCacheConfiguration,
               baseImageLayersCacheConfiguration,
               allowInsecureRegistries,
-              extraFilesLayerConfiguration);
+              layerConfigurations,
+              entrypoint);
 
         case 1:
           throw new IllegalStateException(errorMessages.get(0));
@@ -252,19 +252,8 @@ public class BuildConfiguration {
           throw new IllegalStateException(errorMessages.get(0) + " and " + errorMessages.get(1));
 
         default:
-          // Appends the descriptions in correct grammar.
-          StringBuilder errorMessage = new StringBuilder(errorMessages.get(0));
-          for (int errorMessageIndex = 1;
-              errorMessageIndex < errorMessages.size();
-              errorMessageIndex++) {
-            if (errorMessageIndex == errorMessages.size() - 1) {
-              errorMessage.append(", and ");
-            } else {
-              errorMessage.append(", ");
-            }
-            errorMessage.append(errorMessages.get(errorMessageIndex));
-          }
-          throw new IllegalStateException(errorMessage.toString());
+          // Should never reach here.
+          throw new IllegalStateException();
       }
     }
   }
@@ -294,16 +283,15 @@ public class BuildConfiguration {
   private final ImageReference targetImageReference;
   @Nullable private final String targetImageCredentialHelperName;
   @Nullable private final RegistryCredentials knownTargetRegistryCredentials;
-  private final String mainClass;
-  private final ImmutableList<String> javaArguments;
-  private final ImmutableList<String> jvmFlags;
-  private final ImmutableMap<String, String> environmentMap;
-  private final ImmutableList<Port> exposedPorts;
+  @Nullable private final ImmutableList<String> javaArguments;
+  @Nullable private final ImmutableMap<String, String> environmentMap;
+  @Nullable private final ImmutableList<Port> exposedPorts;
   private final Class<? extends BuildableManifestTemplate> targetFormat;
   @Nullable private final CacheConfiguration applicationLayersCacheConfiguration;
   @Nullable private final CacheConfiguration baseImageLayersCacheConfiguration;
   private final boolean allowInsecureRegistries;
-  @Nullable private final LayerConfiguration extraFilesLayerConfiguration;
+  private final ImmutableList<LayerConfiguration> layerConfigurations;
+  @Nullable private final ImmutableList<String> entrypoint;
 
   /** Instantiate with {@link Builder#build}. */
   private BuildConfiguration(
@@ -315,16 +303,15 @@ public class BuildConfiguration {
       ImageReference targetImageReference,
       @Nullable String targetImageCredentialHelperName,
       @Nullable RegistryCredentials knownTargetRegistryCredentials,
-      String mainClass,
-      ImmutableList<String> javaArguments,
-      ImmutableList<String> jvmFlags,
-      ImmutableMap<String, String> environmentMap,
-      ImmutableList<Port> exposedPorts,
+      @Nullable ImmutableList<String> javaArguments,
+      @Nullable ImmutableMap<String, String> environmentMap,
+      @Nullable ImmutableList<Port> exposedPorts,
       Class<? extends BuildableManifestTemplate> targetFormat,
       @Nullable CacheConfiguration applicationLayersCacheConfiguration,
       @Nullable CacheConfiguration baseImageLayersCacheConfiguration,
       boolean allowInsecureRegistries,
-      @Nullable LayerConfiguration extraFilesLayerConfiguration) {
+      ImmutableList<LayerConfiguration> layerConfigurations,
+      @Nullable ImmutableList<String> entrypoint) {
     this.buildLogger = buildLogger;
     this.creationTime = creationTime;
     this.baseImageReference = baseImageReference;
@@ -333,16 +320,15 @@ public class BuildConfiguration {
     this.targetImageReference = targetImageReference;
     this.targetImageCredentialHelperName = targetImageCredentialHelperName;
     this.knownTargetRegistryCredentials = knownTargetRegistryCredentials;
-    this.mainClass = mainClass;
     this.javaArguments = javaArguments;
-    this.jvmFlags = jvmFlags;
     this.environmentMap = environmentMap;
     this.exposedPorts = exposedPorts;
     this.targetFormat = targetFormat;
     this.applicationLayersCacheConfiguration = applicationLayersCacheConfiguration;
     this.baseImageLayersCacheConfiguration = baseImageLayersCacheConfiguration;
     this.allowInsecureRegistries = allowInsecureRegistries;
-    this.extraFilesLayerConfiguration = extraFilesLayerConfiguration;
+    this.layerConfigurations = layerConfigurations;
+    this.entrypoint = entrypoint;
   }
 
   public BuildLogger getBuildLogger() {
@@ -405,22 +391,32 @@ public class BuildConfiguration {
     return knownTargetRegistryCredentials;
   }
 
-  public String getMainClass() {
-    return mainClass;
-  }
-
+  /**
+   * Gets the arguments to pass to the entrypoint.
+   *
+   * @return the list of arguments, or {@code null} if not set
+   */
+  @Nullable
   public ImmutableList<String> getJavaArguments() {
     return javaArguments;
   }
 
-  public ImmutableList<String> getJvmFlags() {
-    return jvmFlags;
-  }
-
+  /**
+   * Gets the map from environment variable names to values for the container.
+   *
+   * @return the map of environment variables, or {@code null} if not set
+   */
+  @Nullable
   public ImmutableMap<String, String> getEnvironment() {
     return environmentMap;
   }
 
+  /**
+   * Gets the ports to expose on the container.
+   *
+   * @return the list of exposed ports, or {@code null} if not set
+   */
+  @Nullable
   public ImmutableList<Port> getExposedPorts() {
     return exposedPorts;
   }
@@ -460,12 +456,21 @@ public class BuildConfiguration {
   }
 
   /**
-   * Gets the {@link LayerConfiguration} for an extra layer.
+   * Gets the configurations for building the layers.
    *
-   * @return the layer configuration
+   * @return the list of layer configurations
+   */
+  public ImmutableList<LayerConfiguration> getLayerConfigurations() {
+    return layerConfigurations;
+  }
+
+  /**
+   * Gets the container entrypoint.
+   *
+   * @return the list of entrypoint tokens, or {@code null} if not set
    */
   @Nullable
-  public LayerConfiguration getExtraFilesLayerConfiguration() {
-    return extraFilesLayerConfiguration;
+  public ImmutableList<String> getEntrypoint() {
+    return entrypoint;
   }
 }

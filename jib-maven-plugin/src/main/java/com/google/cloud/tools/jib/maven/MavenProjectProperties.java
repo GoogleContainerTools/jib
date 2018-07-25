@@ -17,14 +17,16 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.builder.BuildLogger;
-import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
+import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
 import com.google.cloud.tools.jib.frontend.MainClassFinder;
 import com.google.cloud.tools.jib.frontend.MainClassInferenceException;
 import com.google.cloud.tools.jib.frontend.ProjectProperties;
 import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -43,14 +45,18 @@ class MavenProjectProperties implements ProjectProperties {
   /**
    * @param project the {@link MavenProject} for the plugin.
    * @param mavenBuildLogger the logger used for printing status messages.
+   * @param extraDirectory path to the directory for the extra files layer
    * @return a MavenProjectProperties from the given project and logger.
    * @throws MojoExecutionException if no class files are found in the output directory.
    */
   static MavenProjectProperties getForProject(
-      MavenProject project, MavenBuildLogger mavenBuildLogger) throws MojoExecutionException {
+      MavenProject project, MavenBuildLogger mavenBuildLogger, Path extraDirectory)
+      throws MojoExecutionException {
     try {
       return new MavenProjectProperties(
-          project, mavenBuildLogger, MavenSourceFilesConfiguration.getForProject(project));
+          project,
+          mavenBuildLogger,
+          MavenLayerConfigurations.getForProject(project, extraDirectory));
     } catch (IOException ex) {
       throw new MojoExecutionException(
           "Obtaining project build output files failed; make sure you have compiled your project "
@@ -62,21 +68,46 @@ class MavenProjectProperties implements ProjectProperties {
 
   private final MavenProject project;
   private final MavenBuildLogger mavenBuildLogger;
-  private final SourceFilesConfiguration sourceFilesConfiguration;
+  private final MavenLayerConfigurations mavenLayerConfigurations;
 
   @VisibleForTesting
   MavenProjectProperties(
       MavenProject project,
       MavenBuildLogger mavenBuildLogger,
-      SourceFilesConfiguration sourceFilesConfiguration) {
+      MavenLayerConfigurations mavenLayerConfigurations) {
     this.project = project;
     this.mavenBuildLogger = mavenBuildLogger;
-    this.sourceFilesConfiguration = sourceFilesConfiguration;
+    this.mavenLayerConfigurations = mavenLayerConfigurations;
   }
 
   @Override
-  public SourceFilesConfiguration getSourceFilesConfiguration() {
-    return sourceFilesConfiguration;
+  public ImmutableList<LayerConfiguration> getLayerConfigurations() {
+    return mavenLayerConfigurations.getLayerConfigurations();
+  }
+
+  @Override
+  public LayerEntry getDependenciesLayerEntry() {
+    return mavenLayerConfigurations.getDependenciesLayerEntry();
+  }
+
+  @Override
+  public LayerEntry getSnapshotDependenciesLayerEntry() {
+    return mavenLayerConfigurations.getSnapshotDependenciesLayerEntry();
+  }
+
+  @Override
+  public LayerEntry getResourcesLayerEntry() {
+    return mavenLayerConfigurations.getResourcesLayerEntry();
+  }
+
+  @Override
+  public LayerEntry getClassesLayerEntry() {
+    return mavenLayerConfigurations.getClassesLayerEntry();
+  }
+
+  @Override
+  public LayerEntry getExtraFilesLayerEntry() {
+    return mavenLayerConfigurations.getExtraFilesLayerEntry();
   }
 
   @Override

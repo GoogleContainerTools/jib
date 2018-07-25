@@ -19,8 +19,8 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
-import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.cache.CachedLayer;
+import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.common.collect.ImmutableList;
@@ -41,7 +41,6 @@ class BuildImageStep
   private final BuildConfiguration buildConfiguration;
   private final PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep;
   private final ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps;
-  private final ImmutableList<String> entrypoint;
 
   private final ListeningExecutorService listeningExecutorService;
   private final ListenableFuture<AsyncStep<Image<CachedLayer>>> listenableFuture;
@@ -50,13 +49,11 @@ class BuildImageStep
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
       PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep,
-      ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps,
-      ImmutableList<String> entrypoint) {
+      ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps) {
     this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
     this.pullAndCacheBaseImageLayersStep = pullAndCacheBaseImageLayersStep;
     this.buildAndCacheApplicationLayerSteps = buildAndCacheApplicationLayerSteps;
-    this.entrypoint = entrypoint;
 
     listenableFuture =
         Futures.whenAllSucceed(pullAndCacheBaseImageLayersStep.getFuture())
@@ -101,7 +98,7 @@ class BuildImageStep
       }
       imageBuilder.setCreated(buildConfiguration.getCreationTime());
       imageBuilder.setEnvironment(buildConfiguration.getEnvironment());
-      imageBuilder.setEntrypoint(entrypoint);
+      imageBuilder.setEntrypoint(buildConfiguration.getEntrypoint());
       imageBuilder.setJavaArguments(buildConfiguration.getJavaArguments());
       imageBuilder.setExposedPorts(buildConfiguration.getExposedPorts());
 

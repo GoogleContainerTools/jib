@@ -18,11 +18,10 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.async.AsyncSteps;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
-import com.google.cloud.tools.jib.builder.BuildConfiguration;
-import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.cache.CachedLayerWithMetadata;
+import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -47,7 +46,6 @@ public class StepsRunner {
 
   private final ListeningExecutorService listeningExecutorService;
   private final BuildConfiguration buildConfiguration;
-  private final SourceFilesConfiguration sourceFilesConfiguration;
   private final Cache baseLayersCache;
   private final Cache applicationLayersCache;
 
@@ -68,12 +66,8 @@ public class StepsRunner {
   @Nullable private WriteTarFileStep writeTarFileStep;
 
   public StepsRunner(
-      BuildConfiguration buildConfiguration,
-      SourceFilesConfiguration sourceFilesConfiguration,
-      Cache baseLayersCache,
-      Cache applicationLayersCache) {
+      BuildConfiguration buildConfiguration, Cache baseLayersCache, Cache applicationLayersCache) {
     this.buildConfiguration = buildConfiguration;
-    this.sourceFilesConfiguration = sourceFilesConfiguration;
     this.baseLayersCache = baseLayersCache;
     this.applicationLayersCache = applicationLayersCache;
 
@@ -128,21 +122,17 @@ public class StepsRunner {
   public StepsRunner runBuildAndCacheApplicationLayerSteps() {
     buildAndCacheApplicationLayerSteps =
         BuildAndCacheApplicationLayerStep.makeList(
-            listeningExecutorService,
-            buildConfiguration,
-            sourceFilesConfiguration,
-            applicationLayersCache);
+            listeningExecutorService, buildConfiguration, applicationLayersCache);
     return this;
   }
 
-  public StepsRunner runBuildImageStep(ImmutableList<String> entrypoint) {
+  public StepsRunner runBuildImageStep() {
     buildImageStep =
         new BuildImageStep(
             listeningExecutorService,
             buildConfiguration,
             Preconditions.checkNotNull(pullAndCacheBaseImageLayersStep),
-            Preconditions.checkNotNull(buildAndCacheApplicationLayerSteps),
-            entrypoint);
+            Preconditions.checkNotNull(buildAndCacheApplicationLayerSteps));
     return this;
   }
 

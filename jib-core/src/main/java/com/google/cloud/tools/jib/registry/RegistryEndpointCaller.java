@@ -143,6 +143,8 @@ class RegistryEndpointCaller<T> {
     if (!allowInsecureRegistries && isHttpProtocol) {
       throw new InsecureRegistryException(url);
     }
+    // Only sends authorization if using HTTPS or explicitly forcing over HTTP.
+    boolean sendCredentials = !isHttpProtocol || Boolean.getBoolean("sendCredentialsOverHttp");
 
     try (Connection connection = connectionFactory.apply(url)) {
       Request.Builder requestBuilder =
@@ -151,8 +153,7 @@ class RegistryEndpointCaller<T> {
               .setHttpTimeout(Integer.getInteger("jib.httpTimeout"))
               .setAccept(registryEndpointProvider.getAccept())
               .setBody(registryEndpointProvider.getContent());
-      // Only sends authorization if using HTTPS.
-      if (!isHttpProtocol || Boolean.getBoolean("sendCredentialsOverHttp")) {
+      if (sendCredentials) {
         requestBuilder.setAuthorization(authorization);
       }
       Response response =
@@ -191,18 +192,16 @@ class RegistryEndpointCaller<T> {
 
         } else if (httpResponseException.getStatusCode()
             == HttpStatusCodes.STATUS_CODE_UNAUTHORIZED) {
-          if (isHttpProtocol) {
-            // Using HTTP, so credentials weren't sent.
-            throw new RegistryCredentialsNotSentException(
-                registryEndpointRequestProperties.getServerUrl(),
-                registryEndpointRequestProperties.getImageName());
-
-          } else {
-            // Using HTTPS, so credentials are missing.
+          if (sendCredentials) {
+            // Credentials are either missing or wrong.
             throw new RegistryUnauthorizedException(
                 registryEndpointRequestProperties.getServerUrl(),
                 registryEndpointRequestProperties.getImageName(),
                 httpResponseException);
+          } else {
+            throw new RegistryCredentialsNotSentException(
+                registryEndpointRequestProperties.getServerUrl(),
+                registryEndpointRequestProperties.getImageName());
           }
 
         } else if (httpResponseException.getStatusCode()

@@ -20,7 +20,6 @@ import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
@@ -100,26 +99,19 @@ public class RegistryEndpointCallerTest {
   private RegistryEndpointCaller<String> testRegistryEndpointCallerSecure;
 
   @Before
-  public void setUp() throws IOException, GeneralSecurityException {
-    testRegistryEndpointCallerSecure =
-        new RegistryEndpointCaller<>(
-            "userAgent",
-            "apiRouteBase",
-            new TestRegistryEndpointProvider(),
-            Authorizations.withBasicToken("token"),
-            new RegistryEndpointRequestProperties("serverUrl", "imageName"),
-            false,
-            mockConnectionFactory,
-            null);
+  public void setUp() throws IOException {
+    testRegistryEndpointCallerSecure = createRegistryEndpointCaller(false);
 
     Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
     Mockito.when(mockHttpResponse.parseAsString()).thenReturn("");
     Mockito.when(mockHttpResponse.getHeaders()).thenReturn(new HttpHeaders());
+    Mockito.when(mockResponse.getBody()).thenReturn(Blobs.from("body"));
   }
 
   @After
   public void tearDown() {
     System.clearProperty("jib.httpTimeout");
+    System.clearProperty("sendCredentialsOverHttp");
   }
 
   @Test
@@ -156,29 +148,16 @@ public class RegistryEndpointCallerTest {
   }
 
   @Test
-  public void testCall_credentialsNotSent()
-      throws IOException, RegistryException, GeneralSecurityException {
-    // Mocks a response for temporary redirect to a new location.
+  public void testCall_credentialsNotSent() throws IOException, RegistryException {
     Mockito.when(mockHttpResponse.getStatusCode())
         .thenReturn(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED);
-    Mockito.when(mockHttpResponse.getHeaders())
-        .thenReturn(new HttpHeaders().setLocation("http://location"));
 
     HttpResponseException httpResponseException = new HttpResponseException(mockHttpResponse);
     Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
-        .thenThrow(httpResponseException)
-        .thenReturn(mockResponse);
+        .thenThrow(httpResponseException);
 
     RegistryEndpointCaller<String> testRegistryEndpointCallerInsecure =
-        new RegistryEndpointCaller<>(
-            "userAgent",
-            "apiRouteBase",
-            new TestRegistryEndpointProvider(),
-            Authorizations.withBasicToken("token"),
-            new RegistryEndpointRequestProperties("serverUrl", "imageName"),
-            true,
-            mockConnectionFactory,
-            null);
+        createRegistryEndpointCaller(true);
     try {
       testRegistryEndpointCallerInsecure.call(new URL("http://location"));
       Assert.fail("Call should have failed");
@@ -188,6 +167,18 @@ public class RegistryEndpointCallerTest {
           "Required credentials for serverUrl/imageName were not sent because the connection was over HTTP",
           ex.getMessage());
     }
+  }
+
+  @Test
+  public void testCall_sendingCredentialsForced() throws IOException, RegistryException {
+    Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
+        .thenReturn(mockResponse);
+
+    RegistryEndpointCaller<String> testRegistryEndpointCallerInsecure =
+        createRegistryEndpointCaller(true);
+    System.setProperty("sendCredentialsOverHttp", "true");
+    Assert.assertEquals(
+        "body", testRegistryEndpointCallerInsecure.call(new URL("http://location")));
   }
 
   @Test
@@ -273,7 +264,6 @@ public class RegistryEndpointCallerTest {
       throws IOException, RegistryException, GeneralSecurityException {
     MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
     Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
-    Mockito.when(mockResponse.getBody()).thenReturn(Mockito.mock(Blob.class));
 
     Assert.assertNull(System.getProperty("jib.httpTimeout"));
     testRegistryEndpointCallerSecure.call();
@@ -288,7 +278,6 @@ public class RegistryEndpointCallerTest {
       throws IOException, RegistryException, GeneralSecurityException {
     MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
     Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
-    Mockito.when(mockResponse.getBody()).thenReturn(Mockito.mock(Blob.class));
 
     System.setProperty("jib.httpTimeout", "random string");
     testRegistryEndpointCallerSecure.call();
@@ -301,7 +290,6 @@ public class RegistryEndpointCallerTest {
       throws IOException, RegistryException, GeneralSecurityException {
     MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
     Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
-    Mockito.when(mockResponse.getBody()).thenReturn(Mockito.mock(Blob.class));
 
     System.setProperty("jib.httpTimeout", "-1");
     testRegistryEndpointCallerSecure.call();
@@ -319,7 +307,6 @@ public class RegistryEndpointCallerTest {
     MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
     Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
 
-    Mockito.when(mockResponse.getBody()).thenReturn(Mockito.mock(Blob.class));
     testRegistryEndpointCallerSecure.call();
 
     Assert.assertEquals(Integer.valueOf(0), mockConnection.getRequestedHttpTimeout());
@@ -332,7 +319,6 @@ public class RegistryEndpointCallerTest {
     MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
     Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
 
-    Mockito.when(mockResponse.getBody()).thenReturn(Mockito.mock(Blob.class));
     testRegistryEndpointCallerSecure.call();
 
     Assert.assertEquals(Integer.valueOf(7593), mockConnection.getRequestedHttpTimeout());
@@ -345,18 +331,9 @@ public class RegistryEndpointCallerTest {
     Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
         .thenThrow(Mockito.mock(exceptionClass))
         .thenReturn(mockResponse);
-    Mockito.when(mockResponse.getBody()).thenReturn(Blobs.from("body"));
 
     RegistryEndpointCaller<String> testRegistryEndpointCallerInsecure =
-        new RegistryEndpointCaller<>(
-            "userAgent",
-            "apiRouteBase",
-            new TestRegistryEndpointProvider(),
-            Authorizations.withBasicToken("token"),
-            new RegistryEndpointRequestProperties("serverUrl", "imageName"),
-            true,
-            mockConnectionFactory,
-            null);
+        createRegistryEndpointCaller(true);
     Assert.assertEquals("body", testRegistryEndpointCallerInsecure.call());
 
     // Checks that the URL protocol was first HTTPS, then HTTP.
@@ -434,7 +411,6 @@ public class RegistryEndpointCallerTest {
     Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
         .thenThrow(httpResponseException)
         .thenReturn(mockResponse);
-    Mockito.when(mockResponse.getBody()).thenReturn(Blobs.from("body"));
 
     Assert.assertEquals("body", testRegistryEndpointCallerSecure.call());
 
@@ -444,5 +420,18 @@ public class RegistryEndpointCallerTest {
     Assert.assertEquals(
         new URL("https://apiRouteBase/api"), urlArgumentCaptor.getAllValues().get(0));
     Assert.assertEquals(new URL("https://newlocation"), urlArgumentCaptor.getAllValues().get(1));
+  }
+
+  private RegistryEndpointCaller<String> createRegistryEndpointCaller(boolean allowInsecure)
+      throws MalformedURLException {
+    return new RegistryEndpointCaller<>(
+        "userAgent",
+        "apiRouteBase",
+        new TestRegistryEndpointProvider(),
+        Authorizations.withBasicToken("token"),
+        new RegistryEndpointRequestProperties("serverUrl", "imageName"),
+        allowInsecure,
+        mockConnectionFactory,
+        null);
   }
 }

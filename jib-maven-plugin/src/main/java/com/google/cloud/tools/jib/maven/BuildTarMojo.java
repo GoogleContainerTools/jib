@@ -16,27 +16,22 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
+import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
-import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
+import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.frontend.SystemPropertyValidator;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
@@ -65,7 +60,7 @@ public class BuildTarMojo extends JibPluginConfiguration {
 
     // Parses 'from' and 'to' into image reference.
     MavenProjectProperties mavenProjectProperties =
-        MavenProjectProperties.getForProject(getProject(), mavenBuildLogger);
+        MavenProjectProperties.getForProject(getProject(), mavenBuildLogger, getExtraDirectory());
     ImageReference baseImage = parseImageReference(getBaseImage(), "from");
     ImageReference targetImage =
         mavenProjectProperties.getGeneratedTargetDockerTag(getTargetImage(), mavenBuildLogger);
@@ -92,24 +87,13 @@ public class BuildTarMojo extends JibPluginConfiguration {
             .setBaseImageCredentialHelperName(getBaseImageCredentialHelperName())
             .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
             .setTargetImage(targetImage)
-            .setMainClass(mainClass)
             .setJavaArguments(getArgs())
-            .setJvmFlags(getJvmFlags())
             .setEnvironment(getEnvironment())
             .setExposedPorts(ExposedPortsParser.parse(getExposedPorts()))
-            .setAllowInsecureRegistries(getAllowInsecureRegistries());
-    if (getExtraDirectory() != null && Files.exists(getExtraDirectory())) {
-      try (Stream<Path> extraFilesLayerDirectoryFiles = Files.list(getExtraDirectory())) {
-        buildConfigurationBuilder.setExtraFilesLayerConfiguration(
-            LayerConfiguration.builder()
-                .addEntry(extraFilesLayerDirectoryFiles.collect(Collectors.toList()), "/")
-                .build());
-
-      } catch (IOException ex) {
-        throw new MojoExecutionException(
-            "Failed to list directory for extra files: " + getExtraDirectory(), ex);
-      }
-    }
+            .setAllowInsecureRegistries(getAllowInsecureRegistries())
+            .setLayerConfigurations(mavenProjectProperties.getLayerConfigurations())
+            .setEntrypoint(
+                JavaEntrypointConstructor.makeDefaultEntrypoint(getJvmFlags(), mainClass));
     CacheConfiguration applicationLayersCacheConfiguration =
         CacheConfiguration.forPath(mavenProjectProperties.getCacheDirectory());
     buildConfigurationBuilder.setApplicationLayersCacheConfiguration(
@@ -134,8 +118,7 @@ public class BuildTarMojo extends JibPluginConfiguration {
     try {
       BuildStepsRunner.forBuildTar(
               Paths.get(getProject().getBuild().getDirectory()).resolve("jib-image.tar"),
-              buildConfiguration,
-              mavenProjectProperties.getSourceFilesConfiguration())
+              buildConfiguration)
           .build(HELPFUL_SUGGESTIONS);
       getLog().info("");
 

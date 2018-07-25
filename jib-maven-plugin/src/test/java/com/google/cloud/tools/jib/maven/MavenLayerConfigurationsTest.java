@@ -26,6 +26,7 @@ import java.nio.file.Paths;
 import java.util.Set;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.model.Build;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.junit.Assert;
 import org.junit.Before;
@@ -36,19 +37,19 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link MavenSourceFilesConfiguration}. */
+/** Tests for {@link MavenLayerConfigurations}. */
 @RunWith(MockitoJUnitRunner.class)
-public class MavenSourceFilesConfigurationTest {
+public class MavenLayerConfigurationsTest {
 
   @Rule public TestRepository testRepository = new TestRepository();
 
   @Mock private MavenProject mockMavenProject;
   @Mock private Build mockBuild;
 
-  private MavenSourceFilesConfiguration testMavenSourceFilesConfiguration;
+  private MavenLayerConfigurations testMavenLayerConfigurations;
 
   @Before
-  public void setUp() throws IOException, URISyntaxException {
+  public void setUp() throws IOException, URISyntaxException, MojoExecutionException {
     Path sourcePath = Paths.get(Resources.getResource("application/source").toURI());
     Path outputPath = Paths.get(Resources.getResource("application/output").toURI());
 
@@ -66,8 +67,8 @@ public class MavenSourceFilesConfigurationTest {
             testRepository.findArtifact("com.test", "dependencyX", "1.0.0-SNAPSHOT"));
     Mockito.when(mockMavenProject.getArtifacts()).thenReturn(artifacts);
 
-    testMavenSourceFilesConfiguration =
-        MavenSourceFilesConfiguration.getForProject(mockMavenProject);
+    testMavenLayerConfigurations =
+        MavenLayerConfigurations.getForProject(mockMavenProject, Paths.get("nonexistent/path"));
   }
 
   @Test
@@ -95,22 +96,50 @@ public class MavenSourceFilesConfigurationTest {
             Paths.get(Resources.getResource("application/output/some.class").toURI()));
 
     Assert.assertEquals(
-        expectedDependenciesFiles, testMavenSourceFilesConfiguration.getDependenciesFiles());
+        expectedDependenciesFiles,
+        testMavenLayerConfigurations.getDependenciesLayerEntry().getSourceFiles());
     Assert.assertEquals(
         expectedSnapshotDependenciesFiles,
-        testMavenSourceFilesConfiguration.getSnapshotDependenciesFiles());
+        testMavenLayerConfigurations.getSnapshotDependenciesLayerEntry().getSourceFiles());
     Assert.assertEquals(
-        expectedResourcesFiles, testMavenSourceFilesConfiguration.getResourcesFiles());
-    Assert.assertEquals(expectedClassesFiles, testMavenSourceFilesConfiguration.getClassesFiles());
+        expectedResourcesFiles,
+        testMavenLayerConfigurations.getResourcesLayerEntry().getSourceFiles());
+    Assert.assertEquals(
+        expectedClassesFiles, testMavenLayerConfigurations.getClassesLayerEntry().getSourceFiles());
+  }
+
+  @Test
+  public void test_extraFiles() throws URISyntaxException, IOException, MojoExecutionException {
+    Path extraFilesDirectory = Paths.get(Resources.getResource("layer").toURI());
+
+    testMavenLayerConfigurations =
+        MavenLayerConfigurations.getForProject(mockMavenProject, extraFilesDirectory);
+
+    ImmutableList<Path> expectedExtraFiles =
+        ImmutableList.of(
+            Paths.get(Resources.getResource("layer/a").toURI()),
+            Paths.get(Resources.getResource("layer/c").toURI()),
+            Paths.get(Resources.getResource("layer/foo").toURI()));
+
+    Assert.assertEquals(
+        expectedExtraFiles,
+        testMavenLayerConfigurations.getExtraFilesLayerEntry().getSourceFiles());
   }
 
   @Test
   public void test_correctPathsOnImage() {
     Assert.assertEquals(
-        "/app/libs/", testMavenSourceFilesConfiguration.getDependenciesPathOnImage());
+        "/app/libs/", testMavenLayerConfigurations.getDependenciesLayerEntry().getExtractionPath());
     Assert.assertEquals(
-        "/app/resources/", testMavenSourceFilesConfiguration.getResourcesPathOnImage());
-    Assert.assertEquals("/app/classes/", testMavenSourceFilesConfiguration.getClassesPathOnImage());
+        "/app/libs/",
+        testMavenLayerConfigurations.getSnapshotDependenciesLayerEntry().getExtractionPath());
+    Assert.assertEquals(
+        "/app/resources/",
+        testMavenLayerConfigurations.getResourcesLayerEntry().getExtractionPath());
+    Assert.assertEquals(
+        "/app/classes/", testMavenLayerConfigurations.getClassesLayerEntry().getExtractionPath());
+    Assert.assertEquals(
+        "/", testMavenLayerConfigurations.getExtraFilesLayerEntry().getExtractionPath());
   }
 
   private Artifact makeArtifact(Path path) {

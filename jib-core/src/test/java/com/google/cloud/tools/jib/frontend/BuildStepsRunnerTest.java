@@ -18,14 +18,14 @@ package com.google.cloud.tools.jib.frontend;
 
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.builder.BuildSteps;
-import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
+import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
+import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.registry.InsecureRegistryException;
 import com.google.cloud.tools.jib.registry.RegistryCredentialsNotSentException;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
@@ -62,7 +62,6 @@ public class BuildStepsRunnerTest {
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Mock private BuildSteps mockBuildSteps;
-  @Mock private SourceFilesConfiguration mockSourceFilesConfiguration;
   @Mock private BuildLogger mockBuildLogger;
   @Mock private RegistryUnauthorizedException mockRegistryUnauthorizedException;
   @Mock private RegistryCredentialsNotSentException mockRegistryCredentialsNotSentException;
@@ -78,12 +77,12 @@ public class BuildStepsRunnerTest {
 
     Mockito.when(mockBuildSteps.getBuildConfiguration()).thenReturn(mockBuildConfiguration);
     Mockito.when(mockBuildConfiguration.getBuildLogger()).thenReturn(mockBuildLogger);
-    Mockito.when(mockBuildSteps.getSourceFilesConfiguration())
-        .thenReturn(mockSourceFilesConfiguration);
-    Mockito.when(mockSourceFilesConfiguration.getClassesFiles()).thenReturn(ImmutableList.of());
-    Mockito.when(mockSourceFilesConfiguration.getResourcesFiles()).thenReturn(ImmutableList.of());
-    Mockito.when(mockSourceFilesConfiguration.getDependenciesFiles())
-        .thenReturn(ImmutableList.of());
+    Mockito.when(mockBuildConfiguration.getLayerConfigurations())
+        .thenReturn(
+            ImmutableList.of(
+                LayerConfiguration.builder().addEntry(ImmutableList.of(), "ignored").build(),
+                LayerConfiguration.builder().addEntry(ImmutableList.of(), "ignored").build(),
+                LayerConfiguration.builder().addEntry(ImmutableList.of(), "ignored").build()));
   }
 
   @Test

@@ -17,10 +17,10 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
-import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.cache.CachedLayerWithMetadata;
+import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.common.collect.ImmutableList;
@@ -68,6 +68,7 @@ public class BuildImageStepTest {
     Mockito.when(mockBuildConfiguration.getEnvironment()).thenReturn(ImmutableMap.of());
     Mockito.when(mockBuildConfiguration.getJavaArguments()).thenReturn(ImmutableList.of());
     Mockito.when(mockBuildConfiguration.getExposedPorts()).thenReturn(ImmutableList.of());
+    Mockito.when(mockBuildConfiguration.getEntrypoint()).thenReturn(ImmutableList.of());
 
     Mockito.when(mockPullAndCacheBaseImageLayersStep.getFuture())
         .thenReturn(
@@ -92,8 +93,7 @@ public class BuildImageStepTest {
             ImmutableList.of(
                 mockBuildAndCacheApplicationLayerStep,
                 mockBuildAndCacheApplicationLayerStep,
-                mockBuildAndCacheApplicationLayerStep),
-            ImmutableList.of());
+                mockBuildAndCacheApplicationLayerStep));
     Image<CachedLayer> image = buildImageStep.getFuture().get().getFuture().get();
     Assert.assertEquals(
         testDescriptorDigest, image.getLayers().asList().get(0).getBlobDescriptor().getDigest());
