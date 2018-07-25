@@ -28,7 +28,6 @@ import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.ReferenceLayer;
 import com.google.cloud.tools.jib.image.ReferenceNoDiffIdLayer;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
@@ -49,6 +48,16 @@ public class JsonToImageTranslator {
    * <p>Example matches: 100, 1000/tcp, 2000/udp
    */
   private static final Pattern portPattern = Pattern.compile("(\\d+)(?:/(tcp|udp))?");
+
+  /**
+   * Pattern used for parsing environment variables in the format {@code NAME=VALUE}. {@code NAME}
+   * should start with a letter and contain only letters (uppercase and lower) and numbers. {@code
+   * VALUE} can contain anything.
+   *
+   * <p>Example matches: NAME=VALUE, A12345=$$$$$
+   */
+  @VisibleForTesting
+  static final Pattern environmentPattern = Pattern.compile("([A-Za-z][A-Za-z0-9_]+)=(.*)");
 
   /**
    * Translates {@link V21ManifestTemplate} to {@link Image}.
@@ -140,14 +149,14 @@ public class JsonToImageTranslator {
 
     if (containerConfigurationTemplate.getContainerEnvironment() != null) {
       for (String environmentVariable : containerConfigurationTemplate.getContainerEnvironment()) {
-        if (!environmentVariable.contains("=")) {
+        Matcher matcher = environmentPattern.matcher(environmentVariable);
+        if (!matcher.matches()) {
           throw new BadContainerConfigurationFormatException(
               "Invalid environment variable definition: " + environmentVariable);
         }
-        List<String> environmentVariableElements =
-            Splitter.on('=').splitToList(environmentVariable);
-        imageBuilder.setEnvironmentVariable(
-            environmentVariableElements.get(0), environmentVariableElements.get(1));
+        String name = matcher.group(1);
+        String value = matcher.group(2);
+        imageBuilder.setEnvironmentVariable(name, value);
       }
     }
 

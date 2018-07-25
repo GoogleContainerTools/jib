@@ -37,6 +37,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -108,6 +109,32 @@ public class JsonToImageTranslatorTest {
       } catch (BadContainerConfigurationFormatException ignored) {
       }
     }
+  }
+
+  @Test
+  public void testJsonToImageTranslatorRegex() {
+    assertGoodPattern("NAME=VALUE", "NAME", "VALUE");
+    assertGoodPattern("A1203921=www=ww", "A1203921", "www=ww");
+    assertGoodPattern("abcABC123=", "abcABC123", "");
+    assertGoodPattern("m_a_8943=100", "m_a_8943", "100");
+    assertGoodPattern("A_B_C_D=*****", "A_B_C_D", "*****");
+
+    assertBadPattern("123=ABC");
+    assertBadPattern("=================");
+    assertBadPattern("A_B_C");
+    assertBadPattern("$$$$$=fjdkslajfkdsl");
+  }
+
+  private void assertGoodPattern(String input, String expectedName, String expectedValue) {
+    Matcher matcher = JsonToImageTranslator.environmentPattern.matcher(input);
+    Assert.assertTrue(matcher.matches());
+    Assert.assertEquals(expectedName, matcher.group(1));
+    Assert.assertEquals(expectedValue, matcher.group(2));
+  }
+
+  private void assertBadPattern(String input) {
+    Matcher matcher = JsonToImageTranslator.environmentPattern.matcher(input);
+    Assert.assertFalse(matcher.matches());
   }
 
   private <T extends BuildableManifestTemplate> void testToImage_buildable(
