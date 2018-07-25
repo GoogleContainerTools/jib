@@ -48,7 +48,7 @@ import javax.annotation.Nullable;
 public class Connection implements Closeable {
 
   /**
-   * Returns a factory for {@link Connection} that does not verify TLS peer verification.
+   * Returns a factory for {@link Connection}.
    *
    * @return {@link Connection} factory
    */
@@ -78,7 +78,7 @@ public class Connection implements Closeable {
     return url -> new Connection(url, transport);
   }
 
-  private HttpRequestFactory requestFactory;
+  private final HttpRequestFactory requestFactory;
 
   @Nullable private HttpResponse httpResponse;
 
