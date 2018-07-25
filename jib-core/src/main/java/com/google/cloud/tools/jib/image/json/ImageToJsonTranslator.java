@@ -81,6 +81,9 @@ public class ImageToJsonTranslator {
     }
     ImmutableList.Builder<String> builder = ImmutableList.builder();
     for (Map.Entry<String, String> environmentVariable : environment.entrySet()) {
+      if (environmentVariable.getKey().contains("=")) {
+        throw new IllegalArgumentException("Environment variable name cannot contain '='");
+      }
       builder.add(environmentVariable.getKey() + "=" + environmentVariable.getValue());
     }
     return builder.build();

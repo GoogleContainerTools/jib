@@ -56,7 +56,7 @@ public class JsonToImageTranslator {
    *
    * <p>Example matches: NAME=VALUE, A12345=$$$$$
    */
-  @VisibleForTesting static final Pattern environmentPattern = Pattern.compile("([^=].*?)=(.*)");
+  @VisibleForTesting static final Pattern environmentPattern = Pattern.compile("([^=]+)=(.*)");
 
   /**
    * Translates {@link V21ManifestTemplate} to {@link Image}.
