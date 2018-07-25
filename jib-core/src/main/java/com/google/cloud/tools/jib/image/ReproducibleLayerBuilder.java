@@ -121,7 +121,7 @@ public class ReproducibleLayerBuilder {
       entry.setUserName("");
       entry.setGroupName("");
 
-      tarStreamBuilder.addEntry(entry);
+      tarStreamBuilder.addTarArchiveEntry(entry);
     }
 
     return new UnwrittenLayer(tarStreamBuilder.toBlob());

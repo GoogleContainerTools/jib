@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.tar;
 
 import com.google.cloud.tools.jib.blob.Blob;
+import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Resources;
 import java.io.ByteArrayInputStream;
@@ -44,8 +45,8 @@ public class TarStreamBuilderTest {
   private Path fileA;
   private Path fileB;
   private Path directoryA;
-  private String fileAContents;
-  private String fileBContents;
+  private byte[] fileAContents;
+  private byte[] fileBContents;
   private TarStreamBuilder testTarStreamBuilder = new TarStreamBuilder();
 
   @Before
@@ -55,8 +56,8 @@ public class TarStreamBuilderTest {
     fileB = Paths.get(Resources.getResource("fileB").toURI());
     directoryA = Paths.get(Resources.getResource("directoryA").toURI());
 
-    fileAContents = new String(Files.readAllBytes(fileA), StandardCharsets.UTF_8);
-    fileBContents = new String(Files.readAllBytes(fileB), StandardCharsets.UTF_8);
+    fileAContents = Files.readAllBytes(fileA);
+    fileBContents = Files.readAllBytes(fileB);
   }
 
   @Test
@@ -97,8 +98,8 @@ public class TarStreamBuilderTest {
 
   @Test
   public void testToBlob_multiByte() throws IOException {
-    testTarStreamBuilder.addEntry("日本語", "test");
-    testTarStreamBuilder.addEntry("asdf", "crepecake");
+    testTarStreamBuilder.addByteEntry("日本語".getBytes(StandardCharsets.UTF_8), "test");
+    testTarStreamBuilder.addByteEntry("asdf".getBytes(StandardCharsets.UTF_8), "crepecake");
     Blob blob = testTarStreamBuilder.toBlob();
 
     // Writes the BLOB and captures the output.
@@ -131,11 +132,12 @@ public class TarStreamBuilderTest {
   /** Creates a TarStreamBuilder using TarArchiveEntries. */
   private void setUpWithTarEntries() {
     // Prepares a test TarStreamBuilder.
-    testTarStreamBuilder.addEntry(
+    testTarStreamBuilder.addTarArchiveEntry(
         new TarArchiveEntry(fileA.toFile(), "some/path/to/resourceFileA"));
-    testTarStreamBuilder.addEntry(new TarArchiveEntry(fileB.toFile(), "crepecake"));
-    testTarStreamBuilder.addEntry(new TarArchiveEntry(directoryA.toFile(), "some/path/to"));
-    testTarStreamBuilder.addEntry(
+    testTarStreamBuilder.addTarArchiveEntry(new TarArchiveEntry(fileB.toFile(), "crepecake"));
+    testTarStreamBuilder.addTarArchiveEntry(
+        new TarArchiveEntry(directoryA.toFile(), "some/path/to"));
+    testTarStreamBuilder.addTarArchiveEntry(
         new TarArchiveEntry(
             fileA.toFile(),
             "some/really/long/path/that/exceeds/100/characters/abcdefghijklmnopqrstuvwxyz0123456789012345678901234567890"));
@@ -144,10 +146,11 @@ public class TarStreamBuilderTest {
   /** Creates a TarStreamBuilder using Strings. */
   private void setUpWithStrings() {
     // Prepares a test TarStreamBuilder.
-    testTarStreamBuilder.addEntry(fileAContents, "some/path/to/resourceFileA");
-    testTarStreamBuilder.addEntry(fileBContents, "crepecake");
-    testTarStreamBuilder.addEntry(new TarArchiveEntry(directoryA.toFile(), "some/path/to"));
-    testTarStreamBuilder.addEntry(
+    testTarStreamBuilder.addByteEntry(fileAContents, "some/path/to/resourceFileA");
+    testTarStreamBuilder.addByteEntry(fileBContents, "crepecake");
+    testTarStreamBuilder.addTarArchiveEntry(
+        new TarArchiveEntry(directoryA.toFile(), "some/path/to"));
+    testTarStreamBuilder.addByteEntry(
         fileAContents,
         "some/really/long/path/that/exceeds/100/characters/abcdefghijklmnopqrstuvwxyz0123456789012345678901234567890");
   }
@@ -155,10 +158,11 @@ public class TarStreamBuilderTest {
   /** Creates a TarStreamBuilder using Strings and TarArchiveEntries. */
   private void setUpWithStringsAndTarEntries() {
     // Prepares a test TarStreamBuilder.
-    testTarStreamBuilder.addEntry(fileAContents, "some/path/to/resourceFileA");
-    testTarStreamBuilder.addEntry(new TarArchiveEntry(fileB.toFile(), "crepecake"));
-    testTarStreamBuilder.addEntry(new TarArchiveEntry(directoryA.toFile(), "some/path/to"));
-    testTarStreamBuilder.addEntry(
+    testTarStreamBuilder.addByteEntry(fileAContents, "some/path/to/resourceFileA");
+    testTarStreamBuilder.addTarArchiveEntry(new TarArchiveEntry(fileB.toFile(), "crepecake"));
+    testTarStreamBuilder.addTarArchiveEntry(
+        new TarArchiveEntry(directoryA.toFile(), "some/path/to"));
+    testTarStreamBuilder.addByteEntry(
         fileAContents,
         "some/really/long/path/that/exceeds/100/characters/abcdefghijklmnopqrstuvwxyz0123456789012345678901234567890");
   }
@@ -203,16 +207,14 @@ public class TarStreamBuilderTest {
     // Verifies fileA was archived correctly.
     TarArchiveEntry headerFileA = tarArchiveInputStream.getNextTarEntry();
     Assert.assertEquals("some/path/to/resourceFileA", headerFileA.getName());
-    String fileAString =
-        CharStreams.toString(new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
-    Assert.assertEquals(fileAContents, fileAString);
+    byte[] fileAString = ByteStreams.toByteArray(tarArchiveInputStream);
+    Assert.assertArrayEquals(fileAContents, fileAString);
 
     // Verifies fileB was archived correctly.
     TarArchiveEntry headerFileB = tarArchiveInputStream.getNextTarEntry();
     Assert.assertEquals("crepecake", headerFileB.getName());
-    String fileBString =
-        CharStreams.toString(new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
-    Assert.assertEquals(fileBContents, fileBString);
+    byte[] fileBString = ByteStreams.toByteArray(tarArchiveInputStream);
+    Assert.assertArrayEquals(fileBContents, fileBString);
 
     // Verifies directoryA was archived correctly.
     TarArchiveEntry headerDirectoryA = tarArchiveInputStream.getNextTarEntry();
@@ -223,9 +225,8 @@ public class TarStreamBuilderTest {
     Assert.assertEquals(
         "some/really/long/path/that/exceeds/100/characters/abcdefghijklmnopqrstuvwxyz0123456789012345678901234567890",
         headerFileALong.getName());
-    String fileALongString =
-        CharStreams.toString(new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
-    Assert.assertEquals(fileAContents, fileALongString);
+    byte[] fileALongString = ByteStreams.toByteArray(tarArchiveInputStream);
+    Assert.assertArrayEquals(fileAContents, fileALongString);
 
     Assert.assertNull(tarArchiveInputStream.getNextTarEntry());
   }

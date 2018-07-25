@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.annotation.Nullable;
 
@@ -43,8 +44,7 @@ import javax.annotation.Nullable;
  */
 public class StepsRunner {
 
-  private final ListeningExecutorService listeningExecutorService =
-      MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
+  private final ListeningExecutorService listeningExecutorService;
   private final BuildConfiguration buildConfiguration;
   private final Cache baseLayersCache;
   private final Cache applicationLayersCache;
@@ -70,6 +70,12 @@ public class StepsRunner {
     this.buildConfiguration = buildConfiguration;
     this.baseLayersCache = baseLayersCache;
     this.applicationLayersCache = applicationLayersCache;
+
+    ExecutorService executorService =
+        Boolean.getBoolean("jibSerialized")
+            ? MoreExecutors.newDirectExecutorService()
+            : Executors.newCachedThreadPool();
+    listeningExecutorService = MoreExecutors.listeningDecorator(executorService);
   }
 
   public StepsRunner runRetrieveTargetRegistryCredentialsStep() {

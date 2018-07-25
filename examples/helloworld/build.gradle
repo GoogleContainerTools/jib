@@ -1,6 +1,6 @@
 plugins {
   id 'java'
-  id 'com.google.cloud.tools.jib' version '0.9.6'
+  id 'com.google.cloud.tools.jib' version '0.9.7'
 }
 
 sourceCompatibility = 1.8

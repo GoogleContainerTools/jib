@@ -22,7 +22,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
-/** A {@link Blob} that holds a {@link String}. */
+/** A {@link Blob} that holds a {@link String}. Encodes in UTF-8 when writing in bytes. */
 class StringBlob implements Blob {
 
   private final String content;

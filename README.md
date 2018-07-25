@@ -1,9 +1,10 @@
 [![experimental](http://badges.github.io/stability-badges/dist/experimental.svg)](http://github.com/badges/stability-badges)
-[![Analytics](https://cloud-tools-for-java-metrics.appspot.com/UA-121724379-2/index)](https://github.com/igrigorik/ga-beacon)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/jib-maven-plugin/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/jib-maven-plugin)
-[![Gradle Plugin Portal](https://img.shields.io/badge/gradle%20plugin-v0.9.6-blue.svg)](https://plugins.gradle.org/plugin/com.google.cloud.tools.jib)
+[![Maven Central](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/google/cloud/tools/jib-maven-plugin/maven-metadata.xml.svg?colorB=007ec6)](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/jib-maven-plugin)
+[![Gradle Plugin Portal](https://img.shields.io/badge/gradle%20plugin-v0.9.7-blue.svg)](https://plugins.gradle.org/plugin/com.google.cloud.tools.jib)
+![Build Status](https://storage.googleapis.com/cloud-tools-for-java-kokoro-build-badges/jib-ubuntu-master-orb.svg)
+![Build Status](https://storage.googleapis.com/cloud-tools-for-java-kokoro-build-badges/jib-windows-master-orb.svg)
+![Build Status](https://storage.googleapis.com/cloud-tools-for-java-kokoro-build-badges/jib-macos-master-orb.svg)
 [![Gitter version](https://img.shields.io/gitter/room/gitterHQ/gitter.svg)](https://gitter.im/google/jib)
-[![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=Google%20container%20tool%20for%20dockerizing%20Java%20applications&url=https://github.com/GoogleContainerTools/jib&via=JibContainerBuilder&hashtags=java,docker,kubernetes,maven,gradle,microservices,jib)
 
 # Jib
 
@@ -60,3 +61,5 @@ We welcome contributions! Here's how you can contribute:
   * Join in on [discussion issues](https://github.com/GoogleContainerTools/jib/labels/discuss)
 <!--  * Read the [style guide] -->
 *Make sure to follow the [Code of Conduct](https://github.com/GoogleContainerTools/jib/blob/master/CODE_OF_CONDUCT.md) when contributing so we can foster an open and welcoming community.*
+
+[![Analytics](https://cloud-tools-for-java-metrics.appspot.com/UA-121724379-2/index)](https://github.com/igrigorik/ga-beacon)
