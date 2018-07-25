@@ -78,7 +78,7 @@ public class Connection implements Closeable {
     return url -> new Connection(url, transport);
   }
 
-  private final HttpRequestFactory requestFactory;
+  private HttpRequestFactory requestFactory;
 
   @Nullable private HttpResponse httpResponse;
 
