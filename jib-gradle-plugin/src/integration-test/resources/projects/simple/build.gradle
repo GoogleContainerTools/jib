@@ -24,6 +24,7 @@ jib {
         args = ['An argument.']
         ports = ['1000/tcp', '2000-2003/udp']
     }
+    extraDirectory = file('src/main/custom-extra-dir')
 
     // Does not have tests use user-level cache for base image layers.
     useOnlyProjectCache = true

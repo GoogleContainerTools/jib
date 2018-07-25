@@ -58,7 +58,7 @@ public class DockerContextTask extends DefaultTask {
   @InputFiles
   public FileCollection getInputFiles() {
     return GradleProjectProperties.getInputFiles(
-        Preconditions.checkNotNull(jibExtension).getExtraDirectory(), getProject());
+        Preconditions.checkNotNull(jibExtension).getExtraDirectoryPath().toFile(), getProject());
   }
 
   /**
@@ -105,7 +105,7 @@ public class DockerContextTask extends DefaultTask {
 
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(
-            getProject(), gradleBuildLogger, jibExtension.getExtraDirectory().toPath());
+            getProject(), gradleBuildLogger, jibExtension.getExtraDirectoryPath());
     String mainClass = gradleProjectProperties.getMainClass(jibExtension);
     String targetDir = getTargetDir();
 
