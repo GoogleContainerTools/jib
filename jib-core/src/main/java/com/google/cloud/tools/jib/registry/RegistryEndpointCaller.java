@@ -30,7 +30,7 @@ import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.security.GeneralSecurityException;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import org.apache.http.NoHttpResponseException;
@@ -43,14 +43,6 @@ import org.apache.http.conn.HttpHostConnectException;
  */
 class RegistryEndpointCaller<T> {
 
-  /** Creates {@link Connection} with the given URL. */
-  @FunctionalInterface
-  @VisibleForTesting
-  static interface ConnectionFactory {
-
-    Connection create(URL url) throws GeneralSecurityException;
-  }
-
   /**
    * @see <a
    *     href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308">https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308</a>
@@ -59,17 +51,18 @@ class RegistryEndpointCaller<T> {
 
   private static final String DEFAULT_PROTOCOL = "https";
 
-  /** Makes a {@link Connection} to the specified {@link URL}. */
-  private final ConnectionFactory connectionFactory;
-  /** Makes an insecure {@link Connection} to the specified {@link URL}. */
-  private final ConnectionFactory insecureConnectionFactory;
-
   private final URL initialRequestUrl;
   private final String userAgent;
   private final RegistryEndpointProvider<T> registryEndpointProvider;
   @Nullable private final Authorization authorization;
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   private final boolean allowInsecureRegistries;
+
+  /** Makes a {@link Connection} to the specified {@link URL}. */
+  private final Function<URL, Connection> connectionFactory;
+
+  /** Makes an insecure {@link Connection} to the specified {@link URL}. */
+  @Nullable private Function<URL, Connection> insecureConnectionFactory;
 
   /**
    * Constructs with parameters for making the request.
@@ -97,8 +90,8 @@ class RegistryEndpointCaller<T> {
         authorization,
         registryEndpointRequestProperties,
         allowInsecureRegistries,
-        Connection::createConnection,
-        Connection::createInsecureConnection);
+        Connection.getConnectionFactory(),
+        null /* might never be used, so create lazily to delay throwing potential GeneralSecurityException */);
   }
 
   @VisibleForTesting
@@ -109,8 +102,8 @@ class RegistryEndpointCaller<T> {
       @Nullable Authorization authorization,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
       boolean allowInsecureRegistries,
-      ConnectionFactory connectionFactory,
-      ConnectionFactory insecureConnectionFactory)
+      Function<URL, Connection> connectionFactory,
+      @Nullable Function<URL, Connection> insecureConnectionFactory)
       throws MalformedURLException {
     this.initialRequestUrl =
         registryEndpointProvider.getApiRoute(DEFAULT_PROTOCOL + "://" + apiRouteBase);
@@ -132,11 +125,7 @@ class RegistryEndpointCaller<T> {
    */
   @Nullable
   T call() throws IOException, RegistryException {
-    try {
-      return call(initialRequestUrl);
-    } catch (GeneralSecurityException ex) {
-      throw new RuntimeException("never thrown");
-    }
+    return call(initialRequestUrl);
   }
 
   /**
@@ -149,13 +138,13 @@ class RegistryEndpointCaller<T> {
    */
   @VisibleForTesting
   @Nullable
-  T call(URL url) throws IOException, RegistryException, GeneralSecurityException {
+  T call(URL url) throws IOException, RegistryException {
     boolean isHttpProtocol = "http".equals(url.getProtocol());
     if (!allowInsecureRegistries && isHttpProtocol) {
       throw new InsecureRegistryException(url);
     }
 
-    try (Connection connection = connectionFactory.create(url)) {
+    try (Connection connection = connectionFactory.apply(url)) {
       Request.Builder requestBuilder =
           Request.builder()
               .setUserAgent(userAgent)

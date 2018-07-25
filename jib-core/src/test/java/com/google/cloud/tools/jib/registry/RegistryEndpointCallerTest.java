@@ -36,6 +36,7 @@ import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import org.apache.http.NoHttpResponseException;
@@ -93,8 +94,7 @@ public class RegistryEndpointCallerTest {
 
   @Mock private Connection mockConnection;
   @Mock private Response mockResponse;
-  @Mock private RegistryEndpointCaller.ConnectionFactory mockConnectionFactory;
-  @Mock private RegistryEndpointCaller.ConnectionFactory mockInsecureSslConnectionFactory;
+  @Mock private Function<URL, Connection> mockConnectionFactory;
   @Mock private HttpResponse mockHttpResponse;
 
   private RegistryEndpointCaller<String> testRegistryEndpointCallerSecure;
@@ -110,9 +110,9 @@ public class RegistryEndpointCallerTest {
             new RegistryEndpointRequestProperties("serverUrl", "imageName"),
             false,
             mockConnectionFactory,
-            mockInsecureSslConnectionFactory);
+            null);
 
-    Mockito.when(mockConnectionFactory.create(Mockito.any())).thenReturn(mockConnection);
+    Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
     Mockito.when(mockHttpResponse.parseAsString()).thenReturn("");
     Mockito.when(mockHttpResponse.getHeaders()).thenReturn(new HttpHeaders());
   }
@@ -178,7 +178,7 @@ public class RegistryEndpointCallerTest {
             new RegistryEndpointRequestProperties("serverUrl", "imageName"),
             true,
             mockConnectionFactory,
-            mockInsecureSslConnectionFactory);
+            null);
     try {
       testRegistryEndpointCallerInsecure.call(new URL("http://location"));
       Assert.fail("Call should have failed");
@@ -272,7 +272,7 @@ public class RegistryEndpointCallerTest {
   public void testHttpTimeout_propertyNotSet()
       throws IOException, RegistryException, GeneralSecurityException {
     MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
-    Mockito.when(mockConnectionFactory.create(Mockito.any())).thenReturn(mockConnection);
+    Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
     Mockito.when(mockResponse.getBody()).thenReturn(Mockito.mock(Blob.class));
 
     Assert.assertNull(System.getProperty("jib.httpTimeout"));
@@ -287,7 +287,7 @@ public class RegistryEndpointCallerTest {
   public void testHttpTimeout_stringValue()
       throws IOException, RegistryException, GeneralSecurityException {
     MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
-    Mockito.when(mockConnectionFactory.create(Mockito.any())).thenReturn(mockConnection);
+    Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
     Mockito.when(mockResponse.getBody()).thenReturn(Mockito.mock(Blob.class));
 
     System.setProperty("jib.httpTimeout", "random string");
@@ -300,7 +300,7 @@ public class RegistryEndpointCallerTest {
   public void testHttpTimeout_negativeValue()
       throws IOException, RegistryException, GeneralSecurityException {
     MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
-    Mockito.when(mockConnectionFactory.create(Mockito.any())).thenReturn(mockConnection);
+    Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
     Mockito.when(mockResponse.getBody()).thenReturn(Mockito.mock(Blob.class));
 
     System.setProperty("jib.httpTimeout", "-1");
@@ -317,7 +317,7 @@ public class RegistryEndpointCallerTest {
     System.setProperty("jib.httpTimeout", "0");
 
     MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
-    Mockito.when(mockConnectionFactory.create(Mockito.any())).thenReturn(mockConnection);
+    Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
 
     Mockito.when(mockResponse.getBody()).thenReturn(Mockito.mock(Blob.class));
     testRegistryEndpointCallerSecure.call();
@@ -330,7 +330,7 @@ public class RegistryEndpointCallerTest {
     System.setProperty("jib.httpTimeout", "7593");
 
     MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
-    Mockito.when(mockConnectionFactory.create(Mockito.any())).thenReturn(mockConnection);
+    Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
 
     Mockito.when(mockResponse.getBody()).thenReturn(Mockito.mock(Blob.class));
     testRegistryEndpointCallerSecure.call();
@@ -356,12 +356,12 @@ public class RegistryEndpointCallerTest {
             new RegistryEndpointRequestProperties("serverUrl", "imageName"),
             true,
             mockConnectionFactory,
-            mockInsecureSslConnectionFactory);
+            null);
     Assert.assertEquals("body", testRegistryEndpointCallerInsecure.call());
 
     // Checks that the URL protocol was first HTTPS, then HTTP.
     ArgumentCaptor<URL> urlArgumentCaptor = ArgumentCaptor.forClass(URL.class);
-    Mockito.verify(mockConnectionFactory, Mockito.times(2)).create(urlArgumentCaptor.capture());
+    Mockito.verify(mockConnectionFactory, Mockito.times(2)).apply(urlArgumentCaptor.capture());
     Assert.assertEquals("https", urlArgumentCaptor.getAllValues().get(0).getProtocol());
     Assert.assertEquals("http", urlArgumentCaptor.getAllValues().get(1).getProtocol());
   }
@@ -440,7 +440,7 @@ public class RegistryEndpointCallerTest {
 
     // Checks that the URL was changed to the new location.
     ArgumentCaptor<URL> urlArgumentCaptor = ArgumentCaptor.forClass(URL.class);
-    Mockito.verify(mockConnectionFactory, Mockito.times(2)).create(urlArgumentCaptor.capture());
+    Mockito.verify(mockConnectionFactory, Mockito.times(2)).apply(urlArgumentCaptor.capture());
     Assert.assertEquals(
         new URL("https://apiRouteBase/api"), urlArgumentCaptor.getAllValues().get(0));
     Assert.assertEquals(new URL("https://newlocation"), urlArgumentCaptor.getAllValues().get(1));

@@ -22,6 +22,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
+import javax.net.ssl.SSLPeerUnverifiedException;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -32,7 +33,8 @@ public class WithServerConnectionTest {
   public void testGet()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
     try (TestWebServer server = new TestWebServer(false);
-        Connection connection = Connection.createConnection(new URL(server.getEndpoint()))) {
+        Connection connection =
+            Connection.getConnectionFactory().apply(new URL(server.getEndpoint()))) {
       Response response = connection.send("GET", new Request.Builder().build());
 
       Assert.assertEquals(200, response.getStatusCode());
@@ -47,7 +49,8 @@ public class WithServerConnectionTest {
   public void testErrorOnSecondSend()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
     try (TestWebServer server = new TestWebServer(false);
-        Connection connection = Connection.createConnection(new URL(server.getEndpoint()))) {
+        Connection connection =
+            Connection.getConnectionFactory().apply(new URL(server.getEndpoint()))) {
       connection.send("GET", new Request.Builder().build());
       try {
         connection.send("GET", new Request.Builder().build());
@@ -59,10 +62,26 @@ public class WithServerConnectionTest {
   }
 
   @Test
+  public void testSecureConnectionOnInsecureHttpsServer()
+      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
+    try (TestWebServer server = new TestWebServer(true);
+        Connection connection =
+            Connection.getConnectionFactory().apply(new URL(server.getEndpoint()))) {
+      try {
+        connection.send("GET", new Request.Builder().build());
+        Assert.fail("Should fail if cannot verify peer");
+      } catch (SSLPeerUnverifiedException ex) {
+        Assert.assertNotNull(ex.getMessage());
+      }
+    }
+  }
+
+  @Test
   public void testInsecureConnection()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
     try (TestWebServer server = new TestWebServer(true);
-        Connection connection = Connection.createInsecureConnection(new URL(server.getEndpoint()))) {
+        Connection connection =
+            Connection.getInsecureConnectionFactory().apply(new URL(server.getEndpoint()))) {
       Response response = connection.send("GET", new Request.Builder().build());
 
       Assert.assertEquals(200, response.getStatusCode());

@@ -32,7 +32,8 @@ public class MockConnection extends Connection {
   private Integer httpTimeout;
 
   public MockConnection(BiFunction<String, Request, Response> responseSupplier) {
-    super(new GenericUrl("ftp://non-exisiting.example.url.ever").toURL(), new ApacheHttpTransport());
+    super(
+        new GenericUrl("ftp://non-exisiting.example.url.ever").toURL(), new ApacheHttpTransport());
     this.responseSupplier = responseSupplier;
   }
 

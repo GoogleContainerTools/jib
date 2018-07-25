@@ -23,15 +23,14 @@ import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.apache.ApacheHttpTransport;
-import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.URL;
 import java.security.GeneralSecurityException;
+import java.util.function.Function;
 import javax.annotation.Nullable;
-import org.apache.http.NoHttpResponseException;
 
 /**
  * Sends an HTTP {@link Request} and stores the {@link Response}. Clients should not send more than
@@ -48,11 +47,13 @@ import org.apache.http.NoHttpResponseException;
  */
 public class Connection implements Closeable {
 
-  public static class Builder {
-
-    private final URL url;
-
-    /**
+  /**
+   * Returns a factory for {@link Connection} that does not verify TLS peer verification.
+   *
+   * @return {@link Connection} factory
+   */
+  public static Function<URL, Connection> getConnectionFactory() {
+    /*
      * Do not use {@link NetHttpTransport}. It does not process response errors properly. A new
      * {@link ApacheHttpTransport} needs to be created for each connection because otherwise HTTP
      * connection persistence causes the connection to throw {@link NoHttpResponseException}.
@@ -60,40 +61,24 @@ public class Connection implements Closeable {
      * @see <a
      *     href="https://github.com/google/google-http-java-client/issues/39">https://github.com/google/google-http-java-client/issues/39</a>
      */
-    private HttpTransport httpTransport = new ApacheHttpTransport();
-
-    public Builder(URL url) {
-      this.url = url;
-    }
-
-    /**
-     * Turns off the normal TLS peer verification.
-     *
-     * @throws GeneralSecurityException if unable to turn off
-     * @return this
-     */
-    public Builder doNotValidateCertificate() throws GeneralSecurityException {
-      ApacheHttpTransport.Builder transportBuilder = new ApacheHttpTransport.Builder();
-      transportBuilder.doNotValidateCertificate();
-      httpTransport = transportBuilder.build();
-      return this;
-    }
-
-    public Connection build() {
-      return new Connection(url, httpTransport);
-    }
+    HttpTransport transport = new ApacheHttpTransport();
+    return url -> new Connection(url, transport);
   }
 
-  public static Connection createConnection(URL url) {
-    return new Connection(url, new ApacheHttpTransport());
+  /**
+   * Returns a factory for {@link Connection} that does not verify TLS peer verification.
+   *
+   * @throws GeneralSecurityException if unable to turn off TLS peer verification
+   * @return {@link Connection} factory
+   */
+  public static Function<URL, Connection> getInsecureConnectionFactory()
+      throws GeneralSecurityException {
+    // Do not use {@link NetHttpTransport}. See {@link getConnectionFactory} for details.
+    HttpTransport transport = new ApacheHttpTransport.Builder().doNotValidateCertificate().build();
+    return url -> new Connection(url, transport);
   }
 
-  public static Connection createInsecureConnection(URL url) throws GeneralSecurityException {
-    HttpTransport httpTransport = new ApacheHttpTransport.Builder().doNotValidateCertificate().build();
-    return new Connection(url, httpTransport);
-  }
-
-  private final HttpRequestFactory requestFactory;
+  private HttpRequestFactory requestFactory;
 
   @Nullable private HttpResponse httpResponse;
 
