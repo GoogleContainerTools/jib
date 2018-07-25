@@ -17,16 +17,18 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.builder.BuildLogger;
-import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
+import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
 import com.google.cloud.tools.jib.frontend.MainClassFinder;
 import com.google.cloud.tools.jib.frontend.MainClassInferenceException;
 import com.google.cloud.tools.jib.frontend.ProjectProperties;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -49,12 +51,12 @@ class GradleProjectProperties implements ProjectProperties {
 
   /** @return a GradleProjectProperties from the given project and logger. */
   static GradleProjectProperties getForProject(
-      Project project, GradleBuildLogger gradleBuildLogger) {
+      Project project, GradleBuildLogger gradleBuildLogger, Path extraDirectory) {
     try {
       return new GradleProjectProperties(
           project,
           gradleBuildLogger,
-          GradleSourceFilesConfiguration.getForProject(project, gradleBuildLogger));
+          GradleLayerConfigurations.getForProject(project, gradleBuildLogger, extraDirectory));
 
     } catch (IOException ex) {
       throw new GradleException("Obtaining project build output files failed", ex);
@@ -63,21 +65,46 @@ class GradleProjectProperties implements ProjectProperties {
 
   private final Project project;
   private final GradleBuildLogger gradleBuildLogger;
-  private final SourceFilesConfiguration sourceFilesConfiguration;
+  private final GradleLayerConfigurations gradleLayerConfigurations;
 
   @VisibleForTesting
   GradleProjectProperties(
       Project project,
       GradleBuildLogger gradleBuildLogger,
-      SourceFilesConfiguration sourceFilesConfiguration) {
+      GradleLayerConfigurations gradleLayerConfigurations) {
     this.project = project;
     this.gradleBuildLogger = gradleBuildLogger;
-    this.sourceFilesConfiguration = sourceFilesConfiguration;
+    this.gradleLayerConfigurations = gradleLayerConfigurations;
   }
 
   @Override
-  public SourceFilesConfiguration getSourceFilesConfiguration() {
-    return sourceFilesConfiguration;
+  public ImmutableList<LayerConfiguration> getLayerConfigurations() {
+    return gradleLayerConfigurations.getLayerConfigurations();
+  }
+
+  @Override
+  public LayerEntry getDependenciesLayerEntry() {
+    return gradleLayerConfigurations.getDependenciesLayerEntry();
+  }
+
+  @Override
+  public LayerEntry getSnapshotDependenciesLayerEntry() {
+    return gradleLayerConfigurations.getSnapshotDependenciesLayerEntry();
+  }
+
+  @Override
+  public LayerEntry getResourcesLayerEntry() {
+    return gradleLayerConfigurations.getResourcesLayerEntry();
+  }
+
+  @Override
+  public LayerEntry getClassesLayerEntry() {
+    return gradleLayerConfigurations.getClassesLayerEntry();
+  }
+
+  @Override
+  public LayerEntry getExtraFilesLayerEntry() {
+    return gradleLayerConfigurations.getExtraFilesLayerEntry();
   }
 
   @Override

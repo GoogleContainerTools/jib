@@ -231,10 +231,9 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     return allowInsecureRegistries;
   }
 
-  @Nullable
   Path getExtraDirectory() {
     // TODO: Should inform user about nonexistent directory if using custom directory.
-    return Paths.get(extraDirectory);
+    return Paths.get(Preconditions.checkNotNull(extraDirectory));
   }
 
   @VisibleForTesting

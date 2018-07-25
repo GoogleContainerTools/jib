@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.common.collect.ImmutableMap;
@@ -44,9 +43,9 @@ public class GradleProjectPropertiesTest {
   @Mock private Jar mockJar2;
   @Mock private Project mockProject;
   @Mock private GradleBuildLogger mockGradleBuildLogger;
-  @Mock private SourceFilesConfiguration mockSourceFilesConfiguration;
   @Mock private JibExtension mockJibExtension;
   @Mock private GradleBuildLogger mockBuildLogger;
+  @Mock private GradleLayerConfigurations mockGradleLayerConfigurations;
 
   private Manifest manifest;
   private GradleProjectProperties gradleProjectProperties;
@@ -58,7 +57,7 @@ public class GradleProjectPropertiesTest {
 
     gradleProjectProperties =
         new GradleProjectProperties(
-            mockProject, mockGradleBuildLogger, mockSourceFilesConfiguration);
+            mockProject, mockGradleBuildLogger, mockGradleLayerConfigurations);
   }
 
   @Test
@@ -71,7 +70,7 @@ public class GradleProjectPropertiesTest {
   @Test
   public void testGetMainClassFromJar_missing() {
     Mockito.when(mockProject.getTasksByName("jar", false)).thenReturn(Collections.emptySet());
-    Assert.assertEquals(null, gradleProjectProperties.getMainClassFromJar());
+    Assert.assertNull(gradleProjectProperties.getMainClassFromJar());
   }
 
   @Test
@@ -79,7 +78,7 @@ public class GradleProjectPropertiesTest {
     manifest.attributes(ImmutableMap.of("Main-Class", "some.main.class"));
     Mockito.when(mockProject.getTasksByName("jar", false))
         .thenReturn(ImmutableSet.of(mockJar, mockJar2));
-    Assert.assertEquals(null, gradleProjectProperties.getMainClassFromJar());
+    Assert.assertNull(gradleProjectProperties.getMainClassFromJar());
   }
 
   @Test

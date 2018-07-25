@@ -29,8 +29,20 @@ public class LayerConfiguration {
   public static class Builder {
 
     private final ImmutableList.Builder<LayerEntry> layerEntries = ImmutableList.builder();
+    private String label = "";
 
     private Builder() {}
+
+    /**
+     * Sets a label for this layer.
+     *
+     * @param label the label
+     * @return this
+     */
+    public Builder setLabel(String label) {
+      this.label = label;
+      return this;
+    }
 
     /**
      * Adds an entry to the layer.
@@ -56,7 +68,7 @@ public class LayerConfiguration {
      * @return the built {@link LayerConfiguration}
      */
     public LayerConfiguration build() {
-      return new LayerConfiguration(layerEntries.build());
+      return new LayerConfiguration(label, layerEntries.build());
     }
   }
 
@@ -65,14 +77,21 @@ public class LayerConfiguration {
   }
 
   private final ImmutableList<LayerEntry> layerEntries;
+  private final String label;
 
   /**
    * Constructs a new layer configuration.
    *
+   * @param label an optional label for the layer
    * @param layerEntries the list of {@link LayerEntry}s
    */
-  private LayerConfiguration(ImmutableList<LayerEntry> layerEntries) {
+  private LayerConfiguration(String label, ImmutableList<LayerEntry> layerEntries) {
+    this.label = label;
     this.layerEntries = layerEntries;
+  }
+
+  public String getLabel() {
+    return label;
   }
 
   public ImmutableList<LayerEntry> getLayerEntries() {
