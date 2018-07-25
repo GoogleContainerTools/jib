@@ -78,6 +78,8 @@ public class JibExtension {
   private final Property<Boolean> allowInsecureRegistries;
   private final Property<Path> extraDirectory;
 
+  private final Path projectDir;
+
   // TODO: Deprecated parameters; remove these 4
   private final ListProperty<String> jvmFlags;
   private final Property<String> mainClass;
@@ -85,6 +87,7 @@ public class JibExtension {
   private final Property<ImageFormat> format;
 
   public JibExtension(Project project) {
+    projectDir = project.getProjectDir().toPath();
     ObjectFactory objectFactory = project.getObjects();
 
     from = objectFactory.newInstance(ImageConfiguration.class);
@@ -106,7 +109,7 @@ public class JibExtension {
     args.set(Collections.emptyList());
     useOnlyProjectCache.set(DEFAULT_USE_ONLY_PROJECT_CACHE);
     allowInsecureRegistries.set(DEFAULT_ALLOW_INSECURE_REGISTIRIES);
-    extraDirectory.set(resolveDefaultExtraDirectory(project.getProjectDir().toPath()));
+    extraDirectory.set(resolveDefaultExtraDirectory(projectDir));
   }
 
   /**
@@ -184,8 +187,8 @@ public class JibExtension {
     this.allowInsecureRegistries.set(allowInsecureRegistries);
   }
 
-  public void setExtraDirectory(Path extraDirectory) {
-    this.extraDirectory.set(extraDirectory);
+  public void setExtraDirectory(String extraDirectory) {
+    this.extraDirectory.set(projectDir.resolve(extraDirectory));
   }
 
   @Internal
