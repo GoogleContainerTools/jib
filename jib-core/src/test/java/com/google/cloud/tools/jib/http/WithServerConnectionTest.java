@@ -20,6 +20,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import org.junit.Assert;
 import org.junit.Test;
@@ -31,14 +32,14 @@ public class WithServerConnectionTest {
   public void testGet()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
     try (TestWebServer server = new TestWebServer(false);
-        Connection connection = new Connection(new URL(server.getEndpoint()))) {
+        Connection connection = Connection.createConnection(new URL(server.getEndpoint()))) {
       Response response = connection.send("GET", new Request.Builder().build());
 
       Assert.assertEquals(200, response.getStatusCode());
 
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       response.getBody().writeTo(out);
-      Assert.assertEquals("Hello World!", out.toString("UTF-8"));
+      Assert.assertEquals("Hello World!", out.toString(StandardCharsets.UTF_8.name()));
     }
   }
 
@@ -46,7 +47,7 @@ public class WithServerConnectionTest {
   public void testErrorOnSecondSend()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
     try (TestWebServer server = new TestWebServer(false);
-        Connection connection = new Connection(new URL(server.getEndpoint()))) {
+        Connection connection = Connection.createConnection(new URL(server.getEndpoint()))) {
       connection.send("GET", new Request.Builder().build());
       try {
         connection.send("GET", new Request.Builder().build());
@@ -61,17 +62,14 @@ public class WithServerConnectionTest {
   public void testInsecureConnection()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
     try (TestWebServer server = new TestWebServer(true);
-        Connection connection =
-            new Connection.Builder(new URL(server.getEndpoint()))
-                .doNotValidateCertificate()
-                .build()) {
+        Connection connection = Connection.createInsecureConnection(new URL(server.getEndpoint()))) {
       Response response = connection.send("GET", new Request.Builder().build());
 
       Assert.assertEquals(200, response.getStatusCode());
 
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       response.getBody().writeTo(out);
-      Assert.assertEquals("Hello World!", out.toString("UTF-8"));
+      Assert.assertEquals("Hello World!", out.toString(StandardCharsets.UTF_8.name()));
     }
   }
 }

@@ -24,6 +24,7 @@ import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.apache.ApacheHttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.io.Closeable;
 import java.io.IOException;
@@ -83,7 +84,16 @@ public class Connection implements Closeable {
     }
   }
 
-  private HttpRequestFactory requestFactory;
+  public static Connection createConnection(URL url) {
+    return new Connection(url, new ApacheHttpTransport());
+  }
+
+  public static Connection createInsecureConnection(URL url) throws GeneralSecurityException {
+    HttpTransport httpTransport = new ApacheHttpTransport.Builder().doNotValidateCertificate().build();
+    return new Connection(url, httpTransport);
+  }
+
+  private final HttpRequestFactory requestFactory;
 
   @Nullable private HttpResponse httpResponse;
 
@@ -95,11 +105,8 @@ public class Connection implements Closeable {
    *
    * @param url the url to send the request to
    */
-  public Connection(URL url) {
-    this(url, new ApacheHttpTransport());
-  }
-
-  private Connection(URL url, HttpTransport transport) {
+  @VisibleForTesting
+  Connection(URL url, HttpTransport transport) {
     this.url = new GenericUrl(url);
     requestFactory = transport.createRequestFactory();
   }

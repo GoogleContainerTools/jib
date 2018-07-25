@@ -43,9 +43,11 @@ import org.apache.http.conn.HttpHostConnectException;
  */
 class RegistryEndpointCaller<T> {
 
+  /** Creates {@link Connection} with the given URL. */
   @FunctionalInterface
   @VisibleForTesting
   static interface ConnectionFactory {
+
     Connection create(URL url) throws GeneralSecurityException;
   }
 
@@ -95,8 +97,8 @@ class RegistryEndpointCaller<T> {
         authorization,
         registryEndpointRequestProperties,
         allowInsecureRegistries,
-        Connection::new,
-        url -> new Connection.Builder(url).doNotValidateCertificate().build());
+        Connection::createConnection,
+        Connection::createInsecureConnection);
   }
 
   @VisibleForTesting

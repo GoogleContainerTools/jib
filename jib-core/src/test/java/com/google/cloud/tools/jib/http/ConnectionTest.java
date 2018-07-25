@@ -58,7 +58,7 @@ public class ConnectionTest {
   private Request fakeRequest;
   private HttpResponse mockHttpResponse;
 
-  @InjectMocks private final Connection testConnection = new Connection(fakeUrl.toURL());
+  @InjectMocks private final Connection testConnection = Connection.createConnection(fakeUrl.toURL());
 
   @Test
   public void testGet() throws IOException {
