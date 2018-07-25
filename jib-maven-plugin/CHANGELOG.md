@@ -7,6 +7,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Environment variable configuration is propagated from the base image ([#716](https://github.com/GoogleContainerTools/jib/pull/716))
+
 ### Fixed
 
 - Fixed slow image reference parsing ([#680](https://github.com/GoogleContainerTools/jib/pull/680))
