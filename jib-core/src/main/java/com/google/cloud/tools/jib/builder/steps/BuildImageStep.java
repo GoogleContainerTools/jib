@@ -29,6 +29,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
@@ -101,12 +102,13 @@ class BuildImageStep
         imageBuilder.addLayer(NonBlockingSteps.get(buildAndCacheApplicationLayerStep));
       }
 
-      // Use environment from base image if not configured
-      if (buildConfiguration.getEnvironment() == null) {
-        imageBuilder.setEnvironment(
-            NonBlockingSteps.get(pullBaseImageStep).getBaseImage().getEnvironment());
-      } else {
-        imageBuilder.setEnvironment(buildConfiguration.getEnvironment());
+      // Use environment from base image
+      imageBuilder.setEnvironment(
+          NonBlockingSteps.get(pullBaseImageStep).getBaseImage().getEnvironment());
+      if (buildConfiguration.getEnvironment() != null) {
+        for (Map.Entry<String, String> entry : buildConfiguration.getEnvironment().entrySet()) {
+          imageBuilder.setEnvironmentVariable(entry.getKey(), entry.getValue());
+        }
       }
       imageBuilder.setCreated(buildConfiguration.getCreationTime());
       imageBuilder.setEntrypoint(buildConfiguration.getEntrypoint());
