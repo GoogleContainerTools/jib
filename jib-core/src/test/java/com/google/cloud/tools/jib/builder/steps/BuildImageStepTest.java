@@ -111,7 +111,7 @@ public class BuildImageStepTest {
   public void test_propagateBaseImageConfiguration()
       throws ExecutionException, InterruptedException {
     Mockito.when(mockBuildConfiguration.getEnvironment()).thenReturn(null);
-    Mockito.when(mockBaseImage.getEnvironmentAsMap()).thenReturn(ImmutableMap.of("NAME", "VALUE"));
+    Mockito.when(mockBaseImage.getEnvironment()).thenReturn(ImmutableMap.of("NAME", "VALUE"));
 
     BuildImageStep buildImageStep =
         new BuildImageStep(
@@ -124,6 +124,6 @@ public class BuildImageStepTest {
                 mockBuildAndCacheApplicationLayerStep,
                 mockBuildAndCacheApplicationLayerStep));
     Image<CachedLayer> image = buildImageStep.getFuture().get().getFuture().get();
-    Assert.assertEquals(ImmutableMap.of("NAME", "VALUE"), image.getEnvironmentAsMap());
+    Assert.assertEquals(ImmutableMap.of("NAME", "VALUE"), image.getEnvironment());
   }
 }

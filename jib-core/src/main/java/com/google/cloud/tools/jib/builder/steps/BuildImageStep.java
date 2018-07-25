@@ -104,7 +104,7 @@ class BuildImageStep
       // Use environment from base image if not configured
       if (buildConfiguration.getEnvironment() == null) {
         imageBuilder.setEnvironment(
-            NonBlockingSteps.get(pullBaseImageStep).getBaseImage().getEnvironmentAsMap());
+            NonBlockingSteps.get(pullBaseImageStep).getBaseImage().getEnvironment());
       } else {
         imageBuilder.setEnvironment(buildConfiguration.getEnvironment());
       }

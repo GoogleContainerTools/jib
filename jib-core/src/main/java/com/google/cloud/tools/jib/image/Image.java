@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.configuration.Port;
-import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.time.Instant;
@@ -32,7 +31,7 @@ public class Image<T extends Layer> {
   public static class Builder<T extends Layer> {
 
     private final ImageLayers.Builder<T> imageLayersBuilder = ImageLayers.builder();
-    private ImmutableList.Builder<String> environmentBuilder = ImmutableList.builder();
+    private ImmutableMap.Builder<String, String> environmentBuilder = ImmutableMap.builder();
 
     @Nullable private Instant created;
     @Nullable private ImmutableList<String> entrypoint;
@@ -58,11 +57,9 @@ public class Image<T extends Layer> {
      */
     public Builder<T> setEnvironment(@Nullable Map<String, String> environment) {
       if (environment == null) {
-        this.environmentBuilder = ImmutableList.builder();
+        this.environmentBuilder = ImmutableMap.builder();
       } else {
-        for (Map.Entry<String, String> environmentVariable : environment.entrySet()) {
-          setEnvironmentVariable(environmentVariable.getKey(), environmentVariable.getValue());
-        }
+        this.environmentBuilder.putAll(ImmutableMap.copyOf(environment));
       }
       return this;
     }
@@ -75,18 +72,7 @@ public class Image<T extends Layer> {
      * @return this
      */
     public Builder<T> setEnvironmentVariable(String name, String value) {
-      environmentBuilder.add(name + "=" + value);
-      return this;
-    }
-
-    /**
-     * Adds an environment variable definition in the format {@code NAME=VALUE}.
-     *
-     * @param environmentVariableDefinition the definition to add
-     * @return this
-     */
-    public Builder<T> addEnvironmentVariableDefinition(String environmentVariableDefinition) {
-      environmentBuilder.add(environmentVariableDefinition);
+      environmentBuilder.put(name, value);
       return this;
     }
 
@@ -169,7 +155,7 @@ public class Image<T extends Layer> {
   private final ImageLayers<T> layers;
 
   /** Environment variable definitions for running the image, in the format {@code NAME=VALUE}. */
-  @Nullable private final ImmutableList<String> environment;
+  @Nullable private final ImmutableMap<String, String> environment;
 
   /** Initial command to run when running the image. */
   @Nullable private final ImmutableList<String> entrypoint;
@@ -183,7 +169,7 @@ public class Image<T extends Layer> {
   private Image(
       @Nullable Instant created,
       ImageLayers<T> layers,
-      @Nullable ImmutableList<String> environment,
+      @Nullable ImmutableMap<String, String> environment,
       @Nullable ImmutableList<String> entrypoint,
       @Nullable ImmutableList<String> javaArguments,
       @Nullable ImmutableList<Port> exposedPorts) {
@@ -201,27 +187,8 @@ public class Image<T extends Layer> {
   }
 
   @Nullable
-  public ImmutableList<String> getEnvironment() {
+  public ImmutableMap<String, String> getEnvironment() {
     return environment;
-  }
-
-  /**
-   * Converts the list of environment variables in the format "NAME=VALUE" to a map of {@code
-   * {"NAME", "VALUE"}} pairs.
-   *
-   * @return the map
-   */
-  @Nullable
-  public ImmutableMap<String, String> getEnvironmentAsMap() {
-    if (environment == null) {
-      return null;
-    }
-    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    for (String variable : environment) {
-      List<String> keyValue = Splitter.on('=').splitToList(variable);
-      builder.put(keyValue.get(0), keyValue.get(1));
-    }
-    return builder.build();
   }
 
   @Nullable

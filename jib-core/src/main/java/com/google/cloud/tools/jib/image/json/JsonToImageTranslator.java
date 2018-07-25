@@ -28,6 +28,7 @@ import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.ReferenceLayer;
 import com.google.cloud.tools.jib.image.ReferenceNoDiffIdLayer;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
@@ -139,7 +140,14 @@ public class JsonToImageTranslator {
 
     if (containerConfigurationTemplate.getContainerEnvironment() != null) {
       for (String environmentVariable : containerConfigurationTemplate.getContainerEnvironment()) {
-        imageBuilder.addEnvironmentVariableDefinition(environmentVariable);
+        if (!environmentVariable.contains("=")) {
+          throw new BadContainerConfigurationFormatException(
+              "Invalid environment variable definition: " + environmentVariable);
+        }
+        List<String> environmentVariableElements =
+            Splitter.on('=').splitToList(environmentVariable);
+        imageBuilder.setEnvironmentVariable(
+            environmentVariableElements.get(0), environmentVariableElements.get(1));
       }
     }
 

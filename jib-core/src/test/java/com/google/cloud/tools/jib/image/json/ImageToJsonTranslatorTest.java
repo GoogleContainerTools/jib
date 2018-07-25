@@ -111,6 +111,13 @@ public class ImageToJsonTranslatorTest {
     Assert.assertEquals(expected, ImageToJsonTranslator.portListToMap(input));
   }
 
+  @Test
+  public void testEnvironmentMapToList() {
+    ImmutableMap<String, String> input = ImmutableMap.of("NAME1", "VALUE1", "NAME2", "VALUE2");
+    ImmutableList<String> expected = ImmutableList.of("NAME1=VALUE1", "NAME2=VALUE2");
+    Assert.assertEquals(expected, ImageToJsonTranslator.environmentMapToList(input));
+  }
+
   /** Tests translation of image to {@link BuildableManifestTemplate}. */
   private <T extends BuildableManifestTemplate> void testGetManifest(
       Class<T> manifestTemplateClass, String translatedJsonFilename)
