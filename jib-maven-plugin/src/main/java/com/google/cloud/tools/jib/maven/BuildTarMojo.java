@@ -92,7 +92,8 @@ public class BuildTarMojo extends JibPluginConfiguration {
             .setExposedPorts(ExposedPortsParser.parse(getExposedPorts()))
             .setAllowInsecureRegistries(getAllowInsecureRegistries())
             .setLayerConfigurations(mavenProjectProperties.getLayerConfigurations())
-            .setEntrypoint(JavaEntrypointConstructor.makeDefaultEntrypoint(getJvmFlags(), mainClass));
+            .setEntrypoint(
+                JavaEntrypointConstructor.makeDefaultEntrypoint(getJvmFlags(), mainClass));
     CacheConfiguration applicationLayersCacheConfiguration =
         CacheConfiguration.forPath(mavenProjectProperties.getCacheDirectory());
     buildConfigurationBuilder.setApplicationLayersCacheConfiguration(
