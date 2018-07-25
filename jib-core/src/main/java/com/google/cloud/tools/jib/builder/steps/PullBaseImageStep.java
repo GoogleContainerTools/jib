@@ -40,6 +40,7 @@ import com.google.cloud.tools.jib.registry.RegistryAuthenticator;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryException;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -62,7 +63,8 @@ class PullBaseImageStep
     private final Image<Layer> baseImage;
     private final @Nullable Authorization baseImageAuthorization;
 
-    private BaseImageWithAuthorization(
+    @VisibleForTesting
+    BaseImageWithAuthorization(
         Image<Layer> baseImage, @Nullable Authorization baseImageAuthorization) {
       this.baseImage = baseImage;
       this.baseImageAuthorization = baseImageAuthorization;

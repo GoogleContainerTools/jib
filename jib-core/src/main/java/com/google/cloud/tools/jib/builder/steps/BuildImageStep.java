@@ -39,6 +39,7 @@ class BuildImageStep
   private static final String DESCRIPTION = "Building container configuration";
 
   private final BuildConfiguration buildConfiguration;
+  private final PullBaseImageStep pullBaseImageStep;
   private final PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep;
   private final ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps;
   private final ImmutableList<String> entrypoint;
@@ -49,17 +50,20 @@ class BuildImageStep
   BuildImageStep(
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
+      PullBaseImageStep pullBaseImageStep,
       PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep,
       ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps,
       ImmutableList<String> entrypoint) {
     this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
+    this.pullBaseImageStep = pullBaseImageStep;
     this.pullAndCacheBaseImageLayersStep = pullAndCacheBaseImageLayersStep;
     this.buildAndCacheApplicationLayerSteps = buildAndCacheApplicationLayerSteps;
     this.entrypoint = entrypoint;
 
     listenableFuture =
-        Futures.whenAllSucceed(pullAndCacheBaseImageLayersStep.getFuture())
+        Futures.whenAllSucceed(
+                pullBaseImageStep.getFuture(), pullAndCacheBaseImageLayersStep.getFuture())
             .call(this, listeningExecutorService);
   }
 
@@ -99,8 +103,15 @@ class BuildImageStep
           buildAndCacheApplicationLayerSteps) {
         imageBuilder.addLayer(NonBlockingSteps.get(buildAndCacheApplicationLayerStep));
       }
+
+      // Use environment from base image if not configured
+      if (buildConfiguration.getEnvironment() == null) {
+        imageBuilder.setEnvironment(
+            NonBlockingSteps.get(pullBaseImageStep).getBaseImage().getEnvironmentAsMap());
+      } else {
+        imageBuilder.setEnvironment(buildConfiguration.getEnvironment());
+      }
       imageBuilder.setCreated(buildConfiguration.getCreationTime());
-      imageBuilder.setEnvironment(buildConfiguration.getEnvironment());
       imageBuilder.setEntrypoint(entrypoint);
       imageBuilder.setJavaArguments(buildConfiguration.getJavaArguments());
       imageBuilder.setExposedPorts(buildConfiguration.getExposedPorts());

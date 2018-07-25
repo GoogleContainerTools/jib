@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.cache.CachedLayerWithMetadata;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
+import com.google.cloud.tools.jib.image.Layer;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
@@ -46,6 +47,8 @@ public class BuildImageStepTest {
 
   @Mock private BuildConfiguration mockBuildConfiguration;
   @Mock private BuildLogger mockBuildLogger;
+  @Mock private PullBaseImageStep mockPullBaseImageStep;
+  @Mock private Image<Layer> mockBaseImage;
   @Mock private PullAndCacheBaseImageLayersStep mockPullAndCacheBaseImageLayersStep;
   @Mock private PullAndCacheBaseImageLayerStep mockPullAndCacheBaseImageLayerStep;
   @Mock private BuildAndCacheApplicationLayerStep mockBuildAndCacheApplicationLayerStep;
@@ -69,6 +72,8 @@ public class BuildImageStepTest {
     Mockito.when(mockBuildConfiguration.getJavaArguments()).thenReturn(ImmutableList.of());
     Mockito.when(mockBuildConfiguration.getExposedPorts()).thenReturn(ImmutableList.of());
 
+    Mockito.when(mockPullAndCacheBaseImageLayerStep.getFuture())
+        .thenReturn(Futures.immediateFuture(testCachedLayer));
     Mockito.when(mockPullAndCacheBaseImageLayersStep.getFuture())
         .thenReturn(
             Futures.immediateFuture(
@@ -76,8 +81,10 @@ public class BuildImageStepTest {
                     mockPullAndCacheBaseImageLayerStep,
                     mockPullAndCacheBaseImageLayerStep,
                     mockPullAndCacheBaseImageLayerStep)));
-    Mockito.when(mockPullAndCacheBaseImageLayerStep.getFuture())
-        .thenReturn(Futures.immediateFuture(testCachedLayer));
+    Mockito.when(mockPullBaseImageStep.getFuture())
+        .thenReturn(
+            Futures.immediateFuture(
+                new PullBaseImageStep.BaseImageWithAuthorization(mockBaseImage, null)));
     Mockito.when(mockBuildAndCacheApplicationLayerStep.getFuture())
         .thenReturn(Futures.immediateFuture(testCachedLayer));
   }
@@ -88,6 +95,7 @@ public class BuildImageStepTest {
         new BuildImageStep(
             MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()),
             mockBuildConfiguration,
+            mockPullBaseImageStep,
             mockPullAndCacheBaseImageLayersStep,
             ImmutableList.of(
                 mockBuildAndCacheApplicationLayerStep,
@@ -97,5 +105,26 @@ public class BuildImageStepTest {
     Image<CachedLayer> image = buildImageStep.getFuture().get().getFuture().get();
     Assert.assertEquals(
         testDescriptorDigest, image.getLayers().asList().get(0).getBlobDescriptor().getDigest());
+  }
+
+  @Test
+  public void test_propagateBaseImageConfiguration()
+      throws ExecutionException, InterruptedException {
+    Mockito.when(mockBuildConfiguration.getEnvironment()).thenReturn(null);
+    Mockito.when(mockBaseImage.getEnvironmentAsMap()).thenReturn(ImmutableMap.of("NAME", "VALUE"));
+
+    BuildImageStep buildImageStep =
+        new BuildImageStep(
+            MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()),
+            mockBuildConfiguration,
+            mockPullBaseImageStep,
+            mockPullAndCacheBaseImageLayersStep,
+            ImmutableList.of(
+                mockBuildAndCacheApplicationLayerStep,
+                mockBuildAndCacheApplicationLayerStep,
+                mockBuildAndCacheApplicationLayerStep),
+            ImmutableList.of());
+    Image<CachedLayer> image = buildImageStep.getFuture().get().getFuture().get();
+    Assert.assertEquals(ImmutableMap.of("NAME", "VALUE"), image.getEnvironmentAsMap());
   }
 }

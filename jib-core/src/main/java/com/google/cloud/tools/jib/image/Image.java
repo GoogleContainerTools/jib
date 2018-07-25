@@ -17,7 +17,9 @@
 package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.configuration.Port;
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -151,7 +153,7 @@ public class Image<T extends Layer> {
   private final ImageLayers<T> layers;
 
   /** Environment variable definitions for running the image, in the format {@code NAME=VALUE}. */
-  private final ImmutableList<String> environmentBuilder;
+  private final ImmutableList<String> environment;
 
   /** Initial command to run when running the image. */
   private final ImmutableList<String> entrypoint;
@@ -171,7 +173,7 @@ public class Image<T extends Layer> {
       ImmutableList<Port> exposedPorts) {
     this.created = created;
     this.layers = layers;
-    this.environmentBuilder = environment;
+    this.environment = environment;
     this.entrypoint = entrypoint;
     this.javaArguments = javaArguments;
     this.exposedPorts = exposedPorts;
@@ -183,7 +185,22 @@ public class Image<T extends Layer> {
   }
 
   public ImmutableList<String> getEnvironment() {
-    return environmentBuilder;
+    return environment;
+  }
+
+  /**
+   * Converts the list of environment variables in the format "NAME=VALUE" to a map of {@code
+   * {"NAME", "VALUE"}} pairs.
+   *
+   * @return the map
+   */
+  public ImmutableMap<String, String> getEnvironmentAsMap() {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    for (String variable : environment) {
+      List<String> keyValue = Splitter.on('=').splitToList(variable);
+      builder.put(keyValue.get(0), keyValue.get(1));
+    }
+    return builder.build();
   }
 
   public ImmutableList<String> getEntrypoint() {

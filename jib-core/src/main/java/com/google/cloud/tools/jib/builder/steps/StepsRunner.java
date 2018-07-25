@@ -140,6 +140,7 @@ public class StepsRunner {
         new BuildImageStep(
             listeningExecutorService,
             buildConfiguration,
+            Preconditions.checkNotNull(pullBaseImageStep),
             Preconditions.checkNotNull(pullAndCacheBaseImageLayersStep),
             Preconditions.checkNotNull(buildAndCacheApplicationLayerSteps),
             entrypoint);
