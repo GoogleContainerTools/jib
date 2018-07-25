@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.io.File;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
@@ -187,8 +188,8 @@ public class JibExtension {
     this.allowInsecureRegistries.set(allowInsecureRegistries);
   }
 
-  public void setExtraDirectory(String extraDirectory) {
-    this.extraDirectory.set(projectDir.resolve(extraDirectory));
+  public void setExtraDirectory(File extraDirectory) {
+    this.extraDirectory.set(extraDirectory.toPath());
   }
 
   @Internal
