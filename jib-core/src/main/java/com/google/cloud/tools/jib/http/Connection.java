@@ -50,7 +50,7 @@ public class Connection implements Closeable {
   /**
    * Returns a factory for {@link Connection}.
    *
-   * @return {@link Connection} factory
+   * @return {@link Connection} factory, a function that generates a {@link Connection} to a URL
    */
   public static Function<URL, Connection> getConnectionFactory() {
     /*
@@ -69,7 +69,7 @@ public class Connection implements Closeable {
    * Returns a factory for {@link Connection} that does not verify TLS peer verification.
    *
    * @throws GeneralSecurityException if unable to turn off TLS peer verification
-   * @return {@link Connection} factory
+   * @return {@link Connection} factory, a function that generates a {@link Connection} to a URL
    */
   public static Function<URL, Connection> getInsecureConnectionFactory()
       throws GeneralSecurityException {
