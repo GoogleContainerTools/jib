@@ -14,11 +14,9 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.builder;
+package com.google.cloud.tools.jib.configuration;
 
-import com.google.cloud.tools.jib.configuration.CacheConfiguration;
-import com.google.cloud.tools.jib.configuration.LayerConfiguration;
-import com.google.cloud.tools.jib.configuration.Port;
+import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.configuration.Port.Protocol;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
