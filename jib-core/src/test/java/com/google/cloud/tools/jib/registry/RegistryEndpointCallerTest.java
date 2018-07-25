@@ -32,6 +32,7 @@ import com.google.cloud.tools.jib.registry.json.ErrorResponseTemplate;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
@@ -114,12 +115,14 @@ public class RegistryEndpointCallerTest {
   }
 
   @Test
-  public void testCall_httpsPeerUnverified() throws IOException, RegistryException {
+  public void testCall_httpsPeerUnverified()
+      throws IOException, RegistryException, GeneralSecurityException {
     verifyRetriesWithHttp(SSLPeerUnverifiedException.class);
   }
 
   @Test
-  public void testCall_retryWithHttp() throws IOException, RegistryException {
+  public void testCall_retryWithHttp()
+      throws IOException, RegistryException, GeneralSecurityException {
     verifyRetriesWithHttp(HttpHostConnectException.class);
   }
 
@@ -217,17 +220,20 @@ public class RegistryEndpointCallerTest {
   }
 
   @Test
-  public void testCall_temporaryRedirect() throws IOException, RegistryException {
+  public void testCall_temporaryRedirect()
+      throws IOException, RegistryException, GeneralSecurityException {
     verifyRetriesWithNewLocation(HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT);
   }
 
   @Test
-  public void testCall_movedPermanently() throws IOException, RegistryException {
+  public void testCall_movedPermanently()
+      throws IOException, RegistryException, GeneralSecurityException {
     verifyRetriesWithNewLocation(HttpStatusCodes.STATUS_CODE_MOVED_PERMANENTLY);
   }
 
   @Test
-  public void testCall_permanentRedirect() throws IOException, RegistryException {
+  public void testCall_permanentRedirect()
+      throws IOException, RegistryException, GeneralSecurityException {
     verifyRetriesWithNewLocation(RegistryEndpointCaller.STATUS_CODE_PERMANENT_REDIRECT);
   }
 
@@ -254,7 +260,8 @@ public class RegistryEndpointCallerTest {
   }
 
   @Test
-  public void testHttpTimeout_propertyNotSet() throws IOException, RegistryException {
+  public void testHttpTimeout_propertyNotSet()
+      throws IOException, RegistryException, GeneralSecurityException {
     MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
     Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
 
@@ -267,7 +274,8 @@ public class RegistryEndpointCallerTest {
   }
 
   @Test
-  public void testHttpTimeout_stringValue() throws IOException, RegistryException {
+  public void testHttpTimeout_stringValue()
+      throws IOException, RegistryException, GeneralSecurityException {
     MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
     Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
 
@@ -278,7 +286,8 @@ public class RegistryEndpointCallerTest {
   }
 
   @Test
-  public void testHttpTimeout_negativeValue() throws IOException, RegistryException {
+  public void testHttpTimeout_negativeValue()
+      throws IOException, RegistryException, GeneralSecurityException {
     MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
     Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
 
@@ -291,7 +300,8 @@ public class RegistryEndpointCallerTest {
   }
 
   @Test
-  public void testHttpTimeout_0accepted() throws IOException, RegistryException {
+  public void testHttpTimeout_0accepted()
+      throws IOException, RegistryException, GeneralSecurityException {
     System.setProperty("jib.httpTimeout", "0");
 
     MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
@@ -303,7 +313,7 @@ public class RegistryEndpointCallerTest {
   }
 
   @Test
-  public void testHttpTimeout() throws IOException, RegistryException {
+  public void testHttpTimeout() throws IOException, RegistryException, GeneralSecurityException {
     System.setProperty("jib.httpTimeout", "7593");
 
     MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
@@ -316,7 +326,7 @@ public class RegistryEndpointCallerTest {
 
   /** Verifies a request is retried with HTTP protocol if {@code exceptionClass} is thrown. */
   private void verifyRetriesWithHttp(Class<? extends Throwable> exceptionClass)
-      throws IOException, RegistryException {
+      throws IOException, RegistryException, GeneralSecurityException {
     // Has mockConnection.send throw first, then succeed.
     Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
         .thenThrow(Mockito.mock(exceptionClass))
@@ -390,7 +400,7 @@ public class RegistryEndpointCallerTest {
    * Location} header.
    */
   private void verifyRetriesWithNewLocation(int httpStatusCode)
-      throws IOException, RegistryException {
+      throws IOException, RegistryException, GeneralSecurityException {
     // Mocks a response for temporary redirect to a new location.
     Mockito.when(mockHttpResponse.getStatusCode()).thenReturn(httpStatusCode);
     Mockito.when(mockHttpResponse.getHeaders())
@@ -421,6 +431,7 @@ public class RegistryEndpointCallerTest {
         Authorizations.withBasicToken("token"),
         new RegistryEndpointRequestProperties("serverUrl", "imageName"),
         allowInsecure,
-        mockConnectionFactory);
+        mockConnectionFactory,
+        null);
   }
 }

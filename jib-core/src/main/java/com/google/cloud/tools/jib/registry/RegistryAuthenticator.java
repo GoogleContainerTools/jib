@@ -86,7 +86,7 @@ public class RegistryAuthenticator {
         throw new RegistryAuthenticationFailedException(ex);
 
       } catch (InsecureRegistryException ex) {
-        // HTTP is not allowed, so just return null.
+        // Cannot skip certificate validation or use HTTP, so just return null.
         return null;
       }
     }
@@ -238,7 +238,7 @@ public class RegistryAuthenticator {
     try {
       URL authenticationUrl = getAuthenticationUrl(scope);
 
-      try (Connection connection = new Connection(authenticationUrl)) {
+      try (Connection connection = Connection.getConnectionFactory().apply(authenticationUrl)) {
         Request.Builder requestBuilder =
             Request.builder().setHttpTimeout(Integer.getInteger("jib.httpTimeout"));
         if (authorization != null) {

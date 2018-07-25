@@ -51,15 +51,18 @@ class RegistryEndpointCaller<T> {
 
   private static final String DEFAULT_PROTOCOL = "https";
 
-  /** Makes a {@link Connection} to the specified {@link URL}. */
-  private final Function<URL, Connection> connectionFactory;
-
   private final URL initialRequestUrl;
   private final String userAgent;
   private final RegistryEndpointProvider<T> registryEndpointProvider;
   @Nullable private final Authorization authorization;
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   private final boolean allowInsecureRegistries;
+
+  /** Makes a {@link Connection} to the specified {@link URL}. */
+  private final Function<URL, Connection> connectionFactory;
+
+  /** Makes an insecure {@link Connection} to the specified {@link URL}. */
+  @Nullable private Function<URL, Connection> insecureConnectionFactory;
 
   /**
    * Constructs with parameters for making the request.
@@ -87,7 +90,8 @@ class RegistryEndpointCaller<T> {
         authorization,
         registryEndpointRequestProperties,
         allowInsecureRegistries,
-        Connection::new);
+        Connection.getConnectionFactory(),
+        null /* might never be used, so create lazily to delay throwing potential GeneralSecurityException */);
   }
 
   @VisibleForTesting
@@ -98,7 +102,8 @@ class RegistryEndpointCaller<T> {
       @Nullable Authorization authorization,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
       boolean allowInsecureRegistries,
-      Function<URL, Connection> connectionFactory)
+      Function<URL, Connection> connectionFactory,
+      @Nullable Function<URL, Connection> insecureConnectionFactory)
       throws MalformedURLException {
     this.initialRequestUrl =
         registryEndpointProvider.getApiRoute(DEFAULT_PROTOCOL + "://" + apiRouteBase);
@@ -108,6 +113,7 @@ class RegistryEndpointCaller<T> {
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     this.allowInsecureRegistries = allowInsecureRegistries;
     this.connectionFactory = connectionFactory;
+    this.insecureConnectionFactory = insecureConnectionFactory;
   }
 
   /**

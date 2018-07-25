@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.http;
 
 import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.apache.ApacheHttpTransport;
 import java.io.IOException;
 import java.util.function.BiFunction;
 
@@ -27,11 +28,12 @@ import java.util.function.BiFunction;
  */
 public class MockConnection extends Connection {
 
-  private BiFunction<String, Request, Response> responseSupplier;
+  private final BiFunction<String, Request, Response> responseSupplier;
   private Integer httpTimeout;
 
   public MockConnection(BiFunction<String, Request, Response> responseSupplier) {
-    super(new GenericUrl("ftp://non-exisiting.example.url.ever").toURL());
+    super(
+        new GenericUrl("ftp://non-exisiting.example.url.ever").toURL(), new ApacheHttpTransport());
     this.responseSupplier = responseSupplier;
   }
 
