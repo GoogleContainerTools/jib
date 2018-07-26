@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.configuration.Port.Protocol;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import java.time.Instant;
 import java.util.Arrays;
 import org.junit.Assert;
@@ -45,9 +46,6 @@ public class ImageTest {
 
   @Test
   public void test_smokeTest() throws LayerPropertyNotFoundException {
-    ImmutableList<String> expectedEnvironment =
-        ImmutableList.of("crepecake=is great", "VARIABLE=VALUE");
-
     Image<Layer> image =
         Image.builder()
             .setCreated(Instant.ofEpochSecond(10000))
@@ -63,7 +61,8 @@ public class ImageTest {
     Assert.assertEquals(
         mockDescriptorDigest, image.getLayers().get(0).getBlobDescriptor().getDigest());
     Assert.assertEquals(Instant.ofEpochSecond(10000), image.getCreated());
-    Assert.assertEquals(expectedEnvironment, image.getEnvironment());
+    Assert.assertEquals(
+        ImmutableMap.of("crepecake", "is great", "VARIABLE", "VALUE"), image.getEnvironment());
     Assert.assertEquals(Arrays.asList("some", "command"), image.getEntrypoint());
     Assert.assertEquals(Arrays.asList("arg1", "arg2"), image.getJavaArguments());
     Assert.assertEquals(

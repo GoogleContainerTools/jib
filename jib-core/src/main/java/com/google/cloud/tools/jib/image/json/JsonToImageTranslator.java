@@ -47,7 +47,17 @@ public class JsonToImageTranslator {
    *
    * <p>Example matches: 100, 1000/tcp, 2000/udp
    */
-  private static final Pattern portPattern = Pattern.compile("(\\d+)(?:/(tcp|udp))?");
+  private static final Pattern PORT_PATTERN =
+      Pattern.compile("(?<portNum>\\d+)(?:/(?<protocol>tcp|udp))?");
+
+  /**
+   * Pattern used for parsing environment variables in the format {@code NAME=VALUE}. {@code NAME}
+   * should not contain an '='.
+   *
+   * <p>Example matches: NAME=VALUE, A12345=$$$$$
+   */
+  @VisibleForTesting
+  static final Pattern ENVIRONMENT_PATTERN = Pattern.compile("(?<name>[^=]+)=(?<value>.*)");
 
   /**
    * Translates {@link V21ManifestTemplate} to {@link Image}.
@@ -139,7 +149,12 @@ public class JsonToImageTranslator {
 
     if (containerConfigurationTemplate.getContainerEnvironment() != null) {
       for (String environmentVariable : containerConfigurationTemplate.getContainerEnvironment()) {
-        imageBuilder.addEnvironmentVariableDefinition(environmentVariable);
+        Matcher matcher = ENVIRONMENT_PATTERN.matcher(environmentVariable);
+        if (!matcher.matches()) {
+          throw new BadContainerConfigurationFormatException(
+              "Invalid environment variable definition: " + environmentVariable);
+        }
+        imageBuilder.setEnvironmentVariable(matcher.group("name"), matcher.group("value"));
       }
     }
 
@@ -162,14 +177,14 @@ public class JsonToImageTranslator {
     ImmutableList.Builder<Port> ports = new ImmutableList.Builder<>();
     for (Map.Entry<String, Map<?, ?>> entry : portMap.entrySet()) {
       String port = entry.getKey();
-      Matcher matcher = portPattern.matcher(port);
+      Matcher matcher = PORT_PATTERN.matcher(port);
       if (!matcher.matches()) {
         throw new BadContainerConfigurationFormatException(
             "Invalid port configuration: '" + port + "'.");
       }
 
-      int portNumber = Integer.parseInt(matcher.group(1));
-      String protocol = matcher.group(2);
+      int portNumber = Integer.parseInt(matcher.group("portNum"));
+      String protocol = matcher.group("protocol");
       ports.add(new Port(portNumber, Protocol.getFromString(protocol)));
     }
     return ports.build();

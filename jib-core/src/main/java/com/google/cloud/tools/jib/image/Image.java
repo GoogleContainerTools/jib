@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.configuration.Port;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -30,7 +31,7 @@ public class Image<T extends Layer> {
   public static class Builder<T extends Layer> {
 
     private final ImageLayers.Builder<T> imageLayersBuilder = ImageLayers.builder();
-    private ImmutableList.Builder<String> environmentBuilder = ImmutableList.builder();
+    private ImmutableMap.Builder<String, String> environmentBuilder = ImmutableMap.builder();
 
     @Nullable private Instant created;
     @Nullable private ImmutableList<String> entrypoint;
@@ -49,18 +50,14 @@ public class Image<T extends Layer> {
     }
 
     /**
-     * Sets the environment with a map from environment variable names to values.
+     * Adds a map of environment variables to the current map.
      *
      * @param environment the map of environment variables
      * @return this
      */
-    public Builder<T> setEnvironment(@Nullable Map<String, String> environment) {
-      if (environment == null) {
-        this.environmentBuilder = ImmutableList.builder();
-      } else {
-        for (Map.Entry<String, String> environmentVariable : environment.entrySet()) {
-          setEnvironmentVariable(environmentVariable.getKey(), environmentVariable.getValue());
-        }
+    public Builder<T> addEnvironment(@Nullable Map<String, String> environment) {
+      if (environment != null) {
+        this.environmentBuilder.putAll(environment);
       }
       return this;
     }
@@ -73,18 +70,7 @@ public class Image<T extends Layer> {
      * @return this
      */
     public Builder<T> setEnvironmentVariable(String name, String value) {
-      environmentBuilder.add(name + "=" + value);
-      return this;
-    }
-
-    /**
-     * Adds an environment variable definition in the format {@code NAME=VALUE}.
-     *
-     * @param environmentVariableDefinition the definition to add
-     * @return this
-     */
-    public Builder<T> addEnvironmentVariableDefinition(String environmentVariableDefinition) {
-      environmentBuilder.add(environmentVariableDefinition);
+      environmentBuilder.put(name, value);
       return this;
     }
 
@@ -167,7 +153,7 @@ public class Image<T extends Layer> {
   private final ImageLayers<T> layers;
 
   /** Environment variable definitions for running the image, in the format {@code NAME=VALUE}. */
-  @Nullable private final ImmutableList<String> environment;
+  @Nullable private final ImmutableMap<String, String> environment;
 
   /** Initial command to run when running the image. */
   @Nullable private final ImmutableList<String> entrypoint;
@@ -181,7 +167,7 @@ public class Image<T extends Layer> {
   private Image(
       @Nullable Instant created,
       ImageLayers<T> layers,
-      @Nullable ImmutableList<String> environment,
+      @Nullable ImmutableMap<String, String> environment,
       @Nullable ImmutableList<String> entrypoint,
       @Nullable ImmutableList<String> javaArguments,
       @Nullable ImmutableList<Port> exposedPorts) {
@@ -199,7 +185,7 @@ public class Image<T extends Layer> {
   }
 
   @Nullable
-  public ImmutableList<String> getEnvironment() {
+  public ImmutableMap<String, String> getEnvironment() {
     return environment;
   }
 

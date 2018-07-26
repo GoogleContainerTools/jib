@@ -39,6 +39,7 @@ class BuildImageStep
   private static final String DESCRIPTION = "Building container configuration";
 
   private final BuildConfiguration buildConfiguration;
+  private final PullBaseImageStep pullBaseImageStep;
   private final PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep;
   private final ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps;
 
@@ -48,15 +49,18 @@ class BuildImageStep
   BuildImageStep(
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
+      PullBaseImageStep pullBaseImageStep,
       PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep,
       ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps) {
     this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
+    this.pullBaseImageStep = pullBaseImageStep;
     this.pullAndCacheBaseImageLayersStep = pullAndCacheBaseImageLayersStep;
     this.buildAndCacheApplicationLayerSteps = buildAndCacheApplicationLayerSteps;
 
     listenableFuture =
-        Futures.whenAllSucceed(pullAndCacheBaseImageLayersStep.getFuture())
+        Futures.whenAllSucceed(
+                pullBaseImageStep.getFuture(), pullAndCacheBaseImageLayersStep.getFuture())
             .call(this, listeningExecutorService);
   }
 
@@ -96,8 +100,13 @@ class BuildImageStep
           buildAndCacheApplicationLayerSteps) {
         imageBuilder.addLayer(NonBlockingSteps.get(buildAndCacheApplicationLayerStep));
       }
+
+      // Start with environment from base image and overlay build configuration
+      imageBuilder.addEnvironment(
+          NonBlockingSteps.get(pullBaseImageStep).getBaseImage().getEnvironment());
+      imageBuilder.addEnvironment(buildConfiguration.getEnvironment());
+
       imageBuilder.setCreated(buildConfiguration.getCreationTime());
-      imageBuilder.setEnvironment(buildConfiguration.getEnvironment());
       imageBuilder.setEntrypoint(buildConfiguration.getEntrypoint());
       imageBuilder.setJavaArguments(buildConfiguration.getJavaArguments());
       imageBuilder.setExposedPorts(buildConfiguration.getExposedPorts());

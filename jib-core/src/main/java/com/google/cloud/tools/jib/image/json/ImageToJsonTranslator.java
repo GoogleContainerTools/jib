@@ -24,6 +24,8 @@ import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedMap;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
@@ -67,6 +69,27 @@ public class ImageToJsonTranslator {
     return result.build();
   }
 
+  /**
+   * Converts the map of environment variables to a list with items in the format "NAME=VALUE".
+   *
+   * @return the list
+   */
+  @VisibleForTesting
+  @Nullable
+  static ImmutableList<String> environmentMapToList(@Nullable Map<String, String> environment) {
+    if (environment == null) {
+      return null;
+    }
+    Preconditions.checkArgument(
+        environment.keySet().stream().noneMatch(key -> key.contains("=")),
+        "Illegal environment variable: name cannot contain '='");
+    return environment
+        .entrySet()
+        .stream()
+        .map(entry -> entry.getKey() + "=" + entry.getValue())
+        .collect(ImmutableList.toImmutableList());
+  }
+
   private final Image<CachedLayer> image;
 
   /**
@@ -96,7 +119,7 @@ public class ImageToJsonTranslator {
     template.setCreated(image.getCreated() == null ? null : image.getCreated().toString());
 
     // Adds the environment variables.
-    template.setContainerEnvironment(image.getEnvironment());
+    template.setContainerEnvironment(environmentMapToList(image.getEnvironment()));
 
     // Sets the entrypoint.
     template.setContainerEntrypoint(image.getEntrypoint());

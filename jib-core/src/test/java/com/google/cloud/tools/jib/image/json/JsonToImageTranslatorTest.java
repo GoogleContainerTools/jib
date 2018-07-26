@@ -37,6 +37,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -110,6 +111,31 @@ public class JsonToImageTranslatorTest {
     }
   }
 
+  @Test
+  public void testJsonToImageTranslatorRegex() {
+    assertGoodEnvironmentPattern("NAME=VALUE", "NAME", "VALUE");
+    assertGoodEnvironmentPattern("A1203921=www=ww", "A1203921", "www=ww");
+    assertGoodEnvironmentPattern("&*%(&#$(*@(%&@$*$(=", "&*%(&#$(*@(%&@$*$(", "");
+    assertGoodEnvironmentPattern("m_a_8943=100", "m_a_8943", "100");
+    assertGoodEnvironmentPattern("A_B_C_D=*****", "A_B_C_D", "*****");
+
+    assertBadEnvironmentPattern("=================");
+    assertBadEnvironmentPattern("A_B_C");
+  }
+
+  private void assertGoodEnvironmentPattern(
+      String input, String expectedName, String expectedValue) {
+    Matcher matcher = JsonToImageTranslator.ENVIRONMENT_PATTERN.matcher(input);
+    Assert.assertTrue(matcher.matches());
+    Assert.assertEquals(expectedName, matcher.group("name"));
+    Assert.assertEquals(expectedValue, matcher.group("value"));
+  }
+
+  private void assertBadEnvironmentPattern(String input) {
+    Matcher matcher = JsonToImageTranslator.ENVIRONMENT_PATTERN.matcher(input);
+    Assert.assertFalse(matcher.matches());
+  }
+
   private <T extends BuildableManifestTemplate> void testToImage_buildable(
       String jsonFilename, Class<T> manifestTemplateClass)
       throws IOException, LayerPropertyNotFoundException, LayerCountMismatchException,
@@ -144,7 +170,7 @@ public class JsonToImageTranslatorTest {
         layers.get(0).getDiffId());
     Assert.assertEquals(Instant.ofEpochSecond(20), image.getCreated());
     Assert.assertEquals(Arrays.asList("some", "entrypoint", "command"), image.getEntrypoint());
-    Assert.assertEquals(Arrays.asList("VAR1=VAL1", "VAR2=VAL2"), image.getEnvironment());
+    Assert.assertEquals(ImmutableMap.of("VAR1", "VAL1", "VAR2", "VAL2"), image.getEnvironment());
     Assert.assertEquals(
         ImmutableList.of(
             new Port(1000, Protocol.TCP),
