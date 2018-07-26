@@ -28,6 +28,8 @@ public class NonBlockingSteps {
   /**
    * Gets the completed computation result of {@code asyncStep}.
    *
+   * @param <T> the type of the computation result of {@code asyncStep}
+   * @param asyncStep completed {@link AsyncStep}
    * @return the completed computation result
    * @throws ExecutionException if the {@code Future} failed with an exception
    * @throws IllegalStateException if {@code asyncStep} has not been completed
