@@ -57,7 +57,7 @@ public class Image<T extends Layer> {
      */
     public Builder<T> addEnvironment(@Nullable Map<String, String> environment) {
       if (environment != null) {
-        this.environmentBuilder.putAll(ImmutableMap.copyOf(environment));
+        this.environmentBuilder.putAll(environment);
       }
       return this;
     }

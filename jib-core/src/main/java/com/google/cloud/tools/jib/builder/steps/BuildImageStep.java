@@ -101,12 +101,11 @@ class BuildImageStep
         imageBuilder.addLayer(NonBlockingSteps.get(buildAndCacheApplicationLayerStep));
       }
 
-      // Use environment from base image
+      // Start with environment from base image and overlay build configuration
       imageBuilder.addEnvironment(
           NonBlockingSteps.get(pullBaseImageStep).getBaseImage().getEnvironment());
-      if (buildConfiguration.getEnvironment() != null) {
-        imageBuilder.addEnvironment(buildConfiguration.getEnvironment());
-      }
+      imageBuilder.addEnvironment(buildConfiguration.getEnvironment());
+
       imageBuilder.setCreated(buildConfiguration.getCreationTime());
       imageBuilder.setEntrypoint(buildConfiguration.getEntrypoint());
       imageBuilder.setJavaArguments(buildConfiguration.getJavaArguments());
