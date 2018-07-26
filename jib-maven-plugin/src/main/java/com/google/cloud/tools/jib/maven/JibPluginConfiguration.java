@@ -168,12 +168,12 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   @Parameter(defaultValue = "${session}", readonly = true)
   MavenSession session;
 
-  @Parameter private FromConfiguration from = new FromConfiguration();
+  @Parameter private final FromConfiguration from = new FromConfiguration();
 
   @Parameter(property = "image")
-  private ToConfiguration to = new ToConfiguration();
+  private final ToConfiguration to = new ToConfiguration();
 
-  @Parameter private ContainerParameters container = new ContainerParameters();
+  @Parameter private final ContainerParameters container = new ContainerParameters();
 
   @Deprecated @Parameter private List<String> jvmFlags = Collections.emptyList();
 
@@ -212,9 +212,10 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
   /**
    * Gets an {@code Authorization} from system properties, or from the {@code <from><auth>}
-   * configuration if the system properties are not set.
+   * configuration if the system properties are not set, or {@code null} if neither are set.
    *
-   * @return a new {@code Authorization} from the configured username and password.
+   * @return a new {@code Authorization} from the configured username and password, or {@code null}
+   *     if one isn't configured.
    */
   @Nullable
   Authorization getBaseImageAuth() {
@@ -239,9 +240,10 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
   /**
    * Gets an {@code Authorization} from system properties, or from the {@code <to><auth>}
-   * configuration if the system properties are not set.
+   * configuration if the system properties are not set, or {@code null} if neither are set.
    *
-   * @return a new {@code Authorization} from the configured username and password.
+   * @return a new {@code Authorization} from the configured username and password, or {@code null}
+   *     if one isn't configured.
    */
   @Nullable
   Authorization getTargetImageAuth() {
