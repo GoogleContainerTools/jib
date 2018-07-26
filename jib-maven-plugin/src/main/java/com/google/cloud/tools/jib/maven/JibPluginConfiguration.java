@@ -17,6 +17,8 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.builder.BuildLogger;
+import com.google.cloud.tools.jib.http.Authorization;
+import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.common.annotations.VisibleForTesting;
@@ -39,6 +41,27 @@ import org.apache.maven.settings.crypto.SettingsDecrypter;
 /** Defines the configuration parameters for Jib. Jib {@link Mojo}s should extend this class. */
 abstract class JibPluginConfiguration extends AbstractMojo {
 
+  /** Used to configure {@code from.auth} and {@code to.auth} parameters. */
+  public static class AuthConfiguration {
+
+    @Nullable @Parameter private String username;
+
+    @Nullable @Parameter private String password;
+
+    /**
+     * Converts the {@link AuthConfiguration} to an {@link Authorization}.
+     *
+     * @return the {@link Authorization}
+     */
+    @Nullable
+    private Authorization getAuthorization() {
+      if (username == null || password == null) {
+        return null;
+      }
+      return Authorizations.withBasicCredentials(username, password);
+    }
+  }
+
   /**
    * Configuration for {@code from} parameter, where image by default is {@code
    * gcr.io/distroless/java}.
@@ -50,6 +73,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     private String image = "gcr.io/distroless/java";
 
     @Nullable @Parameter private String credHelper;
+
+    @Parameter private AuthConfiguration auth = new AuthConfiguration();
   }
 
   /** Configuration for {@code to} parameter, where image is required. */
@@ -58,6 +83,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     @Nullable @Parameter private String image;
 
     @Nullable @Parameter private String credHelper;
+
+    @Parameter private AuthConfiguration auth = new AuthConfiguration();
 
     public void set(String image) {
       this.image = image;
@@ -183,6 +210,23 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     return Preconditions.checkNotNull(from).credHelper;
   }
 
+  /**
+   * Gets an {@code Authorization} from system properties, or from the {@code <from><auth>}
+   * configuration if the system properties are not set.
+   *
+   * @return a new {@code Authorization} from the configured username and password.
+   */
+  @Nullable
+  Authorization getBaseImageAuth() {
+    // System property takes priority over build configuration
+    String commandlineUsername = System.getProperty("jib.from.auth.username");
+    String commandlinePassword = System.getProperty("jib.from.auth.password");
+    if (commandlineUsername != null && commandlinePassword != null) {
+      return Authorizations.withBasicCredentials(commandlineUsername, commandlinePassword);
+    }
+    return from.auth.getAuthorization();
+  }
+
   @Nullable
   String getTargetImage() {
     return to.image;
@@ -191,6 +235,23 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   @Nullable
   String getTargetImageCredentialHelperName() {
     return Preconditions.checkNotNull(to).credHelper;
+  }
+
+  /**
+   * Gets an {@code Authorization} from system properties, or from the {@code <to><auth>}
+   * configuration if the system properties are not set.
+   *
+   * @return a new {@code Authorization} from the configured username and password.
+   */
+  @Nullable
+  Authorization getTargetImageAuth() {
+    // System property takes priority over build configuration
+    String commandlineUsername = System.getProperty("jib.to.auth.username");
+    String commandlinePassword = System.getProperty("jib.to.auth.password");
+    if (commandlineUsername != null && commandlinePassword != null) {
+      return Authorizations.withBasicCredentials(commandlineUsername, commandlinePassword);
+    }
+    return to.auth.getAuthorization();
   }
 
   boolean getUseCurrentTimestamp() {

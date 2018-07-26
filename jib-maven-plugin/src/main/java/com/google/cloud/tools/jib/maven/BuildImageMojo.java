@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.frontend.SystemPropertyValidator;
+import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.RegistryClient;
@@ -89,13 +90,20 @@ public class BuildImageMojo extends JibPluginConfiguration {
           "Authentication over HTTP is enabled. It is strongly recommended that you do not enable "
               + "this on a public network!");
     }
+
     MavenSettingsServerCredentials mavenSettingsServerCredentials =
         new MavenSettingsServerCredentials(
             Preconditions.checkNotNull(session).getSettings(), settingsDecrypter, mavenBuildLogger);
+    Authorization fromAuthorization = getBaseImageAuth();
     RegistryCredentials knownBaseRegistryCredentials =
-        mavenSettingsServerCredentials.retrieve(baseImage.getRegistry());
+        fromAuthorization != null
+            ? new RegistryCredentials("<jib><from><auth>", fromAuthorization)
+            : mavenSettingsServerCredentials.retrieve(baseImage.getRegistry());
+    Authorization toAuthorization = getTargetImageAuth();
     RegistryCredentials knownTargetRegistryCredentials =
-        mavenSettingsServerCredentials.retrieve(targetImage.getRegistry());
+        toAuthorization != null
+            ? new RegistryCredentials("<jib><to><auth>", toAuthorization)
+            : mavenSettingsServerCredentials.retrieve(targetImage.getRegistry());
 
     MavenProjectProperties mavenProjectProperties =
         MavenProjectProperties.getForProject(getProject(), mavenBuildLogger, getExtraDirectory());
