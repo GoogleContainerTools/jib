@@ -50,15 +50,13 @@ public class Image<T extends Layer> {
     }
 
     /**
-     * Sets the environment with a map from environment variable names to values.
+     * Adds a map of environment variables to the current map.
      *
      * @param environment the map of environment variables
      * @return this
      */
-    public Builder<T> setEnvironment(@Nullable Map<String, String> environment) {
-      if (environment == null) {
-        this.environmentBuilder = ImmutableMap.builder();
-      } else {
+    public Builder<T> addEnvironment(@Nullable Map<String, String> environment) {
+      if (environment != null) {
         this.environmentBuilder.putAll(ImmutableMap.copyOf(environment));
       }
       return this;

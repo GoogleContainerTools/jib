@@ -127,8 +127,8 @@ public class JsonToImageTranslatorTest {
       String input, String expectedName, String expectedValue) {
     Matcher matcher = JsonToImageTranslator.environmentPattern.matcher(input);
     Assert.assertTrue(matcher.matches());
-    Assert.assertEquals(expectedName, matcher.group(1));
-    Assert.assertEquals(expectedValue, matcher.group(2));
+    Assert.assertEquals(expectedName, matcher.group("name"));
+    Assert.assertEquals(expectedValue, matcher.group("value"));
   }
 
   private void assertBadEnvironmentPattern(String input) {

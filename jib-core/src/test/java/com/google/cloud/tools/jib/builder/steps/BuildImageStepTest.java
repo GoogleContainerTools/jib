@@ -73,7 +73,7 @@ public class BuildImageStepTest {
     Mockito.when(mockBuildConfiguration.getEntrypoint()).thenReturn(ImmutableList.of());
 
     Image<Layer> baseImage =
-        Image.builder().setEnvironment(ImmutableMap.of("NAME", "VALUE")).build();
+        Image.builder().addEnvironment(ImmutableMap.of("NAME", "VALUE")).build();
     Mockito.when(mockPullAndCacheBaseImageLayerStep.getFuture())
         .thenReturn(Futures.immediateFuture(testCachedLayer));
     Mockito.when(mockPullAndCacheBaseImageLayersStep.getFuture())

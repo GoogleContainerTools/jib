@@ -103,7 +103,7 @@ class BuildImageStep
       }
 
       // Use environment from base image
-      imageBuilder.setEnvironment(
+      imageBuilder.addEnvironment(
           NonBlockingSteps.get(pullBaseImageStep).getBaseImage().getEnvironment());
       if (buildConfiguration.getEnvironment() != null) {
         for (Map.Entry<String, String> entry : buildConfiguration.getEnvironment().entrySet()) {

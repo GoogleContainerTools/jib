@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedMap;
 import java.lang.reflect.InvocationTargetException;
@@ -79,14 +80,14 @@ public class ImageToJsonTranslator {
     if (environment == null) {
       return null;
     }
-    ImmutableList.Builder<String> builder = ImmutableList.builder();
-    for (Map.Entry<String, String> environmentVariable : environment.entrySet()) {
-      if (environmentVariable.getKey().contains("=")) {
-        throw new IllegalArgumentException("Environment variable name cannot contain '='");
-      }
-      builder.add(environmentVariable.getKey() + "=" + environmentVariable.getValue());
-    }
-    return builder.build();
+    Preconditions.checkArgument(
+        environment.keySet().stream().noneMatch(s -> s.contains("=")),
+        "Illegal environment variable: name cannot contain '='");
+    return environment
+        .entrySet()
+        .stream()
+        .map(entry -> entry.getKey() + "=" + entry.getValue())
+        .collect(ImmutableList.toImmutableList());
   }
 
   private final Image<CachedLayer> image;
