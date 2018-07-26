@@ -29,7 +29,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
@@ -106,9 +105,7 @@ class BuildImageStep
       imageBuilder.addEnvironment(
           NonBlockingSteps.get(pullBaseImageStep).getBaseImage().getEnvironment());
       if (buildConfiguration.getEnvironment() != null) {
-        for (Map.Entry<String, String> entry : buildConfiguration.getEnvironment().entrySet()) {
-          imageBuilder.setEnvironmentVariable(entry.getKey(), entry.getValue());
-        }
+        imageBuilder.addEnvironment(buildConfiguration.getEnvironment());
       }
       imageBuilder.setCreated(buildConfiguration.getCreationTime());
       imageBuilder.setEntrypoint(buildConfiguration.getEntrypoint());
