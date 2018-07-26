@@ -57,7 +57,7 @@ public class JsonToImageTranslator {
    * <p>Example matches: NAME=VALUE, A12345=$$$$$
    */
   @VisibleForTesting
-  static final Pattern environmentPattern = Pattern.compile("(?<name>[^=]+)=(?<value>.*)");
+  static final Pattern ENVIRONMENT_PATTERN = Pattern.compile("(?<name>[^=]+)=(?<value>.*)");
 
   /**
    * Translates {@link V21ManifestTemplate} to {@link Image}.
@@ -149,7 +149,7 @@ public class JsonToImageTranslator {
 
     if (containerConfigurationTemplate.getContainerEnvironment() != null) {
       for (String environmentVariable : containerConfigurationTemplate.getContainerEnvironment()) {
-        Matcher matcher = environmentPattern.matcher(environmentVariable);
+        Matcher matcher = ENVIRONMENT_PATTERN.matcher(environmentVariable);
         if (!matcher.matches()) {
           throw new BadContainerConfigurationFormatException(
               "Invalid environment variable definition: " + environmentVariable);
