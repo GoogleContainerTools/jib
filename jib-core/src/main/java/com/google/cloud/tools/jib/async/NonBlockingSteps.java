@@ -17,12 +17,23 @@
 package com.google.cloud.tools.jib.async;
 
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import java.util.concurrent.ExecutionException;
 
-/** Static utility for ensuring {@link ListenableFuture#get} does not block. */
+/**
+ * Static utility for checking at runtime that the caller attempts to get a result only from a
+ * completed {@link AsyncStep} by otherwise throwing a runtime exception.
+ */
 public class NonBlockingSteps {
 
+  /**
+   * Gets the completed computation result of {@code asyncStep}.
+   *
+   * @param <T> the type of the computation result of {@code asyncStep}
+   * @param asyncStep completed {@link AsyncStep}
+   * @return the completed computation result
+   * @throws ExecutionException if the {@code Future} failed with an exception
+   * @throws IllegalStateException if {@code asyncStep} has not been completed
+   */
   public static <T> T get(AsyncStep<T> asyncStep) throws ExecutionException {
     return Futures.getDone(asyncStep.getFuture());
   }
