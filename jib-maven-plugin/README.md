@@ -322,7 +322,7 @@ Configure credential helpers to use by specifying them as a `credHelper` for the
 
 #### Using Specific Credentials
 
-You can specify credentials directly in the <auth> parameter for the `from` and/or `to` images. In the example below, `to` credentials are retrieved from the `REGISTRY_USERNAME` and `REGISTRY_PASSWORD` environment variables.
+You can specify credentials directly in the `<auth>` parameter for the `from` and/or `to` images. In the example below, `to` credentials are retrieved from the `REGISTRY_USERNAME` and `REGISTRY_PASSWORD` environment variables.
 
 ```xml
 <configuration>
@@ -356,6 +356,7 @@ Property | Description
 
 e.g. `mvn package jib:build -Djib.to.auth.username=user -Djib.to.auth.password=pass`
 
+**Note** This method of authentication should be used only as a last resort, as it is insecure to make your password visible in plain text.
 
 #### Using Maven Settings
 
