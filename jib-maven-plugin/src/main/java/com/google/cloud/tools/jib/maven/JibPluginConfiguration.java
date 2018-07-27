@@ -122,6 +122,28 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     }
   }
 
+  /**
+   * Gets an {@link Authorization} from a username and password. First tries system properties, then
+   * tries build configuration, otherwise returns null.
+   *
+   * @param usernameProperty the name of the username system property
+   * @param passwordProperty the name of the password system property
+   * @param auth the configured credentials
+   * @return a new {@link Authorization} from the system properties or build configuration, or
+   *     {@code null} if neither is configured.
+   */
+  @Nullable
+  private static Authorization getImageAuth(
+      String usernameProperty, String passwordProperty, AuthConfiguration auth) {
+    // System property takes priority over build configuration
+    String commandlineUsername = System.getProperty(usernameProperty);
+    String commandlinePassword = System.getProperty(passwordProperty);
+    if (commandlineUsername != null && commandlinePassword != null) {
+      return Authorizations.withBasicCredentials(commandlineUsername, commandlinePassword);
+    }
+    return auth.getAuthorization();
+  }
+
   @Nullable
   @Parameter(defaultValue = "${session}", readonly = true)
   MavenSession session;
@@ -306,27 +328,5 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   @VisibleForTesting
   void setExtraDirectory(String extraDirectory) {
     this.extraDirectory = extraDirectory;
-  }
-
-  /**
-   * Gets an {@link Authorization} from a username and password. First tries system properties, then
-   * tries build configuration, otherwise returns null.
-   *
-   * @param usernameProperty the name of the username system property
-   * @param passwordProperty the name of the password system property
-   * @param auth the configured credentials
-   * @return a new {@link Authorization} from the system properties or build configuration, or
-   *     {@code null} if neither is configured.
-   */
-  @Nullable
-  private static Authorization getImageAuth(
-      String usernameProperty, String passwordProperty, AuthConfiguration auth) {
-    // System property takes priority over build configuration
-    String commandlineUsername = System.getProperty(usernameProperty);
-    String commandlinePassword = System.getProperty(passwordProperty);
-    if (commandlineUsername != null && commandlinePassword != null) {
-      return Authorizations.withBasicCredentials(commandlineUsername, commandlinePassword);
-    }
-    return auth.getAuthorization();
   }
 }
