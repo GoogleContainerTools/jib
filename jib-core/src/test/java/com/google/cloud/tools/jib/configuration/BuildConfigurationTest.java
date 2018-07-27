@@ -42,7 +42,6 @@ public class BuildConfigurationTest {
 
   @Test
   public void testBuilder() {
-    Instant expectedCreationTime = Instant.ofEpochSecond(10000);
     String expectedBaseImageServerUrl = "someserver";
     String expectedBaseImageName = "baseimage";
     String expectedBaseImageTag = "baseimagetag";
@@ -55,6 +54,8 @@ public class BuildConfigurationTest {
     String expectedTargetImageCredentialHelperName = "anotherCredentialHelper";
     RegistryCredentials expectedKnownTargetRegistryCredentials =
         Mockito.mock(RegistryCredentials.class);
+    Instant expectedCreationTime = Instant.ofEpochSecond(10000);
+    List<String> expectedEntrypoint = Arrays.asList("some", "entrypoint");
     List<String> expectedJavaArguments = Arrays.asList("arg1", "arg2");
     Map<String, String> expectedEnvironment = ImmutableMap.of("key", "value");
     ImmutableList<Port> expectedExposedPorts =
@@ -67,30 +68,41 @@ public class BuildConfigurationTest {
     List<LayerConfiguration> expectedLayerConfigurations =
         Collections.singletonList(
             LayerConfiguration.builder().addEntry(Collections.emptyList(), "destination").build());
-    List<String> expectedEntrypoint = Arrays.asList("some", "entrypoint");
 
-    BuildConfiguration.Builder buildConfigurationBuilder =
-        BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
-            .setCreationTime(expectedCreationTime)
-            .setBaseImage(
+    ImageConfiguration baseImageConfiguration =
+        ImageConfiguration.builder()
+            .setImage(
                 ImageReference.of(
                     expectedBaseImageServerUrl, expectedBaseImageName, expectedBaseImageTag))
-            .setBaseImageCredentialHelperName(expectedBaseImageCredentialHelperName)
-            .setKnownBaseRegistryCredentials(expectedKnownBaseRegistryCredentials)
-            .setTargetImage(
+            .setCredentialHelper(expectedBaseImageCredentialHelperName)
+            .setKnownRegistryCredentials(expectedKnownBaseRegistryCredentials)
+            .build();
+    ImageConfiguration targetImageConfiguration =
+        ImageConfiguration.builder()
+            .setImage(
                 ImageReference.of(
                     expectedTargetServerUrl, expectedTargetImageName, expectedTargetTag))
-            .setTargetImageCredentialHelperName(expectedTargetImageCredentialHelperName)
-            .setKnownTargetRegistryCredentials(expectedKnownTargetRegistryCredentials)
-            .setJavaArguments(expectedJavaArguments)
+            .setCredentialHelper(expectedTargetImageCredentialHelperName)
+            .setKnownRegistryCredentials(expectedKnownTargetRegistryCredentials)
+            .build();
+    ContainerConfiguration containerConfiguration =
+        ContainerConfiguration.builder()
+            .setCreationTime(expectedCreationTime)
+            .setEntrypoint(expectedEntrypoint)
+            .setProgramArguments(expectedJavaArguments)
             .setEnvironment(expectedEnvironment)
             .setExposedPorts(expectedExposedPorts)
             .setTargetFormat(OCIManifestTemplate.class)
+            .build();
+    BuildConfiguration.Builder buildConfigurationBuilder =
+        BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
+            .setBaseImageConfiguration(baseImageConfiguration)
+            .setTargetImageConfiguration(targetImageConfiguration)
+            .setContainerConfiguration(containerConfiguration)
             .setApplicationLayersCacheConfiguration(expectedApplicationLayersCacheConfiguration)
             .setBaseImageLayersCacheConfiguration(expectedBaseImageLayersCacheConfiguration)
             .setAllowInsecureRegistries(true)
-            .setLayerConfigurations(expectedLayerConfigurations)
-            .setEntrypoint(expectedEntrypoint);
+            .setLayerConfigurations(expectedLayerConfigurations);
     BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
 
     Assert.assertEquals(expectedCreationTime, buildConfiguration.getCreationTime());
@@ -106,7 +118,7 @@ public class BuildConfigurationTest {
     Assert.assertEquals(
         expectedTargetImageCredentialHelperName,
         buildConfiguration.getTargetImageCredentialHelperName());
-    Assert.assertEquals(expectedJavaArguments, buildConfiguration.getJavaArguments());
+    Assert.assertEquals(expectedJavaArguments, buildConfiguration.getMainArguments());
     Assert.assertEquals(expectedEnvironment, buildConfiguration.getEnvironment());
     Assert.assertEquals(expectedExposedPorts, buildConfiguration.getExposedPorts());
     Assert.assertEquals(expectedTargetFormat, buildConfiguration.getTargetFormat());
@@ -131,14 +143,22 @@ public class BuildConfigurationTest {
     String expectedTargetImageName = "targetimage";
     String expectedTargetTag = "targettag";
 
-    BuildConfiguration buildConfiguration =
-        BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
-            .setBaseImage(
+    ImageConfiguration baseImageConfiguration =
+        ImageConfiguration.builder()
+            .setImage(
                 ImageReference.of(
                     expectedBaseImageServerUrl, expectedBaseImageName, expectedBaseImageTag))
-            .setTargetImage(
+            .build();
+    ImageConfiguration targetImageConfiguration =
+        ImageConfiguration.builder()
+            .setImage(
                 ImageReference.of(
                     expectedTargetServerUrl, expectedTargetImageName, expectedTargetTag))
+            .build();
+    BuildConfiguration buildConfiguration =
+        BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
+            .setBaseImageConfiguration(baseImageConfiguration)
+            .setTargetImageConfiguration(targetImageConfiguration)
             .build();
 
     Assert.assertEquals(buildConfiguration.getCreationTime(), Instant.EPOCH);
@@ -146,7 +166,7 @@ public class BuildConfigurationTest {
     Assert.assertNull(buildConfiguration.getKnownBaseRegistryCredentials());
     Assert.assertNull(buildConfiguration.getTargetImageCredentialHelperName());
     Assert.assertNull(buildConfiguration.getKnownTargetRegistryCredentials());
-    Assert.assertNull(buildConfiguration.getJavaArguments());
+    Assert.assertNull(buildConfiguration.getMainArguments());
     Assert.assertNull(buildConfiguration.getEnvironment());
     Assert.assertNull(buildConfiguration.getExposedPorts());
     Assert.assertEquals(V22ManifestTemplate.class, buildConfiguration.getTargetFormat());
@@ -162,7 +182,8 @@ public class BuildConfigurationTest {
     // Target image is missing
     try {
       BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
-          .setBaseImage(Mockito.mock(ImageReference.class))
+          .setBaseImageConfiguration(
+              ImageConfiguration.builder().setImage(Mockito.mock(ImageReference.class)).build())
           .build();
       Assert.fail("Build configuration should not be built with missing values");
 
@@ -188,7 +209,10 @@ public class BuildConfigurationTest {
     // Java arguments element should not be null.
     try {
       BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
-          .setJavaArguments(Arrays.asList("first", null));
+          .setContainerConfiguration(
+              ContainerConfiguration.builder()
+                  .setProgramArguments(Arrays.asList("first", null))
+                  .build());
       Assert.fail("The IllegalArgumentException should be thrown.");
     } catch (IllegalArgumentException ex) {
       Assert.assertNull(ex.getMessage());
@@ -197,7 +221,8 @@ public class BuildConfigurationTest {
     // Entrypoint element should not be null.
     try {
       BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
-          .setEntrypoint(Arrays.asList("first", null));
+          .setContainerConfiguration(
+              ContainerConfiguration.builder().setEntrypoint(Arrays.asList("first", null)).build());
       Assert.fail("The IllegalArgumentException should be thrown.");
     } catch (IllegalArgumentException ex) {
       Assert.assertNull(ex.getMessage());
@@ -206,7 +231,10 @@ public class BuildConfigurationTest {
     // Exposed ports element should not be null.
     try {
       BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
-          .setExposedPorts(Arrays.asList(new Port(1000, Protocol.TCP), null));
+          .setContainerConfiguration(
+              ContainerConfiguration.builder()
+                  .setExposedPorts(Arrays.asList(new Port(1000, Protocol.TCP), null))
+                  .build());
       Assert.fail("The IllegalArgumentException should be thrown.");
     } catch (IllegalArgumentException ex) {
       Assert.assertNull(ex.getMessage());
@@ -217,7 +245,9 @@ public class BuildConfigurationTest {
     nullKeyMap.put(null, "value");
 
     try {
-      BuildConfiguration.builder(Mockito.mock(BuildLogger.class)).setEnvironment(nullKeyMap);
+      BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
+          .setContainerConfiguration(
+              ContainerConfiguration.builder().setEnvironment(nullKeyMap).build());
       Assert.fail("The IllegalArgumentException should be thrown.");
     } catch (IllegalArgumentException ex) {
       Assert.assertNull(ex.getMessage());
@@ -227,18 +257,26 @@ public class BuildConfigurationTest {
     Map<String, String> nullValueMap = new HashMap<>();
     nullValueMap.put("key", null);
     try {
-      BuildConfiguration.builder(Mockito.mock(BuildLogger.class)).setEnvironment(nullValueMap);
+      BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
+          .setContainerConfiguration(
+              ContainerConfiguration.builder().setEnvironment(nullValueMap).build());
       Assert.fail("The IllegalArgumentException should be thrown.");
     } catch (IllegalArgumentException ex) {
       Assert.assertNull(ex.getMessage());
     }
 
     // Can accept empty environment.
-    BuildConfiguration.builder(Mockito.mock(BuildLogger.class)).setEnvironment(ImmutableMap.of());
+    BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
+        .setContainerConfiguration(
+            ContainerConfiguration.builder().setEnvironment(ImmutableMap.of()).build());
 
     // Environment map can accept TreeMap and Hashtable.
-    BuildConfiguration.builder(Mockito.mock(BuildLogger.class)).setEnvironment(new TreeMap<>());
-    BuildConfiguration.builder(Mockito.mock(BuildLogger.class)).setEnvironment(new Hashtable<>());
+    BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
+        .setContainerConfiguration(
+            ContainerConfiguration.builder().setEnvironment(new TreeMap<>()).build());
+    BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
+        .setContainerConfiguration(
+            ContainerConfiguration.builder().setEnvironment(new Hashtable<>()).build());
   }
 
   @Test

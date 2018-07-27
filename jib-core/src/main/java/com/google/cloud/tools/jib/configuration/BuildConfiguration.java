@@ -19,18 +19,13 @@ package com.google.cloud.tools.jib.configuration;
 import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
-import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import javax.annotation.Nullable;
 import javax.lang.model.SourceVersion;
 
@@ -40,23 +35,14 @@ public class BuildConfiguration {
   public static class Builder {
 
     // All the parameters below are set to their default values.
-    private Instant creationTime = Instant.EPOCH;
-    @Nullable private ImageReference baseImageReference;
-    @Nullable private String baseImageCredentialHelperName;
-    @Nullable private RegistryCredentials knownBaseRegistryCredentials;
-    @Nullable private ImageReference targetImageReference;
-    @Nullable private String targetImageCredentialHelperName;
-    @Nullable private RegistryCredentials knownTargetRegistryCredentials;
-    // TODO: Should rename to not be java-specific.
-    @Nullable private ImmutableList<String> javaArguments;
-    @Nullable private ImmutableMap<String, String> environmentMap;
-    @Nullable private ImmutableList<Port> exposedPorts;
-    private Class<? extends BuildableManifestTemplate> targetFormat = V22ManifestTemplate.class;
+    private ImageConfiguration baseImageConfiguration = new ImageConfiguration();
+    private ImageConfiguration targetImageConfiguration = new ImageConfiguration();
+    private ContainerConfiguration containerConfiguration = new ContainerConfiguration();
+
     @Nullable private CacheConfiguration applicationLayersCacheConfiguration;
     @Nullable private CacheConfiguration baseImageLayersCacheConfiguration;
     private boolean allowInsecureRegistries = false;
     private ImmutableList<LayerConfiguration> layerConfigurations = ImmutableList.of();
-    @Nullable private ImmutableList<String> entrypoint;
 
     private BuildLogger buildLogger;
 
@@ -64,70 +50,18 @@ public class BuildConfiguration {
       this.buildLogger = buildLogger;
     }
 
-    public Builder setBaseImage(@Nullable ImageReference imageReference) {
-      baseImageReference = imageReference;
+    public Builder setBaseImageConfiguration(ImageConfiguration imageReference) {
+      this.baseImageConfiguration = imageReference;
       return this;
     }
 
-    public Builder setTargetImage(@Nullable ImageReference imageReference) {
-      targetImageReference = imageReference;
+    public Builder setTargetImageConfiguration(ImageConfiguration imageReference) {
+      this.targetImageConfiguration = imageReference;
       return this;
     }
 
-    public Builder setBaseImageCredentialHelperName(@Nullable String credentialHelperName) {
-      baseImageCredentialHelperName = credentialHelperName;
-      return this;
-    }
-
-    public Builder setTargetImageCredentialHelperName(@Nullable String credentialHelperName) {
-      targetImageCredentialHelperName = credentialHelperName;
-      return this;
-    }
-
-    public Builder setKnownBaseRegistryCredentials(
-        @Nullable RegistryCredentials knownRegistryCrendentials) {
-      knownBaseRegistryCredentials = knownRegistryCrendentials;
-      return this;
-    }
-
-    public Builder setKnownTargetRegistryCredentials(
-        @Nullable RegistryCredentials knownRegistryCrendentials) {
-      knownTargetRegistryCredentials = knownRegistryCrendentials;
-      return this;
-    }
-
-    public Builder setJavaArguments(@Nullable List<String> javaArguments) {
-      if (javaArguments != null) {
-        Preconditions.checkArgument(!javaArguments.contains(null));
-        this.javaArguments = ImmutableList.copyOf(javaArguments);
-      }
-      return this;
-    }
-
-    public Builder setEnvironment(@Nullable Map<String, String> environmentMap) {
-      if (environmentMap == null) {
-        this.environmentMap = null;
-      } else {
-        Preconditions.checkArgument(
-            !Iterables.any(environmentMap.keySet(), Objects::isNull)
-                && !Iterables.any(environmentMap.values(), Objects::isNull));
-        this.environmentMap = ImmutableMap.copyOf(environmentMap);
-      }
-      return this;
-    }
-
-    public Builder setExposedPorts(@Nullable List<Port> exposedPorts) {
-      if (exposedPorts == null) {
-        this.exposedPorts = null;
-      } else {
-        Preconditions.checkArgument(!exposedPorts.contains(null));
-        this.exposedPorts = ImmutableList.copyOf(exposedPorts);
-      }
-      return this;
-    }
-
-    public Builder setTargetFormat(Class<? extends BuildableManifestTemplate> targetFormat) {
-      this.targetFormat = targetFormat;
+    public Builder setContainerConfiguration(ContainerConfiguration containerConfiguration) {
+      this.containerConfiguration = containerConfiguration;
       return this;
     }
 
@@ -177,37 +111,12 @@ public class BuildConfiguration {
       return this;
     }
 
-    /**
-     * Sets the image creation time.
-     *
-     * @param creationTime the creation time
-     * @return this
-     */
-    public Builder setCreationTime(Instant creationTime) {
-      this.creationTime = creationTime;
-      return this;
-    }
-
-    /**
-     * Sets the container entrypoint.
-     *
-     * @param entrypoint the tokenized command to run when the container starts
-     * @return this
-     */
-    public Builder setEntrypoint(@Nullable List<String> entrypoint) {
-      if (entrypoint == null) {
-        this.entrypoint = null;
-      } else {
-        Preconditions.checkArgument(!entrypoint.contains(null));
-        this.entrypoint = ImmutableList.copyOf(entrypoint);
-      }
-      return this;
-    }
-
     /** @return the corresponding build configuration */
     public BuildConfiguration build() {
       // Validates the parameters.
       List<String> errorMessages = new ArrayList<>();
+      ImageReference baseImageReference = baseImageConfiguration.getImage();
+      ImageReference targetImageReference = targetImageConfiguration.getImage();
       if (baseImageReference == null) {
         errorMessages.add("base image is required but not set");
       }
@@ -228,22 +137,22 @@ public class BuildConfiguration {
           }
           return new BuildConfiguration(
               buildLogger,
-              creationTime,
               baseImageReference,
-              baseImageCredentialHelperName,
-              knownBaseRegistryCredentials,
+              baseImageConfiguration.getCredentialHelper(),
+              baseImageConfiguration.getKnownRegistryCredentials(),
               targetImageReference,
-              targetImageCredentialHelperName,
-              knownTargetRegistryCredentials,
-              javaArguments,
-              environmentMap,
-              exposedPorts,
-              targetFormat,
+              targetImageConfiguration.getCredentialHelper(),
+              targetImageConfiguration.getKnownRegistryCredentials(),
+              containerConfiguration.getCreationTime(),
+              containerConfiguration.getEntrypoint(),
+              containerConfiguration.getProgramArguments(),
+              containerConfiguration.getEnvironmentMap(),
+              containerConfiguration.getExposedPorts(),
+              containerConfiguration.getTargetFormat(),
               applicationLayersCacheConfiguration,
               baseImageLayersCacheConfiguration,
               allowInsecureRegistries,
-              layerConfigurations,
-              entrypoint);
+              layerConfigurations);
 
         case 1:
           throw new IllegalStateException(errorMessages.get(0));
@@ -276,14 +185,14 @@ public class BuildConfiguration {
   }
 
   private final BuildLogger buildLogger;
-  private final Instant creationTime;
   private final ImageReference baseImageReference;
   @Nullable private final String baseImageCredentialHelperName;
   @Nullable private final RegistryCredentials knownBaseRegistryCredentials;
   private final ImageReference targetImageReference;
   @Nullable private final String targetImageCredentialHelperName;
   @Nullable private final RegistryCredentials knownTargetRegistryCredentials;
-  @Nullable private final ImmutableList<String> javaArguments;
+  private final Instant creationTime;
+  @Nullable private final ImmutableList<String> mainArguments;
   @Nullable private final ImmutableMap<String, String> environmentMap;
   @Nullable private final ImmutableList<Port> exposedPorts;
   private final Class<? extends BuildableManifestTemplate> targetFormat;
@@ -296,31 +205,31 @@ public class BuildConfiguration {
   /** Instantiate with {@link Builder#build}. */
   private BuildConfiguration(
       BuildLogger buildLogger,
-      Instant creationTime,
       ImageReference baseImageReference,
       @Nullable String baseImageCredentialHelperName,
       @Nullable RegistryCredentials knownBaseRegistryCredentials,
       ImageReference targetImageReference,
       @Nullable String targetImageCredentialHelperName,
       @Nullable RegistryCredentials knownTargetRegistryCredentials,
-      @Nullable ImmutableList<String> javaArguments,
+      Instant creationTime,
+      @Nullable ImmutableList<String> entrypoint,
+      @Nullable ImmutableList<String> mainArguments,
       @Nullable ImmutableMap<String, String> environmentMap,
       @Nullable ImmutableList<Port> exposedPorts,
       Class<? extends BuildableManifestTemplate> targetFormat,
       @Nullable CacheConfiguration applicationLayersCacheConfiguration,
       @Nullable CacheConfiguration baseImageLayersCacheConfiguration,
       boolean allowInsecureRegistries,
-      ImmutableList<LayerConfiguration> layerConfigurations,
-      @Nullable ImmutableList<String> entrypoint) {
+      ImmutableList<LayerConfiguration> layerConfigurations) {
     this.buildLogger = buildLogger;
-    this.creationTime = creationTime;
     this.baseImageReference = baseImageReference;
     this.baseImageCredentialHelperName = baseImageCredentialHelperName;
     this.knownBaseRegistryCredentials = knownBaseRegistryCredentials;
     this.targetImageReference = targetImageReference;
     this.targetImageCredentialHelperName = targetImageCredentialHelperName;
     this.knownTargetRegistryCredentials = knownTargetRegistryCredentials;
-    this.javaArguments = javaArguments;
+    this.creationTime = creationTime;
+    this.mainArguments = mainArguments;
     this.environmentMap = environmentMap;
     this.exposedPorts = exposedPorts;
     this.targetFormat = targetFormat;
@@ -333,10 +242,6 @@ public class BuildConfiguration {
 
   public BuildLogger getBuildLogger() {
     return buildLogger;
-  }
-
-  public Instant getCreationTime() {
-    return creationTime;
   }
 
   public ImageReference getBaseImageReference() {
@@ -391,14 +296,28 @@ public class BuildConfiguration {
     return knownTargetRegistryCredentials;
   }
 
+  public Instant getCreationTime() {
+    return creationTime;
+  }
+
+  /**
+   * Gets the container entrypoint.
+   *
+   * @return the list of entrypoint tokens, or {@code null} if not set
+   */
+  @Nullable
+  public ImmutableList<String> getEntrypoint() {
+    return entrypoint;
+  }
+
   /**
    * Gets the arguments to pass to the entrypoint.
    *
    * @return the list of arguments, or {@code null} if not set
    */
   @Nullable
-  public ImmutableList<String> getJavaArguments() {
-    return javaArguments;
+  public ImmutableList<String> getMainArguments() {
+    return mainArguments;
   }
 
   /**
@@ -462,15 +381,5 @@ public class BuildConfiguration {
    */
   public ImmutableList<LayerConfiguration> getLayerConfigurations() {
     return layerConfigurations;
-  }
-
-  /**
-   * Gets the container entrypoint.
-   *
-   * @return the list of entrypoint tokens, or {@code null} if not set
-   */
-  @Nullable
-  public ImmutableList<String> getEntrypoint() {
-    return entrypoint;
   }
 }
