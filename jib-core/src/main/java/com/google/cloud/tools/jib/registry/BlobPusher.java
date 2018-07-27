@@ -88,7 +88,9 @@ class BlobPusher {
           apiRouteBase
               + registryEndpointRequestProperties.getImageName()
               + "/blobs/uploads/?mount="
-              + blobDigest);
+              + blobDigest
+              + "&from="
+              + registryEndpointRequestProperties.getImageName());
     }
 
     @Override
