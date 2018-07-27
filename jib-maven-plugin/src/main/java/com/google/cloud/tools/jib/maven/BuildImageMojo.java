@@ -19,6 +19,8 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
+import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
+import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
@@ -111,22 +113,42 @@ public class BuildImageMojo extends JibPluginConfiguration {
     String mainClass = mavenProjectProperties.getMainClass(this);
 
     // Builds the BuildConfiguration.
-    BuildConfiguration.Builder buildConfigurationBuilder =
-        BuildConfiguration.builder(mavenBuildLogger)
-            .setBaseImage(baseImage)
-            .setBaseImageCredentialHelperName(getBaseImageCredentialHelperName())
-            .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
-            .setTargetImage(targetImage)
-            .setTargetImageCredentialHelperName(getTargetImageCredentialHelperName())
-            .setKnownTargetRegistryCredentials(knownTargetRegistryCredentials)
-            .setJavaArguments(getArgs())
+    ImageConfiguration baseImageConfiguration =
+        ImageConfiguration.builder()
+            .setImage(baseImage)
+            .setCredentialHelper(getBaseImageCredentialHelperName())
+            .setKnownRegistryCredentials(knownBaseRegistryCredentials)
+            .build();
+
+    ImageConfiguration targetImageConfiguration =
+        ImageConfiguration.builder()
+            .setImage(targetImage)
+            .setCredentialHelper(getTargetImageCredentialHelperName())
+            .setKnownRegistryCredentials(knownTargetRegistryCredentials)
+            .build();
+
+    ContainerConfiguration.Builder containerConfigurationBuilder =
+        ContainerConfiguration.builder()
+            .setEntrypoint(
+                JavaEntrypointConstructor.makeDefaultEntrypoint(getJvmFlags(), mainClass))
+            .setProgramArguments(getArgs())
             .setEnvironment(getEnvironment())
             .setExposedPorts(ExposedPortsParser.parse(getExposedPorts()))
-            .setTargetFormat(ImageFormat.valueOf(getFormat()).getManifestTemplateClass())
+            .setTargetFormat(ImageFormat.valueOf(getFormat()).getManifestTemplateClass());
+    if (getUseCurrentTimestamp()) {
+      mavenBuildLogger.warn(
+          "Setting image creation time to current time; your image may not be reproducible.");
+      containerConfigurationBuilder.setCreationTime(Instant.now());
+    }
+
+    BuildConfiguration.Builder buildConfigurationBuilder =
+        BuildConfiguration.builder(mavenBuildLogger)
+            .setBaseImageConfiguration(baseImageConfiguration)
+            .setTargetImageConfiguration(targetImageConfiguration)
+            .setContainerConfiguration(containerConfigurationBuilder.build())
             .setAllowInsecureRegistries(getAllowInsecureRegistries())
-            .setLayerConfigurations(mavenProjectProperties.getLayerConfigurations())
-            .setEntrypoint(
-                JavaEntrypointConstructor.makeDefaultEntrypoint(getJvmFlags(), mainClass));
+            .setLayerConfigurations(mavenProjectProperties.getLayerConfigurations());
+
     CacheConfiguration applicationLayersCacheConfiguration =
         CacheConfiguration.forPath(mavenProjectProperties.getCacheDirectory());
     buildConfigurationBuilder.setApplicationLayersCacheConfiguration(
@@ -134,11 +156,6 @@ public class BuildImageMojo extends JibPluginConfiguration {
     if (getUseOnlyProjectCache()) {
       buildConfigurationBuilder.setBaseImageLayersCacheConfiguration(
           applicationLayersCacheConfiguration);
-    }
-    if (getUseCurrentTimestamp()) {
-      mavenBuildLogger.warn(
-          "Setting image creation time to current time; your image may not be reproducible.");
-      buildConfigurationBuilder.setCreationTime(Instant.now());
     }
 
     BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
