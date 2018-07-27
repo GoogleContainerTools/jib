@@ -80,7 +80,7 @@ public class CacheWriter {
       Path layerFile = getLayerFile(compressedBlobDescriptor.getDigest());
       try {
         Files.move(tempLayerFile, layerFile);
-      } catch (FileAlreadyExistsException ex) {
+      } catch (FileAlreadyExistsException ignored) {
         // If the file already exists, we skip renaming and use the existing file. This happens if a
         // new layer happens to have the same content as a previously-cached layer.
         //
