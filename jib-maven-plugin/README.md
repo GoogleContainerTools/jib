@@ -212,6 +212,7 @@ Property | Type | Default | Description
 --- | --- | --- | ---
 `image` | string | `gcr.io/distroless/java` | The image reference for the base image.
 `credHelper` | string | *None* | Suffix for the credential helper that can authenticate pulling the base image (following `docker-credential-`).
+`auth` | [`auth`](#auth-object) | *None* | Specify credentials directly (alternative to `credHelper`).
 
 <a name="to-object"></a>`to` is an object with the following properties:
 
@@ -219,6 +220,14 @@ Property | Type | Default | Description
 --- | --- | --- | ---
 `image` | string | *Required* | The image reference for the target image. This can also be specified via the `-Dimage` command line option.
 `credHelper` | string | *None* | Suffix for the credential helper that can authenticate pulling the base image (following `docker-credential-`).
+`auth` | [`auth`](#auth-object) | *None* | Specify credentials directly (alternative to `credHelper`).
+
+<a name="auth-object"></a>`auth` is an object with the following properties (see [Using Specific Credentials](#using-specific-credentials)):
+
+Property | Type
+--- | ---
+`username` | `String`
+`password` | `String`
 
 <a name="container-object"></a>`container` is an object with the following properties:
 
@@ -310,6 +319,43 @@ Configure credential helpers to use by specifying them as a `credHelper` for the
   ...
 </configuration>
 ```
+
+#### Using Specific Credentials
+
+You can specify credentials directly in the <auth> parameter for the `from` and/or `to` images. In the example below, `to` credentials are retrieved from the `REGISTRY_USERNAME` and `REGISTRY_PASSWORD` environment variables.
+
+```xml
+<configuration>
+  ...
+  <from>
+    <image>aws_account_id.dkr.ecr.region.amazonaws.com/my-base-image</image>
+    <auth>
+      <username>my_username</username>
+      <password>my_password</password>
+    </auth>
+  </from>
+  <to>
+    <image>gcr.io/my-gcp-project/my-app</image>
+    <auth>
+      <username>${env.REGISTRY_USERNAME}</username>
+      <password>${env.REGISTRY_PASSWORD}</password>
+    </auth>
+  </to>
+  ...
+</configuration>
+```
+
+Alternatively, you can specify credentials via commandline using the following system properties.
+
+Property | Description
+--- | ---
+`-Djib.from.auth.username` | Username for base image registry.
+`-Djib.from.auth.password` | Password for base image registry.
+`-Djib.to.auth.username` | Username for target image registry.
+`-Djib.to.auth.password` | Password for target image registry.
+
+e.g. `mvn package jib:build -Djib.to.auth.username=user -Djib.to.auth.password=pass`
+
 
 #### Using Maven Settings
 
