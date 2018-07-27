@@ -116,7 +116,8 @@ public class CacheWriterTest {
 
   // Windows file overwrite issue: https://github.com/GoogleContainerTools/jib/issues/719
   @Test
-  public void testWriteLayer_doesNotOverwriteExistingTarGz() throws IOException, InterruptedException {
+  public void testWriteLayer_doesNotOverwriteExistingTarGz()
+      throws IOException, InterruptedException {
     // Writes resourceBlob as a layer to the cache.
     UnwrittenLayer unwrittenLayer = new UnwrittenLayer(Blobs.from(resourceBlob));
 
