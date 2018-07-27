@@ -90,10 +90,7 @@ public class DirectoryWalker {
    */
   public ImmutableList<Path> walk() throws IOException {
     try (Stream<Path> fileStream = Files.walk(rootDir)) {
-      Stream<Path> filteredFileStream = fileStream;
-      if (pathFilter != null) {
-        filteredFileStream = fileStream.filter(pathFilter);
-      }
+      Stream<Path> filteredFileStream = fileStream.filter(pathFilter);
       return filteredFileStream.sorted().collect(ImmutableList.toImmutableList());
     }
   }
