@@ -17,6 +17,8 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.builder.BuildLogger;
+import com.google.cloud.tools.jib.http.Authorization;
+import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.common.annotations.VisibleForTesting;
@@ -39,6 +41,37 @@ import org.apache.maven.settings.crypto.SettingsDecrypter;
 /** Defines the configuration parameters for Jib. Jib {@link Mojo}s should extend this class. */
 abstract class JibPluginConfiguration extends AbstractMojo {
 
+  /** Used to configure {@code from.auth} and {@code to.auth} parameters. */
+  public static class AuthConfiguration {
+
+    @Nullable @Parameter private String username;
+
+    @Nullable @Parameter private String password;
+
+    @VisibleForTesting
+    void setUsername(String username) {
+      this.username = username;
+    }
+
+    @VisibleForTesting
+    void setPassword(String password) {
+      this.password = password;
+    }
+
+    /**
+     * Converts the {@link AuthConfiguration} to an {@link Authorization}.
+     *
+     * @return the {@link Authorization}
+     */
+    @Nullable
+    private Authorization getAuthorization() {
+      if (username == null || password == null) {
+        return null;
+      }
+      return Authorizations.withBasicCredentials(username, password);
+    }
+  }
+
   /**
    * Configuration for {@code from} parameter, where image by default is {@code
    * gcr.io/distroless/java}.
@@ -50,6 +83,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     private String image = "gcr.io/distroless/java";
 
     @Nullable @Parameter private String credHelper;
+
+    @Parameter private AuthConfiguration auth = new AuthConfiguration();
   }
 
   /** Configuration for {@code to} parameter, where image is required. */
@@ -58,6 +93,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     @Nullable @Parameter private String image;
 
     @Nullable @Parameter private String credHelper;
+
+    @Parameter private AuthConfiguration auth = new AuthConfiguration();
 
     public void set(String image) {
       this.image = image;
@@ -94,6 +131,66 @@ abstract class JibPluginConfiguration extends AbstractMojo {
       throw new IllegalStateException("Parameter '" + type + "' is invalid", ex);
     }
   }
+
+  /**
+   * Gets an {@link Authorization} from a username and password. First tries system properties, then
+   * tries build configuration, otherwise returns null.
+   *
+   * @param usernameProperty the name of the username system property
+   * @param passwordProperty the name of the password system property
+   * @param auth the configured credentials
+   * @return a new {@link Authorization} from the system properties or build configuration, or
+   *     {@code null} if neither is configured.
+   */
+  @VisibleForTesting
+  @Nullable
+  static Authorization getImageAuth(
+      String usernameProperty, String passwordProperty, AuthConfiguration auth) {
+    // System property takes priority over build configuration
+    String commandlineUsername = System.getProperty(usernameProperty);
+    String commandlinePassword = System.getProperty(passwordProperty);
+    if (commandlineUsername != null && commandlinePassword != null) {
+      return Authorizations.withBasicCredentials(commandlineUsername, commandlinePassword);
+    }
+    return auth.getAuthorization();
+  }
+
+  @Nullable
+  @Parameter(defaultValue = "${session}", readonly = true)
+  MavenSession session;
+
+  @Nullable
+  @Parameter(defaultValue = "${project}", readonly = true)
+  private MavenProject project;
+
+  @Parameter private FromConfiguration from = new FromConfiguration();
+
+  @Parameter(property = "image")
+  private ToConfiguration to = new ToConfiguration();
+
+  @Parameter private ContainerParameters container = new ContainerParameters();
+
+  @Deprecated @Parameter private List<String> jvmFlags = Collections.emptyList();
+
+  @Nullable @Parameter private Map<String, String> environment;
+
+  @Deprecated @Nullable @Parameter private String mainClass;
+
+  @Deprecated @Parameter private List<String> args = Collections.emptyList();
+
+  @Deprecated @Nullable @Parameter private String format;
+
+  @Parameter(defaultValue = "false", required = true)
+  private boolean useOnlyProjectCache;
+
+  @Parameter(defaultValue = "false", required = true)
+  private boolean allowInsecureRegistries;
+
+  @Nullable
+  @Parameter(defaultValue = "${project.basedir}/src/main/jib", required = true)
+  private String extraDirectory;
+
+  @Nullable @Component protected SettingsDecrypter settingsDecrypter;
 
   /**
    * Warns about deprecated parameters in use.
@@ -133,43 +230,6 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     }
   }
 
-  @Nullable
-  @Parameter(defaultValue = "${project}", readonly = true)
-  private MavenProject project;
-
-  @Nullable
-  @Parameter(defaultValue = "${session}", readonly = true)
-  MavenSession session;
-
-  @Parameter private FromConfiguration from = new FromConfiguration();
-
-  @Parameter(property = "image")
-  private ToConfiguration to = new ToConfiguration();
-
-  @Parameter private ContainerParameters container = new ContainerParameters();
-
-  @Deprecated @Parameter private List<String> jvmFlags = Collections.emptyList();
-
-  @Nullable @Parameter private Map<String, String> environment;
-
-  @Deprecated @Nullable @Parameter private String mainClass;
-
-  @Deprecated @Parameter private List<String> args = Collections.emptyList();
-
-  @Deprecated @Nullable @Parameter private String format;
-
-  @Parameter(defaultValue = "false", required = true)
-  private boolean useOnlyProjectCache;
-
-  @Parameter(defaultValue = "false", required = true)
-  private boolean allowInsecureRegistries;
-
-  @Nullable
-  @Parameter(defaultValue = "${project.basedir}/src/main/jib", required = true)
-  private String extraDirectory;
-
-  @Nullable @Component protected SettingsDecrypter settingsDecrypter;
-
   MavenProject getProject() {
     return Preconditions.checkNotNull(project);
   }
@@ -184,6 +244,11 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   }
 
   @Nullable
+  Authorization getBaseImageAuth() {
+    return getImageAuth("jib.from.auth.username", "jib.from.auth.password", from.auth);
+  }
+
+  @Nullable
   String getTargetImage() {
     return to.image;
   }
@@ -191,6 +256,11 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   @Nullable
   String getTargetImageCredentialHelperName() {
     return Preconditions.checkNotNull(to).credHelper;
+  }
+
+  @Nullable
+  Authorization getTargetImageAuth() {
+    return getImageAuth("jib.to.auth.username", "jib.to.auth.password", to.auth);
   }
 
   boolean getUseCurrentTimestamp() {
