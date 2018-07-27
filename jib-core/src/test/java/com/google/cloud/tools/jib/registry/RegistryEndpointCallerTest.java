@@ -96,6 +96,12 @@ public class RegistryEndpointCallerTest {
     return mock;
   }
 
+  private static HttpResponse mockRedirectHttpResponse(String redirectLocation)
+      throws IOException {
+    int code307 = HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT;
+    return mockHttpResponse(code307, new HttpHeaders().setLocation(redirectLocation));
+  }
+
   @Mock private Connection mockConnection;
   @Mock private Connection mockInsecureConnection;
   @Mock private Response mockResponse;
@@ -217,11 +223,7 @@ public class RegistryEndpointCallerTest {
 
   @Test
   public void testCall_credentialsNotSentOverHttp() throws IOException, RegistryException {
-    HttpResponse redirectResponse =
-        mockHttpResponse(
-            HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT,
-            new HttpHeaders().setLocation("http://newlocation"));
-
+    HttpResponse redirectResponse = mockRedirectHttpResponse("http://newlocation");
     HttpResponse unauthroizedResponse =
         mockHttpResponse(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, null);
 
@@ -247,10 +249,7 @@ public class RegistryEndpointCallerTest {
 
   @Test
   public void testCall_credentialsForcedOverHttp() throws IOException, RegistryException {
-    HttpResponse redirectResponse =
-        mockHttpResponse(
-            HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT,
-            new HttpHeaders().setLocation("http://newlocation"));
+    HttpResponse redirectResponse = mockRedirectHttpResponse("http://newlocation");
 
     Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
         .thenThrow(Mockito.mock(SSLPeerUnverifiedException.class)) // server is not HTTPS
@@ -320,10 +319,7 @@ public class RegistryEndpointCallerTest {
   @Test
   public void testCall_disallowInsecure() throws IOException, RegistryException {
     // Mocks a response for temporary redirect to a new location.
-    HttpResponse redirectResponse =
-        mockHttpResponse(
-            HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT,
-            new HttpHeaders().setLocation("http://newlocation"));
+    HttpResponse redirectResponse = mockRedirectHttpResponse("http://newlocation");
 
     HttpResponseException redirectException = new HttpResponseException(redirectResponse);
     Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))

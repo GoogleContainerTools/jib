@@ -133,9 +133,8 @@ class RegistryEndpointCaller<T> {
     return callWithInsecureRegistryHandling(initialRequestUrl);
   }
 
-  @VisibleForTesting
   @Nullable
-  T callWithInsecureRegistryHandling(URL url) throws IOException, RegistryException {
+  private T callWithInsecureRegistryHandling(URL url) throws IOException, RegistryException {
     try {
       if (!isHttpsProtocol(url) && !allowInsecureRegistries) {
         throw new InsecureRegistryException(url);
