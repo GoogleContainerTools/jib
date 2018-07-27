@@ -30,6 +30,7 @@ import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.GeneralSecurityException;
 import java.util.function.Function;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLPeerUnverifiedException;
@@ -50,6 +51,10 @@ class RegistryEndpointCaller<T> {
   @VisibleForTesting static final int STATUS_CODE_PERMANENT_REDIRECT = 308;
 
   private static final String DEFAULT_PROTOCOL = "https";
+
+  private static boolean isHttpsProtocol(URL url) {
+    return "https".equals(url.getProtocol());
+  }
 
   private final URL initialRequestUrl;
   private final String userAgent;
@@ -125,7 +130,39 @@ class RegistryEndpointCaller<T> {
    */
   @Nullable
   T call() throws IOException, RegistryException {
-    return call(initialRequestUrl);
+    return callWithInsecureRegistryHandling(initialRequestUrl);
+  }
+
+  @VisibleForTesting
+  @Nullable
+  T callWithInsecureRegistryHandling(URL url) throws IOException, RegistryException {
+    try {
+      if (!isHttpsProtocol(url) && !allowInsecureRegistries) {
+        throw new InsecureRegistryException(url);
+      }
+      return call(url, connectionFactory);
+
+    } catch (SSLPeerUnverifiedException exception) {
+      // Cannot verify the server (e.g., self-signed certificate or plain HTTP).
+      if (!allowInsecureRegistries) {
+        throw new InsecureRegistryException(url);
+      }
+
+      try {
+        if (insecureConnectionFactory == null) {
+          insecureConnectionFactory = Connection.getInsecureConnectionFactory();
+        }
+        return call(url, insecureConnectionFactory);
+
+      } catch (GeneralSecurityException ex) {
+        throw new RegistryException("cannot turn off TLS peer verification", ex);
+      } catch (SSLPeerUnverifiedException | HttpHostConnectException ex) {
+        // Try HTTP as a last resort.
+        GenericUrl httpUrl = new GenericUrl(url);
+        httpUrl.setScheme("http");
+        return call(httpUrl.toURL(), connectionFactory);
+      }
+    }
   }
 
   /**
@@ -136,15 +173,11 @@ class RegistryEndpointCaller<T> {
    * @throws IOException for most I/O exceptions when making the request
    * @throws RegistryException for known exceptions when interacting with the registry
    */
-  @VisibleForTesting
   @Nullable
-  T call(URL url) throws IOException, RegistryException {
-    boolean isHttpProtocol = "http".equals(url.getProtocol());
-    if (!allowInsecureRegistries && isHttpProtocol) {
-      throw new InsecureRegistryException(url);
-    }
+  private T call(URL url, Function<URL, Connection> connectionFactory)
+      throws IOException, RegistryException {
     // Only sends authorization if using HTTPS or explicitly forcing over HTTP.
-    boolean sendCredentials = !isHttpProtocol || Boolean.getBoolean("sendCredentialsOverHttp");
+    boolean sendCredentials = isHttpsProtocol(url) || Boolean.getBoolean("sendCredentialsOverHttp");
 
     try (Connection connection = connectionFactory.apply(url)) {
       Request.Builder requestBuilder =
@@ -211,25 +244,13 @@ class RegistryEndpointCaller<T> {
             || httpResponseException.getStatusCode() == STATUS_CODE_PERMANENT_REDIRECT) {
           // 'Location' header can be relative or absolute.
           URL redirectLocation = new URL(url, httpResponseException.getHeaders().getLocation());
-          return call(redirectLocation);
+          return callWithInsecureRegistryHandling(redirectLocation);
 
         } else {
           // Unknown
           throw httpResponseException;
         }
       }
-
-    } catch (HttpHostConnectException | SSLPeerUnverifiedException ex) {
-      // Tries to call with HTTP protocol if HTTPS failed to connect.
-      // Note that this will not succeed if 'allowInsecureRegistries' is false.
-      if ("https".equals(url.getProtocol())) {
-        GenericUrl httpUrl = new GenericUrl(url);
-        httpUrl.setScheme("http");
-        return call(httpUrl.toURL());
-      }
-
-      throw ex;
-
     } catch (NoHttpResponseException ex) {
       throw new RegistryNoResponseException(ex);
     }
