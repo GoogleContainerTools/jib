@@ -143,12 +143,11 @@ class RegistryEndpointCaller<T> {
       return call(url, connectionFactory);
 
     } catch (SSLPeerUnverifiedException exception) {
-      // Cannot verify the server (e.g., self-signed certificate or plain HTTP).
-      if (!allowInsecureRegistries) {
-        throw new InsecureRegistryException(url);
-      }
-
       try {
+        // Cannot verify the server (e.g., self-signed certificate or plain HTTP).
+        if (!allowInsecureRegistries) {
+          throw new InsecureRegistryException(url);
+        }
         if (insecureConnectionFactory == null) {
           insecureConnectionFactory = Connection.getInsecureConnectionFactory();
         }
