@@ -137,7 +137,7 @@ class RegistryEndpointCaller<T> {
   @Nullable
   private T callWithAllowInsecureRegistryHandling(URL url) throws IOException, RegistryException {
     if (allowInsecureRegistries) {
-      return possbilyInsecureCall(url);
+      return possiblyInsecureCall(url);
     }
 
     try {
@@ -151,7 +151,7 @@ class RegistryEndpointCaller<T> {
   }
 
   @Nullable
-  private T possbilyInsecureCall(URL url) throws IOException, RegistryException {
+  private T possiblyInsecureCall(URL url) throws IOException, RegistryException {
     Preconditions.checkState(allowInsecureRegistries);
     try {
       return call(url, connectionFactory);
