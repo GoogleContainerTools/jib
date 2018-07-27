@@ -118,7 +118,7 @@ public class BuildConfigurationTest {
     Assert.assertEquals(
         expectedTargetImageCredentialHelperName,
         buildConfiguration.getTargetImageCredentialHelperName());
-    Assert.assertEquals(expectedJavaArguments, buildConfiguration.getMainArguments());
+    Assert.assertEquals(expectedJavaArguments, buildConfiguration.getProgramArguments());
     Assert.assertEquals(expectedEnvironment, buildConfiguration.getEnvironment());
     Assert.assertEquals(expectedExposedPorts, buildConfiguration.getExposedPorts());
     Assert.assertEquals(expectedTargetFormat, buildConfiguration.getTargetFormat());
@@ -166,7 +166,7 @@ public class BuildConfigurationTest {
     Assert.assertNull(buildConfiguration.getKnownBaseRegistryCredentials());
     Assert.assertNull(buildConfiguration.getTargetImageCredentialHelperName());
     Assert.assertNull(buildConfiguration.getKnownTargetRegistryCredentials());
-    Assert.assertNull(buildConfiguration.getMainArguments());
+    Assert.assertNull(buildConfiguration.getProgramArguments());
     Assert.assertNull(buildConfiguration.getEnvironment());
     Assert.assertNull(buildConfiguration.getExposedPorts());
     Assert.assertEquals(V22ManifestTemplate.class, buildConfiguration.getTargetFormat());

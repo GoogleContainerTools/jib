@@ -192,7 +192,7 @@ public class BuildConfiguration {
   @Nullable private final String targetImageCredentialHelperName;
   @Nullable private final RegistryCredentials knownTargetRegistryCredentials;
   private final Instant creationTime;
-  @Nullable private final ImmutableList<String> mainArguments;
+  @Nullable private final ImmutableList<String> programArguments;
   @Nullable private final ImmutableMap<String, String> environmentMap;
   @Nullable private final ImmutableList<Port> exposedPorts;
   private final Class<? extends BuildableManifestTemplate> targetFormat;
@@ -213,7 +213,7 @@ public class BuildConfiguration {
       @Nullable RegistryCredentials knownTargetRegistryCredentials,
       Instant creationTime,
       @Nullable ImmutableList<String> entrypoint,
-      @Nullable ImmutableList<String> mainArguments,
+      @Nullable ImmutableList<String> programArguments,
       @Nullable ImmutableMap<String, String> environmentMap,
       @Nullable ImmutableList<Port> exposedPorts,
       Class<? extends BuildableManifestTemplate> targetFormat,
@@ -229,7 +229,7 @@ public class BuildConfiguration {
     this.targetImageCredentialHelperName = targetImageCredentialHelperName;
     this.knownTargetRegistryCredentials = knownTargetRegistryCredentials;
     this.creationTime = creationTime;
-    this.mainArguments = mainArguments;
+    this.programArguments = programArguments;
     this.environmentMap = environmentMap;
     this.exposedPorts = exposedPorts;
     this.targetFormat = targetFormat;
@@ -316,8 +316,8 @@ public class BuildConfiguration {
    * @return the list of arguments, or {@code null} if not set
    */
   @Nullable
-  public ImmutableList<String> getMainArguments() {
-    return mainArguments;
+  public ImmutableList<String> getProgramArguments() {
+    return programArguments;
   }
 
   /**

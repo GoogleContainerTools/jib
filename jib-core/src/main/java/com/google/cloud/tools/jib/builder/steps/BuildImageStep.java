@@ -108,7 +108,7 @@ class BuildImageStep
 
       imageBuilder.setCreated(buildConfiguration.getCreationTime());
       imageBuilder.setEntrypoint(buildConfiguration.getEntrypoint());
-      imageBuilder.setJavaArguments(buildConfiguration.getMainArguments());
+      imageBuilder.setJavaArguments(buildConfiguration.getProgramArguments());
       imageBuilder.setExposedPorts(buildConfiguration.getExposedPorts());
 
       // Gets the container configuration content descriptor.
