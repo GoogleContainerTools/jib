@@ -354,9 +354,9 @@ Property | Description
 `-Djib.to.auth.username` | Username for target image registry.
 `-Djib.to.auth.password` | Password for target image registry.
 
-e.g. `mvn package jib:build -Djib.to.auth.username=user -Djib.to.auth.password=pass`
+e.g. `mvn compile jib:build -Djib.to.auth.username=user -Djib.to.auth.password=pass`
 
-**Note** This method of authentication should be used only as a last resort, as it is insecure to make your password visible in plain text.
+**Note:** This method of authentication should be used only as a last resort, as it is insecure to make your password visible in plain text.
 
 #### Using Maven Settings
 
