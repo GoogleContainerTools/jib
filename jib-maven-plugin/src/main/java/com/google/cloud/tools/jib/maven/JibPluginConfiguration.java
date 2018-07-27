@@ -48,6 +48,16 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Nullable @Parameter private String password;
 
+    @VisibleForTesting
+    void setUsername(String username) {
+      this.username = username;
+    }
+
+    @VisibleForTesting
+    void setPassword(String password) {
+      this.password = password;
+    }
+
     /**
      * Converts the {@link AuthConfiguration} to an {@link Authorization}.
      *
@@ -132,8 +142,9 @@ abstract class JibPluginConfiguration extends AbstractMojo {
    * @return a new {@link Authorization} from the system properties or build configuration, or
    *     {@code null} if neither is configured.
    */
+  @VisibleForTesting
   @Nullable
-  private static Authorization getImageAuth(
+  static Authorization getImageAuth(
       String usernameProperty, String passwordProperty, AuthConfiguration auth) {
     // System property takes priority over build configuration
     String commandlineUsername = System.getProperty(usernameProperty);
