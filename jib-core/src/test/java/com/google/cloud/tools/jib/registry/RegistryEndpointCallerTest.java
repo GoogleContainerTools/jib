@@ -96,8 +96,7 @@ public class RegistryEndpointCallerTest {
     return mock;
   }
 
-  private static HttpResponse mockRedirectHttpResponse(String redirectLocation)
-      throws IOException {
+  private static HttpResponse mockRedirectHttpResponse(String redirectLocation) throws IOException {
     int code307 = HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT;
     return mockHttpResponse(code307, new HttpHeaders().setLocation(redirectLocation));
   }
