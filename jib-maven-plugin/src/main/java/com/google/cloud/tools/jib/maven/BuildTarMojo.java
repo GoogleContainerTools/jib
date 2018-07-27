@@ -78,7 +78,8 @@ public class BuildTarMojo extends JibPluginConfiguration {
     Authorization fromAuthorization = getBaseImageAuth();
     RegistryCredentials knownBaseRegistryCredentials =
         fromAuthorization != null
-            ? new RegistryCredentials("<jib><from><auth>", fromAuthorization)
+            ? new RegistryCredentials(
+                "jib-maven-plugin <from><auth> configuration", fromAuthorization)
             : mavenSettingsServerCredentials.retrieve(baseImage.getRegistry());
 
     String mainClass = mavenProjectProperties.getMainClass(this);

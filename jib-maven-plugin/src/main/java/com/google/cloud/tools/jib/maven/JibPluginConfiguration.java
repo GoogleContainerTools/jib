@@ -122,6 +122,43 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     }
   }
 
+  @Nullable
+  @Parameter(defaultValue = "${session}", readonly = true)
+  MavenSession session;
+
+  @Nullable
+  @Parameter(defaultValue = "${project}", readonly = true)
+  private MavenProject project;
+
+  @Parameter private FromConfiguration from = new FromConfiguration();
+
+  @Parameter(property = "image")
+  private ToConfiguration to = new ToConfiguration();
+
+  @Parameter private ContainerParameters container = new ContainerParameters();
+
+  @Deprecated @Parameter private List<String> jvmFlags = Collections.emptyList();
+
+  @Nullable @Parameter private Map<String, String> environment;
+
+  @Deprecated @Nullable @Parameter private String mainClass;
+
+  @Deprecated @Parameter private List<String> args = Collections.emptyList();
+
+  @Deprecated @Nullable @Parameter private String format;
+
+  @Parameter(defaultValue = "false", required = true)
+  private boolean useOnlyProjectCache;
+
+  @Parameter(defaultValue = "false", required = true)
+  private boolean allowInsecureRegistries;
+
+  @Nullable
+  @Parameter(defaultValue = "${project.basedir}/src/main/jib", required = true)
+  private String extraDirectory;
+
+  @Nullable @Component protected SettingsDecrypter settingsDecrypter;
+
   /**
    * Warns about deprecated parameters in use.
    *
@@ -160,43 +197,6 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     }
   }
 
-  @Nullable
-  @Parameter(defaultValue = "${project}", readonly = true)
-  private MavenProject project;
-
-  @Nullable
-  @Parameter(defaultValue = "${session}", readonly = true)
-  MavenSession session;
-
-  @Parameter private final FromConfiguration from = new FromConfiguration();
-
-  @Parameter(property = "image")
-  private final ToConfiguration to = new ToConfiguration();
-
-  @Parameter private final ContainerParameters container = new ContainerParameters();
-
-  @Deprecated @Parameter private List<String> jvmFlags = Collections.emptyList();
-
-  @Nullable @Parameter private Map<String, String> environment;
-
-  @Deprecated @Nullable @Parameter private String mainClass;
-
-  @Deprecated @Parameter private List<String> args = Collections.emptyList();
-
-  @Deprecated @Nullable @Parameter private String format;
-
-  @Parameter(defaultValue = "false", required = true)
-  private boolean useOnlyProjectCache;
-
-  @Parameter(defaultValue = "false", required = true)
-  private boolean allowInsecureRegistries;
-
-  @Nullable
-  @Parameter(defaultValue = "${project.basedir}/src/main/jib", required = true)
-  private String extraDirectory;
-
-  @Nullable @Component protected SettingsDecrypter settingsDecrypter;
-
   MavenProject getProject() {
     return Preconditions.checkNotNull(project);
   }
@@ -210,22 +210,9 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     return Preconditions.checkNotNull(from).credHelper;
   }
 
-  /**
-   * Gets an {@code Authorization} from system properties, or from the {@code <from><auth>}
-   * configuration if the system properties are not set, or {@code null} if neither are set.
-   *
-   * @return a new {@code Authorization} from the configured username and password, or {@code null}
-   *     if one isn't configured.
-   */
   @Nullable
   Authorization getBaseImageAuth() {
-    // System property takes priority over build configuration
-    String commandlineUsername = System.getProperty("jib.from.auth.username");
-    String commandlinePassword = System.getProperty("jib.from.auth.password");
-    if (commandlineUsername != null && commandlinePassword != null) {
-      return Authorizations.withBasicCredentials(commandlineUsername, commandlinePassword);
-    }
-    return from.auth.getAuthorization();
+    return getImageAuth("jib.from.auth.username", "jib.from.auth.password", from.auth);
   }
 
   @Nullable
@@ -238,22 +225,9 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     return Preconditions.checkNotNull(to).credHelper;
   }
 
-  /**
-   * Gets an {@code Authorization} from system properties, or from the {@code <to><auth>}
-   * configuration if the system properties are not set, or {@code null} if neither are set.
-   *
-   * @return a new {@code Authorization} from the configured username and password, or {@code null}
-   *     if one isn't configured.
-   */
   @Nullable
   Authorization getTargetImageAuth() {
-    // System property takes priority over build configuration
-    String commandlineUsername = System.getProperty("jib.to.auth.username");
-    String commandlinePassword = System.getProperty("jib.to.auth.password");
-    if (commandlineUsername != null && commandlinePassword != null) {
-      return Authorizations.withBasicCredentials(commandlineUsername, commandlinePassword);
-    }
-    return to.auth.getAuthorization();
+    return getImageAuth("jib.to.auth.username", "jib.to.auth.password", to.auth);
   }
 
   boolean getUseCurrentTimestamp() {
@@ -332,5 +306,27 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   @VisibleForTesting
   void setExtraDirectory(String extraDirectory) {
     this.extraDirectory = extraDirectory;
+  }
+
+  /**
+   * Gets an {@link Authorization} from a username and password. First tries system properties, then
+   * tries build configuration, otherwise returns null.
+   *
+   * @param usernameProperty the name of the username system property
+   * @param passwordProperty the name of the password system property
+   * @param auth the configured credentials
+   * @return a new {@link Authorization} from the system properties or build configuration, or
+   *     {@code null} if neither is configured.
+   */
+  @Nullable
+  private static Authorization getImageAuth(
+      String usernameProperty, String passwordProperty, AuthConfiguration auth) {
+    // System property takes priority over build configuration
+    String commandlineUsername = System.getProperty(usernameProperty);
+    String commandlinePassword = System.getProperty(passwordProperty);
+    if (commandlineUsername != null && commandlinePassword != null) {
+      return Authorizations.withBasicCredentials(commandlineUsername, commandlinePassword);
+    }
+    return auth.getAuthorization();
   }
 }
