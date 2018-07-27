@@ -130,11 +130,11 @@ class RegistryEndpointCaller<T> {
    */
   @Nullable
   T call() throws IOException, RegistryException {
-    return callWithInsecureRegistryHandling(initialRequestUrl);
+    return callWithAllowInsecureRegistryHandling(initialRequestUrl);
   }
 
   @Nullable
-  private T callWithInsecureRegistryHandling(URL url) throws IOException, RegistryException {
+  private T callWithAllowInsecureRegistryHandling(URL url) throws IOException, RegistryException {
     try {
       if (!isHttpsProtocol(url) && !allowInsecureRegistries) {
         throw new InsecureRegistryException(url);
@@ -154,6 +154,7 @@ class RegistryEndpointCaller<T> {
 
       } catch (GeneralSecurityException ex) {
         throw new RegistryException("cannot turn off TLS peer verification", ex);
+
       } catch (SSLPeerUnverifiedException | HttpHostConnectException ex) {
         // Try HTTP as a last resort.
         GenericUrl httpUrl = new GenericUrl(url);
@@ -242,7 +243,7 @@ class RegistryEndpointCaller<T> {
             || httpResponseException.getStatusCode() == STATUS_CODE_PERMANENT_REDIRECT) {
           // 'Location' header can be relative or absolute.
           URL redirectLocation = new URL(url, httpResponseException.getHeaders().getLocation());
-          return callWithInsecureRegistryHandling(redirectLocation);
+          return callWithAllowInsecureRegistryHandling(redirectLocation);
 
         } else {
           // Unknown
