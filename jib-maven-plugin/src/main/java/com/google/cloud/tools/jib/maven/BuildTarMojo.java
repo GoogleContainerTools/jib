@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.frontend.SystemPropertyValidator;
+import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
@@ -74,8 +75,12 @@ public class BuildTarMojo extends JibPluginConfiguration {
     MavenSettingsServerCredentials mavenSettingsServerCredentials =
         new MavenSettingsServerCredentials(
             Preconditions.checkNotNull(session).getSettings(), settingsDecrypter, mavenBuildLogger);
+    Authorization fromAuthorization = getBaseImageAuth();
     RegistryCredentials knownBaseRegistryCredentials =
-        mavenSettingsServerCredentials.retrieve(baseImage.getRegistry());
+        fromAuthorization != null
+            ? new RegistryCredentials(
+                "jib-maven-plugin <from><auth> configuration", fromAuthorization)
+            : mavenSettingsServerCredentials.retrieve(baseImage.getRegistry());
 
     String mainClass = mavenProjectProperties.getMainClass(this);
 
