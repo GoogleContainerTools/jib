@@ -25,19 +25,18 @@ import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.image.ReproducibleLayerBuilder;
 import com.google.cloud.tools.jib.image.UnwrittenLayer;
 import com.google.common.collect.ImmutableList;
-import com.google.common.io.CharStreams;
+import com.google.common.io.ByteStreams;
 import com.google.common.io.CountingOutputStream;
 import com.google.common.io.Resources;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import org.junit.Assert;
@@ -50,9 +49,14 @@ import org.mockito.Mockito;
 /** Tests for {@link CacheWriter}. */
 public class CacheWriterTest {
 
-  @Rule public TemporaryFolder temporaryCacheDirectory = new TemporaryFolder();
+  private static boolean isTarGz(Path path) {
+    return path.toString().endsWith(".tar.gz");
+  }
+
+  @Rule public final TemporaryFolder temporaryCacheDirectory = new TemporaryFolder();
 
   private Cache testCache;
+  private CacheWriter cacheWriter;
 
   private Path resourceBlob;
 
@@ -74,17 +78,14 @@ public class CacheWriterTest {
     Path cacheDirectory = temporaryCacheDirectory.newFolder().toPath();
 
     testCache = Cache.init(cacheDirectory);
+    // Writes resourceBlob as a layer to the cache.
+    cacheWriter = new CacheWriter(testCache);
 
     resourceBlob = Paths.get(Resources.getResource("blobA").toURI());
   }
 
   @Test
   public void testWriteLayer_unwritten() throws IOException {
-    ExpectedLayer expectedLayer = getExpectedLayer();
-
-    // Writes resourceBlob as a layer to the cache.
-    CacheWriter cacheWriter = new CacheWriter(testCache);
-
     UnwrittenLayer unwrittenLayer = new UnwrittenLayer(Blobs.from(resourceBlob));
 
     ReproducibleLayerBuilder mockReproducibleLayerBuilder =
@@ -94,33 +95,62 @@ public class CacheWriterTest {
         .thenReturn(
             ImmutableList.of(
                 new LayerEntry(
-                    ImmutableList.of(Paths.get("some", "source", "file")),
-                    "/some/extraction/path")));
+                    ImmutableList.of(Paths.get("some/source/file")), "/some/extraction/path")));
 
     CachedLayerWithMetadata cachedLayerWithMetadata =
         cacheWriter.writeLayer(mockReproducibleLayerBuilder);
     testCache.addCachedLayersWithMetadataToMetadata(
         Collections.singletonList(cachedLayerWithMetadata));
 
-    CachedLayerWithMetadata layerInMetadata = testCache.getUpdatedMetadata().getLayers().get(0);
-    Assert.assertNotNull(layerInMetadata.getMetadata());
-    Assert.assertEquals(1, layerInMetadata.getMetadata().getEntries().size());
+    LayerMetadata layerMetadata = testCache.getUpdatedMetadata().getLayers().get(0).getMetadata();
+    Assert.assertNotNull(layerMetadata);
+    Assert.assertEquals(1, layerMetadata.getEntries().size());
     Assert.assertEquals(
-        Collections.singletonList(Paths.get("some", "source", "file").toString()),
-        layerInMetadata.getMetadata().getEntries().get(0).getSourceFilesStrings());
+        Collections.singletonList(Paths.get("some/source/file").toString()),
+        layerMetadata.getEntries().get(0).getSourceFilesStrings());
     Assert.assertEquals(
-        "/some/extraction/path",
-        layerInMetadata.getMetadata().getEntries().get(0).getExtractionPath());
+        "/some/extraction/path", layerMetadata.getEntries().get(0).getExtractionPath());
 
-    verifyCachedLayerIsExpected(expectedLayer, cachedLayerWithMetadata);
+    verifyCachedLayerIsExpected(getExpectedLayer(), cachedLayerWithMetadata);
+  }
+
+  // Windows file overwrite issue: https://github.com/GoogleContainerTools/jib/issues/719
+  @Test
+  public void testWriteLayer_doesNotOverwriteExistingTarGz() throws IOException, InterruptedException {
+    // Writes resourceBlob as a layer to the cache.
+    UnwrittenLayer unwrittenLayer = new UnwrittenLayer(Blobs.from(resourceBlob));
+
+    ReproducibleLayerBuilder layerBuilder = Mockito.mock(ReproducibleLayerBuilder.class);
+    Mockito.when(layerBuilder.build()).thenReturn(unwrittenLayer);
+    LayerEntry layerEntry =
+        new LayerEntry(ImmutableList.of(Paths.get("some/source/file")), "/some/extraction/path");
+    Mockito.when(layerBuilder.getLayerEntries()).thenReturn(ImmutableList.of(layerEntry));
+
+    cacheWriter.writeLayer(layerBuilder);
+    Assert.assertEquals(1, getTarGzCountInCache());
+    long tarGzModifiedTime = getTarGzModifiedTimeInCache();
+
+    Thread.sleep(1000); // to have different modified time
+    cacheWriter.writeLayer(layerBuilder);
+    Assert.assertEquals(1, getTarGzCountInCache());
+    Assert.assertEquals(tarGzModifiedTime, getTarGzModifiedTimeInCache());
+  }
+
+  private long getTarGzCountInCache() throws IOException {
+    try (Stream<Path> stream = Files.walk(temporaryCacheDirectory.getRoot().toPath())) {
+      return stream.filter(CacheWriterTest::isTarGz).count();
+    }
+  }
+
+  private long getTarGzModifiedTimeInCache() throws IOException {
+    try (Stream<Path> stream = Files.walk(temporaryCacheDirectory.getRoot().toPath())) {
+      return stream.filter(CacheWriterTest::isTarGz).findFirst().get().toFile().lastModified();
+    }
   }
 
   @Test
   public void testGetLayerOutputStream() throws IOException {
     ExpectedLayer expectedLayer = getExpectedLayer();
-
-    // Writes resourceBlob as a layer to the cache.
-    CacheWriter cacheWriter = new CacheWriter(testCache);
 
     CountingOutputStream layerOutputStream =
         cacheWriter.getLayerOutputStream(expectedLayer.blobDescriptor.getDigest());
@@ -142,9 +172,6 @@ public class CacheWriterTest {
    *     file
    */
   private ExpectedLayer getExpectedLayer() throws IOException {
-    String expectedBlobAString =
-        new String(Files.readAllBytes(resourceBlob), StandardCharsets.UTF_8);
-
     // Gets the expected content descriptor, diff ID, and compressed BLOB.
     ByteArrayOutputStream compressedBlobOutputStream = new ByteArrayOutputStream();
     CountingDigestOutputStream compressedDigestOutputStream =
@@ -152,7 +179,8 @@ public class CacheWriterTest {
     CountingDigestOutputStream uncompressedDigestOutputStream;
     try (GZIPOutputStream compressorStream = new GZIPOutputStream(compressedDigestOutputStream)) {
       uncompressedDigestOutputStream = new CountingDigestOutputStream(compressorStream);
-      uncompressedDigestOutputStream.write(expectedBlobAString.getBytes(StandardCharsets.UTF_8));
+      byte[] expectedBlobABytes = Files.readAllBytes(resourceBlob);
+      uncompressedDigestOutputStream.write(expectedBlobABytes);
     }
 
     BlobDescriptor expectedBlobADescriptor = compressedDigestOutputStream.toBlobDescriptor();
@@ -171,15 +199,10 @@ public class CacheWriterTest {
     // Reads the cached layer back.
     Path compressedBlobFile = cachedLayer.getContentFile();
 
-    try (InputStreamReader fileReader =
-        new InputStreamReader(
-            new GZIPInputStream(Files.newInputStream(compressedBlobFile)),
-            StandardCharsets.UTF_8)) {
-      String decompressedString = CharStreams.toString(fileReader);
-
-      String expectedBlobAString =
-          new String(Files.readAllBytes(resourceBlob), StandardCharsets.UTF_8);
-      Assert.assertEquals(expectedBlobAString, decompressedString);
+    try (GZIPInputStream in = new GZIPInputStream(Files.newInputStream(compressedBlobFile))) {
+      byte[] decompressedBytes = ByteStreams.toByteArray(in);
+      byte[] expectedBlobABytes = Files.readAllBytes(resourceBlob);
+      Assert.assertArrayEquals(expectedBlobABytes, decompressedBytes);
       Assert.assertEquals(
           expectedLayer.blobDescriptor.getSize(), cachedLayer.getBlobDescriptor().getSize());
       Assert.assertEquals(
