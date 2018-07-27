@@ -77,6 +77,18 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
               .newRegistryClient();
       registryClient.setTimer(timer);
 
+      boolean sameRegistry =
+          buildConfiguration
+              .getBaseImageRegistry()
+              .equals(buildConfiguration.getTargetImageRegistry());
+      // if pushing to same registry then can skip check-blob and use `mount`/`from`
+      if (sameRegistry) {
+        registryClient.pushBlob(
+            blobDescriptor.getDigest(), blob, buildConfiguration.getBaseImageRepository());
+        return blobDescriptor;
+      }
+
+      // check if the blob is available
       if (registryClient.checkBlob(blobDescriptor.getDigest()) != null) {
         buildConfiguration
             .getBuildLogger()
@@ -84,7 +96,7 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
         return blobDescriptor;
       }
 
-      registryClient.pushBlob(blobDescriptor.getDigest(), blob);
+      registryClient.pushBlob(blobDescriptor.getDigest(), blob, null);
 
       return blobDescriptor;
     }

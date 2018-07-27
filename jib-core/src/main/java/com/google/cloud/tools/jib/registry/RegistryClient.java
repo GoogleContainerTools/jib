@@ -267,25 +267,28 @@ public class RegistryClient {
     return callRegistryEndpoint(blobPuller);
   }
 
-  // TODO: Add mount with 'from' parameter
   /**
-   * Pushes the BLOB, or skips if the BLOB already exists on the registry.
+   * Pushes the BLOB. If the {@code sourceRepository} is provided then the remote registry may skip
+   * if the BLOB already exists on the registry.
    *
    * @param blobDigest the digest of the BLOB, used for existence-check
    * @param blob the BLOB to push
+   * @param sourceRepository if pushing to the same registry then the source image, or {@code null}
+   *     otherwise
    * @return {@code true} if the BLOB already exists on the registry and pushing was skipped; false
    *     if the BLOB was pushed
    * @throws IOException if communicating with the endpoint fails
    * @throws RegistryException if communicating with the endpoint fails
    */
-  public boolean pushBlob(DescriptorDigest blobDigest, Blob blob)
+  public boolean pushBlob(DescriptorDigest blobDigest, Blob blob, @Nullable String sourceRepository)
       throws IOException, RegistryException {
-    BlobPusher blobPusher = new BlobPusher(registryEndpointRequestProperties, blobDigest, blob);
+    BlobPusher blobPusher =
+        new BlobPusher(registryEndpointRequestProperties, blobDigest, blob, sourceRepository);
 
     try (Timer t = parentTimer.subTimer("pushBlob")) {
       try (Timer t2 = t.subTimer("pushBlob POST " + blobDigest)) {
 
-        // POST /v2/<name>/blobs/uploads/?mount={blob.digest}
+        // POST /v2/<name>/blobs/uploads/  ?mount={blob.digest}&from={sourceRepository}
         URL patchLocation = callRegistryEndpoint(blobPusher.initializer());
         if (patchLocation == null) {
           // The BLOB exists already.

@@ -57,7 +57,8 @@ public class BlobPusherTest {
         new BlobPusher(
             new RegistryEndpointRequestProperties("someServerUrl", "someImageName"),
             fakeDescriptorDigest,
-            mockBlob);
+            mockBlob,
+            null);
   }
 
   @Test
@@ -119,12 +120,26 @@ public class BlobPusherTest {
   }
 
   @Test
-  public void testInitializer_getApiRoute() throws MalformedURLException {
+  public void testInitializer_getApiRoute_nullSource() throws MalformedURLException {
+    Assert.assertEquals(
+        new URL("http://someApiBase/someImageName/blobs/uploads/"),
+        testBlobPusher.initializer().getApiRoute("http://someApiBase/"));
+  }
+
+  @Test
+  public void testInitializer_getApiRoute_sameSource() throws MalformedURLException {
+    testBlobPusher =
+        new BlobPusher(
+            new RegistryEndpointRequestProperties("someServerUrl", "someImageName"),
+            fakeDescriptorDigest,
+            mockBlob,
+            "sourceImageName");
+
     Assert.assertEquals(
         new URL(
             "http://someApiBase/someImageName/blobs/uploads/?mount="
                 + fakeDescriptorDigest
-                + "&from=someImageName"),
+                + "&from=sourceImageName"),
         testBlobPusher.initializer().getApiRoute("http://someApiBase/"));
   }
 

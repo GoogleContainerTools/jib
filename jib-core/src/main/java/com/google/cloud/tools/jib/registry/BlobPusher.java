@@ -46,6 +46,7 @@ class BlobPusher {
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   private final DescriptorDigest blobDigest;
   private final Blob blob;
+  @Nullable private final String sourceRepository;
 
   /** Initializes the BLOB upload. */
   private class Initializer implements RegistryEndpointProvider<URL> {
@@ -84,13 +85,13 @@ class BlobPusher {
 
     @Override
     public URL getApiRoute(String apiRouteBase) throws MalformedURLException {
-      return new URL(
-          apiRouteBase
-              + registryEndpointRequestProperties.getImageName()
-              + "/blobs/uploads/?mount="
-              + blobDigest
-              + "&from="
-              + registryEndpointRequestProperties.getImageName());
+      String url =
+          apiRouteBase + registryEndpointRequestProperties.getImageName() + "/blobs/uploads/";
+      if (sourceRepository != null) {
+        url += "?mount=" + blobDigest + "&from=" + sourceRepository;
+      }
+
+      return new URL(url);
     }
 
     @Override
@@ -192,10 +193,12 @@ class BlobPusher {
   BlobPusher(
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
       DescriptorDigest blobDigest,
-      Blob blob) {
+      Blob blob,
+      @Nullable String sourceRepository) {
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     this.blobDigest = blobDigest;
     this.blob = blob;
+    this.sourceRepository = sourceRepository;
   }
 
   /**
