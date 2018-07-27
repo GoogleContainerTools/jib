@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.json.ErrorEntryTemplate;
 import com.google.cloud.tools.jib.registry.json.ErrorResponseTemplate;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -135,18 +136,28 @@ class RegistryEndpointCaller<T> {
 
   @Nullable
   private T callWithAllowInsecureRegistryHandling(URL url) throws IOException, RegistryException {
+    if (allowInsecureRegistries) {
+      return possbilyInsecureCall(url);
+    }
+
     try {
-      if (!isHttpsProtocol(url) && !allowInsecureRegistries) {
+      if (!isHttpsProtocol(url)) {
         throw new InsecureRegistryException(url);
       }
+      return call(url, connectionFactory);
+    } catch (SSLPeerUnverifiedException ex) {
+      throw new InsecureRegistryException(url);
+    }
+  }
+
+  @Nullable
+  private T possbilyInsecureCall(URL url) throws IOException, RegistryException {
+    Preconditions.checkState(allowInsecureRegistries);
+    try {
       return call(url, connectionFactory);
 
     } catch (SSLPeerUnverifiedException exception) {
       try {
-        // Cannot verify the server (e.g., self-signed certificate or plain HTTP).
-        if (!allowInsecureRegistries) {
-          throw new InsecureRegistryException(url);
-        }
         if (insecureConnectionFactory == null) {
           insecureConnectionFactory = Connection.getInsecureConnectionFactory();
         }
