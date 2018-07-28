@@ -1,8 +1,12 @@
 [![Analytics](https://cloud-tools-for-java-metrics.appspot.com/UA-121724379-2/examples)](https://github.com/igrigorik/ga-beacon)
 
-### Simple Example 
+### Simple example
 
-You can find simple usage for Java in [helloworld](helloworld).
+See [helloworld](helloworld) for containerizing a simple `Hello World` application.
+
+### Multi-module example
+
+See [multi-module](multi-module) for containerizing projects with multiple modules.
 
 <!-- ### SpringBoot Example 
 
