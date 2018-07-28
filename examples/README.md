@@ -4,7 +4,7 @@
 
 See [helloworld](helloworld) for containerizing a simple `Hello World` application.
 
-### Multi-module example
+### Multi-module example (DRAFT)
 
 See [multi-module](multi-module) for containerizing projects with multiple modules.
 

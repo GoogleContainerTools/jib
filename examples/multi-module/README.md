@@ -1,4 +1,4 @@
-# Multi-module example
+# Multi-module example (DRAFT)
 
 This example shows how to build multiple containers for a multi-module project in both **Maven** and **Gradle**.
 
