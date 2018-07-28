@@ -274,7 +274,7 @@ public class RegistryClient {
    * @param blobDigest the digest of the BLOB, used for existence-check
    * @param blob the BLOB to push
    * @param sourceRepository if pushing to the same registry then the source image, or {@code null}
-   *     otherwise
+   *     otherwise; used to optimize the BLOB push
    * @return {@code true} if the BLOB already exists on the registry and pushing was skipped; false
    *     if the BLOB was pushed
    * @throws IOException if communicating with the endpoint fails
