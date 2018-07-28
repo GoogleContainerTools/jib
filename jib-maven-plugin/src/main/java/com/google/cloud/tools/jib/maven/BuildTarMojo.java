@@ -55,6 +55,11 @@ public class BuildTarMojo extends JibPluginConfiguration {
 
   @Override
   public void execute() throws MojoExecutionException {
+    if ("pom".equals(getProject().getPackaging())) {
+      getLog().info("Skipping containerization because packaging is 'pom'...");
+      return;
+    }
+
     MavenBuildLogger mavenBuildLogger = new MavenBuildLogger(getLog());
     handleDeprecatedParameters(mavenBuildLogger);
     SystemPropertyValidator.checkHttpTimeoutProperty(MojoExecutionException::new);
