@@ -51,14 +51,18 @@ public class MainClassResolver {
 
     // If mainClass is still null, try to search in class files.
     if (mainClass == null) {
-      mainClass = findMainClassInClassFiles(projectProperties, true);
+      mainClass = findMainClassInClassFiles(projectProperties);
 
     } else if (!BuildConfiguration.isValidJavaClass(mainClass)) {
       // If mainClass found in projectProperties is not valid, try to search in class files, but
       // don't error if not found in class files.
-      String mainClassInClassFiles = findMainClassInClassFiles(projectProperties, false);
-      if (mainClassInClassFiles != null) {
-        mainClass = mainClassInClassFiles;
+      try {
+        String mainClassInClassFiles = findMainClassInClassFiles(projectProperties);
+        if (mainClassInClassFiles != null) {
+          mainClass = mainClassInClassFiles;
+        }
+      } catch (MainClassInferenceException ignored) {
+        // Fallback to using the mainClass found in projectProperties.
       }
     }
 
@@ -82,8 +86,8 @@ public class MainClassResolver {
   }
 
   @Nullable
-  private static String findMainClassInClassFiles(
-      ProjectProperties projectProperties, boolean shouldError) throws MainClassInferenceException {
+  private static String findMainClassInClassFiles(ProjectProperties projectProperties)
+      throws MainClassInferenceException {
     projectProperties
         .getLogger()
         .debug(
@@ -101,9 +105,6 @@ public class MainClassResolver {
       return mainClassFinderResult.getFoundMainClass();
     }
 
-    if (!shouldError) {
-      return null;
-    }
     Verify.verify(mainClassFinderResult.getErrorType() != null);
     switch (mainClassFinderResult.getErrorType()) {
       case MAIN_CLASS_NOT_FOUND:
