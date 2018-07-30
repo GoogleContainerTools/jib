@@ -19,6 +19,8 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
+import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
+import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
@@ -133,19 +135,34 @@ public class BuildTarTask extends DefaultTask {
 
     // Builds the BuildConfiguration.
     // TODO: Consolidate with BuildImageTask/BuildDockerTask.
-    BuildConfiguration.Builder buildConfigurationBuilder =
-        BuildConfiguration.builder(gradleBuildLogger)
-            .setBaseImage(ImageReference.parse(jibExtension.getBaseImage()))
-            .setTargetImage(targetImage)
-            .setBaseImageCredentialHelperName(jibExtension.getFrom().getCredHelper())
-            .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
-            .setJavaArguments(jibExtension.getArgs())
-            .setExposedPorts(ExposedPortsParser.parse(jibExtension.getExposedPorts()))
-            .setAllowInsecureRegistries(jibExtension.getAllowInsecureRegistries())
-            .setLayerConfigurations(gradleProjectProperties.getLayerConfigurations())
+    ImageConfiguration baseImageConfiguration =
+        ImageConfiguration.builder(ImageReference.parse(jibExtension.getBaseImage()))
+            .setCredentialHelper(jibExtension.getFrom().getCredHelper())
+            .setKnownRegistryCredentials(knownBaseRegistryCredentials)
+            .build();
+
+    ImageConfiguration targetImageConfiguration = ImageConfiguration.builder(targetImage).build();
+
+    ContainerConfiguration.Builder containerConfigurationBuilder =
+        ContainerConfiguration.builder()
             .setEntrypoint(
                 JavaEntrypointConstructor.makeDefaultEntrypoint(
-                    jibExtension.getJvmFlags(), mainClass));
+                    jibExtension.getJvmFlags(), mainClass))
+            .setProgramArguments(jibExtension.getArgs())
+            .setExposedPorts(ExposedPortsParser.parse(jibExtension.getExposedPorts()));
+    if (jibExtension.getUseCurrentTimestamp()) {
+      gradleBuildLogger.warn(
+          "Setting image creation time to current time; your image may not be reproducible.");
+      containerConfigurationBuilder.setCreationTime(Instant.now());
+    }
+
+    BuildConfiguration.Builder buildConfigurationBuilder =
+        BuildConfiguration.builder(gradleBuildLogger)
+            .setBaseImageConfiguration(baseImageConfiguration)
+            .setTargetImageConfiguration(targetImageConfiguration)
+            .setContainerConfiguration(containerConfigurationBuilder.build())
+            .setAllowInsecureRegistries(jibExtension.getAllowInsecureRegistries())
+            .setLayerConfigurations(gradleProjectProperties.getLayerConfigurations());
     CacheConfiguration applicationLayersCacheConfiguration =
         CacheConfiguration.forPath(gradleProjectProperties.getCacheDirectory());
     buildConfigurationBuilder.setApplicationLayersCacheConfiguration(
@@ -153,11 +170,6 @@ public class BuildTarTask extends DefaultTask {
     if (jibExtension.getUseOnlyProjectCache()) {
       buildConfigurationBuilder.setBaseImageLayersCacheConfiguration(
           applicationLayersCacheConfiguration);
-    }
-    if (jibExtension.getUseCurrentTimestamp()) {
-      gradleBuildLogger.warn(
-          "Setting image creation time to current time; your image may not be reproducible.");
-      buildConfigurationBuilder.setCreationTime(Instant.now());
     }
 
     BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
