@@ -29,7 +29,7 @@
     <java.version>1.8</java.version>
 
     <!-- IMPORTANT: Set the environment variable PROJECT_ID to your own Google Cloud Platform project. -->
-    <image>gcr.io/${env.PROJECT_ID}/${artifactId}:${version}</image>
+    <image>gcr.io/${env.PROJECT_ID}/${project.artifactId}:${project.version}</image>
   </properties>
 
   <build>

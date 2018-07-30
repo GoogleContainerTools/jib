@@ -44,7 +44,7 @@ The output of the build should have the container image references highlighted i
 
 # How to run on Kubernetes
 
-[`kubernetes.yaml`](kubernetes.yaml) defines the manifests for running the two microservices on Kubernetes. Make sure to change `PROJECT_ID` to your own Google Cloud Platform project.
+[`kubernetes.yaml`](kubernetes.yaml) defines the manifests for running the two microservices on Kubernetes. Make sure to open the file and change `PROJECT_ID` to your own Google Cloud Platform project.
 
 Create a Kubernetes cluster:
 
