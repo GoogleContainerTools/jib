@@ -52,9 +52,9 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Authorization>, Calla
     return new RetrieveRegistryCredentialsStep(
         listeningExecutorService,
         buildConfiguration.getBuildLogger(),
-        buildConfiguration.getBaseImageRegistry(),
-        buildConfiguration.getBaseImageCredentialHelperName(),
-        buildConfiguration.getKnownBaseRegistryCredentials());
+        buildConfiguration.getBaseImageConfiguration().getImageRegistry(),
+        buildConfiguration.getBaseImageConfiguration().getCredentialHelper(),
+        buildConfiguration.getBaseImageConfiguration().getKnownRegistryCredentials());
   }
 
   /** Retrieves credentials for the target image. */
@@ -63,9 +63,9 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Authorization>, Calla
     return new RetrieveRegistryCredentialsStep(
         listeningExecutorService,
         buildConfiguration.getBuildLogger(),
-        buildConfiguration.getTargetImageRegistry(),
-        buildConfiguration.getTargetImageCredentialHelperName(),
-        buildConfiguration.getKnownTargetRegistryCredentials());
+        buildConfiguration.getTargetImageConfiguration().getImageRegistry(),
+        buildConfiguration.getTargetImageConfiguration().getCredentialHelper(),
+        buildConfiguration.getTargetImageConfiguration().getKnownRegistryCredentials());
   }
 
   private final BuildLogger buildLogger;
