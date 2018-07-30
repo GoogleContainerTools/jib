@@ -70,16 +70,14 @@ public class BuildConfigurationTest {
             LayerConfiguration.builder().addEntry(Collections.emptyList(), "destination").build());
 
     ImageConfiguration baseImageConfiguration =
-        ImageConfiguration.builder()
-            .setImage(
+        ImageConfiguration.builder(
                 ImageReference.of(
                     expectedBaseImageServerUrl, expectedBaseImageName, expectedBaseImageTag))
             .setCredentialHelper(expectedBaseImageCredentialHelperName)
             .setKnownRegistryCredentials(expectedKnownBaseRegistryCredentials)
             .build();
     ImageConfiguration targetImageConfiguration =
-        ImageConfiguration.builder()
-            .setImage(
+        ImageConfiguration.builder(
                 ImageReference.of(
                     expectedTargetServerUrl, expectedTargetImageName, expectedTargetTag))
             .setCredentialHelper(expectedTargetImageCredentialHelperName)
@@ -144,14 +142,12 @@ public class BuildConfigurationTest {
     String expectedTargetTag = "targettag";
 
     ImageConfiguration baseImageConfiguration =
-        ImageConfiguration.builder()
-            .setImage(
+        ImageConfiguration.builder(
                 ImageReference.of(
                     expectedBaseImageServerUrl, expectedBaseImageName, expectedBaseImageTag))
             .build();
     ImageConfiguration targetImageConfiguration =
-        ImageConfiguration.builder()
-            .setImage(
+        ImageConfiguration.builder(
                 ImageReference.of(
                     expectedTargetServerUrl, expectedTargetImageName, expectedTargetTag))
             .build();
@@ -183,12 +179,12 @@ public class BuildConfigurationTest {
     try {
       BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
           .setBaseImageConfiguration(
-              ImageConfiguration.builder().setImage(Mockito.mock(ImageReference.class)).build())
+              ImageConfiguration.builder(Mockito.mock(ImageReference.class)).build())
           .build();
       Assert.fail("Build configuration should not be built with missing values");
 
     } catch (IllegalStateException ex) {
-      Assert.assertEquals("target image is required but not set", ex.getMessage());
+      Assert.assertEquals("target image configuration is required but not set", ex.getMessage());
     }
 
     // All required fields missing
@@ -198,7 +194,7 @@ public class BuildConfigurationTest {
 
     } catch (IllegalStateException ex) {
       Assert.assertEquals(
-          "base image is required but not set and target image is required but not set",
+          "base image configuration is required but not set and target image configuration is required but not set",
           ex.getMessage());
     }
   }

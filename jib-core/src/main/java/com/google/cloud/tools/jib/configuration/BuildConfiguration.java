@@ -35,10 +35,9 @@ public class BuildConfiguration {
   public static class Builder {
 
     // All the parameters below are set to their default values.
-    private ImageConfiguration baseImageConfiguration = new ImageConfiguration();
-    private ImageConfiguration targetImageConfiguration = new ImageConfiguration();
-    private ContainerConfiguration containerConfiguration = new ContainerConfiguration();
-
+    @Nullable private ImageConfiguration baseImageConfiguration;
+    @Nullable private ImageConfiguration targetImageConfiguration;
+    @Nullable private ContainerConfiguration containerConfiguration;
     @Nullable private CacheConfiguration applicationLayersCacheConfiguration;
     @Nullable private CacheConfiguration baseImageLayersCacheConfiguration;
     private boolean allowInsecureRegistries = false;
@@ -50,13 +49,13 @@ public class BuildConfiguration {
       this.buildLogger = buildLogger;
     }
 
-    public Builder setBaseImageConfiguration(ImageConfiguration imageReference) {
-      this.baseImageConfiguration = imageReference;
+    public Builder setBaseImageConfiguration(ImageConfiguration imageConfiguration) {
+      this.baseImageConfiguration = imageConfiguration;
       return this;
     }
 
-    public Builder setTargetImageConfiguration(ImageConfiguration imageReference) {
-      this.targetImageConfiguration = imageReference;
+    public Builder setTargetImageConfiguration(ImageConfiguration imageConfiguration) {
+      this.targetImageConfiguration = imageConfiguration;
       return this;
     }
 
@@ -115,40 +114,36 @@ public class BuildConfiguration {
     public BuildConfiguration build() {
       // Validates the parameters.
       List<String> errorMessages = new ArrayList<>();
-      ImageReference baseImageReference = baseImageConfiguration.getImage();
-      ImageReference targetImageReference = targetImageConfiguration.getImage();
-      if (baseImageReference == null) {
-        errorMessages.add("base image is required but not set");
+      if (baseImageConfiguration == null) {
+        errorMessages.add("base image configuration is required but not set");
       }
-      if (targetImageReference == null) {
-        errorMessages.add("target image is required but not set");
+      if (targetImageConfiguration == null) {
+        errorMessages.add("target image configuration is required but not set");
       }
 
       switch (errorMessages.size()) {
         case 0: // No errors
-          if (baseImageReference == null || targetImageReference == null) {
+          if (baseImageConfiguration == null || targetImageConfiguration == null) {
             throw new IllegalStateException("Required fields should not be null");
           }
-          if (baseImageReference.usesDefaultTag()) {
+          if (baseImageConfiguration.getImage().usesDefaultTag()) {
             buildLogger.warn(
                 "Base image '"
-                    + baseImageReference
+                    + baseImageConfiguration.getImage()
                     + "' does not use a specific image digest - build may not be reproducible");
           }
+
+          // If a container configuration hasn't been specified, use an empty one by default
+          ContainerConfiguration newContainerConfiguration =
+              containerConfiguration == null
+                  ? ContainerConfiguration.builder().build()
+                  : containerConfiguration;
+
           return new BuildConfiguration(
               buildLogger,
-              baseImageReference,
-              baseImageConfiguration.getCredentialHelper(),
-              baseImageConfiguration.getKnownRegistryCredentials(),
-              targetImageReference,
-              targetImageConfiguration.getCredentialHelper(),
-              targetImageConfiguration.getKnownRegistryCredentials(),
-              containerConfiguration.getCreationTime(),
-              containerConfiguration.getEntrypoint(),
-              containerConfiguration.getProgramArguments(),
-              containerConfiguration.getEnvironmentMap(),
-              containerConfiguration.getExposedPorts(),
-              containerConfiguration.getTargetFormat(),
+              baseImageConfiguration,
+              targetImageConfiguration,
+              newContainerConfiguration,
               applicationLayersCacheConfiguration,
               baseImageLayersCacheConfiguration,
               allowInsecureRegistries,
@@ -205,39 +200,30 @@ public class BuildConfiguration {
   /** Instantiate with {@link Builder#build}. */
   private BuildConfiguration(
       BuildLogger buildLogger,
-      ImageReference baseImageReference,
-      @Nullable String baseImageCredentialHelperName,
-      @Nullable RegistryCredentials knownBaseRegistryCredentials,
-      ImageReference targetImageReference,
-      @Nullable String targetImageCredentialHelperName,
-      @Nullable RegistryCredentials knownTargetRegistryCredentials,
-      Instant creationTime,
-      @Nullable ImmutableList<String> entrypoint,
-      @Nullable ImmutableList<String> programArguments,
-      @Nullable ImmutableMap<String, String> environmentMap,
-      @Nullable ImmutableList<Port> exposedPorts,
-      Class<? extends BuildableManifestTemplate> targetFormat,
+      ImageConfiguration baseImageConfiguration,
+      ImageConfiguration targetImageConfiguration,
+      ContainerConfiguration containerConfiguration,
       @Nullable CacheConfiguration applicationLayersCacheConfiguration,
       @Nullable CacheConfiguration baseImageLayersCacheConfiguration,
       boolean allowInsecureRegistries,
       ImmutableList<LayerConfiguration> layerConfigurations) {
     this.buildLogger = buildLogger;
-    this.baseImageReference = baseImageReference;
-    this.baseImageCredentialHelperName = baseImageCredentialHelperName;
-    this.knownBaseRegistryCredentials = knownBaseRegistryCredentials;
-    this.targetImageReference = targetImageReference;
-    this.targetImageCredentialHelperName = targetImageCredentialHelperName;
-    this.knownTargetRegistryCredentials = knownTargetRegistryCredentials;
-    this.creationTime = creationTime;
-    this.programArguments = programArguments;
-    this.environmentMap = environmentMap;
-    this.exposedPorts = exposedPorts;
-    this.targetFormat = targetFormat;
+    this.baseImageReference = baseImageConfiguration.getImage();
+    this.baseImageCredentialHelperName = baseImageConfiguration.getCredentialHelper();
+    this.knownBaseRegistryCredentials = baseImageConfiguration.getKnownRegistryCredentials();
+    this.targetImageReference = targetImageConfiguration.getImage();
+    this.targetImageCredentialHelperName = targetImageConfiguration.getCredentialHelper();
+    this.knownTargetRegistryCredentials = targetImageConfiguration.getKnownRegistryCredentials();
+    this.creationTime = containerConfiguration.getCreationTime();
+    this.entrypoint = containerConfiguration.getEntrypoint();
+    this.programArguments = containerConfiguration.getProgramArguments();
+    this.environmentMap = containerConfiguration.getEnvironmentMap();
+    this.exposedPorts = containerConfiguration.getExposedPorts();
+    this.targetFormat = containerConfiguration.getTargetFormat();
     this.applicationLayersCacheConfiguration = applicationLayersCacheConfiguration;
     this.baseImageLayersCacheConfiguration = baseImageLayersCacheConfiguration;
     this.allowInsecureRegistries = allowInsecureRegistries;
     this.layerConfigurations = layerConfigurations;
-    this.entrypoint = entrypoint;
   }
 
   public BuildLogger getBuildLogger() {

@@ -26,20 +26,9 @@ public class ImageConfiguration {
   /** Builder for instantiating an {@link ImageConfiguration}. */
   public static class Builder {
 
-    @Nullable private ImageReference imageReference;
+    private ImageReference imageReference;
     @Nullable private String credentialHelper;
     @Nullable private RegistryCredentials knownRegistryCredentials;
-
-    /**
-     * Sets the image reference.
-     *
-     * @param imageReference the image reference containing the registry, repository, and tag.
-     * @return this
-     */
-    public Builder setImage(@Nullable ImageReference imageReference) {
-      this.imageReference = imageReference;
-      return this;
-    }
 
     /**
      * Sets the credential helper name used for authenticating with the image's registry.
@@ -55,12 +44,12 @@ public class ImageConfiguration {
     /**
      * Sets known credentials used for authenticating with the image's registry.
      *
-     * @param knownRegistryCrendentials the credentials.
+     * @param knownRegistryCredentials the credentials.
      * @return this
      */
     public Builder setKnownRegistryCredentials(
-        @Nullable RegistryCredentials knownRegistryCrendentials) {
-      this.knownRegistryCredentials = knownRegistryCrendentials;
+        @Nullable RegistryCredentials knownRegistryCredentials) {
+      this.knownRegistryCredentials = knownRegistryCredentials;
       return this;
     }
 
@@ -73,23 +62,27 @@ public class ImageConfiguration {
       return new ImageConfiguration(imageReference, credentialHelper, knownRegistryCredentials);
     }
 
-    private Builder() {}
+    private Builder(ImageReference imageReference) {
+      this.imageReference = imageReference;
+    }
   }
 
-  public static Builder builder() {
-    return new Builder();
+  /**
+   * Constructs a builder for an {@link ImageConfiguration}.
+   *
+   * @param imageReference the image reference, which is a required field
+   * @return the builder
+   */
+  public static Builder builder(ImageReference imageReference) {
+    return new Builder(imageReference);
   }
 
-  @Nullable private final ImageReference image;
+  private final ImageReference image;
   @Nullable private final String credentialHelper;
   @Nullable private final RegistryCredentials knownRegistryCredentials;
 
-  ImageConfiguration() {
-    this(null, null, null);
-  }
-
   private ImageConfiguration(
-      @Nullable ImageReference image,
+      ImageReference image,
       @Nullable String credentialHelper,
       @Nullable RegistryCredentials knownRegistryCredentials) {
     this.image = image;
@@ -97,7 +90,6 @@ public class ImageConfiguration {
     this.knownRegistryCredentials = knownRegistryCredentials;
   }
 
-  @Nullable
   ImageReference getImage() {
     return image;
   }

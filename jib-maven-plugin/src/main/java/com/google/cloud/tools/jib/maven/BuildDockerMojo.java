@@ -91,14 +91,12 @@ public class BuildDockerMojo extends JibPluginConfiguration {
     // Builds the BuildConfiguration.
     // TODO: Consolidate with BuildImageMojo.
     ImageConfiguration baseImageConfiguration =
-        ImageConfiguration.builder()
-            .setImage(baseImage)
+        ImageConfiguration.builder(baseImage)
             .setCredentialHelper(getBaseImageCredentialHelperName())
             .setKnownRegistryCredentials(knownBaseRegistryCredentials)
             .build();
 
-    ImageConfiguration targetImageConfiguration =
-        ImageConfiguration.builder().setImage(targetImage).build();
+    ImageConfiguration targetImageConfiguration = ImageConfiguration.builder(targetImage).build();
 
     ContainerConfiguration.Builder containerConfigurationBuilder =
         ContainerConfiguration.builder()

@@ -151,10 +151,6 @@ public class ContainerConfiguration {
   @Nullable private final ImmutableList<Port> exposedPorts;
   private final Class<? extends BuildableManifestTemplate> targetFormat;
 
-  ContainerConfiguration() {
-    this(Instant.EPOCH, null, null, null, null, V22ManifestTemplate.class);
-  }
-
   private ContainerConfiguration(
       Instant creationTime,
       @Nullable ImmutableList<String> entrypoint,

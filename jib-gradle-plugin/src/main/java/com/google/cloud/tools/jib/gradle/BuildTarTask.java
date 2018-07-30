@@ -136,14 +136,12 @@ public class BuildTarTask extends DefaultTask {
     // Builds the BuildConfiguration.
     // TODO: Consolidate with BuildImageTask/BuildDockerTask.
     ImageConfiguration baseImageConfiguration =
-        ImageConfiguration.builder()
-            .setImage(ImageReference.parse(jibExtension.getBaseImage()))
+        ImageConfiguration.builder(ImageReference.parse(jibExtension.getBaseImage()))
             .setCredentialHelper(jibExtension.getFrom().getCredHelper())
             .setKnownRegistryCredentials(knownBaseRegistryCredentials)
             .build();
 
-    ImageConfiguration targetImageConfiguration =
-        ImageConfiguration.builder().setImage(targetImage).build();
+    ImageConfiguration targetImageConfiguration = ImageConfiguration.builder(targetImage).build();
 
     ContainerConfiguration.Builder containerConfigurationBuilder =
         ContainerConfiguration.builder()

@@ -113,15 +113,13 @@ public class BuildImageTask extends DefaultTask {
 
     // Builds the BuildConfiguration.
     ImageConfiguration baseImageConfiguration =
-        ImageConfiguration.builder()
-            .setImage(ImageReference.parse(jibExtension.getBaseImage()))
+        ImageConfiguration.builder(ImageReference.parse(jibExtension.getBaseImage()))
             .setCredentialHelper(jibExtension.getFrom().getCredHelper())
             .setKnownRegistryCredentials(knownBaseRegistryCredentials)
             .build();
 
     ImageConfiguration targetImageConfiguration =
-        ImageConfiguration.builder()
-            .setImage(ImageReference.parse(jibExtension.getTargetImage()))
+        ImageConfiguration.builder(ImageReference.parse(jibExtension.getTargetImage()))
             .setCredentialHelper(jibExtension.getTo().getCredHelper())
             .setKnownRegistryCredentials(knownTargetRegistryCredentials)
             .build();

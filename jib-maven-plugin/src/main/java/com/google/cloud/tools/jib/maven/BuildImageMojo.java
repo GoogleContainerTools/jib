@@ -114,15 +114,13 @@ public class BuildImageMojo extends JibPluginConfiguration {
 
     // Builds the BuildConfiguration.
     ImageConfiguration baseImageConfiguration =
-        ImageConfiguration.builder()
-            .setImage(baseImage)
+        ImageConfiguration.builder(baseImage)
             .setCredentialHelper(getBaseImageCredentialHelperName())
             .setKnownRegistryCredentials(knownBaseRegistryCredentials)
             .build();
 
     ImageConfiguration targetImageConfiguration =
-        ImageConfiguration.builder()
-            .setImage(targetImage)
+        ImageConfiguration.builder(targetImage)
             .setCredentialHelper(getTargetImageCredentialHelperName())
             .setKnownRegistryCredentials(knownTargetRegistryCredentials)
             .build();

@@ -190,10 +190,8 @@ public class BuildStepsIntegrationTest {
 
   private BuildConfiguration getBuildConfiguration(
       ImageReference baseImage, ImageReference targetImage) {
-    ImageConfiguration baseImageConfiguration =
-        ImageConfiguration.builder().setImage(baseImage).build();
-    ImageConfiguration targetImageConfiguration =
-        ImageConfiguration.builder().setImage(targetImage).build();
+    ImageConfiguration baseImageConfiguration = ImageConfiguration.builder(baseImage).build();
+    ImageConfiguration targetImageConfiguration = ImageConfiguration.builder(targetImage).build();
     ContainerConfiguration containerConfiguration =
         ContainerConfiguration.builder()
             .setEntrypoint(
