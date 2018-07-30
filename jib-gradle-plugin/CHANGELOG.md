@@ -9,9 +9,12 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Only builds non-empty layers ([#516](https://github.com/GoogleContainerTools/jib/pull/516/files))
-- Fixed slow image reference parsing ([#680](https://github.com/GoogleContainerTools/jib/pull/680))
 - Propagates environment variables from the base image ([#716](https://github.com/GoogleContainerTools/jib/pull/716))
+
+### Fixed
+
+- Fixed slow image reference parsing ([#680](https://github.com/GoogleContainerTools/jib/pull/680))
+- Only builds non-empty layers ([#516](https://github.com/GoogleContainerTools/jib/pull/516/files))
 
 ## 0.9.7
 
