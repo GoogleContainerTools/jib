@@ -55,8 +55,7 @@ public class MainClassResolver {
 
     } else if (!BuildConfiguration.isValidJavaClass(mainClass)) {
       // If mainClass found in projectProperties is not valid, try to search in class files, but
-      // don't error if not found in
-      // class files.
+      // don't error if not found in class files.
       String mainClassInClassFiles = findMainClassInClassFiles(projectProperties, false);
       if (mainClassInClassFiles != null) {
         mainClass = mainClassInClassFiles;
