@@ -288,16 +288,4 @@ public class BuildConfigurationTest {
         .setContainerConfiguration(
             ContainerConfiguration.builder().setEnvironment(new Hashtable<>()).build());
   }
-
-  @Test
-  public void testValidJavaClassRegex() {
-    Assert.assertTrue(BuildConfiguration.isValidJavaClass("my.Class"));
-    Assert.assertTrue(BuildConfiguration.isValidJavaClass("my.java_Class$valid"));
-    Assert.assertTrue(BuildConfiguration.isValidJavaClass("multiple.package.items"));
-    Assert.assertTrue(BuildConfiguration.isValidJavaClass("is123.valid"));
-    Assert.assertFalse(BuildConfiguration.isValidJavaClass("${start-class}"));
-    Assert.assertFalse(BuildConfiguration.isValidJavaClass("123not.Valid"));
-    Assert.assertFalse(BuildConfiguration.isValidJavaClass("{class}"));
-    Assert.assertFalse(BuildConfiguration.isValidJavaClass("not valid"));
-  }
 }

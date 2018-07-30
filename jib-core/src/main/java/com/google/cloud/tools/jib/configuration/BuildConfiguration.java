@@ -19,12 +19,10 @@ package com.google.cloud.tools.jib.configuration;
 import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
-import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
-import javax.lang.model.SourceVersion;
 
 /** Immutable configuration options for the builder process. */
 public class BuildConfiguration {
@@ -186,19 +184,6 @@ public class BuildConfiguration {
           throw new IllegalStateException();
       }
     }
-  }
-
-  /**
-   * @param className the class name to check
-   * @return {@code true} if {@code className} is a valid Java class name; {@code false} otherwise
-   */
-  public static boolean isValidJavaClass(String className) {
-    for (String part : Splitter.on('.').split(className)) {
-      if (!SourceVersion.isIdentifier(part)) {
-        return false;
-      }
-    }
-    return true;
   }
 
   public static Builder builder(BuildLogger buildLogger) {
