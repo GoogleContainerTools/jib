@@ -91,7 +91,7 @@ class LoadDockerStep implements AsyncStep<Void>, Callable<Void> {
     new DockerClient()
         .load(
             new ImageToTarballTranslator(image)
-                .toTarballBlob(buildConfiguration.getTargetImageReference()));
+                .toTarballBlob(buildConfiguration.getTargetImageConfiguration().getImage()));
 
     return null;
   }

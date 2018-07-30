@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
+import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.registry.InsecureRegistryException;
 import com.google.cloud.tools.jib.registry.RegistryCredentialsNotSentException;
@@ -68,6 +69,7 @@ public class BuildStepsRunnerTest {
   @Mock private HttpResponseException mockHttpResponseException;
   @Mock private ExecutionException mockExecutionException;
   @Mock private BuildConfiguration mockBuildConfiguration;
+  @Mock private ImageConfiguration mockImageConfiguration;
 
   private BuildStepsRunner testBuildImageStepsRunner;
 
@@ -76,6 +78,10 @@ public class BuildStepsRunnerTest {
     testBuildImageStepsRunner = new BuildStepsRunner(mockBuildSteps);
 
     Mockito.when(mockBuildSteps.getBuildConfiguration()).thenReturn(mockBuildConfiguration);
+    Mockito.when(mockBuildConfiguration.getBaseImageConfiguration())
+        .thenReturn(mockImageConfiguration);
+    Mockito.when(mockBuildConfiguration.getTargetImageConfiguration())
+        .thenReturn(mockImageConfiguration);
     Mockito.when(mockBuildConfiguration.getBuildLogger()).thenReturn(mockBuildLogger);
     Mockito.when(mockBuildConfiguration.getLayerConfigurations())
         .thenReturn(
@@ -202,7 +208,7 @@ public class BuildStepsRunnerTest {
     Mockito.when(mockExecutionException.getCause()).thenReturn(mockRegistryUnauthorizedException);
     Mockito.doThrow(mockExecutionException).when(mockBuildSteps).run();
 
-    Mockito.when(mockBuildConfiguration.getBaseImageRegistry()).thenReturn("someregistry");
+    Mockito.when(mockImageConfiguration.getImageRegistry()).thenReturn("someregistry");
 
     try {
       testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
@@ -246,9 +252,8 @@ public class BuildStepsRunnerTest {
     Mockito.when(mockExecutionException.getCause()).thenReturn(mockRegistryUnauthorizedException);
     Mockito.doThrow(mockExecutionException).when(mockBuildSteps).run();
 
-    Mockito.when(mockBuildConfiguration.getBaseImageRegistry()).thenReturn("someregistry");
-    Mockito.when(mockBuildConfiguration.getBaseImageCredentialHelperName())
-        .thenReturn("some-credential-helper");
+    Mockito.when(mockImageConfiguration.getImageRegistry()).thenReturn("someregistry");
+    Mockito.when(mockImageConfiguration.getCredentialHelper()).thenReturn("some-credential-helper");
 
     try {
       testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
