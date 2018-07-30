@@ -90,17 +90,17 @@ public class ImageConfiguration {
     this.knownRegistryCredentials = knownRegistryCredentials;
   }
 
-  ImageReference getImage() {
+  public ImageReference getImage() {
     return image;
   }
 
   @Nullable
-  String getCredentialHelper() {
+  public String getCredentialHelper() {
     return credentialHelper;
   }
 
   @Nullable
-  RegistryCredentials getKnownRegistryCredentials() {
+  public RegistryCredentials getKnownRegistryCredentials() {
     return knownRegistryCredentials;
   }
 }

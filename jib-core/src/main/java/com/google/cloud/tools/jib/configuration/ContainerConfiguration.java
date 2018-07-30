@@ -16,8 +16,6 @@
 
 package com.google.cloud.tools.jib.configuration;
 
-import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
-import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -39,7 +37,6 @@ public class ContainerConfiguration {
     @Nullable private ImmutableList<String> programArguments;
     @Nullable private ImmutableMap<String, String> environmentMap;
     @Nullable private ImmutableList<Port> exposedPorts;
-    private Class<? extends BuildableManifestTemplate> targetFormat = V22ManifestTemplate.class;
 
     /**
      * Sets the image creation time.
@@ -59,7 +56,9 @@ public class ContainerConfiguration {
      * @return this
      */
     public Builder setProgramArguments(@Nullable List<String> programArguments) {
-      if (programArguments != null) {
+      if (programArguments == null) {
+        this.programArguments = null;
+      } else {
         Preconditions.checkArgument(!programArguments.contains(null));
         this.programArguments = ImmutableList.copyOf(programArguments);
       }
@@ -76,9 +75,8 @@ public class ContainerConfiguration {
       if (environmentMap == null) {
         this.environmentMap = null;
       } else {
-        Preconditions.checkArgument(
-            !Iterables.any(environmentMap.keySet(), Objects::isNull)
-                && !Iterables.any(environmentMap.values(), Objects::isNull));
+        Preconditions.checkArgument(!Iterables.any(environmentMap.keySet(), Objects::isNull));
+        Preconditions.checkArgument(!Iterables.any(environmentMap.values(), Objects::isNull));
         this.environmentMap = ImmutableMap.copyOf(environmentMap);
       }
       return this;
@@ -117,24 +115,13 @@ public class ContainerConfiguration {
     }
 
     /**
-     * Sets the container's target format.
-     *
-     * @param targetFormat the target format
-     * @return this
-     */
-    public Builder setTargetFormat(Class<? extends BuildableManifestTemplate> targetFormat) {
-      this.targetFormat = targetFormat;
-      return this;
-    }
-
-    /**
      * Builds the {@link ContainerConfiguration}.
      *
      * @return the corresponding {@link ContainerConfiguration}
      */
     public ContainerConfiguration build() {
       return new ContainerConfiguration(
-          creationTime, entrypoint, programArguments, environmentMap, exposedPorts, targetFormat);
+          creationTime, entrypoint, programArguments, environmentMap, exposedPorts);
     }
 
     private Builder() {}
@@ -149,48 +136,41 @@ public class ContainerConfiguration {
   @Nullable private final ImmutableList<String> programArguments;
   @Nullable private final ImmutableMap<String, String> environmentMap;
   @Nullable private final ImmutableList<Port> exposedPorts;
-  private final Class<? extends BuildableManifestTemplate> targetFormat;
 
   private ContainerConfiguration(
       Instant creationTime,
       @Nullable ImmutableList<String> entrypoint,
       @Nullable ImmutableList<String> programArguments,
       @Nullable ImmutableMap<String, String> environmentMap,
-      @Nullable ImmutableList<Port> exposedPorts,
-      Class<? extends BuildableManifestTemplate> targetFormat) {
+      @Nullable ImmutableList<Port> exposedPorts) {
     this.creationTime = creationTime;
     this.entrypoint = entrypoint;
     this.programArguments = programArguments;
     this.environmentMap = environmentMap;
     this.exposedPorts = exposedPorts;
-    this.targetFormat = targetFormat;
   }
 
-  Instant getCreationTime() {
+  public Instant getCreationTime() {
     return creationTime;
   }
 
   @Nullable
-  ImmutableList<String> getEntrypoint() {
+  public ImmutableList<String> getEntrypoint() {
     return entrypoint;
   }
 
   @Nullable
-  ImmutableList<String> getProgramArguments() {
+  public ImmutableList<String> getProgramArguments() {
     return programArguments;
   }
 
   @Nullable
-  ImmutableMap<String, String> getEnvironmentMap() {
+  public ImmutableMap<String, String> getEnvironmentMap() {
     return environmentMap;
   }
 
   @Nullable
-  ImmutableList<Port> getExposedPorts() {
+  public ImmutableList<Port> getExposedPorts() {
     return exposedPorts;
-  }
-
-  Class<? extends BuildableManifestTemplate> getTargetFormat() {
-    return targetFormat;
   }
 }

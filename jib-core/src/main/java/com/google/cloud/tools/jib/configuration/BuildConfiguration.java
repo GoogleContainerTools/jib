@@ -19,11 +19,10 @@ package com.google.cloud.tools.jib.configuration;
 import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
+import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -42,6 +41,7 @@ public class BuildConfiguration {
     @Nullable private CacheConfiguration baseImageLayersCacheConfiguration;
     private boolean allowInsecureRegistries = false;
     private ImmutableList<LayerConfiguration> layerConfigurations = ImmutableList.of();
+    private Class<? extends BuildableManifestTemplate> targetFormat = V22ManifestTemplate.class;
 
     private BuildLogger buildLogger;
 
@@ -85,6 +85,17 @@ public class BuildConfiguration {
     public Builder setBaseImageLayersCacheConfiguration(
         @Nullable CacheConfiguration baseImageLayersCacheConfiguration) {
       this.baseImageLayersCacheConfiguration = baseImageLayersCacheConfiguration;
+      return this;
+    }
+
+    /**
+     * Sets the target format of the container image.
+     *
+     * @param targetFormat the target format
+     * @return this
+     */
+    public Builder setTargetFormat(Class<? extends BuildableManifestTemplate> targetFormat) {
+      this.targetFormat = targetFormat;
       return this;
     }
 
@@ -133,19 +144,14 @@ public class BuildConfiguration {
                     + "' does not use a specific image digest - build may not be reproducible");
           }
 
-          // If a container configuration hasn't been specified, use an empty one by default
-          ContainerConfiguration newContainerConfiguration =
-              containerConfiguration == null
-                  ? ContainerConfiguration.builder().build()
-                  : containerConfiguration;
-
           return new BuildConfiguration(
               buildLogger,
               baseImageConfiguration,
               targetImageConfiguration,
-              newContainerConfiguration,
+              containerConfiguration,
               applicationLayersCacheConfiguration,
               baseImageLayersCacheConfiguration,
+              targetFormat,
               allowInsecureRegistries,
               layerConfigurations);
 
@@ -186,25 +192,22 @@ public class BuildConfiguration {
   private final ImageReference targetImageReference;
   @Nullable private final String targetImageCredentialHelperName;
   @Nullable private final RegistryCredentials knownTargetRegistryCredentials;
-  private final Instant creationTime;
-  @Nullable private final ImmutableList<String> programArguments;
-  @Nullable private final ImmutableMap<String, String> environmentMap;
-  @Nullable private final ImmutableList<Port> exposedPorts;
-  private final Class<? extends BuildableManifestTemplate> targetFormat;
+  @Nullable private final ContainerConfiguration containerConfiguration;
   @Nullable private final CacheConfiguration applicationLayersCacheConfiguration;
   @Nullable private final CacheConfiguration baseImageLayersCacheConfiguration;
+  private Class<? extends BuildableManifestTemplate> targetFormat;
   private final boolean allowInsecureRegistries;
   private final ImmutableList<LayerConfiguration> layerConfigurations;
-  @Nullable private final ImmutableList<String> entrypoint;
 
   /** Instantiate with {@link Builder#build}. */
   private BuildConfiguration(
       BuildLogger buildLogger,
       ImageConfiguration baseImageConfiguration,
       ImageConfiguration targetImageConfiguration,
-      ContainerConfiguration containerConfiguration,
+      @Nullable ContainerConfiguration containerConfiguration,
       @Nullable CacheConfiguration applicationLayersCacheConfiguration,
       @Nullable CacheConfiguration baseImageLayersCacheConfiguration,
+      Class<? extends BuildableManifestTemplate> targetFormat,
       boolean allowInsecureRegistries,
       ImmutableList<LayerConfiguration> layerConfigurations) {
     this.buildLogger = buildLogger;
@@ -214,14 +217,10 @@ public class BuildConfiguration {
     this.targetImageReference = targetImageConfiguration.getImage();
     this.targetImageCredentialHelperName = targetImageConfiguration.getCredentialHelper();
     this.knownTargetRegistryCredentials = targetImageConfiguration.getKnownRegistryCredentials();
-    this.creationTime = containerConfiguration.getCreationTime();
-    this.entrypoint = containerConfiguration.getEntrypoint();
-    this.programArguments = containerConfiguration.getProgramArguments();
-    this.environmentMap = containerConfiguration.getEnvironmentMap();
-    this.exposedPorts = containerConfiguration.getExposedPorts();
-    this.targetFormat = containerConfiguration.getTargetFormat();
+    this.containerConfiguration = containerConfiguration;
     this.applicationLayersCacheConfiguration = applicationLayersCacheConfiguration;
     this.baseImageLayersCacheConfiguration = baseImageLayersCacheConfiguration;
+    this.targetFormat = targetFormat;
     this.allowInsecureRegistries = allowInsecureRegistries;
     this.layerConfigurations = layerConfigurations;
   }
@@ -282,48 +281,9 @@ public class BuildConfiguration {
     return knownTargetRegistryCredentials;
   }
 
-  public Instant getCreationTime() {
-    return creationTime;
-  }
-
-  /**
-   * Gets the container entrypoint.
-   *
-   * @return the list of entrypoint tokens, or {@code null} if not set
-   */
   @Nullable
-  public ImmutableList<String> getEntrypoint() {
-    return entrypoint;
-  }
-
-  /**
-   * Gets the arguments to pass to the entrypoint.
-   *
-   * @return the list of arguments, or {@code null} if not set
-   */
-  @Nullable
-  public ImmutableList<String> getProgramArguments() {
-    return programArguments;
-  }
-
-  /**
-   * Gets the map from environment variable names to values for the container.
-   *
-   * @return the map of environment variables, or {@code null} if not set
-   */
-  @Nullable
-  public ImmutableMap<String, String> getEnvironment() {
-    return environmentMap;
-  }
-
-  /**
-   * Gets the ports to expose on the container.
-   *
-   * @return the list of exposed ports, or {@code null} if not set
-   */
-  @Nullable
-  public ImmutableList<Port> getExposedPorts() {
-    return exposedPorts;
+  public ContainerConfiguration getContainerConfiguration() {
+    return containerConfiguration;
   }
 
   public Class<? extends BuildableManifestTemplate> getTargetFormat() {

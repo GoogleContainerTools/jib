@@ -130,8 +130,7 @@ public class BuildImageTask extends DefaultTask {
                 JavaEntrypointConstructor.makeDefaultEntrypoint(
                     jibExtension.getJvmFlags(), mainClass))
             .setProgramArguments(jibExtension.getArgs())
-            .setExposedPorts(ExposedPortsParser.parse(jibExtension.getExposedPorts()))
-            .setTargetFormat(jibExtension.getFormat());
+            .setExposedPorts(ExposedPortsParser.parse(jibExtension.getExposedPorts()));
     if (jibExtension.getUseCurrentTimestamp()) {
       gradleBuildLogger.warn(
           "Setting image creation time to current time; your image may not be reproducible.");
@@ -143,6 +142,7 @@ public class BuildImageTask extends DefaultTask {
             .setBaseImageConfiguration(baseImageConfiguration)
             .setTargetImageConfiguration(targetImageConfiguration)
             .setContainerConfiguration(containerConfigurationBuilder.build())
+            .setTargetFormat(jibExtension.getFormat())
             .setAllowInsecureRegistries(jibExtension.getAllowInsecureRegistries())
             .setLayerConfigurations(gradleProjectProperties.getLayerConfigurations());
 

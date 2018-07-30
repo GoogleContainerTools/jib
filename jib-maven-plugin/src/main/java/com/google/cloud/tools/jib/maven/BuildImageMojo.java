@@ -131,8 +131,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
                 JavaEntrypointConstructor.makeDefaultEntrypoint(getJvmFlags(), mainClass))
             .setProgramArguments(getArgs())
             .setEnvironment(getEnvironment())
-            .setExposedPorts(ExposedPortsParser.parse(getExposedPorts()))
-            .setTargetFormat(ImageFormat.valueOf(getFormat()).getManifestTemplateClass());
+            .setExposedPorts(ExposedPortsParser.parse(getExposedPorts()));
     if (getUseCurrentTimestamp()) {
       mavenBuildLogger.warn(
           "Setting image creation time to current time; your image may not be reproducible.");
@@ -144,6 +143,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
             .setBaseImageConfiguration(baseImageConfiguration)
             .setTargetImageConfiguration(targetImageConfiguration)
             .setContainerConfiguration(containerConfigurationBuilder.build())
+            .setTargetFormat(ImageFormat.valueOf(getFormat()).getManifestTemplateClass())
             .setAllowInsecureRegistries(getAllowInsecureRegistries())
             .setLayerConfigurations(mavenProjectProperties.getLayerConfigurations());
 

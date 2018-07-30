@@ -90,7 +90,6 @@ public class BuildConfigurationTest {
             .setProgramArguments(expectedJavaArguments)
             .setEnvironment(expectedEnvironment)
             .setExposedPorts(expectedExposedPorts)
-            .setTargetFormat(OCIManifestTemplate.class)
             .build();
     BuildConfiguration.Builder buildConfigurationBuilder =
         BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
@@ -99,11 +98,14 @@ public class BuildConfigurationTest {
             .setContainerConfiguration(containerConfiguration)
             .setApplicationLayersCacheConfiguration(expectedApplicationLayersCacheConfiguration)
             .setBaseImageLayersCacheConfiguration(expectedBaseImageLayersCacheConfiguration)
+            .setTargetFormat(OCIManifestTemplate.class)
             .setAllowInsecureRegistries(true)
             .setLayerConfigurations(expectedLayerConfigurations);
     BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
 
-    Assert.assertEquals(expectedCreationTime, buildConfiguration.getCreationTime());
+    Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
+    Assert.assertEquals(
+        expectedCreationTime, buildConfiguration.getContainerConfiguration().getCreationTime());
     Assert.assertEquals(expectedBaseImageServerUrl, buildConfiguration.getBaseImageRegistry());
     Assert.assertEquals(expectedBaseImageName, buildConfiguration.getBaseImageRepository());
     Assert.assertEquals(expectedBaseImageTag, buildConfiguration.getBaseImageTag());
@@ -116,9 +118,13 @@ public class BuildConfigurationTest {
     Assert.assertEquals(
         expectedTargetImageCredentialHelperName,
         buildConfiguration.getTargetImageCredentialHelperName());
-    Assert.assertEquals(expectedJavaArguments, buildConfiguration.getProgramArguments());
-    Assert.assertEquals(expectedEnvironment, buildConfiguration.getEnvironment());
-    Assert.assertEquals(expectedExposedPorts, buildConfiguration.getExposedPorts());
+    Assert.assertEquals(
+        expectedJavaArguments,
+        buildConfiguration.getContainerConfiguration().getProgramArguments());
+    Assert.assertEquals(
+        expectedEnvironment, buildConfiguration.getContainerConfiguration().getEnvironmentMap());
+    Assert.assertEquals(
+        expectedExposedPorts, buildConfiguration.getContainerConfiguration().getExposedPorts());
     Assert.assertEquals(expectedTargetFormat, buildConfiguration.getTargetFormat());
     Assert.assertEquals(
         expectedApplicationLayersCacheConfiguration,
@@ -128,7 +134,8 @@ public class BuildConfigurationTest {
         buildConfiguration.getBaseImageLayersCacheConfiguration());
     Assert.assertTrue(buildConfiguration.getAllowInsecureRegistries());
     Assert.assertEquals(expectedLayerConfigurations, buildConfiguration.getLayerConfigurations());
-    Assert.assertEquals(expectedEntrypoint, buildConfiguration.getEntrypoint());
+    Assert.assertEquals(
+        expectedEntrypoint, buildConfiguration.getContainerConfiguration().getEntrypoint());
   }
 
   @Test
@@ -157,20 +164,17 @@ public class BuildConfigurationTest {
             .setTargetImageConfiguration(targetImageConfiguration)
             .build();
 
-    Assert.assertEquals(buildConfiguration.getCreationTime(), Instant.EPOCH);
     Assert.assertNull(buildConfiguration.getBaseImageCredentialHelperName());
     Assert.assertNull(buildConfiguration.getKnownBaseRegistryCredentials());
     Assert.assertNull(buildConfiguration.getTargetImageCredentialHelperName());
     Assert.assertNull(buildConfiguration.getKnownTargetRegistryCredentials());
-    Assert.assertNull(buildConfiguration.getProgramArguments());
-    Assert.assertNull(buildConfiguration.getEnvironment());
-    Assert.assertNull(buildConfiguration.getExposedPorts());
     Assert.assertEquals(V22ManifestTemplate.class, buildConfiguration.getTargetFormat());
     Assert.assertNull(buildConfiguration.getApplicationLayersCacheConfiguration());
     Assert.assertNull(buildConfiguration.getBaseImageLayersCacheConfiguration());
+    Assert.assertNull(buildConfiguration.getContainerConfiguration());
+    Assert.assertEquals(buildConfiguration.getTargetFormat(), V22ManifestTemplate.class);
     Assert.assertFalse(buildConfiguration.getAllowInsecureRegistries());
     Assert.assertEquals(Collections.emptyList(), buildConfiguration.getLayerConfigurations());
-    Assert.assertNull(buildConfiguration.getEntrypoint());
   }
 
   @Test

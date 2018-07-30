@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.cache.CachedLayerWithMetadata;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
@@ -46,6 +47,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class BuildImageStepTest {
 
   @Mock private BuildConfiguration mockBuildConfiguration;
+  @Mock private ContainerConfiguration mockContainerConfiguration;
   @Mock private BuildLogger mockBuildLogger;
   @Mock private PullBaseImageStep mockPullBaseImageStep;
   @Mock private PullAndCacheBaseImageLayersStep mockPullAndCacheBaseImageLayersStep;
@@ -66,11 +68,13 @@ public class BuildImageStepTest {
             null);
 
     Mockito.when(mockBuildConfiguration.getBuildLogger()).thenReturn(mockBuildLogger);
-    Mockito.when(mockBuildConfiguration.getCreationTime()).thenReturn(Instant.EPOCH);
-    Mockito.when(mockBuildConfiguration.getEnvironment()).thenReturn(ImmutableMap.of());
-    Mockito.when(mockBuildConfiguration.getProgramArguments()).thenReturn(ImmutableList.of());
-    Mockito.when(mockBuildConfiguration.getExposedPorts()).thenReturn(ImmutableList.of());
-    Mockito.when(mockBuildConfiguration.getEntrypoint()).thenReturn(ImmutableList.of());
+    Mockito.when(mockBuildConfiguration.getContainerConfiguration())
+        .thenReturn(mockContainerConfiguration);
+    Mockito.when(mockContainerConfiguration.getCreationTime()).thenReturn(Instant.EPOCH);
+    Mockito.when(mockContainerConfiguration.getEnvironmentMap()).thenReturn(ImmutableMap.of());
+    Mockito.when(mockContainerConfiguration.getProgramArguments()).thenReturn(ImmutableList.of());
+    Mockito.when(mockContainerConfiguration.getExposedPorts()).thenReturn(ImmutableList.of());
+    Mockito.when(mockContainerConfiguration.getEntrypoint()).thenReturn(ImmutableList.of());
 
     Image<Layer> baseImage =
         Image.builder().addEnvironment(ImmutableMap.of("NAME", "VALUE")).build();
@@ -111,7 +115,7 @@ public class BuildImageStepTest {
   @Test
   public void test_propagateBaseImageConfiguration()
       throws ExecutionException, InterruptedException {
-    Mockito.when(mockBuildConfiguration.getEnvironment())
+    Mockito.when(mockContainerConfiguration.getEnvironmentMap())
         .thenReturn(ImmutableMap.of("BASE", "IMAGE"));
     BuildImageStep buildImageStep =
         new BuildImageStep(
