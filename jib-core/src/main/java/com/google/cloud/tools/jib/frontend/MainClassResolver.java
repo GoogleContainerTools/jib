@@ -16,10 +16,12 @@
 
 package com.google.cloud.tools.jib.frontend;
 
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.base.Verify;
 import javax.annotation.Nullable;
+import javax.lang.model.SourceVersion;
 
 /** Infers the main class in an application. */
 public class MainClassResolver {
@@ -53,7 +55,7 @@ public class MainClassResolver {
     if (mainClass == null) {
       mainClass = findMainClassInClassFiles(projectProperties);
 
-    } else if (!BuildConfiguration.isValidJavaClass(mainClass)) {
+    } else if (!isValidJavaClass(mainClass)) {
       // If mainClass found in projectProperties is not valid, try to search in class files, but
       // don't error if not found in class files.
       try {
@@ -65,11 +67,25 @@ public class MainClassResolver {
     }
 
     Preconditions.checkNotNull(mainClass);
-    if (!BuildConfiguration.isValidJavaClass(mainClass)) {
+    if (!isValidJavaClass(mainClass)) {
       projectProperties.getLogger().warn("'mainClass' is not a valid Java class : " + mainClass);
     }
 
     return mainClass;
+  }
+
+  /**
+   * @param className the class name to check
+   * @return {@code true} if {@code className} is a valid Java class name; {@code false} otherwise
+   */
+  @VisibleForTesting
+  static boolean isValidJavaClass(String className) {
+    for (String part : Splitter.on('.').split(className)) {
+      if (!SourceVersion.isIdentifier(part)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Nullable

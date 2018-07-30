@@ -139,4 +139,16 @@ public class MainClassResolverTest {
           .getMainClassHelpfulSuggestions("Main class was not found");
     }
   }
+
+  @Test
+  public void testValidJavaClassRegex() {
+    Assert.assertTrue(MainClassResolver.isValidJavaClass("my.Class"));
+    Assert.assertTrue(MainClassResolver.isValidJavaClass("my.java_Class$valid"));
+    Assert.assertTrue(MainClassResolver.isValidJavaClass("multiple.package.items"));
+    Assert.assertTrue(MainClassResolver.isValidJavaClass("is123.valid"));
+    Assert.assertFalse(MainClassResolver.isValidJavaClass("${start-class}"));
+    Assert.assertFalse(MainClassResolver.isValidJavaClass("123not.Valid"));
+    Assert.assertFalse(MainClassResolver.isValidJavaClass("{class}"));
+    Assert.assertFalse(MainClassResolver.isValidJavaClass("not valid"));
+  }
 }
