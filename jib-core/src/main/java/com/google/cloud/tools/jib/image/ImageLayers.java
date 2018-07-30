@@ -19,6 +19,8 @@ package com.google.cloud.tools.jib.image;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /** Holds the layers for an image. Makes sure that each layer is only added once. */
@@ -26,7 +28,7 @@ public class ImageLayers<T extends Layer> implements Iterable<T> {
 
   public static class Builder<T extends Layer> {
 
-    private final ImmutableList.Builder<T> layersBuilder = ImmutableList.builder();
+    private final Set<T> layersBuilder = new LinkedHashSet<>();
     private final ImmutableSet.Builder<DescriptorDigest> layerDigestsBuilder =
         ImmutableSet.builder();
 
@@ -34,19 +36,19 @@ public class ImageLayers<T extends Layer> implements Iterable<T> {
     @Nullable private T lastLayer;
 
     /**
-     * Adds a layer.
+     * Adds a layer. Removes any prior occurrences of the same layer. Note that not all {@link
+     * Layer} types implement {@code equals/hashCode} - only those that are intended to be not
+     * duplicated will.
      *
      * @param layer the layer to add
      * @return this
      * @throws LayerPropertyNotFoundException if adding the layer fails
      */
     public Builder<T> add(T layer) throws LayerPropertyNotFoundException {
-      // Doesn't add the layer if the last layer is the same.
-      if (!isSameAsLastLayer(layer)) {
-        layerDigestsBuilder.add(layer.getBlobDescriptor().getDigest());
-        layersBuilder.add(layer);
-        lastLayer = layer;
-      }
+      layerDigestsBuilder.add(layer.getBlobDescriptor().getDigest());
+      layersBuilder.remove(layer);
+      layersBuilder.add(layer);
+      lastLayer = layer;
 
       return this;
     }
@@ -68,20 +70,7 @@ public class ImageLayers<T extends Layer> implements Iterable<T> {
     }
 
     public ImageLayers<T> build() {
-      return new ImageLayers<>(layersBuilder.build(), layerDigestsBuilder.build());
-    }
-
-    /**
-     * @param layer the layer to compare
-     * @return {@code true} if {@code layer} is the same as the last layer in {@link #layers}
-     * @throws LayerPropertyNotFoundException if getting the last layer's blob descriptor fails
-     */
-    private boolean isSameAsLastLayer(T layer) throws LayerPropertyNotFoundException {
-      return lastLayer != null
-          && layer
-              .getBlobDescriptor()
-              .getDigest()
-              .equals(lastLayer.getBlobDescriptor().getDigest());
+      return new ImageLayers<>(ImmutableList.copyOf(layersBuilder), layerDigestsBuilder.build());
     }
   }
 

@@ -68,4 +68,9 @@ public class CacheTest {
     Assert.assertArrayEquals(
         Files.readAllBytes(resourceMetadataJsonPath), Files.readAllBytes(testMetadataJsonPath));
   }
+
+  @Test
+  public void test_saveMetadata_noDuplicates() {
+    // TODO: Implement
+  }
 }
