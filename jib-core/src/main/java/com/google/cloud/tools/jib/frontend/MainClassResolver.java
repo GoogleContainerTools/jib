@@ -57,10 +57,8 @@ public class MainClassResolver {
       // If mainClass found in projectProperties is not valid, try to search in class files, but
       // don't error if not found in class files.
       try {
-        String mainClassInClassFiles = findMainClassInClassFiles(projectProperties);
-        if (mainClassInClassFiles != null) {
-          mainClass = mainClassInClassFiles;
-        }
+        mainClass = findMainClassInClassFiles(projectProperties);
+
       } catch (MainClassInferenceException ignored) {
         // Fallback to using the mainClass found in projectProperties.
       }
@@ -85,7 +83,6 @@ public class MainClassResolver {
     return projectProperties.getMainClassFromJar();
   }
 
-  @Nullable
   private static String findMainClassInClassFiles(ProjectProperties projectProperties)
       throws MainClassInferenceException {
     projectProperties
