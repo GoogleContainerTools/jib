@@ -88,7 +88,6 @@ public class BuildStepsIntegrationTest {
   public void testSteps_forBuildToDockerRegistry()
       throws IOException, InterruptedException, CacheMetadataCorruptedException, ExecutionException,
           CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
-
     BuildSteps buildImageSteps =
         getBuildSteps(
             getBuildConfiguration(
