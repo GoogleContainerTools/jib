@@ -233,7 +233,6 @@ public class RegistryEndpointCallerTest {
     Mockito.when(mockInsecureConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
         .thenThrow(Mockito.mock(SSLPeerUnverifiedException.class)); // server is not HTTPS
 
-    Assert.assertNull(System.getProperty("jib.httpTimeout"));
     RegistryEndpointCaller<String> insecureEndpointCaller = createRegistryEndpointCaller(true);
     try {
       insecureEndpointCaller.call();
