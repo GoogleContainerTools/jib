@@ -25,7 +25,11 @@ import java.io.InputStream;
 import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtMethod;
@@ -153,13 +157,11 @@ public class MainClassFinder {
   public Result find() {
     try {
       List<String> mainClasses = new ArrayList<>();
-      Set<Path> visitedRoots = new HashSet<>();
+      Set<Path> roots = new HashSet<>();
       for (Path classPath : classesFiles) {
-        Path root = classPath.getParent();
-        if (visitedRoots.contains(root)) {
-          continue;
-        }
-        visitedRoots.add(root);
+        roots.add(classPath.getParent());
+      }
+      for (Path root : roots) {
         mainClasses.addAll(findMainClasses(root));
       }
 
