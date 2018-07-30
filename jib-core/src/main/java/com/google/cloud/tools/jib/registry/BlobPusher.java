@@ -85,13 +85,15 @@ class BlobPusher {
 
     @Override
     public URL getApiRoute(String apiRouteBase) throws MalformedURLException {
-      String url =
-          apiRouteBase + registryEndpointRequestProperties.getImageName() + "/blobs/uploads/";
+      StringBuilder url =
+          new StringBuilder(apiRouteBase)
+              .append(registryEndpointRequestProperties.getImageName())
+              .append("/blobs/uploads/");
       if (sourceRepository != null) {
-        url += "?mount=" + blobDigest + "&from=" + sourceRepository;
+        url.append("?mount=").append(blobDigest).append("&from=").append(sourceRepository);
       }
 
-      return new URL(url);
+      return new URL(url.toString());
     }
 
     @Override

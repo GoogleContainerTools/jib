@@ -288,7 +288,8 @@ public class RegistryClient {
     try (Timer t = parentTimer.subTimer("pushBlob")) {
       try (Timer t2 = t.subTimer("pushBlob POST " + blobDigest)) {
 
-        // POST /v2/<name>/blobs/uploads/  ?mount={blob.digest}&from={sourceRepository}
+        // POST /v2/<name>/blobs/uploads/ OR
+        // POST /v2/<name>/blobs/uploads/?mount={blob.digest}&from={sourceRepository}
         URL patchLocation = callRegistryEndpoint(blobPusher.initializer());
         if (patchLocation == null) {
           // The BLOB exists already.
