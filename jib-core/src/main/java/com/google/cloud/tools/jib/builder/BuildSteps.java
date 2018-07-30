@@ -212,9 +212,13 @@ public class BuildSteps {
       }
     }
 
-    buildConfiguration.getBuildLogger().lifecycle("");
-    buildConfiguration
-        .getBuildLogger()
-        .lifecycle("Container entrypoint set to " + buildConfiguration.getEntrypoint());
+    if (buildConfiguration.getContainerConfiguration() != null) {
+      buildConfiguration.getBuildLogger().lifecycle("");
+      buildConfiguration
+          .getBuildLogger()
+          .lifecycle(
+              "Container entrypoint set to "
+                  + buildConfiguration.getContainerConfiguration().getEntrypoint());
+    }
   }
 }
