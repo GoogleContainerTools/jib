@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
-import com.google.cloud.tools.jib.frontend.MainClassFinder;
+import com.google.cloud.tools.jib.frontend.MainClassResolver;
 import com.google.cloud.tools.jib.frontend.MainClassInferenceException;
 import com.google.cloud.tools.jib.frontend.ProjectProperties;
 import com.google.cloud.tools.jib.image.ImageReference;
@@ -149,7 +149,7 @@ class GradleProjectProperties implements ProjectProperties {
    */
   String getMainClass(JibExtension jibExtension) {
     try {
-      return MainClassFinder.resolveMainClass(jibExtension.getMainClass(), this);
+      return MainClassResolver.resolveMainClass(jibExtension.getMainClass(), this);
     } catch (MainClassInferenceException ex) {
       throw new GradleException(ex.getMessage(), ex);
     }
