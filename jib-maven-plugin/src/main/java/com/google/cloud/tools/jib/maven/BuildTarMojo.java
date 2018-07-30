@@ -19,6 +19,8 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
+import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
+import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
@@ -55,6 +57,11 @@ public class BuildTarMojo extends JibPluginConfiguration {
 
   @Override
   public void execute() throws MojoExecutionException {
+    if ("pom".equals(getProject().getPackaging())) {
+      getLog().info("Skipping containerization because packaging is 'pom'...");
+      return;
+    }
+
     MavenBuildLogger mavenBuildLogger = new MavenBuildLogger(getLog());
     handleDeprecatedParameters(mavenBuildLogger);
     SystemPropertyValidator.checkHttpTimeoutProperty(MojoExecutionException::new);
@@ -86,19 +93,34 @@ public class BuildTarMojo extends JibPluginConfiguration {
 
     // Builds the BuildConfiguration.
     // TODO: Consolidate with BuildImageMojo.
+    ImageConfiguration baseImageConfiguration =
+        ImageConfiguration.builder(baseImage)
+            .setCredentialHelper(getBaseImageCredentialHelperName())
+            .setKnownRegistryCredentials(knownBaseRegistryCredentials)
+            .build();
+
+    ImageConfiguration targetImageConfiguration = ImageConfiguration.builder(targetImage).build();
+
+    ContainerConfiguration.Builder containerConfigurationBuilder =
+        ContainerConfiguration.builder()
+            .setEntrypoint(
+                JavaEntrypointConstructor.makeDefaultEntrypoint(getJvmFlags(), mainClass))
+            .setProgramArguments(getArgs())
+            .setEnvironment(getEnvironment())
+            .setExposedPorts(ExposedPortsParser.parse(getExposedPorts()));
+    if (getUseCurrentTimestamp()) {
+      mavenBuildLogger.warn(
+          "Setting image creation time to current time; your image may not be reproducible.");
+      containerConfigurationBuilder.setCreationTime(Instant.now());
+    }
+
     BuildConfiguration.Builder buildConfigurationBuilder =
         BuildConfiguration.builder(mavenBuildLogger)
-            .setBaseImage(baseImage)
-            .setBaseImageCredentialHelperName(getBaseImageCredentialHelperName())
-            .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
-            .setTargetImage(targetImage)
-            .setJavaArguments(getArgs())
-            .setEnvironment(getEnvironment())
-            .setExposedPorts(ExposedPortsParser.parse(getExposedPorts()))
+            .setBaseImageConfiguration(baseImageConfiguration)
+            .setTargetImageConfiguration(targetImageConfiguration)
+            .setContainerConfiguration(containerConfigurationBuilder.build())
             .setAllowInsecureRegistries(getAllowInsecureRegistries())
-            .setLayerConfigurations(mavenProjectProperties.getLayerConfigurations())
-            .setEntrypoint(
-                JavaEntrypointConstructor.makeDefaultEntrypoint(getJvmFlags(), mainClass));
+            .setLayerConfigurations(mavenProjectProperties.getLayerConfigurations());
     CacheConfiguration applicationLayersCacheConfiguration =
         CacheConfiguration.forPath(mavenProjectProperties.getCacheDirectory());
     buildConfigurationBuilder.setApplicationLayersCacheConfiguration(
@@ -106,11 +128,6 @@ public class BuildTarMojo extends JibPluginConfiguration {
     if (getUseOnlyProjectCache()) {
       buildConfigurationBuilder.setBaseImageLayersCacheConfiguration(
           applicationLayersCacheConfiguration);
-    }
-    if (getUseCurrentTimestamp()) {
-      mavenBuildLogger.warn(
-          "Setting image creation time to current time; your image may not be reproducible.");
-      buildConfigurationBuilder.setCreationTime(Instant.now());
     }
 
     BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();

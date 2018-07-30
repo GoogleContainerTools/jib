@@ -7,14 +7,17 @@ All notable changes to this project will be documented in this file.
 
 - `<to><auth>` and `<from><auth>` parameters with `<username>` and `<password>` fields for simple authentication, similar to the Gradle plugin ([#693](https://github.com/GoogleContainerTools/jib/issues/693))
 - Can set credentials via commandline using `jib.to.auth.username`, `jib.to.auth.password`, `jib.from.auth.username`, and `jib.from.auth.password` system properties ([#693](https://github.com/GoogleContainerTools/jib/issues/693))
+- Docker context generation now includes snapshot dependencies and extra files ([#516](https://github.com/GoogleContainerTools/jib/pull/516/files))
 
 ### Changed
 
 - Propagates environment variables from the base image ([#716](https://github.com/GoogleContainerTools/jib/pull/716))
+- Skips execution if packaging is `pom` ([#735](https://github.com/GoogleContainerTools/jib/pull/735))
 
 ### Fixed
 
 - Fixed slow image reference parsing ([#680](https://github.com/GoogleContainerTools/jib/pull/680))
+- Only builds non-empty layers ([#516](https://github.com/GoogleContainerTools/jib/pull/516/files))
 
 ## 0.9.7
 
