@@ -17,10 +17,8 @@
 package com.google.cloud.tools.jib.configuration;
 
 import com.google.cloud.tools.jib.builder.BuildLogger;
-import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
-import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.List;
@@ -193,12 +191,8 @@ public class BuildConfiguration {
   }
 
   private final BuildLogger buildLogger;
-  private final ImageReference baseImageReference;
-  @Nullable private final String baseImageCredentialHelperName;
-  @Nullable private final RegistryCredentials knownBaseRegistryCredentials;
-  private final ImageReference targetImageReference;
-  @Nullable private final String targetImageCredentialHelperName;
-  @Nullable private final RegistryCredentials knownTargetRegistryCredentials;
+  private final ImageConfiguration baseImageConfiguration;
+  private final ImageConfiguration targetImageConfiguration;
   @Nullable private final ContainerConfiguration containerConfiguration;
   @Nullable private final CacheConfiguration applicationLayersCacheConfiguration;
   @Nullable private final CacheConfiguration baseImageLayersCacheConfiguration;
@@ -218,12 +212,8 @@ public class BuildConfiguration {
       boolean allowInsecureRegistries,
       ImmutableList<LayerConfiguration> layerConfigurations) {
     this.buildLogger = buildLogger;
-    this.baseImageReference = baseImageConfiguration.getImage();
-    this.baseImageCredentialHelperName = baseImageConfiguration.getCredentialHelper();
-    this.knownBaseRegistryCredentials = baseImageConfiguration.getKnownRegistryCredentials();
-    this.targetImageReference = targetImageConfiguration.getImage();
-    this.targetImageCredentialHelperName = targetImageConfiguration.getCredentialHelper();
-    this.knownTargetRegistryCredentials = targetImageConfiguration.getKnownRegistryCredentials();
+    this.baseImageConfiguration = baseImageConfiguration;
+    this.targetImageConfiguration = targetImageConfiguration;
     this.containerConfiguration = containerConfiguration;
     this.applicationLayersCacheConfiguration = applicationLayersCacheConfiguration;
     this.baseImageLayersCacheConfiguration = baseImageLayersCacheConfiguration;
@@ -236,56 +226,12 @@ public class BuildConfiguration {
     return buildLogger;
   }
 
-  public ImageReference getBaseImageReference() {
-    return baseImageReference;
+  public ImageConfiguration getBaseImageConfiguration() {
+    return baseImageConfiguration;
   }
 
-  public String getBaseImageRegistry() {
-    return baseImageReference.getRegistry();
-  }
-
-  public String getBaseImageRepository() {
-    return baseImageReference.getRepository();
-  }
-
-  public String getBaseImageTag() {
-    return baseImageReference.getTag();
-  }
-
-  @Nullable
-  public String getBaseImageCredentialHelperName() {
-    return baseImageCredentialHelperName;
-  }
-
-  @Nullable
-  public RegistryCredentials getKnownBaseRegistryCredentials() {
-    return knownBaseRegistryCredentials;
-  }
-
-  public ImageReference getTargetImageReference() {
-    return targetImageReference;
-  }
-
-  public String getTargetImageRegistry() {
-    return targetImageReference.getRegistry();
-  }
-
-  public String getTargetImageRepository() {
-    return targetImageReference.getRepository();
-  }
-
-  public String getTargetImageTag() {
-    return targetImageReference.getTag();
-  }
-
-  @Nullable
-  public String getTargetImageCredentialHelperName() {
-    return targetImageCredentialHelperName;
-  }
-
-  @Nullable
-  public RegistryCredentials getKnownTargetRegistryCredentials() {
-    return knownTargetRegistryCredentials;
+  public ImageConfiguration getTargetImageConfiguration() {
+    return targetImageConfiguration;
   }
 
   @Nullable
