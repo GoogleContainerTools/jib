@@ -57,7 +57,6 @@ for target in "$@"; do
 
     maven)
       if [ "$quickMode" = false ]; then
-        doBuild jib-core           ./gradlew $gradleOptions googleJavaFormat build
         doBuild jib-maven-plugin   ./mvnw $mavenOptions fmt:format install -U
       else
         # jib-maven-plugin pulls in jib-core directly
@@ -67,7 +66,6 @@ for target in "$@"; do
 
     gradle)
       if [ "$quickMode" = false ]; then
-        doBuild jib-core           ./gradlew $gradleOptions googleJavaFormat build
         doBuild jib-gradle-plugin  ./gradlew $gradleOptions googleJavaFormat build install
       else
         # jib-gradle-plugin pulls in jib-core directly
