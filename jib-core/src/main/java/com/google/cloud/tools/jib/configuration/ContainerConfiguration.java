@@ -127,6 +127,11 @@ public class ContainerConfiguration {
     private Builder() {}
   }
 
+  /**
+   * Constructs a builder for a {@link ContainerConfiguration}.
+   *
+   * @return the builder
+   */
   public static Builder builder() {
     return new Builder();
   }

@@ -49,16 +49,34 @@ public class BuildConfiguration {
       this.buildLogger = buildLogger;
     }
 
+    /**
+     * Sets the base image configuration.
+     *
+     * @param imageConfiguration the {@link ImageConfiguration} describing the base image
+     * @return this
+     */
     public Builder setBaseImageConfiguration(ImageConfiguration imageConfiguration) {
       this.baseImageConfiguration = imageConfiguration;
       return this;
     }
 
+    /**
+     * Sets the target image configuration.
+     *
+     * @param imageConfiguration the {@link ImageConfiguration} describing the target image
+     * @return this
+     */
     public Builder setTargetImageConfiguration(ImageConfiguration imageConfiguration) {
       this.targetImageConfiguration = imageConfiguration;
       return this;
     }
 
+    /**
+     * Sets configuration parameters for the container.
+     *
+     * @param containerConfiguration the {@link ContainerConfiguration}
+     * @return this
+     */
     public Builder setContainerConfiguration(ContainerConfiguration containerConfiguration) {
       this.containerConfiguration = containerConfiguration;
       return this;
@@ -121,7 +139,11 @@ public class BuildConfiguration {
       return this;
     }
 
-    /** @return the corresponding build configuration */
+    /**
+     * Builds a new {@link BuildConfiguration} using the parameters passed into the builder.
+     *
+     * @return the corresponding build configuration
+     */
     public BuildConfiguration build() {
       // Validates the parameters.
       List<String> errorMessages = new ArrayList<>();
