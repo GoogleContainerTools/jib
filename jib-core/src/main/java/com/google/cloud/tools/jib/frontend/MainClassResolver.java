@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.frontend;
 
-import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Verify;
@@ -34,7 +33,8 @@ public class MainClassResolver {
    *   <li>2. Searches for a class defined with a main method.
    * </ul>
    *
-   * <p>Warns if main class is not valid, or throws an error if no valid main class is not found.
+   * <p>Warns if main class provided by {@code projectProperties} is not valid, or throws an error
+   * if no valid main class is found.
    *
    * @param mainClass the explicitly configured main class ({@code null} if not configured).
    * @param projectProperties properties containing plugin information and help messages.
@@ -44,64 +44,93 @@ public class MainClassResolver {
   public static String resolveMainClass(
       @Nullable String mainClass, ProjectProperties projectProperties)
       throws MainClassInferenceException {
-    BuildLogger logger = projectProperties.getLogger();
+    // If mainClass is null, try to find via projectProperties.
     if (mainClass == null) {
-      logger.info(
-          "Searching for main class... Add a 'mainClass' configuration to '"
-              + projectProperties.getPluginName()
-              + "' to improve build speed.");
-      mainClass = projectProperties.getMainClassFromJar();
-      if (mainClass == null || !BuildConfiguration.isValidJavaClass(mainClass)) {
-        logger.debug(
+      mainClass = getMainClassFromJar(projectProperties);
+    }
+
+    // If mainClass is still null, try to search in class files.
+    if (mainClass == null) {
+      mainClass = findMainClassInClassFiles(projectProperties, true);
+
+    } else if (!BuildConfiguration.isValidJavaClass(mainClass)) {
+      // If mainClass found in projectProperties is not valid, try to search in class files, but
+      // don't error if not found in
+      // class files.
+      String mainClassInClassFiles = findMainClassInClassFiles(projectProperties, false);
+      if (mainClassInClassFiles != null) {
+        mainClass = mainClassInClassFiles;
+      }
+    }
+
+    Preconditions.checkNotNull(mainClass);
+    if (!BuildConfiguration.isValidJavaClass(mainClass)) {
+      projectProperties.getLogger().warn("'mainClass' is not a valid Java class : " + mainClass);
+    }
+
+    return mainClass;
+  }
+
+  @Nullable
+  private static String getMainClassFromJar(ProjectProperties projectProperties) {
+    projectProperties
+        .getLogger()
+        .info(
+            "Searching for main class... Add a 'mainClass' configuration to '"
+                + projectProperties.getPluginName()
+                + "' to improve build speed.");
+    return projectProperties.getMainClassFromJar();
+  }
+
+  @Nullable
+  private static String findMainClassInClassFiles(
+      ProjectProperties projectProperties, boolean shouldError) throws MainClassInferenceException {
+    projectProperties
+        .getLogger()
+        .debug(
             "Could not find a valid main class specified in "
                 + projectProperties.getJarPluginName()
                 + "; attempting to infer main class.");
 
-        MainClassFinder.Result mainClassFinderResult =
-            new MainClassFinder(
-                    projectProperties.getClassesLayerEntry().getSourceFiles(),
-                    projectProperties.getLogger())
-                .find();
+    MainClassFinder.Result mainClassFinderResult =
+        new MainClassFinder(
+                projectProperties.getClassesLayerEntry().getSourceFiles(),
+                projectProperties.getLogger())
+            .find();
 
-        if (mainClassFinderResult.isSuccess()) {
-          mainClass = mainClassFinderResult.getFoundMainClass();
-
-        } else if (mainClass == null) {
-          Verify.verify(mainClassFinderResult.getErrorType() != null);
-          switch (mainClassFinderResult.getErrorType()) {
-            case MAIN_CLASS_NOT_FOUND:
-              throw new MainClassInferenceException(
-                  projectProperties
-                      .getMainClassHelpfulSuggestions("Main class was not found")
-                      .forMainClassNotFound(projectProperties.getPluginName()));
-
-            case MULTIPLE_MAIN_CLASSES:
-              throw new MainClassInferenceException(
-                  projectProperties
-                      .getMainClassHelpfulSuggestions(
-                          "Multiple valid main classes were found: "
-                              + String.join(", ", mainClassFinderResult.getFoundMainClasses()))
-                      .forMainClassNotFound(projectProperties.getPluginName()));
-
-            case IO_EXCEPTION:
-              throw new MainClassInferenceException(
-                  projectProperties
-                      .getMainClassHelpfulSuggestions("Failed to get main class")
-                      .forMainClassNotFound(projectProperties.getPluginName()),
-                  mainClassFinderResult.getErrorCause());
-
-            default:
-              throw new IllegalStateException("Cannot reach here");
-          }
-        }
-      }
-    }
-    Preconditions.checkNotNull(mainClass);
-    if (!BuildConfiguration.isValidJavaClass(mainClass)) {
-      logger.warn("'mainClass' is not a valid Java class : " + mainClass);
+    if (mainClassFinderResult.isSuccess()) {
+      return mainClassFinderResult.getFoundMainClass();
     }
 
-    return mainClass;
+    if (!shouldError) {
+      return null;
+    }
+    Verify.verify(mainClassFinderResult.getErrorType() != null);
+    switch (mainClassFinderResult.getErrorType()) {
+      case MAIN_CLASS_NOT_FOUND:
+        throw new MainClassInferenceException(
+            projectProperties
+                .getMainClassHelpfulSuggestions("Main class was not found")
+                .forMainClassNotFound(projectProperties.getPluginName()));
+
+      case MULTIPLE_MAIN_CLASSES:
+        throw new MainClassInferenceException(
+            projectProperties
+                .getMainClassHelpfulSuggestions(
+                    "Multiple valid main classes were found: "
+                        + String.join(", ", mainClassFinderResult.getFoundMainClasses()))
+                .forMainClassNotFound(projectProperties.getPluginName()));
+
+      case IO_EXCEPTION:
+        throw new MainClassInferenceException(
+            projectProperties
+                .getMainClassHelpfulSuggestions("Failed to get main class")
+                .forMainClassNotFound(projectProperties.getPluginName()),
+            mainClassFinderResult.getErrorCause());
+
+      default:
+        throw new IllegalStateException("Cannot reach here");
+    }
   }
 
   private MainClassResolver() {}

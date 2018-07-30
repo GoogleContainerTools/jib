@@ -166,14 +166,14 @@ public class MainClassFinder {
       }
 
       if (mainClasses.size() == 1) {
-        // Valid class found; use inferred main class
+        // Valid class found.
         return Result.success(mainClasses.get(0));
       }
       if (mainClasses.size() == 0) {
-        // No main class found anywhere
+        // No main class found anywhere.
         return Result.mainClassNotFound();
       }
-      // More than one main class found with no jar plugin to fall back on; error
+      // More than one main class found.
       return Result.multipleMainClasses(mainClasses);
 
     } catch (IOException ex) {
