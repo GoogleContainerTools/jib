@@ -29,7 +29,7 @@ import org.junit.Test;
 public class BlobCheckerIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
-  private final EmptyBuildLogger buildLogger = new EmptyBuildLogger();
+  private static final EmptyBuildLogger buildLogger = new EmptyBuildLogger();
 
   @Test
   public void testCheck_exists() throws IOException, RegistryException {
