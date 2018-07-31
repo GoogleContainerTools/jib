@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.registry;
 
-import com.google.cloud.tools.jib.BuildLogger;
+import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
@@ -40,7 +40,7 @@ public class RegistryClient {
   // TODO: Remove
   private Timer parentTimer =
       new Timer(
-          new BuildLogger() {
+          new JibLogger() {
             @Override
             public void debug(CharSequence message) {}
 
@@ -66,14 +66,14 @@ public class RegistryClient {
   /** Factory for creating {@link RegistryClient}s. */
   public static class Factory {
 
-    private final BuildLogger buildLogger;
+    private final JibLogger buildLogger;
     private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
 
     private boolean allowInsecureRegistries = false;
     @Nullable private Authorization authorization;
 
     private Factory(
-        BuildLogger buildLogger,
+        JibLogger buildLogger,
         RegistryEndpointRequestProperties registryEndpointRequestProperties) {
       this.buildLogger = buildLogger;
       this.registryEndpointRequestProperties = registryEndpointRequestProperties;
@@ -127,7 +127,7 @@ public class RegistryClient {
    * @param imageName the image/repository name (also known as, namespace)
    * @return the new {@link Factory}
    */
-  public static Factory factory(BuildLogger buildLogger, String serverUrl, String imageName) {
+  public static Factory factory(JibLogger buildLogger, String serverUrl, String imageName) {
     return new Factory(buildLogger, new RegistryEndpointRequestProperties(serverUrl, imageName));
   }
 
@@ -167,7 +167,7 @@ public class RegistryClient {
     return userAgentBuilder.toString();
   }
 
-  private final BuildLogger buildLogger;
+  private final JibLogger buildLogger;
   @Nullable private final Authorization authorization;
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   private final boolean allowInsecureRegistries;
@@ -182,7 +182,7 @@ public class RegistryClient {
    * @param allowInsecureRegistries if {@code true}, insecure connections will be allowed
    */
   private RegistryClient(
-      BuildLogger buildLogger,
+      JibLogger buildLogger,
       @Nullable Authorization authorization,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
       boolean allowInsecureRegistries,

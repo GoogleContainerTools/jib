@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.registry;
 
-import com.google.cloud.tools.jib.EmptyBuildLogger;
+import com.google.cloud.tools.jib.EmptyJibLogger;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
@@ -36,7 +36,7 @@ import org.mockito.Mockito;
 public class BlobPullerIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
-  private static final EmptyBuildLogger BUILD_LOGGER = new EmptyBuildLogger();
+  private static final EmptyJibLogger BUILD_LOGGER = new EmptyJibLogger();
 
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 

@@ -17,7 +17,7 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.api.client.http.HttpTransport;
-import com.google.cloud.tools.jib.BuildLogger;
+import com.google.cloud.tools.jib.JibLogger;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -27,10 +27,10 @@ import org.gradle.internal.logging.events.OutputEventListener;
 import org.gradle.internal.logging.slf4j.OutputEventListenerBackedLoggerContext;
 import org.slf4j.LoggerFactory;
 
-/** Implementation of {@link BuildLogger} for Gradle plugins. */
+/** Implementation of {@link JibLogger} for Gradle plugins. */
 // We don't care about the return values of the logging futures.
 @SuppressWarnings("FutureReturnValueIgnored")
-class GradleBuildLogger implements BuildLogger {
+class GradleJibLogger implements JibLogger {
 
   /** This executor keeps all log messages in order. */
   private static final ExecutorService executorService = Executors.newSingleThreadExecutor();
@@ -58,7 +58,7 @@ class GradleBuildLogger implements BuildLogger {
 
   private final Logger logger;
 
-  GradleBuildLogger(Logger logger) {
+  GradleJibLogger(Logger logger) {
     this.logger = logger;
   }
 

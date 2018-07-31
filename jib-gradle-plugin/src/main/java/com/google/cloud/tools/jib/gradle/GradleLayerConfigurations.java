@@ -50,15 +50,14 @@ class GradleLayerConfigurations {
    * Resolves the source files configuration for a Gradle {@link Project}.
    *
    * @param project the Gradle {@link Project}
-   * @param gradleBuildLogger the build logger for providing feedback about the resolution
+   * @param gradleJibLogger the build logger for providing feedback about the resolution
    * @param extraDirectory path to the directory for the extra files layer
    * @return a {@link GradleLayerConfigurations} for building the layers for the Gradle {@link
    *     Project}
    * @throws IOException if an I/O exception occurred during resolution
    */
   static GradleLayerConfigurations getForProject(
-      Project project, GradleBuildLogger gradleBuildLogger, Path extraDirectory)
-      throws IOException {
+      Project project, GradleJibLogger gradleJibLogger, Path extraDirectory) throws IOException {
     JavaPluginConvention javaPluginConvention =
         project.getConvention().getPlugin(JavaPluginConvention.class);
 
@@ -75,7 +74,7 @@ class GradleLayerConfigurations {
     for (File classesOutputDirectory : classesOutputDirectories) {
       if (Files.notExists(classesOutputDirectory.toPath())) {
         // Warns that output directory was not found.
-        gradleBuildLogger.warn(
+        gradleJibLogger.warn(
             "Could not find build output directory '" + classesOutputDirectory + "'");
         continue;
       }
@@ -84,7 +83,7 @@ class GradleLayerConfigurations {
       }
     }
     if (classesFiles.isEmpty()) {
-      gradleBuildLogger.warn("No classes files were found - did you compile your project?");
+      gradleJibLogger.warn("No classes files were found - did you compile your project?");
     }
 
     // Adds each file in the resources output directory to the resources files list.

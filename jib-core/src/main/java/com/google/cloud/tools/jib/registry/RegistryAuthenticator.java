@@ -17,7 +17,7 @@
 package com.google.cloud.tools.jib.registry;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.google.cloud.tools.jib.BuildLogger;
+import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
@@ -45,7 +45,7 @@ public class RegistryAuthenticator {
   /** Initializer for {@link RegistryAuthenticator}. */
   public static class Initializer {
 
-    private final BuildLogger buildLogger;
+    private final JibLogger buildLogger;
     private final String serverUrl;
     private final String repository;
     private boolean allowInsecureRegistries = false;
@@ -57,7 +57,7 @@ public class RegistryAuthenticator {
      * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
      * @param repository the image/repository name (also known as, namespace)
      */
-    private Initializer(BuildLogger buildLogger, String serverUrl, String repository) {
+    private Initializer(JibLogger buildLogger, String serverUrl, String repository) {
       this.buildLogger = buildLogger;
       this.serverUrl = serverUrl;
       this.repository = repository;
@@ -105,7 +105,7 @@ public class RegistryAuthenticator {
    * @return the new {@link Initializer}
    */
   public static Initializer initializer(
-      BuildLogger buildLogger, String serverUrl, String repository) {
+      JibLogger buildLogger, String serverUrl, String repository) {
     return new Initializer(buildLogger, serverUrl, repository);
   }
 

@@ -17,7 +17,7 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
-import com.google.cloud.tools.jib.builder.TestBuildLogger;
+import com.google.cloud.tools.jib.builder.TestJibLogger;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.CacheReader;
@@ -104,7 +104,7 @@ public class BuildAndCacheApplicationLayerStepTest {
                 EXTRA_FILES_LAYER_EXTRACTION_PATH)
             .build();
     emptyLayerConfiguration = LayerConfiguration.builder().build();
-    Mockito.when(mockBuildConfiguration.getBuildLogger()).thenReturn(new TestBuildLogger());
+    Mockito.when(mockBuildConfiguration.getBuildLogger()).thenReturn(new TestJibLogger());
     temporaryCacheDirectory = temporaryFolder.newFolder().toPath();
   }
 
