@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.maven.it.VerificationException;
@@ -55,6 +56,7 @@ public class BuildImageMojoIntegrationTest {
       throws VerificationException, IOException, InterruptedException {
     Verifier verifier = new Verifier(projectRoot.toString());
     verifier.setAutoclean(false);
+    verifier.setCliOptions(Collections.singletonList("-X"));
     verifier.executeGoals(Arrays.asList("clean", "compile"));
 
     // Builds twice, and checks if the second build took less time.
