@@ -63,14 +63,20 @@ public class BuildImageMojoIntegrationTest {
 
     Logger logger = Logger.getLogger(String.valueOf(BuildImageMojoIntegrationTest.class));
     logger.info("BUILD OUTPUT 1: -------------------");
-    Files.readAllLines(Paths.get(verifier.getLogFileName())).forEach(logger::info);
+    for (String line : Files.readAllLines(Paths.get(verifier.getLogFileName()))) {
+      logger.info(line);
+    }
 
     if (runTwice) {
+      lastTime = System.nanoTime();
+      verifier.resetStreams();
       verifier.executeGoal("jib:" + BuildImageMojo.GOAL_NAME);
-      long timeTwo = System.nanoTime() - timeOne;
+      long timeTwo = System.nanoTime() - lastTime;
 
       logger.info("BUILD OUTPUT 2: -------------------");
-      Files.readAllLines(Paths.get(verifier.getLogFileName())).forEach(logger::info);
+      for (String line : Files.readAllLines(Paths.get(verifier.getLogFileName()))) {
+        logger.info(line);
+      }
       Assert.assertTrue(
           "First build time ("
               + timeOne
