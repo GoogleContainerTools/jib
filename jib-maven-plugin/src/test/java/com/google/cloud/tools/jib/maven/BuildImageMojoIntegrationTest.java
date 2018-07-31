@@ -103,6 +103,8 @@ public class BuildImageMojoIntegrationTest {
     }
 
     Assert.fail("Could not find build execution time in logs");
+    // Should not reach here.
+    return -1;
   }
 
   @Test
