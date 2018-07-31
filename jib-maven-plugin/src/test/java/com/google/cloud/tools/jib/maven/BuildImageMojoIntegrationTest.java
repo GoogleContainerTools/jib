@@ -47,7 +47,7 @@ public class BuildImageMojoIntegrationTest {
    * Builds and runs jib:build on a project at {@code projectRoot} pushing to {@code
    * imageReference}.
    */
-  private static String buildAndRun(Path projectRoot, String imageReference)
+  private static String buildAndRun(Path projectRoot, String imageReference, boolean runTwice)
       throws VerificationException, IOException, InterruptedException {
     Verifier verifier = new Verifier(projectRoot.toString());
     verifier.setAutoclean(false);
@@ -59,18 +59,20 @@ public class BuildImageMojoIntegrationTest {
     long timeOne = System.nanoTime() - lastTime;
     lastTime = System.nanoTime();
 
-    verifier.executeGoal("jib:" + BuildImageMojo.GOAL_NAME);
-    long timeTwo = System.nanoTime() - lastTime;
+    if (runTwice) {
+      verifier.executeGoal("jib:" + BuildImageMojo.GOAL_NAME);
+      long timeTwo = System.nanoTime() - lastTime;
+
+      Assert.assertTrue(
+          "First build time ("
+              + timeOne
+              + ") is not greater than second build time ("
+              + timeTwo
+              + ")",
+          timeOne > timeTwo);
+    }
 
     verifier.verifyErrorFreeLog();
-
-    Assert.assertTrue(
-        "First build time ("
-            + timeOne
-            + ") is not greater than second build time ("
-            + timeTwo
-            + ")",
-        timeOne > timeTwo);
 
     new Command("docker", "pull", imageReference).run();
     Assert.assertThat(
@@ -107,7 +109,8 @@ public class BuildImageMojoIntegrationTest {
         "Hello, world. An argument.\nfoo\ncat\n",
         buildAndRun(
             simpleTestProject.getProjectRoot(),
-            "gcr.io/jib-integration-testing/simpleimage:maven"));
+            "gcr.io/jib-integration-testing/simpleimage:maven",
+            true));
 
     Instant buildTime =
         Instant.parse(
@@ -127,7 +130,9 @@ public class BuildImageMojoIntegrationTest {
     Assert.assertEquals(
         "",
         buildAndRun(
-            emptyTestProject.getProjectRoot(), "gcr.io/jib-integration-testing/emptyimage:maven"));
+            emptyTestProject.getProjectRoot(),
+            "gcr.io/jib-integration-testing/emptyimage:maven",
+            false));
     Assert.assertEquals(
         "1970-01-01T00:00:00Z",
         new Command(
