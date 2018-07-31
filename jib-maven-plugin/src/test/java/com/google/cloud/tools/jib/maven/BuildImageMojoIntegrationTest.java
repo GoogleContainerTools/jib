@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.logging.Logger;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
 import org.hamcrest.CoreMatchers;
@@ -60,15 +61,16 @@ public class BuildImageMojoIntegrationTest {
     verifier.executeGoal("jib:" + BuildImageMojo.GOAL_NAME);
     long timeOne = System.nanoTime() - lastTime;
 
-    System.out.println("BUILD OUTPUT 1: -------------------");
-    Files.readAllLines(Paths.get(verifier.getLogFileName())).forEach(System.out::println);
+    Logger logger = Logger.getLogger(String.valueOf(BuildImageMojoIntegrationTest.class));
+    logger.info("BUILD OUTPUT 1: -------------------");
+    Files.readAllLines(Paths.get(verifier.getLogFileName())).forEach(logger::info);
 
     if (runTwice) {
       verifier.executeGoal("jib:" + BuildImageMojo.GOAL_NAME);
       long timeTwo = System.nanoTime() - timeOne;
 
-      System.out.println("BUILD OUTPUT 2: -------------------");
-      Files.readAllLines(Paths.get(verifier.getLogFileName())).forEach(System.out::println);
+      logger.info("BUILD OUTPUT 2: -------------------");
+      Files.readAllLines(Paths.get(verifier.getLogFileName())).forEach(logger::info);
       Assert.assertTrue(
           "First build time ("
               + timeOne
