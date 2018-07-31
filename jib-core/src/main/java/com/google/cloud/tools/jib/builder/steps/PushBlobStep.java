@@ -91,9 +91,11 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
       // https://docs.docker.com/registry/spec/api/#cross-repository-blob-mount for details.
       boolean sameRegistry =
           buildConfiguration
-              .getBaseImageRegistry()
-              .equals(buildConfiguration.getTargetImageRegistry());
-      String mountFrom = sameRegistry ? buildConfiguration.getBaseImageRepository() : null;
+              .getBaseImageConfiguration()
+              .getImageRegistry()
+              .equals(buildConfiguration.getTargetImageConfiguration().getImageRegistry());
+      String mountFrom =
+          sameRegistry ? buildConfiguration.getBaseImageConfiguration().getImageRepository() : null;
       registryClient.pushBlob(blobDescriptor.getDigest(), blob, mountFrom);
 
       return blobDescriptor;
