@@ -34,7 +34,8 @@ public class ImageLayers<T extends Layer> implements Iterable<T> {
     /**
      * Adds a layer. Removes any prior occurrences of the same layer.
      *
-     * Note that only subclasses of {@link Layer} that implement {@code equals/hashCode} will be guaranteed to not be duplicated.
+     * <p>Note that only subclasses of {@link Layer} that implement {@code equals/hashCode} will be
+     * guaranteed to not be duplicated.
      *
      * @param layer the layer to add
      * @return this
