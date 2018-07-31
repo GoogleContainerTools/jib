@@ -18,7 +18,9 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.Command;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
 import org.apache.maven.it.VerificationException;
@@ -57,12 +59,16 @@ public class BuildImageMojoIntegrationTest {
     long lastTime = System.nanoTime();
     verifier.executeGoal("jib:" + BuildImageMojo.GOAL_NAME);
     long timeOne = System.nanoTime() - lastTime;
-    lastTime = System.nanoTime();
+
+    System.out.println("BUILD OUTPUT 1: -------------------");
+    Files.readAllLines(Paths.get(verifier.getLogFileName())).forEach(System.out::println);
 
     if (runTwice) {
       verifier.executeGoal("jib:" + BuildImageMojo.GOAL_NAME);
-      long timeTwo = System.nanoTime() - lastTime;
+      long timeTwo = System.nanoTime() - timeOne;
 
+      System.out.println("BUILD OUTPUT 2: -------------------");
+      Files.readAllLines(Paths.get(verifier.getLogFileName())).forEach(System.out::println);
       Assert.assertTrue(
           "First build time ("
               + timeOne
