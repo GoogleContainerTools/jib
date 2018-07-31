@@ -125,17 +125,19 @@ public class BuildStepsRunner {
       boolean isRegistryForBase =
           registryUnauthorizedException
               .getRegistry()
-              .equals(buildConfiguration.getBaseImageRegistry());
+              .equals(buildConfiguration.getBaseImageConfiguration().getImageRegistry());
       boolean isRegistryForTarget =
           registryUnauthorizedException
               .getRegistry()
-              .equals(buildConfiguration.getTargetImageRegistry());
+              .equals(buildConfiguration.getTargetImageConfiguration().getImageRegistry());
       boolean areBaseImageCredentialsConfigured =
-          buildConfiguration.getBaseImageCredentialHelperName() != null
-              || buildConfiguration.getKnownBaseRegistryCredentials() != null;
+          buildConfiguration.getBaseImageConfiguration().getCredentialHelper() != null
+              || buildConfiguration.getBaseImageConfiguration().getKnownRegistryCredentials()
+                  != null;
       boolean areTargetImageCredentialsConfigured =
-          buildConfiguration.getTargetImageCredentialHelperName() != null
-              || buildConfiguration.getKnownTargetRegistryCredentials() != null;
+          buildConfiguration.getTargetImageConfiguration().getCredentialHelper() != null
+              || buildConfiguration.getTargetImageConfiguration().getKnownRegistryCredentials()
+                  != null;
 
       if (isRegistryForBase && !areBaseImageCredentialsConfigured) {
         throw new BuildStepsExecutionException(
@@ -233,8 +235,8 @@ public class BuildStepsRunner {
           && exceptionDuringBuildSteps.getCause() instanceof HttpResponseException) {
         handleRegistryUnauthorizedException(
             new RegistryUnauthorizedException(
-                buildConfiguration.getTargetImageRegistry(),
-                buildConfiguration.getTargetImageRepository(),
+                buildConfiguration.getTargetImageConfiguration().getImageRegistry(),
+                buildConfiguration.getTargetImageConfiguration().getImageRepository(),
                 (HttpResponseException) exceptionDuringBuildSteps.getCause()),
             buildConfiguration,
             helpfulSuggestions);

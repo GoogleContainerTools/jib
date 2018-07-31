@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.frontend;
 
 /** Thrown when main class inference fails. */
 public class MainClassInferenceException extends Exception {
+
   MainClassInferenceException(String message) {
     super(message);
   }
