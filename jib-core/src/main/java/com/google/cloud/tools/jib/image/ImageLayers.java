@@ -20,20 +20,16 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
-import java.util.Set;
 import javax.annotation.Nullable;
 
-/** Holds the layers for an image. Makes sure that each layer is only added once. */
+/** Holds the layers for an image. Makes sure that there are no duplicate layers. */
 public class ImageLayers<T extends Layer> implements Iterable<T> {
 
   public static class Builder<T extends Layer> {
 
-    private final Set<T> layersBuilder = new LinkedHashSet<>();
+    private final LinkedHashSet<T> layers = new LinkedHashSet<>();
     private final ImmutableSet.Builder<DescriptorDigest> layerDigestsBuilder =
         ImmutableSet.builder();
-
-    /** The last layer added. */
-    @Nullable private T lastLayer;
 
     /**
      * Adds a layer. Removes any prior occurrences of the same layer. Note that not all {@link
@@ -46,9 +42,8 @@ public class ImageLayers<T extends Layer> implements Iterable<T> {
      */
     public Builder<T> add(T layer) throws LayerPropertyNotFoundException {
       layerDigestsBuilder.add(layer.getBlobDescriptor().getDigest());
-      layersBuilder.remove(layer);
-      layersBuilder.add(layer);
-      lastLayer = layer;
+      layers.remove(layer);
+      layers.add(layer);
 
       return this;
     }
@@ -70,7 +65,7 @@ public class ImageLayers<T extends Layer> implements Iterable<T> {
     }
 
     public ImageLayers<T> build() {
-      return new ImageLayers<>(ImmutableList.copyOf(layersBuilder), layerDigestsBuilder.build());
+      return new ImageLayers<>(ImmutableList.copyOf(layers), layerDigestsBuilder.build());
     }
   }
 
