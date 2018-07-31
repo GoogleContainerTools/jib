@@ -51,7 +51,7 @@ public class BuildImageMojoIntegrationTest {
       throws VerificationException, IOException, InterruptedException {
     Verifier verifier = new Verifier(projectRoot.toString());
     verifier.setAutoclean(false);
-    verifier.executeGoal("package");
+    verifier.executeGoals(Arrays.asList("clean", "compile"));
 
     // Builds twice, and checks if the second build took less time.
     long lastTime = System.nanoTime();
