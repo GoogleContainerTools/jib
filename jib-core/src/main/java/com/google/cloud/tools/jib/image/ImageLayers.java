@@ -32,9 +32,9 @@ public class ImageLayers<T extends Layer> implements Iterable<T> {
         ImmutableSet.builder();
 
     /**
-     * Adds a layer. Removes any prior occurrences of the same layer. Note that not all {@link
-     * Layer} types implement {@code equals/hashCode} - only those that are intended to be not
-     * duplicated will.
+     * Adds a layer. Removes any prior occurrences of the same layer.
+     *
+     * Note that only subclasses of {@link Layer} that implement {@code equals/hashCode} will be guaranteed to not be duplicated.
      *
      * @param layer the layer to add
      * @return this
