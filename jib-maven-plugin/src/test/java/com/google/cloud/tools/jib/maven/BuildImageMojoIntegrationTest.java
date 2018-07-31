@@ -23,7 +23,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
 import org.hamcrest.CoreMatchers;
@@ -57,28 +58,14 @@ public class BuildImageMojoIntegrationTest {
     verifier.executeGoals(Arrays.asList("clean", "compile"));
 
     // Builds twice, and checks if the second build took less time.
-    long lastTime = System.nanoTime();
     verifier.executeGoal("jib:" + BuildImageMojo.GOAL_NAME);
-    long timeOne = System.nanoTime() - lastTime;
-
-    Logger logger = Logger.getLogger(String.valueOf(BuildImageMojoIntegrationTest.class));
-    logger.info("BUILD OUTPUT 1: -------------------");
-    for (String line :
-        Files.readAllLines(Paths.get(verifier.getBasedir(), verifier.getLogFileName()))) {
-      logger.info(line);
-    }
+    float timeOne = getBuildTimeFromVerifierLog(verifier);
 
     if (runTwice) {
-      lastTime = System.nanoTime();
       verifier.resetStreams();
       verifier.executeGoal("jib:" + BuildImageMojo.GOAL_NAME);
-      long timeTwo = System.nanoTime() - lastTime;
+      float timeTwo = getBuildTimeFromVerifierLog(verifier);
 
-      logger.info("BUILD OUTPUT 2: -------------------");
-      for (String line :
-          Files.readAllLines(Paths.get(verifier.getBasedir(), verifier.getLogFileName()))) {
-        logger.info(line);
-      }
       Assert.assertTrue(
           "First build time ("
               + timeOne
@@ -101,6 +88,21 @@ public class BuildImageMojoIntegrationTest {
                 + "                \"2002/udp\": {},\n"
                 + "                \"2003/udp\": {}"));
     return new Command("docker", "run", imageReference).run();
+  }
+
+  private static float getBuildTimeFromVerifierLog(Verifier verifier) throws IOException {
+    Pattern pattern = Pattern.compile("Building and pushing image : (.*) ms");
+
+    for (String line :
+        Files.readAllLines(Paths.get(verifier.getBasedir(), verifier.getLogFileName()))) {
+      Matcher matcher = pattern.matcher(line);
+      if (matcher.find()) {
+        String time = matcher.group();
+        return Float.parseFloat(time);
+      }
+    }
+
+    Assert.fail("Could not find build execution time in logs");
   }
 
   @Test
