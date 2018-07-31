@@ -120,7 +120,7 @@ public class DockerConfigCredentialRetriever {
         dockerConfig.getCredentialHelperFor(dockerCredentialHelperFactory, registryAlias);
     if (dockerCredentialHelper != null) {
       try {
-        // Tries with the given registry alias (NOT the original registry).
+        // Tries with the given registry alias (may be the original registry).
         return dockerCredentialHelper.retrieve();
 
       } catch (IOException
