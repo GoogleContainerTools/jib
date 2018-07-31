@@ -149,9 +149,12 @@ public class RetrieveRegistryCredentialsStepTest {
     Mockito.verify(mockBuildLogger).info("Using docker-credential-gcr for something.gcr.io");
 
     Mockito.when(mockNonexistentDockerCredentialHelperException.getMessage()).thenReturn("warning");
+    Mockito.when(mockNonexistentDockerCredentialHelperException.getCause())
+        .thenReturn(new IOException("the root cause"));
     Assert.assertNull(
         makeRetrieveRegistryCredentialsStep("something.amazonaws.com", null, null).call());
     Mockito.verify(mockBuildLogger).warn("warning");
+    Mockito.verify(mockBuildLogger).info("  Caused by: the root cause");
   }
 
   /** Creates a fake {@link RetrieveRegistryCredentialsStep} for {@code registry}. */
