@@ -140,6 +140,7 @@ class PullBaseImageStep
           // See https://docs.docker.com/registry/spec/auth/token
           RegistryAuthenticator registryAuthenticator =
               RegistryAuthenticator.initializer(
+                      buildConfiguration.getBuildLogger(),
                       buildConfiguration.getBaseImageConfiguration().getImageRegistry(),
                       buildConfiguration.getBaseImageConfiguration().getImageRepository())
                   .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
@@ -179,6 +180,7 @@ class PullBaseImageStep
           LayerCountMismatchException, BadContainerConfigurationFormatException {
     RegistryClient registryClient =
         RegistryClient.factory(
+                buildConfiguration.getBuildLogger(),
                 buildConfiguration.getBaseImageConfiguration().getImageRegistry(),
                 buildConfiguration.getBaseImageConfiguration().getImageRepository())
             .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())

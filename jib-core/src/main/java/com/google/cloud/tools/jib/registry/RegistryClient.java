@@ -66,12 +66,16 @@ public class RegistryClient {
   /** Factory for creating {@link RegistryClient}s. */
   public static class Factory {
 
+    private final BuildLogger buildLogger;
     private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
 
     private boolean allowInsecureRegistries = false;
     @Nullable private Authorization authorization;
 
-    private Factory(RegistryEndpointRequestProperties registryEndpointRequestProperties) {
+    private Factory(
+        BuildLogger buildLogger,
+        RegistryEndpointRequestProperties registryEndpointRequestProperties) {
+      this.buildLogger = buildLogger;
       this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     }
 
@@ -105,6 +109,7 @@ public class RegistryClient {
      */
     public RegistryClient newRegistryClient() {
       return new RegistryClient(
+          buildLogger,
           authorization,
           registryEndpointRequestProperties,
           allowInsecureRegistries,
@@ -115,12 +120,15 @@ public class RegistryClient {
   @Nullable private static String userAgentSuffix;
 
   /**
+   * Creates a new {@link Factory} for building a {@link RegistryClient}.
+   *
+   * @param buildLogger the build logger used for printing messages
    * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
    * @param imageName the image/repository name (also known as, namespace)
    * @return the new {@link Factory}
    */
-  public static Factory factory(String serverUrl, String imageName) {
-    return new Factory(new RegistryEndpointRequestProperties(serverUrl, imageName));
+  public static Factory factory(BuildLogger buildLogger, String serverUrl, String imageName) {
+    return new Factory(buildLogger, new RegistryEndpointRequestProperties(serverUrl, imageName));
   }
 
   // TODO: Inject via a RegistryClient.Factory.
@@ -159,6 +167,7 @@ public class RegistryClient {
     return userAgentBuilder.toString();
   }
 
+  private final BuildLogger buildLogger;
   @Nullable private final Authorization authorization;
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   private final boolean allowInsecureRegistries;
@@ -167,15 +176,18 @@ public class RegistryClient {
   /**
    * Instantiate with {@link #factory}.
    *
+   * @param buildLogger the build logger used for printing messages
    * @param authorization the {@link Authorization} to access the registry/repository
    * @param registryEndpointRequestProperties properties of registry endpoint requests
    * @param allowInsecureRegistries if {@code true}, insecure connections will be allowed
    */
   private RegistryClient(
+      BuildLogger buildLogger,
       @Nullable Authorization authorization,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
       boolean allowInsecureRegistries,
       String userAgent) {
+    this.buildLogger = buildLogger;
     this.authorization = authorization;
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     this.allowInsecureRegistries = allowInsecureRegistries;
@@ -334,6 +346,7 @@ public class RegistryClient {
   private <T> T callRegistryEndpoint(RegistryEndpointProvider<T> registryEndpointProvider)
       throws IOException, RegistryException {
     return new RegistryEndpointCaller<>(
+            buildLogger,
             userAgent,
             getApiRouteBase(),
             registryEndpointProvider,
