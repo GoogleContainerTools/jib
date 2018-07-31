@@ -27,9 +27,9 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.util.zip.GZIPInputStream;
@@ -76,11 +76,17 @@ public class CacheWriter {
       compressorStream.close();
       BlobDescriptor compressedBlobDescriptor = compressedDigestOutputStream.toBlobDescriptor();
 
-      // Renames the temporary layer file to the correct filename. If the file already exists, we
-      // skip renaming and use the existing file. This happens if a new layer happens to have the
-      // same content as a previously-cached layer.
+      // Renames the temporary layer file to the correct filename.
       Path layerFile = getLayerFile(compressedBlobDescriptor.getDigest());
-      Files.move(tempLayerFile, layerFile, StandardCopyOption.REPLACE_EXISTING);
+      try {
+        Files.move(tempLayerFile, layerFile);
+      } catch (FileAlreadyExistsException ignored) {
+        // If the file already exists, we skip renaming and use the existing file. This happens if a
+        // new layer happens to have the same content as a previously-cached layer.
+        //
+        // Do not attempt to remove the try-catch block with the idea of checking file existence
+        // before moving; there can be concurrent file moves.
+      }
 
       CachedLayer cachedLayer = new CachedLayer(layerFile, compressedBlobDescriptor, diffId);
       LayerMetadata layerMetadata =

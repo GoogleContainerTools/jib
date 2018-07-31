@@ -19,12 +19,15 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
+import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
+import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.frontend.SystemPropertyValidator;
+import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.RegistryClient;
@@ -55,6 +58,12 @@ public class BuildImageMojo extends JibPluginConfiguration {
 
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
+    // TODO: Consolidate all of these checks.
+    if ("pom".equals(getProject().getPackaging())) {
+      getLog().info("Skipping containerization because packaging is 'pom'...");
+      return;
+    }
+
     MavenBuildLogger mavenBuildLogger = new MavenBuildLogger(getLog());
     handleDeprecatedParameters(mavenBuildLogger);
     SystemPropertyValidator.checkHttpTimeoutProperty(MojoExecutionException::new);
@@ -89,35 +98,61 @@ public class BuildImageMojo extends JibPluginConfiguration {
           "Authentication over HTTP is enabled. It is strongly recommended that you do not enable "
               + "this on a public network!");
     }
+
     MavenSettingsServerCredentials mavenSettingsServerCredentials =
         new MavenSettingsServerCredentials(
             Preconditions.checkNotNull(session).getSettings(), settingsDecrypter, mavenBuildLogger);
+    Authorization fromAuthorization = getBaseImageAuth();
     RegistryCredentials knownBaseRegistryCredentials =
-        mavenSettingsServerCredentials.retrieve(baseImage.getRegistry());
+        fromAuthorization != null
+            ? new RegistryCredentials(
+                "jib-maven-plugin <from><auth> configuration", fromAuthorization)
+            : mavenSettingsServerCredentials.retrieve(baseImage.getRegistry());
+    Authorization toAuthorization = getTargetImageAuth();
     RegistryCredentials knownTargetRegistryCredentials =
-        mavenSettingsServerCredentials.retrieve(targetImage.getRegistry());
+        toAuthorization != null
+            ? new RegistryCredentials("jib-maven-plugin <to><auth> configuration", toAuthorization)
+            : mavenSettingsServerCredentials.retrieve(targetImage.getRegistry());
 
     MavenProjectProperties mavenProjectProperties =
         MavenProjectProperties.getForProject(getProject(), mavenBuildLogger, getExtraDirectory());
     String mainClass = mavenProjectProperties.getMainClass(this);
 
     // Builds the BuildConfiguration.
+    ImageConfiguration baseImageConfiguration =
+        ImageConfiguration.builder(baseImage)
+            .setCredentialHelper(getBaseImageCredentialHelperName())
+            .setKnownRegistryCredentials(knownBaseRegistryCredentials)
+            .build();
+
+    ImageConfiguration targetImageConfiguration =
+        ImageConfiguration.builder(targetImage)
+            .setCredentialHelper(getTargetImageCredentialHelperName())
+            .setKnownRegistryCredentials(knownTargetRegistryCredentials)
+            .build();
+
+    ContainerConfiguration.Builder containerConfigurationBuilder =
+        ContainerConfiguration.builder()
+            .setEntrypoint(
+                JavaEntrypointConstructor.makeDefaultEntrypoint(getJvmFlags(), mainClass))
+            .setProgramArguments(getArgs())
+            .setEnvironment(getEnvironment())
+            .setExposedPorts(ExposedPortsParser.parse(getExposedPorts()));
+    if (getUseCurrentTimestamp()) {
+      mavenBuildLogger.warn(
+          "Setting image creation time to current time; your image may not be reproducible.");
+      containerConfigurationBuilder.setCreationTime(Instant.now());
+    }
+
     BuildConfiguration.Builder buildConfigurationBuilder =
         BuildConfiguration.builder(mavenBuildLogger)
-            .setBaseImage(baseImage)
-            .setBaseImageCredentialHelperName(getBaseImageCredentialHelperName())
-            .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
-            .setTargetImage(targetImage)
-            .setTargetImageCredentialHelperName(getTargetImageCredentialHelperName())
-            .setKnownTargetRegistryCredentials(knownTargetRegistryCredentials)
-            .setJavaArguments(getArgs())
-            .setEnvironment(getEnvironment())
-            .setExposedPorts(ExposedPortsParser.parse(getExposedPorts()))
+            .setBaseImageConfiguration(baseImageConfiguration)
+            .setTargetImageConfiguration(targetImageConfiguration)
+            .setContainerConfiguration(containerConfigurationBuilder.build())
             .setTargetFormat(ImageFormat.valueOf(getFormat()).getManifestTemplateClass())
             .setAllowInsecureRegistries(getAllowInsecureRegistries())
-            .setLayerConfigurations(mavenProjectProperties.getLayerConfigurations())
-            .setEntrypoint(
-                JavaEntrypointConstructor.makeDefaultEntrypoint(getJvmFlags(), mainClass));
+            .setLayerConfigurations(mavenProjectProperties.getLayerConfigurations());
+
     CacheConfiguration applicationLayersCacheConfiguration =
         CacheConfiguration.forPath(mavenProjectProperties.getCacheDirectory());
     buildConfigurationBuilder.setApplicationLayersCacheConfiguration(
@@ -125,11 +160,6 @@ public class BuildImageMojo extends JibPluginConfiguration {
     if (getUseOnlyProjectCache()) {
       buildConfigurationBuilder.setBaseImageLayersCacheConfiguration(
           applicationLayersCacheConfiguration);
-    }
-    if (getUseCurrentTimestamp()) {
-      mavenBuildLogger.warn(
-          "Setting image creation time to current time; your image may not be reproducible.");
-      buildConfigurationBuilder.setCreationTime(Instant.now());
     }
 
     BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();

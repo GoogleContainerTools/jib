@@ -19,8 +19,8 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
-import com.google.cloud.tools.jib.frontend.MainClassFinder;
 import com.google.cloud.tools.jib.frontend.MainClassInferenceException;
+import com.google.cloud.tools.jib.frontend.MainClassResolver;
 import com.google.cloud.tools.jib.frontend.ProjectProperties;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.LayerEntry;
@@ -170,7 +170,7 @@ class MavenProjectProperties implements ProjectProperties {
    */
   String getMainClass(JibPluginConfiguration jibPluginConfiguration) throws MojoExecutionException {
     try {
-      return MainClassFinder.resolveMainClass(jibPluginConfiguration.getMainClass(), this);
+      return MainClassResolver.resolveMainClass(jibPluginConfiguration.getMainClass(), this);
     } catch (MainClassInferenceException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex);
     }
