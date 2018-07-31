@@ -43,6 +43,8 @@ public class ImageLayers<T extends Layer> implements Iterable<T> {
      */
     public Builder<T> add(T layer) throws LayerPropertyNotFoundException {
       layerDigestsBuilder.add(layer.getBlobDescriptor().getDigest());
+
+      // Remove necessary to move layer to the end of the LinkedHashSet.
       layers.remove(layer);
       layers.add(layer);
 
