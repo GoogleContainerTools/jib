@@ -67,4 +67,21 @@ public class CachedLayer implements Layer {
   public DescriptorDigest getDiffId() {
     return diffId;
   }
+
+  @Override
+  public boolean equals(Object other) {
+    if (other == this) {
+      return true;
+    }
+    if (!(other instanceof CachedLayer)) {
+      return false;
+    }
+    CachedLayer otherLayer = (CachedLayer) other;
+    return getBlobDescriptor().getDigest().equals(otherLayer.getBlobDescriptor().getDigest());
+  }
+
+  @Override
+  public int hashCode() {
+    return getBlobDescriptor().getDigest().hashCode();
+  }
 }
