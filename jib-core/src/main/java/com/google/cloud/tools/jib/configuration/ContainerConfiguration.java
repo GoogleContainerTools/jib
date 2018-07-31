@@ -100,7 +100,7 @@ public class ContainerConfiguration {
     }
 
     /**
-     * Sets the container's exposed ports.
+     * Sets the container's labels.
      *
      * @param labels the map of labels
      * @return this

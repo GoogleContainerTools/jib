@@ -121,7 +121,7 @@ public class Image<T extends Layer> {
     }
 
     /**
-     * Sets the items in the "ExposedPorts" field in the container configuration.
+     * Sets the items in the "Labels" field in the container configuration.
      *
      * @param labels that map of labels to add
      * @return this
