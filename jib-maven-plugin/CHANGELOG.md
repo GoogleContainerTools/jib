@@ -16,8 +16,9 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- Fixed slow image reference parsing ([#680](https://github.com/GoogleContainerTools/jib/pull/680))
-- Only builds non-empty layers ([#516](https://github.com/GoogleContainerTools/jib/pull/516/files))
+- Slow image reference parsing ([#680](https://github.com/GoogleContainerTools/jib/pull/680))
+- Building empty layers ([#516](https://github.com/GoogleContainerTools/jib/pull/516/files))
+- Duplicate layer entries causing unbounded cache growth ([#721](https://github.com/GoogleContainerTools/jib/issues/721))
 
 ## 0.9.7
 
