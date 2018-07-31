@@ -94,6 +94,18 @@ public class ImageConfiguration {
     return image;
   }
 
+  public String getImageRegistry() {
+    return image.getRegistry();
+  }
+
+  public String getImageRepository() {
+    return image.getRepository();
+  }
+
+  public String getImageTag() {
+    return image.getTag();
+  }
+
   @Nullable
   public String getCredentialHelper() {
     return credentialHelper;

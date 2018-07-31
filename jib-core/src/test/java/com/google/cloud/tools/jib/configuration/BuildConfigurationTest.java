@@ -106,18 +106,27 @@ public class BuildConfigurationTest {
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
     Assert.assertEquals(
         expectedCreationTime, buildConfiguration.getContainerConfiguration().getCreationTime());
-    Assert.assertEquals(expectedBaseImageServerUrl, buildConfiguration.getBaseImageRegistry());
-    Assert.assertEquals(expectedBaseImageName, buildConfiguration.getBaseImageRepository());
-    Assert.assertEquals(expectedBaseImageTag, buildConfiguration.getBaseImageTag());
+    Assert.assertEquals(
+        expectedBaseImageServerUrl,
+        buildConfiguration.getBaseImageConfiguration().getImageRegistry());
+    Assert.assertEquals(
+        expectedBaseImageName, buildConfiguration.getBaseImageConfiguration().getImageRepository());
+    Assert.assertEquals(
+        expectedBaseImageTag, buildConfiguration.getBaseImageConfiguration().getImageTag());
     Assert.assertEquals(
         expectedBaseImageCredentialHelperName,
-        buildConfiguration.getBaseImageCredentialHelperName());
-    Assert.assertEquals(expectedTargetServerUrl, buildConfiguration.getTargetImageRegistry());
-    Assert.assertEquals(expectedTargetImageName, buildConfiguration.getTargetImageRepository());
-    Assert.assertEquals(expectedTargetTag, buildConfiguration.getTargetImageTag());
+        buildConfiguration.getBaseImageConfiguration().getCredentialHelper());
+    Assert.assertEquals(
+        expectedTargetServerUrl,
+        buildConfiguration.getTargetImageConfiguration().getImageRegistry());
+    Assert.assertEquals(
+        expectedTargetImageName,
+        buildConfiguration.getTargetImageConfiguration().getImageRepository());
+    Assert.assertEquals(
+        expectedTargetTag, buildConfiguration.getTargetImageConfiguration().getImageTag());
     Assert.assertEquals(
         expectedTargetImageCredentialHelperName,
-        buildConfiguration.getTargetImageCredentialHelperName());
+        buildConfiguration.getTargetImageConfiguration().getCredentialHelper());
     Assert.assertEquals(
         expectedJavaArguments,
         buildConfiguration.getContainerConfiguration().getProgramArguments());
@@ -164,10 +173,11 @@ public class BuildConfigurationTest {
             .setTargetImageConfiguration(targetImageConfiguration)
             .build();
 
-    Assert.assertNull(buildConfiguration.getBaseImageCredentialHelperName());
-    Assert.assertNull(buildConfiguration.getKnownBaseRegistryCredentials());
-    Assert.assertNull(buildConfiguration.getTargetImageCredentialHelperName());
-    Assert.assertNull(buildConfiguration.getKnownTargetRegistryCredentials());
+    Assert.assertNull(buildConfiguration.getBaseImageConfiguration().getCredentialHelper());
+    Assert.assertNull(buildConfiguration.getBaseImageConfiguration().getKnownRegistryCredentials());
+    Assert.assertNull(buildConfiguration.getTargetImageConfiguration().getCredentialHelper());
+    Assert.assertNull(
+        buildConfiguration.getTargetImageConfiguration().getKnownRegistryCredentials());
     Assert.assertEquals(V22ManifestTemplate.class, buildConfiguration.getTargetFormat());
     Assert.assertNull(buildConfiguration.getApplicationLayersCacheConfiguration());
     Assert.assertNull(buildConfiguration.getBaseImageLayersCacheConfiguration());
@@ -277,17 +287,5 @@ public class BuildConfigurationTest {
     BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
         .setContainerConfiguration(
             ContainerConfiguration.builder().setEnvironment(new Hashtable<>()).build());
-  }
-
-  @Test
-  public void testValidJavaClassRegex() {
-    Assert.assertTrue(BuildConfiguration.isValidJavaClass("my.Class"));
-    Assert.assertTrue(BuildConfiguration.isValidJavaClass("my.java_Class$valid"));
-    Assert.assertTrue(BuildConfiguration.isValidJavaClass("multiple.package.items"));
-    Assert.assertTrue(BuildConfiguration.isValidJavaClass("is123.valid"));
-    Assert.assertFalse(BuildConfiguration.isValidJavaClass("${start-class}"));
-    Assert.assertFalse(BuildConfiguration.isValidJavaClass("123not.Valid"));
-    Assert.assertFalse(BuildConfiguration.isValidJavaClass("{class}"));
-    Assert.assertFalse(BuildConfiguration.isValidJavaClass("not valid"));
   }
 }
