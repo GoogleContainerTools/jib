@@ -37,6 +37,7 @@ public class ContainerConfiguration {
     @Nullable private ImmutableList<String> programArguments;
     @Nullable private ImmutableMap<String, String> environmentMap;
     @Nullable private ImmutableList<Port> exposedPorts;
+    @Nullable private ImmutableMap<String, String> labels;
 
     /**
      * Sets the image creation time.
@@ -99,6 +100,23 @@ public class ContainerConfiguration {
     }
 
     /**
+     * Sets the container's exposed ports.
+     *
+     * @param labels the map of labels
+     * @return this
+     */
+    public Builder setLabels(@Nullable Map<String, String> labels) {
+      if (labels == null) {
+        this.labels = null;
+      } else {
+        Preconditions.checkArgument(!Iterables.any(labels.keySet(), Objects::isNull));
+        Preconditions.checkArgument(!Iterables.any(labels.values(), Objects::isNull));
+        this.labels = ImmutableMap.copyOf(labels);
+      }
+      return this;
+    }
+
+    /**
      * Sets the container entrypoint.
      *
      * @param entrypoint the tokenized command to run when the container starts
@@ -121,7 +139,7 @@ public class ContainerConfiguration {
      */
     public ContainerConfiguration build() {
       return new ContainerConfiguration(
-          creationTime, entrypoint, programArguments, environmentMap, exposedPorts);
+          creationTime, entrypoint, programArguments, environmentMap, exposedPorts, labels);
     }
 
     private Builder() {}
@@ -141,18 +159,21 @@ public class ContainerConfiguration {
   @Nullable private final ImmutableList<String> programArguments;
   @Nullable private final ImmutableMap<String, String> environmentMap;
   @Nullable private final ImmutableList<Port> exposedPorts;
+  @Nullable private final ImmutableMap<String, String> labels;
 
   private ContainerConfiguration(
       Instant creationTime,
       @Nullable ImmutableList<String> entrypoint,
       @Nullable ImmutableList<String> programArguments,
       @Nullable ImmutableMap<String, String> environmentMap,
-      @Nullable ImmutableList<Port> exposedPorts) {
+      @Nullable ImmutableList<Port> exposedPorts,
+      @Nullable ImmutableMap<String, String> labels) {
     this.creationTime = creationTime;
     this.entrypoint = entrypoint;
     this.programArguments = programArguments;
     this.environmentMap = environmentMap;
     this.exposedPorts = exposedPorts;
+    this.labels = labels;
   }
 
   public Instant getCreationTime() {
@@ -177,5 +198,10 @@ public class ContainerConfiguration {
   @Nullable
   public ImmutableList<Port> getExposedPorts() {
     return exposedPorts;
+  }
+
+  @Nullable
+  public ImmutableMap<String, String> getLabels() {
+    return labels;
   }
 }

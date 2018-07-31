@@ -31,6 +31,7 @@ import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -147,8 +148,9 @@ public class BuildStepsIntegrationTest {
             new Caches.Initializer(cacheDirectory, false, cacheDirectory, false))
         .run();
 
+    String dockerContainerConfig = new Command("docker", "inspect", "testdocker").run();
     Assert.assertThat(
-        new Command("docker", "inspect", "testdocker").run(),
+        dockerContainerConfig,
         CoreMatchers.containsString(
             "            \"ExposedPorts\": {\n"
                 + "                \"1000/tcp\": {},\n"
@@ -156,6 +158,13 @@ public class BuildStepsIntegrationTest {
                 + "                \"2001/tcp\": {},\n"
                 + "                \"2002/tcp\": {},\n"
                 + "                \"3000/udp\": {}"));
+    Assert.assertThat(
+        dockerContainerConfig,
+        CoreMatchers.containsString(
+            "            \"Labels\": {\n"
+                + "                \"key1\": \"value1\",\n"
+                + "                \"key2\": \"value2\"\n"
+                + "            }"));
     Assert.assertEquals(
         "Hello, world. An argument.\n", new Command("docker", "run", "testdocker").run());
   }
@@ -199,6 +208,7 @@ public class BuildStepsIntegrationTest {
             .setProgramArguments(Collections.singletonList("An argument."))
             .setExposedPorts(
                 ExposedPortsParser.parse(Arrays.asList("1000", "2000-2002/tcp", "3000/udp")))
+            .setLabels(ImmutableMap.of("key1", "value1", "key2", "value2"))
             .build();
     return BuildConfiguration.builder(logger)
         .setBaseImageConfiguration(baseImageConfiguration)
