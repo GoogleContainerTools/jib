@@ -63,7 +63,8 @@ public class BuildImageMojoIntegrationTest {
 
     Logger logger = Logger.getLogger(String.valueOf(BuildImageMojoIntegrationTest.class));
     logger.info("BUILD OUTPUT 1: -------------------");
-    for (String line : Files.readAllLines(Paths.get(verifier.getLogFileName()))) {
+    for (String line :
+        Files.readAllLines(Paths.get(verifier.getBasedir(), verifier.getLogFileName()))) {
       logger.info(line);
     }
 
@@ -74,7 +75,8 @@ public class BuildImageMojoIntegrationTest {
       long timeTwo = System.nanoTime() - lastTime;
 
       logger.info("BUILD OUTPUT 2: -------------------");
-      for (String line : Files.readAllLines(Paths.get(verifier.getLogFileName()))) {
+      for (String line :
+          Files.readAllLines(Paths.get(verifier.getBasedir(), verifier.getLogFileName()))) {
         logger.info(line);
       }
       Assert.assertTrue(
