@@ -78,10 +78,10 @@ public class ManifestPusherIntegrationTest {
         RegistryClient.factory("localhost:5000", "testimage")
             .setAllowInsecureRegistries(true)
             .newRegistryClient();
-    Assert.assertFalse(registryClient.pushBlob(testLayerBlobDigest, testLayerBlob));
+    Assert.assertFalse(registryClient.pushBlob(testLayerBlobDigest, testLayerBlob, null));
     Assert.assertFalse(
         registryClient.pushBlob(
-            testContainerConfigurationBlobDigest, testContainerConfigurationBlob));
+            testContainerConfigurationBlobDigest, testContainerConfigurationBlob, null));
 
     // Pushes the manifest.
     registryClient.pushManifest(expectedManifestTemplate, "latest");
