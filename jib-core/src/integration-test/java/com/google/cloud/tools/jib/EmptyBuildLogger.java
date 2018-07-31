@@ -16,8 +16,6 @@
 
 package com.google.cloud.tools.jib;
 
-import com.google.cloud.tools.jib.builder.BuildLogger;
-
 public class EmptyBuildLogger implements BuildLogger {
 
   @Override
