@@ -39,8 +39,7 @@
         <plugin>
           <groupId>com.google.cloud.tools</groupId>
           <artifactId>jib-maven-plugin</artifactId>
-          <!-- TODO: Change to released version. -->
-          <version>0.9.8-SNAPSHOT</version>
+          <version>0.9.8</version>
         </plugin>
       </plugins>
     </pluginManagement>
