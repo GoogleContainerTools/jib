@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.frontend;
 
-import com.google.cloud.tools.jib.builder.BuildLogger;
+import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
@@ -29,7 +29,7 @@ public interface ProjectProperties {
   /** Directory name for the cache. The directory will be relative to the build output directory. */
   String CACHE_DIRECTORY_NAME = "jib-cache";
 
-  BuildLogger getLogger();
+  JibLogger getLogger();
 
   String getPluginName();
 

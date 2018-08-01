@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.builder.BuildLogger;
+import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.maven.JibPluginConfiguration.AuthConfiguration;
@@ -33,7 +33,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class JibPluginConfigurationTest {
 
-  @Mock private BuildLogger mockLogger;
+  @Mock private JibLogger mockLogger;
 
   @Test
   public void testHandleDeprecatedParameters() {

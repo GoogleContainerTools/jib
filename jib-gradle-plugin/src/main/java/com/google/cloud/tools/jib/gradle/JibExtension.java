@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.builder.BuildLogger;
+import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.common.base.Preconditions;
@@ -118,7 +118,7 @@ public class JibExtension {
    *
    * @param logger The logger used to print the warnings
    */
-  void handleDeprecatedParameters(BuildLogger logger) {
+  void handleDeprecatedParameters(JibLogger logger) {
     StringBuilder deprecatedParams = new StringBuilder();
     if (!jvmFlags.get().isEmpty()) {
       deprecatedParams.append("  jvmFlags -> container.jvmFlags\n");

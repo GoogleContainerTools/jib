@@ -14,9 +14,9 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.builder;
+package com.google.cloud.tools.jib;
 
-public interface BuildLogger {
+public interface JibLogger {
 
   void error(CharSequence message);
 

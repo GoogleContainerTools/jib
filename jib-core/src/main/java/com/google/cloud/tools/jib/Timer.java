@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib;
 
-import com.google.cloud.tools.jib.builder.BuildLogger;
 import java.io.Closeable;
 import javax.annotation.Nullable;
 
@@ -26,17 +25,17 @@ import javax.annotation.Nullable;
  */
 public class Timer implements Closeable {
 
-  private final BuildLogger buildLogger;
+  private final JibLogger buildLogger;
   private final int depth;
 
   @Nullable private String label;
   private long startTime = System.nanoTime();
 
-  public Timer(BuildLogger buildLogger, String label) {
+  public Timer(JibLogger buildLogger, String label) {
     this(buildLogger, label, 0);
   }
 
-  private Timer(BuildLogger buildLogger, String label, int depth) {
+  private Timer(JibLogger buildLogger, String label, int depth) {
     this.buildLogger = buildLogger;
     this.label = label;
     this.depth = depth;

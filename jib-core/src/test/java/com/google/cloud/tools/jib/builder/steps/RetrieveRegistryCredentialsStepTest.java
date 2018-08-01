@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.cloud.tools.jib.builder.BuildLogger;
+import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.registry.credentials.DockerConfigCredentialRetriever;
@@ -44,7 +44,7 @@ public class RetrieveRegistryCredentialsStepTest {
 
   @Mock private ListeningExecutorService mockListeningExecutorService;
   @Mock private ImageConfiguration mockImageConfiguration;
-  @Mock private BuildLogger mockBuildLogger;
+  @Mock private JibLogger mockBuildLogger;
 
   @Mock private DockerCredentialHelperFactory mockDockerCredentialHelperFactory;
   @Mock private DockerCredentialHelper mockDockerCredentialHelper;
@@ -149,9 +149,12 @@ public class RetrieveRegistryCredentialsStepTest {
     Mockito.verify(mockBuildLogger).info("Using docker-credential-gcr for something.gcr.io");
 
     Mockito.when(mockNonexistentDockerCredentialHelperException.getMessage()).thenReturn("warning");
+    Mockito.when(mockNonexistentDockerCredentialHelperException.getCause())
+        .thenReturn(new IOException("the root cause"));
     Assert.assertNull(
         makeRetrieveRegistryCredentialsStep("something.amazonaws.com", null, null).call());
     Mockito.verify(mockBuildLogger).warn("warning");
+    Mockito.verify(mockBuildLogger).info("  Caused by: the root cause");
   }
 
   /** Creates a fake {@link RetrieveRegistryCredentialsStep} for {@code registry}. */
