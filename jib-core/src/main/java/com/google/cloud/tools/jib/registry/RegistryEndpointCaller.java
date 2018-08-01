@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.registry;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.api.client.repackaged.com.google.common.base.Preconditions;
 import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Connection;
@@ -138,12 +137,15 @@ class RegistryEndpointCaller<T> {
    */
   @Nullable
   T call() throws IOException, RegistryException {
-    Preconditions.checkState(isHttpsProtocol(initialRequestUrl));
     return callWithAllowInsecureRegistryHandling(initialRequestUrl);
   }
 
   @Nullable
   private T callWithAllowInsecureRegistryHandling(URL url) throws IOException, RegistryException {
+    if (!isHttpsProtocol(url) && !allowInsecureRegistries) {
+      throw new InsecureRegistryException(url);
+    }
+
     try {
       return call(url, connectionFactory);
 
@@ -263,9 +265,6 @@ class RegistryEndpointCaller<T> {
             || httpResponseException.getStatusCode() == STATUS_CODE_PERMANENT_REDIRECT) {
           // 'Location' header can be relative or absolute.
           URL redirectLocation = new URL(url, httpResponseException.getHeaders().getLocation());
-          if (!isHttpsProtocol(redirectLocation) && !allowInsecureRegistries) {
-            throw new InsecureRegistryException(url);
-          }
           return callWithAllowInsecureRegistryHandling(redirectLocation);
 
         } else {
