@@ -156,6 +156,9 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Authorization>, Calla
               // Warns the user that the specified (or inferred) credential helper is not on the
               // system.
               buildLogger.warn(ex.getMessage());
+              if (ex.getCause() != null && ex.getCause().getMessage() != null) {
+                buildLogger.info("  Caused by: " + ex.getCause().getMessage());
+              }
             }
           }
         }

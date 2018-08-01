@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - `<to><auth>` and `<from><auth>` parameters with `<username>` and `<password>` fields for simple authentication, similar to the Gradle plugin ([#693](https://github.com/GoogleContainerTools/jib/issues/693))
 - Can set credentials via commandline using `jib.to.auth.username`, `jib.to.auth.password`, `jib.from.auth.username`, and `jib.from.auth.password` system properties ([#693](https://github.com/GoogleContainerTools/jib/issues/693))
 - Docker context generation now includes snapshot dependencies and extra files ([#516](https://github.com/GoogleContainerTools/jib/pull/516/files))
+- Disable parallel operation by setting the `jibSerialize` system property to `true` ([#682](https://github.com/GoogleContainerTools/jib/pull/682))
 
 ### Changed
 
