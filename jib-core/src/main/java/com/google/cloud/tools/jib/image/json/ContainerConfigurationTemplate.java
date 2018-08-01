@@ -40,6 +40,7 @@ import javax.annotation.Nullable;
  *     "Entrypoint": ["PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"],
  *     "Cmd": ["arg1", "arg2"]
  *     "ExposedPorts": { "6000/tcp":{}, "8000/tcp":{}, "9000/tcp":{} }
+ *     "Labels": { "com.example.label": "value" }
  *   },
  *   "rootfs": {
  *     "diff_ids": [
@@ -87,6 +88,9 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
 
     /** Network ports the container exposes. */
     @Nullable private Map<String, Map<?, ?>> ExposedPorts;
+
+    /** Labels. */
+    @Nullable private Map<String, String> Labels;
   }
 
   /**
@@ -125,6 +129,10 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     config.ExposedPorts = exposedPorts;
   }
 
+  public void setContainerLabels(@Nullable Map<String, String> labels) {
+    config.Labels = labels;
+  }
+
   public void addLayerDiffId(DescriptorDigest diffId) {
     rootfs.diff_ids.add(diffId);
   }
@@ -156,6 +164,11 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
   @Nullable
   Map<String, Map<?, ?>> getContainerExposedPorts() {
     return config.ExposedPorts;
+  }
+
+  @Nullable
+  Map<String, String> getContainerLabels() {
+    return config.Labels;
   }
 
   @VisibleForTesting

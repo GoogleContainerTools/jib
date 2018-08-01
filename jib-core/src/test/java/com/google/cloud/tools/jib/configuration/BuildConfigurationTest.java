@@ -60,6 +60,7 @@ public class BuildConfigurationTest {
     Map<String, String> expectedEnvironment = ImmutableMap.of("key", "value");
     ImmutableList<Port> expectedExposedPorts =
         ImmutableList.of(new Port(1000, Protocol.TCP), new Port(2000, Protocol.TCP));
+    Map<String, String> expectedLabels = ImmutableMap.of("key1", "value1", "key2", "value2");
     Class<? extends BuildableManifestTemplate> expectedTargetFormat = OCIManifestTemplate.class;
     CacheConfiguration expectedApplicationLayersCacheConfiguration =
         CacheConfiguration.forPath(Paths.get("application/layers"));
@@ -90,6 +91,7 @@ public class BuildConfigurationTest {
             .setProgramArguments(expectedJavaArguments)
             .setEnvironment(expectedEnvironment)
             .setExposedPorts(expectedExposedPorts)
+            .setLabels(expectedLabels)
             .build();
     BuildConfiguration.Builder buildConfigurationBuilder =
         BuildConfiguration.builder(Mockito.mock(JibLogger.class))
@@ -134,6 +136,7 @@ public class BuildConfigurationTest {
         expectedEnvironment, buildConfiguration.getContainerConfiguration().getEnvironmentMap());
     Assert.assertEquals(
         expectedExposedPorts, buildConfiguration.getContainerConfiguration().getExposedPorts());
+    Assert.assertEquals(expectedLabels, buildConfiguration.getContainerConfiguration().getLabels());
     Assert.assertEquals(expectedTargetFormat, buildConfiguration.getTargetFormat());
     Assert.assertEquals(
         expectedApplicationLayersCacheConfiguration,
@@ -245,6 +248,16 @@ public class BuildConfigurationTest {
               ContainerConfiguration.builder()
                   .setExposedPorts(Arrays.asList(new Port(1000, Protocol.TCP), null))
                   .build());
+      Assert.fail("The IllegalArgumentException should be thrown.");
+    } catch (IllegalArgumentException ex) {
+      Assert.assertNull(ex.getMessage());
+    }
+
+    // Labels element should not be null.
+    Map<String, String> badLabels = new HashMap<>();
+    badLabels.put("label-key", null);
+    try {
+      ContainerConfiguration.builder().setLabels(badLabels);
       Assert.fail("The IllegalArgumentException should be thrown.");
     } catch (IllegalArgumentException ex) {
       Assert.assertNull(ex.getMessage());
