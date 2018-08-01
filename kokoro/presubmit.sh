@@ -7,7 +7,8 @@ gcloud components install docker-credential-gcr
 export PATH=$PATH:/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/bin/
 
 # Stops any left-over containers.
-docker stop $(docker container ls --quiet) || true
+docker stop $(docker ps --all --quiet) || true
+docker kill $(docker ps --all --quiet) || true
 
 cd github/jib
 
