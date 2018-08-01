@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.configuration;
 
-import com.google.cloud.tools.jib.BuildLogger;
+import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.common.collect.ImmutableList;
@@ -39,9 +39,9 @@ public class BuildConfiguration {
     private ImmutableList<LayerConfiguration> layerConfigurations = ImmutableList.of();
     private Class<? extends BuildableManifestTemplate> targetFormat = V22ManifestTemplate.class;
 
-    private BuildLogger buildLogger;
+    private JibLogger buildLogger;
 
-    private Builder(BuildLogger buildLogger) {
+    private Builder(JibLogger buildLogger) {
       this.buildLogger = buildLogger;
     }
 
@@ -186,11 +186,11 @@ public class BuildConfiguration {
     }
   }
 
-  public static Builder builder(BuildLogger buildLogger) {
+  public static Builder builder(JibLogger buildLogger) {
     return new Builder(buildLogger);
   }
 
-  private final BuildLogger buildLogger;
+  private final JibLogger buildLogger;
   private final ImageConfiguration baseImageConfiguration;
   private final ImageConfiguration targetImageConfiguration;
   @Nullable private final ContainerConfiguration containerConfiguration;
@@ -202,7 +202,7 @@ public class BuildConfiguration {
 
   /** Instantiate with {@link Builder#build}. */
   private BuildConfiguration(
-      BuildLogger buildLogger,
+      JibLogger buildLogger,
       ImageConfiguration baseImageConfiguration,
       ImageConfiguration targetImageConfiguration,
       @Nullable ContainerConfiguration containerConfiguration,
@@ -222,7 +222,7 @@ public class BuildConfiguration {
     this.layerConfigurations = layerConfigurations;
   }
 
-  public BuildLogger getBuildLogger() {
+  public JibLogger getBuildLogger() {
     return buildLogger;
   }
 

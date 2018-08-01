@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.registry;
 
-import com.google.cloud.tools.jib.EmptyBuildLogger;
+import com.google.cloud.tools.jib.EmptyJibLogger;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
@@ -30,7 +30,7 @@ import org.junit.Test;
 public class BlobPusherIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
-  private static final EmptyBuildLogger BUILD_LOGGER = new EmptyBuildLogger();
+  private static final EmptyJibLogger BUILD_LOGGER = new EmptyJibLogger();
 
   @Test
   public void testPush() throws DigestException, IOException, RegistryException {

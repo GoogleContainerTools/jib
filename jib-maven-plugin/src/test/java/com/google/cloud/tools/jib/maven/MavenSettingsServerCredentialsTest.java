@@ -40,7 +40,7 @@ public class MavenSettingsServerCredentialsTest {
 
   @Mock private Settings mockSettings;
   @Mock private Server mockServer1;
-  @Mock private MavenBuildLogger mockLogger;
+  @Mock private MavenJibLogger mockLogger;
 
   private MavenSettingsServerCredentials testMavenSettingsServerCredentials;
 

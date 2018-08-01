@@ -16,11 +16,11 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.BuildLogger;
+import com.google.cloud.tools.jib.JibLogger;
 import org.apache.maven.plugin.logging.Log;
 
-/** Implementation of {@link BuildLogger} for Maven plugins. */
-class MavenBuildLogger implements BuildLogger {
+/** Implementation of {@link JibLogger} for Maven plugins. */
+class MavenJibLogger implements JibLogger {
 
   /** Disables annoying Apache HTTP client logging. */
   static void disableHttpLogging() {
@@ -31,7 +31,7 @@ class MavenBuildLogger implements BuildLogger {
 
   private final Log log;
 
-  MavenBuildLogger(Log log) {
+  MavenJibLogger(Log log) {
     this.log = log;
   }
 

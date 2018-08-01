@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.frontend;
 
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.cloud.tools.jib.BuildLogger;
+import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.builder.BuildSteps;
 import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
@@ -189,7 +189,7 @@ public class BuildStepsRunner {
   public void build(HelpfulSuggestions helpfulSuggestions) throws BuildStepsExecutionException {
     try {
       // TODO: This logging should be injected via another logging class.
-      BuildLogger buildLogger = buildSteps.getBuildConfiguration().getBuildLogger();
+      JibLogger buildLogger = buildSteps.getBuildConfiguration().getBuildLogger();
 
       buildLogger.lifecycle("");
       buildLogger.lifecycle(buildSteps.getStartupMessage());

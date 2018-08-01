@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.registry;
 
-import com.google.cloud.tools.jib.EmptyBuildLogger;
+import com.google.cloud.tools.jib.EmptyJibLogger;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import java.io.IOException;
@@ -29,7 +29,7 @@ import org.junit.Test;
 public class BlobCheckerIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
-  private static final EmptyBuildLogger buildLogger = new EmptyBuildLogger();
+  private static final EmptyJibLogger buildLogger = new EmptyJibLogger();
 
   @Test
   public void testCheck_exists() throws IOException, RegistryException {

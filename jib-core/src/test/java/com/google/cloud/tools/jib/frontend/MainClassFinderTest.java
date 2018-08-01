@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.frontend;
 
-import com.google.cloud.tools.jib.BuildLogger;
+import com.google.cloud.tools.jib.JibLogger;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 import java.net.URISyntaxException;
@@ -33,7 +33,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class MainClassFinderTest {
 
-  @Mock private BuildLogger mockBuildLogger;
+  @Mock private JibLogger mockBuildLogger;
 
   @Test
   public void testFindMainClass_simple() throws URISyntaxException {
