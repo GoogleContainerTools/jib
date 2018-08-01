@@ -57,7 +57,10 @@ public class Command {
       String output = CharStreams.toString(inputStreamReader);
 
       if (process.waitFor() != 0) {
-        throw new RuntimeException("Command '" + String.join(" ", command) + "' failed");
+        String stderr =
+            CharStreams.toString(
+                new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8));
+        throw new RuntimeException("Command '" + String.join(" ", command) + "' failed: " + stderr);
       }
 
       return output;
