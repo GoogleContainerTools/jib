@@ -150,13 +150,12 @@ class RegistryEndpointCaller<T> {
       return call(url, connectionFactory);
 
     } catch (SSLPeerUnverifiedException ex) {
-      return handleUnverifiableServerException(url, ex);
+      return handleUnverifiableServerException(url);
     }
   }
 
   @Nullable
-  private T handleUnverifiableServerException(URL url, SSLPeerUnverifiedException exception)
-      throws IOException, RegistryException {
+  private T handleUnverifiableServerException(URL url) throws IOException, RegistryException {
     if (!allowInsecureRegistries) {
       throw new InsecureRegistryException(url);
     }
