@@ -16,196 +16,122 @@
 
 package com.google.cloud.tools.jib.frontend;
 
-import com.google.cloud.tools.jib.builder.BuildLogger;
-import com.google.cloud.tools.jib.image.LayerEntry;
+import com.google.cloud.tools.jib.JibLogger;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
-import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Test for MainClassFinder. */
+/** Tests for {@link MainClassFinder}. */
 @RunWith(MockitoJUnitRunner.class)
 public class MainClassFinderTest {
 
-  @Mock private BuildLogger mockBuildLogger;
-  @Mock private ProjectProperties mockProjectProperties;
-  @Mock private HelpfulSuggestions mockHelpfulSuggestions;
-
-  private final ImmutableList<Path> fakeClassesPath = ImmutableList.of(Paths.get("a/b/c"));
-
-  @Before
-  public void setup() {
-    Mockito.when(mockProjectProperties.getLogger()).thenReturn(mockBuildLogger);
-    Mockito.when(mockProjectProperties.getPluginName()).thenReturn("plugin");
-    Mockito.when(mockProjectProperties.getMainClassHelpfulSuggestions(ArgumentMatchers.any()))
-        .thenReturn(mockHelpfulSuggestions);
-    Mockito.when(mockProjectProperties.getJarPluginName()).thenReturn("jar-plugin");
-  }
+  @Mock private JibLogger mockBuildLogger;
 
   @Test
-  public void testFindMainClass_simple() throws URISyntaxException, IOException {
+  public void testFindMainClass_simple() throws URISyntaxException {
     Path rootDirectory = Paths.get(Resources.getResource("class-finder-tests/simple").toURI());
-    List<String> mainClasses = MainClassFinder.findMainClasses(rootDirectory, mockBuildLogger);
-    Assert.assertEquals(1, mainClasses.size());
-    Assert.assertTrue(mainClasses.contains("HelloWorld"));
+    MainClassFinder.Result mainClassFinderResult =
+        new MainClassFinder(ImmutableList.of(rootDirectory.resolve("child")), mockBuildLogger)
+            .find();
+    Assert.assertTrue(mainClassFinderResult.isSuccess());
+    Assert.assertThat(
+        mainClassFinderResult.getFoundMainClass(), CoreMatchers.containsString("HelloWorld"));
   }
 
   @Test
-  public void testFindMainClass_subdirectories() throws URISyntaxException, IOException {
+  public void testFindMainClass_subdirectories() throws URISyntaxException {
     Path rootDirectory =
         Paths.get(Resources.getResource("class-finder-tests/subdirectories").toURI());
-    List<String> mainClasses = MainClassFinder.findMainClasses(rootDirectory, mockBuildLogger);
-    Assert.assertEquals(1, mainClasses.size());
-    Assert.assertTrue(mainClasses.contains("multi.layered.HelloWorld"));
+    MainClassFinder.Result mainClassFinderResult =
+        new MainClassFinder(ImmutableList.of(rootDirectory.resolve("child")), mockBuildLogger)
+            .find();
+    Assert.assertTrue(mainClassFinderResult.isSuccess());
+    Assert.assertThat(
+        mainClassFinderResult.getFoundMainClass(),
+        CoreMatchers.containsString("multi.layered.HelloWorld"));
   }
 
   @Test
-  public void testFindMainClass_noClass() throws URISyntaxException, IOException {
+  public void testFindMainClass_noClass() throws URISyntaxException {
     Path rootDirectory = Paths.get(Resources.getResource("class-finder-tests/no-main").toURI());
-    List<String> mainClasses = MainClassFinder.findMainClasses(rootDirectory, mockBuildLogger);
-    Assert.assertTrue(mainClasses.isEmpty());
+    MainClassFinder.Result mainClassFinderResult =
+        new MainClassFinder(ImmutableList.of(rootDirectory.resolve("child")), mockBuildLogger)
+            .find();
+    Assert.assertFalse(mainClassFinderResult.isSuccess());
+    Assert.assertEquals(
+        MainClassFinder.Result.ErrorType.MAIN_CLASS_NOT_FOUND,
+        mainClassFinderResult.getErrorType());
   }
 
   @Test
-  public void testFindMainClass_multiple() throws URISyntaxException, IOException {
+  public void testFindMainClass_multiple() throws URISyntaxException {
     Path rootDirectory = Paths.get(Resources.getResource("class-finder-tests/multiple").toURI());
-    List<String> mainClasses = MainClassFinder.findMainClasses(rootDirectory, mockBuildLogger);
-    Assert.assertEquals(2, mainClasses.size());
-    Assert.assertTrue(mainClasses.contains("multi.layered.HelloMoon"));
-    Assert.assertTrue(mainClasses.contains("HelloWorld"));
+    MainClassFinder.Result mainClassFinderResult =
+        new MainClassFinder(ImmutableList.of(rootDirectory.resolve("child")), mockBuildLogger)
+            .find();
+    Assert.assertFalse(mainClassFinderResult.isSuccess());
+    Assert.assertEquals(
+        MainClassFinder.Result.ErrorType.MULTIPLE_MAIN_CLASSES,
+        mainClassFinderResult.getErrorType());
+    Assert.assertEquals(2, mainClassFinderResult.getFoundMainClasses().size());
+    Assert.assertTrue(
+        mainClassFinderResult.getFoundMainClasses().contains("multi.layered.HelloMoon"));
+    Assert.assertTrue(mainClassFinderResult.getFoundMainClasses().contains("HelloWorld"));
   }
 
   @Test
-  public void testFindMainClass_extension() throws URISyntaxException, IOException {
+  public void testFindMainClass_extension() throws URISyntaxException {
     Path rootDirectory = Paths.get(Resources.getResource("class-finder-tests/extension").toURI());
-    List<String> mainClasses = MainClassFinder.findMainClasses(rootDirectory, mockBuildLogger);
-    Assert.assertEquals(1, mainClasses.size());
-    Assert.assertTrue(mainClasses.contains("main.MainClass"));
+    MainClassFinder.Result mainClassFinderResult =
+        new MainClassFinder(ImmutableList.of(rootDirectory.resolve("child")), mockBuildLogger)
+            .find();
+    Assert.assertTrue(mainClassFinderResult.isSuccess());
+    Assert.assertThat(
+        mainClassFinderResult.getFoundMainClass(), CoreMatchers.containsString("main.MainClass"));
   }
 
   @Test
-  public void testFindMainClass_importedMethods() throws URISyntaxException, IOException {
+  public void testFindMainClass_importedMethods() throws URISyntaxException {
     Path rootDirectory =
         Paths.get(Resources.getResource("class-finder-tests/imported-methods").toURI());
-    List<String> mainClasses = MainClassFinder.findMainClasses(rootDirectory, mockBuildLogger);
-    Assert.assertEquals(1, mainClasses.size());
-    Assert.assertTrue(mainClasses.contains("main.MainClass"));
+    MainClassFinder.Result mainClassFinderResult =
+        new MainClassFinder(ImmutableList.of(rootDirectory.resolve("child")), mockBuildLogger)
+            .find();
+    Assert.assertTrue(mainClassFinderResult.isSuccess());
+    Assert.assertThat(
+        mainClassFinderResult.getFoundMainClass(), CoreMatchers.containsString("main.MainClass"));
   }
 
   @Test
-  public void testFindMainClass_externalClasses() throws URISyntaxException, IOException {
+  public void testFindMainClass_externalClasses() throws URISyntaxException {
     Path rootDirectory =
         Paths.get(Resources.getResource("class-finder-tests/external-classes").toURI());
-    List<String> mainClasses = MainClassFinder.findMainClasses(rootDirectory, mockBuildLogger);
-    Assert.assertEquals(1, mainClasses.size());
-    Assert.assertTrue(mainClasses.contains("main.MainClass"));
+    MainClassFinder.Result mainClassFinderResult =
+        new MainClassFinder(ImmutableList.of(rootDirectory.resolve("child")), mockBuildLogger)
+            .find();
+    Assert.assertTrue(mainClassFinderResult.isSuccess());
+    Assert.assertThat(
+        mainClassFinderResult.getFoundMainClass(), CoreMatchers.containsString("main.MainClass"));
   }
 
   @Test
-  public void testFindMainClass_innerClasses() throws URISyntaxException, IOException {
+  public void testFindMainClass_innerClasses() throws URISyntaxException {
     Path rootDirectory =
         Paths.get(Resources.getResource("class-finder-tests/inner-classes").toURI());
-    List<String> mainClasses = MainClassFinder.findMainClasses(rootDirectory, mockBuildLogger);
-    Assert.assertEquals(1, mainClasses.size());
-    Assert.assertTrue(mainClasses.contains("HelloWorld$InnerClass"));
-  }
-
-  @Test
-  public void testResolveMainClass() throws MainClassInferenceException {
-    Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("some.main.class");
-    Assert.assertEquals(
-        "some.main.class", MainClassFinder.resolveMainClass(null, mockProjectProperties));
-    Assert.assertEquals(
-        "configured", MainClassFinder.resolveMainClass("configured", mockProjectProperties));
-  }
-
-  @Test
-  public void testResolveMainClass_notValid() throws MainClassInferenceException {
-    Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("${start-class}");
-    Mockito.when(mockProjectProperties.getClassesLayerEntry())
-        .thenReturn(new LayerEntry(fakeClassesPath, "ignored"));
-    Assert.assertEquals(
-        "${start-class}", MainClassFinder.resolveMainClass(null, mockProjectProperties));
-    Mockito.verify(mockBuildLogger).warn("'mainClass' is not a valid Java class : ${start-class}");
-  }
-
-  @Test
-  public void testResolveMainClass_multipleInferredWithBackup()
-      throws MainClassInferenceException, URISyntaxException {
-    Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("${start-class}");
-    Mockito.when(mockProjectProperties.getClassesLayerEntry())
-        .thenReturn(
-            new LayerEntry(
-                ImmutableList.of(
-                    Paths.get(Resources.getResource("class-finder-tests/multiple/multi").toURI()),
-                    Paths.get(
-                        Resources.getResource("class-finder-tests/multiple/HelloWorld.class")
-                            .toURI()),
-                    Paths.get(
-                        Resources.getResource("class-finder-tests/multiple/NotMain.class")
-                            .toURI())),
-                "ignored"));
-    Assert.assertEquals(
-        "${start-class}", MainClassFinder.resolveMainClass(null, mockProjectProperties));
-    Mockito.verify(mockBuildLogger).warn("'mainClass' is not a valid Java class : ${start-class}");
-  }
-
-  @Test
-  public void testResolveMainClass_multipleInferredWithoutBackup() throws URISyntaxException {
-    Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn(null);
-    Mockito.when(mockProjectProperties.getClassesLayerEntry())
-        .thenReturn(
-            new LayerEntry(
-                ImmutableList.of(
-                    Paths.get(Resources.getResource("class-finder-tests/multiple/multi").toURI()),
-                    Paths.get(
-                        Resources.getResource("class-finder-tests/multiple/HelloWorld.class")
-                            .toURI()),
-                    Paths.get(
-                        Resources.getResource("class-finder-tests/multiple/NotMain.class")
-                            .toURI())),
-                "ignored"));
-    try {
-      MainClassFinder.resolveMainClass(null, mockProjectProperties);
-      Assert.fail();
-    } catch (MainClassInferenceException ex) {
-      Mockito.verify(mockProjectProperties)
-          .getMainClassHelpfulSuggestions(
-              "Multiple valid main classes were found: HelloWorld, multi.layered.HelloMoon");
-    }
-  }
-
-  @Test
-  public void testResolveMainClass_noneInferredWithBackup() throws MainClassInferenceException {
-    Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("${start-class}");
-    Mockito.when(mockProjectProperties.getClassesLayerEntry())
-        .thenReturn(new LayerEntry(ImmutableList.of(), "ignored"));
-    Assert.assertEquals(
-        "${start-class}", MainClassFinder.resolveMainClass(null, mockProjectProperties));
-    Mockito.verify(mockBuildLogger).warn("'mainClass' is not a valid Java class : ${start-class}");
-  }
-
-  @Test
-  public void testResolveMainClass_noneInferredWithoutBackup() {
-    Mockito.when(mockProjectProperties.getClassesLayerEntry())
-        .thenReturn(new LayerEntry(ImmutableList.of(), "ignored"));
-    try {
-      MainClassFinder.resolveMainClass(null, mockProjectProperties);
-      Assert.fail();
-    } catch (MainClassInferenceException ex) {
-      Mockito.verify(mockProjectProperties)
-          .getMainClassHelpfulSuggestions("Main class was not found");
-    }
+    MainClassFinder.Result mainClassFinderResult =
+        new MainClassFinder(ImmutableList.of(rootDirectory.resolve("child")), mockBuildLogger)
+            .find();
+    Assert.assertTrue(mainClassFinderResult.isSuccess());
+    Assert.assertThat(
+        mainClassFinderResult.getFoundMainClass(),
+        CoreMatchers.containsString("HelloWorld$InnerClass"));
   }
 }

@@ -16,7 +16,8 @@ export GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/keyfile.json
 docker-credential-gcr configure-docker
 
 # Stops any left-over containers.
-docker stop $(docker container ls --quiet) || true
+docker stop $(docker ps --all --quiet) || true
+docker kill $(docker ps --all --quiet) || true
 
 (cd github/jib/jib-core; ./gradlew clean build integrationTest --info --stacktrace)
 (cd github/jib/jib-maven-plugin; ./mvnw clean install -P integration-tests -B -U -X)

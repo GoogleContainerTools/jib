@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.cloud.tools.jib.builder.BuildLogger;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.JibLogger;
+import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.registry.credentials.DockerConfigCredentialRetriever;
 import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelper;
@@ -43,8 +43,8 @@ public class RetrieveRegistryCredentialsStepTest {
   private static final String FAKE_TARGET_REGISTRY = "someRegistry";
 
   @Mock private ListeningExecutorService mockListeningExecutorService;
-  @Mock private BuildConfiguration mockBuildConfiguration;
-  @Mock private BuildLogger mockBuildLogger;
+  @Mock private ImageConfiguration mockImageConfiguration;
+  @Mock private JibLogger mockBuildLogger;
 
   @Mock private DockerCredentialHelperFactory mockDockerCredentialHelperFactory;
   @Mock private DockerCredentialHelper mockDockerCredentialHelper;
@@ -149,9 +149,12 @@ public class RetrieveRegistryCredentialsStepTest {
     Mockito.verify(mockBuildLogger).info("Using docker-credential-gcr for something.gcr.io");
 
     Mockito.when(mockNonexistentDockerCredentialHelperException.getMessage()).thenReturn("warning");
-    Assert.assertEquals(
-        null, makeRetrieveRegistryCredentialsStep("something.amazonaws.com", null, null).call());
+    Mockito.when(mockNonexistentDockerCredentialHelperException.getCause())
+        .thenReturn(new IOException("the root cause"));
+    Assert.assertNull(
+        makeRetrieveRegistryCredentialsStep("something.amazonaws.com", null, null).call());
     Mockito.verify(mockBuildLogger).warn("warning");
+    Mockito.verify(mockBuildLogger).info("  Caused by: the root cause");
   }
 
   /** Creates a fake {@link RetrieveRegistryCredentialsStep} for {@code registry}. */
@@ -159,7 +162,7 @@ public class RetrieveRegistryCredentialsStepTest {
       String registry,
       @Nullable String credentialHelperSuffix,
       @Nullable RegistryCredentials knownRegistryCredentials) {
-    Mockito.when(mockBuildConfiguration.getTargetImageRegistry()).thenReturn(FAKE_TARGET_REGISTRY);
+    Mockito.when(mockImageConfiguration.getImageRegistry()).thenReturn(FAKE_TARGET_REGISTRY);
 
     return new RetrieveRegistryCredentialsStep(
         mockListeningExecutorService,

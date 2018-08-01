@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.common.collect.ImmutableList;
@@ -104,12 +105,17 @@ class BuildImageStep
       // Start with environment from base image and overlay build configuration
       imageBuilder.addEnvironment(
           NonBlockingSteps.get(pullBaseImageStep).getBaseImage().getEnvironment());
-      imageBuilder.addEnvironment(buildConfiguration.getEnvironment());
 
-      imageBuilder.setCreated(buildConfiguration.getCreationTime());
-      imageBuilder.setEntrypoint(buildConfiguration.getEntrypoint());
-      imageBuilder.setJavaArguments(buildConfiguration.getJavaArguments());
-      imageBuilder.setExposedPorts(buildConfiguration.getExposedPorts());
+      ContainerConfiguration containerConfiguration =
+          buildConfiguration.getContainerConfiguration();
+      if (containerConfiguration != null) {
+        imageBuilder.addEnvironment(containerConfiguration.getEnvironmentMap());
+        imageBuilder.setCreated(containerConfiguration.getCreationTime());
+        imageBuilder.setEntrypoint(containerConfiguration.getEntrypoint());
+        imageBuilder.setJavaArguments(containerConfiguration.getProgramArguments());
+        imageBuilder.setExposedPorts(containerConfiguration.getExposedPorts());
+        imageBuilder.setLabels(containerConfiguration.getLabels());
+      }
 
       // Gets the container configuration content descriptor.
       return imageBuilder.build();

@@ -37,6 +37,7 @@ public class Image<T extends Layer> {
     @Nullable private ImmutableList<String> entrypoint;
     @Nullable private ImmutableList<String> javaArguments;
     @Nullable private ImmutableList<Port> exposedPorts;
+    @Nullable private ImmutableMap<String, String> labels;
 
     /**
      * Sets the image creation time.
@@ -81,11 +82,7 @@ public class Image<T extends Layer> {
      * @return this
      */
     public Builder<T> setEntrypoint(@Nullable List<String> entrypoint) {
-      if (entrypoint == null) {
-        this.entrypoint = null;
-      } else {
-        this.entrypoint = ImmutableList.copyOf(entrypoint);
-      }
+      this.entrypoint = (entrypoint == null) ? null : ImmutableList.copyOf(entrypoint);
       return this;
     }
 
@@ -96,11 +93,7 @@ public class Image<T extends Layer> {
      * @return this
      */
     public Builder<T> setJavaArguments(@Nullable List<String> javaArguments) {
-      if (javaArguments == null) {
-        this.javaArguments = null;
-      } else {
-        this.javaArguments = ImmutableList.copyOf(javaArguments);
-      }
+      this.javaArguments = (javaArguments == null) ? null : ImmutableList.copyOf(javaArguments);
       return this;
     }
 
@@ -110,12 +103,19 @@ public class Image<T extends Layer> {
      * @param exposedPorts the list of exposed ports to add
      * @return this
      */
-    public Builder<T> setExposedPorts(@Nullable ImmutableList<Port> exposedPorts) {
-      if (exposedPorts == null) {
-        this.exposedPorts = null;
-      } else {
-        this.exposedPorts = exposedPorts;
-      }
+    public Builder<T> setExposedPorts(@Nullable List<Port> exposedPorts) {
+      this.exposedPorts = (exposedPorts == null) ? null : ImmutableList.copyOf(exposedPorts);
+      return this;
+    }
+
+    /**
+     * Sets the items in the "Labels" field in the container configuration.
+     *
+     * @param labels that map of labels to add
+     * @return this
+     */
+    public Builder<T> setLabels(@Nullable Map<String, String> labels) {
+      this.labels = (labels == null) ? null : ImmutableMap.copyOf(labels);
       return this;
     }
 
@@ -138,7 +138,8 @@ public class Image<T extends Layer> {
           environmentBuilder.build(),
           entrypoint,
           javaArguments,
-          exposedPorts);
+          exposedPorts,
+          labels);
     }
   }
 
@@ -164,19 +165,24 @@ public class Image<T extends Layer> {
   /** Ports that the container listens on. */
   @Nullable private final ImmutableList<Port> exposedPorts;
 
+  /** Labels on the container configuration */
+  @Nullable private final ImmutableMap<String, String> labels;
+
   private Image(
       @Nullable Instant created,
       ImageLayers<T> layers,
       @Nullable ImmutableMap<String, String> environment,
       @Nullable ImmutableList<String> entrypoint,
       @Nullable ImmutableList<String> javaArguments,
-      @Nullable ImmutableList<Port> exposedPorts) {
+      @Nullable ImmutableList<Port> exposedPorts,
+      @Nullable ImmutableMap<String, String> labels) {
     this.created = created;
     this.layers = layers;
     this.environment = environment;
     this.entrypoint = entrypoint;
     this.javaArguments = javaArguments;
     this.exposedPorts = exposedPorts;
+    this.labels = labels;
   }
 
   @Nullable
@@ -202,6 +208,11 @@ public class Image<T extends Layer> {
   @Nullable
   public ImmutableList<Port> getExposedPorts() {
     return exposedPorts;
+  }
+
+  @Nullable
+  public ImmutableMap<String, String> getLabels() {
+    return labels;
   }
 
   public ImmutableList<T> getLayers() {

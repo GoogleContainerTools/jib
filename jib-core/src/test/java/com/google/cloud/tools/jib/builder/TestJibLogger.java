@@ -16,13 +16,14 @@
 
 package com.google.cloud.tools.jib.builder;
 
+import com.google.cloud.tools.jib.JibLogger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** Implementation of {@link BuildLogger} for testing purposes. */
-public class TestBuildLogger implements BuildLogger {
+/** Implementation of {@link JibLogger} for testing purposes. */
+public class TestJibLogger implements JibLogger {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(TestBuildLogger.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(TestJibLogger.class);
 
   @Override
   public void debug(CharSequence message) {

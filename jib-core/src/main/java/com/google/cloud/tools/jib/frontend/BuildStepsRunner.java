@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.frontend;
 
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.cloud.tools.jib.builder.BuildLogger;
+import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.builder.BuildSteps;
 import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
@@ -122,28 +122,36 @@ public class BuildStepsRunner {
           registryUnauthorizedException);
 
     } else {
-      boolean isRegistryForBase =
+      boolean isImageForBase =
           registryUnauthorizedException
-              .getRegistry()
-              .equals(buildConfiguration.getBaseImageRegistry());
-      boolean isRegistryForTarget =
+                  .getRegistry()
+                  .equals(buildConfiguration.getBaseImageConfiguration().getImageRegistry())
+              && registryUnauthorizedException
+                  .getRepository()
+                  .equals(buildConfiguration.getBaseImageConfiguration().getImageRepository());
+      boolean isImageForTarget =
           registryUnauthorizedException
-              .getRegistry()
-              .equals(buildConfiguration.getTargetImageRegistry());
+                  .getRegistry()
+                  .equals(buildConfiguration.getTargetImageConfiguration().getImageRegistry())
+              && registryUnauthorizedException
+                  .getRepository()
+                  .equals(buildConfiguration.getTargetImageConfiguration().getImageRepository());
       boolean areBaseImageCredentialsConfigured =
-          buildConfiguration.getBaseImageCredentialHelperName() != null
-              || buildConfiguration.getKnownBaseRegistryCredentials() != null;
+          buildConfiguration.getBaseImageConfiguration().getCredentialHelper() != null
+              || buildConfiguration.getBaseImageConfiguration().getKnownRegistryCredentials()
+                  != null;
       boolean areTargetImageCredentialsConfigured =
-          buildConfiguration.getTargetImageCredentialHelperName() != null
-              || buildConfiguration.getKnownTargetRegistryCredentials() != null;
+          buildConfiguration.getTargetImageConfiguration().getCredentialHelper() != null
+              || buildConfiguration.getTargetImageConfiguration().getKnownRegistryCredentials()
+                  != null;
 
-      if (isRegistryForBase && !areBaseImageCredentialsConfigured) {
+      if (isImageForBase && !areBaseImageCredentialsConfigured) {
         throw new BuildStepsExecutionException(
             helpfulSuggestions.forNoCredentialHelpersDefinedForBaseImage(
                 registryUnauthorizedException.getRegistry()),
             registryUnauthorizedException);
       }
-      if (isRegistryForTarget && !areTargetImageCredentialsConfigured) {
+      if (isImageForTarget && !areTargetImageCredentialsConfigured) {
         throw new BuildStepsExecutionException(
             helpfulSuggestions.forNoCredentialHelpersDefinedForTargetImage(
                 registryUnauthorizedException.getRegistry()),
@@ -181,7 +189,7 @@ public class BuildStepsRunner {
   public void build(HelpfulSuggestions helpfulSuggestions) throws BuildStepsExecutionException {
     try {
       // TODO: This logging should be injected via another logging class.
-      BuildLogger buildLogger = buildSteps.getBuildConfiguration().getBuildLogger();
+      JibLogger buildLogger = buildSteps.getBuildConfiguration().getBuildLogger();
 
       buildLogger.lifecycle("");
       buildLogger.lifecycle(buildSteps.getStartupMessage());
@@ -233,8 +241,8 @@ public class BuildStepsRunner {
           && exceptionDuringBuildSteps.getCause() instanceof HttpResponseException) {
         handleRegistryUnauthorizedException(
             new RegistryUnauthorizedException(
-                buildConfiguration.getTargetImageRegistry(),
-                buildConfiguration.getTargetImageRepository(),
+                buildConfiguration.getTargetImageConfiguration().getImageRegistry(),
+                buildConfiguration.getTargetImageConfiguration().getImageRepository(),
                 (HttpResponseException) exceptionDuringBuildSteps.getCause()),
             buildConfiguration,
             helpfulSuggestions);

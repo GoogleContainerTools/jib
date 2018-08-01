@@ -76,7 +76,7 @@ public class ImageLayersTest {
   @Test
   public void testAddLayer_sameAsLastLayer() throws LayerPropertyNotFoundException {
     List<Layer> expectedLayers =
-        Arrays.asList(mockCachedLayer, mockReferenceLayer, mockDigestOnlyLayer, mockUnwrittenLayer);
+        Arrays.asList(mockReferenceLayer, mockDigestOnlyLayer, mockUnwrittenLayer, mockCachedLayer);
 
     ImageLayers<Layer> imageLayers =
         ImageLayers.builder()

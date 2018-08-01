@@ -18,9 +18,14 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.Command;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
 import org.hamcrest.CoreMatchers;
@@ -47,30 +52,32 @@ public class BuildImageMojoIntegrationTest {
    * Builds and runs jib:build on a project at {@code projectRoot} pushing to {@code
    * imageReference}.
    */
-  private static String buildAndRun(Path projectRoot, String imageReference)
+  private static String buildAndRun(Path projectRoot, String imageReference, boolean runTwice)
       throws VerificationException, IOException, InterruptedException {
     Verifier verifier = new Verifier(projectRoot.toString());
     verifier.setAutoclean(false);
-    verifier.executeGoal("package");
+    verifier.addCliOption("-X");
+    verifier.executeGoals(Arrays.asList("clean", "compile"));
 
     // Builds twice, and checks if the second build took less time.
-    long lastTime = System.nanoTime();
     verifier.executeGoal("jib:" + BuildImageMojo.GOAL_NAME);
-    long timeOne = System.nanoTime() - lastTime;
-    lastTime = System.nanoTime();
+    float timeOne = getBuildTimeFromVerifierLog(verifier);
 
-    verifier.executeGoal("jib:" + BuildImageMojo.GOAL_NAME);
-    long timeTwo = System.nanoTime() - lastTime;
+    if (runTwice) {
+      verifier.resetStreams();
+      verifier.executeGoal("jib:" + BuildImageMojo.GOAL_NAME);
+      float timeTwo = getBuildTimeFromVerifierLog(verifier);
+
+      Assert.assertTrue(
+          "First build time ("
+              + timeOne
+              + ") is not greater than second build time ("
+              + timeTwo
+              + ")",
+          timeOne > timeTwo);
+    }
 
     verifier.verifyErrorFreeLog();
-
-    Assert.assertTrue(
-        "First build time ("
-            + timeOne
-            + ") is not greater than second build time ("
-            + timeTwo
-            + ")",
-        timeOne > timeTwo);
 
     new Command("docker", "pull", imageReference).run();
     Assert.assertThat(
@@ -83,6 +90,22 @@ public class BuildImageMojoIntegrationTest {
                 + "                \"2002/udp\": {},\n"
                 + "                \"2003/udp\": {}"));
     return new Command("docker", "run", imageReference).run();
+  }
+
+  private static float getBuildTimeFromVerifierLog(Verifier verifier) throws IOException {
+    Pattern pattern = Pattern.compile("Building and pushing image : (?<time>.*) ms");
+
+    for (String line :
+        Files.readAllLines(Paths.get(verifier.getBasedir(), verifier.getLogFileName()))) {
+      Matcher matcher = pattern.matcher(line);
+      if (matcher.find()) {
+        return Float.parseFloat(matcher.group("time"));
+      }
+    }
+
+    Assert.fail("Could not find build execution time in logs");
+    // Should not reach here.
+    return -1;
   }
 
   @Test
@@ -103,11 +126,26 @@ public class BuildImageMojoIntegrationTest {
     }
 
     Instant before = Instant.now();
+
+    // The target registry these tests push to would already have all the layers cached from before,
+    // causing this test to fail sometimes with the second build being a bit slower than the first
+    // build. This file change makes sure that a new layer is always pushed the first time to solve
+    // this issue.
+    Files.write(
+        simpleTestProject
+            .getProjectRoot()
+            .resolve("src")
+            .resolve("main")
+            .resolve("resources")
+            .resolve("world"),
+        before.toString().getBytes(StandardCharsets.UTF_8));
+
     Assert.assertEquals(
-        "Hello, world. An argument.\nfoo\ncat\n",
+        "Hello, " + before + ". An argument.\nfoo\ncat\n",
         buildAndRun(
             simpleTestProject.getProjectRoot(),
-            "gcr.io/jib-integration-testing/simpleimage:maven"));
+            "gcr.io/jib-integration-testing/simpleimage:maven",
+            true));
 
     Instant buildTime =
         Instant.parse(
@@ -127,7 +165,9 @@ public class BuildImageMojoIntegrationTest {
     Assert.assertEquals(
         "",
         buildAndRun(
-            emptyTestProject.getProjectRoot(), "gcr.io/jib-integration-testing/emptyimage:maven"));
+            emptyTestProject.getProjectRoot(),
+            "gcr.io/jib-integration-testing/emptyimage:maven",
+            false));
     Assert.assertEquals(
         "1970-01-01T00:00:00Z",
         new Command(
@@ -148,6 +188,7 @@ public class BuildImageMojoIntegrationTest {
       verifier.setAutoclean(false);
       verifier.executeGoals(Arrays.asList("clean", "jib:" + BuildImageMojo.GOAL_NAME));
       Assert.fail();
+
     } catch (VerificationException ex) {
       Assert.assertThat(
           ex.getMessage(),

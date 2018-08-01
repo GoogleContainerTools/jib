@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.builder.BuildLogger;
+import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.common.base.Preconditions;
@@ -72,8 +72,8 @@ public class JibExtension {
     return projectDirectory.resolve("src").resolve("main").resolve("jib");
   }
 
-  private final ImageConfiguration from;
-  private final ImageConfiguration to;
+  private final ImageParameters from;
+  private final ImageParameters to;
   private final ContainerParameters container;
   private final Property<Boolean> useOnlyProjectCache;
   private final Property<Boolean> allowInsecureRegistries;
@@ -91,8 +91,8 @@ public class JibExtension {
     projectDir = project.getProjectDir().toPath();
     ObjectFactory objectFactory = project.getObjects();
 
-    from = objectFactory.newInstance(ImageConfiguration.class);
-    to = objectFactory.newInstance(ImageConfiguration.class);
+    from = objectFactory.newInstance(ImageParameters.class);
+    to = objectFactory.newInstance(ImageParameters.class);
     container = objectFactory.newInstance(ContainerParameters.class);
 
     jvmFlags = objectFactory.listProperty(String.class);
@@ -118,7 +118,7 @@ public class JibExtension {
    *
    * @param logger The logger used to print the warnings
    */
-  void handleDeprecatedParameters(BuildLogger logger) {
+  void handleDeprecatedParameters(JibLogger logger) {
     StringBuilder deprecatedParams = new StringBuilder();
     if (!jvmFlags.get().isEmpty()) {
       deprecatedParams.append("  jvmFlags -> container.jvmFlags\n");
@@ -152,11 +152,11 @@ public class JibExtension {
     }
   }
 
-  public void from(Action<? super ImageConfiguration> action) {
+  public void from(Action<? super ImageParameters> action) {
     action.execute(from);
   }
 
-  public void to(Action<? super ImageConfiguration> action) {
+  public void to(Action<? super ImageParameters> action) {
     action.execute(to);
   }
 
@@ -205,13 +205,13 @@ public class JibExtension {
 
   @Nested
   @Optional
-  public ImageConfiguration getFrom() {
+  public ImageParameters getFrom() {
     return from;
   }
 
   @Nested
   @Optional
-  public ImageConfiguration getTo() {
+  public ImageParameters getTo() {
     return to;
   }
 

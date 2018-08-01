@@ -95,7 +95,7 @@ public class WriteTarFileStep implements AsyncStep<Void>, Callable<Void> {
     Files.createDirectories(outputPath.getParent());
     try (OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(outputPath))) {
       new ImageToTarballTranslator(image)
-          .toTarballBlob(buildConfiguration.getTargetImageReference())
+          .toTarballBlob(buildConfiguration.getTargetImageConfiguration().getImage())
           .writeTo(outputStream);
     }
 

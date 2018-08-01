@@ -73,14 +73,17 @@ class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authori
     try (Timer ignored =
         new Timer(
             buildConfiguration.getBuildLogger(),
-            String.format(DESCRIPTION, buildConfiguration.getTargetImageRegistry()))) {
+            String.format(
+                DESCRIPTION,
+                buildConfiguration.getTargetImageConfiguration().getImageRegistry()))) {
       Authorization registryCredentials =
           NonBlockingSteps.get(retrieveTargetRegistryCredentialsStep);
 
       RegistryAuthenticator registryAuthenticator =
           RegistryAuthenticator.initializer(
-                  buildConfiguration.getTargetImageRegistry(),
-                  buildConfiguration.getTargetImageRepository())
+                  buildConfiguration.getBuildLogger(),
+                  buildConfiguration.getTargetImageConfiguration().getImageRegistry(),
+                  buildConfiguration.getTargetImageConfiguration().getImageRepository())
               .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
               .initialize();
       if (registryAuthenticator == null) {

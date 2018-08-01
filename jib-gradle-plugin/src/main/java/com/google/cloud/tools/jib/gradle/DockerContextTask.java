@@ -99,13 +99,13 @@ public class DockerContextTask extends DefaultTask {
   public void generateDockerContext() {
     Preconditions.checkNotNull(jibExtension);
 
-    GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
-    jibExtension.handleDeprecatedParameters(gradleBuildLogger);
+    GradleJibLogger gradleJibLogger = new GradleJibLogger(getLogger());
+    jibExtension.handleDeprecatedParameters(gradleJibLogger);
     SystemPropertyValidator.checkHttpTimeoutProperty(GradleException::new);
 
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(
-            getProject(), gradleBuildLogger, jibExtension.getExtraDirectoryPath());
+            getProject(), gradleJibLogger, jibExtension.getExtraDirectoryPath());
     String mainClass = gradleProjectProperties.getMainClass(jibExtension);
     String targetDir = getTargetDir();
 
@@ -127,7 +127,7 @@ public class DockerContextTask extends DefaultTask {
           .setExposedPorts(jibExtension.getExposedPorts())
           .generate(Paths.get(targetDir));
 
-      gradleBuildLogger.lifecycle("Created Docker context at " + targetDir);
+      gradleJibLogger.lifecycle("Created Docker context at " + targetDir);
 
     } catch (InsecureRecursiveDeleteException ex) {
       throw new GradleException(

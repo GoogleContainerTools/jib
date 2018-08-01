@@ -34,7 +34,7 @@ import org.gradle.api.tasks.Optional;
  * <p>{@code image} (required) is the image reference and {@code credHelper} (optional) is the name
  * (after {@code docker-credential} of the credential helper for accessing the {@code image}.
  */
-public class ImageConfiguration {
+public class ImageParameters {
 
   private AuthConfiguration auth;
 
@@ -42,7 +42,7 @@ public class ImageConfiguration {
   @Nullable private String credHelper;
 
   @Inject
-  public ImageConfiguration(ObjectFactory objectFactory) {
+  public ImageParameters(ObjectFactory objectFactory) {
     auth = objectFactory.newInstance(AuthConfiguration.class);
   }
 
@@ -78,7 +78,7 @@ public class ImageConfiguration {
     action.execute(auth);
   }
 
-  /** Converts the {@link ImageConfiguration} to an {@link Authorization}. */
+  /** Converts the {@link ImageParameters} to an {@link Authorization}. */
   @Internal
   @Nullable
   Authorization getImageAuthorization() {
