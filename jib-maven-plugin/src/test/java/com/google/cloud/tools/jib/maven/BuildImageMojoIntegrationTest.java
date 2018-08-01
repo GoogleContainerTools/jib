@@ -52,17 +52,8 @@ public class BuildImageMojoIntegrationTest {
    * Builds and runs jib:build on a project at {@code projectRoot} pushing to {@code
    * imageReference}.
    */
-  private static String buildAndRun(
-      Path projectRoot, String imageReference, String worldString, boolean runTwice)
+  private static String buildAndRun(Path projectRoot, String imageReference, boolean runTwice)
       throws VerificationException, IOException, InterruptedException {
-    // The target registry these tests push to would already have all the layers cached from before,
-    // causing this test to fail sometimes with the second build being a bit slower than the first
-    // build. This file change makes sure that a new layer is always pushed the first time to solve
-    // this issue.
-    Files.write(
-        projectRoot.resolve("src").resolve("main").resolve("resources").resolve("world"),
-        worldString.getBytes(StandardCharsets.UTF_8));
-
     Verifier verifier = new Verifier(projectRoot.toString());
     verifier.setAutoclean(false);
     verifier.addCliOption("-X");
@@ -135,12 +126,25 @@ public class BuildImageMojoIntegrationTest {
     }
 
     Instant before = Instant.now();
+
+    // The target registry these tests push to would already have all the layers cached from before,
+    // causing this test to fail sometimes with the second build being a bit slower than the first
+    // build. This file change makes sure that a new layer is always pushed the first time to solve
+    // this issue.
+    Files.write(
+        simpleTestProject
+            .getProjectRoot()
+            .resolve("src")
+            .resolve("main")
+            .resolve("resources")
+            .resolve("world"),
+        before.toString().getBytes(StandardCharsets.UTF_8));
+
     Assert.assertEquals(
         "Hello, " + before + ". An argument.\nfoo\ncat\n",
         buildAndRun(
             simpleTestProject.getProjectRoot(),
             "gcr.io/jib-integration-testing/simpleimage:maven",
-            before.toString(),
             true));
 
     Instant buildTime =
@@ -163,7 +167,6 @@ public class BuildImageMojoIntegrationTest {
         buildAndRun(
             emptyTestProject.getProjectRoot(),
             "gcr.io/jib-integration-testing/emptyimage:maven",
-            Instant.now().toString(),
             false));
     Assert.assertEquals(
         "1970-01-01T00:00:00Z",
