@@ -113,7 +113,7 @@ public class RegistryEndpointCallerTest {
 
   @Before
   public void setUp() throws IOException {
-    secureEndpointCaller = createRegistryEndpointCaller(false);
+    secureEndpointCaller = createRegistryEndpointCaller(false, -1);
 
     Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
     Mockito.when(mockInsecureConnectionFactory.apply(Mockito.any()))
@@ -149,7 +149,7 @@ public class RegistryEndpointCallerTest {
     Mockito.when(mockInsecureConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
         .thenReturn(mockResponse); // OK with non-verifying connection
 
-    RegistryEndpointCaller<String> insecureCaller = createRegistryEndpointCaller(true);
+    RegistryEndpointCaller<String> insecureCaller = createRegistryEndpointCaller(true, -1);
     Assert.assertEquals("body", insecureCaller.call());
 
     ArgumentCaptor<URL> urlCaptor = ArgumentCaptor.forClass(URL.class);
@@ -168,7 +168,7 @@ public class RegistryEndpointCallerTest {
     Mockito.when(mockInsecureConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
         .thenThrow(Mockito.mock(SSLPeerUnverifiedException.class)); // server is not HTTPS
 
-    RegistryEndpointCaller<String> insecureEndpointCaller = createRegistryEndpointCaller(true);
+    RegistryEndpointCaller<String> insecureEndpointCaller = createRegistryEndpointCaller(true, -1);
     Assert.assertEquals("body", insecureEndpointCaller.call());
 
     ArgumentCaptor<URL> urlCaptor = ArgumentCaptor.forClass(URL.class);
@@ -188,15 +188,13 @@ public class RegistryEndpointCallerTest {
   }
 
   @Test
-  public void testCall_insecureCallerOnHttpServerByHttpHostConnectException()
+  public void testCall_insecureCallerOnHttpServerAndNoPortSpecified()
       throws IOException, RegistryException {
     Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
-        .thenThrow(Mockito.mock(SSLPeerUnverifiedException.class)) // server is not HTTPS
-        .thenReturn(mockResponse);
-    Mockito.when(mockInsecureConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
-        .thenThrow(Mockito.mock(HttpHostConnectException.class)); // server is not HTTPS
+        .thenThrow(Mockito.mock(HttpHostConnectException.class)) // server is not listening on 443
+        .thenReturn(mockResponse); // respond when connected through 80
 
-    RegistryEndpointCaller<String> insecureEndpointCaller = createRegistryEndpointCaller(true);
+    RegistryEndpointCaller<String> insecureEndpointCaller = createRegistryEndpointCaller(true, -1);
     Assert.assertEquals("body", insecureEndpointCaller.call());
 
     ArgumentCaptor<URL> urlCaptor = ArgumentCaptor.forClass(URL.class);
@@ -204,15 +202,51 @@ public class RegistryEndpointCallerTest {
     Assert.assertEquals(new URL("https://apiRouteBase/api"), urlCaptor.getAllValues().get(0));
     Assert.assertEquals(new URL("http://apiRouteBase/api"), urlCaptor.getAllValues().get(1));
 
-    Mockito.verify(mockInsecureConnectionFactory, Mockito.times(1)).apply(urlCaptor.capture());
-    Assert.assertEquals(new URL("https://apiRouteBase/api"), urlCaptor.getAllValues().get(2));
-
     Mockito.verify(mockBuildLogger)
         .warn(
             "Failed to connect to "
                 + urlCaptor.getAllValues().get(0)
                 + " over HTTPS. Attempting again with HTTP: "
                 + urlCaptor.getAllValues().get(1));
+  }
+
+  @Test
+  public void testCall_secureCallerOnNonListeningServerAndNoPortSpecified()
+      throws IOException, RegistryException {
+    Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
+        .thenThrow(Mockito.mock(HttpHostConnectException.class)); // server is not listening on 443
+
+    RegistryEndpointCaller<String> secureEndpointCaller = createRegistryEndpointCaller(false, -1);
+    try {
+      secureEndpointCaller.call();
+      Assert.fail("Should not fall back to HTTP if not allowInsecureRegistries");
+    } catch (HttpHostConnectException ex) {
+      Assert.assertNull(ex.getMessage());
+    }
+
+    ArgumentCaptor<URL> urlCaptor = ArgumentCaptor.forClass(URL.class);
+    Mockito.verify(mockConnectionFactory, Mockito.times(1)).apply(urlCaptor.capture());
+    Assert.assertEquals(new URL("https://apiRouteBase/api"), urlCaptor.getAllValues().get(0));
+  }
+
+  @Test
+  public void testCall_insecureCallerOnNonListeningServerAndPortSpecified()
+      throws IOException, RegistryException {
+    Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
+        .thenThrow(Mockito.mock(HttpHostConnectException.class)); // server is not listening on 5000
+
+    RegistryEndpointCaller<String> insecureEndpointCaller =
+        createRegistryEndpointCaller(true, 5000);
+    try {
+      insecureEndpointCaller.call();
+      Assert.fail("Should not fall back to HTTP if port was explicitly given and cannot connect");
+    } catch (HttpHostConnectException ex) {
+      Assert.assertNull(ex.getMessage());
+    }
+
+    ArgumentCaptor<URL> urlCaptor = ArgumentCaptor.forClass(URL.class);
+    Mockito.verify(mockConnectionFactory, Mockito.times(1)).apply(urlCaptor.capture());
+    Assert.assertEquals(new URL("https://apiRouteBase:5000/api"), urlCaptor.getAllValues().get(0));
   }
 
   @Test
@@ -249,7 +283,7 @@ public class RegistryEndpointCallerTest {
     Mockito.when(mockInsecureConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
         .thenThrow(Mockito.mock(SSLPeerUnverifiedException.class)); // server is not HTTPS
 
-    RegistryEndpointCaller<String> insecureEndpointCaller = createRegistryEndpointCaller(true);
+    RegistryEndpointCaller<String> insecureEndpointCaller = createRegistryEndpointCaller(true, -1);
     try {
       insecureEndpointCaller.call();
       Assert.fail("Call should have failed");
@@ -273,7 +307,7 @@ public class RegistryEndpointCallerTest {
         .thenThrow(Mockito.mock(SSLPeerUnverifiedException.class)); // server is not HTTPS
 
     System.setProperty("sendCredentialsOverHttp", "true");
-    RegistryEndpointCaller<String> insecureEndpointCaller = createRegistryEndpointCaller(true);
+    RegistryEndpointCaller<String> insecureEndpointCaller = createRegistryEndpointCaller(true, -1);
     Assert.assertEquals("body", insecureEndpointCaller.call());
   }
 
@@ -484,12 +518,12 @@ public class RegistryEndpointCallerTest {
     Assert.assertEquals(new URL("https://newlocation"), urlArgumentCaptor.getAllValues().get(1));
   }
 
-  private RegistryEndpointCaller<String> createRegistryEndpointCaller(boolean allowInsecure)
-      throws MalformedURLException {
+  private RegistryEndpointCaller<String> createRegistryEndpointCaller(
+      boolean allowInsecure, int port) throws MalformedURLException {
     return new RegistryEndpointCaller<>(
         mockBuildLogger,
         "userAgent",
-        "apiRouteBase",
+        (port == -1) ? "apiRouteBase" : ("apiRouteBase:" + port),
         new TestRegistryEndpointProvider(),
         Authorizations.withBasicToken("token"),
         new RegistryEndpointRequestProperties("serverUrl", "imageName"),
