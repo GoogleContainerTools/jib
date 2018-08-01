@@ -93,14 +93,13 @@ public class BuildImageMojoIntegrationTest {
   }
 
   private static float getBuildTimeFromVerifierLog(Verifier verifier) throws IOException {
-    Pattern pattern = Pattern.compile("Building and pushing image : (.*) ms");
+    Pattern pattern = Pattern.compile("Building and pushing image : (?<time>.*) ms");
 
     for (String line :
         Files.readAllLines(Paths.get(verifier.getBasedir(), verifier.getLogFileName()))) {
       Matcher matcher = pattern.matcher(line);
       if (matcher.find()) {
-        String time = matcher.group();
-        return Float.parseFloat(time);
+        return Float.parseFloat(matcher.group("time"));
       }
     }
 
