@@ -14,22 +14,22 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.builder;
+package com.google.cloud.tools.jib;
 
-public interface BuildLogger {
+public class EmptyBuildLogger implements BuildLogger {
 
-  void error(CharSequence message);
+  @Override
+  public void error(CharSequence message) {}
 
-  /**
-   * Logs messages as part of normal execution (default log level).
-   *
-   * @param message the message to log
-   */
-  void lifecycle(CharSequence message);
+  @Override
+  public void lifecycle(CharSequence message) {}
 
-  void warn(CharSequence message);
+  @Override
+  public void warn(CharSequence message) {}
 
-  void info(CharSequence message);
+  @Override
+  public void info(CharSequence message) {}
 
-  void debug(CharSequence message);
+  @Override
+  public void debug(CharSequence message) {}
 }

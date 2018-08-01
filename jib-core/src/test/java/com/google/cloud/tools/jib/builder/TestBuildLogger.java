@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder;
 
+import com.google.cloud.tools.jib.BuildLogger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -20,6 +20,7 @@ import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
+import com.google.cloud.tools.jib.BuildLogger;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
@@ -90,6 +91,7 @@ public class RegistryEndpointCallerTest {
     }
   }
 
+  @Mock private BuildLogger mockBuildLogger;
   @Mock private Connection mockConnection;
   @Mock private Response mockResponse;
   @Mock private Function<URL, Connection> mockConnectionFactory;
@@ -331,6 +333,12 @@ public class RegistryEndpointCallerTest {
     Mockito.verify(mockConnectionFactory, Mockito.times(2)).apply(urlArgumentCaptor.capture());
     Assert.assertEquals("https", urlArgumentCaptor.getAllValues().get(0).getProtocol());
     Assert.assertEquals("http", urlArgumentCaptor.getAllValues().get(1).getProtocol());
+    Mockito.verify(mockBuildLogger)
+        .warn(
+            "Failed to connect to "
+                + urlArgumentCaptor.getAllValues().get(0)
+                + " over HTTPS. Attempting again with HTTP: "
+                + urlArgumentCaptor.getAllValues().get(1));
   }
 
   /**
@@ -415,6 +423,7 @@ public class RegistryEndpointCallerTest {
   private RegistryEndpointCaller<String> createRegistryEndpointCaller(boolean allowInsecure)
       throws MalformedURLException {
     return new RegistryEndpointCaller<>(
+        mockBuildLogger,
         "userAgent",
         "apiRouteBase",
         new TestRegistryEndpointProvider(),
