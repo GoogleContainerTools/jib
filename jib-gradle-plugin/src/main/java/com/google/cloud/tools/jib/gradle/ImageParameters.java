@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
+import com.google.common.base.Strings;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import org.gradle.api.Action;
@@ -89,15 +90,15 @@ public class ImageParameters {
   @Internal
   @Nullable
   Authorization getImageAuthorization(JibLogger logger, String imageProperty) {
-    if (auth.getUsername() == null || auth.getPassword() == null) {
-      if (auth.getPassword() != null) {
+    if (Strings.isNullOrEmpty(auth.getUsername()) || Strings.isNullOrEmpty(auth.getPassword())) {
+      if (!Strings.isNullOrEmpty(auth.getPassword())) {
         logger.warn(
             "jib."
                 + imageProperty
                 + ".auth.username is null; ignoring jib."
                 + imageProperty
                 + ".auth section.");
-      } else if (auth.getUsername() != null) {
+      } else if (!Strings.isNullOrEmpty(auth.getUsername())) {
         logger.warn(
             "jib."
                 + imageProperty

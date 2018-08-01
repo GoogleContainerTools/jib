@@ -152,35 +152,33 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     // System property takes priority over build configuration
     String commandlineUsername = System.getProperty(usernameProperty);
     String commandlinePassword = System.getProperty(passwordProperty);
-    if (commandlineUsername != null && commandlinePassword != null) {
-      return Authorizations.withBasicCredentials(commandlineUsername, commandlinePassword);
-    } else {
-      if (commandlinePassword != null) {
+    if (Strings.isNullOrEmpty(commandlineUsername) || Strings.isNullOrEmpty(commandlinePassword)) {
+      if (!Strings.isNullOrEmpty(commandlinePassword)) {
         logger.warn(
             passwordProperty
                 + " system property is set, but "
                 + usernameProperty
                 + " is not; attempting other authentication methods.");
-      } else if (commandlineUsername != null) {
+      } else if (!Strings.isNullOrEmpty(commandlineUsername)) {
         logger.warn(
             usernameProperty
                 + " system property is set, but "
                 + passwordProperty
                 + " is not; attempting other authentication methods.");
       }
+    } else {
+      return Authorizations.withBasicCredentials(commandlineUsername, commandlinePassword);
     }
 
-    if (auth.getUsername() != null && auth.getPassword() != null) {
-      return Authorizations.withBasicCredentials(auth.getUsername(), auth.getPassword());
-    } else {
-      if (auth.getPassword() != null) {
+    if (Strings.isNullOrEmpty(auth.getUsername()) || Strings.isNullOrEmpty(auth.getPassword())) {
+      if (!Strings.isNullOrEmpty(auth.getPassword())) {
         logger.warn(
             "<"
                 + imageProperty
                 + "><auth><username> is missing from maven configuration; ignoring <"
                 + imageProperty
                 + "><auth> section.");
-      } else if (auth.getUsername() != null) {
+      } else if (!Strings.isNullOrEmpty(auth.getUsername())) {
         logger.warn(
             "<"
                 + imageProperty
@@ -190,6 +188,7 @@ abstract class JibPluginConfiguration extends AbstractMojo {
       }
       return null;
     }
+    return Authorizations.withBasicCredentials(auth.getUsername(), auth.getPassword());
   }
 
   @Nullable
