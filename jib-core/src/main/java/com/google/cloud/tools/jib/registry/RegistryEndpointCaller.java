@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.registry;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
+import com.google.api.client.repackaged.com.google.common.base.Preconditions;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Connection;
 import com.google.cloud.tools.jib.http.Request;
@@ -27,7 +28,6 @@ import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.json.ErrorEntryTemplate;
 import com.google.cloud.tools.jib.registry.json.ErrorResponseTemplate;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -131,47 +131,47 @@ class RegistryEndpointCaller<T> {
    */
   @Nullable
   T call() throws IOException, RegistryException {
+    Preconditions.checkState(isHttpsProtocol(initialRequestUrl));
     return callWithAllowInsecureRegistryHandling(initialRequestUrl);
   }
 
   @Nullable
   private T callWithAllowInsecureRegistryHandling(URL url) throws IOException, RegistryException {
-    if (allowInsecureRegistries) {
-      return possiblyInsecureCall(url);
-    }
-
     try {
-      if (!isHttpsProtocol(url)) {
-        throw new InsecureRegistryException(url);
-      }
       return call(url, connectionFactory);
+
     } catch (SSLPeerUnverifiedException ex) {
-      throw new InsecureRegistryException(url);
+      return handleUnverifiableServerException(url, ex);
     }
   }
 
   @Nullable
-  private T possiblyInsecureCall(URL url) throws IOException, RegistryException {
-    Preconditions.checkState(allowInsecureRegistries);
+  private T handleUnverifiableServerException(URL url, SSLPeerUnverifiedException exception)
+      throws IOException, RegistryException {
+    if (!allowInsecureRegistries) {
+      throw new InsecureRegistryException(url);
+    }
+
     try {
-      return call(url, connectionFactory);
+      return call(url, getInsecureConnectionFactory());
 
-    } catch (SSLPeerUnverifiedException exception) {
-      try {
-        if (insecureConnectionFactory == null) {
-          insecureConnectionFactory = Connection.getInsecureConnectionFactory();
-        }
-        return call(url, insecureConnectionFactory);
+    } catch (SSLPeerUnverifiedException | HttpHostConnectException ex) {
+      // Try HTTP as a last resort.
+      GenericUrl httpUrl = new GenericUrl(url);
+      httpUrl.setScheme("http");
+      return call(httpUrl.toURL(), connectionFactory);
+    }
+  }
 
-      } catch (GeneralSecurityException ex) {
-        throw new RegistryException("cannot turn off TLS peer verification", ex);
-
-      } catch (SSLPeerUnverifiedException | HttpHostConnectException ex) {
-        // Try HTTP as a last resort.
-        GenericUrl httpUrl = new GenericUrl(url);
-        httpUrl.setScheme("http");
-        return call(httpUrl.toURL(), connectionFactory);
+  private Function<URL, Connection> getInsecureConnectionFactory() throws RegistryException {
+    try {
+      if (insecureConnectionFactory == null) {
+        insecureConnectionFactory = Connection.getInsecureConnectionFactory();
       }
+      return insecureConnectionFactory;
+
+    } catch (GeneralSecurityException ex) {
+      throw new RegistryException("cannot turn off TLS peer verification", ex);
     }
   }
 
@@ -254,6 +254,9 @@ class RegistryEndpointCaller<T> {
             || httpResponseException.getStatusCode() == STATUS_CODE_PERMANENT_REDIRECT) {
           // 'Location' header can be relative or absolute.
           URL redirectLocation = new URL(url, httpResponseException.getHeaders().getLocation());
+          if (!isHttpsProtocol(redirectLocation) && !allowInsecureRegistries) {
+            throw new InsecureRegistryException(url);
+          }
           return callWithAllowInsecureRegistryHandling(redirectLocation);
 
         } else {
