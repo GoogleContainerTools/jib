@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.Command;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -53,6 +54,14 @@ public class BuildImageMojoIntegrationTest {
    */
   private static String buildAndRun(Path projectRoot, String imageReference, boolean runTwice)
       throws VerificationException, IOException, InterruptedException {
+    // The target registry these tests push to would already have all the layers cached from before,
+    // causing this test to fail sometimes with the second build being a bit slower than the first
+    // build. This file change makes sure that a new layer is always pushed the first time to solve
+    // this issue.
+    Files.write(
+        projectRoot.resolve("src").resolve("main").resolve("resources").resolve("world"),
+        Instant.now().toString().getBytes(StandardCharsets.UTF_8));
+
     Verifier verifier = new Verifier(projectRoot.toString());
     verifier.setAutoclean(false);
     verifier.addCliOption("-X");
