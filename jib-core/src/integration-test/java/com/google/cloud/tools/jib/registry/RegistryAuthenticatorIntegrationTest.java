@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.registry;
 
+import com.google.cloud.tools.jib.EmptyBuildLogger;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
@@ -26,6 +27,8 @@ import org.junit.Test;
 /** Integration tests for {@link RegistryAuthenticator}. */
 public class RegistryAuthenticatorIntegrationTest {
 
+  private static final EmptyBuildLogger BUILD_LOGGER = new EmptyBuildLogger();
+
   @Test
   public void testAuthenticate()
       throws RegistryAuthenticationFailedException, InvalidImageReferenceException, IOException,
@@ -33,7 +36,9 @@ public class RegistryAuthenticatorIntegrationTest {
     ImageReference dockerHubImageReference = ImageReference.parse("library/busybox");
     RegistryAuthenticator registryAuthenticator =
         RegistryAuthenticator.initializer(
-                dockerHubImageReference.getRegistry(), dockerHubImageReference.getRepository())
+                BUILD_LOGGER,
+                dockerHubImageReference.getRegistry(),
+                dockerHubImageReference.getRepository())
             .initialize();
     Assert.assertNotNull(registryAuthenticator);
     Authorization authorization = registryAuthenticator.authenticatePull();

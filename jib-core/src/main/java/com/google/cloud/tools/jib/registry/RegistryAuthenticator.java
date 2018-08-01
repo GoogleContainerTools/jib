@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.registry;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.google.cloud.tools.jib.BuildLogger;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
@@ -44,6 +45,7 @@ public class RegistryAuthenticator {
   /** Initializer for {@link RegistryAuthenticator}. */
   public static class Initializer {
 
+    private final BuildLogger buildLogger;
     private final String serverUrl;
     private final String repository;
     private boolean allowInsecureRegistries = false;
@@ -51,10 +53,12 @@ public class RegistryAuthenticator {
     /**
      * Instantiates a new initializer for {@link RegistryAuthenticator}.
      *
+     * @param buildLogger the build logger used for printing messages
      * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
      * @param repository the image/repository name (also known as, namespace)
      */
-    private Initializer(String serverUrl, String repository) {
+    private Initializer(BuildLogger buildLogger, String serverUrl, String repository) {
+      this.buildLogger = buildLogger;
       this.serverUrl = serverUrl;
       this.repository = repository;
     }
@@ -77,7 +81,7 @@ public class RegistryAuthenticator {
     public RegistryAuthenticator initialize()
         throws RegistryAuthenticationFailedException, IOException, RegistryException {
       try {
-        return RegistryClient.factory(serverUrl, repository)
+        return RegistryClient.factory(buildLogger, serverUrl, repository)
             .setAllowInsecureRegistries(allowInsecureRegistries)
             .newRegistryClient()
             .getRegistryAuthenticator();
@@ -95,12 +99,14 @@ public class RegistryAuthenticator {
   /**
    * Gets a new initializer for {@link RegistryAuthenticator}.
    *
+   * @param buildLogger the build logger used for printing messages
    * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
    * @param repository the image/repository name (also known as, namespace)
    * @return the new {@link Initializer}
    */
-  public static Initializer initializer(String serverUrl, String repository) {
-    return new Initializer(serverUrl, repository);
+  public static Initializer initializer(
+      BuildLogger buildLogger, String serverUrl, String repository) {
+    return new Initializer(buildLogger, serverUrl, repository);
   }
 
   // TODO: Replace with a WWW-Authenticate header parser.
