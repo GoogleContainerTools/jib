@@ -130,6 +130,9 @@ public class ImageToJsonTranslator {
     // Sets the exposed ports.
     template.setContainerExposedPorts(portListToMap(image.getExposedPorts()));
 
+    // Sets the labels.
+    template.setContainerLabels(image.getLabels());
+
     // Serializes into JSON.
     return JsonTemplateMapper.toBlob(template);
   }
