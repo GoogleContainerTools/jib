@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file.
 - Slow image reference parsing ([#680](https://github.com/GoogleContainerTools/jib/pull/680))
 - Building empty layers ([#516](https://github.com/GoogleContainerTools/jib/pull/516/files))
 - Duplicate layer entries causing unbounded cache growth ([#721](https://github.com/GoogleContainerTools/jib/issues/721))
+- Incorrect authentication error message when target and base registry are the same ([#758](https://github.com/GoogleContainerTools/jib/issues/758))
 
 ## 0.9.7
 
