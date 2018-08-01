@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 
 - Propagates environment variables from the base image ([#716](https://github.com/GoogleContainerTools/jib/pull/716))
 - Skips execution if packaging is `pom` ([#735](https://github.com/GoogleContainerTools/jib/pull/735))
+- `allowInsecureRegistries` allows connecting to insecure HTTPS registries (for example, registries using self-signed certificates) ([#733](https://github.com/GoogleContainerTools/jib/pull/733))
 
 ### Fixed
 
