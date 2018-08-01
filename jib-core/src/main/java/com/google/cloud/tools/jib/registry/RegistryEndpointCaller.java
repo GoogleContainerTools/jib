@@ -20,6 +20,7 @@ import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.api.client.repackaged.com.google.common.base.Preconditions;
+import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Connection;
 import com.google.cloud.tools.jib.http.Request;
@@ -57,6 +58,7 @@ class RegistryEndpointCaller<T> {
     return "https".equals(url.getProtocol());
   }
 
+  private final JibLogger logger;
   private final URL initialRequestUrl;
   private final String userAgent;
   private final RegistryEndpointProvider<T> registryEndpointProvider;
@@ -73,6 +75,7 @@ class RegistryEndpointCaller<T> {
   /**
    * Constructs with parameters for making the request.
    *
+   * @param logger the build logger used for printing messages
    * @param userAgent {@code User-Agent} header to send with the request
    * @param apiRouteBase the endpoint's API root, without the protocol
    * @param registryEndpointProvider the {@link RegistryEndpointProvider} to the endpoint
@@ -82,6 +85,7 @@ class RegistryEndpointCaller<T> {
    * @throws MalformedURLException if the URL generated for the endpoint is malformed
    */
   RegistryEndpointCaller(
+      JibLogger logger,
       String userAgent,
       String apiRouteBase,
       RegistryEndpointProvider<T> registryEndpointProvider,
@@ -90,6 +94,7 @@ class RegistryEndpointCaller<T> {
       boolean allowInsecureRegistries)
       throws MalformedURLException {
     this(
+        logger,
         userAgent,
         apiRouteBase,
         registryEndpointProvider,
@@ -102,6 +107,7 @@ class RegistryEndpointCaller<T> {
 
   @VisibleForTesting
   RegistryEndpointCaller(
+      JibLogger logger,
       String userAgent,
       String apiRouteBase,
       RegistryEndpointProvider<T> registryEndpointProvider,
@@ -111,6 +117,7 @@ class RegistryEndpointCaller<T> {
       Function<URL, Connection> connectionFactory,
       @Nullable Function<URL, Connection> insecureConnectionFactory)
       throws MalformedURLException {
+    this.logger = logger;
     this.initialRequestUrl =
         registryEndpointProvider.getApiRoute(DEFAULT_PROTOCOL + "://" + apiRouteBase);
     this.userAgent = userAgent;
@@ -159,6 +166,8 @@ class RegistryEndpointCaller<T> {
       // Try HTTP as a last resort.
       GenericUrl httpUrl = new GenericUrl(url);
       httpUrl.setScheme("http");
+      logger.warn(
+          "Failed to connect to " + url + " over HTTPS. Attempting again with HTTP: " + httpUrl);
       return call(httpUrl.toURL(), connectionFactory);
     }
   }

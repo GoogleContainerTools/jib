@@ -14,16 +14,22 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.frontend;
+package com.google.cloud.tools.jib;
 
-/** Thrown when main class inference fails. */
-public class MainClassInferenceException extends Exception {
+public class EmptyJibLogger implements JibLogger {
 
-  MainClassInferenceException(String message) {
-    super(message);
-  }
+  @Override
+  public void error(CharSequence message) {}
 
-  MainClassInferenceException(String message, Throwable cause) {
-    super(message, cause);
-  }
+  @Override
+  public void lifecycle(CharSequence message) {}
+
+  @Override
+  public void warn(CharSequence message) {}
+
+  @Override
+  public void info(CharSequence message) {}
+
+  @Override
+  public void debug(CharSequence message) {}
 }

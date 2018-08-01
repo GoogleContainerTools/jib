@@ -16,9 +16,9 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.async.AsyncStep;
-import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.registry.credentials.DockerConfigCredentialRetriever;
@@ -52,9 +52,9 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Authorization>, Calla
     return new RetrieveRegistryCredentialsStep(
         listeningExecutorService,
         buildConfiguration.getBuildLogger(),
-        buildConfiguration.getBaseImageRegistry(),
-        buildConfiguration.getBaseImageCredentialHelperName(),
-        buildConfiguration.getKnownBaseRegistryCredentials());
+        buildConfiguration.getBaseImageConfiguration().getImageRegistry(),
+        buildConfiguration.getBaseImageConfiguration().getCredentialHelper(),
+        buildConfiguration.getBaseImageConfiguration().getKnownRegistryCredentials());
   }
 
   /** Retrieves credentials for the target image. */
@@ -63,12 +63,12 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Authorization>, Calla
     return new RetrieveRegistryCredentialsStep(
         listeningExecutorService,
         buildConfiguration.getBuildLogger(),
-        buildConfiguration.getTargetImageRegistry(),
-        buildConfiguration.getTargetImageCredentialHelperName(),
-        buildConfiguration.getKnownTargetRegistryCredentials());
+        buildConfiguration.getTargetImageConfiguration().getImageRegistry(),
+        buildConfiguration.getTargetImageConfiguration().getCredentialHelper(),
+        buildConfiguration.getTargetImageConfiguration().getKnownRegistryCredentials());
   }
 
-  private final BuildLogger buildLogger;
+  private final JibLogger buildLogger;
   private final String registry;
   @Nullable private final String credentialHelperSuffix;
   @Nullable private final RegistryCredentials knownRegistryCredentials;
@@ -80,7 +80,7 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Authorization>, Calla
   @VisibleForTesting
   RetrieveRegistryCredentialsStep(
       ListeningExecutorService listeningExecutorService,
-      BuildLogger buildLogger,
+      JibLogger buildLogger,
       String registry,
       @Nullable String credentialHelperSuffix,
       @Nullable RegistryCredentials knownRegistryCredentials,
@@ -99,7 +99,7 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Authorization>, Calla
   /** Instantiate with {@link #forBaseImage} or {@link #forTargetImage}. */
   private RetrieveRegistryCredentialsStep(
       ListeningExecutorService listeningExecutorService,
-      BuildLogger buildLogger,
+      JibLogger buildLogger,
       String registry,
       @Nullable String credentialHelperSuffix,
       @Nullable RegistryCredentials knownRegistryCredentials) {
@@ -156,6 +156,9 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Authorization>, Calla
               // Warns the user that the specified (or inferred) credential helper is not on the
               // system.
               buildLogger.warn(ex.getMessage());
+              if (ex.getCause() != null && ex.getCause().getMessage() != null) {
+                buildLogger.info("  Caused by: " + ex.getCause().getMessage());
+              }
             }
           }
         }

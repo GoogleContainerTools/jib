@@ -33,10 +33,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class MavenProjectPropertiesTest {
 
   @Mock private MavenProject mockMavenProject;
-  @Mock private MavenBuildLogger mockMavenBuildLogger;
+  @Mock private MavenJibLogger mockMavenJibLogger;
   @Mock private MavenLayerConfigurations mockMavenLayerConfigurations;
   @Mock private Plugin mockJarPlugin;
-  @Mock private MavenBuildLogger mockBuildLogger;
 
   private Xpp3Dom jarPluginConfiguration;
   private Xpp3Dom archive;
@@ -51,7 +50,7 @@ public class MavenProjectPropertiesTest {
     Mockito.when(mockMavenProject.getVersion()).thenReturn("project-version");
     mavenProjectProperties =
         new MavenProjectProperties(
-            mockMavenProject, mockMavenBuildLogger, mockMavenLayerConfigurations);
+            mockMavenProject, mockMavenJibLogger, mockMavenLayerConfigurations);
     jarPluginConfiguration = new Xpp3Dom("");
     archive = new Xpp3Dom("archive");
     manifest = new Xpp3Dom("manifest");
@@ -117,19 +116,19 @@ public class MavenProjectPropertiesTest {
   @Test
   public void testGetDockerTag_configured() {
     ImageReference result =
-        mavenProjectProperties.getGeneratedTargetDockerTag("a/b:c", mockBuildLogger);
+        mavenProjectProperties.getGeneratedTargetDockerTag("a/b:c", mockMavenJibLogger);
     Assert.assertEquals("a/b", result.getRepository());
     Assert.assertEquals("c", result.getTag());
-    Mockito.verify(mockBuildLogger, Mockito.never()).lifecycle(Mockito.any());
+    Mockito.verify(mockMavenJibLogger, Mockito.never()).lifecycle(Mockito.any());
   }
 
   @Test
   public void testGetDockerTag_notConfigured() {
     ImageReference result =
-        mavenProjectProperties.getGeneratedTargetDockerTag(null, mockBuildLogger);
+        mavenProjectProperties.getGeneratedTargetDockerTag(null, mockMavenJibLogger);
     Assert.assertEquals("project-name", result.getRepository());
     Assert.assertEquals("project-version", result.getTag());
-    Mockito.verify(mockBuildLogger)
+    Mockito.verify(mockMavenJibLogger)
         .lifecycle(
             "Tagging image with generated image reference project-name:project-version. If you'd "
                 + "like to specify a different tag, you can set the <to><image> parameter in your "

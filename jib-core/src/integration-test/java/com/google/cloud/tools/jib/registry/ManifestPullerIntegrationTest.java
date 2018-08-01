@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.registry;
 
+import com.google.cloud.tools.jib.EmptyJibLogger;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
@@ -29,11 +30,12 @@ import org.junit.Test;
 public class ManifestPullerIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
+  private static final EmptyJibLogger BUILD_LOGGER = new EmptyJibLogger();
 
   @Test
   public void testPull_v21() throws IOException, RegistryException {
     RegistryClient registryClient =
-        RegistryClient.factory("localhost:5000", "busybox")
+        RegistryClient.factory(BUILD_LOGGER, "localhost:5000", "busybox")
             .setAllowInsecureRegistries(true)
             .newRegistryClient();
     V21ManifestTemplate manifestTemplate =
@@ -46,7 +48,7 @@ public class ManifestPullerIntegrationTest {
   @Test
   public void testPull_v22() throws IOException, RegistryException {
     RegistryClient registryClient =
-        RegistryClient.factory("gcr.io", "distroless/java").newRegistryClient();
+        RegistryClient.factory(BUILD_LOGGER, "gcr.io", "distroless/java").newRegistryClient();
     ManifestTemplate manifestTemplate = registryClient.pullManifest("latest");
 
     Assert.assertEquals(2, manifestTemplate.getSchemaVersion());
@@ -58,7 +60,7 @@ public class ManifestPullerIntegrationTest {
   public void testPull_unknownManifest() throws RegistryException, IOException {
     try {
       RegistryClient registryClient =
-          RegistryClient.factory("localhost:5000", "busybox")
+          RegistryClient.factory(BUILD_LOGGER, "localhost:5000", "busybox")
               .setAllowInsecureRegistries(true)
               .newRegistryClient();
       registryClient.pullManifest("nonexistent-tag");

@@ -103,7 +103,10 @@ class PullBaseImageStep
           RegistryAuthenticationFailedException {
     buildConfiguration
         .getBuildLogger()
-        .lifecycle("Getting base image " + buildConfiguration.getBaseImageReference() + "...");
+        .lifecycle(
+            "Getting base image "
+                + buildConfiguration.getBaseImageConfiguration().getImage()
+                + "...");
 
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       // First, try with no credentials.
@@ -115,7 +118,7 @@ class PullBaseImageStep
             .getBuildLogger()
             .lifecycle(
                 "The base image requires auth. Trying again for "
-                    + buildConfiguration.getBaseImageReference()
+                    + buildConfiguration.getBaseImageConfiguration().getImage()
                     + "...");
 
         // If failed, then, retrieve base registry credentials and try with retrieved credentials.
@@ -137,8 +140,9 @@ class PullBaseImageStep
           // See https://docs.docker.com/registry/spec/auth/token
           RegistryAuthenticator registryAuthenticator =
               RegistryAuthenticator.initializer(
-                      buildConfiguration.getBaseImageRegistry(),
-                      buildConfiguration.getBaseImageRepository())
+                      buildConfiguration.getBuildLogger(),
+                      buildConfiguration.getBaseImageConfiguration().getImageRegistry(),
+                      buildConfiguration.getBaseImageConfiguration().getImageRepository())
                   .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
                   .initialize();
           if (registryAuthenticator == null) {
@@ -176,14 +180,15 @@ class PullBaseImageStep
           LayerCountMismatchException, BadContainerConfigurationFormatException {
     RegistryClient registryClient =
         RegistryClient.factory(
-                buildConfiguration.getBaseImageRegistry(),
-                buildConfiguration.getBaseImageRepository())
+                buildConfiguration.getBuildLogger(),
+                buildConfiguration.getBaseImageConfiguration().getImageRegistry(),
+                buildConfiguration.getBaseImageConfiguration().getImageRepository())
             .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
             .setAuthorization(registryCredentials)
             .newRegistryClient();
 
     ManifestTemplate manifestTemplate =
-        registryClient.pullManifest(buildConfiguration.getBaseImageTag());
+        registryClient.pullManifest(buildConfiguration.getBaseImageConfiguration().getImageTag());
 
     // TODO: Make schema version be enum.
     switch (manifestTemplate.getSchemaVersion()) {

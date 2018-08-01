@@ -20,6 +20,7 @@ import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
+import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
@@ -101,6 +102,7 @@ public class RegistryEndpointCallerTest {
     return mockHttpResponse(code307, new HttpHeaders().setLocation(redirectLocation));
   }
 
+  @Mock private JibLogger mockBuildLogger;
   @Mock private Connection mockConnection;
   @Mock private Connection mockInsecureConnection;
   @Mock private Response mockResponse;
@@ -176,6 +178,13 @@ public class RegistryEndpointCallerTest {
 
     Mockito.verify(mockInsecureConnectionFactory, Mockito.times(1)).apply(urlCaptor.capture());
     Assert.assertEquals(new URL("https://apiRouteBase/api"), urlCaptor.getAllValues().get(2));
+
+    Mockito.verify(mockBuildLogger)
+        .warn(
+            "Failed to connect to "
+                + urlCaptor.getAllValues().get(0)
+                + " over HTTPS. Attempting again with HTTP: "
+                + urlCaptor.getAllValues().get(1));
   }
 
   @Test
@@ -197,6 +206,13 @@ public class RegistryEndpointCallerTest {
 
     Mockito.verify(mockInsecureConnectionFactory, Mockito.times(1)).apply(urlCaptor.capture());
     Assert.assertEquals(new URL("https://apiRouteBase/api"), urlCaptor.getAllValues().get(2));
+
+    Mockito.verify(mockBuildLogger)
+        .warn(
+            "Failed to connect to "
+                + urlCaptor.getAllValues().get(0)
+                + " over HTTPS. Attempting again with HTTP: "
+                + urlCaptor.getAllValues().get(1));
   }
 
   @Test
@@ -471,6 +487,7 @@ public class RegistryEndpointCallerTest {
   private RegistryEndpointCaller<String> createRegistryEndpointCaller(boolean allowInsecure)
       throws MalformedURLException {
     return new RegistryEndpointCaller<>(
+        mockBuildLogger,
         "userAgent",
         "apiRouteBase",
         new TestRegistryEndpointProvider(),

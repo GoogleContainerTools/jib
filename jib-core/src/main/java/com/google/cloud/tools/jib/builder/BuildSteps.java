@@ -74,10 +74,10 @@ public class BuildSteps {
         cachesInitializer,
         String.format(
             STARTUP_MESSAGE_FORMAT_FOR_DOCKER_REGISTRY,
-            buildConfiguration.getTargetImageReference()),
+            buildConfiguration.getTargetImageConfiguration().getImage()),
         String.format(
             SUCCESS_MESSAGE_FORMAT_FOR_DOCKER_REGISTRY,
-            buildConfiguration.getTargetImageReference()),
+            buildConfiguration.getTargetImageConfiguration().getImage()),
         stepsRunner ->
             stepsRunner
                 .runRetrieveTargetRegistryCredentialsStep()
@@ -108,9 +108,11 @@ public class BuildSteps {
         buildConfiguration,
         cachesInitializer,
         String.format(
-            STARTUP_MESSAGE_FORMAT_FOR_DOCKER_DAEMON, buildConfiguration.getTargetImageReference()),
+            STARTUP_MESSAGE_FORMAT_FOR_DOCKER_DAEMON,
+            buildConfiguration.getTargetImageConfiguration().getImage()),
         String.format(
-            SUCCESS_MESSAGE_FORMAT_FOR_DOCKER_DAEMON, buildConfiguration.getTargetImageReference()),
+            SUCCESS_MESSAGE_FORMAT_FOR_DOCKER_DAEMON,
+            buildConfiguration.getTargetImageConfiguration().getImage()),
         stepsRunner ->
             stepsRunner
                 .runPullBaseImageStep()

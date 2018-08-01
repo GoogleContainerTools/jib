@@ -71,8 +71,9 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer>, Callable
         new Timer(buildConfiguration.getBuildLogger(), String.format(DESCRIPTION, layerDigest))) {
       RegistryClient registryClient =
           RegistryClient.factory(
-                  buildConfiguration.getBaseImageRegistry(),
-                  buildConfiguration.getBaseImageRepository())
+                  buildConfiguration.getBuildLogger(),
+                  buildConfiguration.getBaseImageConfiguration().getImageRegistry(),
+                  buildConfiguration.getBaseImageConfiguration().getImageRepository())
               .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
               .setAuthorization(pullAuthorization)
               .newRegistryClient();

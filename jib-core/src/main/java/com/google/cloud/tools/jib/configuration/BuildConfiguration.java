@@ -16,17 +16,13 @@
 
 package com.google.cloud.tools.jib.configuration;
 
-import com.google.cloud.tools.jib.builder.BuildLogger;
-import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
-import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
-import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
-import javax.lang.model.SourceVersion;
 
 /** Immutable configuration options for the builder process. */
 public class BuildConfiguration {
@@ -43,9 +39,9 @@ public class BuildConfiguration {
     private ImmutableList<LayerConfiguration> layerConfigurations = ImmutableList.of();
     private Class<? extends BuildableManifestTemplate> targetFormat = V22ManifestTemplate.class;
 
-    private BuildLogger buildLogger;
+    private JibLogger buildLogger;
 
-    private Builder(BuildLogger buildLogger) {
+    private Builder(JibLogger buildLogger) {
       this.buildLogger = buildLogger;
     }
 
@@ -190,30 +186,13 @@ public class BuildConfiguration {
     }
   }
 
-  /**
-   * @param className the class name to check
-   * @return {@code true} if {@code className} is a valid Java class name; {@code false} otherwise
-   */
-  public static boolean isValidJavaClass(String className) {
-    for (String part : Splitter.on('.').split(className)) {
-      if (!SourceVersion.isIdentifier(part)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  public static Builder builder(BuildLogger buildLogger) {
+  public static Builder builder(JibLogger buildLogger) {
     return new Builder(buildLogger);
   }
 
-  private final BuildLogger buildLogger;
-  private final ImageReference baseImageReference;
-  @Nullable private final String baseImageCredentialHelperName;
-  @Nullable private final RegistryCredentials knownBaseRegistryCredentials;
-  private final ImageReference targetImageReference;
-  @Nullable private final String targetImageCredentialHelperName;
-  @Nullable private final RegistryCredentials knownTargetRegistryCredentials;
+  private final JibLogger buildLogger;
+  private final ImageConfiguration baseImageConfiguration;
+  private final ImageConfiguration targetImageConfiguration;
   @Nullable private final ContainerConfiguration containerConfiguration;
   @Nullable private final CacheConfiguration applicationLayersCacheConfiguration;
   @Nullable private final CacheConfiguration baseImageLayersCacheConfiguration;
@@ -223,7 +202,7 @@ public class BuildConfiguration {
 
   /** Instantiate with {@link Builder#build}. */
   private BuildConfiguration(
-      BuildLogger buildLogger,
+      JibLogger buildLogger,
       ImageConfiguration baseImageConfiguration,
       ImageConfiguration targetImageConfiguration,
       @Nullable ContainerConfiguration containerConfiguration,
@@ -233,12 +212,8 @@ public class BuildConfiguration {
       boolean allowInsecureRegistries,
       ImmutableList<LayerConfiguration> layerConfigurations) {
     this.buildLogger = buildLogger;
-    this.baseImageReference = baseImageConfiguration.getImage();
-    this.baseImageCredentialHelperName = baseImageConfiguration.getCredentialHelper();
-    this.knownBaseRegistryCredentials = baseImageConfiguration.getKnownRegistryCredentials();
-    this.targetImageReference = targetImageConfiguration.getImage();
-    this.targetImageCredentialHelperName = targetImageConfiguration.getCredentialHelper();
-    this.knownTargetRegistryCredentials = targetImageConfiguration.getKnownRegistryCredentials();
+    this.baseImageConfiguration = baseImageConfiguration;
+    this.targetImageConfiguration = targetImageConfiguration;
     this.containerConfiguration = containerConfiguration;
     this.applicationLayersCacheConfiguration = applicationLayersCacheConfiguration;
     this.baseImageLayersCacheConfiguration = baseImageLayersCacheConfiguration;
@@ -247,60 +222,16 @@ public class BuildConfiguration {
     this.layerConfigurations = layerConfigurations;
   }
 
-  public BuildLogger getBuildLogger() {
+  public JibLogger getBuildLogger() {
     return buildLogger;
   }
 
-  public ImageReference getBaseImageReference() {
-    return baseImageReference;
+  public ImageConfiguration getBaseImageConfiguration() {
+    return baseImageConfiguration;
   }
 
-  public String getBaseImageRegistry() {
-    return baseImageReference.getRegistry();
-  }
-
-  public String getBaseImageRepository() {
-    return baseImageReference.getRepository();
-  }
-
-  public String getBaseImageTag() {
-    return baseImageReference.getTag();
-  }
-
-  @Nullable
-  public String getBaseImageCredentialHelperName() {
-    return baseImageCredentialHelperName;
-  }
-
-  @Nullable
-  public RegistryCredentials getKnownBaseRegistryCredentials() {
-    return knownBaseRegistryCredentials;
-  }
-
-  public ImageReference getTargetImageReference() {
-    return targetImageReference;
-  }
-
-  public String getTargetImageRegistry() {
-    return targetImageReference.getRegistry();
-  }
-
-  public String getTargetImageRepository() {
-    return targetImageReference.getRepository();
-  }
-
-  public String getTargetImageTag() {
-    return targetImageReference.getTag();
-  }
-
-  @Nullable
-  public String getTargetImageCredentialHelperName() {
-    return targetImageCredentialHelperName;
-  }
-
-  @Nullable
-  public RegistryCredentials getKnownTargetRegistryCredentials() {
-    return knownTargetRegistryCredentials;
+  public ImageConfiguration getTargetImageConfiguration() {
+    return targetImageConfiguration;
   }
 
   @Nullable

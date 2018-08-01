@@ -57,22 +57,22 @@ class MavenSettingsServerCredentials {
 
   private final Settings settings;
   @Nullable private final SettingsDecrypter settingsDecrypter;
-  private final MavenBuildLogger mavenBuildLogger;
+  private final MavenJibLogger mavenJibLogger;
 
   /**
    * Create new instance.
    *
    * @param settings the Maven settings object
    * @param settingsDecrypter the Maven decrypter component
-   * @param mavenBuildLogger the Maven build log
+   * @param mavenJibLogger the Maven build log
    */
   MavenSettingsServerCredentials(
       Settings settings,
       @Nullable SettingsDecrypter settingsDecrypter,
-      MavenBuildLogger mavenBuildLogger) {
+      MavenJibLogger mavenJibLogger) {
     this.settings = settings;
     this.settingsDecrypter = settingsDecrypter;
-    this.mavenBuildLogger = mavenBuildLogger;
+    this.mavenJibLogger = mavenJibLogger;
   }
 
   /**
@@ -113,7 +113,7 @@ class MavenSettingsServerCredentials {
         registryServer = result.getServer();
       }
     } else if (isEncrypted(registryServer.getPassword())) {
-      mavenBuildLogger.warn(
+      mavenJibLogger.warn(
           "Server password for registry "
               + registry
               + " appears to be encrypted, but there is no decrypter available");
