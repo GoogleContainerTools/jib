@@ -82,11 +82,7 @@ public class Image<T extends Layer> {
      * @return this
      */
     public Builder<T> setEntrypoint(@Nullable List<String> entrypoint) {
-      if (entrypoint == null) {
-        this.entrypoint = null;
-      } else {
-        this.entrypoint = ImmutableList.copyOf(entrypoint);
-      }
+      this.entrypoint = (entrypoint == null) ? null : ImmutableList.copyOf(entrypoint);
       return this;
     }
 
@@ -97,11 +93,7 @@ public class Image<T extends Layer> {
      * @return this
      */
     public Builder<T> setJavaArguments(@Nullable List<String> javaArguments) {
-      if (javaArguments == null) {
-        this.javaArguments = null;
-      } else {
-        this.javaArguments = ImmutableList.copyOf(javaArguments);
-      }
+      this.javaArguments = (javaArguments == null) ? null : ImmutableList.copyOf(javaArguments);
       return this;
     }
 
@@ -112,11 +104,7 @@ public class Image<T extends Layer> {
      * @return this
      */
     public Builder<T> setExposedPorts(@Nullable List<Port> exposedPorts) {
-      if (exposedPorts == null) {
-        this.exposedPorts = null;
-      } else {
-        this.exposedPorts = ImmutableList.copyOf(exposedPorts);
-      }
+      this.exposedPorts = (exposedPorts == null) ? null : ImmutableList.copyOf(exposedPorts);
       return this;
     }
 
