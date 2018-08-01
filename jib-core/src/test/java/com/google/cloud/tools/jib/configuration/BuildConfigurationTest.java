@@ -254,11 +254,10 @@ public class BuildConfigurationTest {
     }
 
     // Labels element should not be null.
+    Map<String, String> badLabels = new HashMap<>();
+    badLabels.put("label-key", null);
     try {
-      Map<String, String> badLabels = new HashMap<>();
-      badLabels.put("label-key", null);
-      BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
-          .setContainerConfiguration(ContainerConfiguration.builder().setLabels(badLabels).build());
+      ContainerConfiguration.builder().setLabels(badLabels);
       Assert.fail("The IllegalArgumentException should be thrown.");
     } catch (IllegalArgumentException ex) {
       Assert.assertNull(ex.getMessage());
