@@ -127,8 +127,7 @@ public class BuildImageMojoIntegrationTest {
         "Hello, world. An argument.\nfoo\ncat\n",
         buildAndRun(
             simpleTestProject.getProjectRoot(),
-            "gcr.io/jib-integration-testing/simpleimage:maven",
-            true));
+            "gcr.io/jib-integration-testing/simpleimage:maven"));
 
     Instant buildTime =
         Instant.parse(
