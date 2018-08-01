@@ -16,10 +16,10 @@
 
 package com.google.cloud.tools.jib.registry;
 
+import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
-import com.google.cloud.tools.jib.builder.BuildLogger;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
@@ -40,7 +40,7 @@ public class RegistryClient {
   // TODO: Remove
   private Timer parentTimer =
       new Timer(
-          new BuildLogger() {
+          new JibLogger() {
             @Override
             public void debug(CharSequence message) {}
 
@@ -66,12 +66,16 @@ public class RegistryClient {
   /** Factory for creating {@link RegistryClient}s. */
   public static class Factory {
 
+    private final JibLogger buildLogger;
     private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
 
     private boolean allowInsecureRegistries = false;
     @Nullable private Authorization authorization;
 
-    private Factory(RegistryEndpointRequestProperties registryEndpointRequestProperties) {
+    private Factory(
+        JibLogger buildLogger,
+        RegistryEndpointRequestProperties registryEndpointRequestProperties) {
+      this.buildLogger = buildLogger;
       this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     }
 
@@ -105,6 +109,7 @@ public class RegistryClient {
      */
     public RegistryClient newRegistryClient() {
       return new RegistryClient(
+          buildLogger,
           authorization,
           registryEndpointRequestProperties,
           allowInsecureRegistries,
@@ -115,12 +120,15 @@ public class RegistryClient {
   @Nullable private static String userAgentSuffix;
 
   /**
+   * Creates a new {@link Factory} for building a {@link RegistryClient}.
+   *
+   * @param buildLogger the build logger used for printing messages
    * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
    * @param imageName the image/repository name (also known as, namespace)
    * @return the new {@link Factory}
    */
-  public static Factory factory(String serverUrl, String imageName) {
-    return new Factory(new RegistryEndpointRequestProperties(serverUrl, imageName));
+  public static Factory factory(JibLogger buildLogger, String serverUrl, String imageName) {
+    return new Factory(buildLogger, new RegistryEndpointRequestProperties(serverUrl, imageName));
   }
 
   // TODO: Inject via a RegistryClient.Factory.
@@ -159,6 +167,7 @@ public class RegistryClient {
     return userAgentBuilder.toString();
   }
 
+  private final JibLogger buildLogger;
   @Nullable private final Authorization authorization;
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   private final boolean allowInsecureRegistries;
@@ -167,15 +176,18 @@ public class RegistryClient {
   /**
    * Instantiate with {@link #factory}.
    *
+   * @param buildLogger the build logger used for printing messages
    * @param authorization the {@link Authorization} to access the registry/repository
    * @param registryEndpointRequestProperties properties of registry endpoint requests
    * @param allowInsecureRegistries if {@code true}, insecure connections will be allowed
    */
   private RegistryClient(
+      JibLogger buildLogger,
       @Nullable Authorization authorization,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
       boolean allowInsecureRegistries,
       String userAgent) {
+    this.buildLogger = buildLogger;
     this.authorization = authorization;
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     this.allowInsecureRegistries = allowInsecureRegistries;
@@ -267,25 +279,29 @@ public class RegistryClient {
     return callRegistryEndpoint(blobPuller);
   }
 
-  // TODO: Add mount with 'from' parameter
   /**
-   * Pushes the BLOB, or skips if the BLOB already exists on the registry.
+   * Pushes the BLOB. If the {@code sourceRepository} is provided then the remote registry may skip
+   * if the BLOB already exists on the registry.
    *
    * @param blobDigest the digest of the BLOB, used for existence-check
    * @param blob the BLOB to push
+   * @param sourceRepository if pushing to the same registry then the source image, or {@code null}
+   *     otherwise; used to optimize the BLOB push
    * @return {@code true} if the BLOB already exists on the registry and pushing was skipped; false
    *     if the BLOB was pushed
    * @throws IOException if communicating with the endpoint fails
    * @throws RegistryException if communicating with the endpoint fails
    */
-  public boolean pushBlob(DescriptorDigest blobDigest, Blob blob)
+  public boolean pushBlob(DescriptorDigest blobDigest, Blob blob, @Nullable String sourceRepository)
       throws IOException, RegistryException {
-    BlobPusher blobPusher = new BlobPusher(registryEndpointRequestProperties, blobDigest, blob);
+    BlobPusher blobPusher =
+        new BlobPusher(registryEndpointRequestProperties, blobDigest, blob, sourceRepository);
 
     try (Timer t = parentTimer.subTimer("pushBlob")) {
       try (Timer t2 = t.subTimer("pushBlob POST " + blobDigest)) {
 
-        // POST /v2/<name>/blobs/uploads/?mount={blob.digest}
+        // POST /v2/<name>/blobs/uploads/ OR
+        // POST /v2/<name>/blobs/uploads/?mount={blob.digest}&from={sourceRepository}
         URL patchLocation = callRegistryEndpoint(blobPusher.initializer());
         if (patchLocation == null) {
           // The BLOB exists already.
@@ -330,6 +346,7 @@ public class RegistryClient {
   private <T> T callRegistryEndpoint(RegistryEndpointProvider<T> registryEndpointProvider)
       throws IOException, RegistryException {
     return new RegistryEndpointCaller<>(
+            buildLogger,
             userAgent,
             getApiRouteBase(),
             registryEndpointProvider,

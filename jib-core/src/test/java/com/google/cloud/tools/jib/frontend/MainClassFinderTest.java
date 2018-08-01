@@ -16,10 +16,9 @@
 
 package com.google.cloud.tools.jib.frontend;
 
-import com.google.cloud.tools.jib.builder.BuildLogger;
+import com.google.cloud.tools.jib.JibLogger;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
-import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -34,10 +33,10 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class MainClassFinderTest {
 
-  @Mock private BuildLogger mockBuildLogger;
+  @Mock private JibLogger mockBuildLogger;
 
   @Test
-  public void testFindMainClass_simple() throws URISyntaxException, IOException {
+  public void testFindMainClass_simple() throws URISyntaxException {
     Path rootDirectory = Paths.get(Resources.getResource("class-finder-tests/simple").toURI());
     MainClassFinder.Result mainClassFinderResult =
         new MainClassFinder(ImmutableList.of(rootDirectory.resolve("child")), mockBuildLogger)
@@ -48,7 +47,7 @@ public class MainClassFinderTest {
   }
 
   @Test
-  public void testFindMainClass_subdirectories() throws URISyntaxException, IOException {
+  public void testFindMainClass_subdirectories() throws URISyntaxException {
     Path rootDirectory =
         Paths.get(Resources.getResource("class-finder-tests/subdirectories").toURI());
     MainClassFinder.Result mainClassFinderResult =
@@ -61,7 +60,7 @@ public class MainClassFinderTest {
   }
 
   @Test
-  public void testFindMainClass_noClass() throws URISyntaxException, IOException {
+  public void testFindMainClass_noClass() throws URISyntaxException {
     Path rootDirectory = Paths.get(Resources.getResource("class-finder-tests/no-main").toURI());
     MainClassFinder.Result mainClassFinderResult =
         new MainClassFinder(ImmutableList.of(rootDirectory.resolve("child")), mockBuildLogger)
@@ -73,7 +72,7 @@ public class MainClassFinderTest {
   }
 
   @Test
-  public void testFindMainClass_multiple() throws URISyntaxException, IOException {
+  public void testFindMainClass_multiple() throws URISyntaxException {
     Path rootDirectory = Paths.get(Resources.getResource("class-finder-tests/multiple").toURI());
     MainClassFinder.Result mainClassFinderResult =
         new MainClassFinder(ImmutableList.of(rootDirectory.resolve("child")), mockBuildLogger)
@@ -89,7 +88,7 @@ public class MainClassFinderTest {
   }
 
   @Test
-  public void testFindMainClass_extension() throws URISyntaxException, IOException {
+  public void testFindMainClass_extension() throws URISyntaxException {
     Path rootDirectory = Paths.get(Resources.getResource("class-finder-tests/extension").toURI());
     MainClassFinder.Result mainClassFinderResult =
         new MainClassFinder(ImmutableList.of(rootDirectory.resolve("child")), mockBuildLogger)
@@ -100,7 +99,7 @@ public class MainClassFinderTest {
   }
 
   @Test
-  public void testFindMainClass_importedMethods() throws URISyntaxException, IOException {
+  public void testFindMainClass_importedMethods() throws URISyntaxException {
     Path rootDirectory =
         Paths.get(Resources.getResource("class-finder-tests/imported-methods").toURI());
     MainClassFinder.Result mainClassFinderResult =
@@ -112,7 +111,7 @@ public class MainClassFinderTest {
   }
 
   @Test
-  public void testFindMainClass_externalClasses() throws URISyntaxException, IOException {
+  public void testFindMainClass_externalClasses() throws URISyntaxException {
     Path rootDirectory =
         Paths.get(Resources.getResource("class-finder-tests/external-classes").toURI());
     MainClassFinder.Result mainClassFinderResult =
@@ -124,7 +123,7 @@ public class MainClassFinderTest {
   }
 
   @Test
-  public void testFindMainClass_innerClasses() throws URISyntaxException, IOException {
+  public void testFindMainClass_innerClasses() throws URISyntaxException {
     Path rootDirectory =
         Paths.get(Resources.getResource("class-finder-tests/inner-classes").toURI());
     MainClassFinder.Result mainClassFinderResult =

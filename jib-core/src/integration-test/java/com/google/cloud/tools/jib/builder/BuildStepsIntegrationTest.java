@@ -64,7 +64,7 @@ public class BuildStepsIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
 
-  private static final TestBuildLogger logger = new TestBuildLogger();
+  private static final TestJibLogger logger = new TestJibLogger();
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 

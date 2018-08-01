@@ -52,14 +52,14 @@ public class DockerContextMojo extends JibPluginConfiguration {
       return;
     }
 
-    MavenBuildLogger mavenBuildLogger = new MavenBuildLogger(getLog());
-    handleDeprecatedParameters(mavenBuildLogger);
+    MavenJibLogger mavenJibLogger = new MavenJibLogger(getLog());
+    handleDeprecatedParameters(mavenJibLogger);
     SystemPropertyValidator.checkHttpTimeoutProperty(MojoExecutionException::new);
 
     Preconditions.checkNotNull(targetDir);
 
     MavenProjectProperties mavenProjectProperties =
-        MavenProjectProperties.getForProject(getProject(), mavenBuildLogger, getExtraDirectory());
+        MavenProjectProperties.getForProject(getProject(), mavenJibLogger, getExtraDirectory());
     String mainClass = mavenProjectProperties.getMainClass(this);
 
     try {
@@ -80,7 +80,7 @@ public class DockerContextMojo extends JibPluginConfiguration {
           .setExposedPorts(getExposedPorts())
           .generate(Paths.get(targetDir));
 
-      mavenBuildLogger.lifecycle("Created Docker context at " + targetDir);
+      mavenJibLogger.lifecycle("Created Docker context at " + targetDir);
 
     } catch (InsecureRecursiveDeleteException ex) {
       throw new MojoExecutionException(

@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.builder.BuildLogger;
+import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.image.ImageReference;
@@ -197,7 +197,7 @@ abstract class JibPluginConfiguration extends AbstractMojo {
    *
    * @param logger The logger used to print the warnings
    */
-  void handleDeprecatedParameters(BuildLogger logger) {
+  void handleDeprecatedParameters(JibLogger logger) {
     StringBuilder deprecatedParams = new StringBuilder();
     if (!jvmFlags.isEmpty()) {
       deprecatedParams.append("  <jvmFlags> -> <container><jvmFlags>\n");

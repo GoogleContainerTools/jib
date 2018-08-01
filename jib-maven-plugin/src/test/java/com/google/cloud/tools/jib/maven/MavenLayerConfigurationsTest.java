@@ -26,7 +26,6 @@ import java.nio.file.Paths;
 import java.util.Set;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.model.Build;
-import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.junit.Assert;
 import org.junit.Before;
@@ -49,7 +48,7 @@ public class MavenLayerConfigurationsTest {
   private MavenLayerConfigurations testMavenLayerConfigurations;
 
   @Before
-  public void setUp() throws IOException, URISyntaxException, MojoExecutionException {
+  public void setUp() throws IOException, URISyntaxException {
     Path sourcePath = Paths.get(Resources.getResource("application/source").toURI());
     Path outputPath = Paths.get(Resources.getResource("application/output").toURI());
 
@@ -109,7 +108,7 @@ public class MavenLayerConfigurationsTest {
   }
 
   @Test
-  public void test_extraFiles() throws URISyntaxException, IOException, MojoExecutionException {
+  public void test_extraFiles() throws URISyntaxException, IOException {
     Path extraFilesDirectory = Paths.get(Resources.getResource("layer").toURI());
 
     testMavenLayerConfigurations =

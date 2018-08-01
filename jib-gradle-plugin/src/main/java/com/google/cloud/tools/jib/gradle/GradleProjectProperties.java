@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.builder.BuildLogger;
+import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
 import com.google.cloud.tools.jib.frontend.MainClassInferenceException;
@@ -51,12 +51,12 @@ class GradleProjectProperties implements ProjectProperties {
 
   /** @return a GradleProjectProperties from the given project and logger. */
   static GradleProjectProperties getForProject(
-      Project project, GradleBuildLogger gradleBuildLogger, Path extraDirectory) {
+      Project project, GradleJibLogger gradleJibLogger, Path extraDirectory) {
     try {
       return new GradleProjectProperties(
           project,
-          gradleBuildLogger,
-          GradleLayerConfigurations.getForProject(project, gradleBuildLogger, extraDirectory));
+          gradleJibLogger,
+          GradleLayerConfigurations.getForProject(project, gradleJibLogger, extraDirectory));
 
     } catch (IOException ex) {
       throw new GradleException("Obtaining project build output files failed", ex);
@@ -64,16 +64,16 @@ class GradleProjectProperties implements ProjectProperties {
   }
 
   private final Project project;
-  private final GradleBuildLogger gradleBuildLogger;
+  private final GradleJibLogger gradleJibLogger;
   private final GradleLayerConfigurations gradleLayerConfigurations;
 
   @VisibleForTesting
   GradleProjectProperties(
       Project project,
-      GradleBuildLogger gradleBuildLogger,
+      GradleJibLogger gradleJibLogger,
       GradleLayerConfigurations gradleLayerConfigurations) {
     this.project = project;
-    this.gradleBuildLogger = gradleBuildLogger;
+    this.gradleJibLogger = gradleJibLogger;
     this.gradleLayerConfigurations = gradleLayerConfigurations;
   }
 
@@ -113,8 +113,8 @@ class GradleProjectProperties implements ProjectProperties {
   }
 
   @Override
-  public BuildLogger getLogger() {
-    return gradleBuildLogger;
+  public JibLogger getLogger() {
+    return gradleJibLogger;
   }
 
   @Override
@@ -160,18 +160,18 @@ class GradleProjectProperties implements ProjectProperties {
    * {@code project-name:project-version} if target image is not configured
    *
    * @param jibExtension the plugin configuration parameters to generate the name from
-   * @param gradleBuildLogger the logger used to notify users of the target image parameter
+   * @param gradleJibLogger the logger used to notify users of the target image parameter
    * @return an {@link ImageReference} parsed from the configured target image, or one of the form
    *     {@code project-name:project-version} if target image is not configured
    */
   ImageReference getGeneratedTargetDockerTag(
-      JibExtension jibExtension, GradleBuildLogger gradleBuildLogger)
+      JibExtension jibExtension, GradleJibLogger gradleJibLogger)
       throws InvalidImageReferenceException {
     Preconditions.checkNotNull(jibExtension);
     if (Strings.isNullOrEmpty(jibExtension.getTargetImage())) {
       // TODO: Validate that project name and version are valid repository/tag
       // TODO: Use HelpfulSuggestions
-      gradleBuildLogger.lifecycle(
+      gradleJibLogger.lifecycle(
           "Tagging image with generated image reference "
               + project.getName()
               + ":"

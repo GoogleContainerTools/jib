@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.builder.BuildLogger;
+import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
 import com.google.cloud.tools.jib.frontend.MainClassInferenceException;
@@ -44,19 +44,17 @@ class MavenProjectProperties implements ProjectProperties {
 
   /**
    * @param project the {@link MavenProject} for the plugin.
-   * @param mavenBuildLogger the logger used for printing status messages.
+   * @param mavenJibLogger the logger used for printing status messages.
    * @param extraDirectory path to the directory for the extra files layer
    * @return a MavenProjectProperties from the given project and logger.
    * @throws MojoExecutionException if no class files are found in the output directory.
    */
   static MavenProjectProperties getForProject(
-      MavenProject project, MavenBuildLogger mavenBuildLogger, Path extraDirectory)
+      MavenProject project, MavenJibLogger mavenJibLogger, Path extraDirectory)
       throws MojoExecutionException {
     try {
       return new MavenProjectProperties(
-          project,
-          mavenBuildLogger,
-          MavenLayerConfigurations.getForProject(project, extraDirectory));
+          project, mavenJibLogger, MavenLayerConfigurations.getForProject(project, extraDirectory));
     } catch (IOException ex) {
       throw new MojoExecutionException(
           "Obtaining project build output files failed; make sure you have compiled your project "
@@ -67,16 +65,16 @@ class MavenProjectProperties implements ProjectProperties {
   }
 
   private final MavenProject project;
-  private final MavenBuildLogger mavenBuildLogger;
+  private final MavenJibLogger mavenJibLogger;
   private final MavenLayerConfigurations mavenLayerConfigurations;
 
   @VisibleForTesting
   MavenProjectProperties(
       MavenProject project,
-      MavenBuildLogger mavenBuildLogger,
+      MavenJibLogger mavenJibLogger,
       MavenLayerConfigurations mavenLayerConfigurations) {
     this.project = project;
-    this.mavenBuildLogger = mavenBuildLogger;
+    this.mavenJibLogger = mavenJibLogger;
     this.mavenLayerConfigurations = mavenLayerConfigurations;
   }
 
@@ -116,8 +114,8 @@ class MavenProjectProperties implements ProjectProperties {
   }
 
   @Override
-  public BuildLogger getLogger() {
-    return mavenBuildLogger;
+  public JibLogger getLogger() {
+    return mavenJibLogger;
   }
 
   @Override
@@ -181,16 +179,16 @@ class MavenProjectProperties implements ProjectProperties {
    * {@code project-name:project-version} if target image is not configured
    *
    * @param targetImage the configured target image reference (can be empty)
-   * @param mavenBuildLogger the logger used to notify users of the target image parameter
+   * @param mavenJibLogger the logger used to notify users of the target image parameter
    * @return an {@link ImageReference} parsed from the configured target image, or one of the form
    *     {@code project-name:project-version} if target image is not configured
    */
   ImageReference getGeneratedTargetDockerTag(
-      @Nullable String targetImage, MavenBuildLogger mavenBuildLogger) {
+      @Nullable String targetImage, MavenJibLogger mavenJibLogger) {
     if (Strings.isNullOrEmpty(targetImage)) {
       // TODO: Validate that project name and version are valid repository/tag
       // TODO: Use HelpfulSuggestions
-      mavenBuildLogger.lifecycle(
+      mavenJibLogger.lifecycle(
           "Tagging image with generated image reference "
               + project.getName()
               + ":"

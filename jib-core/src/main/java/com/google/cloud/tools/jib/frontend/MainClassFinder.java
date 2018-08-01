@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.frontend;
 
-import com.google.cloud.tools.jib.builder.BuildLogger;
+import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -136,7 +136,7 @@ public class MainClassFinder {
   }
 
   private final ImmutableList<Path> classesFiles;
-  private final BuildLogger buildLogger;
+  private final JibLogger buildLogger;
 
   /**
    * Finds a class with {@code psvm} in {@code classesFiles}.
@@ -144,7 +144,7 @@ public class MainClassFinder {
    * @param classesFiles the classes files to check
    * @param buildLogger used for displaying status messages.
    */
-  public MainClassFinder(ImmutableList<Path> classesFiles, BuildLogger buildLogger) {
+  public MainClassFinder(ImmutableList<Path> classesFiles, JibLogger buildLogger) {
     this.classesFiles = classesFiles;
     this.buildLogger = buildLogger;
   }

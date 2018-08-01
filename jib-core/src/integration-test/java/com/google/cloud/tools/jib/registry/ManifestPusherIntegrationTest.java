@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.registry;
 
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
+import com.google.cloud.tools.jib.EmptyJibLogger;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
@@ -33,15 +34,16 @@ import org.junit.Test;
 public class ManifestPusherIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
+  private static final EmptyJibLogger BUILD_LOGGER = new EmptyJibLogger();
 
   @Test
   public void testPush_missingBlobs() throws IOException, RegistryException {
     RegistryClient registryClient =
-        RegistryClient.factory("gcr.io", "distroless/java").newRegistryClient();
+        RegistryClient.factory(BUILD_LOGGER, "gcr.io", "distroless/java").newRegistryClient();
     ManifestTemplate manifestTemplate = registryClient.pullManifest("latest");
 
     registryClient =
-        RegistryClient.factory("localhost:5000", "busybox")
+        RegistryClient.factory(BUILD_LOGGER, "localhost:5000", "busybox")
             .setAllowInsecureRegistries(true)
             .newRegistryClient();
     try {
@@ -75,13 +77,13 @@ public class ManifestPusherIntegrationTest {
 
     // Pushes the BLOBs.
     RegistryClient registryClient =
-        RegistryClient.factory("localhost:5000", "testimage")
+        RegistryClient.factory(BUILD_LOGGER, "localhost:5000", "testimage")
             .setAllowInsecureRegistries(true)
             .newRegistryClient();
-    Assert.assertFalse(registryClient.pushBlob(testLayerBlobDigest, testLayerBlob));
+    Assert.assertFalse(registryClient.pushBlob(testLayerBlobDigest, testLayerBlob, null));
     Assert.assertFalse(
         registryClient.pushBlob(
-            testContainerConfigurationBlobDigest, testContainerConfigurationBlob));
+            testContainerConfigurationBlobDigest, testContainerConfigurationBlob, null));
 
     // Pushes the manifest.
     registryClient.pushManifest(expectedManifestTemplate, "latest");

@@ -6,15 +6,19 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Docker context generation now includes snapshot dependencies and extra files ([#516](https://github.com/GoogleContainerTools/jib/pull/516/files))
+- Disable parallel operation by setting the `jibSerialize` system property to `true` ([#682](https://github.com/GoogleContainerTools/jib/pull/682))
 
 ### Changed
 
 - Propagates environment variables from the base image ([#716](https://github.com/GoogleContainerTools/jib/pull/716))
+- `allowInsecureRegistries` allows connecting to insecure HTTPS registries (for example, registries using self-signed certificates) ([#733](https://github.com/GoogleContainerTools/jib/pull/733))
 
 ### Fixed
 
-- Fixed slow image reference parsing ([#680](https://github.com/GoogleContainerTools/jib/pull/680))
-- Only builds non-empty layers ([#516](https://github.com/GoogleContainerTools/jib/pull/516/files))
+- Slow image reference parsing ([#680](https://github.com/GoogleContainerTools/jib/pull/680))
+- Building empty layers ([#516](https://github.com/GoogleContainerTools/jib/pull/516/files))
+- Duplicate layer entries causing unbounded cache growth ([#721](https://github.com/GoogleContainerTools/jib/issues/721))
+- Incorrect authentication error message when target and base registry are the same ([#758](https://github.com/GoogleContainerTools/jib/issues/758))
 
 ## 0.9.7
 
