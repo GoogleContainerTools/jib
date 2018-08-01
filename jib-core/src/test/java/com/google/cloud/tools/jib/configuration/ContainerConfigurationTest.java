@@ -20,8 +20,10 @@ import com.google.cloud.tools.jib.configuration.Port.Protocol;
 import com.google.common.collect.ImmutableMap;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -85,8 +87,16 @@ public class ContainerConfigurationTest {
     } catch (IllegalArgumentException ex) {
       Assert.assertNull(ex.getMessage());
     }
+  }
 
+  @Test
+  @SuppressWarnings("JdkObsolete") // for hashtable
+  public void testBuilder_environmentMapTypes() {
     // Can accept empty environment.
     ContainerConfiguration.builder().setEnvironment(ImmutableMap.of()).build();
+
+    // Can handle other map types (https://github.com/GoogleContainerTools/jib/issues/632)
+    ContainerConfiguration.builder().setEnvironment(new TreeMap<>());
+    ContainerConfiguration.builder().setEnvironment(new Hashtable<>());
   }
 }
