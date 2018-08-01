@@ -114,6 +114,7 @@ class BuildImageStep
         imageBuilder.setEntrypoint(containerConfiguration.getEntrypoint());
         imageBuilder.setJavaArguments(containerConfiguration.getProgramArguments());
         imageBuilder.setExposedPorts(containerConfiguration.getExposedPorts());
+        imageBuilder.setLabels(containerConfiguration.getLabels());
       }
 
       // Gets the container configuration content descriptor.
