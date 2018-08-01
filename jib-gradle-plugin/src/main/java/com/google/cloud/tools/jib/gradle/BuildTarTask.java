@@ -121,7 +121,8 @@ public class BuildTarTask extends DefaultTask {
               + "this on a public network!");
     }
     RegistryCredentials knownBaseRegistryCredentials = null;
-    Authorization fromAuthorization = jibExtension.getFrom().getImageAuthorization();
+    Authorization fromAuthorization =
+        jibExtension.getFrom().getImageAuthorization(gradleJibLogger, "from");
     if (fromAuthorization != null) {
       knownBaseRegistryCredentials = new RegistryCredentials("jib.from.auth", fromAuthorization);
     }

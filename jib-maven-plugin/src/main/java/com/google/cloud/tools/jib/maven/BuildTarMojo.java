@@ -82,7 +82,7 @@ public class BuildTarMojo extends JibPluginConfiguration {
     MavenSettingsServerCredentials mavenSettingsServerCredentials =
         new MavenSettingsServerCredentials(
             Preconditions.checkNotNull(session).getSettings(), settingsDecrypter, mavenJibLogger);
-    Authorization fromAuthorization = getBaseImageAuth();
+    Authorization fromAuthorization = getBaseImageAuth(mavenJibLogger);
     RegistryCredentials knownBaseRegistryCredentials =
         fromAuthorization != null
             ? new RegistryCredentials(

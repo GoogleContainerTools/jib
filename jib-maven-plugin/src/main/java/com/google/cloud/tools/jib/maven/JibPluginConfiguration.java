@@ -58,17 +58,14 @@ abstract class JibPluginConfiguration extends AbstractMojo {
       this.password = password;
     }
 
-    /**
-     * Converts the {@link AuthConfiguration} to an {@link Authorization}.
-     *
-     * @return the {@link Authorization}
-     */
     @Nullable
-    private Authorization getAuthorization() {
-      if (username == null || password == null) {
-        return null;
-      }
-      return Authorizations.withBasicCredentials(username, password);
+    private String getUsername() {
+      return username;
+    }
+
+    @Nullable
+    private String getPassword() {
+      return password;
     }
   }
 
@@ -136,6 +133,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
    * Gets an {@link Authorization} from a username and password. First tries system properties, then
    * tries build configuration, otherwise returns null.
    *
+   * @param logger the {@link JibLogger} used to print warnings messages
+   * @param imageProperty the image configuration's name (i.e. "from" or "to")
    * @param usernameProperty the name of the username system property
    * @param passwordProperty the name of the password system property
    * @param auth the configured credentials
@@ -145,14 +144,52 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   @VisibleForTesting
   @Nullable
   static Authorization getImageAuth(
-      String usernameProperty, String passwordProperty, AuthConfiguration auth) {
+      JibLogger logger,
+      String imageProperty,
+      String usernameProperty,
+      String passwordProperty,
+      AuthConfiguration auth) {
     // System property takes priority over build configuration
     String commandlineUsername = System.getProperty(usernameProperty);
     String commandlinePassword = System.getProperty(passwordProperty);
     if (commandlineUsername != null && commandlinePassword != null) {
       return Authorizations.withBasicCredentials(commandlineUsername, commandlinePassword);
+    } else {
+      if (commandlinePassword != null) {
+        logger.warn(
+            passwordProperty
+                + " system property is set, but "
+                + usernameProperty
+                + " is not; attempting other authentication methods.");
+      } else if (commandlineUsername != null) {
+        logger.warn(
+            usernameProperty
+                + " system property is set, but "
+                + passwordProperty
+                + " is not; attempting other authentication methods.");
+      }
     }
-    return auth.getAuthorization();
+
+    if (auth.getUsername() != null && auth.getPassword() != null) {
+      return Authorizations.withBasicCredentials(auth.getUsername(), auth.getPassword());
+    } else {
+      if (auth.getPassword() != null) {
+        logger.warn(
+            "<"
+                + imageProperty
+                + "><auth><username> is missing from maven configuration; ignoring <"
+                + imageProperty
+                + "><auth> section.");
+      } else if (auth.getUsername() != null) {
+        logger.warn(
+            "<"
+                + imageProperty
+                + "><auth><password> is missing from maven configuration; ignoring <"
+                + imageProperty
+                + "><auth> section.");
+      }
+      return null;
+    }
   }
 
   @Nullable
@@ -244,8 +281,9 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   }
 
   @Nullable
-  Authorization getBaseImageAuth() {
-    return getImageAuth("jib.from.auth.username", "jib.from.auth.password", from.auth);
+  Authorization getBaseImageAuth(JibLogger logger) {
+    return getImageAuth(
+        logger, "from", "jib.from.auth.username", "jib.from.auth.password", from.auth);
   }
 
   @Nullable
@@ -259,8 +297,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   }
 
   @Nullable
-  Authorization getTargetImageAuth() {
-    return getImageAuth("jib.to.auth.username", "jib.to.auth.password", to.auth);
+  Authorization getTargetImageAuth(JibLogger logger) {
+    return getImageAuth(logger, "to", "jib.to.auth.username", "jib.to.auth.password", to.auth);
   }
 
   boolean getUseCurrentTimestamp() {

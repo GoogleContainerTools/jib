@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
 import javax.annotation.Nullable;
@@ -36,14 +37,14 @@ import org.gradle.api.tasks.Optional;
  */
 public class ImageParameters {
 
-  private AuthConfiguration auth;
+  private AuthParameters auth;
 
   @Nullable private String image;
   @Nullable private String credHelper;
 
   @Inject
   public ImageParameters(ObjectFactory objectFactory) {
-    auth = objectFactory.newInstance(AuthConfiguration.class);
+    auth = objectFactory.newInstance(AuthParameters.class);
   }
 
   @Input
@@ -70,22 +71,42 @@ public class ImageParameters {
 
   @Nested
   @Optional
-  AuthConfiguration getAuth() {
+  AuthParameters getAuth() {
     return auth;
   }
 
-  public void auth(Action<? super AuthConfiguration> action) {
+  public void auth(Action<? super AuthParameters> action) {
     action.execute(auth);
   }
 
-  /** Converts the {@link ImageParameters} to an {@link Authorization}. */
+  /**
+   * Converts the {@link ImageParameters} to an {@link Authorization}.
+   *
+   * @param logger the {@link JibLogger} used to print warnings
+   * @param imageProperty the image configuration's name (i.e. "from" or "to")
+   * @return the {@link Authorization}, or null if the username and password aren't both configured
+   */
   @Internal
   @Nullable
-  Authorization getImageAuthorization() {
+  Authorization getImageAuthorization(JibLogger logger, String imageProperty) {
     if (auth.getUsername() == null || auth.getPassword() == null) {
+      if (auth.getPassword() != null) {
+        logger.warn(
+            "jib."
+                + imageProperty
+                + ".auth.username is null; ignoring jib."
+                + imageProperty
+                + ".auth section.");
+      } else if (auth.getUsername() != null) {
+        logger.warn(
+            "jib."
+                + imageProperty
+                + ".auth.password is null; ignoring jib."
+                + imageProperty
+                + ".auth section.");
+      }
       return null;
     }
-
     return Authorizations.withBasicCredentials(auth.getUsername(), auth.getPassword());
   }
 }

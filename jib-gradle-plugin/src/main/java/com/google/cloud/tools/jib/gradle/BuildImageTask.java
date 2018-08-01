@@ -97,11 +97,13 @@ public class BuildImageTask extends DefaultTask {
     }
     RegistryCredentials knownBaseRegistryCredentials = null;
     RegistryCredentials knownTargetRegistryCredentials = null;
-    Authorization fromAuthorization = jibExtension.getFrom().getImageAuthorization();
+    Authorization fromAuthorization =
+        jibExtension.getFrom().getImageAuthorization(gradleJibLogger, "from");
     if (fromAuthorization != null) {
       knownBaseRegistryCredentials = new RegistryCredentials("jib.from.auth", fromAuthorization);
     }
-    Authorization toAuthorization = jibExtension.getTo().getImageAuthorization();
+    Authorization toAuthorization =
+        jibExtension.getTo().getImageAuthorization(gradleJibLogger, "to");
     if (toAuthorization != null) {
       knownTargetRegistryCredentials = new RegistryCredentials("jib.to.auth", toAuthorization);
     }

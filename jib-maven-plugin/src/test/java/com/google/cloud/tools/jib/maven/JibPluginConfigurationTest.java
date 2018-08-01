@@ -76,23 +76,54 @@ public class JibPluginConfigurationTest {
     auth.setUsername("vwxyz");
     auth.setPassword("98765");
 
+    // System properties set
     System.setProperty("jib.test.auth.user", "abcde");
     System.setProperty("jib.test.auth.pass", "12345");
     Authorization expected = Authorizations.withBasicCredentials("abcde", "12345");
     Authorization actual =
-        JibPluginConfiguration.getImageAuth("jib.test.auth.user", "jib.test.auth.pass", auth);
+        JibPluginConfiguration.getImageAuth(
+            mockLogger, "to", "jib.test.auth.user", "jib.test.auth.pass", auth);
     Assert.assertNotNull(actual);
     Assert.assertEquals(expected.toString(), actual.toString());
 
+    // Auth set in configuration
     System.clearProperty("jib.test.auth.user");
     System.clearProperty("jib.test.auth.pass");
     expected = Authorizations.withBasicCredentials("vwxyz", "98765");
-    actual = JibPluginConfiguration.getImageAuth("jib.test.auth.user", "jib.test.auth.pass", auth);
+    actual =
+        JibPluginConfiguration.getImageAuth(
+            mockLogger, "to", "jib.test.auth.user", "jib.test.auth.pass", auth);
     Assert.assertNotNull(actual);
     Assert.assertEquals(expected.toString(), actual.toString());
+    Mockito.verify(mockLogger, Mockito.never()).warn(Mockito.any());
 
+    // Auth completely missing
     auth = new AuthConfiguration();
-    actual = JibPluginConfiguration.getImageAuth("jib.test.auth.user", "jib.test.auth.pass", auth);
+    actual =
+        JibPluginConfiguration.getImageAuth(
+            mockLogger, "to", "jib.test.auth.user", "jib.test.auth.pass", auth);
     Assert.assertNull(actual);
+
+    // Password missing
+    auth = new AuthConfiguration();
+    auth.setUsername("vwxyz");
+    actual =
+        JibPluginConfiguration.getImageAuth(
+            mockLogger, "to", "jib.test.auth.user", "jib.test.auth.pass", auth);
+    Assert.assertNull(actual);
+    Mockito.verify(mockLogger)
+        .warn(
+            "<to><auth><password> is missing from maven configuration; ignoring <to><auth> section.");
+
+    // Username missing
+    auth = new AuthConfiguration();
+    auth.setPassword("98765");
+    actual =
+        JibPluginConfiguration.getImageAuth(
+            mockLogger, "to", "jib.test.auth.user", "jib.test.auth.pass", auth);
+    Assert.assertNull(actual);
+    Mockito.verify(mockLogger)
+        .warn(
+            "<to><auth><username> is missing from maven configuration; ignoring <to><auth> section.");
   }
 }

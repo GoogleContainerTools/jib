@@ -102,13 +102,13 @@ public class BuildImageMojo extends JibPluginConfiguration {
     MavenSettingsServerCredentials mavenSettingsServerCredentials =
         new MavenSettingsServerCredentials(
             Preconditions.checkNotNull(session).getSettings(), settingsDecrypter, mavenJibLogger);
-    Authorization fromAuthorization = getBaseImageAuth();
+    Authorization fromAuthorization = getBaseImageAuth(mavenJibLogger);
     RegistryCredentials knownBaseRegistryCredentials =
         fromAuthorization != null
             ? new RegistryCredentials(
                 "jib-maven-plugin <from><auth> configuration", fromAuthorization)
             : mavenSettingsServerCredentials.retrieve(baseImage.getRegistry());
-    Authorization toAuthorization = getTargetImageAuth();
+    Authorization toAuthorization = getTargetImageAuth(mavenJibLogger);
     RegistryCredentials knownTargetRegistryCredentials =
         toAuthorization != null
             ? new RegistryCredentials("jib-maven-plugin <to><auth> configuration", toAuthorization)
