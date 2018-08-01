@@ -20,7 +20,7 @@ import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.cloud.tools.jib.BuildLogger;
+import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
@@ -91,7 +91,7 @@ public class RegistryEndpointCallerTest {
     }
   }
 
-  @Mock private BuildLogger mockBuildLogger;
+  @Mock private JibLogger mockBuildLogger;
   @Mock private Connection mockConnection;
   @Mock private Response mockResponse;
   @Mock private Function<URL, Connection> mockConnectionFactory;

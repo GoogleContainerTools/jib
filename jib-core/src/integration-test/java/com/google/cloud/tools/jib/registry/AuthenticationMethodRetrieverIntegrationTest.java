@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.registry;
 
-import com.google.cloud.tools.jib.EmptyBuildLogger;
+import com.google.cloud.tools.jib.EmptyJibLogger;
 import com.google.cloud.tools.jib.http.Authorization;
 import java.io.IOException;
 import org.junit.Assert;
@@ -25,7 +25,7 @@ import org.junit.Test;
 /** Integration tests for {@link AuthenticationMethodRetriever}. */
 public class AuthenticationMethodRetrieverIntegrationTest {
 
-  private static final EmptyBuildLogger BUILD_LOGGER = new EmptyBuildLogger();
+  private static final EmptyJibLogger BUILD_LOGGER = new EmptyJibLogger();
 
   @Test
   public void testGetRegistryAuthenticator()

@@ -64,8 +64,8 @@ public class BuildImageMojo extends JibPluginConfiguration {
       return;
     }
 
-    MavenBuildLogger mavenBuildLogger = new MavenBuildLogger(getLog());
-    handleDeprecatedParameters(mavenBuildLogger);
+    MavenJibLogger mavenJibLogger = new MavenJibLogger(getLog());
+    handleDeprecatedParameters(mavenJibLogger);
     SystemPropertyValidator.checkHttpTimeoutProperty(MojoExecutionException::new);
 
     // Validates 'format'.
@@ -94,14 +94,14 @@ public class BuildImageMojo extends JibPluginConfiguration {
 
     // Checks Maven settings for registry credentials.
     if (Boolean.getBoolean("sendCredentialsOverHttp")) {
-      mavenBuildLogger.warn(
+      mavenJibLogger.warn(
           "Authentication over HTTP is enabled. It is strongly recommended that you do not enable "
               + "this on a public network!");
     }
 
     MavenSettingsServerCredentials mavenSettingsServerCredentials =
         new MavenSettingsServerCredentials(
-            Preconditions.checkNotNull(session).getSettings(), settingsDecrypter, mavenBuildLogger);
+            Preconditions.checkNotNull(session).getSettings(), settingsDecrypter, mavenJibLogger);
     Authorization fromAuthorization = getBaseImageAuth();
     RegistryCredentials knownBaseRegistryCredentials =
         fromAuthorization != null
@@ -115,7 +115,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
             : mavenSettingsServerCredentials.retrieve(targetImage.getRegistry());
 
     MavenProjectProperties mavenProjectProperties =
-        MavenProjectProperties.getForProject(getProject(), mavenBuildLogger, getExtraDirectory());
+        MavenProjectProperties.getForProject(getProject(), mavenJibLogger, getExtraDirectory());
     String mainClass = mavenProjectProperties.getMainClass(this);
 
     // Builds the BuildConfiguration.
@@ -139,13 +139,13 @@ public class BuildImageMojo extends JibPluginConfiguration {
             .setEnvironment(getEnvironment())
             .setExposedPorts(ExposedPortsParser.parse(getExposedPorts()));
     if (getUseCurrentTimestamp()) {
-      mavenBuildLogger.warn(
+      mavenJibLogger.warn(
           "Setting image creation time to current time; your image may not be reproducible.");
       containerConfigurationBuilder.setCreationTime(Instant.now());
     }
 
     BuildConfiguration.Builder buildConfigurationBuilder =
-        BuildConfiguration.builder(mavenBuildLogger)
+        BuildConfiguration.builder(mavenJibLogger)
             .setBaseImageConfiguration(baseImageConfiguration)
             .setTargetImageConfiguration(targetImageConfiguration)
             .setContainerConfiguration(containerConfigurationBuilder.build())
@@ -165,7 +165,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
     BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
-    MavenBuildLogger.disableHttpLogging();
+    MavenJibLogger.disableHttpLogging();
 
     RegistryClient.setUserAgentSuffix(USER_AGENT_SUFFIX);
 

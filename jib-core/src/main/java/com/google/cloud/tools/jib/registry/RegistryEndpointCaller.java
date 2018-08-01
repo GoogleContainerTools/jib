@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.registry;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.cloud.tools.jib.BuildLogger;
+import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Connection;
 import com.google.cloud.tools.jib.http.Request;
@@ -52,7 +52,7 @@ class RegistryEndpointCaller<T> {
 
   private static final String DEFAULT_PROTOCOL = "https";
 
-  private final BuildLogger logger;
+  private final JibLogger logger;
   private final URL initialRequestUrl;
   private final String userAgent;
   private final RegistryEndpointProvider<T> registryEndpointProvider;
@@ -79,7 +79,7 @@ class RegistryEndpointCaller<T> {
    * @throws MalformedURLException if the URL generated for the endpoint is malformed
    */
   RegistryEndpointCaller(
-      BuildLogger logger,
+      JibLogger logger,
       String userAgent,
       String apiRouteBase,
       RegistryEndpointProvider<T> registryEndpointProvider,
@@ -101,7 +101,7 @@ class RegistryEndpointCaller<T> {
 
   @VisibleForTesting
   RegistryEndpointCaller(
-      BuildLogger logger,
+      JibLogger logger,
       String userAgent,
       String apiRouteBase,
       RegistryEndpointProvider<T> registryEndpointProvider,

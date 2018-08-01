@@ -72,7 +72,7 @@ public class GradleLayerConfigurationsTest {
   @Mock private SourceSetContainer mockSourceSetContainer;
   @Mock private SourceSet mockMainSourceSet;
   @Mock private SourceSetOutput mockMainSourceSetOutput;
-  @Mock private GradleBuildLogger mockGradleBuildLogger;
+  @Mock private GradleJibLogger mockGradleJibLogger;
 
   private GradleLayerConfigurations testGradleLayerConfigurations;
 
@@ -112,7 +112,7 @@ public class GradleLayerConfigurationsTest {
 
     testGradleLayerConfigurations =
         GradleLayerConfigurations.getForProject(
-            mockProject, mockGradleBuildLogger, Paths.get("nonexistent/path"));
+            mockProject, mockGradleJibLogger, Paths.get("nonexistent/path"));
   }
 
   @Test
@@ -165,11 +165,11 @@ public class GradleLayerConfigurationsTest {
 
     testGradleLayerConfigurations =
         GradleLayerConfigurations.getForProject(
-            mockProject, mockGradleBuildLogger, Paths.get("nonexistent/path"));
+            mockProject, mockGradleJibLogger, Paths.get("nonexistent/path"));
 
-    Mockito.verify(mockGradleBuildLogger)
+    Mockito.verify(mockGradleJibLogger)
         .warn("Could not find build output directory '" + nonexistentFile + "'");
-    Mockito.verify(mockGradleBuildLogger)
+    Mockito.verify(mockGradleJibLogger)
         .warn("No classes files were found - did you compile your project?");
   }
 
@@ -179,7 +179,7 @@ public class GradleLayerConfigurationsTest {
 
     testGradleLayerConfigurations =
         GradleLayerConfigurations.getForProject(
-            mockProject, mockGradleBuildLogger, extraFilesDirectory);
+            mockProject, mockGradleJibLogger, extraFilesDirectory);
 
     ImmutableList<Path> expectedExtraFiles =
         ImmutableList.of(

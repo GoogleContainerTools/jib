@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.configuration;
 
-import com.google.cloud.tools.jib.BuildLogger;
+import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.configuration.Port.Protocol;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
@@ -92,7 +92,7 @@ public class BuildConfigurationTest {
             .setExposedPorts(expectedExposedPorts)
             .build();
     BuildConfiguration.Builder buildConfigurationBuilder =
-        BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
+        BuildConfiguration.builder(Mockito.mock(JibLogger.class))
             .setBaseImageConfiguration(baseImageConfiguration)
             .setTargetImageConfiguration(targetImageConfiguration)
             .setContainerConfiguration(containerConfiguration)
@@ -168,7 +168,7 @@ public class BuildConfigurationTest {
                     expectedTargetServerUrl, expectedTargetImageName, expectedTargetTag))
             .build();
     BuildConfiguration buildConfiguration =
-        BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
+        BuildConfiguration.builder(Mockito.mock(JibLogger.class))
             .setBaseImageConfiguration(baseImageConfiguration)
             .setTargetImageConfiguration(targetImageConfiguration)
             .build();
@@ -191,7 +191,7 @@ public class BuildConfigurationTest {
   public void testBuilder_missingValues() {
     // Target image is missing
     try {
-      BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
+      BuildConfiguration.builder(Mockito.mock(JibLogger.class))
           .setBaseImageConfiguration(
               ImageConfiguration.builder(Mockito.mock(ImageReference.class)).build())
           .build();
@@ -203,7 +203,7 @@ public class BuildConfigurationTest {
 
     // All required fields missing
     try {
-      BuildConfiguration.builder(Mockito.mock(BuildLogger.class)).build();
+      BuildConfiguration.builder(Mockito.mock(JibLogger.class)).build();
       Assert.fail("Build configuration should not be built with missing values");
 
     } catch (IllegalStateException ex) {
@@ -218,7 +218,7 @@ public class BuildConfigurationTest {
   public void testBuilder_nullValues() {
     // Java arguments element should not be null.
     try {
-      BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
+      BuildConfiguration.builder(Mockito.mock(JibLogger.class))
           .setContainerConfiguration(
               ContainerConfiguration.builder()
                   .setProgramArguments(Arrays.asList("first", null))
@@ -230,7 +230,7 @@ public class BuildConfigurationTest {
 
     // Entrypoint element should not be null.
     try {
-      BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
+      BuildConfiguration.builder(Mockito.mock(JibLogger.class))
           .setContainerConfiguration(
               ContainerConfiguration.builder().setEntrypoint(Arrays.asList("first", null)).build());
       Assert.fail("The IllegalArgumentException should be thrown.");
@@ -240,7 +240,7 @@ public class BuildConfigurationTest {
 
     // Exposed ports element should not be null.
     try {
-      BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
+      BuildConfiguration.builder(Mockito.mock(JibLogger.class))
           .setContainerConfiguration(
               ContainerConfiguration.builder()
                   .setExposedPorts(Arrays.asList(new Port(1000, Protocol.TCP), null))
@@ -255,7 +255,7 @@ public class BuildConfigurationTest {
     nullKeyMap.put(null, "value");
 
     try {
-      BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
+      BuildConfiguration.builder(Mockito.mock(JibLogger.class))
           .setContainerConfiguration(
               ContainerConfiguration.builder().setEnvironment(nullKeyMap).build());
       Assert.fail("The IllegalArgumentException should be thrown.");
@@ -267,7 +267,7 @@ public class BuildConfigurationTest {
     Map<String, String> nullValueMap = new HashMap<>();
     nullValueMap.put("key", null);
     try {
-      BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
+      BuildConfiguration.builder(Mockito.mock(JibLogger.class))
           .setContainerConfiguration(
               ContainerConfiguration.builder().setEnvironment(nullValueMap).build());
       Assert.fail("The IllegalArgumentException should be thrown.");
@@ -276,15 +276,15 @@ public class BuildConfigurationTest {
     }
 
     // Can accept empty environment.
-    BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
+    BuildConfiguration.builder(Mockito.mock(JibLogger.class))
         .setContainerConfiguration(
             ContainerConfiguration.builder().setEnvironment(ImmutableMap.of()).build());
 
     // Environment map can accept TreeMap and Hashtable.
-    BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
+    BuildConfiguration.builder(Mockito.mock(JibLogger.class))
         .setContainerConfiguration(
             ContainerConfiguration.builder().setEnvironment(new TreeMap<>()).build());
-    BuildConfiguration.builder(Mockito.mock(BuildLogger.class))
+    BuildConfiguration.builder(Mockito.mock(JibLogger.class))
         .setContainerConfiguration(
             ContainerConfiguration.builder().setEnvironment(new Hashtable<>()).build());
   }

@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.registry;
 
-import com.google.cloud.tools.jib.BuildLogger;
+import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.http.Authorization;
 import org.junit.Assert;
 import org.junit.Before;
@@ -31,7 +31,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class RegistryClientTest {
 
-  @Mock private BuildLogger buildLogger;
+  @Mock private JibLogger buildLogger;
   @Mock private Authorization mockAuthorization;
 
   private RegistryClient.Factory testRegistryClientFactory;

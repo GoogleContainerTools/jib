@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.registry;
 
-import com.google.cloud.tools.jib.EmptyBuildLogger;
+import com.google.cloud.tools.jib.EmptyJibLogger;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
@@ -30,7 +30,7 @@ import org.junit.Test;
 public class ManifestPullerIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
-  private static final EmptyBuildLogger BUILD_LOGGER = new EmptyBuildLogger();
+  private static final EmptyJibLogger BUILD_LOGGER = new EmptyJibLogger();
 
   @Test
   public void testPull_v21() throws IOException, RegistryException {
