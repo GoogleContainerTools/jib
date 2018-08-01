@@ -153,11 +153,18 @@ public class RegistryEndpointCallerTest {
     Assert.assertEquals("body", insecureCaller.call());
 
     ArgumentCaptor<URL> urlCaptor = ArgumentCaptor.forClass(URL.class);
-    Mockito.verify(mockConnectionFactory, Mockito.times(1)).apply(urlCaptor.capture());
+    Mockito.verify(mockConnectionFactory).apply(urlCaptor.capture());
     Assert.assertEquals(new URL("https://apiRouteBase/api"), urlCaptor.getAllValues().get(0));
 
-    Mockito.verify(mockInsecureConnectionFactory, Mockito.times(1)).apply(urlCaptor.capture());
+    Mockito.verify(mockInsecureConnectionFactory).apply(urlCaptor.capture());
     Assert.assertEquals(new URL("https://apiRouteBase/api"), urlCaptor.getAllValues().get(1));
+
+    Mockito.verifyNoMoreInteractions(mockConnectionFactory);
+    Mockito.verifyNoMoreInteractions(mockInsecureConnectionFactory);
+
+    Mockito.verify(mockBuildLogger)
+        .warn(
+            "Cannot verify server at https://apiRouteBase/api. Attempting again with no TLS verification.");
   }
 
   @Test
@@ -176,15 +183,18 @@ public class RegistryEndpointCallerTest {
     Assert.assertEquals(new URL("https://apiRouteBase/api"), urlCaptor.getAllValues().get(0));
     Assert.assertEquals(new URL("http://apiRouteBase/api"), urlCaptor.getAllValues().get(1));
 
-    Mockito.verify(mockInsecureConnectionFactory, Mockito.times(1)).apply(urlCaptor.capture());
+    Mockito.verify(mockInsecureConnectionFactory).apply(urlCaptor.capture());
     Assert.assertEquals(new URL("https://apiRouteBase/api"), urlCaptor.getAllValues().get(2));
+
+    Mockito.verifyNoMoreInteractions(mockConnectionFactory);
+    Mockito.verifyNoMoreInteractions(mockInsecureConnectionFactory);
 
     Mockito.verify(mockBuildLogger)
         .warn(
-            "Failed to connect to "
-                + urlCaptor.getAllValues().get(0)
-                + " over HTTPS. Attempting again with HTTP: "
-                + urlCaptor.getAllValues().get(1));
+            "Cannot verify server at https://apiRouteBase/api. Attempting again with no TLS verification.");
+    Mockito.verify(mockBuildLogger)
+        .warn(
+            "Failed to connect to https://apiRouteBase/api over HTTPS. Attempting again with HTTP: http://apiRouteBase/api");
   }
 
   @Test
@@ -202,12 +212,12 @@ public class RegistryEndpointCallerTest {
     Assert.assertEquals(new URL("https://apiRouteBase/api"), urlCaptor.getAllValues().get(0));
     Assert.assertEquals(new URL("http://apiRouteBase/api"), urlCaptor.getAllValues().get(1));
 
+    Mockito.verifyNoMoreInteractions(mockConnectionFactory);
+    Mockito.verifyNoMoreInteractions(mockInsecureConnectionFactory);
+
     Mockito.verify(mockBuildLogger)
         .warn(
-            "Failed to connect to "
-                + urlCaptor.getAllValues().get(0)
-                + " over HTTPS. Attempting again with HTTP: "
-                + urlCaptor.getAllValues().get(1));
+            "Failed to connect to https://apiRouteBase/api over HTTPS. Attempting again with HTTP: http://apiRouteBase/api");
   }
 
   @Test
@@ -225,8 +235,11 @@ public class RegistryEndpointCallerTest {
     }
 
     ArgumentCaptor<URL> urlCaptor = ArgumentCaptor.forClass(URL.class);
-    Mockito.verify(mockConnectionFactory, Mockito.times(1)).apply(urlCaptor.capture());
+    Mockito.verify(mockConnectionFactory).apply(urlCaptor.capture());
     Assert.assertEquals(new URL("https://apiRouteBase/api"), urlCaptor.getAllValues().get(0));
+
+    Mockito.verifyNoMoreInteractions(mockConnectionFactory);
+    Mockito.verifyNoMoreInteractions(mockInsecureConnectionFactory);
   }
 
   @Test
@@ -245,8 +258,11 @@ public class RegistryEndpointCallerTest {
     }
 
     ArgumentCaptor<URL> urlCaptor = ArgumentCaptor.forClass(URL.class);
-    Mockito.verify(mockConnectionFactory, Mockito.times(1)).apply(urlCaptor.capture());
+    Mockito.verify(mockConnectionFactory).apply(urlCaptor.capture());
     Assert.assertEquals(new URL("https://apiRouteBase:5000/api"), urlCaptor.getAllValues().get(0));
+
+    Mockito.verifyNoMoreInteractions(mockConnectionFactory);
+    Mockito.verifyNoMoreInteractions(mockInsecureConnectionFactory);
   }
 
   @Test
@@ -309,6 +325,25 @@ public class RegistryEndpointCallerTest {
     System.setProperty("sendCredentialsOverHttp", "true");
     RegistryEndpointCaller<String> insecureEndpointCaller = createRegistryEndpointCaller(true, -1);
     Assert.assertEquals("body", insecureEndpointCaller.call());
+
+    ArgumentCaptor<URL> urlCaptor = ArgumentCaptor.forClass(URL.class);
+    Mockito.verify(mockConnectionFactory, Mockito.times(3)).apply(urlCaptor.capture());
+    Assert.assertEquals(new URL("https://apiRouteBase/api"), urlCaptor.getAllValues().get(0));
+    Assert.assertEquals(new URL("http://apiRouteBase/api"), urlCaptor.getAllValues().get(1));
+    Assert.assertEquals(new URL("http://newlocation"), urlCaptor.getAllValues().get(2));
+
+    Mockito.verify(mockInsecureConnectionFactory).apply(urlCaptor.capture());
+    Assert.assertEquals(new URL("https://apiRouteBase/api"), urlCaptor.getAllValues().get(3));
+
+    Mockito.verifyNoMoreInteractions(mockConnectionFactory);
+    Mockito.verifyNoMoreInteractions(mockInsecureConnectionFactory);
+
+    Mockito.verify(mockBuildLogger)
+        .warn(
+            "Cannot verify server at https://apiRouteBase/api. Attempting again with no TLS verification.");
+    Mockito.verify(mockBuildLogger)
+        .warn(
+            "Failed to connect to https://apiRouteBase/api over HTTPS. Attempting again with HTTP: http://apiRouteBase/api");
   }
 
   @Test
@@ -516,6 +551,9 @@ public class RegistryEndpointCallerTest {
     Assert.assertEquals(
         new URL("https://apiRouteBase/api"), urlArgumentCaptor.getAllValues().get(0));
     Assert.assertEquals(new URL("https://newlocation"), urlArgumentCaptor.getAllValues().get(1));
+
+    Mockito.verifyNoMoreInteractions(mockConnectionFactory);
+    Mockito.verifyNoMoreInteractions(mockInsecureConnectionFactory);
   }
 
   private RegistryEndpointCaller<String> createRegistryEndpointCaller(

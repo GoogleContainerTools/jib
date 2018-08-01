@@ -169,6 +169,8 @@ class RegistryEndpointCaller<T> {
     }
 
     try {
+      logger.warn(
+          "Cannot verify server at " + url + ". Attempting again with no TLS verification.");
       return call(url, getInsecureConnectionFactory());
 
     } catch (SSLPeerUnverifiedException ex) {
