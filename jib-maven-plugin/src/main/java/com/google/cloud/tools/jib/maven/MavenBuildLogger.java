@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.builder.BuildLogger;
+import com.google.cloud.tools.jib.BuildLogger;
 import org.apache.maven.plugin.logging.Log;
 
 /** Implementation of {@link BuildLogger} for Maven plugins. */

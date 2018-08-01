@@ -17,7 +17,7 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.api.client.http.HttpTransport;
-import com.google.cloud.tools.jib.builder.BuildLogger;
+import com.google.cloud.tools.jib.BuildLogger;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
