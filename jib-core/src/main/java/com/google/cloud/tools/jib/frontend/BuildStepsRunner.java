@@ -122,14 +122,20 @@ public class BuildStepsRunner {
           registryUnauthorizedException);
 
     } else {
-      boolean isRegistryForBase =
+      boolean isImageForBase =
           registryUnauthorizedException
-              .getRegistry()
-              .equals(buildConfiguration.getBaseImageConfiguration().getImageRegistry());
-      boolean isRegistryForTarget =
+                  .getRegistry()
+                  .equals(buildConfiguration.getBaseImageConfiguration().getImageRegistry())
+              && registryUnauthorizedException
+                  .getRepository()
+                  .equals(buildConfiguration.getBaseImageConfiguration().getImageRepository());
+      boolean isImageForTarget =
           registryUnauthorizedException
-              .getRegistry()
-              .equals(buildConfiguration.getTargetImageConfiguration().getImageRegistry());
+                  .getRegistry()
+                  .equals(buildConfiguration.getTargetImageConfiguration().getImageRegistry())
+              && registryUnauthorizedException
+                  .getRepository()
+                  .equals(buildConfiguration.getTargetImageConfiguration().getImageRepository());
       boolean areBaseImageCredentialsConfigured =
           buildConfiguration.getBaseImageConfiguration().getCredentialHelper() != null
               || buildConfiguration.getBaseImageConfiguration().getKnownRegistryCredentials()
@@ -139,13 +145,13 @@ public class BuildStepsRunner {
               || buildConfiguration.getTargetImageConfiguration().getKnownRegistryCredentials()
                   != null;
 
-      if (isRegistryForBase && !areBaseImageCredentialsConfigured) {
+      if (isImageForBase && !areBaseImageCredentialsConfigured) {
         throw new BuildStepsExecutionException(
             helpfulSuggestions.forNoCredentialHelpersDefinedForBaseImage(
                 registryUnauthorizedException.getRegistry()),
             registryUnauthorizedException);
       }
-      if (isRegistryForTarget && !areTargetImageCredentialsConfigured) {
+      if (isImageForTarget && !areTargetImageCredentialsConfigured) {
         throw new BuildStepsExecutionException(
             helpfulSuggestions.forNoCredentialHelpersDefinedForTargetImage(
                 registryUnauthorizedException.getRegistry()),
