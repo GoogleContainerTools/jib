@@ -23,7 +23,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.maven.it.VerificationException;
@@ -56,7 +55,7 @@ public class BuildImageMojoIntegrationTest {
       throws VerificationException, IOException, InterruptedException {
     Verifier verifier = new Verifier(projectRoot.toString());
     verifier.setAutoclean(false);
-    verifier.setCliOptions(Collections.singletonList("-X"));
+    verifier.addCliOption("-X");
     verifier.executeGoals(Arrays.asList("clean", "compile"));
 
     // Builds twice, and checks if the second build took less time.
@@ -128,7 +127,8 @@ public class BuildImageMojoIntegrationTest {
         "Hello, world. An argument.\nfoo\ncat\n",
         buildAndRun(
             simpleTestProject.getProjectRoot(),
-            "gcr.io/jib-integration-testing/simpleimage:maven"));
+            "gcr.io/jib-integration-testing/simpleimage:maven",
+            true));
 
     Instant buildTime =
         Instant.parse(
@@ -148,8 +148,7 @@ public class BuildImageMojoIntegrationTest {
     Assert.assertEquals(
         "",
         buildAndRun(
-            emptyTestProject.getProjectRoot(),
-            "gcr.io/jib-integration-testing/emptyimage:maven"));
+            emptyTestProject.getProjectRoot(), "gcr.io/jib-integration-testing/emptyimage:maven"));
     Assert.assertEquals(
         "1970-01-01T00:00:00Z",
         new Command(
