@@ -29,11 +29,8 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -60,6 +57,7 @@ public class BuildConfigurationTest {
     Map<String, String> expectedEnvironment = ImmutableMap.of("key", "value");
     ImmutableList<Port> expectedExposedPorts =
         ImmutableList.of(new Port(1000, Protocol.TCP), new Port(2000, Protocol.TCP));
+    Map<String, String> expectedLabels = ImmutableMap.of("key1", "value1", "key2", "value2");
     Class<? extends BuildableManifestTemplate> expectedTargetFormat = OCIManifestTemplate.class;
     CacheConfiguration expectedApplicationLayersCacheConfiguration =
         CacheConfiguration.forPath(Paths.get("application/layers"));
@@ -90,6 +88,7 @@ public class BuildConfigurationTest {
             .setProgramArguments(expectedJavaArguments)
             .setEnvironment(expectedEnvironment)
             .setExposedPorts(expectedExposedPorts)
+            .setLabels(expectedLabels)
             .build();
     BuildConfiguration.Builder buildConfigurationBuilder =
         BuildConfiguration.builder(Mockito.mock(JibLogger.class))
@@ -134,6 +133,7 @@ public class BuildConfigurationTest {
         expectedEnvironment, buildConfiguration.getContainerConfiguration().getEnvironmentMap());
     Assert.assertEquals(
         expectedExposedPorts, buildConfiguration.getContainerConfiguration().getExposedPorts());
+    Assert.assertEquals(expectedLabels, buildConfiguration.getContainerConfiguration().getLabels());
     Assert.assertEquals(expectedTargetFormat, buildConfiguration.getTargetFormat());
     Assert.assertEquals(
         expectedApplicationLayersCacheConfiguration,
@@ -211,81 +211,5 @@ public class BuildConfigurationTest {
           "base image configuration is required but not set and target image configuration is required but not set",
           ex.getMessage());
     }
-  }
-
-  @Test
-  @SuppressWarnings("JdkObsolete")
-  public void testBuilder_nullValues() {
-    // Java arguments element should not be null.
-    try {
-      BuildConfiguration.builder(Mockito.mock(JibLogger.class))
-          .setContainerConfiguration(
-              ContainerConfiguration.builder()
-                  .setProgramArguments(Arrays.asList("first", null))
-                  .build());
-      Assert.fail("The IllegalArgumentException should be thrown.");
-    } catch (IllegalArgumentException ex) {
-      Assert.assertNull(ex.getMessage());
-    }
-
-    // Entrypoint element should not be null.
-    try {
-      BuildConfiguration.builder(Mockito.mock(JibLogger.class))
-          .setContainerConfiguration(
-              ContainerConfiguration.builder().setEntrypoint(Arrays.asList("first", null)).build());
-      Assert.fail("The IllegalArgumentException should be thrown.");
-    } catch (IllegalArgumentException ex) {
-      Assert.assertNull(ex.getMessage());
-    }
-
-    // Exposed ports element should not be null.
-    try {
-      BuildConfiguration.builder(Mockito.mock(JibLogger.class))
-          .setContainerConfiguration(
-              ContainerConfiguration.builder()
-                  .setExposedPorts(Arrays.asList(new Port(1000, Protocol.TCP), null))
-                  .build());
-      Assert.fail("The IllegalArgumentException should be thrown.");
-    } catch (IllegalArgumentException ex) {
-      Assert.assertNull(ex.getMessage());
-    }
-
-    // Environment keys element should not be null.
-    Map<String, String> nullKeyMap = new HashMap<>();
-    nullKeyMap.put(null, "value");
-
-    try {
-      BuildConfiguration.builder(Mockito.mock(JibLogger.class))
-          .setContainerConfiguration(
-              ContainerConfiguration.builder().setEnvironment(nullKeyMap).build());
-      Assert.fail("The IllegalArgumentException should be thrown.");
-    } catch (IllegalArgumentException ex) {
-      Assert.assertNull(ex.getMessage());
-    }
-
-    // Environment values element should not be null.
-    Map<String, String> nullValueMap = new HashMap<>();
-    nullValueMap.put("key", null);
-    try {
-      BuildConfiguration.builder(Mockito.mock(JibLogger.class))
-          .setContainerConfiguration(
-              ContainerConfiguration.builder().setEnvironment(nullValueMap).build());
-      Assert.fail("The IllegalArgumentException should be thrown.");
-    } catch (IllegalArgumentException ex) {
-      Assert.assertNull(ex.getMessage());
-    }
-
-    // Can accept empty environment.
-    BuildConfiguration.builder(Mockito.mock(JibLogger.class))
-        .setContainerConfiguration(
-            ContainerConfiguration.builder().setEnvironment(ImmutableMap.of()).build());
-
-    // Environment map can accept TreeMap and Hashtable.
-    BuildConfiguration.builder(Mockito.mock(JibLogger.class))
-        .setContainerConfiguration(
-            ContainerConfiguration.builder().setEnvironment(new TreeMap<>()).build());
-    BuildConfiguration.builder(Mockito.mock(JibLogger.class))
-        .setContainerConfiguration(
-            ContainerConfiguration.builder().setEnvironment(new Hashtable<>()).build());
   }
 }

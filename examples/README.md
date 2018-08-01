@@ -1,8 +1,16 @@
 [![Analytics](https://cloud-tools-for-java-metrics.appspot.com/UA-121724379-2/examples)](https://github.com/igrigorik/ga-beacon)
 
-### Simple Example 
+# Example projects containerizing with Jib
 
-You can find simple usage for Java in [helloworld](helloworld).
+Please [file an issue](/../../issues/new) if you find any problems with the examples or would like to request other examples.
+
+### Simple example
+
+See [helloworld](helloworld) for containerizing a simple `Hello World` application.
+
+### Multi-module example (DRAFT)
+
+See [multi-module](multi-module) for containerizing projects with multiple modules.
 
 <!-- ### SpringBoot Example 
 
