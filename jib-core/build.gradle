@@ -1,10 +1,10 @@
 plugins {
-    id 'java'
-    id 'checkstyle'
-    id 'com.github.sherter.google-java-format' version '0.7.1'
-    id 'net.ltgt.apt' version '0.13'
-    id 'net.ltgt.errorprone' version '0.0.13'
-    id 'biz.aQute.bnd.builder' version '4.0.0'
+  id 'java'
+  id 'checkstyle'
+  id 'com.github.sherter.google-java-format' version '0.7.1'
+  id 'net.ltgt.apt' version '0.13'
+  id 'net.ltgt.errorprone' version '0.0.13'
+  id 'biz.aQute.bnd.builder' version '4.0.0'
 }
 
 group 'com.google.cloud.tools'
@@ -14,113 +14,113 @@ targetCompatibility = JavaVersion.VERSION_1_8
 compileJava.options.encoding = 'UTF-8'
 
 repositories {
-    mavenCentral()
+  mavenCentral()
 }
 
 sourceSets {
-    integrationTest {
-        java {
-            compileClasspath += main.output + test.output
-            runtimeClasspath += main.output + test.output
-            srcDir file('src/integration-test/java')
-        }
-        resources.srcDir file('src/integration-test/resources')
+  integrationTest {
+    java {
+      compileClasspath += main.output + test.output
+      runtimeClasspath += main.output + test.output
+      srcDir file('src/integration-test/java')
     }
+    resources.srcDir file('src/integration-test/resources')
+  }
 }
 
 configurations {
-    integrationTestCompile.extendsFrom testCompile
-    integrationTestRuntime.extendsFrom testRuntime
+  integrationTestCompile.extendsFrom testCompile
+  integrationTestRuntime.extendsFrom testRuntime
 }
 
 dependencies {
-    // Make sure these are consistent with jib-maven-plugin.
-    compile 'com.google.http-client:google-http-client:1.23.0'
-    compile 'org.apache.commons:commons-compress:1.17'
-    compile 'com.google.guava:guava:23.5-jre'
-    compile 'com.fasterxml.jackson.core:jackson-databind:2.9.6'
-    compile 'org.slf4j:slf4j-api:1.7.25'
-    compile 'org.javassist:javassist:3.22.0-GA'
-    
-    testCompile 'junit:junit:4.12'
-    testCompile 'org.mockito:mockito-core:2.12.0'
+  // Make sure these are consistent with jib-maven-plugin.
+  compile 'com.google.http-client:google-http-client:1.23.0'
+  compile 'org.apache.commons:commons-compress:1.17'
+  compile 'com.google.guava:guava:23.5-jre'
+  compile 'com.fasterxml.jackson.core:jackson-databind:2.9.6'
+  compile 'org.slf4j:slf4j-api:1.7.25'
+  compile 'org.javassist:javassist:3.22.0-GA'
 
-    // NullAway errorprone plugin
-    apt 'com.uber.nullaway:nullaway:0.4.2'
-    errorprone 'com.google.errorprone:error_prone_core:2.2.0'
+  testCompile 'junit:junit:4.12'
+  testCompile 'org.mockito:mockito-core:2.12.0'
+
+  // NullAway errorprone plugin
+  apt 'com.uber.nullaway:nullaway:0.4.2'
+  errorprone 'com.google.errorprone:error_prone_core:2.2.0'
 }
 
 jar {
-    manifest {
-        attributes 'Implementation-Version': version
-        
-        // OSGi metadata
-        attributes 'Bundle-SymbolicName': 'com.google.cloud.tools.jib'
-        attributes 'Bundle-Name': 'Jib library for building Docker and OCI images'
-        attributes 'Bundle-Vendor': 'Google LLC'
-        attributes 'Bundle-DocURL': 'https://github.com/GoogleContainerTools/jib'
-        attributes 'Bundle-License': 'https://www.apache.org/licenses/LICENSE-2.0'
-        attributes 'Export-Package': 'com.google.cloud.tools.jib.*'
-    }
+  manifest {
+    attributes 'Implementation-Version': version
+
+    // OSGi metadata
+    attributes 'Bundle-SymbolicName': 'com.google.cloud.tools.jib'
+    attributes 'Bundle-Name': 'Jib library for building Docker and OCI images'
+    attributes 'Bundle-Vendor': 'Google LLC'
+    attributes 'Bundle-DocURL': 'https://github.com/GoogleContainerTools/jib'
+    attributes 'Bundle-License': 'https://www.apache.org/licenses/LICENSE-2.0'
+    attributes 'Export-Package': 'com.google.cloud.tools.jib.*'
+  }
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '4.6'
+  gradleVersion = '4.6'
 }
 
 // Integration tests must be run explicitly
 task integrationTest(type: Test) {
-    testClassesDirs = sourceSets.integrationTest.output.classesDirs
-    classpath = sourceSets.integrationTest.runtimeClasspath
-    systemProperty '_JIB_DISABLE_USER_AGENT', true
+  testClassesDirs = sourceSets.integrationTest.output.classesDirs
+  classpath = sourceSets.integrationTest.runtimeClasspath
+  systemProperty '_JIB_DISABLE_USER_AGENT', true
 }
 integrationTest.dependsOn test
 
 test {
-    testLogging {
-        showStandardStreams = true
-        exceptionFormat = 'full'
-    }
+  testLogging {
+    showStandardStreams = true
+    exceptionFormat = 'full'
+  }
 }
 
 // Adds NullAway errorprone checks.
 tasks.withType(JavaCompile) {
-    if (!name.toLowerCase().contains("test")) {
-        options.compilerArgs += ["-Xep:NullAway:ERROR", "-XepOpt:NullAway:AnnotatedPackages=com.google.cloud.tools"]
-    }
+  if (!name.toLowerCase().contains("test")) {
+    options.compilerArgs += ["-Xep:NullAway:ERROR", "-XepOpt:NullAway:AnnotatedPackages=com.google.cloud.tools"]
+  }
 }
 
 // Fail build on javadoc warnings
 tasks.withType(Javadoc) {
-    options.addBooleanOption('Xwerror', true)
+  options.addBooleanOption('Xwerror', true)
 }
 assemble.dependsOn javadoc
 
 tasks.withType(Test) {
-    reports.html.setDestination file("${reporting.baseDir}/${name}")
+  reports.html.setDestination file("${reporting.baseDir}/${name}")
 }
 
 /* GOOGLE JAVA FORMAT */
 googleJavaFormat {
-    toolVersion = '1.6'
+  toolVersion = '1.6'
 }
 check.dependsOn verifyGoogleJavaFormat
 /* GOOGLE JAVA FORMAT */
 
 /* CHECKSTYLE */
 checkstyle {
-    toolVersion = "7.6.1"
+  toolVersion = "7.6.1"
 
-    // get the google_checks.xml file from the checkstyle jar and take out the java checks
-    def googleChecks = resources.text.fromArchiveEntry(configurations.checkstyle[0], 'google_checks.xml').asString()
-    def fileExtensionsBefore = '<property name="fileExtensions" value="java, properties, xml"/>'
-    def fileExtensionsAfter = '<property name="fileExtensions" value="properties, xml"/>'
-    def googleChecksNoJava = googleChecks.replace(fileExtensionsBefore, fileExtensionsAfter)
-    assert !googleChecks.equals(googleChecksNoJava)
+  // get the google_checks.xml file from the checkstyle jar and take out the java checks
+  def googleChecks = resources.text.fromArchiveEntry(configurations.checkstyle[0], 'google_checks.xml').asString()
+  def fileExtensionsBefore = '<property name="fileExtensions" value="java, properties, xml"/>'
+  def fileExtensionsAfter = '<property name="fileExtensions" value="properties, xml"/>'
+  def googleChecksNoJava = googleChecks.replace(fileExtensionsBefore, fileExtensionsAfter)
+  assert !googleChecks.equals(googleChecksNoJava)
 
-    config = resources.text.fromString(googleChecksNoJava)
+  config = resources.text.fromString(googleChecksNoJava)
 
-    maxErrors = 0
-    maxWarnings = 0
+  maxErrors = 0
+  maxWarnings = 0
 }
 /* CHECKSTYLE */
