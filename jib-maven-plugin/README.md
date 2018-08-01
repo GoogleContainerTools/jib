@@ -1,5 +1,4 @@
-[![experimental](http://badges.github.io/stability-badges/dist/experimental.svg)](http://github.com/badges/stability-badges)
-[![Analytics](https://cloud-tools-for-java-metrics.appspot.com/UA-121724379-2/jib-maven-plugin)](https://github.com/igrigorik/ga-beacon)
+![experimental](https://img.shields.io/badge/stability-experimental-darkorange.svg)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/jib-maven-plugin/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/jib-maven-plugin)
 [![Gitter version](https://img.shields.io/gitter/room/gitterHQ/gitter.svg)](https://gitter.im/google/jib)
 
@@ -346,3 +345,5 @@ See the [Jib project FAQ](../docs/faq.md).
 ## Community
 
 See the [Jib project README](/../../#community).
+
+[![Analytics](https://cloud-tools-for-java-metrics.appspot.com/UA-121724379-2/jib-maven-plugin)](https://github.com/igrigorik/ga-beacon)
