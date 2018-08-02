@@ -203,7 +203,7 @@ Field | Type | Default | Description
 `to` | [`to`](#to-object) | *Required* | Configures the target image to build your application to.
 `container` | [`container`](#container-object) | See [`container`](#container-object) | Configures the container that is run from your image.
 `useOnlyProjectCache` | boolean | `false` | If set to true, Jib does not share a cache between different Gradle projects.
-`allowInsecureRegistries` | boolean | `false` | If set to true, Jib can ignore HTTPS certificate errors, or fall back to HTTP as a last resort. Leaving this parameter set to `false` is strongly recommended, since HTTP communication is unencrypted and visible to others on the network, and insecure HTTPS is no better than plain HTTP.
+`allowInsecureRegistries` | boolean | `false` | If set to true, Jib ignores HTTPS certificate errors and may fall back to HTTP as a last resort. Leaving this parameter set to `false` is strongly recommended, since HTTP communication is unencrypted and visible to others on the network, and insecure HTTPS is no better than plain HTTP. [If accessing a registry with a self-signed certificate, adding the certificate to your Java runtime's trusted keys may be an alternative to enabling this option.](../docs/self_sign_cert.md)
 
 <a name="from-object"></a>`from` is an object with the following properties:
 
