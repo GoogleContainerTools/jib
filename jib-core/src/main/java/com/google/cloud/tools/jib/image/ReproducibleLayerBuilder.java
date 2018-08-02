@@ -22,7 +22,6 @@ import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -45,12 +44,6 @@ public class ReproducibleLayerBuilder {
       throws IOException {
     List<TarArchiveEntry> tarArchiveEntries = new ArrayList<>();
 
-    // Adds the extraction path itself.
-    TarArchiveEntry extractionPathDirectoryEntry =
-        new TarArchiveEntry(Paths.get(".").toFile(), layerEntry.getExtractionPath());
-    tarArchiveEntries.add(extractionPathDirectoryEntry);
-
-    // Adds the files to extract relative to the extraction path.
     for (Path sourceFile : layerEntry.getSourceFiles()) {
       if (Files.isDirectory(sourceFile)) {
         new DirectoryWalker(sourceFile)

@@ -72,23 +72,6 @@ public class ReproducibleLayerBuilderTest {
     Assert.assertEquals(expectedString, extractedString);
   }
 
-  /**
-   * Verifies that the next {@link TarArchiveEntry} in the {@link TarArchiveInputStream} is a
-   * directory with correct permissions.
-   *
-   * @param tarArchiveInputStream the {@link TarArchiveInputStream} to read from
-   * @param expectedExtractionPath the expected extraction path of the next entry
-   * @throws IOException if an I/O exception occurs
-   */
-  private static void verifyNextTarArchiveEntryIsDirectory(
-      TarArchiveInputStream tarArchiveInputStream, String expectedExtractionPath)
-      throws IOException {
-    TarArchiveEntry extractionPathEntry = tarArchiveInputStream.getNextTarEntry();
-    Assert.assertEquals(expectedExtractionPath, extractionPathEntry.getName());
-    Assert.assertTrue(extractionPathEntry.isDirectory());
-    Assert.assertEquals(TarArchiveEntry.DEFAULT_DIR_MODE, extractionPathEntry.getMode());
-  }
-
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
@@ -112,9 +95,6 @@ public class ReproducibleLayerBuilderTest {
     // Reads the file back.
     try (TarArchiveInputStream tarArchiveInputStream =
         new TarArchiveInputStream(Files.newInputStream(temporaryFile))) {
-      // Verifies that the extraction path itself was added.
-      verifyNextTarArchiveEntryIsDirectory(tarArchiveInputStream, "extract/here/apple/");
-
       // Verifies that blobA was added.
       verifyNextTarArchiveEntry(tarArchiveInputStream, "extract/here/apple/blobA", blobA);
 
@@ -144,9 +124,6 @@ public class ReproducibleLayerBuilderTest {
           Assert.assertEquals(expectedFileString, extractedFileString);
         }
       }
-
-      // Verifies that the other extraction path was added.
-      verifyNextTarArchiveEntryIsDirectory(tarArchiveInputStream, "extract/here/banana/");
 
       // Verifies that blobA was added to the other location.
       verifyNextTarArchiveEntry(tarArchiveInputStream, "extract/here/banana/blobA", blobA);
