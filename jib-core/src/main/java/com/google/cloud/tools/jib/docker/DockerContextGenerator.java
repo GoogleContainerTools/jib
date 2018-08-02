@@ -107,10 +107,10 @@ public class DockerContextGenerator {
 
   // TODO: Just take the LayerConfigurations.
   public DockerContextGenerator(
-      LayerEntry dependenciesLayerEntry,
-      LayerEntry snapshotDependenciesLayerEntry,
       LayerEntry resourcesLayerEntry,
       LayerEntry classesLayerEntry,
+      LayerEntry dependenciesLayerEntry,
+      LayerEntry snapshotDependenciesLayerEntry,
       LayerEntry extraFilesLayerEntry) {
     ImmutableList.Builder<CopyDirective> copyDirectivesBuilder = ImmutableList.builder();
     addIfNotEmpty(copyDirectivesBuilder, dependenciesLayerEntry, DEPENDENCIES_LAYER_DIRECTORY);
