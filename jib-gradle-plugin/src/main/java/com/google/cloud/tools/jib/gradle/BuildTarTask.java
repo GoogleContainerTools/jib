@@ -199,7 +199,7 @@ public class BuildTarTask extends DefaultTask {
   }
 
   /**
-   * Converts the {@link ImageParameters} to an {@link Authorization}.
+   * Validates and returns an {@link Authorization} from a configured {@link AuthParameters}.
    *
    * <p>TODO: Consolidate with other tasks.
    *
