@@ -18,13 +18,13 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
-import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
-import com.google.cloud.tools.jib.frontend.MainClassInferenceException;
-import com.google.cloud.tools.jib.frontend.MainClassResolver;
-import com.google.cloud.tools.jib.frontend.ProjectProperties;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.image.LayerEntry;
+import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
+import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
+import com.google.cloud.tools.jib.plugins.common.MainClassResolver;
+import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
