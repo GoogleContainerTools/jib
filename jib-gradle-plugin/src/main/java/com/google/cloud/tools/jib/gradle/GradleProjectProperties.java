@@ -83,31 +83,6 @@ class GradleProjectProperties implements ProjectProperties {
   }
 
   @Override
-  public LayerEntry getDependenciesLayerEntry() {
-    return gradleLayerConfigurations.getDependenciesLayerEntry();
-  }
-
-  @Override
-  public LayerEntry getSnapshotDependenciesLayerEntry() {
-    return gradleLayerConfigurations.getSnapshotDependenciesLayerEntry();
-  }
-
-  @Override
-  public LayerEntry getResourcesLayerEntry() {
-    return gradleLayerConfigurations.getResourcesLayerEntry();
-  }
-
-  @Override
-  public LayerEntry getClassesLayerEntry() {
-    return gradleLayerConfigurations.getClassesLayerEntry();
-  }
-
-  @Override
-  public LayerEntry getExtraFilesLayerEntry() {
-    return gradleLayerConfigurations.getExtraFilesLayerEntry();
-  }
-
-  @Override
   public HelpfulSuggestions getMainClassHelpfulSuggestions(String prefix) {
     return HelpfulSuggestionsProvider.get(prefix);
   }

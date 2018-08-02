@@ -19,15 +19,14 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfigurations;
+import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.image.ImageReference;
-import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.MainClassResolver;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -68,21 +67,21 @@ class MavenProjectProperties implements ProjectProperties {
 
   private final MavenProject project;
   private final MavenJibLogger mavenJibLogger;
-  private final LayerConfigurations layerConfigurations;
+  private final JavaLayerConfigurations javaLayerConfigurations;
 
   @VisibleForTesting
   MavenProjectProperties(
       MavenProject project,
       MavenJibLogger mavenJibLogger,
-      List<LayerConfiguration> layerConfigurations) {
+      List<LayerConfiguration> javaLayerConfigurations) {
     this.project = project;
     this.mavenJibLogger = mavenJibLogger;
-    this.layerConfigurations = new LayerConfigurations(layerConfigurations);
+    this.javaLayerConfigurations = new LayerConfigurations(javaLayerConfigurations);
   }
 
   @Override
-  public LayerConfigurations getLayerConfigurations() {
-    return layerConfigurations;
+  public JavaLayerConfigurations getJavaLayerConfigurations() {
+    return javaLayerConfigurations;
   }
 
   @Override

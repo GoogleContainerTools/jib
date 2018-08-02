@@ -18,8 +18,6 @@ package com.google.cloud.tools.jib.frontend;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.cloud.tools.jib.configuration.LayerConfiguration;
-import com.google.cloud.tools.jib.configuration.LayerConfigurations;
 import com.google.cloud.tools.jib.filesystem.FileOperations;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.annotations.VisibleForTesting;
@@ -32,9 +30,7 @@ import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -89,9 +85,9 @@ public class JavaDockerContextGenerator {
    */
   private static void addIfNotEmpty(
       ImmutableList.Builder<CopyDirective> listBuilder,
-      LayerEntry layerEntry,
+      @Nullable LayerEntry layerEntry,
       String directoryInContext) {
-    if (layerEntry.getSourceFiles().isEmpty()) {
+    if (layerEntry == null || layerEntry.getSourceFiles().isEmpty()) {
       return;
     }
 
@@ -109,33 +105,31 @@ public class JavaDockerContextGenerator {
   private List<String> exposedPorts = Collections.emptyList();
 
   /**
-   * Constructs a Docker context generator for a list of {@link LayerConfiguration}s for a Java
-   * application. The layer configurations must be built with the same labels as defined in {@link
-   * JavaLayerConfigurationsBuilder}.
+   * Constructs a Docker context generator for a Java application.
    *
-   * @param layerConfigurations the {@link LayerConfigurations} for a Java application
+   * @param javaLayerConfigurations the {@link JavaLayerConfigurations}
    */
-  public JavaDockerContextGenerator(LayerConfigurations layerConfigurations) {
+  public JavaDockerContextGenerator(JavaLayerConfigurations javaLayerConfigurations) {
     ImmutableList.Builder<CopyDirective> copyDirectivesBuilder = ImmutableList.builder();
     addIfNotEmpty(
         copyDirectivesBuilder,
-        layerConfigurations.getByLabel(JavaLayerConfigurationsBuilder.DEPENDENCIES_LAYER_LABEL).getLayerEntries().get(0),
+        javaLayerConfigurations.getDependenciesLayerEntry(),
         DEPENDENCIES_LAYER_DIRECTORY);
     addIfNotEmpty(
         copyDirectivesBuilder,
-        layerConfigurations.getByLabel(JavaLayerConfigurationsBuilder.SNAPSHOT_DEPENDENCIES_LAYER_LABEL).getLayerEntries().get(0),
+        javaLayerConfigurations.getSnapshotDependenciesLayerEntry(),
         SNAPSHOT_DEPENDENCIES_LAYER_DIRECTORY);
     addIfNotEmpty(
         copyDirectivesBuilder,
-        layerConfigurations.getByLabel(JavaLayerConfigurationsBuilder.RESOURCES_LAYER_LABEL).getLayerEntries().get(0),
+        javaLayerConfigurations.getResourcesLayerEntry(),
         RESOURCES_LAYER_DIRECTORY);
     addIfNotEmpty(
         copyDirectivesBuilder,
-        layerConfigurations.getByLabel(JavaLayerConfigurationsBuilder.CLASSES_LAYER_LABEL).getLayerEntries().get(0),
+        javaLayerConfigurations.getClassesLayerEntry(),
         CLASSES_LAYER_DIRECTORY);
     addIfNotEmpty(
         copyDirectivesBuilder,
-        layerConfigurations.getByLabel(JavaLayerConfigurationsBuilder.EXTRA_FILES_LAYER_LABEL).getLayerEntries().get(0),
+        javaLayerConfigurations.getExtraFilesLayerEntry(),
         EXTRA_FILES_LAYER_DIRECTORY);
     copyDirectives = copyDirectivesBuilder.build();
   }

@@ -17,9 +17,7 @@
 package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.cloud.tools.jib.JibLogger;
-import com.google.cloud.tools.jib.configuration.LayerConfiguration;
-import com.google.cloud.tools.jib.configuration.LayerConfigurations;
-import com.google.common.collect.ImmutableList;
+import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import java.nio.file.Path;
 import javax.annotation.Nullable;
 
@@ -33,7 +31,7 @@ public interface ProjectProperties {
 
   String getPluginName();
 
-  LayerConfigurations getLayerConfigurations();
+  JavaLayerConfigurations getJavaLayerConfigurations();
 
   Path getCacheDirectory();
 

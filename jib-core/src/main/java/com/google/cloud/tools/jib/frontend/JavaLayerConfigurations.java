@@ -18,6 +18,8 @@ package com.google.cloud.tools.jib.frontend;
 
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfigurations;
+import com.google.cloud.tools.jib.image.LayerEntry;
+import com.google.common.base.Preconditions;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,14 +42,12 @@ public class JavaLayerConfigurations extends LayerConfigurations {
     @Nullable private List<Path> classesFiles;
     @Nullable private List<Path> extraFiles;
 
-    public Builder setDependenciesFiles(
-        @Nullable List<Path> dependenciesFiles) {
+    public Builder setDependenciesFiles(@Nullable List<Path> dependenciesFiles) {
       this.dependenciesFiles = dependenciesFiles;
       return this;
     }
 
-    public Builder setSnapshotDependenciesFiles(
-        @Nullable List<Path> snapshotDependenciesFiles) {
+    public Builder setSnapshotDependenciesFiles(@Nullable List<Path> snapshotDependenciesFiles) {
       this.snapshotDependenciesFiles = snapshotDependenciesFiles;
       return this;
     }
@@ -109,6 +109,30 @@ public class JavaLayerConfigurations extends LayerConfigurations {
       }
       return new JavaLayerConfigurations(layerConfigurations);
     }
+  }
+
+  public LayerEntry getDependenciesLayerEntry() {
+    return Preconditions.checkNotNull(getByLabel(DEPENDENCIES_LAYER_LABEL))
+        .getLayerEntries()
+        .get(0);
+  }
+
+  public LayerEntry getSnapshotDependenciesLayerEntry() {
+    return Preconditions.checkNotNull(getByLabel(SNAPSHOT_DEPENDENCIES_LAYER_LABEL))
+        .getLayerEntries()
+        .get(0);
+  }
+
+  public LayerEntry getResourcesLayerEntry() {
+    return Preconditions.checkNotNull(getByLabel(RESOURCES_LAYER_LABEL)).getLayerEntries().get(0);
+  }
+
+  public LayerEntry getClassesLayerEntry() {
+    return Preconditions.checkNotNull(getByLabel(CLASSES_LAYER_LABEL)).getLayerEntries().get(0);
+  }
+
+  public LayerEntry getExtraFilesLayerEntry() {
+    return Preconditions.checkNotNull(getByLabel(EXTRA_FILES_LAYER_LABEL)).getLayerEntries().get(0);
   }
 
   private JavaLayerConfigurations(List<LayerConfiguration> layerConfigurations) {
