@@ -14,14 +14,16 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.frontend;
+package com.google.cloud.tools.jib.plugins.common;
 
-import com.google.cloud.tools.jib.builder.BuildSteps;
+/** Thrown when main class inference fails. */
+public class MainClassInferenceException extends Exception {
 
-/** Wraps an exception that happens during {@link BuildSteps#run}. */
-public class BuildStepsExecutionException extends Exception {
+  MainClassInferenceException(String message) {
+    super(message);
+  }
 
-  BuildStepsExecutionException(String message, Throwable cause) {
+  MainClassInferenceException(String message, Throwable cause) {
     super(message, cause);
   }
 }

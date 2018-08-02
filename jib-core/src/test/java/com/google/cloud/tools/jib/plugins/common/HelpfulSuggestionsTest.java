@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.frontend;
+package com.google.cloud.tools.jib.plugins.common;
 
 import java.nio.file.Paths;
 import org.junit.Assert;
