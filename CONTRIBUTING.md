@@ -42,7 +42,7 @@ To build, use the provided `build.sh` which builds and tests each of the compone
 5. Associate the change with an existing issue or file a [new issue](../../issues).
 6. Create a pull request!
 
-**Note** that in order to run integration tests, you will need to set the environment variable `JIB_INTEGRATION_TESTING_PROJECT` to the GCP project you would like to use for testing. Otherwise, feel free to skip integration tests.
+**Note** that in order to run integration tests, you will need to set the environment variable `JIB_INTEGRATION_TESTING_PROJECT` to the GCP project you would like to use for testing. You will also need Docker installed with the daemon running. Otherwise, feel free to skip integration tests.
 
 # Development Tips
 
