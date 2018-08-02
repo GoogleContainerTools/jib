@@ -7,6 +7,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Reordered classpath in entrypoint to allow dependency patching ([#777](https://github.com/GoogleContainerTools/jib/issues/777))
+
 ### Fixed
 
 ## 0.9.8
