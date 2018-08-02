@@ -19,12 +19,14 @@ package com.google.cloud.tools.jib.image;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.tar.TarStreamBuilder;
 import com.google.common.collect.ImmutableList;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 
@@ -44,12 +46,6 @@ public class ReproducibleLayerBuilder {
   private static List<TarArchiveEntry> buildAsTarArchiveEntries(LayerEntry layerEntry)
       throws IOException {
     List<TarArchiveEntry> tarArchiveEntries = new ArrayList<>();
-
-    // Adds the extraction path itself; to do this, we are adding the current directory to act as
-    // the file input (since all directories are treated the same in TarArchiveEntry).
-    TarArchiveEntry extractionPathDirectoryEntry =
-        new TarArchiveEntry(Paths.get(".").toFile(), layerEntry.getExtractionPath());
-    tarArchiveEntries.add(extractionPathDirectoryEntry);
 
     // Adds the files to extract relative to the extraction path.
     for (Path sourceFile : layerEntry.getSourceFiles()) {
@@ -84,6 +80,23 @@ public class ReproducibleLayerBuilder {
     return tarArchiveEntries;
   }
 
+  /**
+   * Gets the parent directories for {@code directory}, excluding root {@code /}, but including
+   * {@code directory} itself.
+   *
+   * @param directory the directory to get parents for
+   * @return the list of parent directories
+   */
+  private static List<Path> getParentDirectories(Path directory) {
+    List<Path> parentDirectories = new ArrayList<>();
+    Path currentPath = Paths.get("/");
+    for (Path element : directory) {
+      currentPath = currentPath.resolve(element);
+      parentDirectories.add(currentPath);
+    }
+    return parentDirectories;
+  }
+
   private final ImmutableList.Builder<LayerEntry> layerEntries = ImmutableList.builder();
 
   public ReproducibleLayerBuilder() {}
@@ -110,9 +123,28 @@ public class ReproducibleLayerBuilder {
    */
   public UnwrittenLayer build() throws IOException {
     List<TarArchiveEntry> filesystemEntries = new ArrayList<>();
+    List<LayerEntry> layerEntries = this.layerEntries.build();
+
+    // Adds the extraction paths (along with any parent directories) to explicitly set permissions
+    // for those directories.
+    LinkedHashSet<String> directoriesToAdd = new LinkedHashSet<>();
+    for (LayerEntry layerEntry : layerEntries) {
+      String extractionPath = layerEntry.getExtractionPath();
+      for (Path parentDirectory : getParentDirectories(Paths.get(extractionPath))) {
+        directoriesToAdd.add(parentDirectory.toString());
+      }
+    }
+    // We are using the current directory to act as the file input (since all directories are
+    // treated the same in TarArchiveEntry).
+    File directoryFile = Paths.get(".").toFile();
+    for (String directoryToAdd : directoriesToAdd) {
+      TarArchiveEntry extractionPathDirectoryEntry =
+          new TarArchiveEntry(directoryFile, directoryToAdd);
+      filesystemEntries.add(extractionPathDirectoryEntry);
+    }
 
     // Adds all the layer entries as tar entries.
-    for (LayerEntry layerEntry : layerEntries.build()) {
+    for (LayerEntry layerEntry : layerEntries) {
       filesystemEntries.addAll(buildAsTarArchiveEntries(layerEntry));
     }
 

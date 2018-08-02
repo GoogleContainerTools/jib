@@ -112,7 +112,9 @@ public class ReproducibleLayerBuilderTest {
     // Reads the file back.
     try (TarArchiveInputStream tarArchiveInputStream =
         new TarArchiveInputStream(Files.newInputStream(temporaryFile))) {
-      // Verifies that the extraction path itself was added.
+      // Verifies that the extraction path itself and parents were added.
+      verifyNextTarArchiveEntryIsDirectory(tarArchiveInputStream, "extract/");
+      verifyNextTarArchiveEntryIsDirectory(tarArchiveInputStream, "extract/here/");
       verifyNextTarArchiveEntryIsDirectory(tarArchiveInputStream, "extract/here/apple/");
 
       // Verifies that blobA was added.
