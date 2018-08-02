@@ -39,7 +39,7 @@
         <version>${jib-maven-plugin.version}</version>
         <configuration>
           <to>
-            <image>gcr.io/jib-integration-testing/simpleimage:maven</image>
+            <image>${_TARGET_IMAGE}</image>
           </to>
           <container>
             <useCurrentTimestamp>true</useCurrentTimestamp>
