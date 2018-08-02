@@ -1,5 +1,5 @@
 ![beta](https://img.shields.io/badge/stability-beta-darkorange.svg)
-[![Gradle Plugin Portal](https://img.shields.io/badge/gradle%20plugin-v0.9.7-blue.svg)](https://plugins.gradle.org/plugin/com.google.cloud.tools.jib)
+[![Gradle Plugin Portal](https://img.shields.io/badge/gradle%20plugin-v0.9.8-blue.svg)](https://plugins.gradle.org/plugin/com.google.cloud.tools.jib)
 [![Gitter version](https://img.shields.io/gitter/room/gitterHQ/gitter.svg)](https://gitter.im/google/jib)
 
 # Jib - Containerize your Gradle Java project
@@ -23,7 +23,7 @@ In your Gradle Java project, add the plugin to your `build.gradle`:
 
 ```groovy
 plugins {
-  id 'com.google.cloud.tools.jib' version '0.9.7'
+  id 'com.google.cloud.tools.jib' version '0.9.8'
 }
 ```
 

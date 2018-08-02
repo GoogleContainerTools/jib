@@ -88,12 +88,12 @@ To use a local build of the `jib-gradle-plugin`:
                 mavenCentral()
             }
             dependencies {
-                classpath 'com.google.cloud.tools:jib-gradle-plugin:0.9.8-SNAPSHOT'
+                classpath 'com.google.cloud.tools:jib-gradle-plugin:0.9.9-SNAPSHOT'
             }
         }
 
         plugins {
-            // id 'com.google.cloud.tools.jib' version '0.9.7'
+            // id 'com.google.cloud.tools.jib' version '0.9.8'
         }
 
         // Applies the java plugin after Jib to make sure it works in this order.
