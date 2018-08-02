@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.common.collect.ImmutableMap;
@@ -44,7 +45,7 @@ public class GradleProjectPropertiesTest {
   @Mock private Project mockProject;
   @Mock private GradleJibLogger mockGradleJibLogger;
   @Mock private JibExtension mockJibExtension;
-  @Mock private GradleLayerConfigurations mockGradleLayerConfigurations;
+  @Mock private JavaLayerConfigurations mockJavaLayerConfigurations;
 
   private Manifest manifest;
   private GradleProjectProperties gradleProjectProperties;
@@ -55,8 +56,7 @@ public class GradleProjectPropertiesTest {
     Mockito.when(mockJar.getManifest()).thenReturn(manifest);
 
     gradleProjectProperties =
-        new GradleProjectProperties(
-            mockProject, mockGradleJibLogger, mockGradleLayerConfigurations);
+        new GradleProjectProperties(mockProject, mockGradleJibLogger, mockJavaLayerConfigurations);
   }
 
   @Test

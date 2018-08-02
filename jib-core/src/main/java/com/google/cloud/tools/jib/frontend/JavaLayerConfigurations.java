@@ -34,13 +34,15 @@ public class JavaLayerConfigurations extends LayerConfigurations {
   public static final String CLASSES_LAYER_LABEL = "classes";
   public static final String EXTRA_FILES_LAYER_LABEL = "extra files";
 
-  private static class Builder {
+  public static class Builder {
 
     private List<Path> dependenciesFiles = new ArrayList<>();
     private List<Path> snapshotDependenciesFiles = new ArrayList<>();
     private List<Path> resourcesFiles = new ArrayList<>();
     private List<Path> classesFiles = new ArrayList<>();
     private List<Path> extraFiles = new ArrayList<>();
+
+    private Builder() {}
 
     public Builder setDependenciesFiles(List<Path> dependenciesFiles) {
       this.dependenciesFiles = dependenciesFiles;
@@ -98,6 +100,14 @@ public class JavaLayerConfigurations extends LayerConfigurations {
     }
   }
 
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  private JavaLayerConfigurations(List<LayerConfiguration> layerConfigurations) {
+    super(layerConfigurations);
+  }
+
   public LayerEntry getDependenciesLayerEntry() {
     return Preconditions.checkNotNull(getByLabel(DEPENDENCIES_LAYER_LABEL))
         .getLayerEntries()
@@ -120,9 +130,5 @@ public class JavaLayerConfigurations extends LayerConfigurations {
 
   public LayerEntry getExtraFilesLayerEntry() {
     return Preconditions.checkNotNull(getByLabel(EXTRA_FILES_LAYER_LABEL)).getLayerEntries().get(0);
-  }
-
-  private JavaLayerConfigurations(List<LayerConfiguration> layerConfigurations) {
-    super(layerConfigurations);
   }
 }

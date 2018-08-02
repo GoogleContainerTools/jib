@@ -16,10 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.configuration.LayerConfiguration;
-import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
-import com.google.cloud.tools.jib.image.LayerEntry;
-import com.google.common.collect.ImmutableList;
+import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -34,17 +31,11 @@ import org.gradle.api.file.FileCollection;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.SourceSet;
 
-/** Builds {@link LayerConfiguration}s based on inputs from a {@link Project}. */
+/** Builds {@link JavaLayerConfigurations} based on inputs from a {@link Project}. */
 class GradleLayerConfigurations {
 
   /** Name of the `main` {@link SourceSet} to use as source files. */
   private static final String MAIN_SOURCE_SET_NAME = "main";
-
-  private static final String DEPENDENCIES_LAYER_LABEL = "dependencies";
-  private static final String SNAPSHOT_DEPENDENCIES_LAYER_LABEL = "snapshot dependencies";
-  private static final String RESOURCES_LAYER_LABEL = "resources";
-  private static final String CLASSES_LAYER_LABEL = "classes";
-  private static final String EXTRA_FILES_LAYER_LABEL = "extra files";
 
   /**
    * Resolves the source files configuration for a Gradle {@link Project}.
@@ -52,11 +43,10 @@ class GradleLayerConfigurations {
    * @param project the Gradle {@link Project}
    * @param gradleJibLogger the build logger for providing feedback about the resolution
    * @param extraDirectory path to the directory for the extra files layer
-   * @return a {@link GradleLayerConfigurations} for building the layers for the Gradle {@link
-   *     Project}
+   * @return a {@link JavaLayerConfigurations} for the layers for the Gradle {@link Project}
    * @throws IOException if an I/O exception occurred during resolution
    */
-  static GradleLayerConfigurations getForProject(
+  static JavaLayerConfigurations getForProject(
       Project project, GradleJibLogger gradleJibLogger, Path extraDirectory) throws IOException {
     JavaPluginConvention javaPluginConvention =
         project.getConvention().getPlugin(JavaPluginConvention.class);
@@ -124,79 +114,14 @@ class GradleLayerConfigurations {
     Collections.sort(classesFiles);
     Collections.sort(extraFiles);
 
-    return new GradleLayerConfigurations(
-        LayerConfiguration.builder()
-            .addEntry(
-                dependenciesFiles, JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
-            .setLabel(DEPENDENCIES_LAYER_LABEL)
-            .build(),
-        LayerConfiguration.builder()
-            .addEntry(
-                snapshotDependenciesFiles,
-                JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
-            .setLabel(SNAPSHOT_DEPENDENCIES_LAYER_LABEL)
-            .build(),
-        LayerConfiguration.builder()
-            .addEntry(resourcesFiles, JavaEntrypointConstructor.DEFAULT_RESOURCES_PATH_ON_IMAGE)
-            .setLabel(RESOURCES_LAYER_LABEL)
-            .build(),
-        LayerConfiguration.builder()
-            .addEntry(classesFiles, JavaEntrypointConstructor.DEFAULT_CLASSES_PATH_ON_IMAGE)
-            .setLabel(CLASSES_LAYER_LABEL)
-            .build(),
-        LayerConfiguration.builder()
-            .addEntry(extraFiles, "/")
-            .setLabel(EXTRA_FILES_LAYER_LABEL)
-            .build());
+    return JavaLayerConfigurations.builder()
+        .setDependenciesFiles(dependenciesFiles)
+        .setSnapshotDependenciesFiles(snapshotDependenciesFiles)
+        .setResourcesFiles(resourcesFiles)
+        .setClassesFiles(classesFiles)
+        .setExtraFiles(extraFiles)
+        .build();
   }
 
-  private final LayerConfiguration dependenciesLayerConfiguration;
-  private final LayerConfiguration snapshotDependenciesLayerConfiguration;
-  private final LayerConfiguration resourcesLayerConfiguration;
-  private final LayerConfiguration classesLayerConfiguration;
-  private final LayerConfiguration extraFilesLayerConfiguration;
-
-  // TODO: Consolidate with MavenLayerConfigurations.
-  /** Instantiate with {@link #getForProject}. */
-  private GradleLayerConfigurations(
-      LayerConfiguration dependenciesLayerConfiguration,
-      LayerConfiguration snapshotDependenciesLayerConfiguration,
-      LayerConfiguration resourcesLayerConfiguration,
-      LayerConfiguration classesLayerConfiguration,
-      LayerConfiguration extraFilesLayerConfiguration) {
-    this.dependenciesLayerConfiguration = dependenciesLayerConfiguration;
-    this.snapshotDependenciesLayerConfiguration = snapshotDependenciesLayerConfiguration;
-    this.resourcesLayerConfiguration = resourcesLayerConfiguration;
-    this.classesLayerConfiguration = classesLayerConfiguration;
-    this.extraFilesLayerConfiguration = extraFilesLayerConfiguration;
-  }
-
-  ImmutableList<LayerConfiguration> getLayerConfigurations() {
-    return ImmutableList.of(
-        dependenciesLayerConfiguration,
-        snapshotDependenciesLayerConfiguration,
-        resourcesLayerConfiguration,
-        classesLayerConfiguration,
-        extraFilesLayerConfiguration);
-  }
-
-  LayerEntry getDependenciesLayerEntry() {
-    return dependenciesLayerConfiguration.getLayerEntries().get(0);
-  }
-
-  LayerEntry getSnapshotDependenciesLayerEntry() {
-    return snapshotDependenciesLayerConfiguration.getLayerEntries().get(0);
-  }
-
-  LayerEntry getResourcesLayerEntry() {
-    return resourcesLayerConfiguration.getLayerEntries().get(0);
-  }
-
-  LayerEntry getClassesLayerEntry() {
-    return classesLayerConfiguration.getLayerEntries().get(0);
-  }
-
-  LayerEntry getExtraFilesLayerEntry() {
-    return extraFilesLayerConfiguration.getLayerEntries().get(0);
-  }
+  private GradleLayerConfigurations() {}
 }

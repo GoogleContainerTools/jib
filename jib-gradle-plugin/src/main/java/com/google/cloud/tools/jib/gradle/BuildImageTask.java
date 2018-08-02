@@ -149,7 +149,8 @@ public class BuildImageTask extends DefaultTask {
             .setContainerConfiguration(containerConfigurationBuilder.build())
             .setTargetFormat(jibExtension.getFormat())
             .setAllowInsecureRegistries(jibExtension.getAllowInsecureRegistries())
-            .setLayerConfigurations(gradleProjectProperties.getLayerConfigurations());
+            .setLayerConfigurations(
+                gradleProjectProperties.getJavaLayerConfigurations().getLayerConfigurations());
 
     CacheConfiguration applicationLayersCacheConfiguration =
         CacheConfiguration.forPath(gradleProjectProperties.getCacheDirectory());

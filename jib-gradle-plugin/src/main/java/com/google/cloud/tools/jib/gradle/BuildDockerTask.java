@@ -138,7 +138,8 @@ public class BuildDockerTask extends DefaultTask {
             .setTargetImageConfiguration(targetImageConfiguration)
             .setContainerConfiguration(containerConfigurationBuilder.build())
             .setAllowInsecureRegistries(jibExtension.getAllowInsecureRegistries())
-            .setLayerConfigurations(gradleProjectProperties.getLayerConfigurations());
+            .setLayerConfigurations(
+                gradleProjectProperties.getJavaLayerConfigurations().getLayerConfigurations());
     CacheConfiguration applicationLayersCacheConfiguration =
         CacheConfiguration.forPath(gradleProjectProperties.getCacheDirectory());
     buildConfigurationBuilder.setApplicationLayersCacheConfiguration(
