@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
-import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.frontend.MainClassFinder;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -113,13 +112,7 @@ public class MainClassResolver {
                 + "; attempting to infer main class.");
 
     ImmutableList<Path> classesSourceFiles =
-        Preconditions.checkNotNull(
-                projectProperties
-                    .getJavaLayerConfigurations()
-                    .getByLabel(JavaLayerConfigurations.CLASSES_LAYER_LABEL))
-            .getLayerEntries()
-            .get(0)
-            .getSourceFiles();
+        projectProperties.getJavaLayerConfigurations().getClassesLayerEntry().getSourceFiles();
 
     MainClassFinder.Result mainClassFinderResult =
         new MainClassFinder(classesSourceFiles, projectProperties.getLogger()).find();

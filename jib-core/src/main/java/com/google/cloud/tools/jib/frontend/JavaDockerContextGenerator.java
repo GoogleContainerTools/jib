@@ -85,9 +85,9 @@ public class JavaDockerContextGenerator {
    */
   private static void addIfNotEmpty(
       ImmutableList.Builder<CopyDirective> listBuilder,
-      @Nullable LayerEntry layerEntry,
+      LayerEntry layerEntry,
       String directoryInContext) {
-    if (layerEntry == null || layerEntry.getSourceFiles().isEmpty()) {
+    if (layerEntry.getSourceFiles().isEmpty()) {
       return;
     }
 

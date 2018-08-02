@@ -22,8 +22,8 @@ import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.base.Preconditions;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import javax.annotation.Nullable;
 
 /** Builds {@link LayerConfiguration}s for a Java application. */
 public class JavaLayerConfigurations extends LayerConfigurations {
@@ -36,78 +36,65 @@ public class JavaLayerConfigurations extends LayerConfigurations {
 
   private static class Builder {
 
-    @Nullable private List<Path> dependenciesFiles;
-    @Nullable private List<Path> snapshotDependenciesFiles;
-    @Nullable private List<Path> resourcesFiles;
-    @Nullable private List<Path> classesFiles;
-    @Nullable private List<Path> extraFiles;
+    private List<Path> dependenciesFiles = new ArrayList<>();
+    private List<Path> snapshotDependenciesFiles = new ArrayList<>();
+    private List<Path> resourcesFiles = new ArrayList<>();
+    private List<Path> classesFiles = new ArrayList<>();
+    private List<Path> extraFiles = new ArrayList<>();
 
-    public Builder setDependenciesFiles(@Nullable List<Path> dependenciesFiles) {
+    public Builder setDependenciesFiles(List<Path> dependenciesFiles) {
       this.dependenciesFiles = dependenciesFiles;
       return this;
     }
 
-    public Builder setSnapshotDependenciesFiles(@Nullable List<Path> snapshotDependenciesFiles) {
+    public Builder setSnapshotDependenciesFiles(List<Path> snapshotDependenciesFiles) {
       this.snapshotDependenciesFiles = snapshotDependenciesFiles;
       return this;
     }
 
-    public Builder setResourcesFiles(@Nullable List<Path> resourcesFiles) {
+    public Builder setResourcesFiles(List<Path> resourcesFiles) {
       this.resourcesFiles = resourcesFiles;
       return this;
     }
 
-    public Builder setClassesFiles(@Nullable List<Path> classesFiles) {
+    public Builder setClassesFiles(List<Path> classesFiles) {
       this.classesFiles = classesFiles;
       return this;
     }
 
-    public Builder setExtraFiles(@Nullable List<Path> extraFiles) {
+    public Builder setExtraFiles(List<Path> extraFiles) {
       this.extraFiles = extraFiles;
       return this;
     }
 
     public JavaLayerConfigurations build() {
-      List<LayerConfiguration> layerConfigurations = new ArrayList<>();
-      if (dependenciesFiles != null) {
-        layerConfigurations.add(
-            LayerConfiguration.builder()
-                .addEntry(
-                    dependenciesFiles, JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
-                .setLabel(DEPENDENCIES_LAYER_LABEL)
-                .build());
-      }
-      if (snapshotDependenciesFiles != null) {
-        layerConfigurations.add(
-            LayerConfiguration.builder()
-                .addEntry(
-                    snapshotDependenciesFiles,
-                    JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
-                .setLabel(SNAPSHOT_DEPENDENCIES_LAYER_LABEL)
-                .build());
-      }
-      if (resourcesFiles != null) {
-        layerConfigurations.add(
-            LayerConfiguration.builder()
-                .addEntry(resourcesFiles, JavaEntrypointConstructor.DEFAULT_RESOURCES_PATH_ON_IMAGE)
-                .setLabel(RESOURCES_LAYER_LABEL)
-                .build());
-      }
-      if (classesFiles != null) {
-        layerConfigurations.add(
-            LayerConfiguration.builder()
-                .addEntry(classesFiles, JavaEntrypointConstructor.DEFAULT_CLASSES_PATH_ON_IMAGE)
-                .setLabel(CLASSES_LAYER_LABEL)
-                .build());
-      }
-      if (extraFiles != null) {
-        layerConfigurations.add(
-            LayerConfiguration.builder()
-                .addEntry(extraFiles, "/")
-                .setLabel(EXTRA_FILES_LAYER_LABEL)
-                .build());
-      }
-      return new JavaLayerConfigurations(layerConfigurations);
+      return new JavaLayerConfigurations(
+          Arrays.asList(
+              LayerConfiguration.builder()
+                  .addEntry(
+                      dependenciesFiles,
+                      JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
+                  .setLabel(DEPENDENCIES_LAYER_LABEL)
+                  .build(),
+              LayerConfiguration.builder()
+                  .addEntry(
+                      snapshotDependenciesFiles,
+                      JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
+                  .setLabel(SNAPSHOT_DEPENDENCIES_LAYER_LABEL)
+                  .build(),
+              LayerConfiguration.builder()
+                  .addEntry(
+                      resourcesFiles, JavaEntrypointConstructor.DEFAULT_RESOURCES_PATH_ON_IMAGE)
+                  .setLabel(RESOURCES_LAYER_LABEL)
+                  .build(),
+              LayerConfiguration.builder()
+                  .addEntry(classesFiles, JavaEntrypointConstructor.DEFAULT_CLASSES_PATH_ON_IMAGE)
+                  .setLabel(CLASSES_LAYER_LABEL)
+                  .build(),
+              LayerConfiguration.builder()
+                  .addEntry(extraFiles, "/")
+                  .setLabel(EXTRA_FILES_LAYER_LABEL)
+                  .build()));
     }
   }
 

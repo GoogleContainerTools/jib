@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.cloud.tools.jib.JibLogger;
+import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
@@ -39,6 +40,7 @@ public class MainClassResolverTest {
   @Mock private JibLogger mockBuildLogger;
   @Mock private ProjectProperties mockProjectProperties;
   @Mock private HelpfulSuggestions mockHelpfulSuggestions;
+  @Mock private JavaLayerConfigurations mockJavaLayerConfigurations;
 
   private final ImmutableList<Path> fakeClassesPath = ImmutableList.of(Paths.get("a/b/c"));
 
@@ -49,6 +51,8 @@ public class MainClassResolverTest {
     Mockito.when(mockProjectProperties.getMainClassHelpfulSuggestions(ArgumentMatchers.any()))
         .thenReturn(mockHelpfulSuggestions);
     Mockito.when(mockProjectProperties.getJarPluginName()).thenReturn("jar-plugin");
+    Mockito.when(mockProjectProperties.getJavaLayerConfigurations())
+        .thenReturn(mockJavaLayerConfigurations);
   }
 
   @Test
@@ -129,11 +133,12 @@ public class MainClassResolverTest {
 
   @Test
   public void testResolveMainClass_noneInferredWithoutBackup() {
-    Mockito.when(mockProjectProperties.getJavaLayerConfigurations().getClassesLayerEntry())
+    Mockito.when(mockJavaLayerConfigurations.getClassesLayerEntry())
         .thenReturn(new LayerEntry(ImmutableList.of(), "ignored"));
     try {
       MainClassResolver.resolveMainClass(null, mockProjectProperties);
       Assert.fail();
+
     } catch (MainClassInferenceException ex) {
       Mockito.verify(mockProjectProperties)
           .getMainClassHelpfulSuggestions("Main class was not found");
