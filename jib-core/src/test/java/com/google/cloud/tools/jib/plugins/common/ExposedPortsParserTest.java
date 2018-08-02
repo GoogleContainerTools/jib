@@ -14,11 +14,12 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.frontend;
+package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.configuration.Port.Protocol;
+import com.google.cloud.tools.jib.plugins.common.ExposedPortsParser;
 import com.google.common.collect.ImmutableList;
 import java.util.Arrays;
 import java.util.Collections;
