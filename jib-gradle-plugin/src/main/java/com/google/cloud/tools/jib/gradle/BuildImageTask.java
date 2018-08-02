@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
@@ -28,10 +29,12 @@ import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.frontend.SystemPropertyValidator;
 import com.google.cloud.tools.jib.http.Authorization;
+import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.time.Instant;
@@ -97,11 +100,13 @@ public class BuildImageTask extends DefaultTask {
     }
     RegistryCredentials knownBaseRegistryCredentials = null;
     RegistryCredentials knownTargetRegistryCredentials = null;
-    Authorization fromAuthorization = jibExtension.getFrom().getImageAuthorization();
+    Authorization fromAuthorization =
+        getImageAuthorization(gradleJibLogger, "from", jibExtension.getFrom().getAuth());
     if (fromAuthorization != null) {
       knownBaseRegistryCredentials = new RegistryCredentials("jib.from.auth", fromAuthorization);
     }
-    Authorization toAuthorization = jibExtension.getTo().getImageAuthorization();
+    Authorization toAuthorization =
+        getImageAuthorization(gradleJibLogger, "to", jibExtension.getFrom().getAuth());
     if (toAuthorization != null) {
       knownTargetRegistryCredentials = new RegistryCredentials("jib.to.auth", toAuthorization);
     }
@@ -173,5 +178,43 @@ public class BuildImageTask extends DefaultTask {
   BuildImageTask setJibExtension(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
     return this;
+  }
+
+  /**
+   * Validates and returns an {@link Authorization} from a configured {@link AuthParameters}.
+   *
+   * <p>TODO: Consolidate with other tasks.
+   *
+   * @param logger the {@link JibLogger} used to print warnings
+   * @param imageProperty the image configuration's name (i.e. "from" or "to")
+   * @param auth the auth configuration to get the {@link Authorization} from
+   * @return the {@link Authorization}, or null if the username and password aren't both configured
+   */
+  @VisibleForTesting
+  @Nullable
+  static Authorization getImageAuthorization(
+      JibLogger logger, String imageProperty, AuthParameters auth) {
+    if (Strings.isNullOrEmpty(auth.getUsername()) && Strings.isNullOrEmpty(auth.getPassword())) {
+      return null;
+    }
+    if (Strings.isNullOrEmpty(auth.getUsername())) {
+      logger.warn(
+          "jib."
+              + imageProperty
+              + ".auth.username is null; ignoring jib."
+              + imageProperty
+              + ".auth section.");
+      return null;
+    }
+    if (Strings.isNullOrEmpty(auth.getPassword())) {
+      logger.warn(
+          "jib."
+              + imageProperty
+              + ".auth.password is null; ignoring jib."
+              + imageProperty
+              + ".auth section.");
+      return null;
+    }
+    return Authorizations.withBasicCredentials(auth.getUsername(), auth.getPassword());
   }
 }
