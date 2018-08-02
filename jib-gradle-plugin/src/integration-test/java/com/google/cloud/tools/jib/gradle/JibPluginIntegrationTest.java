@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.Command;
+import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.time.Instant;
@@ -41,7 +42,9 @@ public class JibPluginIntegrationTest {
 
   private static String buildAndRun(TestProject testProject, String imageReference)
       throws IOException, InterruptedException {
-    BuildResult buildResult = testProject.build("clean", JibPlugin.BUILD_IMAGE_TASK_NAME);
+    BuildResult buildResult =
+        testProject.build(
+            "clean", JibPlugin.BUILD_IMAGE_TASK_NAME, "-D_TARGET_IMAGE=" + imageReference);
 
     BuildTask classesTask = buildResult.task(":classes");
     BuildTask jibTask = buildResult.task(":" + JibPlugin.BUILD_IMAGE_TASK_NAME);
@@ -69,7 +72,9 @@ public class JibPluginIntegrationTest {
 
   private static String buildToDockerDaemonAndRun(TestProject testProject, String imageReference)
       throws IOException, InterruptedException {
-    BuildResult buildResult = testProject.build("clean", JibPlugin.BUILD_DOCKER_TASK_NAME);
+    BuildResult buildResult =
+        testProject.build(
+            "clean", JibPlugin.BUILD_DOCKER_TASK_NAME, "-D_TARGET_IMAGE=" + imageReference);
 
     BuildTask classesTask = buildResult.task(":classes");
     BuildTask jibBuildDockerTask = buildResult.task(":" + JibPlugin.BUILD_DOCKER_TASK_NAME);
@@ -94,28 +99,51 @@ public class JibPluginIntegrationTest {
     return new Command("docker", "run", imageReference).run();
   }
 
+  /**
+   * Asserts that the creation time of the simple test project is set. If the time parsed from the
+   * {@code docker inspect} command occurs before the specified time (i.e. if it is 1970), then the
+   * assertion will fail.
+   *
+   * @param before the specified time to compare the resulting image's creation time to
+   * @param imageReference the image to test
+   * @throws IOException if the {@code docker inspect} command fails to run
+   * @throws InterruptedException if the {@code docker inspect} command is interrupted
+   */
+  private static void assertSimpleCreationTimeIsAfter(Instant before, String imageReference)
+      throws IOException, InterruptedException {
+    String inspect =
+        new Command("docker", "inspect", "-f", "{{.Created}}", imageReference).run().trim();
+    Instant parsed = Instant.parse(inspect);
+    Assert.assertTrue(parsed.isAfter(before) || parsed.equals(before));
+  }
+
   @Test
   public void testBuild_empty() throws IOException, InterruptedException {
-    Assert.assertEquals(
-        "", buildAndRun(emptyTestProject, "gcr.io/jib-integration-testing/emptyimage:gradle"));
+    String targetImage =
+        "gcr.io/"
+            + IntegrationTestingConfiguration.getGCPProject()
+            + "/emptyimage:gradle"
+            + System.nanoTime();
+    Assert.assertEquals("", buildAndRun(emptyTestProject, targetImage));
     Assert.assertEquals(
         "1970-01-01T00:00:00Z",
-        new Command(
-                "docker",
-                "inspect",
-                "-f",
-                "{{.Created}}",
-                "gcr.io/jib-integration-testing/emptyimage:gradle")
-            .run()
-            .trim());
+        new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim());
   }
 
   @Test
   public void testBuild_simple() throws IOException, InterruptedException {
+    String targetImage =
+        "gcr.io/"
+            + IntegrationTestingConfiguration.getGCPProject()
+            + "/simpleimage:gradle"
+            + System.nanoTime();
+
     // Test empty output error
     try {
-      simpleTestProject.build("clean", JibPlugin.BUILD_IMAGE_TASK_NAME, "-x=classes");
+      simpleTestProject.build(
+          "clean", JibPlugin.BUILD_IMAGE_TASK_NAME, "-x=classes", "-D_TARGET_IMAGE=" + targetImage);
       Assert.fail();
+
     } catch (UnexpectedBuildFailure ex) {
       Assert.assertThat(
           ex.getMessage(),
@@ -125,9 +153,8 @@ public class JibPluginIntegrationTest {
 
     Instant beforeBuild = Instant.now();
     Assert.assertEquals(
-        "Hello, world. An argument.\nfoo\ncat\n",
-        buildAndRun(simpleTestProject, "gcr.io/jib-integration-testing/simpleimage:gradle"));
-    assertSimpleCreationTimeIsAfter(beforeBuild);
+        "Hello, world. An argument.\nfoo\ncat\n", buildAndRun(simpleTestProject, targetImage));
+    assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
   }
 
   @Test
@@ -148,30 +175,21 @@ public class JibPluginIntegrationTest {
 
   @Test
   public void testDockerDaemon_empty() throws IOException, InterruptedException {
-    Assert.assertEquals(
-        "",
-        buildToDockerDaemonAndRun(
-            emptyTestProject, "gcr.io/jib-integration-testing/emptyimage:gradle"));
+    String targetImage = "emptyimage:gradle" + System.nanoTime();
+    Assert.assertEquals("", buildToDockerDaemonAndRun(emptyTestProject, targetImage));
     Assert.assertEquals(
         "1970-01-01T00:00:00Z",
-        new Command(
-                "docker",
-                "inspect",
-                "-f",
-                "{{.Created}}",
-                "gcr.io/jib-integration-testing/emptyimage:gradle")
-            .run()
-            .trim());
+        new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim());
   }
 
   @Test
   public void testDockerDaemon_simple() throws IOException, InterruptedException {
+    String targetImage = "simpleimage:gradle" + System.nanoTime();
     Instant beforeBuild = Instant.now();
     Assert.assertEquals(
         "Hello, world. An argument.\nfoo\ncat\n",
-        buildToDockerDaemonAndRun(
-            simpleTestProject, "gcr.io/jib-integration-testing/simpleimage:gradle"));
-    assertSimpleCreationTimeIsAfter(beforeBuild);
+        buildToDockerDaemonAndRun(simpleTestProject, targetImage));
+    assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
   }
 
   @Test
@@ -184,11 +202,14 @@ public class JibPluginIntegrationTest {
 
   @Test
   public void testBuildTar_simple() throws IOException, InterruptedException {
-    String imageReference = "gcr.io/jib-integration-testing/simpleimage:gradle";
+    String targetImage = "simpleimage:gradle" + System.nanoTime();
+
     String outputPath =
         simpleTestProject.getProjectRoot().resolve("build").resolve("jib-image.tar").toString();
     Instant beforeBuild = Instant.now();
-    BuildResult buildResult = simpleTestProject.build("clean", JibPlugin.BUILD_TAR_TASK_NAME);
+    BuildResult buildResult =
+        simpleTestProject.build(
+            "clean", JibPlugin.BUILD_TAR_TASK_NAME, "-D_TARGET_IMAGE=" + targetImage);
 
     BuildTask classesTask = buildResult.task(":classes");
     BuildTask jibBuildTarTask = buildResult.task(":" + JibPlugin.BUILD_TAR_TASK_NAME);
@@ -203,9 +224,8 @@ public class JibPluginIntegrationTest {
 
     new Command("docker", "load", "--input", outputPath).run();
     Assert.assertEquals(
-        "Hello, world. An argument.\nfoo\ncat\n",
-        new Command("docker", "run", imageReference).run());
-    assertSimpleCreationTimeIsAfter(beforeBuild);
+        "Hello, world. An argument.\nfoo\ncat\n", new Command("docker", "run", targetImage).run());
+    assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
   }
 
   @Test
@@ -223,7 +243,7 @@ public class JibPluginIntegrationTest {
     Assert.assertThat(
         buildResult.getOutput(), CoreMatchers.containsString("Created Docker context at "));
 
-    String imageName = "jib-gradle-plugin/integration-test";
+    String imageName = "jib-gradle-plugin/integration-test" + System.nanoTime();
     new Command(
             "docker",
             "build",
@@ -280,29 +300,5 @@ public class JibPluginIntegrationTest {
           CoreMatchers.containsString(
               "Export Docker context failed because cannot clear directory"));
     }
-  }
-
-  /**
-   * Asserts that the creation time of the simple test project is set. If the time parsed from the
-   * {@code docker inspect} command occurs before the specified time (i.e. if it is 1970), then the
-   * assertion will fail.
-   *
-   * @param before the specified time to compare the resulting image's creation time to
-   * @throws IOException if the {@code docker inspect} command fails to run
-   * @throws InterruptedException if the {@code docker inspect} command is interrupted
-   */
-  private static void assertSimpleCreationTimeIsAfter(Instant before)
-      throws IOException, InterruptedException {
-    String inspect =
-        new Command(
-                "docker",
-                "inspect",
-                "-f",
-                "{{.Created}}",
-                "gcr.io/jib-integration-testing/simpleimage:gradle")
-            .run()
-            .trim();
-    Instant parsed = Instant.parse(inspect);
-    Assert.assertTrue(parsed.isAfter(before) || parsed.equals(before));
   }
 }
