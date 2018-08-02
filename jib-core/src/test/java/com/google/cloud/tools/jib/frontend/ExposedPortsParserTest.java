@@ -29,7 +29,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link com.google.cloud.tools.jib.frontend.ExposedPortsParser}. */
+/** Tests for {@link ExposedPortsParser}. */
 @RunWith(MockitoJUnitRunner.class)
 public class ExposedPortsParserTest {
 
