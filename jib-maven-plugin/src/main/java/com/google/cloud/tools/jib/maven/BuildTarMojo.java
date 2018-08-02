@@ -130,7 +130,8 @@ public class BuildTarMojo extends JibPluginConfiguration {
             .setTargetImageConfiguration(targetImageConfiguration)
             .setContainerConfiguration(containerConfigurationBuilder.build())
             .setAllowInsecureRegistries(getAllowInsecureRegistries())
-            .setLayerConfigurations(mavenProjectProperties.getJavaLayerConfigurations());
+            .setLayerConfigurations(
+                mavenProjectProperties.getJavaLayerConfigurations().getLayerConfigurations());
     CacheConfiguration applicationLayersCacheConfiguration =
         CacheConfiguration.forPath(mavenProjectProperties.getCacheDirectory());
     buildConfigurationBuilder.setApplicationLayersCacheConfiguration(

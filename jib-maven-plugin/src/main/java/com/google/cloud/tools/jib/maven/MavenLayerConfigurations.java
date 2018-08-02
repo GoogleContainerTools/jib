@@ -16,11 +16,7 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.configuration.LayerConfiguration;
-import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
-import com.google.cloud.tools.jib.frontend.JavaLayerConfigurationsBuilder;
-import com.google.cloud.tools.jib.image.LayerEntry;
-import com.google.common.collect.ImmutableList;
+import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -34,7 +30,7 @@ import java.util.stream.Stream;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.project.MavenProject;
 
-/** Builds {@link LayerConfiguration}s based on inputs from a {@link MavenProject}. */
+/** Builds {@link JavaLayerConfigurations} based on inputs from a {@link MavenProject}. */
 class MavenLayerConfigurations {
 
   /**
@@ -42,10 +38,10 @@ class MavenLayerConfigurations {
    *
    * @param project the {@link MavenProject}
    * @param extraDirectory path to the directory for the extra files layer
-   * @return a list of {@link LayerConfiguration}s for the project
+   * @return a {@link JavaLayerConfigurations} for the project
    * @throws IOException if collecting the project files fails
    */
-  static List<LayerConfiguration> getForProject(MavenProject project, Path extraDirectory)
+  static JavaLayerConfigurations getForProject(MavenProject project, Path extraDirectory)
       throws IOException {
     Path classesSourceDirectory = Paths.get(project.getBuild().getSourceDirectory());
     Path classesOutputDirectory = Paths.get(project.getBuild().getOutputDirectory());
@@ -107,7 +103,13 @@ class MavenLayerConfigurations {
     Collections.sort(classesFiles);
     Collections.sort(extraFiles);
 
-    return new JavaLayerConfigurationsBuilder().setDependenciesFiles(dependenciesFiles).setSnapshotDependenciesFiles(snapshotDependenciesFiles).setResourcesFiles(resourcesFiles).setClassesFiles(classesFiles).setExtraFiles(extraFiles).build();
+    return JavaLayerConfigurations.builder()
+        .setDependenciesFiles(dependenciesFiles)
+        .setSnapshotDependenciesFiles(snapshotDependenciesFiles)
+        .setResourcesFiles(resourcesFiles)
+        .setClassesFiles(classesFiles)
+        .setExtraFiles(extraFiles)
+        .build();
   }
 
   private MavenLayerConfigurations() {}

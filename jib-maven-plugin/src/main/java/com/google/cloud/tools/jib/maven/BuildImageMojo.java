@@ -166,7 +166,8 @@ public class BuildImageMojo extends JibPluginConfiguration {
             .setContainerConfiguration(containerConfigurationBuilder.build())
             .setTargetFormat(ImageFormat.valueOf(getFormat()).getManifestTemplateClass())
             .setAllowInsecureRegistries(getAllowInsecureRegistries())
-            .setLayerConfigurations(mavenProjectProperties.getJavaLayerConfigurations());
+            .setLayerConfigurations(
+                mavenProjectProperties.getJavaLayerConfigurations().getLayerConfigurations());
 
     CacheConfiguration applicationLayersCacheConfiguration =
         CacheConfiguration.forPath(mavenProjectProperties.getCacheDirectory());
