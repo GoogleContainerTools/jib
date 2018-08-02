@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
@@ -28,11 +29,13 @@ import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.frontend.SystemPropertyValidator;
 import com.google.cloud.tools.jib.http.Authorization;
+import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import java.nio.file.Paths;
 import java.time.Instant;
 import javax.annotation.Nullable;
@@ -122,7 +125,7 @@ public class BuildTarTask extends DefaultTask {
     }
     RegistryCredentials knownBaseRegistryCredentials = null;
     Authorization fromAuthorization =
-        jibExtension.getFrom().getImageAuthorization(gradleJibLogger, "from");
+        getImageAuthorization(gradleJibLogger, "from", jibExtension.getFrom().getAuth());
     if (fromAuthorization != null) {
       knownBaseRegistryCredentials = new RegistryCredentials("jib.from.auth", fromAuthorization);
     }
@@ -193,5 +196,42 @@ public class BuildTarTask extends DefaultTask {
   BuildTarTask setJibExtension(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
     return this;
+  }
+
+  /**
+   * Converts the {@link ImageParameters} to an {@link Authorization}.
+   *
+   * <p>TODO: Consolidate with other tasks.
+   *
+   * @param logger the {@link JibLogger} used to print warnings
+   * @param imageProperty the image configuration's name (i.e. "from" or "to")
+   * @param auth the auth configuration to get the {@link Authorization} from
+   * @return the {@link Authorization}, or null if the username and password aren't both configured
+   */
+  @Nullable
+  private static Authorization getImageAuthorization(
+      JibLogger logger, String imageProperty, AuthParameters auth) {
+    if (Strings.isNullOrEmpty(auth.getUsername()) && Strings.isNullOrEmpty(auth.getPassword())) {
+      return null;
+    }
+    if (Strings.isNullOrEmpty(auth.getUsername())) {
+      logger.warn(
+          "jib."
+              + imageProperty
+              + ".auth.username is null; ignoring jib."
+              + imageProperty
+              + ".auth section.");
+      return null;
+    }
+    if (Strings.isNullOrEmpty(auth.getPassword())) {
+      logger.warn(
+          "jib."
+              + imageProperty
+              + ".auth.password is null; ignoring jib."
+              + imageProperty
+              + ".auth section.");
+      return null;
+    }
+    return Authorizations.withBasicCredentials(auth.getUsername(), auth.getPassword());
   }
 }

@@ -16,16 +16,11 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.JibLogger;
-import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.http.Authorizations;
-import com.google.common.base.Strings;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import org.gradle.api.Action;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.Optional;
 
@@ -78,36 +73,5 @@ public class ImageParameters {
 
   public void auth(Action<? super AuthParameters> action) {
     action.execute(auth);
-  }
-
-  /**
-   * Converts the {@link ImageParameters} to an {@link Authorization}.
-   *
-   * @param logger the {@link JibLogger} used to print warnings
-   * @param imageProperty the image configuration's name (i.e. "from" or "to")
-   * @return the {@link Authorization}, or null if the username and password aren't both configured
-   */
-  @Internal
-  @Nullable
-  Authorization getImageAuthorization(JibLogger logger, String imageProperty) {
-    if (Strings.isNullOrEmpty(auth.getUsername()) || Strings.isNullOrEmpty(auth.getPassword())) {
-      if (!Strings.isNullOrEmpty(auth.getPassword())) {
-        logger.warn(
-            "jib."
-                + imageProperty
-                + ".auth.username is null; ignoring jib."
-                + imageProperty
-                + ".auth section.");
-      } else if (!Strings.isNullOrEmpty(auth.getUsername())) {
-        logger.warn(
-            "jib."
-                + imageProperty
-                + ".auth.password is null; ignoring jib."
-                + imageProperty
-                + ".auth section.");
-      }
-      return null;
-    }
-    return Authorizations.withBasicCredentials(auth.getUsername(), auth.getPassword());
   }
 }

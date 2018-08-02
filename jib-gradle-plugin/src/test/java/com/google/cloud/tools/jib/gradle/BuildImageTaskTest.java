@@ -19,8 +19,6 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
-import org.gradle.api.Project;
-import org.gradle.testfixtures.ProjectBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,46 +26,47 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link ImageParameters}. */
+/**
+ * Test for {@link BuildImageTask}.
+ *
+ * <p>TODO: This only tests the {@link BuildImageTask#getImageAuthorization(JibLogger, String,
+ * AuthParameters)} method, which is copy-pasted between the 3 build tasks. When we refactor, we'll
+ * need to move this test.
+ */
 @RunWith(MockitoJUnitRunner.class)
-public class ImageParametersTest {
+public class BuildImageTaskTest {
 
   @Mock private JibLogger mockLogger;
 
   @Test
   public void testGetImageAuthorization() {
-    Project fakeProject = ProjectBuilder.builder().build();
-
-    ImageParameters imageParameters = new ImageParameters(fakeProject.getObjects());
-    imageParameters.auth(
-        auth -> {
-          auth.setUsername("vwxyz");
-          auth.setPassword("98765");
-        });
 
     // Auth set
+    AuthParameters auth = new AuthParameters();
+    auth.setUsername("vwxyz");
+    auth.setPassword("98765");
     Authorization expected = Authorizations.withBasicCredentials("vwxyz", "98765");
-    Authorization actual = imageParameters.getImageAuthorization(mockLogger, "to");
+    Authorization actual = BuildImageTask.getImageAuthorization(mockLogger, "to", auth);
     Assert.assertNotNull(actual);
     Assert.assertEquals(expected.toString(), actual.toString());
     Mockito.verify(mockLogger, Mockito.never()).warn(Mockito.any());
 
     // Auth completely missing
-    imageParameters = new ImageParameters(fakeProject.getObjects());
-    actual = imageParameters.getImageAuthorization(mockLogger, "to");
+    auth = new AuthParameters();
+    actual = BuildImageTask.getImageAuthorization(mockLogger, "to", auth);
     Assert.assertNull(actual);
 
     // Password missing
-    imageParameters = new ImageParameters(fakeProject.getObjects());
-    imageParameters.auth(auth -> auth.setUsername("vwxyz"));
-    actual = imageParameters.getImageAuthorization(mockLogger, "to");
+    auth = new AuthParameters();
+    auth.setUsername("vwxyz");
+    actual = BuildImageTask.getImageAuthorization(mockLogger, "to", auth);
     Assert.assertNull(actual);
     Mockito.verify(mockLogger).warn("jib.to.auth.password is null; ignoring jib.to.auth section.");
 
     // Username missing
-    imageParameters = new ImageParameters(fakeProject.getObjects());
-    imageParameters.auth(auth -> auth.setPassword("98765"));
-    actual = imageParameters.getImageAuthorization(mockLogger, "to");
+    auth = new AuthParameters();
+    auth.setPassword("98765");
+    actual = BuildImageTask.getImageAuthorization(mockLogger, "to", auth);
     Assert.assertNull(actual);
     Mockito.verify(mockLogger).warn("jib.to.auth.username is null; ignoring jib.to.auth section.");
   }

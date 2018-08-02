@@ -17,8 +17,6 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.JibLogger;
-import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.common.annotations.VisibleForTesting;
@@ -59,12 +57,12 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     }
 
     @Nullable
-    private String getUsername() {
+    String getUsername() {
       return username;
     }
 
     @Nullable
-    private String getPassword() {
+    String getPassword() {
       return password;
     }
   }
@@ -127,68 +125,6 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     } catch (InvalidImageReferenceException ex) {
       throw new IllegalStateException("Parameter '" + type + "' is invalid", ex);
     }
-  }
-
-  /**
-   * Gets an {@link Authorization} from a username and password. First tries system properties, then
-   * tries build configuration, otherwise returns null.
-   *
-   * @param logger the {@link JibLogger} used to print warnings messages
-   * @param imageProperty the image configuration's name (i.e. "from" or "to")
-   * @param usernameProperty the name of the username system property
-   * @param passwordProperty the name of the password system property
-   * @param auth the configured credentials
-   * @return a new {@link Authorization} from the system properties or build configuration, or
-   *     {@code null} if neither is configured.
-   */
-  @VisibleForTesting
-  @Nullable
-  static Authorization getImageAuth(
-      JibLogger logger,
-      String imageProperty,
-      String usernameProperty,
-      String passwordProperty,
-      AuthConfiguration auth) {
-    // System property takes priority over build configuration
-    String commandlineUsername = System.getProperty(usernameProperty);
-    String commandlinePassword = System.getProperty(passwordProperty);
-    if (Strings.isNullOrEmpty(commandlineUsername) || Strings.isNullOrEmpty(commandlinePassword)) {
-      if (!Strings.isNullOrEmpty(commandlinePassword)) {
-        logger.warn(
-            passwordProperty
-                + " system property is set, but "
-                + usernameProperty
-                + " is not; attempting other authentication methods.");
-      } else if (!Strings.isNullOrEmpty(commandlineUsername)) {
-        logger.warn(
-            usernameProperty
-                + " system property is set, but "
-                + passwordProperty
-                + " is not; attempting other authentication methods.");
-      }
-    } else {
-      return Authorizations.withBasicCredentials(commandlineUsername, commandlinePassword);
-    }
-
-    if (Strings.isNullOrEmpty(auth.getUsername()) || Strings.isNullOrEmpty(auth.getPassword())) {
-      if (!Strings.isNullOrEmpty(auth.getPassword())) {
-        logger.warn(
-            "<"
-                + imageProperty
-                + "><auth><username> is missing from maven configuration; ignoring <"
-                + imageProperty
-                + "><auth> section.");
-      } else if (!Strings.isNullOrEmpty(auth.getUsername())) {
-        logger.warn(
-            "<"
-                + imageProperty
-                + "><auth><password> is missing from maven configuration; ignoring <"
-                + imageProperty
-                + "><auth> section.");
-      }
-      return null;
-    }
-    return Authorizations.withBasicCredentials(auth.getUsername(), auth.getPassword());
   }
 
   @Nullable
@@ -279,10 +215,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     return Preconditions.checkNotNull(from).credHelper;
   }
 
-  @Nullable
-  Authorization getBaseImageAuth(JibLogger logger) {
-    return getImageAuth(
-        logger, "from", "jib.from.auth.username", "jib.from.auth.password", from.auth);
+  AuthConfiguration getBaseImageAuth() {
+    return from.auth;
   }
 
   @Nullable
@@ -295,9 +229,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     return Preconditions.checkNotNull(to).credHelper;
   }
 
-  @Nullable
-  Authorization getTargetImageAuth(JibLogger logger) {
-    return getImageAuth(logger, "to", "jib.to.auth.username", "jib.to.auth.password", to.auth);
+  AuthConfiguration getTargetImageAuth() {
+    return to.auth;
   }
 
   boolean getUseCurrentTimestamp() {
