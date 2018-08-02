@@ -226,7 +226,6 @@ public class RegistryEndpointCallerTest {
     Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
         .thenThrow(Mockito.mock(HttpHostConnectException.class)); // server is not listening on 443
 
-    RegistryEndpointCaller<String> secureEndpointCaller = createRegistryEndpointCaller(false, -1);
     try {
       secureEndpointCaller.call();
       Assert.fail("Should not fall back to HTTP if not allowInsecureRegistries");
