@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
+import com.google.cloud.tools.jib.configuration.LayerConfigurations;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
@@ -30,6 +31,7 @@ import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import javax.annotation.Nullable;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -66,46 +68,21 @@ class MavenProjectProperties implements ProjectProperties {
 
   private final MavenProject project;
   private final MavenJibLogger mavenJibLogger;
-  private final MavenLayerConfigurations mavenLayerConfigurations;
+  private final LayerConfigurations layerConfigurations;
 
   @VisibleForTesting
   MavenProjectProperties(
       MavenProject project,
       MavenJibLogger mavenJibLogger,
-      MavenLayerConfigurations mavenLayerConfigurations) {
+      List<LayerConfiguration> layerConfigurations) {
     this.project = project;
     this.mavenJibLogger = mavenJibLogger;
-    this.mavenLayerConfigurations = mavenLayerConfigurations;
+    this.layerConfigurations = new LayerConfigurations(layerConfigurations);
   }
 
   @Override
-  public ImmutableList<LayerConfiguration> getLayerConfigurations() {
-    return mavenLayerConfigurations.getLayerConfigurations();
-  }
-
-  @Override
-  public LayerEntry getDependenciesLayerEntry() {
-    return mavenLayerConfigurations.getDependenciesLayerEntry();
-  }
-
-  @Override
-  public LayerEntry getSnapshotDependenciesLayerEntry() {
-    return mavenLayerConfigurations.getSnapshotDependenciesLayerEntry();
-  }
-
-  @Override
-  public LayerEntry getResourcesLayerEntry() {
-    return mavenLayerConfigurations.getResourcesLayerEntry();
-  }
-
-  @Override
-  public LayerEntry getClassesLayerEntry() {
-    return mavenLayerConfigurations.getClassesLayerEntry();
-  }
-
-  @Override
-  public LayerEntry getExtraFilesLayerEntry() {
-    return mavenLayerConfigurations.getExtraFilesLayerEntry();
+  public LayerConfigurations getLayerConfigurations() {
+    return layerConfigurations;
   }
 
   @Override

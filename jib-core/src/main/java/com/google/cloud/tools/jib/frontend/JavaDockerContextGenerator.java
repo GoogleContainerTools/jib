@@ -14,12 +14,13 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.docker;
+package com.google.cloud.tools.jib.frontend;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.cloud.tools.jib.configuration.LayerConfiguration;
+import com.google.cloud.tools.jib.configuration.LayerConfigurations;
 import com.google.cloud.tools.jib.filesystem.FileOperations;
-import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -31,11 +32,13 @@ import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * Generates a Docker context that mimics how Jib builds the image.
+ * Generates a Docker context for a Java application.
  *
  * <p>The image consists of a base image layer and 5 application layers under the directories:
  *
@@ -49,7 +52,7 @@ import javax.annotation.Nullable;
  *
  * Empty application layers are omitted.
  */
-public class DockerContextGenerator {
+public class JavaDockerContextGenerator {
 
   private static final String DEPENDENCIES_LAYER_DIRECTORY = "libs";
   private static final String SNAPSHOT_DEPENDENCIES_LAYER_DIRECTORY = "snapshot-libs";
@@ -105,22 +108,35 @@ public class DockerContextGenerator {
   private List<String> javaArguments = Collections.emptyList();
   private List<String> exposedPorts = Collections.emptyList();
 
-  // TODO: Just take the LayerConfigurations.
-  public DockerContextGenerator(
-      LayerEntry dependenciesLayerEntry,
-      LayerEntry snapshotDependenciesLayerEntry,
-      LayerEntry resourcesLayerEntry,
-      LayerEntry classesLayerEntry,
-      LayerEntry extraFilesLayerEntry) {
+  /**
+   * Constructs a Docker context generator for a list of {@link LayerConfiguration}s for a Java
+   * application. The layer configurations must be built with the same labels as defined in {@link
+   * JavaLayerConfigurationsBuilder}.
+   *
+   * @param layerConfigurations the {@link LayerConfigurations} for a Java application
+   */
+  public JavaDockerContextGenerator(LayerConfigurations layerConfigurations) {
     ImmutableList.Builder<CopyDirective> copyDirectivesBuilder = ImmutableList.builder();
-    addIfNotEmpty(copyDirectivesBuilder, dependenciesLayerEntry, DEPENDENCIES_LAYER_DIRECTORY);
     addIfNotEmpty(
         copyDirectivesBuilder,
-        snapshotDependenciesLayerEntry,
+        layerConfigurations.getByLabel(JavaLayerConfigurationsBuilder.DEPENDENCIES_LAYER_LABEL).getLayerEntries().get(0),
+        DEPENDENCIES_LAYER_DIRECTORY);
+    addIfNotEmpty(
+        copyDirectivesBuilder,
+        layerConfigurations.getByLabel(JavaLayerConfigurationsBuilder.SNAPSHOT_DEPENDENCIES_LAYER_LABEL).getLayerEntries().get(0),
         SNAPSHOT_DEPENDENCIES_LAYER_DIRECTORY);
-    addIfNotEmpty(copyDirectivesBuilder, resourcesLayerEntry, RESOURCES_LAYER_DIRECTORY);
-    addIfNotEmpty(copyDirectivesBuilder, classesLayerEntry, CLASSES_LAYER_DIRECTORY);
-    addIfNotEmpty(copyDirectivesBuilder, extraFilesLayerEntry, EXTRA_FILES_LAYER_DIRECTORY);
+    addIfNotEmpty(
+        copyDirectivesBuilder,
+        layerConfigurations.getByLabel(JavaLayerConfigurationsBuilder.RESOURCES_LAYER_LABEL).getLayerEntries().get(0),
+        RESOURCES_LAYER_DIRECTORY);
+    addIfNotEmpty(
+        copyDirectivesBuilder,
+        layerConfigurations.getByLabel(JavaLayerConfigurationsBuilder.CLASSES_LAYER_LABEL).getLayerEntries().get(0),
+        CLASSES_LAYER_DIRECTORY);
+    addIfNotEmpty(
+        copyDirectivesBuilder,
+        layerConfigurations.getByLabel(JavaLayerConfigurationsBuilder.EXTRA_FILES_LAYER_LABEL).getLayerEntries().get(0),
+        EXTRA_FILES_LAYER_DIRECTORY);
     copyDirectives = copyDirectivesBuilder.build();
   }
 
@@ -131,7 +147,7 @@ public class DockerContextGenerator {
    * @param baseImage the base image.
    * @return this
    */
-  public DockerContextGenerator setBaseImage(String baseImage) {
+  public JavaDockerContextGenerator setBaseImage(String baseImage) {
     this.baseImage = baseImage;
     return this;
   }
@@ -142,7 +158,7 @@ public class DockerContextGenerator {
    * @param jvmFlags the jvm flags.
    * @return this
    */
-  public DockerContextGenerator setJvmFlags(List<String> jvmFlags) {
+  public JavaDockerContextGenerator setJvmFlags(List<String> jvmFlags) {
     this.jvmFlags = jvmFlags;
     return this;
   }
@@ -153,7 +169,7 @@ public class DockerContextGenerator {
    * @param mainClass the name of the main class.
    * @return this
    */
-  public DockerContextGenerator setMainClass(String mainClass) {
+  public JavaDockerContextGenerator setMainClass(String mainClass) {
     this.mainClass = mainClass;
     return this;
   }
@@ -164,7 +180,7 @@ public class DockerContextGenerator {
    * @param javaArguments the list of arguments to pass into main.
    * @return this
    */
-  public DockerContextGenerator setJavaArguments(List<String> javaArguments) {
+  public JavaDockerContextGenerator setJavaArguments(List<String> javaArguments) {
     this.javaArguments = javaArguments;
     return this;
   }
@@ -175,7 +191,7 @@ public class DockerContextGenerator {
    * @param exposedPorts the list of port numbers/port ranges to expose
    * @return this
    */
-  public DockerContextGenerator setExposedPorts(List<String> exposedPorts) {
+  public JavaDockerContextGenerator setExposedPorts(List<String> exposedPorts) {
     this.exposedPorts = exposedPorts;
     return this;
   }

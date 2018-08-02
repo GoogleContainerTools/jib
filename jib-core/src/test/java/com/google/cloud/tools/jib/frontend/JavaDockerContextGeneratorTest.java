@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.docker;
+package com.google.cloud.tools.jib.frontend;
 
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.image.LayerEntry;
@@ -38,13 +38,13 @@ import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link DockerContextGenerator}. */
+/** Tests for {@link JavaDockerContextGenerator}. */
 @RunWith(MockitoJUnitRunner.class)
-public class DockerContextGeneratorTest {
+public class JavaDockerContextGeneratorTest {
 
+  private static final String EXPECTED_DEPENDENCIES_PATH = "/app/libs/";
   private static final String EXPECTED_RESOURCES_PATH = "/app/resources/";
   private static final String EXPECTED_CLASSES_PATH = "/app/classes/";
-  private static final String EXPECTED_DEPENDENCIES_PATH = "/app/libs/";
 
   private static void assertSameFiles(Path directory1, Path directory2) throws IOException {
     Deque<Path> directory1Paths = new ArrayDeque<>(new DirectoryWalker(directory1).walk());
@@ -87,12 +87,12 @@ public class DockerContextGeneratorTest {
     Path targetDirectory = temporaryFolder.newFolder().toPath();
 
     /*
-     * Deletes the directory so that DockerContextGenerator#generate does not throw
+     * Deletes the directory so that JavaDockerContextGenerator#generate does not throw
      * InsecureRecursiveDeleteException.
      */
     Files.delete(targetDirectory);
 
-    new DockerContextGenerator(
+    new JavaDockerContextGenerator(
             new LayerEntry(expectedDependenciesFiles, EXPECTED_DEPENDENCIES_PATH),
             new LayerEntry(expectedSnapshotDependenciesFiles, EXPECTED_DEPENDENCIES_PATH),
             new LayerEntry(expectedResourcesFiles, EXPECTED_RESOURCES_PATH),
@@ -118,7 +118,7 @@ public class DockerContextGeneratorTest {
     List<String> exposedPorts = Arrays.asList("1000/tcp", "2000-2010/udp");
 
     String dockerfile =
-        new DockerContextGenerator(
+        new JavaDockerContextGenerator(
                 new LayerEntry(ImmutableList.of(Paths.get("ignored")), EXPECTED_DEPENDENCIES_PATH),
                 new LayerEntry(ImmutableList.of(Paths.get("ignored")), EXPECTED_DEPENDENCIES_PATH),
                 new LayerEntry(ImmutableList.of(Paths.get("ignored")), EXPECTED_RESOURCES_PATH),

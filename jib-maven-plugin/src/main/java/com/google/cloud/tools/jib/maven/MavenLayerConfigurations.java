@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
+import com.google.cloud.tools.jib.frontend.JavaLayerConfigurationsBuilder;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -36,21 +37,15 @@ import org.apache.maven.project.MavenProject;
 /** Builds {@link LayerConfiguration}s based on inputs from a {@link MavenProject}. */
 class MavenLayerConfigurations {
 
-  private static final String DEPENDENCIES_LAYER_LABEL = "dependencies";
-  private static final String SNAPSHOT_DEPENDENCIES_LAYER_LABEL = "snapshot dependencies";
-  private static final String RESOURCES_LAYER_LABEL = "resources";
-  private static final String CLASSES_LAYER_LABEL = "classes";
-  private static final String EXTRA_FILES_LAYER_LABEL = "extra files";
-
   /**
    * Resolves the source files configuration for a {@link MavenProject}.
    *
    * @param project the {@link MavenProject}
    * @param extraDirectory path to the directory for the extra files layer
-   * @return a new {@link MavenLayerConfigurations} for the project
+   * @return a list of {@link LayerConfiguration}s for the project
    * @throws IOException if collecting the project files fails
    */
-  static MavenLayerConfigurations getForProject(MavenProject project, Path extraDirectory)
+  static List<LayerConfiguration> getForProject(MavenProject project, Path extraDirectory)
       throws IOException {
     Path classesSourceDirectory = Paths.get(project.getBuild().getSourceDirectory());
     Path classesOutputDirectory = Paths.get(project.getBuild().getOutputDirectory());
@@ -112,83 +107,8 @@ class MavenLayerConfigurations {
     Collections.sort(classesFiles);
     Collections.sort(extraFiles);
 
-    return new MavenLayerConfigurations(
-        LayerConfiguration.builder()
-            .addEntry(
-                dependenciesFiles, JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
-            .setLabel(DEPENDENCIES_LAYER_LABEL)
-            .build(),
-        LayerConfiguration.builder()
-            .addEntry(
-                snapshotDependenciesFiles,
-                JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
-            .setLabel(SNAPSHOT_DEPENDENCIES_LAYER_LABEL)
-            .build(),
-        LayerConfiguration.builder()
-            .addEntry(resourcesFiles, JavaEntrypointConstructor.DEFAULT_RESOURCES_PATH_ON_IMAGE)
-            .setLabel(RESOURCES_LAYER_LABEL)
-            .build(),
-        LayerConfiguration.builder()
-            .addEntry(classesFiles, JavaEntrypointConstructor.DEFAULT_CLASSES_PATH_ON_IMAGE)
-            .setLabel(CLASSES_LAYER_LABEL)
-            .build(),
-        LayerConfiguration.builder()
-            .addEntry(extraFiles, "/")
-            .setLabel(EXTRA_FILES_LAYER_LABEL)
-            .build());
+    return new JavaLayerConfigurationsBuilder().setDependenciesFiles(dependenciesFiles).setSnapshotDependenciesFiles(snapshotDependenciesFiles).setResourcesFiles(resourcesFiles).setClassesFiles(classesFiles).setExtraFiles(extraFiles).build();
   }
 
-  private final LayerConfiguration dependenciesLayerConfiguration;
-  private final LayerConfiguration snapshotDependenciesLayerConfiguration;
-  private final LayerConfiguration resourcesLayerConfiguration;
-  private final LayerConfiguration classesLayerConfiguration;
-  private final LayerConfiguration extraFilesLayerConfiguration;
-
-  /** Instantiate with {@link #getForProject}. */
-  private MavenLayerConfigurations(
-      LayerConfiguration dependenciesLayerConfiguration,
-      LayerConfiguration snapshotDependenciesLayerConfiguration,
-      LayerConfiguration resourcesLayerConfiguration,
-      LayerConfiguration classesLayerConfiguration,
-      LayerConfiguration extraFilesLayerConfiguration) {
-    this.dependenciesLayerConfiguration = dependenciesLayerConfiguration;
-    this.snapshotDependenciesLayerConfiguration = snapshotDependenciesLayerConfiguration;
-    this.resourcesLayerConfiguration = resourcesLayerConfiguration;
-    this.classesLayerConfiguration = classesLayerConfiguration;
-    this.extraFilesLayerConfiguration = extraFilesLayerConfiguration;
-  }
-
-  /**
-   * Gets the list of {@link LayerConfiguration}s to use to build the container image.
-   *
-   * @return the list of {@link LayerConfiguration}s
-   */
-  ImmutableList<LayerConfiguration> getLayerConfigurations() {
-    return ImmutableList.of(
-        dependenciesLayerConfiguration,
-        snapshotDependenciesLayerConfiguration,
-        resourcesLayerConfiguration,
-        classesLayerConfiguration,
-        extraFilesLayerConfiguration);
-  }
-
-  LayerEntry getDependenciesLayerEntry() {
-    return dependenciesLayerConfiguration.getLayerEntries().get(0);
-  }
-
-  LayerEntry getSnapshotDependenciesLayerEntry() {
-    return snapshotDependenciesLayerConfiguration.getLayerEntries().get(0);
-  }
-
-  LayerEntry getResourcesLayerEntry() {
-    return resourcesLayerConfiguration.getLayerEntries().get(0);
-  }
-
-  LayerEntry getClassesLayerEntry() {
-    return classesLayerConfiguration.getLayerEntries().get(0);
-  }
-
-  LayerEntry getExtraFilesLayerEntry() {
-    return extraFilesLayerConfiguration.getLayerEntries().get(0);
-  }
+  private MavenLayerConfigurations() {}
 }
