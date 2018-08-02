@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.Command;
+import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -55,6 +56,7 @@ public class BuildImageMojoIntegrationTest {
   private static String buildAndRun(Path projectRoot, String imageReference, boolean runTwice)
       throws VerificationException, IOException, InterruptedException {
     Verifier verifier = new Verifier(projectRoot.toString());
+    verifier.setSystemProperty("_TARGET_IMAGE", imageReference);
     verifier.setAutoclean(false);
     verifier.addCliOption("-X");
     verifier.executeGoals(Arrays.asList("clean", "compile"));
@@ -110,12 +112,20 @@ public class BuildImageMojoIntegrationTest {
 
   @Test
   public void testExecute_simple() throws VerificationException, IOException, InterruptedException {
+    String targetImage =
+        "gcr.io/"
+            + IntegrationTestingConfiguration.getGCPProject()
+            + "/simpleimage:maven"
+            + System.nanoTime();
+
     // Test empty output error
     try {
       Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
+      verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
       verifier.setAutoclean(false);
       verifier.executeGoals(Arrays.asList("clean", "jib:" + BuildImageMojo.GOAL_NAME));
       Assert.fail();
+
     } catch (VerificationException ex) {
       Assert.assertThat(
           ex.getMessage(),
@@ -142,42 +152,26 @@ public class BuildImageMojoIntegrationTest {
 
     Assert.assertEquals(
         "Hello, " + before + ". An argument.\nfoo\ncat\n",
-        buildAndRun(
-            simpleTestProject.getProjectRoot(),
-            "gcr.io/jib-integration-testing/simpleimage:maven",
-            true));
+        buildAndRun(simpleTestProject.getProjectRoot(), targetImage, true));
 
     Instant buildTime =
         Instant.parse(
-            new Command(
-                    "docker",
-                    "inspect",
-                    "-f",
-                    "{{.Created}}",
-                    "gcr.io/jib-integration-testing/simpleimage:maven")
-                .run()
-                .trim());
+            new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim());
     Assert.assertTrue(buildTime.isAfter(before) || buildTime.equals(before));
   }
 
   @Test
   public void testExecute_empty() throws InterruptedException, IOException, VerificationException {
-    Assert.assertEquals(
-        "",
-        buildAndRun(
-            emptyTestProject.getProjectRoot(),
-            "gcr.io/jib-integration-testing/emptyimage:maven",
-            false));
+    String targetImage =
+        "gcr.io/"
+            + IntegrationTestingConfiguration.getGCPProject()
+            + "/emptyimage:maven"
+            + System.nanoTime();
+
+    Assert.assertEquals("", buildAndRun(emptyTestProject.getProjectRoot(), targetImage, false));
     Assert.assertEquals(
         "1970-01-01T00:00:00Z",
-        new Command(
-                "docker",
-                "inspect",
-                "-f",
-                "{{.Created}}",
-                "gcr.io/jib-integration-testing/emptyimage:maven")
-            .run()
-            .trim());
+        new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim());
   }
 
   @Test

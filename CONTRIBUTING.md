@@ -42,7 +42,7 @@ To build, use the provided `build.sh` which builds and tests each of the compone
 5. Associate the change with an existing issue or file a [new issue](../../issues).
 6. Create a pull request!
 
-**Note** that you will not be able to run the integration tests for `jib-gradle-plugin` or `jib-maven-plugin` because those push to our integration-testing GCP project. If you would like to run integration tests, change all uses of the `jib-integration-testing` project to your own GCP project and run `./gradlew integrationTest` for `jib-gradle-plugin` and `./mvnw verify -Pintegration-tests` for `jib-maven-plugin`.
+**Note** that in order to run integration tests, you will need to set the environment variable `JIB_INTEGRATION_TESTING_PROJECT` to the GCP project you would like to use for testing. You will also need Docker installed with the daemon running. Otherwise, feel free to skip integration tests.
 
 # Development Tips
 
@@ -88,12 +88,12 @@ To use a local build of the `jib-gradle-plugin`:
                 mavenCentral()
             }
             dependencies {
-                classpath 'com.google.cloud.tools:jib-gradle-plugin:0.9.8-SNAPSHOT'
+                classpath 'com.google.cloud.tools:jib-gradle-plugin:0.9.9-SNAPSHOT'
             }
         }
 
         plugins {
-            // id 'com.google.cloud.tools.jib' version '0.9.7'
+            // id 'com.google.cloud.tools.jib' version '0.9.8'
         }
 
         // Applies the java plugin after Jib to make sure it works in this order.

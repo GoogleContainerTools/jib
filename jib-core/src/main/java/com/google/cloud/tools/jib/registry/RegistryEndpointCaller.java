@@ -151,6 +151,14 @@ class RegistryEndpointCaller<T> {
 
     } catch (SSLPeerUnverifiedException ex) {
       return handleUnverifiableServerException(url);
+
+    } catch (HttpHostConnectException ex) {
+      if (allowInsecureRegistries && isHttpsProtocol(url) && url.getPort() == -1) {
+        // Fall back to HTTP only if "url" had no port specified (i.e., we tried the default HTTPS
+        // port 443) and we could not connect to 443. It's worth trying port 80.
+        return fallBackToHttp(url);
+      }
+      throw ex;
     }
   }
 
@@ -161,16 +169,22 @@ class RegistryEndpointCaller<T> {
     }
 
     try {
+      logger.warn(
+          "Cannot verify server at " + url + ". Attempting again with no TLS verification.");
       return call(url, getInsecureConnectionFactory());
 
-    } catch (SSLPeerUnverifiedException | HttpHostConnectException ex) {
-      // Try HTTP as a last resort.
-      GenericUrl httpUrl = new GenericUrl(url);
-      httpUrl.setScheme("http");
-      logger.warn(
-          "Failed to connect to " + url + " over HTTPS. Attempting again with HTTP: " + httpUrl);
-      return call(httpUrl.toURL(), connectionFactory);
+    } catch (SSLPeerUnverifiedException ex) {
+      return fallBackToHttp(url);
     }
+  }
+
+  @Nullable
+  private T fallBackToHttp(URL url) throws IOException, RegistryException {
+    GenericUrl httpUrl = new GenericUrl(url);
+    httpUrl.setScheme("http");
+    logger.warn(
+        "Failed to connect to " + url + " over HTTPS. Attempting again with HTTP: " + httpUrl);
+    return call(httpUrl.toURL(), connectionFactory);
   }
 
   private Function<URL, Connection> getInsecureConnectionFactory() throws RegistryException {
