@@ -38,8 +38,11 @@ public class BuildTarMojoIntegrationTest {
    */
   @Test
   public void testExecute_simple() throws VerificationException, IOException, InterruptedException {
+    String targetImage = "simpleimage:maven" + System.nanoTime();
+
     Instant before = Instant.now();
     Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
+    verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
     verifier.setAutoclean(false);
     verifier.executeGoal("package");
 
@@ -57,19 +60,11 @@ public class BuildTarMojoIntegrationTest {
                 .toString())
         .run();
     Assert.assertEquals(
-        "Hello, world. An argument.\nfoo\ncat\n",
-        new Command("docker", "run", "gcr.io/jib-integration-testing/simpleimage:maven").run());
+        "Hello, world. An argument.\nfoo\ncat\n", new Command("docker", "run", targetImage).run());
 
     Instant buildTime =
         Instant.parse(
-            new Command(
-                    "docker",
-                    "inspect",
-                    "-f",
-                    "{{.Created}}",
-                    "gcr.io/jib-integration-testing/simpleimage:maven")
-                .run()
-                .trim());
+            new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim());
     Assert.assertTrue(buildTime.isAfter(before) || buildTime.equals(before));
   }
 }

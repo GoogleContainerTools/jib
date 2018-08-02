@@ -16,7 +16,7 @@ dependencies {
 
 jib {
     to {
-        image = 'gcr.io/jib-integration-testing/simpleimage:gradle'
+        image = System.getProperty("_TARGET_IMAGE")
         credHelper = 'gcr'
     }
     container {
