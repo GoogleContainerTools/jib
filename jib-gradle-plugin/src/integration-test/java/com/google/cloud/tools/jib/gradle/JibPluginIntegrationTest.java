@@ -132,7 +132,11 @@ public class JibPluginIntegrationTest {
 
   @Test
   public void testBuild_simple() throws IOException, InterruptedException {
-    String targetImage = "gcr.io/jib-integration-testing/simpleimage:gradle" + System.nanoTime();
+    String targetImage =
+        "gcr.io/"
+            + IntegrationTestingConfiguration.getGCPProject()
+            + "/simpleimage:gradle"
+            + System.nanoTime();
 
     // Test empty output error
     try {
