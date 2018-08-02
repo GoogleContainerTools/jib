@@ -42,9 +42,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class DockerContextGeneratorTest {
 
-  private static final String EXPECTED_DEPENDENCIES_PATH = "/app/libs/";
   private static final String EXPECTED_RESOURCES_PATH = "/app/resources/";
   private static final String EXPECTED_CLASSES_PATH = "/app/classes/";
+  private static final String EXPECTED_DEPENDENCIES_PATH = "/app/libs/";
 
   private static void assertSameFiles(Path directory1, Path directory2) throws IOException {
     Deque<Path> directory1Paths = new ArrayDeque<>(new DirectoryWalker(directory1).walk());

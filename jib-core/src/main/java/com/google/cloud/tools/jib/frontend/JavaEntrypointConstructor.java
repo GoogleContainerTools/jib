@@ -23,16 +23,16 @@ import java.util.List;
 /** Constructs an image entrypoint for the Java application. */
 public class JavaEntrypointConstructor {
 
-  public static final String DEFAULT_DEPENDENCIES_PATH_ON_IMAGE = "/app/libs/";
   public static final String DEFAULT_RESOURCES_PATH_ON_IMAGE = "/app/resources/";
   public static final String DEFAULT_CLASSES_PATH_ON_IMAGE = "/app/classes/";
+  public static final String DEFAULT_DEPENDENCIES_PATH_ON_IMAGE = "/app/libs/";
 
   public static List<String> makeDefaultEntrypoint(List<String> jvmFlags, String mainClass) {
     return makeEntrypoint(
         Arrays.asList(
-            DEFAULT_DEPENDENCIES_PATH_ON_IMAGE + "*",
             DEFAULT_RESOURCES_PATH_ON_IMAGE,
-            DEFAULT_CLASSES_PATH_ON_IMAGE),
+            DEFAULT_CLASSES_PATH_ON_IMAGE,
+            DEFAULT_DEPENDENCIES_PATH_ON_IMAGE + "*"),
         jvmFlags,
         mainClass);
   }
