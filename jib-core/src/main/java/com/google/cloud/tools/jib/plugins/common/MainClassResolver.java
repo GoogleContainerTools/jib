@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.cloud.tools.jib.frontend.MainClassFinder;
-import com.google.cloud.tools.jib.frontend.MainClassFinder.Result;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
@@ -110,7 +109,7 @@ public class MainClassResolver {
                 + projectProperties.getJarPluginName()
                 + "; attempting to infer main class.");
 
-    Result mainClassFinderResult =
+    MainClassFinder.Result mainClassFinderResult =
         new MainClassFinder(
                 projectProperties.getClassesLayerEntry().getSourceFiles(),
                 projectProperties.getLogger())

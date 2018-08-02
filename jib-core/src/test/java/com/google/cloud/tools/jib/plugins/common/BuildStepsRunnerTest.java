@@ -47,7 +47,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link com.google.cloud.tools.jib.plugins.common.BuildStepsRunner}. */
+/** Tests for {@link BuildStepsRunner}. */
 @RunWith(MockitoJUnitRunner.class)
 public class BuildStepsRunnerTest {
 

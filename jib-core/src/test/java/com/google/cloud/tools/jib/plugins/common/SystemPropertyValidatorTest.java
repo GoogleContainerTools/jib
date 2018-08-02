@@ -20,7 +20,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** Tests for {@link com.google.cloud.tools.jib.plugins.common.SystemPropertyValidator}. */
+/** Tests for {@link SystemPropertyValidator}. */
 public class SystemPropertyValidatorTest {
 
   @After

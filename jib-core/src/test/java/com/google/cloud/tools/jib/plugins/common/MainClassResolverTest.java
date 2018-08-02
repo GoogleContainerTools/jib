@@ -32,7 +32,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Test for {@link com.google.cloud.tools.jib.plugins.common.MainClassResolver}. */
+/** Test for {@link MainClassResolver}. */
 @RunWith(MockitoJUnitRunner.class)
 public class MainClassResolverTest {
 
