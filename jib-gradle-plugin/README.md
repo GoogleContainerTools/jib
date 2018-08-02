@@ -1,4 +1,4 @@
-![experimental](https://img.shields.io/badge/stability-experimental-darkorange.svg)
+![beta](https://img.shields.io/badge/stability-beta-darkorange.svg)
 [![Gradle Plugin Portal](https://img.shields.io/badge/gradle%20plugin-v0.9.7-blue.svg)](https://plugins.gradle.org/plugin/com.google.cloud.tools.jib)
 [![Gitter version](https://img.shields.io/gitter/room/gitterHQ/gitter.svg)](https://gitter.im/google/jib)
 
