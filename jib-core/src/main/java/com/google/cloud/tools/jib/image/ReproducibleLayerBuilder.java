@@ -46,8 +46,7 @@ public class ReproducibleLayerBuilder {
     List<TarArchiveEntry> tarArchiveEntries = new ArrayList<>();
 
     // Adds the extraction path itself; to do this, we are adding the current directory to act as
-    // the
-    // file input (since all directories are treated the same in TarArchiveEntry).
+    // the file input (since all directories are treated the same in TarArchiveEntry).
     TarArchiveEntry extractionPathDirectoryEntry =
         new TarArchiveEntry(Paths.get(".").toFile(), layerEntry.getExtractionPath());
     tarArchiveEntries.add(extractionPathDirectoryEntry);
