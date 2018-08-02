@@ -17,8 +17,6 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.JibLogger;
-import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.common.annotations.VisibleForTesting;
@@ -58,17 +56,14 @@ abstract class JibPluginConfiguration extends AbstractMojo {
       this.password = password;
     }
 
-    /**
-     * Converts the {@link AuthConfiguration} to an {@link Authorization}.
-     *
-     * @return the {@link Authorization}
-     */
     @Nullable
-    private Authorization getAuthorization() {
-      if (username == null || password == null) {
-        return null;
-      }
-      return Authorizations.withBasicCredentials(username, password);
+    String getUsername() {
+      return username;
+    }
+
+    @Nullable
+    String getPassword() {
+      return password;
     }
   }
 
@@ -130,29 +125,6 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     } catch (InvalidImageReferenceException ex) {
       throw new IllegalStateException("Parameter '" + type + "' is invalid", ex);
     }
-  }
-
-  /**
-   * Gets an {@link Authorization} from a username and password. First tries system properties, then
-   * tries build configuration, otherwise returns null.
-   *
-   * @param usernameProperty the name of the username system property
-   * @param passwordProperty the name of the password system property
-   * @param auth the configured credentials
-   * @return a new {@link Authorization} from the system properties or build configuration, or
-   *     {@code null} if neither is configured.
-   */
-  @VisibleForTesting
-  @Nullable
-  static Authorization getImageAuth(
-      String usernameProperty, String passwordProperty, AuthConfiguration auth) {
-    // System property takes priority over build configuration
-    String commandlineUsername = System.getProperty(usernameProperty);
-    String commandlinePassword = System.getProperty(passwordProperty);
-    if (commandlineUsername != null && commandlinePassword != null) {
-      return Authorizations.withBasicCredentials(commandlineUsername, commandlinePassword);
-    }
-    return auth.getAuthorization();
   }
 
   @Nullable
@@ -243,9 +215,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     return Preconditions.checkNotNull(from).credHelper;
   }
 
-  @Nullable
-  Authorization getBaseImageAuth() {
-    return getImageAuth("jib.from.auth.username", "jib.from.auth.password", from.auth);
+  AuthConfiguration getBaseImageAuth() {
+    return from.auth;
   }
 
   @Nullable
@@ -258,9 +229,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     return Preconditions.checkNotNull(to).credHelper;
   }
 
-  @Nullable
-  Authorization getTargetImageAuth() {
-    return getImageAuth("jib.to.auth.username", "jib.to.auth.password", to.auth);
+  AuthConfiguration getTargetImageAuth() {
+    return to.auth;
   }
 
   boolean getUseCurrentTimestamp() {
