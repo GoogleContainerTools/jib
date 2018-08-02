@@ -1,0 +1,2 @@
+rootProject.name = 'jib-multimodule'
+include 'name-service', 'hello-service'

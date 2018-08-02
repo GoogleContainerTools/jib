@@ -1,0 +1,55 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <!-- Defines artifact information for this parent POM. -->
+  <groupId>com.example</groupId>
+  <artifactId>jib-multimodule</artifactId>
+  <packaging>pom</packaging>
+  <version>0.1.0</version>
+  <name>Jib Multi-module Example</name>
+
+  <!-- Inherits from the Spring Boot Starter POM. -->
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>2.0.3.RELEASE</version>
+  </parent>
+
+  <!-- The modules that are part of this project. -->
+  <modules>
+    <module>name-service</module>
+    <module>hello-service</module>
+  </modules>
+
+  <!-- Uses Java 8. -->
+  <properties>
+    <java.version>1.8</java.version>
+
+    <!-- IMPORTANT: Set the environment variable PROJECT_ID to your own Google Cloud Platform project. -->
+    <image>gcr.io/${env.PROJECT_ID}/${project.artifactId}:${project.version}</image>
+  </properties>
+
+  <build>
+    <!-- Defines plugins that are used in the modules. -->
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>com.google.cloud.tools</groupId>
+          <artifactId>jib-maven-plugin</artifactId>
+          <version>0.9.8</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+
+  <!-- Defines dependencies common to all modules. -->
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+  </dependencies>
+</project>
