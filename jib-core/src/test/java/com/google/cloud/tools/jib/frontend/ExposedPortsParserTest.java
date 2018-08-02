@@ -14,12 +14,11 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.plugins.common;
+package com.google.cloud.tools.jib.frontend;
 
 import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.configuration.Port.Protocol;
-import com.google.cloud.tools.jib.plugins.common.ExposedPortsParser;
 import com.google.common.collect.ImmutableList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -30,7 +29,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link ExposedPortsParser}. */
+/** Tests for {@link com.google.cloud.tools.jib.frontend.ExposedPortsParser}. */
 @RunWith(MockitoJUnitRunner.class)
 public class ExposedPortsParserTest {
 

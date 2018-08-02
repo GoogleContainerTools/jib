@@ -16,12 +16,11 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
-import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import java.nio.file.Paths;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** Tests for {@link HelpfulSuggestions}. */
+/** Tests for {@link com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions}. */
 public class HelpfulSuggestionsTest {
 
   private static final HelpfulSuggestions TEST_HELPFUL_SUGGESTIONS =

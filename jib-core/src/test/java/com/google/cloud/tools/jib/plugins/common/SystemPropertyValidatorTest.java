@@ -16,12 +16,11 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
-import com.google.cloud.tools.jib.plugins.common.SystemPropertyValidator;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** Tests for {@link SystemPropertyValidator}. */
+/** Tests for {@link com.google.cloud.tools.jib.plugins.common.SystemPropertyValidator}. */
 public class SystemPropertyValidatorTest {
 
   @After

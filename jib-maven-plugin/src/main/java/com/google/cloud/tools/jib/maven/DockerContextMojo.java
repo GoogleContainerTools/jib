@@ -17,7 +17,7 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.docker.DockerContextGenerator;
-import com.google.cloud.tools.jib.plugins.common.ExposedPortsParser;
+import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.plugins.common.SystemPropertyValidator;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;

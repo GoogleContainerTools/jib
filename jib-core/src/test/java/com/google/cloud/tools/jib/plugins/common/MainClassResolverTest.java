@@ -18,10 +18,6 @@ package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.image.LayerEntry;
-import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
-import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
-import com.google.cloud.tools.jib.plugins.common.MainClassResolver;
-import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 import java.net.URISyntaxException;
@@ -36,7 +32,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Test for {@link MainClassResolver}. */
+/** Test for {@link com.google.cloud.tools.jib.plugins.common.MainClassResolver}. */
 @RunWith(MockitoJUnitRunner.class)
 public class MainClassResolverTest {
 

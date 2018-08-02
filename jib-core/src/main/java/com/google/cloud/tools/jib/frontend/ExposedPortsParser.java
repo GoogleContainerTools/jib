@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.plugins.common;
+package com.google.cloud.tools.jib.frontend;
 
 import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.configuration.Port.Protocol;
@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/** Utility for parsing exposed ports from plugin configuration */
+/** Utility for parsing exposed ports from and to text representations. */
 public class ExposedPortsParser {
 
   /**
