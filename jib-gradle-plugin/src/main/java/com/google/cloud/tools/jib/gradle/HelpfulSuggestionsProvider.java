@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
+import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 
 /** Provider for Maven-specific {@link HelpfulSuggestions}. */
 class HelpfulSuggestionsProvider {

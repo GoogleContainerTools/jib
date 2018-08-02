@@ -14,8 +14,9 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.frontend;
+package com.google.cloud.tools.jib.plugins.common;
 
+import com.google.cloud.tools.jib.frontend.MainClassFinder;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;

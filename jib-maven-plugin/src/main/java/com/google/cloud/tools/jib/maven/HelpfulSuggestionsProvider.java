@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
+import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import java.util.function.Function;
 
 /** Provider for Maven-specific {@link HelpfulSuggestions}. */
