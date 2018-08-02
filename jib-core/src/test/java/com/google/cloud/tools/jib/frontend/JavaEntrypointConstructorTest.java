@@ -26,15 +26,15 @@ public class JavaEntrypointConstructorTest {
 
   @Test
   public void testMakeEntrypoint() {
-    String expectedDependenciesPath = "/app/libs/*";
     String expectedResourcesPath = "/app/resources/";
     String expectedClassesPath = "/app/classes/";
+    String expectedDependenciesPath = "/app/libs/*";
     List<String> expectedJvmFlags = Arrays.asList("-flag", "anotherFlag");
     String expectedMainClass = "SomeMainClass";
 
     List<String> entrypoint =
         JavaEntrypointConstructor.makeEntrypoint(
-            Arrays.asList(expectedDependenciesPath, expectedResourcesPath, expectedClassesPath),
+            Arrays.asList(expectedResourcesPath, expectedClassesPath, expectedDependenciesPath),
             expectedJvmFlags,
             expectedMainClass);
     Assert.assertEquals(
@@ -43,7 +43,7 @@ public class JavaEntrypointConstructorTest {
             "-flag",
             "anotherFlag",
             "-cp",
-            "/app/libs/*:/app/resources/:/app/classes/",
+            "/app/resources/:/app/classes/:/app/libs/*",
             "SomeMainClass"),
         entrypoint);
 
