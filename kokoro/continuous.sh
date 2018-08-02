@@ -19,6 +19,9 @@ docker-credential-gcr configure-docker
 docker stop $(docker ps --all --quiet) || true
 docker kill $(docker ps --all --quiet) || true
 
+# Sets the integration testing project.
+export JIB_INTEGRATION_TESTING_PROJECT=jib-integration-testing
+
 (cd github/jib/jib-core; ./gradlew clean build integrationTest --info --stacktrace)
 (cd github/jib/jib-maven-plugin; ./mvnw clean install -P integration-tests -B -U -X)
 (cd github/jib/jib-gradle-plugin; ./gradlew clean build integrationTest --info --stacktrace)
