@@ -25,7 +25,8 @@ public class IntegrationTestingConfiguration {
   public static String getGCPProject() {
     String projectId = System.getenv("JIB_INTEGRATION_TESTING_PROJECT");
     if (Strings.isNullOrEmpty(projectId)) {
-      Assert.fail("Must set environment variable JIB_INTEGRATION_TESTING_PROJECT to the GCP project to use for integration testing.");
+      Assert.fail(
+          "Must set environment variable JIB_INTEGRATION_TESTING_PROJECT to the GCP project to use for integration testing.");
     }
     return projectId;
   }
