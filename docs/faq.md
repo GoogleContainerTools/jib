@@ -17,7 +17,7 @@ If a question you have is not answered below, please [submit an issue](/../../is
 [How do I configure a proxy?](#how-do-i-configure-a-proxy)\
 [How can I diagnose problems pulling or pushing from remote registries?](#how-can-i-diagnose-problems-pulling-or-pushing-from=-remote=registries)\
 [How can I examine network traffic?](#how-can-i-examine-network-traffic)\
-[How do I enable debugging?](#how-do-i-enable-debugging)\
+[How do I view debug logs for Jib?](#how-do-i-view-debug-logs-for-jib)\
 [Why is my image created 48 years ago?](#why-is-my-image-created-48-years-ago)\
 [I would like to run my application with a javaagent.](#i-would-like-to-run-my-application-with-a-javaagent)\
 [How can I tag my image with a timestamp?](#how-can-i-tag-my-image-with-a-timestamp)
@@ -239,11 +239,13 @@ or
 gradle -Djava.util.logging.config.file=log.properties -DjibSerialize=true ...
 ```
 
-### How do I enable debugging?
+### How do I view debug logs for Jib?
 
 Maven: use `mvn -X -DjibSerialize=true` to enable more detailed logging and serialize Jib's actions.
 
 Gradle: use `grade --debug -DjibSerialize=true` to enable more detailed logging and serialize Jib's actions.
+
+See the [`CONTRIBUTING.md`](../CONTRIBUTING.md), found in the root of the Jib repository, for hints on debugging Jib with an IDE.
 
 ### Why is my image created 48 years ago?
 
