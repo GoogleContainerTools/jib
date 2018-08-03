@@ -40,7 +40,8 @@ public class PluginConfigurationProcessorTest {
     auth.setUsername("vwxyz");
     auth.setPassword("98765");
     Authorization expected = Authorizations.withBasicCredentials("vwxyz", "98765");
-    Authorization actual = PluginConfigurationProcessor.getImageAuthorization(mockLogger, "to", auth);
+    Authorization actual =
+        PluginConfigurationProcessor.getImageAuthorization(mockLogger, "to", auth);
     Assert.assertNotNull(actual);
     Assert.assertEquals(expected.toString(), actual.toString());
     Mockito.verify(mockLogger, Mockito.never()).warn(Mockito.any());
