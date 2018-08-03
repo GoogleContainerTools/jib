@@ -17,86 +17,91 @@
 package com.google.cloud.tools.jib.frontend;
 
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
-import com.google.cloud.tools.jib.configuration.LayerConfigurations;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /** Builds {@link LayerConfiguration}s for a Java application. */
-public class JavaLayerConfigurations extends LayerConfigurations {
+public class JavaLayerConfigurations {
 
-  public static final String DEPENDENCIES_LAYER_LABEL = "dependencies";
-  public static final String SNAPSHOT_DEPENDENCIES_LAYER_LABEL = "snapshot dependencies";
-  public static final String RESOURCES_LAYER_LABEL = "resources";
-  public static final String CLASSES_LAYER_LABEL = "classes";
-  public static final String EXTRA_FILES_LAYER_LABEL = "extra files";
+  /** Represents the different types of layers for a Java application. */
+  public enum LayerType {
+    DEPENDENCIES("dependencies", JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE),
+    SNAPSHOT_DEPENDENCIES(
+        "snapshot dependencies", JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE),
+    RESOURCES("resources", JavaEntrypointConstructor.DEFAULT_RESOURCES_PATH_ON_IMAGE),
+    CLASSES("classes", JavaEntrypointConstructor.DEFAULT_CLASSES_PATH_ON_IMAGE),
+    EXTRA_FILES("extra files", "/");
+
+    private final String label;
+    private final String extractionPath;
+
+    /** Initializes with a label for the layer and the layer files' default extraction path root. */
+    LayerType(String label, String extractionPath) {
+      this.label = label;
+      this.extractionPath = extractionPath;
+    }
+
+    public String getLabel() {
+      return label;
+    }
+
+    public String getExtractionPath() {
+      return extractionPath;
+    }
+  }
 
   public static class Builder {
 
-    private List<Path> dependenciesFiles = new ArrayList<>();
-    private List<Path> snapshotDependenciesFiles = new ArrayList<>();
-    private List<Path> resourcesFiles = new ArrayList<>();
-    private List<Path> classesFiles = new ArrayList<>();
-    private List<Path> extraFiles = new ArrayList<>();
+    private Map<LayerType, List<Path>> layerFilesMap = new EnumMap<>(LayerType.class);
 
-    private Builder() {}
+    private Builder() {
+      for (LayerType layerType : LayerType.values()) {
+        layerFilesMap.put(layerType, new ArrayList<>());
+      }
+    }
 
     public Builder setDependenciesFiles(List<Path> dependenciesFiles) {
-      this.dependenciesFiles = dependenciesFiles;
+      layerFilesMap.put(LayerType.DEPENDENCIES, dependenciesFiles);
       return this;
     }
 
     public Builder setSnapshotDependenciesFiles(List<Path> snapshotDependenciesFiles) {
-      this.snapshotDependenciesFiles = snapshotDependenciesFiles;
+      layerFilesMap.put(LayerType.SNAPSHOT_DEPENDENCIES, snapshotDependenciesFiles);
       return this;
     }
 
     public Builder setResourcesFiles(List<Path> resourcesFiles) {
-      this.resourcesFiles = resourcesFiles;
+      layerFilesMap.put(LayerType.RESOURCES, resourcesFiles);
       return this;
     }
 
     public Builder setClassesFiles(List<Path> classesFiles) {
-      this.classesFiles = classesFiles;
+      layerFilesMap.put(LayerType.CLASSES, classesFiles);
       return this;
     }
 
     public Builder setExtraFiles(List<Path> extraFiles) {
-      this.extraFiles = extraFiles;
+      layerFilesMap.put(LayerType.EXTRA_FILES, extraFiles);
       return this;
     }
 
     public JavaLayerConfigurations build() {
-      return new JavaLayerConfigurations(
-          Arrays.asList(
-              LayerConfiguration.builder()
-                  .addEntry(
-                      dependenciesFiles,
-                      JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
-                  .setLabel(DEPENDENCIES_LAYER_LABEL)
-                  .build(),
-              LayerConfiguration.builder()
-                  .addEntry(
-                      snapshotDependenciesFiles,
-                      JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
-                  .setLabel(SNAPSHOT_DEPENDENCIES_LAYER_LABEL)
-                  .build(),
-              LayerConfiguration.builder()
-                  .addEntry(
-                      resourcesFiles, JavaEntrypointConstructor.DEFAULT_RESOURCES_PATH_ON_IMAGE)
-                  .setLabel(RESOURCES_LAYER_LABEL)
-                  .build(),
-              LayerConfiguration.builder()
-                  .addEntry(classesFiles, JavaEntrypointConstructor.DEFAULT_CLASSES_PATH_ON_IMAGE)
-                  .setLabel(CLASSES_LAYER_LABEL)
-                  .build(),
-              LayerConfiguration.builder()
-                  .addEntry(extraFiles, "/")
-                  .setLabel(EXTRA_FILES_LAYER_LABEL)
-                  .build()));
+      ImmutableMap.Builder<LayerType, LayerConfiguration> layerConfigurationsMap =
+          ImmutableMap.builderWithExpectedSize(LayerType.values().length);
+      for (LayerType layerType : LayerType.values()) {
+        List<Path> layerFiles = Preconditions.checkNotNull(layerFilesMap.get(layerType));
+        layerConfigurationsMap.put(
+            layerType,
+            LayerConfiguration.builder()
+                .addEntry(layerFiles, layerType.getExtractionPath())
+                .setLabel(layerType.getLabel())
+                .build());
+      }
+      return new JavaLayerConfigurations(layerConfigurationsMap.build());
     }
   }
 
@@ -104,31 +109,20 @@ public class JavaLayerConfigurations extends LayerConfigurations {
     return new Builder();
   }
 
-  private JavaLayerConfigurations(List<LayerConfiguration> layerConfigurations) {
-    super(layerConfigurations);
+  private final ImmutableMap<LayerType, LayerConfiguration> layerConfigurationMap;
+
+  private JavaLayerConfigurations(
+      ImmutableMap<LayerType, LayerConfiguration> layerConfigurationsMap) {
+    this.layerConfigurationMap = layerConfigurationsMap;
   }
 
-  public LayerEntry getDependenciesLayerEntry() {
-    return Preconditions.checkNotNull(getByLabel(DEPENDENCIES_LAYER_LABEL))
+  public ImmutableList<LayerConfiguration> getLayerConfigurations() {
+    return layerConfigurationMap.values().asList();
+  }
+
+  public LayerEntry getLayerEntry(LayerType layerType) {
+    return Preconditions.checkNotNull(layerConfigurationMap.get(layerType))
         .getLayerEntries()
         .get(0);
-  }
-
-  public LayerEntry getSnapshotDependenciesLayerEntry() {
-    return Preconditions.checkNotNull(getByLabel(SNAPSHOT_DEPENDENCIES_LAYER_LABEL))
-        .getLayerEntries()
-        .get(0);
-  }
-
-  public LayerEntry getResourcesLayerEntry() {
-    return Preconditions.checkNotNull(getByLabel(RESOURCES_LAYER_LABEL)).getLayerEntries().get(0);
-  }
-
-  public LayerEntry getClassesLayerEntry() {
-    return Preconditions.checkNotNull(getByLabel(CLASSES_LAYER_LABEL)).getLayerEntries().get(0);
-  }
-
-  public LayerEntry getExtraFilesLayerEntry() {
-    return Preconditions.checkNotNull(getByLabel(EXTRA_FILES_LAYER_LABEL)).getLayerEntries().get(0);
   }
 }

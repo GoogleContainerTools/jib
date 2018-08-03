@@ -97,15 +97,24 @@ public class MavenLayerConfigurationsTest {
 
     Assert.assertEquals(
         expectedDependenciesFiles,
-        testJavaLayerConfigurations.getDependenciesLayerEntry().getSourceFiles());
+        testJavaLayerConfigurations
+            .getLayerEntry(JavaLayerConfigurations.LayerType.DEPENDENCIES)
+            .getSourceFiles());
     Assert.assertEquals(
         expectedSnapshotDependenciesFiles,
-        testJavaLayerConfigurations.getSnapshotDependenciesLayerEntry().getSourceFiles());
+        testJavaLayerConfigurations
+            .getLayerEntry(JavaLayerConfigurations.LayerType.SNAPSHOT_DEPENDENCIES)
+            .getSourceFiles());
     Assert.assertEquals(
         expectedResourcesFiles,
-        testJavaLayerConfigurations.getResourcesLayerEntry().getSourceFiles());
+        testJavaLayerConfigurations
+            .getLayerEntry(JavaLayerConfigurations.LayerType.RESOURCES)
+            .getSourceFiles());
     Assert.assertEquals(
-        expectedClassesFiles, testJavaLayerConfigurations.getClassesLayerEntry().getSourceFiles());
+        expectedClassesFiles,
+        testJavaLayerConfigurations
+            .getLayerEntry(JavaLayerConfigurations.LayerType.CLASSES)
+            .getSourceFiles());
   }
 
   @Test
@@ -122,23 +131,39 @@ public class MavenLayerConfigurationsTest {
             Paths.get(Resources.getResource("layer/foo").toURI()));
 
     Assert.assertEquals(
-        expectedExtraFiles, testJavaLayerConfigurations.getExtraFilesLayerEntry().getSourceFiles());
+        expectedExtraFiles,
+        testJavaLayerConfigurations
+            .getLayerEntry(JavaLayerConfigurations.LayerType.EXTRA_FILES)
+            .getSourceFiles());
   }
 
   @Test
   public void test_correctPathsOnImage() {
     Assert.assertEquals(
-        "/app/libs/", testJavaLayerConfigurations.getDependenciesLayerEntry().getExtractionPath());
+        "/app/libs/",
+        testJavaLayerConfigurations
+            .getLayerEntry(JavaLayerConfigurations.LayerType.DEPENDENCIES)
+            .getExtractionPath());
     Assert.assertEquals(
         "/app/libs/",
-        testJavaLayerConfigurations.getSnapshotDependenciesLayerEntry().getExtractionPath());
+        testJavaLayerConfigurations
+            .getLayerEntry(JavaLayerConfigurations.LayerType.SNAPSHOT_DEPENDENCIES)
+            .getExtractionPath());
     Assert.assertEquals(
         "/app/resources/",
-        testJavaLayerConfigurations.getResourcesLayerEntry().getExtractionPath());
+        testJavaLayerConfigurations
+            .getLayerEntry(JavaLayerConfigurations.LayerType.RESOURCES)
+            .getExtractionPath());
     Assert.assertEquals(
-        "/app/classes/", testJavaLayerConfigurations.getClassesLayerEntry().getExtractionPath());
+        "/app/classes/",
+        testJavaLayerConfigurations
+            .getLayerEntry(JavaLayerConfigurations.LayerType.CLASSES)
+            .getExtractionPath());
     Assert.assertEquals(
-        "/", testJavaLayerConfigurations.getExtraFilesLayerEntry().getExtractionPath());
+        "/",
+        testJavaLayerConfigurations
+            .getLayerEntry(JavaLayerConfigurations.LayerType.EXTRA_FILES)
+            .getExtractionPath());
   }
 
   private Artifact makeArtifact(Path path) {
