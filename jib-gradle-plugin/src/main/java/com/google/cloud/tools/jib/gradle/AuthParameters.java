@@ -24,7 +24,7 @@ import org.gradle.api.tasks.Optional;
  * A bean that configures authorization credentials to be used for a registry. This is configurable
  * with Groovy closures and can be validated when used as a task input.
  */
-public class AuthConfiguration {
+public class AuthParameters {
 
   @Nullable private String username;
   @Nullable private String password;

@@ -16,14 +16,11 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.http.Authorizations;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import org.gradle.api.Action;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.Optional;
 
@@ -36,14 +33,14 @@ import org.gradle.api.tasks.Optional;
  */
 public class ImageParameters {
 
-  private AuthConfiguration auth;
+  private AuthParameters auth;
 
   @Nullable private String image;
   @Nullable private String credHelper;
 
   @Inject
   public ImageParameters(ObjectFactory objectFactory) {
-    auth = objectFactory.newInstance(AuthConfiguration.class);
+    auth = objectFactory.newInstance(AuthParameters.class);
   }
 
   @Input
@@ -70,22 +67,11 @@ public class ImageParameters {
 
   @Nested
   @Optional
-  AuthConfiguration getAuth() {
+  AuthParameters getAuth() {
     return auth;
   }
 
-  public void auth(Action<? super AuthConfiguration> action) {
+  public void auth(Action<? super AuthParameters> action) {
     action.execute(auth);
-  }
-
-  /** Converts the {@link ImageParameters} to an {@link Authorization}. */
-  @Internal
-  @Nullable
-  Authorization getImageAuthorization() {
-    if (auth.getUsername() == null || auth.getPassword() == null) {
-      return null;
-    }
-
-    return Authorizations.withBasicCredentials(auth.getUsername(), auth.getPassword());
   }
 }

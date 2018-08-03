@@ -17,9 +17,6 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.JibLogger;
-import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.http.Authorizations;
-import com.google.cloud.tools.jib.maven.JibPluginConfiguration.AuthConfiguration;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import org.junit.Assert;
@@ -68,31 +65,5 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals(Arrays.asList("arg1", "arg2", "arg3"), testPluginConfiguration.getArgs());
     Assert.assertEquals("OCI", testPluginConfiguration.getFormat());
     Assert.assertEquals(Paths.get("some/path"), testPluginConfiguration.getExtraDirectory());
-  }
-
-  @Test
-  public void testGetImageAuth() {
-    AuthConfiguration auth = new AuthConfiguration();
-    auth.setUsername("vwxyz");
-    auth.setPassword("98765");
-
-    System.setProperty("jib.test.auth.user", "abcde");
-    System.setProperty("jib.test.auth.pass", "12345");
-    Authorization expected = Authorizations.withBasicCredentials("abcde", "12345");
-    Authorization actual =
-        JibPluginConfiguration.getImageAuth("jib.test.auth.user", "jib.test.auth.pass", auth);
-    Assert.assertNotNull(actual);
-    Assert.assertEquals(expected.toString(), actual.toString());
-
-    System.clearProperty("jib.test.auth.user");
-    System.clearProperty("jib.test.auth.pass");
-    expected = Authorizations.withBasicCredentials("vwxyz", "98765");
-    actual = JibPluginConfiguration.getImageAuth("jib.test.auth.user", "jib.test.auth.pass", auth);
-    Assert.assertNotNull(actual);
-    Assert.assertEquals(expected.toString(), actual.toString());
-
-    auth = new AuthConfiguration();
-    actual = JibPluginConfiguration.getImageAuth("jib.test.auth.user", "jib.test.auth.pass", auth);
-    Assert.assertNull(actual);
   }
 }

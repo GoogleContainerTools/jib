@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/** Utility for parsing exposed ports from plugin configuration */
+/** Utility for parsing exposed ports from text representations. */
 public class ExposedPortsParser {
 
   /**

@@ -29,7 +29,7 @@
         <version>${jib-maven-plugin.version}</version>
         <configuration>
           <to>
-            <image>gcr.io/jib-integration-testing/emptyimage:maven</image>
+            <image>${_TARGET_IMAGE}</image>
           </to>
           <container>
             <ports>
