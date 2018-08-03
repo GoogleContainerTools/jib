@@ -90,7 +90,8 @@ public class MavenLayerConfigurationsTest {
             Paths.get(Resources.getResource("application/output/package").toURI()),
             Paths.get(Resources.getResource("application/output/some.class").toURI()));
 
-    JavaLayerConfigurations javaLayerConfigurations = MavenLayerConfigurations.getForProject(mockMavenProject, Paths.get("nonexistent/path"));
+    JavaLayerConfigurations javaLayerConfigurations =
+        MavenLayerConfigurations.getForProject(mockMavenProject, Paths.get("nonexistent/path"));
     Assert.assertEquals(
         expectedDependenciesFiles,
         javaLayerConfigurations
