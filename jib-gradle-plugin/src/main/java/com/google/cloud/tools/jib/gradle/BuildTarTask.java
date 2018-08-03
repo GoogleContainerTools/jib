@@ -166,7 +166,6 @@ public class BuildTarTask extends DefaultTask {
             .setTargetImageConfiguration(targetImageConfiguration)
             .setContainerConfiguration(containerConfigurationBuilder.build())
             .setAllowInsecureRegistries(jibExtension.getAllowInsecureRegistries())
-            // TODO: Set as LayerConfigurations directly?
             .setLayerConfigurations(
                 gradleProjectProperties.getJavaLayerConfigurations().getLayerConfigurations());
     CacheConfiguration applicationLayersCacheConfiguration =
