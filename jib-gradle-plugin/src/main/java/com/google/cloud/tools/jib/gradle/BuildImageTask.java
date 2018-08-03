@@ -94,7 +94,7 @@ public class BuildImageTask extends DefaultTask {
             .build();
 
     PluginConfigurationProcessor pluginConfigurationProcessor =
-        PluginConfigurationProcessor.newCommonConfiguration(
+        PluginConfigurationProcessor.processCommonConfiguration(
             gradleJibLogger, jibExtension, gradleProjectProperties);
 
     BuildConfiguration buildConfiguration =

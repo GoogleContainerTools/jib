@@ -52,7 +52,7 @@ class PluginConfigurationProcessor {
    * @return a new {@link PluginConfigurationProcessor} containing pre-configured builders
    * @throws InvalidImageReferenceException if parsing the base image configuration fails
    */
-  static PluginConfigurationProcessor newCommonConfiguration(
+  static PluginConfigurationProcessor processCommonConfiguration(
       JibLogger logger, JibExtension jibExtension, GradleProjectProperties projectProperties)
       throws InvalidImageReferenceException {
     jibExtension.handleDeprecatedParameters(logger);

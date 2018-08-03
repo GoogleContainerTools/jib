@@ -108,7 +108,7 @@ public class BuildTarTask extends DefaultTask {
         gradleProjectProperties.getGeneratedTargetDockerTag(jibExtension, gradleJibLogger);
 
     PluginConfigurationProcessor pluginConfigurationProcessor =
-        PluginConfigurationProcessor.newCommonConfiguration(
+        PluginConfigurationProcessor.processCommonConfiguration(
             gradleJibLogger, jibExtension, gradleProjectProperties);
 
     BuildConfiguration buildConfiguration =
