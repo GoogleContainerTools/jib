@@ -16,28 +16,18 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.configuration.CacheConfiguration;
-import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
-import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
-import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
-import com.google.cloud.tools.jib.plugins.common.SystemPropertyValidator;
-import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import java.time.Instant;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -47,9 +37,6 @@ import org.gradle.api.tasks.options.Option;
 
 /** Builds a container image. */
 public class BuildImageTask extends DefaultTask {
-
-  /** {@code User-Agent} header suffix to send to the registry. */
-  private static final String USER_AGENT_SUFFIX = "jib-gradle-plugin";
 
   private static final HelpfulSuggestions HELPFUL_SUGGESTIONS =
       HelpfulSuggestionsProvider.get("Build image failed");
@@ -83,8 +70,9 @@ public class BuildImageTask extends DefaultTask {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
     GradleJibLogger gradleJibLogger = new GradleJibLogger(getLogger());
-    jibExtension.handleDeprecatedParameters(gradleJibLogger);
-    SystemPropertyValidator.checkHttpTimeoutProperty(GradleException::new);
+    GradleProjectProperties gradleProjectProperties =
+        GradleProjectProperties.getForProject(
+            getProject(), gradleJibLogger, jibExtension.getExtraDirectoryPath());
 
     if (Strings.isNullOrEmpty(jibExtension.getTargetImage())) {
       throw new GradleException(
@@ -92,80 +80,33 @@ public class BuildImageTask extends DefaultTask {
               .forToNotConfigured(
                   "'jib.to.image'", "build.gradle", "gradle jib --image <your image name>"));
     }
-
-    if (Boolean.getBoolean("sendCredentialsOverHttp")) {
-      gradleJibLogger.warn(
-          "Authentication over HTTP is enabled. It is strongly recommended that you do not enable "
-              + "this on a public network!");
-    }
-    RegistryCredentials knownBaseRegistryCredentials = null;
     RegistryCredentials knownTargetRegistryCredentials = null;
-    Authorization fromAuthorization =
-        getImageAuthorization(gradleJibLogger, "from", jibExtension.getFrom().getAuth());
-    if (fromAuthorization != null) {
-      knownBaseRegistryCredentials = new RegistryCredentials("jib.from.auth", fromAuthorization);
-    }
     Authorization toAuthorization =
-        getImageAuthorization(gradleJibLogger, "to", jibExtension.getFrom().getAuth());
+        BuildTaskConfigurator.getImageAuthorization(
+            gradleJibLogger, "to", jibExtension.getFrom().getAuth());
     if (toAuthorization != null) {
       knownTargetRegistryCredentials = new RegistryCredentials("jib.to.auth", toAuthorization);
     }
-
-    GradleProjectProperties gradleProjectProperties =
-        GradleProjectProperties.getForProject(
-            getProject(), gradleJibLogger, jibExtension.getExtraDirectoryPath());
-    String mainClass = gradleProjectProperties.getMainClass(jibExtension);
-
-    // Builds the BuildConfiguration.
-    ImageConfiguration baseImageConfiguration =
-        ImageConfiguration.builder(ImageReference.parse(jibExtension.getBaseImage()))
-            .setCredentialHelper(jibExtension.getFrom().getCredHelper())
-            .setKnownRegistryCredentials(knownBaseRegistryCredentials)
-            .build();
-
     ImageConfiguration targetImageConfiguration =
         ImageConfiguration.builder(ImageReference.parse(jibExtension.getTargetImage()))
             .setCredentialHelper(jibExtension.getTo().getCredHelper())
             .setKnownRegistryCredentials(knownTargetRegistryCredentials)
             .build();
 
-    ContainerConfiguration.Builder containerConfigurationBuilder =
-        ContainerConfiguration.builder()
-            .setEntrypoint(
-                JavaEntrypointConstructor.makeDefaultEntrypoint(
-                    jibExtension.getJvmFlags(), mainClass))
-            .setProgramArguments(jibExtension.getArgs())
-            .setExposedPorts(ExposedPortsParser.parse(jibExtension.getExposedPorts()));
-    if (jibExtension.getUseCurrentTimestamp()) {
-      gradleJibLogger.warn(
-          "Setting image creation time to current time; your image may not be reproducible.");
-      containerConfigurationBuilder.setCreationTime(Instant.now());
-    }
+    BuildTaskConfigurator buildTaskConfigurator =
+        BuildTaskConfigurator.newCommonConfiguration(
+            gradleJibLogger, jibExtension, gradleProjectProperties);
 
-    BuildConfiguration.Builder buildConfigurationBuilder =
-        BuildConfiguration.builder(gradleJibLogger)
-            .setBaseImageConfiguration(baseImageConfiguration)
+    BuildConfiguration buildConfiguration =
+        buildTaskConfigurator
+            .getBuildConfigurationBuilder()
+            .setBaseImageConfiguration(
+                buildTaskConfigurator.getBaseImageConfigurationBuilder().build())
             .setTargetImageConfiguration(targetImageConfiguration)
-            .setContainerConfiguration(containerConfigurationBuilder.build())
+            .setContainerConfiguration(
+                buildTaskConfigurator.getContainerConfigurationBuilder().build())
             .setTargetFormat(jibExtension.getFormat())
-            .setAllowInsecureRegistries(jibExtension.getAllowInsecureRegistries())
-            .setLayerConfigurations(gradleProjectProperties.getLayerConfigurations());
-
-    CacheConfiguration applicationLayersCacheConfiguration =
-        CacheConfiguration.forPath(gradleProjectProperties.getCacheDirectory());
-    buildConfigurationBuilder.setApplicationLayersCacheConfiguration(
-        applicationLayersCacheConfiguration);
-    if (jibExtension.getUseOnlyProjectCache()) {
-      buildConfigurationBuilder.setBaseImageLayersCacheConfiguration(
-          applicationLayersCacheConfiguration);
-    }
-
-    BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
-
-    // TODO: Instead of disabling logging, have authentication credentials be provided
-    GradleJibLogger.disableHttpLogging();
-
-    RegistryClient.setUserAgentSuffix(USER_AGENT_SUFFIX);
+            .build();
 
     try {
       BuildStepsRunner.forBuildImage(buildConfiguration).build(HELPFUL_SUGGESTIONS);
@@ -178,43 +119,5 @@ public class BuildImageTask extends DefaultTask {
   BuildImageTask setJibExtension(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
     return this;
-  }
-
-  /**
-   * Validates and returns an {@link Authorization} from a configured {@link AuthParameters}.
-   *
-   * <p>TODO: Consolidate with other tasks.
-   *
-   * @param logger the {@link JibLogger} used to print warnings
-   * @param imageProperty the image configuration's name (i.e. "from" or "to")
-   * @param auth the auth configuration to get the {@link Authorization} from
-   * @return the {@link Authorization}, or null if the username and password aren't both configured
-   */
-  @VisibleForTesting
-  @Nullable
-  static Authorization getImageAuthorization(
-      JibLogger logger, String imageProperty, AuthParameters auth) {
-    if (Strings.isNullOrEmpty(auth.getUsername()) && Strings.isNullOrEmpty(auth.getPassword())) {
-      return null;
-    }
-    if (Strings.isNullOrEmpty(auth.getUsername())) {
-      logger.warn(
-          "jib."
-              + imageProperty
-              + ".auth.username is null; ignoring jib."
-              + imageProperty
-              + ".auth section.");
-      return null;
-    }
-    if (Strings.isNullOrEmpty(auth.getPassword())) {
-      logger.warn(
-          "jib."
-              + imageProperty
-              + ".auth.password is null; ignoring jib."
-              + imageProperty
-              + ".auth section.");
-      return null;
-    }
-    return Authorizations.withBasicCredentials(auth.getUsername(), auth.getPassword());
   }
 }
