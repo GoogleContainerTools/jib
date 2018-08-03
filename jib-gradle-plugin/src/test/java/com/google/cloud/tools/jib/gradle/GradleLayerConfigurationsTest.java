@@ -172,7 +172,7 @@ public class GradleLayerConfigurationsTest {
         .thenReturn(new TestFileCollection(ImmutableSet.of(nonexistentFile)));
 
     GradleLayerConfigurations.getForProject(
-            mockProject, mockGradleJibLogger, Paths.get("nonexistent/path"));
+        mockProject, mockGradleJibLogger, Paths.get("nonexistent/path"));
 
     Mockito.verify(mockGradleJibLogger)
         .warn("Could not find build output directory '" + nonexistentFile + "'");
