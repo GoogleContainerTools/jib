@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.registry;
 import com.google.api.client.http.HttpResponseException;
 
 /** Thrown when a registry request was unauthorized and therefore authentication is needed. */
-public class RegistryUnauthorizedException extends RegistryException {
+public class RegistryUnauthorizedException extends EndpointException {
 
   private final String registry;
   private final String repository;

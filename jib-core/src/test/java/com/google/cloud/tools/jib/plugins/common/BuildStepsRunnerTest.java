@@ -27,7 +27,7 @@ import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
-import com.google.cloud.tools.jib.registry.InsecureRegistryException;
+import com.google.cloud.tools.jib.registry.InsecureEndpointException;
 import com.google.cloud.tools.jib.registry.RegistryCredentialsNotSentException;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import com.google.common.collect.ImmutableList;
@@ -156,8 +156,8 @@ public class BuildStepsRunnerTest {
   public void testBuildImage_executionException_insecureRegistryException()
       throws InterruptedException, ExecutionException, CacheDirectoryNotOwnedException,
           CacheMetadataCorruptedException, IOException, CacheDirectoryCreationException {
-    InsecureRegistryException mockInsecureRegistryException =
-        Mockito.mock(InsecureRegistryException.class);
+    InsecureEndpointException mockInsecureRegistryException =
+        Mockito.mock(InsecureEndpointException.class);
     Mockito.when(mockExecutionException.getCause()).thenReturn(mockInsecureRegistryException);
     Mockito.doThrow(mockExecutionException).when(mockBuildSteps).run();
 

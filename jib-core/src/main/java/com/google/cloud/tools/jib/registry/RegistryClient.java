@@ -198,14 +198,14 @@ public class RegistryClient {
    * @return the {@link RegistryAuthenticator} to authenticate pulls/pushes with the registry, or
    *     {@code null} if no token authentication is necessary
    * @throws IOException if communicating with the endpoint fails
-   * @throws RegistryException if communicating with the endpoint fails
+   * @throws EndpointException if communicating with the endpoint fails
    */
   @Nullable
-  public RegistryAuthenticator getRegistryAuthenticator() throws IOException, RegistryException {
+  public RegistryAuthenticator getRegistryAuthenticator() throws IOException, EndpointException {
     // Gets the WWW-Authenticate header (eg. 'WWW-Authenticate: Bearer
     // realm="https://gcr.io/v2/token",service="gcr.io"')
     return callRegistryEndpoint(
-        new AuthenticationMethodRetriever(registryEndpointRequestProperties));
+        new AuthenticationMethodRetriever(buildLogger, registryEndpointRequestProperties));
   }
 
   /**
@@ -217,10 +217,10 @@ public class RegistryClient {
    *     ManifestTemplate} to pull either {@link V22ManifestTemplate} or {@link V21ManifestTemplate}
    * @return the manifest template
    * @throws IOException if communicating with the endpoint fails
-   * @throws RegistryException if communicating with the endpoint fails
+   * @throws EndpointException if communicating with the endpoint fails
    */
   public <T extends ManifestTemplate> T pullManifest(
-      String imageTag, Class<T> manifestTemplateClass) throws IOException, RegistryException {
+      String imageTag, Class<T> manifestTemplateClass) throws IOException, EndpointException {
     ManifestPuller<T> manifestPuller =
         new ManifestPuller<>(registryEndpointRequestProperties, imageTag, manifestTemplateClass);
     T manifestTemplate = callRegistryEndpoint(manifestPuller);
@@ -230,7 +230,7 @@ public class RegistryClient {
     return manifestTemplate;
   }
 
-  public ManifestTemplate pullManifest(String imageTag) throws IOException, RegistryException {
+  public ManifestTemplate pullManifest(String imageTag) throws IOException, EndpointException {
     return pullManifest(imageTag, ManifestTemplate.class);
   }
 
@@ -240,10 +240,10 @@ public class RegistryClient {
    * @param manifestTemplate the image manifest
    * @param imageTag the tag to push on
    * @throws IOException if communicating with the endpoint fails
-   * @throws RegistryException if communicating with the endpoint fails
+   * @throws EndpointException if communicating with the endpoint fails
    */
   public void pushManifest(BuildableManifestTemplate manifestTemplate, String imageTag)
-      throws IOException, RegistryException {
+      throws IOException, EndpointException {
     callRegistryEndpoint(
         new ManifestPusher(registryEndpointRequestProperties, manifestTemplate, imageTag));
   }
@@ -253,11 +253,11 @@ public class RegistryClient {
    * @return the BLOB's {@link BlobDescriptor} if the BLOB exists on the registry, or {@code null}
    *     if it doesn't
    * @throws IOException if communicating with the endpoint fails
-   * @throws RegistryException if communicating with the endpoint fails
+   * @throws EndpointException if communicating with the endpoint fails
    */
   @Nullable
   public BlobDescriptor checkBlob(DescriptorDigest blobDigest)
-      throws IOException, RegistryException {
+      throws IOException, EndpointException {
     BlobChecker blobChecker = new BlobChecker(registryEndpointRequestProperties, blobDigest);
     return callRegistryEndpoint(blobChecker);
   }
@@ -270,10 +270,10 @@ public class RegistryClient {
    * @return a {@link Blob} backed by the file at {@code destPath}. The file at {@code destPath}
    *     must exist for {@link Blob} to be valid.
    * @throws IOException if communicating with the endpoint fails
-   * @throws RegistryException if communicating with the endpoint fails
+   * @throws EndpointException if communicating with the endpoint fails
    */
   public Void pullBlob(DescriptorDigest blobDigest, OutputStream destinationOutputStream)
-      throws RegistryException, IOException {
+      throws EndpointException, IOException {
     BlobPuller blobPuller =
         new BlobPuller(registryEndpointRequestProperties, blobDigest, destinationOutputStream);
     return callRegistryEndpoint(blobPuller);
@@ -290,10 +290,10 @@ public class RegistryClient {
    * @return {@code true} if the BLOB already exists on the registry and pushing was skipped; false
    *     if the BLOB was pushed
    * @throws IOException if communicating with the endpoint fails
-   * @throws RegistryException if communicating with the endpoint fails
+   * @throws EndpointException if communicating with the endpoint fails
    */
   public boolean pushBlob(DescriptorDigest blobDigest, Blob blob, @Nullable String sourceRepository)
-      throws IOException, RegistryException {
+      throws IOException, EndpointException {
     BlobPusher blobPusher =
         new BlobPusher(registryEndpointRequestProperties, blobDigest, blob, sourceRepository);
 
@@ -340,11 +340,11 @@ public class RegistryClient {
    *
    * @param registryEndpointProvider the {@link RegistryEndpointProvider} to the endpoint
    * @throws IOException if communicating with the endpoint fails
-   * @throws RegistryException if communicating with the endpoint fails
+   * @throws EndpointException if communicating with the endpoint fails
    */
   @Nullable
   private <T> T callRegistryEndpoint(RegistryEndpointProvider<T> registryEndpointProvider)
-      throws IOException, RegistryException {
+      throws IOException, EndpointException {
     return new RegistryEndpointCaller<>(
             buildLogger,
             userAgent,

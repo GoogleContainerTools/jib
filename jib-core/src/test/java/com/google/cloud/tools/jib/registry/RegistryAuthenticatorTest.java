@@ -16,13 +16,21 @@
 
 package com.google.cloud.tools.jib.registry;
 
+import com.google.cloud.tools.jib.JibLogger;
 import java.net.MalformedURLException;
 import java.net.URL;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link RegistryAuthenticator}. */
+@RunWith(MockitoJUnitRunner.class)
 public class RegistryAuthenticatorTest {
+
+  @Mock private JibLogger logger;
+
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties =
       new RegistryEndpointRequestProperties("someserver", "someimage");
 
@@ -31,6 +39,7 @@ public class RegistryAuthenticatorTest {
       throws MalformedURLException, RegistryAuthenticationFailedException {
     RegistryAuthenticator registryAuthenticator =
         RegistryAuthenticator.fromAuthenticationMethod(
+            logger,
             "Bearer realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
             registryEndpointRequestProperties);
     Assert.assertEquals(
@@ -39,6 +48,7 @@ public class RegistryAuthenticatorTest {
 
     registryAuthenticator =
         RegistryAuthenticator.fromAuthenticationMethod(
+            logger,
             "bEaReR realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
             registryEndpointRequestProperties);
     Assert.assertEquals(
@@ -50,16 +60,19 @@ public class RegistryAuthenticatorTest {
   public void testFromAuthenticationMethod_basic() throws RegistryAuthenticationFailedException {
     Assert.assertNull(
         RegistryAuthenticator.fromAuthenticationMethod(
+            logger,
             "Basic realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
             registryEndpointRequestProperties));
 
     Assert.assertNull(
         RegistryAuthenticator.fromAuthenticationMethod(
+            logger,
             "BASIC realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
             registryEndpointRequestProperties));
 
     Assert.assertNull(
         RegistryAuthenticator.fromAuthenticationMethod(
+            logger,
             "bASIC realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
             registryEndpointRequestProperties));
   }
@@ -68,6 +81,7 @@ public class RegistryAuthenticatorTest {
   public void testFromAuthenticationMethod_noBearer() {
     try {
       RegistryAuthenticator.fromAuthenticationMethod(
+          logger,
           "realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
           registryEndpointRequestProperties);
       Assert.fail("Authentication method without 'Bearer ' or 'Basic ' should fail");
@@ -83,7 +97,7 @@ public class RegistryAuthenticatorTest {
   public void testFromAuthenticationMethod_noRealm() {
     try {
       RegistryAuthenticator.fromAuthenticationMethod(
-          "Bearer scope=\"somescope\"", registryEndpointRequestProperties);
+          logger, "Bearer scope=\"somescope\"", registryEndpointRequestProperties);
       Assert.fail("Authentication method without 'realm' should fail");
 
     } catch (RegistryAuthenticationFailedException ex) {
@@ -98,7 +112,7 @@ public class RegistryAuthenticatorTest {
       throws MalformedURLException, RegistryAuthenticationFailedException {
     RegistryAuthenticator registryAuthenticator =
         RegistryAuthenticator.fromAuthenticationMethod(
-            "Bearer realm=\"https://somerealm\"", registryEndpointRequestProperties);
+            logger, "Bearer realm=\"https://somerealm\"", registryEndpointRequestProperties);
 
     Assert.assertEquals(
         new URL("https://somerealm?service=someserver&scope=repository:someimage:scope"),

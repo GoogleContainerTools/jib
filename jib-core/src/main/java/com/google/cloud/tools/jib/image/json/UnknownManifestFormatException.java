@@ -16,10 +16,10 @@
 
 package com.google.cloud.tools.jib.image.json;
 
-import com.google.cloud.tools.jib.registry.RegistryException;
+import com.google.cloud.tools.jib.registry.EndpointException;
 
 /** Exception thrown when trying to parse an unknown image manifest format. */
-public class UnknownManifestFormatException extends RegistryException {
+public class UnknownManifestFormatException extends EndpointException {
 
   public UnknownManifestFormatException(String message) {
     super(message);

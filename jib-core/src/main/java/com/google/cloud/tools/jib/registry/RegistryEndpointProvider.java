@@ -50,7 +50,7 @@ interface RegistryEndpointProvider<T> {
 
   /** Handles the response specific to the registry action. */
   @Nullable
-  T handleResponse(Response response) throws IOException, RegistryException;
+  T handleResponse(Response response) throws IOException, EndpointException;
 
   /**
    * Handles an {@link HttpResponseException} that occurs.

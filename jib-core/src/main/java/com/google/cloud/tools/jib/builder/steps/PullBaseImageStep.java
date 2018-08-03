@@ -35,10 +35,10 @@ import com.google.cloud.tools.jib.image.json.UnknownManifestFormatException;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import com.google.cloud.tools.jib.registry.EndpointException;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticator;
 import com.google.cloud.tools.jib.registry.RegistryClient;
-import com.google.cloud.tools.jib.registry.RegistryException;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -98,7 +98,7 @@ class PullBaseImageStep
 
   @Override
   public BaseImageWithAuthorization call()
-      throws IOException, RegistryException, LayerPropertyNotFoundException,
+      throws IOException, EndpointException, LayerPropertyNotFoundException,
           LayerCountMismatchException, ExecutionException, BadContainerConfigurationFormatException,
           RegistryAuthenticationFailedException {
     buildConfiguration
@@ -168,7 +168,7 @@ class PullBaseImageStep
    * @param registryCredentials authentication credentials to possibly use
    * @return the pulled image
    * @throws IOException when an I/O exception occurs during the pulling
-   * @throws RegistryException if communicating with the registry caused a known error
+   * @throws EndpointException if communicating with the registry caused a known error
    * @throws LayerCountMismatchException if the manifest and configuration contain conflicting layer
    *     information
    * @throws LayerPropertyNotFoundException if adding image layers fails
@@ -176,7 +176,7 @@ class PullBaseImageStep
    *     format
    */
   private Image<Layer> pullBaseImage(@Nullable Authorization registryCredentials)
-      throws IOException, RegistryException, LayerPropertyNotFoundException,
+      throws IOException, EndpointException, LayerPropertyNotFoundException,
           LayerCountMismatchException, BadContainerConfigurationFormatException {
     RegistryClient registryClient =
         RegistryClient.factory(

@@ -125,7 +125,7 @@ class BlobPusher {
 
     /** @return a URL to continue pushing the BLOB to */
     @Override
-    public URL handleResponse(Response response) throws RegistryException {
+    public URL handleResponse(Response response) throws EndpointException {
       // TODO: Handle 204 No Content
       return getRedirectLocation(response);
     }

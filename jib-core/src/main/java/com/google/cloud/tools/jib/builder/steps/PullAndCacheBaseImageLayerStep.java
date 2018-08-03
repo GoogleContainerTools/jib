@@ -25,8 +25,8 @@ import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.registry.EndpointException;
 import com.google.cloud.tools.jib.registry.RegistryClient;
-import com.google.cloud.tools.jib.registry.RegistryException;
 import com.google.common.io.CountingOutputStream;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -66,7 +66,7 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer>, Callable
   }
 
   @Override
-  public CachedLayer call() throws IOException, RegistryException {
+  public CachedLayer call() throws IOException, EndpointException {
     try (Timer ignored =
         new Timer(buildConfiguration.getBuildLogger(), String.format(DESCRIPTION, layerDigest))) {
       RegistryClient registryClient =

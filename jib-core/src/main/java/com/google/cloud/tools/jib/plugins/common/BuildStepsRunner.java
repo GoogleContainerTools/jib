@@ -29,7 +29,7 @@ import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.image.LayerEntry;
-import com.google.cloud.tools.jib.registry.InsecureRegistryException;
+import com.google.cloud.tools.jib.registry.InsecureEndpointException;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.registry.RegistryCredentialsNotSentException;
 import com.google.cloud.tools.jib.registry.RegistryErrorException;
@@ -251,7 +251,7 @@ public class BuildStepsRunner {
         throw new BuildStepsExecutionException(
             helpfulSuggestions.forUnknownHost(), exceptionDuringBuildSteps);
 
-      } else if (exceptionDuringBuildSteps instanceof InsecureRegistryException) {
+      } else if (exceptionDuringBuildSteps instanceof InsecureEndpointException) {
         throw new BuildStepsExecutionException(
             helpfulSuggestions.forInsecureRegistry(), exceptionDuringBuildSteps);
 

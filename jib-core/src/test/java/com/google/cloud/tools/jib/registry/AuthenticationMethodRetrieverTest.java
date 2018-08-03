@@ -20,6 +20,7 @@ import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
+import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.http.Response;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -35,13 +36,14 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class AuthenticationMethodRetrieverTest {
 
+  @Mock private JibLogger logger;
   @Mock private HttpResponseException mockHttpResponseException;
   @Mock private HttpHeaders mockHeaders;
 
   private final RegistryEndpointRequestProperties fakeRegistryEndpointRequestProperties =
       new RegistryEndpointRequestProperties("someServerUrl", "someImageName");
   private final AuthenticationMethodRetriever testAuthenticationMethodRetriever =
-      new AuthenticationMethodRetriever(fakeRegistryEndpointRequestProperties);
+      new AuthenticationMethodRetriever(logger, fakeRegistryEndpointRequestProperties);
 
   @Test
   public void testGetContent() {

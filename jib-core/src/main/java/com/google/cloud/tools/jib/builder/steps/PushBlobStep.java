@@ -22,8 +22,8 @@ import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.registry.EndpointException;
 import com.google.cloud.tools.jib.registry.RegistryClient;
-import com.google.cloud.tools.jib.registry.RegistryException;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -65,7 +65,7 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
   }
 
   @Override
-  public BlobDescriptor call() throws IOException, RegistryException, ExecutionException {
+  public BlobDescriptor call() throws IOException, EndpointException, ExecutionException {
     try (Timer timer =
         new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION + blobDescriptor)) {
       RegistryClient registryClient =

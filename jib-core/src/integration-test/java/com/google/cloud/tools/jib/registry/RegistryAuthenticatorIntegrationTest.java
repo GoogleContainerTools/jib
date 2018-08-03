@@ -32,7 +32,7 @@ public class RegistryAuthenticatorIntegrationTest {
   @Test
   public void testAuthenticate()
       throws RegistryAuthenticationFailedException, InvalidImageReferenceException, IOException,
-          RegistryException {
+          EndpointException {
     ImageReference dockerHubImageReference = ImageReference.parse("library/busybox");
     RegistryAuthenticator registryAuthenticator =
         RegistryAuthenticator.initializer(
