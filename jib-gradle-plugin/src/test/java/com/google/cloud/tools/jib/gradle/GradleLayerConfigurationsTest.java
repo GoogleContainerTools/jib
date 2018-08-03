@@ -75,10 +75,8 @@ public class GradleLayerConfigurationsTest {
   @Mock private SourceSetOutput mockMainSourceSetOutput;
   @Mock private GradleJibLogger mockGradleJibLogger;
 
-  private JavaLayerConfigurations testJavaLayerConfigurations;
-
   @Before
-  public void setUp() throws URISyntaxException, IOException {
+  public void setUp() throws URISyntaxException {
     Set<File> classesFiles =
         ImmutableSet.of(Paths.get(Resources.getResource("application/classes").toURI()).toFile());
     FileCollection classesFileCollection = new TestFileCollection(classesFiles);
@@ -110,14 +108,10 @@ public class GradleLayerConfigurationsTest {
     Mockito.when(mockMainSourceSetOutput.getClassesDirs()).thenReturn(classesFileCollection);
     Mockito.when(mockMainSourceSetOutput.getResourcesDir()).thenReturn(resourcesOutputDir);
     Mockito.when(mockMainSourceSet.getRuntimeClasspath()).thenReturn(runtimeFileCollection);
-
-    testJavaLayerConfigurations =
-        GradleLayerConfigurations.getForProject(
-            mockProject, mockGradleJibLogger, Paths.get("nonexistent/path"));
   }
 
   @Test
-  public void test_correctFiles() throws URISyntaxException {
+  public void test_correctFiles() throws URISyntaxException, IOException {
     ImmutableList<Path> expectedDependenciesFiles =
         ImmutableList.of(
             Paths.get(
@@ -141,29 +135,32 @@ public class GradleLayerConfigurationsTest {
             Paths.get(Resources.getResource("application/classes").toURI()).resolve("some.class"));
     ImmutableList<Path> expectedExtraFiles = ImmutableList.of();
 
+    JavaLayerConfigurations javaLayerConfigurations =
+        GradleLayerConfigurations.getForProject(
+            mockProject, mockGradleJibLogger, Paths.get("nonexistent/path"));
     Assert.assertEquals(
         expectedDependenciesFiles,
-        testJavaLayerConfigurations
+        javaLayerConfigurations
             .getLayerEntry(JavaLayerConfigurations.LayerType.DEPENDENCIES)
             .getSourceFiles());
     Assert.assertEquals(
         expectedSnapshotDependenciesFiles,
-        testJavaLayerConfigurations
+        javaLayerConfigurations
             .getLayerEntry(JavaLayerConfigurations.LayerType.SNAPSHOT_DEPENDENCIES)
             .getSourceFiles());
     Assert.assertEquals(
         expectedResourcesFiles,
-        testJavaLayerConfigurations
+        javaLayerConfigurations
             .getLayerEntry(JavaLayerConfigurations.LayerType.RESOURCES)
             .getSourceFiles());
     Assert.assertEquals(
         expectedClassesFiles,
-        testJavaLayerConfigurations
+        javaLayerConfigurations
             .getLayerEntry(JavaLayerConfigurations.LayerType.CLASSES)
             .getSourceFiles());
     Assert.assertEquals(
         expectedExtraFiles,
-        testJavaLayerConfigurations
+        javaLayerConfigurations
             .getLayerEntry(JavaLayerConfigurations.LayerType.EXTRA_FILES)
             .getSourceFiles());
   }
@@ -174,8 +171,7 @@ public class GradleLayerConfigurationsTest {
     Mockito.when(mockMainSourceSetOutput.getClassesDirs())
         .thenReturn(new TestFileCollection(ImmutableSet.of(nonexistentFile)));
 
-    testJavaLayerConfigurations =
-        GradleLayerConfigurations.getForProject(
+    GradleLayerConfigurations.getForProject(
             mockProject, mockGradleJibLogger, Paths.get("nonexistent/path"));
 
     Mockito.verify(mockGradleJibLogger)
@@ -188,7 +184,7 @@ public class GradleLayerConfigurationsTest {
   public void test_extraFiles() throws URISyntaxException, IOException {
     Path extraFilesDirectory = Paths.get(Resources.getResource("layer").toURI());
 
-    testJavaLayerConfigurations =
+    JavaLayerConfigurations javaLayerConfigurations =
         GradleLayerConfigurations.getForProject(
             mockProject, mockGradleJibLogger, extraFilesDirectory);
 
@@ -200,37 +196,8 @@ public class GradleLayerConfigurationsTest {
 
     Assert.assertEquals(
         expectedExtraFiles,
-        testJavaLayerConfigurations
+        javaLayerConfigurations
             .getLayerEntry(JavaLayerConfigurations.LayerType.EXTRA_FILES)
             .getSourceFiles());
-  }
-
-  @Test
-  public void test_correctPathsOnImage() {
-    Assert.assertEquals(
-        "/app/libs/",
-        testJavaLayerConfigurations
-            .getLayerEntry(JavaLayerConfigurations.LayerType.DEPENDENCIES)
-            .getExtractionPath());
-    Assert.assertEquals(
-        "/app/libs/",
-        testJavaLayerConfigurations
-            .getLayerEntry(JavaLayerConfigurations.LayerType.SNAPSHOT_DEPENDENCIES)
-            .getExtractionPath());
-    Assert.assertEquals(
-        "/app/resources/",
-        testJavaLayerConfigurations
-            .getLayerEntry(JavaLayerConfigurations.LayerType.RESOURCES)
-            .getExtractionPath());
-    Assert.assertEquals(
-        "/app/classes/",
-        testJavaLayerConfigurations
-            .getLayerEntry(JavaLayerConfigurations.LayerType.CLASSES)
-            .getExtractionPath());
-    Assert.assertEquals(
-        "/",
-        testJavaLayerConfigurations
-            .getLayerEntry(JavaLayerConfigurations.LayerType.EXTRA_FILES)
-            .getExtractionPath());
   }
 }
