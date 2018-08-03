@@ -37,7 +37,7 @@ public class ManifestPusherIntegrationTest {
   private static final EmptyJibLogger BUILD_LOGGER = new EmptyJibLogger();
 
   @Test
-  public void testPush_missingBlobs() throws IOException, RegistryException {
+  public void testPush_missingBlobs() throws IOException, EndpointException {
     RegistryClient registryClient =
         RegistryClient.factory(BUILD_LOGGER, "gcr.io", "distroless/java").newRegistryClient();
     ManifestTemplate manifestTemplate = registryClient.pullManifest("latest");
@@ -59,7 +59,7 @@ public class ManifestPusherIntegrationTest {
 
   /** Tests manifest pushing. This test is a comprehensive test of push and pull. */
   @Test
-  public void testPush() throws DigestException, IOException, RegistryException {
+  public void testPush() throws DigestException, IOException, EndpointException {
     Blob testLayerBlob = Blobs.from("crepecake");
     // Known digest for 'crepecake'
     DescriptorDigest testLayerBlobDigest =

@@ -29,7 +29,7 @@ public class AuthenticationMethodRetrieverIntegrationTest {
 
   @Test
   public void testGetRegistryAuthenticator()
-      throws RegistryAuthenticationFailedException, IOException, RegistryException {
+      throws RegistryAuthenticationFailedException, IOException, EndpointException {
     RegistryClient registryClient =
         RegistryClient.factory(BUILD_LOGGER, "registry.hub.docker.com", "library/busybox")
             .newRegistryClient();

@@ -21,7 +21,6 @@ import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
-import com.google.cloud.tools.jib.http.Connection;
 import com.google.cloud.tools.jib.http.Request;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.json.JsonTemplate;
@@ -75,11 +74,11 @@ public class RegistryAuthenticator {
      *     {@code null} if no token authentication is necessary
      * @throws RegistryAuthenticationFailedException if failed to create the registry authenticator
      * @throws IOException if communicating with the endpoint fails
-     * @throws RegistryException if communicating with the endpoint fails
+     * @throws EndpointException if communicating with the endpoint fails
      */
     @Nullable
     public RegistryAuthenticator initialize()
-        throws RegistryAuthenticationFailedException, IOException, RegistryException {
+        throws RegistryAuthenticationFailedException, IOException, EndpointException {
       try {
         return RegistryClient.factory(buildLogger, serverUrl, repository)
             .setAllowInsecureRegistries(allowInsecureRegistries)
@@ -89,7 +88,7 @@ public class RegistryAuthenticator {
       } catch (MalformedURLException ex) {
         throw new RegistryAuthenticationFailedException(ex);
 
-      } catch (InsecureRegistryException ex) {
+      } catch (InsecureEndpointException ex) {
         // Cannot skip certificate validation or use HTTP, so just return null.
         return null;
       }
@@ -122,6 +121,7 @@ public class RegistryAuthenticator {
    */
   @Nullable
   static RegistryAuthenticator fromAuthenticationMethod(
+      JibLogger jibLogger,
       String authenticationMethod,
       RegistryEndpointRequestProperties registryEndpointRequestProperties)
       throws RegistryAuthenticationFailedException {
@@ -152,7 +152,7 @@ public class RegistryAuthenticator {
             : registryEndpointRequestProperties.getServerUrl();
 
     return new RegistryAuthenticator(
-        realm, service, registryEndpointRequestProperties.getImageName());
+        jibLogger, realm, service, registryEndpointRequestProperties.getImageName());
   }
 
   private static RegistryAuthenticationFailedException newRegistryAuthenticationFailedException(
@@ -188,10 +188,12 @@ public class RegistryAuthenticator {
     }
   }
 
+  private final JibLogger logger;
   private final String authenticationUrlBase;
   @Nullable private Authorization authorization;
 
-  RegistryAuthenticator(String realm, String service, String repository) {
+  RegistryAuthenticator(JibLogger logger, String realm, String service, String repository) {
+    this.logger = logger;
     authenticationUrlBase = realm + "?service=" + service + "&scope=repository:" + repository + ":";
   }
 
@@ -242,27 +244,27 @@ public class RegistryAuthenticator {
    */
   private Authorization authenticate(String scope) throws RegistryAuthenticationFailedException {
     try {
-      URL authenticationUrl = getAuthenticationUrl(scope);
-
-      try (Connection connection = Connection.getConnectionFactory().apply(authenticationUrl)) {
-        Request.Builder requestBuilder =
-            Request.builder().setHttpTimeout(Integer.getInteger("jib.httpTimeout"));
-        if (authorization != null) {
-          requestBuilder.setAuthorization(authorization);
-        }
-        Response response = connection.get(requestBuilder.build());
-        String responseString = Blobs.writeToString(response.getBody());
-
-        AuthenticationResponseTemplate responseJson =
-            JsonTemplateMapper.readJson(responseString, AuthenticationResponseTemplate.class);
-        if (responseJson.getToken() == null) {
-          throw new RegistryAuthenticationFailedException(
-              "Did not get token in authentication response from " + authenticationUrl);
-        }
-        return Authorizations.withBearerToken(responseJson.getToken());
+      Request.Builder requestBuilder =
+          Request.builder().setHttpTimeout(Integer.getInteger("jib.httpTimeout"));
+      if (authorization != null) {
+        requestBuilder.setAuthorization(authorization);
       }
 
-    } catch (IOException ex) {
+      URL authenticationUrl = getAuthenticationUrl(scope);
+      // TODO: should pass "allowInsecureRegistries"
+      Response response =
+          new EndpointCaller(logger, false).call(authenticationUrl, "GET", requestBuilder.build());
+      String responseString = Blobs.writeToString(response.getBody());
+
+      AuthenticationResponseTemplate responseJson =
+          JsonTemplateMapper.readJson(responseString, AuthenticationResponseTemplate.class);
+      if (responseJson.getToken() == null) {
+        throw new RegistryAuthenticationFailedException(
+            "Did not get token in authentication response from " + authenticationUrl);
+      }
+      return Authorizations.withBearerToken(responseJson.getToken());
+
+    } catch (IOException | EndpointException ex) {
       throw new RegistryAuthenticationFailedException(ex);
     }
   }

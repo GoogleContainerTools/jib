@@ -22,8 +22,8 @@ import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
+import com.google.cloud.tools.jib.registry.EndpointException;
 import com.google.cloud.tools.jib.registry.RegistryClient;
-import com.google.cloud.tools.jib.registry.RegistryException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -114,7 +114,7 @@ class PushImageStep implements AsyncStep<Void>, Callable<Void> {
         .call(this::afterAllPushed, listeningExecutorService);
   }
 
-  private Void afterAllPushed() throws IOException, RegistryException, ExecutionException {
+  private Void afterAllPushed() throws IOException, EndpointException, ExecutionException {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       RegistryClient registryClient =
           RegistryClient.factory(

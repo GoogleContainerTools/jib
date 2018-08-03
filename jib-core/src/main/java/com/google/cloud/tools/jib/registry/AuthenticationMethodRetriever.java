@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.registry;
 import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
+import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
 import java.net.MalformedURLException;
@@ -31,9 +32,11 @@ import javax.annotation.Nullable;
 class AuthenticationMethodRetriever implements RegistryEndpointProvider<RegistryAuthenticator> {
 
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
+  private final JibLogger jibLogger;
 
   AuthenticationMethodRetriever(
-      RegistryEndpointRequestProperties registryEndpointRequestProperties) {
+      JibLogger jibLogger, RegistryEndpointRequestProperties registryEndpointRequestProperties) {
+    this.jibLogger = jibLogger;
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
   }
 
@@ -96,7 +99,7 @@ class AuthenticationMethodRetriever implements RegistryEndpointProvider<Registry
     // Parses the header to retrieve the components.
     try {
       return RegistryAuthenticator.fromAuthenticationMethod(
-          authenticationMethod, registryEndpointRequestProperties);
+          jibLogger, authenticationMethod, registryEndpointRequestProperties);
 
     } catch (RegistryAuthenticationFailedException ex) {
       throw new RegistryErrorExceptionBuilder(getActionDescription(), ex)

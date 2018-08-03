@@ -16,20 +16,17 @@
 
 package com.google.cloud.tools.jib.registry;
 
-import javax.annotation.Nullable;
+import java.net.URL;
 
-/** Thrown when interacting with a registry. */
-public class RegistryException extends Exception {
+/**
+ * Throw when attempting to access an insecure registry when only secure connections are allowed.
+ */
+public class InsecureEndpointException extends EndpointException {
 
-  public RegistryException(String message, @Nullable Throwable cause) {
-    super(message, cause);
-  }
-
-  public RegistryException(String message) {
-    super(message);
-  }
-
-  public RegistryException(Throwable cause) {
-    super(cause);
+  InsecureEndpointException(URL insecureUrl) {
+    super(
+        "Failed to verify the server at "
+            + insecureUrl
+            + " because only secure connections are allowed.");
   }
 }

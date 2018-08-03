@@ -17,7 +17,7 @@
 package com.google.cloud.tools.jib.registry;
 
 /** Thrown when registry request was unauthorized because credentials weren't sent. */
-public class RegistryCredentialsNotSentException extends RegistryException {
+public class RegistryCredentialsNotSentException extends EndpointException {
 
   /**
    * Identifies the image registry and repository that denied access.

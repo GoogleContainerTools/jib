@@ -22,7 +22,7 @@ import javax.annotation.Nullable;
  * Thrown when an HTTP request to a registry endpoint failed with errors as defined in {@link
  * ErrorCodes}.
  */
-public class RegistryErrorException extends RegistryException {
+public class RegistryErrorException extends EndpointException {
 
   RegistryErrorException(String message, @Nullable Throwable cause) {
     super(message, cause);

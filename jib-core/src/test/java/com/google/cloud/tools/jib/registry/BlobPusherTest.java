@@ -72,13 +72,13 @@ public class BlobPusherTest {
   }
 
   @Test
-  public void testInitializer_handleResponse_created() throws IOException, RegistryException {
+  public void testInitializer_handleResponse_created() throws IOException, EndpointException {
     Mockito.when(mockResponse.getStatusCode()).thenReturn(201); // Created
     Assert.assertNull(testBlobPusher.initializer().handleResponse(mockResponse));
   }
 
   @Test
-  public void testInitializer_handleResponse_accepted() throws IOException, RegistryException {
+  public void testInitializer_handleResponse_accepted() throws IOException, EndpointException {
     Mockito.when(mockResponse.getStatusCode()).thenReturn(202); // Accepted
     Mockito.when(mockResponse.getHeader("Location"))
         .thenReturn(Collections.singletonList("location"));
@@ -91,7 +91,7 @@ public class BlobPusherTest {
 
   @Test
   public void testInitializer_handleResponse_accepted_multipleLocations()
-      throws IOException, RegistryException {
+      throws IOException, EndpointException {
     Mockito.when(mockResponse.getStatusCode()).thenReturn(202); // Accepted
     Mockito.when(mockResponse.getHeader("Location"))
         .thenReturn(Arrays.asList("location1", "location2"));
@@ -107,7 +107,7 @@ public class BlobPusherTest {
   }
 
   @Test
-  public void testInitializer_handleResponse_unrecognized() throws IOException, RegistryException {
+  public void testInitializer_handleResponse_unrecognized() throws IOException, EndpointException {
     Mockito.when(mockResponse.getStatusCode()).thenReturn(-1); // Unrecognized
     try {
       testBlobPusher.initializer().handleResponse(mockResponse);
@@ -172,7 +172,7 @@ public class BlobPusherTest {
   }
 
   @Test
-  public void testWriter_handleResponse() throws IOException, RegistryException {
+  public void testWriter_handleResponse() throws IOException, EndpointException {
     Mockito.when(mockResponse.getHeader("Location"))
         .thenReturn(Collections.singletonList("https://somenewurl/location"));
     GenericUrl requestUrl = new GenericUrl("https://someurl");
@@ -211,7 +211,7 @@ public class BlobPusherTest {
   }
 
   @Test
-  public void testCommitter_handleResponse() throws IOException, RegistryException {
+  public void testCommitter_handleResponse() throws IOException, EndpointException {
     Assert.assertNull(
         testBlobPusher.committer(mockURL).handleResponse(Mockito.mock(Response.class)));
   }

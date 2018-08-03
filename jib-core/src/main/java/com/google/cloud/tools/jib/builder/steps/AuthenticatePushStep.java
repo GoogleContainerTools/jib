@@ -21,9 +21,9 @@ import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.http.Authorization;
+import com.google.cloud.tools.jib.registry.EndpointException;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticator;
-import com.google.cloud.tools.jib.registry.RegistryException;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -69,7 +69,7 @@ class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authori
   @Nullable
   public Authorization call()
       throws ExecutionException, RegistryAuthenticationFailedException, IOException,
-          RegistryException {
+          EndpointException {
     try (Timer ignored =
         new Timer(
             buildConfiguration.getBuildLogger(),
