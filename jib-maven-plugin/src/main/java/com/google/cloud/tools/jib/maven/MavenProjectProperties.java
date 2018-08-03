@@ -170,7 +170,7 @@ class MavenProjectProperties implements ProjectProperties {
               + "in your pom.xml, or use the -Dimage=<MY IMAGE> commandline flag.");
       return ImageReference.of(null, project.getName(), project.getVersion());
     } else {
-      return JibPluginConfiguration.parseImageReference(targetImage, "to");
+      return PluginConfigurationProcessor.parseImageReference(targetImage, "to");
     }
   }
 }

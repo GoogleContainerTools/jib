@@ -26,15 +26,9 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/**
- * Test for {@link BuildImageTask}.
- *
- * <p>TODO: This only tests the {@link BuildImageTask#getImageAuthorization(JibLogger, String,
- * AuthParameters)} method, which is copy-pasted between the 3 build tasks. When we refactor, we'll
- * need to move this test.
- */
+/** Test for {@link PluginConfigurationProcessor}. */
 @RunWith(MockitoJUnitRunner.class)
-public class BuildImageTaskTest {
+public class PluginConfigurationProcessorTest {
 
   @Mock private JibLogger mockLogger;
 
@@ -46,27 +40,28 @@ public class BuildImageTaskTest {
     auth.setUsername("vwxyz");
     auth.setPassword("98765");
     Authorization expected = Authorizations.withBasicCredentials("vwxyz", "98765");
-    Authorization actual = BuildImageTask.getImageAuthorization(mockLogger, "to", auth);
+    Authorization actual =
+        PluginConfigurationProcessor.getImageAuthorization(mockLogger, "to", auth);
     Assert.assertNotNull(actual);
     Assert.assertEquals(expected.toString(), actual.toString());
     Mockito.verify(mockLogger, Mockito.never()).warn(Mockito.any());
 
     // Auth completely missing
     auth = new AuthParameters();
-    actual = BuildImageTask.getImageAuthorization(mockLogger, "to", auth);
+    actual = PluginConfigurationProcessor.getImageAuthorization(mockLogger, "to", auth);
     Assert.assertNull(actual);
 
     // Password missing
     auth = new AuthParameters();
     auth.setUsername("vwxyz");
-    actual = BuildImageTask.getImageAuthorization(mockLogger, "to", auth);
+    actual = PluginConfigurationProcessor.getImageAuthorization(mockLogger, "to", auth);
     Assert.assertNull(actual);
     Mockito.verify(mockLogger).warn("jib.to.auth.password is null; ignoring jib.to.auth section.");
 
     // Username missing
     auth = new AuthParameters();
     auth.setPassword("98765");
-    actual = BuildImageTask.getImageAuthorization(mockLogger, "to", auth);
+    actual = PluginConfigurationProcessor.getImageAuthorization(mockLogger, "to", auth);
     Assert.assertNull(actual);
     Mockito.verify(mockLogger).warn("jib.to.auth.username is null; ignoring jib.to.auth section.");
   }

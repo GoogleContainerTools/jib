@@ -17,8 +17,6 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.JibLogger;
-import com.google.cloud.tools.jib.image.ImageReference;
-import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -114,19 +112,6 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     @Parameter private List<String> ports = Collections.emptyList();
   }
 
-  /**
-   * @param image the image reference string to parse.
-   * @param type name of the parameter being parsed (e.g. "to" or "from").
-   * @return the {@link ImageReference} parsed from {@code from}.
-   */
-  static ImageReference parseImageReference(String image, String type) {
-    try {
-      return ImageReference.parse(image);
-    } catch (InvalidImageReferenceException ex) {
-      throw new IllegalStateException("Parameter '" + type + "' is invalid", ex);
-    }
-  }
-
   @Nullable
   @Parameter(defaultValue = "${session}", readonly = true)
   MavenSession session;
@@ -202,6 +187,10 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     }
   }
 
+  MavenSession getSession() {
+    return Preconditions.checkNotNull(session);
+  }
+
   MavenProject getProject() {
     return Preconditions.checkNotNull(project);
   }
@@ -274,6 +263,10 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   Path getExtraDirectory() {
     // TODO: Should inform user about nonexistent directory if using custom directory.
     return Paths.get(Preconditions.checkNotNull(extraDirectory));
+  }
+
+  SettingsDecrypter getSettingsDecrypter() {
+    return Preconditions.checkNotNull(settingsDecrypter);
   }
 
   @VisibleForTesting
