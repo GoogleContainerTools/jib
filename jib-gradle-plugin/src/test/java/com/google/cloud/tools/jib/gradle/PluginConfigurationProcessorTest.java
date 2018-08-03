@@ -26,9 +26,9 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Test for {@link BuildTaskConfigurator}. */
+/** Test for {@link PluginConfigurationProcessor}. */
 @RunWith(MockitoJUnitRunner.class)
-public class BuildTaskConfiguratorTest {
+public class PluginConfigurationProcessorTest {
 
   @Mock private JibLogger mockLogger;
 
@@ -40,27 +40,27 @@ public class BuildTaskConfiguratorTest {
     auth.setUsername("vwxyz");
     auth.setPassword("98765");
     Authorization expected = Authorizations.withBasicCredentials("vwxyz", "98765");
-    Authorization actual = BuildTaskConfigurator.getImageAuthorization(mockLogger, "to", auth);
+    Authorization actual = PluginConfigurationProcessor.getImageAuthorization(mockLogger, "to", auth);
     Assert.assertNotNull(actual);
     Assert.assertEquals(expected.toString(), actual.toString());
     Mockito.verify(mockLogger, Mockito.never()).warn(Mockito.any());
 
     // Auth completely missing
     auth = new AuthParameters();
-    actual = BuildTaskConfigurator.getImageAuthorization(mockLogger, "to", auth);
+    actual = PluginConfigurationProcessor.getImageAuthorization(mockLogger, "to", auth);
     Assert.assertNull(actual);
 
     // Password missing
     auth = new AuthParameters();
     auth.setUsername("vwxyz");
-    actual = BuildTaskConfigurator.getImageAuthorization(mockLogger, "to", auth);
+    actual = PluginConfigurationProcessor.getImageAuthorization(mockLogger, "to", auth);
     Assert.assertNull(actual);
     Mockito.verify(mockLogger).warn("jib.to.auth.password is null; ignoring jib.to.auth section.");
 
     // Username missing
     auth = new AuthParameters();
     auth.setPassword("98765");
-    actual = BuildTaskConfigurator.getImageAuthorization(mockLogger, "to", auth);
+    actual = PluginConfigurationProcessor.getImageAuthorization(mockLogger, "to", auth);
     Assert.assertNull(actual);
     Mockito.verify(mockLogger).warn("jib.to.auth.username is null; ignoring jib.to.auth section.");
   }

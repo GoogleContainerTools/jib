@@ -36,23 +36,23 @@ import javax.annotation.Nullable;
 import org.gradle.api.GradleException;
 
 /** Configures and provides builders for the image building tasks. */
-class BuildTaskConfigurator {
+class PluginConfigurationProcessor {
 
   /** {@code User-Agent} header suffix to send to the registry. */
   private static final String USER_AGENT_SUFFIX = "jib-gradle-plugin";
 
   /**
-   * Sets up configuration that is common among the image building tasks. This includes setting up
-   * the base image reference/authorization, container configuration, cache configuration, and layer
-   * configuration.
+   * Sets up {@link BuildConfiguration} that is common among the image building tasks. This includes
+   * setting up the base image reference/authorization, container configuration, cache
+   * configuration, and layer configuration.
    *
    * @param logger the logger used to display messages.
    * @param jibExtension the {@link JibExtension} providing the configuration data
    * @param projectProperties used for providing additional information
-   * @return a new {@link BuildTaskConfigurator} containing pre-configured builders
+   * @return a new {@link PluginConfigurationProcessor} containing pre-configured builders
    * @throws InvalidImageReferenceException if parsing the base image configuration fails
    */
-  static BuildTaskConfigurator newCommonConfiguration(
+  static PluginConfigurationProcessor newCommonConfiguration(
       JibLogger logger, JibExtension jibExtension, GradleProjectProperties projectProperties)
       throws InvalidImageReferenceException {
     jibExtension.handleDeprecatedParameters(logger);
@@ -106,7 +106,7 @@ class BuildTaskConfigurator {
           applicationLayersCacheConfiguration);
     }
 
-    return new BuildTaskConfigurator(
+    return new PluginConfigurationProcessor(
         buildConfigurationBuilder, baseImageConfigurationBuilder, containerConfigurationBuilder);
   }
 
@@ -145,9 +145,18 @@ class BuildTaskConfigurator {
     return Authorizations.withBasicCredentials(auth.getUsername(), auth.getPassword());
   }
 
-  private BuildConfiguration.Builder buildConfigurationBuilder;
-  private ImageConfiguration.Builder baseImageConfigurationBuilder;
-  private ContainerConfiguration.Builder containerConfigurationBuilder;
+  private final BuildConfiguration.Builder buildConfigurationBuilder;
+  private final ImageConfiguration.Builder baseImageConfigurationBuilder;
+  private final ContainerConfiguration.Builder containerConfigurationBuilder;
+
+  private PluginConfigurationProcessor(
+      BuildConfiguration.Builder buildConfigurationBuilder,
+      ImageConfiguration.Builder baseImageConfigurationBuilder,
+      ContainerConfiguration.Builder containerConfigurationBuilder) {
+    this.buildConfigurationBuilder = buildConfigurationBuilder;
+    this.baseImageConfigurationBuilder = baseImageConfigurationBuilder;
+    this.containerConfigurationBuilder = containerConfigurationBuilder;
+  }
 
   BuildConfiguration.Builder getBuildConfigurationBuilder() {
     return buildConfigurationBuilder;
@@ -159,14 +168,5 @@ class BuildTaskConfigurator {
 
   ContainerConfiguration.Builder getContainerConfigurationBuilder() {
     return containerConfigurationBuilder;
-  }
-
-  private BuildTaskConfigurator(
-      BuildConfiguration.Builder buildConfigurationBuilder,
-      ImageConfiguration.Builder baseImageConfigurationBuilder,
-      ContainerConfiguration.Builder containerConfigurationBuilder) {
-    this.buildConfigurationBuilder = buildConfigurationBuilder;
-    this.baseImageConfigurationBuilder = baseImageConfigurationBuilder;
-    this.containerConfigurationBuilder = containerConfigurationBuilder;
   }
 }

@@ -79,18 +79,18 @@ public class BuildDockerTask extends DefaultTask {
     ImageReference targetImage =
         gradleProjectProperties.getGeneratedTargetDockerTag(jibExtension, gradleJibLogger);
 
-    BuildTaskConfigurator buildTaskConfigurator =
-        BuildTaskConfigurator.newCommonConfiguration(
+    PluginConfigurationProcessor pluginConfigurationProcessor =
+        PluginConfigurationProcessor.newCommonConfiguration(
             gradleJibLogger, jibExtension, gradleProjectProperties);
 
     BuildConfiguration buildConfiguration =
-        buildTaskConfigurator
+        pluginConfigurationProcessor
             .getBuildConfigurationBuilder()
             .setBaseImageConfiguration(
-                buildTaskConfigurator.getBaseImageConfigurationBuilder().build())
+                pluginConfigurationProcessor.getBaseImageConfigurationBuilder().build())
             .setTargetImageConfiguration(ImageConfiguration.builder(targetImage).build())
             .setContainerConfiguration(
-                buildTaskConfigurator.getContainerConfigurationBuilder().build())
+                pluginConfigurationProcessor.getContainerConfigurationBuilder().build())
             .build();
 
     // Uses a directory in the Gradle build cache as the Jib cache.

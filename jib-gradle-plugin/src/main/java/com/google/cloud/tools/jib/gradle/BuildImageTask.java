@@ -82,7 +82,7 @@ public class BuildImageTask extends DefaultTask {
     }
     RegistryCredentials knownTargetRegistryCredentials = null;
     Authorization toAuthorization =
-        BuildTaskConfigurator.getImageAuthorization(
+        PluginConfigurationProcessor.getImageAuthorization(
             gradleJibLogger, "to", jibExtension.getFrom().getAuth());
     if (toAuthorization != null) {
       knownTargetRegistryCredentials = new RegistryCredentials("jib.to.auth", toAuthorization);
@@ -93,18 +93,18 @@ public class BuildImageTask extends DefaultTask {
             .setKnownRegistryCredentials(knownTargetRegistryCredentials)
             .build();
 
-    BuildTaskConfigurator buildTaskConfigurator =
-        BuildTaskConfigurator.newCommonConfiguration(
+    PluginConfigurationProcessor pluginConfigurationProcessor =
+        PluginConfigurationProcessor.newCommonConfiguration(
             gradleJibLogger, jibExtension, gradleProjectProperties);
 
     BuildConfiguration buildConfiguration =
-        buildTaskConfigurator
+        pluginConfigurationProcessor
             .getBuildConfigurationBuilder()
             .setBaseImageConfiguration(
-                buildTaskConfigurator.getBaseImageConfigurationBuilder().build())
+                pluginConfigurationProcessor.getBaseImageConfigurationBuilder().build())
             .setTargetImageConfiguration(targetImageConfiguration)
             .setContainerConfiguration(
-                buildTaskConfigurator.getContainerConfigurationBuilder().build())
+                pluginConfigurationProcessor.getContainerConfigurationBuilder().build())
             .setTargetFormat(jibExtension.getFormat())
             .build();
 
