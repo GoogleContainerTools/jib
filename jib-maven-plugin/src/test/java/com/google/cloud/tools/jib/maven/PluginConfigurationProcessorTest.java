@@ -27,15 +27,9 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/**
- * Test for {@link BuildImageMojo}.
- *
- * <p>TODO: This only tests the {@link BuildImageMojo#getImageAuth(JibLogger, String, String,
- * String, AuthConfiguration)} method, which is copy-pasted between the 3 build mojos. When we
- * refactor, we'll need to move this test.
- */
+/** Test for {@link PluginConfigurationProcessor}. */
 @RunWith(MockitoJUnitRunner.class)
-public class BuildImageMojoTest {
+public class PluginConfigurationProcessorTest {
 
   @Mock private JibLogger mockLogger;
 
@@ -50,7 +44,7 @@ public class BuildImageMojoTest {
     System.setProperty("jib.test.auth.pass", "12345");
     Authorization expected = Authorizations.withBasicCredentials("abcde", "12345");
     Authorization actual =
-        BuildImageMojo.getImageAuth(
+        PluginConfigurationProcessor.getImageAuth(
             mockLogger, "to", "jib.test.auth.user", "jib.test.auth.pass", auth);
     Assert.assertNotNull(actual);
     Assert.assertEquals(expected.toString(), actual.toString());
@@ -60,7 +54,7 @@ public class BuildImageMojoTest {
     System.clearProperty("jib.test.auth.pass");
     expected = Authorizations.withBasicCredentials("vwxyz", "98765");
     actual =
-        BuildImageMojo.getImageAuth(
+        PluginConfigurationProcessor.getImageAuth(
             mockLogger, "to", "jib.test.auth.user", "jib.test.auth.pass", auth);
     Assert.assertNotNull(actual);
     Assert.assertEquals(expected.toString(), actual.toString());
@@ -69,7 +63,7 @@ public class BuildImageMojoTest {
     // Auth completely missing
     auth = new AuthConfiguration();
     actual =
-        BuildImageMojo.getImageAuth(
+        PluginConfigurationProcessor.getImageAuth(
             mockLogger, "to", "jib.test.auth.user", "jib.test.auth.pass", auth);
     Assert.assertNull(actual);
 
@@ -77,7 +71,7 @@ public class BuildImageMojoTest {
     auth = new AuthConfiguration();
     auth.setUsername("vwxyz");
     actual =
-        BuildImageMojo.getImageAuth(
+        PluginConfigurationProcessor.getImageAuth(
             mockLogger, "to", "jib.test.auth.user", "jib.test.auth.pass", auth);
     Assert.assertNull(actual);
     Mockito.verify(mockLogger)
@@ -88,7 +82,7 @@ public class BuildImageMojoTest {
     auth = new AuthConfiguration();
     auth.setPassword("98765");
     actual =
-        BuildImageMojo.getImageAuth(
+        PluginConfigurationProcessor.getImageAuth(
             mockLogger, "to", "jib.test.auth.user", "jib.test.auth.pass", auth);
     Assert.assertNull(actual);
     Mockito.verify(mockLogger)

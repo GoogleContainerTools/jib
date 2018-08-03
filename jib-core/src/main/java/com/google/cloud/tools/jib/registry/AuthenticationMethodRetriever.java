@@ -32,11 +32,11 @@ import javax.annotation.Nullable;
 class AuthenticationMethodRetriever implements RegistryEndpointProvider<RegistryAuthenticator> {
 
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
-  private final JibLogger jibLogger;
+  private final JibLogger logger;
 
   AuthenticationMethodRetriever(
       JibLogger jibLogger, RegistryEndpointRequestProperties registryEndpointRequestProperties) {
-    this.jibLogger = jibLogger;
+    this.logger = jibLogger;
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
   }
 
@@ -99,7 +99,7 @@ class AuthenticationMethodRetriever implements RegistryEndpointProvider<Registry
     // Parses the header to retrieve the components.
     try {
       return RegistryAuthenticator.fromAuthenticationMethod(
-          jibLogger, authenticationMethod, registryEndpointRequestProperties);
+          logger, authenticationMethod, registryEndpointRequestProperties);
 
     } catch (RegistryAuthenticationFailedException ex) {
       throw new RegistryErrorExceptionBuilder(getActionDescription(), ex)

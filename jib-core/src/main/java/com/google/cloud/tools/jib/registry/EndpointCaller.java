@@ -42,7 +42,7 @@ class EndpointCaller {
   private final Function<URL, Connection> connectionFactory;
   @Nullable private Function<URL, Connection> insecureConnectionFactory;
 
-  public EndpointCaller(JibLogger logger, boolean allowInsecureEndpoints) {
+  EndpointCaller(JibLogger logger, boolean allowInsecureEndpoints) {
     this(
         logger,
         allowInsecureEndpoints,
@@ -71,7 +71,7 @@ class EndpointCaller {
     }
 
     try {
-      return call(url, httpMethod, request, connectionFactory);
+      return sendRequest(url, httpMethod, request, connectionFactory);
 
     } catch (SSLPeerUnverifiedException ex) {
       return handleUnverifiableServerException(url, httpMethod, request);
@@ -95,7 +95,7 @@ class EndpointCaller {
     try {
       logger.warn(
           "Cannot verify server at " + url + ". Attempting again with no TLS verification.");
-      return call(url, httpMethod, request, getInsecureConnectionFactory());
+      return sendRequest(url, httpMethod, request, getInsecureConnectionFactory());
 
     } catch (SSLPeerUnverifiedException ex) {
       return fallBackToHttp(url, httpMethod, request);
@@ -108,7 +108,7 @@ class EndpointCaller {
     httpUrl.setScheme("http");
     logger.warn(
         "Failed to connect to " + url + " over HTTPS. Attempting again with HTTP: " + httpUrl);
-    return call(httpUrl.toURL(), httpMethod, request, connectionFactory);
+    return sendRequest(httpUrl.toURL(), httpMethod, request, connectionFactory);
   }
 
   private Function<URL, Connection> getInsecureConnectionFactory() throws EndpointException {
@@ -123,7 +123,7 @@ class EndpointCaller {
     }
   }
 
-  private Response call(
+  private Response sendRequest(
       URL url, String httpMethod, Request request, Function<URL, Connection> connectionFactory)
       throws IOException {
     try (Connection connection = connectionFactory.apply(url)) {
