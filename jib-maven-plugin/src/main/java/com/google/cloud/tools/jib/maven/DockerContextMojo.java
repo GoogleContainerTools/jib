@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaDockerContextGenerator;
-import com.google.cloud.tools.jib.plugins.common.SystemPropertyValidator;
+import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.io.InsecureRecursiveDeleteException;
@@ -54,7 +54,7 @@ public class DockerContextMojo extends JibPluginConfiguration {
 
     MavenJibLogger mavenJibLogger = new MavenJibLogger(getLog());
     handleDeprecatedParameters(mavenJibLogger);
-    SystemPropertyValidator.checkHttpTimeoutProperty(MojoExecutionException::new);
+    ConfigurationPropertyValidator.checkHttpTimeoutProperty(MojoExecutionException::new);
 
     Preconditions.checkNotNull(targetDir);
 
