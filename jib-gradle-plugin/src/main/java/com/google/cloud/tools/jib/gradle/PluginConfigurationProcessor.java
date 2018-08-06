@@ -70,8 +70,6 @@ class PluginConfigurationProcessor {
             logger,
             "jib.from.auth.username",
             "jib.from.auth.password",
-            "jib.from.auth.username",
-            "jib.from.auth.password",
             jibExtension.getFrom().getAuth());
     if (fromAuthorization != null) {
       knownBaseRegistryCredentials = new RegistryCredentials("jib.from.auth", fromAuthorization);

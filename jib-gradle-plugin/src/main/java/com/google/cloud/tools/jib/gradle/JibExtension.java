@@ -105,6 +105,10 @@ public class JibExtension {
     extraDirectory = objectFactory.property(Path.class);
 
     // Sets defaults.
+    from.getAuth().setUsernamePropertyDescriptor("jib.from.auth.username");
+    from.getAuth().setPasswordPropertyDescriptor("jib.from.auth.password");
+    to.getAuth().setUsernamePropertyDescriptor("jib.to.auth.username");
+    to.getAuth().setPasswordPropertyDescriptor("jib.to.auth.password");
     from.setImage(DEFAULT_FROM_IMAGE);
     jvmFlags.set(Collections.emptyList());
     args.set(Collections.emptyList());

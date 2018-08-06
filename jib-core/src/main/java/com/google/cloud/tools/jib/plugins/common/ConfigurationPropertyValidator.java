@@ -23,7 +23,7 @@ import com.google.common.base.Strings;
 import java.util.function.Function;
 import javax.annotation.Nullable;
 
-/** Validator for system properties. */
+/** Validator for plugin configuration parameters and system properties. */
 public class ConfigurationPropertyValidator {
 
   /**
@@ -37,8 +37,11 @@ public class ConfigurationPropertyValidator {
   public static <T extends Throwable> void checkHttpTimeoutProperty(
       Function<String, T> exceptionFactory) throws T {
     String value = System.getProperty("jib.httpTimeout");
+    if (value == null) {
+      return;
+    }
     try {
-      if (value != null && Integer.parseInt(value) < 0) {
+      if (Integer.parseInt(value) < 0) {
         throw exceptionFactory.apply("jib.httpTimeout cannot be negative: " + value);
       }
     } catch (NumberFormatException ex) {
@@ -51,10 +54,6 @@ public class ConfigurationPropertyValidator {
    * tries build configuration, otherwise returns null.
    *
    * @param logger the {@link JibLogger} used to print warnings messages
-   * @param imageUsernameProperty the username configuration property (e.g.
-   *     "jib.from.auth.username")
-   * @param imagePasswordProperty the password configuration property (e.g.
-   *     "jib.from.auth.password")
    * @param usernameProperty the name of the username system property
    * @param passwordProperty the name of the password system property
    * @param auth the configured credentials
@@ -63,12 +62,7 @@ public class ConfigurationPropertyValidator {
    */
   @Nullable
   public static Authorization getImageAuth(
-      JibLogger logger,
-      String imageUsernameProperty,
-      String imagePasswordProperty,
-      String usernameProperty,
-      String passwordProperty,
-      AuthProperty auth) {
+      JibLogger logger, String usernameProperty, String passwordProperty, AuthProperty auth) {
     // System property takes priority over build configuration
     String commandlineUsername = System.getProperty(usernameProperty);
     String commandlinePassword = System.getProperty(passwordProperty);
@@ -99,12 +93,14 @@ public class ConfigurationPropertyValidator {
     }
     if (Strings.isNullOrEmpty(auth.getUsername())) {
       logger.warn(
-          imageUsernameProperty + " is missing from build configuration; ignoring auth section.");
+          auth.getUsernamePropertyDescriptor()
+              + " is missing from build configuration; ignoring auth section.");
       return null;
     }
     if (Strings.isNullOrEmpty(auth.getPassword())) {
       logger.warn(
-          imagePasswordProperty + " is missing from build configuration; ignoring auth section.");
+          auth.getPasswordPropertyDescriptor()
+              + " is missing from build configuration; ignoring auth section.");
       return null;
     }
 

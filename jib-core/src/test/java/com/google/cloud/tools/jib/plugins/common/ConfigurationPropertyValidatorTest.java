@@ -69,6 +69,8 @@ public class ConfigurationPropertyValidatorTest {
 
   @Test
   public void testGetImageAuth() {
+    Mockito.when(mockAuth.getUsernamePropertyDescriptor()).thenReturn("user");
+    Mockito.when(mockAuth.getPasswordPropertyDescriptor()).thenReturn("pass");
     Mockito.when(mockAuth.getUsername()).thenReturn("vwxyz");
     Mockito.when(mockAuth.getPassword()).thenReturn("98765");
 
@@ -78,7 +80,7 @@ public class ConfigurationPropertyValidatorTest {
     Authorization expected = Authorizations.withBasicCredentials("abcde", "12345");
     Authorization actual =
         ConfigurationPropertyValidator.getImageAuth(
-            mockLogger, "user", "pass", "jib.test.auth.user", "jib.test.auth.pass", mockAuth);
+            mockLogger, "jib.test.auth.user", "jib.test.auth.pass", mockAuth);
     Assert.assertNotNull(actual);
     Assert.assertEquals(expected.toString(), actual.toString());
 
@@ -88,7 +90,7 @@ public class ConfigurationPropertyValidatorTest {
     expected = Authorizations.withBasicCredentials("vwxyz", "98765");
     actual =
         ConfigurationPropertyValidator.getImageAuth(
-            mockLogger, "user", "pass", "jib.test.auth.user", "jib.test.auth.pass", mockAuth);
+            mockLogger, "jib.test.auth.user", "jib.test.auth.pass", mockAuth);
     Assert.assertNotNull(actual);
     Assert.assertEquals(expected.toString(), actual.toString());
     Mockito.verify(mockLogger, Mockito.never()).warn(Mockito.any());
@@ -98,7 +100,7 @@ public class ConfigurationPropertyValidatorTest {
     Mockito.when(mockAuth.getPassword()).thenReturn(null);
     actual =
         ConfigurationPropertyValidator.getImageAuth(
-            mockLogger, "user", "pass", "jib.test.auth.user", "jib.test.auth.pass", mockAuth);
+            mockLogger, "jib.test.auth.user", "jib.test.auth.pass", mockAuth);
     Assert.assertNull(actual);
 
     // Password missing
@@ -106,7 +108,7 @@ public class ConfigurationPropertyValidatorTest {
     Mockito.when(mockAuth.getPassword()).thenReturn(null);
     actual =
         ConfigurationPropertyValidator.getImageAuth(
-            mockLogger, "user", "pass", "jib.test.auth.user", "jib.test.auth.pass", mockAuth);
+            mockLogger, "jib.test.auth.user", "jib.test.auth.pass", mockAuth);
     Assert.assertNull(actual);
     Mockito.verify(mockLogger)
         .warn("pass is missing from build configuration; ignoring auth section.");
@@ -116,7 +118,7 @@ public class ConfigurationPropertyValidatorTest {
     Mockito.when(mockAuth.getPassword()).thenReturn("98765");
     actual =
         ConfigurationPropertyValidator.getImageAuth(
-            mockLogger, "user", "pass", "jib.test.auth.user", "jib.test.auth.pass", mockAuth);
+            mockLogger, "jib.test.auth.user", "jib.test.auth.pass", mockAuth);
     Assert.assertNull(actual);
     Mockito.verify(mockLogger)
         .warn("user is missing from build configuration; ignoring auth section.");

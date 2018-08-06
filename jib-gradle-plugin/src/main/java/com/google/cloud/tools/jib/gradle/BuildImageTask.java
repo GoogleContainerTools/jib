@@ -87,8 +87,6 @@ public class BuildImageTask extends DefaultTask {
             gradleJibLogger,
             "jib.to.auth.username",
             "jib.to.auth.password",
-            "jib.to.auth.username",
-            "jib.to.auth.password",
             jibExtension.getTo().getAuth());
     if (toAuthorization != null) {
       knownTargetRegistryCredentials = new RegistryCredentials("jib.to.auth", toAuthorization);

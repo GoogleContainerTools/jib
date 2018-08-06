@@ -78,8 +78,6 @@ class PluginConfigurationProcessor {
     Authorization fromAuthorization =
         ConfigurationPropertyValidator.getImageAuth(
             logger,
-            "<from><auth><username>",
-            "<from><auth><password>",
             "jib.from.auth.username",
             "jib.from.auth.password",
             jibPluginConfiguration.getBaseImageAuth());
