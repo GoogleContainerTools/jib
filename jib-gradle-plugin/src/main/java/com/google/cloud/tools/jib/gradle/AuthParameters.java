@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import javax.annotation.Nullable;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Optional;
@@ -24,14 +25,15 @@ import org.gradle.api.tasks.Optional;
  * A bean that configures authorization credentials to be used for a registry. This is configurable
  * with Groovy closures and can be validated when used as a task input.
  */
-public class AuthParameters {
+public class AuthParameters implements AuthProperty {
 
   @Nullable private String username;
   @Nullable private String password;
 
   @Input
-  @Nullable
   @Optional
+  @Override
+  @Nullable
   public String getUsername() {
     return username;
   }
@@ -41,8 +43,9 @@ public class AuthParameters {
   }
 
   @Input
-  @Nullable
   @Optional
+  @Override
+  @Nullable
   public String getPassword() {
     return password;
   }

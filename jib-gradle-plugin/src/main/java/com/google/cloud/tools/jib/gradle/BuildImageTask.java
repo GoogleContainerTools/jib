@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
+import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.base.Preconditions;
@@ -82,8 +83,13 @@ public class BuildImageTask extends DefaultTask {
     }
     RegistryCredentials knownTargetRegistryCredentials = null;
     Authorization toAuthorization =
-        PluginConfigurationProcessor.getImageAuthorization(
-            gradleJibLogger, "to", jibExtension.getFrom().getAuth());
+        ConfigurationPropertyValidator.getImageAuth(
+            gradleJibLogger,
+            "jib.to.auth.username",
+            "jib.to.auth.password",
+            "jib.to.auth.username",
+            "jib.to.auth.password",
+            jibExtension.getTo().getAuth());
     if (toAuthorization != null) {
       knownTargetRegistryCredentials = new RegistryCredentials("jib.to.auth", toAuthorization);
     }

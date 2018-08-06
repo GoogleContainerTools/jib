@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.JibLogger;
+import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -38,7 +39,7 @@ import org.apache.maven.settings.crypto.SettingsDecrypter;
 abstract class JibPluginConfiguration extends AbstractMojo {
 
   /** Used to configure {@code from.auth} and {@code to.auth} parameters. */
-  public static class AuthConfiguration {
+  public static class AuthConfiguration implements AuthProperty {
 
     @Nullable @Parameter private String username;
 
@@ -54,13 +55,15 @@ abstract class JibPluginConfiguration extends AbstractMojo {
       this.password = password;
     }
 
+    @Override
     @Nullable
-    String getUsername() {
+    public String getUsername() {
       return username;
     }
 
+    @Override
     @Nullable
-    String getPassword() {
+    public String getPassword() {
       return password;
     }
   }

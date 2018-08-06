@@ -24,15 +24,12 @@ import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
-import com.google.cloud.tools.jib.plugins.common.SystemPropertyValidator;
+import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
-import com.google.common.base.Strings;
 import java.time.Instant;
-import javax.annotation.Nullable;
 import org.gradle.api.GradleException;
 
 /** Configures and provides builders for the image building tasks. */
@@ -56,7 +53,7 @@ class PluginConfigurationProcessor {
       JibLogger logger, JibExtension jibExtension, GradleProjectProperties projectProperties)
       throws InvalidImageReferenceException {
     jibExtension.handleDeprecatedParameters(logger);
-    SystemPropertyValidator.checkHttpTimeoutProperty(GradleException::new);
+    ConfigurationPropertyValidator.checkHttpTimeoutProperty(GradleException::new);
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
     GradleJibLogger.disableHttpLogging();
@@ -69,7 +66,13 @@ class PluginConfigurationProcessor {
     }
     RegistryCredentials knownBaseRegistryCredentials = null;
     Authorization fromAuthorization =
-        getImageAuthorization(logger, "from", jibExtension.getFrom().getAuth());
+        ConfigurationPropertyValidator.getImageAuth(
+            logger,
+            "jib.from.auth.username",
+            "jib.from.auth.password",
+            "jib.from.auth.username",
+            "jib.from.auth.password",
+            jibExtension.getFrom().getAuth());
     if (fromAuthorization != null) {
       knownBaseRegistryCredentials = new RegistryCredentials("jib.from.auth", fromAuthorization);
     }
@@ -108,41 +111,6 @@ class PluginConfigurationProcessor {
 
     return new PluginConfigurationProcessor(
         buildConfigurationBuilder, baseImageConfigurationBuilder, containerConfigurationBuilder);
-  }
-
-  /**
-   * Validates and returns an {@link Authorization} from a configured {@link AuthParameters}.
-   *
-   * @param logger the {@link JibLogger} used to print warnings
-   * @param imageProperty the image configuration's name (i.e. "from" or "to")
-   * @param auth the auth configuration to get the {@link Authorization} from
-   * @return the {@link Authorization}, or null if the username and password aren't both configured
-   */
-  @Nullable
-  static Authorization getImageAuthorization(
-      JibLogger logger, String imageProperty, AuthParameters auth) {
-    if (Strings.isNullOrEmpty(auth.getUsername()) && Strings.isNullOrEmpty(auth.getPassword())) {
-      return null;
-    }
-    if (Strings.isNullOrEmpty(auth.getUsername())) {
-      logger.warn(
-          "jib."
-              + imageProperty
-              + ".auth.username is null; ignoring jib."
-              + imageProperty
-              + ".auth section.");
-      return null;
-    }
-    if (Strings.isNullOrEmpty(auth.getPassword())) {
-      logger.warn(
-          "jib."
-              + imageProperty
-              + ".auth.password is null; ignoring jib."
-              + imageProperty
-              + ".auth section.");
-      return null;
-    }
-    return Authorizations.withBasicCredentials(auth.getUsername(), auth.getPassword());
   }
 
   private final BuildConfiguration.Builder buildConfigurationBuilder;

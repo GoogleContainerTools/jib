@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
@@ -24,17 +23,13 @@ import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
-import com.google.cloud.tools.jib.maven.JibPluginConfiguration.AuthConfiguration;
-import com.google.cloud.tools.jib.plugins.common.SystemPropertyValidator;
+import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import java.time.Instant;
-import javax.annotation.Nullable;
 import org.apache.maven.plugin.MojoExecutionException;
 
 /** Configures and provides builders for the image building goals. */
@@ -61,7 +56,7 @@ class PluginConfigurationProcessor {
       MavenProjectProperties projectProperties)
       throws MojoExecutionException {
     jibPluginConfiguration.handleDeprecatedParameters(logger);
-    SystemPropertyValidator.checkHttpTimeoutProperty(MojoExecutionException::new);
+    ConfigurationPropertyValidator.checkHttpTimeoutProperty(MojoExecutionException::new);
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
     MavenJibLogger.disableHttpLogging();
@@ -81,9 +76,10 @@ class PluginConfigurationProcessor {
             jibPluginConfiguration.getSettingsDecrypter(),
             logger);
     Authorization fromAuthorization =
-        getImageAuth(
+        ConfigurationPropertyValidator.getImageAuth(
             logger,
-            "from",
+            "<from><auth><username>",
+            "<from><auth><password>",
             "jib.from.auth.username",
             "jib.from.auth.password",
             jibPluginConfiguration.getBaseImageAuth());
@@ -143,75 +139,6 @@ class PluginConfigurationProcessor {
     } catch (InvalidImageReferenceException ex) {
       throw new IllegalStateException("Parameter '" + type + "' is invalid", ex);
     }
-  }
-
-  /**
-   * Gets an {@link Authorization} from a username and password. First tries system properties, then
-   * tries build configuration, otherwise returns null.
-   *
-   * @param logger the {@link JibLogger} used to print warnings messages
-   * @param imageProperty the image configuration's name (i.e. "from" or "to")
-   * @param usernameProperty the name of the username system property
-   * @param passwordProperty the name of the password system property
-   * @param auth the configured credentials
-   * @return a new {@link Authorization} from the system properties or build configuration, or
-   *     {@code null} if neither is configured.
-   */
-  @Nullable
-  static Authorization getImageAuth(
-      JibLogger logger,
-      String imageProperty,
-      String usernameProperty,
-      String passwordProperty,
-      AuthConfiguration auth) {
-    // System property takes priority over build configuration
-    String commandlineUsername = System.getProperty(usernameProperty);
-    String commandlinePassword = System.getProperty(passwordProperty);
-    if (!Strings.isNullOrEmpty(commandlineUsername)
-        && !Strings.isNullOrEmpty(commandlinePassword)) {
-      return Authorizations.withBasicCredentials(commandlineUsername, commandlinePassword);
-    }
-
-    // Warn if a system property is missing
-    if (!Strings.isNullOrEmpty(commandlinePassword) && Strings.isNullOrEmpty(commandlineUsername)) {
-      logger.warn(
-          passwordProperty
-              + " system property is set, but "
-              + usernameProperty
-              + " is not; attempting other authentication methods.");
-    }
-    if (!Strings.isNullOrEmpty(commandlineUsername) && Strings.isNullOrEmpty(commandlinePassword)) {
-      logger.warn(
-          usernameProperty
-              + " system property is set, but "
-              + passwordProperty
-              + " is not; attempting other authentication methods.");
-    }
-
-    // Check auth configuration next; warn if they aren't both set
-    if (Strings.isNullOrEmpty(auth.getUsername()) && Strings.isNullOrEmpty(auth.getPassword())) {
-      return null;
-    }
-    if (Strings.isNullOrEmpty(auth.getUsername())) {
-      logger.warn(
-          "<"
-              + imageProperty
-              + "><auth><username> is missing from maven configuration; ignoring <"
-              + imageProperty
-              + "><auth> section.");
-      return null;
-    }
-    if (Strings.isNullOrEmpty(auth.getPassword())) {
-      logger.warn(
-          "<"
-              + imageProperty
-              + "><auth><password> is missing from maven configuration; ignoring <"
-              + imageProperty
-              + "><auth> section.");
-      return null;
-    }
-
-    return Authorizations.withBasicCredentials(auth.getUsername(), auth.getPassword());
   }
 
   private final BuildConfiguration.Builder buildConfigurationBuilder;
