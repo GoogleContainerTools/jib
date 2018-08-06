@@ -38,13 +38,12 @@ public class AuthParameters implements AuthProperty {
   /**
    * Constructs a new {@link AuthParameters}.
    *
-   * @param usernameDescriptor the name of the username configuration property
-   * @param passwordDescriptor the name of the password configuration property
+   * @param descriptor the name of the auth configuration property
    */
   @Inject
-  public AuthParameters(String usernameDescriptor, String passwordDescriptor) {
-    this.usernameDescriptor = usernameDescriptor;
-    this.passwordDescriptor = passwordDescriptor;
+  public AuthParameters(String descriptor) {
+    this.usernameDescriptor = descriptor + ".username";
+    this.passwordDescriptor = descriptor + ".password";
   }
 
   @Internal

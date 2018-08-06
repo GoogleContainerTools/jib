@@ -40,11 +40,7 @@ public class ImageParameters {
 
   @Inject
   public ImageParameters(ObjectFactory objectFactory, String imageDescriptor) {
-    auth =
-        objectFactory.newInstance(
-            AuthParameters.class,
-            imageDescriptor + ".auth.username",
-            imageDescriptor + ".auth.password");
+    auth = objectFactory.newInstance(AuthParameters.class, imageDescriptor + ".auth");
   }
 
   @Input

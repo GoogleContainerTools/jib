@@ -46,9 +46,9 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     private String usernameDescriptor;
     private String passwordDescriptor;
 
-    private AuthConfiguration(String usernameDescriptor, String passwordDescriptor) {
-      this.usernameDescriptor = usernameDescriptor;
-      this.passwordDescriptor = passwordDescriptor;
+    private AuthConfiguration(String descriptor) {
+      this.usernameDescriptor = descriptor + "<username>";
+      this.passwordDescriptor = descriptor + "<password>";
     }
 
     @VisibleForTesting
@@ -68,7 +68,7 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Override
     public String getPasswordPropertyDescriptor() {
-      return usernameDescriptor;
+      return passwordDescriptor;
     }
 
     @Override
@@ -96,9 +96,7 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Nullable @Parameter private String credHelper;
 
-    @Parameter
-    private AuthConfiguration auth =
-        new AuthConfiguration("<from><auth><username>", "<from><auth><password>");
+    @Parameter private AuthConfiguration auth = new AuthConfiguration("<from><auth>");
   }
 
   /** Configuration for {@code to} parameter, where image is required. */
@@ -108,9 +106,7 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Nullable @Parameter private String credHelper;
 
-    @Parameter
-    private AuthConfiguration auth =
-        new AuthConfiguration("<to><auth><username>", "<to><auth><password>");
+    @Parameter private AuthConfiguration auth = new AuthConfiguration("<to><auth>");
 
     public void set(String image) {
       this.image = image;
