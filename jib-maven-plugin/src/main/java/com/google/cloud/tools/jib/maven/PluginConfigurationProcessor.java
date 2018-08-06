@@ -109,7 +109,8 @@ class PluginConfigurationProcessor {
     BuildConfiguration.Builder buildConfigurationBuilder =
         BuildConfiguration.builder(logger)
             .setAllowInsecureRegistries(jibPluginConfiguration.getAllowInsecureRegistries())
-            .setLayerConfigurations(projectProperties.getLayerConfigurations());
+            .setLayerConfigurations(
+                projectProperties.getJavaLayerConfigurations().getLayerConfigurations());
     CacheConfiguration applicationLayersCacheConfiguration =
         CacheConfiguration.forPath(projectProperties.getCacheDirectory());
     buildConfigurationBuilder.setApplicationLayersCacheConfiguration(

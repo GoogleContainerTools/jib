@@ -17,9 +17,7 @@
 package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.cloud.tools.jib.JibLogger;
-import com.google.cloud.tools.jib.configuration.LayerConfiguration;
-import com.google.cloud.tools.jib.image.LayerEntry;
-import com.google.common.collect.ImmutableList;
+import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import java.nio.file.Path;
 import javax.annotation.Nullable;
 
@@ -33,7 +31,7 @@ public interface ProjectProperties {
 
   String getPluginName();
 
-  ImmutableList<LayerConfiguration> getLayerConfigurations();
+  JavaLayerConfigurations getJavaLayerConfigurations();
 
   Path getCacheDirectory();
 
@@ -42,16 +40,6 @@ public interface ProjectProperties {
   /** @return the name of the main class configured in a jar plugin, or null if none is found. */
   @Nullable
   String getMainClassFromJar();
-
-  LayerEntry getDependenciesLayerEntry();
-
-  LayerEntry getSnapshotDependenciesLayerEntry();
-
-  LayerEntry getResourcesLayerEntry();
-
-  LayerEntry getClassesLayerEntry();
-
-  LayerEntry getExtraFilesLayerEntry();
 
   /**
    * @param prefix the prefix message for the {@link HelpfulSuggestions}.

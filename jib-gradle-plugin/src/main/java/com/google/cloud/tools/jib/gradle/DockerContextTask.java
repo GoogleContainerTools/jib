@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.docker.DockerContextGenerator;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
+import com.google.cloud.tools.jib.frontend.JavaDockerContextGenerator;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.common.base.Preconditions;
 import com.google.common.io.InsecureRecursiveDeleteException;
@@ -114,12 +114,7 @@ public class DockerContextTask extends DefaultTask {
       // here.
       ExposedPortsParser.parse(jibExtension.getExposedPorts());
 
-      new DockerContextGenerator(
-              gradleProjectProperties.getDependenciesLayerEntry(),
-              gradleProjectProperties.getSnapshotDependenciesLayerEntry(),
-              gradleProjectProperties.getResourcesLayerEntry(),
-              gradleProjectProperties.getClassesLayerEntry(),
-              gradleProjectProperties.getExtraFilesLayerEntry())
+      new JavaDockerContextGenerator(gradleProjectProperties.getJavaLayerConfigurations())
           .setBaseImage(jibExtension.getBaseImage())
           .setJvmFlags(jibExtension.getJvmFlags())
           .setMainClass(mainClass)

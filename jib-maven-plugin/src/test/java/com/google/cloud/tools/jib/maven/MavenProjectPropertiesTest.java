@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.image.ImageReference;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.project.MavenProject;
@@ -34,7 +35,7 @@ public class MavenProjectPropertiesTest {
 
   @Mock private MavenProject mockMavenProject;
   @Mock private MavenJibLogger mockMavenJibLogger;
-  @Mock private MavenLayerConfigurations mockMavenLayerConfigurations;
+  @Mock private JavaLayerConfigurations mockJavaLayerConfigurations;
   @Mock private Plugin mockJarPlugin;
 
   private Xpp3Dom jarPluginConfiguration;
@@ -50,7 +51,7 @@ public class MavenProjectPropertiesTest {
     Mockito.when(mockMavenProject.getVersion()).thenReturn("project-version");
     mavenProjectProperties =
         new MavenProjectProperties(
-            mockMavenProject, mockMavenJibLogger, mockMavenLayerConfigurations);
+            mockMavenProject, mockMavenJibLogger, mockJavaLayerConfigurations);
     jarPluginConfiguration = new Xpp3Dom("");
     archive = new Xpp3Dom("archive");
     manifest = new Xpp3Dom("manifest");

@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
@@ -45,10 +46,8 @@ public class MavenLayerConfigurationsTest {
   @Mock private MavenProject mockMavenProject;
   @Mock private Build mockBuild;
 
-  private MavenLayerConfigurations testMavenLayerConfigurations;
-
   @Before
-  public void setUp() throws IOException, URISyntaxException {
+  public void setUp() throws URISyntaxException {
     Path sourcePath = Paths.get(Resources.getResource("application/source").toURI());
     Path outputPath = Paths.get(Resources.getResource("application/output").toURI());
 
@@ -65,13 +64,10 @@ public class MavenLayerConfigurationsTest {
             testRepository.findArtifact("com.test", "dependency", "1.0.0"),
             testRepository.findArtifact("com.test", "dependencyX", "1.0.0-SNAPSHOT"));
     Mockito.when(mockMavenProject.getArtifacts()).thenReturn(artifacts);
-
-    testMavenLayerConfigurations =
-        MavenLayerConfigurations.getForProject(mockMavenProject, Paths.get("nonexistent/path"));
   }
 
   @Test
-  public void test_correctFiles() throws URISyntaxException {
+  public void test_correctFiles() throws URISyntaxException, IOException {
     ImmutableList<Path> expectedDependenciesFiles =
         // on windows, these files may be in a different order, so sort
         ImmutableList.sortedCopyOf(
@@ -94,24 +90,25 @@ public class MavenLayerConfigurationsTest {
             Paths.get(Resources.getResource("application/output/package").toURI()),
             Paths.get(Resources.getResource("application/output/some.class").toURI()));
 
+    JavaLayerConfigurations javaLayerConfigurations =
+        MavenLayerConfigurations.getForProject(mockMavenProject, Paths.get("nonexistent/path"));
     Assert.assertEquals(
         expectedDependenciesFiles,
-        testMavenLayerConfigurations.getDependenciesLayerEntry().getSourceFiles());
+        javaLayerConfigurations.getDependenciesLayerEntry().getSourceFiles());
     Assert.assertEquals(
         expectedSnapshotDependenciesFiles,
-        testMavenLayerConfigurations.getSnapshotDependenciesLayerEntry().getSourceFiles());
+        javaLayerConfigurations.getSnapshotDependenciesLayerEntry().getSourceFiles());
     Assert.assertEquals(
-        expectedResourcesFiles,
-        testMavenLayerConfigurations.getResourcesLayerEntry().getSourceFiles());
+        expectedResourcesFiles, javaLayerConfigurations.getResourcesLayerEntry().getSourceFiles());
     Assert.assertEquals(
-        expectedClassesFiles, testMavenLayerConfigurations.getClassesLayerEntry().getSourceFiles());
+        expectedClassesFiles, javaLayerConfigurations.getClassesLayerEntry().getSourceFiles());
   }
 
   @Test
   public void test_extraFiles() throws URISyntaxException, IOException {
     Path extraFilesDirectory = Paths.get(Resources.getResource("layer").toURI());
 
-    testMavenLayerConfigurations =
+    JavaLayerConfigurations javaLayerConfigurations =
         MavenLayerConfigurations.getForProject(mockMavenProject, extraFilesDirectory);
 
     ImmutableList<Path> expectedExtraFiles =
@@ -121,24 +118,7 @@ public class MavenLayerConfigurationsTest {
             Paths.get(Resources.getResource("layer/foo").toURI()));
 
     Assert.assertEquals(
-        expectedExtraFiles,
-        testMavenLayerConfigurations.getExtraFilesLayerEntry().getSourceFiles());
-  }
-
-  @Test
-  public void test_correctPathsOnImage() {
-    Assert.assertEquals(
-        "/app/libs/", testMavenLayerConfigurations.getDependenciesLayerEntry().getExtractionPath());
-    Assert.assertEquals(
-        "/app/libs/",
-        testMavenLayerConfigurations.getSnapshotDependenciesLayerEntry().getExtractionPath());
-    Assert.assertEquals(
-        "/app/resources/",
-        testMavenLayerConfigurations.getResourcesLayerEntry().getExtractionPath());
-    Assert.assertEquals(
-        "/app/classes/", testMavenLayerConfigurations.getClassesLayerEntry().getExtractionPath());
-    Assert.assertEquals(
-        "/", testMavenLayerConfigurations.getExtraFilesLayerEntry().getExtractionPath());
+        expectedExtraFiles, javaLayerConfigurations.getExtraFilesLayerEntry().getSourceFiles());
   }
 
   private Artifact makeArtifact(Path path) {
