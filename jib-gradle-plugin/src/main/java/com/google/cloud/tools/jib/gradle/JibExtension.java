@@ -91,12 +91,8 @@ public class JibExtension {
     projectDir = project.getProjectDir().toPath();
     ObjectFactory objectFactory = project.getObjects();
 
-    from =
-        objectFactory.newInstance(
-            ImageParameters.class, "jib.from.auth.username", "jib.from.auth.password");
-    to =
-        objectFactory.newInstance(
-            ImageParameters.class, "jib.to.auth.username", "jib.to.auth.password");
+    from = objectFactory.newInstance(ImageParameters.class, "jib.from");
+    to = objectFactory.newInstance(ImageParameters.class, "jib.to");
     container = objectFactory.newInstance(ContainerParameters.class);
 
     jvmFlags = objectFactory.listProperty(String.class);
