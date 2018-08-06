@@ -91,8 +91,12 @@ public class JibExtension {
     projectDir = project.getProjectDir().toPath();
     ObjectFactory objectFactory = project.getObjects();
 
-    from = objectFactory.newInstance(ImageParameters.class);
-    to = objectFactory.newInstance(ImageParameters.class);
+    from =
+        objectFactory.newInstance(
+            ImageParameters.class, "jib.from.auth.username", "jib.from.auth.password");
+    to =
+        objectFactory.newInstance(
+            ImageParameters.class, "jib.to.auth.username", "jib.to.auth.password");
     container = objectFactory.newInstance(ContainerParameters.class);
 
     jvmFlags = objectFactory.listProperty(String.class);
@@ -105,10 +109,6 @@ public class JibExtension {
     extraDirectory = objectFactory.property(Path.class);
 
     // Sets defaults.
-    from.getAuth().setUsernamePropertyDescriptor("jib.from.auth.username");
-    from.getAuth().setPasswordPropertyDescriptor("jib.from.auth.password");
-    to.getAuth().setUsernamePropertyDescriptor("jib.to.auth.username");
-    to.getAuth().setPasswordPropertyDescriptor("jib.to.auth.password");
     from.setImage(DEFAULT_FROM_IMAGE);
     jvmFlags.set(Collections.emptyList());
     args.set(Collections.emptyList());
