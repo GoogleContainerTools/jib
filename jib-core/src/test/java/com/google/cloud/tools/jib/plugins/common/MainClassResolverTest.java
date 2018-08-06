@@ -67,10 +67,7 @@ public class MainClassResolverTest {
   @Test
   public void testResolveMainClass_notValid() throws MainClassInferenceException {
     Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("${start-class}");
-    Mockito.when(
-            mockProjectProperties
-                .getJavaLayerConfigurations()
-                .getLayerEntry(JavaLayerConfigurations.LayerType.CLASSES))
+    Mockito.when(mockProjectProperties.getJavaLayerConfigurations().getClassesLayerEntry())
         .thenReturn(new LayerEntry(fakeClassesPath, "ignored"));
     Assert.assertEquals(
         "${start-class}", MainClassResolver.resolveMainClass(null, mockProjectProperties));
@@ -81,10 +78,7 @@ public class MainClassResolverTest {
   public void testResolveMainClass_multipleInferredWithBackup()
       throws MainClassInferenceException, URISyntaxException {
     Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("${start-class}");
-    Mockito.when(
-            mockProjectProperties
-                .getJavaLayerConfigurations()
-                .getLayerEntry(JavaLayerConfigurations.LayerType.CLASSES))
+    Mockito.when(mockProjectProperties.getJavaLayerConfigurations().getClassesLayerEntry())
         .thenReturn(
             new LayerEntry(
                 ImmutableList.of(
@@ -104,10 +98,7 @@ public class MainClassResolverTest {
   @Test
   public void testResolveMainClass_multipleInferredWithoutBackup() throws URISyntaxException {
     Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn(null);
-    Mockito.when(
-            mockProjectProperties
-                .getJavaLayerConfigurations()
-                .getLayerEntry(JavaLayerConfigurations.LayerType.CLASSES))
+    Mockito.when(mockProjectProperties.getJavaLayerConfigurations().getClassesLayerEntry())
         .thenReturn(
             new LayerEntry(
                 ImmutableList.of(
@@ -133,10 +124,7 @@ public class MainClassResolverTest {
   @Test
   public void testResolveMainClass_noneInferredWithBackup() throws MainClassInferenceException {
     Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("${start-class}");
-    Mockito.when(
-            mockProjectProperties
-                .getJavaLayerConfigurations()
-                .getLayerEntry(JavaLayerConfigurations.LayerType.CLASSES))
+    Mockito.when(mockProjectProperties.getJavaLayerConfigurations().getClassesLayerEntry())
         .thenReturn(new LayerEntry(ImmutableList.of(), "ignored"));
     Assert.assertEquals(
         "${start-class}", MainClassResolver.resolveMainClass(null, mockProjectProperties));
@@ -145,8 +133,7 @@ public class MainClassResolverTest {
 
   @Test
   public void testResolveMainClass_noneInferredWithoutBackup() {
-    Mockito.when(
-            mockJavaLayerConfigurations.getLayerEntry(JavaLayerConfigurations.LayerType.CLASSES))
+    Mockito.when(mockJavaLayerConfigurations.getClassesLayerEntry())
         .thenReturn(new LayerEntry(ImmutableList.of(), "ignored"));
     try {
       MainClassResolver.resolveMainClass(null, mockProjectProperties);

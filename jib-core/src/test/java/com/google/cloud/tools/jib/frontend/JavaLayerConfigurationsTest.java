@@ -18,17 +18,12 @@ public class JavaLayerConfigurationsTest {
   public void testDefault() {
     JavaLayerConfigurations javaLayerConfigurations = JavaLayerConfigurations.builder().build();
 
-    LayerEntry dependenciesLayerEntry =
-        javaLayerConfigurations.getLayerEntry(JavaLayerConfigurations.LayerType.DEPENDENCIES);
+    LayerEntry dependenciesLayerEntry = javaLayerConfigurations.getDependenciesLayerEntry();
     LayerEntry snapshotDependenciesLayerEntry =
-        javaLayerConfigurations.getLayerEntry(
-            JavaLayerConfigurations.LayerType.SNAPSHOT_DEPENDENCIES);
-    LayerEntry resourcesLayerEntry =
-        javaLayerConfigurations.getLayerEntry(JavaLayerConfigurations.LayerType.RESOURCES);
-    LayerEntry classesLayerEntry =
-        javaLayerConfigurations.getLayerEntry(JavaLayerConfigurations.LayerType.CLASSES);
-    LayerEntry extraFilesLayerEntry =
-        javaLayerConfigurations.getLayerEntry(JavaLayerConfigurations.LayerType.EXTRA_FILES);
+        javaLayerConfigurations.getSnapshotDependenciesLayerEntry();
+    LayerEntry resourcesLayerEntry = javaLayerConfigurations.getResourcesLayerEntry();
+    LayerEntry classesLayerEntry = javaLayerConfigurations.getClassesLayerEntry();
+    LayerEntry extraFilesLayerEntry = javaLayerConfigurations.getExtraFilesLayerEntry();
 
     Assert.assertEquals(
         JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE,

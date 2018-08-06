@@ -140,29 +140,16 @@ public class GradleLayerConfigurationsTest {
             mockProject, mockGradleJibLogger, Paths.get("nonexistent/path"));
     Assert.assertEquals(
         expectedDependenciesFiles,
-        javaLayerConfigurations
-            .getLayerEntry(JavaLayerConfigurations.LayerType.DEPENDENCIES)
-            .getSourceFiles());
+        javaLayerConfigurations.getDependenciesLayerEntry().getSourceFiles());
     Assert.assertEquals(
         expectedSnapshotDependenciesFiles,
-        javaLayerConfigurations
-            .getLayerEntry(JavaLayerConfigurations.LayerType.SNAPSHOT_DEPENDENCIES)
-            .getSourceFiles());
+        javaLayerConfigurations.getSnapshotDependenciesLayerEntry().getSourceFiles());
     Assert.assertEquals(
-        expectedResourcesFiles,
-        javaLayerConfigurations
-            .getLayerEntry(JavaLayerConfigurations.LayerType.RESOURCES)
-            .getSourceFiles());
+        expectedResourcesFiles, javaLayerConfigurations.getResourcesLayerEntry().getSourceFiles());
     Assert.assertEquals(
-        expectedClassesFiles,
-        javaLayerConfigurations
-            .getLayerEntry(JavaLayerConfigurations.LayerType.CLASSES)
-            .getSourceFiles());
+        expectedClassesFiles, javaLayerConfigurations.getClassesLayerEntry().getSourceFiles());
     Assert.assertEquals(
-        expectedExtraFiles,
-        javaLayerConfigurations
-            .getLayerEntry(JavaLayerConfigurations.LayerType.EXTRA_FILES)
-            .getSourceFiles());
+        expectedExtraFiles, javaLayerConfigurations.getExtraFilesLayerEntry().getSourceFiles());
   }
 
   @Test
@@ -195,9 +182,6 @@ public class GradleLayerConfigurationsTest {
             Paths.get(Resources.getResource("layer/foo").toURI()));
 
     Assert.assertEquals(
-        expectedExtraFiles,
-        javaLayerConfigurations
-            .getLayerEntry(JavaLayerConfigurations.LayerType.EXTRA_FILES)
-            .getSourceFiles());
+        expectedExtraFiles, javaLayerConfigurations.getExtraFilesLayerEntry().getSourceFiles());
   }
 }

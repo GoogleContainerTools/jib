@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.frontend;
 
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.image.LayerEntry;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -31,7 +32,8 @@ import java.util.Map;
 public class JavaLayerConfigurations {
 
   /** Represents the different types of layers for a Java application. */
-  public enum LayerType {
+  @VisibleForTesting
+  enum LayerType {
     DEPENDENCIES("dependencies", JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE),
     SNAPSHOT_DEPENDENCIES(
         "snapshot dependencies", JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE),
@@ -48,11 +50,13 @@ public class JavaLayerConfigurations {
       this.extractionPath = extractionPath;
     }
 
-    public String getLabel() {
+    @VisibleForTesting
+    String getLabel() {
       return label;
     }
 
-    public String getExtractionPath() {
+    @VisibleForTesting
+    String getExtractionPath() {
       return extractionPath;
     }
   }
@@ -124,7 +128,27 @@ public class JavaLayerConfigurations {
     return layerConfigurationMap.values().asList();
   }
 
-  public LayerEntry getLayerEntry(LayerType layerType) {
+  public LayerEntry getDependenciesLayerEntry() {
+    return getLayerEntry(LayerType.DEPENDENCIES);
+  }
+
+  public LayerEntry getSnapshotDependenciesLayerEntry() {
+    return getLayerEntry(LayerType.SNAPSHOT_DEPENDENCIES);
+  }
+
+  public LayerEntry getResourcesLayerEntry() {
+    return getLayerEntry(LayerType.RESOURCES);
+  }
+
+  public LayerEntry getClassesLayerEntry() {
+    return getLayerEntry(LayerType.CLASSES);
+  }
+
+  public LayerEntry getExtraFilesLayerEntry() {
+    return getLayerEntry(LayerType.EXTRA_FILES);
+  }
+
+  private LayerEntry getLayerEntry(LayerType layerType) {
     return Preconditions.checkNotNull(layerConfigurationMap.get(layerType))
         .getLayerEntries()
         .get(0);
