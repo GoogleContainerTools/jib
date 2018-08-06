@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
+import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.annotations.VisibleForTesting;
@@ -83,12 +84,8 @@ public class BuildImageMojo extends JibPluginConfiguration {
     ImageReference targetImage =
         PluginConfigurationProcessor.parseImageReference(getTargetImage(), "to");
     Authorization toAuthorization =
-        PluginConfigurationProcessor.getImageAuth(
-            mavenJibLogger,
-            "to",
-            "jib.to.auth.username",
-            "jib.to.auth.password",
-            getTargetImageAuth());
+        ConfigurationPropertyValidator.getImageAuth(
+            mavenJibLogger, "jib.to.auth.username", "jib.to.auth.password", getTargetImageAuth());
     RegistryCredentials knownTargetRegistryCredentials =
         toAuthorization != null
             ? new RegistryCredentials("jib-maven-plugin <to><auth> configuration", toAuthorization)
