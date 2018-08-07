@@ -81,16 +81,17 @@ public class ReproducibleLayerBuilder {
   }
 
   /**
-   * Gets the parent directories for {@code directory}, excluding root {@code /}, but including
-   * {@code directory} itself.
+   * Gets the parent directories for {@code directory}, excluding root {@code /}. The {@code file}
+   * itself will be included only if it is a directory.
    *
-   * @param directory the directory to get parents for
+   * @param file the file to get parents for
    * @return the list of parent directories
    */
-  private static List<Path> getParentDirectories(Path directory) {
+  private static List<Path> getParentDirectories(Path file) {
     List<Path> parentDirectories = new ArrayList<>();
     Path currentPath = Paths.get("/");
-    for (Path element : directory) {
+    Path fullPath = Files.isDirectory(file) ? file : file.getParent();
+    for (Path element : fullPath) {
       currentPath = currentPath.resolve(element);
       parentDirectories.add(currentPath);
     }
@@ -125,27 +126,31 @@ public class ReproducibleLayerBuilder {
     List<TarArchiveEntry> filesystemEntries = new ArrayList<>();
     List<LayerEntry> layerEntries = this.layerEntries.build();
 
-    // Adds the extraction paths (along with any parent directories) to explicitly set permissions
-    // for those directories.
-    LinkedHashSet<String> directoriesToAdd = new LinkedHashSet<>();
-    for (LayerEntry layerEntry : layerEntries) {
-      String extractionPath = layerEntry.getExtractionPath();
-      for (Path parentDirectory : getParentDirectories(Paths.get(extractionPath))) {
-        directoriesToAdd.add(parentDirectory.toString());
-      }
-    }
+    // Keeps track of all the added directories so that the same directory is not added twice.
+    LinkedHashSet<String> addedDirectories = new LinkedHashSet<>();
     // We are using the current directory to act as the file input (since all directories are
     // treated the same in TarArchiveEntry).
     File directoryFile = Paths.get(".").toFile();
-    for (String directoryToAdd : directoriesToAdd) {
-      TarArchiveEntry extractionPathDirectoryEntry =
-          new TarArchiveEntry(directoryFile, directoryToAdd);
-      filesystemEntries.add(extractionPathDirectoryEntry);
-    }
 
     // Adds all the layer entries as tar entries.
     for (LayerEntry layerEntry : layerEntries) {
-      filesystemEntries.addAll(buildAsTarArchiveEntries(layerEntry));
+      // Converts layerEntry to list of TarArchiveEntrys.
+      List<TarArchiveEntry> tarArchiveEntries = buildAsTarArchiveEntries(layerEntry);
+
+      // Adds all directories along extraction paths to explicitly set permissions for those
+      // directories.
+      for (TarArchiveEntry tarArchiveEntry : tarArchiveEntries) {
+        for (Path parentDirectory : getParentDirectories(Paths.get(tarArchiveEntry.getName()))) {
+          if (addedDirectories.contains(parentDirectory.toString())) {
+            continue;
+          }
+          filesystemEntries.add(new TarArchiveEntry(directoryFile, parentDirectory.toString()));
+          addedDirectories.add(parentDirectory.toString());
+        }
+      }
+
+      // Adds the actual files.
+      filesystemEntries.addAll(tarArchiveEntries);
     }
 
     // Sorts the entries by name.
