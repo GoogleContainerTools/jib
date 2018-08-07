@@ -21,6 +21,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Verify;
+import com.google.common.collect.ImmutableList;
+import java.nio.file.Path;
 import javax.annotation.Nullable;
 import javax.lang.model.SourceVersion;
 
@@ -109,11 +111,11 @@ public class MainClassResolver {
                 + projectProperties.getJarPluginName()
                 + "; attempting to infer main class.");
 
+    ImmutableList<Path> classesSourceFiles =
+        projectProperties.getJavaLayerConfigurations().getClassesLayerEntry().getSourceFiles();
+
     MainClassFinder.Result mainClassFinderResult =
-        new MainClassFinder(
-                projectProperties.getClassesLayerEntry().getSourceFiles(),
-                projectProperties.getLogger())
-            .find();
+        new MainClassFinder(classesSourceFiles, projectProperties.getLogger()).find();
 
     if (mainClassFinderResult.isSuccess()) {
       return mainClassFinderResult.getFoundMainClass();
