@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.JibLogger;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -32,14 +33,35 @@ public class JibPluginConfigurationTest {
 
   @Mock private JibLogger mockLogger;
 
-  @Test
-  public void testHandleDeprecatedParameters() {
-    JibPluginConfiguration testPluginConfiguration =
+  private JibPluginConfiguration testPluginConfiguration;
+
+  @Before
+  public void setup() {
+    testPluginConfiguration =
         new JibPluginConfiguration() {
           @Override
           public void execute() {}
         };
+  }
 
+  @Test
+  public void testAuthDefaults() {
+    Assert.assertEquals(
+        "<from><auth><username>",
+        testPluginConfiguration.getBaseImageAuth().getUsernamePropertyDescriptor());
+    Assert.assertEquals(
+        "<from><auth><password>",
+        testPluginConfiguration.getBaseImageAuth().getPasswordPropertyDescriptor());
+    Assert.assertEquals(
+        "<to><auth><username>",
+        testPluginConfiguration.getTargetImageAuth().getUsernamePropertyDescriptor());
+    Assert.assertEquals(
+        "<to><auth><password>",
+        testPluginConfiguration.getTargetImageAuth().getPasswordPropertyDescriptor());
+  }
+
+  @Test
+  public void testHandleDeprecatedParameters() {
     testPluginConfiguration.handleDeprecatedParameters(mockLogger);
     Mockito.verify(mockLogger, Mockito.never()).warn(Mockito.any());
 
