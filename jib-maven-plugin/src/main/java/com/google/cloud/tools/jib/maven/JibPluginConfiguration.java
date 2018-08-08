@@ -68,11 +68,6 @@ abstract class JibPluginConfiguration extends AbstractMojo {
       return password;
     }
 
-    void setPropertyDescriptors(String usernameDescriptor, String passwordDescriptor) {
-      this.usernameDescriptor = usernameDescriptor;
-      this.passwordDescriptor = passwordDescriptor;
-    }
-
     @VisibleForTesting
     void setUsername(String username) {
       this.username = username;
@@ -81,6 +76,11 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     @VisibleForTesting
     void setPassword(String password) {
       this.password = password;
+    }
+
+    private void setPropertyDescriptors(String usernameDescriptor, String passwordDescriptor) {
+      this.usernameDescriptor = usernameDescriptor;
+      this.passwordDescriptor = passwordDescriptor;
     }
   }
 
