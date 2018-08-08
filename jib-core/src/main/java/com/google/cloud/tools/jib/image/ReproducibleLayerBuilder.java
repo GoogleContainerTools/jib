@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.tar.TarStreamBuilder;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.io.File;
 import java.io.IOException;
@@ -30,7 +29,6 @@ import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 
 /**
@@ -47,43 +45,16 @@ public class ReproducibleLayerBuilder {
   /** Decorates an object with a separate object for {@link #hashCode}. */
   private static class CustomHashWrapper<T, H> {
 
-    /**
-     * Instantiate with just the object to use for hashing. This is useful for instantiating hash
-     * keys to, for example, check if a hash table contains that key.
-     *
-     * @param hashObject the object to use for hashing
-     * @param <H> the type of the hash object
-     * @return the new {@link CustomHashWrapper}
-     */
-    private static <H> CustomHashWrapper<?, H> hashOnly(H hashObject) {
-      return new CustomHashWrapper<>(hashObject, null);
-    }
-
-    /**
-     * Instantiate with the wrapped object and the object to use for hashing.
-     *
-     * @param object the object to wrap
-     * @param hashObject the object to use for hashing
-     * @param <H> the type of the hash object
-     * @return the new {@link CustomHashWrapper}
-     */
-    private static <T, H> CustomHashWrapper<T, H> wrap(T object, H hashObject) {
-      return new CustomHashWrapper<>(hashObject, object);
-    }
-
     private final H hashObject;
-
-    @Nullable private T contents;
+    private final T contents;
 
     /**
-     * Instantiate with {@link #hashOnly} and {@link #wrap}.
-     *
-     * @param hashObject the object to use for hashing
      * @param contents the object to wrap
+     * @param hashObject the object to use for hashing
      */
-    private CustomHashWrapper(H hashObject, @Nullable T contents) {
-      this.hashObject = hashObject;
+    private CustomHashWrapper(T contents, H hashObject) {
       this.contents = contents;
+      this.hashObject = hashObject;
     }
 
     @Override
@@ -94,15 +65,6 @@ public class ReproducibleLayerBuilder {
     @Override
     public int hashCode() {
       return hashObject.hashCode();
-    }
-
-    /**
-     * Gets the wrapped object. Only to be used if instantiated with {@link #wrap}.
-     *
-     * @return the wrapped object
-     */
-    private T getContentsNonNull() {
-      return Preconditions.checkNotNull(contents);
     }
   }
 
@@ -205,18 +167,12 @@ public class ReproducibleLayerBuilder {
         // Adds all directories along extraction paths to explicitly set permissions for those
         // directories.
         for (Path parentDirectory : getParentDirectories(Paths.get(tarArchiveEntry.getName()))) {
-          if (!filesystemEntrySet.contains(
-              CustomHashWrapper.hashOnly(parentDirectory.toString()))) {
-            filesystemEntrySet.add(
-                CustomHashWrapper.wrap(
-                    new TarArchiveEntry(DIRECTORY_FILE, parentDirectory.toString()),
-                    parentDirectory.toString()));
-          }
-        }
-        if (!filesystemEntrySet.contains(CustomHashWrapper.hashOnly(tarArchiveEntry.getName()))) {
           filesystemEntrySet.add(
-              CustomHashWrapper.wrap(tarArchiveEntry, tarArchiveEntry.getName()));
+              new CustomHashWrapper<>(
+                  new TarArchiveEntry(DIRECTORY_FILE, parentDirectory.toString()),
+                  parentDirectory.toString()));
         }
+        filesystemEntrySet.add(new CustomHashWrapper<>(tarArchiveEntry, tarArchiveEntry.getName()));
       }
     }
 
@@ -224,7 +180,7 @@ public class ReproducibleLayerBuilder {
     List<TarArchiveEntry> filesystemEntries =
         filesystemEntrySet
             .stream()
-            .map(CustomHashWrapper::getContentsNonNull)
+            .map(customHashWrapper -> customHashWrapper.contents)
             .sorted(Comparator.comparing(TarArchiveEntry::getName))
             .collect(Collectors.toList());
 
