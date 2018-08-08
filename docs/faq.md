@@ -15,9 +15,10 @@ If a question you have is not answered below, please [submit an issue](/../../is
 [Can I build to a local Docker daemon?](#can-i-build-to-a-local-docker-daemon)\
 [I am seeing `ImagePullBackoff` on my pods.](#i-am-seeing-imagepullbackoff-on-my-pods-in-minikube)\
 [How do I configure a proxy?](#how-do-i-configure-a-proxy)\
-[How can I diagnose problems pulling or pushing from remote registries?](#how-can-i-diagnose-problems-pulling-or-pushing-from=-remote=registries)\
+[How can I diagnose problems pulling or pushing from remote registries?](#how-can-i-diagnose-problems-pulling-or-pushing-from-remote-registries)\
 [How can I examine network traffic?](#how-can-i-examine-network-traffic)\
 [How do I view debug logs for Jib?](#how-do-i-view-debug-logs-for-jib)\
+[How do I enable debugging?](#how-do-i-enable-debugging)\
 [Why is my image created 48 years ago?](#why-is-my-image-created-48-years-ago)\
 [I would like to run my application with a javaagent.](#i-would-like-to-run-my-application-with-a-javaagent)\
 [How can I tag my image with a timestamp?](#how-can-i-tag-my-image-with-a-timestamp)
@@ -212,7 +213,7 @@ Jib currently requires configuring your build tool to use the appropriate [Java 
 There are a few reasons why Jib may be unable to connect to a remote registry, including:
 
 - **Access requires a proxy.** See [_How do I configure a proxy?_](#how-do-i-configure-a-proxy) for details.
-- **The registry does not support HTTPS.** We do not pass authentication details on non-HTTPS connections, though this can be overridden with the `sendCredentialsOverHttp` system property (_version 0.9.8_).
+- **The registry does not support HTTPS.** We do not pass authentication details on non-HTTPS connections, though this can be overridden with the `sendCredentialsOverHttp` system property, but it is not recommend  (_version 0.9.8_).
 - **The registry's SSL certificates have expired or are not trusted.**  We have a separate document on [handling registries that use self-signed certificates](self_sign_cert.md), which may also apply if the SSL certificate is signed by an untrusted Certificate Authority.  Jib supports an  `allowInsecureRegistries` flag to ignore SSL certificate validation, but it is not recommend (_version 0.9.8_). 
 - **The registry does not support the [Docker Image Format V2 Schema 2](https://github.com/GoogleContainerTools/jib/issues/601)** (sometimes referred to as _v2-2_).  This problem is usually shown by failures wth `INVALID_MANIFEST` errors. Some registries can be configured to support V2-2 such as [Artifactory](https://www.jfrog.com/confluence/display/RTF/Docker+Registry#DockerRegistry-LocalDockerRepositories) and [OpenShift](https://docs.openshift.com/container-platform/3.9/install_config/registry/extended_registry_configuration.html#middleware-repository-acceptschema2). Other registries, such as Quay.io/Quay Enterprise, are in the process of adding support.
 
@@ -245,7 +246,9 @@ Maven: use `mvn -X -DjibSerialize=true` to enable more detailed logging and seri
 
 Gradle: use `grade --debug -DjibSerialize=true` to enable more detailed logging and serialize Jib's actions.
 
-See the [`CONTRIBUTING.md`](../CONTRIBUTING.md), found in the root of the Jib repository, for hints on debugging Jib with an IDE.
+### How do I enable debugging?
+
+See the [`CONTRIBUTING.md`](https://github.com/GoogleContainerTools/jib/blob/master/CONTRIBUTING.md), found in the root of the Jib repository, for hints on debugging Jib with an IDE.
 
 ### Why is my image created 48 years ago?
 
