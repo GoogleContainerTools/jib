@@ -1,0 +1,36 @@
+buildscript {
+  repositories {
+    mavenCentral()
+    maven {
+      url 'https://plugins.gradle.org/m2/'
+    }
+  }
+  dependencies {
+    classpath 'org.springframework.boot:spring-boot-gradle-plugin:2.0.3.RELEASE'
+    classpath 'io.spring.gradle:dependency-management-plugin:1.0.6.RELEASE'
+    classpath 'gradle.plugin.com.google.cloud.tools:jib-gradle-plugin:0.9.8'
+  }
+}
+
+subprojects {
+  apply plugin: 'java'
+  apply plugin: 'eclipse'
+  apply plugin: 'idea'
+  apply plugin: 'org.springframework.boot'
+  apply plugin: 'io.spring.dependency-management'
+  apply plugin: 'com.google.cloud.tools.jib'
+
+  repositories {
+    mavenCentral()
+  }
+
+  sourceCompatibility = 1.8
+  targetCompatibility = 1.8
+
+  dependencies {
+    compile 'org.springframework.boot:spring-boot-starter-web'
+  }
+
+  // IMPORTANT: Set the environment variable PROJECT_ID to your own Google Cloud Platform project.
+  jib.to.image = "gcr.io/${System.getenv('PROJECT_ID')}/${project.name}:${version}"
+}

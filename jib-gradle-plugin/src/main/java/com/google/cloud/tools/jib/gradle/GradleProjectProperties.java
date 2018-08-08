@@ -17,18 +17,16 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.JibLogger;
-import com.google.cloud.tools.jib.configuration.LayerConfiguration;
-import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
-import com.google.cloud.tools.jib.frontend.MainClassInferenceException;
-import com.google.cloud.tools.jib.frontend.MainClassResolver;
-import com.google.cloud.tools.jib.frontend.ProjectProperties;
+import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
-import com.google.cloud.tools.jib.image.LayerEntry;
+import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
+import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
+import com.google.cloud.tools.jib.plugins.common.MainClassResolver;
+import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -65,46 +63,21 @@ class GradleProjectProperties implements ProjectProperties {
 
   private final Project project;
   private final GradleJibLogger gradleJibLogger;
-  private final GradleLayerConfigurations gradleLayerConfigurations;
+  private final JavaLayerConfigurations javaLayerConfigurations;
 
   @VisibleForTesting
   GradleProjectProperties(
       Project project,
       GradleJibLogger gradleJibLogger,
-      GradleLayerConfigurations gradleLayerConfigurations) {
+      JavaLayerConfigurations javaLayerConfigurations) {
     this.project = project;
     this.gradleJibLogger = gradleJibLogger;
-    this.gradleLayerConfigurations = gradleLayerConfigurations;
+    this.javaLayerConfigurations = javaLayerConfigurations;
   }
 
   @Override
-  public ImmutableList<LayerConfiguration> getLayerConfigurations() {
-    return gradleLayerConfigurations.getLayerConfigurations();
-  }
-
-  @Override
-  public LayerEntry getDependenciesLayerEntry() {
-    return gradleLayerConfigurations.getDependenciesLayerEntry();
-  }
-
-  @Override
-  public LayerEntry getSnapshotDependenciesLayerEntry() {
-    return gradleLayerConfigurations.getSnapshotDependenciesLayerEntry();
-  }
-
-  @Override
-  public LayerEntry getResourcesLayerEntry() {
-    return gradleLayerConfigurations.getResourcesLayerEntry();
-  }
-
-  @Override
-  public LayerEntry getClassesLayerEntry() {
-    return gradleLayerConfigurations.getClassesLayerEntry();
-  }
-
-  @Override
-  public LayerEntry getExtraFilesLayerEntry() {
-    return gradleLayerConfigurations.getExtraFilesLayerEntry();
+  public JavaLayerConfigurations getJavaLayerConfigurations() {
+    return javaLayerConfigurations;
   }
 
   @Override

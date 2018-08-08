@@ -49,7 +49,7 @@ public class DockerContextMojoIntegrationTest {
         simpleTestProject.getProjectRoot().resolve("target").resolve("jib-docker-context");
     Assert.assertTrue(Files.exists(dockerContextDirectory));
 
-    String imageName = "jib/integration-test";
+    String imageName = "jib/integration-test" + System.nanoTime();
     new Command("docker", "build", "-t", imageName, dockerContextDirectory.toString()).run();
     Assert.assertThat(
         new Command("docker", "inspect", imageName).run(),

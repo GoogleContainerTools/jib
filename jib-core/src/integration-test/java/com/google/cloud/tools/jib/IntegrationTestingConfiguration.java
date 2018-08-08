@@ -14,16 +14,22 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.frontend;
+package com.google.cloud.tools.jib;
 
-/** Thrown when main class inference fails. */
-public class MainClassInferenceException extends Exception {
+import com.google.common.base.Strings;
+import org.junit.Assert;
 
-  MainClassInferenceException(String message) {
-    super(message);
+/** Configuration for integration tests. */
+public class IntegrationTestingConfiguration {
+
+  public static String getGCPProject() {
+    String projectId = System.getenv("JIB_INTEGRATION_TESTING_PROJECT");
+    if (Strings.isNullOrEmpty(projectId)) {
+      Assert.fail(
+          "Must set environment variable JIB_INTEGRATION_TESTING_PROJECT to the GCP project to use for integration testing.");
+    }
+    return projectId;
   }
 
-  MainClassInferenceException(String message, Throwable cause) {
-    super(message, cause);
-  }
+  private IntegrationTestingConfiguration() {}
 }

@@ -49,6 +49,7 @@ public class BuildDockerMojoIntegrationTest {
   private static String buildToDockerDaemonAndRun(Path projectRoot, String imageReference)
       throws VerificationException, IOException, InterruptedException {
     Verifier verifier = new Verifier(projectRoot.toString());
+    verifier.setSystemProperty("_TARGET_IMAGE", imageReference);
     verifier.setAutoclean(false);
     verifier.executeGoal("package");
 
@@ -69,41 +70,27 @@ public class BuildDockerMojoIntegrationTest {
 
   @Test
   public void testExecute_simple() throws VerificationException, IOException, InterruptedException {
+    String targetImage = "simpleimage:maven" + System.nanoTime();
+
     Instant before = Instant.now();
     Assert.assertEquals(
         "Hello, world. An argument.\nfoo\ncat\n",
-        buildToDockerDaemonAndRun(
-            simpleTestProject.getProjectRoot(),
-            "gcr.io/jib-integration-testing/simpleimage:maven"));
+        buildToDockerDaemonAndRun(simpleTestProject.getProjectRoot(), targetImage));
     Instant buildTime =
         Instant.parse(
-            new Command(
-                    "docker",
-                    "inspect",
-                    "-f",
-                    "{{.Created}}",
-                    "gcr.io/jib-integration-testing/simpleimage:maven")
-                .run()
-                .trim());
+            new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim());
     Assert.assertTrue(buildTime.isAfter(before) || buildTime.equals(before));
   }
 
   @Test
   public void testExecute_empty() throws InterruptedException, IOException, VerificationException {
+    String targetImage = "emptyimage:maven" + System.nanoTime();
+
     Assert.assertEquals(
-        "",
-        buildToDockerDaemonAndRun(
-            emptyTestProject.getProjectRoot(), "gcr.io/jib-integration-testing/emptyimage:maven"));
+        "", buildToDockerDaemonAndRun(emptyTestProject.getProjectRoot(), targetImage));
     Assert.assertEquals(
         "1970-01-01T00:00:00Z",
-        new Command(
-                "docker",
-                "inspect",
-                "-f",
-                "{{.Created}}",
-                "gcr.io/jib-integration-testing/emptyimage:maven")
-            .run()
-            .trim());
+        new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim());
   }
 
   @Test

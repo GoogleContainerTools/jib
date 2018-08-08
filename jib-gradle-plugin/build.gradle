@@ -1,19 +1,19 @@
 plugins {
-    id 'java-gradle-plugin'
-    id 'checkstyle'
-    id 'com.github.sherter.google-java-format' version '0.7.1'
+  id 'java-gradle-plugin'
+  id 'checkstyle'
+  id 'com.github.sherter.google-java-format' version '0.7.1'
 
-    // For local install
-    id 'maven'
+  // For local install
+  id 'maven'
 
-    // Error-prone checker
-    id 'net.ltgt.apt' version '0.13'
-    id 'net.ltgt.errorprone' version '0.0.13'
+  // Error-prone checker
+  id 'net.ltgt.apt' version '0.13'
+  id 'net.ltgt.errorprone' version '0.0.13'
 
-    // Prepare release
-    id 'net.researchgate.release' version '2.6.0'
-    // Gradle Plugin Portal publish
-    id 'com.gradle.plugin-publish' version '0.9.10'
+  // Prepare release
+  id 'net.researchgate.release' version '2.6.0'
+  // Gradle Plugin Portal publish
+  id 'com.gradle.plugin-publish' version '0.9.10'
 }
 
 group 'com.google.cloud.tools'
@@ -23,152 +23,152 @@ targetCompatibility = JavaVersion.VERSION_1_8
 compileJava.options.encoding = 'UTF-8'
 
 repositories {
-    // Use jcenter for gradle plugin portal releases.
-    jcenter()
+  // Use jcenter for gradle plugin portal releases.
+  jcenter()
 }
 
 sourceSets {
-    main {
-        java.srcDir file('../jib-core/src/main/java')
-        resources.srcDir file('../jib-core/src/main/resources')
+  main {
+    java.srcDir file('../jib-core/src/main/java')
+    resources.srcDir file('../jib-core/src/main/resources')
+  }
+  test {
+    java.srcDir file('../jib-core/src/test/java')
+    resources.srcDir file('../jib-core/src/test/resources')
+  }
+  integrationTest {
+    java {
+      compileClasspath += main.output + test.output
+      runtimeClasspath += main.output + test.output
+      srcDir file('src/integration-test/java')
+      srcDir file('../jib-core/src/integration-test/java')
     }
-    test {
-        java.srcDir file('../jib-core/src/test/java')
-        resources.srcDir file('../jib-core/src/test/resources')
+    resources {
+      srcDir file('src/integration-test/resources')
+      srcDir file('../jib-core/src/integration-test/resources')
     }
-    integrationTest {
-        java {
-            compileClasspath += main.output + test.output
-            runtimeClasspath += main.output + test.output
-            srcDir file('src/integration-test/java')
-            srcDir file('../jib-core/src/integration-test/java')
-        }
-        resources {
-            srcDir file('src/integration-test/resources')
-            srcDir file('../jib-core/src/integration-test/resources')
-        }
-    }
+  }
 }
 
 configurations {
-    integrationTestCompile.extendsFrom testCompile
-    integrationTestRuntime.extendsFrom testRuntime
+  integrationTestCompile.extendsFrom testCompile
+  integrationTestRuntime.extendsFrom testRuntime
 }
 
 dependencies {
-    // These are copied over from jib-core and are necessary for the jib-core sourcesets.
-    compile 'com.google.http-client:google-http-client:1.23.0'
-    compile 'org.apache.commons:commons-compress:1.17'
-    compile 'com.google.guava:guava:23.5-jre'
-    compile 'com.fasterxml.jackson.core:jackson-databind:2.9.6'
-    compile 'org.slf4j:slf4j-api:1.7.25'
-    compile 'org.javassist:javassist:3.22.0-GA'
+  // These are copied over from jib-core and are necessary for the jib-core sourcesets.
+  compile 'com.google.http-client:google-http-client:1.23.0'
+  compile 'org.apache.commons:commons-compress:1.17'
+  compile 'com.google.guava:guava:23.5-jre'
+  compile 'com.fasterxml.jackson.core:jackson-databind:2.9.6'
+  compile 'org.slf4j:slf4j-api:1.7.25'
+  compile 'org.javassist:javassist:3.22.0-GA'
 
-    testCompile 'junit:junit:4.12'
-    testCompile 'org.mockito:mockito-core:2.12.0'
+  testCompile 'junit:junit:4.12'
+  testCompile 'org.mockito:mockito-core:2.12.0'
 
-    compile gradleApi()
+  compile gradleApi()
 
-    // NullAway errorprone plugin
-    apt 'com.uber.nullaway:nullaway:0.4.2'
-    errorprone 'com.google.errorprone:error_prone_core:2.2.0'
+  // NullAway errorprone plugin
+  apt 'com.uber.nullaway:nullaway:0.4.2'
+  errorprone 'com.google.errorprone:error_prone_core:2.2.0'
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '4.6'
+  gradleVersion = '4.6'
 }
 
 // Integration tests must be run explicitly
 task integrationTest(type: Test) {
-    testClassesDirs = sourceSets.integrationTest.output.classesDirs
-    classpath = sourceSets.integrationTest.runtimeClasspath
-    systemProperty '_JIB_DISABLE_USER_AGENT', true
+  testClassesDirs = sourceSets.integrationTest.output.classesDirs
+  classpath = sourceSets.integrationTest.runtimeClasspath
+  systemProperty '_JIB_DISABLE_USER_AGENT', true
 }
 integrationTest.dependsOn test
 
 test {
-    testLogging {
-        showStandardStreams = true
-        exceptionFormat = 'full'
-    }
+  testLogging {
+    showStandardStreams = true
+    exceptionFormat = 'full'
+  }
 }
 
 // Adds NullAway errorprone checks.
 tasks.withType(JavaCompile) {
-    if (!name.toLowerCase().contains("test")) {
-        options.compilerArgs += ["-Xep:NullAway:ERROR", "-XepOpt:NullAway:AnnotatedPackages=com.google.cloud.tools"]
-    }
+  if (!name.toLowerCase().contains("test")) {
+    options.compilerArgs += ["-Xep:NullAway:ERROR", "-XepOpt:NullAway:AnnotatedPackages=com.google.cloud.tools"]
+  }
 }
 
 // Fail build on javadoc warnings
 tasks.withType(Javadoc) {
-    options.addBooleanOption('Xwerror', true)
+  options.addBooleanOption('Xwerror', true)
 }
 
 tasks.withType(Test) {
-    reports.html.setDestination file("${reporting.baseDir}/${name}")
+  reports.html.setDestination file("${reporting.baseDir}/${name}")
 }
 
 /* GOOGLE JAVA FORMAT */
 googleJavaFormat {
-    toolVersion = '1.6'
+  toolVersion = '1.6'
 }
 check.dependsOn verifyGoogleJavaFormat
 /* GOOGLE JAVA FORMAT */
 
 /* CHECKSTYLE */
 checkstyle {
-    toolVersion = "7.6.1"
+  toolVersion = "7.6.1"
 
-    // get the google_checks.xml file from the checkstyle jar and take out the java checks
-    def googleChecks = resources.text.fromArchiveEntry(configurations.checkstyle[0], 'google_checks.xml').asString()
-    def fileExtensionsBefore = '<property name="fileExtensions" value="java, properties, xml"/>'
-    def fileExtensionsAfter = '<property name="fileExtensions" value="properties, xml"/>'
-    def googleChecksNoJava = googleChecks.replace(fileExtensionsBefore, fileExtensionsAfter)
-    assert !googleChecks.equals(googleChecksNoJava)
+  // get the google_checks.xml file from the checkstyle jar and take out the java checks
+  def googleChecks = resources.text.fromArchiveEntry(configurations.checkstyle[0], 'google_checks.xml').asString()
+  def fileExtensionsBefore = '<property name="fileExtensions" value="java, properties, xml"/>'
+  def fileExtensionsAfter = '<property name="fileExtensions" value="properties, xml"/>'
+  def googleChecksNoJava = googleChecks.replace(fileExtensionsBefore, fileExtensionsAfter)
+  assert !googleChecks.equals(googleChecksNoJava)
 
-    config = resources.text.fromString(googleChecksNoJava)
+  config = resources.text.fromString(googleChecksNoJava)
 
-    maxErrors = 0
-    maxWarnings = 0
+  maxErrors = 0
+  maxWarnings = 0
 }
 /* CHECKSTYLE */
 
 /* JAR */
 // Necessary for adding version information into the JAR.
 jar {
-    manifest {
-        attributes 'Implementation-Title': project.name,
-                'Implementation-Version': version,
-                'Built-By': System.getProperty('user.name'),
-                'Built-Date': new Date(),
-                'Built-JDK': System.getProperty('java.version'),
-                'Built-Gradle': gradle.gradleVersion
-    }
+  manifest {
+    attributes 'Implementation-Title': project.name,
+               'Implementation-Version': version,
+               'Built-By': System.getProperty('user.name'),
+               'Built-Date': new Date(),
+               'Built-JDK': System.getProperty('java.version'),
+               'Built-Gradle': gradle.gradleVersion
+  }
 }
 /* JAR */
 
 /* RELEASE */
 // Prepare release
 release {
-    tagTemplate = 'v$version-gradle'
-    git {
-        requireBranch = /^gradle_release_v\d+.*$/  //regex
-    }
+  tagTemplate = 'v$version-gradle'
+  git {
+    requireBranch = /^gradle_release_v\d+.*$/  //regex
+  }
 }
 // Gradle Plugin Portal releases
 pluginBundle {
-    website = 'https://github.com/GoogleContainerTools/jib/'
-    vcsUrl = 'https://github.com/GoogleContainerTools/jib/'
+  website = 'https://github.com/GoogleContainerTools/jib/'
+  vcsUrl = 'https://github.com/GoogleContainerTools/jib/'
 
-    plugins {
-        jibPlugin {
-            id = 'com.google.cloud.tools.jib'
-            displayName = 'Jib'
-            description = 'Containerize your Java application'
-            tags = ['google', 'java', 'containers', 'docker', 'kubernetes', 'microservices']
-        }
+  plugins {
+    jibPlugin {
+      id = 'com.google.cloud.tools.jib'
+      displayName = 'Jib'
+      description = 'Containerize your Java application'
+      tags = ['google', 'java', 'containers', 'docker', 'kubernetes', 'microservices']
     }
+  }
 }
 tasks.publishPlugins.dependsOn integrationTest
 /* RELEASE */

@@ -18,24 +18,17 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.configuration.CacheConfiguration;
-import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
-import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
-import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
-import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
-import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
-import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
-import com.google.cloud.tools.jib.frontend.SystemPropertyValidator;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.ImageReference;
-import com.google.cloud.tools.jib.registry.RegistryClient;
+import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
+import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
+import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
+import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import java.time.Instant;
 import java.util.Arrays;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -50,23 +43,15 @@ public class BuildImageMojo extends JibPluginConfiguration {
 
   @VisibleForTesting static final String GOAL_NAME = "build";
 
-  /** {@code User-Agent} header suffix to send to the registry. */
-  private static final String USER_AGENT_SUFFIX = "jib-maven-plugin";
-
   private static final HelpfulSuggestions HELPFUL_SUGGESTIONS =
       HelpfulSuggestionsProvider.get("Build image failed");
 
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
-    // TODO: Consolidate all of these checks.
     if ("pom".equals(getProject().getPackaging())) {
       getLog().info("Skipping containerization because packaging is 'pom'...");
       return;
     }
-
-    MavenJibLogger mavenJibLogger = new MavenJibLogger(getLog());
-    handleDeprecatedParameters(mavenJibLogger);
-    SystemPropertyValidator.checkHttpTimeoutProperty(MojoExecutionException::new);
 
     // Validates 'format'.
     if (Arrays.stream(ImageFormat.values()).noneMatch(value -> value.name().equals(getFormat()))) {
@@ -80,9 +65,6 @@ public class BuildImageMojo extends JibPluginConfiguration {
               + "'.");
     }
 
-    // Parses 'from' into image reference.
-    ImageReference baseImage = parseImageReference(getBaseImage(), "from");
-
     // Parses 'to' into image reference.
     if (Strings.isNullOrEmpty(getTargetImage())) {
       throw new MojoFailureException(
@@ -90,84 +72,42 @@ public class BuildImageMojo extends JibPluginConfiguration {
               .forToNotConfigured(
                   "<to><image>", "pom.xml", "mvn compile jib:build -Dimage=<your image name>"));
     }
-    ImageReference targetImage = parseImageReference(getTargetImage(), "to");
 
-    // Checks Maven settings for registry credentials.
-    if (Boolean.getBoolean("sendCredentialsOverHttp")) {
-      mavenJibLogger.warn(
-          "Authentication over HTTP is enabled. It is strongly recommended that you do not enable "
-              + "this on a public network!");
-    }
+    MavenJibLogger mavenJibLogger = new MavenJibLogger(getLog());
+    MavenProjectProperties mavenProjectProperties =
+        MavenProjectProperties.getForProject(getProject(), mavenJibLogger, getExtraDirectory());
 
-    MavenSettingsServerCredentials mavenSettingsServerCredentials =
-        new MavenSettingsServerCredentials(
-            Preconditions.checkNotNull(session).getSettings(), settingsDecrypter, mavenJibLogger);
-    Authorization fromAuthorization = getBaseImageAuth();
-    RegistryCredentials knownBaseRegistryCredentials =
-        fromAuthorization != null
-            ? new RegistryCredentials(
-                "jib-maven-plugin <from><auth> configuration", fromAuthorization)
-            : mavenSettingsServerCredentials.retrieve(baseImage.getRegistry());
-    Authorization toAuthorization = getTargetImageAuth();
+    PluginConfigurationProcessor pluginConfigurationProcessor =
+        PluginConfigurationProcessor.processCommonConfiguration(
+            mavenJibLogger, this, mavenProjectProperties);
+
+    ImageReference targetImage =
+        PluginConfigurationProcessor.parseImageReference(getTargetImage(), "to");
+    Authorization toAuthorization =
+        ConfigurationPropertyValidator.getImageAuth(
+            mavenJibLogger, "jib.to.auth.username", "jib.to.auth.password", getTargetImageAuth());
     RegistryCredentials knownTargetRegistryCredentials =
         toAuthorization != null
             ? new RegistryCredentials("jib-maven-plugin <to><auth> configuration", toAuthorization)
-            : mavenSettingsServerCredentials.retrieve(targetImage.getRegistry());
-
-    MavenProjectProperties mavenProjectProperties =
-        MavenProjectProperties.getForProject(getProject(), mavenJibLogger, getExtraDirectory());
-    String mainClass = mavenProjectProperties.getMainClass(this);
-
-    // Builds the BuildConfiguration.
-    ImageConfiguration baseImageConfiguration =
-        ImageConfiguration.builder(baseImage)
-            .setCredentialHelper(getBaseImageCredentialHelperName())
-            .setKnownRegistryCredentials(knownBaseRegistryCredentials)
-            .build();
-
+            : pluginConfigurationProcessor
+                .getMavenSettingsServerCredentials()
+                .retrieve(targetImage.getRegistry());
     ImageConfiguration targetImageConfiguration =
         ImageConfiguration.builder(targetImage)
             .setCredentialHelper(getTargetImageCredentialHelperName())
             .setKnownRegistryCredentials(knownTargetRegistryCredentials)
             .build();
 
-    ContainerConfiguration.Builder containerConfigurationBuilder =
-        ContainerConfiguration.builder()
-            .setEntrypoint(
-                JavaEntrypointConstructor.makeDefaultEntrypoint(getJvmFlags(), mainClass))
-            .setProgramArguments(getArgs())
-            .setEnvironment(getEnvironment())
-            .setExposedPorts(ExposedPortsParser.parse(getExposedPorts()));
-    if (getUseCurrentTimestamp()) {
-      mavenJibLogger.warn(
-          "Setting image creation time to current time; your image may not be reproducible.");
-      containerConfigurationBuilder.setCreationTime(Instant.now());
-    }
-
-    BuildConfiguration.Builder buildConfigurationBuilder =
-        BuildConfiguration.builder(mavenJibLogger)
-            .setBaseImageConfiguration(baseImageConfiguration)
+    BuildConfiguration buildConfiguration =
+        pluginConfigurationProcessor
+            .getBuildConfigurationBuilder()
+            .setBaseImageConfiguration(
+                pluginConfigurationProcessor.getBaseImageConfigurationBuilder().build())
             .setTargetImageConfiguration(targetImageConfiguration)
-            .setContainerConfiguration(containerConfigurationBuilder.build())
+            .setContainerConfiguration(
+                pluginConfigurationProcessor.getContainerConfigurationBuilder().build())
             .setTargetFormat(ImageFormat.valueOf(getFormat()).getManifestTemplateClass())
-            .setAllowInsecureRegistries(getAllowInsecureRegistries())
-            .setLayerConfigurations(mavenProjectProperties.getLayerConfigurations());
-
-    CacheConfiguration applicationLayersCacheConfiguration =
-        CacheConfiguration.forPath(mavenProjectProperties.getCacheDirectory());
-    buildConfigurationBuilder.setApplicationLayersCacheConfiguration(
-        applicationLayersCacheConfiguration);
-    if (getUseOnlyProjectCache()) {
-      buildConfigurationBuilder.setBaseImageLayersCacheConfiguration(
-          applicationLayersCacheConfiguration);
-    }
-
-    BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
-
-    // TODO: Instead of disabling logging, have authentication credentials be provided
-    MavenJibLogger.disableHttpLogging();
-
-    RegistryClient.setUserAgentSuffix(USER_AGENT_SUFFIX);
+            .build();
 
     try {
       BuildStepsRunner.forBuildImage(buildConfiguration).build(HELPFUL_SUGGESTIONS);

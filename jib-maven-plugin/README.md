@@ -1,4 +1,4 @@
-![experimental](https://img.shields.io/badge/stability-experimental-darkorange.svg)
+![beta](https://img.shields.io/badge/stability-beta-darkorange.svg)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/jib-maven-plugin/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/jib-maven-plugin)
 [![Gitter version](https://img.shields.io/gitter/room/gitterHQ/gitter.svg)](https://gitter.im/google/jib)
 
@@ -18,7 +18,7 @@ See [Milestones](https://github.com/GoogleContainerTools/jib/milestones) for pla
 You can containerize your application easily with one command:
 
 ```shell
-mvn compile com.google.cloud.tools:jib-maven-plugin:0.9.7:build -Dimage=<MY IMAGE>
+mvn compile com.google.cloud.tools:jib-maven-plugin:0.9.8:build -Dimage=<MY IMAGE>
 ```
 
 This builds and pushes a container image for your application to a container registry. *If you encounter authentication issues, see [Authentication Methods](#authentication-methods).*
@@ -26,7 +26,7 @@ This builds and pushes a container image for your application to a container reg
 To build to a Docker daemon, use:
 
 ```shell
-mvn compile com.google.cloud.tools:jib-maven-plugin:0.9.7:dockerBuild
+mvn compile com.google.cloud.tools:jib-maven-plugin:0.9.8:dockerBuild
 ```
 
 If you would like to set up Jib as part of your Maven build, follow the guide below.
@@ -44,7 +44,7 @@ In your Maven Java project, add the plugin to your `pom.xml`:
       <plugin>
         <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
-        <version>0.9.7</version>
+        <version>0.9.8</version>
         <configuration>
           <to>
             <image>myimage</image>
@@ -203,7 +203,7 @@ Field | Type | Default | Description
 `to` | [`to`](#to-object) | *Required* | Configures the target image to build your application to.
 `container` | [`container`](#container-object) | See [`container`](#container-object) | Configures the container that is run from your image.
 `useOnlyProjectCache` | boolean | `false` | If set to true, Jib does not share a cache between different Gradle projects.
-`allowInsecureRegistries` | boolean | `false` | If set to true, Jib uses HTTP as a fallback for registries that do not support HTTPS or whose certificates cannot be verified. Leaving this parameter set to `false` is strongly recommended, since communication with insecure registries is unencrypted and visible to others on the network.
+`allowInsecureRegistries` | boolean | `false` | If set to true, Jib ignores HTTPS certificate errors and may fall back to HTTP as a last resort. Leaving this parameter set to `false` is strongly recommended, since HTTP communication is unencrypted and visible to others on the network, and insecure HTTPS is no better than plain HTTP. [If accessing a registry with a self-signed certificate, adding the certificate to your Java runtime's trusted keys](https://github.com/GoogleContainerTools/jib/tree/master/docs/self_sign_cert.md) may be an alternative to enabling this option.
 
 <a name="from-object"></a>`from` is an object with the following properties:
 
@@ -211,6 +211,7 @@ Property | Type | Default | Description
 --- | --- | --- | ---
 `image` | string | `gcr.io/distroless/java` | The image reference for the base image.
 `credHelper` | string | *None* | Suffix for the credential helper that can authenticate pulling the base image (following `docker-credential-`).
+`auth` | [`auth`](#auth-object) | *None* | Specify credentials directly (alternative to `credHelper`).
 
 <a name="to-object"></a>`to` is an object with the following properties:
 
@@ -218,6 +219,14 @@ Property | Type | Default | Description
 --- | --- | --- | ---
 `image` | string | *Required* | The image reference for the target image. This can also be specified via the `-Dimage` command line option.
 `credHelper` | string | *None* | Suffix for the credential helper that can authenticate pulling the base image (following `docker-credential-`).
+`auth` | [`auth`](#auth-object) | *None* | Specify credentials directly (alternative to `credHelper`).
+
+<a name="auth-object"></a>`auth` is an object with the following properties (see [Using Specific Credentials](#using-specific-credentials)):
+
+Property | Type
+--- | ---
+`username` | `String`
+`password` | `String`
 
 <a name="container-object"></a>`container` is an object with the following properties:
 
@@ -309,6 +318,44 @@ Configure credential helpers to use by specifying them as a `credHelper` for the
   ...
 </configuration>
 ```
+
+#### Using Specific Credentials
+
+You can specify credentials directly in the `<auth>` parameter for the `from` and/or `to` images. In the example below, `to` credentials are retrieved from the `REGISTRY_USERNAME` and `REGISTRY_PASSWORD` environment variables.
+
+```xml
+<configuration>
+  ...
+  <from>
+    <image>aws_account_id.dkr.ecr.region.amazonaws.com/my-base-image</image>
+    <auth>
+      <username>my_username</username>
+      <password>my_password</password>
+    </auth>
+  </from>
+  <to>
+    <image>gcr.io/my-gcp-project/my-app</image>
+    <auth>
+      <username>${env.REGISTRY_USERNAME}</username>
+      <password>${env.REGISTRY_PASSWORD}</password>
+    </auth>
+  </to>
+  ...
+</configuration>
+```
+
+Alternatively, you can specify credentials via commandline using the following system properties.
+
+Property | Description
+--- | ---
+`-Djib.from.auth.username` | Username for base image registry.
+`-Djib.from.auth.password` | Password for base image registry.
+`-Djib.to.auth.username` | Username for target image registry.
+`-Djib.to.auth.password` | Password for target image registry.
+
+e.g. `mvn compile jib:build -Djib.to.auth.username=user -Djib.to.auth.password=pass`
+
+**Note:** This method of authentication should be used only as a last resort, as it is insecure to make your password visible in plain text.
 
 #### Using Maven Settings
 

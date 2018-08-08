@@ -17,10 +17,7 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.JibLogger;
-import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.http.Authorizations;
-import com.google.cloud.tools.jib.image.ImageReference;
-import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -42,11 +39,34 @@ import org.apache.maven.settings.crypto.SettingsDecrypter;
 abstract class JibPluginConfiguration extends AbstractMojo {
 
   /** Used to configure {@code from.auth} and {@code to.auth} parameters. */
-  public static class AuthConfiguration {
+  public static class AuthConfiguration implements AuthProperty {
 
     @Nullable @Parameter private String username;
-
     @Nullable @Parameter private String password;
+    @Nullable private String usernameDescriptor;
+    @Nullable private String passwordDescriptor;
+
+    @Override
+    public String getUsernamePropertyDescriptor() {
+      return Preconditions.checkNotNull(usernameDescriptor);
+    }
+
+    @Override
+    public String getPasswordPropertyDescriptor() {
+      return Preconditions.checkNotNull(passwordDescriptor);
+    }
+
+    @Override
+    @Nullable
+    public String getUsername() {
+      return username;
+    }
+
+    @Override
+    @Nullable
+    public String getPassword() {
+      return password;
+    }
 
     @VisibleForTesting
     void setUsername(String username) {
@@ -58,17 +78,9 @@ abstract class JibPluginConfiguration extends AbstractMojo {
       this.password = password;
     }
 
-    /**
-     * Converts the {@link AuthConfiguration} to an {@link Authorization}.
-     *
-     * @return the {@link Authorization}
-     */
-    @Nullable
-    private Authorization getAuthorization() {
-      if (username == null || password == null) {
-        return null;
-      }
-      return Authorizations.withBasicCredentials(username, password);
+    private void setPropertyDescriptors(String descriptorPrefix) {
+      this.usernameDescriptor = descriptorPrefix + "<username>";
+      this.passwordDescriptor = descriptorPrefix + "<password>";
     }
   }
 
@@ -119,42 +131,6 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     @Parameter private List<String> ports = Collections.emptyList();
   }
 
-  /**
-   * @param image the image reference string to parse.
-   * @param type name of the parameter being parsed (e.g. "to" or "from").
-   * @return the {@link ImageReference} parsed from {@code from}.
-   */
-  static ImageReference parseImageReference(String image, String type) {
-    try {
-      return ImageReference.parse(image);
-    } catch (InvalidImageReferenceException ex) {
-      throw new IllegalStateException("Parameter '" + type + "' is invalid", ex);
-    }
-  }
-
-  /**
-   * Gets an {@link Authorization} from a username and password. First tries system properties, then
-   * tries build configuration, otherwise returns null.
-   *
-   * @param usernameProperty the name of the username system property
-   * @param passwordProperty the name of the password system property
-   * @param auth the configured credentials
-   * @return a new {@link Authorization} from the system properties or build configuration, or
-   *     {@code null} if neither is configured.
-   */
-  @VisibleForTesting
-  @Nullable
-  static Authorization getImageAuth(
-      String usernameProperty, String passwordProperty, AuthConfiguration auth) {
-    // System property takes priority over build configuration
-    String commandlineUsername = System.getProperty(usernameProperty);
-    String commandlinePassword = System.getProperty(passwordProperty);
-    if (commandlineUsername != null && commandlinePassword != null) {
-      return Authorizations.withBasicCredentials(commandlineUsername, commandlinePassword);
-    }
-    return auth.getAuthorization();
-  }
-
   @Nullable
   @Parameter(defaultValue = "${session}", readonly = true)
   MavenSession session;
@@ -191,6 +167,12 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   private String extraDirectory;
 
   @Nullable @Component protected SettingsDecrypter settingsDecrypter;
+
+  /** Default constructor handles setting up auth property descriptors. */
+  JibPluginConfiguration() {
+    to.auth.setPropertyDescriptors("<to><auth>");
+    from.auth.setPropertyDescriptors("<from><auth>");
+  }
 
   /**
    * Warns about deprecated parameters in use.
@@ -230,6 +212,10 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     }
   }
 
+  MavenSession getSession() {
+    return Preconditions.checkNotNull(session);
+  }
+
   MavenProject getProject() {
     return Preconditions.checkNotNull(project);
   }
@@ -243,9 +229,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     return Preconditions.checkNotNull(from).credHelper;
   }
 
-  @Nullable
-  Authorization getBaseImageAuth() {
-    return getImageAuth("jib.from.auth.username", "jib.from.auth.password", from.auth);
+  AuthConfiguration getBaseImageAuth() {
+    return from.auth;
   }
 
   @Nullable
@@ -258,9 +243,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     return Preconditions.checkNotNull(to).credHelper;
   }
 
-  @Nullable
-  Authorization getTargetImageAuth() {
-    return getImageAuth("jib.to.auth.username", "jib.to.auth.password", to.auth);
+  AuthConfiguration getTargetImageAuth() {
+    return to.auth;
   }
 
   boolean getUseCurrentTimestamp() {
@@ -304,6 +288,10 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   Path getExtraDirectory() {
     // TODO: Should inform user about nonexistent directory if using custom directory.
     return Paths.get(Preconditions.checkNotNull(extraDirectory));
+  }
+
+  SettingsDecrypter getSettingsDecrypter() {
+    return Preconditions.checkNotNull(settingsDecrypter);
   }
 
   @VisibleForTesting
