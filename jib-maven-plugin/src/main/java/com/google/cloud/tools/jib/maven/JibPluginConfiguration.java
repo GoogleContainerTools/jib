@@ -78,9 +78,9 @@ abstract class JibPluginConfiguration extends AbstractMojo {
       this.password = password;
     }
 
-    private void setPropertyDescriptors(String usernameDescriptor, String passwordDescriptor) {
-      this.usernameDescriptor = usernameDescriptor;
-      this.passwordDescriptor = passwordDescriptor;
+    private void setPropertyDescriptors(String descriptorPrefix) {
+      this.usernameDescriptor = descriptorPrefix + "<username>";
+      this.passwordDescriptor = descriptorPrefix + "<password>";
     }
   }
 
@@ -170,8 +170,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
   /** Default constructor handles setting up auth property descriptors. */
   JibPluginConfiguration() {
-    to.auth.setPropertyDescriptors("<to><auth><username>", "<to><auth><password>");
-    from.auth.setPropertyDescriptors("<from><auth><username>", "<from><auth><password>");
+    to.auth.setPropertyDescriptors("<to><auth>");
+    from.auth.setPropertyDescriptors("<from><auth>");
   }
 
   /**
