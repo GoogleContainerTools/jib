@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.maven.it.VerificationException;
@@ -41,6 +42,9 @@ public class BuildImageMojoIntegrationTest {
 
   @ClassRule
   public static final TestProject simpleTestProject = new TestProject(testPlugin, "simple");
+
+  @ClassRule
+  public static final TestProject complexTestProject = new TestProject(testPlugin, "complex");
 
   @ClassRule
   public static final TestProject emptyTestProject = new TestProject(testPlugin, "empty");
@@ -190,6 +194,81 @@ public class BuildImageMojoIntegrationTest {
               "Missing target image parameter, perhaps you should add a <to><image> configuration "
                   + "parameter to your pom.xml or set the parameter via the commandline (e.g. 'mvn "
                   + "compile jib:build -Dimage=<your image name>')."));
+    }
+  }
+
+  @Test
+  public void testExecute_complex()
+      throws IOException, InterruptedException, VerificationException {
+    // Runs the Docker registry.
+    String containerName = "registry-" + UUID.randomUUID();
+    new Command(
+            "docker",
+            "run",
+            "-d",
+            "-p",
+            "5000:5000",
+            "--restart=always",
+            "--name",
+            containerName,
+            "-v",
+            complexTestProject.getProjectRoot().resolve("auth") + ":/auth",
+            "-e",
+            "REGISTRY_AUTH=htpasswd",
+            "-e",
+            "REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm",
+            "-e",
+            "REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd",
+            "registry:2")
+        .run();
+
+    // Login in to push base image to local registry, then logout so we can test Jib's auth
+    new Command("docker", "login", "localhost:5000", "-u", "testuser", "-p", "testpassword").run();
+    new Command("docker", "pull", "gcr.io/distroless/java:latest").run();
+    new Command("docker", "tag", "gcr.io/distroless/java:latest", "localhost:5000/distroless/java")
+        .run();
+    new Command("docker", "push", "localhost:5000/distroless/java").run();
+    new Command("docker", "logout", "localhost:5000").run();
+
+    // Run jib:build
+    Instant before = Instant.now();
+    Verifier verifier = new Verifier(complexTestProject.getProjectRoot().toString());
+    verifier.setAutoclean(false);
+    verifier.addCliOption("-X");
+    verifier.addCliOption("-DsendCredentialsOverHttp=true");
+    verifier.executeGoals(Arrays.asList("clean", "compile", "jib:build"));
+    verifier.verifyErrorFreeLog();
+
+    // Verify output
+    new Command("docker", "login", "localhost:5000", "-u", "testuser", "-p", "testpassword").run();
+    new Command("docker", "pull", "localhost:5000/complex-image").run();
+    Assert.assertThat(
+        new Command("docker", "inspect", "localhost:5000/complex-image").run(),
+        CoreMatchers.containsString(
+            "            \"ExposedPorts\": {\n"
+                + "                \"1000/tcp\": {},\n"
+                + "                \"2000/udp\": {},\n"
+                + "                \"2001/udp\": {},\n"
+                + "                \"2002/udp\": {},\n"
+                + "                \"2003/udp\": {}"));
+    Assert.assertEquals(
+        "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\n",
+        new Command("docker", "run", "localhost:5000/complex-image").run());
+    Instant buildTime =
+        Instant.parse(
+            new Command("docker", "inspect", "-f", "{{.Created}}", "localhost:5000/complex-image")
+                .run()
+                .trim());
+    Assert.assertTrue(buildTime.isAfter(before) || buildTime.equals(before));
+    new Command("docker", "logout", "localhost:5000").run();
+
+    // Stops the local registry.
+    try {
+      new Command("docker", "stop", containerName).run();
+      new Command("docker", "rm", "-v", containerName).run();
+
+    } catch (InterruptedException | IOException ex) {
+      throw new RuntimeException("Could not stop local registry fully: " + containerName, ex);
     }
   }
 }
