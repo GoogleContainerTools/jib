@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.tar.TarStreamBuilder;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.io.File;
 import java.io.IOException;
@@ -28,6 +29,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 
 /**
@@ -36,6 +39,72 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
  * group name) from name-sorted tar archive entries.
  */
 public class ReproducibleLayerBuilder {
+
+  // Uses the current directory to act as the file input to TarArchiveEntry (since all directories
+  // are treated the same in TarArchiveEntry).
+  private static final File DIRECTORY_FILE = Paths.get(".").toFile();
+
+  /** Decorates an object with a separate object for {@link #hashCode}. */
+  private static class CustomHashWrapper<T, H> {
+
+    /**
+     * Instantiate with just the object to use for hashing. This is useful for instantiating hash
+     * keys to, for example, check if a hash table contains that key.
+     *
+     * @param hashObject the object to use for hashing
+     * @param <H> the type of the hash object
+     * @return the new {@link CustomHashWrapper}
+     */
+    private static <H> CustomHashWrapper<?, H> hashOnly(H hashObject) {
+      return new CustomHashWrapper<>(hashObject, null);
+    }
+
+    /**
+     * Instantiate with the wrapped object and the object to use for hashing.
+     *
+     * @param object the object to wrap
+     * @param hashObject the object to use for hashing
+     * @param <H> the type of the hash object
+     * @return the new {@link CustomHashWrapper}
+     */
+    private static <T, H> CustomHashWrapper<T, H> wrap(T object, H hashObject) {
+      return new CustomHashWrapper<>(hashObject, object);
+    }
+
+    private final H hashObject;
+
+    @Nullable private T contents;
+
+    /**
+     * Instantiate with {@link #hashOnly} and {@link #wrap}.
+     *
+     * @param hashObject the object to use for hashing
+     * @param contents the object to wrap
+     */
+    private CustomHashWrapper(H hashObject, @Nullable T contents) {
+      this.hashObject = hashObject;
+      this.contents = contents;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+      return hashObject.equals(other);
+    }
+
+    @Override
+    public int hashCode() {
+      return hashObject.hashCode();
+    }
+
+    /**
+     * Gets the wrapped object. Only to be used if instantiated with {@link #wrap}.
+     *
+     * @return the wrapped object
+     */
+    private T getContentsNonNull() {
+      return Preconditions.checkNotNull(contents);
+    }
+  }
 
   /**
    * Builds the {@link TarArchiveEntry}s for adding this {@link LayerEntry} to a tarball archive.
@@ -123,38 +192,41 @@ public class ReproducibleLayerBuilder {
    * @throws IOException if walking the source files fails
    */
   public UnwrittenLayer build() throws IOException {
-    List<TarArchiveEntry> filesystemEntries = new ArrayList<>();
-    List<LayerEntry> layerEntries = this.layerEntries.build();
-
-    // Keeps track of all the added directories so that the same directory is not added twice.
-    LinkedHashSet<String> addedDirectories = new LinkedHashSet<>();
-    // We are using the current directory to act as the file input (since all directories are
-    // treated the same in TarArchiveEntry).
-    File directoryFile = Paths.get(".").toFile();
+    LinkedHashSet<CustomHashWrapper<TarArchiveEntry, String>> filesystemEntrySet =
+        new LinkedHashSet<>();
 
     // Adds all the layer entries as tar entries.
+    List<LayerEntry> layerEntries = this.layerEntries.build();
     for (LayerEntry layerEntry : layerEntries) {
       // Converts layerEntry to list of TarArchiveEntrys.
       List<TarArchiveEntry> tarArchiveEntries = buildAsTarArchiveEntries(layerEntry);
 
-      // Adds all directories along extraction paths to explicitly set permissions for those
-      // directories.
       for (TarArchiveEntry tarArchiveEntry : tarArchiveEntries) {
+        // Adds all directories along extraction paths to explicitly set permissions for those
+        // directories.
         for (Path parentDirectory : getParentDirectories(Paths.get(tarArchiveEntry.getName()))) {
-          if (addedDirectories.contains(parentDirectory.toString())) {
-            continue;
+          if (!filesystemEntrySet.contains(
+              CustomHashWrapper.hashOnly(parentDirectory.toString()))) {
+            filesystemEntrySet.add(
+                CustomHashWrapper.wrap(
+                    new TarArchiveEntry(DIRECTORY_FILE, parentDirectory.toString()),
+                    parentDirectory.toString()));
           }
-          filesystemEntries.add(new TarArchiveEntry(directoryFile, parentDirectory.toString()));
-          addedDirectories.add(parentDirectory.toString());
+        }
+        if (!filesystemEntrySet.contains(CustomHashWrapper.hashOnly(tarArchiveEntry.getName()))) {
+          filesystemEntrySet.add(
+              CustomHashWrapper.wrap(tarArchiveEntry, tarArchiveEntry.getName()));
         }
       }
-
-      // Adds the actual files.
-      filesystemEntries.addAll(tarArchiveEntries);
     }
 
     // Sorts the entries by name.
-    filesystemEntries.sort(Comparator.comparing(TarArchiveEntry::getName));
+    List<TarArchiveEntry> filesystemEntries =
+        filesystemEntrySet
+            .stream()
+            .map(CustomHashWrapper::getContentsNonNull)
+            .sorted(Comparator.comparing(TarArchiveEntry::getName))
+            .collect(Collectors.toList());
 
     // Adds all the files to a tar stream.
     TarStreamBuilder tarStreamBuilder = new TarStreamBuilder();
