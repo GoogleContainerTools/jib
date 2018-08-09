@@ -54,7 +54,9 @@
           </to>
           <container>
             <useCurrentTimestamp>true</useCurrentTimestamp>
-            <args>An argument.</args>
+            <args>
+              <arg>An argument.</arg>
+            </args>
             <mainClass>com.test.HelloWorld</mainClass>
             <jvmFlags>
               <jvmFlag>-Xms512m</jvmFlag>
@@ -64,7 +66,7 @@
               <port>1000/tcp</port>
               <port>2000-2003/udp</port>
             </ports>
-            <!-- <format>OCI</format> -->
+            <format>Docker</format>
           </container>
           <allowInsecureRegistries>true</allowInsecureRegistries>
           <useOnlyProjectCache>true</useOnlyProjectCache>
