@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.http;
 
-import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import java.util.Objects;
 
 /**
@@ -55,7 +54,7 @@ public class Authorization {
     if (obj == this) {
       return true;
     }
-    if (!(obj instanceof BlobDescriptor)) {
+    if (!(obj instanceof Authorization)) {
       return false;
     }
 

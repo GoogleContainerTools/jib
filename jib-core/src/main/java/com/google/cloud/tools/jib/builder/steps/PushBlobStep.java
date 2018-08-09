@@ -22,7 +22,6 @@ import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryException;
 import com.google.common.util.concurrent.Futures;
@@ -38,7 +37,7 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
   private static final String DESCRIPTION = "Pushing BLOB ";
 
   private final BuildConfiguration buildConfiguration;
-  private final DecideCrossRepositoryBlobMountStep decideCrossRepositoryBlobMountStep;
+  private final DecideCrossRepositoryBlobMountStep shouldDoCrossRepositoryBlobMount;
   private final AuthenticatePushStep authenticatePushStep;
   private final BlobDescriptor blobDescriptor;
   private final Blob blob;
@@ -48,19 +47,19 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
   PushBlobStep(
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
-      DecideCrossRepositoryBlobMountStep decideCrossRepositoryBlobMountStep,
+      DecideCrossRepositoryBlobMountStep shouldDoCrossRepositoryBlobMount,
       AuthenticatePushStep authenticatePushStep,
       BlobDescriptor blobDescriptor,
       Blob blob) {
     this.buildConfiguration = buildConfiguration;
     this.authenticatePushStep = authenticatePushStep;
-    this.decideCrossRepositoryBlobMountStep = decideCrossRepositoryBlobMountStep;
+    this.shouldDoCrossRepositoryBlobMount = shouldDoCrossRepositoryBlobMount;
     this.blobDescriptor = blobDescriptor;
     this.blob = blob;
 
     listenableFuture =
         Futures.whenAllSucceed(
-                authenticatePushStep.getFuture(), decideCrossRepositoryBlobMountStep.getFuture())
+                authenticatePushStep.getFuture(), shouldDoCrossRepositoryBlobMount.getFuture())
             .call(this, listeningExecutorService);
   }
 
@@ -73,15 +72,13 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
   public BlobDescriptor call() throws IOException, RegistryException, ExecutionException {
     try (Timer timer =
         new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION + blobDescriptor)) {
-      Authorization targetAuthorization = NonBlockingSteps.get(authenticatePushStep);
-
       RegistryClient registryClient =
           RegistryClient.factory(
                   buildConfiguration.getBuildLogger(),
                   buildConfiguration.getTargetImageConfiguration().getImageRegistry(),
                   buildConfiguration.getTargetImageConfiguration().getImageRepository())
               .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
-              .setAuthorization(targetAuthorization)
+              .setAuthorization(NonBlockingSteps.get(authenticatePushStep))
               .newRegistryClient();
       registryClient.setTimer(timer);
 
@@ -93,14 +90,9 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
         return blobDescriptor;
       }
 
-      buildConfiguration
-          .getBaseImageConfiguration()
-          .getImageRegistry()
-          .equals(buildConfiguration.getTargetImageConfiguration().getImageRegistry());
+      boolean doMount = NonBlockingSteps.get(shouldDoCrossRepositoryBlobMount);
       String mountFrom =
-          NonBlockingSteps.get(decideCrossRepositoryBlobMountStep)
-              ? buildConfiguration.getBaseImageConfiguration().getImageRepository()
-              : null;
+          doMount ? buildConfiguration.getBaseImageConfiguration().getImageRepository() : null;
       registryClient.pushBlob(blobDescriptor.getDigest(), blob, mountFrom);
 
       return blobDescriptor;
