@@ -65,7 +65,7 @@ public class ImageToJsonTranslatorTest {
             new Port(1000, Protocol.TCP),
             new Port(2000, Protocol.TCP),
             new Port(3000, Protocol.UDP)));
-    testImageBuilder.setLabels(ImmutableMap.of("key1", "value1", "key2", "value2"));
+    testImageBuilder.addLabels(ImmutableMap.of("key1", "value1", "key2", "value2"));
 
     DescriptorDigest fakeDigest =
         DescriptorDigest.fromDigest(
