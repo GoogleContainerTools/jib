@@ -248,13 +248,14 @@ Gradle: use `grade --debug -DjibSerialize=true` to enable more detailed logging 
 
 ### How do I enable debugging?
 
-If using the `distroless/java` base image, then use the [`JAVA_TOOL_OPTIONS`](#how-do-i-set-parameters-for-my-image-at-runtime) to pass along debugging configuration arguments.  For example, to have the remote VM accept debug connections on port 8000, but not suspend:
+If using the `distroless/java` base image, then use the [`JAVA_TOOL_OPTIONS`](#how-do-i-set-parameters-for-my-image-at-runtime) to pass along debugging configuration arguments.  For example, to have the remote VM accept debug connections on port 5005, but not suspend:
 ```
 -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005
 ```
 
-Then connect your debugger to port 5005 on the given host.  Exposing the debug port will likely require additional configuration of the container runtime environment.
+Then connect your debugger to port 5005 on the given host.  Exposing the debug port will likely require additional configuration of the container runtime environment.  Using Docker: `docker run -p 5005:5005 <image>`
 
+Using Kubernetes: `kubectl port-forward <pod name> 5005:5005`
 
 ### Why is my image created 48 years ago?
 
