@@ -31,13 +31,20 @@ class TestProject extends TemporaryFolder implements Closeable {
 
   private final TestPlugin testPlugin;
   private final String projectDir;
+  private final String pomFilename;
 
   private Path projectRoot;
 
   /** Initialize to a specific project directory. */
   TestProject(TestPlugin testPlugin, String projectDir) {
+    this(testPlugin, projectDir, "pom.xml");
+  }
+
+  /** Initialize to a specific project directory with a non-default pom.xml. */
+  TestProject(TestPlugin testPlugin, String projectDir, String pomFilename) {
     this.testPlugin = testPlugin;
     this.projectDir = projectDir;
+    this.pomFilename = pomFilename;
   }
 
   Path getProjectRoot() {
@@ -58,7 +65,7 @@ class TestProject extends TemporaryFolder implements Closeable {
             .toPath();
 
     // Puts the correct plugin version into the test project pom.xml.
-    Path pomXml = projectRoot.resolve("pom.xml");
+    Path pomXml = projectRoot.resolve(pomFilename);
     Files.write(
         pomXml,
         new String(Files.readAllBytes(pomXml), StandardCharsets.UTF_8)
