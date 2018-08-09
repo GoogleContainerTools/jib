@@ -253,7 +253,7 @@ If using the `distroless/java` base image, then use the [`JAVA_TOOL_OPTIONS`](#h
 -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005
 ```
 
-Then connect your debugger to port 5005 on the given host.  Exposing the debug port will likely require additional configuration of the container runtime environment.  Using Docker: `docker run -p 5005:5005 <image>`
+Then connect your debugger to port 5005 on the given host.  You can port-forward the container port to a localhost port for easy access.  Using Docker: `docker run -p 5005:5005 <image>`
 
 Using Kubernetes: `kubectl port-forward <pod name> 5005:5005`
 
