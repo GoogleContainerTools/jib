@@ -46,7 +46,7 @@
             </auth>
           </from>
           <to>
-            <image>localhost:5000/complex-image</image>
+            <image>${_TARGET_IMAGE}</image>
             <auth>
               <username>testuser</username>
               <password>testpassword</password>
