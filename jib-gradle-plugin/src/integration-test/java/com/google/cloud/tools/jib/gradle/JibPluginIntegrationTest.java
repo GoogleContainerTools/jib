@@ -36,7 +36,7 @@ public class JibPluginIntegrationTest {
 
   @ClassRule
   public static final LocalRegistry localRegistry =
-      new LocalRegistry(5000, false, "testuser", "testpassword");
+      new LocalRegistry(5000, "testuser", "testpassword");
 
   @ClassRule public static final TestProject emptyTestProject = new TestProject("empty");
 

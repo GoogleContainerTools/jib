@@ -21,6 +21,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.junit.rules.ExternalResource;
@@ -30,17 +33,15 @@ public class LocalRegistry extends ExternalResource {
 
   private final String containerName = "registry-" + UUID.randomUUID();
   private final int port;
-  private final boolean pullBusyBox;
   @Nullable private final String username;
   @Nullable private final String password;
 
-  public LocalRegistry(int port, boolean pullBusyBox) {
-    this(port, pullBusyBox, null, null);
+  public LocalRegistry(int port) {
+    this(port, null, null);
   }
 
-  public LocalRegistry(int port, boolean pullBusyBox, String username, String password) {
+  public LocalRegistry(int port, String username, String password) {
     this.port = port;
-    this.pullBusyBox = pullBusyBox;
     this.username = username;
     this.password = password;
   }
@@ -49,19 +50,18 @@ public class LocalRegistry extends ExternalResource {
   @Override
   protected void before() throws IOException, InterruptedException {
     // Runs the Docker registry.
-    if (username == null || password == null) {
-      new Command(
-              "docker",
-              "run",
-              "-d",
-              "-p",
-              port + ":5000",
-              "--restart=always",
-              "--name",
-              containerName,
-              "registry:2")
-          .run();
-    } else {
+    ArrayList<String> dockerTokens =
+        new ArrayList<>(
+            Arrays.asList(
+                "docker",
+                "run",
+                "-d",
+                "-p",
+                port + ":5000",
+                "--restart=always",
+                "--name",
+                containerName));
+    if (username != null && password != null) {
       // Generate the htpasswd file to store credentials
       String credentialString =
           new Command(
@@ -79,15 +79,8 @@ public class LocalRegistry extends ExternalResource {
           tempFolder.resolve("htpasswd"), credentialString.getBytes(StandardCharsets.UTF_8));
 
       // Run the Docker registry
-      new Command(
-              "docker",
-              "run",
-              "-d",
-              "-p",
-              port + ":5000",
-              "--restart=always",
-              "--name",
-              containerName,
+      dockerTokens.addAll(
+          Arrays.asList(
               "-v",
               // Volume mount used for storing credentials
               tempFolder + ":/auth",
@@ -96,14 +89,11 @@ public class LocalRegistry extends ExternalResource {
               "-e",
               "REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm",
               "-e",
-              "REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd",
-              "registry:2")
-          .run();
+              "REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd"));
     }
-
-    if (pullBusyBox) {
-      pullAndPushToLocal("busybox", "busybox");
-    }
+    dockerTokens.add("registry:2");
+    String[] tokenArray = new String[dockerTokens.size()];
+    new Command(dockerTokens.toArray(tokenArray)).run();
   }
 
   @Override

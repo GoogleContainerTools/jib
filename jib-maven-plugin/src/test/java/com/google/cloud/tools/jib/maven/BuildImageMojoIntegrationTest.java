@@ -40,7 +40,7 @@ public class BuildImageMojoIntegrationTest {
 
   @ClassRule
   public static final LocalRegistry localRegistry =
-      new LocalRegistry(5000, false, "testuser", "testpassword");
+      new LocalRegistry(5000, "testuser", "testpassword");
 
   @ClassRule public static final TestPlugin testPlugin = new TestPlugin();
 

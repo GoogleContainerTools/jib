@@ -35,14 +35,15 @@ import org.mockito.Mockito;
 /** Integration tests for {@link BlobPuller}. */
 public class BlobPullerIntegrationTest {
 
-  @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000, true);
+  @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
   private static final EmptyJibLogger BUILD_LOGGER = new EmptyJibLogger();
 
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
-  public void testPull() throws IOException, RegistryException {
+  public void testPull() throws IOException, RegistryException, InterruptedException {
     // Pulls the busybox image.
+    localRegistry.pullAndPushToLocal("busybox", "busybox");
     RegistryClient registryClient =
         RegistryClient.factory(BUILD_LOGGER, "localhost:5000", "busybox")
             .setAllowInsecureRegistries(true)
@@ -61,7 +62,9 @@ public class BlobPullerIntegrationTest {
   }
 
   @Test
-  public void testPull_unknownBlob() throws RegistryException, IOException, DigestException {
+  public void testPull_unknownBlob()
+      throws RegistryException, IOException, DigestException, InterruptedException {
+    localRegistry.pullAndPushToLocal("busybox", "busybox");
     DescriptorDigest nonexistentDigest =
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");

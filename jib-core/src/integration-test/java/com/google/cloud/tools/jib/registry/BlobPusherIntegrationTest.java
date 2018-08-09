@@ -29,11 +29,13 @@ import org.junit.Test;
 /** Integration tests for {@link BlobPusher}. */
 public class BlobPusherIntegrationTest {
 
-  @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000, true);
+  @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
   private static final EmptyJibLogger BUILD_LOGGER = new EmptyJibLogger();
 
   @Test
-  public void testPush() throws DigestException, IOException, RegistryException {
+  public void testPush()
+      throws DigestException, IOException, RegistryException, InterruptedException {
+    localRegistry.pullAndPushToLocal("busybox", "busybox");
     Blob testBlob = Blobs.from("crepecake");
     // Known digest for 'crepecake'
     DescriptorDigest testBlobDigest =

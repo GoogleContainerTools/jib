@@ -53,7 +53,7 @@ import org.junit.rules.TemporaryFolder;
 /** Integration tests for {@link BuildSteps}. */
 public class BuildStepsIntegrationTest {
 
-  @ClassRule public static final LocalRegistry localRegistry = new LocalRegistry(5000, false);
+  @ClassRule public static final LocalRegistry localRegistry = new LocalRegistry(5000);
 
   /** Lists the files in the {@code resourcePath} resources directory. */
   private static ImmutableList<Path> getResourceFilesList(String resourcePath)
