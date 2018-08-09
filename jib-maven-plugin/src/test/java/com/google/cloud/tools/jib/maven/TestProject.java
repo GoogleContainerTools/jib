@@ -37,9 +37,7 @@ class TestProject extends TemporaryFolder implements Closeable {
 
   /** Initialize to a specific project directory. */
   TestProject(TestPlugin testPlugin, String projectDir) {
-    this.testPlugin = testPlugin;
-    this.projectDir = projectDir;
-    this.pomFilename = "pom.xml";
+    this(testPlugin, projectDir, "pom.xml");
   }
 
   /** Initialize to a specific project directory with a non-default pom.xml. */
