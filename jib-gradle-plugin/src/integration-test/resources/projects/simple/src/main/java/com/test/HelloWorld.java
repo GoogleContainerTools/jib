@@ -18,6 +18,7 @@ package com.test;
 
 import dependency.Greeting;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -43,6 +44,11 @@ public class HelloWorld {
       System.out.println(new String(Files.readAllBytes(Paths.get("/foo")), StandardCharsets.UTF_8));
       System.out.println(
           new String(Files.readAllBytes(Paths.get("/bar/cat")), StandardCharsets.UTF_8));
+    }
+
+    // Prints jvm flags
+    for (String jvmFlag : ManagementFactory.getRuntimeMXBean().getInputArguments()) {
+      System.out.println(jvmFlag);
     }
   }
 }

@@ -201,6 +201,8 @@ public class BuildImageMojoIntegrationTest {
   @Test
   public void testExecute_complex()
       throws IOException, InterruptedException, VerificationException {
+    String targetImage = "localhost:5000/compleximage:maven" + System.nanoTime();
+
     // Runs the Docker registry.
     // TODO: Refactor into LocalRegistry
     String containerName = "registry-" + UUID.randomUUID();
@@ -225,7 +227,7 @@ public class BuildImageMojoIntegrationTest {
             "registry:2")
         .run();
 
-    // Login in to push base image to local registry, then logout so we can test Jib's auth
+    // Login to push base image to local registry, then logout so we can test Jib's auth
     try {
       new Command("docker", "login", "localhost:5000", "-u", "testuser", "-p", "testpassword")
           .run();
@@ -239,6 +241,7 @@ public class BuildImageMojoIntegrationTest {
       // Run jib:build
       Instant before = Instant.now();
       Verifier verifier = new Verifier(complexTestProject.getProjectRoot().toString());
+      verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
       verifier.setAutoclean(false);
       verifier.addCliOption("-X");
       verifier.addCliOption("-DsendCredentialsOverHttp=true");
@@ -249,9 +252,9 @@ public class BuildImageMojoIntegrationTest {
       // Verify output
       new Command("docker", "login", "localhost:5000", "-u", "testuser", "-p", "testpassword")
           .run();
-      new Command("docker", "pull", "localhost:5000/complex-image").run();
+      new Command("docker", "pull", targetImage).run();
       Assert.assertThat(
-          new Command("docker", "inspect", "localhost:5000/complex-image").run(),
+          new Command("docker", "inspect", targetImage).run(),
           CoreMatchers.containsString(
               "            \"ExposedPorts\": {\n"
                   + "                \"1000/tcp\": {},\n"
@@ -261,12 +264,10 @@ public class BuildImageMojoIntegrationTest {
                   + "                \"2003/udp\": {}"));
       Assert.assertEquals(
           "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\n",
-          new Command("docker", "run", "localhost:5000/complex-image").run());
+          new Command("docker", "run", targetImage).run());
       Instant buildTime =
           Instant.parse(
-              new Command("docker", "inspect", "-f", "{{.Created}}", "localhost:5000/complex-image")
-                  .run()
-                  .trim());
+              new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim());
       Assert.assertTrue(buildTime.isAfter(before) || buildTime.equals(before));
       new Command("docker", "logout", "localhost:5000").run();
 
