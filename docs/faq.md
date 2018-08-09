@@ -248,7 +248,13 @@ Gradle: use `grade --debug -DjibSerialize=true` to enable more detailed logging 
 
 ### How do I enable debugging?
 
-See the [`CONTRIBUTING.md`](https://github.com/GoogleContainerTools/jib/blob/master/CONTRIBUTING.md), found in the root of the Jib repository, for hints on debugging Jib with an IDE.
+If using the `distroless/java` base image, then use the [`JAVA_TOOL_OPTIONS`](#how-do-i-set-parameters-for-my-image-at-runtime) to pass along debugging configuration arguments.  For example, to have the remote VM accept debug connections on port 8000, but not suspend:
+```
+-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005
+```
+
+Then connect your debugger to port 5005 on the given host.  Exposing the debug port will likely require additional configuration of the container runtime environment.
+
 
 ### Why is my image created 48 years ago?
 

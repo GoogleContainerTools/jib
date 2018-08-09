@@ -108,6 +108,6 @@ Attach a debugger to a Gradle instance by running Gradle as follows:
 ```shell
 ./gradlew jib \
   --no-daemon \
-  -Dorg.gradle.jvmargs='-Xdebug -Xrunjdwp:transport=dt_socket,server=y,address=5005,suspend=y'
+  -Dorg.gradle.jvmargs='-agentlib:jdwp:transport=dt_socket,server=y,address=5005,suspend=y'
 ```
 
