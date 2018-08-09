@@ -285,6 +285,23 @@ In this configuration, the image:
 </configuration>
 ```
 
+### Adding Arbitrary Files to the Image
+
+*\* Note: this is an incubating feature and may change in the future.*
+
+You can add arbitrary, non-classpath files to the image by placing them in a `src/main/jib` directory. This will copy all files within the `jib` folder to the image's root directory, maintaining the same structure (e.g. if you have a text file at `src/main/jib/dir/hello.txt`, then your image will contain `/dir/hello.txt` after being built with Jib).
+
+You can configure a different directory by using the `extraDirectory` parameter in your `pom.xml`:
+
+```xml
+<configuration>
+  ...
+  // Copies files from 'src/main/custom-extra-dir' instead of 'src/main/jib'
+  <extraDirectory>${project.basedir}/src/main/custom-extra-dir</extraDirectory>
+  ...
+</configuration>
+```
+
 ### Authentication Methods
 
 Pushing/pulling from private registries require authorization credentials. These can be [retrieved using Docker credential helpers](#using-docker-credential-helpers) or [defined in your Maven settings](#using-maven-settings). If you do not define credentials explicitly, Jib will try to [use credentials defined in your Docker config](/../../issues/101) or infer common credential helpers.
