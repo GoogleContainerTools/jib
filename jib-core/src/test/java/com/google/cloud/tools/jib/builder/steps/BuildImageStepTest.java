@@ -77,7 +77,10 @@ public class BuildImageStepTest {
     Mockito.when(mockContainerConfiguration.getEntrypoint()).thenReturn(ImmutableList.of());
 
     Image<Layer> baseImage =
-        Image.builder().addEnvironment(ImmutableMap.of("NAME", "VALUE")).build();
+        Image.builder()
+            .addEnvironment(ImmutableMap.of("BASE_ENV", "BASE_ENV_VALUE"))
+            .addLabel("base.label", "base.label.value")
+            .build();
     Mockito.when(mockPullAndCacheBaseImageLayerStep.getFuture())
         .thenReturn(Futures.immediateFuture(testCachedLayer));
     Mockito.when(mockPullAndCacheBaseImageLayersStep.getFuture())
@@ -116,7 +119,9 @@ public class BuildImageStepTest {
   public void test_propagateBaseImageConfiguration()
       throws ExecutionException, InterruptedException {
     Mockito.when(mockContainerConfiguration.getEnvironmentMap())
-        .thenReturn(ImmutableMap.of("BASE", "IMAGE"));
+        .thenReturn(ImmutableMap.of("MY_ENV", "MY_ENV_VALUE"));
+    Mockito.when(mockContainerConfiguration.getLabels())
+        .thenReturn(ImmutableMap.of("my.label", "my.label.value"));
     BuildImageStep buildImageStep =
         new BuildImageStep(
             MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()),
@@ -128,6 +133,11 @@ public class BuildImageStepTest {
                 mockBuildAndCacheApplicationLayerStep,
                 mockBuildAndCacheApplicationLayerStep));
     Image<CachedLayer> image = buildImageStep.getFuture().get().getFuture().get();
-    Assert.assertEquals(ImmutableMap.of("NAME", "VALUE", "BASE", "IMAGE"), image.getEnvironment());
+    Assert.assertEquals(
+        ImmutableMap.of("BASE_ENV", "BASE_ENV_VALUE", "MY_ENV", "MY_ENV_VALUE"),
+        image.getEnvironment());
+    Assert.assertEquals(
+        ImmutableMap.of("base.label", "base.label.value", "my.label", "my.label.value"),
+        image.getLabels());
   }
 }

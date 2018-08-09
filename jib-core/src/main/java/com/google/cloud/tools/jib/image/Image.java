@@ -32,12 +32,12 @@ public class Image<T extends Layer> {
 
     private final ImageLayers.Builder<T> imageLayersBuilder = ImageLayers.builder();
     private ImmutableMap.Builder<String, String> environmentBuilder = ImmutableMap.builder();
+    private ImmutableMap.Builder<String, String> labelsBuilder = ImmutableMap.builder();
 
     @Nullable private Instant created;
     @Nullable private ImmutableList<String> entrypoint;
     @Nullable private ImmutableList<String> javaArguments;
     @Nullable private ImmutableList<Port> exposedPorts;
-    @Nullable private ImmutableMap<String, String> labels;
 
     /**
      * Sets the image creation time.
@@ -109,13 +109,27 @@ public class Image<T extends Layer> {
     }
 
     /**
-     * Sets the items in the "Labels" field in the container configuration.
+     * Add items to the "Labels" field in the container configuration.
      *
      * @param labels that map of labels to add
      * @return this
      */
-    public Builder<T> setLabels(@Nullable Map<String, String> labels) {
-      this.labels = (labels == null) ? null : ImmutableMap.copyOf(labels);
+    public Builder<T> addLabels(@Nullable Map<String, String> labels) {
+      if (labels != null) {
+        labelsBuilder.putAll(labels);
+      }
+      return this;
+    }
+
+    /**
+     * A an item to the "Labels" field in the container configuration.
+     *
+     * @param name that name of the label
+     * @param value the value of the label
+     * @return this
+     */
+    public Builder<T> addLabel(String name, String value) {
+      labelsBuilder.put(name, value);
       return this;
     }
 
@@ -139,7 +153,7 @@ public class Image<T extends Layer> {
           entrypoint,
           javaArguments,
           exposedPorts,
-          labels);
+          labelsBuilder.build());
     }
   }
 
