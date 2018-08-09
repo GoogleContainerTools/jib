@@ -48,7 +48,7 @@ public class DecideCrossRepositoryBlobMountStep implements AsyncStep<Boolean>, C
   public Boolean call() throws Exception {
     Authorization target = NonBlockingSteps.get(targetRegistryCredentials);
     Authorization base = NonBlockingSteps.get(baseImage).getBaseImageAuthorization();
-    return base == null || target.equals(base);
+    return base == null || base.equals(target);
   }
 
   @Override
