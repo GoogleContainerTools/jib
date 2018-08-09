@@ -29,7 +29,7 @@ import org.junit.Test;
 /** Integration tests for {@link BlobPusher}. */
 public class BlobPusherIntegrationTest {
 
-  @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
+  @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000, true);
   private static final EmptyJibLogger BUILD_LOGGER = new EmptyJibLogger();
 
   @Test

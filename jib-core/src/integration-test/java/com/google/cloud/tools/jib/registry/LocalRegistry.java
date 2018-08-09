@@ -17,60 +17,100 @@
 package com.google.cloud.tools.jib.registry;
 
 import com.google.cloud.tools.jib.Command;
-import com.google.common.io.CharStreams;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import org.junit.rules.ExternalResource;
-import org.junit.rules.TestRule;
 
-/** {@link TestRule} that runs a local registry. */
+/** Runs a local registry. */
 public class LocalRegistry extends ExternalResource {
 
-  private final int port;
-
-  /** The name for the container running the registry. */
   private final String containerName = "registry-" + UUID.randomUUID();
+  private final int port;
+  private final boolean pullBusyBox;
+  @Nullable private final String username;
+  @Nullable private final String password;
 
-  public LocalRegistry(int port) {
+  public LocalRegistry(int port, boolean pullBusyBox) {
+    this(port, pullBusyBox, null, null);
+  }
+
+  public LocalRegistry(int port, boolean pullBusyBox, String username, String password) {
     this.port = port;
+    this.pullBusyBox = pullBusyBox;
+    this.username = username;
+    this.password = password;
   }
 
   /** Starts the local registry. */
   @Override
-  protected void before() throws Throwable {
+  protected void before() throws IOException, InterruptedException {
     // Runs the Docker registry.
-    new Command(
-            "docker",
-            "run",
-            "-d",
-            "-p",
-            port + ":5000",
-            "--restart=always",
-            "--name",
-            containerName,
-            "registry:2")
-        .run();
+    if (username == null || password == null) {
+      new Command(
+              "docker",
+              "run",
+              "-d",
+              "-p",
+              port + ":5000",
+              "--restart=always",
+              "--name",
+              containerName,
+              "registry:2")
+          .run();
+    } else {
+      // Generate the htpasswd file to store credentials
+      String credentialString =
+          new Command(
+                  "docker",
+                  "run",
+                  "--entrypoint",
+                  "htpasswd",
+                  "registry:2",
+                  "-Bbn",
+                  username,
+                  password)
+              .run();
+      Path tempFolder = Files.createTempDirectory("auth");
+      Files.write(
+          tempFolder.resolve("htpasswd"), credentialString.getBytes(StandardCharsets.UTF_8));
 
-    // Pulls 'busybox'.
-    new Command("docker", "pull", "busybox").run();
+      // Run the Docker registry
+      new Command(
+              "docker",
+              "run",
+              "-d",
+              "-p",
+              port + ":5000",
+              "--restart=always",
+              "--name",
+              containerName,
+              "-v",
+              // Volume mount used for storing credentials
+              tempFolder + ":/auth",
+              "-e",
+              "REGISTRY_AUTH=htpasswd",
+              "-e",
+              "REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm",
+              "-e",
+              "REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd",
+              "registry:2")
+          .run();
+    }
 
-    // Tags 'busybox' to push to our local registry.
-    new Command("docker", "tag", "busybox", "localhost:" + port + "/busybox").run();
-
-    // Pushes 'busybox' to our local registry.
-    new Command("docker", "push", "localhost:" + port + "/busybox").run();
+    if (pullBusyBox) {
+      pullAndPushToLocal("busybox", "busybox");
+    }
   }
 
-  /** Stops the local registry. */
   @Override
   protected void after() {
     try {
-      // Stops the registry.
+      logout();
       new Command("docker", "stop", containerName).run();
-
-      // Removes the container.
       new Command("docker", "rm", "-v", containerName).run();
 
     } catch (InterruptedException | IOException ex) {
@@ -78,16 +118,44 @@ public class LocalRegistry extends ExternalResource {
     }
   }
 
-  private void printLogs() throws IOException, InterruptedException {
-    Process process = Runtime.getRuntime().exec("docker logs " + containerName);
-    try (InputStreamReader inputStreamReader =
-        new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)) {
-      System.out.println(CharStreams.toString(inputStreamReader));
+  /**
+   * Pulls an image.
+   *
+   * @param from the image reference to pull
+   * @throws IOException if the pull command fails
+   * @throws InterruptedException if the pull command is interrupted
+   */
+  public void pull(String from) throws IOException, InterruptedException {
+    login();
+    new Command("docker", "pull", from).run();
+    logout();
+  }
+
+  /**
+   * Pulls an image and pushes it to the local registry under a new tag.
+   *
+   * @param from the image reference to pull
+   * @param to the new location of the image (i.e. {@code localhost:[port]/[to]}
+   * @throws IOException if the commands fail
+   * @throws InterruptedException if the commands are interrupted
+   */
+  public void pullAndPushToLocal(String from, String to) throws IOException, InterruptedException {
+    login();
+    new Command("docker", "pull", from).run();
+    new Command("docker", "tag", from, "localhost:" + port + "/" + to).run();
+    new Command("docker", "push", "localhost:" + port + "/" + to).run();
+    logout();
+  }
+
+  private void login() throws IOException, InterruptedException {
+    if (username != null && password != null) {
+      new Command("docker", "login", "localhost:" + port, "-u", username, "-p", password).run();
     }
-    try (InputStreamReader inputStreamReader =
-        new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8)) {
-      System.err.println(CharStreams.toString(inputStreamReader));
+  }
+
+  private void logout() throws IOException, InterruptedException {
+    if (username != null && password != null) {
+      new Command("docker", "logout", "localhost:" + port).run();
     }
-    process.waitFor();
   }
 }

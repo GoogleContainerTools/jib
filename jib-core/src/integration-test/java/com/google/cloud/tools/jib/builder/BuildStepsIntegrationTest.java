@@ -53,6 +53,8 @@ import org.junit.rules.TemporaryFolder;
 /** Integration tests for {@link BuildSteps}. */
 public class BuildStepsIntegrationTest {
 
+  @ClassRule public static final LocalRegistry localRegistry = new LocalRegistry(5000, false);
+
   /** Lists the files in the {@code resourcePath} resources directory. */
   private static ImmutableList<Path> getResourceFilesList(String resourcePath)
       throws URISyntaxException, IOException {
@@ -61,8 +63,6 @@ public class BuildStepsIntegrationTest {
       return fileStream.collect(ImmutableList.toImmutableList());
     }
   }
-
-  @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
 
   private static final TestJibLogger logger = new TestJibLogger();
 
@@ -103,7 +103,7 @@ public class BuildStepsIntegrationTest {
     logger.info("Secondary build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
 
     String imageReference = "localhost:5000/testimage:testtag";
-    new Command("docker", "pull", imageReference).run();
+    localRegistry.pull(imageReference);
     Assert.assertThat(
         new Command("docker", "inspect", imageReference).run(),
         CoreMatchers.containsString(

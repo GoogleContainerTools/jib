@@ -28,7 +28,7 @@ import org.junit.Test;
 /** Integration tests for {@link BlobChecker}. */
 public class BlobCheckerIntegrationTest {
 
-  @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
+  @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000, true);
   private static final EmptyJibLogger buildLogger = new EmptyJibLogger();
 
   @Test

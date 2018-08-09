@@ -35,7 +35,7 @@ import org.mockito.Mockito;
 /** Integration tests for {@link BlobPuller}. */
 public class BlobPullerIntegrationTest {
 
-  @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
+  @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000, true);
   private static final EmptyJibLogger BUILD_LOGGER = new EmptyJibLogger();
 
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
