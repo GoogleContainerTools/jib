@@ -81,8 +81,9 @@ public class BuildSteps {
         stepsRunner ->
             stepsRunner
                 .runRetrieveTargetRegistryCredentialsStep()
-                .runAuthenticatePushStep()
                 .runPullBaseImageStep()
+                .runDetermineCrossRepositoryBlobMountStep()
+                .runAuthenticatePushStep()
                 .runPullAndCacheBaseImageLayersStep()
                 .runPushBaseImageLayersStep()
                 .runBuildAndCacheApplicationLayerSteps()

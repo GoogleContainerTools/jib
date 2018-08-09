@@ -50,6 +50,7 @@ public class StepsRunner {
   private final Cache applicationLayersCache;
 
   @Nullable private RetrieveRegistryCredentialsStep retrieveTargetRegistryCredentialsStep;
+  @Nullable private DecideCrossRepositoryBlobMountStep decideCrossRepositoryBlobMountStep;
   @Nullable private AuthenticatePushStep authenticatePushStep;
   @Nullable private PullBaseImageStep pullBaseImageStep;
   @Nullable private PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep;
@@ -85,12 +86,23 @@ public class StepsRunner {
     return this;
   }
 
+  public StepsRunner runDetermineCrossRepositoryBlobMountStep() {
+    decideCrossRepositoryBlobMountStep =
+        new DecideCrossRepositoryBlobMountStep(
+            listeningExecutorService,
+            buildConfiguration,
+            Preconditions.checkNotNull(retrieveTargetRegistryCredentialsStep),
+            Preconditions.checkNotNull(pullBaseImageStep));
+    return this;
+  }
+
   public StepsRunner runAuthenticatePushStep() {
     authenticatePushStep =
         new AuthenticatePushStep(
             listeningExecutorService,
             buildConfiguration,
-            Preconditions.checkNotNull(retrieveTargetRegistryCredentialsStep));
+            Preconditions.checkNotNull(retrieveTargetRegistryCredentialsStep),
+            Preconditions.checkNotNull(decideCrossRepositoryBlobMountStep));
     return this;
   }
 
@@ -114,6 +126,7 @@ public class StepsRunner {
         new PushLayersStep(
             listeningExecutorService,
             buildConfiguration,
+            Preconditions.checkNotNull(decideCrossRepositoryBlobMountStep),
             Preconditions.checkNotNull(authenticatePushStep),
             Preconditions.checkNotNull(pullAndCacheBaseImageLayersStep));
     return this;
@@ -142,6 +155,7 @@ public class StepsRunner {
         new PushContainerConfigurationStep(
             listeningExecutorService,
             buildConfiguration,
+            Preconditions.checkNotNull(decideCrossRepositoryBlobMountStep),
             Preconditions.checkNotNull(authenticatePushStep),
             Preconditions.checkNotNull(buildImageStep));
     return this;
@@ -152,6 +166,7 @@ public class StepsRunner {
         new PushLayersStep(
             listeningExecutorService,
             buildConfiguration,
+            Preconditions.checkNotNull(decideCrossRepositoryBlobMountStep),
             Preconditions.checkNotNull(authenticatePushStep),
             AsyncSteps.immediate(Preconditions.checkNotNull(buildAndCacheApplicationLayerSteps)));
     return this;

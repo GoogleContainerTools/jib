@@ -41,6 +41,7 @@ class PushContainerConfigurationStep
   private static final String DESCRIPTION = "Pushing container configuration";
 
   private final BuildConfiguration buildConfiguration;
+  private final DecideCrossRepositoryBlobMountStep decideCrossRepositoryBlobMountStep;
   private final AuthenticatePushStep authenticatePushStep;
   private final BuildImageStep buildImageStep;
 
@@ -50,10 +51,12 @@ class PushContainerConfigurationStep
   PushContainerConfigurationStep(
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
+      DecideCrossRepositoryBlobMountStep decideCrossRepositoryBlobMountStep,
       AuthenticatePushStep authenticatePushStep,
       BuildImageStep buildImageStep) {
     this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
+    this.decideCrossRepositoryBlobMountStep = decideCrossRepositoryBlobMountStep;
     this.authenticatePushStep = authenticatePushStep;
     this.buildImageStep = buildImageStep;
 
@@ -90,6 +93,7 @@ class PushContainerConfigurationStep
       return new PushBlobStep(
           listeningExecutorService,
           buildConfiguration,
+          decideCrossRepositoryBlobMountStep,
           authenticatePushStep,
           blobDescriptor,
           containerConfigurationBlob);

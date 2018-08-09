@@ -137,7 +137,7 @@ public class AuthenticationMethodRetrieverTest {
   public void testHandleHttpResponseException_pass()
       throws RegistryErrorException, HttpResponseException, MalformedURLException {
     String authenticationMethod =
-        "Bearer realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"";
+        "Bearer realm=\"https://somerealm\",service=\"someservice\",scope=\"ignored\"";
 
     Mockito.when(mockHttpResponseException.getStatusCode())
         .thenReturn(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED);
@@ -149,6 +149,6 @@ public class AuthenticationMethodRetrieverTest {
 
     Assert.assertEquals(
         new URL("https://somerealm?service=someservice&scope=repository:someImageName:someScope"),
-        registryAuthenticator.getAuthenticationUrl("someScope"));
+        registryAuthenticator.getAuthenticationUrl("&scope=repository:someImageName:someScope"));
   }
 }

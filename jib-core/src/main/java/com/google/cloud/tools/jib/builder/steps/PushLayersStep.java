@@ -35,6 +35,7 @@ class PushLayersStep
   private static final String DESCRIPTION = "Setting up to push layers";
 
   private final BuildConfiguration buildConfiguration;
+  private final DecideCrossRepositoryBlobMountStep shouldDoCrossRepositoryBlobMount;
   private final AuthenticatePushStep authenticatePushStep;
   private final AsyncStep<? extends ImmutableList<? extends AsyncStep<? extends CachedLayer>>>
       cachedLayerStepsStep;
@@ -45,12 +46,14 @@ class PushLayersStep
   PushLayersStep(
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
+      DecideCrossRepositoryBlobMountStep shouldDoCrossRepositoryBlobMount,
       AuthenticatePushStep authenticatePushStep,
       AsyncStep<? extends ImmutableList<? extends AsyncStep<? extends CachedLayer>>>
           cachedLayerStepsStep) {
     this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
     this.authenticatePushStep = authenticatePushStep;
+    this.shouldDoCrossRepositoryBlobMount = shouldDoCrossRepositoryBlobMount;
     this.cachedLayerStepsStep = cachedLayerStepsStep;
 
     listenableFuture =
@@ -88,6 +91,7 @@ class PushLayersStep
     return new PushBlobStep(
         listeningExecutorService,
         buildConfiguration,
+        shouldDoCrossRepositoryBlobMount,
         authenticatePushStep,
         cachedLayer.getBlobDescriptor(),
         cachedLayer.getBlob());

@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryException;
 import com.google.common.util.concurrent.Futures;
@@ -37,6 +38,7 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
   private static final String DESCRIPTION = "Pushing BLOB ";
 
   private final BuildConfiguration buildConfiguration;
+  private final DecideCrossRepositoryBlobMountStep decideCrossRepositoryBlobMountStep;
   private final AuthenticatePushStep authenticatePushStep;
   private final BlobDescriptor blobDescriptor;
   private final Blob blob;
@@ -46,16 +48,19 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
   PushBlobStep(
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
+      DecideCrossRepositoryBlobMountStep decideCrossRepositoryBlobMountStep,
       AuthenticatePushStep authenticatePushStep,
       BlobDescriptor blobDescriptor,
       Blob blob) {
     this.buildConfiguration = buildConfiguration;
     this.authenticatePushStep = authenticatePushStep;
+    this.decideCrossRepositoryBlobMountStep = decideCrossRepositoryBlobMountStep;
     this.blobDescriptor = blobDescriptor;
     this.blob = blob;
 
     listenableFuture =
-        Futures.whenAllSucceed(authenticatePushStep.getFuture())
+        Futures.whenAllSucceed(
+                authenticatePushStep.getFuture(), decideCrossRepositoryBlobMountStep.getFuture())
             .call(this, listeningExecutorService);
   }
 
@@ -68,13 +73,15 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
   public BlobDescriptor call() throws IOException, RegistryException, ExecutionException {
     try (Timer timer =
         new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION + blobDescriptor)) {
+      Authorization targetAuthorization = NonBlockingSteps.get(authenticatePushStep);
+
       RegistryClient registryClient =
           RegistryClient.factory(
                   buildConfiguration.getBuildLogger(),
                   buildConfiguration.getTargetImageConfiguration().getImageRegistry(),
                   buildConfiguration.getTargetImageConfiguration().getImageRepository())
               .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
-              .setAuthorization(NonBlockingSteps.get(authenticatePushStep))
+              .setAuthorization(targetAuthorization)
               .newRegistryClient();
       registryClient.setTimer(timer);
 
@@ -86,17 +93,14 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
         return blobDescriptor;
       }
 
-      // If base and target images are in the same registry, then use mount/from to try mounting the
-      // BLOB from the base image repository to the target image repository and possibly avoid
-      // having to push the BLOB. See
-      // https://docs.docker.com/registry/spec/api/#cross-repository-blob-mount for details.
-      boolean sameRegistry =
-          buildConfiguration
-              .getBaseImageConfiguration()
-              .getImageRegistry()
-              .equals(buildConfiguration.getTargetImageConfiguration().getImageRegistry());
+      buildConfiguration
+          .getBaseImageConfiguration()
+          .getImageRegistry()
+          .equals(buildConfiguration.getTargetImageConfiguration().getImageRegistry());
       String mountFrom =
-          sameRegistry ? buildConfiguration.getBaseImageConfiguration().getImageRepository() : null;
+          NonBlockingSteps.get(decideCrossRepositoryBlobMountStep)
+              ? buildConfiguration.getBaseImageConfiguration().getImageRepository()
+              : null;
       registryClient.pushBlob(blobDescriptor.getDigest(), blob, mountFrom);
 
       return blobDescriptor;
