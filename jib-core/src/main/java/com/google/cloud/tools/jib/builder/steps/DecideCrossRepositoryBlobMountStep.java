@@ -8,7 +8,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Decide whether to do the Cross-Repository BLOB Mount.
@@ -23,7 +22,6 @@ public class DecideCrossRepositoryBlobMountStep implements AsyncStep<Boolean>, C
   private final ListenableFuture<Boolean> listenableFuture;
   private final PullBaseImageStep baseImage;
   private final RetrieveRegistryCredentialsStep targetRegistryCredentials;
-  private final boolean sameRegistry;
 
   DecideCrossRepositoryBlobMountStep(
       ListeningExecutorService listeningExecutorService,
@@ -35,26 +33,26 @@ public class DecideCrossRepositoryBlobMountStep implements AsyncStep<Boolean>, C
 
     String baseRegistry = buildConfiguration.getBaseImageConfiguration().getImageRegistry();
     String targetRegistry = buildConfiguration.getTargetImageConfiguration().getImageRegistry();
-    sameRegistry = baseRegistry.equals(targetRegistry);
 
-    listenableFuture =
-        Futures.whenAllSucceed(pullBaseImageStep.getFuture(), targetRegistryCredentials.getFuture())
-            .call(this, listeningExecutorService);
+    if (baseRegistry.equals(targetRegistry)) {
+      listenableFuture =
+          Futures.whenAllSucceed(
+                  pullBaseImageStep.getFuture(), targetRegistryCredentials.getFuture())
+              .call(this, listeningExecutorService);
+    } else {
+      listenableFuture = Futures.immediateFuture(false);
+    }
   }
 
   @Override
   public Boolean call() throws Exception {
-    return sameRegistry && targetCredentialsWorkForBase();
+    Authorization target = NonBlockingSteps.get(targetRegistryCredentials);
+    Authorization base = NonBlockingSteps.get(baseImage).getBaseImageAuthorization();
+    return base == null || target.equals(base);
   }
 
   @Override
   public ListenableFuture<Boolean> getFuture() {
     return listenableFuture;
-  }
-
-  private boolean targetCredentialsWorkForBase() throws ExecutionException {
-    Authorization target = NonBlockingSteps.get(targetRegistryCredentials);
-    Authorization base = NonBlockingSteps.get(baseImage).getBaseImageAuthorization();
-    return base == null || target.equals(base);
   }
 }
