@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.image.Image;
+import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
@@ -102,9 +103,10 @@ class BuildImageStep
         imageBuilder.addLayer(NonBlockingSteps.get(buildAndCacheApplicationLayerStep));
       }
 
-      // Start with environment from base image and overlay build configuration
-      imageBuilder.addEnvironment(
-          NonBlockingSteps.get(pullBaseImageStep).getBaseImage().getEnvironment());
+      // Parameters that we passthrough from the base image
+      Image<Layer> baseImage = NonBlockingSteps.get(pullBaseImageStep).getBaseImage();
+      imageBuilder.addEnvironment(baseImage.getEnvironment());
+      imageBuilder.addLabels(baseImage.getLabels());
 
       ContainerConfiguration containerConfiguration =
           buildConfiguration.getContainerConfiguration();
@@ -114,7 +116,7 @@ class BuildImageStep
         imageBuilder.setEntrypoint(containerConfiguration.getEntrypoint());
         imageBuilder.setJavaArguments(containerConfiguration.getProgramArguments());
         imageBuilder.setExposedPorts(containerConfiguration.getExposedPorts());
-        imageBuilder.setLabels(containerConfiguration.getLabels());
+        imageBuilder.addLabels(containerConfiguration.getLabels());
       }
 
       // Gets the container configuration content descriptor.
