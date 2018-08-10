@@ -33,7 +33,9 @@ public class BlobPusherIntegrationTest {
   private static final EmptyJibLogger BUILD_LOGGER = new EmptyJibLogger();
 
   @Test
-  public void testPush() throws DigestException, IOException, RegistryException {
+  public void testPush()
+      throws DigestException, IOException, RegistryException, InterruptedException {
+    localRegistry.pullAndPushToLocal("busybox", "busybox");
     Blob testBlob = Blobs.from("crepecake");
     // Known digest for 'crepecake'
     DescriptorDigest testBlobDigest =
