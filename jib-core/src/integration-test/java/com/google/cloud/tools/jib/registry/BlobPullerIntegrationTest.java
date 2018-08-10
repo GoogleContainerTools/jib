@@ -41,8 +41,9 @@ public class BlobPullerIntegrationTest {
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
-  public void testPull() throws IOException, RegistryException {
+  public void testPull() throws IOException, RegistryException, InterruptedException {
     // Pulls the busybox image.
+    localRegistry.pullAndPushToLocal("busybox", "busybox");
     RegistryClient registryClient =
         RegistryClient.factory(BUILD_LOGGER, "localhost:5000", "busybox")
             .setAllowInsecureRegistries(true)
@@ -61,7 +62,9 @@ public class BlobPullerIntegrationTest {
   }
 
   @Test
-  public void testPull_unknownBlob() throws RegistryException, IOException, DigestException {
+  public void testPull_unknownBlob()
+      throws RegistryException, IOException, DigestException, InterruptedException {
+    localRegistry.pullAndPushToLocal("busybox", "busybox");
     DescriptorDigest nonexistentDigest =
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");

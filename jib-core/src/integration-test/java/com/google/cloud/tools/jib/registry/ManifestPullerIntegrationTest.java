@@ -33,7 +33,8 @@ public class ManifestPullerIntegrationTest {
   private static final EmptyJibLogger BUILD_LOGGER = new EmptyJibLogger();
 
   @Test
-  public void testPull_v21() throws IOException, RegistryException {
+  public void testPull_v21() throws IOException, RegistryException, InterruptedException {
+    localRegistry.pullAndPushToLocal("busybox", "busybox");
     RegistryClient registryClient =
         RegistryClient.factory(BUILD_LOGGER, "localhost:5000", "busybox")
             .setAllowInsecureRegistries(true)
@@ -46,7 +47,8 @@ public class ManifestPullerIntegrationTest {
   }
 
   @Test
-  public void testPull_v22() throws IOException, RegistryException {
+  public void testPull_v22() throws IOException, RegistryException, InterruptedException {
+    localRegistry.pullAndPushToLocal("busybox", "busybox");
     RegistryClient registryClient =
         RegistryClient.factory(BUILD_LOGGER, "gcr.io", "distroless/java").newRegistryClient();
     ManifestTemplate manifestTemplate = registryClient.pullManifest("latest");
@@ -57,7 +59,9 @@ public class ManifestPullerIntegrationTest {
   }
 
   @Test
-  public void testPull_unknownManifest() throws RegistryException, IOException {
+  public void testPull_unknownManifest()
+      throws RegistryException, IOException, InterruptedException {
+    localRegistry.pullAndPushToLocal("busybox", "busybox");
     try {
       RegistryClient registryClient =
           RegistryClient.factory(BUILD_LOGGER, "localhost:5000", "busybox")
