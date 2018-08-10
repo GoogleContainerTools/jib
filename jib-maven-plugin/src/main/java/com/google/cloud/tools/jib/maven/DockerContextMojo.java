@@ -19,6 +19,8 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaDockerContextGenerator;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
+import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
+import com.google.cloud.tools.jib.plugins.common.MainClassResolver;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.io.InsecureRecursiveDeleteException;
@@ -60,9 +62,10 @@ public class DockerContextMojo extends JibPluginConfiguration {
 
     MavenProjectProperties mavenProjectProperties =
         MavenProjectProperties.getForProject(getProject(), mavenJibLogger, getExtraDirectory());
-    String mainClass = mavenProjectProperties.getMainClass(this);
-
+    String mainClass;
     try {
+      mainClass = MainClassResolver.resolveMainClass(getMainClass(), mavenProjectProperties);
+
       // Validate port input, but don't save the output because we don't want the ranges expanded
       // here.
       ExposedPortsParser.parse(getExposedPorts());
@@ -91,6 +94,9 @@ public class DockerContextMojo extends JibPluginConfiguration {
           HelpfulSuggestionsProvider.get("Export Docker context failed")
               .suggest("check if `targetDir` is set correctly"),
           ex);
+
+    } catch (MainClassInferenceException ex) {
+      throw new MojoExecutionException(ex.getMessage(), ex.getCause());
     }
   }
 }

@@ -19,6 +19,8 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaDockerContextGenerator;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
+import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
+import com.google.cloud.tools.jib.plugins.common.MainClassResolver;
 import com.google.common.base.Preconditions;
 import com.google.common.io.InsecureRecursiveDeleteException;
 import java.io.IOException;
@@ -96,7 +98,7 @@ public class DockerContextTask extends DefaultTask {
   }
 
   @TaskAction
-  public void generateDockerContext() {
+  public void generateDockerContext() throws MainClassInferenceException {
     Preconditions.checkNotNull(jibExtension);
 
     GradleJibLogger gradleJibLogger = new GradleJibLogger(getLogger());
@@ -106,7 +108,8 @@ public class DockerContextTask extends DefaultTask {
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(
             getProject(), gradleJibLogger, jibExtension.getExtraDirectoryPath());
-    String mainClass = gradleProjectProperties.getMainClass(jibExtension);
+    String mainClass =
+        MainClassResolver.resolveMainClass(jibExtension.getMainClass(), gradleProjectProperties);
     String targetDir = getTargetDir();
 
     try {

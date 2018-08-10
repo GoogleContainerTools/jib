@@ -26,6 +26,7 @@ import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
+import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -67,13 +68,9 @@ public class BuildImageTask extends DefaultTask {
   }
 
   @TaskAction
-  public void buildImage() throws InvalidImageReferenceException {
+  public void buildImage() throws InvalidImageReferenceException, MainClassInferenceException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
-    GradleJibLogger gradleJibLogger = new GradleJibLogger(getLogger());
-    GradleProjectProperties gradleProjectProperties =
-        GradleProjectProperties.getForProject(
-            getProject(), gradleJibLogger, jibExtension.getExtraDirectoryPath());
 
     if (Strings.isNullOrEmpty(jibExtension.getTargetImage())) {
       throw new GradleException(
@@ -81,13 +78,23 @@ public class BuildImageTask extends DefaultTask {
               .forToNotConfigured(
                   "'jib.to.image'", "build.gradle", "gradle jib --image <your image name>"));
     }
+
+    GradleJibLogger gradleJibLogger = new GradleJibLogger(getLogger());
+    GradleProjectProperties gradleProjectProperties =
+        GradleProjectProperties.getForProject(
+            getProject(), gradleJibLogger, jibExtension.getExtraDirectoryPath());
+    ConfigurationPropertyValidator validator =
+        ConfigurationPropertyValidator.newGradlePropertyValidator(gradleJibLogger);
+    PluginConfigurationProcessor pluginConfigurationProcessor =
+        PluginConfigurationProcessor.processCommonConfiguration(
+            gradleJibLogger, validator, jibExtension, gradleProjectProperties);
+
     RegistryCredentials knownTargetRegistryCredentials = null;
     Authorization toAuthorization =
-        ConfigurationPropertyValidator.getImageAuth(
-            gradleJibLogger,
-            "jib.to.auth.username",
-            "jib.to.auth.password",
-            jibExtension.getTo().getAuth());
+        validator.getImageAuth(
+            "to",
+            jibExtension.getTo().getAuth().getUsername(),
+            jibExtension.getTo().getAuth().getPassword());
     if (toAuthorization != null) {
       knownTargetRegistryCredentials = new RegistryCredentials("jib.to.auth", toAuthorization);
     }
@@ -96,10 +103,6 @@ public class BuildImageTask extends DefaultTask {
             .setCredentialHelper(jibExtension.getTo().getCredHelper())
             .setKnownRegistryCredentials(knownTargetRegistryCredentials)
             .build();
-
-    PluginConfigurationProcessor pluginConfigurationProcessor =
-        PluginConfigurationProcessor.processCommonConfiguration(
-            gradleJibLogger, jibExtension, gradleProjectProperties);
 
     BuildConfiguration buildConfiguration =
         pluginConfigurationProcessor

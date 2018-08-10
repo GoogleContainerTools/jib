@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.JibLogger;
-import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -39,30 +38,16 @@ import org.apache.maven.settings.crypto.SettingsDecrypter;
 abstract class JibPluginConfiguration extends AbstractMojo {
 
   /** Used to configure {@code from.auth} and {@code to.auth} parameters. */
-  public static class AuthConfiguration implements AuthProperty {
+  public static class AuthConfiguration {
 
     @Nullable @Parameter private String username;
     @Nullable @Parameter private String password;
-    @Nullable private String usernameDescriptor;
-    @Nullable private String passwordDescriptor;
 
-    @Override
-    public String getUsernamePropertyDescriptor() {
-      return Preconditions.checkNotNull(usernameDescriptor);
-    }
-
-    @Override
-    public String getPasswordPropertyDescriptor() {
-      return Preconditions.checkNotNull(passwordDescriptor);
-    }
-
-    @Override
     @Nullable
     public String getUsername() {
       return username;
     }
 
-    @Override
     @Nullable
     public String getPassword() {
       return password;
@@ -76,11 +61,6 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     @VisibleForTesting
     void setPassword(String password) {
       this.password = password;
-    }
-
-    private void setPropertyDescriptors(String descriptorPrefix) {
-      this.usernameDescriptor = descriptorPrefix + "<username>";
-      this.passwordDescriptor = descriptorPrefix + "<password>";
     }
   }
 
@@ -167,12 +147,6 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   private String extraDirectory;
 
   @Nullable @Component protected SettingsDecrypter settingsDecrypter;
-
-  /** Default constructor handles setting up auth property descriptors. */
-  JibPluginConfiguration() {
-    to.auth.setPropertyDescriptors("<to><auth>");
-    from.auth.setPropertyDescriptors("<from><auth>");
-  }
 
   /**
    * Warns about deprecated parameters in use.
