@@ -107,11 +107,9 @@ public class CredentialRetrieverFactory {
   @VisibleForTesting
   CredentialRetriever inferCredentialHelper(
       DockerCredentialHelperFactory dockerCredentialHelperFactory) {
-    String registry = imageReference.getRegistry();
-
     List<String> inferredCredentialHelperSuffixes = new ArrayList<>();
     for (String registrySuffix : COMMON_CREDENTIAL_HELPERS.keySet()) {
-      if (!registry.endsWith(registrySuffix)) {
+      if (!imageReference.getRegistry().endsWith(registrySuffix)) {
         continue;
       }
       String inferredCredentialHelperSuffix = COMMON_CREDENTIAL_HELPERS.get(registrySuffix);
@@ -125,7 +123,6 @@ public class CredentialRetrieverFactory {
       for (String inferredCredentialHelperSuffix : inferredCredentialHelperSuffixes) {
         try {
           return retrieveFromDockerCredentialHelper(
-              registry,
               Paths.get(
                   DockerCredentialHelperFactory.CREDENTIAL_HELPER_PREFIX
                       + inferredCredentialHelperSuffix),
@@ -149,31 +146,27 @@ public class CredentialRetrieverFactory {
   @VisibleForTesting
   CredentialRetriever dockerCredentialHelper(
       Path credentialHelper, DockerCredentialHelperFactory dockerCredentialHelperFactory) {
-    String registry = imageReference.getRegistry();
-
     return () -> {
       logger.info("Checking credentials from " + credentialHelper);
 
       try {
-        return retrieveFromDockerCredentialHelper(
-            registry, credentialHelper, dockerCredentialHelperFactory);
+        return retrieveFromDockerCredentialHelper(credentialHelper, dockerCredentialHelperFactory);
 
       } catch (NonexistentServerUrlDockerCredentialHelperException ex) {
-        logger.info("No credentials for " + registry + " in " + credentialHelper);
+        logger.info(
+            "No credentials for " + imageReference.getRegistry() + " in " + credentialHelper);
         return null;
       }
     };
   }
 
   private Credentials retrieveFromDockerCredentialHelper(
-      String registry,
-      Path credentialHelper,
-      DockerCredentialHelperFactory dockerCredentialHelperFactory)
+      Path credentialHelper, DockerCredentialHelperFactory dockerCredentialHelperFactory)
       throws NonexistentServerUrlDockerCredentialHelperException,
           NonexistentDockerCredentialHelperException, IOException {
     Credentials credentials =
         dockerCredentialHelperFactory
-            .newDockerCredentialHelper(registry, credentialHelper)
+            .newDockerCredentialHelper(imageReference.getRegistry(), credentialHelper)
             .retrieve();
     logGotCredentialsFrom(credentialHelper.getFileName().toString());
     return credentials;
