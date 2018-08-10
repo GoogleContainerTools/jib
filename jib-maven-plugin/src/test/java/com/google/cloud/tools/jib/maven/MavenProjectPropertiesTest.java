@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
-import com.google.cloud.tools.jib.image.ImageReference;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
@@ -47,8 +46,6 @@ public class MavenProjectPropertiesTest {
 
   @Before
   public void setup() {
-    Mockito.when(mockMavenProject.getName()).thenReturn("project-name");
-    Mockito.when(mockMavenProject.getVersion()).thenReturn("project-version");
     mavenProjectProperties =
         new MavenProjectProperties(
             mockMavenProject, mockMavenJibLogger, mockJavaLayerConfigurations);
@@ -112,27 +109,5 @@ public class MavenProjectPropertiesTest {
   @Test
   public void testGetMainClassFromJar_missingPlugin() {
     Assert.assertNull(mavenProjectProperties.getMainClassFromJar());
-  }
-
-  @Test
-  public void testGetDockerTag_configured() {
-    ImageReference result =
-        mavenProjectProperties.getGeneratedTargetDockerTag("a/b:c", mockMavenJibLogger);
-    Assert.assertEquals("a/b", result.getRepository());
-    Assert.assertEquals("c", result.getTag());
-    Mockito.verify(mockMavenJibLogger, Mockito.never()).lifecycle(Mockito.any());
-  }
-
-  @Test
-  public void testGetDockerTag_notConfigured() {
-    ImageReference result =
-        mavenProjectProperties.getGeneratedTargetDockerTag(null, mockMavenJibLogger);
-    Assert.assertEquals("project-name", result.getRepository());
-    Assert.assertEquals("project-version", result.getTag());
-    Mockito.verify(mockMavenJibLogger)
-        .lifecycle(
-            "Tagging image with generated image reference project-name:project-version. If you'd "
-                + "like to specify a different tag, you can set the <to><image> parameter in your "
-                + "pom.xml, or use the -Dimage=<MY IMAGE> commandline flag.");
   }
 }

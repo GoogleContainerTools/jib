@@ -19,12 +19,36 @@ package com.google.cloud.tools.jib.plugins.common;
 import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
+import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.common.base.Strings;
 import java.util.function.Function;
 import javax.annotation.Nullable;
 
 /** Validator for plugin configuration parameters and system properties. */
 public class ConfigurationPropertyValidator {
+
+  /**
+   * Creates a new {@link ConfigurationPropertyValidator} for maven-specific messages.
+   *
+   * @param jibLogger the logger used to show messages
+   * @return the {@link ConfigurationPropertyValidator}
+   */
+  public static ConfigurationPropertyValidator newMavenPropertyValidator(JibLogger jibLogger) {
+    return new ConfigurationPropertyValidator(
+        "<IMAGE><image>", "<IMAGE><auth><PROPERTY>", "pom.xml", jibLogger);
+  }
+
+  /**
+   * Creates a new {@link ConfigurationPropertyValidator} for gradle-specific messages.
+   *
+   * @param jibLogger the logger used to show messages
+   * @return the {@link ConfigurationPropertyValidator}
+   */
+  public static ConfigurationPropertyValidator newGradlePropertyValidator(JibLogger jibLogger) {
+    return new ConfigurationPropertyValidator(
+        "jib.IMAGE.image", "jib.IMAGE.auth.PROPERTY", "build.gradle", jibLogger);
+  }
 
   /**
    * Checks the {@code jib.httpTimeout} system property for invalid (non-integer or negative)
@@ -49,21 +73,38 @@ public class ConfigurationPropertyValidator {
     }
   }
 
+  private final String imageParameterTemplate;
+  private final String authParameterTemplate;
+  private final String buildConfigFilename;
+  private final JibLogger jibLogger;
+
+  private ConfigurationPropertyValidator(
+      String imageParameterTemplate,
+      String authParameterTemplate,
+      String buildConfigFilename,
+      JibLogger jibLogger) {
+    this.imageParameterTemplate = imageParameterTemplate;
+    this.authParameterTemplate = authParameterTemplate;
+    this.buildConfigFilename = buildConfigFilename;
+    this.jibLogger = jibLogger;
+  }
+
   /**
    * Gets an {@link Authorization} from a username and password. First tries system properties, then
    * tries build configuration, otherwise returns null.
    *
-   * @param logger the {@link JibLogger} used to print warnings messages
-   * @param usernameProperty the name of the username system property
-   * @param passwordProperty the name of the password system property
-   * @param auth the configured credentials
+   * @param imageParameter which image parameter to get the auth for (e.g. "from" or "to")
+   * @param username the configured username
+   * @param password the configured password
    * @return a new {@link Authorization} from the system properties or build configuration, or
    *     {@code null} if neither is configured.
    */
   @Nullable
-  public static Authorization getImageAuth(
-      JibLogger logger, String usernameProperty, String passwordProperty, AuthProperty auth) {
+  public Authorization getImageAuth(
+      String imageParameter, @Nullable String username, @Nullable String password) {
     // System property takes priority over build configuration
+    String usernameProperty = "jib." + imageParameter + ".auth.username";
+    String passwordProperty = "jib." + imageParameter + ".auth.password";
     String commandlineUsername = System.getProperty(usernameProperty);
     String commandlinePassword = System.getProperty(passwordProperty);
     if (!Strings.isNullOrEmpty(commandlineUsername)
@@ -73,14 +114,14 @@ public class ConfigurationPropertyValidator {
 
     // Warn if a system property is missing
     if (!Strings.isNullOrEmpty(commandlinePassword) && Strings.isNullOrEmpty(commandlineUsername)) {
-      logger.warn(
+      jibLogger.warn(
           passwordProperty
               + " system property is set, but "
               + usernameProperty
               + " is not; attempting other authentication methods.");
     }
     if (!Strings.isNullOrEmpty(commandlineUsername) && Strings.isNullOrEmpty(commandlinePassword)) {
-      logger.warn(
+      jibLogger.warn(
           usernameProperty
               + " system property is set, but "
               + passwordProperty
@@ -88,24 +129,54 @@ public class ConfigurationPropertyValidator {
     }
 
     // Check auth configuration next; warn if they aren't both set
-    if (Strings.isNullOrEmpty(auth.getUsername()) && Strings.isNullOrEmpty(auth.getPassword())) {
+    if (Strings.isNullOrEmpty(username) && Strings.isNullOrEmpty(password)) {
       return null;
     }
-    if (Strings.isNullOrEmpty(auth.getUsername())) {
-      logger.warn(
-          auth.getUsernamePropertyDescriptor()
+    if (Strings.isNullOrEmpty(username)) {
+      jibLogger.warn(
+          authParameterTemplate.replace("IMAGE", imageParameter).replace("PROPERTY", "username")
               + " is missing from build configuration; ignoring auth section.");
       return null;
     }
-    if (Strings.isNullOrEmpty(auth.getPassword())) {
-      logger.warn(
-          auth.getPasswordPropertyDescriptor()
+    if (Strings.isNullOrEmpty(password)) {
+      jibLogger.warn(
+          authParameterTemplate.replace("IMAGE", imageParameter).replace("PROPERTY", "password")
               + " is missing from build configuration; ignoring auth section.");
       return null;
     }
 
-    return Authorizations.withBasicCredentials(auth.getUsername(), auth.getPassword());
+    return Authorizations.withBasicCredentials(username, password);
   }
 
-  private ConfigurationPropertyValidator() {}
+  /**
+   * Returns an {@link ImageReference} parsed from the configured target image, or one of the form
+   * {@code project-name:project-version} if target image is not configured
+   *
+   * @param targetImage the configured target image reference (can be empty)
+   * @param projectName the name of the project as defined by the plugin
+   * @param projectVersion the version of the project as defined by the plugin
+   * @throws InvalidImageReferenceException if the configured image is invalid
+   * @return an {@link ImageReference} parsed from the configured target image, or one of the form
+   *     {@code project-name:project-version} if target image is not configured
+   */
+  public ImageReference getGeneratedTargetDockerTag(
+      @Nullable String targetImage, String projectName, String projectVersion)
+      throws InvalidImageReferenceException {
+    if (Strings.isNullOrEmpty(targetImage)) {
+      jibLogger.lifecycle(
+          "Tagging image with generated image reference "
+              + projectName
+              + ":"
+              + projectVersion
+              + ". If you'd like to specify a different tag, you can set the "
+              + imageParameterTemplate.replace("IMAGE", "to")
+              + " parameter in your "
+              + buildConfigFilename
+              + ", or use the -Dimage=<MY IMAGE> commandline flag.");
+      // TODO: Verify projectName and projectVersion are valid
+      return ImageReference.of(null, projectName, projectVersion);
+    } else {
+      return ImageReference.parse(targetImage);
+    }
+  }
 }

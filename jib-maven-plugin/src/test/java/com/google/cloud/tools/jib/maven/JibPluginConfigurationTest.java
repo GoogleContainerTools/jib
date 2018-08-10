@@ -45,22 +45,6 @@ public class JibPluginConfigurationTest {
   }
 
   @Test
-  public void testAuthDefaults() {
-    Assert.assertEquals(
-        "<from><auth><username>",
-        testPluginConfiguration.getBaseImageAuth().getUsernamePropertyDescriptor());
-    Assert.assertEquals(
-        "<from><auth><password>",
-        testPluginConfiguration.getBaseImageAuth().getPasswordPropertyDescriptor());
-    Assert.assertEquals(
-        "<to><auth><username>",
-        testPluginConfiguration.getTargetImageAuth().getUsernamePropertyDescriptor());
-    Assert.assertEquals(
-        "<to><auth><password>",
-        testPluginConfiguration.getTargetImageAuth().getPasswordPropertyDescriptor());
-  }
-
-  @Test
   public void testHandleDeprecatedParameters() {
     testPluginConfiguration.handleDeprecatedParameters(mockLogger);
     Mockito.verify(mockLogger, Mockito.never()).warn(Mockito.any());

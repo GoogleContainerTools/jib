@@ -20,8 +20,10 @@ import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
+import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.annotations.VisibleForTesting;
 import java.nio.file.Paths;
@@ -52,13 +54,20 @@ public class BuildTarMojo extends JibPluginConfiguration {
     MavenJibLogger mavenJibLogger = new MavenJibLogger(getLog());
     MavenProjectProperties mavenProjectProperties =
         MavenProjectProperties.getForProject(getProject(), mavenJibLogger, getExtraDirectory());
-
-    ImageReference targetImage =
-        mavenProjectProperties.getGeneratedTargetDockerTag(getTargetImage(), mavenJibLogger);
-
+    ConfigurationPropertyValidator validator =
+        ConfigurationPropertyValidator.newMavenPropertyValidator(mavenJibLogger);
     PluginConfigurationProcessor pluginConfigurationProcessor =
         PluginConfigurationProcessor.processCommonConfiguration(
-            mavenJibLogger, this, mavenProjectProperties);
+            mavenJibLogger, validator, this, mavenProjectProperties);
+
+    ImageReference targetImage;
+    try {
+      targetImage =
+          validator.getGeneratedTargetDockerTag(
+              getTargetImage(), getProject().getName(), getProject().getVersion());
+    } catch (InvalidImageReferenceException ex) {
+      throw new MojoExecutionException(ex.getMessage());
+    }
 
     BuildConfiguration buildConfiguration =
         pluginConfigurationProcessor

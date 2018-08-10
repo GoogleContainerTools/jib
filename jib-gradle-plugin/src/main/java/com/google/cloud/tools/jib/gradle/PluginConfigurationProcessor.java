@@ -27,6 +27,8 @@ import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
+import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
+import com.google.cloud.tools.jib.plugins.common.MainClassResolver;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import java.time.Instant;
@@ -44,14 +46,18 @@ class PluginConfigurationProcessor {
    * configuration, and layer configuration.
    *
    * @param logger the logger used to display messages.
+   * @param validator used to validate configuration properties
    * @param jibExtension the {@link JibExtension} providing the configuration data
    * @param projectProperties used for providing additional information
    * @return a new {@link PluginConfigurationProcessor} containing pre-configured builders
    * @throws InvalidImageReferenceException if parsing the base image configuration fails
    */
   static PluginConfigurationProcessor processCommonConfiguration(
-      JibLogger logger, JibExtension jibExtension, GradleProjectProperties projectProperties)
-      throws InvalidImageReferenceException {
+      JibLogger logger,
+      ConfigurationPropertyValidator validator,
+      JibExtension jibExtension,
+      GradleProjectProperties projectProperties)
+      throws InvalidImageReferenceException, MainClassInferenceException {
     jibExtension.handleDeprecatedParameters(logger);
     ConfigurationPropertyValidator.checkHttpTimeoutProperty(GradleException::new);
 
@@ -66,11 +72,10 @@ class PluginConfigurationProcessor {
     }
     RegistryCredentials knownBaseRegistryCredentials = null;
     Authorization fromAuthorization =
-        ConfigurationPropertyValidator.getImageAuth(
-            logger,
-            "jib.from.auth.username",
-            "jib.from.auth.password",
-            jibExtension.getFrom().getAuth());
+        validator.getImageAuth(
+            "from",
+            jibExtension.getFrom().getAuth().getUsername(),
+            jibExtension.getFrom().getAuth().getPassword());
     if (fromAuthorization != null) {
       knownBaseRegistryCredentials = new RegistryCredentials("jib.from.auth", fromAuthorization);
     }
@@ -80,7 +85,8 @@ class PluginConfigurationProcessor {
             .setCredentialHelper(jibExtension.getFrom().getCredHelper())
             .setKnownRegistryCredentials(knownBaseRegistryCredentials);
 
-    String mainClass = projectProperties.getMainClass(jibExtension);
+    String mainClass =
+        MainClassResolver.resolveMainClass(jibExtension.getMainClass(), projectProperties);
     ContainerConfiguration.Builder containerConfigurationBuilder =
         ContainerConfiguration.builder()
             .setEntrypoint(

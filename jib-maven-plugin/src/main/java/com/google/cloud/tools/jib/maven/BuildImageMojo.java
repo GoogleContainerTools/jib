@@ -76,16 +76,17 @@ public class BuildImageMojo extends JibPluginConfiguration {
     MavenJibLogger mavenJibLogger = new MavenJibLogger(getLog());
     MavenProjectProperties mavenProjectProperties =
         MavenProjectProperties.getForProject(getProject(), mavenJibLogger, getExtraDirectory());
-
+    ConfigurationPropertyValidator validator =
+        ConfigurationPropertyValidator.newMavenPropertyValidator(mavenJibLogger);
     PluginConfigurationProcessor pluginConfigurationProcessor =
         PluginConfigurationProcessor.processCommonConfiguration(
-            mavenJibLogger, this, mavenProjectProperties);
+            mavenJibLogger, validator, this, mavenProjectProperties);
 
     ImageReference targetImage =
         PluginConfigurationProcessor.parseImageReference(getTargetImage(), "to");
     Authorization toAuthorization =
-        ConfigurationPropertyValidator.getImageAuth(
-            mavenJibLogger, "jib.to.auth.username", "jib.to.auth.password", getTargetImageAuth());
+        validator.getImageAuth(
+            "to", getTargetImageAuth().getUsername(), getTargetImageAuth().getPassword());
     RegistryCredentials knownTargetRegistryCredentials =
         toAuthorization != null
             ? new RegistryCredentials("jib-maven-plugin <to><auth> configuration", toAuthorization)

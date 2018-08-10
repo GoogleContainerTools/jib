@@ -26,6 +26,8 @@ import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
+import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
+import com.google.cloud.tools.jib.plugins.common.MainClassResolver;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.base.Preconditions;
@@ -44,6 +46,7 @@ class PluginConfigurationProcessor {
    * configuration, and layer configuration.
    *
    * @param logger the logger used to display messages
+   * @param validator used to validate configuration properties
    * @param jibPluginConfiguration the {@link JibPluginConfiguration} providing the configuration
    *     data
    * @param projectProperties used for providing additional information
@@ -52,6 +55,7 @@ class PluginConfigurationProcessor {
    */
   static PluginConfigurationProcessor processCommonConfiguration(
       MavenJibLogger logger,
+      ConfigurationPropertyValidator validator,
       JibPluginConfiguration jibPluginConfiguration,
       MavenProjectProperties projectProperties)
       throws MojoExecutionException {
@@ -76,11 +80,10 @@ class PluginConfigurationProcessor {
             jibPluginConfiguration.getSettingsDecrypter(),
             logger);
     Authorization fromAuthorization =
-        ConfigurationPropertyValidator.getImageAuth(
-            logger,
-            "jib.from.auth.username",
-            "jib.from.auth.password",
-            jibPluginConfiguration.getBaseImageAuth());
+        validator.getImageAuth(
+            "from",
+            jibPluginConfiguration.getBaseImageAuth().getUsername(),
+            jibPluginConfiguration.getBaseImageAuth().getPassword());
     RegistryCredentials knownBaseRegistryCredentials =
         fromAuthorization != null
             ? new RegistryCredentials(
@@ -91,7 +94,14 @@ class PluginConfigurationProcessor {
             .setCredentialHelper(jibPluginConfiguration.getBaseImageCredentialHelperName())
             .setKnownRegistryCredentials(knownBaseRegistryCredentials);
 
-    String mainClass = projectProperties.getMainClass(jibPluginConfiguration);
+    String mainClass;
+    try {
+      mainClass =
+          MainClassResolver.resolveMainClass(
+              jibPluginConfiguration.getMainClass(), projectProperties);
+    } catch (MainClassInferenceException ex) {
+      throw new MojoExecutionException(ex.getMessage(), ex);
+    }
     ContainerConfiguration.Builder containerConfigurationBuilder =
         ContainerConfiguration.builder()
             .setEntrypoint(

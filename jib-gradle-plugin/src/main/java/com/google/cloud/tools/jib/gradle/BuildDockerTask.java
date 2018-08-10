@@ -24,7 +24,9 @@ import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
+import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
+import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.common.base.Preconditions;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
@@ -64,7 +66,7 @@ public class BuildDockerTask extends DefaultTask {
   }
 
   @TaskAction
-  public void buildDocker() throws InvalidImageReferenceException {
+  public void buildDocker() throws InvalidImageReferenceException, MainClassInferenceException {
     if (!new DockerClient().isDockerInstalled()) {
       throw new GradleException(HELPFUL_SUGGESTIONS.forDockerNotInstalled());
     }
@@ -75,13 +77,17 @@ public class BuildDockerTask extends DefaultTask {
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(
             getProject(), gradleJibLogger, jibExtension.getExtraDirectoryPath());
-
-    ImageReference targetImage =
-        gradleProjectProperties.getGeneratedTargetDockerTag(jibExtension, gradleJibLogger);
-
+    ConfigurationPropertyValidator validator =
+        ConfigurationPropertyValidator.newGradlePropertyValidator(gradleJibLogger);
     PluginConfigurationProcessor pluginConfigurationProcessor =
         PluginConfigurationProcessor.processCommonConfiguration(
-            gradleJibLogger, jibExtension, gradleProjectProperties);
+            gradleJibLogger, validator, jibExtension, gradleProjectProperties);
+
+    ImageReference targetImage =
+        validator.getGeneratedTargetDockerTag(
+            jibExtension.getTargetImage(),
+            getProject().getName(),
+            getProject().getVersion().toString());
 
     BuildConfiguration buildConfiguration =
         pluginConfigurationProcessor
