@@ -91,8 +91,7 @@ public class LocalRegistry extends ExternalResource {
               "REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd"));
     }
     dockerTokens.add("registry:2");
-    String[] tokenArray = new String[dockerTokens.size()];
-    new Command(dockerTokens.toArray(tokenArray)).run();
+    new Command(dockerTokens).run();
   }
 
   @Override
