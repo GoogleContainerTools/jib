@@ -37,6 +37,7 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
   private static final String DESCRIPTION = "Pushing BLOB ";
 
   private final BuildConfiguration buildConfiguration;
+  private final DecideCrossRepositoryBlobMountStep shouldDoCrossRepositoryBlobMount;
   private final AuthenticatePushStep authenticatePushStep;
   private final BlobDescriptor blobDescriptor;
   private final Blob blob;
@@ -46,16 +47,19 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
   PushBlobStep(
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
+      DecideCrossRepositoryBlobMountStep shouldDoCrossRepositoryBlobMount,
       AuthenticatePushStep authenticatePushStep,
       BlobDescriptor blobDescriptor,
       Blob blob) {
     this.buildConfiguration = buildConfiguration;
     this.authenticatePushStep = authenticatePushStep;
+    this.shouldDoCrossRepositoryBlobMount = shouldDoCrossRepositoryBlobMount;
     this.blobDescriptor = blobDescriptor;
     this.blob = blob;
 
     listenableFuture =
-        Futures.whenAllSucceed(authenticatePushStep.getFuture())
+        Futures.whenAllSucceed(
+                authenticatePushStep.getFuture(), shouldDoCrossRepositoryBlobMount.getFuture())
             .call(this, listeningExecutorService);
   }
 
@@ -86,17 +90,9 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
         return blobDescriptor;
       }
 
-      // If base and target images are in the same registry, then use mount/from to try mounting the
-      // BLOB from the base image repository to the target image repository and possibly avoid
-      // having to push the BLOB. See
-      // https://docs.docker.com/registry/spec/api/#cross-repository-blob-mount for details.
-      boolean sameRegistry =
-          buildConfiguration
-              .getBaseImageConfiguration()
-              .getImageRegistry()
-              .equals(buildConfiguration.getTargetImageConfiguration().getImageRegistry());
+      boolean doMount = NonBlockingSteps.get(shouldDoCrossRepositoryBlobMount);
       String mountFrom =
-          sameRegistry ? buildConfiguration.getBaseImageConfiguration().getImageRepository() : null;
+          doMount ? buildConfiguration.getBaseImageConfiguration().getImageRepository() : null;
       registryClient.pushBlob(blobDescriptor.getDigest(), blob, mountFrom);
 
       return blobDescriptor;

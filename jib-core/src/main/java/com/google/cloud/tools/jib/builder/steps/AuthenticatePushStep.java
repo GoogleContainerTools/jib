@@ -45,18 +45,23 @@ class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authori
 
   private final BuildConfiguration buildConfiguration;
   private final RetrieveRegistryCredentialsStep retrieveTargetRegistryCredentialsStep;
+  private final DecideCrossRepositoryBlobMountStep shouldDoCrossRepositoryMount;
 
   private final ListenableFuture<Authorization> listenableFuture;
 
   AuthenticatePushStep(
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
-      RetrieveRegistryCredentialsStep retrieveTargetRegistryCredentialsStep) {
+      RetrieveRegistryCredentialsStep retrieveTargetRegistryCredentialsStep,
+      DecideCrossRepositoryBlobMountStep shouldDoCrossRepositoryMount) {
     this.buildConfiguration = buildConfiguration;
     this.retrieveTargetRegistryCredentialsStep = retrieveTargetRegistryCredentialsStep;
+    this.shouldDoCrossRepositoryMount = shouldDoCrossRepositoryMount;
 
     listenableFuture =
-        Futures.whenAllSucceed(retrieveTargetRegistryCredentialsStep.getFuture())
+        Futures.whenAllSucceed(
+                retrieveTargetRegistryCredentialsStep.getFuture(),
+                shouldDoCrossRepositoryMount.getFuture())
             .call(this, listeningExecutorService);
   }
 
@@ -89,7 +94,14 @@ class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authori
       if (registryAuthenticator == null) {
         return registryCredentials;
       }
-      return registryAuthenticator.setAuthorization(registryCredentials).authenticatePush();
+
+      registryAuthenticator.setAuthorization(registryCredentials);
+      if (NonBlockingSteps.get(shouldDoCrossRepositoryMount)) {
+        String baseRepository = buildConfiguration.getBaseImageConfiguration().getImageRepository();
+        return registryAuthenticator.authenticatePushWithBasePull(baseRepository);
+      } else {
+        return registryAuthenticator.authenticatePush();
+      }
     }
   }
 }

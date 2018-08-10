@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Joiner;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -189,10 +190,12 @@ public class RegistryAuthenticator {
   }
 
   private final String authenticationUrlBase;
+  private final String repository;
   @Nullable private Authorization authorization;
 
   RegistryAuthenticator(String realm, String service, String repository) {
-    authenticationUrlBase = realm + "?service=" + service + "&scope=repository:" + repository + ":";
+    authenticationUrlBase = realm + "?service=" + service;
+    this.repository = repository;
   }
 
   /**
@@ -213,7 +216,7 @@ public class RegistryAuthenticator {
    * @throws RegistryAuthenticationFailedException if authentication fails
    */
   public Authorization authenticatePull() throws RegistryAuthenticationFailedException {
-    return authenticate("pull");
+    return authenticate(getScopeParameter(repository, "pull"));
   }
 
   /**
@@ -223,12 +226,18 @@ public class RegistryAuthenticator {
    * @throws RegistryAuthenticationFailedException if authentication fails
    */
   public Authorization authenticatePush() throws RegistryAuthenticationFailedException {
-    return authenticate("pull,push");
+    return authenticate(getScopeParameter(repository, "pull,push"));
+  }
+
+  public Authorization authenticatePushWithBasePull(String baseRepository)
+      throws RegistryAuthenticationFailedException {
+    return authenticate(
+        getScopeParameter(repository, "pull,push"), getScopeParameter(baseRepository, "pull"));
   }
 
   @VisibleForTesting
-  URL getAuthenticationUrl(String scope) throws MalformedURLException {
-    return new URL(authenticationUrlBase + scope);
+  URL getAuthenticationUrl(String... scopes) throws MalformedURLException {
+    return new URL(authenticationUrlBase + Joiner.on("").join(scopes));
   }
 
   /**
@@ -240,9 +249,10 @@ public class RegistryAuthenticator {
    * @see <a
    *     href="https://docs.docker.com/registry/spec/auth/token/#how-to-authenticate">https://docs.docker.com/registry/spec/auth/token/#how-to-authenticate</a>
    */
-  private Authorization authenticate(String scope) throws RegistryAuthenticationFailedException {
+  private Authorization authenticate(String... scopes)
+      throws RegistryAuthenticationFailedException {
     try {
-      URL authenticationUrl = getAuthenticationUrl(scope);
+      URL authenticationUrl = getAuthenticationUrl(scopes);
 
       try (Connection connection = Connection.getConnectionFactory().apply(authenticationUrl)) {
         Request.Builder requestBuilder =
@@ -265,5 +275,9 @@ public class RegistryAuthenticator {
     } catch (IOException ex) {
       throw new RegistryAuthenticationFailedException(ex);
     }
+  }
+
+  private static String getScopeParameter(String repository, String actions) {
+    return "&scope=repository:" + repository + ":" + actions;
   }
 }
