@@ -23,7 +23,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import javax.annotation.Nullable;
-import jdk.nashorn.internal.ir.annotations.Immutable;
 
 /** Immutable configuration options for an image reference with credentials. */
 public class ImageConfiguration {
@@ -34,7 +33,8 @@ public class ImageConfiguration {
     private ImageReference imageReference;
     @Nullable private String credentialHelper;
     @Nullable private RegistryCredentials knownRegistryCredentials;
-    private ImmutableList<RegistryCredentialProvider> registryCredentialProviders = ImmutableList.of();
+    private ImmutableList<RegistryCredentialProvider> registryCredentialProviders =
+        ImmutableList.of();
 
     /**
      * Sets the credential helper name used for authenticating with the image's registry.
@@ -65,7 +65,8 @@ public class ImageConfiguration {
      * @param registryCredentialProviders the list of {@link RegistryCredentialProvider}s
      * @return this
      */
-    public Builder setRegistryCredentialProviders(List<RegistryCredentialProvider> registryCredentialProviders) {
+    public Builder setRegistryCredentialProviders(
+        List<RegistryCredentialProvider> registryCredentialProviders) {
       Preconditions.checkArgument(!registryCredentialProviders.contains(null));
       this.registryCredentialProviders = ImmutableList.copyOf(registryCredentialProviders);
       return this;
@@ -77,7 +78,8 @@ public class ImageConfiguration {
      * @return the corresponding {@link ImageConfiguration}
      */
     public ImageConfiguration build() {
-      return new ImageConfiguration(imageReference, credentialHelper, knownRegistryCredentials, registryCredentialProviders);
+      return new ImageConfiguration(
+          imageReference, credentialHelper, knownRegistryCredentials, registryCredentialProviders);
     }
 
     private Builder(ImageReference imageReference) {

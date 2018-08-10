@@ -53,8 +53,8 @@ public class BuildConfigurationTest {
     String expectedTargetImageCredentialHelperName = "anotherCredentialHelper";
     RegistryCredentials expectedKnownTargetRegistryCredentials =
         Mockito.mock(RegistryCredentials.class);
-    List<RegistryCredentialProvider> expectedRegistryCredentialProviders = Collections
-        .singletonList(() -> new Credentials("username", "password"));
+    List<RegistryCredentialProvider> expectedRegistryCredentialProviders =
+        Collections.singletonList(() -> new Credentials("username", "password"));
     Instant expectedCreationTime = Instant.ofEpochSecond(10000);
     List<String> expectedEntrypoint = Arrays.asList("some", "entrypoint");
     List<String> expectedJavaArguments = Arrays.asList("arg1", "arg2");
@@ -131,7 +131,13 @@ public class BuildConfigurationTest {
     Assert.assertEquals(
         expectedTargetImageCredentialHelperName,
         buildConfiguration.getTargetImageConfiguration().getCredentialHelper());
-    Assert.assertEquals(new Credentials("username", "password"), buildConfiguration.getTargetImageConfiguration().getRegistryCredentialProviders().get(0).get());
+    Assert.assertEquals(
+        new Credentials("username", "password"),
+        buildConfiguration
+            .getTargetImageConfiguration()
+            .getRegistryCredentialProviders()
+            .get(0)
+            .get());
     Assert.assertEquals(
         expectedJavaArguments,
         buildConfiguration.getContainerConfiguration().getProgramArguments());
