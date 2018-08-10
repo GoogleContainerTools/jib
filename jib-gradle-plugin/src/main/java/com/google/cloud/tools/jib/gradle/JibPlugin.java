@@ -40,6 +40,42 @@ public class JibPlugin implements Plugin<Project> {
   @VisibleForTesting static final String BUILD_DOCKER_TASK_NAME = "jibDockerBuild";
   @VisibleForTesting static final String DOCKER_CONTEXT_TASK_NAME = "jibExportDockerContext";
 
+  private static void checkGradleVersion() {
+    if (GRADLE_MIN_VERSION.compareTo(GradleVersion.current()) > 0) {
+      throw new GradleException(
+          "Detected "
+              + GradleVersion.current()
+              + ", but jib requires "
+              + GRADLE_MIN_VERSION
+              + " or higher. You can upgrade by running 'gradle wrapper --gradle-version="
+              + GRADLE_MIN_VERSION.getVersion()
+              + "'.");
+    }
+  }
+
+  /**
+   * Collects all assemble tasks for project dependencies of the style "compile project(':mylib')"
+   * for any kind of configuration [compile, runtime, etc]. It potentially will collect common test
+   * libraries in configs like [test, integrationTest, etc], but it's either that or filter based on
+   * a configuration containing the word "test" which feels dangerous.
+   *
+   * @param project this project we are containerizing
+   * @return a list of "assemble" tasks associated with projects that this project depends on.
+   */
+  @VisibleForTesting
+  static List<Task> getProjectDependencyAssembleTasks(Project project) {
+    return project
+        .getConfigurations()
+        .stream()
+        .map(Configuration::getDependencies)
+        .flatMap(DependencySet::stream)
+        .filter(ProjectDependency.class::isInstance)
+        .map(ProjectDependency.class::cast)
+        .map(ProjectDependency::getDependencyProject)
+        .map(subProject -> subProject.getTasks().getByPath(BasePlugin.ASSEMBLE_TASK_NAME))
+        .collect(Collectors.toList());
+  }
+
   @Override
   public void apply(Project project) {
     checkGradleVersion();
@@ -68,18 +104,23 @@ public class JibPlugin implements Plugin<Project> {
             .create(BUILD_TAR_TASK_NAME, BuildTarTask.class)
             .setJibExtension(jibExtension);
 
-    // Has all tasks depend on the 'classes' task.
     project.afterEvaluate(
         projectAfterEvaluation -> {
           try {
-            List<Task> taskDependencies = getProjectDependencyAssembleTasks(projectAfterEvaluation);
+            // Find project dependencies
+            List<Task> computedDependencies =
+                getProjectDependencyAssembleTasks(projectAfterEvaluation);
+            // Has all tasks depend on the 'classes' task.
             Task classesTask = projectAfterEvaluation.getTasks().getByPath("classes");
-            taskDependencies.add(classesTask);
+            computedDependencies.add(classesTask);
 
-            buildImageTask.dependsOn(taskDependencies.toArray());
-            dockerContextTask.dependsOn(taskDependencies.toArray());
-            buildDockerTask.dependsOn(taskDependencies.toArray());
-            buildTarTask.dependsOn(taskDependencies.toArray());
+            // dependsOn takes an Object... type
+            Object[] dependenciesArray = computedDependencies.toArray();
+
+            buildImageTask.dependsOn(dependenciesArray);
+            dockerContextTask.dependsOn(dependenciesArray);
+            buildDockerTask.dependsOn(dependenciesArray);
+            buildTarTask.dependsOn(dependenciesArray);
 
           } catch (UnknownTaskException ex) {
             throw new GradleException(
@@ -89,40 +130,5 @@ public class JibPlugin implements Plugin<Project> {
                 ex);
           }
         });
-  }
-
-  /**
-   * Collects all assemble tasks for project dependencies of the style "compile project(':mylib')"
-   * for any kind of configuration [compile, runtime, etc]. It potentially will collect common test
-   * libraries in configs like [test, integrationTest, etc], but it's either that or filter based on
-   * a configuration containing the word "test" which feels dangerous.
-   *
-   * @param project this project we are containerizing
-   * @return a list of "assemble" tasks associated with projects that this project depends on.
-   */
-  static List<Task> getProjectDependencyAssembleTasks(Project project) {
-    return project
-        .getConfigurations()
-        .stream()
-        .map(Configuration::getDependencies)
-        .flatMap(DependencySet::stream)
-        .filter(ProjectDependency.class::isInstance)
-        .map(ProjectDependency.class::cast)
-        .map(ProjectDependency::getDependencyProject)
-        .map(subProject -> subProject.getTasks().getByPath(BasePlugin.ASSEMBLE_TASK_NAME))
-        .collect(Collectors.toList());
-  }
-
-  private static void checkGradleVersion() {
-    if (GRADLE_MIN_VERSION.compareTo(GradleVersion.current()) > 0) {
-      throw new GradleException(
-          "Detected "
-              + GradleVersion.current()
-              + ", but jib requires "
-              + GRADLE_MIN_VERSION
-              + " or higher. You can upgrade by running 'gradle wrapper --gradle-version="
-              + GRADLE_MIN_VERSION.getVersion()
-              + "'.");
-    }
   }
 }

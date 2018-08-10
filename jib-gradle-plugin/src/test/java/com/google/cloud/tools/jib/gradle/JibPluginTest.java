@@ -16,14 +16,15 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -39,6 +40,12 @@ import org.junit.rules.TemporaryFolder;
 /** Tests for {@link JibPlugin}. */
 public class JibPluginTest {
 
+  private static final List<String> KNOWN_JIB_TASKS =
+      ImmutableList.of(
+          JibPlugin.BUILD_IMAGE_TASK_NAME,
+          JibPlugin.BUILD_DOCKER_TASK_NAME,
+          JibPlugin.DOCKER_CONTEXT_TASK_NAME,
+          JibPlugin.BUILD_TAR_TASK_NAME);
   @Rule public TemporaryFolder testProjectRoot = new TemporaryFolder();
 
   @Test
@@ -120,25 +127,27 @@ public class JibPluginTest {
 
     // check by applying the jib plugin and inspect the task dependencies
     rootProject.getPluginManager().apply("com.google.cloud.tools.jib");
+
+    // add a custom task that our jib tasks depend on to ensure we do not overwrite this dependsOn
+    Task dependencyTask =
+        rootProject.getTasks().create("myCustomTask", task -> System.out.println("test"));
+    KNOWN_JIB_TASKS.forEach(
+        taskName -> rootProject.getTasks().getByPath(taskName).dependsOn(dependencyTask));
+
     ((ProjectInternal) rootProject).evaluate();
 
-    Arrays.asList(
-            JibPlugin.BUILD_IMAGE_TASK_NAME,
-            JibPlugin.DOCKER_CONTEXT_TASK_NAME,
-            JibPlugin.BUILD_DOCKER_TASK_NAME,
-            JibPlugin.BUILD_TAR_TASK_NAME)
-        .forEach(
-            taskName -> {
-              Assert.assertEquals(
-                  ImmutableSet.of(":sub:assemble", ":classes"),
-                  rootProject
-                      .getTasks()
-                      .getByPath(taskName)
-                      .getDependsOn()
-                      .stream()
-                      .map(Task.class::cast)
-                      .map(Task::getPath)
-                      .collect(Collectors.toSet()));
-            });
+    KNOWN_JIB_TASKS.forEach(
+        taskName -> {
+          Assert.assertEquals(
+              ImmutableSet.of(":sub:assemble", ":classes", ":myCustomTask"),
+              rootProject
+                  .getTasks()
+                  .getByPath(taskName)
+                  .getDependsOn()
+                  .stream()
+                  .map(Task.class::cast)
+                  .map(Task::getPath)
+                  .collect(Collectors.toSet()));
+        });
   }
 }
