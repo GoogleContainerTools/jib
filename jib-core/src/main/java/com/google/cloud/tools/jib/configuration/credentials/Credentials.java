@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.configuration.credentials;
 
+import java.util.Objects;
+
 /** Holds credentials (username and password). */
 public class Credentials {
 
@@ -33,5 +35,22 @@ public class Credentials {
 
   public String getPassword() {
     return password;
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    if (this == other) {
+      return true;
+    }
+    if (other == null || getClass() != other.getClass()) {
+      return false;
+    }
+    Credentials otherCredentials = (Credentials) other;
+    return username.equals(otherCredentials.username) && password.equals(otherCredentials.password);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(username, password);
   }
 }
