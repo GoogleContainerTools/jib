@@ -33,7 +33,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
@@ -201,8 +200,7 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Authorization>, Calla
     try {
       Credentials credentials =
           dockerCredentialHelperFactory
-              .newDockerCredentialHelper(
-                  registry, Paths.get("docker-credential-" + credentialHelperSuffix))
+              .newDockerCredentialHelper(registry, credentialHelperSuffix)
               .retrieve();
       Authorization authorization =
           Authorizations.withBasicCredentials(credentials.getUsername(), credentials.getPassword());
