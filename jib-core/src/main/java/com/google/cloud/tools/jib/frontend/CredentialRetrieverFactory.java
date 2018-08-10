@@ -17,8 +17,8 @@
 package com.google.cloud.tools.jib.frontend;
 
 import com.google.cloud.tools.jib.JibLogger;
+import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
-import com.google.cloud.tools.jib.configuration.credentials.Credentials;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.credentials.DockerConfigCredentialRetriever;
 import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelperFactory;
@@ -190,7 +190,7 @@ public class CredentialRetrieverFactory {
       DockerConfigCredentialRetriever dockerConfigCredentialRetriever) {
     return () -> {
       try {
-        Credentials dockerConfigCredentials = dockerConfigCredentialRetriever.retrieve();
+        Credential dockerConfigCredentials = dockerConfigCredentialRetriever.retrieve();
         if (dockerConfigCredentials != null) {
           logger.info("Using credentials from Docker config for " + imageReference.getRegistry());
           return dockerConfigCredentials;
@@ -203,11 +203,11 @@ public class CredentialRetrieverFactory {
     };
   }
 
-  private Credentials retrieveFromDockerCredentialHelper(
+  private Credential retrieveFromDockerCredentialHelper(
       Path credentialHelper, DockerCredentialHelperFactory dockerCredentialHelperFactory)
       throws NonexistentServerUrlDockerCredentialHelperException,
           NonexistentDockerCredentialHelperException, IOException {
-    Credentials credentials =
+    Credential credentials =
         dockerCredentialHelperFactory
             .newDockerCredentialHelper(imageReference.getRegistry(), credentialHelper)
             .retrieve();

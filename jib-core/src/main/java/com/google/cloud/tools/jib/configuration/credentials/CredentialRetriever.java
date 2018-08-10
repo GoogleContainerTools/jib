@@ -25,11 +25,14 @@ public interface CredentialRetriever {
   /**
    * Fetches the credentials. <b>Implementations must be thread-safe.</b>
    *
+   * <p>Implementations should return {@code null} if no credentials could be fetched with this
+   * {@link CredentialRetriever} (and so other credential retrieval methods may be tried), or throw
+   * an exception something went wrong when fetching the credentials.
+   *
    * @return the fetched credentials or {@code null} if no credentials could be fetched with this
    *     provider
-   * @throws Exception if the execution should fail instead of trying other credential retrieval
-   *     methods
+   * @throws Exception if the credential retrieval encountered an exception
    */
   @Nullable
-  Credentials retrieve() throws Exception;
+  Credential retrieve() throws Exception;
 }

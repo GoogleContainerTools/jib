@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.registry.credentials;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.cloud.tools.jib.configuration.credentials.Credentials;
+import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
@@ -73,7 +73,7 @@ public class DockerCredentialHelper {
    * @throws NonexistentServerUrlDockerCredentialHelperException if credentials are not found.
    * @throws NonexistentDockerCredentialHelperException if the credential helper CLI doesn't exist.
    */
-  public Credentials retrieve()
+  public Credential retrieve()
       throws IOException, NonexistentServerUrlDockerCredentialHelperException,
           NonexistentDockerCredentialHelperException {
     try {
@@ -111,7 +111,7 @@ public class DockerCredentialHelper {
                 credentialHelper, serverUrl, output);
           }
 
-          return new Credentials(dockerCredentials.Username, dockerCredentials.Secret);
+          return new Credential(dockerCredentials.Username, dockerCredentials.Secret);
 
         } catch (JsonProcessingException ex) {
           throw new NonexistentServerUrlDockerCredentialHelperException(

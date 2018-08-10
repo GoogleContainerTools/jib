@@ -54,7 +54,7 @@ public class Authorization {
     if (this == other) {
       return true;
     }
-    if (other == null || getClass() != other.getClass()) {
+    if (!(other instanceof Authorization)) {
       return false;
     }
     Authorization otherAuthorization = (Authorization) other;

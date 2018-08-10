@@ -17,7 +17,7 @@
 package com.google.cloud.tools.jib.registry.credentials;
 
 import com.google.api.client.util.Base64;
-import com.google.cloud.tools.jib.configuration.credentials.Credentials;
+import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.RegistryAliasGroup;
 import com.google.cloud.tools.jib.registry.credentials.json.DockerConfigTemplate;
@@ -80,11 +80,11 @@ public class DockerConfigCredentialRetriever {
   /**
    * Retrieves credentials for a registry. Tries all possible known aliases.
    *
-   * @return {@link Credentials} found for {@code registry}, or {@code null} if not found
+   * @return {@link Credential} found for {@code registry}, or {@code null} if not found
    * @throws IOException if failed to parse the config JSON
    */
   @Nullable
-  public Credentials retrieve() throws IOException {
+  public Credential retrieve() throws IOException {
     DockerConfigTemplate dockerConfigTemplate = loadDockerConfigTemplate();
     if (dockerConfigTemplate == null) {
       return null;
@@ -93,7 +93,7 @@ public class DockerConfigCredentialRetriever {
     DockerConfig dockerConfig = new DockerConfig(dockerConfigTemplate);
 
     for (String registryAlias : RegistryAliasGroup.getAliasesGroup(registry)) {
-      Credentials credentials = retrieve(dockerConfig, registryAlias);
+      Credential credentials = retrieve(dockerConfig, registryAlias);
       if (credentials != null) {
         return credentials;
       }
@@ -109,7 +109,7 @@ public class DockerConfigCredentialRetriever {
    * @return the retrieved credentials, or {@code null} if none are found
    */
   @Nullable
-  private Credentials retrieve(DockerConfig dockerConfig, String registryAlias) {
+  private Credential retrieve(DockerConfig dockerConfig, String registryAlias) {
     // First, tries to find defined auth.
     String auth = dockerConfig.getAuthFor(registryAlias);
     if (auth != null) {
@@ -117,7 +117,7 @@ public class DockerConfigCredentialRetriever {
       String usernameColonPassword = new String(Base64.decodeBase64(auth), StandardCharsets.UTF_8);
       String username = usernameColonPassword.substring(0, usernameColonPassword.indexOf(":"));
       String password = usernameColonPassword.substring(usernameColonPassword.indexOf(":") + 1);
-      return new Credentials(username, password);
+      return new Credential(username, password);
     }
 
     // Then, tries to use a defined credHelpers credential helper.

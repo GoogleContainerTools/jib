@@ -20,12 +20,12 @@ import java.util.Objects;
 
 // TODO: Move to lower-level package - probably at same level as Authorization.
 /** Holds credentials (username and password). */
-public class Credentials {
+public class Credential {
 
   private final String username;
   private final String password;
 
-  public Credentials(String username, String password) {
+  public Credential(String username, String password) {
     this.username = username;
     this.password = password;
   }
@@ -43,11 +43,11 @@ public class Credentials {
     if (this == other) {
       return true;
     }
-    if (!(other instanceof Credentials)) {
+    if (!(other instanceof Credential)) {
       return false;
     }
-    Credentials otherCredentials = (Credentials) other;
-    return username.equals(otherCredentials.username) && password.equals(otherCredentials.password);
+    Credential otherCredential = (Credential) other;
+    return username.equals(otherCredential.username) && password.equals(otherCredential.password);
   }
 
   @Override

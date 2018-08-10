@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
-import com.google.cloud.tools.jib.configuration.credentials.Credentials;
+import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.registry.credentials.DockerConfigCredentialRetriever;
@@ -43,10 +43,10 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class RetrieveRegistryCredentialsStepTest {
 
   private static final String FAKE_TARGET_REGISTRY = "someRegistry";
-  private static final Credentials FAKE_CREDENTIALS = new Credentials("username", "password");
+  private static final Credential FAKE_CREDENTIAL = new Credential("username", "password");
   private static final Authorization FAKE_AUTHORIZATION =
       Authorizations.withBasicCredentials(
-          FAKE_CREDENTIALS.getUsername(), FAKE_CREDENTIALS.getPassword());
+          FAKE_CREDENTIAL.getUsername(), FAKE_CREDENTIAL.getPassword());
 
   @Mock private ListeningExecutorService mockListeningExecutorService;
   @Mock private ImageConfiguration mockImageConfiguration;
@@ -80,7 +80,7 @@ public class RetrieveRegistryCredentialsStepTest {
   public void setUpMocks()
       throws NonexistentServerUrlDockerCredentialHelperException,
           NonexistentDockerCredentialHelperException, IOException {
-    Mockito.when(mockDockerCredentialHelper.retrieve()).thenReturn(FAKE_CREDENTIALS);
+    Mockito.when(mockDockerCredentialHelper.retrieve()).thenReturn(FAKE_CREDENTIAL);
     Mockito.when(mockNonexistentServerUrlDockerCredentialHelper.retrieve())
         .thenThrow(mockNonexistentServerUrlDockerCredentialHelperException);
     Mockito.when(mockNonexistentDockerCredentialHelper.retrieve())
@@ -127,7 +127,7 @@ public class RetrieveRegistryCredentialsStepTest {
                 FAKE_TARGET_REGISTRY, "someCredentialHelper"))
         .thenReturn(mockNonexistentServerUrlDockerCredentialHelper);
 
-    Mockito.when(mockDockerConfigCredentialRetriever.retrieve()).thenReturn(FAKE_CREDENTIALS);
+    Mockito.when(mockDockerConfigCredentialRetriever.retrieve()).thenReturn(FAKE_CREDENTIAL);
 
     Assert.assertEquals(
         FAKE_AUTHORIZATION,
