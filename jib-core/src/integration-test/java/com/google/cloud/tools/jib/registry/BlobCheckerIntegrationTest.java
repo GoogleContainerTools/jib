@@ -32,7 +32,8 @@ public class BlobCheckerIntegrationTest {
   private static final EmptyJibLogger buildLogger = new EmptyJibLogger();
 
   @Test
-  public void testCheck_exists() throws IOException, RegistryException {
+  public void testCheck_exists() throws IOException, RegistryException, InterruptedException {
+    localRegistry.pullAndPushToLocal("busybox", "busybox");
     RegistryClient registryClient =
         RegistryClient.factory(buildLogger, "localhost:5000", "busybox")
             .setAllowInsecureRegistries(true)
@@ -45,7 +46,9 @@ public class BlobCheckerIntegrationTest {
   }
 
   @Test
-  public void testCheck_doesNotExist() throws IOException, RegistryException, DigestException {
+  public void testCheck_doesNotExist()
+      throws IOException, RegistryException, DigestException, InterruptedException {
+    localRegistry.pullAndPushToLocal("busybox", "busybox");
     RegistryClient registryClient =
         RegistryClient.factory(buildLogger, "localhost:5000", "busybox")
             .setAllowInsecureRegistries(true)

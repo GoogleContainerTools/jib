@@ -18,9 +18,9 @@ package com.google.cloud.tools.jib.configuration.credentials;
 
 import javax.annotation.Nullable;
 
-/** Provides credentials for a registry. */
+/** Retrieves credentials for a registry. */
 @FunctionalInterface
-public interface CredentialProvider {
+public interface CredentialRetriever {
 
   /**
    * Fetches the credentials. <b>Implementations must be thread-safe.</b>
@@ -31,5 +31,5 @@ public interface CredentialProvider {
    *     methods
    */
   @Nullable
-  Credentials get() throws Exception;
+  Credentials retrieve() throws Exception;
 }

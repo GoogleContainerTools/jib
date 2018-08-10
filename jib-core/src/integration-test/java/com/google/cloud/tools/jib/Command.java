@@ -35,6 +35,11 @@ public class Command {
     this.command = Arrays.asList(command);
   }
 
+  /** Instantiate with a command. */
+  public Command(List<String> command) {
+    this.command = command;
+  }
+
   /** Runs the command. */
   public String run() throws IOException, InterruptedException {
     return run(null);
