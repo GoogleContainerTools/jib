@@ -65,11 +65,7 @@ public class DockerContextMojo extends JibPluginConfiguration {
     String mainClass;
     try {
       mainClass = MainClassResolver.resolveMainClass(getMainClass(), mavenProjectProperties);
-    } catch (MainClassInferenceException ex) {
-      throw new MojoExecutionException(ex.getMessage(), ex);
-    }
 
-    try {
       // Validate port input, but don't save the output because we don't want the ranges expanded
       // here.
       ExposedPortsParser.parse(getExposedPorts());
@@ -98,6 +94,9 @@ public class DockerContextMojo extends JibPluginConfiguration {
           HelpfulSuggestionsProvider.get("Export Docker context failed")
               .suggest("check if `targetDir` is set correctly"),
           ex);
+
+    } catch (MainClassInferenceException ex) {
+      throw new MojoExecutionException(ex.getMessage(), ex.getCause());
     }
   }
 }
