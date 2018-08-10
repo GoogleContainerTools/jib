@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.configuration.credentials;
 
 /** Provides credentials for a registry. */
 @FunctionalInterface
-public interface RegistryCredentialProvider {
+public interface CredentialProvider {
 
   /**
    * Fetches the credentials. <b>Implementations must be thread-safe.</b>
