@@ -18,10 +18,10 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
+import com.google.cloud.tools.jib.registry.LocalRegistry;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.time.Instant;
-import java.util.UUID;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.BuildTask;
 import org.gradle.testkit.runner.TaskOutcome;
@@ -33,6 +33,10 @@ import org.junit.Test;
 
 /** Integration tests for {@link JibPlugin}. */
 public class JibPluginIntegrationTest {
+
+  @ClassRule
+  public static final LocalRegistry localRegistry =
+      new LocalRegistry(5000, "testuser", "testpassword");
 
   @ClassRule public static final TestProject emptyTestProject = new TestProject("empty");
 
@@ -176,86 +180,45 @@ public class JibPluginIntegrationTest {
 
   @Test
   public void testBuild_complex() throws IOException, InterruptedException {
-    // Runs the Docker registry.
-    // TODO: Refactor into LocalRegistry
-    String containerName = "registry-" + UUID.randomUUID();
-    new Command(
-            "docker",
-            "run",
-            "-d",
-            "-p",
-            "5000:5000",
-            "--restart=always",
-            "--name",
-            containerName,
-            "-v",
-            // Volume mount used for storing credentials
-            simpleTestProject.getProjectRoot().resolve("auth") + ":/auth",
-            "-e",
-            "REGISTRY_AUTH=htpasswd",
-            "-e",
-            "REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm",
-            "-e",
-            "REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd",
-            "registry:2")
-        .run();
+    String targetImage = "localhost:5000/compleximage:gradle" + System.nanoTime();
 
-    // Login to push base image to local registry, then logout so we can test Jib's auth
-    try {
-      new Command("docker", "login", "localhost:5000", "-u", "testuser", "-p", "testpassword")
-          .run();
-      new Command("docker", "pull", "gcr.io/distroless/java:latest").run();
-      new Command(
-              "docker", "tag", "gcr.io/distroless/java:latest", "localhost:5000/distroless/java")
-          .run();
-      new Command("docker", "push", "localhost:5000/distroless/java").run();
-      new Command("docker", "logout", "localhost:5000").run();
+    // Pull distroless to local registry so we can test 'from' credentials
+    localRegistry.pullAndPushToLocal("gcr.io/distroless/java:latest", "distroless/java");
 
-      String targetImage = "localhost:5000/compleximage:gradle" + System.nanoTime();
+    Instant beforeBuild = Instant.now();
+    BuildResult buildResult =
+        simpleTestProject.build(
+            "clean",
+            JibPlugin.BUILD_IMAGE_TASK_NAME,
+            "-D_TARGET_IMAGE=" + targetImage,
+            "-DsendCredentialsOverHttp=true",
+            "-b=complex-build.gradle");
 
-      Instant beforeBuild = Instant.now();
-      BuildResult buildResult =
-          simpleTestProject.build(
-              "clean",
-              JibPlugin.BUILD_IMAGE_TASK_NAME,
-              "-D_TARGET_IMAGE=" + targetImage,
-              "-DsendCredentialsOverHttp=true",
-              "-b=complex-build.gradle");
+    BuildTask classesTask = buildResult.task(":classes");
+    BuildTask jibTask = buildResult.task(":" + JibPlugin.BUILD_IMAGE_TASK_NAME);
 
-      BuildTask classesTask = buildResult.task(":classes");
-      BuildTask jibTask = buildResult.task(":" + JibPlugin.BUILD_IMAGE_TASK_NAME);
+    Assert.assertNotNull(classesTask);
+    Assert.assertEquals(TaskOutcome.SUCCESS, classesTask.getOutcome());
+    Assert.assertNotNull(jibTask);
+    Assert.assertEquals(TaskOutcome.SUCCESS, jibTask.getOutcome());
+    Assert.assertThat(
+        buildResult.getOutput(), CoreMatchers.containsString("Built and pushed image as "));
+    Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(targetImage));
 
-      Assert.assertNotNull(classesTask);
-      Assert.assertEquals(TaskOutcome.SUCCESS, classesTask.getOutcome());
-      Assert.assertNotNull(jibTask);
-      Assert.assertEquals(TaskOutcome.SUCCESS, jibTask.getOutcome());
-      Assert.assertThat(
-          buildResult.getOutput(), CoreMatchers.containsString("Built and pushed image as "));
-      Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(targetImage));
-
-      new Command("docker", "login", "localhost:5000", "-u", "testuser", "-p", "testpassword")
-          .run();
-      new Command("docker", "pull", targetImage).run();
-      Assert.assertThat(
-          new Command("docker", "inspect", targetImage).run(),
-          CoreMatchers.containsString(
-              "            \"ExposedPorts\": {\n"
-                  + "                \"1000/tcp\": {},\n"
-                  + "                \"2000/udp\": {},\n"
-                  + "                \"2001/udp\": {},\n"
-                  + "                \"2002/udp\": {},\n"
-                  + "                \"2003/udp\": {}"));
-      Assert.assertEquals(
-          "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\n",
-          new Command("docker", "run", targetImage).run());
-      assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
-      new Command("docker", "logout", "localhost:5000").run();
-
-    } finally {
-      // Stops the local registry.
-      new Command("docker", "stop", containerName).run();
-      new Command("docker", "rm", "-v", containerName).run();
-    }
+    localRegistry.pull(targetImage);
+    Assert.assertEquals(
+        "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\n",
+        new Command("docker", "run", targetImage).run());
+    Assert.assertThat(
+        new Command("docker", "inspect", targetImage).run(),
+        CoreMatchers.containsString(
+            "            \"ExposedPorts\": {\n"
+                + "                \"1000/tcp\": {},\n"
+                + "                \"2000/udp\": {},\n"
+                + "                \"2001/udp\": {},\n"
+                + "                \"2002/udp\": {},\n"
+                + "                \"2003/udp\": {}"));
+    assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
   }
 
   @Test
