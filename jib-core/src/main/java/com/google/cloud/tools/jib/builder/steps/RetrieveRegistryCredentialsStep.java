@@ -168,8 +168,11 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Authorization>, Calla
 
       // Tries to get registry credentials from the Docker config.
       try {
-        Authorization dockerConfigAuthorization = dockerConfigCredentialRetriever.retrieve();
-        if (dockerConfigAuthorization != null) {
+        Credentials dockerConfigCredentials = dockerConfigCredentialRetriever.retrieve();
+        if (dockerConfigCredentials != null) {
+          Authorization dockerConfigAuthorization =
+              Authorizations.withBasicCredentials(
+                  dockerConfigCredentials.getUsername(), dockerConfigCredentials.getPassword());
           buildLogger.info("Using credentials from Docker config for " + registry);
           return dockerConfigAuthorization;
         }

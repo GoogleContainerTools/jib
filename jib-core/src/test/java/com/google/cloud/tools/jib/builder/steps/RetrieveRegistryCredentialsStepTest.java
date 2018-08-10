@@ -127,10 +127,10 @@ public class RetrieveRegistryCredentialsStepTest {
                 FAKE_TARGET_REGISTRY, "someCredentialHelper"))
         .thenReturn(mockNonexistentServerUrlDockerCredentialHelper);
 
-    Mockito.when(mockDockerConfigCredentialRetriever.retrieve()).thenReturn(mockAuthorization);
+    Mockito.when(mockDockerConfigCredentialRetriever.retrieve()).thenReturn(FAKE_CREDENTIALS);
 
     Assert.assertEquals(
-        mockAuthorization,
+        FAKE_AUTHORIZATION,
         makeRetrieveRegistryCredentialsStep(FAKE_TARGET_REGISTRY, "someCredentialHelper", null)
             .call());
 

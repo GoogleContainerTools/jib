@@ -16,14 +16,14 @@
 
 package com.google.cloud.tools.jib.registry.credentials;
 
+import com.google.api.client.util.Base64;
 import com.google.cloud.tools.jib.configuration.credentials.Credentials;
-import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.RegistryAliasGroup;
 import com.google.cloud.tools.jib.registry.credentials.json.DockerConfigTemplate;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -61,7 +61,7 @@ public class DockerConfigCredentialRetriever {
   }
 
   @VisibleForTesting
-  DockerConfigCredentialRetriever(String registry, Path dockerConfigFile) {
+  public DockerConfigCredentialRetriever(String registry, Path dockerConfigFile) {
     this.registry = registry;
     this.dockerConfigFile = dockerConfigFile;
     this.dockerCredentialHelperFactory = new DockerCredentialHelperFactory();
@@ -80,11 +80,11 @@ public class DockerConfigCredentialRetriever {
   /**
    * Retrieves credentials for a registry. Tries all possible known aliases.
    *
-   * @return {@link Authorization} found for {@code registry}, or {@code null} if not found
+   * @return {@link Credentials} found for {@code registry}, or {@code null} if not found
    * @throws IOException if failed to parse the config JSON
    */
   @Nullable
-  public Authorization retrieve() throws IOException {
+  public Credentials retrieve() throws IOException {
     DockerConfigTemplate dockerConfigTemplate = loadDockerConfigTemplate();
     if (dockerConfigTemplate == null) {
       return null;
@@ -93,9 +93,9 @@ public class DockerConfigCredentialRetriever {
     DockerConfig dockerConfig = new DockerConfig(dockerConfigTemplate);
 
     for (String registryAlias : RegistryAliasGroup.getAliasesGroup(registry)) {
-      Authorization authorization = retrieve(dockerConfig, registryAlias);
-      if (authorization != null) {
-        return authorization;
+      Credentials credentials = retrieve(dockerConfig, registryAlias);
+      if (credentials != null) {
+        return credentials;
       }
     }
     return null;
@@ -109,11 +109,15 @@ public class DockerConfigCredentialRetriever {
    * @return the retrieved credentials, or {@code null} if none are found
    */
   @Nullable
-  private Authorization retrieve(DockerConfig dockerConfig, String registryAlias) {
+  private Credentials retrieve(DockerConfig dockerConfig, String registryAlias) {
     // First, tries to find defined auth.
     String auth = dockerConfig.getAuthFor(registryAlias);
     if (auth != null) {
-      return Authorizations.withBasicToken(auth);
+      // 'auth' is a basic authentication token that should be parsed back into credentials
+      String usernameColonPassword = new String(Base64.decodeBase64(auth), StandardCharsets.UTF_8);
+      String username = usernameColonPassword.substring(0, usernameColonPassword.indexOf(":"));
+      String password = usernameColonPassword.substring(usernameColonPassword.indexOf(":") + 1);
+      return new Credentials(username, password);
     }
 
     // Then, tries to use a defined credHelpers credential helper.
@@ -122,9 +126,7 @@ public class DockerConfigCredentialRetriever {
     if (dockerCredentialHelper != null) {
       try {
         // Tries with the given registry alias (may be the original registry).
-        Credentials credentials = dockerCredentialHelper.retrieve();
-        return Authorizations.withBasicCredentials(
-            credentials.getUsername(), credentials.getPassword());
+        return dockerCredentialHelper.retrieve();
 
       } catch (IOException
           | NonexistentServerUrlDockerCredentialHelperException

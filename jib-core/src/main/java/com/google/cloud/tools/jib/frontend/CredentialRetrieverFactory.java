@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
 import com.google.cloud.tools.jib.configuration.credentials.Credentials;
 import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.registry.credentials.DockerConfigCredentialRetriever;
 import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelperFactory;
 import com.google.cloud.tools.jib.registry.credentials.NonexistentDockerCredentialHelperException;
 import com.google.cloud.tools.jib.registry.credentials.NonexistentServerUrlDockerCredentialHelperException;
@@ -104,6 +105,30 @@ public class CredentialRetrieverFactory {
     return inferCredentialHelper(new DockerCredentialHelperFactory());
   }
 
+  /**
+   * Creates a new {@link CredentialRetriever} that tries to retrieve credentials from Docker config
+   * (located at {@code $USER_HOME/.docker/config.json}).
+   *
+   * @return a new {@link CredentialRetriever}
+   * @see DockerConfigCredentialRetriever
+   */
+  public CredentialRetriever dockerConfig() {
+    return dockerConfig(new DockerConfigCredentialRetriever(imageReference.getRegistry()));
+  }
+
+  /**
+   * Creates a new {@link CredentialRetriever} that tries to retrieve credentials from a custom path
+   * to a Docker config.
+   *
+   * @param dockerConfigFile the path to the Docker config file
+   * @return a new {@link CredentialRetriever}
+   * @see DockerConfigCredentialRetriever
+   */
+  public CredentialRetriever dockerConfig(Path dockerConfigFile) {
+    return dockerConfig(
+        new DockerConfigCredentialRetriever(imageReference.getRegistry(), dockerConfigFile));
+  }
+
   @VisibleForTesting
   CredentialRetriever inferCredentialHelper(
       DockerCredentialHelperFactory dockerCredentialHelperFactory) {
@@ -157,6 +182,24 @@ public class CredentialRetrieverFactory {
             "No credentials for " + imageReference.getRegistry() + " in " + credentialHelper);
         return null;
       }
+    };
+  }
+
+  @VisibleForTesting
+  CredentialRetriever dockerConfig(
+      DockerConfigCredentialRetriever dockerConfigCredentialRetriever) {
+    return () -> {
+      try {
+        Credentials dockerConfigCredentials = dockerConfigCredentialRetriever.retrieve();
+        if (dockerConfigCredentials != null) {
+          logger.info("Using credentials from Docker config for " + imageReference.getRegistry());
+          return dockerConfigCredentials;
+        }
+
+      } catch (IOException ex) {
+        logger.info("Unable to parse Docker config");
+      }
+      return null;
     };
   }
 
