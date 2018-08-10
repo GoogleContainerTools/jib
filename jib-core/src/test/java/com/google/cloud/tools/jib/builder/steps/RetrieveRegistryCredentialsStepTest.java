@@ -29,7 +29,6 @@ import com.google.cloud.tools.jib.registry.credentials.NonexistentServerUrlDocke
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
-import java.nio.file.Paths;
 import javax.annotation.Nullable;
 import org.junit.Assert;
 import org.junit.Before;
@@ -93,7 +92,7 @@ public class RetrieveRegistryCredentialsStepTest {
       throws IOException, NonexistentDockerCredentialHelperException {
     Mockito.when(
             mockDockerCredentialHelperFactory.newDockerCredentialHelper(
-                "someRegistry", Paths.get("docker-credential-someOtherCredentialHelper")))
+                FAKE_TARGET_REGISTRY, "someOtherCredentialHelper"))
         .thenReturn(mockDockerCredentialHelper);
 
     Assert.assertEquals(
@@ -125,7 +124,7 @@ public class RetrieveRegistryCredentialsStepTest {
     // Credential helper does not have credentials.
     Mockito.when(
             mockDockerCredentialHelperFactory.newDockerCredentialHelper(
-                "someRegistry", Paths.get("docker-credential-someCredentialHelper")))
+                FAKE_TARGET_REGISTRY, "someCredentialHelper"))
         .thenReturn(mockNonexistentServerUrlDockerCredentialHelper);
 
     Mockito.when(mockDockerConfigCredentialRetriever.retrieve()).thenReturn(mockAuthorization);
@@ -143,12 +142,11 @@ public class RetrieveRegistryCredentialsStepTest {
   public void testCall_inferCommonCredentialHelpers()
       throws IOException, NonexistentDockerCredentialHelperException {
     Mockito.when(
-            mockDockerCredentialHelperFactory.newDockerCredentialHelper(
-                "something.gcr.io", Paths.get("docker-credential-gcr")))
+            mockDockerCredentialHelperFactory.newDockerCredentialHelper("something.gcr.io", "gcr"))
         .thenReturn(mockDockerCredentialHelper);
     Mockito.when(
             mockDockerCredentialHelperFactory.newDockerCredentialHelper(
-                "something.amazonaws.com", Paths.get("docker-credential-ecr-login")))
+                "something.amazonaws.com", "ecr-login"))
         .thenReturn(mockNonexistentDockerCredentialHelper);
 
     Assert.assertEquals(
