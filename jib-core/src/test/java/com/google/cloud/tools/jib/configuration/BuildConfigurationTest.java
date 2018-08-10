@@ -40,7 +40,7 @@ import org.mockito.Mockito;
 public class BuildConfigurationTest {
 
   @Test
-  public void testBuilder() {
+  public void testBuilder() throws Exception {
     String expectedBaseImageServerUrl = "someserver";
     String expectedBaseImageName = "baseimage";
     String expectedBaseImageTag = "baseimagetag";

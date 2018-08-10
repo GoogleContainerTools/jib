@@ -17,7 +17,7 @@
 package com.google.cloud.tools.jib.registry.credentials;
 
 import com.google.cloud.tools.jib.Command;
-import com.google.cloud.tools.jib.http.Authorization;
+import com.google.cloud.tools.jib.configuration.credentials.Credentials;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -41,10 +41,9 @@ public class DockerCredentialHelperIntegrationTest {
     DockerCredentialHelper dockerCredentialHelper =
         new DockerCredentialHelperFactory().newDockerCredentialHelper("myregistry", "gcr");
 
-    Authorization authorization = dockerCredentialHelper.retrieve();
-
-    // Checks that token received was base64 encoding of "myusername:mysecret".
-    Assert.assertEquals("bXl1c2VybmFtZTpteXNlY3JldA==", authorization.getToken());
+    Credentials credentials = dockerCredentialHelper.retrieve();
+    Assert.assertEquals("myusername", credentials.getUsername());
+    Assert.assertEquals("mypassword", credentials.getPassword());
   }
 
   @Test

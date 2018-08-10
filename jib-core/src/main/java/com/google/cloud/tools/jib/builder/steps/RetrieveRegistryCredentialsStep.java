@@ -20,7 +20,9 @@ import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.credentials.Credentials;
 import com.google.cloud.tools.jib.http.Authorization;
+import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.registry.credentials.DockerConfigCredentialRetriever;
 import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelperFactory;
 import com.google.cloud.tools.jib.registry.credentials.NonexistentDockerCredentialHelperException;
@@ -31,6 +33,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
@@ -196,10 +199,13 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Authorization>, Calla
     buildLogger.info("Checking credentials from docker-credential-" + credentialHelperSuffix);
 
     try {
-      Authorization authorization =
+      Credentials credentials =
           dockerCredentialHelperFactory
-              .newDockerCredentialHelper(registry, credentialHelperSuffix)
+              .newDockerCredentialHelper(
+                  registry, Paths.get("docker-credential-" + credentialHelperSuffix))
               .retrieve();
+      Authorization authorization =
+          Authorizations.withBasicCredentials(credentials.getUsername(), credentials.getPassword());
       logGotCredentialsFrom("docker-credential-" + credentialHelperSuffix);
       return authorization;
 

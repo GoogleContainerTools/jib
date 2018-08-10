@@ -16,10 +16,12 @@
 
 package com.google.cloud.tools.jib.registry.credentials;
 
+import java.nio.file.Path;
+
 /** Thrown because the requested credential helper CLI does not exist. */
 public class NonexistentDockerCredentialHelperException extends Exception {
 
-  NonexistentDockerCredentialHelperException(String credentialHelperSuffix, Throwable cause) {
-    super("The system does not have docker-credential-" + credentialHelperSuffix + " CLI", cause);
+  NonexistentDockerCredentialHelperException(Path credentialHelper, Throwable cause) {
+    super("The system does not have " + credentialHelper + " CLI", cause);
   }
 }

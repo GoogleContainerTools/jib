@@ -27,7 +27,9 @@ public interface CredentialProvider {
    *
    * @return the fetched credentials or {@code null} if no credentials could be fetched with this
    *     provider
+   * @throws Exception if the execution should fail instead of trying other credential retrieval
+   *     methods
    */
   @Nullable
-  Credentials get();
+  Credentials get() throws Exception;
 }
