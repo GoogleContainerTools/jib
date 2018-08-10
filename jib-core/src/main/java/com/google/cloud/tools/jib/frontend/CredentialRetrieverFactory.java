@@ -17,8 +17,8 @@
 package com.google.cloud.tools.jib.frontend;
 
 import com.google.cloud.tools.jib.JibLogger;
+import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
-import com.google.cloud.tools.jib.configuration.credentials.Credentials;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelperFactory;
 import com.google.cloud.tools.jib.registry.credentials.NonexistentServerUrlDockerCredentialHelperException;
@@ -85,12 +85,12 @@ public class CredentialRetrieverFactory {
       logger.info("Checking credentials from " + credentialHelper);
 
       try {
-        Credentials credentials =
+        Credential credential =
             dockerCredentialHelperFactory
                 .newDockerCredentialHelper(registry, credentialHelper)
                 .retrieve();
         logGotCredentialsFrom(credentialHelper.getFileName().toString());
-        return credentials;
+        return credential;
 
       } catch (NonexistentServerUrlDockerCredentialHelperException ex) {
         logger.info("No credentials for " + registry + " in " + credentialHelper);

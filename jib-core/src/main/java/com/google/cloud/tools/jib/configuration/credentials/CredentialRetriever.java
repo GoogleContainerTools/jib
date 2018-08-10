@@ -34,5 +34,5 @@ public interface CredentialRetriever {
    * @throws Exception if the credential retrieval encountered an exception
    */
   @Nullable
-  Credentials retrieve() throws Exception;
+  Credential retrieve() throws Exception;
 }

@@ -17,7 +17,7 @@
 package com.google.cloud.tools.jib.frontend;
 
 import com.google.cloud.tools.jib.JibLogger;
-import com.google.cloud.tools.jib.configuration.credentials.Credentials;
+import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelper;
 import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelperFactory;
@@ -42,16 +42,16 @@ public class CredentialRetrieverFactoryTest {
     CredentialRetrieverFactory credentialProviderFactory =
         CredentialRetrieverFactory.forImage(
             ImageReference.of("registry", null, null), mockJibLogger);
-    Credentials expectedCredentials = new Credentials("username", "password");
+    Credential expectedCredential = new Credential("username", "password");
 
     Mockito.when(
             mockDockerCredentialHelperFactory.newDockerCredentialHelper(
                 "registry", Paths.get("docker-credential-helper")))
         .thenReturn(mockDockerCredentialHelper);
-    Mockito.when(mockDockerCredentialHelper.retrieve()).thenReturn(expectedCredentials);
+    Mockito.when(mockDockerCredentialHelper.retrieve()).thenReturn(expectedCredential);
 
     Assert.assertEquals(
-        expectedCredentials,
+        expectedCredential,
         credentialProviderFactory
             .dockerCredentialHelper(
                 Paths.get("docker-credential-helper"), mockDockerCredentialHelperFactory)
