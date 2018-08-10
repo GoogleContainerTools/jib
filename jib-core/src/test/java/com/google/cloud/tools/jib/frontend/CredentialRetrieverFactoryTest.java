@@ -29,9 +29,9 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link CredentialProviderFactory}. */
+/** Tests for {@link CredentialRetrieverFactory}. */
 @RunWith(MockitoJUnitRunner.class)
-public class CredentialProviderFactoryTest {
+public class CredentialRetrieverFactoryTest {
 
   @Mock private JibLogger mockJibLogger;
   @Mock private DockerCredentialHelperFactory mockDockerCredentialHelperFactory;
@@ -39,14 +39,14 @@ public class CredentialProviderFactoryTest {
 
   @Test
   public void testDockerCredentialHelper() throws Exception {
-    CredentialProviderFactory credentialProviderFactory =
-        CredentialProviderFactory.forImage(
+    CredentialRetrieverFactory credentialProviderFactory =
+        CredentialRetrieverFactory.forImage(
             ImageReference.of("registry", null, null), mockJibLogger);
     Credentials expectedCredentials = new Credentials("username", "password");
 
     Mockito.when(
             mockDockerCredentialHelperFactory.newDockerCredentialHelper(
-                "registry", Paths.get("docker-credential-help")))
+                "registry", Paths.get("docker-credential-helper")))
         .thenReturn(mockDockerCredentialHelper);
     Mockito.when(mockDockerCredentialHelper.retrieve()).thenReturn(expectedCredentials);
 
@@ -55,7 +55,7 @@ public class CredentialProviderFactoryTest {
         credentialProviderFactory
             .dockerCredentialHelper(
                 Paths.get("docker-credential-helper"), mockDockerCredentialHelperFactory)
-            .get());
+            .retrieve());
 
     Mockito.verify(mockJibLogger).info("Using docker-credential-helper for registry");
   }

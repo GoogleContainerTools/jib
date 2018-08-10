@@ -152,7 +152,7 @@ public class RetrieveRegistryCredentialsStepTest {
         .thenReturn(mockNonexistentDockerCredentialHelper);
 
     Assert.assertEquals(
-        mockAuthorization,
+        FAKE_AUTHORIZATION,
         makeRetrieveRegistryCredentialsStep("something.gcr.io", null, null).call());
     Mockito.verify(mockBuildLogger).info("Using docker-credential-gcr for something.gcr.io");
 

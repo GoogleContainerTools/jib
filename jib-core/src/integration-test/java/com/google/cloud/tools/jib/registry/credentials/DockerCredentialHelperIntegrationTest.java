@@ -43,7 +43,7 @@ public class DockerCredentialHelperIntegrationTest {
 
     Credentials credentials = dockerCredentialHelper.retrieve();
     Assert.assertEquals("myusername", credentials.getUsername());
-    Assert.assertEquals("mypassword", credentials.getPassword());
+    Assert.assertEquals("mysecret", credentials.getPassword());
   }
 
   @Test

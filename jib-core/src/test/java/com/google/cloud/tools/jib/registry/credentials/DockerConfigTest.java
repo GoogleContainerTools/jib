@@ -57,7 +57,7 @@ public class DockerConfigTest {
         Paths.get("docker-credential-some credential store"),
         dockerConfig.getCredentialHelperFor("with.protocol").getCredentialHelper());
     Assert.assertEquals(
-        "another credential helper",
+        Paths.get("docker-credential-another credential helper"),
         dockerConfig.getCredentialHelperFor("another registry").getCredentialHelper());
     Assert.assertNull(dockerConfig.getCredentialHelperFor("unknonwn registry"));
   }
