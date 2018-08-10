@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.configuration;
 
-import com.google.cloud.tools.jib.configuration.credentials.RegistryCredentialProvider;
+import com.google.cloud.tools.jib.configuration.credentials.CredentialProvider;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.base.Preconditions;
@@ -33,8 +33,7 @@ public class ImageConfiguration {
     private ImageReference imageReference;
     @Nullable private String credentialHelper;
     @Nullable private RegistryCredentials knownRegistryCredentials;
-    private ImmutableList<RegistryCredentialProvider> registryCredentialProviders =
-        ImmutableList.of();
+    private ImmutableList<CredentialProvider> registryCredentialProviders = ImmutableList.of();
 
     /**
      * Sets the credential helper name used for authenticating with the image's registry.
@@ -62,11 +61,10 @@ public class ImageConfiguration {
     /**
      * Sets the providers for registry credentials.
      *
-     * @param registryCredentialProviders the list of {@link RegistryCredentialProvider}s
+     * @param registryCredentialProviders the list of {@link CredentialProvider}s
      * @return this
      */
-    public Builder setRegistryCredentialProviders(
-        List<RegistryCredentialProvider> registryCredentialProviders) {
+    public Builder setCredentialProviders(List<CredentialProvider> registryCredentialProviders) {
       Preconditions.checkArgument(!registryCredentialProviders.contains(null));
       this.registryCredentialProviders = ImmutableList.copyOf(registryCredentialProviders);
       return this;
@@ -100,13 +98,13 @@ public class ImageConfiguration {
   private final ImageReference image;
   @Nullable private final String credentialHelper;
   @Nullable private final RegistryCredentials knownRegistryCredentials;
-  private final ImmutableList<RegistryCredentialProvider> registryCredentialProviders;
+  private final ImmutableList<CredentialProvider> registryCredentialProviders;
 
   private ImageConfiguration(
       ImageReference image,
       @Nullable String credentialHelper,
       @Nullable RegistryCredentials knownRegistryCredentials,
-      ImmutableList<RegistryCredentialProvider> registryCredentialProviders) {
+      ImmutableList<CredentialProvider> registryCredentialProviders) {
     this.image = image;
     this.credentialHelper = credentialHelper;
     this.knownRegistryCredentials = knownRegistryCredentials;
@@ -139,7 +137,7 @@ public class ImageConfiguration {
     return knownRegistryCredentials;
   }
 
-  public ImmutableList<RegistryCredentialProvider> getRegistryCredentialProviders() {
+  public ImmutableList<CredentialProvider> getCredentialProviders() {
     return registryCredentialProviders;
   }
 }
