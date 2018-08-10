@@ -18,6 +18,8 @@ package com.google.cloud.tools.jib.configuration;
 
 import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.configuration.Port.Protocol;
+import com.google.cloud.tools.jib.configuration.credentials.Credentials;
+import com.google.cloud.tools.jib.configuration.credentials.RegistryCredentialProvider;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
@@ -51,6 +53,8 @@ public class BuildConfigurationTest {
     String expectedTargetImageCredentialHelperName = "anotherCredentialHelper";
     RegistryCredentials expectedKnownTargetRegistryCredentials =
         Mockito.mock(RegistryCredentials.class);
+    List<RegistryCredentialProvider> expectedRegistryCredentialProviders = Collections
+        .singletonList(() -> new Credentials("username", "password"));
     Instant expectedCreationTime = Instant.ofEpochSecond(10000);
     List<String> expectedEntrypoint = Arrays.asList("some", "entrypoint");
     List<String> expectedJavaArguments = Arrays.asList("arg1", "arg2");
@@ -80,6 +84,7 @@ public class BuildConfigurationTest {
                     expectedTargetServerUrl, expectedTargetImageName, expectedTargetTag))
             .setCredentialHelper(expectedTargetImageCredentialHelperName)
             .setKnownRegistryCredentials(expectedKnownTargetRegistryCredentials)
+            .setRegistryCredentialProviders(expectedRegistryCredentialProviders)
             .build();
     ContainerConfiguration containerConfiguration =
         ContainerConfiguration.builder()
@@ -126,6 +131,7 @@ public class BuildConfigurationTest {
     Assert.assertEquals(
         expectedTargetImageCredentialHelperName,
         buildConfiguration.getTargetImageConfiguration().getCredentialHelper());
+    Assert.assertEquals(new Credentials("username", "password"), buildConfiguration.getTargetImageConfiguration().getRegistryCredentialProviders().get(0).get());
     Assert.assertEquals(
         expectedJavaArguments,
         buildConfiguration.getContainerConfiguration().getProgramArguments());
