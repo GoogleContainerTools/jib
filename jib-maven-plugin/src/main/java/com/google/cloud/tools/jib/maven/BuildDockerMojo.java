@@ -62,30 +62,27 @@ public class BuildDockerMojo extends JibPluginConfiguration {
         PluginConfigurationProcessor.processCommonConfiguration(
             mavenJibLogger, validator, this, mavenProjectProperties);
 
-    ImageReference targetImage;
     try {
-      targetImage =
+      ImageReference targetImage =
           validator.getGeneratedTargetDockerTag(
               getTargetImage(), getProject().getName(), getProject().getVersion());
-    } catch (InvalidImageReferenceException ex) {
-      throw new MojoExecutionException(ex.getMessage());
-    }
 
-    BuildConfiguration buildConfiguration =
-        pluginConfigurationProcessor
-            .getBuildConfigurationBuilder()
-            .setBaseImageConfiguration(
-                pluginConfigurationProcessor.getBaseImageConfigurationBuilder().build())
-            .setTargetImageConfiguration(ImageConfiguration.builder(targetImage).build())
-            .setContainerConfiguration(
-                pluginConfigurationProcessor.getContainerConfigurationBuilder().build())
-            .build();
+      BuildConfiguration buildConfiguration =
+          pluginConfigurationProcessor
+              .getBuildConfigurationBuilder()
+              .setBaseImageConfiguration(
+                  pluginConfigurationProcessor.getBaseImageConfigurationBuilder().build())
+              .setTargetImageConfiguration(ImageConfiguration.builder(targetImage).build())
+              .setContainerConfiguration(
+                  pluginConfigurationProcessor.getContainerConfigurationBuilder().build())
+              .build();
 
-    try {
       BuildStepsRunner.forBuildToDockerDaemon(buildConfiguration).build(HELPFUL_SUGGESTIONS);
       getLog().info("");
 
-    } catch (CacheDirectoryCreationException | BuildStepsExecutionException ex) {
+    } catch (CacheDirectoryCreationException
+        | BuildStepsExecutionException
+        | InvalidImageReferenceException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex.getCause());
     }
   }

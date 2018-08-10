@@ -36,7 +36,7 @@ public class ConfigurationPropertyValidator {
    */
   public static ConfigurationPropertyValidator newMavenPropertyValidator(JibLogger jibLogger) {
     return new ConfigurationPropertyValidator(
-        "<IMAGE><image>", "<IMAGE><auth><PROPERTY>", "pom.xml", jibLogger);
+        "<%s><image>", "<%s><auth><%s>", "pom.xml", jibLogger);
   }
 
   /**
@@ -47,7 +47,7 @@ public class ConfigurationPropertyValidator {
    */
   public static ConfigurationPropertyValidator newGradlePropertyValidator(JibLogger jibLogger) {
     return new ConfigurationPropertyValidator(
-        "jib.IMAGE.image", "jib.IMAGE.auth.PROPERTY", "build.gradle", jibLogger);
+        "jib.%s.image", "jib.%s.auth.%s", "build.gradle", jibLogger);
   }
 
   /**
@@ -134,13 +134,13 @@ public class ConfigurationPropertyValidator {
     }
     if (Strings.isNullOrEmpty(username)) {
       jibLogger.warn(
-          authParameterTemplate.replace("IMAGE", imageParameter).replace("PROPERTY", "username")
+          String.format(authParameterTemplate, imageParameter, "username")
               + " is missing from build configuration; ignoring auth section.");
       return null;
     }
     if (Strings.isNullOrEmpty(password)) {
       jibLogger.warn(
-          authParameterTemplate.replace("IMAGE", imageParameter).replace("PROPERTY", "password")
+          String.format(authParameterTemplate, imageParameter, "password")
               + " is missing from build configuration; ignoring auth section.");
       return null;
     }
@@ -169,7 +169,7 @@ public class ConfigurationPropertyValidator {
               + ":"
               + projectVersion
               + ". If you'd like to specify a different tag, you can set the "
-              + imageParameterTemplate.replace("IMAGE", "to")
+              + String.format(imageParameterTemplate, "to")
               + " parameter in your "
               + buildConfigFilename
               + ", or use the -Dimage=<MY IMAGE> commandline flag.");
