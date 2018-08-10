@@ -13,6 +13,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Gradle project dependencies have their `assemble` task run before running a jib task ([#815](https://github.com/GoogleContainerTools/jib/issues/815))
+
 ## 0.9.8
 
 ### Added
