@@ -40,19 +40,6 @@ public class JibPlugin implements Plugin<Project> {
   @VisibleForTesting static final String BUILD_DOCKER_TASK_NAME = "jibDockerBuild";
   @VisibleForTesting static final String DOCKER_CONTEXT_TASK_NAME = "jibExportDockerContext";
 
-  private static void checkGradleVersion() {
-    if (GRADLE_MIN_VERSION.compareTo(GradleVersion.current()) > 0) {
-      throw new GradleException(
-          "Detected "
-              + GradleVersion.current()
-              + ", but jib requires "
-              + GRADLE_MIN_VERSION
-              + " or higher. You can upgrade by running 'gradle wrapper --gradle-version="
-              + GRADLE_MIN_VERSION.getVersion()
-              + "'.");
-    }
-  }
-
   /**
    * Collects all assemble tasks for project dependencies of the style "compile project(':mylib')"
    * for any kind of configuration [compile, runtime, etc]. It potentially will collect common test
@@ -74,6 +61,19 @@ public class JibPlugin implements Plugin<Project> {
         .map(ProjectDependency::getDependencyProject)
         .map(subProject -> subProject.getTasks().getByPath(BasePlugin.ASSEMBLE_TASK_NAME))
         .collect(Collectors.toList());
+  }
+
+  private static void checkGradleVersion() {
+    if (GRADLE_MIN_VERSION.compareTo(GradleVersion.current()) > 0) {
+      throw new GradleException(
+          "Detected "
+              + GradleVersion.current()
+              + ", but jib requires "
+              + GRADLE_MIN_VERSION
+              + " or higher. You can upgrade by running 'gradle wrapper --gradle-version="
+              + GRADLE_MIN_VERSION.getVersion()
+              + "'.");
+    }
   }
 
   @Override

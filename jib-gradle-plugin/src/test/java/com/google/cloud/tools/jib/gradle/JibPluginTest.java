@@ -24,7 +24,6 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
-import java.util.List;
 import java.util.stream.Collectors;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -40,7 +39,7 @@ import org.junit.rules.TemporaryFolder;
 /** Tests for {@link JibPlugin}. */
 public class JibPluginTest {
 
-  private static final List<String> KNOWN_JIB_TASKS =
+  private static final ImmutableList<String> KNOWN_JIB_TASKS =
       ImmutableList.of(
           JibPlugin.BUILD_IMAGE_TASK_NAME,
           JibPlugin.BUILD_DOCKER_TASK_NAME,
@@ -129,8 +128,7 @@ public class JibPluginTest {
     rootProject.getPluginManager().apply("com.google.cloud.tools.jib");
 
     // add a custom task that our jib tasks depend on to ensure we do not overwrite this dependsOn
-    Task dependencyTask =
-        rootProject.getTasks().create("myCustomTask", task -> System.out.println("test"));
+    Task dependencyTask = rootProject.getTasks().create("myCustomTask", task -> {});
     KNOWN_JIB_TASKS.forEach(
         taskName -> rootProject.getTasks().getByPath(taskName).dependsOn(dependencyTask));
 
