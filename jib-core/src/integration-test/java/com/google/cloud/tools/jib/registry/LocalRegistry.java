@@ -74,7 +74,8 @@ public class LocalRegistry extends ExternalResource {
                   username,
                   password)
               .run();
-      // Creates the temporary directory in /tmp since that is one of the default directories mounted into Docker.
+      // Creates the temporary directory in /tmp since that is one of the default directories
+      // mounted into Docker.
       // See: https://docs.docker.com/docker-for-mac/osxfs
       Path tempFolder = Files.createTempDirectory(Paths.get("/tmp"), "");
       Files.write(
