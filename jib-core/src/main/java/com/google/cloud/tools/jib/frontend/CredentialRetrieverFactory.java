@@ -21,13 +21,25 @@ import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelperFactory;
+import com.google.cloud.tools.jib.registry.credentials.NonexistentDockerCredentialHelperException;
 import com.google.cloud.tools.jib.registry.credentials.NonexistentServerUrlDockerCredentialHelperException;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableMap;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 /** Static factories for various {@link CredentialRetriever}s. */
 public class CredentialRetrieverFactory {
+
+  /**
+   * Defines common credential helpers to use as defaults. Maps from registry suffix to credential
+   * helper suffix.
+   */
+  private static final ImmutableMap<String, String> COMMON_CREDENTIAL_HELPERS =
+      ImmutableMap.of("gcr.io", "gcr", "amazonaws.com", "ecr-login");
 
   /**
    * Creates a new {@link CredentialRetrieverFactory} for an image.
@@ -41,12 +53,17 @@ public class CredentialRetrieverFactory {
     return new CredentialRetrieverFactory(imageReference, logger);
   }
 
-  private final ImageReference imageReference;
   private final JibLogger logger;
+  private ImageReference imageReference;
 
   private CredentialRetrieverFactory(ImageReference imageReference, JibLogger logger) {
     this.imageReference = imageReference;
     this.logger = logger;
+  }
+
+  public CredentialRetrieverFactory setImageReference(ImageReference imageReference) {
+    this.imageReference = imageReference;
+    return this;
   }
 
   /**
@@ -76,27 +93,83 @@ public class CredentialRetrieverFactory {
     return dockerCredentialHelper(credentialHelper, new DockerCredentialHelperFactory());
   }
 
+  /**
+   * Creates a new {@link CredentialRetriever} that tries common Docker credential helpers to
+   * retrieve credentials based on the registry of the image, such as {@code docker-credential-gcr}
+   * for images with the registry as {@code gcr.io}.
+   *
+   * @return a new {@link CredentialRetriever}
+   */
+  public CredentialRetriever inferCredentialHelper() {
+    return inferCredentialHelper(new DockerCredentialHelperFactory());
+  }
+
+  @VisibleForTesting
+  CredentialRetriever inferCredentialHelper(
+      DockerCredentialHelperFactory dockerCredentialHelperFactory) {
+    List<String> inferredCredentialHelperSuffixes = new ArrayList<>();
+    for (String registrySuffix : COMMON_CREDENTIAL_HELPERS.keySet()) {
+      if (!imageReference.getRegistry().endsWith(registrySuffix)) {
+        continue;
+      }
+      String inferredCredentialHelperSuffix = COMMON_CREDENTIAL_HELPERS.get(registrySuffix);
+      if (inferredCredentialHelperSuffix == null) {
+        throw new IllegalStateException("No COMMON_CREDENTIAL_HELPERS should be null");
+      }
+      inferredCredentialHelperSuffixes.add(inferredCredentialHelperSuffix);
+    }
+
+    return () -> {
+      for (String inferredCredentialHelperSuffix : inferredCredentialHelperSuffixes) {
+        try {
+          return retrieveFromDockerCredentialHelper(
+              Paths.get(
+                  DockerCredentialHelperFactory.CREDENTIAL_HELPER_PREFIX
+                      + inferredCredentialHelperSuffix),
+              dockerCredentialHelperFactory);
+
+        } catch (NonexistentDockerCredentialHelperException ex) {
+          if (ex.getMessage() != null) {
+            // Warns the user that the specified (or inferred) credential helper is not on the
+            // system.
+            logger.warn(ex.getMessage());
+            if (ex.getCause() != null && ex.getCause().getMessage() != null) {
+              logger.info("  Caused by: " + ex.getCause().getMessage());
+            }
+          }
+        }
+      }
+      return null;
+    };
+  }
+
   @VisibleForTesting
   CredentialRetriever dockerCredentialHelper(
       Path credentialHelper, DockerCredentialHelperFactory dockerCredentialHelperFactory) {
-    String registry = imageReference.getRegistry();
-
     return () -> {
       logger.info("Checking credentials from " + credentialHelper);
 
       try {
-        Credential credential =
-            dockerCredentialHelperFactory
-                .newDockerCredentialHelper(registry, credentialHelper)
-                .retrieve();
-        logGotCredentialsFrom(credentialHelper.getFileName().toString());
-        return credential;
+        return retrieveFromDockerCredentialHelper(credentialHelper, dockerCredentialHelperFactory);
 
       } catch (NonexistentServerUrlDockerCredentialHelperException ex) {
-        logger.info("No credentials for " + registry + " in " + credentialHelper);
+        logger.info(
+            "No credentials for " + imageReference.getRegistry() + " in " + credentialHelper);
         return null;
       }
     };
+  }
+
+  private Credential retrieveFromDockerCredentialHelper(
+      Path credentialHelper, DockerCredentialHelperFactory dockerCredentialHelperFactory)
+      throws NonexistentServerUrlDockerCredentialHelperException,
+          NonexistentDockerCredentialHelperException, IOException {
+    Credential credentials =
+        dockerCredentialHelperFactory
+            .newDockerCredentialHelper(imageReference.getRegistry(), credentialHelper)
+            .retrieve();
+    logGotCredentialsFrom(credentialHelper.getFileName().toString());
+    return credentials;
   }
 
   private void logGotCredentialsFrom(String credentialSource) {
