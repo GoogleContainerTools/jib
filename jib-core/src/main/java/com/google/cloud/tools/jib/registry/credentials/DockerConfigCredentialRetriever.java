@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.registry.credentials;
 
+import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
@@ -121,7 +122,9 @@ public class DockerConfigCredentialRetriever {
     if (dockerCredentialHelper != null) {
       try {
         // Tries with the given registry alias (may be the original registry).
-        return dockerCredentialHelper.retrieve();
+        Credential credential = dockerCredentialHelper.retrieve();
+        return Authorizations.withBasicCredentials(
+            credential.getUsername(), credential.getPassword());
 
       } catch (IOException
           | NonexistentServerUrlDockerCredentialHelperException

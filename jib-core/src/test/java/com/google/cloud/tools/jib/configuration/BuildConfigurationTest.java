@@ -18,8 +18,8 @@ package com.google.cloud.tools.jib.configuration;
 
 import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.configuration.Port.Protocol;
+import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
-import com.google.cloud.tools.jib.configuration.credentials.Credentials;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
@@ -40,7 +40,7 @@ import org.mockito.Mockito;
 public class BuildConfigurationTest {
 
   @Test
-  public void testBuilder() {
+  public void testBuilder() throws Exception {
     String expectedBaseImageServerUrl = "someserver";
     String expectedBaseImageName = "baseimage";
     String expectedBaseImageTag = "baseimagetag";
@@ -54,7 +54,7 @@ public class BuildConfigurationTest {
     RegistryCredentials expectedKnownTargetRegistryCredentials =
         Mockito.mock(RegistryCredentials.class);
     List<CredentialRetriever> credentialRetrievers =
-        Collections.singletonList(() -> new Credentials("username", "password"));
+        Collections.singletonList(() -> new Credential("username", "password"));
     Instant expectedCreationTime = Instant.ofEpochSecond(10000);
     List<String> expectedEntrypoint = Arrays.asList("some", "entrypoint");
     List<String> expectedJavaArguments = Arrays.asList("arg1", "arg2");
@@ -132,7 +132,7 @@ public class BuildConfigurationTest {
         expectedTargetImageCredentialHelperName,
         buildConfiguration.getTargetImageConfiguration().getCredentialHelper());
     Assert.assertEquals(
-        new Credentials("username", "password"),
+        new Credential("username", "password"),
         buildConfiguration
             .getTargetImageConfiguration()
             .getCredentialRetrievers()
