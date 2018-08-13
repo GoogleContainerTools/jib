@@ -19,6 +19,8 @@ package com.google.cloud.tools.jib.plugins.common;
 import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
+import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
@@ -33,6 +35,9 @@ public class ConfigurationPropertyValidatorTest {
 
   @Mock private JibLogger mockLogger;
   @Mock private AuthProperty mockAuth;
+
+  private HelpfulSuggestions helpfulSuggestions =
+      new HelpfulSuggestions("", "", "", unused -> "", "", unused -> "", "to", "--to", "build.txt");
 
   @After
   public void tearDown() {
@@ -122,5 +127,36 @@ public class ConfigurationPropertyValidatorTest {
     Assert.assertNull(actual);
     Mockito.verify(mockLogger)
         .warn("user is missing from build configuration; ignoring auth section.");
+  }
+
+  @Test
+  public void testGetGeneratedTargetDockerTag() throws InvalidImageReferenceException {
+    // Target configured
+    ImageReference result =
+        ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
+            "a/b:c", mockLogger, "project-name", "project-version", helpfulSuggestions);
+    Assert.assertEquals("a/b", result.getRepository());
+    Assert.assertEquals("c", result.getTag());
+    Mockito.verify(mockLogger, Mockito.never()).lifecycle(Mockito.any());
+
+    // Target not configured
+    result =
+        ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
+            null, mockLogger, "project-name", "project-version", helpfulSuggestions);
+    Assert.assertEquals("project-name", result.getRepository());
+    Assert.assertEquals("project-version", result.getTag());
+    Mockito.verify(mockLogger)
+        .lifecycle(
+            "Tagging image with generated image reference project-name:project-version. If you'd "
+                + "like to specify a different tag, you can set the to parameter in your "
+                + "build.txt, or use the --to=<MY IMAGE> commandline flag.");
+
+    // Generated tag invalid
+    try {
+      ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
+          null, mockLogger, "%#&///*@(", "%$#//&*@($", helpfulSuggestions);
+      Assert.fail();
+    } catch (InvalidImageReferenceException ignored) {
+    }
   }
 }

@@ -36,7 +36,10 @@ class HelpfulSuggestionsProvider {
         "<from><credHelper>",
         AUTH_CONFIGURATION_SUGGESTION,
         "<to><credHelper>",
-        AUTH_CONFIGURATION_SUGGESTION);
+        AUTH_CONFIGURATION_SUGGESTION,
+        "<to><image>",
+        "-Dimage",
+        "pom.xml");
   }
 
   private HelpfulSuggestionsProvider() {}
