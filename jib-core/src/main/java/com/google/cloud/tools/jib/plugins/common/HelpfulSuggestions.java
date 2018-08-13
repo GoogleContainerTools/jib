@@ -28,6 +28,9 @@ public class HelpfulSuggestions {
   private final Function<String, String> baseImageAuthConfiguration;
   private final String targetImageCredHelperConfiguration;
   private final Function<String, String> targetImageAuthConfiguration;
+  private final String toImageConfiguration;
+  private final String buildConfigurationFilename;
+  private final String toImageFlag;
 
   /**
    * Creates a new {@link HelpfulSuggestions} with frontend-specific texts.
@@ -42,6 +45,9 @@ public class HelpfulSuggestions {
    *     for the target image
    * @param targetImageAuthConfiguration the way to define raw credentials for the target image -
    *     takes the target image registry as an argument
+   * @param toImageConfiguration the configuration defining the target image
+   * @param toImageFlag the commandline flag used to set the target image
+   * @param buildConfigurationFilename the filename of the build configuration
    */
   public HelpfulSuggestions(
       String messagePrefix,
@@ -49,13 +55,19 @@ public class HelpfulSuggestions {
       String baseImageCredHelperConfiguration,
       Function<String, String> baseImageAuthConfiguration,
       String targetImageCredHelperConfiguration,
-      Function<String, String> targetImageAuthConfiguration) {
+      Function<String, String> targetImageAuthConfiguration,
+      String toImageConfiguration,
+      String toImageFlag,
+      String buildConfigurationFilename) {
     this.messagePrefix = messagePrefix;
     this.clearCacheCommand = clearCacheCommand;
     this.baseImageCredHelperConfiguration = baseImageCredHelperConfiguration;
     this.baseImageAuthConfiguration = baseImageAuthConfiguration;
     this.targetImageCredHelperConfiguration = targetImageCredHelperConfiguration;
     this.targetImageAuthConfiguration = targetImageAuthConfiguration;
+    this.toImageConfiguration = toImageConfiguration;
+    this.buildConfigurationFilename = buildConfigurationFilename;
+    this.toImageFlag = toImageFlag;
   }
 
   public String forHttpHostConnect() {
@@ -133,6 +145,20 @@ public class HelpfulSuggestions {
             + " or set the parameter via the commandline (e.g. '"
             + command
             + "').");
+  }
+
+  public String forGeneratedTag(String projectName, String projectVersion) {
+    return "Tagging image with generated image reference "
+        + projectName
+        + ":"
+        + projectVersion
+        + ". If you'd like to specify a different tag, you can set the "
+        + toImageConfiguration
+        + " parameter in your "
+        + buildConfigurationFilename
+        + ", or use the "
+        + toImageFlag
+        + "=<MY IMAGE> commandline flag.";
   }
 
   public String none() {
