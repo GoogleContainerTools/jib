@@ -36,9 +36,6 @@ public class ConfigurationPropertyValidatorTest {
   @Mock private JibLogger mockLogger;
   @Mock private AuthProperty mockAuth;
 
-  private HelpfulSuggestions helpfulSuggestions =
-      new HelpfulSuggestions("", "", "", unused -> "", "", unused -> "", "to", "--to", "build.txt");
-
   @After
   public void tearDown() {
     System.clearProperty("jib.httpTimeout");
@@ -131,6 +128,10 @@ public class ConfigurationPropertyValidatorTest {
 
   @Test
   public void testGetGeneratedTargetDockerTag() throws InvalidImageReferenceException {
+    HelpfulSuggestions helpfulSuggestions =
+        new HelpfulSuggestions(
+            "", "", "", unused -> "", "", unused -> "", "to", "--to", "build.txt");
+
     // Target configured
     ImageReference result =
         ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
