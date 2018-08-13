@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
+import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.base.Preconditions;
 import javax.annotation.Nullable;
@@ -77,7 +78,12 @@ public class BuildDockerTask extends DefaultTask {
             getProject(), gradleJibLogger, jibExtension.getExtraDirectoryPath());
 
     ImageReference targetImage =
-        gradleProjectProperties.getGeneratedTargetDockerTag(jibExtension, gradleJibLogger);
+        ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
+            jibExtension.getTargetImage(),
+            gradleJibLogger,
+            getProject().getName(),
+            getProject().getVersion().toString(),
+            HELPFUL_SUGGESTIONS);
 
     PluginConfigurationProcessor pluginConfigurationProcessor =
         PluginConfigurationProcessor.processCommonConfiguration(

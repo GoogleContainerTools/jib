@@ -58,7 +58,10 @@ public class BuildStepsRunnerTest {
           "baseImageCredHelperConfiguration",
           registry -> "baseImageAuthConfiguration " + registry,
           "targetImageCredHelperConfiguration",
-          registry -> "targetImageAuthConfiguration " + registry);
+          registry -> "targetImageAuthConfiguration " + registry,
+          "toConfig",
+          "toFlag",
+          "buildFile");
 
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 

@@ -18,15 +18,11 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
-import com.google.cloud.tools.jib.image.ImageReference;
-import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.MainClassResolver;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -125,35 +121,6 @@ class GradleProjectProperties implements ProjectProperties {
       return MainClassResolver.resolveMainClass(jibExtension.getMainClass(), this);
     } catch (MainClassInferenceException ex) {
       throw new GradleException(ex.getMessage(), ex);
-    }
-  }
-
-  /**
-   * Returns an {@link ImageReference} parsed from the configured target image, or one of the form
-   * {@code project-name:project-version} if target image is not configured
-   *
-   * @param jibExtension the plugin configuration parameters to generate the name from
-   * @param gradleJibLogger the logger used to notify users of the target image parameter
-   * @return an {@link ImageReference} parsed from the configured target image, or one of the form
-   *     {@code project-name:project-version} if target image is not configured
-   */
-  ImageReference getGeneratedTargetDockerTag(
-      JibExtension jibExtension, GradleJibLogger gradleJibLogger)
-      throws InvalidImageReferenceException {
-    Preconditions.checkNotNull(jibExtension);
-    if (Strings.isNullOrEmpty(jibExtension.getTargetImage())) {
-      // TODO: Validate that project name and version are valid repository/tag
-      // TODO: Use HelpfulSuggestions
-      gradleJibLogger.lifecycle(
-          "Tagging image with generated image reference "
-              + project.getName()
-              + ":"
-              + project.getVersion().toString()
-              + ". If you'd like to specify a different tag, you can set the jib.to.image "
-              + "parameter in your build.gradle, or use the --image=<MY IMAGE> commandline flag.");
-      return ImageReference.of(null, project.getName(), project.getVersion().toString());
-    } else {
-      return ImageReference.parse(jibExtension.getTargetImage());
     }
   }
 

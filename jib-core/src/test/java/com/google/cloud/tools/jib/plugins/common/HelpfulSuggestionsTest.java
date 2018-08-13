@@ -30,7 +30,10 @@ public class HelpfulSuggestionsTest {
           "baseImageCredHelperConfiguration",
           registry -> "baseImageAuthConfiguration " + registry,
           "targetImageCredHelperConfiguration",
-          registry -> "targetImageAuthConfiguration " + registry);
+          registry -> "targetImageAuthConfiguration " + registry,
+          "toProperty",
+          "toFlag",
+          "buildFile");
 
   @Test
   public void testSuggestions_smoke() {
@@ -71,5 +74,8 @@ public class HelpfulSuggestionsTest {
     Assert.assertEquals(
         "messagePrefix, perhaps you should use a registry that supports HTTPS so credentials can be sent safely, or set the 'sendCredentialsOverHttp' system property to true",
         TEST_HELPFUL_SUGGESTIONS.forCredentialsNotSent());
+    Assert.assertEquals(
+        "Tagging image with generated image reference project-name:project-version. If you'd like to specify a different tag, you can set the toProperty parameter in your buildFile, or use the toFlag=<MY IMAGE> commandline flag.",
+        TEST_HELPFUL_SUGGESTIONS.forGeneratedTag("project-name", "project-version"));
   }
 }

@@ -39,8 +39,12 @@ import org.junit.Test;
 public class BuildImageMojoIntegrationTest {
 
   @ClassRule
-  public static final LocalRegistry localRegistry =
+  public static final LocalRegistry localRegistry1 =
       new LocalRegistry(5000, "testuser", "testpassword");
+
+  @ClassRule
+  public static final LocalRegistry localRegistry2 =
+      new LocalRegistry(6000, "testuser2", "testpassword2");
 
   @ClassRule public static final TestPlugin testPlugin = new TestPlugin();
 
@@ -205,24 +209,67 @@ public class BuildImageMojoIntegrationTest {
   @Test
   public void testExecute_complex()
       throws IOException, InterruptedException, VerificationException {
-    String targetImage = "localhost:5000/compleximage:maven" + System.nanoTime();
+    String targetImage = "localhost:6000/compleximage:maven" + System.nanoTime();
 
     // Pull distroless to local registry so we can test 'from' credentials
-    localRegistry.pullAndPushToLocal("gcr.io/distroless/java:latest", "distroless/java");
+    localRegistry1.pullAndPushToLocal("gcr.io/distroless/java:latest", "distroless/java");
 
     // Run jib:build
     Instant before = Instant.now();
     Verifier verifier = new Verifier(complexTestProject.getProjectRoot().toString());
     verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
+    verifier.setSystemProperty("_TARGET_USERNAME", "testuser2");
+    verifier.setSystemProperty("_TARGET_PASSWORD", "testpassword2");
+    verifier.setSystemProperty("sendCredentialsOverHttp", "true");
     verifier.setAutoclean(false);
     verifier.addCliOption("-X");
-    verifier.addCliOption("-DsendCredentialsOverHttp=true");
     verifier.addCliOption("--file=pom-complex.xml");
     verifier.executeGoals(Arrays.asList("clean", "compile", "jib:build"));
     verifier.verifyErrorFreeLog();
 
     // Verify output
-    localRegistry.pull(targetImage);
+    localRegistry2.pull(targetImage);
+    Assert.assertEquals(
+        "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\n",
+        new Command("docker", "run", targetImage).run());
+    Assert.assertThat(
+        new Command("docker", "inspect", targetImage).run(),
+        CoreMatchers.containsString(
+            "            \"ExposedPorts\": {\n"
+                + "                \"1000/tcp\": {},\n"
+                + "                \"2000/udp\": {},\n"
+                + "                \"2001/udp\": {},\n"
+                + "                \"2002/udp\": {},\n"
+                + "                \"2003/udp\": {}"));
+    Instant buildTime =
+        Instant.parse(
+            new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim());
+    Assert.assertTrue(buildTime.isAfter(before) || buildTime.equals(before));
+  }
+
+  @Test
+  public void testExecute_complex_sameFromAndToRegistry()
+      throws IOException, InterruptedException, VerificationException {
+    String targetImage = "localhost:5000/compleximage:maven" + System.nanoTime();
+
+    // Pull distroless to local registry so we can test 'from' credentials
+    localRegistry1.pullAndPushToLocal("gcr.io/distroless/java:latest", "distroless/java");
+
+    // Run jib:build
+    Instant before = Instant.now();
+    Verifier verifier = new Verifier(complexTestProject.getProjectRoot().toString());
+    verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
+    verifier.setSystemProperty("_TARGET_USERNAME", "testuser");
+    verifier.setSystemProperty("_TARGET_PASSWORD", "testpassword");
+    verifier.setSystemProperty("sendCredentialsOverHttp", "true");
+    verifier.setAutoclean(false);
+    verifier.addCliOption("-X");
+    verifier.addCliOption("--file=pom-complex.xml");
+    verifier.executeGoals(Arrays.asList("clean", "compile", "jib:build"));
+    verifier.verifyErrorFreeLog();
+
+    // Verify output
+    localRegistry1.pull(targetImage);
     Assert.assertEquals(
         "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\n",
         new Command("docker", "run", targetImage).run());
