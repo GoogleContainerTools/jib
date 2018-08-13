@@ -25,8 +25,8 @@ jib {
     to {
         image = System.getProperty("_TARGET_IMAGE")
         auth {
-            username = 'testuser'
-            password = 'testpassword'
+            username = System.getProperty("_TARGET_USERNAME")
+            password = System.getProperty("_TARGET_PASSWORD")
         }
     }
     container {
