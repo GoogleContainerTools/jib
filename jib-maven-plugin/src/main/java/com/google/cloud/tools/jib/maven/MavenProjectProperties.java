@@ -18,13 +18,11 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
-import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.MainClassResolver;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Strings;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -144,33 +142,6 @@ class MavenProjectProperties implements ProjectProperties {
       return MainClassResolver.resolveMainClass(jibPluginConfiguration.getMainClass(), this);
     } catch (MainClassInferenceException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex);
-    }
-  }
-
-  /**
-   * Returns an {@link ImageReference} parsed from the configured target image, or one of the form
-   * {@code project-name:project-version} if target image is not configured
-   *
-   * @param targetImage the configured target image reference (can be empty)
-   * @param mavenJibLogger the logger used to notify users of the target image parameter
-   * @return an {@link ImageReference} parsed from the configured target image, or one of the form
-   *     {@code project-name:project-version} if target image is not configured
-   */
-  ImageReference getGeneratedTargetDockerTag(
-      @Nullable String targetImage, MavenJibLogger mavenJibLogger) {
-    if (Strings.isNullOrEmpty(targetImage)) {
-      // TODO: Validate that project name and version are valid repository/tag
-      // TODO: Use HelpfulSuggestions
-      mavenJibLogger.lifecycle(
-          "Tagging image with generated image reference "
-              + project.getName()
-              + ":"
-              + project.getVersion()
-              + ". If you'd like to specify a different tag, you can set the <to><image> parameter "
-              + "in your pom.xml, or use the -Dimage=<MY IMAGE> commandline flag.");
-      return ImageReference.of(null, project.getName(), project.getVersion());
-    } else {
-      return PluginConfigurationProcessor.parseImageReference(targetImage, "to");
     }
   }
 }
