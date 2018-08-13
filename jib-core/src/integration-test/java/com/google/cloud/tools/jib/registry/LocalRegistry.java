@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.UUID;
@@ -76,6 +77,12 @@ public class LocalRegistry extends ExternalResource {
       Path tempFolder = Files.createTempDirectory("auth");
       Files.write(
           tempFolder.resolve("htpasswd"), credentialString.getBytes(StandardCharsets.UTF_8));
+
+      // Temp folders are created in /var/, and Docker for Mac cannot share here by default.
+      // See: https://stackoverflow.com/a/45123074
+      if (System.getProperty("os.name").toLowerCase().contains("mac")) {
+        tempFolder = Paths.get("/private").resolve(tempFolder);
+      }
 
       // Run the Docker registry
       dockerTokens.addAll(
