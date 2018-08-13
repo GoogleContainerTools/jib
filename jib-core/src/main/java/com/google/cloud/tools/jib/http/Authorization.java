@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.http;
 
+import java.util.Objects;
+
 /**
  * Holds the credentials for an HTTP {@code Authorization} header.
  *
@@ -45,5 +47,22 @@ public class Authorization {
   @Override
   public String toString() {
     return scheme + " " + token;
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    if (this == other) {
+      return true;
+    }
+    if (!(other instanceof Authorization)) {
+      return false;
+    }
+    Authorization otherAuthorization = (Authorization) other;
+    return scheme.equals(otherAuthorization.scheme) && token.equals(otherAuthorization.token);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(scheme, token);
   }
 }

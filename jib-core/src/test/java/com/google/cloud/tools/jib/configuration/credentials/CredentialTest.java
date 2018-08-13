@@ -22,23 +22,23 @@ import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** Tests for {@link Credentials}. */
-public class CredentialsTest {
+/** Tests for {@link Credential}. */
+public class CredentialTest {
 
   @Test
   public void testCredentialsHash() {
-    Credentials credentialsA1 = new Credentials("username", "password");
-    Credentials credentialsA2 = new Credentials("username", "password");
-    Credentials credentialsB1 = new Credentials("", "");
-    Credentials credentialsB2 = new Credentials("", "");
+    Credential credentialA1 = new Credential("username", "password");
+    Credential credentialA2 = new Credential("username", "password");
+    Credential credentialB1 = new Credential("", "");
+    Credential credentialB2 = new Credential("", "");
 
-    Assert.assertEquals(credentialsA1, credentialsA2);
-    Assert.assertEquals(credentialsB1, credentialsB2);
-    Assert.assertNotEquals(credentialsA1, credentialsB1);
-    Assert.assertNotEquals(credentialsA1, credentialsB2);
+    Assert.assertEquals(credentialA1, credentialA2);
+    Assert.assertEquals(credentialB1, credentialB2);
+    Assert.assertNotEquals(credentialA1, credentialB1);
+    Assert.assertNotEquals(credentialA1, credentialB2);
 
-    Set<Credentials> credentialsSet =
-        new HashSet<>(Arrays.asList(credentialsA1, credentialsA2, credentialsB1, credentialsB2));
-    Assert.assertEquals(new HashSet<>(Arrays.asList(credentialsA2, credentialsB1)), credentialsSet);
+    Set<Credential> credentialSet =
+        new HashSet<>(Arrays.asList(credentialA1, credentialA2, credentialB1, credentialB2));
+    Assert.assertEquals(new HashSet<>(Arrays.asList(credentialA2, credentialB1)), credentialSet);
   }
 }
