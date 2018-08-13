@@ -35,8 +35,12 @@ import org.junit.Test;
 public class JibPluginIntegrationTest {
 
   @ClassRule
-  public static final LocalRegistry localRegistry =
+  public static final LocalRegistry localRegistry1 =
       new LocalRegistry(5000, "testuser", "testpassword");
+
+  @ClassRule
+  public static final LocalRegistry localRegistry2 =
+      new LocalRegistry(6000, "testuser2", "testpassword2");
 
   @ClassRule public static final TestProject emptyTestProject = new TestProject("empty");
 
@@ -180,10 +184,10 @@ public class JibPluginIntegrationTest {
 
   @Test
   public void testBuild_complex() throws IOException, InterruptedException {
-    String targetImage = "localhost:5000/compleximage:gradle" + System.nanoTime();
+    String targetImage = "localhost:6000/compleximage:gradle" + System.nanoTime();
 
     // Pull distroless to local registry so we can test 'from' credentials
-    localRegistry.pullAndPushToLocal("gcr.io/distroless/java:latest", "distroless/java");
+    localRegistry1.pullAndPushToLocal("gcr.io/distroless/java:latest", "distroless/java");
 
     Instant beforeBuild = Instant.now();
     BuildResult buildResult =
@@ -191,6 +195,8 @@ public class JibPluginIntegrationTest {
             "clean",
             JibPlugin.BUILD_IMAGE_TASK_NAME,
             "-D_TARGET_IMAGE=" + targetImage,
+            "-D_TARGET_USERNAME=testuser2",
+            "-D_TARGET_PASSWORD=testpassword2",
             "-DsendCredentialsOverHttp=true",
             "-b=complex-build.gradle");
 
@@ -205,7 +211,52 @@ public class JibPluginIntegrationTest {
         buildResult.getOutput(), CoreMatchers.containsString("Built and pushed image as "));
     Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(targetImage));
 
-    localRegistry.pull(targetImage);
+    localRegistry2.pull(targetImage);
+    Assert.assertEquals(
+        "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\n",
+        new Command("docker", "run", targetImage).run());
+    Assert.assertThat(
+        new Command("docker", "inspect", targetImage).run(),
+        CoreMatchers.containsString(
+            "            \"ExposedPorts\": {\n"
+                + "                \"1000/tcp\": {},\n"
+                + "                \"2000/udp\": {},\n"
+                + "                \"2001/udp\": {},\n"
+                + "                \"2002/udp\": {},\n"
+                + "                \"2003/udp\": {}"));
+    assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
+  }
+
+  @Test
+  public void testBuild_complex_sameFromAndToRegistry() throws IOException, InterruptedException {
+    String targetImage = "localhost:5000/compleximage:gradle" + System.nanoTime();
+
+    // Pull distroless to local registry so we can test 'from' credentials
+    localRegistry1.pullAndPushToLocal("gcr.io/distroless/java:latest", "distroless/java");
+
+    Instant beforeBuild = Instant.now();
+    BuildResult buildResult =
+        simpleTestProject.build(
+            "clean",
+            JibPlugin.BUILD_IMAGE_TASK_NAME,
+            "-D_TARGET_IMAGE=" + targetImage,
+            "-D_TARGET_USERNAME=testuser",
+            "-D_TARGET_PASSWORD=testpassword",
+            "-DsendCredentialsOverHttp=true",
+            "-b=complex-build.gradle");
+
+    BuildTask classesTask = buildResult.task(":classes");
+    BuildTask jibTask = buildResult.task(":" + JibPlugin.BUILD_IMAGE_TASK_NAME);
+
+    Assert.assertNotNull(classesTask);
+    Assert.assertEquals(TaskOutcome.SUCCESS, classesTask.getOutcome());
+    Assert.assertNotNull(jibTask);
+    Assert.assertEquals(TaskOutcome.SUCCESS, jibTask.getOutcome());
+    Assert.assertThat(
+        buildResult.getOutput(), CoreMatchers.containsString("Built and pushed image as "));
+    Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(targetImage));
+
+    localRegistry1.pull(targetImage);
     Assert.assertEquals(
         "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\n",
         new Command("docker", "run", targetImage).run());
