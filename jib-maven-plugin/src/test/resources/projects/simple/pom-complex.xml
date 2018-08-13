@@ -48,8 +48,8 @@
           <to>
             <image>${_TARGET_IMAGE}</image>
             <auth>
-              <username>testuser</username>
-              <password>testpassword</password>
+              <username>${_TARGET_USERNAME}</username>
+              <password>${_TARGET_PASSWORD}</password>
             </auth>
           </to>
           <container>

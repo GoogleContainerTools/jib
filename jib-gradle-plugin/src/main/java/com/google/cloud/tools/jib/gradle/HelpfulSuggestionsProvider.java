@@ -32,7 +32,10 @@ class HelpfulSuggestionsProvider {
         "from.credHelper",
         ignored -> "from.auth",
         "to.credHelper",
-        ignored -> "to.auth");
+        ignored -> "to.auth",
+        "jib.to.image",
+        "--image",
+        "build.gradle");
   }
 
   private HelpfulSuggestionsProvider() {}
