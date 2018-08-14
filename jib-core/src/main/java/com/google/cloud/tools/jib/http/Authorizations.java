@@ -37,10 +37,7 @@ public class Authorizations {
    */
   public static Authorization withBasicCredentials(String username, String secret) {
     String credentials = username + ":" + secret;
-    String token =
-        new String(
-            Base64.encodeBase64(credentials.getBytes(StandardCharsets.UTF_8)),
-            StandardCharsets.UTF_8);
+    String token = Base64.encodeBase64String(credentials.getBytes(StandardCharsets.UTF_8));
     return new Authorization("Basic", token);
   }
 
