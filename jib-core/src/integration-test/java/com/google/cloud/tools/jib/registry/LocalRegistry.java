@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.UUID;
@@ -73,7 +74,10 @@ public class LocalRegistry extends ExternalResource {
                   username,
                   password)
               .run();
-      Path tempFolder = Files.createTempDirectory("auth");
+      // Creates the temporary directory in /tmp since that is one of the default directories
+      // mounted into Docker.
+      // See: https://docs.docker.com/docker-for-mac/osxfs
+      Path tempFolder = Files.createTempDirectory(Paths.get("/tmp"), "");
       Files.write(
           tempFolder.resolve("htpasswd"), credentialString.getBytes(StandardCharsets.UTF_8));
 
