@@ -32,6 +32,7 @@ import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -95,6 +96,37 @@ public class BuildImageMojoIntegrationTest {
     verifier.verifyErrorFreeLog();
 
     new Command("docker", "pull", imageReference).run();
+    assertHasExposedPorts(imageReference);
+    return new Command("docker", "run", imageReference).run();
+  }
+
+  private static String buildAndRunComplex(
+      String imageReference, String username, String password, LocalRegistry targetRegistry)
+      throws VerificationException, IOException, InterruptedException {
+    Instant before = Instant.now();
+    Verifier verifier = new Verifier(complexTestProject.getProjectRoot().toString());
+    verifier.setSystemProperty("_TARGET_IMAGE", imageReference);
+    verifier.setSystemProperty("_TARGET_USERNAME", username);
+    verifier.setSystemProperty("_TARGET_PASSWORD", password);
+    verifier.setSystemProperty("sendCredentialsOverHttp", "true");
+    verifier.setAutoclean(false);
+    verifier.addCliOption("-X");
+    verifier.addCliOption("--file=pom-complex.xml");
+    verifier.executeGoals(Arrays.asList("clean", "compile", "jib:build"));
+    verifier.verifyErrorFreeLog();
+
+    // Verify output
+    targetRegistry.pull(imageReference);
+    assertHasExposedPorts(imageReference);
+    Instant buildTime =
+        Instant.parse(
+            new Command("docker", "inspect", "-f", "{{.Created}}", imageReference).run().trim());
+    Assert.assertTrue(buildTime.isAfter(before) || buildTime.equals(before));
+    return new Command("docker", "run", imageReference).run();
+  }
+
+  private static void assertHasExposedPorts(String imageReference)
+      throws IOException, InterruptedException {
     Assert.assertThat(
         new Command("docker", "inspect", imageReference).run(),
         CoreMatchers.containsString(
@@ -104,7 +136,6 @@ public class BuildImageMojoIntegrationTest {
                 + "                \"2001/udp\": {},\n"
                 + "                \"2002/udp\": {},\n"
                 + "                \"2003/udp\": {}"));
-    return new Command("docker", "run", imageReference).run();
   }
 
   private static float getBuildTimeFromVerifierLog(Verifier verifier) throws IOException {
@@ -121,6 +152,12 @@ public class BuildImageMojoIntegrationTest {
     Assert.fail("Could not find build execution time in logs");
     // Should not reach here.
     return -1;
+  }
+
+  @Before
+  public void setup() throws IOException, InterruptedException {
+    // Pull distroless to local registry so we can test 'from' credentials
+    localRegistry1.pullAndPushToLocal("gcr.io/distroless/java:latest", "distroless/java");
   }
 
   @Test
@@ -210,81 +247,17 @@ public class BuildImageMojoIntegrationTest {
   public void testExecute_complex()
       throws IOException, InterruptedException, VerificationException {
     String targetImage = "localhost:6000/compleximage:maven" + System.nanoTime();
-
-    // Pull distroless to local registry so we can test 'from' credentials
-    localRegistry1.pullAndPushToLocal("gcr.io/distroless/java:latest", "distroless/java");
-
-    // Run jib:build
-    Instant before = Instant.now();
-    Verifier verifier = new Verifier(complexTestProject.getProjectRoot().toString());
-    verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
-    verifier.setSystemProperty("_TARGET_USERNAME", "testuser2");
-    verifier.setSystemProperty("_TARGET_PASSWORD", "testpassword2");
-    verifier.setSystemProperty("sendCredentialsOverHttp", "true");
-    verifier.setAutoclean(false);
-    verifier.addCliOption("-X");
-    verifier.addCliOption("--file=pom-complex.xml");
-    verifier.executeGoals(Arrays.asList("clean", "compile", "jib:build"));
-    verifier.verifyErrorFreeLog();
-
-    // Verify output
-    localRegistry2.pull(targetImage);
     Assert.assertEquals(
         "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\n",
-        new Command("docker", "run", targetImage).run());
-    Assert.assertThat(
-        new Command("docker", "inspect", targetImage).run(),
-        CoreMatchers.containsString(
-            "            \"ExposedPorts\": {\n"
-                + "                \"1000/tcp\": {},\n"
-                + "                \"2000/udp\": {},\n"
-                + "                \"2001/udp\": {},\n"
-                + "                \"2002/udp\": {},\n"
-                + "                \"2003/udp\": {}"));
-    Instant buildTime =
-        Instant.parse(
-            new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim());
-    Assert.assertTrue(buildTime.isAfter(before) || buildTime.equals(before));
+        buildAndRunComplex(targetImage, "testuser2", "testpassword2", localRegistry2));
   }
 
   @Test
   public void testExecute_complex_sameFromAndToRegistry()
       throws IOException, InterruptedException, VerificationException {
     String targetImage = "localhost:5000/compleximage:maven" + System.nanoTime();
-
-    // Pull distroless to local registry so we can test 'from' credentials
-    localRegistry1.pullAndPushToLocal("gcr.io/distroless/java:latest", "distroless/java");
-
-    // Run jib:build
-    Instant before = Instant.now();
-    Verifier verifier = new Verifier(complexTestProject.getProjectRoot().toString());
-    verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
-    verifier.setSystemProperty("_TARGET_USERNAME", "testuser");
-    verifier.setSystemProperty("_TARGET_PASSWORD", "testpassword");
-    verifier.setSystemProperty("sendCredentialsOverHttp", "true");
-    verifier.setAutoclean(false);
-    verifier.addCliOption("-X");
-    verifier.addCliOption("--file=pom-complex.xml");
-    verifier.executeGoals(Arrays.asList("clean", "compile", "jib:build"));
-    verifier.verifyErrorFreeLog();
-
-    // Verify output
-    localRegistry1.pull(targetImage);
     Assert.assertEquals(
         "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\n",
-        new Command("docker", "run", targetImage).run());
-    Assert.assertThat(
-        new Command("docker", "inspect", targetImage).run(),
-        CoreMatchers.containsString(
-            "            \"ExposedPorts\": {\n"
-                + "                \"1000/tcp\": {},\n"
-                + "                \"2000/udp\": {},\n"
-                + "                \"2001/udp\": {},\n"
-                + "                \"2002/udp\": {},\n"
-                + "                \"2003/udp\": {}"));
-    Instant buildTime =
-        Instant.parse(
-            new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim());
-    Assert.assertTrue(buildTime.isAfter(before) || buildTime.equals(before));
+        buildAndRunComplex(targetImage, "testuser", "testpassword", localRegistry1));
   }
 }
