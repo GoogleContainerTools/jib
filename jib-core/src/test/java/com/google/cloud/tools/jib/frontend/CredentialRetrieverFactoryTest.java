@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.frontend;
 import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.registry.credentials.DockerConfigCredentialRetriever;
 import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelper;
 import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelperFactory;
 import com.google.cloud.tools.jib.registry.credentials.NonexistentDockerCredentialHelperException;
@@ -42,6 +43,12 @@ public class CredentialRetrieverFactoryTest {
   @Mock private JibLogger mockJibLogger;
   @Mock private DockerCredentialHelperFactory mockDockerCredentialHelperFactory;
   @Mock private DockerCredentialHelper mockDockerCredentialHelper;
+  @Mock private DockerConfigCredentialRetriever mockDockerConfigCredentialRetriever;
+
+  /**
+   * A {@link DockerCredentialHelper} that throws {@link
+   * NonexistentDockerCredentialHelperException}.
+   */
   @Mock private DockerCredentialHelper mockNonexistentDockerCredentialHelper;
 
   @Mock
@@ -108,5 +115,20 @@ public class CredentialRetrieverFactoryTest {
             .retrieve());
     Mockito.verify(mockJibLogger).warn("warning");
     Mockito.verify(mockJibLogger).info("  Caused by: the root cause");
+  }
+
+  @Test
+  public void testDockerConfig() throws Exception {
+    CredentialRetrieverFactory credentialRetrieverFactory =
+        CredentialRetrieverFactory.forImage(
+            ImageReference.of("registry", null, null), mockJibLogger);
+
+    Mockito.when(mockDockerConfigCredentialRetriever.retrieve()).thenReturn(FAKE_CREDENTIALS);
+
+    Assert.assertEquals(
+        FAKE_CREDENTIALS,
+        credentialRetrieverFactory.dockerConfig(mockDockerConfigCredentialRetriever).retrieve());
+
+    Mockito.verify(mockJibLogger).info("Using credentials from Docker config for registry");
   }
 }

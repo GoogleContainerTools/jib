@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.configuration.credentials;
 
 import java.util.Objects;
 
+// TODO: Move to lower-level package - probably at same level as Authorization.
 /** Holds credentials (username and password). */
 public class Credential {
 
