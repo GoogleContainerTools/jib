@@ -59,7 +59,7 @@ public class ImageConfiguration {
     }
 
     /**
-     * Sets the providers for registry credentials.
+     * Sets the providers for registry credentials. The order determines the priority in which the retrieval methods are attempted.
      *
      * @param credentialRetrievers the list of {@link CredentialRetriever}s
      * @return this

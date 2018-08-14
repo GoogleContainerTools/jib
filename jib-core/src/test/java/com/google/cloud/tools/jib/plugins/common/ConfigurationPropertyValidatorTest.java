@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.cloud.tools.jib.JibLogger;
+import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.image.ImageReference;
@@ -79,9 +80,9 @@ public class ConfigurationPropertyValidatorTest {
     // System properties set
     System.setProperty("jib.test.auth.user", "abcde");
     System.setProperty("jib.test.auth.pass", "12345");
-    Authorization expected = Authorizations.withBasicCredentials("abcde", "12345");
-    Authorization actual =
-        ConfigurationPropertyValidator.getImageAuth(
+    Credential expected = new Credential("abcde", "12345");
+    Credential actual =
+        ConfigurationPropertyValidator.getImageCredential(
             mockLogger, "jib.test.auth.user", "jib.test.auth.pass", mockAuth);
     Assert.assertNotNull(actual);
     Assert.assertEquals(expected.toString(), actual.toString());
@@ -89,9 +90,9 @@ public class ConfigurationPropertyValidatorTest {
     // Auth set in configuration
     System.clearProperty("jib.test.auth.user");
     System.clearProperty("jib.test.auth.pass");
-    expected = Authorizations.withBasicCredentials("vwxyz", "98765");
+    expected = new Credential("vwxyz", "98765");
     actual =
-        ConfigurationPropertyValidator.getImageAuth(
+        ConfigurationPropertyValidator.getImageCredential(
             mockLogger, "jib.test.auth.user", "jib.test.auth.pass", mockAuth);
     Assert.assertNotNull(actual);
     Assert.assertEquals(expected.toString(), actual.toString());
@@ -101,7 +102,7 @@ public class ConfigurationPropertyValidatorTest {
     Mockito.when(mockAuth.getUsername()).thenReturn(null);
     Mockito.when(mockAuth.getPassword()).thenReturn(null);
     actual =
-        ConfigurationPropertyValidator.getImageAuth(
+        ConfigurationPropertyValidator.getImageCredential(
             mockLogger, "jib.test.auth.user", "jib.test.auth.pass", mockAuth);
     Assert.assertNull(actual);
 
@@ -109,7 +110,7 @@ public class ConfigurationPropertyValidatorTest {
     Mockito.when(mockAuth.getUsername()).thenReturn("vwxyz");
     Mockito.when(mockAuth.getPassword()).thenReturn(null);
     actual =
-        ConfigurationPropertyValidator.getImageAuth(
+        ConfigurationPropertyValidator.getImageCredential(
             mockLogger, "jib.test.auth.user", "jib.test.auth.pass", mockAuth);
     Assert.assertNull(actual);
     Mockito.verify(mockLogger)
@@ -119,7 +120,7 @@ public class ConfigurationPropertyValidatorTest {
     Mockito.when(mockAuth.getUsername()).thenReturn(null);
     Mockito.when(mockAuth.getPassword()).thenReturn("98765");
     actual =
-        ConfigurationPropertyValidator.getImageAuth(
+        ConfigurationPropertyValidator.getImageCredential(
             mockLogger, "jib.test.auth.user", "jib.test.auth.pass", mockAuth);
     Assert.assertNull(actual);
     Mockito.verify(mockLogger)
