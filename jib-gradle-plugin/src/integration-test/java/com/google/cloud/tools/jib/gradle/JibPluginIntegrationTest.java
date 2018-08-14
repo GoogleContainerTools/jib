@@ -153,7 +153,7 @@ public class JibPluginIntegrationTest {
                 + "                \"2002/udp\": {},\n"
                 + "                \"2003/udp\": {}"));
   }
-  
+
   @Before
   public void setup() throws IOException, InterruptedException {
     // Pull distroless and push to local registry so we can test 'from' credentials
