@@ -52,7 +52,7 @@ public class ConfigurationPropertyValidator {
   }
 
   /**
-   * Gets an {@link Credential} from a username and password. First tries system properties, then
+   * Gets a {@link Credential} from a username and password. First tries system properties, then
    * tries build configuration, otherwise returns null.
    *
    * @param logger the {@link JibLogger} used to print warnings messages

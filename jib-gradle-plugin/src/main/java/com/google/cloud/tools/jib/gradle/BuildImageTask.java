@@ -109,7 +109,7 @@ public class BuildImageTask extends DefaultTask {
     }
     // Makes credential retriever list.
     List<CredentialRetriever> credentialRetrievers = new ArrayList<>();
-    String credentialHelperSuffix = jibExtension.getFrom().getCredHelper();
+    String credentialHelperSuffix = jibExtension.getTo().getCredHelper();
     if (credentialHelperSuffix != null) {
       credentialRetrievers.add(
           credentialRetrieverFactory.dockerCredentialHelper(credentialHelperSuffix));

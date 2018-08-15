@@ -113,12 +113,12 @@ public class BuildImageMojo extends JibPluginConfiguration {
     } else {
       knownTargetRegistryCredentials =
           new RegistryCredentials(
-              "jib-maven-plugin <from><auth> configuration",
+              "jib-maven-plugin <to><auth> configuration",
               Authorizations.withBasicCredentials(
                   toCredential.getUsername(), toCredential.getPassword()));
       knownCredentialRetriever =
           credentialRetrieverFactory.known(
-              toCredential, "jib-maven-plugin <from><auth> configuration");
+              toCredential, "jib-maven-plugin <to><auth> configuration");
     }
     // Makes credential retriever list.
     List<CredentialRetriever> credentialRetrievers = new ArrayList<>();
