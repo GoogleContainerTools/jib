@@ -21,15 +21,20 @@ import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
+import com.google.cloud.tools.jib.configuration.credentials.Credential;
+import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
+import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
-import com.google.cloud.tools.jib.http.Authorization;
+import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import org.gradle.api.GradleException;
 
 /** Configures and provides builders for the image building tasks. */
@@ -59,26 +64,49 @@ class PluginConfigurationProcessor {
     GradleJibLogger.disableHttpLogging();
     RegistryClient.setUserAgentSuffix(USER_AGENT_SUFFIX);
 
+    ImageReference baseImage = ImageReference.parse(jibExtension.getBaseImage());
+
     if (Boolean.getBoolean("sendCredentialsOverHttp")) {
       logger.warn(
           "Authentication over HTTP is enabled. It is strongly recommended that you do not enable "
               + "this on a public network!");
     }
-    RegistryCredentials knownBaseRegistryCredentials = null;
-    Authorization fromAuthorization =
-        ConfigurationPropertyValidator.getImageAuth(
+    CredentialRetrieverFactory credentialRetrieverFactory =
+        CredentialRetrieverFactory.forImage(baseImage, logger);
+    Credential fromCredential =
+        ConfigurationPropertyValidator.getImageCredential(
             logger,
             "jib.from.auth.username",
             "jib.from.auth.password",
             jibExtension.getFrom().getAuth());
-    if (fromAuthorization != null) {
-      knownBaseRegistryCredentials = new RegistryCredentials("jib.from.auth", fromAuthorization);
+    RegistryCredentials knownBaseRegistryCredentials = null;
+    CredentialRetriever knownCredentialRetriever = null;
+    if (fromCredential != null) {
+      knownBaseRegistryCredentials =
+          new RegistryCredentials(
+              "jib.from.auth",
+              Authorizations.withBasicCredentials(
+                  fromCredential.getUsername(), fromCredential.getPassword()));
+      knownCredentialRetriever = credentialRetrieverFactory.known(fromCredential, "jib.from.auth");
     }
+    // Makes credential retriever list.
+    List<CredentialRetriever> credentialRetrievers = new ArrayList<>();
+    String credentialHelperSuffix = jibExtension.getFrom().getCredHelper();
+    if (credentialHelperSuffix != null) {
+      credentialRetrievers.add(
+          credentialRetrieverFactory.dockerCredentialHelper(credentialHelperSuffix));
+    }
+    if (knownCredentialRetriever != null) {
+      credentialRetrievers.add(knownCredentialRetriever);
+    }
+    credentialRetrievers.add(credentialRetrieverFactory.inferCredentialHelper());
+    credentialRetrievers.add(credentialRetrieverFactory.dockerConfig());
 
     ImageConfiguration.Builder baseImageConfigurationBuilder =
-        ImageConfiguration.builder(ImageReference.parse(jibExtension.getBaseImage()))
-            .setCredentialHelper(jibExtension.getFrom().getCredHelper())
-            .setKnownRegistryCredentials(knownBaseRegistryCredentials);
+        ImageConfiguration.builder(baseImage)
+            .setCredentialHelper(credentialHelperSuffix)
+            .setKnownRegistryCredentials(knownBaseRegistryCredentials)
+            .setCredentialRetrievers(credentialRetrievers);
 
     String mainClass = projectProperties.getMainClass(jibExtension);
     ContainerConfiguration.Builder containerConfigurationBuilder =

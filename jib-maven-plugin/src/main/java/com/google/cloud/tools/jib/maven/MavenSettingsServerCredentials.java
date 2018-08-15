@@ -16,8 +16,7 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.http.Authorizations;
-import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
+import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -37,7 +36,7 @@ import org.apache.maven.settings.crypto.SettingsDecryptionResult;
  */
 class MavenSettingsServerCredentials {
 
-  @VisibleForTesting static final String CREDENTIAL_SOURCE = "Maven settings";
+  public static final String CREDENTIAL_SOURCE = "Maven settings";
 
   // pattern cribbed directly from
   // https://github.com/sonatype/plexus-cipher/blob/master/src/main/java/org/sonatype/plexus/components/cipher/DefaultPlexusCipher.java
@@ -83,7 +82,7 @@ class MavenSettingsServerCredentials {
    * @throws MojoExecutionException if the credentials could not be retrieved
    */
   @Nullable
-  RegistryCredentials retrieve(@Nullable String registry) throws MojoExecutionException {
+  Credential retrieve(@Nullable String registry) throws MojoExecutionException {
     if (registry == null) {
       return null;
     }
@@ -119,9 +118,6 @@ class MavenSettingsServerCredentials {
               + " appears to be encrypted, but there is no decrypter available");
     }
 
-    return new RegistryCredentials(
-        CREDENTIAL_SOURCE,
-        Authorizations.withBasicCredentials(
-            registryServer.getUsername(), registryServer.getPassword()));
+    return new Credential(registryServer.getUsername(), registryServer.getPassword());
   }
 }

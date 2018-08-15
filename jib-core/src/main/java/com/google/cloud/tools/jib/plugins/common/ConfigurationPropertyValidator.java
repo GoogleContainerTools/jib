@@ -17,8 +17,8 @@
 package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.cloud.tools.jib.JibLogger;
+import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.common.base.Strings;
@@ -52,7 +52,7 @@ public class ConfigurationPropertyValidator {
   }
 
   /**
-   * Gets an {@link Authorization} from a username and password. First tries system properties, then
+   * Gets a {@link Credential} from a username and password. First tries system properties, then
    * tries build configuration, otherwise returns null.
    *
    * @param logger the {@link JibLogger} used to print warnings messages
@@ -63,14 +63,14 @@ public class ConfigurationPropertyValidator {
    *     {@code null} if neither is configured.
    */
   @Nullable
-  public static Authorization getImageAuth(
+  public static Credential getImageCredential(
       JibLogger logger, String usernameProperty, String passwordProperty, AuthProperty auth) {
     // System property takes priority over build configuration
     String commandlineUsername = System.getProperty(usernameProperty);
     String commandlinePassword = System.getProperty(passwordProperty);
     if (!Strings.isNullOrEmpty(commandlineUsername)
         && !Strings.isNullOrEmpty(commandlinePassword)) {
-      return Authorizations.withBasicCredentials(commandlineUsername, commandlinePassword);
+      return new Credential(commandlineUsername, commandlinePassword);
     }
 
     // Warn if a system property is missing
@@ -106,7 +106,7 @@ public class ConfigurationPropertyValidator {
       return null;
     }
 
-    return Authorizations.withBasicCredentials(auth.getUsername(), auth.getPassword());
+    return new Credential(auth.getUsername(), auth.getPassword());
   }
 
   /**

@@ -67,6 +67,13 @@ public class CredentialRetrieverFactory {
     return this;
   }
 
+  public CredentialRetriever known(Credential credential, String credentialSource) {
+    return () -> {
+      logGotCredentialsFrom(credentialSource);
+      return credential;
+    };
+  }
+
   /**
    * Creates a new {@link CredentialRetriever} for retrieving credentials via a Docker credential
    * helper, such as {@code docker-credential-gcr}.
