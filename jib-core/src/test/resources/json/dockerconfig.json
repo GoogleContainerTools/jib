@@ -1,8 +1,8 @@
 {
   "auths":{
-    "some other registry":{"auth":"some other auth"},
-    "some registry":{"auth":"some auth","password":"ignored"},
-    "https://registry":{"auth":"token"},
+    "some other registry":{"auth":"c29tZTpvdGhlcjphdXRo"},
+    "some registry":{"auth":"c29tZTphdXRo","password":"ignored"},
+    "https://registry":{"auth":"dG9rZW4="},
 
     "just registry":{},
     "https://with.protocol":{},
