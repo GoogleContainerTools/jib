@@ -162,7 +162,8 @@ public class GradleLayerConfigurationsTest {
         mockProject, mockGradleJibLogger, Paths.get("nonexistent/path"));
 
     Mockito.verify(mockGradleJibLogger)
-        .warn("Could not find build output directory '" + nonexistentFile + "'");
+        .info("Adding corresponding output directories of source sets to image.");
+    Mockito.verify(mockGradleJibLogger).info("\t'" + nonexistentFile + "' (not found, skipped)");
     Mockito.verify(mockGradleJibLogger)
         .warn("No classes files were found - did you compile your project?");
   }
