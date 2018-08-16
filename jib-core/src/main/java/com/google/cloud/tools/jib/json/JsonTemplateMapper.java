@@ -79,7 +79,10 @@ public class JsonTemplateMapper {
   }
 
   /**
-   * Deserializes a JSON object from an input stream. The input stream will not be closed.
+   * Deserializes a JSON object from an input stream.
+   *
+   * <p>Note that the input stream will be closed as Jackson's {@link
+   * com.fasterxml.jackson.core.JsonParser.Feature#AUTO_CLOSE_SOURCE} flag is enabled by default.
    *
    * @param <T> child type of {@link JsonTemplate}
    * @param inputStream an input stream
