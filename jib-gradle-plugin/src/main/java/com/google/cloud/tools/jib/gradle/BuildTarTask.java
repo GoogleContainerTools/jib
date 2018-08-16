@@ -40,8 +40,7 @@ import org.gradle.api.tasks.options.Option;
 /** Builds a container image to a tarball. */
 public class BuildTarTask extends DefaultTask {
 
-  private static final HelpfulSuggestions HELPFUL_SUGGESTIONS =
-      HelpfulSuggestionsProvider.get("Building image tarball failed");
+  private static final String HELPFUL_SUGGESTIONS_PREFIX = "Building image tarball failed";
 
   @Nullable private JibExtension jibExtension;
 
@@ -105,13 +104,15 @@ public class BuildTarTask extends DefaultTask {
         GradleProjectProperties.getForProject(
             getProject(), gradleJibLogger, jibExtension.getExtraDirectoryPath());
 
+    GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
+        new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);
     ImageReference targetImage =
         ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
             jibExtension.getTargetImage(),
             gradleJibLogger,
             getProject().getName(),
             getProject().getVersion().toString(),
-            HELPFUL_SUGGESTIONS);
+            gradleHelpfulSuggestionsBuilder.build());
 
     PluginConfigurationProcessor pluginConfigurationProcessor =
         PluginConfigurationProcessor.processCommonConfiguration(
@@ -127,10 +128,18 @@ public class BuildTarTask extends DefaultTask {
                 pluginConfigurationProcessor.getContainerConfigurationBuilder().build())
             .build();
 
+    HelpfulSuggestions helpfulSuggestions =
+        gradleHelpfulSuggestionsBuilder
+            .setBaseImageReference(buildConfiguration.getBaseImageConfiguration().getImage())
+            .setAreKnownCredentialsDefinedForBaseImage(
+                pluginConfigurationProcessor.getFromCredential() != null)
+            .setTargetImageReference(buildConfiguration.getTargetImageConfiguration().getImage())
+            .build();
+
     // Uses a directory in the Gradle build cache as the Jib cache.
     try {
       BuildStepsRunner.forBuildTar(Paths.get(getTargetPath()), buildConfiguration)
-          .build(HELPFUL_SUGGESTIONS);
+          .build(helpfulSuggestions);
 
     } catch (CacheDirectoryCreationException | BuildStepsExecutionException ex) {
       throw new GradleException(ex.getMessage(), ex.getCause());

@@ -41,8 +41,7 @@ public class BuildTarMojo extends JibPluginConfiguration {
 
   @VisibleForTesting static final String GOAL_NAME = "buildTar";
 
-  private static final HelpfulSuggestions HELPFUL_SUGGESTIONS =
-      HelpfulSuggestionsProvider.get("Building image tarball failed");
+  private static final String HELPFUL_SUGGESTIONS_PREFIX = "Building image tarball failed";
 
   @Override
   public void execute() throws MojoExecutionException {
@@ -56,13 +55,16 @@ public class BuildTarMojo extends JibPluginConfiguration {
         MavenProjectProperties.getForProject(getProject(), mavenJibLogger, getExtraDirectory());
 
     try {
+      MavenHelpfulSuggestionsBuilder mavenHelpfulSuggestionsBuilder =
+          new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this);
+
       ImageReference targetImage =
           ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
               getTargetImage(),
               mavenJibLogger,
               getProject().getName(),
               getProject().getVersion(),
-              HELPFUL_SUGGESTIONS);
+              mavenHelpfulSuggestionsBuilder.build());
 
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfiguration(
@@ -78,10 +80,18 @@ public class BuildTarMojo extends JibPluginConfiguration {
                   pluginConfigurationProcessor.getContainerConfigurationBuilder().build())
               .build();
 
+      HelpfulSuggestions helpfulSuggestions =
+          mavenHelpfulSuggestionsBuilder
+              .setBaseImageReference(buildConfiguration.getBaseImageConfiguration().getImage())
+              .setAreKnownCredentialsDefinedForBaseImage(
+                  pluginConfigurationProcessor.getFromCredential() != null)
+              .setTargetImageReference(buildConfiguration.getTargetImageConfiguration().getImage())
+              .build();
+
       BuildStepsRunner.forBuildTar(
               Paths.get(getProject().getBuild().getDirectory()).resolve("jib-image.tar"),
               buildConfiguration)
-          .build(HELPFUL_SUGGESTIONS);
+          .build(helpfulSuggestions);
       getLog().info("");
 
     } catch (CacheDirectoryCreationException

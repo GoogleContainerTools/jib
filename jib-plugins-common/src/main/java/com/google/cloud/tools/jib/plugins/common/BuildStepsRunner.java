@@ -109,7 +109,6 @@ public class BuildStepsRunner {
 
   private static void handleRegistryUnauthorizedException(
       RegistryUnauthorizedException registryUnauthorizedException,
-      BuildConfiguration buildConfiguration,
       HelpfulSuggestions helpfulSuggestions)
       throws BuildStepsExecutionException {
     if (registryUnauthorizedException.getHttpResponseException().getStatusCode()
@@ -121,46 +120,8 @@ public class BuildStepsRunner {
           registryUnauthorizedException);
 
     } else {
-      boolean isImageForBase =
-          registryUnauthorizedException
-                  .getRegistry()
-                  .equals(buildConfiguration.getBaseImageConfiguration().getImageRegistry())
-              && registryUnauthorizedException
-                  .getRepository()
-                  .equals(buildConfiguration.getBaseImageConfiguration().getImageRepository());
-      boolean isImageForTarget =
-          registryUnauthorizedException
-                  .getRegistry()
-                  .equals(buildConfiguration.getTargetImageConfiguration().getImageRegistry())
-              && registryUnauthorizedException
-                  .getRepository()
-                  .equals(buildConfiguration.getTargetImageConfiguration().getImageRepository());
-      boolean areBaseImageCredentialsConfigured =
-          buildConfiguration.getBaseImageConfiguration().getCredentialHelper() != null
-              || buildConfiguration.getBaseImageConfiguration().getKnownRegistryCredentials()
-                  != null;
-      boolean areTargetImageCredentialsConfigured =
-          buildConfiguration.getTargetImageConfiguration().getCredentialHelper() != null
-              || buildConfiguration.getTargetImageConfiguration().getKnownRegistryCredentials()
-                  != null;
-
-      if (isImageForBase && !areBaseImageCredentialsConfigured) {
-        throw new BuildStepsExecutionException(
-            helpfulSuggestions.forNoCredentialHelpersDefinedForBaseImage(
-                registryUnauthorizedException.getRegistry()),
-            registryUnauthorizedException);
-      }
-      if (isImageForTarget && !areTargetImageCredentialsConfigured) {
-        throw new BuildStepsExecutionException(
-            helpfulSuggestions.forNoCredentialHelpersDefinedForTargetImage(
-                registryUnauthorizedException.getRegistry()),
-            registryUnauthorizedException);
-      }
-
-      // Credential helper probably was not configured correctly or did not have the necessary
-      // credentials.
       throw new BuildStepsExecutionException(
-          helpfulSuggestions.forCredentialsNotCorrect(registryUnauthorizedException.getRegistry()),
+          helpfulSuggestions.forNoCredentialsDefined(registryUnauthorizedException.getRegistry(), registryUnauthorizedException.getRepository()),
           registryUnauthorizedException);
     }
   }
@@ -229,7 +190,6 @@ public class BuildStepsRunner {
       } else if (exceptionDuringBuildSteps instanceof RegistryUnauthorizedException) {
         handleRegistryUnauthorizedException(
             (RegistryUnauthorizedException) exceptionDuringBuildSteps,
-            buildConfiguration,
             helpfulSuggestions);
 
       } else if (exceptionDuringBuildSteps instanceof RegistryCredentialsNotSentException) {
@@ -243,7 +203,6 @@ public class BuildStepsRunner {
                 buildConfiguration.getTargetImageConfiguration().getImageRegistry(),
                 buildConfiguration.getTargetImageConfiguration().getImageRepository(),
                 (HttpResponseException) exceptionDuringBuildSteps.getCause()),
-            buildConfiguration,
             helpfulSuggestions);
 
       } else if (exceptionDuringBuildSteps instanceof UnknownHostException) {

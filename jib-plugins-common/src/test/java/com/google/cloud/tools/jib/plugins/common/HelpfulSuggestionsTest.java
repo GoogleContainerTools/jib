@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
+import com.google.cloud.tools.jib.image.ImageReference;
 import java.nio.file.Paths;
 import org.junit.Assert;
 import org.junit.Test;
@@ -27,8 +28,12 @@ public class HelpfulSuggestionsTest {
       new HelpfulSuggestions(
           "messagePrefix",
           "clearCacheCommand",
+          ImageReference.of("baseregistry", "baserepository", null),
+          true,
           "baseImageCredHelperConfiguration",
           registry -> "baseImageAuthConfiguration " + registry,
+          ImageReference.of("targetregistry", "targetrepository", null),
+          false,
           "targetImageCredHelperConfiguration",
           registry -> "targetImageAuthConfiguration " + registry,
           "toProperty",
@@ -53,23 +58,20 @@ public class HelpfulSuggestionsTest {
         "messagePrefix, perhaps you should make sure you have permissions for imageReference",
         TEST_HELPFUL_SUGGESTIONS.forHttpStatusCodeForbidden("imageReference"));
     Assert.assertEquals(
-        "messagePrefix, perhaps you should set a credential helper name with the configuration 'baseImageCredHelperConfiguration' or baseImageAuthConfiguration registry",
-        TEST_HELPFUL_SUGGESTIONS.forNoCredentialHelpersDefinedForBaseImage("registry"));
+        "messagePrefix, perhaps you should set a credential helper name with the configuration 'baseImageCredHelperConfiguration' or baseImageAuthConfiguration baseregistry",
+        TEST_HELPFUL_SUGGESTIONS.forNoCredentialsDefined("baseregistry", "baserepository"));
     Assert.assertEquals(
-        "messagePrefix, perhaps you should set a credential helper name with the configuration 'targetImageCredHelperConfiguration' or targetImageAuthConfiguration registry",
-        TEST_HELPFUL_SUGGESTIONS.forNoCredentialHelpersDefinedForTargetImage("registry"));
-    Assert.assertEquals(
-        "messagePrefix, perhaps you should make sure your credentials for 'registry' are set up correctly",
-        TEST_HELPFUL_SUGGESTIONS.forCredentialsNotCorrect("registry"));
+        "messagePrefix, perhaps you should make sure your credentials for 'targetregistry' are set up correctly",
+        TEST_HELPFUL_SUGGESTIONS.forNoCredentialsDefined("targetregistry", "targetrepository"));
     Assert.assertEquals(
         "messagePrefix, perhaps you should clear directory manually before creating the Docker context",
-        TEST_HELPFUL_SUGGESTIONS.forDockerContextInsecureRecursiveDelete("directory"));
+        HelpfulSuggestions.forDockerContextInsecureRecursiveDelete("messagePrefix", "directory"));
     Assert.assertEquals(
         "messagePrefix, perhaps you should add a `mainClass` configuration to plugin",
-        TEST_HELPFUL_SUGGESTIONS.forMainClassNotFound("plugin"));
+        HelpfulSuggestions.forMainClassNotFound("messagePrefix", "plugin"));
     Assert.assertEquals(
         "messagePrefix, perhaps you should add a parameter configuration parameter to your buildFile or set the parameter via the commandline (e.g. 'command').",
-        TEST_HELPFUL_SUGGESTIONS.forToNotConfigured("parameter", "buildFile", "command"));
+        HelpfulSuggestions.forToNotConfigured("messagePrefix", "parameter", "buildFile", "command"));
     Assert.assertEquals("messagePrefix", TEST_HELPFUL_SUGGESTIONS.none());
     Assert.assertEquals(
         "messagePrefix, perhaps you should use a registry that supports HTTPS so credentials can be sent safely, or set the 'sendCredentialsOverHttp' system property to true",
