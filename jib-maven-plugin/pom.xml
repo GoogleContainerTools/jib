@@ -209,12 +209,12 @@
 
   <build>
     <plugins>
-      <!-- Imports jib-core sources -->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
         <version>3.0.0</version>
         <executions>
+          <!-- Imports jib-core sources -->
           <execution>
             <id>add-jib-core-sources</id>
             <phase>generate-sources</phase>
@@ -289,6 +289,60 @@
               <resources>
                 <resource>
                   <directory>${basedir}/../jib-core/src/integration-test/resources</directory>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+
+          <!-- Imports jib-plugins-common sources -->
+          <execution>
+            <id>add-jib-plugins-common-sources</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>${basedir}/../jib-plugins-common/src/main/java</source>
+              </sources>
+            </configuration>
+          </execution>
+          <execution>
+            <id>add-jib-plugins-common-resources</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-resource</goal>
+            </goals>
+            <configuration>
+              <resources>
+                <resource>
+                  <directory>${basedir}/../jib-plugins-common/src/main/resources</directory>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+          <execution>
+            <id>add-jib-plugins-common-test-sources</id>
+            <phase>generate-test-sources</phase>
+            <goals>
+              <goal>add-test-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>${basedir}/../jib-plugins-common/src/test/java</source>
+              </sources>
+            </configuration>
+          </execution>
+          <execution>
+            <id>add-jib-plugins-common-test-resources</id>
+            <phase>generate-test-sources</phase>
+            <goals>
+              <goal>add-test-resource</goal>
+            </goals>
+            <configuration>
+              <resources>
+                <resource>
+                  <directory>${basedir}/../jib-plugins-common/src/test/resources</directory>
                 </resource>
               </resources>
             </configuration>
