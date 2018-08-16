@@ -22,6 +22,14 @@ import javax.annotation.Nullable;
 @FunctionalInterface
 public interface CredentialRetriever {
 
+  /** Thrown if something went wrong during {@link CredentialRetriever#retrieve}. */
+  class CredentialRetrievalException extends Exception {
+
+    public CredentialRetrievalException(Throwable cause) {
+      super(cause);
+    }
+  }
+
   /**
    * Fetches the credentials. <b>Implementations must be thread-safe.</b>
    *
@@ -31,8 +39,8 @@ public interface CredentialRetriever {
    *
    * @return the fetched credentials or {@code null} if no credentials could be fetched with this
    *     provider
-   * @throws Exception if the credential retrieval encountered an exception
+   * @throws CredentialRetrievalException if the credential retrieval encountered an exception
    */
   @Nullable
-  Credential retrieve() throws Exception;
+  Credential retrieve() throws CredentialRetrievalException;
 }
