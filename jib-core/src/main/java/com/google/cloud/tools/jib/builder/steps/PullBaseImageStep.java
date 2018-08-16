@@ -22,7 +22,9 @@ import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.BaseImageWithAuthorization;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.http.Authorization;
+import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerCountMismatchException;
@@ -128,12 +130,14 @@ class PullBaseImageStep
         RetrieveRegistryCredentialsStep retrieveBaseRegistryCredentialsStep =
             RetrieveRegistryCredentialsStep.forBaseImage(directExecutorService, buildConfiguration);
 
-        Authorization registryCredentials =
-            NonBlockingSteps.get(retrieveBaseRegistryCredentialsStep);
+        Credential registryCredential = NonBlockingSteps.get(retrieveBaseRegistryCredentialsStep);
+        Authorization registryAuthorization =
+            Authorizations.withBasicCredentials(
+                registryCredential.getUsername(), registryCredential.getPassword());
 
         try {
           return new BaseImageWithAuthorization(
-              pullBaseImage(registryCredentials), registryCredentials);
+              pullBaseImage(registryAuthorization), registryAuthorization);
 
         } catch (RegistryUnauthorizedException registryUnauthorizedException) {
           // The registry requires us to authenticate using the Docker Token Authentication.
@@ -152,11 +156,11 @@ class PullBaseImageStep
                     "Failed to retrieve authentication challenge for registry that required token authentication");
             throw registryUnauthorizedException;
           }
-          registryCredentials =
-              registryAuthenticator.setAuthorization(registryCredentials).authenticatePull();
+          registryAuthorization =
+              registryAuthenticator.setAuthorization(registryAuthorization).authenticatePull();
 
           return new BaseImageWithAuthorization(
-              pullBaseImage(registryCredentials), registryCredentials);
+              pullBaseImage(registryAuthorization), registryAuthorization);
         }
       }
     }
@@ -165,7 +169,7 @@ class PullBaseImageStep
   /**
    * Pulls the base image.
    *
-   * @param registryCredentials authentication credentials to possibly use
+   * @param registryAuthorization authentication credentials to possibly use
    * @return the pulled image
    * @throws IOException when an I/O exception occurs during the pulling
    * @throws RegistryException if communicating with the registry caused a known error
@@ -175,7 +179,7 @@ class PullBaseImageStep
    * @throws BadContainerConfigurationFormatException if the container configuration is in a bad
    *     format
    */
-  private Image<Layer> pullBaseImage(@Nullable Authorization registryCredentials)
+  private Image<Layer> pullBaseImage(@Nullable Authorization registryAuthorization)
       throws IOException, RegistryException, LayerPropertyNotFoundException,
           LayerCountMismatchException, BadContainerConfigurationFormatException {
     RegistryClient registryClient =
@@ -184,7 +188,7 @@ class PullBaseImageStep
                 buildConfiguration.getBaseImageConfiguration().getImageRegistry(),
                 buildConfiguration.getBaseImageConfiguration().getImageRepository())
             .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
-            .setAuthorization(registryCredentials)
+            .setAuthorization(registryAuthorization)
             .newRegistryClient();
 
     ManifestTemplate manifestTemplate =
