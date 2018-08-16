@@ -19,13 +19,17 @@ package com.google.cloud.tools.jib.cache;
 import com.google.cloud.tools.jib.cache.json.CacheMetadataTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
-import java.io.BufferedOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.EnumSet;
 import java.util.List;
 
 /** Manages a cache. Implementation is thread-safe. */
@@ -59,10 +63,14 @@ public class Cache implements Closeable {
     }
 
     try {
-      CacheMetadataTemplate cacheMetadataJson =
-          JsonTemplateMapper.readJsonFromFile(cacheMetadataJsonFile, CacheMetadataTemplate.class);
-      return CacheMetadataTranslator.fromTemplate(cacheMetadataJson, cacheDirectory);
-
+      // channel is closed by inputStream.close()
+      FileChannel channel = FileChannel.open(cacheMetadataJsonFile, StandardOpenOption.READ);
+      channel.lock(0, Long.MAX_VALUE, true); // shared lock, released by channel close
+      try (InputStream inputStream = Channels.newInputStream(channel)) {
+        CacheMetadataTemplate cacheMetadataJson =
+            JsonTemplateMapper.readJson(inputStream, CacheMetadataTemplate.class);
+        return CacheMetadataTranslator.fromTemplate(cacheMetadataJson, cacheDirectory);
+      }
     } catch (IOException ex) {
       // The cache metadata is probably corrupted.
       throw new CacheMetadataCorruptedException(ex);
@@ -139,9 +147,16 @@ public class Cache implements Closeable {
     CacheMetadataTemplate cacheMetadataJson =
         CacheMetadataTranslator.toTemplate(cacheMetadataBuilder.build());
 
-    try (OutputStream fileOutputStream =
-        new BufferedOutputStream(Files.newOutputStream(cacheMetadataJsonFile))) {
-      JsonTemplateMapper.toBlob(cacheMetadataJson).writeTo(fileOutputStream);
+    EnumSet<StandardOpenOption> createOrTruncate =
+        EnumSet.of(
+            StandardOpenOption.CREATE,
+            StandardOpenOption.WRITE,
+            StandardOpenOption.TRUNCATE_EXISTING);
+    // channel is closed by outputStream.close()
+    FileChannel channel = FileChannel.open(cacheMetadataJsonFile, createOrTruncate);
+    channel.lock(); // released when channel is closed
+    try (OutputStream outputStream = Channels.newOutputStream(channel)) {
+      JsonTemplateMapper.toBlob(cacheMetadataJson).writeTo(outputStream);
     }
   }
 }

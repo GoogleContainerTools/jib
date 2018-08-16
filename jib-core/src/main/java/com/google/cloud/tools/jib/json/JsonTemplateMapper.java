@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -75,6 +76,20 @@ public class JsonTemplateMapper {
   public static <T extends JsonTemplate> T readJson(String jsonString, Class<T> templateClass)
       throws IOException {
     return objectMapper.readValue(jsonString, templateClass);
+  }
+
+  /**
+   * Deserializes a JSON object from an input stream. The input stream will not be closed.
+   *
+   * @param <T> child type of {@link JsonTemplate}
+   * @param inputStream an input stream
+   * @param templateClass the template to deserialize the string to
+   * @return the template filled with the values parsed from {@code jsonString}
+   * @throws IOException if an error occurred during parsing the JSON
+   */
+  public static <T extends JsonTemplate> T readJson(InputStream inputStream, Class<T> templateClass)
+      throws IOException {
+    return objectMapper.readValue(inputStream, templateClass);
   }
 
   /**
