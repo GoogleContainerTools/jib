@@ -61,13 +61,13 @@ class GradleLayerConfigurations {
 
     // Adds each file in each classes output directory to the classes files list.
     FileCollection classesOutputDirectories = mainSourceSet.getOutput().getClassesDirs();
+    gradleJibLogger.info("Adding corresponding output directories of source sets to image");
     for (File classesOutputDirectory : classesOutputDirectories) {
       if (Files.notExists(classesOutputDirectory.toPath())) {
-        // Warns that output directory was not found.
-        gradleJibLogger.warn(
-            "Could not find build output directory '" + classesOutputDirectory + "'");
+        gradleJibLogger.info("\t'" + classesOutputDirectory + "' (not found, skipped)");
         continue;
       }
+      gradleJibLogger.info("\t'" + classesOutputDirectory + "'");
       try (Stream<Path> classFileStream = Files.list(classesOutputDirectory.toPath())) {
         classFileStream.forEach(classesFiles::add);
       }
