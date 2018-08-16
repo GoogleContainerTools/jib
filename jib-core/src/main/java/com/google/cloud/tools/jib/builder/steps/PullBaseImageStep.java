@@ -132,8 +132,10 @@ class PullBaseImageStep
 
         Credential registryCredential = NonBlockingSteps.get(retrieveBaseRegistryCredentialsStep);
         Authorization registryAuthorization =
-            Authorizations.withBasicCredentials(
-                registryCredential.getUsername(), registryCredential.getPassword());
+            registryCredential == null
+                ? null
+                : Authorizations.withBasicCredentials(
+                    registryCredential.getUsername(), registryCredential.getPassword());
 
         try {
           return new BaseImageWithAuthorization(
