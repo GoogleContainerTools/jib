@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Reordered classpath in entrypoint to allow dependency patching ([#777](https://github.com/GoogleContainerTools/jib/issues/777))
+- Changed logging level of missing build output directory message ([#677](https://github.com/GoogleContainerTools/jib/issues/677))
 
 ### Fixed
 
