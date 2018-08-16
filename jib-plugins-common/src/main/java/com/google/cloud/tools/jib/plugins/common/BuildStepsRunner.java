@@ -23,7 +23,6 @@ import com.google.cloud.tools.jib.builder.BuildSteps;
 import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
-import com.google.cloud.tools.jib.cache.Caches;
 import com.google.cloud.tools.jib.cache.Caches.Initializer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
@@ -101,7 +100,7 @@ public class BuildStepsRunner {
             ? CacheConfiguration.forDefaultUserLevelCacheDirectory()
             : buildConfiguration.getBaseImageLayersCacheConfiguration();
 
-    return new Caches.Initializer(
+    return new Initializer(
         baseImageLayersCacheConfiguration.getCacheDirectory(),
         applicationLayersCacheConfiguration.shouldEnsureOwnership(),
         applicationLayersCacheConfiguration.getCacheDirectory(),
