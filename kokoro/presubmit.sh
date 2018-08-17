@@ -3,6 +3,9 @@
 set -e
 set -x
 
+date
+echo QUIT | openssl s_client -connect gcr.io:443 | openssl x509 -in - -text -noout | grep -i validity -A 2
+
 gcloud components install docker-credential-gcr
 export PATH=$PATH:/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/bin/
 
