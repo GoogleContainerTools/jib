@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.cache;
 
+import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.cache.json.CacheMetadataTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
@@ -58,8 +59,8 @@ public class Cache implements Closeable {
 
     try {
       CacheMetadataTemplate cacheMetadataJson =
-          JsonTemplateMapper.readJsonFromFile(
-              cacheMetadataJsonFile, CacheMetadataTemplate.class, true /* acquireLock */);
+          JsonTemplateMapper.readJsonFromFileWithLock(
+              cacheMetadataJsonFile, CacheMetadataTemplate.class);
       return CacheMetadataTranslator.fromTemplate(cacheMetadataJson, cacheDirectory);
     } catch (IOException ex) {
       // The cache metadata is probably corrupted.
@@ -137,7 +138,6 @@ public class Cache implements Closeable {
     CacheMetadataTemplate cacheMetadataJson =
         CacheMetadataTranslator.toTemplate(cacheMetadataBuilder.build());
 
-    JsonTemplateMapper.toBlob(cacheMetadataJson)
-        .writeTo(cacheMetadataJsonFile, true /* acquireLock */);
+    Blobs.writeToFileWithLock(JsonTemplateMapper.toBlob(cacheMetadataJson), cacheMetadataJsonFile);
   }
 }

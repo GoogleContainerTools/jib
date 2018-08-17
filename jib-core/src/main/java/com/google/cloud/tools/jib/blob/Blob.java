@@ -18,11 +18,6 @@ package com.google.cloud.tools.jib.blob;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.util.EnumSet;
 
 /** Holds a BLOB source for writing to an {@link OutputStream}. */
 public interface Blob {
@@ -35,28 +30,4 @@ public interface Blob {
    * @throws IOException if writing the BLOB fails
    */
   BlobDescriptor writeTo(OutputStream outputStream) throws IOException;
-
-  /**
-   * Writes the BLOB to a file, optionally with an exclusive lock.
-   *
-   * @param jsonFile the file to write to
-   * @param acquireLock if true then acquire an exclusive lock
-   * @return the {@link BlobDescriptor} of the written BLOB
-   * @throws IOException if writing the BLOB fails
-   */
-  default BlobDescriptor writeTo(Path jsonFile, boolean acquireLock) throws IOException {
-    EnumSet<StandardOpenOption> createOrTruncate =
-        EnumSet.of(
-            StandardOpenOption.CREATE,
-            StandardOpenOption.WRITE,
-            StandardOpenOption.TRUNCATE_EXISTING);
-    // channel is closed by outputStream.close()
-    FileChannel channel = FileChannel.open(jsonFile, createOrTruncate);
-    if (acquireLock) {
-      channel.lock(); // released when channel is closed
-    }
-    try (OutputStream outputStream = Channels.newOutputStream(channel)) {
-      return writeTo(outputStream);
-    }
-  }
 }

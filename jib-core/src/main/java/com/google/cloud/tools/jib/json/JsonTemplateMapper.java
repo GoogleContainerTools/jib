@@ -68,20 +68,16 @@ public class JsonTemplateMapper {
   }
 
   /**
-   * Deserializes a JSON file via a JSON object template.
+   * Deserializes a JSON file via a JSON object template with a shared lock on the file
    *
    * @param <T> child type of {@link JsonTemplate}
    * @param jsonFile a file containing a JSON string
    * @param templateClass the template to deserialize the string to
-   * @param acquireLock if true then acquire a shared lock on the file
    * @return the template filled with the values parsed from {@code jsonFile}
    * @throws IOException if an error occurred during reading the file or parsing the JSON
    */
-  public static <T extends JsonTemplate> T readJsonFromFile(
-      Path jsonFile, Class<T> templateClass, boolean acquireLock) throws IOException {
-    if (!acquireLock) {
-      return objectMapper.readValue(Files.newInputStream(jsonFile), templateClass);
-    }
+  public static <T extends JsonTemplate> T readJsonFromFileWithLock(
+      Path jsonFile, Class<T> templateClass) throws IOException {
     // channel is closed by inputStream.close()
     FileChannel channel = FileChannel.open(jsonFile, StandardOpenOption.READ);
     channel.lock(0, Long.MAX_VALUE, true); // shared lock, released by channel close
