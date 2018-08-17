@@ -201,6 +201,7 @@ class PluginConfigurationProcessor {
     return mavenSettingsServerCredentials;
   }
 
+  @Nullable
   Credential getFromCredential() {
     return fromCredential;
   }
