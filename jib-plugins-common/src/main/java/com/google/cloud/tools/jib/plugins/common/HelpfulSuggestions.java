@@ -32,8 +32,10 @@ public class HelpfulSuggestions {
    * @param command an example command for passing the parameter via commandline
    * @return a suggested fix for a missing target image configuration
    */
-  public static String forToNotConfigured(String messagePrefix, String parameter, String buildConfigFilename, String command) {
-    return suggest(messagePrefix,
+  public static String forToNotConfigured(
+      String messagePrefix, String parameter, String buildConfigFilename, String command) {
+    return suggest(
+        messagePrefix,
         "add a "
             + parameter
             + " configuration parameter to your "
@@ -44,15 +46,18 @@ public class HelpfulSuggestions {
   }
 
   public static String forDockerNotInstalled(String messagePrefix) {
-    return suggest(messagePrefix, "make sure Docker is installed and you have correct privileges to run it");
+    return suggest(
+        messagePrefix, "make sure Docker is installed and you have correct privileges to run it");
   }
 
   public static String forMainClassNotFound(String messagePrefix, String pluginName) {
     return suggest(messagePrefix, "add a `mainClass` configuration to " + pluginName);
   }
 
-  public static String forDockerContextInsecureRecursiveDelete(String messagePrefix, String directory) {
-    return suggest(messagePrefix, "clear " + directory + " manually before creating the Docker context");
+  public static String forDockerContextInsecureRecursiveDelete(
+      String messagePrefix, String directory) {
+    return suggest(
+        messagePrefix, "clear " + directory + " manually before creating the Docker context");
   }
 
   /**
@@ -84,13 +89,15 @@ public class HelpfulSuggestions {
    * @param messagePrefix the initial message text
    * @param clearCacheCommand the command for clearing the cache
    * @param baseImageReference the base image reference
-   * @param noCredentialsDefinedForBaseImage {@code true} if no credentials were defined for the base image; {@code false} otherwise
+   * @param noCredentialsDefinedForBaseImage {@code true} if no credentials were defined for the
+   *     base image; {@code false} otherwise
    * @param baseImageCredHelperConfiguration the configuration defining the credential helper name
    *     for the base image
    * @param baseImageAuthConfiguration the way to define raw credentials for the base image - takes
    *     the base image registry as an argument
    * @param targetImageReference the target image reference
-   * @param noCredentialsDefinedForTargetImage {@code true} if no credentials were defined for the base image; {@code false} otherwise
+   * @param noCredentialsDefinedForTargetImage {@code true} if no credentials were defined for the
+   *     base image; {@code false} otherwise
    * @param targetImageCredHelperConfiguration the configuration defining the credential helper name
    *     for the target image
    * @param targetImageAuthConfiguration the way to define raw credentials for the target image -
@@ -155,11 +162,15 @@ public class HelpfulSuggestions {
   public String forNoCredentialsDefined(String registry, String repository) {
     Preconditions.checkNotNull(baseImageReference);
     Preconditions.checkNotNull(targetImageReference);
-    if (noCredentialsDefinedForBaseImage && registry.equals(baseImageReference.getRegistry()) && repository.equals(baseImageReference.getRepository())) {
+    if (noCredentialsDefinedForBaseImage
+        && registry.equals(baseImageReference.getRegistry())
+        && repository.equals(baseImageReference.getRepository())) {
       return forNoCredentialHelpersDefined(
           baseImageCredHelperConfiguration, baseImageAuthConfiguration.apply(registry));
     }
-    if (noCredentialsDefinedForTargetImage && registry.equals(targetImageReference.getRegistry()) && repository.equals(targetImageReference.getRepository())) {
+    if (noCredentialsDefinedForTargetImage
+        && registry.equals(targetImageReference.getRegistry())
+        && repository.equals(targetImageReference.getRepository())) {
       return forNoCredentialHelpersDefined(
           targetImageCredHelperConfiguration, targetImageAuthConfiguration.apply(registry));
     }

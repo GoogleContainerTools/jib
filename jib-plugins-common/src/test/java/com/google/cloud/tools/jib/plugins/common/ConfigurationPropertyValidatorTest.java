@@ -130,7 +130,19 @@ public class ConfigurationPropertyValidatorTest {
   public void testGetGeneratedTargetDockerTag() throws InvalidImageReferenceException {
     HelpfulSuggestions helpfulSuggestions =
         new HelpfulSuggestions(
-            "", "", mockImageReference, false, "", unused -> "", mockImageReference, false, "", unused -> "", "to", "--to", "build.txt");
+            "",
+            "",
+            mockImageReference,
+            false,
+            "",
+            unused -> "",
+            mockImageReference,
+            false,
+            "",
+            unused -> "",
+            "to",
+            "--to",
+            "build.txt");
 
     // Target configured
     ImageReference result =

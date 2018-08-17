@@ -125,18 +125,20 @@ public class MainClassResolver {
     switch (mainClassFinderResult.getErrorType()) {
       case MAIN_CLASS_NOT_FOUND:
         throw new MainClassInferenceException(
-            HelpfulSuggestions
-                .forMainClassNotFound("Main class was not found", projectProperties.getPluginName()));
+            HelpfulSuggestions.forMainClassNotFound(
+                "Main class was not found", projectProperties.getPluginName()));
 
       case MULTIPLE_MAIN_CLASSES:
         throw new MainClassInferenceException(
             HelpfulSuggestions.forMainClassNotFound(
-                    "Multiple valid main classes were found: "
-                        + String.join(", ", mainClassFinderResult.getFoundMainClasses()), projectProperties.getPluginName()));
+                "Multiple valid main classes were found: "
+                    + String.join(", ", mainClassFinderResult.getFoundMainClasses()),
+                projectProperties.getPluginName()));
 
       case IO_EXCEPTION:
         throw new MainClassInferenceException(
-            HelpfulSuggestions.forMainClassNotFound("Failed to get main class",projectProperties.getPluginName()),
+            HelpfulSuggestions.forMainClassNotFound(
+                "Failed to get main class", projectProperties.getPluginName()),
             mainClassFinderResult.getErrorCause());
 
       default:

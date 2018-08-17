@@ -25,7 +25,6 @@ import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
-import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.InsecureRegistryException;
@@ -223,7 +222,7 @@ public class BuildStepsRunnerTest {
       Assert.assertEquals(mockRegistryUnauthorizedException, ex.getCause());
     }
   }
-  
+
   @Test
   public void testBuildImage_executionException_registryCredentialsNotSentException()
       throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,

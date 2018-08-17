@@ -121,7 +121,9 @@ public class BuildStepsRunner {
 
     } else {
       throw new BuildStepsExecutionException(
-          helpfulSuggestions.forNoCredentialsDefined(registryUnauthorizedException.getRegistry(), registryUnauthorizedException.getRepository()),
+          helpfulSuggestions.forNoCredentialsDefined(
+              registryUnauthorizedException.getRegistry(),
+              registryUnauthorizedException.getRepository()),
           registryUnauthorizedException);
     }
   }
@@ -189,8 +191,7 @@ public class BuildStepsRunner {
 
       } else if (exceptionDuringBuildSteps instanceof RegistryUnauthorizedException) {
         handleRegistryUnauthorizedException(
-            (RegistryUnauthorizedException) exceptionDuringBuildSteps,
-            helpfulSuggestions);
+            (RegistryUnauthorizedException) exceptionDuringBuildSteps, helpfulSuggestions);
 
       } else if (exceptionDuringBuildSteps instanceof RegistryCredentialsNotSentException) {
         throw new BuildStepsExecutionException(
