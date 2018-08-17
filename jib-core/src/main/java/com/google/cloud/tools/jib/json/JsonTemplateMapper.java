@@ -21,8 +21,11 @@ import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
 
 // TODO: Add JsonFactory for HTTP response parsing.
@@ -65,6 +68,29 @@ public class JsonTemplateMapper {
   }
 
   /**
+   * Deserializes a JSON file via a JSON object template.
+   *
+   * @param <T> child type of {@link JsonTemplate}
+   * @param jsonFile a file containing a JSON string
+   * @param templateClass the template to deserialize the string to
+   * @param acquireLock if true then acquire a shared lock on the file
+   * @return the template filled with the values parsed from {@code jsonFile}
+   * @throws IOException if an error occurred during reading the file or parsing the JSON
+   */
+  public static <T extends JsonTemplate> T readJsonFromFile(
+      Path jsonFile, Class<T> templateClass, boolean acquireLock) throws IOException {
+    if (!acquireLock) {
+      return objectMapper.readValue(Files.newInputStream(jsonFile), templateClass);
+    }
+    // channel is closed by inputStream.close()
+    FileChannel channel = FileChannel.open(jsonFile, StandardOpenOption.READ);
+    channel.lock(0, Long.MAX_VALUE, true); // shared lock, released by channel close
+    try (InputStream inputStream = Channels.newInputStream(channel)) {
+      return objectMapper.readValue(inputStream, templateClass);
+    }
+  }
+
+  /**
    * Deserializes a JSON object from a JSON string.
    *
    * @param <T> child type of {@link JsonTemplate}
@@ -76,23 +102,6 @@ public class JsonTemplateMapper {
   public static <T extends JsonTemplate> T readJson(String jsonString, Class<T> templateClass)
       throws IOException {
     return objectMapper.readValue(jsonString, templateClass);
-  }
-
-  /**
-   * Deserializes a JSON object from an input stream.
-   *
-   * <p>Note that the input stream will be closed as Jackson's {@link
-   * com.fasterxml.jackson.core.JsonParser.Feature#AUTO_CLOSE_SOURCE} flag is enabled by default.
-   *
-   * @param <T> child type of {@link JsonTemplate}
-   * @param inputStream an input stream
-   * @param templateClass the template to deserialize the string to
-   * @return the template filled with the values parsed from {@code jsonString}
-   * @throws IOException if an error occurred during parsing the JSON
-   */
-  public static <T extends JsonTemplate> T readJson(InputStream inputStream, Class<T> templateClass)
-      throws IOException {
-    return objectMapper.readValue(inputStream, templateClass);
   }
 
   /**
