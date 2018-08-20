@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.frontend;
 import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
+import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever.CredentialRetrievalException;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.credentials.DockerConfigCredentialRetriever;
 import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelperFactory;
@@ -169,6 +170,9 @@ public class CredentialRetrieverFactory {
               logger.info("  Caused by: " + ex.getCause().getMessage());
             }
           }
+
+        } catch (NonexistentServerUrlDockerCredentialHelperException | IOException ex) {
+          throw new CredentialRetrievalException(ex);
         }
       }
       return null;
@@ -188,6 +192,9 @@ public class CredentialRetrieverFactory {
         logger.info(
             "No credentials for " + imageReference.getRegistry() + " in " + credentialHelper);
         return null;
+
+      } catch (NonexistentDockerCredentialHelperException | IOException ex) {
+        throw new CredentialRetrievalException(ex);
       }
     };
   }
