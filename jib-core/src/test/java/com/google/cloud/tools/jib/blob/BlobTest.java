@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.common.io.Resources;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -29,6 +30,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -66,6 +68,35 @@ public class BlobTest {
     verifyBlobWriteTo(expected, Blobs.from(writer));
   }
 
+  @Test
+  public void testWriteToFileWithLock_newFile() throws IOException {
+    String expected = "crepecake";
+    File file = File.createTempFile("blob", "bin");
+    Assert.assertTrue(file.delete()); // ensure it doesn't exist
+
+    Blobs.writeToFileWithLock(Blobs.from(expected), file.toPath());
+
+    Assert.assertTrue(file.exists());
+    verifyBlobWriteTo(expected, Blobs.from(file.toPath()));
+  }
+
+  @Test
+  public void testWriteToFileWithLock_existingFile() throws IOException {
+    File file = File.createTempFile("blob", "bin");
+    // write out more bytes to ensure properly truncated
+    byte[] dataBytes = new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    Files.write(file.toPath(), dataBytes, StandardOpenOption.WRITE);
+    Assert.assertTrue(file.exists());
+    Assert.assertEquals(10, file.length());
+
+    String expected = "crepecake";
+    Blobs.writeToFileWithLock(Blobs.from(expected), file.toPath());
+
+    Assert.assertTrue(file.exists());
+    Assert.assertEquals(9, file.length());
+    verifyBlobWriteTo(expected, Blobs.from(file.toPath()));
+  }
+
   /** Checks that the {@link Blob} streams the expected string. */
   private void verifyBlobWriteTo(String expected, Blob blob) throws IOException {
     OutputStream outputStream = new ByteArrayOutputStream();
@@ -77,6 +108,7 @@ public class BlobTest {
     byte[] expectedBytes = expected.getBytes(StandardCharsets.UTF_8);
     Assert.assertEquals(expectedBytes.length, blobDescriptor.getSize());
 
+    @SuppressWarnings("resource") // no leak
     CountingDigestOutputStream countingDigestOutputStream =
         new CountingDigestOutputStream(Mockito.mock(OutputStream.class));
     countingDigestOutputStream.write(expectedBytes);

@@ -29,6 +29,7 @@ import java.security.DigestException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -88,5 +89,34 @@ public class JsonTemplateMapperTest {
     JsonTemplateMapper.toBlob(testJson).writeTo(jsonStream);
 
     Assert.assertEquals(expectedJson, jsonStream.toString());
+  }
+
+  @Test
+  public void tedstReadJsonWithLock() throws IOException, URISyntaxException, DigestException {
+    Path jsonFile = Paths.get(Resources.getResource("json/basic.json").toURI());
+
+    // Deserializes into a metadata JSON object.
+    TestJson testJson = JsonTemplateMapper.readJsonFromFileWithLock(jsonFile, TestJson.class);
+
+    Assert.assertThat(testJson.number, CoreMatchers.is(54));
+    Assert.assertThat(testJson.text, CoreMatchers.is("crepecake"));
+    Assert.assertThat(
+        testJson.digest,
+        CoreMatchers.is(
+            DescriptorDigest.fromDigest(
+                "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad")));
+    Assert.assertThat(testJson.innerObject, CoreMatchers.instanceOf(TestJson.InnerObject.class));
+    Assert.assertThat(testJson.innerObject.number, CoreMatchers.is(23));
+    Assert.assertThat(
+        testJson.innerObject.texts, CoreMatchers.is(Arrays.asList("first text", "second text")));
+    Assert.assertThat(
+        testJson.innerObject.digests,
+        CoreMatchers.is(
+            Arrays.asList(
+                DescriptorDigest.fromDigest(
+                    "sha256:91e0cae00b86c289b33fee303a807ae72dd9f0315c16b74e6ab0cdbe9d996c10"),
+                DescriptorDigest.fromHash(
+                    "4945ba5011739b0b98c4a41afe224e417f47c7c99b2ce76830999c9a0861b236"))));
+    // ignore testJson.list
   }
 }
