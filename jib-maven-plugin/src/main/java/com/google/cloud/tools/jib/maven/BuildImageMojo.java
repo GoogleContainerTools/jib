@@ -20,19 +20,17 @@ import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
-import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
+import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -87,42 +85,31 @@ public class BuildImageMojo extends JibPluginConfiguration {
 
     ImageReference targetImage =
         PluginConfigurationProcessor.parseImageReference(getTargetImage(), "to");
-    CredentialRetrieverFactory credentialRetrieverFactory =
-        CredentialRetrieverFactory.forImage(targetImage, mavenJibLogger);
+
+    DefaultCredentialRetrievers defaultCredentialRetrievers =
+        DefaultCredentialRetrievers.init(
+            CredentialRetrieverFactory.forImage(targetImage, mavenJibLogger));
     Credential toCredential =
         ConfigurationPropertyValidator.getImageCredential(
             mavenJibLogger, "jib.to.auth.username", "jib.to.auth.password", getTargetImageAuth());
-    CredentialRetriever knownCredentialRetriever = null;
     if (toCredential == null) {
       toCredential =
           pluginConfigurationProcessor
               .getMavenSettingsServerCredentials()
               .retrieve(targetImage.getRegistry());
       if (toCredential != null) {
-        knownCredentialRetriever =
-            credentialRetrieverFactory.known(
-                toCredential, MavenSettingsServerCredentials.CREDENTIAL_SOURCE);
+        defaultCredentialRetrievers.setKnownCredential(
+            toCredential, MavenSettingsServerCredentials.CREDENTIAL_SOURCE);
       }
     } else {
-      knownCredentialRetriever =
-          credentialRetrieverFactory.known(
-              toCredential, "jib-maven-plugin <to><auth> configuration");
+      defaultCredentialRetrievers.setKnownCredential(
+          toCredential, "jib-maven-plugin <to><auth> configuration");
     }
-    // Makes credential retriever list.
-    List<CredentialRetriever> credentialRetrievers = new ArrayList<>();
-    String credentialHelperSuffix = getTargetImageCredentialHelperName();
-    if (credentialHelperSuffix != null) {
-      credentialRetrievers.add(
-          credentialRetrieverFactory.dockerCredentialHelper(credentialHelperSuffix));
-    }
-    if (knownCredentialRetriever != null) {
-      credentialRetrievers.add(knownCredentialRetriever);
-    }
-    credentialRetrievers.add(credentialRetrieverFactory.inferCredentialHelper());
-    credentialRetrievers.add(credentialRetrieverFactory.dockerConfig());
+    defaultCredentialRetrievers.setCredentialHelperSuffix(getTargetImageCredentialHelperName());
+
     ImageConfiguration targetImageConfiguration =
         ImageConfiguration.builder(targetImage)
-            .setCredentialRetrievers(credentialRetrievers)
+            .setCredentialRetrievers(defaultCredentialRetrievers.asList())
             .build();
 
     BuildConfiguration buildConfiguration =
