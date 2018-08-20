@@ -32,8 +32,8 @@ class MavenHelpfulSuggestionsBuilder {
 
   @Nullable private ImageReference baseImageReference;
   @Nullable private ImageReference targetImageReference;
-  private boolean areKnownCredentialsDefinedForBaseImage;
-  private boolean areKnownCredentialsDefinedForTargetImage;
+  private boolean baseImageHasConfiguredCredentials;
+  private boolean targetImageHasConfiguredCredentials;
 
   MavenHelpfulSuggestionsBuilder(
       String messagePrefix, JibPluginConfiguration jibPluginConfiguration) {
@@ -48,7 +48,7 @@ class MavenHelpfulSuggestionsBuilder {
 
   MavenHelpfulSuggestionsBuilder setBaseImageHasConfiguredCredentials(
       boolean areKnownCredentialsDefined) {
-    areKnownCredentialsDefinedForBaseImage = areKnownCredentialsDefined;
+    baseImageHasConfiguredCredentials = areKnownCredentialsDefined;
     return this;
   }
 
@@ -59,7 +59,7 @@ class MavenHelpfulSuggestionsBuilder {
 
   MavenHelpfulSuggestionsBuilder setTargetImageHasConfiguredCredentials(
       boolean areKnownCredentialsDefined) {
-    areKnownCredentialsDefinedForTargetImage = areKnownCredentialsDefined;
+    targetImageHasConfiguredCredentials = areKnownCredentialsDefined;
     return this;
   }
 
@@ -77,11 +77,11 @@ class MavenHelpfulSuggestionsBuilder {
         messagePrefix,
         "mvn clean",
         baseImageReference,
-        !isCredHelperDefinedForBaseImage && !areKnownCredentialsDefinedForBaseImage,
+        !isCredHelperDefinedForBaseImage && !baseImageHasConfiguredCredentials,
         "<from><credHelper>",
         AUTH_CONFIGURATION_SUGGESTION,
         targetImageReference,
-        !isCredHelperDefinedForTargetImage && !areKnownCredentialsDefinedForTargetImage,
+        !isCredHelperDefinedForTargetImage && !targetImageHasConfiguredCredentials,
         "<to><credHelper>",
         AUTH_CONFIGURATION_SUGGESTION,
         "<to><image>",

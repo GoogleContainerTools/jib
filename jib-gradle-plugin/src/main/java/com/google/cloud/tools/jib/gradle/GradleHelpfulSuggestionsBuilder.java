@@ -28,8 +28,8 @@ class GradleHelpfulSuggestionsBuilder {
 
   @Nullable private ImageReference baseImageReference;
   @Nullable private ImageReference targetImageReference;
-  private boolean areKnownCredentialsDefinedForBaseImage;
-  private boolean areKnownCredentialsDefinedForTargetImage;
+  private boolean baseImageHasConfiguredCredentials;
+  private boolean targetImageHasConfiguredCredentials;
 
   GradleHelpfulSuggestionsBuilder(String messagePrefix, JibExtension jibExtension) {
     this.messagePrefix = messagePrefix;
@@ -43,7 +43,7 @@ class GradleHelpfulSuggestionsBuilder {
 
   GradleHelpfulSuggestionsBuilder setBaseImageHasConfiguredCredentials(
       boolean areKnownCredentialsDefined) {
-    areKnownCredentialsDefinedForBaseImage = areKnownCredentialsDefined;
+    baseImageHasConfiguredCredentials = areKnownCredentialsDefined;
     return this;
   }
 
@@ -54,7 +54,7 @@ class GradleHelpfulSuggestionsBuilder {
 
   GradleHelpfulSuggestionsBuilder setTargetImageHasConfiguredCredentials(
       boolean areKnownCredentialsDefined) {
-    areKnownCredentialsDefinedForTargetImage = areKnownCredentialsDefined;
+    targetImageHasConfiguredCredentials = areKnownCredentialsDefined;
     return this;
   }
 
@@ -65,11 +65,11 @@ class GradleHelpfulSuggestionsBuilder {
         messagePrefix,
         "gradle clean",
         baseImageReference,
-        !isCredHelperDefinedForBaseImage && !areKnownCredentialsDefinedForBaseImage,
+        !isCredHelperDefinedForBaseImage && !baseImageHasConfiguredCredentials,
         "from.credHelper",
         ignored -> "from.auth",
         targetImageReference,
-        !isCredHelperDefinedForTargetImage && !areKnownCredentialsDefinedForTargetImage,
+        !isCredHelperDefinedForTargetImage && !targetImageHasConfiguredCredentials,
         "to.credHelper",
         ignored -> "to.auth",
         "jib.to.image",
