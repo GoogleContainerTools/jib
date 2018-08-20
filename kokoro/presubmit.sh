@@ -3,8 +3,8 @@
 set -e
 set -x
 
-date
-echo QUIT | openssl s_client -connect gcr.io:443 | openssl x509 -in - -text -noout | grep -i validity -A 2
+echo QUIT | openssl s_client -connect gcr.io:443 > cert.crt
+openssl x509 -in cert.crt -text -noout | grep -i validity -A 2
 
 gcloud components install docker-credential-gcr
 export PATH=$PATH:/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/bin/
@@ -15,6 +15,7 @@ docker kill $(docker ps --all --quiet) || true
 
 cd github/jib
 
+date
 (cd jib-core; ./gradlew clean build integrationTest --info --stacktrace)
 (cd jib-plugins-common; ./gradlew clean build --info --stacktrace)
 (cd jib-maven-plugin; ./mvnw clean install -B -U -X)
