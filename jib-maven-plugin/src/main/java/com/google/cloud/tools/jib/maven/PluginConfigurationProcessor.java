@@ -25,16 +25,15 @@ import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
-import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.registry.RegistryClient;
-import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.base.Preconditions;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 import org.apache.maven.plugin.MojoExecutionException;
 
 /** Configures and provides builders for the image building goals. */
@@ -88,26 +87,15 @@ class PluginConfigurationProcessor {
             "jib.from.auth.username",
             "jib.from.auth.password",
             jibPluginConfiguration.getBaseImageAuth());
-    RegistryCredentials knownBaseRegistryCredentials = null;
     CredentialRetriever knownCredentialRetriever = null;
     if (fromCredential == null) {
       fromCredential = mavenSettingsServerCredentials.retrieve(baseImage.getRegistry());
       if (fromCredential != null) {
-        knownBaseRegistryCredentials =
-            new RegistryCredentials(
-                MavenSettingsServerCredentials.CREDENTIAL_SOURCE,
-                Authorizations.withBasicCredentials(
-                    fromCredential.getUsername(), fromCredential.getPassword()));
         knownCredentialRetriever =
             credentialRetrieverFactory.known(
                 fromCredential, MavenSettingsServerCredentials.CREDENTIAL_SOURCE);
       }
     } else {
-      knownBaseRegistryCredentials =
-          new RegistryCredentials(
-              "jib-maven-plugin <from><auth> configuration",
-              Authorizations.withBasicCredentials(
-                  fromCredential.getUsername(), fromCredential.getPassword()));
       knownCredentialRetriever =
           credentialRetrieverFactory.known(
               fromCredential, "jib-maven-plugin <from><auth> configuration");
@@ -126,10 +114,7 @@ class PluginConfigurationProcessor {
     credentialRetrievers.add(credentialRetrieverFactory.inferCredentialHelper());
     credentialRetrievers.add(credentialRetrieverFactory.dockerConfig());
     ImageConfiguration.Builder baseImageConfiguration =
-        ImageConfiguration.builder(baseImage)
-            .setCredentialHelper(credentialHelperSuffix)
-            .setKnownRegistryCredentials(knownBaseRegistryCredentials)
-            .setCredentialRetrievers(credentialRetrievers);
+        ImageConfiguration.builder(baseImage).setCredentialRetrievers(credentialRetrievers);
 
     String mainClass = projectProperties.getMainClass(jibPluginConfiguration);
     ContainerConfiguration.Builder containerConfigurationBuilder =
@@ -164,7 +149,8 @@ class PluginConfigurationProcessor {
         buildConfigurationBuilder,
         baseImageConfiguration,
         containerConfigurationBuilder,
-        mavenSettingsServerCredentials);
+        mavenSettingsServerCredentials,
+        fromCredential);
   }
 
   /**
@@ -184,16 +170,19 @@ class PluginConfigurationProcessor {
   private final ImageConfiguration.Builder baseImageConfigurationBuilder;
   private final ContainerConfiguration.Builder containerConfigurationBuilder;
   private final MavenSettingsServerCredentials mavenSettingsServerCredentials;
+  @Nullable private final Credential baseImageCredential;
 
   private PluginConfigurationProcessor(
       BuildConfiguration.Builder buildConfigurationBuilder,
       ImageConfiguration.Builder baseImageConfigurationBuilder,
       ContainerConfiguration.Builder containerConfigurationBuilder,
-      MavenSettingsServerCredentials mavenSettingsServerCredentials) {
+      MavenSettingsServerCredentials mavenSettingsServerCredentials,
+      @Nullable Credential baseImageCredential) {
     this.buildConfigurationBuilder = buildConfigurationBuilder;
     this.baseImageConfigurationBuilder = baseImageConfigurationBuilder;
     this.containerConfigurationBuilder = containerConfigurationBuilder;
     this.mavenSettingsServerCredentials = mavenSettingsServerCredentials;
+    this.baseImageCredential = baseImageCredential;
   }
 
   BuildConfiguration.Builder getBuildConfigurationBuilder() {
@@ -210,5 +199,10 @@ class PluginConfigurationProcessor {
 
   MavenSettingsServerCredentials getMavenSettingsServerCredentials() {
     return mavenSettingsServerCredentials;
+  }
+
+  @Nullable
+  Credential getBaseImageCredential() {
+    return baseImageCredential;
   }
 }
