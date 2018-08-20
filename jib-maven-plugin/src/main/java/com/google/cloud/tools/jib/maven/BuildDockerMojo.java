@@ -39,8 +39,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
 
   @VisibleForTesting static final String GOAL_NAME = "dockerBuild";
 
-  private static final HelpfulSuggestions HELPFUL_SUGGESTIONS =
-      HelpfulSuggestionsProvider.get("Build to Docker daemon failed");
+  private static final String HELPFUL_SUGGESTIONS_PREFIX = "Build to Docker daemon failed";
 
   @Override
   public void execute() throws MojoExecutionException {
@@ -50,7 +49,8 @@ public class BuildDockerMojo extends JibPluginConfiguration {
     }
 
     if (!new DockerClient().isDockerInstalled()) {
-      throw new MojoExecutionException(HELPFUL_SUGGESTIONS.forDockerNotInstalled());
+      throw new MojoExecutionException(
+          HelpfulSuggestions.forDockerNotInstalled(HELPFUL_SUGGESTIONS_PREFIX));
     }
 
     MavenJibLogger mavenJibLogger = new MavenJibLogger(getLog());
@@ -58,13 +58,16 @@ public class BuildDockerMojo extends JibPluginConfiguration {
         MavenProjectProperties.getForProject(getProject(), mavenJibLogger, getExtraDirectory());
 
     try {
+      MavenHelpfulSuggestionsBuilder mavenHelpfulSuggestionsBuilder =
+          new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this);
+
       ImageReference targetImage =
           ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
               getTargetImage(),
               mavenJibLogger,
               getProject().getName(),
               getProject().getVersion(),
-              HELPFUL_SUGGESTIONS);
+              mavenHelpfulSuggestionsBuilder.build());
 
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfiguration(
@@ -80,7 +83,15 @@ public class BuildDockerMojo extends JibPluginConfiguration {
                   pluginConfigurationProcessor.getContainerConfigurationBuilder().build())
               .build();
 
-      BuildStepsRunner.forBuildToDockerDaemon(buildConfiguration).build(HELPFUL_SUGGESTIONS);
+      HelpfulSuggestions helpfulSuggestions =
+          mavenHelpfulSuggestionsBuilder
+              .setBaseImageReference(buildConfiguration.getBaseImageConfiguration().getImage())
+              .setBaseImageHasConfiguredCredentials(
+                  pluginConfigurationProcessor.getBaseImageCredential() != null)
+              .setTargetImageReference(buildConfiguration.getTargetImageConfiguration().getImage())
+              .build();
+
+      BuildStepsRunner.forBuildToDockerDaemon(buildConfiguration).build(helpfulSuggestions);
       getLog().info("");
 
     } catch (CacheDirectoryCreationException

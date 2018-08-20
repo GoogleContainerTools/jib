@@ -24,11 +24,11 @@ import com.google.common.io.Resources;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -39,7 +39,6 @@ public class MainClassResolverTest {
 
   @Mock private JibLogger mockBuildLogger;
   @Mock private ProjectProperties mockProjectProperties;
-  @Mock private HelpfulSuggestions mockHelpfulSuggestions;
   @Mock private JavaLayerConfigurations mockJavaLayerConfigurations;
 
   private final ImmutableList<Path> fakeClassesPath = ImmutableList.of(Paths.get("a/b/c"));
@@ -48,8 +47,6 @@ public class MainClassResolverTest {
   public void setup() {
     Mockito.when(mockProjectProperties.getLogger()).thenReturn(mockBuildLogger);
     Mockito.when(mockProjectProperties.getPluginName()).thenReturn("plugin");
-    Mockito.when(mockProjectProperties.getMainClassHelpfulSuggestions(ArgumentMatchers.any()))
-        .thenReturn(mockHelpfulSuggestions);
     Mockito.when(mockProjectProperties.getJarPluginName()).thenReturn("jar-plugin");
     Mockito.when(mockProjectProperties.getJavaLayerConfigurations())
         .thenReturn(mockJavaLayerConfigurations);
@@ -115,9 +112,10 @@ public class MainClassResolverTest {
       Assert.fail();
 
     } catch (MainClassInferenceException ex) {
-      Mockito.verify(mockProjectProperties)
-          .getMainClassHelpfulSuggestions(
-              "Multiple valid main classes were found: HelloWorld, multi.layered.HelloMoon");
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.containsString(
+              "Multiple valid main classes were found: HelloWorld, multi.layered.HelloMoon"));
     }
   }
 
@@ -140,8 +138,7 @@ public class MainClassResolverTest {
       Assert.fail();
 
     } catch (MainClassInferenceException ex) {
-      Mockito.verify(mockProjectProperties)
-          .getMainClassHelpfulSuggestions("Main class was not found");
+      Assert.assertThat(ex.getMessage(), CoreMatchers.containsString("Main class was not found"));
     }
   }
 

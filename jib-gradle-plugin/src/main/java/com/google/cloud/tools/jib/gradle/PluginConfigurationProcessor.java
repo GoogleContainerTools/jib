@@ -26,15 +26,14 @@ import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
-import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.registry.RegistryClient;
-import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 import org.gradle.api.GradleException;
 
 /** Configures and provides builders for the image building tasks. */
@@ -79,14 +78,8 @@ class PluginConfigurationProcessor {
             "jib.from.auth.username",
             "jib.from.auth.password",
             jibExtension.getFrom().getAuth());
-    RegistryCredentials knownBaseRegistryCredentials = null;
     CredentialRetriever knownCredentialRetriever = null;
     if (fromCredential != null) {
-      knownBaseRegistryCredentials =
-          new RegistryCredentials(
-              "jib.from.auth",
-              Authorizations.withBasicCredentials(
-                  fromCredential.getUsername(), fromCredential.getPassword()));
       knownCredentialRetriever = credentialRetrieverFactory.known(fromCredential, "jib.from.auth");
     }
     // Makes credential retriever list.
@@ -103,10 +96,7 @@ class PluginConfigurationProcessor {
     credentialRetrievers.add(credentialRetrieverFactory.dockerConfig());
 
     ImageConfiguration.Builder baseImageConfigurationBuilder =
-        ImageConfiguration.builder(baseImage)
-            .setCredentialHelper(credentialHelperSuffix)
-            .setKnownRegistryCredentials(knownBaseRegistryCredentials)
-            .setCredentialRetrievers(credentialRetrievers);
+        ImageConfiguration.builder(baseImage).setCredentialRetrievers(credentialRetrievers);
 
     String mainClass = projectProperties.getMainClass(jibExtension);
     ContainerConfiguration.Builder containerConfigurationBuilder =
@@ -137,20 +127,26 @@ class PluginConfigurationProcessor {
     }
 
     return new PluginConfigurationProcessor(
-        buildConfigurationBuilder, baseImageConfigurationBuilder, containerConfigurationBuilder);
+        buildConfigurationBuilder,
+        baseImageConfigurationBuilder,
+        containerConfigurationBuilder,
+        fromCredential);
   }
 
   private final BuildConfiguration.Builder buildConfigurationBuilder;
   private final ImageConfiguration.Builder baseImageConfigurationBuilder;
   private final ContainerConfiguration.Builder containerConfigurationBuilder;
+  @Nullable private final Credential baseImageCredential;
 
   private PluginConfigurationProcessor(
       BuildConfiguration.Builder buildConfigurationBuilder,
       ImageConfiguration.Builder baseImageConfigurationBuilder,
-      ContainerConfiguration.Builder containerConfigurationBuilder) {
+      ContainerConfiguration.Builder containerConfigurationBuilder,
+      @Nullable Credential baseImageCredential) {
     this.buildConfigurationBuilder = buildConfigurationBuilder;
     this.baseImageConfigurationBuilder = baseImageConfigurationBuilder;
     this.containerConfigurationBuilder = containerConfigurationBuilder;
+    this.baseImageCredential = baseImageCredential;
   }
 
   BuildConfiguration.Builder getBuildConfigurationBuilder() {
@@ -163,5 +159,10 @@ class PluginConfigurationProcessor {
 
   ContainerConfiguration.Builder getContainerConfigurationBuilder() {
     return containerConfigurationBuilder;
+  }
+
+  @Nullable
+  Credential getBaseImageCredential() {
+    return baseImageCredential;
   }
 }

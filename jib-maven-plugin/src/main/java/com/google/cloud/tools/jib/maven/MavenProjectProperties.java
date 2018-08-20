@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
-import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.MainClassResolver;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
@@ -77,11 +76,6 @@ class MavenProjectProperties implements ProjectProperties {
   @Override
   public JavaLayerConfigurations getJavaLayerConfigurations() {
     return javaLayerConfigurations;
-  }
-
-  @Override
-  public HelpfulSuggestions getMainClassHelpfulSuggestions(String prefix) {
-    return HelpfulSuggestionsProvider.get(prefix);
   }
 
   @Override
