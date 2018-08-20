@@ -136,17 +136,17 @@ class PluginConfigurationProcessor {
   private final BuildConfiguration.Builder buildConfigurationBuilder;
   private final ImageConfiguration.Builder baseImageConfigurationBuilder;
   private final ContainerConfiguration.Builder containerConfigurationBuilder;
-  @Nullable private final Credential fromCredential;
+  @Nullable private final Credential baseImageCredential;
 
   private PluginConfigurationProcessor(
       BuildConfiguration.Builder buildConfigurationBuilder,
       ImageConfiguration.Builder baseImageConfigurationBuilder,
       ContainerConfiguration.Builder containerConfigurationBuilder,
-      @Nullable Credential fromCredential) {
+      @Nullable Credential baseImageCredential) {
     this.buildConfigurationBuilder = buildConfigurationBuilder;
     this.baseImageConfigurationBuilder = baseImageConfigurationBuilder;
     this.containerConfigurationBuilder = containerConfigurationBuilder;
-    this.fromCredential = fromCredential;
+    this.baseImageCredential = baseImageCredential;
   }
 
   BuildConfiguration.Builder getBuildConfigurationBuilder() {
@@ -162,7 +162,7 @@ class PluginConfigurationProcessor {
   }
 
   @Nullable
-  Credential getFromCredential() {
-    return fromCredential;
+  Credential getBaseImageCredential() {
+    return baseImageCredential;
   }
 }

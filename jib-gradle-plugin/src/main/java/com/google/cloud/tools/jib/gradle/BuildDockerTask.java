@@ -105,8 +105,8 @@ public class BuildDockerTask extends DefaultTask {
     HelpfulSuggestions helpfulSuggestions =
         gradleHelpfulSuggestionsBuilder
             .setBaseImageReference(buildConfiguration.getBaseImageConfiguration().getImage())
-            .setAreKnownCredentialsDefinedForBaseImage(
-                pluginConfigurationProcessor.getFromCredential() != null)
+            .setBaseImageHasConfiguredCredentials(
+                pluginConfigurationProcessor.getBaseImageCredential() != null)
             .setTargetImageReference(buildConfiguration.getTargetImageConfiguration().getImage())
             .build();
 

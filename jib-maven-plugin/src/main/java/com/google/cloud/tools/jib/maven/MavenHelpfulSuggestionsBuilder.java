@@ -46,7 +46,7 @@ class MavenHelpfulSuggestionsBuilder {
     return this;
   }
 
-  MavenHelpfulSuggestionsBuilder setAreKnownCredentialsDefinedForBaseImage(
+  MavenHelpfulSuggestionsBuilder setBaseImageHasConfiguredCredentials(
       boolean areKnownCredentialsDefined) {
     areKnownCredentialsDefinedForBaseImage = areKnownCredentialsDefined;
     return this;
@@ -57,7 +57,7 @@ class MavenHelpfulSuggestionsBuilder {
     return this;
   }
 
-  MavenHelpfulSuggestionsBuilder setAreKnownCredentialsDefinedForTargetImage(
+  MavenHelpfulSuggestionsBuilder setTargetImageHasConfiguredCredentials(
       boolean areKnownCredentialsDefined) {
     areKnownCredentialsDefinedForTargetImage = areKnownCredentialsDefined;
     return this;

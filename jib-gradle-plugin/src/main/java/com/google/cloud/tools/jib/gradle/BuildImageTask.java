@@ -136,10 +136,10 @@ public class BuildImageTask extends DefaultTask {
     HelpfulSuggestions helpfulSuggestions =
         new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension)
             .setBaseImageReference(buildConfiguration.getBaseImageConfiguration().getImage())
+            .setBaseImageHasConfiguredCredentials(
+                pluginConfigurationProcessor.getBaseImageCredential() != null)
             .setTargetImageReference(buildConfiguration.getTargetImageConfiguration().getImage())
-            .setAreKnownCredentialsDefinedForBaseImage(
-                pluginConfigurationProcessor.getFromCredential() != null)
-            .setAreKnownCredentialsDefinedForTargetImage(toCredential != null)
+            .setTargetImageHasConfiguredCredentials(toCredential != null)
             .build();
 
     try {

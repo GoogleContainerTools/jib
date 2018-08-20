@@ -139,10 +139,10 @@ public class BuildImageMojo extends JibPluginConfiguration {
     HelpfulSuggestions helpfulSuggestions =
         new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this)
             .setBaseImageReference(buildConfiguration.getBaseImageConfiguration().getImage())
-            .setAreKnownCredentialsDefinedForBaseImage(
-                pluginConfigurationProcessor.getFromCredential() != null)
+            .setBaseImageHasConfiguredCredentials(
+                pluginConfigurationProcessor.getBaseImageCredential() != null)
             .setTargetImageReference(buildConfiguration.getTargetImageConfiguration().getImage())
-            .setAreKnownCredentialsDefinedForTargetImage(toCredential != null)
+            .setTargetImageHasConfiguredCredentials(toCredential != null)
             .build();
 
     try {

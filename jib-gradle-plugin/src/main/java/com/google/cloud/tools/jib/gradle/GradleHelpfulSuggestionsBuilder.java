@@ -41,7 +41,7 @@ class GradleHelpfulSuggestionsBuilder {
     return this;
   }
 
-  GradleHelpfulSuggestionsBuilder setAreKnownCredentialsDefinedForBaseImage(
+  GradleHelpfulSuggestionsBuilder setBaseImageHasConfiguredCredentials(
       boolean areKnownCredentialsDefined) {
     areKnownCredentialsDefinedForBaseImage = areKnownCredentialsDefined;
     return this;
@@ -52,7 +52,7 @@ class GradleHelpfulSuggestionsBuilder {
     return this;
   }
 
-  GradleHelpfulSuggestionsBuilder setAreKnownCredentialsDefinedForTargetImage(
+  GradleHelpfulSuggestionsBuilder setTargetImageHasConfiguredCredentials(
       boolean areKnownCredentialsDefined) {
     areKnownCredentialsDefinedForTargetImage = areKnownCredentialsDefined;
     return this;

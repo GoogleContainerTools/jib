@@ -83,8 +83,8 @@ public class BuildTarMojo extends JibPluginConfiguration {
       HelpfulSuggestions helpfulSuggestions =
           mavenHelpfulSuggestionsBuilder
               .setBaseImageReference(buildConfiguration.getBaseImageConfiguration().getImage())
-              .setAreKnownCredentialsDefinedForBaseImage(
-                  pluginConfigurationProcessor.getFromCredential() != null)
+              .setBaseImageHasConfiguredCredentials(
+                  pluginConfigurationProcessor.getBaseImageCredential() != null)
               .setTargetImageReference(buildConfiguration.getTargetImageConfiguration().getImage())
               .build();
 

@@ -170,19 +170,19 @@ class PluginConfigurationProcessor {
   private final ImageConfiguration.Builder baseImageConfigurationBuilder;
   private final ContainerConfiguration.Builder containerConfigurationBuilder;
   private final MavenSettingsServerCredentials mavenSettingsServerCredentials;
-  @Nullable private final Credential fromCredential;
+  @Nullable private final Credential baseImageCredential;
 
   private PluginConfigurationProcessor(
       BuildConfiguration.Builder buildConfigurationBuilder,
       ImageConfiguration.Builder baseImageConfigurationBuilder,
       ContainerConfiguration.Builder containerConfigurationBuilder,
       MavenSettingsServerCredentials mavenSettingsServerCredentials,
-      @Nullable Credential fromCredential) {
+      @Nullable Credential baseImageCredential) {
     this.buildConfigurationBuilder = buildConfigurationBuilder;
     this.baseImageConfigurationBuilder = baseImageConfigurationBuilder;
     this.containerConfigurationBuilder = containerConfigurationBuilder;
     this.mavenSettingsServerCredentials = mavenSettingsServerCredentials;
-    this.fromCredential = fromCredential;
+    this.baseImageCredential = baseImageCredential;
   }
 
   BuildConfiguration.Builder getBuildConfigurationBuilder() {
@@ -202,7 +202,7 @@ class PluginConfigurationProcessor {
   }
 
   @Nullable
-  Credential getFromCredential() {
-    return fromCredential;
+  Credential getBaseImageCredential() {
+    return baseImageCredential;
   }
 }
