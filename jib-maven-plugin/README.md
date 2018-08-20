@@ -296,7 +296,7 @@ You can configure a different directory by using the `extraDirectory` parameter 
 ```xml
 <configuration>
   ...
-  // Copies files from 'src/main/custom-extra-dir' instead of 'src/main/jib'
+  <!-- Copies files from 'src/main/custom-extra-dir' instead of 'src/main/jib' -->
   <extraDirectory>${project.basedir}/src/main/custom-extra-dir</extraDirectory>
   ...
 </configuration>
