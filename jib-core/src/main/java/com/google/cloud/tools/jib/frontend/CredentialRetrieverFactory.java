@@ -23,7 +23,7 @@ import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever.
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.credentials.DockerConfigCredentialRetriever;
 import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelperFactory;
-import com.google.cloud.tools.jib.registry.credentials.NonexistentDockerCredentialHelperException;
+import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelperNotFoundException;
 import com.google.cloud.tools.jib.registry.credentials.NonexistentServerUrlDockerCredentialHelperException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
@@ -161,7 +161,7 @@ public class CredentialRetrieverFactory {
                       + inferredCredentialHelperSuffix),
               dockerCredentialHelperFactory);
 
-        } catch (NonexistentDockerCredentialHelperException ex) {
+        } catch (DockerCredentialHelperNotFoundException ex) {
           if (ex.getMessage() != null) {
             // Warns the user that the specified (or inferred) credential helper is not on the
             // system.
@@ -193,7 +193,7 @@ public class CredentialRetrieverFactory {
             "No credentials for " + imageReference.getRegistry() + " in " + credentialHelper);
         return null;
 
-      } catch (NonexistentDockerCredentialHelperException | IOException ex) {
+      } catch (DockerCredentialHelperNotFoundException | IOException ex) {
         throw new CredentialRetrievalException(ex);
       }
     };
@@ -220,7 +220,7 @@ public class CredentialRetrieverFactory {
   private Credential retrieveFromDockerCredentialHelper(
       Path credentialHelper, DockerCredentialHelperFactory dockerCredentialHelperFactory)
       throws NonexistentServerUrlDockerCredentialHelperException,
-          NonexistentDockerCredentialHelperException, IOException {
+          DockerCredentialHelperNotFoundException, IOException {
     Credential credentials =
         dockerCredentialHelperFactory
             .newDockerCredentialHelper(imageReference.getRegistry(), credentialHelper)

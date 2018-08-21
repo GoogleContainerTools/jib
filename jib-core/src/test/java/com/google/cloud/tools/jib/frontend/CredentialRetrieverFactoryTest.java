@@ -22,7 +22,7 @@ import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.credentials.DockerConfigCredentialRetriever;
 import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelper;
 import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelperFactory;
-import com.google.cloud.tools.jib.registry.credentials.NonexistentDockerCredentialHelperException;
+import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelperNotFoundException;
 import com.google.cloud.tools.jib.registry.credentials.NonexistentServerUrlDockerCredentialHelperException;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -46,21 +46,19 @@ public class CredentialRetrieverFactoryTest {
   @Mock private DockerConfigCredentialRetriever mockDockerConfigCredentialRetriever;
 
   /**
-   * A {@link DockerCredentialHelper} that throws {@link
-   * NonexistentDockerCredentialHelperException}.
+   * A {@link DockerCredentialHelper} that throws {@link DockerCredentialHelperNotFoundException}.
    */
   @Mock private DockerCredentialHelper mockNonexistentDockerCredentialHelper;
 
-  @Mock
-  private NonexistentDockerCredentialHelperException mockNonexistentDockerCredentialHelperException;
+  @Mock private DockerCredentialHelperNotFoundException mockDockerCredentialHelperNotFoundException;
 
   @Before
   public void setUp()
       throws NonexistentServerUrlDockerCredentialHelperException,
-          NonexistentDockerCredentialHelperException, IOException {
+          DockerCredentialHelperNotFoundException, IOException {
     Mockito.when(mockDockerCredentialHelper.retrieve()).thenReturn(FAKE_CREDENTIALS);
     Mockito.when(mockNonexistentDockerCredentialHelper.retrieve())
-        .thenThrow(mockNonexistentDockerCredentialHelperException);
+        .thenThrow(mockDockerCredentialHelperNotFoundException);
   }
 
   @Test
@@ -105,8 +103,8 @@ public class CredentialRetrieverFactoryTest {
             .retrieve());
     Mockito.verify(mockJibLogger).info("Using docker-credential-gcr for something.gcr.io");
 
-    Mockito.when(mockNonexistentDockerCredentialHelperException.getMessage()).thenReturn("warning");
-    Mockito.when(mockNonexistentDockerCredentialHelperException.getCause())
+    Mockito.when(mockDockerCredentialHelperNotFoundException.getMessage()).thenReturn("warning");
+    Mockito.when(mockDockerCredentialHelperNotFoundException.getCause())
         .thenReturn(new IOException("the root cause"));
     Assert.assertNull(
         credentialRetrieverFactory

@@ -71,11 +71,11 @@ public class DockerCredentialHelper {
    * @return the Docker credentials by calling the corresponding CLI
    * @throws IOException if writing/reading process input/output fails.
    * @throws NonexistentServerUrlDockerCredentialHelperException if credentials are not found.
-   * @throws NonexistentDockerCredentialHelperException if the credential helper CLI doesn't exist.
+   * @throws DockerCredentialHelperNotFoundException if the credential helper CLI doesn't exist.
    */
   public Credential retrieve()
       throws IOException, NonexistentServerUrlDockerCredentialHelperException,
-          NonexistentDockerCredentialHelperException {
+          DockerCredentialHelperNotFoundException {
     try {
       String[] credentialHelperCommand = {credentialHelper.toString(), "get"};
 
@@ -127,7 +127,7 @@ public class DockerCredentialHelper {
       // Checks if the failure is due to a nonexistent credential helper CLI.
       if (ex.getMessage().contains("No such file or directory")
           || ex.getMessage().contains("cannot find the file")) {
-        throw new NonexistentDockerCredentialHelperException(credentialHelper, ex);
+        throw new DockerCredentialHelperNotFoundException(credentialHelper, ex);
       }
 
       throw ex;
