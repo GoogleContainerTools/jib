@@ -63,11 +63,24 @@ public class CredentialRetrieverFactory {
     this.logger = logger;
   }
 
+  /**
+   * Sets the image reference the {@link CredentialRetriever}s should retrieve credentials for.
+   *
+   * @param imageReference the image reference
+   * @return this
+   */
   public CredentialRetrieverFactory setImageReference(ImageReference imageReference) {
     this.imageReference = imageReference;
     return this;
   }
 
+  /**
+   * Creates a new {@link CredentialRetriever} that returns a known {@link Credential}.
+   *
+   * @param credential the known credential
+   * @param credentialSource the source of the credentials (for logging)
+   * @return a new {@link CredentialRetriever}
+   */
   public CredentialRetriever known(Credential credential, String credentialSource) {
     return () -> {
       logGotCredentialsFrom(credentialSource);
@@ -79,14 +92,11 @@ public class CredentialRetrieverFactory {
    * Creates a new {@link CredentialRetriever} for retrieving credentials via a Docker credential
    * helper, such as {@code docker-credential-gcr}.
    *
-   * @param credentialHelperSuffix the credential helper executable suffix, following {@code
-   *     docker-credential-} (ie. {@code gcr} for {@code docker-credential-gcr})
+   * @param credentialHelper the credential helper executable
    * @return a new {@link CredentialRetriever}
    */
-  public CredentialRetriever dockerCredentialHelper(String credentialHelperSuffix) {
-    return dockerCredentialHelper(
-        Paths.get(DockerCredentialHelperFactory.CREDENTIAL_HELPER_PREFIX + credentialHelperSuffix),
-        new DockerCredentialHelperFactory());
+  public CredentialRetriever dockerCredentialHelper(String credentialHelper) {
+    return dockerCredentialHelper(Paths.get(credentialHelper), new DockerCredentialHelperFactory());
   }
 
   /**
