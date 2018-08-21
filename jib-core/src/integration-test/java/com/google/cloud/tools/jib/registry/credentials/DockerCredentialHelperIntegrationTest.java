@@ -34,7 +34,7 @@ public class DockerCredentialHelperIntegrationTest {
   @Test
   public void testRetrieveGCR()
       throws IOException, NonexistentServerUrlDockerCredentialHelperException,
-          NonexistentDockerCredentialHelperException, URISyntaxException, InterruptedException {
+          DockerCredentialHelperNotFoundException, URISyntaxException, InterruptedException {
     new Command("docker-credential-gcr", "store")
         .run(Files.readAllBytes(Paths.get(Resources.getResource("credentials.json").toURI())));
 
@@ -57,7 +57,7 @@ public class DockerCredentialHelperIntegrationTest {
 
       Assert.fail("Retrieve should have failed for nonexistent credential helper");
 
-    } catch (NonexistentDockerCredentialHelperException ex) {
+    } catch (DockerCredentialHelperNotFoundException ex) {
       Assert.assertEquals(
           "The system does not have docker-credential-fake-cloud-provider CLI", ex.getMessage());
     }
@@ -65,7 +65,7 @@ public class DockerCredentialHelperIntegrationTest {
 
   @Test
   public void testRetrieve_nonexistentServerUrl()
-      throws IOException, NonexistentDockerCredentialHelperException {
+      throws IOException, DockerCredentialHelperNotFoundException {
     try {
       DockerCredentialHelper fakeDockerCredentialHelper =
           new DockerCredentialHelperFactory().newDockerCredentialHelper("fake.server.url", "gcr");
