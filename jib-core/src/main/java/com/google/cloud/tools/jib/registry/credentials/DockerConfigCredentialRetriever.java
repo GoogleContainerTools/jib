@@ -130,7 +130,7 @@ public class DockerConfigCredentialRetriever {
 
       } catch (IOException
           | NonexistentServerUrlDockerCredentialHelperException
-          | NonexistentDockerCredentialHelperException ex) {
+          | DockerCredentialHelperNotFoundException ex) {
         // Ignores credential helper retrieval exceptions.
       }
     }
