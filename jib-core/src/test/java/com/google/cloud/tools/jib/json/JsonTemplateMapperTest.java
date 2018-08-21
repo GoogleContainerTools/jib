@@ -92,7 +92,7 @@ public class JsonTemplateMapperTest {
   }
 
   @Test
-  public void tedstReadJsonWithLock() throws IOException, URISyntaxException, DigestException {
+  public void testReadJsonWithLock() throws IOException, URISyntaxException, DigestException {
     Path jsonFile = Paths.get(Resources.getResource("json/basic.json").toURI());
 
     // Deserializes into a metadata JSON object.
