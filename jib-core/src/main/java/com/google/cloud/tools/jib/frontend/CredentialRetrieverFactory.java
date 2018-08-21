@@ -96,9 +96,7 @@ public class CredentialRetrieverFactory {
    * @return a new {@link CredentialRetriever}
    */
   public CredentialRetriever dockerCredentialHelper(String credentialHelper) {
-    return dockerCredentialHelper(
-        Paths.get(credentialHelper),
-        new DockerCredentialHelperFactory());
+    return dockerCredentialHelper(Paths.get(credentialHelper), new DockerCredentialHelperFactory());
   }
 
   /**
