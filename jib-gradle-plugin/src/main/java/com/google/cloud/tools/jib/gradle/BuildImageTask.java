@@ -20,18 +20,16 @@ import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
-import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
+import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import java.util.ArrayList;
-import java.util.List;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -88,34 +86,23 @@ public class BuildImageTask extends DefaultTask {
 
     ImageReference targetImage = ImageReference.parse(jibExtension.getTargetImage());
 
-    CredentialRetrieverFactory credentialRetrieverFactory =
-        CredentialRetrieverFactory.forImage(targetImage, gradleJibLogger);
+    DefaultCredentialRetrievers defaultCredentialRetrievers =
+        DefaultCredentialRetrievers.init(
+            CredentialRetrieverFactory.forImage(targetImage, gradleJibLogger));
     Credential toCredential =
         ConfigurationPropertyValidator.getImageCredential(
             gradleJibLogger,
             "jib.to.auth.username",
             "jib.to.auth.password",
             jibExtension.getTo().getAuth());
-    CredentialRetriever knownCredentialRetriever = null;
     if (toCredential != null) {
-      knownCredentialRetriever = credentialRetrieverFactory.known(toCredential, "jib.to.auth");
+      defaultCredentialRetrievers.setKnownCredential(toCredential, "jib.to.auth");
     }
-    // Makes credential retriever list.
-    List<CredentialRetriever> credentialRetrievers = new ArrayList<>();
-    String credentialHelperSuffix = jibExtension.getTo().getCredHelper();
-    if (credentialHelperSuffix != null) {
-      credentialRetrievers.add(
-          credentialRetrieverFactory.dockerCredentialHelper(credentialHelperSuffix));
-    }
-    if (knownCredentialRetriever != null) {
-      credentialRetrievers.add(knownCredentialRetriever);
-    }
-    credentialRetrievers.add(credentialRetrieverFactory.inferCredentialHelper());
-    credentialRetrievers.add(credentialRetrieverFactory.dockerConfig());
+    defaultCredentialRetrievers.setCredentialHelperSuffix(jibExtension.getTo().getCredHelper());
 
     ImageConfiguration targetImageConfiguration =
         ImageConfiguration.builder(targetImage)
-            .setCredentialRetrievers(credentialRetrievers)
+            .setCredentialRetrievers(defaultCredentialRetrievers.asList())
             .build();
 
     PluginConfigurationProcessor pluginConfigurationProcessor =
