@@ -81,6 +81,7 @@ public class JibPluginIntegrationTest {
 
     targetRegistry.pull(imageReference);
     assertHasExposedPorts(imageReference);
+    assertHasLabels(imageReference);
     return new Command("docker", "run", imageReference).run();
   }
 
@@ -94,6 +95,7 @@ public class JibPluginIntegrationTest {
     Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
 
     assertHasExposedPorts(imageReference);
+    assertHasLabels(imageReference);
     return new Command("docker", "run", imageReference).run();
   }
 
@@ -152,6 +154,24 @@ public class JibPluginIntegrationTest {
                 + "                \"2001/udp\": {},\n"
                 + "                \"2002/udp\": {},\n"
                 + "                \"2003/udp\": {}"));
+  }
+
+  /**
+   * Asserts that the test project has the required labels.
+   *
+   * @param imageReference the image to test
+   * @throws IOException if the {@code docker inspect} command fails to run
+   * @throws InterruptedException if the {@code docker inspect} command is interrupted
+   */
+  private static void assertHasLabels(String imageReference)
+      throws IOException, InterruptedException {
+    Assert.assertThat(
+        new Command("docker", "inspect", imageReference).run(),
+        CoreMatchers.containsString(
+            "            \"Labels\": {\n"
+                + "                \"key1\": \"value1\",\n"
+                + "                \"key2\": \"value2\"\n"
+                + "            }"));
   }
 
   @Before

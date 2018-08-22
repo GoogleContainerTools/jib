@@ -25,6 +25,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
@@ -254,6 +255,12 @@ public class JibExtension {
   @Optional
   List<String> getExposedPorts() {
     return container.getPorts();
+  }
+
+  @Internal
+  @Optional
+  Map<String, String> getLabels() {
+    return container.getLabels();
   }
 
   @Internal
