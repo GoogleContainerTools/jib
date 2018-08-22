@@ -96,7 +96,7 @@ public class BuildImageMojoIntegrationTest {
     verifier.verifyErrorFreeLog();
 
     new Command("docker", "pull", imageReference).run();
-    assertHasExposedPorts(imageReference);
+    assertDockerInspectParameters(imageReference);
     return new Command("docker", "run", imageReference).run();
   }
 
@@ -117,7 +117,7 @@ public class BuildImageMojoIntegrationTest {
 
     // Verify output
     targetRegistry.pull(imageReference);
-    assertHasExposedPorts(imageReference);
+    assertDockerInspectParameters(imageReference);
     Instant buildTime =
         Instant.parse(
             new Command("docker", "inspect", "-f", "{{.Created}}", imageReference).run().trim());
@@ -125,10 +125,11 @@ public class BuildImageMojoIntegrationTest {
     return new Command("docker", "run", imageReference).run();
   }
 
-  private static void assertHasExposedPorts(String imageReference)
+  private static void assertDockerInspectParameters(String imageReference)
       throws IOException, InterruptedException {
+    String dockerInspect = new Command("docker", "inspect", imageReference).run();
     Assert.assertThat(
-        new Command("docker", "inspect", imageReference).run(),
+        dockerInspect,
         CoreMatchers.containsString(
             "            \"ExposedPorts\": {\n"
                 + "                \"1000/tcp\": {},\n"
@@ -136,6 +137,13 @@ public class BuildImageMojoIntegrationTest {
                 + "                \"2001/udp\": {},\n"
                 + "                \"2002/udp\": {},\n"
                 + "                \"2003/udp\": {}"));
+    Assert.assertThat(
+        dockerInspect,
+        CoreMatchers.containsString(
+            "            \"Labels\": {\n"
+                + "                \"key1\": \"value1\",\n"
+                + "                \"key2\": \"value2\"\n"
+                + "            }"));
   }
 
   private static float getBuildTimeFromVerifierLog(Verifier verifier) throws IOException {

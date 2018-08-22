@@ -56,8 +56,9 @@ public class BuildDockerMojoIntegrationTest {
     verifier.executeGoal("jib:" + BuildDockerMojo.GOAL_NAME);
     verifier.verifyErrorFreeLog();
 
+    String dockerInspect = new Command("docker", "inspect", imageReference).run();
     Assert.assertThat(
-        new Command("docker", "inspect", imageReference).run(),
+        dockerInspect,
         CoreMatchers.containsString(
             "            \"ExposedPorts\": {\n"
                 + "                \"1000/tcp\": {},\n"
@@ -65,6 +66,13 @@ public class BuildDockerMojoIntegrationTest {
                 + "                \"2001/udp\": {},\n"
                 + "                \"2002/udp\": {},\n"
                 + "                \"2003/udp\": {}"));
+    Assert.assertThat(
+        dockerInspect,
+        CoreMatchers.containsString(
+            "            \"Labels\": {\n"
+                + "                \"key1\": \"value1\",\n"
+                + "                \"key2\": \"value2\"\n"
+                + "            }"));
     return new Command("docker", "run", imageReference).run();
   }
 
