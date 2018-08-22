@@ -195,6 +195,7 @@ Property | Type | Default | Description
 `mainClass` | `String` | *Inferred\** | The main class to launch your application from.
 `args` | `List<String>` | *None* | Default main method arguments to run your application with.
 `ports` | `List<String>` | *None* | Ports that the container exposes at runtime (similar to Docker's [EXPOSE](https://docs.docker.com/engine/reference/builder/#expose) instruction).
+`labels` | `Map<String, String>` | *None* | Key-value pairs for applying image metadata (similar to Docker's [LABEL](https://docs.docker.com/engine/reference/builder/#label) instruction).
 `format` | `String` | `Docker` | Use `OCI` to build an [OCI container image](https://www.opencontainers.org/).
 `useCurrentTimestamp` | `boolean` | `false` | By default, Jib wipes all timestamps to guarantee reproducibility. If this parameter is set to `true`, Jib will set the image's creation timestamp to the time of the build, which sacrifices reproducibility for easily being able to tell when your image was created.
 
@@ -213,6 +214,7 @@ In this configuration, the image:
 * Is pushed to `localhost:5000/my-image:built-with-jib`
 * Runs by calling `java -Xms512m -Xdebug -Xmy:flag=jib-rules -cp app/libs/*:app/resources:app/classes mypackage.MyApp some args`
 * Exposes port 1000 for tcp (default), and ports 2000, 2001, 2002, and 2003 for udp
+* Has two labels (key1:value1 and key2:value2)
 * Is built as OCI format
 
 ```groovy
@@ -229,6 +231,7 @@ jib {
     mainClass = 'mypackage.MyApp'
     args = ['some', 'args']
     ports = ['1000', '2000-2003/udp']
+    labels = [key1:'value1', key2:'value2']
     format = 'OCI'
   }
 }
