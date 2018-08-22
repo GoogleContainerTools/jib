@@ -1,5 +1,7 @@
 # Proposal: Give users ability to add Java agents, arbitrary files, and separate dependencies
 
+Implemented in: **v0.9.5**
+
 ## Motivation
 
 There are 3 feature requests that may be able to be solved together. These are:
@@ -29,6 +31,16 @@ Users may wish to add other files for use in the image. Currently, the way to do
 The dependencies layer tends to be the largest layer in the image, since it contains all the dependency JARs. However, not all dependencies are the same. Some may change more frequently than others (especially `-SNAPSHOT` versions). Therefore, users should have some way to group different dependencies into different layers. For example, separating released artifacts from snapshot artifacts, and grouping dependencies from a BOM into a layer, or separating more frequently changed ones from less frequently changed ones to reduce the amortized push time.
 
 ## Proposal
+
+The proposal is to define a new convention for adding more files to the Jib container.
+
+The user can add arbitrary files to the image by placing them in a `src/main/jib` directory. This will copy all files within `src/main/jib` to the image's root directory `/`, maintaining the same structure. For example, if the user has a text file at `src/main/jib/dir/hello.txt`, then the built image have `/dir/hello.txt`.
+
+The directory should also be able to be configured to override the `src/main/jib` default.
+
+### Alternative (Rejected) Proposal
+
+**The alternative proposal was rejected** because we deemed that it required too much extra configuration on the part of the user.
 
 The proposal is to keep the configuration for adding additional files and Java agents separate from the configuration for separating the application layers into thinner layers. The point of this is to keep the configuration simple and not allow arbitrary user-controlled layering.
 
@@ -69,8 +81,6 @@ In the future, we may consider allowing the user to configure this in the form o
 ```
 
 This would match dependencies that are in the `com.yourcompany` package and `SNAPSHOT` dependencies and place these in a new volatile-dependencies layer.
-
-\* 
 
 ### Alternative (Rejected) Proposal
 
