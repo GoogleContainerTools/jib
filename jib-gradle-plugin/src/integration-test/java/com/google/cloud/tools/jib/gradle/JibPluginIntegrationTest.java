@@ -59,6 +59,7 @@ public class JibPluginIntegrationTest {
     Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
 
     new Command("docker", "pull", imageReference).run();
+    assertHasEntrypoint(imageReference);
     assertHasExposedPorts(imageReference);
     return new Command("docker", "run", imageReference).run();
   }
@@ -80,6 +81,7 @@ public class JibPluginIntegrationTest {
     Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
 
     targetRegistry.pull(imageReference);
+    assertHasEntrypoint(imageReference);
     assertHasExposedPorts(imageReference);
     assertHasLabels(imageReference);
     return new Command("docker", "run", imageReference).run();
@@ -94,6 +96,7 @@ public class JibPluginIntegrationTest {
         buildResult, JibPlugin.BUILD_DOCKER_TASK_NAME, "Built image to Docker daemon as ");
     Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
 
+    assertHasEntrypoint(imageReference);
     assertHasExposedPorts(imageReference);
     assertHasLabels(imageReference);
     return new Command("docker", "run", imageReference).run();
@@ -134,6 +137,24 @@ public class JibPluginIntegrationTest {
         new Command("docker", "inspect", "-f", "{{.Created}}", imageReference).run().trim();
     Instant parsed = Instant.parse(inspect);
     Assert.assertTrue(parsed.isAfter(before) || parsed.equals(before));
+  }
+
+  /**
+   * Asserts that the test project has the required entrypoint.
+   *
+   * @param imageReference the image to test
+   * @throws IOException if the {@code docker inspect} command fails to run
+   * @throws InterruptedException if the {@code docker inspect} command is interrupted
+   */
+  private static void assertHasEntrypoint(String imageReference)
+      throws IOException, InterruptedException {
+    Assert.assertThat(
+        new Command("docker", "inspect", imageReference).run(),
+        CoreMatchers.containsString(
+            "            \"Entrypoint\": {\n"
+                + "                \"foo\",\n"
+                + "                \"bar\",\n"
+                + "                \"baz\""));
   }
 
   /**
@@ -300,6 +321,7 @@ public class JibPluginIntegrationTest {
     new Command("docker", "load", "--input", outputPath).run();
     Assert.assertEquals(
         "Hello, world. An argument.\nfoo\ncat\n", new Command("docker", "run", targetImage).run());
+    assertHasEntrypoint(targetImage);
     assertHasExposedPorts(targetImage);
     assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
   }
@@ -325,6 +347,7 @@ public class JibPluginIntegrationTest {
                 .toString())
         .run();
 
+    assertHasEntrypoint(imageName);
     assertHasExposedPorts(imageName);
     Assert.assertEquals(
         "Hello, world. An argument.\nfoo\ncat\n", new Command("docker", "run", imageName).run());

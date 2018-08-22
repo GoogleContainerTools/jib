@@ -31,6 +31,7 @@ jib {
     }
     container {
         useCurrentTimestamp = true
+        entrypoint = ['foo', 'bar', 'baz']
         args = ['An argument.']
         mainClass = 'com.test.HelloWorld'
         jvmFlags = ['-Xms512m', '-Xdebug']

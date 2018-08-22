@@ -34,6 +34,7 @@ public class ContainerParameters {
 
   private boolean useCurrentTimestamp = false;
   private List<String> jvmFlags = Collections.emptyList();
+  private List<String> entrypoint = Collections.emptyList();
   @Nullable private String mainClass;
   private List<String> args = Collections.emptyList();
   private ImageFormat format = ImageFormat.Docker;
@@ -48,6 +49,16 @@ public class ContainerParameters {
 
   public void setUseCurrentTimestamp(boolean useCurrentTimestamp) {
     this.useCurrentTimestamp = useCurrentTimestamp;
+  }
+
+  @Input
+  @Optional
+  public List<String> getEntrypoint() {
+    return entrypoint;
+  }
+
+  public void setEntrypoint(List<String> entrypoint) {
+    this.entrypoint = entrypoint;
   }
 
   @Input

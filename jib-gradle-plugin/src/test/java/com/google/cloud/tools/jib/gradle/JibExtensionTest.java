@@ -103,12 +103,15 @@ public class JibExtensionTest {
     testJibExtension.container(
         container -> {
           container.setJvmFlags(Arrays.asList("jvmFlag1", "jvmFlag2"));
+          container.setEntrypoint(Arrays.asList("foo", "bar", "baz"));
           container.setMainClass("mainClass");
           container.setArgs(Arrays.asList("arg1", "arg2", "arg3"));
           container.setPorts(Arrays.asList("1000", "2000-2010", "3000"));
           container.setLabels(ImmutableMap.of("label1", "value1", "label2", "value2"));
           container.setFormat(ImageFormat.OCI);
         });
+    Assert.assertEquals(
+        Arrays.asList("foo", "bar", "baz"), testJibExtension.getContainer().getEntrypoint());
     Assert.assertEquals(
         Arrays.asList("jvmFlag1", "jvmFlag2"), testJibExtension.getContainer().getJvmFlags());
     Assert.assertEquals("mainClass", testJibExtension.getContainer().getMainClass());

@@ -131,6 +131,13 @@ public class BuildImageMojoIntegrationTest {
     Assert.assertThat(
         dockerInspect,
         CoreMatchers.containsString(
+            "            \"Entrypoint\": {\n"
+                + "                \"foo\",\n"
+                + "                \"bar\",\n"
+                + "                \"baz\""));
+    Assert.assertThat(
+        dockerInspect,
+        CoreMatchers.containsString(
             "            \"ExposedPorts\": {\n"
                 + "                \"1000/tcp\": {},\n"
                 + "                \"2000/udp\": {},\n"

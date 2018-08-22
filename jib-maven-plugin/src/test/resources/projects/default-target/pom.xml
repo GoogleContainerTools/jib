@@ -39,6 +39,11 @@
         <version>${jib-maven-plugin.version}</version>
         <configuration>
           <container>
+            <entrypoint>
+              <arg>foo</arg>
+              <arg>bar</arg>
+              <arg>baz</arg>
+            </entrypoint>
             <args>An argument.</args>
             <ports>
               <port>1000/tcp</port>
