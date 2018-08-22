@@ -25,8 +25,8 @@ import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
-import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
+import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.InsecureRegistryException;
 import com.google.cloud.tools.jib.registry.RegistryCredentialsNotSentException;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
@@ -55,8 +55,12 @@ public class BuildStepsRunnerTest {
       new HelpfulSuggestions(
           "messagePrefix",
           "clearCacheCommand",
+          ImageReference.of("someregistry", "somerepository", null),
+          false,
           "baseImageCredHelperConfiguration",
           registry -> "baseImageAuthConfiguration " + registry,
+          ImageReference.of("toRegistry", "toRepository", null),
+          false,
           "targetImageCredHelperConfiguration",
           registry -> "targetImageAuthConfiguration " + registry,
           "toConfig",
@@ -72,8 +76,6 @@ public class BuildStepsRunnerTest {
   @Mock private HttpResponseException mockHttpResponseException;
   @Mock private ExecutionException mockExecutionException;
   @Mock private BuildConfiguration mockBuildConfiguration;
-  @Mock private ImageConfiguration mockFromImageConfiguration;
-  @Mock private ImageConfiguration mockToImageConfiguration;
 
   private BuildStepsRunner testBuildImageStepsRunner;
 
@@ -82,10 +84,6 @@ public class BuildStepsRunnerTest {
     testBuildImageStepsRunner = new BuildStepsRunner(mockBuildSteps);
 
     Mockito.when(mockBuildSteps.getBuildConfiguration()).thenReturn(mockBuildConfiguration);
-    Mockito.when(mockBuildConfiguration.getBaseImageConfiguration())
-        .thenReturn(mockFromImageConfiguration);
-    Mockito.when(mockBuildConfiguration.getTargetImageConfiguration())
-        .thenReturn(mockToImageConfiguration);
     Mockito.when(mockBuildConfiguration.getBuildLogger()).thenReturn(mockBuildLogger);
     Mockito.when(mockBuildConfiguration.getLayerConfigurations())
         .thenReturn(
@@ -213,46 +211,13 @@ public class BuildStepsRunnerTest {
     Mockito.when(mockExecutionException.getCause()).thenReturn(mockRegistryUnauthorizedException);
     Mockito.doThrow(mockExecutionException).when(mockBuildSteps).run();
 
-    Mockito.when(mockFromImageConfiguration.getImageRegistry()).thenReturn("someregistry");
-    Mockito.when(mockFromImageConfiguration.getImageRepository()).thenReturn("somerepository");
-
     try {
       testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
     } catch (BuildStepsExecutionException ex) {
       Assert.assertEquals(
-          TEST_HELPFUL_SUGGESTIONS.forNoCredentialHelpersDefinedForBaseImage("someregistry"),
-          ex.getMessage());
-      Assert.assertEquals(mockRegistryUnauthorizedException, ex.getCause());
-    }
-  }
-
-  @Test
-  public void testBuildImage_executionException_registryUnauthorizedException_sameRegistry()
-      throws CacheDirectoryNotOwnedException, InterruptedException, ExecutionException,
-          CacheMetadataCorruptedException, CacheDirectoryCreationException, IOException {
-    Mockito.when(mockRegistryUnauthorizedException.getHttpResponseException())
-        .thenReturn(mockHttpResponseException);
-    Mockito.when(mockRegistryUnauthorizedException.getRegistry()).thenReturn("toRegistry");
-    Mockito.when(mockRegistryUnauthorizedException.getRepository()).thenReturn("toRepository");
-    Mockito.when(mockHttpResponseException.getStatusCode()).thenReturn(-1); // Unknown
-
-    Mockito.when(mockExecutionException.getCause()).thenReturn(mockRegistryUnauthorizedException);
-    Mockito.doThrow(mockExecutionException).when(mockBuildSteps).run();
-
-    Mockito.when(mockFromImageConfiguration.getImageRegistry()).thenReturn("toRegistry");
-    Mockito.when(mockFromImageConfiguration.getImageRepository()).thenReturn("fromRepository");
-    Mockito.when(mockToImageConfiguration.getImageRegistry()).thenReturn("toRegistry");
-    Mockito.when(mockToImageConfiguration.getImageRepository()).thenReturn("toRepository");
-
-    try {
-      testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
-      Assert.fail("buildImage should have thrown an exception");
-
-    } catch (BuildStepsExecutionException ex) {
-      Assert.assertEquals(
-          TEST_HELPFUL_SUGGESTIONS.forNoCredentialHelpersDefinedForTargetImage("toRegistry"),
+          TEST_HELPFUL_SUGGESTIONS.forNoCredentialsDefined("someregistry", "somerepository"),
           ex.getMessage());
       Assert.assertEquals(mockRegistryUnauthorizedException, ex.getCause());
     }
@@ -273,35 +238,6 @@ public class BuildStepsRunnerTest {
     } catch (BuildStepsExecutionException ex) {
       Assert.assertEquals(TEST_HELPFUL_SUGGESTIONS.forCredentialsNotSent(), ex.getMessage());
       Assert.assertEquals(mockRegistryCredentialsNotSentException, ex.getCause());
-    }
-  }
-
-  @Test
-  public void testBuildImage_executionException_registryUnauthorizedException_other()
-      throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
-          CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
-    Mockito.when(mockRegistryUnauthorizedException.getHttpResponseException())
-        .thenReturn(mockHttpResponseException);
-    Mockito.when(mockRegistryUnauthorizedException.getRegistry()).thenReturn("someregistry");
-    Mockito.when(mockRegistryUnauthorizedException.getRepository()).thenReturn("somerepository");
-    Mockito.when(mockHttpResponseException.getStatusCode()).thenReturn(-1); // Unknown
-
-    Mockito.when(mockExecutionException.getCause()).thenReturn(mockRegistryUnauthorizedException);
-    Mockito.doThrow(mockExecutionException).when(mockBuildSteps).run();
-
-    Mockito.when(mockFromImageConfiguration.getImageRegistry()).thenReturn("someregistry");
-    Mockito.when(mockFromImageConfiguration.getImageRepository()).thenReturn("somerepository");
-    Mockito.when(mockFromImageConfiguration.getCredentialHelper())
-        .thenReturn("some-credential-helper");
-
-    try {
-      testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
-      Assert.fail("buildImage should have thrown an exception");
-
-    } catch (BuildStepsExecutionException ex) {
-      Assert.assertEquals(
-          TEST_HELPFUL_SUGGESTIONS.forCredentialsNotCorrect("someregistry"), ex.getMessage());
-      Assert.assertEquals(mockRegistryUnauthorizedException, ex.getCause());
     }
   }
 

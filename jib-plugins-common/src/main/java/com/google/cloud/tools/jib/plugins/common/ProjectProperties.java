@@ -40,10 +40,4 @@ public interface ProjectProperties {
   /** @return the name of the main class configured in a jar plugin, or null if none is found. */
   @Nullable
   String getMainClassFromJar();
-
-  /**
-   * @param prefix the prefix message for the {@link HelpfulSuggestions}.
-   * @return a {@link HelpfulSuggestions} instance for main class inference failure.
-   */
-  HelpfulSuggestions getMainClassHelpfulSuggestions(String prefix);
 }

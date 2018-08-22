@@ -24,7 +24,6 @@ import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
-import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.nio.file.Paths;
@@ -37,6 +36,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+/** Tests for {@link BuildConfiguration}. */
 public class BuildConfigurationTest {
 
   @Test
@@ -44,15 +44,9 @@ public class BuildConfigurationTest {
     String expectedBaseImageServerUrl = "someserver";
     String expectedBaseImageName = "baseimage";
     String expectedBaseImageTag = "baseimagetag";
-    String expectedBaseImageCredentialHelperName = "credentialhelper";
-    RegistryCredentials expectedKnownBaseRegistryCredentials =
-        Mockito.mock(RegistryCredentials.class);
     String expectedTargetServerUrl = "someotherserver";
     String expectedTargetImageName = "targetimage";
     String expectedTargetTag = "targettag";
-    String expectedTargetImageCredentialHelperName = "anotherCredentialHelper";
-    RegistryCredentials expectedKnownTargetRegistryCredentials =
-        Mockito.mock(RegistryCredentials.class);
     List<CredentialRetriever> credentialRetrievers =
         Collections.singletonList(() -> new Credential("username", "password"));
     Instant expectedCreationTime = Instant.ofEpochSecond(10000);
@@ -75,15 +69,11 @@ public class BuildConfigurationTest {
         ImageConfiguration.builder(
                 ImageReference.of(
                     expectedBaseImageServerUrl, expectedBaseImageName, expectedBaseImageTag))
-            .setCredentialHelper(expectedBaseImageCredentialHelperName)
-            .setKnownRegistryCredentials(expectedKnownBaseRegistryCredentials)
             .build();
     ImageConfiguration targetImageConfiguration =
         ImageConfiguration.builder(
                 ImageReference.of(
                     expectedTargetServerUrl, expectedTargetImageName, expectedTargetTag))
-            .setCredentialHelper(expectedTargetImageCredentialHelperName)
-            .setKnownRegistryCredentials(expectedKnownTargetRegistryCredentials)
             .setCredentialRetrievers(credentialRetrievers)
             .build();
     ContainerConfiguration containerConfiguration =
@@ -118,9 +108,6 @@ public class BuildConfigurationTest {
     Assert.assertEquals(
         expectedBaseImageTag, buildConfiguration.getBaseImageConfiguration().getImageTag());
     Assert.assertEquals(
-        expectedBaseImageCredentialHelperName,
-        buildConfiguration.getBaseImageConfiguration().getCredentialHelper());
-    Assert.assertEquals(
         expectedTargetServerUrl,
         buildConfiguration.getTargetImageConfiguration().getImageRegistry());
     Assert.assertEquals(
@@ -128,9 +115,6 @@ public class BuildConfigurationTest {
         buildConfiguration.getTargetImageConfiguration().getImageRepository());
     Assert.assertEquals(
         expectedTargetTag, buildConfiguration.getTargetImageConfiguration().getImageTag());
-    Assert.assertEquals(
-        expectedTargetImageCredentialHelperName,
-        buildConfiguration.getTargetImageConfiguration().getCredentialHelper());
     Assert.assertEquals(
         new Credential("username", "password"),
         buildConfiguration
@@ -185,11 +169,6 @@ public class BuildConfigurationTest {
             .setTargetImageConfiguration(targetImageConfiguration)
             .build();
 
-    Assert.assertNull(buildConfiguration.getBaseImageConfiguration().getCredentialHelper());
-    Assert.assertNull(buildConfiguration.getBaseImageConfiguration().getKnownRegistryCredentials());
-    Assert.assertNull(buildConfiguration.getTargetImageConfiguration().getCredentialHelper());
-    Assert.assertNull(
-        buildConfiguration.getTargetImageConfiguration().getKnownRegistryCredentials());
     Assert.assertEquals(V22ManifestTemplate.class, buildConfiguration.getTargetFormat());
     Assert.assertNull(buildConfiguration.getApplicationLayersCacheConfiguration());
     Assert.assertNull(buildConfiguration.getBaseImageLayersCacheConfiguration());

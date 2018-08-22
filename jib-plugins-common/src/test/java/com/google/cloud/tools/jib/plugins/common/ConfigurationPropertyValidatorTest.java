@@ -34,6 +34,7 @@ public class ConfigurationPropertyValidatorTest {
 
   @Mock private JibLogger mockLogger;
   @Mock private AuthProperty mockAuth;
+  @Mock private ImageReference mockImageReference;
 
   @After
   public void tearDown() {
@@ -129,7 +130,19 @@ public class ConfigurationPropertyValidatorTest {
   public void testGetGeneratedTargetDockerTag() throws InvalidImageReferenceException {
     HelpfulSuggestions helpfulSuggestions =
         new HelpfulSuggestions(
-            "", "", "", unused -> "", "", unused -> "", "to", "--to", "build.txt");
+            "",
+            "",
+            mockImageReference,
+            false,
+            "",
+            unused -> "",
+            mockImageReference,
+            false,
+            "",
+            unused -> "",
+            "to",
+            "--to",
+            "build.txt");
 
     // Target configured
     ImageReference result =

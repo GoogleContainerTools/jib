@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 0.9.9
+
+### Added
+
 - Passthrough labels from base image ([#750](https://github.com/GoogleContainerTools/jib/pull/750/files))
 
 ### Changed
