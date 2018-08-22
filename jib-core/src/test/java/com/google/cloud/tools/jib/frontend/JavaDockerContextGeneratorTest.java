@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.frontend;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -30,6 +31,7 @@ import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -124,6 +126,14 @@ public class JavaDockerContextGeneratorTest {
     String expectedMainClass = "SomeMainClass";
     List<String> expectedJavaArguments = Arrays.asList("arg1", "arg2");
     List<String> exposedPorts = Arrays.asList("1000/tcp", "2000-2010/udp");
+    Map<String, String> expectedLabels =
+        ImmutableMap.of(
+            "key1",
+            "value",
+            "key2",
+            "value with\\backslashes\"and\\\\\"\"quotes\"\\",
+            "key3",
+            "value3");
 
     Mockito.when(mockJavaLayerConfigurations.getDependenciesLayerEntry())
         .thenReturn(
@@ -145,6 +155,7 @@ public class JavaDockerContextGeneratorTest {
             .setMainClass(expectedMainClass)
             .setJavaArguments(expectedJavaArguments)
             .setExposedPorts(exposedPorts)
+            .setLabels(expectedLabels)
             .makeDockerfile();
 
     // Need to split/rejoin the string here to avoid cross-platform troubles
