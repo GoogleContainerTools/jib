@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
+import com.google.common.collect.ImmutableMap;
 import java.util.Arrays;
 import java.util.Collections;
 import org.gradle.api.Project;
@@ -105,6 +106,7 @@ public class JibExtensionTest {
           container.setMainClass("mainClass");
           container.setArgs(Arrays.asList("arg1", "arg2", "arg3"));
           container.setPorts(Arrays.asList("1000", "2000-2010", "3000"));
+          container.setLabels(ImmutableMap.of("label1", "value1", "label2", "value2"));
           container.setFormat(ImageFormat.OCI);
         });
     Assert.assertEquals(
@@ -114,6 +116,9 @@ public class JibExtensionTest {
         Arrays.asList("arg1", "arg2", "arg3"), testJibExtension.getContainer().getArgs());
     Assert.assertEquals(
         Arrays.asList("1000", "2000-2010", "3000"), testJibExtension.getContainer().getPorts());
+    Assert.assertEquals(
+        ImmutableMap.of("label1", "value1", "label2", "value2"),
+        testJibExtension.getContainer().getLabels());
     Assert.assertEquals(OCIManifestTemplate.class, testJibExtension.getContainer().getFormat());
   }
 
