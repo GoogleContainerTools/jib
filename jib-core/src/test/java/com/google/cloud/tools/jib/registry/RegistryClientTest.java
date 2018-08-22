@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.registry;
 
+import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.http.Authorization;
 import org.junit.Assert;
 import org.junit.Before;
@@ -30,27 +31,31 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class RegistryClientTest {
 
+  @Mock private JibLogger buildLogger;
   @Mock private Authorization mockAuthorization;
 
   private RegistryClient.Factory testRegistryClientFactory;
 
   @Before
   public void setUp() {
-    testRegistryClientFactory = RegistryClient.factory("some.server.url", "some image name");
+    testRegistryClientFactory =
+        RegistryClient.factory(buildLogger, "some.server.url", "some image name");
   }
 
   @Test
   public void testGetUserAgent_null() {
     Assert.assertTrue(
         testRegistryClientFactory
-            .newWithAuthorization(mockAuthorization)
+            .setAuthorization(mockAuthorization)
+            .newRegistryClient()
             .getUserAgent()
             .startsWith("jib"));
 
     RegistryClient.setUserAgentSuffix(null);
     Assert.assertTrue(
         testRegistryClientFactory
-            .newWithAuthorization(mockAuthorization)
+            .setAuthorization(mockAuthorization)
+            .newRegistryClient()
             .getUserAgent()
             .startsWith("jib"));
   }
@@ -59,10 +64,16 @@ public class RegistryClientTest {
   public void testGetUserAgent() {
     RegistryClient.setUserAgentSuffix("some user agent suffix");
 
-    Assert.assertTrue(testRegistryClientFactory.newAllowHttp().getUserAgent().startsWith("jib "));
     Assert.assertTrue(
         testRegistryClientFactory
-            .newAllowHttp()
+            .setAllowInsecureRegistries(true)
+            .newRegistryClient()
+            .getUserAgent()
+            .startsWith("jib "));
+    Assert.assertTrue(
+        testRegistryClientFactory
+            .setAllowInsecureRegistries(true)
+            .newRegistryClient()
             .getUserAgent()
             .endsWith(" some user agent suffix"));
   }
@@ -70,6 +81,10 @@ public class RegistryClientTest {
   @Test
   public void testGetApiRouteBase() {
     Assert.assertEquals(
-        "some.server.url/v2/", testRegistryClientFactory.newAllowHttp().getApiRouteBase());
+        "some.server.url/v2/",
+        testRegistryClientFactory
+            .setAllowInsecureRegistries(true)
+            .newRegistryClient()
+            .getApiRouteBase());
   }
 }

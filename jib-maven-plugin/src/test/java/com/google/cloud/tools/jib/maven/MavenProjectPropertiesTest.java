@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
+import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
@@ -33,8 +33,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class MavenProjectPropertiesTest {
 
   @Mock private MavenProject mockMavenProject;
-  @Mock private MavenBuildLogger mockMavenBuildLogger;
-  @Mock private SourceFilesConfiguration mockSourcesFilesConfiguration;
+  @Mock private MavenJibLogger mockMavenJibLogger;
+  @Mock private JavaLayerConfigurations mockJavaLayerConfigurations;
   @Mock private Plugin mockJarPlugin;
 
   private Xpp3Dom jarPluginConfiguration;
@@ -48,7 +48,7 @@ public class MavenProjectPropertiesTest {
   public void setup() {
     mavenProjectProperties =
         new MavenProjectProperties(
-            mockMavenProject, mockMavenBuildLogger, mockSourcesFilesConfiguration);
+            mockMavenProject, mockMavenJibLogger, mockJavaLayerConfigurations);
     jarPluginConfiguration = new Xpp3Dom("");
     archive = new Xpp3Dom("archive");
     manifest = new Xpp3Dom("manifest");
@@ -76,7 +76,7 @@ public class MavenProjectPropertiesTest {
     jarPluginConfiguration.addChild(archive);
     archive.addChild(manifest);
 
-    Assert.assertEquals(null, mavenProjectProperties.getMainClassFromJar());
+    Assert.assertNull(mavenProjectProperties.getMainClassFromJar());
   }
 
   @Test
@@ -86,7 +86,7 @@ public class MavenProjectPropertiesTest {
     Mockito.when(mockJarPlugin.getConfiguration()).thenReturn(jarPluginConfiguration);
     jarPluginConfiguration.addChild(archive);
 
-    Assert.assertEquals(null, mavenProjectProperties.getMainClassFromJar());
+    Assert.assertNull(mavenProjectProperties.getMainClassFromJar());
   }
 
   @Test
@@ -95,7 +95,7 @@ public class MavenProjectPropertiesTest {
         .thenReturn(mockJarPlugin);
     Mockito.when(mockJarPlugin.getConfiguration()).thenReturn(jarPluginConfiguration);
 
-    Assert.assertEquals(null, mavenProjectProperties.getMainClassFromJar());
+    Assert.assertNull(mavenProjectProperties.getMainClassFromJar());
   }
 
   @Test
@@ -103,11 +103,11 @@ public class MavenProjectPropertiesTest {
     Mockito.when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-jar-plugin"))
         .thenReturn(mockJarPlugin);
 
-    Assert.assertEquals(null, mavenProjectProperties.getMainClassFromJar());
+    Assert.assertNull(mavenProjectProperties.getMainClassFromJar());
   }
 
   @Test
   public void testGetMainClassFromJar_missingPlugin() {
-    Assert.assertEquals(null, mavenProjectProperties.getMainClassFromJar());
+    Assert.assertNull(mavenProjectProperties.getMainClassFromJar());
   }
 }

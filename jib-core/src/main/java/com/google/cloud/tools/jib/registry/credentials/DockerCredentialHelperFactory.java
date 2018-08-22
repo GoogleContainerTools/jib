@@ -16,20 +16,29 @@
 
 package com.google.cloud.tools.jib.registry.credentials;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 /** Factory class for constructing {@link DockerCredentialHelper}. */
 public class DockerCredentialHelperFactory {
 
-  private final String registry;
+  public static final String CREDENTIAL_HELPER_PREFIX = "docker-credential-";
 
-  public DockerCredentialHelperFactory(String registry) {
-    this.registry = registry;
-  }
+  public DockerCredentialHelperFactory() {}
 
   /**
-   * @param credentialHelperSuffix the suffix of the docker-credential-[suffix] command to be run.
+   * @param registry the {@code ServerURL} stored by the credential helper
+   * @param credentialHelper the path to the Docker credential helper executable - usually in the
+   *     form docker-credential-[suffix]
    * @return a {@link DockerCredentialHelper} retrieved from the command.
    */
-  public DockerCredentialHelper withCredentialHelperSuffix(String credentialHelperSuffix) {
-    return new DockerCredentialHelper(registry, credentialHelperSuffix);
+  public DockerCredentialHelper newDockerCredentialHelper(String registry, Path credentialHelper) {
+    return new DockerCredentialHelper(registry, credentialHelper);
+  }
+
+  public DockerCredentialHelper newDockerCredentialHelper(
+      String registry, String credentialHelperSuffix) {
+    return new DockerCredentialHelper(
+        registry, Paths.get(CREDENTIAL_HELPER_PREFIX + credentialHelperSuffix));
   }
 }

@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.registry;
 
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
+import com.google.cloud.tools.jib.EmptyJibLogger;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
@@ -33,14 +34,20 @@ import org.junit.Test;
 public class ManifestPusherIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
+  private static final EmptyJibLogger BUILD_LOGGER = new EmptyJibLogger();
 
   @Test
-  public void testPush_missingBlobs() throws IOException, RegistryException {
+  public void testPush_missingBlobs() throws IOException, RegistryException, InterruptedException {
+    localRegistry.pullAndPushToLocal("busybox", "busybox");
+
     RegistryClient registryClient =
-        RegistryClient.factory("gcr.io", "distroless/java").newWithAuthorization(null);
+        RegistryClient.factory(BUILD_LOGGER, "gcr.io", "distroless/java").newRegistryClient();
     ManifestTemplate manifestTemplate = registryClient.pullManifest("latest");
 
-    registryClient = RegistryClient.factory("localhost:5000", "busybox").newAllowHttp();
+    registryClient =
+        RegistryClient.factory(BUILD_LOGGER, "localhost:5000", "busybox")
+            .setAllowInsecureRegistries(true)
+            .newRegistryClient();
     try {
       registryClient.pushManifest((V22ManifestTemplate) manifestTemplate, "latest");
       Assert.fail("Pushing manifest without its BLOBs should fail");
@@ -54,7 +61,9 @@ public class ManifestPusherIntegrationTest {
 
   /** Tests manifest pushing. This test is a comprehensive test of push and pull. */
   @Test
-  public void testPush() throws DigestException, IOException, RegistryException {
+  public void testPush()
+      throws DigestException, IOException, RegistryException, InterruptedException {
+    localRegistry.pullAndPushToLocal("busybox", "busybox");
     Blob testLayerBlob = Blobs.from("crepecake");
     // Known digest for 'crepecake'
     DescriptorDigest testLayerBlobDigest =
@@ -72,11 +81,13 @@ public class ManifestPusherIntegrationTest {
 
     // Pushes the BLOBs.
     RegistryClient registryClient =
-        RegistryClient.factory("localhost:5000", "testimage").newAllowHttp();
-    Assert.assertFalse(registryClient.pushBlob(testLayerBlobDigest, testLayerBlob));
+        RegistryClient.factory(BUILD_LOGGER, "localhost:5000", "testimage")
+            .setAllowInsecureRegistries(true)
+            .newRegistryClient();
+    Assert.assertFalse(registryClient.pushBlob(testLayerBlobDigest, testLayerBlob, null));
     Assert.assertFalse(
         registryClient.pushBlob(
-            testContainerConfigurationBlobDigest, testContainerConfigurationBlob));
+            testContainerConfigurationBlobDigest, testContainerConfigurationBlob, null));
 
     // Pushes the manifest.
     registryClient.pushManifest(expectedManifestTemplate, "latest");

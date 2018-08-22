@@ -17,7 +17,11 @@
 package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
+import com.google.cloud.tools.jib.configuration.Port;
+import com.google.cloud.tools.jib.configuration.Port.Protocol;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import java.time.Instant;
 import java.util.Arrays;
 import org.junit.Assert;
 import org.junit.Before;
@@ -42,24 +46,27 @@ public class ImageTest {
 
   @Test
   public void test_smokeTest() throws LayerPropertyNotFoundException {
-    ImmutableList<String> expectedEnvironment =
-        ImmutableList.of("crepecake=is great", "VARIABLE=VALUE");
-
     Image<Layer> image =
         Image.builder()
+            .setCreated(Instant.ofEpochSecond(10000))
             .setEnvironmentVariable("crepecake", "is great")
             .setEnvironmentVariable("VARIABLE", "VALUE")
             .setEntrypoint(Arrays.asList("some", "command"))
             .setJavaArguments(Arrays.asList("arg1", "arg2"))
-            .setExposedPorts(ImmutableList.of("1000", "2000"))
+            .setExposedPorts(
+                ImmutableList.of(new Port(1000, Protocol.TCP), new Port(2000, Protocol.TCP)))
             .addLayer(mockLayer)
             .build();
 
     Assert.assertEquals(
         mockDescriptorDigest, image.getLayers().get(0).getBlobDescriptor().getDigest());
-    Assert.assertEquals(expectedEnvironment, image.getEnvironment());
+    Assert.assertEquals(Instant.ofEpochSecond(10000), image.getCreated());
+    Assert.assertEquals(
+        ImmutableMap.of("crepecake", "is great", "VARIABLE", "VALUE"), image.getEnvironment());
     Assert.assertEquals(Arrays.asList("some", "command"), image.getEntrypoint());
     Assert.assertEquals(Arrays.asList("arg1", "arg2"), image.getJavaArguments());
-    Assert.assertEquals(ImmutableList.of("1000", "2000"), image.getExposedPorts());
+    Assert.assertEquals(
+        ImmutableList.of(new Port(1000, Protocol.TCP), new Port(2000, Protocol.TCP)),
+        image.getExposedPorts());
   }
 }

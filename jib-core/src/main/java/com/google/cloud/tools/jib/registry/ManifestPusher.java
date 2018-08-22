@@ -29,15 +29,15 @@ import java.util.List;
 /** Pushes an image's manifest. */
 class ManifestPusher implements RegistryEndpointProvider<Void> {
 
-  private final RegistryEndpointProperties registryEndpointProperties;
+  private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   private final BuildableManifestTemplate manifestTemplate;
   private final String imageTag;
 
   ManifestPusher(
-      RegistryEndpointProperties registryEndpointProperties,
+      RegistryEndpointRequestProperties registryEndpointRequestProperties,
       BuildableManifestTemplate manifestTemplate,
       String imageTag) {
-    this.registryEndpointProperties = registryEndpointProperties;
+    this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     this.manifestTemplate = manifestTemplate;
     this.imageTag = imageTag;
   }
@@ -61,7 +61,7 @@ class ManifestPusher implements RegistryEndpointProvider<Void> {
   @Override
   public URL getApiRoute(String apiRouteBase) throws MalformedURLException {
     return new URL(
-        apiRouteBase + registryEndpointProperties.getImageName() + "/manifests/" + imageTag);
+        apiRouteBase + registryEndpointRequestProperties.getImageName() + "/manifests/" + imageTag);
   }
 
   @Override
@@ -72,9 +72,9 @@ class ManifestPusher implements RegistryEndpointProvider<Void> {
   @Override
   public String getActionDescription() {
     return "push image manifest for "
-        + registryEndpointProperties.getServerUrl()
+        + registryEndpointRequestProperties.getServerUrl()
         + "/"
-        + registryEndpointProperties.getImageName()
+        + registryEndpointRequestProperties.getImageName()
         + ":"
         + imageTag;
   }

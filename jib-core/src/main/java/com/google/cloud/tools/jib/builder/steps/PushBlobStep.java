@@ -21,7 +21,7 @@ import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
-import com.google.cloud.tools.jib.builder.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryException;
 import com.google.common.util.concurrent.Futures;
@@ -68,17 +68,17 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
   public BlobDescriptor call() throws IOException, RegistryException, ExecutionException {
     try (Timer timer =
         new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION + blobDescriptor)) {
-      RegistryClient.Factory registryClientFactory =
-          RegistryClient.factory(
-              buildConfiguration.getTargetImageRegistry(),
-              buildConfiguration.getTargetImageRepository());
       RegistryClient registryClient =
-          buildConfiguration.getAllowHttp()
-              ? registryClientFactory.newAllowHttp()
-              : registryClientFactory.newWithAuthorization(
-                  NonBlockingSteps.get(authenticatePushStep));
+          RegistryClient.factory(
+                  buildConfiguration.getBuildLogger(),
+                  buildConfiguration.getTargetImageConfiguration().getImageRegistry(),
+                  buildConfiguration.getTargetImageConfiguration().getImageRepository())
+              .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
+              .setAuthorization(NonBlockingSteps.get(authenticatePushStep))
+              .newRegistryClient();
       registryClient.setTimer(timer);
 
+      // check if the BLOB is available
       if (registryClient.checkBlob(blobDescriptor.getDigest()) != null) {
         buildConfiguration
             .getBuildLogger()
@@ -86,7 +86,8 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
         return blobDescriptor;
       }
 
-      registryClient.pushBlob(blobDescriptor.getDigest(), blob);
+      // todo: leverage cross-repository mounts
+      registryClient.pushBlob(blobDescriptor.getDigest(), blob, null);
 
       return blobDescriptor;
     }

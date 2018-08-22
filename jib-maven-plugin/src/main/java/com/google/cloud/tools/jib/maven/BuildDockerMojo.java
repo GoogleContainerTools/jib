@@ -16,103 +16,87 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
-import com.google.cloud.tools.jib.configuration.CacheConfiguration;
+import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
-import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
-import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
-import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
-import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
 import com.google.cloud.tools.jib.image.ImageReference;
-import com.google.cloud.tools.jib.registry.RegistryClient;
-import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
+import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
+import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
+import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
+import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
 /** Builds a container image and exports to the default Docker daemon. */
 @Mojo(
-  name = BuildDockerMojo.GOAL_NAME,
-  requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM
-)
+    name = BuildDockerMojo.GOAL_NAME,
+    requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM)
 public class BuildDockerMojo extends JibPluginConfiguration {
 
   @VisibleForTesting static final String GOAL_NAME = "dockerBuild";
 
-  /** {@code User-Agent} header suffix to send to the registry. */
-  private static final String USER_AGENT_SUFFIX = "jib-maven-plugin";
-
-  private static final HelpfulSuggestions HELPFUL_SUGGESTIONS =
-      HelpfulSuggestionsProvider.get("Build to Docker daemon failed");
+  private static final String HELPFUL_SUGGESTIONS_PREFIX = "Build to Docker daemon failed";
 
   @Override
   public void execute() throws MojoExecutionException {
-    MavenBuildLogger mavenBuildLogger = new MavenBuildLogger(getLog());
-    handleDeprecatedParameters(mavenBuildLogger);
+    if ("pom".equals(getProject().getPackaging())) {
+      getLog().info("Skipping containerization because packaging is 'pom'...");
+      return;
+    }
 
     if (!new DockerClient().isDockerInstalled()) {
-      throw new MojoExecutionException(HELPFUL_SUGGESTIONS.forDockerNotInstalled());
+      throw new MojoExecutionException(
+          HelpfulSuggestions.forDockerNotInstalled(HELPFUL_SUGGESTIONS_PREFIX));
     }
 
-    // Parses 'from' and 'to' into image reference.
-    ImageReference baseImage = parseImageReference(getBaseImage(), "from");
-
-    // TODO: Validate that project name and version are valid repository/tag
-    ImageReference targetImage =
-        Strings.isNullOrEmpty(getTargetImage())
-            ? ImageReference.of(null, getProject().getName(), getProject().getVersion())
-            : parseImageReference(getTargetImage(), "to");
-
-    // Checks Maven settings for registry credentials.
-    MavenSettingsServerCredentials mavenSettingsServerCredentials =
-        new MavenSettingsServerCredentials(Preconditions.checkNotNull(session).getSettings());
-    RegistryCredentials knownBaseRegistryCredentials =
-        mavenSettingsServerCredentials.retrieve(baseImage.getRegistry());
-
+    MavenJibLogger mavenJibLogger = new MavenJibLogger(getLog());
     MavenProjectProperties mavenProjectProperties =
-        MavenProjectProperties.getForProject(getProject(), mavenBuildLogger);
-    String mainClass = mavenProjectProperties.getMainClass(this);
-
-    // Builds the BuildConfiguration.
-    // TODO: Consolidate with BuildImageMojo.
-    BuildConfiguration.Builder buildConfigurationBuilder =
-        BuildConfiguration.builder(mavenBuildLogger)
-            .setBaseImage(baseImage)
-            .setBaseImageCredentialHelperName(getBaseImageCredentialHelperName())
-            .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
-            .setTargetImage(targetImage)
-            .setMainClass(mainClass)
-            .setJavaArguments(getArgs())
-            .setJvmFlags(getJvmFlags())
-            .setEnvironment(getEnvironment())
-            .setExposedPorts(ExposedPortsParser.parse(getExposedPorts(), mavenBuildLogger))
-            .setAllowHttp(getAllowInsecureRegistries());
-    CacheConfiguration applicationLayersCacheConfiguration =
-        CacheConfiguration.forPath(mavenProjectProperties.getCacheDirectory());
-    buildConfigurationBuilder.setApplicationLayersCacheConfiguration(
-        applicationLayersCacheConfiguration);
-    if (getUseOnlyProjectCache()) {
-      buildConfigurationBuilder.setBaseImageLayersCacheConfiguration(
-          applicationLayersCacheConfiguration);
-    }
-    BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
-
-    // TODO: Instead of disabling logging, have authentication credentials be provided
-    MavenBuildLogger.disableHttpLogging();
-
-    RegistryClient.setUserAgentSuffix(USER_AGENT_SUFFIX);
+        MavenProjectProperties.getForProject(getProject(), mavenJibLogger, getExtraDirectory());
 
     try {
-      BuildStepsRunner.forBuildToDockerDaemon(
-              buildConfiguration, mavenProjectProperties.getSourceFilesConfiguration())
-          .build(HELPFUL_SUGGESTIONS);
+      MavenHelpfulSuggestionsBuilder mavenHelpfulSuggestionsBuilder =
+          new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this);
+
+      ImageReference targetImage =
+          ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
+              getTargetImage(),
+              mavenJibLogger,
+              getProject().getName(),
+              getProject().getVersion(),
+              mavenHelpfulSuggestionsBuilder.build());
+
+      PluginConfigurationProcessor pluginConfigurationProcessor =
+          PluginConfigurationProcessor.processCommonConfiguration(
+              mavenJibLogger, this, mavenProjectProperties);
+
+      BuildConfiguration buildConfiguration =
+          pluginConfigurationProcessor
+              .getBuildConfigurationBuilder()
+              .setBaseImageConfiguration(
+                  pluginConfigurationProcessor.getBaseImageConfigurationBuilder().build())
+              .setTargetImageConfiguration(ImageConfiguration.builder(targetImage).build())
+              .setContainerConfiguration(
+                  pluginConfigurationProcessor.getContainerConfigurationBuilder().build())
+              .build();
+
+      HelpfulSuggestions helpfulSuggestions =
+          mavenHelpfulSuggestionsBuilder
+              .setBaseImageReference(buildConfiguration.getBaseImageConfiguration().getImage())
+              .setBaseImageHasConfiguredCredentials(
+                  pluginConfigurationProcessor.getBaseImageCredential() != null)
+              .setTargetImageReference(buildConfiguration.getTargetImageConfiguration().getImage())
+              .build();
+
+      BuildStepsRunner.forBuildToDockerDaemon(buildConfiguration).build(helpfulSuggestions);
       getLog().info("");
 
-    } catch (CacheDirectoryCreationException | BuildStepsExecutionException ex) {
+    } catch (CacheDirectoryCreationException
+        | BuildStepsExecutionException
+        | InvalidImageReferenceException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex.getCause());
     }
   }

@@ -16,18 +16,18 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
-import com.google.cloud.tools.jib.configuration.CacheConfiguration;
-import com.google.cloud.tools.jib.frontend.BuildStepsExecutionException;
-import com.google.cloud.tools.jib.frontend.BuildStepsRunner;
-import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
-import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
-import com.google.cloud.tools.jib.http.Authorization;
+import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.ImageConfiguration;
+import com.google.cloud.tools.jib.configuration.credentials.Credential;
+import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
-import com.google.cloud.tools.jib.registry.RegistryClient;
-import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
+import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
+import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
+import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
+import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
+import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import javax.annotation.Nullable;
@@ -40,11 +40,7 @@ import org.gradle.api.tasks.options.Option;
 /** Builds a container image. */
 public class BuildImageTask extends DefaultTask {
 
-  /** {@code User-Agent} header suffix to send to the registry. */
-  private static final String USER_AGENT_SUFFIX = "jib-gradle-plugin";
-
-  private static final HelpfulSuggestions HELPFUL_SUGGESTIONS =
-      HelpfulSuggestionsProvider.get("Build image failed");
+  private static final String HELPFUL_SUGGESTIONS_PREFIX = "Build image failed";
 
   @Nullable private JibExtension jibExtension;
 
@@ -74,66 +70,67 @@ public class BuildImageTask extends DefaultTask {
   public void buildImage() throws InvalidImageReferenceException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
-    GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
-    jibExtension.handleDeprecatedParameters(gradleBuildLogger);
+    GradleJibLogger gradleJibLogger = new GradleJibLogger(getLogger());
+    GradleProjectProperties gradleProjectProperties =
+        GradleProjectProperties.getForProject(
+            getProject(), gradleJibLogger, jibExtension.getExtraDirectoryPath());
 
     if (Strings.isNullOrEmpty(jibExtension.getTargetImage())) {
       throw new GradleException(
-          HelpfulSuggestionsProvider.get("Missing target image parameter")
-              .forToNotConfigured(
-                  "'jib.to.image'", "build.gradle", "gradle jib --image <your image name>"));
+          HelpfulSuggestions.forToNotConfigured(
+              "Missing target image parameter",
+              "'jib.to.image'",
+              "build.gradle",
+              "gradle jib --image <your image name>"));
     }
 
-    RegistryCredentials knownBaseRegistryCredentials = null;
-    RegistryCredentials knownTargetRegistryCredentials = null;
-    Authorization fromAuthorization = jibExtension.getFrom().getImageAuthorization();
-    if (fromAuthorization != null) {
-      knownBaseRegistryCredentials = new RegistryCredentials("jib.from.auth", fromAuthorization);
-    }
-    Authorization toAuthorization = jibExtension.getTo().getImageAuthorization();
-    if (toAuthorization != null) {
-      knownTargetRegistryCredentials = new RegistryCredentials("jib.to.auth", toAuthorization);
-    }
+    ImageReference targetImage = ImageReference.parse(jibExtension.getTargetImage());
 
-    GradleProjectProperties gradleProjectProperties =
-        GradleProjectProperties.getForProject(getProject(), gradleBuildLogger);
-    String mainClass = gradleProjectProperties.getMainClass(jibExtension);
+    DefaultCredentialRetrievers defaultCredentialRetrievers =
+        DefaultCredentialRetrievers.init(
+            CredentialRetrieverFactory.forImage(targetImage, gradleJibLogger));
+    Credential toCredential =
+        ConfigurationPropertyValidator.getImageCredential(
+            gradleJibLogger,
+            "jib.to.auth.username",
+            "jib.to.auth.password",
+            jibExtension.getTo().getAuth());
+    if (toCredential != null) {
+      defaultCredentialRetrievers.setKnownCredential(toCredential, "jib.to.auth");
+    }
+    defaultCredentialRetrievers.setCredentialHelperSuffix(jibExtension.getTo().getCredHelper());
 
-    // Builds the BuildConfiguration.
-    BuildConfiguration.Builder buildConfigurationBuilder =
-        BuildConfiguration.builder(gradleBuildLogger)
-            .setBaseImage(ImageReference.parse(jibExtension.getBaseImage()))
-            .setTargetImage(ImageReference.parse(jibExtension.getTargetImage()))
-            .setBaseImageCredentialHelperName(jibExtension.getFrom().getCredHelper())
-            .setKnownBaseRegistryCredentials(knownBaseRegistryCredentials)
-            .setTargetImageCredentialHelperName(jibExtension.getTo().getCredHelper())
-            .setKnownTargetRegistryCredentials(knownTargetRegistryCredentials)
-            .setMainClass(mainClass)
-            .setJavaArguments(jibExtension.getArgs())
-            .setJvmFlags(jibExtension.getJvmFlags())
-            .setExposedPorts(
-                ExposedPortsParser.parse(jibExtension.getExposedPorts(), gradleBuildLogger))
+    ImageConfiguration targetImageConfiguration =
+        ImageConfiguration.builder(targetImage)
+            .setCredentialRetrievers(defaultCredentialRetrievers.asList())
+            .build();
+
+    PluginConfigurationProcessor pluginConfigurationProcessor =
+        PluginConfigurationProcessor.processCommonConfiguration(
+            gradleJibLogger, jibExtension, gradleProjectProperties);
+
+    BuildConfiguration buildConfiguration =
+        pluginConfigurationProcessor
+            .getBuildConfigurationBuilder()
+            .setBaseImageConfiguration(
+                pluginConfigurationProcessor.getBaseImageConfigurationBuilder().build())
+            .setTargetImageConfiguration(targetImageConfiguration)
+            .setContainerConfiguration(
+                pluginConfigurationProcessor.getContainerConfigurationBuilder().build())
             .setTargetFormat(jibExtension.getFormat())
-            .setAllowHttp(jibExtension.getAllowInsecureRegistries());
-    CacheConfiguration applicationLayersCacheConfiguration =
-        CacheConfiguration.forPath(gradleProjectProperties.getCacheDirectory());
-    buildConfigurationBuilder.setApplicationLayersCacheConfiguration(
-        applicationLayersCacheConfiguration);
-    if (jibExtension.getUseOnlyProjectCache()) {
-      buildConfigurationBuilder.setBaseImageLayersCacheConfiguration(
-          applicationLayersCacheConfiguration);
-    }
-    BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
+            .build();
 
-    // TODO: Instead of disabling logging, have authentication credentials be provided
-    GradleBuildLogger.disableHttpLogging();
-
-    RegistryClient.setUserAgentSuffix(USER_AGENT_SUFFIX);
+    HelpfulSuggestions helpfulSuggestions =
+        new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension)
+            .setBaseImageReference(buildConfiguration.getBaseImageConfiguration().getImage())
+            .setBaseImageHasConfiguredCredentials(
+                pluginConfigurationProcessor.getBaseImageCredential() != null)
+            .setTargetImageReference(buildConfiguration.getTargetImageConfiguration().getImage())
+            .setTargetImageHasConfiguredCredentials(toCredential != null)
+            .build();
 
     try {
-      BuildStepsRunner.forBuildImage(
-              buildConfiguration, gradleProjectProperties.getSourceFilesConfiguration())
-          .build(HELPFUL_SUGGESTIONS);
+      BuildStepsRunner.forBuildImage(buildConfiguration).build(helpfulSuggestions);
 
     } catch (CacheDirectoryCreationException | BuildStepsExecutionException ex) {
       throw new GradleException(ex.getMessage(), ex.getCause());

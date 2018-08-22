@@ -18,20 +18,21 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.async.AsyncSteps;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
-import com.google.cloud.tools.jib.builder.BuildConfiguration;
-import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.cache.CachedLayerWithMetadata;
+import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.annotation.Nullable;
 
@@ -43,10 +44,8 @@ import javax.annotation.Nullable;
  */
 public class StepsRunner {
 
-  private final ListeningExecutorService listeningExecutorService =
-      MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
+  private final ListeningExecutorService listeningExecutorService;
   private final BuildConfiguration buildConfiguration;
-  private final SourceFilesConfiguration sourceFilesConfiguration;
   private final Cache baseLayersCache;
   private final Cache applicationLayersCache;
 
@@ -63,17 +62,20 @@ public class StepsRunner {
   @Nullable private BuildImageStep buildImageStep;
   @Nullable private PushContainerConfigurationStep pushContainerConfigurationStep;
   @Nullable private PushImageStep pushImageStep;
-  @Nullable private BuildTarballAndLoadDockerStep buildTarballAndLoadDockerStep;
+  @Nullable private LoadDockerStep loadDockerStep;
+  @Nullable private WriteTarFileStep writeTarFileStep;
 
   public StepsRunner(
-      BuildConfiguration buildConfiguration,
-      SourceFilesConfiguration sourceFilesConfiguration,
-      Cache baseLayersCache,
-      Cache applicationLayersCache) {
+      BuildConfiguration buildConfiguration, Cache baseLayersCache, Cache applicationLayersCache) {
     this.buildConfiguration = buildConfiguration;
-    this.sourceFilesConfiguration = sourceFilesConfiguration;
     this.baseLayersCache = baseLayersCache;
     this.applicationLayersCache = applicationLayersCache;
+
+    ExecutorService executorService =
+        Boolean.getBoolean("jibSerialize")
+            ? MoreExecutors.newDirectExecutorService()
+            : Executors.newCachedThreadPool();
+    listeningExecutorService = MoreExecutors.listeningDecorator(executorService);
   }
 
   public StepsRunner runRetrieveTargetRegistryCredentialsStep() {
@@ -120,21 +122,18 @@ public class StepsRunner {
   public StepsRunner runBuildAndCacheApplicationLayerSteps() {
     buildAndCacheApplicationLayerSteps =
         BuildAndCacheApplicationLayerStep.makeList(
-            listeningExecutorService,
-            buildConfiguration,
-            sourceFilesConfiguration,
-            applicationLayersCache);
+            listeningExecutorService, buildConfiguration, applicationLayersCache);
     return this;
   }
 
-  public StepsRunner runBuildImageStep(ImmutableList<String> entrypoint) {
+  public StepsRunner runBuildImageStep() {
     buildImageStep =
         new BuildImageStep(
             listeningExecutorService,
             buildConfiguration,
+            Preconditions.checkNotNull(pullBaseImageStep),
             Preconditions.checkNotNull(pullAndCacheBaseImageLayersStep),
-            Preconditions.checkNotNull(buildAndCacheApplicationLayerSteps),
-            entrypoint);
+            Preconditions.checkNotNull(buildAndCacheApplicationLayerSteps));
     return this;
   }
 
@@ -191,10 +190,22 @@ public class StepsRunner {
     return this;
   }
 
-  public StepsRunner runBuildTarballAndLoadDockerStep() {
-    buildTarballAndLoadDockerStep =
-        new BuildTarballAndLoadDockerStep(
+  public StepsRunner runLoadDockerStep() {
+    loadDockerStep =
+        new LoadDockerStep(
             listeningExecutorService,
+            buildConfiguration,
+            Preconditions.checkNotNull(pullAndCacheBaseImageLayersStep),
+            Preconditions.checkNotNull(buildAndCacheApplicationLayerSteps),
+            Preconditions.checkNotNull(buildImageStep));
+    return this;
+  }
+
+  public StepsRunner runWriteTarFileStep(Path outputPath) {
+    writeTarFileStep =
+        new WriteTarFileStep(
+            listeningExecutorService,
+            outputPath,
             buildConfiguration,
             Preconditions.checkNotNull(pullAndCacheBaseImageLayersStep),
             Preconditions.checkNotNull(buildAndCacheApplicationLayerSteps),
@@ -206,9 +217,12 @@ public class StepsRunner {
     Preconditions.checkNotNull(pushImageStep).getFuture().get();
   }
 
-  public void waitOnBuildTarballAndLoadDockerStep()
-      throws ExecutionException, InterruptedException {
-    Preconditions.checkNotNull(buildTarballAndLoadDockerStep).getFuture().get();
+  public void waitOnLoadDockerStep() throws ExecutionException, InterruptedException {
+    Preconditions.checkNotNull(loadDockerStep).getFuture().get();
+  }
+
+  public void waitOnWriteTarFileStep() throws ExecutionException, InterruptedException {
+    Preconditions.checkNotNull(writeTarFileStep).getFuture().get();
   }
 
   /**

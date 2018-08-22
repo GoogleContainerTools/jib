@@ -1,0 +1,84 @@
+/*
+ * Copyright 2018 Google LLC. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+package com.google.cloud.tools.jib.plugins.common;
+
+import com.google.cloud.tools.jib.image.ImageReference;
+import java.nio.file.Paths;
+import org.junit.Assert;
+import org.junit.Test;
+
+/** Tests for {@link HelpfulSuggestions}. */
+public class HelpfulSuggestionsTest {
+
+  private static final HelpfulSuggestions TEST_HELPFUL_SUGGESTIONS =
+      new HelpfulSuggestions(
+          "messagePrefix",
+          "clearCacheCommand",
+          ImageReference.of("baseregistry", "baserepository", null),
+          true,
+          "baseImageCredHelperConfiguration",
+          registry -> "baseImageAuthConfiguration " + registry,
+          ImageReference.of("targetregistry", "targetrepository", null),
+          false,
+          "targetImageCredHelperConfiguration",
+          registry -> "targetImageAuthConfiguration " + registry,
+          "toProperty",
+          "toFlag",
+          "buildFile");
+
+  @Test
+  public void testSuggestions_smoke() {
+    Assert.assertEquals(
+        "messagePrefix, perhaps you should make sure your Internet is up and that the registry you are pushing to exists",
+        TEST_HELPFUL_SUGGESTIONS.forHttpHostConnect());
+    Assert.assertEquals(
+        "messagePrefix, perhaps you should make sure that the registry you configured exists/is spelled properly",
+        TEST_HELPFUL_SUGGESTIONS.forUnknownHost());
+    Assert.assertEquals(
+        "messagePrefix, perhaps you should run 'clearCacheCommand' to clear your build cache",
+        TEST_HELPFUL_SUGGESTIONS.forCacheNeedsClean());
+    Assert.assertEquals(
+        "messagePrefix, perhaps you should check that 'cacheDirectory' is not used by another application or set the `useOnlyProjectCache` configuration",
+        TEST_HELPFUL_SUGGESTIONS.forCacheDirectoryNotOwned(Paths.get("cacheDirectory")));
+    Assert.assertEquals(
+        "messagePrefix, perhaps you should make sure you have permissions for imageReference",
+        TEST_HELPFUL_SUGGESTIONS.forHttpStatusCodeForbidden("imageReference"));
+    Assert.assertEquals(
+        "messagePrefix, perhaps you should set a credential helper name with the configuration 'baseImageCredHelperConfiguration' or baseImageAuthConfiguration baseregistry",
+        TEST_HELPFUL_SUGGESTIONS.forNoCredentialsDefined("baseregistry", "baserepository"));
+    Assert.assertEquals(
+        "messagePrefix, perhaps you should make sure your credentials for 'targetregistry' are set up correctly",
+        TEST_HELPFUL_SUGGESTIONS.forNoCredentialsDefined("targetregistry", "targetrepository"));
+    Assert.assertEquals(
+        "messagePrefix, perhaps you should clear directory manually before creating the Docker context",
+        HelpfulSuggestions.forDockerContextInsecureRecursiveDelete("messagePrefix", "directory"));
+    Assert.assertEquals(
+        "messagePrefix, perhaps you should add a `mainClass` configuration to plugin",
+        HelpfulSuggestions.forMainClassNotFound("messagePrefix", "plugin"));
+    Assert.assertEquals(
+        "messagePrefix, perhaps you should add a parameter configuration parameter to your buildFile or set the parameter via the commandline (e.g. 'command').",
+        HelpfulSuggestions.forToNotConfigured(
+            "messagePrefix", "parameter", "buildFile", "command"));
+    Assert.assertEquals("messagePrefix", TEST_HELPFUL_SUGGESTIONS.none());
+    Assert.assertEquals(
+        "messagePrefix, perhaps you should use a registry that supports HTTPS so credentials can be sent safely, or set the 'sendCredentialsOverHttp' system property to true",
+        TEST_HELPFUL_SUGGESTIONS.forCredentialsNotSent());
+    Assert.assertEquals(
+        "Tagging image with generated image reference project-name:project-version. If you'd like to specify a different tag, you can set the toProperty parameter in your buildFile, or use the toFlag=<MY IMAGE> commandline flag.",
+        TEST_HELPFUL_SUGGESTIONS.forGeneratedTag("project-name", "project-version"));
+  }
+}

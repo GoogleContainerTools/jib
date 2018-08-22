@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.registry;
 
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpMethods;
-import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
@@ -44,9 +43,10 @@ import javax.annotation.Nullable;
  */
 class BlobPusher {
 
-  private final RegistryEndpointProperties registryEndpointProperties;
+  private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   private final DescriptorDigest blobDigest;
   private final Blob blob;
+  @Nullable private final String sourceRepository;
 
   /** Initializes the BLOB upload. */
   private class Initializer implements RegistryEndpointProvider<URL> {
@@ -70,7 +70,7 @@ class BlobPusher {
     @Override
     public URL handleResponse(Response response) throws RegistryErrorException {
       switch (response.getStatusCode()) {
-        case HttpStatusCodes.STATUS_CODE_CREATED:
+        case HttpURLConnection.HTTP_CREATED:
           // The BLOB exists in the registry.
           return null;
 
@@ -85,11 +85,15 @@ class BlobPusher {
 
     @Override
     public URL getApiRoute(String apiRouteBase) throws MalformedURLException {
-      return new URL(
-          apiRouteBase
-              + registryEndpointProperties.getImageName()
-              + "/blobs/uploads/?mount="
-              + blobDigest);
+      StringBuilder url =
+          new StringBuilder(apiRouteBase)
+              .append(registryEndpointRequestProperties.getImageName())
+              .append("/blobs/uploads/");
+      if (sourceRepository != null) {
+        url.append("?mount=").append(blobDigest).append("&from=").append(sourceRepository);
+      }
+
+      return new URL(url.toString());
     }
 
     @Override
@@ -189,12 +193,14 @@ class BlobPusher {
   }
 
   BlobPusher(
-      RegistryEndpointProperties registryEndpointProperties,
+      RegistryEndpointRequestProperties registryEndpointRequestProperties,
       DescriptorDigest blobDigest,
-      Blob blob) {
-    this.registryEndpointProperties = registryEndpointProperties;
+      Blob blob,
+      @Nullable String sourceRepository) {
+    this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     this.blobDigest = blobDigest;
     this.blob = blob;
+    this.sourceRepository = sourceRepository;
   }
 
   /**
@@ -234,9 +240,9 @@ class BlobPusher {
    */
   private String getActionDescription() {
     return "push BLOB for "
-        + registryEndpointProperties.getServerUrl()
+        + registryEndpointRequestProperties.getServerUrl()
         + "/"
-        + registryEndpointProperties.getImageName()
+        + registryEndpointRequestProperties.getImageName()
         + " with digest "
         + blobDigest;
   }

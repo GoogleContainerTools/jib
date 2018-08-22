@@ -30,10 +30,11 @@ import javax.annotation.Nullable;
 /** Retrieves the {@code WWW-Authenticate} header from the registry API. */
 class AuthenticationMethodRetriever implements RegistryEndpointProvider<RegistryAuthenticator> {
 
-  private final RegistryEndpointProperties registryEndpointProperties;
+  private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
 
-  AuthenticationMethodRetriever(RegistryEndpointProperties registryEndpointProperties) {
-    this.registryEndpointProperties = registryEndpointProperties;
+  AuthenticationMethodRetriever(
+      RegistryEndpointRequestProperties registryEndpointRequestProperties) {
+    this.registryEndpointRequestProperties = registryEndpointRequestProperties;
   }
 
   @Nullable
@@ -71,7 +72,7 @@ class AuthenticationMethodRetriever implements RegistryEndpointProvider<Registry
 
   @Override
   public String getActionDescription() {
-    return "retrieve authentication method for " + registryEndpointProperties.getServerUrl();
+    return "retrieve authentication method for " + registryEndpointRequestProperties.getServerUrl();
   }
 
   @Override
@@ -95,7 +96,7 @@ class AuthenticationMethodRetriever implements RegistryEndpointProvider<Registry
     // Parses the header to retrieve the components.
     try {
       return RegistryAuthenticator.fromAuthenticationMethod(
-          authenticationMethod, registryEndpointProperties.getImageName());
+          authenticationMethod, registryEndpointRequestProperties);
 
     } catch (RegistryAuthenticationFailedException ex) {
       throw new RegistryErrorExceptionBuilder(getActionDescription(), ex)

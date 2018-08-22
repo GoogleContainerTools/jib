@@ -20,8 +20,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
 
 // TODO: Add JsonFactory for HTTP response parsing.
@@ -61,6 +65,25 @@ public class JsonTemplateMapper {
   public static <T extends JsonTemplate> T readJsonFromFile(Path jsonFile, Class<T> templateClass)
       throws IOException {
     return objectMapper.readValue(Files.newInputStream(jsonFile), templateClass);
+  }
+
+  /**
+   * Deserializes a JSON file via a JSON object template with a shared lock on the file
+   *
+   * @param <T> child type of {@link JsonTemplate}
+   * @param jsonFile a file containing a JSON string
+   * @param templateClass the template to deserialize the string to
+   * @return the template filled with the values parsed from {@code jsonFile}
+   * @throws IOException if an error occurred during reading the file or parsing the JSON
+   */
+  public static <T extends JsonTemplate> T readJsonFromFileWithLock(
+      Path jsonFile, Class<T> templateClass) throws IOException {
+    // channel is closed by inputStream.close()
+    FileChannel channel = FileChannel.open(jsonFile, StandardOpenOption.READ);
+    channel.lock(0, Long.MAX_VALUE, true); // shared lock, released by channel close
+    try (InputStream inputStream = Channels.newInputStream(channel)) {
+      return objectMapper.readValue(inputStream, templateClass);
+    }
   }
 
   /**

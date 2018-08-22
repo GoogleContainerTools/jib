@@ -16,12 +16,11 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.builder.BuildLogger;
-import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
-import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
-import com.google.cloud.tools.jib.frontend.MainClassFinder;
-import com.google.cloud.tools.jib.frontend.MainClassInferenceException;
-import com.google.cloud.tools.jib.frontend.ProjectProperties;
+import com.google.cloud.tools.jib.JibLogger;
+import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
+import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
+import com.google.cloud.tools.jib.plugins.common.MainClassResolver;
+import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -40,15 +39,17 @@ class MavenProjectProperties implements ProjectProperties {
 
   /**
    * @param project the {@link MavenProject} for the plugin.
-   * @param mavenBuildLogger the logger used for printing status messages.
+   * @param mavenJibLogger the logger used for printing status messages.
+   * @param extraDirectory path to the directory for the extra files layer
    * @return a MavenProjectProperties from the given project and logger.
    * @throws MojoExecutionException if no class files are found in the output directory.
    */
   static MavenProjectProperties getForProject(
-      MavenProject project, MavenBuildLogger mavenBuildLogger) throws MojoExecutionException {
+      MavenProject project, MavenJibLogger mavenJibLogger, Path extraDirectory)
+      throws MojoExecutionException {
     try {
       return new MavenProjectProperties(
-          project, mavenBuildLogger, MavenSourceFilesConfiguration.getForProject(project));
+          project, mavenJibLogger, MavenLayerConfigurations.getForProject(project, extraDirectory));
     } catch (IOException ex) {
       throw new MojoExecutionException(
           "Obtaining project build output files failed; make sure you have compiled your project "
@@ -59,32 +60,27 @@ class MavenProjectProperties implements ProjectProperties {
   }
 
   private final MavenProject project;
-  private final MavenBuildLogger mavenBuildLogger;
-  private final SourceFilesConfiguration sourceFilesConfiguration;
+  private final MavenJibLogger mavenJibLogger;
+  private final JavaLayerConfigurations javaLayerConfigurations;
 
   @VisibleForTesting
   MavenProjectProperties(
       MavenProject project,
-      MavenBuildLogger mavenBuildLogger,
-      SourceFilesConfiguration sourceFilesConfiguration) {
+      MavenJibLogger mavenJibLogger,
+      JavaLayerConfigurations javaLayerConfigurations) {
     this.project = project;
-    this.mavenBuildLogger = mavenBuildLogger;
-    this.sourceFilesConfiguration = sourceFilesConfiguration;
+    this.mavenJibLogger = mavenJibLogger;
+    this.javaLayerConfigurations = javaLayerConfigurations;
   }
 
   @Override
-  public SourceFilesConfiguration getSourceFilesConfiguration() {
-    return sourceFilesConfiguration;
+  public JavaLayerConfigurations getJavaLayerConfigurations() {
+    return javaLayerConfigurations;
   }
 
   @Override
-  public HelpfulSuggestions getMainClassHelpfulSuggestions(String prefix) {
-    return HelpfulSuggestionsProvider.get(prefix);
-  }
-
-  @Override
-  public BuildLogger getLogger() {
-    return mavenBuildLogger;
+  public JibLogger getLogger() {
+    return mavenJibLogger;
   }
 
   @Override
@@ -137,7 +133,7 @@ class MavenProjectProperties implements ProjectProperties {
    */
   String getMainClass(JibPluginConfiguration jibPluginConfiguration) throws MojoExecutionException {
     try {
-      return MainClassFinder.resolveMainClass(jibPluginConfiguration.getMainClass(), this);
+      return MainClassResolver.resolveMainClass(jibPluginConfiguration.getMainClass(), this);
     } catch (MainClassInferenceException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex);
     }

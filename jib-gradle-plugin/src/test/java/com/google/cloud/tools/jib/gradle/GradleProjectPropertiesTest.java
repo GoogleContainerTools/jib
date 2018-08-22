@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
+import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.util.Collections;
@@ -41,8 +41,8 @@ public class GradleProjectPropertiesTest {
   @Mock private Jar mockJar;
   @Mock private Jar mockJar2;
   @Mock private Project mockProject;
-  @Mock private GradleBuildLogger mockGradleBuildLogger;
-  @Mock private SourceFilesConfiguration mockSourceFilesConfiguration;
+  @Mock private GradleJibLogger mockGradleJibLogger;
+  @Mock private JavaLayerConfigurations mockJavaLayerConfigurations;
 
   private Manifest manifest;
   private GradleProjectProperties gradleProjectProperties;
@@ -53,8 +53,7 @@ public class GradleProjectPropertiesTest {
     Mockito.when(mockJar.getManifest()).thenReturn(manifest);
 
     gradleProjectProperties =
-        new GradleProjectProperties(
-            mockProject, mockGradleBuildLogger, mockSourceFilesConfiguration);
+        new GradleProjectProperties(mockProject, mockGradleJibLogger, mockJavaLayerConfigurations);
   }
 
   @Test
@@ -67,7 +66,7 @@ public class GradleProjectPropertiesTest {
   @Test
   public void testGetMainClassFromJar_missing() {
     Mockito.when(mockProject.getTasksByName("jar", false)).thenReturn(Collections.emptySet());
-    Assert.assertEquals(null, gradleProjectProperties.getMainClassFromJar());
+    Assert.assertNull(gradleProjectProperties.getMainClassFromJar());
   }
 
   @Test
@@ -75,6 +74,6 @@ public class GradleProjectPropertiesTest {
     manifest.attributes(ImmutableMap.of("Main-Class", "some.main.class"));
     Mockito.when(mockProject.getTasksByName("jar", false))
         .thenReturn(ImmutableSet.of(mockJar, mockJar2));
-    Assert.assertEquals(null, gradleProjectProperties.getMainClassFromJar());
+    Assert.assertNull(gradleProjectProperties.getMainClassFromJar());
   }
 }

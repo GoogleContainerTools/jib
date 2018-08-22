@@ -49,10 +49,11 @@ public class DockerContextMojoIntegrationTest {
         simpleTestProject.getProjectRoot().resolve("target").resolve("jib-docker-context");
     Assert.assertTrue(Files.exists(dockerContextDirectory));
 
-    String imageName = "jib/integration-test";
+    String imageName = "jib/integration-test" + System.nanoTime();
     new Command("docker", "build", "-t", imageName, dockerContextDirectory.toString()).run();
+    String dockerInspect = new Command("docker", "inspect", imageName).run();
     Assert.assertThat(
-        new Command("docker", "inspect", imageName).run(),
+        dockerInspect,
         CoreMatchers.containsString(
             "            \"ExposedPorts\": {\n"
                 + "                \"1000/tcp\": {},\n"
@@ -60,8 +61,15 @@ public class DockerContextMojoIntegrationTest {
                 + "                \"2001/udp\": {},\n"
                 + "                \"2002/udp\": {},\n"
                 + "                \"2003/udp\": {}"));
+    Assert.assertThat(
+        dockerInspect,
+        CoreMatchers.containsString(
+            "            \"Labels\": {\n"
+                + "                \"key1\": \"value1\",\n"
+                + "                \"key2\": \"value2\"\n"
+                + "            }"));
 
     Assert.assertEquals(
-        "Hello, world. An argument.\n", new Command("docker", "run", imageName).run());
+        "Hello, world. An argument.\nfoo\ncat\n", new Command("docker", "run", imageName).run());
   }
 }

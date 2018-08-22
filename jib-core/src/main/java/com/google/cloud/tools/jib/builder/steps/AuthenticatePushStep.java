@@ -19,11 +19,12 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
-import com.google.cloud.tools.jib.builder.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.http.Authorization;
+import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticator;
-import com.google.cloud.tools.jib.registry.RegistryAuthenticators;
 import com.google.cloud.tools.jib.registry.RegistryException;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -74,18 +75,27 @@ class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authori
     try (Timer ignored =
         new Timer(
             buildConfiguration.getBuildLogger(),
-            String.format(DESCRIPTION, buildConfiguration.getTargetImageRegistry()))) {
-      Authorization registryCredentials =
-          NonBlockingSteps.get(retrieveTargetRegistryCredentialsStep);
+            String.format(
+                DESCRIPTION,
+                buildConfiguration.getTargetImageConfiguration().getImageRegistry()))) {
+      Credential registryCredential = NonBlockingSteps.get(retrieveTargetRegistryCredentialsStep);
+      Authorization registryAuthorization =
+          registryCredential == null
+              ? null
+              : Authorizations.withBasicCredentials(
+                  registryCredential.getUsername(), registryCredential.getPassword());
 
       RegistryAuthenticator registryAuthenticator =
-          RegistryAuthenticators.forOther(
-              buildConfiguration.getTargetImageRegistry(),
-              buildConfiguration.getTargetImageRepository());
+          RegistryAuthenticator.initializer(
+                  buildConfiguration.getBuildLogger(),
+                  buildConfiguration.getTargetImageConfiguration().getImageRegistry(),
+                  buildConfiguration.getTargetImageConfiguration().getImageRepository())
+              .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
+              .initialize();
       if (registryAuthenticator == null) {
-        return registryCredentials;
+        return registryAuthorization;
       }
-      return registryAuthenticator.setAuthorization(registryCredentials).authenticatePush();
+      return registryAuthenticator.setAuthorization(registryAuthorization).authenticatePush();
     }
   }
 }

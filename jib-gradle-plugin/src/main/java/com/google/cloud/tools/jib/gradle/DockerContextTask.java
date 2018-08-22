@@ -16,20 +16,19 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.docker.DockerContextGenerator;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
+import com.google.cloud.tools.jib.frontend.JavaDockerContextGenerator;
+import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
+import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.base.Preconditions;
 import com.google.common.io.InsecureRecursiveDeleteException;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
-import org.gradle.api.Task;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.OutputDirectory;
@@ -59,22 +58,27 @@ public class DockerContextTask extends DefaultTask {
    */
   @InputFiles
   public FileCollection getInputFiles() {
-    Task classesTask = getProject().getTasks().getByPath("classes");
-    Set<? extends Task> classesDependencies =
-        classesTask.getTaskDependencies().getDependencies(classesTask);
-
-    List<FileCollection> dependencyFileCollections = new ArrayList<>();
-    for (Task task : classesDependencies) {
-      dependencyFileCollections.add(task.getOutputs().getFiles());
-    }
-    return getProject().files(dependencyFileCollections);
+    return GradleProjectProperties.getInputFiles(
+        Preconditions.checkNotNull(jibExtension).getExtraDirectoryPath().toFile(), getProject());
   }
 
   /**
-   * @return the output directory for the Docker context is by default {@code build/jib-docker-
-   *     context}.
+   * The output directory to check for task up-to-date.
+   *
+   * @return the output directory
    */
   @OutputDirectory
+  public String getOutputDirectory() {
+    return getTargetDir();
+  }
+
+  /**
+   * Returns the output directory for the Docker context. By default, it is {@code
+   * build/jib-docker-context}.
+   *
+   * @return the output directory
+   */
+  @Input
   public String getTargetDir() {
     if (targetDir == null) {
       return getProject().getBuildDir().toPath().resolve("jib-docker-context").toString();
@@ -83,11 +87,11 @@ public class DockerContextTask extends DefaultTask {
   }
 
   /**
-   * The output directory can be overriden with the {@code --jib.dockerDir} command line option.
+   * The output directory can be overriden with the {@code --jibTargetDir} command line option.
    *
    * @param targetDir the output directory.
    */
-  @Option(option = "jib.dockerDir", description = "Directory to output the Docker context to")
+  @Option(option = "jibTargetDir", description = "Directory to output the Docker context to")
   public void setTargetDir(String targetDir) {
     this.targetDir = targetDir;
   }
@@ -96,43 +100,46 @@ public class DockerContextTask extends DefaultTask {
   public void generateDockerContext() {
     Preconditions.checkNotNull(jibExtension);
 
-    GradleBuildLogger gradleBuildLogger = new GradleBuildLogger(getLogger());
-    jibExtension.handleDeprecatedParameters(gradleBuildLogger);
+    GradleJibLogger gradleJibLogger = new GradleJibLogger(getLogger());
+    jibExtension.handleDeprecatedParameters(gradleJibLogger);
+    ConfigurationPropertyValidator.checkHttpTimeoutProperty(GradleException::new);
 
     GradleProjectProperties gradleProjectProperties =
-        GradleProjectProperties.getForProject(getProject(), gradleBuildLogger);
+        GradleProjectProperties.getForProject(
+            getProject(), gradleJibLogger, jibExtension.getExtraDirectoryPath());
     String mainClass = gradleProjectProperties.getMainClass(jibExtension);
-
     String targetDir = getTargetDir();
 
     try {
       // Validate port input, but don't save the output because we don't want the ranges expanded
       // here.
-      ExposedPortsParser.parse(jibExtension.getExposedPorts(), gradleBuildLogger);
+      ExposedPortsParser.parse(jibExtension.getExposedPorts());
 
-      new DockerContextGenerator(gradleProjectProperties.getSourceFilesConfiguration())
+      new JavaDockerContextGenerator(gradleProjectProperties.getJavaLayerConfigurations())
           .setBaseImage(jibExtension.getBaseImage())
           .setJvmFlags(jibExtension.getJvmFlags())
           .setMainClass(mainClass)
           .setJavaArguments(jibExtension.getArgs())
           .setExposedPorts(jibExtension.getExposedPorts())
+          .setLabels(jibExtension.getLabels())
           .generate(Paths.get(targetDir));
 
-      gradleBuildLogger.lifecycle("Created Docker context at " + targetDir);
+      gradleJibLogger.lifecycle("Created Docker context at " + targetDir);
 
     } catch (InsecureRecursiveDeleteException ex) {
       throw new GradleException(
-          HelpfulSuggestionsProvider.get(
-                  "Export Docker context failed because cannot clear directory '"
-                      + getTargetDir()
-                      + "' safely")
-              .forDockerContextInsecureRecursiveDelete(getTargetDir()),
+          HelpfulSuggestions.forDockerContextInsecureRecursiveDelete(
+              "Export Docker context failed because cannot clear directory '"
+                  + getTargetDir()
+                  + "' safely",
+              getTargetDir()),
           ex);
 
     } catch (IOException ex) {
       throw new GradleException(
-          HelpfulSuggestionsProvider.get("Export Docker context failed")
-              .suggest("check if the command-line option `--jib.dockerDir` is set correctly"),
+          HelpfulSuggestions.suggest(
+              "Export Docker context failed",
+              "check if the command-line option `--jibTargetDir` is set correctly"),
           ex);
     }
   }

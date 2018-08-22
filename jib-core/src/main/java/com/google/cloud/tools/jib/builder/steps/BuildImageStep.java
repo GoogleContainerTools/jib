@@ -19,9 +19,11 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
-import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.cache.CachedLayer;
+import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.image.Image;
+import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
@@ -39,9 +41,9 @@ class BuildImageStep
   private static final String DESCRIPTION = "Building container configuration";
 
   private final BuildConfiguration buildConfiguration;
+  private final PullBaseImageStep pullBaseImageStep;
   private final PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep;
   private final ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps;
-  private final ImmutableList<String> entrypoint;
 
   private final ListeningExecutorService listeningExecutorService;
   private final ListenableFuture<AsyncStep<Image<CachedLayer>>> listenableFuture;
@@ -49,17 +51,18 @@ class BuildImageStep
   BuildImageStep(
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
+      PullBaseImageStep pullBaseImageStep,
       PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep,
-      ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps,
-      ImmutableList<String> entrypoint) {
+      ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps) {
     this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
+    this.pullBaseImageStep = pullBaseImageStep;
     this.pullAndCacheBaseImageLayersStep = pullAndCacheBaseImageLayersStep;
     this.buildAndCacheApplicationLayerSteps = buildAndCacheApplicationLayerSteps;
-    this.entrypoint = entrypoint;
 
     listenableFuture =
-        Futures.whenAllSucceed(pullAndCacheBaseImageLayersStep.getFuture())
+        Futures.whenAllSucceed(
+                pullBaseImageStep.getFuture(), pullAndCacheBaseImageLayersStep.getFuture())
             .call(this, listeningExecutorService);
   }
 
@@ -99,10 +102,22 @@ class BuildImageStep
           buildAndCacheApplicationLayerSteps) {
         imageBuilder.addLayer(NonBlockingSteps.get(buildAndCacheApplicationLayerStep));
       }
-      imageBuilder.setEnvironment(buildConfiguration.getEnvironment());
-      imageBuilder.setEntrypoint(entrypoint);
-      imageBuilder.setJavaArguments(buildConfiguration.getJavaArguments());
-      imageBuilder.setExposedPorts(buildConfiguration.getExposedPorts());
+
+      // Parameters that we passthrough from the base image
+      Image<Layer> baseImage = NonBlockingSteps.get(pullBaseImageStep).getBaseImage();
+      imageBuilder.addEnvironment(baseImage.getEnvironment());
+      imageBuilder.addLabels(baseImage.getLabels());
+
+      ContainerConfiguration containerConfiguration =
+          buildConfiguration.getContainerConfiguration();
+      if (containerConfiguration != null) {
+        imageBuilder.addEnvironment(containerConfiguration.getEnvironmentMap());
+        imageBuilder.setCreated(containerConfiguration.getCreationTime());
+        imageBuilder.setEntrypoint(containerConfiguration.getEntrypoint());
+        imageBuilder.setJavaArguments(containerConfiguration.getProgramArguments());
+        imageBuilder.setExposedPorts(containerConfiguration.getExposedPorts());
+        imageBuilder.addLabels(containerConfiguration.getLabels());
+      }
 
       // Gets the container configuration content descriptor.
       return imageBuilder.build();

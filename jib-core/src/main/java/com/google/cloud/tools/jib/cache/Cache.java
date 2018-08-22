@@ -16,13 +16,12 @@
 
 package com.google.cloud.tools.jib.cache;
 
+import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.cache.json.CacheMetadataTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
-import java.io.BufferedOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
@@ -60,9 +59,9 @@ public class Cache implements Closeable {
 
     try {
       CacheMetadataTemplate cacheMetadataJson =
-          JsonTemplateMapper.readJsonFromFile(cacheMetadataJsonFile, CacheMetadataTemplate.class);
+          JsonTemplateMapper.readJsonFromFileWithLock(
+              cacheMetadataJsonFile, CacheMetadataTemplate.class);
       return CacheMetadataTranslator.fromTemplate(cacheMetadataJson, cacheDirectory);
-
     } catch (IOException ex) {
       // The cache metadata is probably corrupted.
       throw new CacheMetadataCorruptedException(ex);
@@ -139,9 +138,6 @@ public class Cache implements Closeable {
     CacheMetadataTemplate cacheMetadataJson =
         CacheMetadataTranslator.toTemplate(cacheMetadataBuilder.build());
 
-    try (OutputStream fileOutputStream =
-        new BufferedOutputStream(Files.newOutputStream(cacheMetadataJsonFile))) {
-      JsonTemplateMapper.toBlob(cacheMetadataJson).writeTo(fileOutputStream);
-    }
+    Blobs.writeToFileWithLock(JsonTemplateMapper.toBlob(cacheMetadataJson), cacheMetadataJsonFile);
   }
 }

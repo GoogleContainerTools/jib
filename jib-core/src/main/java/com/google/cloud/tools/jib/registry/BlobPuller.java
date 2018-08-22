@@ -32,7 +32,7 @@ import javax.annotation.Nullable;
 /** Pulls an image's BLOB (layer or container configuration). */
 class BlobPuller implements RegistryEndpointProvider<Void> {
 
-  private final RegistryEndpointProperties registryEndpointProperties;
+  private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
 
   /** The digest of the BLOB to pull. */
   private final DescriptorDigest blobDigest;
@@ -43,10 +43,10 @@ class BlobPuller implements RegistryEndpointProvider<Void> {
   private final OutputStream destinationOutputStream;
 
   BlobPuller(
-      RegistryEndpointProperties registryEndpointProperties,
+      RegistryEndpointRequestProperties registryEndpointRequestProperties,
       DescriptorDigest blobDigest,
       OutputStream destinationOutputStream) {
-    this.registryEndpointProperties = registryEndpointProperties;
+    this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     this.blobDigest = blobDigest;
     this.destinationOutputStream = destinationOutputStream;
   }
@@ -83,7 +83,7 @@ class BlobPuller implements RegistryEndpointProvider<Void> {
   @Override
   public URL getApiRoute(String apiRouteBase) throws MalformedURLException {
     return new URL(
-        apiRouteBase + registryEndpointProperties.getImageName() + "/blobs/" + blobDigest);
+        apiRouteBase + registryEndpointRequestProperties.getImageName() + "/blobs/" + blobDigest);
   }
 
   @Override
@@ -94,9 +94,9 @@ class BlobPuller implements RegistryEndpointProvider<Void> {
   @Override
   public String getActionDescription() {
     return "pull BLOB for "
-        + registryEndpointProperties.getServerUrl()
+        + registryEndpointRequestProperties.getServerUrl()
         + "/"
-        + registryEndpointProperties.getImageName()
+        + registryEndpointRequestProperties.getImageName()
         + " with digest "
         + blobDigest;
   }

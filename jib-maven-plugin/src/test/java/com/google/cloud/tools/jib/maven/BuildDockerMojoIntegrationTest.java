@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.Command;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Instant;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
 import org.hamcrest.CoreMatchers;
@@ -48,15 +49,16 @@ public class BuildDockerMojoIntegrationTest {
   private static String buildToDockerDaemonAndRun(Path projectRoot, String imageReference)
       throws VerificationException, IOException, InterruptedException {
     Verifier verifier = new Verifier(projectRoot.toString());
+    verifier.setSystemProperty("_TARGET_IMAGE", imageReference);
     verifier.setAutoclean(false);
     verifier.executeGoal("package");
 
-    // Builds twice, and checks if the second build took less time.
     verifier.executeGoal("jib:" + BuildDockerMojo.GOAL_NAME);
     verifier.verifyErrorFreeLog();
 
+    String dockerInspect = new Command("docker", "inspect", imageReference).run();
     Assert.assertThat(
-        new Command("docker", "inspect", imageReference).run(),
+        dockerInspect,
         CoreMatchers.containsString(
             "            \"ExposedPorts\": {\n"
                 + "                \"1000/tcp\": {},\n"
@@ -64,24 +66,39 @@ public class BuildDockerMojoIntegrationTest {
                 + "                \"2001/udp\": {},\n"
                 + "                \"2002/udp\": {},\n"
                 + "                \"2003/udp\": {}"));
+    Assert.assertThat(
+        dockerInspect,
+        CoreMatchers.containsString(
+            "            \"Labels\": {\n"
+                + "                \"key1\": \"value1\",\n"
+                + "                \"key2\": \"value2\"\n"
+                + "            }"));
     return new Command("docker", "run", imageReference).run();
   }
 
   @Test
   public void testExecute_simple() throws VerificationException, IOException, InterruptedException {
+    String targetImage = "simpleimage:maven" + System.nanoTime();
+
+    Instant before = Instant.now();
     Assert.assertEquals(
-        "Hello, world. An argument.\n",
-        buildToDockerDaemonAndRun(
-            simpleTestProject.getProjectRoot(),
-            "gcr.io/jib-integration-testing/simpleimage:maven"));
+        "Hello, world. An argument.\nfoo\ncat\n",
+        buildToDockerDaemonAndRun(simpleTestProject.getProjectRoot(), targetImage));
+    Instant buildTime =
+        Instant.parse(
+            new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim());
+    Assert.assertTrue(buildTime.isAfter(before) || buildTime.equals(before));
   }
 
   @Test
   public void testExecute_empty() throws InterruptedException, IOException, VerificationException {
+    String targetImage = "emptyimage:maven" + System.nanoTime();
+
     Assert.assertEquals(
-        "",
-        buildToDockerDaemonAndRun(
-            emptyTestProject.getProjectRoot(), "gcr.io/jib-integration-testing/emptyimage:maven"));
+        "", buildToDockerDaemonAndRun(emptyTestProject.getProjectRoot(), targetImage));
+    Assert.assertEquals(
+        "1970-01-01T00:00:00Z",
+        new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim());
   }
 
   @Test

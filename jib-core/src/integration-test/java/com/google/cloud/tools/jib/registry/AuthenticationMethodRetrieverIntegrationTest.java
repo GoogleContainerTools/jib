@@ -16,25 +16,31 @@
 
 package com.google.cloud.tools.jib.registry;
 
+import com.google.cloud.tools.jib.EmptyJibLogger;
 import com.google.cloud.tools.jib.http.Authorization;
 import java.io.IOException;
+import org.junit.Assert;
 import org.junit.Test;
 
 /** Integration tests for {@link AuthenticationMethodRetriever}. */
 public class AuthenticationMethodRetrieverIntegrationTest {
 
+  private static final EmptyJibLogger BUILD_LOGGER = new EmptyJibLogger();
+
   @Test
   public void testGetRegistryAuthenticator()
       throws RegistryAuthenticationFailedException, IOException, RegistryException {
     RegistryClient registryClient =
-        RegistryClient.factory("registry.hub.docker.com", "library/busybox")
-            .newWithAuthorization(null);
+        RegistryClient.factory(BUILD_LOGGER, "registry.hub.docker.com", "library/busybox")
+            .newRegistryClient();
     RegistryAuthenticator registryAuthenticator = registryClient.getRegistryAuthenticator();
+    Assert.assertNotNull(registryAuthenticator);
     Authorization authorization = registryAuthenticator.authenticatePull();
 
     RegistryClient authorizedRegistryClient =
-        RegistryClient.factory("registry.hub.docker.com", "library/busybox")
-            .newWithAuthorization(authorization);
+        RegistryClient.factory(BUILD_LOGGER, "registry.hub.docker.com", "library/busybox")
+            .setAuthorization(authorization)
+            .newRegistryClient();
     authorizedRegistryClient.pullManifest("latest");
   }
 }

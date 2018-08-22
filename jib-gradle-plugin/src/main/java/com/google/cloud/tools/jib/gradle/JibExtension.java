@@ -16,13 +16,16 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.builder.BuildLogger;
+import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.io.File;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
@@ -66,11 +69,18 @@ public class JibExtension {
   private static final boolean DEFAULT_USE_ONLY_PROJECT_CACHE = false;
   private static final boolean DEFAULT_ALLOW_INSECURE_REGISTIRIES = false;
 
-  private final ImageConfiguration from;
-  private final ImageConfiguration to;
+  private static Path resolveDefaultExtraDirectory(Path projectDirectory) {
+    return projectDirectory.resolve("src").resolve("main").resolve("jib");
+  }
+
+  private final ImageParameters from;
+  private final ImageParameters to;
   private final ContainerParameters container;
   private final Property<Boolean> useOnlyProjectCache;
   private final Property<Boolean> allowInsecureRegistries;
+  private final Property<Path> extraDirectory;
+
+  private final Path projectDir;
 
   // TODO: Deprecated parameters; remove these 4
   private final ListProperty<String> jvmFlags;
@@ -79,10 +89,11 @@ public class JibExtension {
   private final Property<ImageFormat> format;
 
   public JibExtension(Project project) {
+    projectDir = project.getProjectDir().toPath();
     ObjectFactory objectFactory = project.getObjects();
 
-    from = objectFactory.newInstance(ImageConfiguration.class);
-    to = objectFactory.newInstance(ImageConfiguration.class);
+    from = objectFactory.newInstance(ImageParameters.class, "jib.from");
+    to = objectFactory.newInstance(ImageParameters.class, "jib.to");
     container = objectFactory.newInstance(ContainerParameters.class);
 
     jvmFlags = objectFactory.listProperty(String.class);
@@ -92,6 +103,7 @@ public class JibExtension {
 
     useOnlyProjectCache = objectFactory.property(Boolean.class);
     allowInsecureRegistries = objectFactory.property(Boolean.class);
+    extraDirectory = objectFactory.property(Path.class);
 
     // Sets defaults.
     from.setImage(DEFAULT_FROM_IMAGE);
@@ -99,6 +111,7 @@ public class JibExtension {
     args.set(Collections.emptyList());
     useOnlyProjectCache.set(DEFAULT_USE_ONLY_PROJECT_CACHE);
     allowInsecureRegistries.set(DEFAULT_ALLOW_INSECURE_REGISTIRIES);
+    extraDirectory.set(resolveDefaultExtraDirectory(projectDir));
   }
 
   /**
@@ -106,7 +119,7 @@ public class JibExtension {
    *
    * @param logger The logger used to print the warnings
    */
-  void handleDeprecatedParameters(BuildLogger logger) {
+  void handleDeprecatedParameters(JibLogger logger) {
     StringBuilder deprecatedParams = new StringBuilder();
     if (!jvmFlags.get().isEmpty()) {
       deprecatedParams.append("  jvmFlags -> container.jvmFlags\n");
@@ -140,11 +153,11 @@ public class JibExtension {
     }
   }
 
-  public void from(Action<? super ImageConfiguration> action) {
+  public void from(Action<? super ImageParameters> action) {
     action.execute(from);
   }
 
-  public void to(Action<? super ImageConfiguration> action) {
+  public void to(Action<? super ImageParameters> action) {
     action.execute(to);
   }
 
@@ -176,6 +189,10 @@ public class JibExtension {
     this.allowInsecureRegistries.set(allowInsecureRegistries);
   }
 
+  public void setExtraDirectory(File extraDirectory) {
+    this.extraDirectory.set(extraDirectory.toPath());
+  }
+
   @Internal
   String getBaseImage() {
     return Preconditions.checkNotNull(from.getImage());
@@ -189,13 +206,13 @@ public class JibExtension {
 
   @Nested
   @Optional
-  public ImageConfiguration getFrom() {
+  public ImageParameters getFrom() {
     return from;
   }
 
   @Nested
   @Optional
-  public ImageConfiguration getTo() {
+  public ImageParameters getTo() {
     return to;
   }
 
@@ -240,6 +257,18 @@ public class JibExtension {
     return container.getPorts();
   }
 
+  @Internal
+  @Optional
+  Map<String, String> getLabels() {
+    return container.getLabels();
+  }
+
+  @Internal
+  @Optional
+  boolean getUseCurrentTimestamp() {
+    return container.getUseCurrentTimestamp();
+  }
+
   @Input
   @Optional
   boolean getUseOnlyProjectCache() {
@@ -250,5 +279,18 @@ public class JibExtension {
   @Optional
   boolean getAllowInsecureRegistries() {
     return allowInsecureRegistries.get();
+  }
+
+  @Input
+  String getExtraDirectory() {
+    // Gradle warns about @Input annotations on File objects, so we have to expose a getter for a
+    // String to make them go away.
+    return extraDirectory.get().toString();
+  }
+
+  @Internal
+  Path getExtraDirectoryPath() {
+    // TODO: Should inform user about nonexistent directory if using custom directory.
+    return extraDirectory.get();
   }
 }

@@ -18,11 +18,11 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.async.AsyncStep;
-import com.google.cloud.tools.jib.builder.BuildConfiguration;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheReader;
 import com.google.cloud.tools.jib.cache.CacheWriter;
 import com.google.cloud.tools.jib.cache.CachedLayer;
+import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.registry.RegistryClient;
@@ -69,14 +69,14 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer>, Callable
   public CachedLayer call() throws IOException, RegistryException {
     try (Timer ignored =
         new Timer(buildConfiguration.getBuildLogger(), String.format(DESCRIPTION, layerDigest))) {
-      RegistryClient.Factory registryClientFactory =
-          RegistryClient.factory(
-              buildConfiguration.getBaseImageRegistry(),
-              buildConfiguration.getBaseImageRepository());
       RegistryClient registryClient =
-          buildConfiguration.getAllowHttp()
-              ? registryClientFactory.newAllowHttp()
-              : registryClientFactory.newWithAuthorization(pullAuthorization);
+          RegistryClient.factory(
+                  buildConfiguration.getBuildLogger(),
+                  buildConfiguration.getBaseImageConfiguration().getImageRegistry(),
+                  buildConfiguration.getBaseImageConfiguration().getImageRepository())
+              .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
+              .setAuthorization(pullAuthorization)
+              .newRegistryClient();
 
       // Checks if the layer already exists in the cache.
       CachedLayer cachedLayer = new CacheReader(cache).getLayer(layerDigest);

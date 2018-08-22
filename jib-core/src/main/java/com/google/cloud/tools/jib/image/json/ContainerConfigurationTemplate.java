@@ -20,13 +20,9 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSortedMap;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.SortedMap;
 import javax.annotation.Nullable;
 
 /**
@@ -44,6 +40,7 @@ import javax.annotation.Nullable;
  *     "Entrypoint": ["PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"],
  *     "Cmd": ["arg1", "arg2"]
  *     "ExposedPorts": { "6000/tcp":{}, "8000/tcp":{}, "9000/tcp":{} }
+ *     "Labels": { "com.example.label": "value" }
  *   },
  *   "rootfs": {
  *     "diff_ids": [
@@ -61,14 +58,8 @@ import javax.annotation.Nullable;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ContainerConfigurationTemplate implements JsonTemplate {
 
-  /**
-   * A combined date and time at which the image was created. Constant to maintain reproducibility
-   * and avoid Docker's weird "292 years old" bug.
-   *
-   * @see <a
-   *     href="https://github.com/GoogleContainerTools/jib/issues/341">https://github.com/GoogleContainerTools/jib/issues/341</a>
-   */
-  private String created = "1970-01-01T00:00:00Z";
+  /** ISO-8601 formatted combined date and time at which the image was created. */
+  @Nullable private String created;
 
   /** The CPU architecture to run the binaries in this container. */
   private String architecture = "amd64";
@@ -96,7 +87,10 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     @Nullable private List<String> Cmd;
 
     /** Network ports the container exposes. */
-    @Nullable private SortedMap<String, Map<?, ?>> ExposedPorts;
+    @Nullable private Map<String, Map<?, ?>> ExposedPorts;
+
+    /** Labels. */
+    @Nullable private Map<String, String> Labels;
   }
 
   /**
@@ -115,26 +109,28 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     private final List<DescriptorDigest> diff_ids = new ArrayList<>();
   }
 
-  public void setContainerEnvironment(List<String> environment) {
+  public void setCreated(@Nullable String created) {
+    this.created = created;
+  }
+
+  public void setContainerEnvironment(@Nullable List<String> environment) {
     config.Env = environment;
   }
 
-  public void setContainerEntrypoint(List<String> command) {
+  public void setContainerEntrypoint(@Nullable List<String> command) {
     config.Entrypoint = command;
   }
 
-  public void setContainerCmd(List<String> cmd) {
+  public void setContainerCmd(@Nullable List<String> cmd) {
     config.Cmd = cmd;
   }
 
-  public void setContainerExposedPorts(List<String> exposedPorts) {
-    // TODO: Do this conversion somewhere else
-    ImmutableSortedMap.Builder<String, Map<?, ?>> result =
-        new ImmutableSortedMap.Builder<>(String::compareTo);
-    for (String port : exposedPorts) {
-      result.put(port, Collections.emptyMap());
-    }
-    config.ExposedPorts = result.build();
+  public void setContainerExposedPorts(@Nullable Map<String, Map<?, ?>> exposedPorts) {
+    config.ExposedPorts = exposedPorts;
+  }
+
+  public void setContainerLabels(@Nullable Map<String, String> labels) {
+    config.Labels = labels;
   }
 
   public void addLayerDiffId(DescriptorDigest diffId) {
@@ -143,6 +139,11 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
 
   List<DescriptorDigest> getDiffIds() {
     return rootfs.diff_ids;
+  }
+
+  @Nullable
+  String getCreated() {
+    return created;
   }
 
   @Nullable
@@ -161,16 +162,13 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
   }
 
   @Nullable
-  ImmutableList<String> getContainerExposedPorts() {
-    // TODO: Do this conversion somewhere else
-    if (config.ExposedPorts == null) {
-      return null;
-    }
-    ImmutableList.Builder<String> ports = new ImmutableList.Builder<>();
-    for (Map.Entry<String, Map<?, ?>> entry : config.ExposedPorts.entrySet()) {
-      ports.add(entry.getKey());
-    }
-    return ports.build();
+  Map<String, Map<?, ?>> getContainerExposedPorts() {
+    return config.ExposedPorts;
+  }
+
+  @Nullable
+  Map<String, String> getContainerLabels() {
+    return config.Labels;
   }
 
   @VisibleForTesting

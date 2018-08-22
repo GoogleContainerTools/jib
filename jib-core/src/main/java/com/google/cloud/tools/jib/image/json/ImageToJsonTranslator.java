@@ -19,10 +19,19 @@ package com.google.cloud.tools.jib.image.json;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.cache.CachedLayer;
+import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSortedMap;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Translates an {@link Image} into a manifest or container configuration JSON BLOB.
@@ -37,6 +46,49 @@ import java.lang.reflect.InvocationTargetException;
  * }</pre>
  */
 public class ImageToJsonTranslator {
+
+  /**
+   * Converts a list of {@link Port}s to the corresponding container config format for exposed ports
+   * (e.g. {@code Port(1000, Protocol.TCP)} -> {@code {"1000/tcp":{}}}).
+   *
+   * @param exposedPorts the list of {@link Port}s to translate, or {@code null}
+   * @return a sorted map with the string representation of the ports as keys and empty maps as
+   *     values, or {@code null} if {@code exposedPorts} is {@code null}
+   */
+  @VisibleForTesting
+  @Nullable
+  static Map<String, Map<?, ?>> portListToMap(@Nullable List<Port> exposedPorts) {
+    if (exposedPorts == null) {
+      return null;
+    }
+    ImmutableSortedMap.Builder<String, Map<?, ?>> result =
+        new ImmutableSortedMap.Builder<>(String::compareTo);
+    for (Port port : exposedPorts) {
+      result.put(port.getPort() + "/" + port.getProtocol(), Collections.emptyMap());
+    }
+    return result.build();
+  }
+
+  /**
+   * Converts the map of environment variables to a list with items in the format "NAME=VALUE".
+   *
+   * @return the list
+   */
+  @VisibleForTesting
+  @Nullable
+  static ImmutableList<String> environmentMapToList(@Nullable Map<String, String> environment) {
+    if (environment == null) {
+      return null;
+    }
+    Preconditions.checkArgument(
+        environment.keySet().stream().noneMatch(key -> key.contains("=")),
+        "Illegal environment variable: name cannot contain '='");
+    return environment
+        .entrySet()
+        .stream()
+        .map(entry -> entry.getKey() + "=" + entry.getValue())
+        .collect(ImmutableList.toImmutableList());
+  }
 
   private final Image<CachedLayer> image;
 
@@ -63,8 +115,11 @@ public class ImageToJsonTranslator {
       template.addLayerDiffId(layer.getDiffId());
     }
 
+    // Sets the creation time. Instant#toString() returns an ISO-8601 formatted string.
+    template.setCreated(image.getCreated() == null ? null : image.getCreated().toString());
+
     // Adds the environment variables.
-    template.setContainerEnvironment(image.getEnvironment());
+    template.setContainerEnvironment(environmentMapToList(image.getEnvironment()));
 
     // Sets the entrypoint.
     template.setContainerEntrypoint(image.getEntrypoint());
@@ -73,7 +128,10 @@ public class ImageToJsonTranslator {
     template.setContainerCmd(image.getJavaArguments());
 
     // Sets the exposed ports.
-    template.setContainerExposedPorts(image.getExposedPorts());
+    template.setContainerExposedPorts(portListToMap(image.getExposedPorts()));
+
+    // Sets the labels.
+    template.setContainerLabels(image.getLabels());
 
     // Serializes into JSON.
     return JsonTemplateMapper.toBlob(template);

@@ -16,11 +16,11 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.builder.BuildLogger;
+import com.google.cloud.tools.jib.JibLogger;
+import java.nio.file.Paths;
 import java.util.Arrays;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -31,16 +31,37 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class JibPluginConfigurationTest {
 
-  @Mock private BuildLogger mockLogger;
+  @Mock private JibLogger mockLogger;
+
+  private JibPluginConfiguration testPluginConfiguration;
+
+  @Before
+  public void setup() {
+    testPluginConfiguration =
+        new JibPluginConfiguration() {
+          @Override
+          public void execute() {}
+        };
+  }
+
+  @Test
+  public void testAuthDefaults() {
+    Assert.assertEquals(
+        "<from><auth><username>",
+        testPluginConfiguration.getBaseImageAuth().getUsernamePropertyDescriptor());
+    Assert.assertEquals(
+        "<from><auth><password>",
+        testPluginConfiguration.getBaseImageAuth().getPasswordPropertyDescriptor());
+    Assert.assertEquals(
+        "<to><auth><username>",
+        testPluginConfiguration.getTargetImageAuth().getUsernamePropertyDescriptor());
+    Assert.assertEquals(
+        "<to><auth><password>",
+        testPluginConfiguration.getTargetImageAuth().getPasswordPropertyDescriptor());
+  }
 
   @Test
   public void testHandleDeprecatedParameters() {
-    JibPluginConfiguration testPluginConfiguration =
-        new JibPluginConfiguration() {
-          @Override
-          public void execute() throws MojoExecutionException, MojoFailureException {}
-        };
-
     testPluginConfiguration.handleDeprecatedParameters(mockLogger);
     Mockito.verify(mockLogger, Mockito.never()).warn(Mockito.any());
 
@@ -48,6 +69,7 @@ public class JibPluginConfigurationTest {
     testPluginConfiguration.setMainClass("mainClass");
     testPluginConfiguration.setArgs(Arrays.asList("arg1", "arg2", "arg3"));
     testPluginConfiguration.setFormat("OCI");
+    testPluginConfiguration.setExtraDirectory("some/path");
 
     testPluginConfiguration.handleDeprecatedParameters(mockLogger);
 
@@ -64,5 +86,6 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals("mainClass", testPluginConfiguration.getMainClass());
     Assert.assertEquals(Arrays.asList("arg1", "arg2", "arg3"), testPluginConfiguration.getArgs());
     Assert.assertEquals("OCI", testPluginConfiguration.getFormat());
+    Assert.assertEquals(Paths.get("some/path"), testPluginConfiguration.getExtraDirectory());
   }
 }

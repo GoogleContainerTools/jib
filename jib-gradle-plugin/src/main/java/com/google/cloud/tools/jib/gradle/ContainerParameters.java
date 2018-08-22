@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.common.base.Preconditions;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Optional;
@@ -31,11 +32,23 @@ import org.gradle.api.tasks.Optional;
  */
 public class ContainerParameters {
 
+  private boolean useCurrentTimestamp = false;
   private List<String> jvmFlags = Collections.emptyList();
   @Nullable private String mainClass;
   private List<String> args = Collections.emptyList();
   private ImageFormat format = ImageFormat.Docker;
   private List<String> ports = Collections.emptyList();
+  private Map<String, String> labels = Collections.emptyMap();
+
+  @Input
+  @Optional
+  public boolean getUseCurrentTimestamp() {
+    return useCurrentTimestamp;
+  }
+
+  public void setUseCurrentTimestamp(boolean useCurrentTimestamp) {
+    this.useCurrentTimestamp = useCurrentTimestamp;
+  }
 
   @Input
   @Optional
@@ -86,5 +99,15 @@ public class ContainerParameters {
 
   public void setPorts(List<String> ports) {
     this.ports = ports;
+  }
+
+  @Input
+  @Optional
+  public Map<String, String> getLabels() {
+    return labels;
+  }
+
+  public void setLabels(Map<String, String> labels) {
+    this.labels = labels;
   }
 }

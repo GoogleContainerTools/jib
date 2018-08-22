@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.registry;
 
+import com.google.cloud.tools.jib.EmptyJibLogger;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
@@ -35,14 +36,18 @@ import org.mockito.Mockito;
 public class BlobPullerIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
+  private static final EmptyJibLogger BUILD_LOGGER = new EmptyJibLogger();
 
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
-  public void testPull() throws IOException, RegistryException {
+  public void testPull() throws IOException, RegistryException, InterruptedException {
     // Pulls the busybox image.
+    localRegistry.pullAndPushToLocal("busybox", "busybox");
     RegistryClient registryClient =
-        RegistryClient.factory("localhost:5000", "busybox").newAllowHttp();
+        RegistryClient.factory(BUILD_LOGGER, "localhost:5000", "busybox")
+            .setAllowInsecureRegistries(true)
+            .newRegistryClient();
     V21ManifestTemplate manifestTemplate =
         registryClient.pullManifest("latest", V21ManifestTemplate.class);
 
@@ -57,14 +62,18 @@ public class BlobPullerIntegrationTest {
   }
 
   @Test
-  public void testPull_unknownBlob() throws RegistryException, IOException, DigestException {
+  public void testPull_unknownBlob()
+      throws RegistryException, IOException, DigestException, InterruptedException {
+    localRegistry.pullAndPushToLocal("busybox", "busybox");
     DescriptorDigest nonexistentDigest =
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
     try {
       RegistryClient registryClient =
-          RegistryClient.factory("localhost:5000", "busybox").newAllowHttp();
+          RegistryClient.factory(BUILD_LOGGER, "localhost:5000", "busybox")
+              .setAllowInsecureRegistries(true)
+              .newRegistryClient();
       registryClient.pullBlob(nonexistentDigest, Mockito.mock(OutputStream.class));
       Assert.fail("Trying to pull nonexistent blob should have errored");
 

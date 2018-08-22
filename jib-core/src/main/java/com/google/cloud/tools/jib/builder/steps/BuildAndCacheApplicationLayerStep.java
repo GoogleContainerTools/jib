@@ -18,19 +18,19 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.async.AsyncStep;
-import com.google.cloud.tools.jib.builder.BuildConfiguration;
-import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.CacheReader;
 import com.google.cloud.tools.jib.cache.CacheWriter;
 import com.google.cloud.tools.jib.cache.CachedLayerWithMetadata;
+import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.LayerConfiguration;
+import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.image.ReproducibleLayerBuilder;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.concurrent.Callable;
 
 /** Builds and caches application layers. */
@@ -41,43 +41,39 @@ class BuildAndCacheApplicationLayerStep
 
   /**
    * Makes a list of {@link BuildAndCacheApplicationLayerStep} for dependencies, resources, and
-   * classes layers.
+   * classes layers. Optionally adds an extra layer if configured to do so.
    */
   static ImmutableList<BuildAndCacheApplicationLayerStep> makeList(
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
-      SourceFilesConfiguration sourceFilesConfiguration,
       Cache cache) {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
-      return ImmutableList.of(
-          new BuildAndCacheApplicationLayerStep(
-              "dependencies",
-              listeningExecutorService,
-              buildConfiguration,
-              sourceFilesConfiguration.getDependenciesFiles(),
-              sourceFilesConfiguration.getDependenciesPathOnImage(),
-              cache),
-          new BuildAndCacheApplicationLayerStep(
-              "resources",
-              listeningExecutorService,
-              buildConfiguration,
-              sourceFilesConfiguration.getResourcesFiles(),
-              sourceFilesConfiguration.getResourcesPathOnImage(),
-              cache),
-          new BuildAndCacheApplicationLayerStep(
-              "classes",
-              listeningExecutorService,
-              buildConfiguration,
-              sourceFilesConfiguration.getClassesFiles(),
-              sourceFilesConfiguration.getClassesPathOnImage(),
-              cache));
+      ImmutableList.Builder<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps =
+          ImmutableList.builderWithExpectedSize(buildConfiguration.getLayerConfigurations().size());
+      for (LayerConfiguration layerConfiguration : buildConfiguration.getLayerConfigurations()) {
+        // Skips the layer if empty.
+        if (layerConfiguration
+            .getLayerEntries()
+            .stream()
+            .allMatch(layerEntry -> layerEntry.getSourceFiles().isEmpty())) {
+          continue;
+        }
+
+        buildAndCacheApplicationLayerSteps.add(
+            new BuildAndCacheApplicationLayerStep(
+                layerConfiguration.getLabel(),
+                listeningExecutorService,
+                buildConfiguration,
+                layerConfiguration,
+                cache));
+      }
+      return buildAndCacheApplicationLayerSteps.build();
     }
   }
 
   private final String layerType;
   private final BuildConfiguration buildConfiguration;
-  private final ImmutableList<Path> sourceFiles;
-  private final String extractionPath;
+  private final LayerConfiguration layerConfiguration;
   private final Cache cache;
 
   private final ListenableFuture<CachedLayerWithMetadata> listenableFuture;
@@ -86,13 +82,11 @@ class BuildAndCacheApplicationLayerStep
       String layerType,
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
-      ImmutableList<Path> sourceFiles,
-      String extractionPath,
+      LayerConfiguration layerConfiguration,
       Cache cache) {
     this.layerType = layerType;
     this.buildConfiguration = buildConfiguration;
-    this.sourceFiles = sourceFiles;
-    this.extractionPath = extractionPath;
+    this.layerConfiguration = layerConfiguration;
     this.cache = cache;
 
     listenableFuture = listeningExecutorService.submit(this);
@@ -112,13 +106,17 @@ class BuildAndCacheApplicationLayerStep
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), description)) {
       // Don't build the layer if it exists already.
       CachedLayerWithMetadata cachedLayer =
-          new CacheReader(cache).getUpToDateLayerBySourceFiles(sourceFiles);
+          new CacheReader(cache)
+              .getUpToDateLayerByLayerEntries(layerConfiguration.getLayerEntries());
       if (cachedLayer != null) {
         return cachedLayer;
       }
 
-      ReproducibleLayerBuilder reproducibleLayerBuilder =
-          new ReproducibleLayerBuilder(sourceFiles, extractionPath);
+      ReproducibleLayerBuilder reproducibleLayerBuilder = new ReproducibleLayerBuilder();
+      for (LayerEntry layerEntry : layerConfiguration.getLayerEntries()) {
+        reproducibleLayerBuilder.addFiles(
+            layerEntry.getSourceFiles(), layerEntry.getExtractionPath());
+      }
 
       cachedLayer = new CacheWriter(cache).writeLayer(reproducibleLayerBuilder);
 

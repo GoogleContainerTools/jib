@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.registry;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
@@ -41,12 +42,79 @@ import javax.annotation.Nullable;
  */
 public class RegistryAuthenticator {
 
+  /** Initializer for {@link RegistryAuthenticator}. */
+  public static class Initializer {
+
+    private final JibLogger buildLogger;
+    private final String serverUrl;
+    private final String repository;
+    private boolean allowInsecureRegistries = false;
+
+    /**
+     * Instantiates a new initializer for {@link RegistryAuthenticator}.
+     *
+     * @param buildLogger the build logger used for printing messages
+     * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
+     * @param repository the image/repository name (also known as, namespace)
+     */
+    private Initializer(JibLogger buildLogger, String serverUrl, String repository) {
+      this.buildLogger = buildLogger;
+      this.serverUrl = serverUrl;
+      this.repository = repository;
+    }
+
+    public Initializer setAllowInsecureRegistries(boolean allowInsecureRegistries) {
+      this.allowInsecureRegistries = allowInsecureRegistries;
+      return this;
+    }
+
+    /**
+     * Gets a {@link RegistryAuthenticator} for a custom registry server and repository.
+     *
+     * @return the {@link RegistryAuthenticator} to authenticate pulls/pushes with the registry, or
+     *     {@code null} if no token authentication is necessary
+     * @throws RegistryAuthenticationFailedException if failed to create the registry authenticator
+     * @throws IOException if communicating with the endpoint fails
+     * @throws RegistryException if communicating with the endpoint fails
+     */
+    @Nullable
+    public RegistryAuthenticator initialize()
+        throws RegistryAuthenticationFailedException, IOException, RegistryException {
+      try {
+        return RegistryClient.factory(buildLogger, serverUrl, repository)
+            .setAllowInsecureRegistries(allowInsecureRegistries)
+            .newRegistryClient()
+            .getRegistryAuthenticator();
+
+      } catch (MalformedURLException ex) {
+        throw new RegistryAuthenticationFailedException(ex);
+
+      } catch (InsecureRegistryException ex) {
+        // Cannot skip certificate validation or use HTTP, so just return null.
+        return null;
+      }
+    }
+  }
+
+  /**
+   * Gets a new initializer for {@link RegistryAuthenticator}.
+   *
+   * @param buildLogger the build logger used for printing messages
+   * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
+   * @param repository the image/repository name (also known as, namespace)
+   * @return the new {@link Initializer}
+   */
+  public static Initializer initializer(
+      JibLogger buildLogger, String serverUrl, String repository) {
+    return new Initializer(buildLogger, serverUrl, repository);
+  }
+
   // TODO: Replace with a WWW-Authenticate header parser.
   /**
    * Instantiates from parsing a {@code WWW-Authenticate} header.
    *
    * @param authenticationMethod the {@code WWW-Authenticate} header value
-   * @param repository the repository/image name
+   * @param registryEndpointRequestProperties the registry request properties
    * @return a new {@link RegistryAuthenticator} for authenticating with the registry service
    * @throws RegistryAuthenticationFailedException if authentication fails
    * @see <a
@@ -54,14 +122,17 @@ public class RegistryAuthenticator {
    */
   @Nullable
   static RegistryAuthenticator fromAuthenticationMethod(
-      String authenticationMethod, String repository) throws RegistryAuthenticationFailedException {
-    // If the authentication method starts with 'Basic ', no registry authentication is needed.
-    if (authenticationMethod.matches("^Basic .*")) {
+      String authenticationMethod,
+      RegistryEndpointRequestProperties registryEndpointRequestProperties)
+      throws RegistryAuthenticationFailedException {
+    // If the authentication method starts with 'basic ' (case insensitive), no registry
+    // authentication is needed.
+    if (authenticationMethod.matches("^(?i)(basic) .*")) {
       return null;
     }
 
-    // Checks that the authentication method starts with 'Bearer '.
-    if (!authenticationMethod.matches("^Bearer .*")) {
+    // Checks that the authentication method starts with 'bearer ' (case insensitive).
+    if (!authenticationMethod.matches("^(?i)(bearer) .*")) {
       throw newRegistryAuthenticationFailedException(authenticationMethod, "Bearer");
     }
 
@@ -74,12 +145,14 @@ public class RegistryAuthenticator {
 
     Pattern servicePattern = Pattern.compile("service=\"(.*?)\"");
     Matcher serviceMatcher = servicePattern.matcher(authenticationMethod);
-    if (!serviceMatcher.find()) {
-      throw newRegistryAuthenticationFailedException(authenticationMethod, "service");
-    }
-    String service = serviceMatcher.group(1);
+    // use the provided registry location when missing service (e.g., for OpenShift)
+    String service =
+        serviceMatcher.find()
+            ? serviceMatcher.group(1)
+            : registryEndpointRequestProperties.getServerUrl();
 
-    return new RegistryAuthenticator(realm, service, repository);
+    return new RegistryAuthenticator(
+        realm, service, registryEndpointRequestProperties.getImageName());
   }
 
   private static RegistryAuthenticationFailedException newRegistryAuthenticationFailedException(
@@ -171,8 +244,9 @@ public class RegistryAuthenticator {
     try {
       URL authenticationUrl = getAuthenticationUrl(scope);
 
-      try (Connection connection = new Connection(authenticationUrl)) {
-        Request.Builder requestBuilder = Request.builder();
+      try (Connection connection = Connection.getConnectionFactory().apply(authenticationUrl)) {
+        Request.Builder requestBuilder =
+            Request.builder().setHttpTimeout(Integer.getInteger("jib.httpTimeout"));
         if (authorization != null) {
           requestBuilder.setAuthorization(authorization);
         }

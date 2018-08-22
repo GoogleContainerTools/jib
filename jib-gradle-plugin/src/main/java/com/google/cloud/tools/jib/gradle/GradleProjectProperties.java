@@ -16,21 +16,24 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.builder.BuildLogger;
-import com.google.cloud.tools.jib.builder.SourceFilesConfiguration;
-import com.google.cloud.tools.jib.frontend.HelpfulSuggestions;
-import com.google.cloud.tools.jib.frontend.MainClassFinder;
-import com.google.cloud.tools.jib.frontend.MainClassInferenceException;
-import com.google.cloud.tools.jib.frontend.ProjectProperties;
+import com.google.cloud.tools.jib.JibLogger;
+import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
+import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
+import com.google.cloud.tools.jib.plugins.common.MainClassResolver;
+import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.common.annotations.VisibleForTesting;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.Nullable;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.api.file.FileCollection;
 import org.gradle.jvm.tasks.Jar;
 
 /** Obtains information about a Gradle {@link Project} that uses Jib. */
@@ -41,12 +44,12 @@ class GradleProjectProperties implements ProjectProperties {
 
   /** @return a GradleProjectProperties from the given project and logger. */
   static GradleProjectProperties getForProject(
-      Project project, GradleBuildLogger gradleBuildLogger) {
+      Project project, GradleJibLogger gradleJibLogger, Path extraDirectory) {
     try {
       return new GradleProjectProperties(
           project,
-          gradleBuildLogger,
-          GradleSourceFilesConfiguration.getForProject(project, gradleBuildLogger));
+          gradleJibLogger,
+          GradleLayerConfigurations.getForProject(project, gradleJibLogger, extraDirectory));
 
     } catch (IOException ex) {
       throw new GradleException("Obtaining project build output files failed", ex);
@@ -54,32 +57,27 @@ class GradleProjectProperties implements ProjectProperties {
   }
 
   private final Project project;
-  private final GradleBuildLogger gradleBuildLogger;
-  private final SourceFilesConfiguration sourceFilesConfiguration;
+  private final GradleJibLogger gradleJibLogger;
+  private final JavaLayerConfigurations javaLayerConfigurations;
 
   @VisibleForTesting
   GradleProjectProperties(
       Project project,
-      GradleBuildLogger gradleBuildLogger,
-      SourceFilesConfiguration sourceFilesConfiguration) {
+      GradleJibLogger gradleJibLogger,
+      JavaLayerConfigurations javaLayerConfigurations) {
     this.project = project;
-    this.gradleBuildLogger = gradleBuildLogger;
-    this.sourceFilesConfiguration = sourceFilesConfiguration;
+    this.gradleJibLogger = gradleJibLogger;
+    this.javaLayerConfigurations = javaLayerConfigurations;
   }
 
   @Override
-  public SourceFilesConfiguration getSourceFilesConfiguration() {
-    return sourceFilesConfiguration;
+  public JavaLayerConfigurations getJavaLayerConfigurations() {
+    return javaLayerConfigurations;
   }
 
   @Override
-  public HelpfulSuggestions getMainClassHelpfulSuggestions(String prefix) {
-    return HelpfulSuggestionsProvider.get(prefix);
-  }
-
-  @Override
-  public BuildLogger getLogger() {
-    return gradleBuildLogger;
+  public JibLogger getLogger() {
+    return gradleJibLogger;
   }
 
   @Override
@@ -114,9 +112,33 @@ class GradleProjectProperties implements ProjectProperties {
    */
   String getMainClass(JibExtension jibExtension) {
     try {
-      return MainClassFinder.resolveMainClass(jibExtension.getMainClass(), this);
+      return MainClassResolver.resolveMainClass(jibExtension.getMainClass(), this);
     } catch (MainClassInferenceException ex) {
       throw new GradleException(ex.getMessage(), ex);
+    }
+  }
+
+  /**
+   * Returns the input files for a task.
+   *
+   * @param extraDirectory the image's configured extra directory
+   * @param project the gradle project
+   * @return the input files to the task are all the output files for all the dependencies of the
+   *     {@code classes} task
+   */
+  static FileCollection getInputFiles(File extraDirectory, Project project) {
+    Task classesTask = project.getTasks().getByPath("classes");
+    Set<? extends Task> classesDependencies =
+        classesTask.getTaskDependencies().getDependencies(classesTask);
+
+    List<FileCollection> dependencyFileCollections = new ArrayList<>();
+    for (Task task : classesDependencies) {
+      dependencyFileCollections.add(task.getOutputs().getFiles());
+    }
+    if (Files.exists(extraDirectory.toPath())) {
+      return project.files(dependencyFileCollections, extraDirectory);
+    } else {
+      return project.files(dependencyFileCollections);
     }
   }
 }
