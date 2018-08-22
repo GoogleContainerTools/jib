@@ -111,7 +111,7 @@ class PluginConfigurationProcessor {
               jibPluginConfiguration.getJvmFlags(), mainClass);
     } else if (jibPluginConfiguration.getMainClass() != null
         || jibPluginConfiguration.getJvmFlags() != null) {
-      logger.warn("<mainClass> and <jvmFlags> are ignored when entrypoint is specified");
+      logger.warn("<mainClass> and <jvmFlags> are ignored when <entrypoint> is specified");
     }
     ContainerConfiguration.Builder containerConfigurationBuilder =
         ContainerConfiguration.builder()
