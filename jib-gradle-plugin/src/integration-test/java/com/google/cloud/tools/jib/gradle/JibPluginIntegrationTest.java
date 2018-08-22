@@ -59,7 +59,7 @@ public class JibPluginIntegrationTest {
     Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
 
     new Command("docker", "pull", imageReference).run();
-    assertHasExposedPorts(imageReference);
+    assertDockerInspect(imageReference);
     return new Command("docker", "run", imageReference).run();
   }
 
@@ -80,8 +80,7 @@ public class JibPluginIntegrationTest {
     Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
 
     targetRegistry.pull(imageReference);
-    assertHasExposedPorts(imageReference);
-    assertHasLabels(imageReference);
+    assertDockerInspect(imageReference);
     return new Command("docker", "run", imageReference).run();
   }
 
@@ -94,8 +93,7 @@ public class JibPluginIntegrationTest {
         buildResult, JibPlugin.BUILD_DOCKER_TASK_NAME, "Built image to Docker daemon as ");
     Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
 
-    assertHasExposedPorts(imageReference);
-    assertHasLabels(imageReference);
+    assertDockerInspect(imageReference);
     return new Command("docker", "run", imageReference).run();
   }
 
@@ -137,16 +135,17 @@ public class JibPluginIntegrationTest {
   }
 
   /**
-   * Asserts that the test project has the required exposed ports.
+   * Asserts that the test project has the required exposed ports and labels.
    *
    * @param imageReference the image to test
    * @throws IOException if the {@code docker inspect} command fails to run
    * @throws InterruptedException if the {@code docker inspect} command is interrupted
    */
-  private static void assertHasExposedPorts(String imageReference)
+  private static void assertDockerInspect(String imageReference)
       throws IOException, InterruptedException {
+    String dockerInspect = new Command("docker", "inspect", imageReference).run();
     Assert.assertThat(
-        new Command("docker", "inspect", imageReference).run(),
+        dockerInspect,
         CoreMatchers.containsString(
             "            \"ExposedPorts\": {\n"
                 + "                \"1000/tcp\": {},\n"
@@ -154,19 +153,8 @@ public class JibPluginIntegrationTest {
                 + "                \"2001/udp\": {},\n"
                 + "                \"2002/udp\": {},\n"
                 + "                \"2003/udp\": {}"));
-  }
-
-  /**
-   * Asserts that the test project has the required labels.
-   *
-   * @param imageReference the image to test
-   * @throws IOException if the {@code docker inspect} command fails to run
-   * @throws InterruptedException if the {@code docker inspect} command is interrupted
-   */
-  private static void assertHasLabels(String imageReference)
-      throws IOException, InterruptedException {
     Assert.assertThat(
-        new Command("docker", "inspect", imageReference).run(),
+        dockerInspect,
         CoreMatchers.containsString(
             "            \"Labels\": {\n"
                 + "                \"key1\": \"value1\",\n"
@@ -300,7 +288,7 @@ public class JibPluginIntegrationTest {
     new Command("docker", "load", "--input", outputPath).run();
     Assert.assertEquals(
         "Hello, world. An argument.\nfoo\ncat\n", new Command("docker", "run", targetImage).run());
-    assertHasExposedPorts(targetImage);
+    assertDockerInspect(targetImage);
     assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
   }
 
@@ -325,7 +313,7 @@ public class JibPluginIntegrationTest {
                 .toString())
         .run();
 
-    assertHasExposedPorts(imageName);
+    assertDockerInspect(imageName);
     Assert.assertEquals(
         "Hello, world. An argument.\nfoo\ncat\n", new Command("docker", "run", imageName).run());
 

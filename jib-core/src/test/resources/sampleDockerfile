@@ -8,5 +8,8 @@ COPY root /
 
 EXPOSE 1000/tcp
 EXPOSE 2000-2010/udp
+LABEL key1="value" \
+      key2="value with\\backslashes\"and\\\\\"\"quotes\"\\" \
+      key3="value3"
 ENTRYPOINT ["java","-flag","another\"Flag","-cp","/app/resources/:/app/classes/:/app/libs/*","SomeMainClass"]
 CMD ["arg1","arg2"]
