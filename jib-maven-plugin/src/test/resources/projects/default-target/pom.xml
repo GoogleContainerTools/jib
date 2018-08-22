@@ -44,6 +44,10 @@
               <port>1000/tcp</port>
               <port>2000-2003/udp</port>
             </ports>
+            <labels>
+              <key1>value1</key1>
+              <key2>value2</key2>
+            </labels>
           </container>
           <!-- Does not have tests use user-level cache for base image layers. -->
           <useOnlyProjectCache>true</useOnlyProjectCache>

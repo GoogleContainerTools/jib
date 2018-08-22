@@ -129,6 +129,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     private String format = "Docker";
 
     @Parameter private List<String> ports = Collections.emptyList();
+
+    @Parameter private Map<String, String> labels = Collections.emptyMap();
   }
 
   @Nullable
@@ -273,6 +275,10 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     return container.ports;
   }
 
+  Map<String, String> getLabels() {
+    return container.labels;
+  }
+
   String getFormat() {
     return Preconditions.checkNotNull(container.format);
   }
@@ -317,11 +323,6 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   @VisibleForTesting
   void setProject(MavenProject project) {
     this.project = project;
-  }
-
-  @VisibleForTesting
-  void setTargetImage(@Nullable String targetImage) {
-    this.to.image = targetImage;
   }
 
   @VisibleForTesting

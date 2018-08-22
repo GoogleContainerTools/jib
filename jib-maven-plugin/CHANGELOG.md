@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- `<container><labels>` configuration parameter for configuring labels ([#751](https://github.com/GoogleContainerTools/jib/issues/751))
+
 ### Changed
 
 ### Fixed
