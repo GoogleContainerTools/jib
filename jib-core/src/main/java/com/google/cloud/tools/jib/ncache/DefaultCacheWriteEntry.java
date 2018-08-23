@@ -21,13 +21,29 @@ import com.google.cloud.tools.jib.image.DescriptorDigest;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
+/** A default implementation of {@link CacheWriteEntry}. */
 public class DefaultCacheWriteEntry implements CacheWriteEntry {
 
-  public static DefaultCacheWriteEntry layerOnly(Blob layerBlob) {
+  /**
+   * Constructs a {@link CacheWriteEntry} with only the layer {@link Blob}.
+   *
+   * @param layerBlob the layer {@link Blob}
+   * @return the new {@link CacheWriteEntry}
+   */
+  public static CacheWriteEntry layerOnly(Blob layerBlob) {
     return new DefaultCacheWriteEntry(layerBlob, null, null);
   }
 
-  public static DefaultCacheWriteEntry withSelectorAndMetadata(
+  /**
+   * Constructs a {@link CacheWriteEntry} with a layer {@link Blob}, an additional selector digest,
+   * and a metadata {@link Blob}.
+   *
+   * @param layerBlob the layer {@link Blob}
+   * @param selector the selector digest
+   * @param metadataBlob the metadata {@link Blob}
+   * @return the new {@link CacheWriteEntry}
+   */
+  public static CacheWriteEntry withSelectorAndMetadata(
       Blob layerBlob, DescriptorDigest selector, Blob metadataBlob) {
     return new DefaultCacheWriteEntry(layerBlob, selector, metadataBlob);
   }
@@ -36,7 +52,8 @@ public class DefaultCacheWriteEntry implements CacheWriteEntry {
   @Nullable private final DescriptorDigest selector;
   @Nullable private final Blob metadataBlob;
 
-  private DefaultCacheWriteEntry(Blob layerBlob, @Nullable DescriptorDigest selector, @Nullable Blob metadataBlob) {
+  private DefaultCacheWriteEntry(
+      Blob layerBlob, @Nullable DescriptorDigest selector, @Nullable Blob metadataBlob) {
     this.layerBlob = layerBlob;
     this.selector = selector;
     this.metadataBlob = metadataBlob;
