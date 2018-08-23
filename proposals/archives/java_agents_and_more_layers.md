@@ -38,7 +38,9 @@ The user can add arbitrary files to the image by placing them in a `src/main/jib
 
 The directory should also be able to be configured to override the `src/main/jib` default.
 
-### Alternative (Rejected) Proposal
+## Alternative Proposals
+
+### Rejected Proposal 1
 
 **The alternative proposal was rejected** because we deemed that it required too much extra configuration on the part of the user.
 
@@ -82,7 +84,7 @@ In the future, we may consider allowing the user to configure this in the form o
 
 This would match dependencies that are in the `com.yourcompany` package and `SNAPSHOT` dependencies and place these in a new volatile-dependencies layer.
 
-### Alternative (Rejected) Proposal
+### Rejected Proposal 2
 
 **The alternative proposal was rejected** because we deemed that layering should be an implementation detail that should not be exposed to the user.
 
