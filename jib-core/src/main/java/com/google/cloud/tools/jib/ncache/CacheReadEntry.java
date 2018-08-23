@@ -57,8 +57,9 @@ public interface CacheReadEntry {
   Blob getLayerBlob();
 
   /**
-   * Gets the optional metadata blob for the layer. The metadata is an arbitrary format chosen by
-   * the storage engine implementation.
+   * Gets the optional metadata blob for the layer. The metadata is in the same format as supplied
+   * when writing to the cache with {@link CacheWriteEntry}. This {@link Blob} should be able to be
+   * used multiple times.
    *
    * @return the metadata {@link Blob}
    */
