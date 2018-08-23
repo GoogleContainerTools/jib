@@ -2,7 +2,7 @@ plugins {
   id 'java'
   id 'checkstyle'
   id 'com.github.sherter.google-java-format' version '0.7.1'
-  id 'net.ltgt.apt' version '0.13'
+  id 'net.ltgt.apt' version '0.18'
   id 'net.ltgt.errorprone' version '0.0.13'
   id 'biz.aQute.bnd.builder' version '4.0.0'
 }
