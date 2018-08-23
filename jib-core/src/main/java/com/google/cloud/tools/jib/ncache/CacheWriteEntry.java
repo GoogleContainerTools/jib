@@ -31,7 +31,11 @@ public interface CacheWriteEntry {
   Blob getLayerBlob();
 
   /**
-   * Gets the optional selector digest to also reference this layer data.
+   * Gets the optional selector digest to also reference this layer data. A selector digest may be a
+   * secondary identifier for a layer that is distinct from the default layer digest.
+   *
+   * <p>For example, it is useful as an inexpensive alternative reference to a layer compared to
+   * calculating the primary layer digest (SHA256 of compressed tarball).
    *
    * @return the selector digest
    */
@@ -39,6 +43,8 @@ public interface CacheWriteEntry {
 
   /**
    * Gets the optional {@link Blob} to write as the arbitrary layer metadata.
+   *
+   * <p>For example, the metadata could contain last modified time, layer types, layer sources, etc.
    *
    * @return the metadata {@link Blob}
    */
