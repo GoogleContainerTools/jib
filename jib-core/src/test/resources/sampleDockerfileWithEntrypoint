@@ -1,0 +1,10 @@
+FROM somebaseimage
+
+COPY libs /app/libs/
+COPY snapshot-libs /app/libs/
+COPY resources /app/resources/
+COPY classes /app/classes/
+COPY root /
+
+ENTRYPOINT ["command","argument"]
+CMD ["arg1","arg2"]

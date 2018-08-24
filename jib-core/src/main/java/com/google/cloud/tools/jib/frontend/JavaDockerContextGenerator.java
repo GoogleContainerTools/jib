@@ -101,6 +101,7 @@ public class JavaDockerContextGenerator {
   private final ImmutableList<CopyDirective> copyDirectives;
 
   @Nullable private String baseImage;
+  private List<String> entrypoint = Collections.emptyList();
   private List<String> jvmFlags = Collections.emptyList();
   private String mainClass = "";
   private List<String> javaArguments = Collections.emptyList();
@@ -146,6 +147,18 @@ public class JavaDockerContextGenerator {
    */
   public JavaDockerContextGenerator setBaseImage(String baseImage) {
     this.baseImage = baseImage;
+    return this;
+  }
+
+  /**
+   * Sets the entrypoint to be used as the {@code ENTRYPOINT}. If not empty, then overrides the
+   * {@link #setJvmFlags(List) jvmFlags} and {@link #setMainClass(String) mainclass}.
+   *
+   * @param entrypoint the entrypoint.
+   * @return this
+   */
+  public JavaDockerContextGenerator setEntrypoint(List<String> entrypoint) {
+    this.entrypoint = entrypoint;
     return this;
   }
 
@@ -293,7 +306,9 @@ public class JavaDockerContextGenerator {
         .append("\nENTRYPOINT ")
         .append(
             objectMapper.writeValueAsString(
-                JavaEntrypointConstructor.makeDefaultEntrypoint(jvmFlags, mainClass)))
+                !entrypoint.isEmpty()
+                    ? entrypoint
+                    : JavaEntrypointConstructor.makeDefaultEntrypoint(jvmFlags, mainClass)))
         .append("\nCMD ")
         .append(objectMapper.writeValueAsString(javaArguments));
     return dockerfile.toString();

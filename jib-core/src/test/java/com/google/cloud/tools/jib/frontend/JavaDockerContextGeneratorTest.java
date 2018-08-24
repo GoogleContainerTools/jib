@@ -163,4 +163,29 @@ public class JavaDockerContextGeneratorTest {
         Resources.readLines(Resources.getResource("sampleDockerfile"), StandardCharsets.UTF_8);
     Assert.assertEquals(String.join("\n", sampleDockerfile), dockerfile);
   }
+
+  @Test
+  public void testMakeDockerfileWithEntrypoint() throws IOException {
+    String expectedBaseImage = "somebaseimage";
+    List<String> expectedEntrypoint = Arrays.asList("command", "argument");
+    List<String> expectedJavaArguments = Arrays.asList("arg1", "arg2");
+    // specifying an entrypoint should cause jvmFlags and mainClass to be ignored
+    List<String> ignoredJvmFlags = Arrays.asList("-flag", "another\"Flag");
+    String ignoredMainClass = "SomeMainClass";
+
+    String dockerfile =
+        new JavaDockerContextGenerator(mockJavaLayerConfigurations)
+            .setBaseImage(expectedBaseImage)
+            .setEntrypoint(expectedEntrypoint)
+            .setJvmFlags(ignoredJvmFlags)
+            .setMainClass(ignoredMainClass)
+            .setJavaArguments(expectedJavaArguments)
+            .makeDockerfile();
+
+    // Need to split/rejoin the string here to avoid cross-platform troubles
+    List<String> sampleDockerfile =
+        Resources.readLines(
+            Resources.getResource("sampleDockerfileWithEntrypoint"), StandardCharsets.UTF_8);
+    Assert.assertEquals(String.join("\n", sampleDockerfile), dockerfile);
+  }
 }
