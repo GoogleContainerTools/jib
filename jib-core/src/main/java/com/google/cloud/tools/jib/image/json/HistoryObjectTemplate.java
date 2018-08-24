@@ -16,9 +16,11 @@
 
 package com.google.cloud.tools.jib.image.json;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import java.util.Objects;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class HistoryObjectTemplate implements JsonTemplate {
 
   /** The name of the author specified when committing the image. */
@@ -29,6 +31,9 @@ public class HistoryObjectTemplate implements JsonTemplate {
 
   /** The command used while building the image. */
   private String created_by;
+
+  /** Whether or not the layer is empty */
+  private boolean empty_layer;
 
   public HistoryObjectTemplate() {
     this("Jib", "1970-01-01T00:00:00Z", "jib");
@@ -46,13 +51,14 @@ public class HistoryObjectTemplate implements JsonTemplate {
       HistoryObjectTemplate otherHistory = (HistoryObjectTemplate) other;
       return otherHistory.author.equals(author)
           && otherHistory.created.equals(created)
-          && otherHistory.created_by.equals(created_by);
+          && otherHistory.created_by.equals(created_by)
+          && otherHistory.empty_layer == empty_layer;
     }
     return false;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(author, created, created_by);
+    return Objects.hash(author, created, created_by, empty_layer);
   }
 }
