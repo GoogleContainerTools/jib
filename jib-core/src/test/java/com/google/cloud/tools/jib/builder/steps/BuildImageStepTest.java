@@ -78,7 +78,7 @@ public class BuildImageStepTest {
     Mockito.when(mockContainerConfiguration.getExposedPorts()).thenReturn(ImmutableList.of());
     Mockito.when(mockContainerConfiguration.getEntrypoint()).thenReturn(ImmutableList.of());
 
-    expectedHistory = new HistoryObjectTemplate("JibBase", Instant.EPOCH.toString(), "jib-test");
+    expectedHistory = new HistoryObjectTemplate(Instant.EPOCH.toString(), "JibBase", "jib-test");
     Image<Layer> baseImage =
         Image.builder()
             .addEnvironment(ImmutableMap.of("BASE_ENV", "BASE_ENV_VALUE"))

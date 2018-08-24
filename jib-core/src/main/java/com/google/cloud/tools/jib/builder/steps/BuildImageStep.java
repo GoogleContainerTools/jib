@@ -120,7 +120,7 @@ class BuildImageStep
       if (baseImage.getHistory().size() < baseImageLayers.size()) {
         int sizeDifference = baseImageLayers.size() - baseImage.getHistory().size();
         for (int count = 0; count < sizeDifference; count++) {
-          imageBuilder.addHistory(new HistoryObjectTemplate("Jib", buildTime, "jib"));
+          imageBuilder.addHistory(new HistoryObjectTemplate(buildTime, "Jib", "jib"));
         }
       }
 
@@ -128,7 +128,7 @@ class BuildImageStep
       for (BuildAndCacheApplicationLayerStep buildAndCacheApplicationLayerStep :
           buildAndCacheApplicationLayerSteps) {
         imageBuilder.addLayer(NonBlockingSteps.get(buildAndCacheApplicationLayerStep));
-        imageBuilder.addHistory(new HistoryObjectTemplate("Jib", buildTime, "jib"));
+        imageBuilder.addHistory(new HistoryObjectTemplate(buildTime, "Jib", "jib"));
       }
       if (containerConfiguration != null) {
         imageBuilder.addEnvironment(containerConfiguration.getEnvironmentMap());

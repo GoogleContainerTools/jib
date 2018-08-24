@@ -19,27 +19,29 @@ package com.google.cloud.tools.jib.image.json;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class HistoryObjectTemplate implements JsonTemplate {
 
-  /** The name of the author specified when committing the image. */
-  private String author;
-
   /** The timestamp at which the image was created. */
   private String created;
 
+  /** The name of the author specified when committing the image. */
+  @Nullable private String author;
+
   /** The command used while building the image. */
-  private String created_by;
+  @Nullable private String created_by;
 
   /** Whether or not the layer is empty */
-  private boolean empty_layer;
+  @Nullable private Boolean empty_layer;
 
   public HistoryObjectTemplate() {
-    this("Jib", "1970-01-01T00:00:00Z", "jib");
+    this("1970-01-01T00:00:00Z", null, null);
   }
 
-  public HistoryObjectTemplate(String author, String created, String createdBy) {
+  public HistoryObjectTemplate(
+      String created, @Nullable String author, @Nullable String createdBy) {
     this.author = author;
     this.created = created;
     this.created_by = createdBy;
@@ -49,10 +51,10 @@ public class HistoryObjectTemplate implements JsonTemplate {
   public boolean equals(Object other) {
     if (other instanceof HistoryObjectTemplate) {
       HistoryObjectTemplate otherHistory = (HistoryObjectTemplate) other;
-      return otherHistory.author.equals(author)
-          && otherHistory.created.equals(created)
-          && otherHistory.created_by.equals(created_by)
-          && otherHistory.empty_layer == empty_layer;
+      return otherHistory.created.equals(created)
+          && Objects.equals(otherHistory.author, author)
+          && Objects.equals(otherHistory.created_by, created_by)
+          && Objects.equals(otherHistory.empty_layer, empty_layer);
     }
     return false;
   }
