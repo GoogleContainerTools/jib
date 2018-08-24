@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.image.json;
 
 import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate.HistoryObjectTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;

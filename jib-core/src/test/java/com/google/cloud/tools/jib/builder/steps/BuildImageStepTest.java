@@ -25,7 +25,7 @@ import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
-import com.google.cloud.tools.jib.image.json.HistoryObjectTemplate;
+import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate.HistoryObjectTemplate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;

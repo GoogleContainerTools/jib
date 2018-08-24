@@ -17,7 +17,7 @@
 package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.configuration.Port;
-import com.google.cloud.tools.jib.image.json.HistoryObjectTemplate;
+import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate.HistoryObjectTemplate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.time.Instant;

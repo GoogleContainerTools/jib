@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.configuration.Port.Protocol;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
+import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate.HistoryObjectTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
