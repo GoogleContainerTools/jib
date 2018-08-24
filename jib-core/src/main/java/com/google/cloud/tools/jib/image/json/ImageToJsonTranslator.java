@@ -115,6 +115,11 @@ public class ImageToJsonTranslator {
       template.addLayerDiffId(layer.getDiffId());
     }
 
+    // Adds the history.
+    for (HistoryObjectTemplate historyObject : image.getHistory()) {
+      template.addHistory(historyObject);
+    }
+
     // Sets the creation time. Instant#toString() returns an ISO-8601 formatted string.
     template.setCreated(image.getCreated() == null ? null : image.getCreated().toString());
 

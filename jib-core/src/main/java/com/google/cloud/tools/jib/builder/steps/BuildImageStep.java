@@ -25,10 +25,12 @@ import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
+import com.google.cloud.tools.jib.image.json.HistoryObjectTemplate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -94,22 +96,40 @@ class BuildImageStep
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       // Constructs the image.
       Image.Builder<CachedLayer> imageBuilder = Image.builder();
-      for (PullAndCacheBaseImageLayerStep pullAndCacheBaseImageLayerStep :
-          NonBlockingSteps.get(pullAndCacheBaseImageLayersStep)) {
+      Image<Layer> baseImage = NonBlockingSteps.get(pullBaseImageStep).getBaseImage();
+      ContainerConfiguration containerConfiguration =
+          buildConfiguration.getContainerConfiguration();
+      String buildTime =
+          containerConfiguration == null
+              ? Instant.EPOCH.toString()
+              : containerConfiguration.getCreationTime().toString();
+
+      // Base image layers/configuration passthrough
+      List<PullAndCacheBaseImageLayerStep> baseImageLayers =
+          NonBlockingSteps.get(pullAndCacheBaseImageLayersStep);
+      for (PullAndCacheBaseImageLayerStep pullAndCacheBaseImageLayerStep : baseImageLayers) {
         imageBuilder.addLayer(NonBlockingSteps.get(pullAndCacheBaseImageLayerStep));
       }
-      for (BuildAndCacheApplicationLayerStep buildAndCacheApplicationLayerStep :
-          buildAndCacheApplicationLayerSteps) {
-        imageBuilder.addLayer(NonBlockingSteps.get(buildAndCacheApplicationLayerStep));
+      for (HistoryObjectTemplate historyObject : baseImage.getHistory()) {
+        imageBuilder.addHistory(historyObject);
       }
-
-      // Parameters that we passthrough from the base image
-      Image<Layer> baseImage = NonBlockingSteps.get(pullBaseImageStep).getBaseImage();
       imageBuilder.addEnvironment(baseImage.getEnvironment());
       imageBuilder.addLabels(baseImage.getLabels());
 
-      ContainerConfiguration containerConfiguration =
-          buildConfiguration.getContainerConfiguration();
+      // Add history elements if base layers/history sizes don't match
+      if (baseImage.getHistory().size() < baseImageLayers.size()) {
+        int sizeDifference = baseImageLayers.size() - baseImage.getHistory().size();
+        for (int count = 0; count < sizeDifference; count++) {
+          imageBuilder.addHistory(new HistoryObjectTemplate("Jib", buildTime, "jib"));
+        }
+      }
+
+      // Add built layers/configuration
+      for (BuildAndCacheApplicationLayerStep buildAndCacheApplicationLayerStep :
+          buildAndCacheApplicationLayerSteps) {
+        imageBuilder.addLayer(NonBlockingSteps.get(buildAndCacheApplicationLayerStep));
+        imageBuilder.addHistory(new HistoryObjectTemplate("Jib", buildTime, "jib"));
+      }
       if (containerConfiguration != null) {
         imageBuilder.addEnvironment(containerConfiguration.getEnvironmentMap());
         imageBuilder.setCreated(containerConfiguration.getCreationTime());

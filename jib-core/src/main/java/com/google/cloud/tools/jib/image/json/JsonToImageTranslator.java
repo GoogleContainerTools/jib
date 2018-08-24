@@ -110,6 +110,7 @@ public class JsonToImageTranslator {
     }
 
     List<DescriptorDigest> diffIds = containerConfigurationTemplate.getDiffIds();
+    List<HistoryObjectTemplate> historyObjects = containerConfigurationTemplate.getHistory();
 
     if (layers.size() != diffIds.size()) {
       throw new LayerCountMismatchException(
@@ -123,6 +124,9 @@ public class JsonToImageTranslator {
       DescriptorDigest diffId = diffIds.get(layerIndex);
 
       imageBuilder.addLayer(new ReferenceLayer(noDiffIdLayer.getBlobDescriptor(), diffId));
+    }
+    for (HistoryObjectTemplate historyObject : historyObjects) {
+      imageBuilder.addHistory(historyObject);
     }
 
     if (containerConfigurationTemplate.getCreated() != null) {

@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
+import com.google.cloud.tools.jib.image.json.HistoryObjectTemplate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
@@ -55,6 +56,7 @@ public class BuildImageStepTest {
   @Mock private BuildAndCacheApplicationLayerStep mockBuildAndCacheApplicationLayerStep;
 
   private DescriptorDigest testDescriptorDigest;
+  private HistoryObjectTemplate expectedHistory;
 
   @Before
   public void setUp() throws DigestException {
@@ -76,10 +78,12 @@ public class BuildImageStepTest {
     Mockito.when(mockContainerConfiguration.getExposedPorts()).thenReturn(ImmutableList.of());
     Mockito.when(mockContainerConfiguration.getEntrypoint()).thenReturn(ImmutableList.of());
 
+    expectedHistory = new HistoryObjectTemplate("JibBase", Instant.EPOCH.toString(), "jib-test");
     Image<Layer> baseImage =
         Image.builder()
             .addEnvironment(ImmutableMap.of("BASE_ENV", "BASE_ENV_VALUE"))
             .addLabel("base.label", "base.label.value")
+            .addHistory(expectedHistory)
             .build();
     Mockito.when(mockPullAndCacheBaseImageLayerStep.getFuture())
         .thenReturn(Futures.immediateFuture(testCachedLayer));
@@ -139,5 +143,9 @@ public class BuildImageStepTest {
     Assert.assertEquals(
         ImmutableMap.of("base.label", "base.label.value", "my.label", "my.label.value"),
         image.getLabels());
+    Assert.assertTrue(
+        "History doesn't contain expected base image layer",
+        image.getHistory().contains(expectedHistory));
+    Assert.assertEquals(6, image.getHistory().size());
   }
 }

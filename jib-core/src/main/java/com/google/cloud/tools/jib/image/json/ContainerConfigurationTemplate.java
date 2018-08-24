@@ -42,6 +42,18 @@ import javax.annotation.Nullable;
  *     "ExposedPorts": { "6000/tcp":{}, "8000/tcp":{}, "9000/tcp":{} }
  *     "Labels": { "com.example.label": "value" }
  *   },
+ *   "history": [
+ *     {
+ *       "author": "Jib",
+ *       "created": "1970-01-01T00:00:00Z",
+ *       "created_by": "jib build ..."
+ *     },
+ *     {
+ *       "author": "Jib",
+ *       "created": "1970-01-01T00:00:00Z",
+ *       "created_by": "jib build ..."
+ *     }
+ *   ]
  *   "rootfs": {
  *     "diff_ids": [
  *       "sha256:2aebd096e0e237b447781353379722157e6c2d434b9ec5a0d63f2a6f07cf90c2",
@@ -69,6 +81,9 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
 
   /** Execution parameters that should be used as a base when running the container. */
   private final ConfigurationObjectTemplate config = new ConfigurationObjectTemplate();
+
+  /** Build commands used to create the image. */
+  private final List<HistoryObjectTemplate> history = new ArrayList<>();
 
   /** Layer content digests that are used to build the container filesystem. */
   private final RootFilesystemObjectTemplate rootfs = new RootFilesystemObjectTemplate();
@@ -137,8 +152,16 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     rootfs.diff_ids.add(diffId);
   }
 
+  public void addHistory(HistoryObjectTemplate historyObject) {
+    history.add(historyObject);
+  }
+
   List<DescriptorDigest> getDiffIds() {
     return rootfs.diff_ids;
+  }
+
+  List<HistoryObjectTemplate> getHistory() {
+    return history;
   }
 
   @Nullable

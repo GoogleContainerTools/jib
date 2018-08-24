@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.configuration.Port;
+import com.google.cloud.tools.jib.image.json.HistoryObjectTemplate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.time.Instant;
@@ -31,6 +32,7 @@ public class Image<T extends Layer> {
   public static class Builder<T extends Layer> {
 
     private final ImageLayers.Builder<T> imageLayersBuilder = ImageLayers.builder();
+    private ImmutableList.Builder<HistoryObjectTemplate> historyBuilder = ImmutableList.builder();
     private ImmutableMap.Builder<String, String> environmentBuilder = ImmutableMap.builder();
     private ImmutableMap.Builder<String, String> labelsBuilder = ImmutableMap.builder();
 
@@ -145,10 +147,22 @@ public class Image<T extends Layer> {
       return this;
     }
 
+    /**
+     * Adds a history element to the image.
+     *
+     * @param history the history object to add
+     * @return this
+     */
+    public Builder<T> addHistory(HistoryObjectTemplate history) {
+      historyBuilder.add(history);
+      return this;
+    }
+
     public Image<T> build() {
       return new Image<>(
           created,
           imageLayersBuilder.build(),
+          historyBuilder.build(),
           environmentBuilder.build(),
           entrypoint,
           javaArguments,
@@ -166,6 +180,9 @@ public class Image<T extends Layer> {
 
   /** The layers of the image, in the order in which they are applied. */
   private final ImageLayers<T> layers;
+
+  /** The commands used to build each layer of the image */
+  private final ImmutableList<HistoryObjectTemplate> history;
 
   /** Environment variable definitions for running the image, in the format {@code NAME=VALUE}. */
   @Nullable private final ImmutableMap<String, String> environment;
@@ -185,6 +202,7 @@ public class Image<T extends Layer> {
   private Image(
       @Nullable Instant created,
       ImageLayers<T> layers,
+      ImmutableList<HistoryObjectTemplate> history,
       @Nullable ImmutableMap<String, String> environment,
       @Nullable ImmutableList<String> entrypoint,
       @Nullable ImmutableList<String> javaArguments,
@@ -192,6 +210,7 @@ public class Image<T extends Layer> {
       @Nullable ImmutableMap<String, String> labels) {
     this.created = created;
     this.layers = layers;
+    this.history = history;
     this.environment = environment;
     this.entrypoint = entrypoint;
     this.javaArguments = javaArguments;
@@ -231,5 +250,9 @@ public class Image<T extends Layer> {
 
   public ImmutableList<T> getLayers() {
     return layers.getLayers();
+  }
+
+  public ImmutableList<HistoryObjectTemplate> getHistory() {
+    return history;
   }
 }
