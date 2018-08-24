@@ -99,36 +99,43 @@ class BuildImageStep
       Image<Layer> baseImage = NonBlockingSteps.get(pullBaseImageStep).getBaseImage();
       ContainerConfiguration containerConfiguration =
           buildConfiguration.getContainerConfiguration();
-      String buildTime =
-          containerConfiguration == null
-              ? Instant.EPOCH.toString()
-              : containerConfiguration.getCreationTime().toString();
 
-      // Base image layers/configuration passthrough
+      // Base image layers
       List<PullAndCacheBaseImageLayerStep> baseImageLayers =
           NonBlockingSteps.get(pullAndCacheBaseImageLayersStep);
       for (PullAndCacheBaseImageLayerStep pullAndCacheBaseImageLayerStep : baseImageLayers) {
         imageBuilder.addLayer(NonBlockingSteps.get(pullAndCacheBaseImageLayerStep));
       }
+
+      // Passthrough config and count non-empty history entries
+      int nonEmptyLayerCount = 0;
       for (HistoryObjectTemplate historyObject : baseImage.getHistory()) {
         imageBuilder.addHistory(historyObject);
+        if (!historyObject.isEmptyLayer()) {
+          nonEmptyLayerCount++;
+        }
       }
       imageBuilder.addEnvironment(baseImage.getEnvironment());
       imageBuilder.addLabels(baseImage.getLabels());
 
-      // Add history elements if base layers/history sizes don't match
-      if (baseImage.getHistory().size() < baseImageLayers.size()) {
-        int sizeDifference = baseImageLayers.size() - baseImage.getHistory().size();
-        for (int count = 0; count < sizeDifference; count++) {
-          imageBuilder.addHistory(new HistoryObjectTemplate(buildTime, "Jib", "jib"));
-        }
+      // Add history elements for non-empty layers that don't have one yet
+      int sizeDifference =
+          baseImageLayers.size() + buildAndCacheApplicationLayerSteps.size() - nonEmptyLayerCount;
+      for (int count = 0; count < sizeDifference; count++) {
+        imageBuilder.addHistory(
+            new HistoryObjectTemplate(
+                containerConfiguration == null
+                    ? Instant.EPOCH.toString()
+                    : containerConfiguration.getCreationTime().toString(),
+                "Jib",
+                "jib",
+                null));
       }
 
       // Add built layers/configuration
       for (BuildAndCacheApplicationLayerStep buildAndCacheApplicationLayerStep :
           buildAndCacheApplicationLayerSteps) {
         imageBuilder.addLayer(NonBlockingSteps.get(buildAndCacheApplicationLayerStep));
-        imageBuilder.addHistory(new HistoryObjectTemplate(buildTime, "Jib", "jib"));
       }
       if (containerConfiguration != null) {
         imageBuilder.addEnvironment(containerConfiguration.getEnvironmentMap());

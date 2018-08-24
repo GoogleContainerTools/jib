@@ -56,7 +56,8 @@ public class BuildImageStepTest {
   @Mock private BuildAndCacheApplicationLayerStep mockBuildAndCacheApplicationLayerStep;
 
   private DescriptorDigest testDescriptorDigest;
-  private HistoryObjectTemplate expectedHistory;
+  private HistoryObjectTemplate nonEmptyLayerHistory;
+  private HistoryObjectTemplate emptyLayerHistory;
 
   @Before
   public void setUp() throws DigestException {
@@ -78,12 +79,18 @@ public class BuildImageStepTest {
     Mockito.when(mockContainerConfiguration.getExposedPorts()).thenReturn(ImmutableList.of());
     Mockito.when(mockContainerConfiguration.getEntrypoint()).thenReturn(ImmutableList.of());
 
-    expectedHistory = new HistoryObjectTemplate(Instant.EPOCH.toString(), "JibBase", "jib-test");
+    nonEmptyLayerHistory =
+        new HistoryObjectTemplate(Instant.EPOCH.toString(), "JibBase", "jib-test", null);
+    emptyLayerHistory =
+        new HistoryObjectTemplate(Instant.EPOCH.toString(), "JibBase", "jib-test", true);
+
     Image<Layer> baseImage =
         Image.builder()
             .addEnvironment(ImmutableMap.of("BASE_ENV", "BASE_ENV_VALUE"))
             .addLabel("base.label", "base.label.value")
-            .addHistory(expectedHistory)
+            .addHistory(nonEmptyLayerHistory)
+            .addHistory(emptyLayerHistory)
+            .addHistory(emptyLayerHistory)
             .build();
     Mockito.when(mockPullAndCacheBaseImageLayerStep.getFuture())
         .thenReturn(Futures.immediateFuture(testCachedLayer));
@@ -143,9 +150,43 @@ public class BuildImageStepTest {
     Assert.assertEquals(
         ImmutableMap.of("base.label", "base.label.value", "my.label", "my.label.value"),
         image.getLabels());
-    Assert.assertTrue(
-        "History doesn't contain expected base image layer",
-        image.getHistory().contains(expectedHistory));
-    Assert.assertEquals(6, image.getHistory().size());
+
+    Assert.assertEquals(image.getHistory().get(0), nonEmptyLayerHistory);
+    Assert.assertEquals(image.getHistory().get(1), emptyLayerHistory);
+    Assert.assertEquals(image.getHistory().get(2), emptyLayerHistory);
+  }
+
+  @Test
+  public void test_generateHistoryObjects() throws ExecutionException, InterruptedException {
+    BuildImageStep buildImageStep =
+        new BuildImageStep(
+            MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()),
+            mockBuildConfiguration,
+            mockPullBaseImageStep,
+            mockPullAndCacheBaseImageLayersStep,
+            ImmutableList.of(
+                mockBuildAndCacheApplicationLayerStep,
+                mockBuildAndCacheApplicationLayerStep,
+                mockBuildAndCacheApplicationLayerStep));
+    Image<CachedLayer> image = buildImageStep.getFuture().get().getFuture().get();
+
+    // Make sure history is as expected
+    HistoryObjectTemplate expectedApplicationLayerHistory =
+        new HistoryObjectTemplate(Instant.EPOCH.toString(), "Jib", "jib", null);
+
+    // Base layers (1 non-empty propagated, 2 empty propagated, 2 non-empty generated)
+    Assert.assertEquals(image.getHistory().get(0), nonEmptyLayerHistory);
+    Assert.assertEquals(image.getHistory().get(1), emptyLayerHistory);
+    Assert.assertEquals(image.getHistory().get(2), emptyLayerHistory);
+    Assert.assertEquals(image.getHistory().get(3), expectedApplicationLayerHistory);
+    Assert.assertEquals(image.getHistory().get(4), expectedApplicationLayerHistory);
+
+    // Application layers (3 generated)
+    Assert.assertEquals(image.getHistory().get(5), expectedApplicationLayerHistory);
+    Assert.assertEquals(image.getHistory().get(6), expectedApplicationLayerHistory);
+    Assert.assertEquals(image.getHistory().get(7), expectedApplicationLayerHistory);
+
+    // Should be exactly 8 total
+    Assert.assertEquals(8, image.getHistory().size());
   }
 }

@@ -46,12 +46,12 @@ import javax.annotation.Nullable;
  *     {
  *       "author": "Jib",
  *       "created": "1970-01-01T00:00:00Z",
- *       "created_by": "jib build ..."
+ *       "created_by": "jib"
  *     },
  *     {
  *       "author": "Jib",
  *       "created": "1970-01-01T00:00:00Z",
- *       "created_by": "jib build ..."
+ *       "created_by": "jib"
  *     }
  *   ]
  *   "rootfs": {

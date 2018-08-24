@@ -65,7 +65,9 @@ public class ContainerConfigurationTemplateTest {
         DescriptorDigest.fromDigest(
             "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad"));
     containerConfigJson.addHistory(
-        new HistoryObjectTemplate(Instant.ofEpochSecond(20).toString(), "Jib", "jib"));
+        new HistoryObjectTemplate(Instant.EPOCH.toString(), "Bazel", "bazel build ...", true));
+    containerConfigJson.addHistory(
+        new HistoryObjectTemplate(Instant.ofEpochSecond(20).toString(), "Jib", "jib", null));
 
     // Serializes the JSON object.
     ByteArrayOutputStream jsonStream = new ByteArrayOutputStream();
@@ -98,7 +100,9 @@ public class ContainerConfigurationTemplateTest {
             "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad"),
         containerConfigJson.getLayerDiffId(0));
     Assert.assertEquals(
-        ImmutableList.of(new HistoryObjectTemplate("1970-01-01T00:00:20Z", "Jib", "jib")),
+        ImmutableList.of(
+            new HistoryObjectTemplate(Instant.EPOCH.toString(), "Bazel", "bazel build ...", true),
+            new HistoryObjectTemplate("1970-01-01T00:00:20Z", "Jib", "jib", null)),
         containerConfigJson.getHistory());
   }
 }

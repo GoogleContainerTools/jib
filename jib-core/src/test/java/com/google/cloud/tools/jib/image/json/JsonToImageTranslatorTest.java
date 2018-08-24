@@ -168,6 +168,11 @@ public class JsonToImageTranslatorTest {
         DescriptorDigest.fromDigest(
             "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad"),
         layers.get(0).getDiffId());
+    Assert.assertEquals(
+        ImmutableList.of(
+            new HistoryObjectTemplate(Instant.EPOCH.toString(), "Bazel", "bazel build ...", true),
+            new HistoryObjectTemplate(Instant.ofEpochSecond(20).toString(), "Jib", "jib", null)),
+        image.getHistory());
     Assert.assertEquals(Instant.ofEpochSecond(20), image.getCreated());
     Assert.assertEquals(Arrays.asList("some", "entrypoint", "command"), image.getEntrypoint());
     Assert.assertEquals(ImmutableMap.of("VAR1", "VAL1", "VAR2", "VAL2"), image.getEnvironment());
