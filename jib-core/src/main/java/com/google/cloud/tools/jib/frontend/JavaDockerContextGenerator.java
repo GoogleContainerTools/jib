@@ -31,6 +31,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import javax.annotation.Nullable;
 
 /**
@@ -103,6 +105,7 @@ public class JavaDockerContextGenerator {
   private String mainClass = "";
   private List<String> javaArguments = Collections.emptyList();
   private List<String> exposedPorts = Collections.emptyList();
+  private Map<String, String> labels = Collections.emptyMap();
 
   /**
    * Constructs a Docker context generator for a Java application.
@@ -191,6 +194,17 @@ public class JavaDockerContextGenerator {
   }
 
   /**
+   * Sets the labels
+   *
+   * @param labels the map of labels
+   * @return this
+   */
+  public JavaDockerContextGenerator setLabels(Map<String, String> labels) {
+    this.labels = labels;
+    return this;
+  }
+
+  /**
    * Creates the Docker context in {@code #targetDirectory}.
    *
    * @param targetDirectory the directory to generate the Docker context in
@@ -238,6 +252,9 @@ public class JavaDockerContextGenerator {
    *
    * EXPOSE [port]
    * [More EXPOSE instructions, if necessary]
+   * LABEL [key1]="[value1]" \
+   *       [key2]="[value2]" \
+   *       [...]
    * ENTRYPOINT java [jvm flags] -cp [classpaths] [main class]
    * CMD [main class args]
    * }</pre>
@@ -256,10 +273,22 @@ public class JavaDockerContextGenerator {
           .append(" ")
           .append(copyDirective.extractionPath);
     }
+
     dockerfile.append("\n");
     for (String port : exposedPorts) {
       dockerfile.append("\nEXPOSE ").append(port);
     }
+
+    boolean firstLabel = true;
+    for (Entry<String, String> label : labels.entrySet()) {
+      dockerfile
+          .append(firstLabel ? "\nLABEL " : " \\\n      ")
+          .append(label.getKey())
+          .append("=")
+          .append(objectMapper.writeValueAsString(label.getValue()));
+      firstLabel = false;
+    }
+
     dockerfile
         .append("\nENTRYPOINT ")
         .append(
