@@ -151,12 +151,6 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
       return empty_layer == null ? false : empty_layer;
     }
 
-    @VisibleForTesting
-    @JsonIgnore
-    public void setEmptyLayer(boolean emptyLayer) {
-      empty_layer = emptyLayer;
-    }
-
     @Override
     public boolean equals(Object other) {
       if (this == other) {
