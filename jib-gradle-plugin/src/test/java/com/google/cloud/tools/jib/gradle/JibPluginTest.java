@@ -118,10 +118,10 @@ public class JibPluginTest {
 
     // programmatic check
     Assert.assertEquals(
-        Collections.singletonList(":sub:assemble"),
-        JibPlugin.getProjectDependencyAssembleTasks(rootProject)
+        Collections.singletonList(":sub"),
+        JibPlugin.getProjectDependencies(rootProject)
             .stream()
-            .map(Task::getPath)
+            .map(Project::getPath)
             .collect(Collectors.toList()));
 
     // check by applying the jib plugin and inspect the task dependencies

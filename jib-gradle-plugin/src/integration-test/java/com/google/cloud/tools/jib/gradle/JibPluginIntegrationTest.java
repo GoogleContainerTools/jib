@@ -48,6 +48,9 @@ public class JibPluginIntegrationTest {
   @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
 
   @ClassRule
+  public static final TestProject multiprojectTestProject = new TestProject("multiproject");
+
+  @ClassRule
   public static final TestProject defaultTargetTestProject = new TestProject("default-target");
 
   private static String buildAndRun(TestProject testProject, String imageReference)
@@ -106,8 +109,21 @@ public class JibPluginIntegrationTest {
    */
   private static void assertBuildSuccess(
       BuildResult buildResult, String taskName, String successMessage) {
-    BuildTask classesTask = buildResult.task(":classes");
-    BuildTask jibTask = buildResult.task(":" + taskName);
+    assertBuildSuccess(buildResult, "", taskName, successMessage);
+  }
+
+  /**
+   * Asserts that the test project build output indicates a success.
+   *
+   * @param buildResult the builds results of the project under test
+   * @param taskPrefix the common prefix of tasks to verify (e.g., a subproject path)
+   * @param taskName the name of the Jib task that was run
+   * @param successMessage a Jib-specific success message to check for
+   */
+  private static void assertBuildSuccess(
+      BuildResult buildResult, String taskPrefix, String taskName, String successMessage) {
+    BuildTask classesTask = buildResult.task(taskPrefix + ":classes");
+    BuildTask jibTask = buildResult.task(taskPrefix + ":" + taskName);
 
     Assert.assertNotNull(classesTask);
     Assert.assertEquals(TaskOutcome.SUCCESS, classesTask.getOutcome());
@@ -349,5 +365,16 @@ public class JibPluginIntegrationTest {
           CoreMatchers.containsString(
               "Export Docker context failed because cannot clear directory"));
     }
+  }
+
+  @Test
+  public void testMultiProject() throws IOException, InterruptedException {
+    String taskPrefix = ":a_packaged";
+    BuildResult buildResult =
+        multiprojectTestProject.build(
+            "clean", taskPrefix + ":" + JibPlugin.DOCKER_CONTEXT_TASK_NAME, "--info");
+
+    assertBuildSuccess(
+        buildResult, taskPrefix, JibPlugin.DOCKER_CONTEXT_TASK_NAME, "Created Docker context at ");
   }
 }
