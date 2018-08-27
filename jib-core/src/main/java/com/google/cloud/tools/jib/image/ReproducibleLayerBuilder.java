@@ -26,9 +26,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.LinkedHashSet;
+import java.util.HashSet;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Set;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 
 /**
@@ -42,29 +42,37 @@ public class ReproducibleLayerBuilder {
   // are treated the same in TarArchiveEntry).
   private static final File DIRECTORY_FILE = Paths.get(".").toFile();
 
-  /** Decorates an object with a separate object for {@link #hashCode}. */
-  private static class CustomHashWrapper<T, H> {
+  /** Holds a list of {@link TarArchiveEntry}s with unique extraction paths. */
+  private static class UniqueTarArchiveEntries {
 
-    private final H hashObject;
-    private final T contents;
+    private final List<TarArchiveEntry> entries = new ArrayList<>();
+    private final Set<String> names = new HashSet<>();
 
     /**
-     * @param contents the object to wrap
-     * @param hashObject the object to use for hashing
+     * Adds a {@link TarArchiveEntry} if its extraction path does not exist yet.
+     *
+     * @param tarArchiveEntry the {@link TarArchiveEntry}
      */
-    private CustomHashWrapper(T contents, H hashObject) {
-      this.contents = contents;
-      this.hashObject = hashObject;
+    private void add(TarArchiveEntry tarArchiveEntry) {
+      if (names.contains(tarArchiveEntry.getName())) {
+        return;
+      }
+
+      // Adds all directories along extraction paths to explicitly set permissions for those
+      // directories.
+      Path namePath = Paths.get(tarArchiveEntry.getName());
+      if (namePath.getParent() != namePath.getRoot()) {
+        add(new TarArchiveEntry(DIRECTORY_FILE, namePath.getParent().toString()));
+      }
+
+      entries.add(tarArchiveEntry);
+      names.add(tarArchiveEntry.getName());
     }
 
-    @Override
-    public boolean equals(Object other) {
-      return hashObject.equals(other);
-    }
-
-    @Override
-    public int hashCode() {
-      return hashObject.hashCode();
+    private List<TarArchiveEntry> getSortedEntries() {
+      List<TarArchiveEntry> sortedEntries = new ArrayList<>(entries);
+      sortedEntries.sort(Comparator.comparing(TarArchiveEntry::getName));
+      return sortedEntries;
     }
   }
 
@@ -111,24 +119,6 @@ public class ReproducibleLayerBuilder {
     return tarArchiveEntries;
   }
 
-  /**
-   * Gets the parent directories for {@code directory}, excluding root {@code /}. The {@code file}
-   * itself will be included only if it is a directory.
-   *
-   * @param file the file to get parents for
-   * @return the list of parent directories
-   */
-  private static List<Path> getParentDirectories(Path file) {
-    List<Path> parentDirectories = new ArrayList<>();
-    Path currentPath = Paths.get("/");
-    Path fullPath = Files.isDirectory(file) ? file : file.getParent();
-    for (Path element : fullPath) {
-      currentPath = currentPath.resolve(element);
-      parentDirectories.add(currentPath);
-    }
-    return parentDirectories;
-  }
-
   private final ImmutableList.Builder<LayerEntry> layerEntries = ImmutableList.builder();
 
   public ReproducibleLayerBuilder() {}
@@ -154,39 +144,21 @@ public class ReproducibleLayerBuilder {
    * @throws IOException if walking the source files fails
    */
   public UnwrittenLayer build() throws IOException {
-    LinkedHashSet<CustomHashWrapper<TarArchiveEntry, String>> filesystemEntrySet =
-        new LinkedHashSet<>();
+    UniqueTarArchiveEntries uniqueTarArchiveEntries = new UniqueTarArchiveEntries();
 
     // Adds all the layer entries as tar entries.
     List<LayerEntry> layerEntries = this.layerEntries.build();
     for (LayerEntry layerEntry : layerEntries) {
-      // Converts layerEntry to list of TarArchiveEntrys.
-      List<TarArchiveEntry> tarArchiveEntries = buildAsTarArchiveEntries(layerEntry);
-
-      for (TarArchiveEntry tarArchiveEntry : tarArchiveEntries) {
-        // Adds all directories along extraction paths to explicitly set permissions for those
-        // directories.
-        for (Path parentDirectory : getParentDirectories(Paths.get(tarArchiveEntry.getName()))) {
-          filesystemEntrySet.add(
-              new CustomHashWrapper<>(
-                  new TarArchiveEntry(DIRECTORY_FILE, parentDirectory.toString()),
-                  parentDirectory.toString()));
-        }
-        filesystemEntrySet.add(new CustomHashWrapper<>(tarArchiveEntry, tarArchiveEntry.getName()));
-      }
+      // Converts layerEntry to list of TarArchiveEntrys and adds to uniqueTarArchiveEntries.
+      buildAsTarArchiveEntries(layerEntry).forEach(uniqueTarArchiveEntries::add);
     }
 
-    // Sorts the entries by name.
-    List<TarArchiveEntry> filesystemEntries =
-        filesystemEntrySet
-            .stream()
-            .map(customHashWrapper -> customHashWrapper.contents)
-            .sorted(Comparator.comparing(TarArchiveEntry::getName))
-            .collect(Collectors.toList());
+    // Gets the entries sorted by extraction path.
+    List<TarArchiveEntry> sortedFilesystemEntries = uniqueTarArchiveEntries.getSortedEntries();
 
     // Adds all the files to a tar stream.
     TarStreamBuilder tarStreamBuilder = new TarStreamBuilder();
-    for (TarArchiveEntry entry : filesystemEntries) {
+    for (TarArchiveEntry entry : sortedFilesystemEntries) {
       // Strips out all non-reproducible elements from tar archive entries.
       entry.setModTime(0);
       entry.setGroupId(0);
