@@ -23,9 +23,9 @@ import com.google.cloud.tools.jib.cache.CachedLayerWithMetadata;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.image.HistoryItem;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
-import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate.HistoryObjectTemplate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
@@ -56,8 +56,8 @@ public class BuildImageStepTest {
   @Mock private BuildAndCacheApplicationLayerStep mockBuildAndCacheApplicationLayerStep;
 
   private DescriptorDigest testDescriptorDigest;
-  private HistoryObjectTemplate nonEmptyLayerHistory;
-  private HistoryObjectTemplate emptyLayerHistory;
+  private HistoryItem nonEmptyLayerHistory;
+  private HistoryItem emptyLayerHistory;
 
   @Before
   public void setUp() throws DigestException {
@@ -79,10 +79,8 @@ public class BuildImageStepTest {
     Mockito.when(mockContainerConfiguration.getExposedPorts()).thenReturn(ImmutableList.of());
     Mockito.when(mockContainerConfiguration.getEntrypoint()).thenReturn(ImmutableList.of());
 
-    nonEmptyLayerHistory =
-        new HistoryObjectTemplate(Instant.EPOCH.toString(), "JibBase", "jib-test", null);
-    emptyLayerHistory =
-        new HistoryObjectTemplate(Instant.EPOCH.toString(), "JibBase", "jib-test", true);
+    nonEmptyLayerHistory = new HistoryItem(Instant.EPOCH.toString(), "JibBase", "jib-test", null);
+    emptyLayerHistory = new HistoryItem(Instant.EPOCH.toString(), "JibBase", "jib-test", true);
 
     Image<Layer> baseImage =
         Image.builder()
@@ -171,8 +169,8 @@ public class BuildImageStepTest {
     Image<CachedLayer> image = buildImageStep.getFuture().get().getFuture().get();
 
     // Make sure history is as expected
-    HistoryObjectTemplate expectedApplicationLayerHistory =
-        new HistoryObjectTemplate(Instant.EPOCH.toString(), "Jib", "jib", null);
+    HistoryItem expectedApplicationLayerHistory =
+        new HistoryItem(Instant.EPOCH.toString(), "Jib", "jib", null);
 
     // Base layers (1 non-empty propagated, 2 empty propagated, 2 non-empty generated)
     Assert.assertEquals(image.getHistory().get(0), nonEmptyLayerHistory);

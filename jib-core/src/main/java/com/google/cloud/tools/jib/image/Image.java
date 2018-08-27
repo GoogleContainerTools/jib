@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.configuration.Port;
-import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate.HistoryObjectTemplate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.time.Instant;
@@ -32,7 +31,7 @@ public class Image<T extends Layer> {
   public static class Builder<T extends Layer> {
 
     private final ImageLayers.Builder<T> imageLayersBuilder = ImageLayers.builder();
-    private ImmutableList.Builder<HistoryObjectTemplate> historyBuilder = ImmutableList.builder();
+    private ImmutableList.Builder<HistoryItem> historyBuilder = ImmutableList.builder();
     private ImmutableMap.Builder<String, String> environmentBuilder = ImmutableMap.builder();
     private ImmutableMap.Builder<String, String> labelsBuilder = ImmutableMap.builder();
 
@@ -153,7 +152,7 @@ public class Image<T extends Layer> {
      * @param history the history object to add
      * @return this
      */
-    public Builder<T> addHistory(HistoryObjectTemplate history) {
+    public Builder<T> addHistory(HistoryItem history) {
       historyBuilder.add(history);
       return this;
     }
@@ -182,7 +181,7 @@ public class Image<T extends Layer> {
   private final ImageLayers<T> layers;
 
   /** The commands used to build each layer of the image */
-  private final ImmutableList<HistoryObjectTemplate> history;
+  private final ImmutableList<HistoryItem> history;
 
   /** Environment variable definitions for running the image, in the format {@code NAME=VALUE}. */
   @Nullable private final ImmutableMap<String, String> environment;
@@ -202,7 +201,7 @@ public class Image<T extends Layer> {
   private Image(
       @Nullable Instant created,
       ImageLayers<T> layers,
-      ImmutableList<HistoryObjectTemplate> history,
+      ImmutableList<HistoryItem> history,
       @Nullable ImmutableMap<String, String> environment,
       @Nullable ImmutableList<String> entrypoint,
       @Nullable ImmutableList<String> javaArguments,
@@ -252,7 +251,7 @@ public class Image<T extends Layer> {
     return layers.getLayers();
   }
 
-  public ImmutableList<HistoryObjectTemplate> getHistory() {
+  public ImmutableList<HistoryItem> getHistory() {
     return history;
   }
 }

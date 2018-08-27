@@ -20,11 +20,11 @@ import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.configuration.Port.Protocol;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.image.HistoryItem;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerCountMismatchException;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
-import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate.HistoryObjectTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -171,8 +171,8 @@ public class JsonToImageTranslatorTest {
         layers.get(0).getDiffId());
     Assert.assertEquals(
         ImmutableList.of(
-            new HistoryObjectTemplate(Instant.EPOCH.toString(), "Bazel", "bazel build ...", true),
-            new HistoryObjectTemplate(Instant.ofEpochSecond(20).toString(), "Jib", "jib", null)),
+            new HistoryItem(Instant.EPOCH.toString(), "Bazel", "bazel build ...", true),
+            new HistoryItem(Instant.ofEpochSecond(20).toString(), "Jib", "jib", null)),
         image.getHistory());
     Assert.assertEquals(Instant.ofEpochSecond(20), image.getCreated());
     Assert.assertEquals(Arrays.asList("some", "entrypoint", "command"), image.getEntrypoint());
