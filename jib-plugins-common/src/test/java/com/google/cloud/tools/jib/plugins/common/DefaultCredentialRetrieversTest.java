@@ -36,12 +36,12 @@ public class DefaultCredentialRetrieversTest {
   @Mock private CredentialRetrieverFactory mockCredentialRetrieverFactory;
   @Mock private CredentialRetriever mockDockerCredentialHelperCredentialRetriever;
   @Mock private CredentialRetriever mockKnownCredentialRetriever;
-  @Mock private CredentialRetriever mockInferredKnownCredentialRetriever;
+  @Mock private CredentialRetriever mockInferredCredentialRetriever;
   @Mock private CredentialRetriever mockInferCredentialHelperCredentialRetriever;
   @Mock private CredentialRetriever mockDockerConfigCredentialRetriever;
 
   private final Credential knownCredential = new Credential("username", "password");
-  private final Credential inferredKnownCredential = new Credential("username2", "password2");
+  private final Credential inferredCredential = new Credential("username2", "password2");
 
   @Before
   public void setUp() {
@@ -50,9 +50,8 @@ public class DefaultCredentialRetrieversTest {
     Mockito.when(mockCredentialRetrieverFactory.known(knownCredential, "credentialSource"))
         .thenReturn(mockKnownCredentialRetriever);
     Mockito.when(
-            mockCredentialRetrieverFactory.known(
-                inferredKnownCredential, "inferredCredentialSource"))
-        .thenReturn(mockInferredKnownCredentialRetriever);
+            mockCredentialRetrieverFactory.known(inferredCredential, "inferredCredentialSource"))
+        .thenReturn(mockInferredCredentialRetriever);
     Mockito.when(mockCredentialRetrieverFactory.inferCredentialHelper())
         .thenReturn(mockInferCredentialHelperCredentialRetriever);
     Mockito.when(mockCredentialRetrieverFactory.dockerConfig())
@@ -74,21 +73,21 @@ public class DefaultCredentialRetrieversTest {
     List<CredentialRetriever> credentialRetrievers =
         DefaultCredentialRetrievers.init(mockCredentialRetrieverFactory)
             .setKnownCredential(knownCredential, "credentialSource")
-            .setInferredKnownCredential(inferredKnownCredential, "inferredCredentialSource")
+            .setInferredCredential(inferredCredential, "inferredCredentialSource")
             .setCredentialHelperSuffix("credentialHelperSuffix")
             .asList();
     Assert.assertEquals(
         Arrays.asList(
             mockKnownCredentialRetriever,
             mockDockerCredentialHelperCredentialRetriever,
-            mockInferredKnownCredentialRetriever,
+            mockInferredCredentialRetriever,
             mockInferCredentialHelperCredentialRetriever,
             mockDockerConfigCredentialRetriever),
         credentialRetrievers);
 
     Mockito.verify(mockCredentialRetrieverFactory).known(knownCredential, "credentialSource");
     Mockito.verify(mockCredentialRetrieverFactory)
-        .known(inferredKnownCredential, "inferredCredentialSource");
+        .known(inferredCredential, "inferredCredentialSource");
     Mockito.verify(mockCredentialRetrieverFactory)
         .dockerCredentialHelper("docker-credential-credentialHelperSuffix");
   }

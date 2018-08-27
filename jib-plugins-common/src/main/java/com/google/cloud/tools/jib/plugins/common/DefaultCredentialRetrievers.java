@@ -55,7 +55,7 @@ public class DefaultCredentialRetrievers {
   private final CredentialRetrieverFactory credentialRetrieverFactory;
 
   @Nullable private CredentialRetriever knownCredentialRetriever;
-  @Nullable private CredentialRetriever inferredKnownCredentialRetriever;
+  @Nullable private CredentialRetriever inferredCredentialRetriever;
   @Nullable private String credentialHelperSuffix;
 
   private DefaultCredentialRetrievers(CredentialRetrieverFactory credentialRetrieverFactory) {
@@ -78,14 +78,14 @@ public class DefaultCredentialRetrievers {
   /**
    * Sets the inferred known {@link Credential} to use in the default credential retrievers.
    *
-   * @param inferredKnownCredential the known credential
+   * @param inferredCredential the known credential
    * @param credentialSource the source of the known credential (for logging)
    * @return this
    */
-  public DefaultCredentialRetrievers setInferredKnownCredential(
-      Credential inferredKnownCredential, String credentialSource) {
-    inferredKnownCredentialRetriever =
-        credentialRetrieverFactory.known(inferredKnownCredential, credentialSource);
+  public DefaultCredentialRetrievers setInferredCredential(
+      Credential inferredCredential, String credentialSource) {
+    inferredCredentialRetriever =
+        credentialRetrieverFactory.known(inferredCredential, credentialSource);
     return this;
   }
 
@@ -117,8 +117,8 @@ public class DefaultCredentialRetrievers {
           credentialRetrieverFactory.dockerCredentialHelper(
               DockerCredentialHelperFactory.CREDENTIAL_HELPER_PREFIX + credentialHelperSuffix));
     }
-    if (inferredKnownCredentialRetriever != null) {
-      credentialRetrievers.add(inferredKnownCredentialRetriever);
+    if (inferredCredentialRetriever != null) {
+      credentialRetrievers.add(inferredCredentialRetriever);
     }
     credentialRetrievers.add(credentialRetrieverFactory.inferCredentialHelper());
     credentialRetrievers.add(credentialRetrieverFactory.dockerConfig());
