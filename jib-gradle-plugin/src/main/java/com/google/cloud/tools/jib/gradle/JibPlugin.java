@@ -122,7 +122,7 @@ public class JibPlugin implements Plugin<Project> {
                   .withType(
                       BasePlugin.class,
                       unused -> {
-                        Task assembleTask = p.getTasks().findByPath(BasePlugin.ASSEMBLE_TASK_NAME);
+                        Task assembleTask = p.getTasks().getByPath(BasePlugin.ASSEMBLE_TASK_NAME);
                         buildImageTask.dependsOn(assembleTask);
                         dockerContextTask.dependsOn(assembleTask);
                         buildDockerTask.dependsOn(assembleTask);
