@@ -18,8 +18,7 @@ package com.google.cloud.tools.jib.registry.credentials;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.http.Authorizations;
+import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
@@ -29,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import javax.annotation.Nullable;
 
 /**
@@ -40,7 +40,7 @@ import javax.annotation.Nullable;
 public class DockerCredentialHelper {
 
   private final String serverUrl;
-  private final String credentialHelperSuffix;
+  private final Path credentialHelper;
 
   /** Template for a Docker credential helper output. */
   @JsonIgnoreProperties(ignoreUnknown = true)
@@ -54,30 +54,30 @@ public class DockerCredentialHelper {
    * Construct with {@link DockerCredentialHelperFactory}.
    *
    * @param serverUrl the server URL to pass into the credential helper
-   * @param credentialHelperSuffix the credential helper CLI suffix
+   * @param credentialHelper the path to the credential helper executable
    */
-  DockerCredentialHelper(String serverUrl, String credentialHelperSuffix) {
+  DockerCredentialHelper(String serverUrl, Path credentialHelper) {
     this.serverUrl = serverUrl;
-    this.credentialHelperSuffix = credentialHelperSuffix;
+    this.credentialHelper = credentialHelper;
   }
 
   /**
-   * @return the Docker credentials by calling the corresponding CLI.
-   *     <p>The credential helper CLI is called in the form:
-   *     <pre>{@code
+   * Calls the credential helper CLI in the form:
+   *
+   * <pre>{@code
    * echo -n <server URL> | docker-credential-<credential helper suffix> get
    * }</pre>
    *
+   * @return the Docker credentials by calling the corresponding CLI
    * @throws IOException if writing/reading process input/output fails.
    * @throws NonexistentServerUrlDockerCredentialHelperException if credentials are not found.
-   * @throws NonexistentDockerCredentialHelperException if the credential helper CLI doesn't exist.
+   * @throws DockerCredentialHelperNotFoundException if the credential helper CLI doesn't exist.
    */
-  public Authorization retrieve()
+  public Credential retrieve()
       throws IOException, NonexistentServerUrlDockerCredentialHelperException,
-          NonexistentDockerCredentialHelperException {
+          DockerCredentialHelperNotFoundException {
     try {
-      String credentialHelper = "docker-credential-" + credentialHelperSuffix;
-      String[] credentialHelperCommand = {credentialHelper, "get"};
+      String[] credentialHelperCommand = {credentialHelper.toString(), "get"};
 
       Process process = new ProcessBuilder(credentialHelperCommand).start();
       try (OutputStream processStdin = process.getOutputStream()) {
@@ -111,8 +111,7 @@ public class DockerCredentialHelper {
                 credentialHelper, serverUrl, output);
           }
 
-          return Authorizations.withBasicCredentials(
-              dockerCredentials.Username, dockerCredentials.Secret);
+          return new Credential(dockerCredentials.Username, dockerCredentials.Secret);
 
         } catch (JsonProcessingException ex) {
           throw new NonexistentServerUrlDockerCredentialHelperException(
@@ -128,7 +127,7 @@ public class DockerCredentialHelper {
       // Checks if the failure is due to a nonexistent credential helper CLI.
       if (ex.getMessage().contains("No such file or directory")
           || ex.getMessage().contains("cannot find the file")) {
-        throw new NonexistentDockerCredentialHelperException(credentialHelperSuffix, ex);
+        throw new DockerCredentialHelperNotFoundException(credentialHelper, ex);
       }
 
       throw ex;
@@ -141,7 +140,7 @@ public class DockerCredentialHelper {
   }
 
   @VisibleForTesting
-  String getCredentialHelperSuffix() {
-    return credentialHelperSuffix;
+  Path getCredentialHelper() {
+    return credentialHelper;
   }
 }

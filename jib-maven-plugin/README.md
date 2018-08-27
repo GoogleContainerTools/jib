@@ -18,7 +18,7 @@ See [Milestones](https://github.com/GoogleContainerTools/jib/milestones) for pla
 You can containerize your application easily with one command:
 
 ```shell
-mvn compile com.google.cloud.tools:jib-maven-plugin:0.9.8:build -Dimage=<MY IMAGE>
+mvn compile com.google.cloud.tools:jib-maven-plugin:0.9.9:build -Dimage=<MY IMAGE>
 ```
 
 This builds and pushes a container image for your application to a container registry. *If you encounter authentication issues, see [Authentication Methods](#authentication-methods).*
@@ -26,7 +26,7 @@ This builds and pushes a container image for your application to a container reg
 To build to a Docker daemon, use:
 
 ```shell
-mvn compile com.google.cloud.tools:jib-maven-plugin:0.9.8:dockerBuild
+mvn compile com.google.cloud.tools:jib-maven-plugin:0.9.9:dockerBuild
 ```
 
 If you would like to set up Jib as part of your Maven build, follow the guide below.
@@ -44,7 +44,7 @@ In your Maven Java project, add the plugin to your `pom.xml`:
       <plugin>
         <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
-        <version>0.9.8</version>
+        <version>0.9.9</version>
         <configuration>
           <to>
             <image>myimage</image>
@@ -282,6 +282,23 @@ In this configuration, the image:
     </ports>
     <format>OCI</format>
   </container>
+</configuration>
+```
+
+### Adding Arbitrary Files to the Image
+
+*\* Note: this is an incubating feature and may change in the future.*
+
+You can add arbitrary, non-classpath files to the image by placing them in a `src/main/jib` directory. This will copy all files within the `jib` folder to the image's root directory, maintaining the same structure (e.g. if you have a text file at `src/main/jib/dir/hello.txt`, then your image will contain `/dir/hello.txt` after being built with Jib).
+
+You can configure a different directory by using the `extraDirectory` parameter in your `pom.xml`:
+
+```xml
+<configuration>
+  ...
+  <!-- Copies files from 'src/main/custom-extra-dir' instead of 'src/main/jib' -->
+  <extraDirectory>${project.basedir}/src/main/custom-extra-dir</extraDirectory>
+  ...
 </configuration>
 ```
 

@@ -14,6 +14,10 @@ If a question you have is not answered below, please [submit an issue](/../../is
 [Can I ADD a custom directory to the image?](#can-i-add-a-custom-directory-to-the-image)\
 [Can I build to a local Docker daemon?](#can-i-build-to-a-local-docker-daemon)\
 [I am seeing `ImagePullBackoff` on my pods.](#i-am-seeing-imagepullbackoff-on-my-pods-in-minikube)\
+[How do I configure a proxy?](#how-do-i-configure-a-proxy)\
+[How can I diagnose problems pulling or pushing from remote registries?](#how-can-i-diagnose-problems-pulling-or-pushing-from-remote-registries)\
+[How can I examine network traffic?](#how-can-i-examine-network-traffic)\
+[How do I view debug logs for Jib?](#how-do-i-view-debug-logs-for-jib)\
 [How do I enable debugging?](#how-do-i-enable-debugging)\
 [Why is my image created 48 years ago?](#why-is-my-image-created-48-years-ago)\
 [I would like to run my application with a javaagent.](#i-would-like-to-run-my-application-with-a-javaagent)\
@@ -200,9 +204,60 @@ kubectl patch serviceaccount default \
 
 See more at [Using Google Container Registry (GCR) with Minikube](https://ryaneschinger.com/blog/using-google-container-registry-gcr-with-minikube/).
 
+### How do I configure a proxy?
+
+Jib currently requires configuring your build tool to use the appropriate [Java networking properties](https://docs.oracle.com/javase/8/docs/api/java/net/doc-files/net-properties.html) (`https.proxyHost`, `https.proxyPort`, `https.proxyUser`, `https.proxyPassword`).
+
+### How can I diagnose problems pulling or pushing from remote registries?
+
+There are a few reasons why Jib may be unable to connect to a remote registry, including:
+
+- **Access requires a proxy.** See [_How do I configure a proxy?_](#how-do-i-configure-a-proxy) for details.
+- **The registry does not support HTTPS.** We do not pass authentication details on non-HTTPS connections, though this can be overridden with the `sendCredentialsOverHttp` system property, but it is not recommend  (_version 0.9.9_).
+- **The registry's SSL certificates have expired or are not trusted.**  We have a separate document on [handling registries that use self-signed certificates](self_sign_cert.md), which may also apply if the SSL certificate is signed by an untrusted Certificate Authority.  Jib supports an  `allowInsecureRegistries` flag to ignore SSL certificate validation, but it is not recommend (_version 0.9.9_).
+- **The registry does not support the [Docker Image Format V2 Schema 2](https://github.com/GoogleContainerTools/jib/issues/601)** (sometimes referred to as _v2-2_).  This problem is usually shown by failures wth `INVALID_MANIFEST` errors. Some registries can be configured to support V2-2 such as [Artifactory](https://www.jfrog.com/confluence/display/RTF/Docker+Registry#DockerRegistry-LocalDockerRepositories) and [OpenShift](https://docs.openshift.com/container-platform/3.9/install_config/registry/extended_registry_configuration.html#middleware-repository-acceptschema2). Other registries, such as Quay.io/Quay Enterprise, are in the process of adding support.
+
+### How can I examine network traffic?
+
+It can be useful to examine network traffic to diagnose connectivity issues. Jib uses the Google HTTP client library to interact with registries which logs HTTP requests using the JVM-provided `java.util.logging` facilities.  It is very helpful to serialize Jib's actions using the `jibSerialize` property.
+
+To see the HTTP traffic, create a `logging.properties` file with the following:
+```
+handlers = java.util.logging.ConsoleHandler
+java.util.logging.ConsoleHandler.level=ALL
+
+# CONFIG hides authentication data
+# ALL includes authentication data
+com.google.api.client.http.level=CONFIG
+```
+
+And then launch your build tool as follows:
+```sh
+mvn -Djava.util.logging.config.file=path/to/log.properties -DjibSerialize=true ...
+```
+or
+```sh
+gradle -Djava.util.logging.config.file=path/to/log.properties -DjibSerialize=true ...
+```
+
+### How do I view debug logs for Jib?
+
+Maven: use `mvn -X -DjibSerialize=true` to enable more detailed logging and serialize Jib's actions.
+
+Gradle: use `grade --debug -DjibSerialize=true` to enable more detailed logging and serialize Jib's actions.
+
 ### How do I enable debugging?
 
-*TODO: Provide solution.*
+If using the `distroless/java` base image, then use the [`JAVA_TOOL_OPTIONS`](#how-do-i-set-parameters-for-my-image-at-runtime) to pass along debugging configuration arguments.  For example, to have the remote VM accept debug connections on port 5005, but not suspend:
+```
+-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005
+```
+
+Then connect your debugger to port 5005 on the given host.  You can port-forward the container port to a localhost port for easy access.
+
+Using Docker: `docker run -p 5005:5005 <image>`
+
+Using Kubernetes: `kubectl port-forward <pod name> 5005:5005`
 
 ### Why is my image created 48 years ago?
 

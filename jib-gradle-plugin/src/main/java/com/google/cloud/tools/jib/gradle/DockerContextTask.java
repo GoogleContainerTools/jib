@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaDockerContextGenerator;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
+import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.base.Preconditions;
 import com.google.common.io.InsecureRecursiveDeleteException;
 import java.io.IOException;
@@ -120,23 +121,25 @@ public class DockerContextTask extends DefaultTask {
           .setMainClass(mainClass)
           .setJavaArguments(jibExtension.getArgs())
           .setExposedPorts(jibExtension.getExposedPorts())
+          .setLabels(jibExtension.getLabels())
           .generate(Paths.get(targetDir));
 
       gradleJibLogger.lifecycle("Created Docker context at " + targetDir);
 
     } catch (InsecureRecursiveDeleteException ex) {
       throw new GradleException(
-          HelpfulSuggestionsProvider.get(
-                  "Export Docker context failed because cannot clear directory '"
-                      + getTargetDir()
-                      + "' safely")
-              .forDockerContextInsecureRecursiveDelete(getTargetDir()),
+          HelpfulSuggestions.forDockerContextInsecureRecursiveDelete(
+              "Export Docker context failed because cannot clear directory '"
+                  + getTargetDir()
+                  + "' safely",
+              getTargetDir()),
           ex);
 
     } catch (IOException ex) {
       throw new GradleException(
-          HelpfulSuggestionsProvider.get("Export Docker context failed")
-              .suggest("check if the command-line option `--jibTargetDir` is set correctly"),
+          HelpfulSuggestions.suggest(
+              "Export Docker context failed",
+              "check if the command-line option `--jibTargetDir` is set correctly"),
           ex);
     }
   }

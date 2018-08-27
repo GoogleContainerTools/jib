@@ -16,11 +16,13 @@
 
 package com.google.cloud.tools.jib.registry.credentials;
 
+import com.google.api.client.util.Base64;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.credentials.json.DockerConfigTemplate;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.junit.Assert;
@@ -28,6 +30,10 @@ import org.junit.Test;
 
 /** Tests for {@link DockerConfig}. */
 public class DockerConfigTest {
+
+  private static String decodeBase64(String base64String) {
+    return new String(Base64.decodeBase64(base64String), StandardCharsets.UTF_8);
+  }
 
   @Test
   public void test_fromJson() throws URISyntaxException, IOException {
@@ -38,27 +44,28 @@ public class DockerConfigTest {
     DockerConfig dockerConfig =
         new DockerConfig(JsonTemplateMapper.readJsonFromFile(jsonFile, DockerConfigTemplate.class));
 
-    Assert.assertEquals("some auth", dockerConfig.getAuthFor("some registry"));
-    Assert.assertEquals("some other auth", dockerConfig.getAuthFor("some other registry"));
-    Assert.assertEquals("token", dockerConfig.getAuthFor("registry"));
-    Assert.assertEquals("token", dockerConfig.getAuthFor("https://registry"));
+    Assert.assertEquals("some:auth", decodeBase64(dockerConfig.getAuthFor("some registry")));
+    Assert.assertEquals(
+        "some:other:auth", decodeBase64(dockerConfig.getAuthFor("some other registry")));
+    Assert.assertEquals("token", decodeBase64(dockerConfig.getAuthFor("registry")));
+    Assert.assertEquals("token", decodeBase64(dockerConfig.getAuthFor("https://registry")));
     Assert.assertNull(dockerConfig.getAuthFor("just registry"));
 
     Assert.assertEquals(
-        "some credential store",
-        dockerConfig.getCredentialHelperFor("some registry").getCredentialHelperSuffix());
+        Paths.get("docker-credential-some credential store"),
+        dockerConfig.getCredentialHelperFor("some registry").getCredentialHelper());
     Assert.assertEquals(
-        "some credential store",
-        dockerConfig.getCredentialHelperFor("some other registry").getCredentialHelperSuffix());
+        Paths.get("docker-credential-some credential store"),
+        dockerConfig.getCredentialHelperFor("some other registry").getCredentialHelper());
     Assert.assertEquals(
-        "some credential store",
-        dockerConfig.getCredentialHelperFor("just registry").getCredentialHelperSuffix());
+        Paths.get("docker-credential-some credential store"),
+        dockerConfig.getCredentialHelperFor("just registry").getCredentialHelper());
     Assert.assertEquals(
-        "some credential store",
-        dockerConfig.getCredentialHelperFor("with.protocol").getCredentialHelperSuffix());
+        Paths.get("docker-credential-some credential store"),
+        dockerConfig.getCredentialHelperFor("with.protocol").getCredentialHelper());
     Assert.assertEquals(
-        "another credential helper",
-        dockerConfig.getCredentialHelperFor("another registry").getCredentialHelperSuffix());
+        Paths.get("docker-credential-another credential helper"),
+        dockerConfig.getCredentialHelperFor("another registry").getCredentialHelper());
     Assert.assertNull(dockerConfig.getCredentialHelperFor("unknonwn registry"));
   }
 
@@ -96,8 +103,8 @@ public class DockerConfigTest {
         new DockerConfig(JsonTemplateMapper.readJsonFromFile(json, DockerConfigTemplate.class));
 
     Assert.assertEquals(
-        "some credential store",
-        dockerConfig.getCredentialHelperFor("just registry").getCredentialHelperSuffix());
+        Paths.get("docker-credential-some credential store"),
+        dockerConfig.getCredentialHelperFor("just registry").getCredentialHelper());
   }
 
   @Test
@@ -108,8 +115,8 @@ public class DockerConfigTest {
         new DockerConfig(JsonTemplateMapper.readJsonFromFile(json, DockerConfigTemplate.class));
 
     Assert.assertEquals(
-        "some credential store",
-        dockerConfig.getCredentialHelperFor("with.protocol").getCredentialHelperSuffix());
+        Paths.get("docker-credential-some credential store"),
+        dockerConfig.getCredentialHelperFor("with.protocol").getCredentialHelper());
   }
 
   @Test
@@ -120,8 +127,8 @@ public class DockerConfigTest {
         new DockerConfig(JsonTemplateMapper.readJsonFromFile(json, DockerConfigTemplate.class));
 
     Assert.assertEquals(
-        "some credential store",
-        dockerConfig.getCredentialHelperFor("with.suffix").getCredentialHelperSuffix());
+        Paths.get("docker-credential-some credential store"),
+        dockerConfig.getCredentialHelperFor("with.suffix").getCredentialHelper());
   }
 
   @Test
@@ -133,10 +140,8 @@ public class DockerConfigTest {
         new DockerConfig(JsonTemplateMapper.readJsonFromFile(json, DockerConfigTemplate.class));
 
     Assert.assertEquals(
-        "some credential store",
-        dockerConfig
-            .getCredentialHelperFor("with.protocol.and.suffix")
-            .getCredentialHelperSuffix());
+        Paths.get("docker-credential-some credential store"),
+        dockerConfig.getCredentialHelperFor("with.protocol.and.suffix").getCredentialHelper());
   }
 
   @Test

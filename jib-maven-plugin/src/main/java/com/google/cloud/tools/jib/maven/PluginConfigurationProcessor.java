@@ -20,16 +20,18 @@ import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
+import com.google.cloud.tools.jib.configuration.credentials.Credential;
+import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
-import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
+import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
 import com.google.cloud.tools.jib.registry.RegistryClient;
-import com.google.cloud.tools.jib.registry.credentials.RegistryCredentials;
 import com.google.common.base.Preconditions;
 import java.time.Instant;
+import javax.annotation.Nullable;
 import org.apache.maven.plugin.MojoExecutionException;
 
 /** Configures and provides builders for the image building goals. */
@@ -75,21 +77,30 @@ class PluginConfigurationProcessor {
             Preconditions.checkNotNull(jibPluginConfiguration.getSession()).getSettings(),
             jibPluginConfiguration.getSettingsDecrypter(),
             logger);
-    Authorization fromAuthorization =
-        ConfigurationPropertyValidator.getImageAuth(
+    DefaultCredentialRetrievers defaultCredentialRetrievers =
+        DefaultCredentialRetrievers.init(CredentialRetrieverFactory.forImage(baseImage, logger));
+    Credential fromCredential =
+        ConfigurationPropertyValidator.getImageCredential(
             logger,
             "jib.from.auth.username",
             "jib.from.auth.password",
             jibPluginConfiguration.getBaseImageAuth());
-    RegistryCredentials knownBaseRegistryCredentials =
-        fromAuthorization != null
-            ? new RegistryCredentials(
-                "jib-maven-plugin <from><auth> configuration", fromAuthorization)
-            : mavenSettingsServerCredentials.retrieve(baseImage.getRegistry());
+    if (fromCredential == null) {
+      fromCredential = mavenSettingsServerCredentials.retrieve(baseImage.getRegistry());
+      if (fromCredential != null) {
+        defaultCredentialRetrievers.setKnownCredential(
+            fromCredential, MavenSettingsServerCredentials.CREDENTIAL_SOURCE);
+      }
+    } else {
+      defaultCredentialRetrievers.setKnownCredential(
+          fromCredential, "jib-maven-plugin <from><auth> configuration");
+    }
+    defaultCredentialRetrievers.setCredentialHelperSuffix(
+        jibPluginConfiguration.getBaseImageCredentialHelperName());
+
     ImageConfiguration.Builder baseImageConfiguration =
         ImageConfiguration.builder(baseImage)
-            .setCredentialHelper(jibPluginConfiguration.getBaseImageCredentialHelperName())
-            .setKnownRegistryCredentials(knownBaseRegistryCredentials);
+            .setCredentialRetrievers(defaultCredentialRetrievers.asList());
 
     String mainClass = projectProperties.getMainClass(jibPluginConfiguration);
     ContainerConfiguration.Builder containerConfigurationBuilder =
@@ -99,7 +110,8 @@ class PluginConfigurationProcessor {
                     jibPluginConfiguration.getJvmFlags(), mainClass))
             .setProgramArguments(jibPluginConfiguration.getArgs())
             .setEnvironment(jibPluginConfiguration.getEnvironment())
-            .setExposedPorts(ExposedPortsParser.parse(jibPluginConfiguration.getExposedPorts()));
+            .setExposedPorts(ExposedPortsParser.parse(jibPluginConfiguration.getExposedPorts()))
+            .setLabels(jibPluginConfiguration.getLabels());
     if (jibPluginConfiguration.getUseCurrentTimestamp()) {
       logger.warn(
           "Setting image creation time to current time; your image may not be reproducible.");
@@ -124,7 +136,8 @@ class PluginConfigurationProcessor {
         buildConfigurationBuilder,
         baseImageConfiguration,
         containerConfigurationBuilder,
-        mavenSettingsServerCredentials);
+        mavenSettingsServerCredentials,
+        fromCredential);
   }
 
   /**
@@ -144,16 +157,19 @@ class PluginConfigurationProcessor {
   private final ImageConfiguration.Builder baseImageConfigurationBuilder;
   private final ContainerConfiguration.Builder containerConfigurationBuilder;
   private final MavenSettingsServerCredentials mavenSettingsServerCredentials;
+  @Nullable private final Credential baseImageCredential;
 
   private PluginConfigurationProcessor(
       BuildConfiguration.Builder buildConfigurationBuilder,
       ImageConfiguration.Builder baseImageConfigurationBuilder,
       ContainerConfiguration.Builder containerConfigurationBuilder,
-      MavenSettingsServerCredentials mavenSettingsServerCredentials) {
+      MavenSettingsServerCredentials mavenSettingsServerCredentials,
+      @Nullable Credential baseImageCredential) {
     this.buildConfigurationBuilder = buildConfigurationBuilder;
     this.baseImageConfigurationBuilder = baseImageConfigurationBuilder;
     this.containerConfigurationBuilder = containerConfigurationBuilder;
     this.mavenSettingsServerCredentials = mavenSettingsServerCredentials;
+    this.baseImageCredential = baseImageCredential;
   }
 
   BuildConfiguration.Builder getBuildConfigurationBuilder() {
@@ -170,5 +186,10 @@ class PluginConfigurationProcessor {
 
   MavenSettingsServerCredentials getMavenSettingsServerCredentials() {
     return mavenSettingsServerCredentials;
+  }
+
+  @Nullable
+  Credential getBaseImageCredential() {
+    return baseImageCredential;
   }
 }

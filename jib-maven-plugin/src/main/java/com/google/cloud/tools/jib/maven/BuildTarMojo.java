@@ -20,8 +20,10 @@ import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
+import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.annotations.VisibleForTesting;
 import java.nio.file.Paths;
@@ -39,8 +41,7 @@ public class BuildTarMojo extends JibPluginConfiguration {
 
   @VisibleForTesting static final String GOAL_NAME = "buildTar";
 
-  private static final HelpfulSuggestions HELPFUL_SUGGESTIONS =
-      HelpfulSuggestionsProvider.get("Building image tarball failed");
+  private static final String HELPFUL_SUGGESTIONS_PREFIX = "Building image tarball failed";
 
   @Override
   public void execute() throws MojoExecutionException {
@@ -53,31 +54,49 @@ public class BuildTarMojo extends JibPluginConfiguration {
     MavenProjectProperties mavenProjectProperties =
         MavenProjectProperties.getForProject(getProject(), mavenJibLogger, getExtraDirectory());
 
-    ImageReference targetImage =
-        mavenProjectProperties.getGeneratedTargetDockerTag(getTargetImage(), mavenJibLogger);
-
-    PluginConfigurationProcessor pluginConfigurationProcessor =
-        PluginConfigurationProcessor.processCommonConfiguration(
-            mavenJibLogger, this, mavenProjectProperties);
-
-    BuildConfiguration buildConfiguration =
-        pluginConfigurationProcessor
-            .getBuildConfigurationBuilder()
-            .setBaseImageConfiguration(
-                pluginConfigurationProcessor.getBaseImageConfigurationBuilder().build())
-            .setTargetImageConfiguration(ImageConfiguration.builder(targetImage).build())
-            .setContainerConfiguration(
-                pluginConfigurationProcessor.getContainerConfigurationBuilder().build())
-            .build();
-
     try {
+      MavenHelpfulSuggestionsBuilder mavenHelpfulSuggestionsBuilder =
+          new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this);
+
+      ImageReference targetImage =
+          ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
+              getTargetImage(),
+              mavenJibLogger,
+              getProject().getName(),
+              getProject().getVersion(),
+              mavenHelpfulSuggestionsBuilder.build());
+
+      PluginConfigurationProcessor pluginConfigurationProcessor =
+          PluginConfigurationProcessor.processCommonConfiguration(
+              mavenJibLogger, this, mavenProjectProperties);
+
+      BuildConfiguration buildConfiguration =
+          pluginConfigurationProcessor
+              .getBuildConfigurationBuilder()
+              .setBaseImageConfiguration(
+                  pluginConfigurationProcessor.getBaseImageConfigurationBuilder().build())
+              .setTargetImageConfiguration(ImageConfiguration.builder(targetImage).build())
+              .setContainerConfiguration(
+                  pluginConfigurationProcessor.getContainerConfigurationBuilder().build())
+              .build();
+
+      HelpfulSuggestions helpfulSuggestions =
+          mavenHelpfulSuggestionsBuilder
+              .setBaseImageReference(buildConfiguration.getBaseImageConfiguration().getImage())
+              .setBaseImageHasConfiguredCredentials(
+                  pluginConfigurationProcessor.getBaseImageCredential() != null)
+              .setTargetImageReference(buildConfiguration.getTargetImageConfiguration().getImage())
+              .build();
+
       BuildStepsRunner.forBuildTar(
               Paths.get(getProject().getBuild().getDirectory()).resolve("jib-image.tar"),
               buildConfiguration)
-          .build(HELPFUL_SUGGESTIONS);
+          .build(helpfulSuggestions);
       getLog().info("");
 
-    } catch (CacheDirectoryCreationException | BuildStepsExecutionException ex) {
+    } catch (CacheDirectoryCreationException
+        | BuildStepsExecutionException
+        | InvalidImageReferenceException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex.getCause());
     }
   }

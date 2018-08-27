@@ -17,8 +17,10 @@
 package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.cloud.tools.jib.JibLogger;
+import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.http.Authorizations;
+import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.common.base.Strings;
 import java.util.function.Function;
 import javax.annotation.Nullable;
@@ -50,7 +52,7 @@ public class ConfigurationPropertyValidator {
   }
 
   /**
-   * Gets an {@link Authorization} from a username and password. First tries system properties, then
+   * Gets a {@link Credential} from a username and password. First tries system properties, then
    * tries build configuration, otherwise returns null.
    *
    * @param logger the {@link JibLogger} used to print warnings messages
@@ -61,14 +63,14 @@ public class ConfigurationPropertyValidator {
    *     {@code null} if neither is configured.
    */
   @Nullable
-  public static Authorization getImageAuth(
+  public static Credential getImageCredential(
       JibLogger logger, String usernameProperty, String passwordProperty, AuthProperty auth) {
     // System property takes priority over build configuration
     String commandlineUsername = System.getProperty(usernameProperty);
     String commandlinePassword = System.getProperty(passwordProperty);
     if (!Strings.isNullOrEmpty(commandlineUsername)
         && !Strings.isNullOrEmpty(commandlinePassword)) {
-      return Authorizations.withBasicCredentials(commandlineUsername, commandlinePassword);
+      return new Credential(commandlineUsername, commandlinePassword);
     }
 
     // Warn if a system property is missing
@@ -104,7 +106,41 @@ public class ConfigurationPropertyValidator {
       return null;
     }
 
-    return Authorizations.withBasicCredentials(auth.getUsername(), auth.getPassword());
+    return new Credential(auth.getUsername(), auth.getPassword());
+  }
+
+  /**
+   * Returns an {@link ImageReference} parsed from the configured target image, or one of the form
+   * {@code project-name:project-version} if target image is not configured
+   *
+   * @param targetImage the configured target image reference
+   * @param logger the {@link JibLogger} used to show messages
+   * @param projectName the project name, as determined by the plugin
+   * @param projectVersion the project version, as determined by the plugin
+   * @param helpfulSuggestions used for generating the message notifying the user of the generated
+   *     tag
+   * @return an {@link ImageReference} parsed from the configured target image, or one of the form
+   *     {@code project-name:project-version} if target image is not configured
+   * @throws InvalidImageReferenceException if the configured or generated image reference is
+   *     invalid
+   */
+  public static ImageReference getGeneratedTargetDockerTag(
+      @Nullable String targetImage,
+      JibLogger logger,
+      String projectName,
+      String projectVersion,
+      HelpfulSuggestions helpfulSuggestions)
+      throws InvalidImageReferenceException {
+    if (Strings.isNullOrEmpty(targetImage)) {
+      logger.lifecycle(helpfulSuggestions.forGeneratedTag(projectName, projectVersion));
+
+      // Try to parse generated tag to verify that project name and version are valid (throws an
+      // exception if parse fails)
+      ImageReference.parse(projectName + ":" + projectVersion);
+      return ImageReference.of(null, projectName, projectVersion);
+    } else {
+      return ImageReference.parse(targetImage);
+    }
   }
 
   private ConfigurationPropertyValidator() {}

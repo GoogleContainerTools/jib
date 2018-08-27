@@ -3,7 +3,7 @@
 
   <groupId>com.google.cloud.tools</groupId>
   <artifactId>jib-maven-plugin</artifactId>
-  <version>0.9.9-SNAPSHOT</version>
+  <version>0.9.10-SNAPSHOT</version>
   <packaging>maven-plugin</packaging>
 
   <name>Jib</name>
@@ -72,12 +72,6 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <version>1.7.25</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
       <groupId>org.javassist</groupId>
       <artifactId>javassist</artifactId>
       <version>3.22.0-GA</version>
@@ -116,11 +110,16 @@
       <version>4.12</version>
       <scope>test</scope>
     </dependency>
-
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
       <version>2.12.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>1.7.25</version>
       <scope>test</scope>
     </dependency>
 
@@ -210,12 +209,12 @@
 
   <build>
     <plugins>
-      <!-- Imports jib-core sources -->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
         <version>3.0.0</version>
         <executions>
+          <!-- Imports jib-core and jib-plugins-common sources -->
           <execution>
             <id>add-jib-core-sources</id>
             <phase>generate-sources</phase>
@@ -225,6 +224,7 @@
             <configuration>
               <sources>
                 <source>${basedir}/../jib-core/src/main/java</source>
+                <source>${basedir}/../jib-plugins-common/src/main/java</source>
               </sources>
             </configuration>
           </execution>
@@ -239,6 +239,9 @@
                 <resource>
                   <directory>${basedir}/../jib-core/src/main/resources</directory>
                 </resource>
+                <resource>
+                  <directory>${basedir}/../jib-plugins-common/src/main/resources</directory>
+                </resource>
               </resources>
             </configuration>
           </execution>
@@ -251,6 +254,7 @@
             <configuration>
               <sources>
                 <source>${basedir}/../jib-core/src/test/java</source>
+                <source>${basedir}/../jib-plugins-common/src/test/java</source>
               </sources>
             </configuration>
           </execution>
@@ -264,6 +268,9 @@
               <resources>
                 <resource>
                   <directory>${basedir}/../jib-core/src/test/resources</directory>
+                </resource>
+                <resource>
+                  <directory>${basedir}/../jib-plugins-common/src/test/resources</directory>
                 </resource>
               </resources>
             </configuration>

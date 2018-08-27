@@ -8,8 +8,8 @@ gradleOptions=""
 usage()
 {
   eval 1>&2
-  echo "Simple builder for Jib for jib-core, jib-maven-plugin, and jib-gradle-plugin"
-  echo "use: $0 [-qe] [clean | core | maven | gradle | all]"
+  echo "Simple builder for Jib for jib-core, jib-plugins-common, jib-maven-plugin, and jib-gradle-plugin"
+  echo "use: $0 [-qe] [clean | core | plugins | maven | gradle | all]"
   echo "  -q  quick mode: skip tests, formatting"
   echo "  -e  show error information (mvn: -e, gradle: --stacktrace)"
   exit 1
@@ -34,7 +34,7 @@ done
 shift `expr $OPTIND - 1`
 
 if [ $# -eq 0 ]; then
-  set -- core gradle maven
+  set -- core plugins gradle maven
 fi
 
 set -e  # exit on error
@@ -42,6 +42,7 @@ for target in "$@"; do
   case "$target" in
     clean)
       doBuild jib-core ./gradlew $gradleOptions clean
+      doBuild jib-plugins-common ./gradlew $gradleOptions clean
       doBuild jib-gradle-plugin ./gradlew $gradleOptions clean
       doBuild jib-maven-plugin ./mvnw $mavenOptions clean
       ;;
@@ -51,6 +52,15 @@ for target in "$@"; do
         doBuild jib-core           ./gradlew $gradleOptions googleJavaFormat build
       else
         doBuild jib-core  ./gradlew $gradleOptions build \
+            --exclude-task test --exclude-task check
+      fi
+      ;;
+
+    plugins)
+      if [ "$quickMode" = false ]; then
+        doBuild jib-plugins-common ./gradlew $gradleOptions googleJavaFormat build
+      else
+        doBuild jib-plugins-common ./gradlew $gradleOptions build \
             --exclude-task test --exclude-task check
       fi
       ;;

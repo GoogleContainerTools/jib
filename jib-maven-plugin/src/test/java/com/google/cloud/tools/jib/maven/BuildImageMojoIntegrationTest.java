@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
+import com.google.cloud.tools.jib.registry.LocalRegistry;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -31,16 +32,29 @@ import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
 /** Integration tests for {@link BuildImageMojo}. */
 public class BuildImageMojoIntegrationTest {
 
+  @ClassRule
+  public static final LocalRegistry localRegistry1 =
+      new LocalRegistry(5000, "testuser", "testpassword");
+
+  @ClassRule
+  public static final LocalRegistry localRegistry2 =
+      new LocalRegistry(6000, "testuser2", "testpassword2");
+
   @ClassRule public static final TestPlugin testPlugin = new TestPlugin();
 
   @ClassRule
   public static final TestProject simpleTestProject = new TestProject(testPlugin, "simple");
+
+  @ClassRule
+  public static final TestProject complexTestProject =
+      new TestProject(testPlugin, "simple", "pom-complex.xml");
 
   @ClassRule
   public static final TestProject emptyTestProject = new TestProject(testPlugin, "empty");
@@ -82,8 +96,40 @@ public class BuildImageMojoIntegrationTest {
     verifier.verifyErrorFreeLog();
 
     new Command("docker", "pull", imageReference).run();
+    assertDockerInspectParameters(imageReference);
+    return new Command("docker", "run", imageReference).run();
+  }
+
+  private static String buildAndRunComplex(
+      String imageReference, String username, String password, LocalRegistry targetRegistry)
+      throws VerificationException, IOException, InterruptedException {
+    Instant before = Instant.now();
+    Verifier verifier = new Verifier(complexTestProject.getProjectRoot().toString());
+    verifier.setSystemProperty("_TARGET_IMAGE", imageReference);
+    verifier.setSystemProperty("_TARGET_USERNAME", username);
+    verifier.setSystemProperty("_TARGET_PASSWORD", password);
+    verifier.setSystemProperty("sendCredentialsOverHttp", "true");
+    verifier.setAutoclean(false);
+    verifier.addCliOption("-X");
+    verifier.addCliOption("--file=pom-complex.xml");
+    verifier.executeGoals(Arrays.asList("clean", "compile", "jib:build"));
+    verifier.verifyErrorFreeLog();
+
+    // Verify output
+    targetRegistry.pull(imageReference);
+    assertDockerInspectParameters(imageReference);
+    Instant buildTime =
+        Instant.parse(
+            new Command("docker", "inspect", "-f", "{{.Created}}", imageReference).run().trim());
+    Assert.assertTrue(buildTime.isAfter(before) || buildTime.equals(before));
+    return new Command("docker", "run", imageReference).run();
+  }
+
+  private static void assertDockerInspectParameters(String imageReference)
+      throws IOException, InterruptedException {
+    String dockerInspect = new Command("docker", "inspect", imageReference).run();
     Assert.assertThat(
-        new Command("docker", "inspect", imageReference).run(),
+        dockerInspect,
         CoreMatchers.containsString(
             "            \"ExposedPorts\": {\n"
                 + "                \"1000/tcp\": {},\n"
@@ -91,7 +137,13 @@ public class BuildImageMojoIntegrationTest {
                 + "                \"2001/udp\": {},\n"
                 + "                \"2002/udp\": {},\n"
                 + "                \"2003/udp\": {}"));
-    return new Command("docker", "run", imageReference).run();
+    Assert.assertThat(
+        dockerInspect,
+        CoreMatchers.containsString(
+            "            \"Labels\": {\n"
+                + "                \"key1\": \"value1\",\n"
+                + "                \"key2\": \"value2\"\n"
+                + "            }"));
   }
 
   private static float getBuildTimeFromVerifierLog(Verifier verifier) throws IOException {
@@ -108,6 +160,12 @@ public class BuildImageMojoIntegrationTest {
     Assert.fail("Could not find build execution time in logs");
     // Should not reach here.
     return -1;
+  }
+
+  @Before
+  public void setup() throws IOException, InterruptedException {
+    // Pull distroless to local registry so we can test 'from' credentials
+    localRegistry1.pullAndPushToLocal("gcr.io/distroless/java:latest", "distroless/java");
   }
 
   @Test
@@ -191,5 +249,23 @@ public class BuildImageMojoIntegrationTest {
                   + "parameter to your pom.xml or set the parameter via the commandline (e.g. 'mvn "
                   + "compile jib:build -Dimage=<your image name>')."));
     }
+  }
+
+  @Test
+  public void testExecute_complex()
+      throws IOException, InterruptedException, VerificationException {
+    String targetImage = "localhost:6000/compleximage:maven" + System.nanoTime();
+    Assert.assertEquals(
+        "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\n",
+        buildAndRunComplex(targetImage, "testuser2", "testpassword2", localRegistry2));
+  }
+
+  @Test
+  public void testExecute_complex_sameFromAndToRegistry()
+      throws IOException, InterruptedException, VerificationException {
+    String targetImage = "localhost:5000/compleximage:maven" + System.nanoTime();
+    Assert.assertEquals(
+        "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\n",
+        buildAndRunComplex(targetImage, "testuser", "testpassword", localRegistry1));
   }
 }

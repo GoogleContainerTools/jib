@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
+import com.google.cloud.tools.jib.registry.LocalRegistry;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.time.Instant;
@@ -27,11 +28,20 @@ import org.gradle.testkit.runner.TaskOutcome;
 import org.gradle.testkit.runner.UnexpectedBuildFailure;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
 /** Integration tests for {@link JibPlugin}. */
 public class JibPluginIntegrationTest {
+
+  @ClassRule
+  public static final LocalRegistry localRegistry1 =
+      new LocalRegistry(5000, "testuser", "testpassword");
+
+  @ClassRule
+  public static final LocalRegistry localRegistry2 =
+      new LocalRegistry(6000, "testuser2", "testpassword2");
 
   @ClassRule public static final TestProject emptyTestProject = new TestProject("empty");
 
@@ -45,28 +55,32 @@ public class JibPluginIntegrationTest {
     BuildResult buildResult =
         testProject.build(
             "clean", JibPlugin.BUILD_IMAGE_TASK_NAME, "-D_TARGET_IMAGE=" + imageReference);
-
-    BuildTask classesTask = buildResult.task(":classes");
-    BuildTask jibTask = buildResult.task(":" + JibPlugin.BUILD_IMAGE_TASK_NAME);
-
-    Assert.assertNotNull(classesTask);
-    Assert.assertEquals(TaskOutcome.SUCCESS, classesTask.getOutcome());
-    Assert.assertNotNull(jibTask);
-    Assert.assertEquals(TaskOutcome.SUCCESS, jibTask.getOutcome());
-    Assert.assertThat(
-        buildResult.getOutput(), CoreMatchers.containsString("Built and pushed image as "));
+    assertBuildSuccess(buildResult, JibPlugin.BUILD_IMAGE_TASK_NAME, "Built and pushed image as ");
     Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
 
     new Command("docker", "pull", imageReference).run();
-    Assert.assertThat(
-        new Command("docker", "inspect", imageReference).run(),
-        CoreMatchers.containsString(
-            "            \"ExposedPorts\": {\n"
-                + "                \"1000/tcp\": {},\n"
-                + "                \"2000/udp\": {},\n"
-                + "                \"2001/udp\": {},\n"
-                + "                \"2002/udp\": {},\n"
-                + "                \"2003/udp\": {}"));
+    assertDockerInspect(imageReference);
+    return new Command("docker", "run", imageReference).run();
+  }
+
+  private static String buildAndRunComplex(
+      String imageReference, String username, String password, LocalRegistry targetRegistry)
+      throws IOException, InterruptedException {
+    BuildResult buildResult =
+        simpleTestProject.build(
+            "clean",
+            JibPlugin.BUILD_IMAGE_TASK_NAME,
+            "-D_TARGET_IMAGE=" + imageReference,
+            "-D_TARGET_USERNAME=" + username,
+            "-D_TARGET_PASSWORD=" + password,
+            "-DsendCredentialsOverHttp=true",
+            "-b=complex-build.gradle");
+
+    assertBuildSuccess(buildResult, JibPlugin.BUILD_IMAGE_TASK_NAME, "Built and pushed image as ");
+    Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
+
+    targetRegistry.pull(imageReference);
+    assertDockerInspect(imageReference);
     return new Command("docker", "run", imageReference).run();
   }
 
@@ -75,28 +89,31 @@ public class JibPluginIntegrationTest {
     BuildResult buildResult =
         testProject.build(
             "clean", JibPlugin.BUILD_DOCKER_TASK_NAME, "-D_TARGET_IMAGE=" + imageReference);
+    assertBuildSuccess(
+        buildResult, JibPlugin.BUILD_DOCKER_TASK_NAME, "Built image to Docker daemon as ");
+    Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
 
+    assertDockerInspect(imageReference);
+    return new Command("docker", "run", imageReference).run();
+  }
+
+  /**
+   * Asserts that the test project build output indicates a success.
+   *
+   * @param buildResult the builds results of the project under test
+   * @param taskName the name of the Jib task that was run
+   * @param successMessage a Jib-specific success message to check for
+   */
+  private static void assertBuildSuccess(
+      BuildResult buildResult, String taskName, String successMessage) {
     BuildTask classesTask = buildResult.task(":classes");
-    BuildTask jibBuildDockerTask = buildResult.task(":" + JibPlugin.BUILD_DOCKER_TASK_NAME);
+    BuildTask jibTask = buildResult.task(":" + taskName);
 
     Assert.assertNotNull(classesTask);
     Assert.assertEquals(TaskOutcome.SUCCESS, classesTask.getOutcome());
-    Assert.assertNotNull(jibBuildDockerTask);
-    Assert.assertEquals(TaskOutcome.SUCCESS, jibBuildDockerTask.getOutcome());
-    Assert.assertThat(
-        buildResult.getOutput(), CoreMatchers.containsString("Built image to Docker daemon as "));
-    Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
-
-    Assert.assertThat(
-        new Command("docker", "inspect", imageReference).run(),
-        CoreMatchers.containsString(
-            "            \"ExposedPorts\": {\n"
-                + "                \"1000/tcp\": {},\n"
-                + "                \"2000/udp\": {},\n"
-                + "                \"2001/udp\": {},\n"
-                + "                \"2002/udp\": {},\n"
-                + "                \"2003/udp\": {}"));
-    return new Command("docker", "run", imageReference).run();
+    Assert.assertNotNull(jibTask);
+    Assert.assertEquals(TaskOutcome.SUCCESS, jibTask.getOutcome());
+    Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(successMessage));
   }
 
   /**
@@ -115,6 +132,40 @@ public class JibPluginIntegrationTest {
         new Command("docker", "inspect", "-f", "{{.Created}}", imageReference).run().trim();
     Instant parsed = Instant.parse(inspect);
     Assert.assertTrue(parsed.isAfter(before) || parsed.equals(before));
+  }
+
+  /**
+   * Asserts that the test project has the required exposed ports and labels.
+   *
+   * @param imageReference the image to test
+   * @throws IOException if the {@code docker inspect} command fails to run
+   * @throws InterruptedException if the {@code docker inspect} command is interrupted
+   */
+  private static void assertDockerInspect(String imageReference)
+      throws IOException, InterruptedException {
+    String dockerInspect = new Command("docker", "inspect", imageReference).run();
+    Assert.assertThat(
+        dockerInspect,
+        CoreMatchers.containsString(
+            "            \"ExposedPorts\": {\n"
+                + "                \"1000/tcp\": {},\n"
+                + "                \"2000/udp\": {},\n"
+                + "                \"2001/udp\": {},\n"
+                + "                \"2002/udp\": {},\n"
+                + "                \"2003/udp\": {}"));
+    Assert.assertThat(
+        dockerInspect,
+        CoreMatchers.containsString(
+            "            \"Labels\": {\n"
+                + "                \"key1\": \"value1\",\n"
+                + "                \"key2\": \"value2\"\n"
+                + "            }"));
+  }
+
+  @Before
+  public void setup() throws IOException, InterruptedException {
+    // Pull distroless and push to local registry so we can test 'from' credentials
+    localRegistry1.pullAndPushToLocal("gcr.io/distroless/java:latest", "distroless/java");
   }
 
   @Test
@@ -174,6 +225,26 @@ public class JibPluginIntegrationTest {
   }
 
   @Test
+  public void testBuild_complex() throws IOException, InterruptedException {
+    String targetImage = "localhost:6000/compleximage:gradle" + System.nanoTime();
+    Instant beforeBuild = Instant.now();
+    Assert.assertEquals(
+        "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\n",
+        buildAndRunComplex(targetImage, "testuser2", "testpassword2", localRegistry2));
+    assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
+  }
+
+  @Test
+  public void testBuild_complex_sameFromAndToRegistry() throws IOException, InterruptedException {
+    String targetImage = "localhost:5000/compleximage:gradle" + System.nanoTime();
+    Instant beforeBuild = Instant.now();
+    Assert.assertEquals(
+        "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\n",
+        buildAndRunComplex(targetImage, "testuser", "testpassword", localRegistry1));
+    assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
+  }
+
+  @Test
   public void testDockerDaemon_empty() throws IOException, InterruptedException {
     String targetImage = "emptyimage:gradle" + System.nanoTime();
     Assert.assertEquals("", buildToDockerDaemonAndRun(emptyTestProject, targetImage));
@@ -211,20 +282,13 @@ public class JibPluginIntegrationTest {
         simpleTestProject.build(
             "clean", JibPlugin.BUILD_TAR_TASK_NAME, "-D_TARGET_IMAGE=" + targetImage);
 
-    BuildTask classesTask = buildResult.task(":classes");
-    BuildTask jibBuildTarTask = buildResult.task(":" + JibPlugin.BUILD_TAR_TASK_NAME);
-
-    Assert.assertNotNull(classesTask);
-    Assert.assertEquals(TaskOutcome.SUCCESS, classesTask.getOutcome());
-    Assert.assertNotNull(jibBuildTarTask);
-    Assert.assertEquals(TaskOutcome.SUCCESS, jibBuildTarTask.getOutcome());
-    Assert.assertThat(
-        buildResult.getOutput(), CoreMatchers.containsString("Built image tarball at "));
+    assertBuildSuccess(buildResult, JibPlugin.BUILD_TAR_TASK_NAME, "Built image tarball at ");
     Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(outputPath));
 
     new Command("docker", "load", "--input", outputPath).run();
     Assert.assertEquals(
         "Hello, world. An argument.\nfoo\ncat\n", new Command("docker", "run", targetImage).run());
+    assertDockerInspect(targetImage);
     assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
   }
 
@@ -233,15 +297,8 @@ public class JibPluginIntegrationTest {
     BuildResult buildResult =
         simpleTestProject.build("clean", JibPlugin.DOCKER_CONTEXT_TASK_NAME, "--info");
 
-    BuildTask classesTask = buildResult.task(":classes");
-    BuildTask jibDockerContextTask = buildResult.task(":" + JibPlugin.DOCKER_CONTEXT_TASK_NAME);
-
-    Assert.assertNotNull(classesTask);
-    Assert.assertEquals(TaskOutcome.SUCCESS, classesTask.getOutcome());
-    Assert.assertNotNull(jibDockerContextTask);
-    Assert.assertEquals(TaskOutcome.SUCCESS, jibDockerContextTask.getOutcome());
-    Assert.assertThat(
-        buildResult.getOutput(), CoreMatchers.containsString("Created Docker context at "));
+    assertBuildSuccess(
+        buildResult, JibPlugin.DOCKER_CONTEXT_TASK_NAME, "Created Docker context at ");
 
     String imageName = "jib-gradle-plugin/integration-test" + System.nanoTime();
     new Command(
@@ -256,15 +313,7 @@ public class JibPluginIntegrationTest {
                 .toString())
         .run();
 
-    Assert.assertThat(
-        new Command("docker", "inspect", imageName).run(),
-        CoreMatchers.containsString(
-            "            \"ExposedPorts\": {\n"
-                + "                \"1000/tcp\": {},\n"
-                + "                \"2000/udp\": {},\n"
-                + "                \"2001/udp\": {},\n"
-                + "                \"2002/udp\": {},\n"
-                + "                \"2003/udp\": {}"));
+    assertDockerInspect(imageName);
     Assert.assertEquals(
         "Hello, world. An argument.\nfoo\ncat\n", new Command("docker", "run", imageName).run());
 

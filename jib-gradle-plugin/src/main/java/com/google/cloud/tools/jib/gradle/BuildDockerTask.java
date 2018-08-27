@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
+import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.base.Preconditions;
 import javax.annotation.Nullable;
@@ -36,8 +37,7 @@ import org.gradle.api.tasks.options.Option;
 /** Builds a container image and exports to the default Docker daemon. */
 public class BuildDockerTask extends DefaultTask {
 
-  private static final HelpfulSuggestions HELPFUL_SUGGESTIONS =
-      HelpfulSuggestionsProvider.get("Build to Docker daemon failed");
+  private static final String HELPFUL_SUGGESTIONS_PREFIX = "Build to Docker daemon failed";
 
   @Nullable private JibExtension jibExtension;
 
@@ -66,7 +66,8 @@ public class BuildDockerTask extends DefaultTask {
   @TaskAction
   public void buildDocker() throws InvalidImageReferenceException {
     if (!new DockerClient().isDockerInstalled()) {
-      throw new GradleException(HELPFUL_SUGGESTIONS.forDockerNotInstalled());
+      throw new GradleException(
+          HelpfulSuggestions.forDockerNotInstalled(HELPFUL_SUGGESTIONS_PREFIX));
     }
 
     // Asserts required @Input parameters are not null.
@@ -76,8 +77,16 @@ public class BuildDockerTask extends DefaultTask {
         GradleProjectProperties.getForProject(
             getProject(), gradleJibLogger, jibExtension.getExtraDirectoryPath());
 
+    GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
+        new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);
+
     ImageReference targetImage =
-        gradleProjectProperties.getGeneratedTargetDockerTag(jibExtension, gradleJibLogger);
+        ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
+            jibExtension.getTargetImage(),
+            gradleJibLogger,
+            getProject().getName(),
+            getProject().getVersion().toString(),
+            gradleHelpfulSuggestionsBuilder.build());
 
     PluginConfigurationProcessor pluginConfigurationProcessor =
         PluginConfigurationProcessor.processCommonConfiguration(
@@ -93,9 +102,17 @@ public class BuildDockerTask extends DefaultTask {
                 pluginConfigurationProcessor.getContainerConfigurationBuilder().build())
             .build();
 
+    HelpfulSuggestions helpfulSuggestions =
+        gradleHelpfulSuggestionsBuilder
+            .setBaseImageReference(buildConfiguration.getBaseImageConfiguration().getImage())
+            .setBaseImageHasConfiguredCredentials(
+                pluginConfigurationProcessor.getBaseImageCredential() != null)
+            .setTargetImageReference(buildConfiguration.getTargetImageConfiguration().getImage())
+            .build();
+
     // Uses a directory in the Gradle build cache as the Jib cache.
     try {
-      BuildStepsRunner.forBuildToDockerDaemon(buildConfiguration).build(HELPFUL_SUGGESTIONS);
+      BuildStepsRunner.forBuildToDockerDaemon(buildConfiguration).build(helpfulSuggestions);
 
     } catch (CacheDirectoryCreationException | BuildStepsExecutionException ex) {
       throw new GradleException(ex.getMessage(), ex.getCause());

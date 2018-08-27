@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
+import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.base.Preconditions;
 import java.nio.file.Paths;
@@ -39,8 +40,7 @@ import org.gradle.api.tasks.options.Option;
 /** Builds a container image to a tarball. */
 public class BuildTarTask extends DefaultTask {
 
-  private static final HelpfulSuggestions HELPFUL_SUGGESTIONS =
-      HelpfulSuggestionsProvider.get("Building image tarball failed");
+  private static final String HELPFUL_SUGGESTIONS_PREFIX = "Building image tarball failed";
 
   @Nullable private JibExtension jibExtension;
 
@@ -104,8 +104,15 @@ public class BuildTarTask extends DefaultTask {
         GradleProjectProperties.getForProject(
             getProject(), gradleJibLogger, jibExtension.getExtraDirectoryPath());
 
+    GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
+        new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);
     ImageReference targetImage =
-        gradleProjectProperties.getGeneratedTargetDockerTag(jibExtension, gradleJibLogger);
+        ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
+            jibExtension.getTargetImage(),
+            gradleJibLogger,
+            getProject().getName(),
+            getProject().getVersion().toString(),
+            gradleHelpfulSuggestionsBuilder.build());
 
     PluginConfigurationProcessor pluginConfigurationProcessor =
         PluginConfigurationProcessor.processCommonConfiguration(
@@ -121,10 +128,18 @@ public class BuildTarTask extends DefaultTask {
                 pluginConfigurationProcessor.getContainerConfigurationBuilder().build())
             .build();
 
+    HelpfulSuggestions helpfulSuggestions =
+        gradleHelpfulSuggestionsBuilder
+            .setBaseImageReference(buildConfiguration.getBaseImageConfiguration().getImage())
+            .setBaseImageHasConfiguredCredentials(
+                pluginConfigurationProcessor.getBaseImageCredential() != null)
+            .setTargetImageReference(buildConfiguration.getTargetImageConfiguration().getImage())
+            .build();
+
     // Uses a directory in the Gradle build cache as the Jib cache.
     try {
       BuildStepsRunner.forBuildTar(Paths.get(getTargetPath()), buildConfiguration)
-          .build(HELPFUL_SUGGESTIONS);
+          .build(helpfulSuggestions);
 
     } catch (CacheDirectoryCreationException | BuildStepsExecutionException ex) {
       throw new GradleException(ex.getMessage(), ex.getCause());

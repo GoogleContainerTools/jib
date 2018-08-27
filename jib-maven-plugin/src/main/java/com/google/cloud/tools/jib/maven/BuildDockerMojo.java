@@ -21,8 +21,10 @@ import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
+import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -37,8 +39,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
 
   @VisibleForTesting static final String GOAL_NAME = "dockerBuild";
 
-  private static final HelpfulSuggestions HELPFUL_SUGGESTIONS =
-      HelpfulSuggestionsProvider.get("Build to Docker daemon failed");
+  private static final String HELPFUL_SUGGESTIONS_PREFIX = "Build to Docker daemon failed";
 
   @Override
   public void execute() throws MojoExecutionException {
@@ -48,35 +49,54 @@ public class BuildDockerMojo extends JibPluginConfiguration {
     }
 
     if (!new DockerClient().isDockerInstalled()) {
-      throw new MojoExecutionException(HELPFUL_SUGGESTIONS.forDockerNotInstalled());
+      throw new MojoExecutionException(
+          HelpfulSuggestions.forDockerNotInstalled(HELPFUL_SUGGESTIONS_PREFIX));
     }
 
     MavenJibLogger mavenJibLogger = new MavenJibLogger(getLog());
     MavenProjectProperties mavenProjectProperties =
         MavenProjectProperties.getForProject(getProject(), mavenJibLogger, getExtraDirectory());
 
-    ImageReference targetImage =
-        mavenProjectProperties.getGeneratedTargetDockerTag(getTargetImage(), mavenJibLogger);
-
-    PluginConfigurationProcessor pluginConfigurationProcessor =
-        PluginConfigurationProcessor.processCommonConfiguration(
-            mavenJibLogger, this, mavenProjectProperties);
-
-    BuildConfiguration buildConfiguration =
-        pluginConfigurationProcessor
-            .getBuildConfigurationBuilder()
-            .setBaseImageConfiguration(
-                pluginConfigurationProcessor.getBaseImageConfigurationBuilder().build())
-            .setTargetImageConfiguration(ImageConfiguration.builder(targetImage).build())
-            .setContainerConfiguration(
-                pluginConfigurationProcessor.getContainerConfigurationBuilder().build())
-            .build();
-
     try {
-      BuildStepsRunner.forBuildToDockerDaemon(buildConfiguration).build(HELPFUL_SUGGESTIONS);
+      MavenHelpfulSuggestionsBuilder mavenHelpfulSuggestionsBuilder =
+          new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this);
+
+      ImageReference targetImage =
+          ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
+              getTargetImage(),
+              mavenJibLogger,
+              getProject().getName(),
+              getProject().getVersion(),
+              mavenHelpfulSuggestionsBuilder.build());
+
+      PluginConfigurationProcessor pluginConfigurationProcessor =
+          PluginConfigurationProcessor.processCommonConfiguration(
+              mavenJibLogger, this, mavenProjectProperties);
+
+      BuildConfiguration buildConfiguration =
+          pluginConfigurationProcessor
+              .getBuildConfigurationBuilder()
+              .setBaseImageConfiguration(
+                  pluginConfigurationProcessor.getBaseImageConfigurationBuilder().build())
+              .setTargetImageConfiguration(ImageConfiguration.builder(targetImage).build())
+              .setContainerConfiguration(
+                  pluginConfigurationProcessor.getContainerConfigurationBuilder().build())
+              .build();
+
+      HelpfulSuggestions helpfulSuggestions =
+          mavenHelpfulSuggestionsBuilder
+              .setBaseImageReference(buildConfiguration.getBaseImageConfiguration().getImage())
+              .setBaseImageHasConfiguredCredentials(
+                  pluginConfigurationProcessor.getBaseImageCredential() != null)
+              .setTargetImageReference(buildConfiguration.getTargetImageConfiguration().getImage())
+              .build();
+
+      BuildStepsRunner.forBuildToDockerDaemon(buildConfiguration).build(helpfulSuggestions);
       getLog().info("");
 
-    } catch (CacheDirectoryCreationException | BuildStepsExecutionException ex) {
+    } catch (CacheDirectoryCreationException
+        | BuildStepsExecutionException
+        | InvalidImageReferenceException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex.getCause());
     }
   }
