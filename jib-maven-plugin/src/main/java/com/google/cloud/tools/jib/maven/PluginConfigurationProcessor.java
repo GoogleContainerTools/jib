@@ -88,7 +88,7 @@ class PluginConfigurationProcessor {
     if (fromCredential == null) {
       fromCredential = mavenSettingsServerCredentials.retrieve(baseImage.getRegistry());
       if (fromCredential != null) {
-        defaultCredentialRetrievers.setKnownCredential(
+        defaultCredentialRetrievers.setInferredKnownCredential(
             fromCredential, MavenSettingsServerCredentials.CREDENTIAL_SOURCE);
       }
     } else {

@@ -98,7 +98,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
               .getMavenSettingsServerCredentials()
               .retrieve(targetImage.getRegistry());
       if (toCredential != null) {
-        defaultCredentialRetrievers.setKnownCredential(
+        defaultCredentialRetrievers.setInferredKnownCredential(
             toCredential, MavenSettingsServerCredentials.CREDENTIAL_SOURCE);
       }
     } else {
