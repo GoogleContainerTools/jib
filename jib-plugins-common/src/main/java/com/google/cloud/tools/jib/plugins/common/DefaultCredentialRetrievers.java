@@ -76,10 +76,10 @@ public class DefaultCredentialRetrievers {
   }
 
   /**
-   * Sets the inferred known {@link Credential} to use in the default credential retrievers.
+   * Sets the inferred {@link Credential} to use in the default credential retrievers.
    *
-   * @param inferredCredential the known credential
-   * @param credentialSource the source of the known credential (for logging)
+   * @param inferredCredential the inferred credential
+   * @param credentialSource the source of the inferred credential (for logging)
    * @return this
    */
   public DefaultCredentialRetrievers setInferredCredential(
