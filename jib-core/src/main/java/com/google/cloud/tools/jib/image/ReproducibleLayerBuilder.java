@@ -43,8 +43,8 @@ public class ReproducibleLayerBuilder {
   private static final File DIRECTORY_FILE = Paths.get(".").toFile();
 
   /**
-   * Holds a list of {@link TarArchiveEntry}s with unique extraction paths. For any entry added,
-   * parent directories are also added.
+   * Holds a list of {@link TarArchiveEntry}s with unique extraction paths. The list also consists
+   * of all parent directories for each extraction path.
    */
   private static class UniqueTarArchiveEntries {
 
@@ -52,8 +52,8 @@ public class ReproducibleLayerBuilder {
     private final Set<String> names = new HashSet<>();
 
     /**
-     * Adds a {@link TarArchiveEntry} if its extraction path does not exist yet. All of the parent
-     * directories on the extraction path are also added.
+     * Adds a {@link TarArchiveEntry} if its extraction path does not exist yet. Also adds all of
+     * the parent directories on the extraction path.
      *
      * @param tarArchiveEntry the {@link TarArchiveEntry}
      */
