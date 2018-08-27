@@ -42,14 +42,18 @@ public class ReproducibleLayerBuilder {
   // are treated the same in TarArchiveEntry).
   private static final File DIRECTORY_FILE = Paths.get(".").toFile();
 
-  /** Holds a list of {@link TarArchiveEntry}s with unique extraction paths. */
+  /**
+   * Holds a list of {@link TarArchiveEntry}s with unique extraction paths. For any entry added,
+   * parent directories are also added.
+   */
   private static class UniqueTarArchiveEntries {
 
     private final List<TarArchiveEntry> entries = new ArrayList<>();
     private final Set<String> names = new HashSet<>();
 
     /**
-     * Adds a {@link TarArchiveEntry} if its extraction path does not exist yet.
+     * Adds a {@link TarArchiveEntry} if its extraction path does not exist yet. All of the parent
+     * directories on the extraction path are also added.
      *
      * @param tarArchiveEntry the {@link TarArchiveEntry}
      */
@@ -149,8 +153,11 @@ public class ReproducibleLayerBuilder {
     // Adds all the layer entries as tar entries.
     List<LayerEntry> layerEntries = this.layerEntries.build();
     for (LayerEntry layerEntry : layerEntries) {
-      // Converts layerEntry to list of TarArchiveEntrys and adds to uniqueTarArchiveEntries.
-      buildAsTarArchiveEntries(layerEntry).forEach(uniqueTarArchiveEntries::add);
+      // Converts layerEntry to list of TarArchiveEntrys.
+      List<TarArchiveEntry> tarArchiveEntries = buildAsTarArchiveEntries(layerEntry);
+      // Adds the entries to uniqueTarArchiveEntries, which makes sure all entries are unique and
+      // adds parent directories for each extraction path.
+      tarArchiveEntries.forEach(uniqueTarArchiveEntries::add);
     }
 
     // Gets the entries sorted by extraction path.
