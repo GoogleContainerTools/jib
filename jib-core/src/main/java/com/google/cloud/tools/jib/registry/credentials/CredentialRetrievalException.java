@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,12 +16,20 @@
 
 package com.google.cloud.tools.jib.registry.credentials;
 
-import java.nio.file.Path;
+import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
 
-/** Thrown because the requested credential helper CLI does not exist. */
-public class DockerCredentialHelperNotFoundException extends CredentialRetrievalException {
+/** Thrown if something went wrong during {@link CredentialRetriever#retrieve}. */
+public class CredentialRetrievalException extends Exception {
 
-  DockerCredentialHelperNotFoundException(Path credentialHelper, Throwable cause) {
-    super("The system does not have " + credentialHelper + " CLI", cause);
+  CredentialRetrievalException(String message, Throwable cause) {
+    super(message, cause);
+  }
+
+  CredentialRetrievalException(String message) {
+    super(message);
+  }
+
+  public CredentialRetrievalException(Throwable cause) {
+    super(cause);
   }
 }

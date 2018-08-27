@@ -70,12 +70,11 @@ public class DockerCredentialHelper {
    *
    * @return the Docker credentials by calling the corresponding CLI
    * @throws IOException if writing/reading process input/output fails.
-   * @throws NonexistentServerUrlDockerCredentialHelperException if credentials are not found.
+   * @throws UnknownServerUrlException if credentials are not found.
    * @throws DockerCredentialHelperNotFoundException if the credential helper CLI doesn't exist.
    */
   public Credential retrieve()
-      throws IOException, NonexistentServerUrlDockerCredentialHelperException,
-          DockerCredentialHelperNotFoundException {
+      throws IOException, UnknownServerUrlException, DockerCredentialHelperNotFoundException {
     try {
       String[] credentialHelperCommand = {credentialHelper.toString(), "get"};
 
@@ -90,15 +89,13 @@ public class DockerCredentialHelper {
 
         // Throws an exception if the credential store does not have credentials for serverUrl.
         if (output.contains("credentials not found in native keychain")) {
-          throw new NonexistentServerUrlDockerCredentialHelperException(
-              credentialHelper, serverUrl, output);
+          throw new UnknownServerUrlException(credentialHelper, serverUrl, output);
         }
         if (output.isEmpty()) {
           try (InputStreamReader processStderrReader =
               new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8)) {
             String errorOutput = CharStreams.toString(processStderrReader);
-            throw new NonexistentServerUrlDockerCredentialHelperException(
-                credentialHelper, serverUrl, errorOutput);
+            throw new UnknownServerUrlException(credentialHelper, serverUrl, errorOutput);
           }
         }
 
@@ -107,15 +104,13 @@ public class DockerCredentialHelper {
               JsonTemplateMapper.readJson(output, DockerCredentialsTemplate.class);
           if (Strings.isNullOrEmpty(dockerCredentials.Username)
               || Strings.isNullOrEmpty(dockerCredentials.Secret)) {
-            throw new NonexistentServerUrlDockerCredentialHelperException(
-                credentialHelper, serverUrl, output);
+            throw new UnknownServerUrlException(credentialHelper, serverUrl, output);
           }
 
           return new Credential(dockerCredentials.Username, dockerCredentials.Secret);
 
         } catch (JsonProcessingException ex) {
-          throw new NonexistentServerUrlDockerCredentialHelperException(
-              credentialHelper, serverUrl, output);
+          throw new UnknownServerUrlException(credentialHelper, serverUrl, output);
         }
       }
 
