@@ -171,17 +171,17 @@ public class CredentialRetrieverFactory {
                       + inferredCredentialHelperSuffix),
               dockerCredentialHelperFactory);
 
-        } catch (DockerCredentialHelperNotFoundException ex) {
+        } catch (DockerCredentialHelperNotFoundException
+            | NonexistentServerUrlDockerCredentialHelperException ex) {
           if (ex.getMessage() != null) {
-            // Warns the user that the specified (or inferred) credential helper is not on the
-            // system.
+            // Warns the user that the specified (or inferred) credential helper cannot be used.
             logger.warn(ex.getMessage());
             if (ex.getCause() != null && ex.getCause().getMessage() != null) {
               logger.info("  Caused by: " + ex.getCause().getMessage());
             }
           }
 
-        } catch (NonexistentServerUrlDockerCredentialHelperException | IOException ex) {
+        } catch (IOException ex) {
           throw new CredentialRetrievalException(ex);
         }
       }
