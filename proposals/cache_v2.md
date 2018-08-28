@@ -50,8 +50,9 @@ There are 4 actions that would be performed against the storage engine:
 
 - Save a cache entry
 - List the entries in the cache
-- Retrieve a cache entry (by layer digest)
-- Find layers referenced by a selector (explained below)
+- Retrieve a cache entry by layer digest
+- Retrieve a layer digest by a selector (explained below)
+- (Optional) Prune the cache
 
 Cache entry writes are provided with:
 
@@ -71,7 +72,7 @@ Cache entry reads are provided with:
 
 There are two types of layers - application layers and base image layers. Base image layers would only need to store their layer data (layer digest and diff ID). Application layers need to store their layer data along with metadata and a custom selector.
 
-In the provided storage implementation, the metadata will be just the last modified time of the layer. **The selector will be a digest of the layer entries that built the layer.**
+In the provided storage implementation, the metadata will be just the last modified time of the layer (the latest modification time for the files that go into the layer). **The selector will be a digest of the layer entries that built the layer.**
 
 For example, the cache directory structure looks like:
 
@@ -81,8 +82,7 @@ layers/
     326a609681777ee4ca02b1898579c9e07801ef066a629a3c59fa6df6ab42b7aa.layer
     metadata
 selectors/
-  65de3b72aaf98e4f300ccdf7d64bf9a3b1e23c8c44a1242265f717db1a0877e9/
-    36a2b7401dcddc50a35aeaa81085718b9d5fbce9d607c55a1d79beec2469f9ac.layer.digest
+  65de3b72aaf98e4f300ccdf7d64bf9a3b1e23c8c44a1242265f717db1a0877e9
 ```
 
 The `layers/` directory consists of directories for each layer, named by the layer digest.
@@ -90,7 +90,9 @@ Inside each of the layer directories:
 - The layer tarball is named by the layer diff ID with extension `.layer`
 - The metadata is stored in the file `metadata`
 
-The `selectors/` directory consists of directories for each selector, named by the selector digest. Inside each of the selector directories, there’s a `.layer.digest` file named with the digest of the layer the selector references.
+The `selectors/` directory consists of a file for each selector, named by the selector digest. The selector file contents will be the digest of the layer the selector references. In the example, `selectors/65de3b72aaf98e4f300ccdf7d64bf9a3b1e23c8c44a1242265f717db1a0877e9` will have contents `36a2b7401dcddc50a35aeaa81085718b9d5fbce9d607c55a1d79beec2469f9ac`.
+
+All writes should lock the file they are writing to.
 
 ### Analysis
 
@@ -104,11 +106,11 @@ Each cache entry (layer data, metadata, selector) is stored independently. This 
 
 Listing the entries (by list of layer digests) is a simple call to list the names of the directories in `layers/`. Listing is *linear* in the size of the cache.
 
-#### Retrieve a cache entry (by layer digest)
+#### Retrieve a cache entry by layer digest
 
 Retrieving an entry by layer digest is simply finding the file referenced at `layers/<the layer digest>` (along with associated files). This operation is *constant* in the size of the cache.
 
-#### Find layers referenced by a selector
+#### Retrieve a layer digest by a selector
 
 The higher-level operation is finding a layer that was built by a list of layer entries (the files that built the layer). The operation generates a digest of the layer entries (the selector) and then the storage engine simply finds the file referenced at `selectors/<the selector digest>` (from which the layer digest is retrieved). This operation is *constant* in the size of the cache (and linear in the number of layer entries).
 
