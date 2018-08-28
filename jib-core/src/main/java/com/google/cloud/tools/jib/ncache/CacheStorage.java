@@ -24,8 +24,8 @@ import java.util.Optional;
 /**
  * Interface for queries to a cache storage engine.
  *
- * <p>The cache storage engine stores layer data as {@link CacheWrite}s. These entries are read
- * out as {@link CacheEntry}s. Cache entries can be retrieved by the layer digest.
+ * <p>The cache storage engine stores layer data as {@link CacheWrite}s. These entries are read out
+ * as {@link CacheEntry}s. Cache entries can be retrieved by the layer digest.
  *
  * <p>The cache entries can also be queried by an arbitrarily-defined selector (in digest format).
  * The selectors do not need to be unique. An example of a selector could be the digest of the list
@@ -42,7 +42,7 @@ public interface CacheStorage {
    * @return the {@link CacheEntry} for the written {@link CacheWrite}
    * @throws IOException if an I/O exception occurs
    */
-  CacheEntry save(CacheWrite cacheWrite) throws IOException;
+  CacheEntry write(CacheWrite cacheWrite) throws IOException;
 
   /**
    * Lists all the layer digests stored.

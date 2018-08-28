@@ -35,8 +35,8 @@ public class DefaultCacheWrite implements CacheWrite {
   }
 
   /**
-   * Constructs a {@link CacheWrite} with a layer {@link Blob}, an additional selector digest,
-   * and a metadata {@link Blob}.
+   * Constructs a {@link CacheWrite} with a layer {@link Blob}, an additional selector digest, and a
+   * metadata {@link Blob}.
    *
    * @param layerBlob the layer {@link Blob}
    * @param selector the selector digest
