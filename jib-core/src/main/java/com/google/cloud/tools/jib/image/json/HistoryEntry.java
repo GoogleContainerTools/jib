@@ -34,6 +34,7 @@ public class HistoryEntry implements JsonTemplate {
 
   /** The RFC 3339 formatted timestamp at which the image was created. */
   @JsonProperty("created")
+  @Nullable
   private String creationTimestamp;
 
   /** The name of the author specified when committing the image. */
@@ -46,6 +47,11 @@ public class HistoryEntry implements JsonTemplate {
   @Nullable
   private String createdBy;
 
+  /** A custom message set when creating the layer. */
+  @JsonProperty("comment")
+  @Nullable
+  private String comment;
+
   /**
    * Whether or not the entry corresponds to an empty layer ({@code @Nullable Boolean} to make field
    * optional).
@@ -54,18 +60,18 @@ public class HistoryEntry implements JsonTemplate {
   @Nullable
   private Boolean emptyLayer;
 
-  public HistoryEntry() {
-    this("1970-01-01T00:00:00Z", null, null, null);
-  }
+  public HistoryEntry() {}
 
   public HistoryEntry(
-      String creationTimestamp,
+      @Nullable String creationTimestamp,
       @Nullable String author,
       @Nullable String createdBy,
+      @Nullable String comment,
       @Nullable Boolean emptyLayer) {
     this.author = author;
     this.creationTimestamp = creationTimestamp;
     this.createdBy = createdBy;
+    this.comment = comment;
     this.emptyLayer = emptyLayer;
   }
 
@@ -86,9 +92,10 @@ public class HistoryEntry implements JsonTemplate {
     }
     if (other instanceof HistoryEntry) {
       HistoryEntry otherHistory = (HistoryEntry) other;
-      return otherHistory.creationTimestamp.equals(creationTimestamp)
+      return Objects.equals(otherHistory.creationTimestamp, creationTimestamp)
           && Objects.equals(otherHistory.author, author)
           && Objects.equals(otherHistory.createdBy, createdBy)
+          && Objects.equals(otherHistory.comment, comment)
           && Objects.equals(otherHistory.emptyLayer, emptyLayer);
     }
     return false;
@@ -96,6 +103,6 @@ public class HistoryEntry implements JsonTemplate {
 
   @Override
   public int hashCode() {
-    return Objects.hash(author, creationTimestamp, createdBy, emptyLayer);
+    return Objects.hash(author, creationTimestamp, createdBy, comment, emptyLayer);
   }
 }
