@@ -17,7 +17,7 @@
 package com.google.cloud.tools.jib.image.json;
 
 import com.google.cloud.tools.jib.image.DescriptorDigest;
-import com.google.cloud.tools.jib.image.HistoryItem;
+import com.google.cloud.tools.jib.image.HistoryEntry;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -66,9 +66,9 @@ public class ContainerConfigurationTemplateTest {
         DescriptorDigest.fromDigest(
             "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad"));
     containerConfigJson.addHistory(
-        new HistoryItem(Instant.EPOCH.toString(), "Bazel", "bazel build ...", true));
+        new HistoryEntry(Instant.EPOCH.toString(), "Bazel", "bazel build ...", true));
     containerConfigJson.addHistory(
-        new HistoryItem(Instant.ofEpochSecond(20).toString(), "Jib", "jib", null));
+        new HistoryEntry(Instant.ofEpochSecond(20).toString(), "Jib", "jib", null));
 
     // Serializes the JSON object.
     ByteArrayOutputStream jsonStream = new ByteArrayOutputStream();
@@ -102,8 +102,8 @@ public class ContainerConfigurationTemplateTest {
         containerConfigJson.getLayerDiffId(0));
     Assert.assertEquals(
         ImmutableList.of(
-            new HistoryItem(Instant.EPOCH.toString(), "Bazel", "bazel build ...", true),
-            new HistoryItem("1970-01-01T00:00:20Z", "Jib", "jib", null)),
+            new HistoryEntry(Instant.EPOCH.toString(), "Bazel", "bazel build ...", true),
+            new HistoryEntry("1970-01-01T00:00:20Z", "Jib", "jib", null)),
         containerConfigJson.getHistory());
   }
 }

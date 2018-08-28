@@ -18,13 +18,14 @@ package com.google.cloud.tools.jib.image;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
 /** Represents an item in the container configuration's {@code history} list. */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class HistoryItem implements JsonTemplate {
+public class HistoryEntry implements JsonTemplate {
 
   /** The timestamp at which the image was created. */
   private String created;
@@ -33,24 +34,28 @@ public class HistoryItem implements JsonTemplate {
   @Nullable private String author;
 
   /** The command used while building the image. */
-  @Nullable private String created_by;
+  @JsonProperty("created_by")
+  @Nullable
+  private String createdBy;
 
   /** Whether or not the layer is empty ({@code @Nullable Boolean} to make field optional). */
-  @Nullable private Boolean empty_layer;
+  @JsonProperty("empty_layer")
+  @Nullable
+  private Boolean emptyLayer;
 
-  public HistoryItem() {
+  public HistoryEntry() {
     this("1970-01-01T00:00:00Z", null, null, null);
   }
 
-  public HistoryItem(
+  public HistoryEntry(
       String created,
       @Nullable String author,
       @Nullable String createdBy,
       @Nullable Boolean emptyLayer) {
     this.author = author;
     this.created = created;
-    this.created_by = createdBy;
-    this.empty_layer = emptyLayer;
+    this.createdBy = createdBy;
+    this.emptyLayer = emptyLayer;
   }
 
   /**
@@ -60,7 +65,7 @@ public class HistoryItem implements JsonTemplate {
    */
   @JsonIgnore
   public boolean isEmptyLayer() {
-    return empty_layer == null ? false : empty_layer;
+    return emptyLayer == null ? false : emptyLayer;
   }
 
   @Override
@@ -68,18 +73,18 @@ public class HistoryItem implements JsonTemplate {
     if (this == other) {
       return true;
     }
-    if (other instanceof HistoryItem) {
-      HistoryItem otherHistory = (HistoryItem) other;
+    if (other instanceof HistoryEntry) {
+      HistoryEntry otherHistory = (HistoryEntry) other;
       return otherHistory.created.equals(created)
           && Objects.equals(otherHistory.author, author)
-          && Objects.equals(otherHistory.created_by, created_by)
-          && Objects.equals(otherHistory.empty_layer, empty_layer);
+          && Objects.equals(otherHistory.createdBy, createdBy)
+          && Objects.equals(otherHistory.emptyLayer, emptyLayer);
     }
     return false;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(author, created, created_by, empty_layer);
+    return Objects.hash(author, created, createdBy, emptyLayer);
   }
 }

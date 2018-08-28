@@ -31,7 +31,7 @@ public class Image<T extends Layer> {
   public static class Builder<T extends Layer> {
 
     private final ImageLayers.Builder<T> imageLayersBuilder = ImageLayers.builder();
-    private ImmutableList.Builder<HistoryItem> historyBuilder = ImmutableList.builder();
+    private ImmutableList.Builder<HistoryEntry> historyBuilder = ImmutableList.builder();
     private ImmutableMap.Builder<String, String> environmentBuilder = ImmutableMap.builder();
     private ImmutableMap.Builder<String, String> labelsBuilder = ImmutableMap.builder();
 
@@ -152,7 +152,7 @@ public class Image<T extends Layer> {
      * @param history the history object to add
      * @return this
      */
-    public Builder<T> addHistory(HistoryItem history) {
+    public Builder<T> addHistory(HistoryEntry history) {
       historyBuilder.add(history);
       return this;
     }
@@ -181,7 +181,7 @@ public class Image<T extends Layer> {
   private final ImageLayers<T> layers;
 
   /** The commands used to build each layer of the image */
-  private final ImmutableList<HistoryItem> history;
+  private final ImmutableList<HistoryEntry> history;
 
   /** Environment variable definitions for running the image, in the format {@code NAME=VALUE}. */
   @Nullable private final ImmutableMap<String, String> environment;
@@ -201,7 +201,7 @@ public class Image<T extends Layer> {
   private Image(
       @Nullable Instant created,
       ImageLayers<T> layers,
-      ImmutableList<HistoryItem> history,
+      ImmutableList<HistoryEntry> history,
       @Nullable ImmutableMap<String, String> environment,
       @Nullable ImmutableList<String> entrypoint,
       @Nullable ImmutableList<String> javaArguments,
@@ -251,7 +251,7 @@ public class Image<T extends Layer> {
     return layers.getLayers();
   }
 
-  public ImmutableList<HistoryItem> getHistory() {
+  public ImmutableList<HistoryEntry> getHistory() {
     return history;
   }
 }

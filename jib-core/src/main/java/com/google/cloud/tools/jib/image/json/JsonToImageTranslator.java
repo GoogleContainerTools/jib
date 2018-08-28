@@ -21,7 +21,7 @@ import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.configuration.Port.Protocol;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.DigestOnlyLayer;
-import com.google.cloud.tools.jib.image.HistoryItem;
+import com.google.cloud.tools.jib.image.HistoryEntry;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerCountMismatchException;
@@ -111,7 +111,7 @@ public class JsonToImageTranslator {
     }
 
     List<DescriptorDigest> diffIds = containerConfigurationTemplate.getDiffIds();
-    List<HistoryItem> historyObjects = containerConfigurationTemplate.getHistory();
+    List<HistoryEntry> historyObjects = containerConfigurationTemplate.getHistory();
 
     if (layers.size() != diffIds.size()) {
       throw new LayerCountMismatchException(
@@ -126,7 +126,7 @@ public class JsonToImageTranslator {
 
       imageBuilder.addLayer(new ReferenceLayer(noDiffIdLayer.getBlobDescriptor(), diffId));
     }
-    for (HistoryItem historyObject : historyObjects) {
+    for (HistoryEntry historyObject : historyObjects) {
       imageBuilder.addHistory(historyObject);
     }
 

@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.image.json;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
-import com.google.cloud.tools.jib.image.HistoryItem;
+import com.google.cloud.tools.jib.image.HistoryEntry;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.ArrayList;
@@ -84,7 +84,7 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
   private final ConfigurationObjectTemplate config = new ConfigurationObjectTemplate();
 
   /** Build commands used to create the image. */
-  private final List<HistoryItem> history = new ArrayList<>();
+  private final List<HistoryEntry> history = new ArrayList<>();
 
   /** Layer content digests that are used to build the container filesystem. */
   private final RootFilesystemObjectTemplate rootfs = new RootFilesystemObjectTemplate();
@@ -153,15 +153,15 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     rootfs.diff_ids.add(diffId);
   }
 
-  public void addHistory(HistoryItem historyItem) {
-    history.add(historyItem);
+  public void addHistory(HistoryEntry historyEntry) {
+    history.add(historyEntry);
   }
 
   List<DescriptorDigest> getDiffIds() {
     return rootfs.diff_ids;
   }
 
-  List<HistoryItem> getHistory() {
+  List<HistoryEntry> getHistory() {
     return history;
   }
 

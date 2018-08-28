@@ -23,7 +23,7 @@ import com.google.cloud.tools.jib.cache.CachedLayerWithMetadata;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
-import com.google.cloud.tools.jib.image.HistoryItem;
+import com.google.cloud.tools.jib.image.HistoryEntry;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.common.collect.ImmutableList;
@@ -56,8 +56,8 @@ public class BuildImageStepTest {
   @Mock private BuildAndCacheApplicationLayerStep mockBuildAndCacheApplicationLayerStep;
 
   private DescriptorDigest testDescriptorDigest;
-  private HistoryItem nonEmptyLayerHistory;
-  private HistoryItem emptyLayerHistory;
+  private HistoryEntry nonEmptyLayerHistory;
+  private HistoryEntry emptyLayerHistory;
 
   @Before
   public void setUp() throws DigestException {
@@ -79,8 +79,8 @@ public class BuildImageStepTest {
     Mockito.when(mockContainerConfiguration.getExposedPorts()).thenReturn(ImmutableList.of());
     Mockito.when(mockContainerConfiguration.getEntrypoint()).thenReturn(ImmutableList.of());
 
-    nonEmptyLayerHistory = new HistoryItem(Instant.EPOCH.toString(), "JibBase", "jib-test", null);
-    emptyLayerHistory = new HistoryItem(Instant.EPOCH.toString(), "JibBase", "jib-test", true);
+    nonEmptyLayerHistory = new HistoryEntry(Instant.EPOCH.toString(), "JibBase", "jib-test", null);
+    emptyLayerHistory = new HistoryEntry(Instant.EPOCH.toString(), "JibBase", "jib-test", true);
 
     Image<Layer> baseImage =
         Image.builder()
@@ -169,8 +169,8 @@ public class BuildImageStepTest {
     Image<CachedLayer> image = buildImageStep.getFuture().get().getFuture().get();
 
     // Make sure history is as expected
-    HistoryItem expectedApplicationLayerHistory =
-        new HistoryItem(Instant.EPOCH.toString(), "Jib", "jib", null);
+    HistoryEntry expectedApplicationLayerHistory =
+        new HistoryEntry(Instant.EPOCH.toString(), "Jib", "jib", null);
 
     // Base layers (1 non-empty propagated, 2 empty propagated, 2 non-empty generated)
     Assert.assertEquals(image.getHistory().get(0), nonEmptyLayerHistory);

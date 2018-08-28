@@ -22,7 +22,7 @@ import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
-import com.google.cloud.tools.jib.image.HistoryItem;
+import com.google.cloud.tools.jib.image.HistoryEntry;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
@@ -109,7 +109,7 @@ class BuildImageStep
 
       // Passthrough config and count non-empty history entries
       int nonEmptyLayerCount = 0;
-      for (HistoryItem historyObject : baseImage.getHistory()) {
+      for (HistoryEntry historyObject : baseImage.getHistory()) {
         imageBuilder.addHistory(historyObject);
         if (!historyObject.isEmptyLayer()) {
           nonEmptyLayerCount++;
@@ -119,23 +119,19 @@ class BuildImageStep
       imageBuilder.addLabels(baseImage.getLabels());
 
       // Add history elements for non-empty layers that don't have one yet
-      int sizeDifference =
-          baseImageLayers.size() + buildAndCacheApplicationLayerSteps.size() - nonEmptyLayerCount;
-      for (int count = 0; count < sizeDifference; count++) {
-        imageBuilder.addHistory(
-            new HistoryItem(
-                containerConfiguration == null
-                    ? Instant.EPOCH.toString()
-                    : containerConfiguration.getCreationTime().toString(),
-                "Jib",
-                "jib",
-                null));
+      String layerCreationTime =
+          containerConfiguration == null
+              ? Instant.EPOCH.toString()
+              : containerConfiguration.getCreationTime().toString();
+      for (int count = 0; count < baseImageLayers.size() - nonEmptyLayerCount; count++) {
+        imageBuilder.addHistory(new HistoryEntry(layerCreationTime, "Jib", "jib", null));
       }
 
       // Add built layers/configuration
       for (BuildAndCacheApplicationLayerStep buildAndCacheApplicationLayerStep :
           buildAndCacheApplicationLayerSteps) {
         imageBuilder.addLayer(NonBlockingSteps.get(buildAndCacheApplicationLayerStep));
+        imageBuilder.addHistory(new HistoryEntry(layerCreationTime, "Jib", "jib", null));
       }
       if (containerConfiguration != null) {
         imageBuilder.addEnvironment(containerConfiguration.getEnvironmentMap());

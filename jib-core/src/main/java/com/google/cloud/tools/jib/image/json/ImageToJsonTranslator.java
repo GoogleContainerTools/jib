@@ -21,7 +21,7 @@ import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
-import com.google.cloud.tools.jib.image.HistoryItem;
+import com.google.cloud.tools.jib.image.HistoryEntry;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
@@ -117,7 +117,7 @@ public class ImageToJsonTranslator {
     }
 
     // Adds the history.
-    for (HistoryItem historyObject : image.getHistory()) {
+    for (HistoryEntry historyObject : image.getHistory()) {
       template.addHistory(historyObject);
     }
 

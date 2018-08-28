@@ -22,7 +22,7 @@ import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.configuration.Port.Protocol;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
-import com.google.cloud.tools.jib.image.HistoryItem;
+import com.google.cloud.tools.jib.image.HistoryEntry;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
@@ -75,9 +75,9 @@ public class ImageToJsonTranslatorTest {
         new CachedLayer(Mockito.mock(Path.class), new BlobDescriptor(1000, fakeDigest), fakeDigest);
     testImageBuilder.addLayer(fakeLayer);
     testImageBuilder.addHistory(
-        new HistoryItem(Instant.EPOCH.toString(), "Bazel", "bazel build ...", true));
+        new HistoryEntry(Instant.EPOCH.toString(), "Bazel", "bazel build ...", true));
     testImageBuilder.addHistory(
-        new HistoryItem(Instant.ofEpochSecond(20).toString(), "Jib", "jib", null));
+        new HistoryEntry(Instant.ofEpochSecond(20).toString(), "Jib", "jib", null));
 
     imageToJsonTranslator = new ImageToJsonTranslator(testImageBuilder.build());
   }
