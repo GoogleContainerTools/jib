@@ -19,12 +19,12 @@ package com.google.cloud.tools.jib.frontend;
 import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
-import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever.CredentialRetrievalException;
 import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.registry.credentials.CredentialHelperNotFoundException;
+import com.google.cloud.tools.jib.registry.credentials.CredentialHelperUnhandledServerUrlException;
+import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import com.google.cloud.tools.jib.registry.credentials.DockerConfigCredentialRetriever;
 import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelperFactory;
-import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelperNotFoundException;
-import com.google.cloud.tools.jib.registry.credentials.NonexistentServerUrlDockerCredentialHelperException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
@@ -171,17 +171,17 @@ public class CredentialRetrieverFactory {
                       + inferredCredentialHelperSuffix),
               dockerCredentialHelperFactory);
 
-        } catch (DockerCredentialHelperNotFoundException ex) {
+        } catch (CredentialHelperNotFoundException
+            | CredentialHelperUnhandledServerUrlException ex) {
           if (ex.getMessage() != null) {
-            // Warns the user that the specified (or inferred) credential helper is not on the
-            // system.
+            // Warns the user that the specified (or inferred) credential helper cannot be used.
             logger.warn(ex.getMessage());
             if (ex.getCause() != null && ex.getCause().getMessage() != null) {
               logger.info("  Caused by: " + ex.getCause().getMessage());
             }
           }
 
-        } catch (NonexistentServerUrlDockerCredentialHelperException | IOException ex) {
+        } catch (IOException ex) {
           throw new CredentialRetrievalException(ex);
         }
       }
@@ -198,12 +198,12 @@ public class CredentialRetrieverFactory {
       try {
         return retrieveFromDockerCredentialHelper(credentialHelper, dockerCredentialHelperFactory);
 
-      } catch (NonexistentServerUrlDockerCredentialHelperException ex) {
+      } catch (CredentialHelperUnhandledServerUrlException ex) {
         logger.info(
             "No credentials for " + imageReference.getRegistry() + " in " + credentialHelper);
         return null;
 
-      } catch (DockerCredentialHelperNotFoundException | IOException ex) {
+      } catch (CredentialHelperNotFoundException | IOException ex) {
         throw new CredentialRetrievalException(ex);
       }
     };
@@ -229,8 +229,8 @@ public class CredentialRetrieverFactory {
 
   private Credential retrieveFromDockerCredentialHelper(
       Path credentialHelper, DockerCredentialHelperFactory dockerCredentialHelperFactory)
-      throws NonexistentServerUrlDockerCredentialHelperException,
-          DockerCredentialHelperNotFoundException, IOException {
+      throws CredentialHelperUnhandledServerUrlException, CredentialHelperNotFoundException,
+          IOException {
     Credential credentials =
         dockerCredentialHelperFactory
             .newDockerCredentialHelper(imageReference.getRegistry(), credentialHelper)
