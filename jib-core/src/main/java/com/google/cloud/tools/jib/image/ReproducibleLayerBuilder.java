@@ -103,10 +103,8 @@ public class ReproducibleLayerBuilder {
             .filter(path -> !Files.isDirectory(path))
             .walk(
                 path -> {
-                  /*
-                   * Builds the same file path as in the source file for extraction. The
-                  iteration is necessary because the path needs to be in Unix-style.
-                   */
+                  // Builds the same file path as in the source file for extraction. The iteration
+                  // is necessary because the path needs to be in Unix-style.
                   Path subExtractionPath = Paths.get(layerEntry.getExtractionPath());
                   Path sourceFileRelativePath = sourceFile.getParent().relativize(path);
                   for (Path sourceFileRelativePathComponent : sourceFileRelativePath) {
