@@ -18,6 +18,8 @@ package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.tar.TarStreamBuilder;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
 import java.io.File;
 import java.io.IOException;
@@ -89,8 +91,8 @@ public class ReproducibleLayerBuilder {
    * @return the list of {@link TarArchiveEntry}
    * @throws IOException if walking a source file that is a directory failed
    */
-  private static List<TarArchiveEntry> buildAsTarArchiveEntries(LayerEntry layerEntry)
-      throws IOException {
+  @VisibleForTesting
+  static List<TarArchiveEntry> buildAsTarArchiveEntries(LayerEntry layerEntry) throws IOException {
     List<TarArchiveEntry> tarArchiveEntries = new ArrayList<>();
 
     // Adds the files to extract relative to the extraction path.
@@ -98,17 +100,17 @@ public class ReproducibleLayerBuilder {
       if (Files.isDirectory(sourceFile)) {
         new DirectoryWalker(sourceFile)
             .filterRoot()
+            .filter(path -> !Files.isDirectory(path))
             .walk(
                 path -> {
                   /*
-                   * Builds the same file path as in the source file for extraction. The iteration
-                   * is necessary because the path needs to be in Unix-style.
+                   * Builds the same file path as in the source file for extraction. The
+                  iteration is necessary because the path needs to be in Unix-style.
                    */
-                  StringBuilder subExtractionPath =
-                      new StringBuilder(layerEntry.getExtractionPath());
+                  Path subExtractionPath = Paths.get(layerEntry.getExtractionPath());
                   Path sourceFileRelativePath = sourceFile.getParent().relativize(path);
                   for (Path sourceFileRelativePathComponent : sourceFileRelativePath) {
-                    subExtractionPath.append('/').append(sourceFileRelativePathComponent);
+                    subExtractionPath = subExtractionPath.resolve(sourceFileRelativePathComponent);
                   }
                   tarArchiveEntries.add(
                       new TarArchiveEntry(path.toFile(), subExtractionPath.toString()));
@@ -118,7 +120,8 @@ public class ReproducibleLayerBuilder {
         TarArchiveEntry tarArchiveEntry =
             new TarArchiveEntry(
                 sourceFile.toFile(),
-                layerEntry.getExtractionPath() + "/" + sourceFile.getFileName());
+                Paths.get(layerEntry.getExtractionPath(), sourceFile.getFileName().toString())
+                    .toString());
         tarArchiveEntries.add(tarArchiveEntry);
       }
     }
@@ -166,6 +169,8 @@ public class ReproducibleLayerBuilder {
     // Gets the entries sorted by extraction path.
     List<TarArchiveEntry> sortedFilesystemEntries = uniqueTarArchiveEntries.getSortedEntries();
 
+    Set<String> names = new HashSet<>();
+
     // Adds all the files to a tar stream.
     TarStreamBuilder tarStreamBuilder = new TarStreamBuilder();
     for (TarArchiveEntry entry : sortedFilesystemEntries) {
@@ -175,6 +180,9 @@ public class ReproducibleLayerBuilder {
       entry.setUserId(0);
       entry.setUserName("");
       entry.setGroupName("");
+
+      Verify.verify(!names.contains(entry.getName()));
+      names.add(entry.getName());
 
       tarStreamBuilder.addTarArchiveEntry(entry);
     }
