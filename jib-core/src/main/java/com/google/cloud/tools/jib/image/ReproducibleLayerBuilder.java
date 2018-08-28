@@ -38,15 +38,18 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
  */
 public class ReproducibleLayerBuilder {
 
-  // Uses the current directory to act as the file input to TarArchiveEntry (since all directories
-  // are treated the same in TarArchiveEntry).
-  private static final File DIRECTORY_FILE = Paths.get(".").toFile();
-
   /**
-   * Holds a list of {@link TarArchiveEntry}s with unique extraction paths. The list also consists
-   * of all parent directories for each extraction path.
+   * Holds a list of {@link TarArchiveEntry}s with unique extraction paths. The list also includes
+   * all parent directories for each extraction path.
    */
   private static class UniqueTarArchiveEntries {
+
+    /**
+     * Uses the current directory to act as the file input to TarArchiveEntry (since all directories
+     * are treated the same in {@link TarArchiveEntry#TarArchiveEntry(File, String)}, except for
+     * modification time, which is wiped away in {@link #build}).
+     */
+    private static final File DIRECTORY_FILE = Paths.get(".").toFile();
 
     private final List<TarArchiveEntry> entries = new ArrayList<>();
     private final Set<String> names = new HashSet<>();
