@@ -109,21 +109,8 @@ public class JibPluginIntegrationTest {
    */
   private static void assertBuildSuccess(
       BuildResult buildResult, String taskName, String successMessage) {
-    assertBuildSuccess(buildResult, "", taskName, successMessage);
-  }
-
-  /**
-   * Asserts that the test project build output indicates a success.
-   *
-   * @param buildResult the builds results of the project under test
-   * @param taskPrefix the common prefix of tasks to verify (e.g., a subproject path)
-   * @param taskName the name of the Jib task that was run
-   * @param successMessage a Jib-specific success message to check for
-   */
-  private static void assertBuildSuccess(
-      BuildResult buildResult, String taskPrefix, String taskName, String successMessage) {
-    BuildTask classesTask = buildResult.task(taskPrefix + ":classes");
-    BuildTask jibTask = buildResult.task(taskPrefix + ":" + taskName);
+    BuildTask classesTask = buildResult.task(":classes");
+    BuildTask jibTask = buildResult.task(":" + taskName);
 
     Assert.assertNotNull(classesTask);
     Assert.assertEquals(TaskOutcome.SUCCESS, classesTask.getOutcome());
@@ -368,13 +355,18 @@ public class JibPluginIntegrationTest {
   }
 
   @Test
-  public void testMultiProject() throws IOException, InterruptedException {
-    String taskPrefix = ":a_packaged";
+  public void testMultiProject() {
     BuildResult buildResult =
         multiprojectTestProject.build(
-            "clean", taskPrefix + ":" + JibPlugin.DOCKER_CONTEXT_TASK_NAME, "--info");
+            "clean", ":a_packaged:" + JibPlugin.DOCKER_CONTEXT_TASK_NAME, "--info");
 
-    assertBuildSuccess(
-        buildResult, taskPrefix, JibPlugin.DOCKER_CONTEXT_TASK_NAME, "Created Docker context at ");
+    BuildTask classesTask = buildResult.task(":a_packaged:classes");
+    BuildTask jibTask = buildResult.task(":a_packaged:" + JibPlugin.DOCKER_CONTEXT_TASK_NAME);
+    Assert.assertNotNull(classesTask);
+    Assert.assertEquals(TaskOutcome.SUCCESS, classesTask.getOutcome());
+    Assert.assertNotNull(jibTask);
+    Assert.assertEquals(TaskOutcome.SUCCESS, jibTask.getOutcome());
+    Assert.assertThat(
+        buildResult.getOutput(), CoreMatchers.containsString("Created Docker context at "));
   }
 }

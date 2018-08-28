@@ -85,7 +85,7 @@ public class JibPluginTest {
   }
 
   @Test
-  public void testGetProjectDependencyAssembleTasks() {
+  public void testProjectDependencyAssembleTasksAreRun() {
     // root project is our jib packaged service
     Project rootProject =
         ProjectBuilder.builder().withProjectDir(testProjectRoot.getRoot()).withName("root").build();

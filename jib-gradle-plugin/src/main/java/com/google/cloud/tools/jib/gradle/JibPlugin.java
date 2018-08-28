@@ -117,12 +117,14 @@ public class JibPlugin implements Plugin<Project> {
             // to only add the dependency after BasePlugin is evaluated as otherwise the assemble
             // task may not be available yet.
             List<Project> computedDependencies = getProjectDependencies(projectAfterEvaluation);
-            for (Project p : computedDependencies) {
-              p.getPlugins()
+            for (Project dependencyProject : computedDependencies) {
+              dependencyProject
+                  .getPlugins()
                   .withType(
                       BasePlugin.class,
                       unused -> {
-                        Task assembleTask = p.getTasks().getByPath(BasePlugin.ASSEMBLE_TASK_NAME);
+                        Task assembleTask =
+                            dependencyProject.getTasks().getByPath(BasePlugin.ASSEMBLE_TASK_NAME);
                         buildImageTask.dependsOn(assembleTask);
                         dockerContextTask.dependsOn(assembleTask);
                         buildDockerTask.dependsOn(assembleTask);
