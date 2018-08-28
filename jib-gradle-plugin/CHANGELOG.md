@@ -21,7 +21,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Reordered classpath in entrypoint to allow dependency patching ([#777](https://github.com/GoogleContainerTools/jib/issues/777))
+- Reordered classpath in entrypoint to use _resources_, _classes_, and then _dependencies_, to allow dependency patching
+  ([#777](https://github.com/GoogleContainerTools/jib/issues/777)).  Note that this classpath ordering differs from that used by Gradle's `run` task.
 - Changed logging level of missing build output directory message ([#677](https://github.com/GoogleContainerTools/jib/issues/677))
 
 ### Fixed
