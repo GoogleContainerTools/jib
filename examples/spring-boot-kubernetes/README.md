@@ -36,3 +36,5 @@ Give it a [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style
 ## More information
 
 Learn [more about Jib](https://github.com/GoogleContainerTools/jib).
+
+[![Analytics](https://cloud-tools-for-java-metrics.appspot.com/UA-121724379-2/examples/spring-boot-kubernetes)](https://github.com/igrigorik/ga-beacon)
