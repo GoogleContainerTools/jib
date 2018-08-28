@@ -37,13 +37,13 @@ class DefaultCacheStorageWriter {
   }
 
   /**
-   * Saves the {@link CacheWriteEntry}.
+   * Saves the {@link CacheWrite}.
    *
-   * @param cacheWriteEntry the {@link CacheWriteEntry} to write out
-   * @return the {@link CacheReadEntry} representing the written entry
+   * @param cacheWriteEntry the {@link CacheWrite} to write out
+   * @return the {@link CacheEntry} representing the written entry
    * @throws IOException if an I/O exception occurs
    */
-  CacheReadEntry write(CacheWriteEntry cacheWriteEntry) throws IOException {
+  CacheEntry write(CacheWrite cacheWriteEntry) throws IOException {
     Path temporaryLayerFile = Files.createTempFile(null, null);
     temporaryLayerFile.toFile().deleteOnExit();
 
@@ -86,8 +86,8 @@ class DefaultCacheStorageWriter {
         Files.createFile(selectorFile);
       }
 
-      DefaultCacheReadEntry.Builder cacheReadEntryBuilder =
-          DefaultCacheReadEntry.builder()
+      DefaultCacheEntry.Builder cacheReadEntryBuilder =
+          DefaultCacheEntry.builder()
               .setLayerDigest(layerDigest)
               .setLayerDiffId(layerDiffId)
               .setLayerSize(compressedBlobDescriptor.getSize())

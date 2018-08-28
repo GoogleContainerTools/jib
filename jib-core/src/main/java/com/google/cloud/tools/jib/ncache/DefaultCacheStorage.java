@@ -67,8 +67,8 @@ public class DefaultCacheStorage implements CacheStorage {
   }
 
   @Override
-  public CacheReadEntry save(CacheWriteEntry cacheWriteEntry) throws IOException {
-    return defaultCacheStorageWriter.write(cacheWriteEntry);
+  public CacheEntry write(CacheWrite cacheWrite) throws IOException {
+    return defaultCacheStorageWriter.write(cacheWrite);
   }
 
   @Override
@@ -78,15 +78,14 @@ public class DefaultCacheStorage implements CacheStorage {
   }
 
   @Override
-  public Optional<CacheReadEntry> retrieve(DescriptorDigest layerDigest) throws IOException {
+  public Optional<CacheEntry> retrieve(DescriptorDigest layerDigest) throws IOException {
     // TODO: Implement
     return Optional.empty();
   }
 
   @Override
-  public List<DescriptorDigest> listDigestsBySelector(DescriptorDigest selector)
-      throws IOException {
+  public Optional<DescriptorDigest> select(DescriptorDigest selector) throws IOException {
     // TODO: Implement
-    return Collections.emptyList();
+    return Optional.empty();
   }
 }
