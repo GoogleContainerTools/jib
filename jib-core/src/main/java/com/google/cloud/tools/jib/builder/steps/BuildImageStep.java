@@ -119,10 +119,8 @@ class BuildImageStep
       imageBuilder.addLabels(baseImage.getLabels());
 
       // Add history elements for non-empty layers that don't have one yet
-      String layerCreationTime =
-          containerConfiguration == null
-              ? Instant.EPOCH.toString()
-              : containerConfiguration.getCreationTime().toString();
+      Instant layerCreationTime =
+          containerConfiguration == null ? Instant.EPOCH : containerConfiguration.getCreationTime();
       for (int count = 0; count < baseImageLayers.size() - nonEmptyLayerCount; count++) {
         imageBuilder.addHistory(
             HistoryEntry.builder()

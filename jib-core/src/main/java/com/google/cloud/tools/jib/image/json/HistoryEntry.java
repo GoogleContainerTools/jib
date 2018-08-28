@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.cloud.tools.jib.json.JsonTemplate;
+import java.time.Instant;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
@@ -34,13 +35,13 @@ public class HistoryEntry implements JsonTemplate {
 
   public static class Builder {
 
-    @Nullable private String creationTimestamp;
+    @Nullable private Instant creationTimestamp;
     @Nullable private String author;
     @Nullable private String createdBy;
     @Nullable private String comment;
     @Nullable private Boolean emptyLayer;
 
-    public Builder setCreationTimestamp(String creationTimestamp) {
+    public Builder setCreationTimestamp(Instant creationTimestamp) {
       this.creationTimestamp = creationTimestamp;
       return this;
     }
@@ -66,7 +67,12 @@ public class HistoryEntry implements JsonTemplate {
     }
 
     public HistoryEntry build() {
-      return new HistoryEntry(creationTimestamp, author, createdBy, comment, emptyLayer);
+      return new HistoryEntry(
+          creationTimestamp == null ? null : creationTimestamp.toString(),
+          author,
+          createdBy,
+          comment,
+          emptyLayer);
     }
 
     private Builder() {}
@@ -153,18 +159,5 @@ public class HistoryEntry implements JsonTemplate {
   @Override
   public int hashCode() {
     return Objects.hash(author, creationTimestamp, createdBy, comment, emptyLayer);
-  }
-
-  @Override
-  public String toString() {
-    return creationTimestamp
-        + ", "
-        + author
-        + ", "
-        + createdBy
-        + ", "
-        + comment
-        + ", "
-        + emptyLayer;
   }
 }

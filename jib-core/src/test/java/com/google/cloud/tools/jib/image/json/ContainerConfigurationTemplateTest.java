@@ -66,14 +66,14 @@ public class ContainerConfigurationTemplateTest {
             "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad"));
     containerConfigJson.addHistoryEntry(
         HistoryEntry.builder()
-            .setCreationTimestamp(Instant.EPOCH.toString())
+            .setCreationTimestamp(Instant.EPOCH)
             .setAuthor("Bazel")
             .setCreatedBy("bazel build ...")
             .setEmptyLayer(true)
             .build());
     containerConfigJson.addHistoryEntry(
         HistoryEntry.builder()
-            .setCreationTimestamp(Instant.ofEpochSecond(20).toString())
+            .setCreationTimestamp(Instant.ofEpochSecond(20))
             .setAuthor("Jib")
             .setCreatedBy("jib")
             .build());
@@ -111,13 +111,13 @@ public class ContainerConfigurationTemplateTest {
     Assert.assertEquals(
         ImmutableList.of(
             HistoryEntry.builder()
-                .setCreationTimestamp(Instant.EPOCH.toString())
+                .setCreationTimestamp(Instant.EPOCH)
                 .setAuthor("Bazel")
                 .setCreatedBy("bazel build ...")
                 .setEmptyLayer(true)
                 .build(),
             HistoryEntry.builder()
-                .setCreationTimestamp("1970-01-01T00:00:20Z")
+                .setCreationTimestamp(Instant.ofEpochSecond(20))
                 .setAuthor("Jib")
                 .setCreatedBy("jib")
                 .build()),

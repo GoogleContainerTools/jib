@@ -171,13 +171,13 @@ public class JsonToImageTranslatorTest {
     Assert.assertEquals(
         ImmutableList.of(
             HistoryEntry.builder()
-                .setCreationTimestamp(Instant.EPOCH.toString())
+                .setCreationTimestamp(Instant.EPOCH)
                 .setAuthor("Bazel")
                 .setCreatedBy("bazel build ...")
                 .setEmptyLayer(true)
                 .build(),
             HistoryEntry.builder()
-                .setCreationTimestamp(Instant.ofEpochSecond(20).toString())
+                .setCreationTimestamp(Instant.ofEpochSecond(20))
                 .setAuthor("Jib")
                 .setCreatedBy("jib")
                 .build()),

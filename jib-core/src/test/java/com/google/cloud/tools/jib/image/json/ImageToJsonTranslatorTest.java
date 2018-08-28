@@ -75,14 +75,14 @@ public class ImageToJsonTranslatorTest {
     testImageBuilder.addLayer(fakeLayer);
     testImageBuilder.addHistory(
         HistoryEntry.builder()
-            .setCreationTimestamp(Instant.EPOCH.toString())
+            .setCreationTimestamp(Instant.EPOCH)
             .setAuthor("Bazel")
             .setCreatedBy("bazel build ...")
             .setEmptyLayer(true)
             .build());
     testImageBuilder.addHistory(
         HistoryEntry.builder()
-            .setCreationTimestamp(Instant.ofEpochSecond(20).toString())
+            .setCreationTimestamp(Instant.ofEpochSecond(20))
             .setAuthor("Jib")
             .setCreatedBy("jib")
             .build());
