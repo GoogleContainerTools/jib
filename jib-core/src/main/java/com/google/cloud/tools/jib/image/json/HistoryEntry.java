@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.image;
+package com.google.cloud.tools.jib.image.json;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -23,22 +23,33 @@ import com.google.cloud.tools.jib.json.JsonTemplate;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
-/** Represents an item in the container configuration's {@code history} list. */
+/**
+ * Represents an item in the container configuration's {@code history} list.
+ *
+ * @see <a href=https://github.com/opencontainers/image-spec/blob/master/config.md#properties>OCI
+ *     image spec ({@code history} field)</a>
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class HistoryEntry implements JsonTemplate {
 
-  /** The timestamp at which the image was created. */
-  private String created;
+  /** The RFC 3339 formatted timestamp at which the image was created. */
+  @JsonProperty("created")
+  private String creationTimestamp;
 
   /** The name of the author specified when committing the image. */
-  @Nullable private String author;
+  @JsonProperty("author")
+  @Nullable
+  private String author;
 
-  /** The command used while building the image. */
+  /** The command used to build the image. */
   @JsonProperty("created_by")
   @Nullable
   private String createdBy;
 
-  /** Whether or not the layer is empty ({@code @Nullable Boolean} to make field optional). */
+  /**
+   * Whether or not the entry corresponds to an empty layer ({@code @Nullable Boolean} to make field
+   * optional).
+   */
   @JsonProperty("empty_layer")
   @Nullable
   private Boolean emptyLayer;
@@ -48,23 +59,23 @@ public class HistoryEntry implements JsonTemplate {
   }
 
   public HistoryEntry(
-      String created,
+      String creationTimestamp,
       @Nullable String author,
       @Nullable String createdBy,
       @Nullable Boolean emptyLayer) {
     this.author = author;
-    this.created = created;
+    this.creationTimestamp = creationTimestamp;
     this.createdBy = createdBy;
     this.emptyLayer = emptyLayer;
   }
 
   /**
-   * Returns whether or not the history object corresponds to an empty layer.
+   * Returns whether or not the history object corresponds to a layer in the container.
    *
-   * @return {@code true} if the history object corresponds to an empty layer
+   * @return {@code true} if the history object corresponds to a layer in the container
    */
   @JsonIgnore
-  public boolean isEmptyLayer() {
+  public boolean hasLayer() {
     return emptyLayer == null ? false : emptyLayer;
   }
 
@@ -75,7 +86,7 @@ public class HistoryEntry implements JsonTemplate {
     }
     if (other instanceof HistoryEntry) {
       HistoryEntry otherHistory = (HistoryEntry) other;
-      return otherHistory.created.equals(created)
+      return otherHistory.creationTimestamp.equals(creationTimestamp)
           && Objects.equals(otherHistory.author, author)
           && Objects.equals(otherHistory.createdBy, createdBy)
           && Objects.equals(otherHistory.emptyLayer, emptyLayer);
@@ -85,6 +96,6 @@ public class HistoryEntry implements JsonTemplate {
 
   @Override
   public int hashCode() {
-    return Objects.hash(author, created, createdBy, emptyLayer);
+    return Objects.hash(author, creationTimestamp, createdBy, emptyLayer);
   }
 }

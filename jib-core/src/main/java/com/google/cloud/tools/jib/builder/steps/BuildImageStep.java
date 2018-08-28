@@ -22,10 +22,10 @@ import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
-import com.google.cloud.tools.jib.image.HistoryEntry;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
+import com.google.cloud.tools.jib.image.json.HistoryEntry;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -111,7 +111,7 @@ class BuildImageStep
       int nonEmptyLayerCount = 0;
       for (HistoryEntry historyObject : baseImage.getHistory()) {
         imageBuilder.addHistory(historyObject);
-        if (!historyObject.isEmptyLayer()) {
+        if (!historyObject.hasLayer()) {
           nonEmptyLayerCount++;
         }
       }
