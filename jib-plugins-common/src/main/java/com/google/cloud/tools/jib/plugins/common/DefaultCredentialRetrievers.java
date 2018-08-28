@@ -55,6 +55,7 @@ public class DefaultCredentialRetrievers {
   private final CredentialRetrieverFactory credentialRetrieverFactory;
 
   @Nullable private CredentialRetriever knownCredentialRetriever;
+  @Nullable private CredentialRetriever inferredCredentialRetriever;
   @Nullable private String credentialHelperSuffix;
 
   private DefaultCredentialRetrievers(CredentialRetrieverFactory credentialRetrieverFactory) {
@@ -71,6 +72,20 @@ public class DefaultCredentialRetrievers {
   public DefaultCredentialRetrievers setKnownCredential(
       Credential knownCredential, String credentialSource) {
     knownCredentialRetriever = credentialRetrieverFactory.known(knownCredential, credentialSource);
+    return this;
+  }
+
+  /**
+   * Sets the inferred {@link Credential} to use in the default credential retrievers.
+   *
+   * @param inferredCredential the inferred credential
+   * @param credentialSource the source of the inferred credential (for logging)
+   * @return this
+   */
+  public DefaultCredentialRetrievers setInferredCredential(
+      Credential inferredCredential, String credentialSource) {
+    inferredCredentialRetriever =
+        credentialRetrieverFactory.known(inferredCredential, credentialSource);
     return this;
   }
 
@@ -94,13 +109,16 @@ public class DefaultCredentialRetrievers {
    */
   public List<CredentialRetriever> asList() {
     List<CredentialRetriever> credentialRetrievers = new ArrayList<>();
+    if (knownCredentialRetriever != null) {
+      credentialRetrievers.add(knownCredentialRetriever);
+    }
     if (credentialHelperSuffix != null) {
       credentialRetrievers.add(
           credentialRetrieverFactory.dockerCredentialHelper(
               DockerCredentialHelperFactory.CREDENTIAL_HELPER_PREFIX + credentialHelperSuffix));
     }
-    if (knownCredentialRetriever != null) {
-      credentialRetrievers.add(knownCredentialRetriever);
+    if (inferredCredentialRetriever != null) {
+      credentialRetrievers.add(inferredCredentialRetriever);
     }
     credentialRetrievers.add(credentialRetrieverFactory.inferCredentialHelper());
     credentialRetrievers.add(credentialRetrieverFactory.dockerConfig());
