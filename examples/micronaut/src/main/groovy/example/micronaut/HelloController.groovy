@@ -9,6 +9,6 @@ import io.micronaut.http.annotation.Get
 class HelloController {
     @Get("/") // <2>
     String index() {
-        "Hello Jib" // <3>
+        "Hello World" // <3>
     }
 }

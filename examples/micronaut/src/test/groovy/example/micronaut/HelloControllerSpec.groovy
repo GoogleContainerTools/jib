@@ -19,13 +19,13 @@ class HelloControllerSpec extends Specification {
     @AutoCleanup
     RxHttpClient client = embeddedServer.applicationContext.createBean(RxHttpClient, embeddedServer.getURL()) // <3>
 
-    void "test hello jib response"() {
+    void "test hello world response"() {
         when:
         HttpRequest request = HttpRequest.GET('/hello') // <4>
         String rsp  = client.toBlocking().retrieve(request)
 
         then:
-        rsp == "Hello Jib"
+        rsp == "Hello World"
     }
 
 }
