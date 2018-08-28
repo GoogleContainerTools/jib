@@ -70,12 +70,13 @@ public class DockerCredentialHelper {
    *
    * @return the Docker credentials by calling the corresponding CLI
    * @throws IOException if writing/reading process input/output fails
-   * @throws UnhandledServerUrlException if no credentials could be found for the corresponding
-   *     server
-   * @throws DockerCredentialHelperNotFoundException if the credential helper CLI doesn't exist
+   * @throws CredentialHelperUnhandledServerUrlException if no credentials could be found for the
+   *     corresponding server
+   * @throws CredentialHelperNotFoundException if the credential helper CLI doesn't exist
    */
   public Credential retrieve()
-      throws IOException, UnhandledServerUrlException, DockerCredentialHelperNotFoundException {
+      throws IOException, CredentialHelperUnhandledServerUrlException,
+          CredentialHelperNotFoundException {
     try {
       String[] credentialHelperCommand = {credentialHelper.toString(), "get"};
 
@@ -90,13 +91,15 @@ public class DockerCredentialHelper {
 
         // Throws an exception if the credential store does not have credentials for serverUrl.
         if (output.contains("credentials not found in native keychain")) {
-          throw new UnhandledServerUrlException(credentialHelper, serverUrl, output);
+          throw new CredentialHelperUnhandledServerUrlException(
+              credentialHelper, serverUrl, output);
         }
         if (output.isEmpty()) {
           try (InputStreamReader processStderrReader =
               new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8)) {
             String errorOutput = CharStreams.toString(processStderrReader);
-            throw new UnhandledServerUrlException(credentialHelper, serverUrl, errorOutput);
+            throw new CredentialHelperUnhandledServerUrlException(
+                credentialHelper, serverUrl, errorOutput);
           }
         }
 
@@ -105,13 +108,15 @@ public class DockerCredentialHelper {
               JsonTemplateMapper.readJson(output, DockerCredentialsTemplate.class);
           if (Strings.isNullOrEmpty(dockerCredentials.Username)
               || Strings.isNullOrEmpty(dockerCredentials.Secret)) {
-            throw new UnhandledServerUrlException(credentialHelper, serverUrl, output);
+            throw new CredentialHelperUnhandledServerUrlException(
+                credentialHelper, serverUrl, output);
           }
 
           return new Credential(dockerCredentials.Username, dockerCredentials.Secret);
 
         } catch (JsonProcessingException ex) {
-          throw new UnhandledServerUrlException(credentialHelper, serverUrl, output);
+          throw new CredentialHelperUnhandledServerUrlException(
+              credentialHelper, serverUrl, output);
         }
       }
 
@@ -123,7 +128,7 @@ public class DockerCredentialHelper {
       // Checks if the failure is due to a nonexistent credential helper CLI.
       if (ex.getMessage().contains("No such file or directory")
           || ex.getMessage().contains("cannot find the file")) {
-        throw new DockerCredentialHelperNotFoundException(credentialHelper, ex);
+        throw new CredentialHelperNotFoundException(credentialHelper, ex);
       }
 
       throw ex;

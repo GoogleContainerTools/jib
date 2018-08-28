@@ -33,8 +33,8 @@ public class DockerCredentialHelperIntegrationTest {
   /** Tests retrieval via {@code docker-credential-gcr} CLI. */
   @Test
   public void testRetrieveGCR()
-      throws IOException, UnhandledServerUrlException, DockerCredentialHelperNotFoundException,
-          URISyntaxException, InterruptedException {
+      throws IOException, CredentialHelperUnhandledServerUrlException,
+          CredentialHelperNotFoundException, URISyntaxException, InterruptedException {
     new Command("docker-credential-gcr", "store")
         .run(Files.readAllBytes(Paths.get(Resources.getResource("credentials.json").toURI())));
 
@@ -48,7 +48,7 @@ public class DockerCredentialHelperIntegrationTest {
 
   @Test
   public void testRetrieve_nonexistentCredentialHelper()
-      throws IOException, UnhandledServerUrlException {
+      throws IOException, CredentialHelperUnhandledServerUrlException {
     try {
       DockerCredentialHelper fakeDockerCredentialHelper =
           new DockerCredentialHelperFactory().newDockerCredentialHelper("", "fake-cloud-provider");
@@ -57,7 +57,7 @@ public class DockerCredentialHelperIntegrationTest {
 
       Assert.fail("Retrieve should have failed for nonexistent credential helper");
 
-    } catch (DockerCredentialHelperNotFoundException ex) {
+    } catch (CredentialHelperNotFoundException ex) {
       Assert.assertEquals(
           "The system does not have docker-credential-fake-cloud-provider CLI", ex.getMessage());
     }
@@ -65,7 +65,7 @@ public class DockerCredentialHelperIntegrationTest {
 
   @Test
   public void testRetrieve_nonexistentServerUrl()
-      throws IOException, DockerCredentialHelperNotFoundException {
+      throws IOException, CredentialHelperNotFoundException {
     try {
       DockerCredentialHelper fakeDockerCredentialHelper =
           new DockerCredentialHelperFactory().newDockerCredentialHelper("fake.server.url", "gcr");
@@ -74,7 +74,7 @@ public class DockerCredentialHelperIntegrationTest {
 
       Assert.fail("Retrieve should have failed for nonexistent server URL");
 
-    } catch (UnhandledServerUrlException ex) {
+    } catch (CredentialHelperUnhandledServerUrlException ex) {
       Assert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(

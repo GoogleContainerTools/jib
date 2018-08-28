@@ -43,8 +43,8 @@ public class DockerConfigCredentialRetrieverTest {
 
   @Before
   public void setUp()
-      throws URISyntaxException, UnhandledServerUrlException,
-          DockerCredentialHelperNotFoundException, IOException {
+      throws URISyntaxException, CredentialHelperUnhandledServerUrlException,
+          CredentialHelperNotFoundException, IOException {
     dockerConfigFile = Paths.get(Resources.getResource("json/dockerconfig.json").toURI());
 
     Mockito.when(mockDockerCredentialHelper.retrieve()).thenReturn(FAKE_CREDENTIAL);

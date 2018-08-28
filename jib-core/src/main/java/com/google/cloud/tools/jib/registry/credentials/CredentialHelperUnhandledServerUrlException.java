@@ -19,9 +19,9 @@ package com.google.cloud.tools.jib.registry.credentials;
 import java.nio.file.Path;
 
 /** Thrown because the credential helper does not have credentials for the specified server URL. */
-public class UnhandledServerUrlException extends CredentialRetrievalException {
+public class CredentialHelperUnhandledServerUrlException extends CredentialRetrievalException {
 
-  UnhandledServerUrlException(
+  CredentialHelperUnhandledServerUrlException(
       Path credentialHelper, String serverUrl, String credentialHelperOutput) {
     super(
         "The credential helper ("
