@@ -23,7 +23,7 @@ import com.google.cloud.tools.jib.registry.credentials.DockerConfigCredentialRet
 import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelper;
 import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelperFactory;
 import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelperNotFoundException;
-import com.google.cloud.tools.jib.registry.credentials.UnknownServerUrlException;
+import com.google.cloud.tools.jib.registry.credentials.UnhandledServerUrlException;
 import java.io.IOException;
 import java.nio.file.Paths;
 import org.junit.Assert;
@@ -54,7 +54,7 @@ public class CredentialRetrieverFactoryTest {
 
   @Before
   public void setUp()
-      throws UnknownServerUrlException, DockerCredentialHelperNotFoundException, IOException {
+      throws UnhandledServerUrlException, DockerCredentialHelperNotFoundException, IOException {
     Mockito.when(mockDockerCredentialHelper.retrieve()).thenReturn(FAKE_CREDENTIALS);
     Mockito.when(mockNonexistentDockerCredentialHelper.retrieve())
         .thenThrow(mockDockerCredentialHelperNotFoundException);

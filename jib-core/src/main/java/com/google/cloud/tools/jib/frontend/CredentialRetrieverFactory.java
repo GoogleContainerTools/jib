@@ -24,7 +24,7 @@ import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalExcept
 import com.google.cloud.tools.jib.registry.credentials.DockerConfigCredentialRetriever;
 import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelperFactory;
 import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelperNotFoundException;
-import com.google.cloud.tools.jib.registry.credentials.UnknownServerUrlException;
+import com.google.cloud.tools.jib.registry.credentials.UnhandledServerUrlException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
@@ -181,7 +181,7 @@ public class CredentialRetrieverFactory {
             }
           }
 
-        } catch (UnknownServerUrlException | IOException ex) {
+        } catch (UnhandledServerUrlException | IOException ex) {
           throw new CredentialRetrievalException(ex);
         }
       }
@@ -198,7 +198,7 @@ public class CredentialRetrieverFactory {
       try {
         return retrieveFromDockerCredentialHelper(credentialHelper, dockerCredentialHelperFactory);
 
-      } catch (UnknownServerUrlException ex) {
+      } catch (UnhandledServerUrlException ex) {
         logger.info(
             "No credentials for " + imageReference.getRegistry() + " in " + credentialHelper);
         return null;
@@ -229,7 +229,7 @@ public class CredentialRetrieverFactory {
 
   private Credential retrieveFromDockerCredentialHelper(
       Path credentialHelper, DockerCredentialHelperFactory dockerCredentialHelperFactory)
-      throws UnknownServerUrlException, DockerCredentialHelperNotFoundException, IOException {
+      throws UnhandledServerUrlException, DockerCredentialHelperNotFoundException, IOException {
     Credential credentials =
         dockerCredentialHelperFactory
             .newDockerCredentialHelper(imageReference.getRegistry(), credentialHelper)
