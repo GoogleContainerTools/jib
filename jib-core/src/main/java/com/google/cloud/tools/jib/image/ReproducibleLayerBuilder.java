@@ -19,12 +19,16 @@ package com.google.cloud.tools.jib.image;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.tar.TarStreamBuilder;
 import com.google.common.collect.ImmutableList;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 
 /**
@@ -33,6 +37,51 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
  * group name) from name-sorted tar archive entries.
  */
 public class ReproducibleLayerBuilder {
+
+  /**
+   * Holds a list of {@link TarArchiveEntry}s with unique extraction paths. The list also includes
+   * all parent directories for each extraction path.
+   */
+  private static class UniqueTarArchiveEntries {
+
+    /**
+     * Uses the current directory to act as the file input to TarArchiveEntry (since all directories
+     * are treated the same in {@link TarArchiveEntry#TarArchiveEntry(File, String)}, except for
+     * modification time, which is wiped away in {@link #build}).
+     */
+    private static final File DIRECTORY_FILE = Paths.get(".").toFile();
+
+    private final List<TarArchiveEntry> entries = new ArrayList<>();
+    private final Set<String> names = new HashSet<>();
+
+    /**
+     * Adds a {@link TarArchiveEntry} if its extraction path does not exist yet. Also adds all of
+     * the parent directories on the extraction path.
+     *
+     * @param tarArchiveEntry the {@link TarArchiveEntry}
+     */
+    private void add(TarArchiveEntry tarArchiveEntry) {
+      if (names.contains(tarArchiveEntry.getName())) {
+        return;
+      }
+
+      // Adds all directories along extraction paths to explicitly set permissions for those
+      // directories.
+      Path namePath = Paths.get(tarArchiveEntry.getName());
+      if (namePath.getParent() != namePath.getRoot()) {
+        add(new TarArchiveEntry(DIRECTORY_FILE, namePath.getParent().toString()));
+      }
+
+      entries.add(tarArchiveEntry);
+      names.add(tarArchiveEntry.getName());
+    }
+
+    private List<TarArchiveEntry> getSortedEntries() {
+      List<TarArchiveEntry> sortedEntries = new ArrayList<>(entries);
+      sortedEntries.sort(Comparator.comparing(TarArchiveEntry::getName));
+      return sortedEntries;
+    }
+  }
 
   /**
    * Builds the {@link TarArchiveEntry}s for adding this {@link LayerEntry} to a tarball archive.
@@ -44,6 +93,7 @@ public class ReproducibleLayerBuilder {
       throws IOException {
     List<TarArchiveEntry> tarArchiveEntries = new ArrayList<>();
 
+    // Adds the files to extract relative to the extraction path.
     for (Path sourceFile : layerEntry.getSourceFiles()) {
       if (Files.isDirectory(sourceFile)) {
         new DirectoryWalker(sourceFile)
@@ -101,19 +151,24 @@ public class ReproducibleLayerBuilder {
    * @throws IOException if walking the source files fails
    */
   public UnwrittenLayer build() throws IOException {
-    List<TarArchiveEntry> filesystemEntries = new ArrayList<>();
+    UniqueTarArchiveEntries uniqueTarArchiveEntries = new UniqueTarArchiveEntries();
 
     // Adds all the layer entries as tar entries.
-    for (LayerEntry layerEntry : layerEntries.build()) {
-      filesystemEntries.addAll(buildAsTarArchiveEntries(layerEntry));
+    List<LayerEntry> layerEntries = this.layerEntries.build();
+    for (LayerEntry layerEntry : layerEntries) {
+      // Converts layerEntry to list of TarArchiveEntrys.
+      List<TarArchiveEntry> tarArchiveEntries = buildAsTarArchiveEntries(layerEntry);
+      // Adds the entries to uniqueTarArchiveEntries, which makes sure all entries are unique and
+      // adds parent directories for each extraction path.
+      tarArchiveEntries.forEach(uniqueTarArchiveEntries::add);
     }
 
-    // Sorts the entries by name.
-    filesystemEntries.sort(Comparator.comparing(TarArchiveEntry::getName));
+    // Gets the entries sorted by extraction path.
+    List<TarArchiveEntry> sortedFilesystemEntries = uniqueTarArchiveEntries.getSortedEntries();
 
     // Adds all the files to a tar stream.
     TarStreamBuilder tarStreamBuilder = new TarStreamBuilder();
-    for (TarArchiveEntry entry : filesystemEntries) {
+    for (TarArchiveEntry entry : sortedFilesystemEntries) {
       // Strips out all non-reproducible elements from tar archive entries.
       entry.setModTime(0);
       entry.setGroupId(0);
