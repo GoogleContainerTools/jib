@@ -20,7 +20,7 @@ docker run -d -p 8080:8080 micronaut-jib:0.1
 ```
 ```shell
 curl localhost:8080/hello
-> Hello World
+> Hello Jib
 ```
 
 <!-- Dockerize and run a "Hello World" @Java @micronautfw app with #Jib in seconds -->
@@ -40,7 +40,7 @@ kubectl port-forward micronaut-jib 8080 > /dev/null 2>&1 &
 ```
 ```shell
 curl localhost:8080/hello
-> Hello World
+> Hello Jib
 ```
 
 <!-- Run a "Hello World" @java @micronautfw app on #Kubernetes with #Jib in seconds -->
