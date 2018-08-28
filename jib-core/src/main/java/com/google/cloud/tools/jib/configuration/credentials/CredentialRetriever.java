@@ -16,19 +16,12 @@
 
 package com.google.cloud.tools.jib.configuration.credentials;
 
+import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import javax.annotation.Nullable;
 
 /** Retrieves credentials for a registry. */
 @FunctionalInterface
 public interface CredentialRetriever {
-
-  /** Thrown if something went wrong during {@link CredentialRetriever#retrieve}. */
-  class CredentialRetrievalException extends Exception {
-
-    public CredentialRetrievalException(Throwable cause) {
-      super(cause);
-    }
-  }
 
   /**
    * Fetches the credentials. <b>Implementations must be thread-safe.</b>
