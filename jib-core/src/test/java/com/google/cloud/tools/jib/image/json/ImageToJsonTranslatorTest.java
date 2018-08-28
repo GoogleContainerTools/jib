@@ -74,10 +74,18 @@ public class ImageToJsonTranslatorTest {
         new CachedLayer(Mockito.mock(Path.class), new BlobDescriptor(1000, fakeDigest), fakeDigest);
     testImageBuilder.addLayer(fakeLayer);
     testImageBuilder.addHistory(
-        new HistoryEntry(Instant.EPOCH.toString(), "Bazel", "bazel build ...", null, true));
+        HistoryEntry.builder()
+            .setCreationTimestamp(Instant.EPOCH.toString())
+            .setAuthor("Bazel")
+            .setCreatedBy("bazel build ...")
+            .setEmptyLayer(true)
+            .build());
     testImageBuilder.addHistory(
-        new HistoryEntry(Instant.ofEpochSecond(20).toString(), "Jib", "jib", null, null));
-
+        HistoryEntry.builder()
+            .setCreationTimestamp(Instant.ofEpochSecond(20).toString())
+            .setAuthor("Jib")
+            .setCreatedBy("jib")
+            .build());
     imageToJsonTranslator = new ImageToJsonTranslator(testImageBuilder.build());
   }
 

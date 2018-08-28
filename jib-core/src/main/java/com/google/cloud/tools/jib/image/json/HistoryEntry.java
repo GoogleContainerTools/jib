@@ -32,7 +32,56 @@ import javax.annotation.Nullable;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class HistoryEntry implements JsonTemplate {
 
-  /** The RFC 3339 formatted timestamp at which the image was created. */
+  public static class Builder {
+
+    @Nullable private String creationTimestamp;
+    @Nullable private String author;
+    @Nullable private String createdBy;
+    @Nullable private String comment;
+    @Nullable private Boolean emptyLayer;
+
+    public Builder setCreationTimestamp(String creationTimestamp) {
+      this.creationTimestamp = creationTimestamp;
+      return this;
+    }
+
+    public Builder setAuthor(String author) {
+      this.author = author;
+      return this;
+    }
+
+    public Builder setCreatedBy(String createdBy) {
+      this.createdBy = createdBy;
+      return this;
+    }
+
+    public Builder setComment(String comment) {
+      this.comment = comment;
+      return this;
+    }
+
+    public Builder setEmptyLayer(Boolean emptyLayer) {
+      this.emptyLayer = emptyLayer;
+      return this;
+    }
+
+    public HistoryEntry build() {
+      return new HistoryEntry(creationTimestamp, author, createdBy, comment, emptyLayer);
+    }
+
+    private Builder() {}
+  }
+
+  /**
+   * Creates a builder for a {@link HistoryEntry}.
+   *
+   * @return the builder
+   */
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  /** The ISO-8601 formatted timestamp at which the image was created. */
   @JsonProperty("created")
   @Nullable
   private String creationTimestamp;
@@ -42,7 +91,7 @@ public class HistoryEntry implements JsonTemplate {
   @Nullable
   private String author;
 
-  /** The command used to build the image. */
+  /** The command used to build the layer. */
   @JsonProperty("created_by")
   @Nullable
   private String createdBy;
@@ -53,8 +102,8 @@ public class HistoryEntry implements JsonTemplate {
   private String comment;
 
   /**
-   * Whether or not the entry corresponds to an empty layer ({@code @Nullable Boolean} to make field
-   * optional).
+   * Whether or not the entry corresponds to a layer in the container ({@code @Nullable Boolean} to
+   * make field optional).
    */
   @JsonProperty("empty_layer")
   @Nullable
@@ -62,7 +111,7 @@ public class HistoryEntry implements JsonTemplate {
 
   public HistoryEntry() {}
 
-  public HistoryEntry(
+  private HistoryEntry(
       @Nullable String creationTimestamp,
       @Nullable String author,
       @Nullable String createdBy,
@@ -81,7 +130,7 @@ public class HistoryEntry implements JsonTemplate {
    * @return {@code true} if the history object corresponds to a layer in the container
    */
   @JsonIgnore
-  public boolean hasLayer() {
+  public boolean hasCorrespondingLayer() {
     return emptyLayer == null ? false : emptyLayer;
   }
 
@@ -104,5 +153,18 @@ public class HistoryEntry implements JsonTemplate {
   @Override
   public int hashCode() {
     return Objects.hash(author, creationTimestamp, createdBy, comment, emptyLayer);
+  }
+
+  @Override
+  public String toString() {
+    return creationTimestamp
+        + ", "
+        + author
+        + ", "
+        + createdBy
+        + ", "
+        + comment
+        + ", "
+        + emptyLayer;
   }
 }

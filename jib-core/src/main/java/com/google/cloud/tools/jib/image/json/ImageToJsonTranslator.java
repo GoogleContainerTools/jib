@@ -117,7 +117,7 @@ public class ImageToJsonTranslator {
 
     // Adds the history.
     for (HistoryEntry historyObject : image.getHistory()) {
-      template.addHistory(historyObject);
+      template.addHistoryEntry(historyObject);
     }
 
     // Sets the creation time. Instant#toString() returns an ISO-8601 formatted string.

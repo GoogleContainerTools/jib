@@ -170,8 +170,17 @@ public class JsonToImageTranslatorTest {
         layers.get(0).getDiffId());
     Assert.assertEquals(
         ImmutableList.of(
-            new HistoryEntry(Instant.EPOCH.toString(), "Bazel", "bazel build ...", null, true),
-            new HistoryEntry(Instant.ofEpochSecond(20).toString(), "Jib", "jib", null, null)),
+            HistoryEntry.builder()
+                .setCreationTimestamp(Instant.EPOCH.toString())
+                .setAuthor("Bazel")
+                .setCreatedBy("bazel build ...")
+                .setEmptyLayer(true)
+                .build(),
+            HistoryEntry.builder()
+                .setCreationTimestamp(Instant.ofEpochSecond(20).toString())
+                .setAuthor("Jib")
+                .setCreatedBy("jib")
+                .build()),
         image.getHistory());
     Assert.assertEquals(Instant.ofEpochSecond(20), image.getCreated());
     Assert.assertEquals(Arrays.asList("some", "entrypoint", "command"), image.getEntrypoint());

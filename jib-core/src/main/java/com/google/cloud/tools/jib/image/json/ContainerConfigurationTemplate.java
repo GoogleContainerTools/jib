@@ -82,7 +82,7 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
   /** Execution parameters that should be used as a base when running the container. */
   private final ConfigurationObjectTemplate config = new ConfigurationObjectTemplate();
 
-  /** Build commands used to create the image. */
+  /** Describes the history of each layer. */
   private final List<HistoryEntry> history = new ArrayList<>();
 
   /** Layer content digests that are used to build the container filesystem. */
@@ -152,7 +152,7 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     rootfs.diff_ids.add(diffId);
   }
 
-  public void addHistory(HistoryEntry historyEntry) {
+  public void addHistoryEntry(HistoryEntry historyEntry) {
     history.add(historyEntry);
   }
 
