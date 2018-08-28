@@ -33,7 +33,7 @@ public class DockerCredentialHelperIntegrationTest {
   /** Tests retrieval via {@code docker-credential-gcr} CLI. */
   @Test
   public void testRetrieveGCR()
-      throws IOException, UnknownServerUrlException, DockerCredentialHelperNotFoundException,
+      throws IOException, UnhandledServerUrlException, DockerCredentialHelperNotFoundException,
           URISyntaxException, InterruptedException {
     new Command("docker-credential-gcr", "store")
         .run(Files.readAllBytes(Paths.get(Resources.getResource("credentials.json").toURI())));
@@ -48,7 +48,7 @@ public class DockerCredentialHelperIntegrationTest {
 
   @Test
   public void testRetrieve_nonexistentCredentialHelper()
-      throws IOException, UnknownServerUrlException {
+      throws IOException, UnhandledServerUrlException {
     try {
       DockerCredentialHelper fakeDockerCredentialHelper =
           new DockerCredentialHelperFactory().newDockerCredentialHelper("", "fake-cloud-provider");
@@ -74,7 +74,7 @@ public class DockerCredentialHelperIntegrationTest {
 
       Assert.fail("Retrieve should have failed for nonexistent server URL");
 
-    } catch (UnknownServerUrlException ex) {
+    } catch (UnhandledServerUrlException ex) {
       Assert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
