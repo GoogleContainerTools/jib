@@ -173,6 +173,19 @@ public class JavaDockerContextGeneratorTest {
     List<String> ignoredJvmFlags = Arrays.asList("-flag", "another\"Flag");
     String ignoredMainClass = "SomeMainClass";
 
+    Mockito.when(mockJavaLayerConfigurations.getDependenciesLayerEntry())
+        .thenReturn(
+            new LayerEntry(ImmutableList.of(Paths.get("ignored")), EXPECTED_DEPENDENCIES_PATH));
+    Mockito.when(mockJavaLayerConfigurations.getSnapshotDependenciesLayerEntry())
+        .thenReturn(
+            new LayerEntry(ImmutableList.of(Paths.get("ignored")), EXPECTED_DEPENDENCIES_PATH));
+    Mockito.when(mockJavaLayerConfigurations.getResourcesLayerEntry())
+        .thenReturn(
+            new LayerEntry(ImmutableList.of(Paths.get("ignored")), EXPECTED_RESOURCES_PATH));
+    Mockito.when(mockJavaLayerConfigurations.getClassesLayerEntry())
+        .thenReturn(new LayerEntry(ImmutableList.of(Paths.get("ignored")), EXPECTED_CLASSES_PATH));
+    Mockito.when(mockJavaLayerConfigurations.getExtraFilesLayerEntry())
+        .thenReturn(new LayerEntry(ImmutableList.of(Paths.get("ignored")), "/"));
     String dockerfile =
         new JavaDockerContextGenerator(mockJavaLayerConfigurations)
             .setBaseImage(expectedBaseImage)
