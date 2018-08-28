@@ -88,7 +88,7 @@ task integrationTest(type: Test) {
   classpath = sourceSets.integrationTest.runtimeClasspath
   systemProperty '_JIB_DISABLE_USER_AGENT', true
 }
-// integrationTest.dependsOn test
+integrationTest.dependsOn test
 
 test {
   testLogging {
