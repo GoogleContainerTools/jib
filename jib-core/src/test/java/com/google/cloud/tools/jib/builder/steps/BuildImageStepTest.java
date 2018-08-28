@@ -169,6 +169,8 @@ public class BuildImageStepTest {
     Image<CachedLayer> image = buildImageStep.getFuture().get().getFuture().get();
 
     // Make sure history is as expected
+    HistoryEntry expectedAddedBaseLayerHistory =
+        new HistoryEntry(Instant.EPOCH.toString(), null, null, null);
     HistoryEntry expectedApplicationLayerHistory =
         new HistoryEntry(Instant.EPOCH.toString(), "Jib", "jib", null);
 
@@ -176,8 +178,8 @@ public class BuildImageStepTest {
     Assert.assertEquals(image.getHistory().get(0), nonEmptyLayerHistory);
     Assert.assertEquals(image.getHistory().get(1), emptyLayerHistory);
     Assert.assertEquals(image.getHistory().get(2), emptyLayerHistory);
-    Assert.assertEquals(image.getHistory().get(3), expectedApplicationLayerHistory);
-    Assert.assertEquals(image.getHistory().get(4), expectedApplicationLayerHistory);
+    Assert.assertEquals(image.getHistory().get(3), expectedAddedBaseLayerHistory);
+    Assert.assertEquals(image.getHistory().get(4), expectedAddedBaseLayerHistory);
 
     // Application layers (3 generated)
     Assert.assertEquals(image.getHistory().get(5), expectedApplicationLayerHistory);

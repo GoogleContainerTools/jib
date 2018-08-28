@@ -124,7 +124,7 @@ class BuildImageStep
               ? Instant.EPOCH.toString()
               : containerConfiguration.getCreationTime().toString();
       for (int count = 0; count < baseImageLayers.size() - nonEmptyLayerCount; count++) {
-        imageBuilder.addHistory(new HistoryEntry(layerCreationTime, "Jib", "jib", null));
+        imageBuilder.addHistory(new HistoryEntry(layerCreationTime, null, null, null));
       }
 
       // Add built layers/configuration
