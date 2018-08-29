@@ -32,11 +32,6 @@
             <image>${_TARGET_IMAGE}</image>
           </to>
           <container>
-            <entrypoint>
-              <arg>foo</arg>
-              <arg>bar</arg>
-              <arg>baz</arg>
-            </entrypoint>
             <ports>
               <port>1000/tcp</port>
               <port>2000-2003/udp</port>
