@@ -71,8 +71,6 @@ public class DockerContextMojo extends JibPluginConfiguration {
       new JavaDockerContextGenerator(mavenProjectProperties.getJavaLayerConfigurations())
           .setBaseImage(getBaseImage())
           .setEntrypoint(getEntrypoint())
-          .setJvmFlags(getJvmFlags())
-          .setMainClass(mainClass)
           .setJavaArguments(getArgs())
           .setExposedPorts(getExposedPorts())
           .setLabels(getLabels())

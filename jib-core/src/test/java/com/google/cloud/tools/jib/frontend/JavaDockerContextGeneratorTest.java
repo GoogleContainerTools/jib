@@ -151,8 +151,9 @@ public class JavaDockerContextGeneratorTest {
     String dockerfile =
         new JavaDockerContextGenerator(mockJavaLayerConfigurations)
             .setBaseImage(expectedBaseImage)
-            .setJvmFlags(expectedJvmFlags)
-            .setMainClass(expectedMainClass)
+            .setEntrypoint(
+                JavaEntrypointConstructor.makeDefaultEntrypoint(
+                    expectedJvmFlags, expectedMainClass))
             .setJavaArguments(expectedJavaArguments)
             .setExposedPorts(exposedPorts)
             .setLabels(expectedLabels)
@@ -161,44 +162,6 @@ public class JavaDockerContextGeneratorTest {
     // Need to split/rejoin the string here to avoid cross-platform troubles
     List<String> sampleDockerfile =
         Resources.readLines(Resources.getResource("sampleDockerfile"), StandardCharsets.UTF_8);
-    Assert.assertEquals(String.join("\n", sampleDockerfile), dockerfile);
-  }
-
-  @Test
-  public void testMakeDockerfileWithEntrypoint() throws IOException {
-    String expectedBaseImage = "somebaseimage";
-    List<String> expectedEntrypoint = Arrays.asList("command", "argument");
-    List<String> expectedJavaArguments = Arrays.asList("arg1", "arg2");
-    // specifying an entrypoint should cause jvmFlags and mainClass to be ignored
-    List<String> ignoredJvmFlags = Arrays.asList("-flag", "another\"Flag");
-    String ignoredMainClass = "SomeMainClass";
-
-    Mockito.when(mockJavaLayerConfigurations.getDependenciesLayerEntry())
-        .thenReturn(
-            new LayerEntry(ImmutableList.of(Paths.get("ignored")), EXPECTED_DEPENDENCIES_PATH));
-    Mockito.when(mockJavaLayerConfigurations.getSnapshotDependenciesLayerEntry())
-        .thenReturn(
-            new LayerEntry(ImmutableList.of(Paths.get("ignored")), EXPECTED_DEPENDENCIES_PATH));
-    Mockito.when(mockJavaLayerConfigurations.getResourcesLayerEntry())
-        .thenReturn(
-            new LayerEntry(ImmutableList.of(Paths.get("ignored")), EXPECTED_RESOURCES_PATH));
-    Mockito.when(mockJavaLayerConfigurations.getClassesLayerEntry())
-        .thenReturn(new LayerEntry(ImmutableList.of(Paths.get("ignored")), EXPECTED_CLASSES_PATH));
-    Mockito.when(mockJavaLayerConfigurations.getExtraFilesLayerEntry())
-        .thenReturn(new LayerEntry(ImmutableList.of(Paths.get("ignored")), "/"));
-    String dockerfile =
-        new JavaDockerContextGenerator(mockJavaLayerConfigurations)
-            .setBaseImage(expectedBaseImage)
-            .setEntrypoint(expectedEntrypoint)
-            .setJvmFlags(ignoredJvmFlags)
-            .setMainClass(ignoredMainClass)
-            .setJavaArguments(expectedJavaArguments)
-            .makeDockerfile();
-
-    // Need to split/rejoin the string here to avoid cross-platform troubles
-    List<String> sampleDockerfile =
-        Resources.readLines(
-            Resources.getResource("sampleDockerfileWithEntrypoint"), StandardCharsets.UTF_8);
     Assert.assertEquals(String.join("\n", sampleDockerfile), dockerfile);
   }
 }

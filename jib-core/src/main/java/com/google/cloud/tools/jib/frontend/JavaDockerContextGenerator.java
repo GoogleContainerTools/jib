@@ -102,8 +102,6 @@ public class JavaDockerContextGenerator {
 
   @Nullable private String baseImage;
   private List<String> entrypoint = Collections.emptyList();
-  private List<String> jvmFlags = Collections.emptyList();
-  private String mainClass = "";
   private List<String> javaArguments = Collections.emptyList();
   private List<String> exposedPorts = Collections.emptyList();
   private Map<String, String> labels = Collections.emptyMap();
@@ -151,36 +149,13 @@ public class JavaDockerContextGenerator {
   }
 
   /**
-   * Sets the entrypoint to be used as the {@code ENTRYPOINT}. If not empty, then overrides the
-   * {@link #setJvmFlags(List) jvmFlags} and {@link #setMainClass(String) mainclass}.
+   * Sets the entrypoint to be used as the {@code ENTRYPOINT}.
    *
    * @param entrypoint the entrypoint.
    * @return this
    */
   public JavaDockerContextGenerator setEntrypoint(List<String> entrypoint) {
     this.entrypoint = entrypoint;
-    return this;
-  }
-
-  /**
-   * Sets the JVM flags used in the {@code ENTRYPOINT}.
-   *
-   * @param jvmFlags the jvm flags.
-   * @return this
-   */
-  public JavaDockerContextGenerator setJvmFlags(List<String> jvmFlags) {
-    this.jvmFlags = jvmFlags;
-    return this;
-  }
-
-  /**
-   * Sets the main class used in the {@code ENTRYPOINT}.
-   *
-   * @param mainClass the name of the main class.
-   * @return this
-   */
-  public JavaDockerContextGenerator setMainClass(String mainClass) {
-    this.mainClass = mainClass;
     return this;
   }
 
@@ -304,11 +279,7 @@ public class JavaDockerContextGenerator {
 
     dockerfile
         .append("\nENTRYPOINT ")
-        .append(
-            objectMapper.writeValueAsString(
-                !entrypoint.isEmpty()
-                    ? entrypoint
-                    : JavaEntrypointConstructor.makeDefaultEntrypoint(jvmFlags, mainClass)))
+        .append(objectMapper.writeValueAsString(entrypoint))
         .append("\nCMD ")
         .append(objectMapper.writeValueAsString(javaArguments));
     return dockerfile.toString();

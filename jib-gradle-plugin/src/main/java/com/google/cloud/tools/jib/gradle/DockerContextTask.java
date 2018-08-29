@@ -18,12 +18,14 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaDockerContextGenerator;
+import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.base.Preconditions;
 import com.google.common.io.InsecureRecursiveDeleteException;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.List;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -107,8 +109,16 @@ public class DockerContextTask extends DefaultTask {
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(
             getProject(), gradleJibLogger, jibExtension.getExtraDirectoryPath());
-    String mainClass = gradleProjectProperties.getMainClass(jibExtension);
     String targetDir = getTargetDir();
+
+    List<String> entrypoint = jibExtension.getContainer().getEntrypoint();
+    if (entrypoint.isEmpty()) {
+      String mainClass = gradleProjectProperties.getMainClass(jibExtension);
+      entrypoint =
+          JavaEntrypointConstructor.makeDefaultEntrypoint(jibExtension.getJvmFlags(), mainClass);
+    } else if (jibExtension.getMainClass() != null || !jibExtension.getJvmFlags().isEmpty()) {
+      gradleJibLogger.warn("mainClass and jvmFlags are ignored when entrypoint is specified");
+    }
 
     try {
       // Validate port input, but don't save the output because we don't want the ranges expanded
@@ -117,9 +127,7 @@ public class DockerContextTask extends DefaultTask {
 
       new JavaDockerContextGenerator(gradleProjectProperties.getJavaLayerConfigurations())
           .setBaseImage(jibExtension.getBaseImage())
-          .setEntrypoint(jibExtension.getContainer().getEntrypoint())
-          .setJvmFlags(jibExtension.getJvmFlags())
-          .setMainClass(mainClass)
+          .setEntrypoint(entrypoint)
           .setJavaArguments(jibExtension.getArgs())
           .setExposedPorts(jibExtension.getExposedPorts())
           .setLabels(jibExtension.getLabels())
