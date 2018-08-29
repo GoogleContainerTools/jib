@@ -16,6 +16,13 @@ docker-credential-gcr configure-docker
 docker stop $(docker ps --all --quiet) || true
 docker kill $(docker ps --all --quiet) || true
 
+# Because Docker itself is running in a VM in macOS, its clock is skewed, causing certificates to be invalid.
+# The fix is to restart Docker.
+osascript -e 'quit app "Docker"'
+open --background -a Docker
+# Waits for docker to finish coming up.
+while ! docker system info > /dev/null 2>&1; do sleep 1; done
+
 # Sets the integration testing project.
 export JIB_INTEGRATION_TESTING_PROJECT=jib-integration-testing
 
