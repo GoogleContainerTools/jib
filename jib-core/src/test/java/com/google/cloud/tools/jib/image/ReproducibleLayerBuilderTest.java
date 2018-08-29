@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
-import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Resources;
@@ -35,6 +34,7 @@ import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileTime;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.hamcrest.CoreMatchers;
@@ -72,7 +72,52 @@ public class ReproducibleLayerBuilderTest {
     Assert.assertEquals(expectedString, extractedString);
   }
 
+  /**
+   * Verifies that the next {@link TarArchiveEntry} in the {@link TarArchiveInputStream} is a
+   * directory with correct permissions.
+   *
+   * @param tarArchiveInputStream the {@link TarArchiveInputStream} to read from
+   * @param expectedExtractionPath the expected extraction path of the next entry
+   * @throws IOException if an I/O exception occurs
+   */
+  private static void verifyNextTarArchiveEntryIsDirectory(
+      TarArchiveInputStream tarArchiveInputStream, String expectedExtractionPath)
+      throws IOException {
+    TarArchiveEntry extractionPathEntry = tarArchiveInputStream.getNextTarEntry();
+    Assert.assertEquals(expectedExtractionPath, extractionPathEntry.getName());
+    Assert.assertTrue(extractionPathEntry.isDirectory());
+    Assert.assertEquals(TarArchiveEntry.DEFAULT_DIR_MODE, extractionPathEntry.getMode());
+  }
+
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+  @Test
+  public void testBuildAsTarArchiveEntries() throws URISyntaxException, IOException {
+    Path testDirectory = Paths.get(Resources.getResource("layer").toURI());
+    Path testFile = Paths.get(Resources.getResource("fileA").toURI());
+
+    List<TarArchiveEntry> tarArchiveEntries =
+        ReproducibleLayerBuilder.buildAsTarArchiveEntries(
+            new LayerEntry(ImmutableList.of(testDirectory, testFile), "/app/"));
+
+    List<TarArchiveEntry> expectedTarArchiveEntries =
+        ImmutableList.of(
+            new TarArchiveEntry(
+                testDirectory.resolve("a").resolve("b").resolve("bar").toFile(),
+                "/app/layer/a/b/bar"),
+            new TarArchiveEntry(
+                testDirectory.resolve("c").resolve("cat").toFile(), "/app/layer/c/cat"),
+            new TarArchiveEntry(testDirectory.resolve("foo").toFile(), "/app/layer/foo"),
+            new TarArchiveEntry(testFile.toFile(), "/app/fileA"));
+
+    Assert.assertEquals(expectedTarArchiveEntries.size(), tarArchiveEntries.size());
+    for (int entryIndex = 0; entryIndex < expectedTarArchiveEntries.size(); entryIndex++) {
+      TarArchiveEntry expectedTarArchiveEntry = expectedTarArchiveEntries.get(entryIndex);
+      TarArchiveEntry tarArchiveEntry = tarArchiveEntries.get(entryIndex);
+      Assert.assertEquals(expectedTarArchiveEntry.getFile(), tarArchiveEntry.getFile());
+      Assert.assertEquals(expectedTarArchiveEntry.getName(), tarArchiveEntry.getName());
+    }
+  }
 
   @Test
   public void testBuild() throws URISyntaxException, IOException {
@@ -95,37 +140,27 @@ public class ReproducibleLayerBuilderTest {
     // Reads the file back.
     try (TarArchiveInputStream tarArchiveInputStream =
         new TarArchiveInputStream(Files.newInputStream(temporaryFile))) {
-      // Verifies that blobA was added.
+      verifyNextTarArchiveEntryIsDirectory(tarArchiveInputStream, "extract/");
+      verifyNextTarArchiveEntryIsDirectory(tarArchiveInputStream, "extract/here/");
+      verifyNextTarArchiveEntryIsDirectory(tarArchiveInputStream, "extract/here/apple/");
       verifyNextTarArchiveEntry(tarArchiveInputStream, "extract/here/apple/blobA", blobA);
-
-      // Verifies that all the files have been added to the tarball stream.
-      ImmutableList<Path> layerDirectoryPaths =
-          new DirectoryWalker(layerDirectory).filter(path -> !path.equals(layerDirectory)).walk();
-      for (Path path : layerDirectoryPaths) {
-        TarArchiveEntry header = tarArchiveInputStream.getNextTarEntry();
-
-        StringBuilder expectedExtractionPath = new StringBuilder("extract/here/apple");
-        for (Path pathComponent : layerDirectory.getParent().relativize(path)) {
-          expectedExtractionPath.append("/").append(pathComponent);
-        }
-        // Check path-equality because there might be an appended backslash in the header
-        // filename.
-        Assert.assertEquals(
-            Paths.get(expectedExtractionPath.toString()), Paths.get(header.getName()));
-
-        // If is a normal file, checks that the file contents match.
-        if (Files.isRegularFile(path)) {
-          String expectedFileString = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
-
-          String extractedFileString =
-              CharStreams.toString(
-                  new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
-
-          Assert.assertEquals(expectedFileString, extractedFileString);
-        }
-      }
-
-      // Verifies that blobA was added to the other location.
+      verifyNextTarArchiveEntryIsDirectory(tarArchiveInputStream, "extract/here/apple/layer/");
+      verifyNextTarArchiveEntryIsDirectory(tarArchiveInputStream, "extract/here/apple/layer/a/");
+      verifyNextTarArchiveEntryIsDirectory(tarArchiveInputStream, "extract/here/apple/layer/a/b/");
+      verifyNextTarArchiveEntry(
+          tarArchiveInputStream,
+          "extract/here/apple/layer/a/b/bar",
+          Paths.get(Resources.getResource("layer/a/b/bar").toURI()));
+      verifyNextTarArchiveEntryIsDirectory(tarArchiveInputStream, "extract/here/apple/layer/c/");
+      verifyNextTarArchiveEntry(
+          tarArchiveInputStream,
+          "extract/here/apple/layer/c/cat",
+          Paths.get(Resources.getResource("layer/c/cat").toURI()));
+      verifyNextTarArchiveEntry(
+          tarArchiveInputStream,
+          "extract/here/apple/layer/foo",
+          Paths.get(Resources.getResource("layer/foo").toURI()));
+      verifyNextTarArchiveEntryIsDirectory(tarArchiveInputStream, "extract/here/banana/");
       verifyNextTarArchiveEntry(tarArchiveInputStream, "extract/here/banana/blobA", blobA);
     }
   }

@@ -22,10 +22,10 @@ import com.google.common.base.Preconditions;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
-/** Default implementation of {@link CacheReadEntry}. */
-public class DefaultCacheReadEntry implements CacheReadEntry {
+/** Default implementation of {@link CacheEntry}. */
+public class DefaultCacheEntry implements CacheEntry {
 
-  /** Builds a {@link CacheReadEntry}. */
+  /** Builds a {@link CacheEntry}. */
   public static class Builder {
 
     @Nullable private DescriptorDigest layerDigest;
@@ -61,8 +61,8 @@ public class DefaultCacheReadEntry implements CacheReadEntry {
       return this;
     }
 
-    public CacheReadEntry build() {
-      return new DefaultCacheReadEntry(
+    public CacheEntry build() {
+      return new DefaultCacheEntry(
           Preconditions.checkNotNull(layerDigest, "layerDigest required"),
           Preconditions.checkNotNull(layerDiffId, "layerDiffId required"),
           layerSize,
@@ -72,7 +72,7 @@ public class DefaultCacheReadEntry implements CacheReadEntry {
   }
 
   /**
-   * Creates a new {@link Builder} for a {@link CacheReadEntry}.
+   * Creates a new {@link Builder} for a {@link CacheEntry}.
    *
    * @return the new {@link Builder}
    */
@@ -86,7 +86,7 @@ public class DefaultCacheReadEntry implements CacheReadEntry {
   private final Blob layerBlob;
   @Nullable private final Blob metadataBlob;
 
-  private DefaultCacheReadEntry(
+  private DefaultCacheEntry(
       DescriptorDigest layerDigest,
       DescriptorDigest layerDiffId,
       long layerSize,
