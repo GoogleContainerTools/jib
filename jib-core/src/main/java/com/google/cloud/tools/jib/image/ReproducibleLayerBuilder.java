@@ -109,13 +109,11 @@ public class ReproducibleLayerBuilder {
                   tarArchiveEntries.add(
                       new TarArchiveEntry(path.toFile(), extractionPath.toString()));
                 });
-
       } else {
+        Path extractionPath =
+            Paths.get(layerEntry.getExtractionPath()).resolve(sourceFile.getFileName());
         TarArchiveEntry tarArchiveEntry =
-            new TarArchiveEntry(
-                sourceFile.toFile(),
-                Paths.get(layerEntry.getExtractionPath(), sourceFile.getFileName().toString())
-                    .toString());
+            new TarArchiveEntry(sourceFile.toFile(), extractionPath.toString());
         tarArchiveEntries.add(tarArchiveEntry);
       }
     }
