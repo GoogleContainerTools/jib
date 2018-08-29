@@ -24,7 +24,7 @@ import java.util.Optional;
  * Represents a cache entry for a layer stored in the cache. <b>Implementations must be
  * immutable.</b>
  */
-public interface CacheReadEntry {
+public interface CacheEntry {
 
   /**
    * Gets the digest of the layer.
@@ -58,8 +58,8 @@ public interface CacheReadEntry {
 
   /**
    * Gets the optional metadata blob for the layer. The metadata is in the same format as supplied
-   * when writing to the cache with {@link CacheWriteEntry}. This {@link Blob} should be able to be
-   * used multiple times.
+   * when writing to the cache with {@link CacheWrite}. This {@link Blob} should be able to be used
+   * multiple times.
    *
    * @return the metadata {@link Blob}
    */
