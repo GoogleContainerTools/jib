@@ -44,16 +44,13 @@ For more information, see [steps 4-6 of the Kubernetes Engine deployment tutoria
 
 #### Where is bash?
 
-By default, Jib uses [`distroless/java`](https://github.com/GoogleContainerTools/distroless) as the base image. Distroless images contain only runtime dependencies. They do not contain package managers, shells or any other programs you would expect to find in a standard Linux distribution.
+By default, Jib uses [`distroless/java`](https://github.com/GoogleContainerTools/distroless/tree/master/java) as the base image. Visit the [distroless project](https://github.com/GoogleContainerTools/distroless#distroless-docker-images) for more information about distroless images.
 
 If you would like to include a shell for debugging, set the base image to `gcr.io/distroless/java:debug` instead. The shell will be located at `/busybox/sh`.
 
 <details>
-<summary>Base image configuration examples</summary>
+<summary>Configuring a base image in Maven</summary>
 <p>
-
-#### Maven
-
 In [`jib-maven-plugin`](../jib-maven-plugin), you can use the `gcr.io/distroless/java:debug` base image by adding the following configuration:
 
 ```xml
@@ -63,9 +60,12 @@ In [`jib-maven-plugin`](../jib-maven-plugin), you can use the `gcr.io/distroless
   </from>
 </configuration>
 ```
+</p>
+</details><br />
 
-#### Gradle
-
+<details>
+<summary>Configuring a base image in Gradle</summary>
+<p>
 In [`jib-gradle-plugin`](../jib-gradle-plugin), you can use the `gcr.io/distroless/java:debug` base image by adding the following configuration:
 
 ```groovy
