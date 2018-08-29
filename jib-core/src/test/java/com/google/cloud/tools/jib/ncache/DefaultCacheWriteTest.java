@@ -25,28 +25,28 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link DefaultCacheWriteEntry}. */
+/** Tests for {@link DefaultCacheWrite}. */
 @RunWith(MockitoJUnitRunner.class)
-public class DefaultCacheWriteEntryTest {
+public class DefaultCacheWriteTest {
 
   @Mock private DescriptorDigest mockSelector;
 
   @Test
   public void testLayerOnly() throws IOException {
-    CacheWriteEntry cacheWriteEntry = DefaultCacheWriteEntry.layerOnly(Blobs.from("layerBlob"));
-    Assert.assertEquals("layerBlob", Blobs.writeToString(cacheWriteEntry.getLayerBlob()));
-    Assert.assertFalse(cacheWriteEntry.getSelector().isPresent());
-    Assert.assertFalse(cacheWriteEntry.getMetadataBlob().isPresent());
+    CacheWrite cacheWrite = DefaultCacheWrite.layerOnly(Blobs.from("layerBlob"));
+    Assert.assertEquals("layerBlob", Blobs.writeToString(cacheWrite.getLayerBlob()));
+    Assert.assertFalse(cacheWrite.getSelector().isPresent());
+    Assert.assertFalse(cacheWrite.getMetadataBlob().isPresent());
   }
 
   @Test
   public void testWithSelectorAndMetadata() throws IOException {
-    CacheWriteEntry cacheWriteEntry =
-        DefaultCacheWriteEntry.withSelectorAndMetadata(
+    CacheWrite cacheWrite =
+        DefaultCacheWrite.withSelectorAndMetadata(
             Blobs.from("layerBlob"), mockSelector, Blobs.from("metadataBlob"));
-    Assert.assertEquals("layerBlob", Blobs.writeToString(cacheWriteEntry.getLayerBlob()));
-    Assert.assertEquals(mockSelector, cacheWriteEntry.getSelector().orElse(null));
+    Assert.assertEquals("layerBlob", Blobs.writeToString(cacheWrite.getLayerBlob()));
+    Assert.assertEquals(mockSelector, cacheWrite.getSelector().orElse(null));
     Assert.assertEquals(
-        "metadataBlob", Blobs.writeToString(cacheWriteEntry.getMetadataBlob().orElse(null)));
+        "metadataBlob", Blobs.writeToString(cacheWrite.getMetadataBlob().orElse(null)));
   }
 }

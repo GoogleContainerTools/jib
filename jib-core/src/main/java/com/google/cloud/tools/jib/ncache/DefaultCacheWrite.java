@@ -21,38 +21,38 @@ import com.google.cloud.tools.jib.image.DescriptorDigest;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
-/** A default implementation of {@link CacheWriteEntry}. */
-public class DefaultCacheWriteEntry implements CacheWriteEntry {
+/** A default implementation of {@link CacheWrite}. */
+public class DefaultCacheWrite implements CacheWrite {
 
   /**
-   * Constructs a {@link CacheWriteEntry} with only the layer {@link Blob}.
+   * Constructs a {@link CacheWrite} with only the layer {@link Blob}.
    *
    * @param layerBlob the layer {@link Blob}
-   * @return the new {@link CacheWriteEntry}
+   * @return the new {@link CacheWrite}
    */
-  public static CacheWriteEntry layerOnly(Blob layerBlob) {
-    return new DefaultCacheWriteEntry(layerBlob, null, null);
+  public static CacheWrite layerOnly(Blob layerBlob) {
+    return new DefaultCacheWrite(layerBlob, null, null);
   }
 
   /**
-   * Constructs a {@link CacheWriteEntry} with a layer {@link Blob}, an additional selector digest,
-   * and a metadata {@link Blob}.
+   * Constructs a {@link CacheWrite} with a layer {@link Blob}, an additional selector digest, and a
+   * metadata {@link Blob}.
    *
    * @param layerBlob the layer {@link Blob}
    * @param selector the selector digest
    * @param metadataBlob the metadata {@link Blob}
-   * @return the new {@link CacheWriteEntry}
+   * @return the new {@link CacheWrite}
    */
-  public static CacheWriteEntry withSelectorAndMetadata(
+  public static CacheWrite withSelectorAndMetadata(
       Blob layerBlob, DescriptorDigest selector, Blob metadataBlob) {
-    return new DefaultCacheWriteEntry(layerBlob, selector, metadataBlob);
+    return new DefaultCacheWrite(layerBlob, selector, metadataBlob);
   }
 
   private final Blob layerBlob;
   @Nullable private final DescriptorDigest selector;
   @Nullable private final Blob metadataBlob;
 
-  private DefaultCacheWriteEntry(
+  private DefaultCacheWrite(
       Blob layerBlob, @Nullable DescriptorDigest selector, @Nullable Blob metadataBlob) {
     this.layerBlob = layerBlob;
     this.selector = selector;
