@@ -160,4 +160,9 @@ public class HistoryEntry implements JsonTemplate {
   public int hashCode() {
     return Objects.hash(author, creationTimestamp, createdBy, comment, emptyLayer);
   }
+
+  @Override
+  public String toString() {
+    return createdBy == null ? "" : createdBy;
+  }
 }
