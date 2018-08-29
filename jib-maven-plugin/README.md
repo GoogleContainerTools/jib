@@ -296,10 +296,9 @@ In this configuration, the image:
     <image>gcr.io/distroless/java:debug</image>
   </from>
   <container>
-    <!-- Maven doesn't check the names of child tags --> 
     <entrypoint>
-      <executable>/busybox/sh</executable>
-      <script>/bin/start.sh</script>
+      <arg>/busybox/sh</arg>
+      <arg>/bin/start.sh</arg>
     </entrypoint>
   </container>
 </configuration>
