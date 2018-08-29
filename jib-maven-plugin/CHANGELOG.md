@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 
 - `<container><labels>` configuration parameter for configuring labels ([#751](https://github.com/GoogleContainerTools/jib/issues/751))
 - `history` to layer metadata ([#875](https://github.com/GoogleContainerTools/jib/issues/875))
+- Propagates working directory from the base image
 
 ### Changed
 

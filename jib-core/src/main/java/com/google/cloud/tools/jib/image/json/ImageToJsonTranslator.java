@@ -138,6 +138,9 @@ public class ImageToJsonTranslator {
     // Sets the labels.
     template.setContainerLabels(image.getLabels());
 
+    // Sets the working directory.
+    template.setContainerWorkingDir(image.getWorkingDirectory());
+
     // Serializes into JSON.
     return JsonTemplateMapper.toBlob(template);
   }

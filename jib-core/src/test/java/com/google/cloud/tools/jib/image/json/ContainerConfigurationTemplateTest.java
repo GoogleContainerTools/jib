@@ -60,6 +60,7 @@ public class ContainerConfigurationTemplateTest {
             "3000/udp",
             ImmutableMap.of()));
     containerConfigJson.setContainerLabels(ImmutableMap.of("key1", "value1", "key2", "value2"));
+    containerConfigJson.setContainerWorkingDir("/some/workspace");
 
     containerConfigJson.addLayerDiffId(
         DescriptorDigest.fromDigest(
@@ -104,6 +105,7 @@ public class ContainerConfigurationTemplateTest {
     Assert.assertEquals(
         ImmutableMap.of("key1", "value1", "key2", "value2"),
         containerConfigJson.getContainerLabels());
+    Assert.assertEquals("/some/workspace", containerConfigJson.getContainerWorkingDir());
     Assert.assertEquals(
         DescriptorDigest.fromDigest(
             "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad"),

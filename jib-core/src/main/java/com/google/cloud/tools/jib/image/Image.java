@@ -40,6 +40,7 @@ public class Image<T extends Layer> {
     @Nullable private ImmutableList<String> entrypoint;
     @Nullable private ImmutableList<String> javaArguments;
     @Nullable private ImmutableList<Port> exposedPorts;
+    @Nullable private String workingDirectory;
 
     /**
      * Sets the image creation time.
@@ -135,6 +136,11 @@ public class Image<T extends Layer> {
       return this;
     }
 
+    public Builder<T> setWorkingDirectory(@Nullable String workingDirectory) {
+      this.workingDirectory = workingDirectory;
+      return this;
+    }
+
     /**
      * Adds a layer to the image.
      *
@@ -167,7 +173,8 @@ public class Image<T extends Layer> {
           entrypoint,
           javaArguments,
           exposedPorts,
-          labelsBuilder.build());
+          labelsBuilder.build(),
+          workingDirectory);
     }
   }
 
@@ -199,6 +206,9 @@ public class Image<T extends Layer> {
   /** Labels on the container configuration */
   @Nullable private final ImmutableMap<String, String> labels;
 
+  /** Working directory on the container configuration */
+  @Nullable private final String workingDirectory;
+
   private Image(
       @Nullable Instant created,
       ImageLayers<T> layers,
@@ -207,7 +217,8 @@ public class Image<T extends Layer> {
       @Nullable ImmutableList<String> entrypoint,
       @Nullable ImmutableList<String> javaArguments,
       @Nullable ImmutableList<Port> exposedPorts,
-      @Nullable ImmutableMap<String, String> labels) {
+      @Nullable ImmutableMap<String, String> labels,
+      @Nullable String workingDirectory) {
     this.created = created;
     this.layers = layers;
     this.history = history;
@@ -216,6 +227,7 @@ public class Image<T extends Layer> {
     this.javaArguments = javaArguments;
     this.exposedPorts = exposedPorts;
     this.labels = labels;
+    this.workingDirectory = workingDirectory;
   }
 
   @Nullable
@@ -246,6 +258,11 @@ public class Image<T extends Layer> {
   @Nullable
   public ImmutableMap<String, String> getLabels() {
     return labels;
+  }
+
+  @Nullable
+  public String getWorkingDirectory() {
+    return workingDirectory;
   }
 
   public ImmutableList<T> getLayers() {
