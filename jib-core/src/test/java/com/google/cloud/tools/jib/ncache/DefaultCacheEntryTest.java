@@ -26,9 +26,9 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link DefaultCacheReadEntry}. */
+/** Tests for {@link DefaultCacheEntry}. */
 @RunWith(MockitoJUnitRunner.class)
-public class DefaultCacheReadEntryTest {
+public class DefaultCacheEntryTest {
 
   @Mock private DescriptorDigest mockLayerDigest;
   @Mock private DescriptorDigest mockLayerDiffId;
@@ -36,7 +36,7 @@ public class DefaultCacheReadEntryTest {
   @Test
   public void testBuilder_fail() {
     try {
-      DefaultCacheReadEntry.builder().build();
+      DefaultCacheEntry.builder().build();
       Assert.fail("missing required");
 
     } catch (NullPointerException ex) {
@@ -44,7 +44,7 @@ public class DefaultCacheReadEntryTest {
     }
 
     try {
-      DefaultCacheReadEntry.builder().setLayerDigest(mockLayerDigest).build();
+      DefaultCacheEntry.builder().setLayerDigest(mockLayerDigest).build();
       Assert.fail("missing required");
 
     } catch (NullPointerException ex) {
@@ -52,7 +52,7 @@ public class DefaultCacheReadEntryTest {
     }
 
     try {
-      DefaultCacheReadEntry.builder()
+      DefaultCacheEntry.builder()
           .setLayerDigest(mockLayerDigest)
           .setLayerDiffId(mockLayerDiffId)
           .build();
@@ -65,35 +65,35 @@ public class DefaultCacheReadEntryTest {
 
   @Test
   public void testBuilder_noMetadataBlob() throws IOException {
-    CacheReadEntry cacheReadEntry =
-        DefaultCacheReadEntry.builder()
+    CacheEntry cacheEntry =
+        DefaultCacheEntry.builder()
             .setLayerDigest(mockLayerDigest)
             .setLayerDiffId(mockLayerDiffId)
             .setLayerSize(1337)
             .setLayerBlob(Blobs.from("layerBlob"))
             .build();
-    Assert.assertEquals(mockLayerDigest, cacheReadEntry.getLayerDigest());
-    Assert.assertEquals(mockLayerDiffId, cacheReadEntry.getLayerDiffId());
-    Assert.assertEquals(1337, cacheReadEntry.getLayerSize());
-    Assert.assertEquals("layerBlob", Blobs.writeToString(cacheReadEntry.getLayerBlob()));
-    Assert.assertFalse(cacheReadEntry.getMetadataBlob().isPresent());
+    Assert.assertEquals(mockLayerDigest, cacheEntry.getLayerDigest());
+    Assert.assertEquals(mockLayerDiffId, cacheEntry.getLayerDiffId());
+    Assert.assertEquals(1337, cacheEntry.getLayerSize());
+    Assert.assertEquals("layerBlob", Blobs.writeToString(cacheEntry.getLayerBlob()));
+    Assert.assertFalse(cacheEntry.getMetadataBlob().isPresent());
   }
 
   @Test
   public void testBuilder_withMetadataBlob() throws IOException {
-    CacheReadEntry cacheReadEntry =
-        DefaultCacheReadEntry.builder()
+    CacheEntry cacheEntry =
+        DefaultCacheEntry.builder()
             .setLayerDigest(mockLayerDigest)
             .setLayerDiffId(mockLayerDiffId)
             .setLayerSize(1337)
             .setLayerBlob(Blobs.from("layerBlob"))
             .setMetadataBlob(Blobs.from("metadataBlob"))
             .build();
-    Assert.assertEquals(mockLayerDigest, cacheReadEntry.getLayerDigest());
-    Assert.assertEquals(mockLayerDiffId, cacheReadEntry.getLayerDiffId());
-    Assert.assertEquals(1337, cacheReadEntry.getLayerSize());
-    Assert.assertEquals("layerBlob", Blobs.writeToString(cacheReadEntry.getLayerBlob()));
+    Assert.assertEquals(mockLayerDigest, cacheEntry.getLayerDigest());
+    Assert.assertEquals(mockLayerDiffId, cacheEntry.getLayerDiffId());
+    Assert.assertEquals(1337, cacheEntry.getLayerSize());
+    Assert.assertEquals("layerBlob", Blobs.writeToString(cacheEntry.getLayerBlob()));
     Assert.assertEquals(
-        "metadataBlob", Blobs.writeToString(cacheReadEntry.getMetadataBlob().orElse(null)));
+        "metadataBlob", Blobs.writeToString(cacheEntry.getMetadataBlob().orElse(null)));
   }
 }
