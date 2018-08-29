@@ -112,9 +112,9 @@ public class Image<T extends Layer> {
     }
 
     /**
-     * Add items to the "Labels" field in the container configuration.
+     * Adds items to the "Labels" field in the container configuration.
      *
-     * @param labels that map of labels to add
+     * @param labels the map of labels to add
      * @return this
      */
     public Builder<T> addLabels(@Nullable Map<String, String> labels) {
@@ -125,9 +125,9 @@ public class Image<T extends Layer> {
     }
 
     /**
-     * A an item to the "Labels" field in the container configuration.
+     * Adds an item to the "Labels" field in the container configuration.
      *
-     * @param name that name of the label
+     * @param name the name of the label
      * @param value the value of the label
      * @return this
      */
@@ -136,6 +136,12 @@ public class Image<T extends Layer> {
       return this;
     }
 
+    /**
+     * Sets the item in the "WorkingDir" field in the container configuration.
+     *
+     * @param workingDirectory the working directory
+     * @return this
+     */
     public Builder<T> setWorkingDirectory(@Nullable String workingDirectory) {
       this.workingDirectory = workingDirectory;
       return this;
