@@ -77,4 +77,11 @@ public class DefaultCacheStorageFilesTest {
             "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"),
         testDefaultCacheStorageFiles.getSelectorFile(selector));
   }
+
+  @Test
+  public void testGetLayersDirectory() {
+    Assert.assertEquals(
+        Paths.get("cache", "directory", "layers"),
+        testDefaultCacheStorageFiles.getLayersDirectory());
+  }
 }
