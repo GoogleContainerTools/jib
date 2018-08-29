@@ -58,9 +58,11 @@ public interface CacheStorage {
    *
    * @param layerDigest the layer digest
    * @return the {@link CacheEntry} referenced by the layer digest
+   * @throws CacheCorruptedException if the cache was found to be corrupted
    * @throws IOException if an I/O exception occurs
    */
-  Optional<CacheEntry> retrieve(DescriptorDigest layerDigest) throws IOException;
+  Optional<CacheEntry> retrieve(DescriptorDigest layerDigest)
+      throws IOException, CacheCorruptedException;
 
   /**
    * Queries for layer digests that can be selected with the {@code selector}.

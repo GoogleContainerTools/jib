@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.ncache;
 
+import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -23,6 +24,7 @@ import java.nio.file.Path;
 import java.security.DigestException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -57,5 +59,47 @@ class DefaultCacheStorageReader {
       }
       return layerDigests;
     }
+  }
+
+  /**
+   * Retrieves the {@link CacheEntry} for the layer with digest {@code layerDigest}.
+   *
+   * @param layerDigest the layer digest
+   * @return the {@link CacheEntry} referenced by the layer digest
+   * @throws CacheCorruptedException if the cache was found to be corrupted
+   * @throws IOException if an I/O exception occurs
+   */
+  Optional<CacheEntry> retrieve(DescriptorDigest layerDigest)
+      throws IOException, CacheCorruptedException {
+    Path layerDirectory = defaultCacheStorageFiles.getLayerDirectory(layerDigest);
+    if (!Files.exists(layerDirectory)) {
+      return Optional.empty();
+    }
+
+    DefaultCacheEntry.Builder cacheEntryBuilder =
+        DefaultCacheEntry.builder().setLayerDigest(layerDigest);
+
+    try (Stream<Path> filesInLayerDirectory = Files.list(layerDirectory)) {
+      for (Path fileInLayerDirectory : filesInLayerDirectory.collect(Collectors.toList())) {
+        if (DefaultCacheStorageFiles.isLayerFile(fileInLayerDirectory)) {
+          if (cacheEntryBuilder.getLayerBlob().isPresent()) {
+            throw new CacheCorruptedException(
+                "Multiple layer files found for layer with digest "
+                    + layerDigest.getHash()
+                    + " in directory: "
+                    + layerDirectory);
+          }
+          cacheEntryBuilder
+              .setLayerBlob(Blobs.from(fileInLayerDirectory))
+              .setLayerDiffId(DefaultCacheStorageFiles.getDiffId(fileInLayerDirectory))
+              .setLayerSize(Files.size(fileInLayerDirectory));
+
+        } else if (DefaultCacheStorageFiles.isMetadataFile(fileInLayerDirectory)) {
+          cacheEntryBuilder.setMetadataBlob(Blobs.from(fileInLayerDirectory));
+        }
+      }
+    }
+
+    return Optional.of(cacheEntryBuilder.build());
   }
 }

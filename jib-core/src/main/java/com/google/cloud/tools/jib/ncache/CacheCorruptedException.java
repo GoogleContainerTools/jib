@@ -22,4 +22,8 @@ public class CacheCorruptedException extends Exception {
   CacheCorruptedException(String message, Throwable cause) {
     super(message, cause);
   }
+
+  CacheCorruptedException(String message) {
+    super(message);
+  }
 }

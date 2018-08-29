@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.ncache;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import java.nio.file.Paths;
 import java.security.DigestException;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -27,6 +28,65 @@ public class DefaultCacheStorageFilesTest {
 
   private static final DefaultCacheStorageFiles testDefaultCacheStorageFiles =
       new DefaultCacheStorageFiles(Paths.get("cache/directory"));
+
+  @Test
+  public void testIsLayerFile() {
+    Assert.assertTrue(DefaultCacheStorageFiles.isLayerFile(Paths.get(".layer")));
+    Assert.assertTrue(
+        DefaultCacheStorageFiles.isLayerFile(Paths.get("is", "layer", "file", "layerfile.layer")));
+    Assert.assertFalse(DefaultCacheStorageFiles.isLayerFile(Paths.get("is.not.layer.file")));
+  }
+
+  @Test
+  public void testIsMetadataFile() {
+    Assert.assertTrue(DefaultCacheStorageFiles.isMetadataFile(Paths.get("metadata")));
+    Assert.assertTrue(DefaultCacheStorageFiles.isMetadataFile(Paths.get("is", "metadata")));
+    Assert.assertFalse(DefaultCacheStorageFiles.isMetadataFile(Paths.get("not.metadata")));
+  }
+
+  @Test
+  public void testGetDiffId() throws DigestException, CacheCorruptedException {
+    Assert.assertEquals(
+        DescriptorDigest.fromHash(
+            "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"),
+        DefaultCacheStorageFiles.getDiffId(
+            Paths.get(
+                "layer",
+                "file",
+                "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.layer")));
+    Assert.assertEquals(
+        DescriptorDigest.fromHash(
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+        DefaultCacheStorageFiles.getDiffId(
+            Paths.get("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.layer")));
+  }
+
+  @Test
+  public void testGetDiffId_corrupted() {
+    try {
+      DefaultCacheStorageFiles.getDiffId(Paths.get("not long enough"));
+      Assert.fail("Should have thrown CacheCorruptedException");
+
+    } catch (CacheCorruptedException ex) {
+      Assert.assertEquals(
+          "Layer file did not include valid diff ID: not long enough", ex.getMessage());
+      Assert.assertThat(ex.getCause(), CoreMatchers.instanceOf(IndexOutOfBoundsException.class));
+    }
+
+    try {
+      DefaultCacheStorageFiles.getDiffId(
+          Paths.get(
+              "not valid hash bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"));
+      Assert.fail("Should have thrown CacheCorruptedException");
+
+    } catch (CacheCorruptedException ex) {
+      Assert.assertEquals(
+          "Layer file did not include valid diff ID: "
+              + "not valid hash bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          ex.getMessage());
+      Assert.assertThat(ex.getCause(), CoreMatchers.instanceOf(DigestException.class));
+    }
+  }
 
   @Test
   public void testGetLayerFilename() throws DigestException {
@@ -83,5 +143,19 @@ public class DefaultCacheStorageFilesTest {
     Assert.assertEquals(
         Paths.get("cache", "directory", "layers"),
         testDefaultCacheStorageFiles.getLayersDirectory());
+  }
+
+  @Test
+  public void testGetLayerDirectory() throws DigestException {
+    DescriptorDigest layerDigest =
+        DescriptorDigest.fromHash(
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    Assert.assertEquals(
+        Paths.get(
+            "cache",
+            "directory",
+            "layers",
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+        testDefaultCacheStorageFiles.getLayerDirectory(layerDigest));
   }
 }

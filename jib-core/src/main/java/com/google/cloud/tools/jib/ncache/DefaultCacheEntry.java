@@ -61,6 +61,10 @@ public class DefaultCacheEntry implements CacheEntry {
       return this;
     }
 
+    public Optional<Blob> getLayerBlob() {
+      return Optional.ofNullable(layerBlob);
+    }
+
     public CacheEntry build() {
       return new DefaultCacheEntry(
           Preconditions.checkNotNull(layerDigest, "layerDigest required"),

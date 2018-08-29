@@ -34,8 +34,10 @@ import java.security.DigestException;
 @JsonDeserialize(using = DescriptorDigestDeserializer.class)
 public class DescriptorDigest {
 
+  public static final int HASH_LENGTH = 64;
+
   /** Pattern matches a SHA-256 hash - 32 bytes in lowercase hexadecimal. */
-  private static final String HASH_REGEX = "[a-f0-9]{64}";
+  private static final String HASH_REGEX = String.format("[a-f0-9]{%d}", HASH_LENGTH);
 
   /** The algorithm prefix for the digest string. */
   private static final String DIGEST_PREFIX = "sha256:";
