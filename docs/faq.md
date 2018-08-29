@@ -61,7 +61,7 @@ In [`jib-maven-plugin`](../jib-maven-plugin), you can use the `gcr.io/distroless
 </configuration>
 ```
 </p>
-</details><br />
+</details>
 
 <details>
 <summary>Configuring a base image in Gradle</summary>
