@@ -72,8 +72,7 @@ In [`jib-gradle-plugin`](../jib-gradle-plugin), you can then use this custom bas
 jib.from.image = 'gcr.io/distroless/java/debug'
 ```
 </p>
-</details>
-
+</details><br />
 
 You can then run the image in shell form with Docker: `docker run -it --entrypoint /busybox/sh <image name>`
 
