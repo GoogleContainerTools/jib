@@ -6,10 +6,13 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - `<container><labels>` configuration parameter for configuring labels ([#751](https://github.com/GoogleContainerTools/jib/issues/751))
+- `history` to layer metadata ([#875](https://github.com/GoogleContainerTools/jib/issues/875))
 
 ### Changed
 
 ### Fixed
+
+- Corrects permissions for directories in the container filesystem ([#772](https://github.com/GoogleContainerTools/jib/pull/772))
 
 ## 0.9.9
 
