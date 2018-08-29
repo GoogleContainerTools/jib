@@ -16,12 +16,19 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.BuildTask;
 import org.gradle.testkit.runner.TaskOutcome;
@@ -52,6 +59,8 @@ public class JibPluginIntegrationTest {
 
   @ClassRule
   public static final TestProject defaultTargetTestProject = new TestProject("default-target");
+
+  @ClassRule public static final TestProject entrypointTestProject = new TestProject("entrypoint");
 
   private static String buildAndRun(TestProject testProject, String imageReference)
       throws IOException, InterruptedException {
@@ -368,5 +377,43 @@ public class JibPluginIntegrationTest {
     Assert.assertEquals(TaskOutcome.SUCCESS, jibTask.getOutcome());
     Assert.assertThat(
         buildResult.getOutput(), CoreMatchers.containsString("Created Docker context at "));
+  }
+
+  @Test
+  public void testBuildTar_entrypoint() throws IOException {
+    String targetImage = "entrypoint:gradle" + System.nanoTime();
+
+    Path tarFile = entrypointTestProject.getProjectRoot().resolve("build").resolve("jib-image.tar");
+    String outputPath = tarFile.toString();
+    BuildResult buildResult =
+        entrypointTestProject.build(
+            "clean", JibPlugin.BUILD_TAR_TASK_NAME, "-D_TARGET_IMAGE=" + targetImage);
+
+    assertBuildSuccess(buildResult, JibPlugin.BUILD_TAR_TASK_NAME, "Built image tarball at ");
+    Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(outputPath));
+
+    try (InputStream configuration = extractTarContent(tarFile, "config.json")) {
+      ObjectMapper objectMapper = new ObjectMapper();
+      JsonNode node = objectMapper.readTree(configuration);
+      JsonNode entrypoint = node.get("config").get("Entrypoint");
+      Assert.assertNotNull(entrypoint);
+      Assert.assertTrue(entrypoint.isArray());
+      Assert.assertEquals(2, entrypoint.size());
+      Assert.assertTrue(entrypoint.get(0).isTextual());
+      Assert.assertEquals("custom", entrypoint.get(0).asText());
+      Assert.assertTrue(entrypoint.get(1).isTextual());
+      Assert.assertEquals("entrypoint", entrypoint.get(1).asText());
+    }
+  }
+
+  private InputStream extractTarContent(Path tarFile, String filename) throws IOException {
+    TarArchiveInputStream tarInput = new TarArchiveInputStream(Files.newInputStream(tarFile));
+    TarArchiveEntry entry;
+    while ((entry = tarInput.getNextTarEntry()) != null) {
+      if (filename.equals(entry.getName())) {
+        return tarInput;
+      }
+    }
+    throw new FileNotFoundException(filename + " not found in " + tarFile);
   }
 }
