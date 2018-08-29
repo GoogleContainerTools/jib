@@ -54,7 +54,7 @@ If you would like to include a shell for debugging, set the base image to `gcr.i
 
 #### Maven
 
-In [`jib-maven-plugin`](../jib-maven-plugin), you can then use this custom base image by adding the following configuration:
+In [`jib-maven-plugin`](../jib-maven-plugin), you can use the `gcr.io/distroless/java:debug` base image by adding the following configuration:
 
 ```xml
 <configuration>
@@ -66,10 +66,10 @@ In [`jib-maven-plugin`](../jib-maven-plugin), you can then use this custom base 
 
 #### Gradle
 
-In [`jib-gradle-plugin`](../jib-gradle-plugin), you can then use this custom base image by adding the following configuration:
+In [`jib-gradle-plugin`](../jib-gradle-plugin), you can use the `gcr.io/distroless/java:debug` base image by adding the following configuration:
 
 ```groovy
-jib.from.image = 'gcr.io/distroless/java/debug'
+jib.from.image = 'gcr.io/distroless/java:debug'
 ```
 </p>
 </details><br />
