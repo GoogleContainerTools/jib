@@ -41,16 +41,16 @@ public class JibPlugin implements Plugin<Project> {
   @VisibleForTesting static final String DOCKER_CONTEXT_TASK_NAME = "jibExportDockerContext";
 
   /**
-   * Collects all assemble tasks for project dependencies of the style "compile project(':mylib')"
-   * for any kind of configuration [compile, runtime, etc]. It potentially will collect common test
-   * libraries in configs like [test, integrationTest, etc], but it's either that or filter based on
-   * a configuration containing the word "test" which feels dangerous.
+   * Collects all project dependencies of the style "compile project(':mylib')" for any kind of
+   * configuration [compile, runtime, etc]. It potentially will collect common test libraries in
+   * configs like [test, integrationTest, etc], but it's either that or filter based on a
+   * configuration containing the word "test" which feels dangerous.
    *
    * @param project this project we are containerizing
-   * @return a list of "assemble" tasks associated with projects that this project depends on.
+   * @return a list of projects that this project depends on.
    */
   @VisibleForTesting
-  static List<Task> getProjectDependencyAssembleTasks(Project project) {
+  static List<Project> getProjectDependencies(Project project) {
     return project
         .getConfigurations()
         .stream()
@@ -59,7 +59,6 @@ public class JibPlugin implements Plugin<Project> {
         .filter(ProjectDependency.class::isInstance)
         .map(ProjectDependency.class::cast)
         .map(ProjectDependency::getDependencyProject)
-        .map(subProject -> subProject.getTasks().getByPath(BasePlugin.ASSEMBLE_TASK_NAME))
         .collect(Collectors.toList());
   }
 
@@ -107,21 +106,31 @@ public class JibPlugin implements Plugin<Project> {
     project.afterEvaluate(
         projectAfterEvaluation -> {
           try {
-            // Find project dependencies
-            List<Task> computedDependencies =
-                getProjectDependencyAssembleTasks(projectAfterEvaluation);
             // Has all tasks depend on the 'classes' task.
             Task classesTask = projectAfterEvaluation.getTasks().getByPath("classes");
-            computedDependencies.add(classesTask);
+            buildImageTask.dependsOn(classesTask);
+            dockerContextTask.dependsOn(classesTask);
+            buildDockerTask.dependsOn(classesTask);
+            buildTarTask.dependsOn(classesTask);
 
-            // dependsOn takes an Object... type
-            Object[] dependenciesArray = computedDependencies.toArray();
-
-            buildImageTask.dependsOn(dependenciesArray);
-            dockerContextTask.dependsOn(dependenciesArray);
-            buildDockerTask.dependsOn(dependenciesArray);
-            buildTarTask.dependsOn(dependenciesArray);
-
+            // Find project dependencies and add a dependency to their assemble task. We make sure
+            // to only add the dependency after BasePlugin is evaluated as otherwise the assemble
+            // task may not be available yet.
+            List<Project> computedDependencies = getProjectDependencies(projectAfterEvaluation);
+            for (Project dependencyProject : computedDependencies) {
+              dependencyProject
+                  .getPlugins()
+                  .withType(
+                      BasePlugin.class,
+                      unused -> {
+                        Task assembleTask =
+                            dependencyProject.getTasks().getByPath(BasePlugin.ASSEMBLE_TASK_NAME);
+                        buildImageTask.dependsOn(assembleTask);
+                        dockerContextTask.dependsOn(assembleTask);
+                        buildDockerTask.dependsOn(assembleTask);
+                        buildTarTask.dependsOn(assembleTask);
+                      });
+            }
           } catch (UnknownTaskException ex) {
             throw new GradleException(
                 "Could not find task 'classes' on project "

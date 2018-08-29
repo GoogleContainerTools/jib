@@ -48,6 +48,9 @@ public class JibPluginIntegrationTest {
   @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
 
   @ClassRule
+  public static final TestProject multiprojectTestProject = new TestProject("multiproject");
+
+  @ClassRule
   public static final TestProject defaultTargetTestProject = new TestProject("default-target");
 
   private static String buildAndRun(TestProject testProject, String imageReference)
@@ -349,5 +352,21 @@ public class JibPluginIntegrationTest {
           CoreMatchers.containsString(
               "Export Docker context failed because cannot clear directory"));
     }
+  }
+
+  @Test
+  public void testMultiProject() {
+    BuildResult buildResult =
+        multiprojectTestProject.build(
+            "clean", ":a_packaged:" + JibPlugin.DOCKER_CONTEXT_TASK_NAME, "--info");
+
+    BuildTask classesTask = buildResult.task(":a_packaged:classes");
+    BuildTask jibTask = buildResult.task(":a_packaged:" + JibPlugin.DOCKER_CONTEXT_TASK_NAME);
+    Assert.assertNotNull(classesTask);
+    Assert.assertEquals(TaskOutcome.SUCCESS, classesTask.getOutcome());
+    Assert.assertNotNull(jibTask);
+    Assert.assertEquals(TaskOutcome.SUCCESS, jibTask.getOutcome());
+    Assert.assertThat(
+        buildResult.getOutput(), CoreMatchers.containsString("Created Docker context at "));
   }
 }
