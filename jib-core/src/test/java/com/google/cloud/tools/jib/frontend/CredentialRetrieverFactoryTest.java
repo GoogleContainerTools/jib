@@ -21,9 +21,9 @@ import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.credentials.CredentialHelperNotFoundException;
 import com.google.cloud.tools.jib.registry.credentials.CredentialHelperUnhandledServerUrlException;
+import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import com.google.cloud.tools.jib.registry.credentials.DockerConfigCredentialRetriever;
 import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelper;
-import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelperFactory;
 import java.io.IOException;
 import java.nio.file.Paths;
 import org.junit.Assert;
@@ -41,7 +41,6 @@ public class CredentialRetrieverFactoryTest {
   private static final Credential FAKE_CREDENTIALS = new Credential("username", "password");
 
   @Mock private JibLogger mockJibLogger;
-  @Mock private DockerCredentialHelperFactory mockDockerCredentialHelperFactory;
   @Mock private DockerCredentialHelper mockDockerCredentialHelper;
   @Mock private DockerConfigCredentialRetriever mockDockerConfigCredentialRetriever;
 
@@ -60,46 +59,42 @@ public class CredentialRetrieverFactoryTest {
   }
 
   @Test
-  public void testDockerCredentialHelper() throws Exception {
+  public void testDockerCredentialHelper() throws CredentialRetrievalException {
     CredentialRetrieverFactory credentialRetrieverFactory =
         CredentialRetrieverFactory.forImage(
             ImageReference.of("registry", null, null), mockJibLogger);
-
-    Mockito.when(
-            mockDockerCredentialHelperFactory.newDockerCredentialHelper(
-                "registry", Paths.get("docker-credential-helper")))
-        .thenReturn(mockDockerCredentialHelper);
+    credentialRetrieverFactory.setDockerCredentialHelperFactory(
+        (registry, credentialHelper) -> mockDockerCredentialHelper);
 
     Assert.assertEquals(
         FAKE_CREDENTIALS,
         credentialRetrieverFactory
-            .dockerCredentialHelper(
-                Paths.get("docker-credential-helper"), mockDockerCredentialHelperFactory)
+            .dockerCredentialHelper(Paths.get("docker-credential-helper"))
             .retrieve());
 
     Mockito.verify(mockJibLogger).info("Using docker-credential-helper for registry");
   }
 
   @Test
-  public void testInferCredentialHelper() throws Exception {
+  public void testInferCredentialHelper() throws CredentialRetrievalException {
     CredentialRetrieverFactory credentialRetrieverFactory =
         CredentialRetrieverFactory.forImage(
             ImageReference.of("something.gcr.io", null, null), mockJibLogger);
-    Mockito.when(
-            mockDockerCredentialHelperFactory.newDockerCredentialHelper(
-                "something.gcr.io", Paths.get("docker-credential-gcr")))
-        .thenReturn(mockDockerCredentialHelper);
-    Mockito.when(
-            mockDockerCredentialHelperFactory.newDockerCredentialHelper(
-                "something.amazonaws.com", Paths.get("docker-credential-ecr-login")))
-        .thenReturn(mockNonexistentDockerCredentialHelper);
+    credentialRetrieverFactory.setDockerCredentialHelperFactory(
+        (registry, credentialHelper) -> mockDockerCredentialHelper);
 
     Assert.assertEquals(
-        FAKE_CREDENTIALS,
-        credentialRetrieverFactory
-            .inferCredentialHelper(mockDockerCredentialHelperFactory)
-            .retrieve());
+        FAKE_CREDENTIALS, credentialRetrieverFactory.inferCredentialHelper().retrieve());
     Mockito.verify(mockJibLogger).info("Using docker-credential-gcr for something.gcr.io");
+  }
+
+  @Test
+  public void testInferCredentialHelper_warn() throws CredentialRetrievalException {
+    CredentialRetrieverFactory credentialRetrieverFactory =
+        CredentialRetrieverFactory.forImage(
+            ImageReference.of("something.gcr.io", null, null), mockJibLogger);
+    credentialRetrieverFactory.setDockerCredentialHelperFactory(
+        (registry, credentialHelper) -> mockNonexistentDockerCredentialHelper);
 
     Mockito.when(mockCredentialHelperNotFoundException.getMessage()).thenReturn("warning");
     Mockito.when(mockCredentialHelperNotFoundException.getCause())
@@ -107,14 +102,14 @@ public class CredentialRetrieverFactoryTest {
     Assert.assertNull(
         credentialRetrieverFactory
             .setImageReference(ImageReference.of("something.amazonaws.com", null, null))
-            .inferCredentialHelper(mockDockerCredentialHelperFactory)
+            .inferCredentialHelper()
             .retrieve());
     Mockito.verify(mockJibLogger).warn("warning");
     Mockito.verify(mockJibLogger).info("  Caused by: the root cause");
   }
 
   @Test
-  public void testDockerConfig() throws Exception {
+  public void testDockerConfig() throws IOException, CredentialRetrievalException {
     CredentialRetrieverFactory credentialRetrieverFactory =
         CredentialRetrieverFactory.forImage(
             ImageReference.of("registry", null, null), mockJibLogger);
