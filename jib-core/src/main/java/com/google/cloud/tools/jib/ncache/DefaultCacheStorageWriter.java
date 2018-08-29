@@ -37,13 +37,13 @@ class DefaultCacheStorageWriter {
   }
 
   /**
-   * Saves the {@link CacheWrite}.
+   * Writes the {@link CacheWrite}.
    *
-   * @param cacheWriteEntry the {@link CacheWrite} to write out
+   * @param cacheWrite the {@link CacheWrite} to write out
    * @return the {@link CacheEntry} representing the written entry
    * @throws IOException if an I/O exception occurs
    */
-  CacheEntry write(CacheWrite cacheWriteEntry) throws IOException {
+  CacheEntry write(CacheWrite cacheWrite) throws IOException {
     Path temporaryLayerFile = Files.createTempFile(null, null);
     temporaryLayerFile.toFile().deleteOnExit();
 
@@ -56,7 +56,7 @@ class DefaultCacheStorageWriter {
       // content descriptor.
       GZIPOutputStream compressorStream = new GZIPOutputStream(compressedDigestOutputStream);
       DescriptorDigest layerDiffId =
-          cacheWriteEntry.getLayerBlob().writeTo(compressorStream).getDigest();
+          cacheWrite.getLayerBlob().writeTo(compressorStream).getDigest();
 
       // The GZIPOutputStream must be closed in order to write out the remaining compressed data.
       compressorStream.close();
@@ -78,30 +78,29 @@ class DefaultCacheStorageWriter {
       }
 
       // Writes the selector file.
-      if (cacheWriteEntry.getSelector().isPresent()) {
+      if (cacheWrite.getSelector().isPresent()) {
         Path selectorFile =
-            defaultCacheStorageFiles.getSelectorFile(
-                cacheWriteEntry.getSelector().get(), layerDigest);
+            defaultCacheStorageFiles.getSelectorFile(cacheWrite.getSelector().get());
         Files.createDirectories(selectorFile.getParent());
-        Files.createFile(selectorFile);
+        Blobs.writeToFileWithLock(Blobs.from(layerDigest.getHash()), selectorFile);
       }
 
-      DefaultCacheEntry.Builder cacheReadEntryBuilder =
+      DefaultCacheEntry.Builder cacheEntryBuilder =
           DefaultCacheEntry.builder()
               .setLayerDigest(layerDigest)
               .setLayerDiffId(layerDiffId)
               .setLayerSize(compressedBlobDescriptor.getSize())
               .setLayerBlob(Blobs.from(layerFile));
 
-      if (!cacheWriteEntry.getMetadataBlob().isPresent()) {
-        return cacheReadEntryBuilder.build();
+      if (!cacheWrite.getMetadataBlob().isPresent()) {
+        return cacheEntryBuilder.build();
       }
 
       // Writes metadata blob to the layer directory.
       Path metadataFile = defaultCacheStorageFiles.getMetadataFile(layerDigest);
-      Blobs.writeToFileWithLock(cacheWriteEntry.getMetadataBlob().get(), metadataFile);
+      Blobs.writeToFileWithLock(cacheWrite.getMetadataBlob().get(), metadataFile);
 
-      return cacheReadEntryBuilder.setMetadataBlob(Blobs.from(metadataFile)).build();
+      return cacheEntryBuilder.setMetadataBlob(Blobs.from(metadataFile)).build();
     }
   }
 }

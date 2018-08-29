@@ -25,6 +25,7 @@ import com.google.common.io.ByteStreams;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import org.junit.Assert;
@@ -65,8 +66,8 @@ public class DefaultCacheStorageWriterTest {
   @Test
   public void testWrite_layerOnly() throws IOException {
     Blob layerBlob = Blobs.from("layerBlob");
-    CacheEntry cacheReadEntry = verifyWrite(DefaultCacheWrite.layerOnly(layerBlob), layerBlob);
-    Assert.assertFalse(cacheReadEntry.getMetadataBlob().isPresent());
+    CacheEntry cacheEntry = verifyWrite(DefaultCacheWrite.layerOnly(layerBlob), layerBlob);
+    Assert.assertFalse(cacheEntry.getMetadataBlob().isPresent());
   }
 
   @Test
@@ -75,23 +76,23 @@ public class DefaultCacheStorageWriterTest {
     DescriptorDigest selector = getDigest(Blobs.from("selector"));
     Blob metadataBlob = Blobs.from("metadata");
 
-    CacheEntry cacheReadEntry =
+    CacheEntry cacheEntry =
         verifyWrite(
             DefaultCacheWrite.withSelectorAndMetadata(layerBlob, selector, metadataBlob),
             layerBlob);
 
-    // Verifies cacheReadEntry is correct.
-    Assert.assertTrue(cacheReadEntry.getMetadataBlob().isPresent());
+    // Verifies cacheEntry is correct.
+    Assert.assertTrue(cacheEntry.getMetadataBlob().isPresent());
     Assert.assertArrayEquals(
         Blobs.writeToByteArray(metadataBlob),
-        Blobs.writeToByteArray(cacheReadEntry.getMetadataBlob().get()));
+        Blobs.writeToByteArray(cacheEntry.getMetadataBlob().get()));
 
     // Verifies that the files are present.
+    Path selectorFile = defaultCacheStorageFiles.getSelectorFile(selector);
+    Assert.assertTrue(Files.exists(selectorFile));
+    Assert.assertEquals(selector.getHash(), Blobs.writeToString(Blobs.from(selectorFile)));
     Assert.assertTrue(
-        Files.exists(
-            defaultCacheStorageFiles.getSelectorFile(selector, cacheReadEntry.getLayerDigest())));
-    Assert.assertTrue(
-        Files.exists(defaultCacheStorageFiles.getMetadataFile(cacheReadEntry.getLayerDigest())));
+        Files.exists(defaultCacheStorageFiles.getMetadataFile(cacheEntry.getLayerDigest())));
   }
 
   private CacheEntry verifyWrite(CacheWrite cacheWriteEntry, Blob expectedLayerBlob)
@@ -101,22 +102,22 @@ public class DefaultCacheStorageWriterTest {
 
     DefaultCacheStorageWriter defaultCacheStorageWriter =
         new DefaultCacheStorageWriter(defaultCacheStorageFiles);
-    CacheEntry cacheReadEntry = defaultCacheStorageWriter.write(cacheWriteEntry);
+    CacheEntry cacheEntry = defaultCacheStorageWriter.write(cacheWriteEntry);
 
-    // Verifies cacheReadEntry is correct.
-    Assert.assertEquals(layerBlobDescriptor.getDigest(), cacheReadEntry.getLayerDigest());
-    Assert.assertEquals(layerDiffId, cacheReadEntry.getLayerDiffId());
-    Assert.assertEquals(layerBlobDescriptor.getSize(), cacheReadEntry.getLayerSize());
+    // Verifies cacheEntry is correct.
+    Assert.assertEquals(layerBlobDescriptor.getDigest(), cacheEntry.getLayerDigest());
+    Assert.assertEquals(layerDiffId, cacheEntry.getLayerDiffId());
+    Assert.assertEquals(layerBlobDescriptor.getSize(), cacheEntry.getLayerSize());
     Assert.assertArrayEquals(
         Blobs.writeToByteArray(expectedLayerBlob),
-        Blobs.writeToByteArray(decompress(cacheReadEntry.getLayerBlob())));
+        Blobs.writeToByteArray(decompress(cacheEntry.getLayerBlob())));
 
     // Verifies that the files are present.
     Assert.assertTrue(
         Files.exists(
             defaultCacheStorageFiles.getLayerFile(
-                cacheReadEntry.getLayerDigest(), cacheReadEntry.getLayerDiffId())));
+                cacheEntry.getLayerDigest(), cacheEntry.getLayerDiffId())));
 
-    return cacheReadEntry;
+    return cacheEntry;
   }
 }

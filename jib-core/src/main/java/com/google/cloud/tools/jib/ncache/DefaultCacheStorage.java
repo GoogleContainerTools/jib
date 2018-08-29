@@ -32,9 +32,10 @@ import java.util.Optional;
  *   <layer digest>/
  *     <layer diff ID>.layer
  *     metadata
+ *   ...
  * selectors/
- *   <selector digest>/
- *     <layer digest>.layer.digest
+ *   <selector digest>
+ *   ...
  * }</pre>
  *
  * Layers entires are stored in their own directories under the {@code layers/} directory. Each
@@ -42,9 +43,8 @@ import java.util.Optional;
  * the {@code .layer} file prefixed with the layer diff ID, and the metadata is the {@code metadata}
  * file.
  *
- * <p>Selectors are stored in their own directories under the {@code selectors/} directory. Each
- * selector directory is named by the selector digest. Inside each selector directory, the layer
- * digest it selects is the {@code .layer.digest} file prefixed with the layer digest.
+ * <p>Selectors are stored in the {@code selectors/} directory. Each selector file is named by the
+ * selector digest. The contents of a selector file is the digest of the layer it selects.
  */
 public class DefaultCacheStorage implements CacheStorage {
 

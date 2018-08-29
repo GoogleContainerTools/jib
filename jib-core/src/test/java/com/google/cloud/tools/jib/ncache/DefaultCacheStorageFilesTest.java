@@ -65,9 +65,6 @@ public class DefaultCacheStorageFilesTest {
 
   @Test
   public void testGetSelectorFilename() throws DigestException {
-    DescriptorDigest layerDigest =
-        DescriptorDigest.fromHash(
-            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
     DescriptorDigest selector =
         DescriptorDigest.fromHash(
             "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc");
@@ -77,8 +74,7 @@ public class DefaultCacheStorageFilesTest {
             "cache",
             "directory",
             "selectors",
-            "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
-            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.layer.digest"),
-        testDefaultCacheStorageFiles.getSelectorFile(selector, layerDigest));
+            "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"),
+        testDefaultCacheStorageFiles.getSelectorFile(selector));
   }
 }

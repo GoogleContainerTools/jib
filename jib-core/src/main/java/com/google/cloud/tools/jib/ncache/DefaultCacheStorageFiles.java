@@ -26,7 +26,6 @@ class DefaultCacheStorageFiles {
   private static final String LAYER_FILENAME_SUFFIX = ".layer";
   private static final String METADATA_FILENAME = "metadata";
   private static final String SELECTORS_DIRECTORY = "selectors";
-  private static final String SELECTOR_FILENAME_EXTENSION = ".layer.digest";
 
   private final Path cacheDirectory;
 
@@ -56,15 +55,13 @@ class DefaultCacheStorageFiles {
   }
 
   /**
-   * Resolves the selector file for a layer.
+   * Resolves a selector file.
    *
    * @param selector the selector digest
-   * @param layerDigest the layer digest
    * @return the selector file
    */
-  Path getSelectorFile(DescriptorDigest selector, DescriptorDigest layerDigest) {
-    return getSelectorDirectory(selector)
-        .resolve(layerDigest.getHash() + SELECTOR_FILENAME_EXTENSION);
+  Path getSelectorFile(DescriptorDigest selector) {
+    return getSelectorDirectory(selector);
   }
 
   private Path getLayerDirectory(DescriptorDigest layerDigest) {
