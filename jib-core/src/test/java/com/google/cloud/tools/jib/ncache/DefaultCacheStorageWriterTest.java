@@ -73,6 +73,7 @@ public class DefaultCacheStorageWriterTest {
   @Test
   public void testWrite_withSelectorAndMetadata() throws IOException {
     Blob layerBlob = Blobs.from("layerBlob");
+    DescriptorDigest layerDigest = getCompressedBlobDescriptor(layerBlob).getDigest();
     DescriptorDigest selector = getDigest(Blobs.from("selector"));
     Blob metadataBlob = Blobs.from("metadata");
 
@@ -90,7 +91,7 @@ public class DefaultCacheStorageWriterTest {
     // Verifies that the files are present.
     Path selectorFile = defaultCacheStorageFiles.getSelectorFile(selector);
     Assert.assertTrue(Files.exists(selectorFile));
-    Assert.assertEquals(selector.getHash(), Blobs.writeToString(Blobs.from(selectorFile)));
+    Assert.assertEquals(layerDigest.getHash(), Blobs.writeToString(Blobs.from(selectorFile)));
     Assert.assertTrue(
         Files.exists(defaultCacheStorageFiles.getMetadataFile(cacheEntry.getLayerDigest())));
   }
