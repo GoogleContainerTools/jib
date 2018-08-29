@@ -56,8 +56,8 @@ public class ImageToJsonTranslatorTest {
     Image.Builder<CachedLayer> testImageBuilder = Image.builder();
 
     testImageBuilder.setCreated(Instant.ofEpochSecond(20));
-    testImageBuilder.setEnvironmentVariable("VAR1", "VAL1");
-    testImageBuilder.setEnvironmentVariable("VAR2", "VAL2");
+    testImageBuilder.addEnvironmentVariable("VAR1", "VAL1");
+    testImageBuilder.addEnvironmentVariable("VAR2", "VAL2");
     testImageBuilder.setEntrypoint(Arrays.asList("some", "entrypoint", "command"));
     testImageBuilder.setJavaArguments(Arrays.asList("arg1", "arg2"));
     testImageBuilder.setExposedPorts(
