@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.plugins.common;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
-import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelperFactory;
+import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelper;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -115,7 +115,7 @@ public class DefaultCredentialRetrievers {
     if (credentialHelperSuffix != null) {
       credentialRetrievers.add(
           credentialRetrieverFactory.dockerCredentialHelper(
-              DockerCredentialHelperFactory.CREDENTIAL_HELPER_PREFIX + credentialHelperSuffix));
+              DockerCredentialHelper.CREDENTIAL_HELPER_PREFIX + credentialHelperSuffix));
     }
     if (inferredCredentialRetriever != null) {
       credentialRetrievers.add(inferredCredentialRetriever);

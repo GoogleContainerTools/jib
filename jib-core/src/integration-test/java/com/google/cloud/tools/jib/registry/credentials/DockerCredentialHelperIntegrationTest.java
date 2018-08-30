@@ -38,8 +38,7 @@ public class DockerCredentialHelperIntegrationTest {
     new Command("docker-credential-gcr", "store")
         .run(Files.readAllBytes(Paths.get(Resources.getResource("credentials.json").toURI())));
 
-    DockerCredentialHelper dockerCredentialHelper =
-        new DockerCredentialHelperFactory().newDockerCredentialHelper("myregistry", "gcr");
+    DockerCredentialHelper dockerCredentialHelper = new DockerCredentialHelper("myregistry", "gcr");
 
     Credential credentials = dockerCredentialHelper.retrieve();
     Assert.assertEquals("myusername", credentials.getUsername());
@@ -51,7 +50,7 @@ public class DockerCredentialHelperIntegrationTest {
       throws IOException, CredentialHelperUnhandledServerUrlException {
     try {
       DockerCredentialHelper fakeDockerCredentialHelper =
-          new DockerCredentialHelperFactory().newDockerCredentialHelper("", "fake-cloud-provider");
+          new DockerCredentialHelper("", "fake-cloud-provider");
 
       fakeDockerCredentialHelper.retrieve();
 
@@ -68,7 +67,7 @@ public class DockerCredentialHelperIntegrationTest {
       throws IOException, CredentialHelperNotFoundException {
     try {
       DockerCredentialHelper fakeDockerCredentialHelper =
-          new DockerCredentialHelperFactory().newDockerCredentialHelper("fake.server.url", "gcr");
+          new DockerCredentialHelper("fake.server.url", "gcr");
 
       fakeDockerCredentialHelper.retrieve();
 
