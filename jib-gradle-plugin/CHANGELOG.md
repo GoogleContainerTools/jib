@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - `container.labels` configuration parameter for configuring labels ([#751](https://github.com/GoogleContainerTools/jib/issues/751))
-- `container.entrypoint` configuration parameter to replace entrypoint ([#579](https://github.com/GoogleContainerTools/jib/issues/579))
+- `container.entrypoint` configuration parameter to set the entrypoint ([#579](https://github.com/GoogleContainerTools/jib/issues/579))
 - `history` to layer metadata ([#875](https://github.com/GoogleContainerTools/jib/issues/875))
 
 ### Changed
