@@ -48,7 +48,8 @@ public class ZipUtil {
 
         String canonicalTarget = entryPath.toFile().getCanonicalPath();
         if (!canonicalTarget.startsWith(canonicalDestination + File.separator)) {
-          throw new IOException("Blocked unzipping files outside destination: " + entry.getName());
+          String offender = entry.getName() + " from " + archive;
+          throw new IOException("Blocked unzipping files outside destination: " + offender);
         }
 
         if (entry.isDirectory()) {
