@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.common.io.ByteStreams;
 import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -37,12 +38,18 @@ public class ZipUtil {
    * @throws IOException when I/O error occurs
    */
   public static void unzip(Path archive, Path destination) throws IOException {
+    String canonicalDestination = destination.toFile().getCanonicalPath();
+
     try (InputStream fileIn = Files.newInputStream(archive);
         ZipInputStream zipIn = new ZipInputStream(new BufferedInputStream(fileIn))) {
 
       for (ZipEntry entry = zipIn.getNextEntry(); entry != null; entry = zipIn.getNextEntry()) {
-        // TODO: check Zip-Slip vulnerability: https://snyk.io/research/zip-slip-vulnerability#java
         Path entryPath = destination.resolve(entry.getName());
+
+        String canonicalTarget = entryPath.toFile().getCanonicalPath();
+        if (!canonicalTarget.startsWith(canonicalDestination + File.separator)) {
+          throw new IOException("Blocked unzipping files outside destination: " + entry.getName());
+        }
 
         if (entry.isDirectory()) {
           Files.createDirectories(entryPath);
