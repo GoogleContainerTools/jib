@@ -32,8 +32,8 @@ public class Image<T extends Layer> {
   public static class Builder<T extends Layer> {
 
     private final ImageLayers.Builder<T> imageLayersBuilder = ImageLayers.builder();
-    private final ImmutableMap.Builder<String, String> environmentBuilder = ImmutableMap.builder();
     private final ImmutableList.Builder<HistoryEntry> historyBuilder = ImmutableList.builder();
+    private final ImmutableMap.Builder<String, String> environmentBuilder = ImmutableMap.builder();
     private final ImmutableMap.Builder<String, String> labelsBuilder = ImmutableMap.builder();
 
     @Nullable private Instant created;
