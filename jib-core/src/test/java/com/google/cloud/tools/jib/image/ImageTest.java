@@ -49,8 +49,8 @@ public class ImageTest {
     Image<Layer> image =
         Image.builder()
             .setCreated(Instant.ofEpochSecond(10000))
-            .setEnvironmentVariable("crepecake", "is great")
-            .setEnvironmentVariable("VARIABLE", "VALUE")
+            .addEnvironmentVariable("crepecake", "is great")
+            .addEnvironmentVariable("VARIABLE", "VALUE")
             .setEntrypoint(Arrays.asList("some", "command"))
             .setJavaArguments(Arrays.asList("arg1", "arg2"))
             .setExposedPorts(

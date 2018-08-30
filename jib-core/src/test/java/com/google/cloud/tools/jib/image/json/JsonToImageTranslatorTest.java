@@ -185,6 +185,7 @@ public class JsonToImageTranslatorTest {
     Assert.assertEquals(Instant.ofEpochSecond(20), image.getCreated());
     Assert.assertEquals(Arrays.asList("some", "entrypoint", "command"), image.getEntrypoint());
     Assert.assertEquals(ImmutableMap.of("VAR1", "VAL1", "VAR2", "VAL2"), image.getEnvironment());
+    Assert.assertEquals("/some/workspace", image.getWorkingDirectory());
     Assert.assertEquals(
         ImmutableList.of(
             new Port(1000, Protocol.TCP),
