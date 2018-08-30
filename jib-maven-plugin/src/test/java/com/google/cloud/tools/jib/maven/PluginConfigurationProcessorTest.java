@@ -32,93 +32,98 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
+/** Tests for {@link PluginConfigurationProcessor}. */
 @RunWith(MockitoJUnitRunner.class)
 public class PluginConfigurationProcessorTest {
-  @Mock MavenJibLogger mavenJibLogger;
-  @Mock JibPluginConfiguration jibPluginConfiguration;
-  @Mock MavenProjectProperties projectProperties;
-  @Mock MavenSession mavenSession;
-  @Mock Settings mavenSettings;
+
+  @Mock MavenJibLogger mockMavenJibLogger;
+  @Mock JibPluginConfiguration mockJibPluginConfiguration;
+  @Mock MavenProjectProperties mockProjectProperties;
+  @Mock MavenSession mockMavenSession;
+  @Mock Settings mockMavenSettings;
 
   @Before
   public void setUp() throws Exception {
-    Mockito.doReturn(mavenSession).when(jibPluginConfiguration).getSession();
-    Mockito.doReturn(mavenSettings).when(mavenSession).getSettings();
+    Mockito.doReturn(mockMavenSession).when(mockJibPluginConfiguration).getSession();
+    Mockito.doReturn(mockMavenSettings).when(mockMavenSession).getSettings();
 
-    Mockito.doReturn("gcr.io/distroless/java").when(jibPluginConfiguration).getBaseImage();
-    Mockito.doReturn(new AuthConfiguration()).when(jibPluginConfiguration).getBaseImageAuth();
-    Mockito.doReturn(Collections.emptyList()).when(jibPluginConfiguration).getEntrypoint();
-    Mockito.doReturn(Collections.emptyList()).when(jibPluginConfiguration).getJvmFlags();
-    Mockito.doReturn(Collections.emptyList()).when(jibPluginConfiguration).getArgs();
-    Mockito.doReturn(Collections.emptyList()).when(jibPluginConfiguration).getExposedPorts();
+    Mockito.doReturn("gcr.io/distroless/java").when(mockJibPluginConfiguration).getBaseImage();
+    Mockito.doReturn(new AuthConfiguration()).when(mockJibPluginConfiguration).getBaseImageAuth();
+    Mockito.doReturn(Collections.emptyList()).when(mockJibPluginConfiguration).getEntrypoint();
+    Mockito.doReturn(Collections.emptyList()).when(mockJibPluginConfiguration).getJvmFlags();
+    Mockito.doReturn(Collections.emptyList()).when(mockJibPluginConfiguration).getArgs();
+    Mockito.doReturn(Collections.emptyList()).when(mockJibPluginConfiguration).getExposedPorts();
 
     Mockito.doReturn(JavaLayerConfigurations.builder().build())
-        .when(projectProperties)
+        .when(mockProjectProperties)
         .getJavaLayerConfigurations();
     Mockito.doReturn("java.lang.Object")
-        .when(projectProperties)
-        .getMainClass(jibPluginConfiguration);
+        .when(mockProjectProperties)
+        .getMainClass(mockJibPluginConfiguration);
   }
 
+  /** Test with our default mocks, which try to mimic the bare Maven configuration. */
   @Test
-  public void testBase() throws MojoExecutionException {
+  public void testPluginConfigurationProcessor_defaults() throws MojoExecutionException {
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
-            mavenJibLogger, jibPluginConfiguration, projectProperties);
+            mockMavenJibLogger, mockJibPluginConfiguration, mockProjectProperties);
     ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
     Assert.assertEquals(
         Arrays.asList(
             "java", "-cp", "/app/resources/:/app/classes/:/app/libs/*", "java.lang.Object"),
         configuration.getEntrypoint());
-    Mockito.verifyZeroInteractions(mavenJibLogger);
+    Mockito.verifyZeroInteractions(mockMavenJibLogger);
   }
 
   @Test
   public void testEntrypoint() throws MojoExecutionException {
     Mockito.doReturn(Arrays.asList("custom", "entrypoint"))
-        .when(jibPluginConfiguration)
+        .when(mockJibPluginConfiguration)
         .getEntrypoint();
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
-            mavenJibLogger, jibPluginConfiguration, projectProperties);
+            mockMavenJibLogger, mockJibPluginConfiguration, mockProjectProperties);
     ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
     
     Assert.assertEquals(Arrays.asList("custom", "entrypoint"), configuration.getEntrypoint());
-    Mockito.verifyZeroInteractions(mavenJibLogger);
+    Mockito.verifyZeroInteractions(mockMavenJibLogger);
   }
 
   @Test
   public void testEntrypoint_warningOnJvmFlags() throws MojoExecutionException {
     Mockito.doReturn(Arrays.asList("custom", "entrypoint"))
-        .when(jibPluginConfiguration)
+        .when(mockJibPluginConfiguration)
         .getEntrypoint();
-    Mockito.doReturn(Arrays.asList("jvmFlag")).when(jibPluginConfiguration).getJvmFlags();
+    Mockito.doReturn(Arrays.asList("jvmFlag")).when(mockJibPluginConfiguration).getJvmFlags();
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
-            mavenJibLogger, jibPluginConfiguration, projectProperties);
+            mockMavenJibLogger, mockJibPluginConfiguration, mockProjectProperties);
     ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
     
     Assert.assertEquals(Arrays.asList("custom", "entrypoint"), configuration.getEntrypoint());
-    Mockito.verify(mavenJibLogger)
+    Mockito.verify(mockMavenJibLogger)
         .warn("<mainClass> and <jvmFlags> are ignored when <entrypoint> is specified");
   }
 
   @Test
   public void testEntrypoint_warningOnMainclass() throws MojoExecutionException {
     Mockito.doReturn(Arrays.asList("custom", "entrypoint"))
-        .when(jibPluginConfiguration)
+        .when(mockJibPluginConfiguration)
         .getEntrypoint();
-    Mockito.doReturn("java.util.Object").when(jibPluginConfiguration).getMainClass();
+    Mockito.doReturn("java.util.Object").when(mockJibPluginConfiguration).getMainClass();
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
-            mavenJibLogger, jibPluginConfiguration, projectProperties);
+            mockMavenJibLogger, mockJibPluginConfiguration, mockProjectProperties);
     ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
     
     Assert.assertEquals(Arrays.asList("custom", "entrypoint"), configuration.getEntrypoint());
-    Mockito.verify(mavenJibLogger)
+    Mockito.verify(mockMavenJibLogger)
         .warn("<mainClass> and <jvmFlags> are ignored when <entrypoint> is specified");
   }
+
+  // TODO should test other behaviours
 }

@@ -29,87 +29,92 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
+/** Tests for {@link PluginConfigurationProcessor}. */
 @RunWith(MockitoJUnitRunner.class)
 public class PluginConfigurationProcessorTest {
-  @Mock GradleJibLogger gradleJibLogger;
-  @Mock JibExtension jibExtension;
-  @Mock ImageParameters imageParameters;
-  @Mock ContainerParameters containerParameters;
-  @Mock GradleProjectProperties projectProperties;
+
+  @Mock GradleJibLogger mockGradleJibLogger;
+  @Mock JibExtension mockJibExtension;
+  @Mock ImageParameters mockImageParameters;
+  @Mock ContainerParameters mockContainerParameters;
+  @Mock GradleProjectProperties mockProjectProperties;
 
   @Before
   public void setUp() throws Exception {
-    Mockito.doReturn("gcr.io/distroless/java").when(jibExtension).getBaseImage();
-    Mockito.doReturn(imageParameters).when(jibExtension).getFrom();
-    Mockito.doReturn(new AuthParameters("mock")).when(imageParameters).getAuth();
-    Mockito.doReturn(containerParameters).when(jibExtension).getContainer();
-    Mockito.doReturn(Collections.emptyList()).when(containerParameters).getEntrypoint();
+    Mockito.doReturn("gcr.io/distroless/java").when(mockJibExtension).getBaseImage();
+    Mockito.doReturn(mockImageParameters).when(mockJibExtension).getFrom();
+    Mockito.doReturn(new AuthParameters("mock")).when(mockImageParameters).getAuth();
+    Mockito.doReturn(mockContainerParameters).when(mockJibExtension).getContainer();
+    Mockito.doReturn(Collections.emptyList()).when(mockContainerParameters).getEntrypoint();
 
     Mockito.doReturn(JavaLayerConfigurations.builder().build())
-        .when(projectProperties)
+        .when(mockProjectProperties)
         .getJavaLayerConfigurations();
-    Mockito.doReturn("java.lang.Object").when(projectProperties).getMainClass(jibExtension);
+    Mockito.doReturn("java.lang.Object").when(mockProjectProperties).getMainClass(mockJibExtension);
   }
 
+  /** Test with our default mocks, which try to mimic the bare Gradle configuration. */
   @Test
-  public void testBase() throws InvalidImageReferenceException {
+  public void testPluginConfigurationProcessor_defaults() throws InvalidImageReferenceException {
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
-            gradleJibLogger, jibExtension, projectProperties);
+            mockGradleJibLogger, mockJibExtension, mockProjectProperties);
     ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
     Assert.assertEquals(
         Arrays.asList(
             "java", "-cp", "/app/resources/:/app/classes/:/app/libs/*", "java.lang.Object"),
         configuration.getEntrypoint());
-    Mockito.verifyZeroInteractions(gradleJibLogger);
+    Mockito.verifyZeroInteractions(mockGradleJibLogger);
   }
 
   @Test
   public void testEntrypoint() throws InvalidImageReferenceException {
     Mockito.doReturn(Arrays.asList("custom", "entrypoint"))
-        .when(containerParameters)
+        .when(mockContainerParameters)
         .getEntrypoint();
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
-            gradleJibLogger, jibExtension, projectProperties);
+            mockGradleJibLogger, mockJibExtension, mockProjectProperties);
     ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
 
     Assert.assertEquals(Arrays.asList("custom", "entrypoint"), configuration.getEntrypoint());
-    Mockito.verifyZeroInteractions(gradleJibLogger);
+    Mockito.verifyZeroInteractions(mockGradleJibLogger);
   }
 
   @Test
   public void testEntrypoint_warningOnJvmFlags() throws InvalidImageReferenceException {
     Mockito.doReturn(Arrays.asList("custom", "entrypoint"))
-        .when(containerParameters)
+        .when(mockContainerParameters)
         .getEntrypoint();
-    Mockito.doReturn(Arrays.asList("jvmFlag")).when(jibExtension).getJvmFlags();
+    Mockito.doReturn(Arrays.asList("jvmFlag")).when(mockJibExtension).getJvmFlags();
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
-            gradleJibLogger, jibExtension, projectProperties);
+            mockGradleJibLogger, mockJibExtension, mockProjectProperties);
     ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
 
     Assert.assertEquals(Arrays.asList("custom", "entrypoint"), configuration.getEntrypoint());
-    Mockito.verify(gradleJibLogger)
+    Mockito.verify(mockGradleJibLogger)
         .warn("mainClass and jvmFlags are ignored when entrypoint is specified");
   }
 
   @Test
   public void testEntrypoint_warningOnMainclass() throws InvalidImageReferenceException {
     Mockito.doReturn(Arrays.asList("custom", "entrypoint"))
-        .when(containerParameters)
+        .when(mockContainerParameters)
         .getEntrypoint();
-    Mockito.doReturn("java.util.Object").when(jibExtension).getMainClass();
+    Mockito.doReturn("java.util.Object").when(mockJibExtension).getMainClass();
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
-            gradleJibLogger, jibExtension, projectProperties);
+            mockGradleJibLogger, mockJibExtension, mockProjectProperties);
     ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
 
     Assert.assertEquals(Arrays.asList("custom", "entrypoint"), configuration.getEntrypoint());
-    Mockito.verify(gradleJibLogger)
+    Mockito.verify(mockGradleJibLogger)
         .warn("mainClass and jvmFlags are ignored when entrypoint is specified");
   }
+
+  // TODO should test other behaviours
 }
