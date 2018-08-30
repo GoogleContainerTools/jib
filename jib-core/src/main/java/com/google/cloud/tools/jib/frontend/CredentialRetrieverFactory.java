@@ -63,7 +63,7 @@ public class CredentialRetrieverFactory {
   }
 
   private final JibLogger logger;
-  private ImageReference imageReference;
+  private final ImageReference imageReference;
   private final DockerCredentialHelperFactory dockerCredentialHelperFactory;
 
   private CredentialRetrieverFactory(ImageReference imageReference, JibLogger logger) {
@@ -78,17 +78,6 @@ public class CredentialRetrieverFactory {
     this.imageReference = imageReference;
     this.logger = logger;
     this.dockerCredentialHelperFactory = dockerCredentialHelperFactory;
-  }
-
-  /**
-   * Sets the image reference the {@link CredentialRetriever}s should retrieve credentials for.
-   *
-   * @param imageReference the image reference
-   * @return this
-   */
-  public CredentialRetrieverFactory setImageReference(ImageReference imageReference) {
-    this.imageReference = imageReference;
-    return this;
   }
 
   /**

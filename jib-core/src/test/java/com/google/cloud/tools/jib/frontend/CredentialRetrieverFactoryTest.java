@@ -118,7 +118,7 @@ public class CredentialRetrieverFactoryTest {
   public void testInferCredentialHelper_warn() throws CredentialRetrievalException {
     CredentialRetrieverFactory credentialRetrieverFactory =
         new CredentialRetrieverFactory(
-            ImageReference.of("something.gcr.io", null, null),
+            ImageReference.of("something.amazonaws.com", null, null),
             mockJibLogger,
             getTestFactory(
                 "something.amazonaws.com",
@@ -128,11 +128,7 @@ public class CredentialRetrieverFactoryTest {
     Mockito.when(mockCredentialHelperNotFoundException.getMessage()).thenReturn("warning");
     Mockito.when(mockCredentialHelperNotFoundException.getCause())
         .thenReturn(new IOException("the root cause"));
-    Assert.assertNull(
-        credentialRetrieverFactory
-            .setImageReference(ImageReference.of("something.amazonaws.com", null, null))
-            .inferCredentialHelper()
-            .retrieve());
+    Assert.assertNull(credentialRetrieverFactory.inferCredentialHelper().retrieve());
     Mockito.verify(mockJibLogger).warn("warning");
     Mockito.verify(mockJibLogger).info("  Caused by: the root cause");
   }
