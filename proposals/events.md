@@ -1,7 +1,5 @@
 # Proposal: Emit events from Jib Core
 
-Implemented in: **v0.9.0**
-
 ## Motivation
 
 Currently, Jib logs various log messages via injecting a [`JibLogger`](https://github.com/GoogleContainerTools/jib/blob/02f7f41874223e1e6acf2a40648b5b3695877397/jib-core/src/main/java/com/google/cloud/tools/jib/JibLogger.java) interface into the execution steps in the `builder` package. However, the data is not structured. The user (of Jib Core) needs to parse log messages in order to obtain useful information. The log messages are also catered towards the `jib-maven/gradle-plugin` execution output.
