@@ -114,7 +114,7 @@ public class BuildStepsIntegrationTest {
                 + "                \"2002/tcp\": {},\n"
                 + "                \"3000/udp\": {}"));
     String history = new Command("docker", "history", imageReference).run();
-    Assert.assertThat(history, CoreMatchers.containsString("jib"));
+    Assert.assertThat(history, CoreMatchers.containsString("jib-integration-test"));
     Assert.assertThat(history, CoreMatchers.containsString("bazel build ..."));
     Assert.assertEquals(
         "Hello, world. An argument.\n", new Command("docker", "run", imageReference).run());
@@ -170,7 +170,7 @@ public class BuildStepsIntegrationTest {
                 + "                \"key2\": \"value2\"\n"
                 + "            }"));
     String history = new Command("docker", "history", imageReference).run();
-    Assert.assertThat(history, CoreMatchers.containsString("jib"));
+    Assert.assertThat(history, CoreMatchers.containsString("jib-integration-test"));
     Assert.assertThat(history, CoreMatchers.containsString("bazel build ..."));
     Assert.assertEquals(
         "Hello, world. An argument.\n", new Command("docker", "run", imageReference).run());
@@ -223,6 +223,7 @@ public class BuildStepsIntegrationTest {
         .setContainerConfiguration(containerConfiguration)
         .setAllowInsecureRegistries(true)
         .setLayerConfigurations(fakeLayerConfigurations)
+        .setCreatedBy("jib-integration-test")
         .build();
   }
 }

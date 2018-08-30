@@ -38,9 +38,10 @@ import javax.annotation.Nullable;
  *   "config": {
  *     "Env": ["/usr/bin/java"],
  *     "Entrypoint": ["PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"],
- *     "Cmd": ["arg1", "arg2"]
- *     "ExposedPorts": { "6000/tcp":{}, "8000/tcp":{}, "9000/tcp":{} }
- *     "Labels": { "com.example.label": "value" }
+ *     "Cmd": ["arg1", "arg2"],
+ *     "ExposedPorts": { "6000/tcp":{}, "8000/tcp":{}, "9000/tcp":{} },
+ *     "Labels": { "com.example.label": "value" },
+ *     "WorkingDir": "/home/user/workspace"
  *   },
  *   "history": [
  *     {
@@ -106,6 +107,9 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
 
     /** Labels. */
     @Nullable private Map<String, String> Labels;
+
+    /** Working directory. */
+    @Nullable private String WorkingDir;
   }
 
   /**
@@ -146,6 +150,10 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
 
   public void setContainerLabels(@Nullable Map<String, String> labels) {
     config.Labels = labels;
+  }
+
+  public void setContainerWorkingDir(@Nullable String workingDirectory) {
+    config.WorkingDir = workingDirectory;
   }
 
   public void addLayerDiffId(DescriptorDigest diffId) {
@@ -192,6 +200,11 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
   @Nullable
   Map<String, String> getContainerLabels() {
     return config.Labels;
+  }
+
+  @Nullable
+  String getContainerWorkingDir() {
+    return config.WorkingDir;
   }
 
   @VisibleForTesting

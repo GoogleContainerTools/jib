@@ -70,3 +70,5 @@ Visit the IP in your web browser and you should see:
 ```
 Hello Jib Multimodule
 ```
+
+[![Analytics](https://cloud-tools-for-java-metrics.appspot.com/UA-121724379-2/examples/multi-module)](https://github.com/igrigorik/ga-beacon)

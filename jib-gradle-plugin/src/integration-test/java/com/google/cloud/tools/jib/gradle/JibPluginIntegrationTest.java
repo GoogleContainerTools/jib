@@ -63,6 +63,8 @@ public class JibPluginIntegrationTest {
 
     new Command("docker", "pull", imageReference).run();
     assertDockerInspect(imageReference);
+    String history = new Command("docker", "history", imageReference).run();
+    Assert.assertThat(history, CoreMatchers.containsString("jib-gradle-plugin"));
     return new Command("docker", "run", imageReference).run();
   }
 
@@ -84,6 +86,8 @@ public class JibPluginIntegrationTest {
 
     targetRegistry.pull(imageReference);
     assertDockerInspect(imageReference);
+    String history = new Command("docker", "history", imageReference).run();
+    Assert.assertThat(history, CoreMatchers.containsString("jib-gradle-plugin"));
     return new Command("docker", "run", imageReference).run();
   }
 
@@ -97,6 +101,8 @@ public class JibPluginIntegrationTest {
     Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
 
     assertDockerInspect(imageReference);
+    String history = new Command("docker", "history", imageReference).run();
+    Assert.assertThat(history, CoreMatchers.containsString("jib-gradle-plugin"));
     return new Command("docker", "run", imageReference).run();
   }
 
