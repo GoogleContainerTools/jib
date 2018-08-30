@@ -86,7 +86,7 @@ public class PluginConfigurationProcessorTest {
         PluginConfigurationProcessor.processCommonConfiguration(
             mockMavenJibLogger, mockJibPluginConfiguration, mockProjectProperties);
     ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
-    
+
     Assert.assertEquals(Arrays.asList("custom", "entrypoint"), configuration.getEntrypoint());
     Mockito.verifyZeroInteractions(mockMavenJibLogger);
   }
@@ -102,7 +102,7 @@ public class PluginConfigurationProcessorTest {
         PluginConfigurationProcessor.processCommonConfiguration(
             mockMavenJibLogger, mockJibPluginConfiguration, mockProjectProperties);
     ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
-    
+
     Assert.assertEquals(Arrays.asList("custom", "entrypoint"), configuration.getEntrypoint());
     Mockito.verify(mockMavenJibLogger)
         .warn("<mainClass> and <jvmFlags> are ignored when <entrypoint> is specified");
@@ -119,7 +119,7 @@ public class PluginConfigurationProcessorTest {
         PluginConfigurationProcessor.processCommonConfiguration(
             mockMavenJibLogger, mockJibPluginConfiguration, mockProjectProperties);
     ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
-    
+
     Assert.assertEquals(Arrays.asList("custom", "entrypoint"), configuration.getEntrypoint());
     Mockito.verify(mockMavenJibLogger)
         .warn("<mainClass> and <jvmFlags> are ignored when <entrypoint> is specified");
