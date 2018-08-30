@@ -141,7 +141,7 @@ public class CredentialRetrieverFactoryTest {
    * @param returnedCredentialHelper the mock credential helper to return
    * @return a new {@link DockerCredentialHelperFactory}
    */
-  private DockerCredentialHelperFactory getTestFactory(
+  private static DockerCredentialHelperFactory getTestFactory(
       String expectedRegistry,
       Path expectedCredentialHelper,
       DockerCredentialHelper returnedCredentialHelper) {
