@@ -151,8 +151,9 @@ public class JavaDockerContextGeneratorTest {
     String dockerfile =
         new JavaDockerContextGenerator(mockJavaLayerConfigurations)
             .setBaseImage(expectedBaseImage)
-            .setJvmFlags(expectedJvmFlags)
-            .setMainClass(expectedMainClass)
+            .setEntrypoint(
+                JavaEntrypointConstructor.makeDefaultEntrypoint(
+                    expectedJvmFlags, expectedMainClass))
             .setJavaArguments(expectedJavaArguments)
             .setExposedPorts(exposedPorts)
             .setLabels(expectedLabels)

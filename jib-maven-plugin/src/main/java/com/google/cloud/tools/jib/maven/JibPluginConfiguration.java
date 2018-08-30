@@ -118,6 +118,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Parameter private boolean useCurrentTimestamp = false;
 
+    @Parameter private List<String> entrypoint = Collections.emptyList();
+
     @Parameter private List<String> jvmFlags = Collections.emptyList();
 
     @Nullable @Parameter private String mainClass;
@@ -251,6 +253,10 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
   boolean getUseCurrentTimestamp() {
     return container.useCurrentTimestamp;
+  }
+
+  List<String> getEntrypoint() {
+    return container.entrypoint;
   }
 
   List<String> getJvmFlags() {

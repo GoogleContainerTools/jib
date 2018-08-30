@@ -31,6 +31,7 @@ import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.base.Preconditions;
 import java.time.Instant;
+import java.util.List;
 import javax.annotation.Nullable;
 import org.apache.maven.plugin.MojoExecutionException;
 
@@ -102,12 +103,19 @@ class PluginConfigurationProcessor {
         ImageConfiguration.builder(baseImage)
             .setCredentialRetrievers(defaultCredentialRetrievers.asList());
 
-    String mainClass = projectProperties.getMainClass(jibPluginConfiguration);
+    List<String> entrypoint = jibPluginConfiguration.getEntrypoint();
+    if (entrypoint.isEmpty()) {
+      String mainClass = projectProperties.getMainClass(jibPluginConfiguration);
+      entrypoint =
+          JavaEntrypointConstructor.makeDefaultEntrypoint(
+              jibPluginConfiguration.getJvmFlags(), mainClass);
+    } else if (jibPluginConfiguration.getMainClass() != null
+        || !jibPluginConfiguration.getJvmFlags().isEmpty()) {
+      logger.warn("<mainClass> and <jvmFlags> are ignored when <entrypoint> is specified");
+    }
     ContainerConfiguration.Builder containerConfigurationBuilder =
         ContainerConfiguration.builder()
-            .setEntrypoint(
-                JavaEntrypointConstructor.makeDefaultEntrypoint(
-                    jibPluginConfiguration.getJvmFlags(), mainClass))
+            .setEntrypoint(entrypoint)
             .setProgramArguments(jibPluginConfiguration.getArgs())
             .setEnvironment(jibPluginConfiguration.getEnvironment())
             .setExposedPorts(ExposedPortsParser.parse(jibPluginConfiguration.getExposedPorts()))

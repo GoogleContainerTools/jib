@@ -101,8 +101,7 @@ public class JavaDockerContextGenerator {
   private final ImmutableList<CopyDirective> copyDirectives;
 
   @Nullable private String baseImage;
-  private List<String> jvmFlags = Collections.emptyList();
-  private String mainClass = "";
+  private List<String> entrypoint = Collections.emptyList();
   private List<String> javaArguments = Collections.emptyList();
   private List<String> exposedPorts = Collections.emptyList();
   private Map<String, String> labels = Collections.emptyMap();
@@ -150,24 +149,13 @@ public class JavaDockerContextGenerator {
   }
 
   /**
-   * Sets the JVM flags used in the {@code ENTRYPOINT}.
+   * Sets the entrypoint to be used as the {@code ENTRYPOINT}.
    *
-   * @param jvmFlags the jvm flags.
+   * @param entrypoint the entrypoint.
    * @return this
    */
-  public JavaDockerContextGenerator setJvmFlags(List<String> jvmFlags) {
-    this.jvmFlags = jvmFlags;
-    return this;
-  }
-
-  /**
-   * Sets the main class used in the {@code ENTRYPOINT}.
-   *
-   * @param mainClass the name of the main class.
-   * @return this
-   */
-  public JavaDockerContextGenerator setMainClass(String mainClass) {
-    this.mainClass = mainClass;
+  public JavaDockerContextGenerator setEntrypoint(List<String> entrypoint) {
+    this.entrypoint = entrypoint;
     return this;
   }
 
@@ -291,9 +279,7 @@ public class JavaDockerContextGenerator {
 
     dockerfile
         .append("\nENTRYPOINT ")
-        .append(
-            objectMapper.writeValueAsString(
-                JavaEntrypointConstructor.makeDefaultEntrypoint(jvmFlags, mainClass)))
+        .append(objectMapper.writeValueAsString(entrypoint))
         .append("\nCMD ")
         .append(objectMapper.writeValueAsString(javaArguments));
     return dockerfile.toString();
