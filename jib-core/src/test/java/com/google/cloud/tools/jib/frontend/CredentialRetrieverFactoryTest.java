@@ -42,6 +42,26 @@ public class CredentialRetrieverFactoryTest {
 
   private static final Credential FAKE_CREDENTIALS = new Credential("username", "password");
 
+  /**
+   * Returns a {@link DockerCredentialHelperFactory} that checks given parameters upon creating a
+   * {@link DockerCredentialHelper} instance.
+   *
+   * @param expectedRegistry the expected registry given to the factory
+   * @param expectedCredentialHelper the expected credential helper path given to the factory
+   * @param returnedCredentialHelper the mock credential helper to return
+   * @return a new {@link DockerCredentialHelperFactory}
+   */
+  private static DockerCredentialHelperFactory getTestFactory(
+      String expectedRegistry,
+      Path expectedCredentialHelper,
+      DockerCredentialHelper returnedCredentialHelper) {
+    return (registry, credentialHelper) -> {
+      Assert.assertEquals(expectedRegistry, registry);
+      Assert.assertEquals(expectedCredentialHelper, credentialHelper);
+      return returnedCredentialHelper;
+    };
+  }
+
   @Mock private JibLogger mockJibLogger;
   @Mock private DockerCredentialHelper mockDockerCredentialHelper;
   @Mock private DockerConfigCredentialRetriever mockDockerConfigCredentialRetriever;
@@ -130,25 +150,5 @@ public class CredentialRetrieverFactoryTest {
         credentialRetrieverFactory.dockerConfig(mockDockerConfigCredentialRetriever).retrieve());
 
     Mockito.verify(mockJibLogger).info("Using credentials from Docker config for registry");
-  }
-
-  /**
-   * Returns a {@link DockerCredentialHelperFactory} that checks given parameters upon creating a
-   * {@link DockerCredentialHelper} instance.
-   *
-   * @param expectedRegistry the expected registry given to the factory
-   * @param expectedCredentialHelper the expected credential helper path given to the factory
-   * @param returnedCredentialHelper the mock credential helper to return
-   * @return a new {@link DockerCredentialHelperFactory}
-   */
-  private static DockerCredentialHelperFactory getTestFactory(
-      String expectedRegistry,
-      Path expectedCredentialHelper,
-      DockerCredentialHelper returnedCredentialHelper) {
-    return (registry, credentialHelper) -> {
-      Assert.assertEquals(expectedRegistry, registry);
-      Assert.assertEquals(expectedCredentialHelper, credentialHelper);
-      return returnedCredentialHelper;
-    };
   }
 }

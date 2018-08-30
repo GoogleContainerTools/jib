@@ -64,7 +64,7 @@ public class CredentialRetrieverFactory {
 
   private final JibLogger logger;
   private ImageReference imageReference;
-  private DockerCredentialHelperFactory dockerCredentialHelperFactory;
+  private final DockerCredentialHelperFactory dockerCredentialHelperFactory;
 
   private CredentialRetrieverFactory(ImageReference imageReference, JibLogger logger) {
     this(imageReference, logger, DockerCredentialHelper::new);
