@@ -67,9 +67,17 @@ public class CredentialRetrieverFactory {
   private DockerCredentialHelperFactory dockerCredentialHelperFactory;
 
   private CredentialRetrieverFactory(ImageReference imageReference, JibLogger logger) {
+    this(imageReference, logger, DockerCredentialHelper::new);
+  }
+
+  @VisibleForTesting
+  CredentialRetrieverFactory(
+      ImageReference imageReference,
+      JibLogger logger,
+      DockerCredentialHelperFactory dockerCredentialHelperFactory) {
     this.imageReference = imageReference;
     this.logger = logger;
-    this.dockerCredentialHelperFactory = DockerCredentialHelper::new;
+    this.dockerCredentialHelperFactory = dockerCredentialHelperFactory;
   }
 
   /**
@@ -129,7 +137,7 @@ public class CredentialRetrieverFactory {
             "No credentials for " + imageReference.getRegistry() + " in " + credentialHelper);
         return null;
 
-      } catch (CredentialHelperNotFoundException | IOException ex) {
+      } catch (IOException ex) {
         throw new CredentialRetrievalException(ex);
       }
     };
@@ -221,12 +229,6 @@ public class CredentialRetrieverFactory {
       }
       return null;
     };
-  }
-
-  @VisibleForTesting
-  void setDockerCredentialHelperFactory(
-      DockerCredentialHelperFactory dockerCredentialHelperFactory) {
-    this.dockerCredentialHelperFactory = dockerCredentialHelperFactory;
   }
 
   private Credential retrieveFromDockerCredentialHelper(Path credentialHelper)

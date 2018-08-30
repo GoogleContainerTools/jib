@@ -99,12 +99,11 @@ public class DockerConfigCredentialRetrieverTest {
   }
 
   @Test
-  public void testRetrieve_none() {
-    Mockito.when(mockDockerConfig.getCredentialHelperFor(Mockito.any())).thenReturn(null);
+  public void testRetrieve_none() throws IOException {
     DockerConfigCredentialRetriever dockerConfigCredentialRetriever =
         new DockerConfigCredentialRetriever("unknown registry", dockerConfigFile);
 
-    Assert.assertNull(dockerConfigCredentialRetriever.retrieve(mockDockerConfig));
+    Assert.assertNull(dockerConfigCredentialRetriever.retrieve());
   }
 
   @Test

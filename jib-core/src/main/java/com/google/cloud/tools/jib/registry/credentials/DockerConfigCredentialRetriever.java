@@ -73,11 +73,13 @@ public class DockerConfigCredentialRetriever {
    */
   @Nullable
   public Credential retrieve() throws IOException {
-    DockerConfigTemplate dockerConfigTemplate = loadDockerConfigTemplate();
-    if (dockerConfigTemplate == null) {
+    if (!Files.exists(dockerConfigFile)) {
       return null;
     }
-    return retrieve(new DockerConfig(dockerConfigTemplate));
+    DockerConfig dockerConfig =
+        new DockerConfig(
+            JsonTemplateMapper.readJsonFromFile(dockerConfigFile, DockerConfigTemplate.class));
+    return retrieve(dockerConfig);
   }
 
   /**
@@ -117,20 +119,5 @@ public class DockerConfigCredentialRetriever {
       }
     }
     return null;
-  }
-
-  /**
-   * Loads the Docker config JSON and caches it.
-   *
-   * @throws IOException if failed to parse the config JSON
-   */
-  @Nullable
-  private DockerConfigTemplate loadDockerConfigTemplate() throws IOException {
-    // Loads the Docker config.
-    if (!Files.exists(dockerConfigFile)) {
-      return null;
-    }
-
-    return JsonTemplateMapper.readJsonFromFile(dockerConfigFile, DockerConfigTemplate.class);
   }
 }
