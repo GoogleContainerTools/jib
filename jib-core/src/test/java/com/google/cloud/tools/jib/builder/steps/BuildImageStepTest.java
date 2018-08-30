@@ -98,6 +98,7 @@ public class BuildImageStepTest {
         Image.builder()
             .addEnvironment(ImmutableMap.of("BASE_ENV", "BASE_ENV_VALUE"))
             .addLabel("base.label", "base.label.value")
+            .setWorkingDirectory("/base/working/directory")
             .addHistory(nonEmptyLayerHistory)
             .addHistory(emptyLayerHistory)
             .addHistory(emptyLayerHistory)
@@ -160,6 +161,7 @@ public class BuildImageStepTest {
     Assert.assertEquals(
         ImmutableMap.of("base.label", "base.label.value", "my.label", "my.label.value"),
         image.getLabels());
+    Assert.assertEquals("/base/working/directory", image.getWorkingDirectory());
 
     Assert.assertEquals(image.getHistory().get(0), nonEmptyLayerHistory);
     Assert.assertEquals(image.getHistory().get(1), emptyLayerHistory);

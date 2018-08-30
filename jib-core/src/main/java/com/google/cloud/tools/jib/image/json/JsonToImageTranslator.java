@@ -162,6 +162,8 @@ public class JsonToImageTranslator {
       }
     }
 
+    imageBuilder.setWorkingDirectory(containerConfigurationTemplate.getContainerWorkingDir());
+
     return imageBuilder.build();
   }
 

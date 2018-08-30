@@ -117,6 +117,7 @@ class BuildImageStep
       }
       imageBuilder.addEnvironment(baseImage.getEnvironment());
       imageBuilder.addLabels(baseImage.getLabels());
+      imageBuilder.setWorkingDirectory(baseImage.getWorkingDirectory());
 
       // Add history elements for non-empty layers that don't have one yet
       Instant layerCreationTime =
