@@ -14,31 +14,41 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.zip;
+package com.google.cloud.tools.jib.plugins.common;
 
+import com.google.common.io.ByteStreams;
+import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-import org.apache.commons.compress.utils.IOUtils;
 
 /** Utility class for Zip archives. */
 public class ZipUtil {
 
-  // TODO: prevent Zip-Slip vulnerability: https://snyk.io/research/zip-slip-vulnerability#java
+  /**
+   * Unzips {@code archive} into {@code destination}.
+   *
+   * @param archive zip archive to unzip
+   * @param destination target root for unzipping
+   * @throws IOException when I/O error occurs
+   */
   public static void unzip(Path archive, Path destination) throws IOException {
-    try (ZipInputStream zipIn = new ZipInputStream(Files.newInputStream(archive))) {
+    try (InputStream fileIn = Files.newInputStream(archive);
+        ZipInputStream zipIn = new ZipInputStream(new BufferedInputStream(fileIn))) {
 
       for (ZipEntry entry = zipIn.getNextEntry(); entry != null; entry = zipIn.getNextEntry()) {
+        // TODO: check Zip-Slip vulnerability: https://snyk.io/research/zip-slip-vulnerability#java
         Path entryPath = destination.resolve(entry.getName());
 
         if (entry.isDirectory()) {
           Files.createDirectories(entryPath);
         } else {
           try (OutputStream out = Files.newOutputStream(entryPath)) {
-            IOUtils.copy(zipIn, out);
+            ByteStreams.copy(zipIn, out);
           }
         }
       }

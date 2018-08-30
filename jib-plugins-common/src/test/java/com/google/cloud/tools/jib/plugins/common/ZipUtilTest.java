@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.zip;
+package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.common.io.Resources;
 import java.io.IOException;
