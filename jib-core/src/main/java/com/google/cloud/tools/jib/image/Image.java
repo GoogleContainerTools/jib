@@ -32,9 +32,9 @@ public class Image<T extends Layer> {
   public static class Builder<T extends Layer> {
 
     private final ImageLayers.Builder<T> imageLayersBuilder = ImageLayers.builder();
-    private ImmutableList.Builder<HistoryEntry> historyBuilder = ImmutableList.builder();
-    private ImmutableMap.Builder<String, String> environmentBuilder = ImmutableMap.builder();
-    private ImmutableMap.Builder<String, String> labelsBuilder = ImmutableMap.builder();
+    private final ImmutableList.Builder<HistoryEntry> historyBuilder = ImmutableList.builder();
+    private final ImmutableMap.Builder<String, String> environmentBuilder = ImmutableMap.builder();
+    private final ImmutableMap.Builder<String, String> labelsBuilder = ImmutableMap.builder();
 
     @Nullable private Instant created;
     @Nullable private ImmutableList<String> entrypoint;
@@ -73,7 +73,7 @@ public class Image<T extends Layer> {
      * @param value the value to set it to
      * @return this
      */
-    public Builder<T> setEnvironmentVariable(String name, String value) {
+    public Builder<T> addEnvironmentVariable(String name, String value) {
       environmentBuilder.put(name, value);
       return this;
     }

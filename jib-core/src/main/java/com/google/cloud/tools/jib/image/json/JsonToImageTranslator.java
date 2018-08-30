@@ -158,7 +158,7 @@ public class JsonToImageTranslator {
           throw new BadContainerConfigurationFormatException(
               "Invalid environment variable definition: " + environmentVariable);
         }
-        imageBuilder.setEnvironmentVariable(matcher.group("name"), matcher.group("value"));
+        imageBuilder.addEnvironmentVariable(matcher.group("name"), matcher.group("value"));
       }
     }
 
