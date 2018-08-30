@@ -22,7 +22,9 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -45,6 +47,22 @@ public class ZipUtilTest {
     Assert.assertTrue(Files.exists(destination));
   }
 
+  @Test
+  public void testZipSlipVulnerability_windows() throws URISyntaxException {
+    Assume.assumeTrue(System.getProperty("os.name").startsWith("Windows"));
+
+    Path archive = Paths.get(Resources.getResource("test-archives/zip-slip-win.zip").toURI());
+    verifyZipSlipSafe(archive);
+  }
+
+  @Test
+  public void testZipSlipVulnerability_unix() throws URISyntaxException {
+    Assume.assumeFalse(System.getProperty("os.name").startsWith("Windows"));
+
+    Path archive = Paths.get(Resources.getResource("test-archives/zip-slip.zip").toURI());
+    verifyZipSlipSafe(archive);
+  }
+
   private void verifyUnzip(Path destination) throws URISyntaxException, IOException {
     Path archive = Paths.get(Resources.getResource("test-archives/test.zip").toURI());
 
@@ -58,5 +76,16 @@ public class ZipUtilTest {
     Assert.assertEquals("file1", Files.readAllLines(file1).get(0));
     Assert.assertEquals("file2", Files.readAllLines(file2).get(0));
     Assert.assertEquals("file3", Files.readAllLines(file3).get(0));
+  }
+
+  private void verifyZipSlipSafe(Path archive) {
+    try {
+      ZipUtil.unzip(archive, tempFolder.getRoot().toPath());
+      Assert.fail("Should block Zip-Slip");
+    } catch (IOException ex) {
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.startsWith("Blocked unzipping files outside destination: "));
+    }
   }
 }
