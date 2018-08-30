@@ -43,6 +43,10 @@ public class BuildDockerMojo extends JibPluginConfiguration {
 
   @Override
   public void execute() throws MojoExecutionException {
+    if (isSkipped()) {
+      getLog().info("Skipping containerizations because jib-maven-plugin: skip = true");
+      return;
+    }
     if ("pom".equals(getProject().getPackaging())) {
       getLog().info("Skipping containerization because packaging is 'pom'...");
       return;
