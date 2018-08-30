@@ -18,17 +18,10 @@ package com.google.cloud.tools.jib.registry.credentials;
 
 import java.nio.file.Path;
 
-/** Thrown because the credential helper does not have credentials for the specified server URL. */
-public class NonexistentServerUrlDockerCredentialHelperException extends Exception {
+/** Thrown because the requested credential helper CLI does not exist. */
+public class CredentialHelperNotFoundException extends CredentialRetrievalException {
 
-  NonexistentServerUrlDockerCredentialHelperException(
-      Path credentialHelper, String serverUrl, String credentialHelperOutput) {
-    super(
-        "The credential helper ("
-            + credentialHelper
-            + ") has nothing for server URL: "
-            + serverUrl
-            + "\n\nGot output:\n\n"
-            + credentialHelperOutput);
+  CredentialHelperNotFoundException(Path credentialHelper, Throwable cause) {
+    super("The system does not have " + credentialHelper + " CLI", cause);
   }
 }

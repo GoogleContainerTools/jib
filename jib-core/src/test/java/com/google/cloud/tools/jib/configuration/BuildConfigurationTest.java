@@ -64,6 +64,7 @@ public class BuildConfigurationTest {
     List<LayerConfiguration> expectedLayerConfigurations =
         Collections.singletonList(
             LayerConfiguration.builder().addEntry(Collections.emptyList(), "destination").build());
+    String expectedCreatedBy = "createdBy";
 
     ImageConfiguration baseImageConfiguration =
         ImageConfiguration.builder(
@@ -94,7 +95,8 @@ public class BuildConfigurationTest {
             .setBaseImageLayersCacheConfiguration(expectedBaseImageLayersCacheConfiguration)
             .setTargetFormat(OCIManifestTemplate.class)
             .setAllowInsecureRegistries(true)
-            .setLayerConfigurations(expectedLayerConfigurations);
+            .setLayerConfigurations(expectedLayerConfigurations)
+            .setCreatedBy(expectedCreatedBy);
     BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
 
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
@@ -141,6 +143,7 @@ public class BuildConfigurationTest {
     Assert.assertEquals(expectedLayerConfigurations, buildConfiguration.getLayerConfigurations());
     Assert.assertEquals(
         expectedEntrypoint, buildConfiguration.getContainerConfiguration().getEntrypoint());
+    Assert.assertEquals(expectedCreatedBy, buildConfiguration.getCreatedBy());
   }
 
   @Test
@@ -176,6 +179,7 @@ public class BuildConfigurationTest {
     Assert.assertEquals(buildConfiguration.getTargetFormat(), V22ManifestTemplate.class);
     Assert.assertFalse(buildConfiguration.getAllowInsecureRegistries());
     Assert.assertEquals(Collections.emptyList(), buildConfiguration.getLayerConfigurations());
+    Assert.assertEquals("jib", buildConfiguration.getCreatedBy());
   }
 
   @Test

@@ -110,6 +110,7 @@ public class JsonToImageTranslator {
     }
 
     List<DescriptorDigest> diffIds = containerConfigurationTemplate.getDiffIds();
+    List<HistoryEntry> historyObjects = containerConfigurationTemplate.getHistory();
 
     if (layers.size() != diffIds.size()) {
       throw new LayerCountMismatchException(
@@ -123,6 +124,9 @@ public class JsonToImageTranslator {
       DescriptorDigest diffId = diffIds.get(layerIndex);
 
       imageBuilder.addLayer(new ReferenceLayer(noDiffIdLayer.getBlobDescriptor(), diffId));
+    }
+    for (HistoryEntry historyObject : historyObjects) {
+      imageBuilder.addHistory(historyObject);
     }
 
     if (containerConfigurationTemplate.getCreated() != null) {
@@ -154,9 +158,11 @@ public class JsonToImageTranslator {
           throw new BadContainerConfigurationFormatException(
               "Invalid environment variable definition: " + environmentVariable);
         }
-        imageBuilder.setEnvironmentVariable(matcher.group("name"), matcher.group("value"));
+        imageBuilder.addEnvironmentVariable(matcher.group("name"), matcher.group("value"));
       }
     }
+
+    imageBuilder.setWorkingDirectory(containerConfigurationTemplate.getContainerWorkingDir());
 
     return imageBuilder.build();
   }

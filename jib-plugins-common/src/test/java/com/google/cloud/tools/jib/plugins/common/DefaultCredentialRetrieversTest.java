@@ -36,15 +36,22 @@ public class DefaultCredentialRetrieversTest {
   @Mock private CredentialRetrieverFactory mockCredentialRetrieverFactory;
   @Mock private CredentialRetriever mockDockerCredentialHelperCredentialRetriever;
   @Mock private CredentialRetriever mockKnownCredentialRetriever;
+  @Mock private CredentialRetriever mockInferredCredentialRetriever;
   @Mock private CredentialRetriever mockInferCredentialHelperCredentialRetriever;
   @Mock private CredentialRetriever mockDockerConfigCredentialRetriever;
+
+  private final Credential knownCredential = new Credential("username", "password");
+  private final Credential inferredCredential = new Credential("username2", "password2");
 
   @Before
   public void setUp() {
     Mockito.when(mockCredentialRetrieverFactory.dockerCredentialHelper(Mockito.anyString()))
         .thenReturn(mockDockerCredentialHelperCredentialRetriever);
-    Mockito.when(mockCredentialRetrieverFactory.known(Mockito.any(), Mockito.anyString()))
+    Mockito.when(mockCredentialRetrieverFactory.known(knownCredential, "credentialSource"))
         .thenReturn(mockKnownCredentialRetriever);
+    Mockito.when(
+            mockCredentialRetrieverFactory.known(inferredCredential, "inferredCredentialSource"))
+        .thenReturn(mockInferredCredentialRetriever);
     Mockito.when(mockCredentialRetrieverFactory.inferCredentialHelper())
         .thenReturn(mockInferCredentialHelperCredentialRetriever);
     Mockito.when(mockCredentialRetrieverFactory.dockerConfig())
@@ -63,21 +70,24 @@ public class DefaultCredentialRetrieversTest {
 
   @Test
   public void testInitAsList_all() {
-    Credential knownCredential = new Credential("username", "password");
     List<CredentialRetriever> credentialRetrievers =
         DefaultCredentialRetrievers.init(mockCredentialRetrieverFactory)
             .setKnownCredential(knownCredential, "credentialSource")
+            .setInferredCredential(inferredCredential, "inferredCredentialSource")
             .setCredentialHelperSuffix("credentialHelperSuffix")
             .asList();
     Assert.assertEquals(
         Arrays.asList(
-            mockDockerCredentialHelperCredentialRetriever,
             mockKnownCredentialRetriever,
+            mockDockerCredentialHelperCredentialRetriever,
+            mockInferredCredentialRetriever,
             mockInferCredentialHelperCredentialRetriever,
             mockDockerConfigCredentialRetriever),
         credentialRetrievers);
 
     Mockito.verify(mockCredentialRetrieverFactory).known(knownCredential, "credentialSource");
+    Mockito.verify(mockCredentialRetrieverFactory)
+        .known(inferredCredential, "inferredCredentialSource");
     Mockito.verify(mockCredentialRetrieverFactory)
         .dockerCredentialHelper("docker-credential-credentialHelperSuffix");
   }

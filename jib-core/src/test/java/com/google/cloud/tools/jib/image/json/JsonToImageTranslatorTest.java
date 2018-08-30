@@ -168,9 +168,24 @@ public class JsonToImageTranslatorTest {
         DescriptorDigest.fromDigest(
             "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad"),
         layers.get(0).getDiffId());
+    Assert.assertEquals(
+        ImmutableList.of(
+            HistoryEntry.builder()
+                .setCreationTimestamp(Instant.EPOCH)
+                .setAuthor("Bazel")
+                .setCreatedBy("bazel build ...")
+                .setEmptyLayer(true)
+                .build(),
+            HistoryEntry.builder()
+                .setCreationTimestamp(Instant.ofEpochSecond(20))
+                .setAuthor("Jib")
+                .setCreatedBy("jib")
+                .build()),
+        image.getHistory());
     Assert.assertEquals(Instant.ofEpochSecond(20), image.getCreated());
     Assert.assertEquals(Arrays.asList("some", "entrypoint", "command"), image.getEntrypoint());
     Assert.assertEquals(ImmutableMap.of("VAR1", "VAL1", "VAR2", "VAL2"), image.getEnvironment());
+    Assert.assertEquals("/some/workspace", image.getWorkingDirectory());
     Assert.assertEquals(
         ImmutableList.of(
             new Port(1000, Protocol.TCP),

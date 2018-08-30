@@ -64,7 +64,7 @@ public class JavaLayerConfigurations {
   /** Builds with each layer's files. */
   public static class Builder {
 
-    private Map<LayerType, List<Path>> layerFilesMap = new EnumMap<>(LayerType.class);
+    private final Map<LayerType, List<Path>> layerFilesMap = new EnumMap<>(LayerType.class);
 
     private Builder() {
       for (LayerType layerType : LayerType.values()) {

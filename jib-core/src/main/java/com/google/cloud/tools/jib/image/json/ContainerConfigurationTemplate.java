@@ -38,10 +38,23 @@ import javax.annotation.Nullable;
  *   "config": {
  *     "Env": ["/usr/bin/java"],
  *     "Entrypoint": ["PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"],
- *     "Cmd": ["arg1", "arg2"]
- *     "ExposedPorts": { "6000/tcp":{}, "8000/tcp":{}, "9000/tcp":{} }
- *     "Labels": { "com.example.label": "value" }
+ *     "Cmd": ["arg1", "arg2"],
+ *     "ExposedPorts": { "6000/tcp":{}, "8000/tcp":{}, "9000/tcp":{} },
+ *     "Labels": { "com.example.label": "value" },
+ *     "WorkingDir": "/home/user/workspace"
  *   },
+ *   "history": [
+ *     {
+ *       "author": "Jib",
+ *       "created": "1970-01-01T00:00:00Z",
+ *       "created_by": "jib"
+ *     },
+ *     {
+ *       "author": "Jib",
+ *       "created": "1970-01-01T00:00:00Z",
+ *       "created_by": "jib"
+ *     }
+ *   ]
  *   "rootfs": {
  *     "diff_ids": [
  *       "sha256:2aebd096e0e237b447781353379722157e6c2d434b9ec5a0d63f2a6f07cf90c2",
@@ -70,6 +83,9 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
   /** Execution parameters that should be used as a base when running the container. */
   private final ConfigurationObjectTemplate config = new ConfigurationObjectTemplate();
 
+  /** Describes the history of each layer. */
+  private final List<HistoryEntry> history = new ArrayList<>();
+
   /** Layer content digests that are used to build the container filesystem. */
   private final RootFilesystemObjectTemplate rootfs = new RootFilesystemObjectTemplate();
 
@@ -91,6 +107,9 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
 
     /** Labels. */
     @Nullable private Map<String, String> Labels;
+
+    /** Working directory. */
+    @Nullable private String WorkingDir;
   }
 
   /**
@@ -133,12 +152,24 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     config.Labels = labels;
   }
 
+  public void setContainerWorkingDir(@Nullable String workingDirectory) {
+    config.WorkingDir = workingDirectory;
+  }
+
   public void addLayerDiffId(DescriptorDigest diffId) {
     rootfs.diff_ids.add(diffId);
   }
 
+  public void addHistoryEntry(HistoryEntry historyEntry) {
+    history.add(historyEntry);
+  }
+
   List<DescriptorDigest> getDiffIds() {
     return rootfs.diff_ids;
+  }
+
+  List<HistoryEntry> getHistory() {
+    return history;
   }
 
   @Nullable
@@ -169,6 +200,11 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
   @Nullable
   Map<String, String> getContainerLabels() {
     return config.Labels;
+  }
+
+  @Nullable
+  String getContainerWorkingDir() {
+    return config.WorkingDir;
   }
 
   @VisibleForTesting

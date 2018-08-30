@@ -113,6 +113,9 @@ public class BuildStepsIntegrationTest {
                 + "                \"2001/tcp\": {},\n"
                 + "                \"2002/tcp\": {},\n"
                 + "                \"3000/udp\": {}"));
+    String history = new Command("docker", "history", imageReference).run();
+    Assert.assertThat(history, CoreMatchers.containsString("jib-integration-test"));
+    Assert.assertThat(history, CoreMatchers.containsString("bazel build ..."));
     Assert.assertEquals(
         "Hello, world. An argument.\n", new Command("docker", "run", imageReference).run());
   }
@@ -138,17 +141,18 @@ public class BuildStepsIntegrationTest {
   public void testSteps_forBuildToDockerDaemon()
       throws IOException, InterruptedException, CacheMetadataCorruptedException, ExecutionException,
           CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
+    String imageReference = "testdocker";
     BuildConfiguration buildConfiguration =
         getBuildConfiguration(
             ImageReference.of("gcr.io", "distroless/java", "latest"),
-            ImageReference.of(null, "testdocker", null));
+            ImageReference.of(null, imageReference, null));
     Path cacheDirectory = temporaryFolder.newFolder().toPath();
     BuildSteps.forBuildToDockerDaemon(
             buildConfiguration,
             new Caches.Initializer(cacheDirectory, false, cacheDirectory, false))
         .run();
 
-    String dockerContainerConfig = new Command("docker", "inspect", "testdocker").run();
+    String dockerContainerConfig = new Command("docker", "inspect", imageReference).run();
     Assert.assertThat(
         dockerContainerConfig,
         CoreMatchers.containsString(
@@ -165,8 +169,11 @@ public class BuildStepsIntegrationTest {
                 + "                \"key1\": \"value1\",\n"
                 + "                \"key2\": \"value2\"\n"
                 + "            }"));
+    String history = new Command("docker", "history", imageReference).run();
+    Assert.assertThat(history, CoreMatchers.containsString("jib-integration-test"));
+    Assert.assertThat(history, CoreMatchers.containsString("bazel build ..."));
     Assert.assertEquals(
-        "Hello, world. An argument.\n", new Command("docker", "run", "testdocker").run());
+        "Hello, world. An argument.\n", new Command("docker", "run", imageReference).run());
   }
 
   @Test
@@ -216,6 +223,7 @@ public class BuildStepsIntegrationTest {
         .setContainerConfiguration(containerConfiguration)
         .setAllowInsecureRegistries(true)
         .setLayerConfigurations(fakeLayerConfigurations)
+        .setCreatedBy("jib-integration-test")
         .build();
   }
 }

@@ -144,6 +144,8 @@ public class BuildImageMojoIntegrationTest {
                 + "                \"key1\": \"value1\",\n"
                 + "                \"key2\": \"value2\"\n"
                 + "            }"));
+    String history = new Command("docker", "history", imageReference).run();
+    Assert.assertThat(history, CoreMatchers.containsString("jib-maven-plugin"));
   }
 
   private static float getBuildTimeFromVerifierLog(Verifier verifier) throws IOException {

@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.image.json;
 
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.io.Resources;
@@ -29,6 +30,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.DigestException;
+import java.time.Instant;
 import java.util.Arrays;
 import org.junit.Assert;
 import org.junit.Test;
@@ -58,10 +60,24 @@ public class ContainerConfigurationTemplateTest {
             "3000/udp",
             ImmutableMap.of()));
     containerConfigJson.setContainerLabels(ImmutableMap.of("key1", "value1", "key2", "value2"));
+    containerConfigJson.setContainerWorkingDir("/some/workspace");
 
     containerConfigJson.addLayerDiffId(
         DescriptorDigest.fromDigest(
             "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad"));
+    containerConfigJson.addHistoryEntry(
+        HistoryEntry.builder()
+            .setCreationTimestamp(Instant.EPOCH)
+            .setAuthor("Bazel")
+            .setCreatedBy("bazel build ...")
+            .setEmptyLayer(true)
+            .build());
+    containerConfigJson.addHistoryEntry(
+        HistoryEntry.builder()
+            .setCreationTimestamp(Instant.ofEpochSecond(20))
+            .setAuthor("Jib")
+            .setCreatedBy("jib")
+            .build());
 
     // Serializes the JSON object.
     ByteArrayOutputStream jsonStream = new ByteArrayOutputStream();
@@ -89,9 +105,24 @@ public class ContainerConfigurationTemplateTest {
     Assert.assertEquals(
         ImmutableMap.of("key1", "value1", "key2", "value2"),
         containerConfigJson.getContainerLabels());
+    Assert.assertEquals("/some/workspace", containerConfigJson.getContainerWorkingDir());
     Assert.assertEquals(
         DescriptorDigest.fromDigest(
             "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad"),
         containerConfigJson.getLayerDiffId(0));
+    Assert.assertEquals(
+        ImmutableList.of(
+            HistoryEntry.builder()
+                .setCreationTimestamp(Instant.EPOCH)
+                .setAuthor("Bazel")
+                .setCreatedBy("bazel build ...")
+                .setEmptyLayer(true)
+                .build(),
+            HistoryEntry.builder()
+                .setCreationTimestamp(Instant.ofEpochSecond(20))
+                .setAuthor("Jib")
+                .setCreatedBy("jib")
+                .build()),
+        containerConfigJson.getHistory());
   }
 }
