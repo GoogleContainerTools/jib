@@ -52,4 +52,10 @@ public class JavaEntrypointConstructorTest {
         JavaEntrypointConstructor.makeDefaultEntrypoint(expectedJvmFlags, expectedMainClass),
         entrypoint);
   }
+
+  @Test
+  public void testMakeDistrolessJettyEntrypoint() {
+    List<String> expected = Arrays.asList("java", "-jar", "/jetty/start.jar");
+    Assert.assertEquals(expected, JavaEntrypointConstructor.makeDistrolessJettyEntrypoint());
+  }
 }

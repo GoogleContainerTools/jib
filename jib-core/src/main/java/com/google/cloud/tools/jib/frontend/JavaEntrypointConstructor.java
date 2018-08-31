@@ -26,6 +26,7 @@ public class JavaEntrypointConstructor {
   public static final String DEFAULT_RESOURCES_PATH_ON_IMAGE = "/app/resources/";
   public static final String DEFAULT_CLASSES_PATH_ON_IMAGE = "/app/classes/";
   public static final String DEFAULT_DEPENDENCIES_PATH_ON_IMAGE = "/app/libs/";
+  public static final String DEFAULT_JETTY_BASE_ON_IMAGE = "/jetty/webapps/ROOT/";
 
   public static List<String> makeDefaultEntrypoint(List<String> jvmFlags, String mainClass) {
     return makeEntrypoint(
@@ -35,6 +36,15 @@ public class JavaEntrypointConstructor {
             DEFAULT_DEPENDENCIES_PATH_ON_IMAGE + "*"),
         jvmFlags,
         mainClass);
+  }
+
+  /**
+   * Constructs the container entrypoint for the gcr.io/distroless/jetty base image.
+   *
+   * @return ["java", "-jar", "/jetty/start.jar"]
+   */
+  public static List<String> makeDistrolessJettyEntrypoint() {
+    return Arrays.asList("java", "-jar", "/jetty/start.jar");
   }
 
   /**

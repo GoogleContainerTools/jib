@@ -34,6 +34,8 @@ import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.plugins.WarPluginConvention;
+import org.gradle.api.tasks.bundling.War;
 import org.gradle.jvm.tasks.Jar;
 
 /** Obtains information about a Gradle {@link Project} that uses Jib. */
@@ -54,6 +56,16 @@ class GradleProjectProperties implements ProjectProperties {
     } catch (IOException ex) {
       throw new GradleException("Obtaining project build output files failed", ex);
     }
+  }
+
+  @Nullable
+  static War getWar(Project project) {
+    WarPluginConvention warPluginConvention =
+        project.getConvention().findPlugin(WarPluginConvention.class);
+    if (warPluginConvention == null) {
+      return null;
+    }
+    return (War) warPluginConvention.getProject().getTasks().findByName("war");
   }
 
   private final Project project;
@@ -103,6 +115,12 @@ class GradleProjectProperties implements ProjectProperties {
   @Override
   public String getJarPluginName() {
     return JAR_PLUGIN_NAME;
+  }
+
+  @Override
+  public boolean isWarProject() {
+    // TODO: replace with "getWar(project) != null" once ready
+    return false;
   }
 
   /**

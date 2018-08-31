@@ -49,6 +49,7 @@ public class JavaDockerContextGeneratorTest {
   private static final String EXPECTED_DEPENDENCIES_PATH = "/app/libs/";
   private static final String EXPECTED_RESOURCES_PATH = "/app/resources/";
   private static final String EXPECTED_CLASSES_PATH = "/app/classes/";
+  private static final String EXPECTED_EXPLODED_WAR_PATH = "/jetty/webapps/ROOT/";
 
   private static void assertSameFiles(Path directory1, Path directory2) throws IOException {
     Deque<Path> directory1Paths = new ArrayDeque<>(new DirectoryWalker(directory1).walk());
@@ -80,6 +81,7 @@ public class JavaDockerContextGeneratorTest {
         Paths.get(Resources.getResource("application/snapshot-dependencies").toURI());
     Path testResources = Paths.get(Resources.getResource("application/resources").toURI());
     Path testClasses = Paths.get(Resources.getResource("application/classes").toURI());
+    Path testExplodedWarFiles = Paths.get(Resources.getResource("exploded-war").toURI());
     Path testExtraFiles = Paths.get(Resources.getResource("layer").toURI());
 
     ImmutableList<Path> expectedDependenciesFiles = listFilesInDirectory(testDependencies);
@@ -87,6 +89,7 @@ public class JavaDockerContextGeneratorTest {
         listFilesInDirectory(testSnapshotDependencies);
     ImmutableList<Path> expectedResourcesFiles = listFilesInDirectory(testResources);
     ImmutableList<Path> expectedClassesFiles = listFilesInDirectory(testClasses);
+    ImmutableList<Path> expectedExplodedWarFiles = listFilesInDirectory(testExplodedWarFiles);
     ImmutableList<Path> expectedExtraFiles = listFilesInDirectory(testExtraFiles);
 
     Path targetDirectory = temporaryFolder.newFolder().toPath();
@@ -105,6 +108,8 @@ public class JavaDockerContextGeneratorTest {
         .thenReturn(new LayerEntry(expectedResourcesFiles, EXPECTED_RESOURCES_PATH));
     Mockito.when(mockJavaLayerConfigurations.getClassesLayerEntry())
         .thenReturn(new LayerEntry(expectedClassesFiles, EXPECTED_CLASSES_PATH));
+    Mockito.when(mockJavaLayerConfigurations.getExplodedWarEntry())
+        .thenReturn(new LayerEntry(expectedExplodedWarFiles, EXPECTED_EXPLODED_WAR_PATH));
     Mockito.when(mockJavaLayerConfigurations.getExtraFilesLayerEntry())
         .thenReturn(new LayerEntry(expectedExtraFiles, "/"));
     new JavaDockerContextGenerator(mockJavaLayerConfigurations)
@@ -116,6 +121,7 @@ public class JavaDockerContextGeneratorTest {
     assertSameFiles(targetDirectory.resolve("snapshot-libs"), testSnapshotDependencies);
     assertSameFiles(targetDirectory.resolve("resources"), testResources);
     assertSameFiles(targetDirectory.resolve("classes"), testClasses);
+    assertSameFiles(targetDirectory.resolve("exploded-war"), testExplodedWarFiles);
     assertSameFiles(targetDirectory.resolve("root"), testExtraFiles);
   }
 
@@ -146,6 +152,9 @@ public class JavaDockerContextGeneratorTest {
             new LayerEntry(ImmutableList.of(Paths.get("ignored")), EXPECTED_RESOURCES_PATH));
     Mockito.when(mockJavaLayerConfigurations.getClassesLayerEntry())
         .thenReturn(new LayerEntry(ImmutableList.of(Paths.get("ignored")), EXPECTED_CLASSES_PATH));
+    Mockito.when(mockJavaLayerConfigurations.getExplodedWarEntry())
+        .thenReturn(
+            new LayerEntry(ImmutableList.of(Paths.get("ignored")), EXPECTED_EXPLODED_WAR_PATH));
     Mockito.when(mockJavaLayerConfigurations.getExtraFilesLayerEntry())
         .thenReturn(new LayerEntry(ImmutableList.of(Paths.get("ignored")), "/"));
     String dockerfile =

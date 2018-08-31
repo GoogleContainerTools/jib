@@ -40,4 +40,6 @@ public interface ProjectProperties {
   /** @return the name of the main class configured in a jar plugin, or null if none is found. */
   @Nullable
   String getMainClassFromJar();
+
+  boolean isWarProject();
 }

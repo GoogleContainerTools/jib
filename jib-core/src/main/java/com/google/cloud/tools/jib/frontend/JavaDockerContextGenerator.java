@@ -56,6 +56,7 @@ public class JavaDockerContextGenerator {
   private static final String SNAPSHOT_DEPENDENCIES_LAYER_DIRECTORY = "snapshot-libs";
   private static final String RESOURCES_LAYER_DIRECTORY = "resources";
   private static final String CLASSES_LAYER_DIRECTORY = "classes";
+  private static final String EXPLODED_WAR_LAYER_DIRECTORY = "exploded-war";
   private static final String EXTRA_FILES_LAYER_DIRECTORY = "root";
 
   /** Represents a Dockerfile {@code COPY} directive. */
@@ -131,8 +132,13 @@ public class JavaDockerContextGenerator {
         CLASSES_LAYER_DIRECTORY);
     addIfNotEmpty(
         copyDirectivesBuilder,
+        javaLayerConfigurations.getExplodedWarEntry(),
+        EXPLODED_WAR_LAYER_DIRECTORY);
+    addIfNotEmpty(
+        copyDirectivesBuilder,
         javaLayerConfigurations.getExtraFilesLayerEntry(),
         EXTRA_FILES_LAYER_DIRECTORY);
+
     copyDirectives = copyDirectivesBuilder.build();
   }
 
