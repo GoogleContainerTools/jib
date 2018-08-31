@@ -31,7 +31,9 @@ class EventHandlers {
 }
 ```
 
-For example, usage could look like this:
+Emitted events will be matched to handlers by their exact type. `JibEvent`s should **not** inherit from each other. 
+
+An example usage could look like this:
 
 ```java
 // In Jib Core
