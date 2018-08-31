@@ -51,13 +51,13 @@ public class JavaEntrypointConstructor {
       List<String> classpathElements, List<String> jvmFlags, String mainClass) {
     String classpathString = String.join(":", classpathElements);
 
-    List<String> entrypointBuilder = new ArrayList<>(4 + jvmFlags.size());
-    entrypointBuilder.add("java");
-    entrypointBuilder.addAll(jvmFlags);
-    entrypointBuilder.add("-cp");
-    entrypointBuilder.add(classpathString);
-    entrypointBuilder.add(mainClass);
-    return entrypointBuilder;
+    List<String> entrypoint = new ArrayList<>(4 + jvmFlags.size());
+    entrypoint.add("java");
+    entrypoint.addAll(jvmFlags);
+    entrypoint.add("-cp");
+    entrypoint.add(classpathString);
+    entrypoint.add(mainClass);
+    return entrypoint;
   }
 
   private JavaEntrypointConstructor() {}

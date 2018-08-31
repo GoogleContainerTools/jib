@@ -15,3 +15,7 @@ See [multi-module](multi-module) for containerizing projects with multiple modul
 <!-- ### SpringBoot Example 
 
 You can find usage by Gradle or Maven with SpringBoot in [spring-boot](spring-boot-draft#Quickstart) -->
+
+### Micronaut example
+
+See [micronaut](micronaut) for containerizing a [Micronaut framework](https://micronaut.io/) Groovy/Java application.

@@ -117,6 +117,7 @@ class BuildImageStep
       }
       imageBuilder.addEnvironment(baseImage.getEnvironment());
       imageBuilder.addLabels(baseImage.getLabels());
+      imageBuilder.setWorkingDirectory(baseImage.getWorkingDirectory());
 
       // Add history elements for non-empty layers that don't have one yet
       Instant layerCreationTime =
@@ -137,7 +138,7 @@ class BuildImageStep
             HistoryEntry.builder()
                 .setCreationTimestamp(layerCreationTime)
                 .setAuthor("Jib")
-                .setCreatedBy("jib")
+                .setCreatedBy(buildConfiguration.getCreatedBy())
                 .build());
       }
       if (containerConfiguration != null) {

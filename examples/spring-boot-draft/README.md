@@ -125,3 +125,5 @@ settings.xml(`${MAVEN_HOME}/conf/settings.xml`)(You should config this is you ar
     </servers>
 </settings>
 ```
+
+[![Analytics](https://cloud-tools-for-java-metrics.appspot.com/UA-121724379-2/examples/spring-boot-draft)](https://github.com/igrigorik/ga-beacon)

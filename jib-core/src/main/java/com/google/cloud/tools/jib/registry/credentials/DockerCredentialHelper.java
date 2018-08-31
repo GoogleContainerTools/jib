@@ -29,6 +29,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import javax.annotation.Nullable;
 
 /**
@@ -38,6 +39,8 @@ import javax.annotation.Nullable;
  *     href="https://github.com/docker/docker-credential-helpers">https://github.com/docker/docker-credential-helpers</a>
  */
 public class DockerCredentialHelper {
+
+  public static final String CREDENTIAL_HELPER_PREFIX = "docker-credential-";
 
   private final String serverUrl;
   private final Path credentialHelper;
@@ -51,14 +54,18 @@ public class DockerCredentialHelper {
   }
 
   /**
-   * Construct with {@link DockerCredentialHelperFactory}.
+   * Constructs a new {@link DockerCredentialHelper}.
    *
    * @param serverUrl the server URL to pass into the credential helper
    * @param credentialHelper the path to the credential helper executable
    */
-  DockerCredentialHelper(String serverUrl, Path credentialHelper) {
+  public DockerCredentialHelper(String serverUrl, Path credentialHelper) {
     this.serverUrl = serverUrl;
     this.credentialHelper = credentialHelper;
+  }
+
+  DockerCredentialHelper(String registry, String credentialHelperSuffix) {
+    this(registry, Paths.get(CREDENTIAL_HELPER_PREFIX + credentialHelperSuffix));
   }
 
   /**
@@ -133,11 +140,6 @@ public class DockerCredentialHelper {
 
       throw ex;
     }
-  }
-
-  @VisibleForTesting
-  String getServerUrl() {
-    return serverUrl;
   }
 
   @VisibleForTesting

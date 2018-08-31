@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.registry.credentials;
 
 import com.google.cloud.tools.jib.registry.credentials.json.DockerConfigTemplate;
 import com.google.cloud.tools.jib.registry.credentials.json.DockerConfigTemplate.AuthTemplate;
-import com.google.common.annotations.VisibleForTesting;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -82,12 +81,6 @@ class DockerConfig {
     return authEntry != null ? authEntry.getValue().getAuth() : null;
   }
 
-  @VisibleForTesting
-  @Nullable
-  DockerCredentialHelper getCredentialHelperFor(String registry) {
-    return getCredentialHelperFor(new DockerCredentialHelperFactory(), registry);
-  }
-
   /**
    * Determines a {@link DockerCredentialHelper} to use for {@code registry}.
    *
@@ -103,13 +96,12 @@ class DockerConfig {
    *     registry
    */
   @Nullable
-  DockerCredentialHelper getCredentialHelperFor(
-      DockerCredentialHelperFactory dockerCredentialHelperFactory, String registry) {
+  DockerCredentialHelper getCredentialHelperFor(String registry) {
     List<Predicate<String>> registryMatchers = getRegistryMatchersFor(registry);
     Map.Entry<String, ?> firstMatchInAuths =
         findFirstInMapByKey(dockerConfigTemplate.getAuths(), registryMatchers);
     if (dockerConfigTemplate.getCredsStore() != null && firstMatchInAuths != null) {
-      return dockerCredentialHelperFactory.newDockerCredentialHelper(
+      return new DockerCredentialHelper(
           firstMatchInAuths.getKey(), dockerConfigTemplate.getCredsStore());
     }
     Map.Entry<String, String> firstMatchInCredHelpers =
@@ -117,7 +109,7 @@ class DockerConfig {
     if (firstMatchInCredHelpers == null) {
       return null;
     }
-    return dockerCredentialHelperFactory.newDockerCredentialHelper(
+    return new DockerCredentialHelper(
         firstMatchInCredHelpers.getKey(), firstMatchInCredHelpers.getValue());
   }
 

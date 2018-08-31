@@ -31,6 +31,7 @@ import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import java.time.Instant;
+import java.util.List;
 import javax.annotation.Nullable;
 import org.gradle.api.GradleException;
 
@@ -85,12 +86,17 @@ class PluginConfigurationProcessor {
         ImageConfiguration.builder(baseImage)
             .setCredentialRetrievers(defaultCredentialRetrievers.asList());
 
-    String mainClass = projectProperties.getMainClass(jibExtension);
+    List<String> entrypoint = jibExtension.getContainer().getEntrypoint();
+    if (entrypoint.isEmpty()) {
+      String mainClass = projectProperties.getMainClass(jibExtension);
+      entrypoint =
+          JavaEntrypointConstructor.makeDefaultEntrypoint(jibExtension.getJvmFlags(), mainClass);
+    } else if (jibExtension.getMainClass() != null || !jibExtension.getJvmFlags().isEmpty()) {
+      logger.warn("mainClass and jvmFlags are ignored when entrypoint is specified");
+    }
     ContainerConfiguration.Builder containerConfigurationBuilder =
         ContainerConfiguration.builder()
-            .setEntrypoint(
-                JavaEntrypointConstructor.makeDefaultEntrypoint(
-                    jibExtension.getJvmFlags(), mainClass))
+            .setEntrypoint(entrypoint)
             .setProgramArguments(jibExtension.getArgs())
             .setExposedPorts(ExposedPortsParser.parse(jibExtension.getExposedPorts()))
             .setLabels(jibExtension.getLabels());
@@ -102,6 +108,7 @@ class PluginConfigurationProcessor {
 
     BuildConfiguration.Builder buildConfigurationBuilder =
         BuildConfiguration.builder(logger)
+            .setCreatedBy("jib-gradle-plugin")
             .setAllowInsecureRegistries(jibExtension.getAllowInsecureRegistries())
             .setLayerConfigurations(
                 projectProperties.getJavaLayerConfigurations().getLayerConfigurations());

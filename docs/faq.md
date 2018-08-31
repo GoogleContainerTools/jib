@@ -6,6 +6,7 @@ If a question you have is not answered below, please [submit an issue](/../../is
 
 [But, I'm not a Java developer.](#but-im-not-a-java-developer)\
 [How do I run the image I built?](#how-do-i-run-the-image-i-built)\
+[Where is bash?](#where-is-bash)\
 [How do I set parameters for my image at runtime?](#how-do-i-set-parameters-for-my-image-at-runtime)\
 [What image format does Jib use?](#what-image-format-does-jib-use)\
 [Can I define a custom entrypoint?](#can-i-define-a-custom-entrypoint)\
@@ -40,6 +41,42 @@ kubectl run jib-deployment --image=<image name>
 ```
 
 For more information, see [steps 4-6 of the Kubernetes Engine deployment tutorial](https://cloud.google.com/kubernetes-engine/docs/tutorials/hello-app#step_4_create_a_container_cluster).
+
+#### Where is bash?
+
+By default, Jib uses [`distroless/java`](https://github.com/GoogleContainerTools/distroless/tree/master/java) as the base image. Distroless images contain only runtime dependencies. They do not contain package managers, shells or any other programs you would expect to find in a standard Linux distribution. Check out the [distroless project](https://github.com/GoogleContainerTools/distroless#distroless-docker-images) for more information about distroless images.
+
+If you would like to include a shell for debugging, set the base image to `gcr.io/distroless/java:debug` instead. The shell will be located at `/busybox/sh`. Note that `:debug` images are **not** recommended for production use.
+
+<details>
+<summary>Configuring a base image in Maven</summary>
+<p>
+
+In [`jib-maven-plugin`](../jib-maven-plugin), you can use the `gcr.io/distroless/java:debug` base image by adding the following configuration:
+
+```xml
+<configuration>
+  <from>
+    <image>gcr.io/distroless/java:debug</image>
+  </from>
+</configuration>
+```
+</p>
+</details>
+
+<details>
+<summary>Configuring a base image in Gradle</summary>
+<p>
+
+In [`jib-gradle-plugin`](../jib-gradle-plugin), you can use the `gcr.io/distroless/java:debug` base image by adding the following configuration:
+
+```groovy
+jib.from.image = 'gcr.io/distroless/java:debug'
+```
+</p>
+</details><br />
+
+You can then run the image in shell form with Docker: `docker run -it --entrypoint /busybox/sh <image name>`
 
 ### How do I set parameters for my image at runtime?
 

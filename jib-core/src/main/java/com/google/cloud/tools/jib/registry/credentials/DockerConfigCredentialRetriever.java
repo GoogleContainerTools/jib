@@ -54,7 +54,6 @@ public class DockerConfigCredentialRetriever {
 
   private final String registry;
   private final Path dockerConfigFile;
-  private final DockerCredentialHelperFactory dockerCredentialHelperFactory;
 
   public DockerConfigCredentialRetriever(String registry) {
     this(registry, DOCKER_CONFIG_FILE);
@@ -64,17 +63,6 @@ public class DockerConfigCredentialRetriever {
   public DockerConfigCredentialRetriever(String registry, Path dockerConfigFile) {
     this.registry = registry;
     this.dockerConfigFile = dockerConfigFile;
-    this.dockerCredentialHelperFactory = new DockerCredentialHelperFactory();
-  }
-
-  @VisibleForTesting
-  DockerConfigCredentialRetriever(
-      String registry,
-      Path dockerConfigFile,
-      DockerCredentialHelperFactory dockerCredentialHelperFactory) {
-    this.registry = registry;
-    this.dockerConfigFile = dockerConfigFile;
-    this.dockerCredentialHelperFactory = dockerCredentialHelperFactory;
   }
 
   /**
@@ -85,71 +73,51 @@ public class DockerConfigCredentialRetriever {
    */
   @Nullable
   public Credential retrieve() throws IOException {
-    DockerConfigTemplate dockerConfigTemplate = loadDockerConfigTemplate();
-    if (dockerConfigTemplate == null) {
+    if (!Files.exists(dockerConfigFile)) {
       return null;
     }
-
-    DockerConfig dockerConfig = new DockerConfig(dockerConfigTemplate);
-
-    for (String registryAlias : RegistryAliasGroup.getAliasesGroup(registry)) {
-      Credential credentials = retrieve(dockerConfig, registryAlias);
-      if (credentials != null) {
-        return credentials;
-      }
-    }
-    return null;
+    DockerConfig dockerConfig =
+        new DockerConfig(
+            JsonTemplateMapper.readJsonFromFile(dockerConfigFile, DockerConfigTemplate.class));
+    return retrieve(dockerConfig);
   }
 
   /**
    * Retrieves credentials for a registry alias from a {@link DockerConfig}.
    *
    * @param dockerConfig the {@link DockerConfig} to retrieve from
-   * @param registryAlias the registry alias to use
    * @return the retrieved credentials, or {@code null} if none are found
    */
+  @VisibleForTesting
   @Nullable
-  private Credential retrieve(DockerConfig dockerConfig, String registryAlias) {
-    // First, tries to find defined auth.
-    String auth = dockerConfig.getAuthFor(registryAlias);
-    if (auth != null) {
-      // 'auth' is a basic authentication token that should be parsed back into credentials
-      String usernameColonPassword = new String(Base64.decodeBase64(auth), StandardCharsets.UTF_8);
-      String username = usernameColonPassword.substring(0, usernameColonPassword.indexOf(":"));
-      String password = usernameColonPassword.substring(usernameColonPassword.indexOf(":") + 1);
-      return new Credential(username, password);
-    }
+  Credential retrieve(DockerConfig dockerConfig) {
+    for (String registryAlias : RegistryAliasGroup.getAliasesGroup(registry)) {
+      // First, tries to find defined auth.
+      String auth = dockerConfig.getAuthFor(registryAlias);
+      if (auth != null) {
+        // 'auth' is a basic authentication token that should be parsed back into credentials
+        String usernameColonPassword =
+            new String(Base64.decodeBase64(auth), StandardCharsets.UTF_8);
+        String username = usernameColonPassword.substring(0, usernameColonPassword.indexOf(":"));
+        String password = usernameColonPassword.substring(usernameColonPassword.indexOf(":") + 1);
+        return new Credential(username, password);
+      }
 
-    // Then, tries to use a defined credHelpers credential helper.
-    DockerCredentialHelper dockerCredentialHelper =
-        dockerConfig.getCredentialHelperFor(dockerCredentialHelperFactory, registryAlias);
-    if (dockerCredentialHelper != null) {
-      try {
-        // Tries with the given registry alias (may be the original registry).
-        return dockerCredentialHelper.retrieve();
+      // Then, tries to use a defined credHelpers credential helper.
+      DockerCredentialHelper dockerCredentialHelper =
+          dockerConfig.getCredentialHelperFor(registryAlias);
+      if (dockerCredentialHelper != null) {
+        try {
+          // Tries with the given registry alias (may be the original registry).
+          return dockerCredentialHelper.retrieve();
 
-      } catch (IOException
-          | CredentialHelperUnhandledServerUrlException
-          | CredentialHelperNotFoundException ex) {
-        // Ignores credential helper retrieval exceptions.
+        } catch (IOException
+            | CredentialHelperUnhandledServerUrlException
+            | CredentialHelperNotFoundException ex) {
+          // Ignores credential helper retrieval exceptions.
+        }
       }
     }
-
     return null;
-  }
-
-  /**
-   * Loads the Docker config JSON and caches it.
-   *
-   * @throws IOException if failed to parse the config JSON
-   */
-  @Nullable
-  private DockerConfigTemplate loadDockerConfigTemplate() throws IOException {
-    // Loads the Docker config.
-    if (!Files.exists(dockerConfigFile)) {
-      return null;
-    }
-
-    return JsonTemplateMapper.readJsonFromFile(dockerConfigFile, DockerConfigTemplate.class);
   }
 }
