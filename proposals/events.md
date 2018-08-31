@@ -22,34 +22,33 @@ An `EventHandlers` class holds handlers to pass into the execution steps.
 
 ```java
 class EventHandlers {
-  <E extends JibEvent> addHandler(JibEventHandler<E> handler);
-  <E extends JibEvent> removeHandler(JibEventHandler<E> handler);
+  <E extends JibEvent> add(Class<E> eventClass, Consumer<E> eventConsumer);
+  <E extends JibEvent> remove(Consumer<E> eventConsumer);
 }
 ```
 
-`<E extends JibEvent> addHandler(JibEventHandler<E> handler)`
-This adds an event handler for the E event class to handle that event with handler. For example, a `JibEventHandler` could look like this:
+`<E extends JibEvent> add(Class<E> eventClass, Consumer<E> eventConsumer)`
+This adds an event handler for the `E` event class to handle that event with `eventConsumer`. For example, usage could look like this:
 
 ```java
-class SomeJibEventHandler implements JibEventHandler<SomeJibEvent> {
-  
-  @Override
-  Class<SomeJibEvent> getEventClass() {
-    return SomeJibEvent.class;
-  }
-  
-  @Override
-  void handle(SomeJibEvent event) {
-    // Do some processing on event, like:
-    System.out.println("Got event with string: " + event.getString());
-  }
-}
+EventHandlers jibEventHandlers = 
+    EventHandlers.create()
+                 .add(SomeJibEvent.class, someJibEvent -> {
+                   // Do some processing on event, like:
+                   System.out.println("Got event with string: " + event.getString());
+                 });
+jibEventHandlers.add();
 
-EventHandlers jibEventHandlers = EventHandlers.create();
-jibEventHandlers.addHandler(new SomeJibEventHandler());
-jibEventHandlers.add(EventHandlers.loggingHandlers(jibLogger));
-
-Containerizers.toRegistry(targetImage).setEventHandlers(jibEventHandlers)
+ExecutionContext executionContext = 
+    ExecutionContext.newContext()
+                    .addEventHandlers(jibEventHandlers)
+                    // Some class that has pre-defined handlers that print log messages.
+                    .addEventHandlers(new LoggingEventHandlers(jibLogger));
+Jib.from(...)
+   ...
+   .containerize(
+       Containerizers.withExecutionContext(executionContext)
+                     .to(RegistryImage.named(targetImage)));
 ```
 
 `<E extends JibEvent> removeHandler(handler)`
@@ -67,7 +66,7 @@ class PushingBlobEvent implements JibEvent {
 
 // Called by user
 EventHandlers handlers = EventHandlers.create();
-handlers.add(JibEventHandler.handle(PushingBlobEvent.class, event -> {
+handlers.add(PushingBlobEvent.class, event -> {
   System.out.println("Pushing blob " + event.getDigest() + " to " + event.getUploadLocation());
 });
 ... add other handlers ...
