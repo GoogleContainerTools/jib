@@ -17,6 +17,8 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.Command;
+import com.google.common.base.Charsets;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,6 +39,9 @@ public class DockerContextMojoIntegrationTest {
 
   @ClassRule
   public static final TestProject simpleTestProject = new TestProject(testPlugin, "simple");
+
+  @ClassRule
+  public static final TestProject skippedTestProject = new TestProject(testPlugin, "empty");
 
   @Test
   public void testExecute() throws VerificationException, IOException, InterruptedException {
@@ -71,5 +76,24 @@ public class DockerContextMojoIntegrationTest {
 
     Assert.assertEquals(
         "Hello, world. An argument.\nfoo\ncat\n", new Command("docker", "run", imageName).run());
+  }
+
+  public void testExecute_skipJibGoal() throws VerificationException, IOException {
+    String targetImage = "emptyimage:maven" + System.nanoTime();
+
+    Verifier verifier = new Verifier(skippedTestProject.getProjectRoot().toString());
+    verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
+    verifier.setAutoclean(false);
+    verifier.setSystemProperty("jib.skip", "true");
+
+    verifier.executeGoal("jib:" + BuildDockerMojo.GOAL_NAME);
+    File logFile = new File(verifier.getBasedir(), verifier.getLogFileName());
+    Assert.assertTrue(
+        com.google.common.io.Files.asCharSource(logFile, Charsets.UTF_8)
+            .read()
+            .contains(
+                "[INFO] Skipping containerizations because jib-maven-plugin: skip = true\n"
+                    + "[INFO] ------------------------------------------------------------------------\n"
+                    + "[INFO] BUILD SUCCESS"));
   }
 }

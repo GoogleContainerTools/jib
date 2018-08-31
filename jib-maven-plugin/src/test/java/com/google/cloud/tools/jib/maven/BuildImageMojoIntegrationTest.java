@@ -19,6 +19,8 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
+import com.google.common.base.Charsets;
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -58,6 +60,9 @@ public class BuildImageMojoIntegrationTest {
 
   @ClassRule
   public static final TestProject emptyTestProject = new TestProject(testPlugin, "empty");
+
+  @ClassRule
+  public static final TestProject skippedTestProject = new TestProject(testPlugin, "empty");
 
   @ClassRule
   public static final TestProject defaultTargetTestProject =
@@ -269,5 +274,25 @@ public class BuildImageMojoIntegrationTest {
     Assert.assertEquals(
         "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\n",
         buildAndRunComplex(targetImage, "testuser", "testpassword", localRegistry1));
+  }
+
+  @Test
+  public void testExecute_skipJibGoal() throws VerificationException, IOException {
+    String targetImage = "emptyimage:maven" + System.nanoTime();
+
+    Verifier verifier = new Verifier(skippedTestProject.getProjectRoot().toString());
+    verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
+    verifier.setAutoclean(false);
+    verifier.setSystemProperty("jib.skip", "true");
+
+    verifier.executeGoal("jib:" + BuildImageMojo.GOAL_NAME);
+    File logFile = new File(verifier.getBasedir(), verifier.getLogFileName());
+    Assert.assertTrue(
+        com.google.common.io.Files.asCharSource(logFile, Charsets.UTF_8)
+            .read()
+            .contains(
+                "[INFO] Skipping containerizations because jib-maven-plugin: skip = true\n"
+                    + "[INFO] ------------------------------------------------------------------------\n"
+                    + "[INFO] BUILD SUCCESS"));
   }
 }
