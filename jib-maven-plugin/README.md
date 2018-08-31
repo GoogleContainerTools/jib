@@ -239,7 +239,7 @@ Property | Type | Default | Description
 `labels` | map | *None* | Key-value pairs for applying image metadata (similar to Docker's [LABEL](https://docs.docker.com/engine/reference/builder/#label) instruction).
 `format` | string | `Docker` | Use `OCI` to build an [OCI container image](https://www.opencontainers.org/).
 `useCurrentTimestamp` | boolean | `false` | By default, Jib wipes all timestamps to guarantee reproducibility. If this parameter is set to `true`, Jib will set the image's creation timestamp to the time of the build, which sacrifices reproducibility for easily being able to tell when your image was created.
-`entrypoint` | list | *None* | The executable to be run (similar to Docker's [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint) instruction). If set then `jvmFlags` and `mainClass` are ignored.
+`entrypoint` | list | *None* | The command to start the container with (similar to Docker's [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint) instruction). If set, then `jvmFlags` and `mainClass` are ignored.
 
 You can also configure HTTP connection/read timeouts for registry interactions using the `jib.httpTimeout` system property, configured in milliseconds via commandline (the default is `20000`; you can also set it to `0` for infinite timeout):
 
@@ -249,7 +249,7 @@ mvn compile jib:build -Djib.httpTimeout=3000
 
 *\* Uses `mainClass` from `maven-jar-plugin` or tries to find a valid main class.*
 
-### Examples
+### Example
 
 In this configuration, the image:
 * Is built from a base of `openjdk:alpine` (pulled from Docker Hub)
@@ -288,24 +288,6 @@ In this configuration, the image:
       <key2>value2</key2>
     </labels>
     <format>OCI</format>
-  </container>
-</configuration>
-```
-
-In this configuration, the image:
-* Is built from a base of `gcr.io/distroless/java:debug` to include busybox
-* Sets an entrypoint to run a script `/bin/start.sh` that is provided in `src/main/jib/bin/start.sh`
-
-```xml
-<configuration>
-  <from>
-    <image>gcr.io/distroless/java:debug</image>
-  </from>
-  <container>
-    <entrypoint>
-      <arg>/busybox/sh</arg>
-      <arg>/bin/start.sh</arg>
-    </entrypoint>
   </container>
 </configuration>
 ```
