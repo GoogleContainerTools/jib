@@ -24,14 +24,14 @@ An `EventHandlers` class holds handlers to pass into the execution steps. This i
 class EventHandlers {
   
   // Handles `E` event class to with `eventConsumer`.
-  <E extends JibEvent> add(Class<E> eventClass, Consumer<E> eventConsumer);
+  <E extends JibEvent> add(JibEventType<E> eventType, Consumer<E> eventConsumer);
   
   // Handles all events.
   add(Consumer<JibEvent> eventConsumer);
 }
 ```
 
-Emitted events will be matched to handlers by their exact type. `JibEvent`s should **not** inherit from each other. 
+Emitted events will be matched to handlers by their exact type. `JibEvent`s should **not** inherit from each other. `JibEventType` defines constants for all the possible event types to add handlers for.
 
 An example usage could look like this:
 
@@ -46,7 +46,7 @@ class PushingBlobEvent implements JibEvent {
 // Called by user
 ExecutionContext executionContext = 
     ExecutionContext.newContext()
-                    .addEventHandler(PushingBlobEvent.class, event -> {
+                    .addEventHandler(JibEventType.PUSHING_BLOB, event -> {
                       // Do some processing on event, like:
                       System.out.println(
                           "Pushing blob " + event.getDigest() + " to " +
