@@ -32,6 +32,9 @@ public class BuildTarMojoIntegrationTest {
   @ClassRule
   public static final TestProject simpleTestProject = new TestProject(testPlugin, "simple");
 
+  @ClassRule
+  public static final TestProject skippedTestProject = new TestProject(testPlugin, "empty");
+
   /**
    * Builds and runs jib:buildTar on a project at {@code projectRoot} pushing to {@code
    * imageReference}.
@@ -66,5 +69,10 @@ public class BuildTarMojoIntegrationTest {
         Instant.parse(
             new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim());
     Assert.assertTrue(buildTime.isAfter(before) || buildTime.equals(before));
+  }
+
+  @Test
+  public void testExecute_skipJibGoal() throws VerificationException, IOException {
+    SkippedGoalVerifier.verifyGoalIsSkipped(skippedTestProject, BuildTarMojo.GOAL_NAME);
   }
 }

@@ -38,6 +38,9 @@ public class DockerContextMojoIntegrationTest {
   @ClassRule
   public static final TestProject simpleTestProject = new TestProject(testPlugin, "simple");
 
+  @ClassRule
+  public static final TestProject skippedTestProject = new TestProject(testPlugin, "empty");
+
   @Test
   public void testExecute() throws VerificationException, IOException, InterruptedException {
     Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
@@ -71,5 +74,9 @@ public class DockerContextMojoIntegrationTest {
 
     Assert.assertEquals(
         "Hello, world. An argument.\nfoo\ncat\n", new Command("docker", "run", imageName).run());
+  }
+
+  public void testExecute_skipJibGoal() throws VerificationException, IOException {
+    SkippedGoalVerifier.verifyGoalIsSkipped(skippedTestProject, BuildDockerMojo.GOAL_NAME);
   }
 }

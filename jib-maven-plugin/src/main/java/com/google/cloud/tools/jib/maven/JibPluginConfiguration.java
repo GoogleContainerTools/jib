@@ -170,6 +170,9 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   @Parameter(defaultValue = "${project.basedir}/src/main/jib", required = true)
   private String extraDirectory;
 
+  @Parameter(defaultValue = "false", property = "jib.skip")
+  private boolean skip;
+
   @Nullable @Component protected SettingsDecrypter settingsDecrypter;
 
   /** Default constructor handles setting up auth property descriptors. */
@@ -300,6 +303,10 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   Path getExtraDirectory() {
     // TODO: Should inform user about nonexistent directory if using custom directory.
     return Paths.get(Preconditions.checkNotNull(extraDirectory));
+  }
+
+  boolean isSkipped() {
+    return skip;
   }
 
   SettingsDecrypter getSettingsDecrypter() {

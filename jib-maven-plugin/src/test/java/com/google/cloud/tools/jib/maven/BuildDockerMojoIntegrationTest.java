@@ -42,6 +42,9 @@ public class BuildDockerMojoIntegrationTest {
   public static final TestProject defaultTargetTestProject =
       new TestProject(testPlugin, "default-target");
 
+  @ClassRule
+  public static final TestProject skippedTestProject = new TestProject(testPlugin, "empty");
+
   /**
    * Builds and runs jib:buildDocker on a project at {@code projectRoot} pushing to {@code
    * imageReference}.
@@ -109,5 +112,10 @@ public class BuildDockerMojoIntegrationTest {
         buildToDockerDaemonAndRun(
             defaultTargetTestProject.getProjectRoot(),
             "default-target-name:default-target-version"));
+  }
+
+  @Test
+  public void testExecute_skipJibGoal() throws VerificationException, IOException {
+    SkippedGoalVerifier.verifyGoalIsSkipped(skippedTestProject, BuildDockerMojo.GOAL_NAME);
   }
 }

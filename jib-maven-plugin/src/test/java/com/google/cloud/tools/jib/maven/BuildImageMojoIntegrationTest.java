@@ -60,6 +60,9 @@ public class BuildImageMojoIntegrationTest {
   public static final TestProject emptyTestProject = new TestProject(testPlugin, "empty");
 
   @ClassRule
+  public static final TestProject skippedTestProject = new TestProject(testPlugin, "empty");
+
+  @ClassRule
   public static final TestProject defaultTargetTestProject =
       new TestProject(testPlugin, "default-target");
 
@@ -269,5 +272,10 @@ public class BuildImageMojoIntegrationTest {
     Assert.assertEquals(
         "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\n",
         buildAndRunComplex(targetImage, "testuser", "testpassword", localRegistry1));
+  }
+
+  @Test
+  public void testExecute_skipJibGoal() throws VerificationException, IOException {
+    SkippedGoalVerifier.verifyGoalIsSkipped(skippedTestProject, BuildImageMojo.GOAL_NAME);
   }
 }
