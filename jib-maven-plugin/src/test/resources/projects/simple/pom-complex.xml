@@ -63,8 +63,8 @@
               <jvmFlag>-Xdebug</jvmFlag>
             </jvmFlags>
             <environment>
-              <var1>value1</var1>
-              <var2>value2</var2>
+              <env1>value1</env1>
+              <env2>value2</env2>
             </environment>
             <ports>
               <port>1000/tcp</port>

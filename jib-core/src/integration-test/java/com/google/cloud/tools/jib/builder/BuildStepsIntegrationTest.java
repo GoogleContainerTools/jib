@@ -64,6 +64,33 @@ public class BuildStepsIntegrationTest {
     }
   }
 
+  private static void assertDockerInspect(String imageReference)
+      throws IOException, InterruptedException {
+    String dockerContainerConfig = new Command("docker", "inspect", imageReference).run();
+    Assert.assertThat(
+        dockerContainerConfig,
+        CoreMatchers.containsString(
+            "            \"ExposedPorts\": {\n"
+                + "                \"1000/tcp\": {},\n"
+                + "                \"2000/tcp\": {},\n"
+                + "                \"2001/tcp\": {},\n"
+                + "                \"2002/tcp\": {},\n"
+                + "                \"3000/udp\": {}"));
+    Assert.assertThat(
+        dockerContainerConfig,
+        CoreMatchers.containsString(
+            "            \"Labels\": {\n"
+                + "                \"key1\": \"value1\",\n"
+                + "                \"key2\": \"value2\"\n"
+                + "            }"));
+    String dockerConfigEnv =
+        new Command("docker", "inspect", "-f", "{{.Config.Env}}", imageReference).run();
+    Assert.assertThat(dockerConfigEnv, CoreMatchers.containsString("var1=value1 var2=value2"));
+    String history = new Command("docker", "history", imageReference).run();
+    Assert.assertThat(history, CoreMatchers.containsString("jib-integration-test"));
+    Assert.assertThat(history, CoreMatchers.containsString("bazel build ..."));
+  }
+
   private static final TestJibLogger logger = new TestJibLogger();
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -196,32 +223,5 @@ public class BuildStepsIntegrationTest {
         .setLayerConfigurations(fakeLayerConfigurations)
         .setCreatedBy("jib-integration-test")
         .build();
-  }
-
-  private void assertDockerInspect(String imageReference) throws IOException, InterruptedException {
-    String dockerContainerConfig = new Command("docker", "inspect", imageReference).run();
-    Assert.assertThat(
-        dockerContainerConfig,
-        CoreMatchers.containsString(
-            "            \"ExposedPorts\": {\n"
-                + "                \"1000/tcp\": {},\n"
-                + "                \"2000/tcp\": {},\n"
-                + "                \"2001/tcp\": {},\n"
-                + "                \"2002/tcp\": {},\n"
-                + "                \"3000/udp\": {}"));
-    Assert.assertThat(
-        dockerContainerConfig,
-        CoreMatchers.containsString(
-            "            \"Labels\": {\n"
-                + "                \"key1\": \"value1\",\n"
-                + "                \"key2\": \"value2\"\n"
-                + "            }"));
-
-    String dockerConfigEnv =
-        new Command("docker", "inspect", "-f", "{{.Config.Env}}", imageReference).run();
-    Assert.assertThat(dockerConfigEnv, CoreMatchers.containsString("var1=value1 var2=value2"));
-    String history = new Command("docker", "history", imageReference).run();
-    Assert.assertThat(history, CoreMatchers.containsString("jib-integration-test"));
-    Assert.assertThat(history, CoreMatchers.containsString("bazel build ..."));
   }
 }

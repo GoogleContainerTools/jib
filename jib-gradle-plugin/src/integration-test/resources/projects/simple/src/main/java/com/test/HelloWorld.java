@@ -51,11 +51,11 @@ public class HelloWorld {
       System.out.println(jvmFlag);
     }
 
-    if (System.getenv("var1") != null) {
-      System.out.println(System.getenv("var1"));
+    if (System.getenv("env1") != null) {
+      System.out.println(System.getenv("env1"));
     }
-    if (System.getenv("var2") != null) {
-      System.out.println(System.getenv("var2"));
+    if (System.getenv("env2") != null) {
+      System.out.println(System.getenv("env2"));
     }
   }
 }

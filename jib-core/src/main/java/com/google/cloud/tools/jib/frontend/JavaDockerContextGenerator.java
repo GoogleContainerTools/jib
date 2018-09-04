@@ -99,6 +99,35 @@ public class JavaDockerContextGenerator {
             layerEntry.getSourceFiles(), directoryInContext, layerEntry.getExtractionPath()));
   }
 
+  /**
+   * Converts a map to a corresponding dockerfile string in the form of:
+   *
+   * <pre>{@code
+   * command key1="value1" \
+   *     key2="value2" \
+   *     ...
+   * }</pre>
+   *
+   * @param map the map to convert
+   * @param command the dockerfile command to prefix the map values with
+   * @param objectMapper used to json-ify map values
+   * @return the new dockerfile command as a string
+   * @throws JsonProcessingException if getting the json string of a map value fails
+   */
+  private static String mapToDockerfileString(
+      Map<String, String> map, String command, ObjectMapper objectMapper)
+      throws JsonProcessingException {
+    if (map.isEmpty()) {
+      return "";
+    }
+
+    StringJoiner joiner = new StringJoiner(" \\\n    ", "\n" + command + " ", "");
+    for (Entry<String, String> entry : map.entrySet()) {
+      joiner.add(entry.getKey() + "=" + objectMapper.writeValueAsString(entry.getValue()));
+    }
+    return joiner.toString();
+  }
+
   private final ImmutableList<CopyDirective> copyDirectives;
 
   @Nullable private String baseImage;
@@ -175,7 +204,7 @@ public class JavaDockerContextGenerator {
   /**
    * Sets the environment variables
    *
-   * @param environment the environment variables
+   * @param environment map from the environment variable name to value
    * @return this
    */
   public JavaDockerContextGenerator setEnvironment(Map<String, String> environment) {
@@ -257,8 +286,8 @@ public class JavaDockerContextGenerator {
    *     [key2]="[value2]" \
    *     [...]
    * LABEL [key1]="[value1]" \
-   *       [key2]="[value2]" \
-   *       [...]
+   *     [key2]="[value2]" \
+   *     [...]
    * ENTRYPOINT java [jvm flags] -cp [classpaths] [main class]
    * CMD [main class args]
    * }</pre>
@@ -283,22 +312,8 @@ public class JavaDockerContextGenerator {
       dockerfile.append("\nEXPOSE ").append(port);
     }
 
-    StringJoiner joiner = new StringJoiner(" \\\n    ", "\nENV ", "");
-    for (Entry<String, String> env : environment.entrySet()) {
-      joiner.add(env.getKey() + "=" + objectMapper.writeValueAsString(env.getValue()));
-    }
-    if (environment.entrySet().size() > 0) {
-      dockerfile.append(joiner.toString());
-    }
-
-    joiner = new StringJoiner(" \\\n      ", "\nLABEL ", "");
-    for (Entry<String, String> label : labels.entrySet()) {
-      joiner.add(label.getKey() + "=" + objectMapper.writeValueAsString(label.getValue()));
-    }
-    if (labels.entrySet().size() > 0) {
-      dockerfile.append(joiner.toString());
-    }
-
+    dockerfile.append(mapToDockerfileString(environment, "ENV", objectMapper));
+    dockerfile.append(mapToDockerfileString(labels, "LABEL", objectMapper));
     dockerfile
         .append("\nENTRYPOINT ")
         .append(objectMapper.writeValueAsString(entrypoint))
