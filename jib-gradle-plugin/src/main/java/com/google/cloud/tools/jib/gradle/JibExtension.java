@@ -229,6 +229,12 @@ public class JibExtension {
     return container.getJvmFlags();
   }
 
+  @Internal
+  @Optional
+  Map<String, String> getEnvironment() {
+    return container.getEnvironment();
+  }
+
   // TODO: Make @Internal (deprecated)
   @Input
   @Nullable

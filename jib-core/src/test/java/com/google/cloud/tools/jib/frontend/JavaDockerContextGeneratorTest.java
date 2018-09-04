@@ -125,6 +125,7 @@ public class JavaDockerContextGeneratorTest {
     List<String> expectedJvmFlags = Arrays.asList("-flag", "another\"Flag");
     String expectedMainClass = "SomeMainClass";
     List<String> expectedJavaArguments = Arrays.asList("arg1", "arg2");
+    Map<String, String> expectedEnv = ImmutableMap.of("key1", "value1", "key2", "value2");
     List<String> exposedPorts = Arrays.asList("1000/tcp", "2000-2010/udp");
     Map<String, String> expectedLabels =
         ImmutableMap.of(
@@ -155,6 +156,7 @@ public class JavaDockerContextGeneratorTest {
                 JavaEntrypointConstructor.makeDefaultEntrypoint(
                     expectedJvmFlags, expectedMainClass))
             .setJavaArguments(expectedJavaArguments)
+            .setEnvironment(expectedEnv)
             .setExposedPorts(exposedPorts)
             .setLabels(expectedLabels)
             .makeDockerfile();

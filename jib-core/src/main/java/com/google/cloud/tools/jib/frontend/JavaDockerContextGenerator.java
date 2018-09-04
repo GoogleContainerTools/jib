@@ -103,6 +103,7 @@ public class JavaDockerContextGenerator {
   @Nullable private String baseImage;
   private List<String> entrypoint = Collections.emptyList();
   private List<String> javaArguments = Collections.emptyList();
+  private Map<String, String> environment = Collections.emptyMap();
   private List<String> exposedPorts = Collections.emptyList();
   private Map<String, String> labels = Collections.emptyMap();
 
@@ -167,6 +168,17 @@ public class JavaDockerContextGenerator {
    */
   public JavaDockerContextGenerator setJavaArguments(List<String> javaArguments) {
     this.javaArguments = javaArguments;
+    return this;
+  }
+
+  /**
+   * Sets the environment variables
+   *
+   * @param environment the environment variables
+   * @return this
+   */
+  public JavaDockerContextGenerator setEnvironment(Map<String, String> environment) {
+    this.environment = environment;
     return this;
   }
 
@@ -240,6 +252,9 @@ public class JavaDockerContextGenerator {
    *
    * EXPOSE [port]
    * [More EXPOSE instructions, if necessary]
+   * ENV [key1]="[value1]" \
+   *     [key2]="[value2]" \
+   *     [...]
    * LABEL [key1]="[value1]" \
    *       [key2]="[value2]" \
    *       [...]
@@ -267,14 +282,24 @@ public class JavaDockerContextGenerator {
       dockerfile.append("\nEXPOSE ").append(port);
     }
 
-    boolean firstLabel = true;
+    boolean firstElement = true;
+    for (Entry<String, String> env : environment.entrySet()) {
+      dockerfile
+          .append(firstElement ? "\nENV " : " \\\n    ")
+          .append(env.getKey())
+          .append("=")
+          .append(objectMapper.writeValueAsString(env.getValue()));
+      firstElement = false;
+    }
+
+    firstElement = true;
     for (Entry<String, String> label : labels.entrySet()) {
       dockerfile
-          .append(firstLabel ? "\nLABEL " : " \\\n      ")
+          .append(firstElement ? "\nLABEL " : " \\\n      ")
           .append(label.getKey())
           .append("=")
           .append(objectMapper.writeValueAsString(label.getValue()));
-      firstLabel = false;
+      firstElement = false;
     }
 
     dockerfile

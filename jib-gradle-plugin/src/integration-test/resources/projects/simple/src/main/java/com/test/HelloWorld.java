@@ -50,5 +50,12 @@ public class HelloWorld {
     for (String jvmFlag : ManagementFactory.getRuntimeMXBean().getInputArguments()) {
       System.out.println(jvmFlag);
     }
+
+    if (System.getenv("var1") != null) {
+      System.out.println(System.getenv("var1"));
+    }
+    if (System.getenv("var2") != null) {
+      System.out.println(System.getenv("var2"));
+    }
   }
 }

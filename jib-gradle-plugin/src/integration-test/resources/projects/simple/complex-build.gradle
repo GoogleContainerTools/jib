@@ -34,6 +34,7 @@ jib {
         args = ['An argument.']
         mainClass = 'com.test.HelloWorld'
         jvmFlags = ['-Xms512m', '-Xdebug']
+        environment = [var1:'value1', var2:'value2']
         ports = ['1000/tcp', '2000-2003/udp']
         labels = [key1:'value1', key2:'value2']
     }
