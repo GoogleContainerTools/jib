@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- `<skip>` configuration parameter to skip Jib execution in multi-module projects ([#865](https://github.com/GoogleContainerTools/jib/issues/865))
 - `<container><environment>` configuration parameter to configure environment variables ([#890](https://github.com/GoogleContainerTools/jib/issues/890))
 
 ### Changed
