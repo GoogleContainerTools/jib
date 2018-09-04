@@ -216,10 +216,10 @@ public class BuildStepsIntegrationTest {
                 + "                \"key1\": \"value1\",\n"
                 + "                \"key2\": \"value2\"\n"
                 + "            }"));
-    Assert.assertThat(
-        dockerContainerConfig,
-        CoreMatchers.containsString(
-            "                \"var1=value1\",\n                \"var2=value2\"\n"));
+
+    String dockerConfigEnv =
+        new Command("docker", "inspect", "-f", "{{.Config.Env}}", imageReference).run();
+    Assert.assertThat(dockerConfigEnv, CoreMatchers.containsString("var1=value1 var2=value2"));
     String history = new Command("docker", "history", imageReference).run();
     Assert.assertThat(history, CoreMatchers.containsString("jib-integration-test"));
     Assert.assertThat(history, CoreMatchers.containsString("bazel build ..."));

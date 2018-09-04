@@ -33,6 +33,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.StringJoiner;
 import javax.annotation.Nullable;
 
 /**
@@ -282,24 +283,20 @@ public class JavaDockerContextGenerator {
       dockerfile.append("\nEXPOSE ").append(port);
     }
 
-    boolean firstElement = true;
+    StringJoiner joiner = new StringJoiner(" \\\n    ", "\nENV ", "");
     for (Entry<String, String> env : environment.entrySet()) {
-      dockerfile
-          .append(firstElement ? "\nENV " : " \\\n    ")
-          .append(env.getKey())
-          .append("=")
-          .append(objectMapper.writeValueAsString(env.getValue()));
-      firstElement = false;
+      joiner.add(env.getKey() + "=" + objectMapper.writeValueAsString(env.getValue()));
+    }
+    if (environment.entrySet().size() > 0) {
+      dockerfile.append(joiner.toString());
     }
 
-    firstElement = true;
+    joiner = new StringJoiner(" \\\n      ", "\nLABEL ", "");
     for (Entry<String, String> label : labels.entrySet()) {
-      dockerfile
-          .append(firstElement ? "\nLABEL " : " \\\n      ")
-          .append(label.getKey())
-          .append("=")
-          .append(objectMapper.writeValueAsString(label.getValue()));
-      firstElement = false;
+      joiner.add(label.getKey() + "=" + objectMapper.writeValueAsString(label.getValue()));
+    }
+    if (labels.entrySet().size() > 0) {
+      dockerfile.append(joiner.toString());
     }
 
     dockerfile
