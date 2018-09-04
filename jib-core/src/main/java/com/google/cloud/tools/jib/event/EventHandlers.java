@@ -26,34 +26,7 @@ import java.util.function.Consumer;
 /** Builds a set of event handlers to handle {@link JibEvent}s. */
 public class EventHandlers {
 
-  /** Handles an emitted {@link JibEvent}. */
-  public static class Handler<E extends JibEvent> {
-
-    private final Class<E> eventClass;
-    private final Consumer<E> eventConsumer;
-
-    private Handler(Class<E> eventClass, Consumer<E> eventConsumer) {
-      this.eventClass = eventClass;
-      this.eventConsumer = eventConsumer;
-    }
-
-    /**
-     * Handles a {@link JibEvent}.
-     *
-     * @param jibEvent the event to handle
-     * @return {@code true} if this {@link Handler} handled the event; {@code false} if this {@link
-     *     Handler} does not handle the event
-     */
-    public boolean handle(JibEvent jibEvent) {
-      if (eventClass.isInstance(jibEvent)) {
-        eventConsumer.accept(eventClass.cast(jibEvent));
-        return true;
-      }
-      return false;
-    }
-  }
-
-  // Maps from JibEvent class to handlers for that event type.
+  /** Maps from {@link JibEvent} class to handlers for that event type. */
   private final Map<Class<? extends JibEvent>, List<Handler<? extends JibEvent>>> handlers =
       new HashMap<>();
 
@@ -95,7 +68,7 @@ public class EventHandlers {
    *
    * @return the map from {@link JibEvent} type to a list of {@link Handler}s
    */
-  public Map<Class<? extends JibEvent>, List<Handler<? extends JibEvent>>> getHandlers() {
+  Map<Class<? extends JibEvent>, List<Handler<? extends JibEvent>>> getHandlers() {
     return Collections.unmodifiableMap(handlers);
   }
 }

@@ -52,9 +52,7 @@ public class EventHandlersTest {
         new EventHandlers()
             .add(
                 new JibEventType<>(TestJibEvent1.class),
-                testJibEvent1 -> {
-                  Assert.assertEquals("payload", testJibEvent1.getPayload());
-                })
+                testJibEvent1 -> Assert.assertEquals("payload", testJibEvent1.getPayload()))
             .add(
                 new JibEventType<>(TestJibEvent2.class),
                 testJibEvent2 -> testJibEvent2.sayHello("Jib"))
