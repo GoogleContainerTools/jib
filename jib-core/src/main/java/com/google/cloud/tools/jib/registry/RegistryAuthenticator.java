@@ -46,21 +46,20 @@ public class RegistryAuthenticator {
   public static class Initializer {
 
     private final JibLogger buildLogger;
-    private final String serverUrl;
-    private final String repository;
+    private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
     private boolean allowInsecureRegistries = false;
 
     /**
      * Instantiates a new initializer for {@link RegistryAuthenticator}.
      *
      * @param buildLogger the build logger used for printing messages
-     * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
-     * @param repository the image/repository name (also known as, namespace)
+     * @param registryEndpointRequestProperties properties of registry endpoint requests
      */
-    private Initializer(JibLogger buildLogger, String serverUrl, String repository) {
+    private Initializer(
+        JibLogger buildLogger,
+        RegistryEndpointRequestProperties registryEndpointRequestProperties) {
       this.buildLogger = buildLogger;
-      this.serverUrl = serverUrl;
-      this.repository = repository;
+      this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     }
 
     public Initializer setAllowInsecureRegistries(boolean allowInsecureRegistries) {
@@ -81,7 +80,8 @@ public class RegistryAuthenticator {
     public RegistryAuthenticator initialize()
         throws RegistryAuthenticationFailedException, IOException, RegistryException {
       try {
-        return RegistryClient.factory(buildLogger, serverUrl, repository)
+        // TODO creating a client to obtain its authenticator seems convoluted
+        return RegistryClient.factory(buildLogger, registryEndpointRequestProperties)
             .setAllowInsecureRegistries(allowInsecureRegistries)
             .newRegistryClient()
             .getRegistryAuthenticator();
@@ -101,12 +101,19 @@ public class RegistryAuthenticator {
    *
    * @param buildLogger the build logger used for printing messages
    * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
-   * @param repository the image/repository name (also known as, namespace)
+   * @param repository the image/repository name for access (also known as, namespace)
+   * @param additionalRepositories additional image/repository names required for access
    * @return the new {@link Initializer}
    */
   public static Initializer initializer(
-      JibLogger buildLogger, String serverUrl, String repository) {
-    return new Initializer(buildLogger, serverUrl, repository);
+      JibLogger buildLogger,
+      String serverUrl,
+      String repository,
+      String... additionalRepositories) {
+
+    return new Initializer(
+        buildLogger,
+        new RegistryEndpointRequestProperties(serverUrl, repository, additionalRepositories));
   }
 
   // TODO: Replace with a WWW-Authenticate header parser.
@@ -114,7 +121,7 @@ public class RegistryAuthenticator {
    * Instantiates from parsing a {@code WWW-Authenticate} header.
    *
    * @param authenticationMethod the {@code WWW-Authenticate} header value
-   * @param registryEndpointRequestProperties the registry request properties
+   * @param registryEndpointRequestProperties registry details
    * @return a new {@link RegistryAuthenticator} for authenticating with the registry service
    * @throws RegistryAuthenticationFailedException if authentication fails
    * @see <a
@@ -152,7 +159,7 @@ public class RegistryAuthenticator {
             : registryEndpointRequestProperties.getServerUrl();
 
     return new RegistryAuthenticator(
-        realm, service, registryEndpointRequestProperties.getImageName());
+        realm, service, registryEndpointRequestProperties.getAllImageNames());
   }
 
   private static RegistryAuthenticationFailedException newRegistryAuthenticationFailedException(
@@ -188,11 +195,15 @@ public class RegistryAuthenticator {
     }
   }
 
-  private final String authenticationUrlBase;
+  private final String realm;
+  private final String service;
+  private final String[] repositories;
   @Nullable private Authorization authorization;
 
-  RegistryAuthenticator(String realm, String service, String repository) {
-    authenticationUrlBase = realm + "?service=" + service + "&scope=repository:" + repository + ":";
+  RegistryAuthenticator(String realm, String service, String... repositories) {
+    this.realm = realm;
+    this.service = service;
+    this.repositories = repositories;
   }
 
   /**
@@ -228,7 +239,11 @@ public class RegistryAuthenticator {
 
   @VisibleForTesting
   URL getAuthenticationUrl(String scope) throws MalformedURLException {
-    return new URL(authenticationUrlBase + scope);
+    StringBuilder urlBase = new StringBuilder(realm).append("?service=").append(service);
+    for (String repository : repositories) {
+      urlBase.append("&scope=repository:").append(repository).append(':').append(scope);
+    }
+    return new URL(urlBase.toString());
   }
 
   /**

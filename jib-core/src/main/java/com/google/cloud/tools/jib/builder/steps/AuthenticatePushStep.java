@@ -85,11 +85,23 @@ class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authori
               : Authorizations.withBasicCredentials(
                   registryCredential.getUsername(), registryCredential.getPassword());
 
+      // If target is colocated with base, request permission for both so as to allow using
+      // mount/from
+      String[] additionalRepositories = new String[0];
+      if (buildConfiguration
+          .getBaseImageConfiguration()
+          .getImageRegistry()
+          .equals(buildConfiguration.getTargetImageConfiguration().getImageRegistry())) {
+        additionalRepositories =
+            new String[] {buildConfiguration.getBaseImageConfiguration().getImageRepository()};
+      }
+
       RegistryAuthenticator registryAuthenticator =
           RegistryAuthenticator.initializer(
                   buildConfiguration.getBuildLogger(),
                   buildConfiguration.getTargetImageConfiguration().getImageRegistry(),
-                  buildConfiguration.getTargetImageConfiguration().getImageRepository())
+                  buildConfiguration.getTargetImageConfiguration().getImageRepository(),
+                  additionalRepositories)
               .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
               .initialize();
       if (registryAuthenticator == null) {

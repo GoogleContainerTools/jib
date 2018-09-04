@@ -128,7 +128,19 @@ public class RegistryClient {
    * @return the new {@link Factory}
    */
   public static Factory factory(JibLogger buildLogger, String serverUrl, String imageName) {
-    return new Factory(buildLogger, new RegistryEndpointRequestProperties(serverUrl, imageName));
+    return factory(buildLogger, new RegistryEndpointRequestProperties(serverUrl, imageName));
+  }
+
+  /**
+   * Creates a new {@link Factory} for building a {@link RegistryClient}.
+   *
+   * @param buildLogger the build logger used for printing messages
+   * @param registryEndpointRequestProperties properties of registry endpoint requests
+   * @return the new {@link Factory}
+   */
+  public static Factory factory(
+      JibLogger buildLogger, RegistryEndpointRequestProperties registryEndpointRequestProperties) {
+    return new Factory(buildLogger, registryEndpointRequestProperties);
   }
 
   // TODO: Inject via a RegistryClient.Factory.
