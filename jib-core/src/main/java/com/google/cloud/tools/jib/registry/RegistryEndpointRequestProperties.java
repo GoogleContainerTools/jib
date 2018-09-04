@@ -21,18 +21,18 @@ class RegistryEndpointRequestProperties {
 
   private final String serverUrl;
   private final String imageName;
-  private final String[] additionalImageReferences;
+  private final String[] dependentImageNames;
 
   /**
    * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
    * @param imageName the image/repository name (also known as, namespace)
-   * @param additionalImageReferences any additional image references required for access
+   * @param dependentImageNames any additional images required for access
    */
   RegistryEndpointRequestProperties(
-      String serverUrl, String imageName, String... additionalImageReferences) {
+      String serverUrl, String imageName, String... dependentImageNames) {
     this.serverUrl = serverUrl;
     this.imageName = imageName;
-    this.additionalImageReferences = additionalImageReferences;
+    this.dependentImageNames = dependentImageNames;
   }
 
   String getServerUrl() {
@@ -43,13 +43,7 @@ class RegistryEndpointRequestProperties {
     return imageName;
   }
 
-  String[] getAllImageNames() {
-    String[] allImagesNames = new String[1 + additionalImageReferences.length];
-    allImagesNames[0] = imageName;
-    if (additionalImageReferences.length > 0) {
-      System.arraycopy(
-          additionalImageReferences, 0, allImagesNames, 1, additionalImageReferences.length);
-    }
-    return allImagesNames;
+  String[] getDependentImageNames() {
+    return dependentImageNames;
   }
 }

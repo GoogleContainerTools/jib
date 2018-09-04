@@ -87,12 +87,12 @@ class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authori
 
       // If target is colocated with base, request permission for both so as to allow using
       // mount/from
-      String[] additionalRepositories = new String[0];
+      String[] dependentRepositories = new String[0];
       if (buildConfiguration
           .getBaseImageConfiguration()
           .getImageRegistry()
           .equals(buildConfiguration.getTargetImageConfiguration().getImageRegistry())) {
-        additionalRepositories =
+        dependentRepositories =
             new String[] {buildConfiguration.getBaseImageConfiguration().getImageRepository()};
       }
 
@@ -101,7 +101,7 @@ class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authori
                   buildConfiguration.getBuildLogger(),
                   buildConfiguration.getTargetImageConfiguration().getImageRegistry(),
                   buildConfiguration.getTargetImageConfiguration().getImageRepository(),
-                  additionalRepositories)
+                  dependentRepositories)
               .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
               .initialize();
       if (registryAuthenticator == null) {

@@ -102,18 +102,15 @@ public class RegistryAuthenticator {
    * @param buildLogger the build logger used for printing messages
    * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
    * @param repository the image/repository name for access (also known as, namespace)
-   * @param additionalRepositories additional image/repository names required for access
+   * @param dependentRepositories additional image/repository names required for access
    * @return the new {@link Initializer}
    */
   public static Initializer initializer(
-      JibLogger buildLogger,
-      String serverUrl,
-      String repository,
-      String... additionalRepositories) {
+      JibLogger buildLogger, String serverUrl, String repository, String... dependentRepositories) {
 
     return new Initializer(
         buildLogger,
-        new RegistryEndpointRequestProperties(serverUrl, repository, additionalRepositories));
+        new RegistryEndpointRequestProperties(serverUrl, repository, dependentRepositories));
   }
 
   // TODO: Replace with a WWW-Authenticate header parser.
@@ -159,7 +156,10 @@ public class RegistryAuthenticator {
             : registryEndpointRequestProperties.getServerUrl();
 
     return new RegistryAuthenticator(
-        realm, service, registryEndpointRequestProperties.getAllImageNames());
+        realm,
+        service,
+        registryEndpointRequestProperties.getImageName(),
+        registryEndpointRequestProperties.getDependentImageNames());
   }
 
   private static RegistryAuthenticationFailedException newRegistryAuthenticationFailedException(
@@ -197,13 +197,16 @@ public class RegistryAuthenticator {
 
   private final String realm;
   private final String service;
-  private final String[] repositories;
+  private final String repository;
+  private final String[] dependentRepositories;
   @Nullable private Authorization authorization;
 
-  RegistryAuthenticator(String realm, String service, String... repositories) {
+  RegistryAuthenticator(
+      String realm, String service, String repository, String... dependentRepositories) {
     this.realm = realm;
     this.service = service;
-    this.repositories = repositories;
+    this.repository = repository;
+    this.dependentRepositories = dependentRepositories;
   }
 
   /**
@@ -240,9 +243,12 @@ public class RegistryAuthenticator {
   @VisibleForTesting
   URL getAuthenticationUrl(String scope) throws MalformedURLException {
     StringBuilder urlBase = new StringBuilder(realm).append("?service=").append(service);
-    for (String repository : repositories) {
-      urlBase.append("&scope=repository:").append(repository).append(':').append(scope);
+    urlBase.append("&scope=repository:").append(repository).append(':').append(scope);
+
+    for (String repository : dependentRepositories) {
+      urlBase.append("&scope=repository:").append(repository).append(":pull");
     }
+
     return new URL(urlBase.toString());
   }
 
