@@ -85,7 +85,7 @@ public class BuildStepsIntegrationTest {
                 + "            }"));
     String dockerConfigEnv =
         new Command("docker", "inspect", "-f", "{{.Config.Env}}", imageReference).run();
-    Assert.assertThat(dockerConfigEnv, CoreMatchers.containsString("var1=value1 var2=value2"));
+    Assert.assertThat(dockerConfigEnv, CoreMatchers.containsString("env1=value1 env2=value2"));
     String history = new Command("docker", "history", imageReference).run();
     Assert.assertThat(history, CoreMatchers.containsString("jib-integration-test"));
     Assert.assertThat(history, CoreMatchers.containsString("bazel build ..."));
@@ -210,7 +210,7 @@ public class BuildStepsIntegrationTest {
                 JavaEntrypointConstructor.makeDefaultEntrypoint(
                     Collections.emptyList(), "HelloWorld"))
             .setProgramArguments(Collections.singletonList("An argument."))
-            .setEnvironment(ImmutableMap.of("var1", "value1", "var2", "value2"))
+            .setEnvironment(ImmutableMap.of("env1", "value1", "env2", "value2"))
             .setExposedPorts(
                 ExposedPortsParser.parse(Arrays.asList("1000", "2000-2002/tcp", "3000/udp")))
             .setLabels(ImmutableMap.of("key1", "value1", "key2", "value2"))
