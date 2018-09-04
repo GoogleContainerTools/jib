@@ -55,15 +55,15 @@ public class DefaultCacheStorage implements CacheStorage {
    * @return a new {@link CacheStorage}
    */
   public static CacheStorage withDirectory(Path cacheDirectory) {
-    return new DefaultCacheStorage(cacheDirectory);
+    DefaultCacheStorageFiles defaultCacheStorageFiles =
+        new DefaultCacheStorageFiles(cacheDirectory);
+    return new DefaultCacheStorage(new DefaultCacheStorageWriter(defaultCacheStorageFiles));
   }
 
   private final DefaultCacheStorageWriter defaultCacheStorageWriter;
 
-  private DefaultCacheStorage(Path cacheDirectory) {
-    DefaultCacheStorageFiles defaultCacheStorageFiles =
-        new DefaultCacheStorageFiles(cacheDirectory);
-    this.defaultCacheStorageWriter = new DefaultCacheStorageWriter(defaultCacheStorageFiles);
+  private DefaultCacheStorage(DefaultCacheStorageWriter defaultCacheStorageWriter) {
+    this.defaultCacheStorageWriter = defaultCacheStorageWriter;
   }
 
   @Override

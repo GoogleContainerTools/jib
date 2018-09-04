@@ -16,16 +16,13 @@
 
 package com.google.cloud.tools.jib.blob;
 
+import com.google.cloud.tools.jib.filesystem.FileOperations;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.util.EnumSet;
 
 /** Static methods for {@link Blob}. */
 public class Blobs {
@@ -85,15 +82,7 @@ public class Blobs {
    * @throws IOException if writing the BLOB fails
    */
   public static BlobDescriptor writeToFileWithLock(Blob blob, Path blobFile) throws IOException {
-    EnumSet<StandardOpenOption> createOrTruncate =
-        EnumSet.of(
-            StandardOpenOption.CREATE,
-            StandardOpenOption.WRITE,
-            StandardOpenOption.TRUNCATE_EXISTING);
-    // channel is closed by outputStream.close()
-    FileChannel channel = FileChannel.open(blobFile, createOrTruncate);
-    channel.lock(); // released when channel is closed
-    try (OutputStream outputStream = Channels.newOutputStream(channel)) {
+    try (OutputStream outputStream = FileOperations.newLockingOutputStream(blobFile)) {
       return blob.writeTo(outputStream);
     }
   }

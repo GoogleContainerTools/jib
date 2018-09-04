@@ -17,6 +17,8 @@
 package com.google.cloud.tools.jib.ncache;
 
 import com.google.cloud.tools.jib.image.DescriptorDigest;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 /** Resolves the files used in the default cache storage engine. */
@@ -62,6 +64,18 @@ class DefaultCacheStorageFiles {
    */
   Path getSelectorFile(DescriptorDigest selector) {
     return getSelectorDirectory(selector);
+  }
+
+  /**
+   * Creates a temporary file that is deleted on exit.
+   *
+   * @return the file
+   * @throws IOException if an I/O exception occurs
+   */
+  Path createTemporaryFile() throws IOException {
+    Path temporaryFile = Files.createTempFile(cacheDirectory, null, null);
+    temporaryFile.toFile().deleteOnExit();
+    return temporaryFile;
   }
 
   private Path getLayerDirectory(DescriptorDigest layerDigest) {

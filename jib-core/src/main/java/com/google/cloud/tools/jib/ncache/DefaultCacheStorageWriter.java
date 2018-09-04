@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.ncache;
 
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.filesystem.FileOperations;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import java.io.BufferedOutputStream;
@@ -44,13 +45,12 @@ class DefaultCacheStorageWriter {
    * @throws IOException if an I/O exception occurs
    */
   CacheEntry write(CacheWrite cacheWrite) throws IOException {
-    Path temporaryLayerFile = Files.createTempFile(null, null);
-    temporaryLayerFile.toFile().deleteOnExit();
+    Path temporaryLayerFile = defaultCacheStorageFiles.createTemporaryFile();
 
     // Writes the UnwrittenLayer layer BLOB to a file to convert into a CachedLayer.
     try (CountingDigestOutputStream compressedDigestOutputStream =
         new CountingDigestOutputStream(
-            new BufferedOutputStream(Files.newOutputStream(temporaryLayerFile)))) {
+            new BufferedOutputStream(FileOperations.newLockingOutputStream(temporaryLayerFile)))) {
       // Writes the layer with GZIP compression. The original bytes are captured as the layer's
       // diff ID and the bytes outputted from the GZIP compression are captured as the layer's
       // content descriptor.
