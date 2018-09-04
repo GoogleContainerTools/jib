@@ -19,23 +19,15 @@ package com.google.cloud.tools.jib.event;
 import javax.annotation.Nullable;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 /** Tests for {@link EventHandlers}. */
 public class EventHandlersTest {
 
-  /** Test implementation of {@link JibEvent}. */
-  private static class TestJibEvent1 implements JibEvent {
+  /** Test {@link JibEvent}. */
+  private interface TestJibEvent1 extends JibEvent {
 
-    private boolean called = false;
-
-    private void assertGetPayloadCalled() {
-      Assert.assertTrue(called);
-    }
-
-    private void getPayload() {
-      Assert.assertFalse(called);
-      called = true;
-    }
+    String getPayload();
   }
 
   /** Test implementation of {@link JibEvent}. */
@@ -53,22 +45,20 @@ public class EventHandlersTest {
     }
   }
 
-  /** Test class to hold mutable int. */
-  private static class Counter {
-
-    private int count = 0;
-  }
-
   @Test
   public void testAdd() {
-    Counter counter = new Counter();
+    int[] counter = new int[1];
     EventHandlers eventHandlers =
         new EventHandlers()
-            .add(new JibEventType<>(TestJibEvent1.class), TestJibEvent1::getPayload)
+            .add(
+                new JibEventType<>(TestJibEvent1.class),
+                testJibEvent1 -> {
+                  Assert.assertEquals("payload", testJibEvent1.getPayload());
+                })
             .add(
                 new JibEventType<>(TestJibEvent2.class),
                 testJibEvent2 -> testJibEvent2.sayHello("Jib"))
-            .add(jibEvent -> counter.count++);
+            .add(jibEvent -> counter[0]++);
     Assert.assertTrue(eventHandlers.getHandlers().containsKey(JibEvent.class));
     Assert.assertTrue(eventHandlers.getHandlers().containsKey(TestJibEvent1.class));
     Assert.assertTrue(eventHandlers.getHandlers().containsKey(TestJibEvent2.class));
@@ -76,23 +66,26 @@ public class EventHandlersTest {
     Assert.assertEquals(1, eventHandlers.getHandlers().get(TestJibEvent1.class).size());
     Assert.assertEquals(1, eventHandlers.getHandlers().get(TestJibEvent2.class).size());
 
-    TestJibEvent1 testJibEvent1 = new TestJibEvent1();
+    TestJibEvent1 mockTestJibEvent1 = Mockito.mock(TestJibEvent1.class);
+    Mockito.when(mockTestJibEvent1.getPayload()).thenReturn("payload");
     TestJibEvent2 testJibEvent2 = new TestJibEvent2();
 
     // Checks that the handlers handled their respective event types.
-    Assert.assertTrue(eventHandlers.getHandlers().get(JibEvent.class).get(0).handle(testJibEvent1));
+    Assert.assertTrue(
+        eventHandlers.getHandlers().get(JibEvent.class).get(0).handle(mockTestJibEvent1));
     Assert.assertTrue(eventHandlers.getHandlers().get(JibEvent.class).get(0).handle(testJibEvent2));
     Assert.assertTrue(
-        eventHandlers.getHandlers().get(TestJibEvent1.class).get(0).handle(testJibEvent1));
+        eventHandlers.getHandlers().get(TestJibEvent1.class).get(0).handle(mockTestJibEvent1));
     Assert.assertTrue(
         eventHandlers.getHandlers().get(TestJibEvent2.class).get(0).handle(testJibEvent2));
     Assert.assertFalse(
         eventHandlers.getHandlers().get(TestJibEvent1.class).get(0).handle(testJibEvent2));
     Assert.assertFalse(
-        eventHandlers.getHandlers().get(TestJibEvent2.class).get(0).handle(testJibEvent1));
+        eventHandlers.getHandlers().get(TestJibEvent2.class).get(0).handle(mockTestJibEvent1));
 
-    Assert.assertEquals(2, counter.count);
-    testJibEvent1.assertGetPayloadCalled();
+    Assert.assertEquals(2, counter[0]);
+    Mockito.verify(mockTestJibEvent1).getPayload();
+    Mockito.verifyNoMoreInteractions(mockTestJibEvent1);
     testJibEvent2.assertMessageCorrect("Jib");
   }
 }
