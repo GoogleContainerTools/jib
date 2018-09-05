@@ -29,7 +29,6 @@ import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
-import com.google.cloud.tools.jib.registry.RegistryClient;
 import java.time.Instant;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -37,9 +36,6 @@ import org.gradle.api.GradleException;
 
 /** Configures and provides builders for the image building tasks. */
 class PluginConfigurationProcessor {
-
-  /** {@code User-Agent} header suffix to send to the registry. */
-  private static final String USER_AGENT_SUFFIX = "jib-gradle-plugin";
 
   /**
    * Sets up {@link BuildConfiguration} that is common among the image building tasks. This includes
@@ -60,7 +56,6 @@ class PluginConfigurationProcessor {
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
     GradleJibLogger.disableHttpLogging();
-    RegistryClient.setUserAgentSuffix(USER_AGENT_SUFFIX);
 
     ImageReference baseImage = ImageReference.parse(jibExtension.getBaseImage());
 
@@ -109,7 +104,7 @@ class PluginConfigurationProcessor {
 
     BuildConfiguration.Builder buildConfigurationBuilder =
         BuildConfiguration.builder(logger)
-            .setCreatedBy("jib-gradle-plugin")
+            .setToolName("jib-gradle-plugin")
             .setAllowInsecureRegistries(jibExtension.getAllowInsecureRegistries())
             .setLayerConfigurations(
                 projectProperties.getJavaLayerConfigurations().getLayerConfigurations());

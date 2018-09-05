@@ -73,7 +73,7 @@ public class BuildImageStepTest {
     Mockito.when(mockBuildConfiguration.getBuildLogger()).thenReturn(mockBuildLogger);
     Mockito.when(mockBuildConfiguration.getContainerConfiguration())
         .thenReturn(mockContainerConfiguration);
-    Mockito.when(mockBuildConfiguration.getCreatedBy()).thenReturn("jib");
+    Mockito.when(mockBuildConfiguration.getToolName()).thenReturn("jib");
     Mockito.when(mockContainerConfiguration.getCreationTime()).thenReturn(Instant.EPOCH);
     Mockito.when(mockContainerConfiguration.getEnvironmentMap()).thenReturn(ImmutableMap.of());
     Mockito.when(mockContainerConfiguration.getProgramArguments()).thenReturn(ImmutableList.of());

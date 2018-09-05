@@ -191,6 +191,7 @@ class PullBaseImageStep
                 buildConfiguration.getBaseImageConfiguration().getImageRepository())
             .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
             .setAuthorization(registryAuthorization)
+            .setUserAgentSuffix(buildConfiguration.getToolName())
             .newRegistryClient();
 
     ManifestTemplate manifestTemplate =

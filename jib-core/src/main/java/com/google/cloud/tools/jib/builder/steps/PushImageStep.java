@@ -123,6 +123,7 @@ class PushImageStep implements AsyncStep<Void>, Callable<Void> {
                   buildConfiguration.getTargetImageConfiguration().getImageRepository())
               .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
               .setAuthorization(NonBlockingSteps.get(authenticatePushStep))
+              .setUserAgentSuffix(buildConfiguration.getToolName())
               .newRegistryClient();
 
       // Constructs the image.

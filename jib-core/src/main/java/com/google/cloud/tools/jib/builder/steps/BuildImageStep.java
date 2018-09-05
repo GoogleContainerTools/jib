@@ -138,7 +138,7 @@ class BuildImageStep
             HistoryEntry.builder()
                 .setCreationTimestamp(layerCreationTime)
                 .setAuthor("Jib")
-                .setCreatedBy(buildConfiguration.getCreatedBy())
+                .setCreatedBy(buildConfiguration.getToolName())
                 .build());
       }
       if (containerConfiguration != null) {

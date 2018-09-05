@@ -76,6 +76,7 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer>, Callable
                   buildConfiguration.getBaseImageConfiguration().getImageRepository())
               .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
               .setAuthorization(pullAuthorization)
+              .setUserAgentSuffix(buildConfiguration.getToolName())
               .newRegistryClient();
 
       // Checks if the layer already exists in the cache.

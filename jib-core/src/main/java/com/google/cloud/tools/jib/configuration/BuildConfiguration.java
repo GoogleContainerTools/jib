@@ -38,7 +38,7 @@ public class BuildConfiguration {
     private boolean allowInsecureRegistries = false;
     private ImmutableList<LayerConfiguration> layerConfigurations = ImmutableList.of();
     private Class<? extends BuildableManifestTemplate> targetFormat = V22ManifestTemplate.class;
-    private String createdBy = "jib";
+    private String toolName = "jib";
 
     private JibLogger buildLogger;
 
@@ -137,14 +137,13 @@ public class BuildConfiguration {
     }
 
     /**
-     * Sets the command that created the image layers (for the "Created By" field in the container's
-     * history).
+     * Sets the name of the tool that is executing the build.
      *
-     * @param createdBy the field value
+     * @param toolName the tool name
      * @return this
      */
-    public Builder setCreatedBy(String createdBy) {
-      this.createdBy = createdBy;
+    public Builder setToolName(String toolName) {
+      this.toolName = toolName;
       return this;
     }
 
@@ -185,7 +184,7 @@ public class BuildConfiguration {
               targetFormat,
               allowInsecureRegistries,
               layerConfigurations,
-              createdBy);
+              toolName);
 
         case 1:
           throw new IllegalStateException(errorMessages.get(0));
@@ -213,7 +212,7 @@ public class BuildConfiguration {
   private Class<? extends BuildableManifestTemplate> targetFormat;
   private final boolean allowInsecureRegistries;
   private final ImmutableList<LayerConfiguration> layerConfigurations;
-  private final String createdBy;
+  private final String toolName;
 
   /** Instantiate with {@link Builder#build}. */
   private BuildConfiguration(
@@ -226,7 +225,7 @@ public class BuildConfiguration {
       Class<? extends BuildableManifestTemplate> targetFormat,
       boolean allowInsecureRegistries,
       ImmutableList<LayerConfiguration> layerConfigurations,
-      String createdBy) {
+      String toolName) {
     this.buildLogger = buildLogger;
     this.baseImageConfiguration = baseImageConfiguration;
     this.targetImageConfiguration = targetImageConfiguration;
@@ -236,7 +235,7 @@ public class BuildConfiguration {
     this.targetFormat = targetFormat;
     this.allowInsecureRegistries = allowInsecureRegistries;
     this.layerConfigurations = layerConfigurations;
-    this.createdBy = createdBy;
+    this.toolName = toolName;
   }
 
   public JibLogger getBuildLogger() {
@@ -260,8 +259,8 @@ public class BuildConfiguration {
     return targetFormat;
   }
 
-  public String getCreatedBy() {
-    return createdBy;
+  public String getToolName() {
+    return toolName;
   }
 
   /**
