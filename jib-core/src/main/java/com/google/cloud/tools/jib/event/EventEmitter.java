@@ -33,7 +33,6 @@ public class EventEmitter {
    */
   public EventEmitter(EventHandlers eventHandlers) {
     handlers = ImmutableMap.copyOf(eventHandlers.getHandlers());
-    System.out.println(handlers);
   }
 
   /**
