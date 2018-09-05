@@ -37,7 +37,7 @@ import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.options.Option;
 
-public class DockerContextTask extends DefaultTask {
+public class DockerContextTask extends DefaultTask implements JibTask {
 
   @Nullable private String targetDir;
   @Nullable private JibExtension jibExtension;
@@ -153,7 +153,8 @@ public class DockerContextTask extends DefaultTask {
     }
   }
 
-  DockerContextTask setJibExtension(JibExtension jibExtension) {
+  @Override
+  public DockerContextTask setJibExtension(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
     return this;
   }
