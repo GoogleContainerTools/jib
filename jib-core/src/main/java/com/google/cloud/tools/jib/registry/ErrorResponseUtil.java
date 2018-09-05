@@ -29,7 +29,7 @@ public class ErrorResponseUtil {
   /**
    * Extract an {@link ErrorCodes} response from an error object.
    *
-   * @param ex the response exception
+   * @param httpResponseException the response exception
    * @return the parsed {@link ErrorCodes} if found
    * @throws HttpResponseException rethrows the original exception if an error object could not be
    *     parsed, if there were multiple error objects, or if the error code is unknown.
