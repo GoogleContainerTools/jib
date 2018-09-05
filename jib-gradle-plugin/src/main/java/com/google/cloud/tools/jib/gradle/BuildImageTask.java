@@ -38,7 +38,7 @@ import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.options.Option;
 
 /** Builds a container image. */
-public class BuildImageTask extends DefaultTask {
+public class BuildImageTask extends DefaultTask implements JibTask {
 
   private static final String HELPFUL_SUGGESTIONS_PREFIX = "Build image failed";
 
@@ -137,6 +137,7 @@ public class BuildImageTask extends DefaultTask {
     }
   }
 
+  @Override
   public BuildImageTask setJibExtension(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
     return this;
