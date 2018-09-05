@@ -34,6 +34,7 @@ public class ContainerParameters {
 
   private boolean useCurrentTimestamp = false;
   private List<String> jvmFlags = Collections.emptyList();
+  private Map<String, String> environment = Collections.emptyMap();
   private List<String> entrypoint = Collections.emptyList();
   @Nullable private String mainClass;
   private List<String> args = Collections.emptyList();
@@ -69,6 +70,16 @@ public class ContainerParameters {
 
   public void setJvmFlags(List<String> jvmFlags) {
     this.jvmFlags = jvmFlags;
+  }
+
+  @Input
+  @Optional
+  public Map<String, String> getEnvironment() {
+    return environment;
+  }
+
+  public void setEnvironment(Map<String, String> environment) {
+    this.environment = environment;
   }
 
   @Input

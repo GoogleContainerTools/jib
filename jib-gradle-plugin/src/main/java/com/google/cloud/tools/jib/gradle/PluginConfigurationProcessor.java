@@ -97,6 +97,7 @@ class PluginConfigurationProcessor {
     ContainerConfiguration.Builder containerConfigurationBuilder =
         ContainerConfiguration.builder()
             .setEntrypoint(entrypoint)
+            .setEnvironment(jibExtension.getEnvironment())
             .setProgramArguments(jibExtension.getArgs())
             .setExposedPorts(ExposedPortsParser.parse(jibExtension.getExposedPorts()))
             .setLabels(jibExtension.getLabels());

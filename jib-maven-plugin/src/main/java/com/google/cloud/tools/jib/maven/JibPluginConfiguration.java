@@ -122,6 +122,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Parameter private List<String> jvmFlags = Collections.emptyList();
 
+    @Parameter private Map<String, String> environment = Collections.emptyMap();
+
     @Nullable @Parameter private String mainClass;
 
     @Parameter private List<String> args = Collections.emptyList();
@@ -151,8 +153,6 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   @Parameter private ContainerParameters container = new ContainerParameters();
 
   @Deprecated @Parameter private List<String> jvmFlags = Collections.emptyList();
-
-  @Nullable @Parameter private Map<String, String> environment;
 
   @Deprecated @Nullable @Parameter private String mainClass;
 
@@ -268,7 +268,7 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
   @Nullable
   Map<String, String> getEnvironment() {
-    return environment;
+    return container.environment;
   }
 
   @Nullable
