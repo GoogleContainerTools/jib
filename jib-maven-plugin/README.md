@@ -199,28 +199,28 @@ Extended configuration options provide additional options for customizing the im
 
 Field | Type | Default | Description
 --- | --- | --- | ---
-`from` | [`from`](#from-object) | See [`from`](#from-object) | Configures the base image to build your application on top of.
 `to` | [`to`](#to-object) | *Required* | Configures the target image to build your application to.
+`from` | [`from`](#from-object) | See [`from`](#from-object) | Configures the base image to build your application on top of.
 `container` | [`container`](#container-object) | See [`container`](#container-object) | Configures the container that is run from your image.
-`useOnlyProjectCache` | boolean | `false` | If set to true, Jib does not share a cache between different Gradle projects.
 `allowInsecureRegistries` | boolean | `false` | If set to true, Jib ignores HTTPS certificate errors and may fall back to HTTP as a last resort. Leaving this parameter set to `false` is strongly recommended, since HTTP communication is unencrypted and visible to others on the network, and insecure HTTPS is no better than plain HTTP. [If accessing a registry with a self-signed certificate, adding the certificate to your Java runtime's trusted keys](https://github.com/GoogleContainerTools/jib/tree/master/docs/self_sign_cert.md) may be an alternative to enabling this option.
 `skip` | boolean | `false` | If set to true, Jib execution is skipped (useful for multi-module projects). This can also be specified via the `-Djib.skip` command line option.
+`useOnlyProjectCache` | boolean | `false` | If set to true, Jib does not share a cache between different Gradle projects.
 
 <a name="from-object"></a>`from` is an object with the following properties:
 
 Property | Type | Default | Description
 --- | --- | --- | ---
 `image` | string | `gcr.io/distroless/java` | The image reference for the base image.
-`credHelper` | string | *None* | Suffix for the credential helper that can authenticate pulling the base image (following `docker-credential-`).
 `auth` | [`auth`](#auth-object) | *None* | Specify credentials directly (alternative to `credHelper`).
+`credHelper` | string | *None* | Suffix for the credential helper that can authenticate pulling the base image (following `docker-credential-`).
 
 <a name="to-object"></a>`to` is an object with the following properties:
 
 Property | Type | Default | Description
 --- | --- | --- | ---
 `image` | string | *Required* | The image reference for the target image. This can also be specified via the `-Dimage` command line option.
-`credHelper` | string | *None* | Suffix for the credential helper that can authenticate pulling the base image (following `docker-credential-`).
 `auth` | [`auth`](#auth-object) | *None* | Specify credentials directly (alternative to `credHelper`).
+`credHelper` | string | *None* | Suffix for the credential helper that can authenticate pulling the base image (following `docker-credential-`).
 
 <a name="auth-object"></a>`auth` is an object with the following properties (see [Using Specific Credentials](#using-specific-credentials)):
 
@@ -233,15 +233,15 @@ Property | Type
 
 Property | Type | Default | Description
 --- | --- | --- | ---
-`jvmFlags` | list | *None* | Additional flags to pass into the JVM when running your application.
-`mainClass` | string | *Inferred\** | The main class to launch the application from.
 `args` | list | *None* | Default main method arguments to run your application with.
-`ports` | list | *None* | Ports that the container exposes at runtime (similar to Docker's [EXPOSE](https://docs.docker.com/engine/reference/builder/#expose) instruction).
-`labels` | map | *None* | Key-value pairs for applying image metadata (similar to Docker's [LABEL](https://docs.docker.com/engine/reference/builder/#label) instruction).
-`format` | string | `Docker` | Use `OCI` to build an [OCI container image](https://www.opencontainers.org/).
-`useCurrentTimestamp` | boolean | `false` | By default, Jib wipes all timestamps to guarantee reproducibility. If this parameter is set to `true`, Jib will set the image's creation timestamp to the time of the build, which sacrifices reproducibility for easily being able to tell when your image was created.
 `entrypoint` | list | *None* | The command to start the container with (similar to Docker's [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint) instruction). If set, then `jvmFlags` and `mainClass` are ignored.
 `environment` | map | *None* | Key-value pairs for setting environment variables on the container (similar to Docker's [ENV](https://docs.docker.com/engine/reference/builder/#env) instruction).
+`format` | string | `Docker` | Use `OCI` to build an [OCI container image](https://www.opencontainers.org/).
+`jvmFlags` | list | *None* | Additional flags to pass into the JVM when running your application.
+`labels` | map | *None* | Key-value pairs for applying image metadata (similar to Docker's [LABEL](https://docs.docker.com/engine/reference/builder/#label) instruction).
+`mainClass` | string | *Inferred\** | The main class to launch the application from.
+`ports` | list | *None* | Ports that the container exposes at runtime (similar to Docker's [EXPOSE](https://docs.docker.com/engine/reference/builder/#expose) instruction).
+`useCurrentTimestamp` | boolean | `false` | By default, Jib wipes all timestamps to guarantee reproducibility. If this parameter is set to `true`, Jib will set the image's creation timestamp to the time of the build, which sacrifices reproducibility for easily being able to tell when your image was created.
 
 You can also configure HTTP connection/read timeouts for registry interactions using the `jib.httpTimeout` system property, configured in milliseconds via commandline (the default is `20000`; you can also set it to `0` for infinite timeout):
 
