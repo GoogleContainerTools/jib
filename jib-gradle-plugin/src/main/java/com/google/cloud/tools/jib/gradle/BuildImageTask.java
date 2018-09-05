@@ -137,7 +137,7 @@ public class BuildImageTask extends DefaultTask {
     }
   }
 
-  BuildImageTask setJibExtension(JibExtension jibExtension) {
+  public BuildImageTask setJibExtension(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
     return this;
   }

@@ -146,7 +146,7 @@ public class BuildTarTask extends DefaultTask {
     }
   }
 
-  BuildTarTask setJibExtension(JibExtension jibExtension) {
+  public BuildTarTask setJibExtension(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
     return this;
   }

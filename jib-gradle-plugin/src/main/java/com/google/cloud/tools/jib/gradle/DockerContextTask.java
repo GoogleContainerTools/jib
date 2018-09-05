@@ -153,7 +153,7 @@ public class DockerContextTask extends DefaultTask {
     }
   }
 
-  DockerContextTask setJibExtension(JibExtension jibExtension) {
+  public DockerContextTask setJibExtension(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
     return this;
   }
