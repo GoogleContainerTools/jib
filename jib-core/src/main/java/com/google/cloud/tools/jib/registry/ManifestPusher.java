@@ -22,9 +22,6 @@ import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
-import com.google.cloud.tools.jib.registry.json.ErrorEntryTemplate;
-import com.google.cloud.tools.jib.registry.json.ErrorResponseTemplate;
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
@@ -77,40 +74,13 @@ class ManifestPusher implements RegistryEndpointProvider<Void> {
       throw httpResponseException;
     }
 
-    // TODO turn deserializing the error-code into a library method
-
-    // Obtain the error response code.
-    String errorContent = httpResponseException.getContent();
-    if (errorContent == null) {
-      throw httpResponseException;
-    }
-
-    try {
-      ErrorResponseTemplate errorResponse =
-          JsonTemplateMapper.readJson(errorContent, ErrorResponseTemplate.class);
-      List<ErrorEntryTemplate> errors = errorResponse.getErrors();
-      if (errors.size() == 1) {
-        String errorCodeString = errors.get(0).getCode();
-        if (errorCodeString == null) {
-          // Did not get an error code back.
-          throw httpResponseException;
-        }
-        ErrorCodes errorCode = ErrorCodes.valueOf(errorCodeString);
-        if (errorCode.equals(ErrorCodes.MANIFEST_INVALID)
-            || errorCode.equals(ErrorCodes.TAG_INVALID)) {
-          throw new RegistryErrorExceptionBuilder(getActionDescription(), httpResponseException)
-              .addReason("Registry does not support Image Manifest Version 2, Schema 2")
-              .build();
-        }
-      }
-
-    } catch (IOException ex) {
+    ErrorCodes errorCode = ErrorResponseUtil.getErrorCode(httpResponseException);
+    if (errorCode.equals(ErrorCodes.MANIFEST_INVALID) || errorCode.equals(ErrorCodes.TAG_INVALID)) {
       throw new RegistryErrorExceptionBuilder(getActionDescription(), httpResponseException)
-          .addReason("Failed to parse registry error response body")
+          .addReason("Registry may not support Image Manifest Version 2, Schema 2")
           .build();
     }
-
-    // unhandled error response code.
+    // rethrow: unhandled error response code.
     throw httpResponseException;
   }
 

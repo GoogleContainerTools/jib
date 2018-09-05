@@ -147,7 +147,7 @@ public class ManifestPusherTest {
       Assert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
-              "Registry does not support Image Manifest Version 2, Schema 2"));
+              "Registry may not support Image Manifest Version 2, Schema 2"));
 
     } catch (HttpResponseException ex) {
       Assert.fail("should have been a RegistryErrorException");
@@ -172,7 +172,7 @@ public class ManifestPusherTest {
       Assert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
-              "Registry does not support Image Manifest Version 2, Schema 2"));
+              "Registry may not support Image Manifest Version 2, Schema 2"));
 
     } catch (HttpResponseException ex) {
       Assert.fail("should have been a RegistryErrorException");
