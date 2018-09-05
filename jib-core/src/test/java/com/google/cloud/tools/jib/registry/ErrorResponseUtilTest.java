@@ -22,9 +22,7 @@ import org.apache.http.HttpStatus;
 import org.junit.Assert;
 import org.junit.Test;
 
-/**
- * Test for {@link ErrorReponseUtil}.
- */
+/** Test for {@link ErrorReponseUtil}. */
 public class ErrorResponseUtilTest {
 
   @Test
@@ -36,7 +34,8 @@ public class ErrorResponseUtilTest {
                 "{\"errors\":[{\"code\":\"MANIFEST_INVALID\",\"message\":\"manifest invalid\",\"detail\":{}}]}")
             .build();
 
-    Assert.assertEquals(ErrorCodes.MANIFEST_INVALID, ErrorResponseUtil.getErrorCode(httpResponseException));
+    Assert.assertEquals(
+        ErrorCodes.MANIFEST_INVALID, ErrorResponseUtil.getErrorCode(httpResponseException));
   }
 
   /** An unknown {@link ErrorCodes} should cause original exception to be rethrown. */
@@ -44,14 +43,14 @@ public class ErrorResponseUtilTest {
   public void testGetErrorCode_unknownErrorCode() {
     HttpResponseException httpResponseException =
         new HttpResponseException.Builder(
-            HttpStatus.SC_BAD_REQUEST, "Bad Request", new HttpHeaders())
-        .setContent(
-            "{\"errors\":[{\"code\":\"INVALID_ERROR_CODE\",\"message\":\"invalid code\",\"detail\":{}}]}")
-        .build();
+                HttpStatus.SC_BAD_REQUEST, "Bad Request", new HttpHeaders())
+            .setContent(
+                "{\"errors\":[{\"code\":\"INVALID_ERROR_CODE\",\"message\":\"invalid code\",\"detail\":{}}]}")
+            .build();
     try {
       ErrorResponseUtil.getErrorCode(httpResponseException);
       Assert.fail();
-    } catch(HttpResponseException ex) {
+    } catch (HttpResponseException ex) {
       Assert.assertSame(httpResponseException, ex);
     }
   }
