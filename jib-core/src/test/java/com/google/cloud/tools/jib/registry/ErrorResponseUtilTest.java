@@ -34,7 +34,7 @@ public class ErrorResponseUtilTest {
                 "{\"errors\":[{\"code\":\"MANIFEST_INVALID\",\"message\":\"manifest invalid\",\"detail\":{}}]}")
             .build();
 
-    Assert.assertEquals(
+    Assert.assertSame(
         ErrorCodes.MANIFEST_INVALID, ErrorResponseUtil.getErrorCode(httpResponseException));
   }
 

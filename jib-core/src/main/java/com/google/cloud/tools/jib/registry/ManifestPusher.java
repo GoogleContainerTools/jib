@@ -75,7 +75,7 @@ class ManifestPusher implements RegistryEndpointProvider<Void> {
     }
 
     ErrorCodes errorCode = ErrorResponseUtil.getErrorCode(httpResponseException);
-    if (errorCode.equals(ErrorCodes.MANIFEST_INVALID) || errorCode.equals(ErrorCodes.TAG_INVALID)) {
+    if (errorCode == ErrorCodes.MANIFEST_INVALID || errorCode == ErrorCodes.TAG_INVALID) {
       throw new RegistryErrorExceptionBuilder(getActionDescription(), httpResponseException)
           .addReason("Registry may not support Image Manifest Version 2, Schema 2")
           .build();

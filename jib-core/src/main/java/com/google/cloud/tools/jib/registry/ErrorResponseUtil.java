@@ -23,11 +23,12 @@ import com.google.cloud.tools.jib.registry.json.ErrorResponseTemplate;
 import java.io.IOException;
 import java.util.List;
 
-/** Helper class for parsing {@link ErrorResponseTemplate} from JSON. */
+/** Utility methods for parsing {@link ErrorResponseTemplate JSON-encoded error responses}. */
 public class ErrorResponseUtil {
 
   /**
-   * Extract an {@link ErrorCodes} response from an error object.
+   * Extract an {@link ErrorCodes} response from the error object encoded in an {@link
+   * HttpResponseException}.
    *
    * @param httpResponseException the response exception
    * @return the parsed {@link ErrorCodes} if found
@@ -63,4 +64,7 @@ public class ErrorResponseUtil {
     // rethrow the original exception
     throw httpResponseException;
   }
+
+  // not intended to be instantiated
+  private ErrorResponseUtil() {}
 }

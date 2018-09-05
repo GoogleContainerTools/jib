@@ -74,7 +74,7 @@ class BlobChecker implements RegistryEndpointProvider<BlobDescriptor> {
     }
 
     ErrorCodes errorCode = ErrorResponseUtil.getErrorCode(httpResponseException);
-    if (errorCode.equals(ErrorCodes.BLOB_UNKNOWN)) {
+    if (errorCode == ErrorCodes.BLOB_UNKNOWN) {
       return null;
     }
 
