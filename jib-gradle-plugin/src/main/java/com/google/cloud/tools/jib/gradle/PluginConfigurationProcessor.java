@@ -37,6 +37,8 @@ import org.gradle.api.GradleException;
 /** Configures and provides builders for the image building tasks. */
 class PluginConfigurationProcessor {
 
+  private static final String TOOL_NAME = "jib-gradle-plugin";
+
   /**
    * Sets up {@link BuildConfiguration} that is common among the image building tasks. This includes
    * setting up the base image reference/authorization, container configuration, cache
@@ -104,7 +106,7 @@ class PluginConfigurationProcessor {
 
     BuildConfiguration.Builder buildConfigurationBuilder =
         BuildConfiguration.builder(logger)
-            .setToolName("jib-gradle-plugin")
+            .setToolName(TOOL_NAME)
             .setAllowInsecureRegistries(jibExtension.getAllowInsecureRegistries())
             .setLayerConfigurations(
                 projectProperties.getJavaLayerConfigurations().getLayerConfigurations());

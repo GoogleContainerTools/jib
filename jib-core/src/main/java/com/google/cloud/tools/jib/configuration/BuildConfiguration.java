@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.configuration;
 import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
+import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.List;
@@ -300,5 +301,21 @@ public class BuildConfiguration {
    */
   public ImmutableList<LayerConfiguration> getLayerConfigurations() {
     return layerConfigurations;
+  }
+
+  /**
+   * Creates a new {@link RegistryClient.Factory} and sets fields from the build configuration.
+   *
+   * @param imageConfiguration the {@link ImageConfiguration} to use for the server URL and image
+   *     name
+   * @return a new {@link RegistryClient.Factory}
+   */
+  public RegistryClient.Factory newRegistryClientFactory(ImageConfiguration imageConfiguration) {
+    return RegistryClient.factory(
+            getBuildLogger(),
+            imageConfiguration.getImageRegistry(),
+            imageConfiguration.getImageRepository())
+        .setAllowInsecureRegistries(getAllowInsecureRegistries())
+        .setUserAgentSuffix(getToolName());
   }
 }

@@ -117,13 +117,9 @@ class PushImageStep implements AsyncStep<Void>, Callable<Void> {
   private Void afterAllPushed() throws IOException, RegistryException, ExecutionException {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       RegistryClient registryClient =
-          RegistryClient.factory(
-                  buildConfiguration.getBuildLogger(),
-                  buildConfiguration.getTargetImageConfiguration().getImageRegistry(),
-                  buildConfiguration.getTargetImageConfiguration().getImageRepository())
-              .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
+          buildConfiguration
+              .newRegistryClientFactory(buildConfiguration.getTargetImageConfiguration())
               .setAuthorization(NonBlockingSteps.get(authenticatePushStep))
-              .setUserAgentSuffix(buildConfiguration.getToolName())
               .newRegistryClient();
 
       // Constructs the image.

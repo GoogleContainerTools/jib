@@ -185,13 +185,9 @@ class PullBaseImageStep
       throws IOException, RegistryException, LayerPropertyNotFoundException,
           LayerCountMismatchException, BadContainerConfigurationFormatException {
     RegistryClient registryClient =
-        RegistryClient.factory(
-                buildConfiguration.getBuildLogger(),
-                buildConfiguration.getBaseImageConfiguration().getImageRegistry(),
-                buildConfiguration.getBaseImageConfiguration().getImageRepository())
-            .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
+        buildConfiguration
+            .newRegistryClientFactory(buildConfiguration.getBaseImageConfiguration())
             .setAuthorization(registryAuthorization)
-            .setUserAgentSuffix(buildConfiguration.getToolName())
             .newRegistryClient();
 
     ManifestTemplate manifestTemplate =

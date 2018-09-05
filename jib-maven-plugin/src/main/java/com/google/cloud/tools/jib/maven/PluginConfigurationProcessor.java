@@ -37,6 +37,8 @@ import org.apache.maven.plugin.MojoExecutionException;
 /** Configures and provides builders for the image building goals. */
 class PluginConfigurationProcessor {
 
+  private static final String TOOL_NAME = "jib-maven-plugin";
+
   /**
    * Sets up {@link BuildConfiguration} that is common among the image building goals. This includes
    * setting up the base image reference/authorization, container configuration, cache
@@ -123,7 +125,7 @@ class PluginConfigurationProcessor {
 
     BuildConfiguration.Builder buildConfigurationBuilder =
         BuildConfiguration.builder(logger)
-            .setToolName("jib-maven-plugin")
+            .setToolName(TOOL_NAME)
             .setAllowInsecureRegistries(jibPluginConfiguration.getAllowInsecureRegistries())
             .setLayerConfigurations(
                 projectProperties.getJavaLayerConfigurations().getLayerConfigurations());
