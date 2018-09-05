@@ -238,7 +238,7 @@ public class JibPluginIntegrationTest {
     String targetImage = "localhost:6000/compleximage:gradle" + System.nanoTime();
     Instant beforeBuild = Instant.now();
     Assert.assertEquals(
-        "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\n",
+        "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
         buildAndRunComplex(targetImage, "testuser2", "testpassword2", localRegistry2));
     assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
   }
@@ -248,7 +248,7 @@ public class JibPluginIntegrationTest {
     String targetImage = "localhost:5000/compleximage:gradle" + System.nanoTime();
     Instant beforeBuild = Instant.now();
     Assert.assertEquals(
-        "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\n",
+        "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
         buildAndRunComplex(targetImage, "testuser", "testpassword", localRegistry1));
     assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
   }

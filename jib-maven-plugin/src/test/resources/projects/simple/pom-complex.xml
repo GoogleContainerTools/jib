@@ -62,6 +62,10 @@
               <jvmFlag>-Xms512m</jvmFlag>
               <jvmFlag>-Xdebug</jvmFlag>
             </jvmFlags>
+            <environment>
+              <env1>envvalue1</env1>
+              <env2>envvalue2</env2>
+            </environment>
             <ports>
               <port>1000/tcp</port>
               <port>2000-2003/udp</port>

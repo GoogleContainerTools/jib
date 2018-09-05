@@ -95,14 +95,17 @@ public class JibExtensionTest {
   @Test
   public void testContainer() {
     Assert.assertEquals(Collections.emptyList(), testJibExtension.getContainer().getJvmFlags());
+    Assert.assertEquals(Collections.emptyMap(), testJibExtension.getContainer().getEnvironment());
     Assert.assertNull(testJibExtension.getContainer().getMainClass());
     Assert.assertEquals(Collections.emptyList(), testJibExtension.getContainer().getArgs());
     Assert.assertEquals(V22ManifestTemplate.class, testJibExtension.getContainer().getFormat());
     Assert.assertEquals(Collections.emptyList(), testJibExtension.getContainer().getPorts());
+    Assert.assertEquals(Collections.emptyMap(), testJibExtension.getContainer().getLabels());
 
     testJibExtension.container(
         container -> {
           container.setJvmFlags(Arrays.asList("jvmFlag1", "jvmFlag2"));
+          container.setEnvironment(ImmutableMap.of("var1", "value1", "var2", "value2"));
           container.setEntrypoint(Arrays.asList("foo", "bar", "baz"));
           container.setMainClass("mainClass");
           container.setArgs(Arrays.asList("arg1", "arg2", "arg3"));
@@ -114,6 +117,9 @@ public class JibExtensionTest {
         Arrays.asList("foo", "bar", "baz"), testJibExtension.getContainer().getEntrypoint());
     Assert.assertEquals(
         Arrays.asList("jvmFlag1", "jvmFlag2"), testJibExtension.getContainer().getJvmFlags());
+    Assert.assertEquals(
+        ImmutableMap.of("var1", "value1", "var2", "value2"),
+        testJibExtension.getContainer().getEnvironment());
     Assert.assertEquals("mainClass", testJibExtension.getContainer().getMainClass());
     Assert.assertEquals(
         Arrays.asList("arg1", "arg2", "arg3"), testJibExtension.getContainer().getArgs());
