@@ -108,7 +108,8 @@ public class ManifestPusherTest {
 
   /** Docker Registry 2.0 and 2.1 return 400 / TAG_INVALID. */
   @Test
-  public void testHandleHttpResponseException_dockerRegistry_tagInvalid() {
+  public void testHandleHttpResponseException_dockerRegistry_tagInvalid()
+      throws HttpResponseException {
     HttpResponseException exception =
         new HttpResponseException.Builder(
                 HttpStatus.SC_BAD_REQUEST, "Bad Request", new HttpHeaders())
@@ -124,15 +125,13 @@ public class ManifestPusherTest {
           ex.getMessage(),
           CoreMatchers.containsString(
               "Registry may not support Image Manifest Version 2, Schema 2"));
-
-    } catch (HttpResponseException ex) {
-      Assert.fail("should have been a RegistryErrorException");
     }
   }
 
   /** Docker Registry 2.2 returns a 400 / MANIFEST_INVALID. */
   @Test
-  public void testHandleHttpResponseException_dockerRegistry_manifestInvalid() {
+  public void testHandleHttpResponseException_dockerRegistry_manifestInvalid()
+      throws HttpResponseException {
     HttpResponseException exception =
         new HttpResponseException.Builder(
                 HttpStatus.SC_BAD_REQUEST, "Bad Request", new HttpHeaders())
@@ -148,15 +147,12 @@ public class ManifestPusherTest {
           ex.getMessage(),
           CoreMatchers.containsString(
               "Registry may not support Image Manifest Version 2, Schema 2"));
-
-    } catch (HttpResponseException ex) {
-      Assert.fail("should have been a RegistryErrorException");
     }
   }
 
   /** Quay.io returns an undocumented 415 / MANIFEST_INVALID. */
   @Test
-  public void testHandleHttpResponseException_quayIo() {
+  public void testHandleHttpResponseException_quayIo() throws HttpResponseException {
     HttpResponseException exception =
         new HttpResponseException.Builder(
                 HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE, "UNSUPPORTED MEDIA TYPE", new HttpHeaders())
@@ -173,14 +169,11 @@ public class ManifestPusherTest {
           ex.getMessage(),
           CoreMatchers.containsString(
               "Registry may not support Image Manifest Version 2, Schema 2"));
-
-    } catch (HttpResponseException ex) {
-      Assert.fail("should have been a RegistryErrorException");
     }
   }
 
   @Test
-  public void testHandleHttpResponseException_otherError() {
+  public void testHandleHttpResponseException_otherError() throws RegistryErrorException {
     HttpResponseException exception =
         new HttpResponseException.Builder(
                 HttpStatus.SC_UNAUTHORIZED, "Unauthorized", new HttpHeaders())
@@ -189,9 +182,6 @@ public class ManifestPusherTest {
     try {
       testManifestPusher.handleHttpResponseException(exception);
       Assert.fail();
-
-    } catch (RegistryErrorException ex) {
-      Assert.fail("should have been a HttpResponseException");
 
     } catch (HttpResponseException ex) {
       Assert.assertSame(exception, ex);
