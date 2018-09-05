@@ -59,6 +59,8 @@ public class JavaDockerContextGenerator {
   private static final String CLASSES_LAYER_DIRECTORY = "classes";
   private static final String EXTRA_FILES_LAYER_DIRECTORY = "root";
 
+  private static final ObjectMapper objectMapper = new ObjectMapper();
+
   /** Represents a Dockerfile {@code COPY} directive. */
   private static class CopyDirective {
 
@@ -110,12 +112,10 @@ public class JavaDockerContextGenerator {
    *
    * @param map the map to convert
    * @param command the dockerfile command to prefix the map values with
-   * @param objectMapper used to json-ify map values
    * @return the new dockerfile command as a string
    * @throws JsonProcessingException if getting the json string of a map value fails
    */
-  private static String mapToDockerfileString(
-      Map<String, String> map, String command, ObjectMapper objectMapper)
+  private static String mapToDockerfileString(Map<String, String> map, String command)
       throws JsonProcessingException {
     if (map.isEmpty()) {
       return "";
@@ -296,7 +296,6 @@ public class JavaDockerContextGenerator {
    */
   @VisibleForTesting
   String makeDockerfile() throws JsonProcessingException {
-    ObjectMapper objectMapper = new ObjectMapper();
     StringBuilder dockerfile = new StringBuilder();
     dockerfile.append("FROM ").append(Preconditions.checkNotNull(baseImage)).append("\n");
     for (CopyDirective copyDirective : copyDirectives) {
@@ -312,8 +311,8 @@ public class JavaDockerContextGenerator {
       dockerfile.append("\nEXPOSE ").append(port);
     }
 
-    dockerfile.append(mapToDockerfileString(environment, "ENV", objectMapper));
-    dockerfile.append(mapToDockerfileString(labels, "LABEL", objectMapper));
+    dockerfile.append(mapToDockerfileString(environment, "ENV"));
+    dockerfile.append(mapToDockerfileString(labels, "LABEL"));
     dockerfile
         .append("\nENTRYPOINT ")
         .append(objectMapper.writeValueAsString(entrypoint))

@@ -261,7 +261,7 @@ public class BuildImageMojoIntegrationTest {
       throws IOException, InterruptedException, VerificationException {
     String targetImage = "localhost:6000/compleximage:maven" + System.nanoTime();
     Assert.assertEquals(
-        "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\nvalue1\nvalue2\n",
+        "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
         buildAndRunComplex(targetImage, "testuser2", "testpassword2", localRegistry2));
   }
 
@@ -270,7 +270,7 @@ public class BuildImageMojoIntegrationTest {
       throws IOException, InterruptedException, VerificationException {
     String targetImage = "localhost:5000/compleximage:maven" + System.nanoTime();
     Assert.assertEquals(
-        "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\nvalue1\nvalue2\n",
+        "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
         buildAndRunComplex(targetImage, "testuser", "testpassword", localRegistry1));
   }
 
