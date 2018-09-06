@@ -39,6 +39,7 @@ import org.gradle.jvm.tasks.Jar;
 /** Obtains information about a Gradle {@link Project} that uses Jib. */
 class GradleProjectProperties implements ProjectProperties {
 
+  public static final String TOOL_NAME = "jib-gradle-plugin";
   private static final String PLUGIN_NAME = "jib";
   private static final String JAR_PLUGIN_NAME = "'jar' task";
 
