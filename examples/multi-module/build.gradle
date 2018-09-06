@@ -8,7 +8,7 @@ buildscript {
   dependencies {
     classpath 'org.springframework.boot:spring-boot-gradle-plugin:2.0.3.RELEASE'
     classpath 'io.spring.gradle:dependency-management-plugin:1.0.6.RELEASE'
-    classpath 'gradle.plugin.com.google.cloud.tools:jib-gradle-plugin:0.9.9'
+    classpath 'gradle.plugin.com.google.cloud.tools:jib-gradle-plugin:0.9.10'
   }
 }
 

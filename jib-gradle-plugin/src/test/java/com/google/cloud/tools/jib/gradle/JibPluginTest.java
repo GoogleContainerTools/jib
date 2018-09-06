@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -85,7 +85,7 @@ public class JibPluginTest {
   }
 
   @Test
-  public void testGetProjectDependencyAssembleTasks() {
+  public void testProjectDependencyAssembleTasksAreRun() {
     // root project is our jib packaged service
     Project rootProject =
         ProjectBuilder.builder().withProjectDir(testProjectRoot.getRoot()).withName("root").build();
@@ -118,10 +118,10 @@ public class JibPluginTest {
 
     // programmatic check
     Assert.assertEquals(
-        Collections.singletonList(":sub:assemble"),
-        JibPlugin.getProjectDependencyAssembleTasks(rootProject)
+        Collections.singletonList(":sub"),
+        JibPlugin.getProjectDependencies(rootProject)
             .stream()
-            .map(Task::getPath)
+            .map(Project::getPath)
             .collect(Collectors.toList()));
 
     // check by applying the jib plugin and inspect the task dependencies

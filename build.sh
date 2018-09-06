@@ -9,9 +9,10 @@ usage()
 {
   eval 1>&2
   echo "Simple builder for Jib for jib-core, jib-plugins-common, jib-maven-plugin, and jib-gradle-plugin"
-  echo "use: $0 [-qe] [clean | core | plugins | maven | gradle | all]"
+  echo "use: $0 [-qe] [clean | core | plugins | maven | gradle | all | it]"
+  echo "  'all' is the same as 'core plugins gradle maven'"
   echo "  -q  quick mode: skip tests, formatting"
-  echo "  -e  show error information (mvn: -e, gradle: --stacktrace)"
+  echo "  -e  show error information (mvn: -e, gradle: --stacktrace --info)"
   exit 1
 }
 
@@ -26,7 +27,7 @@ while getopts qe c; do
   case $c in
   q)  quickMode=true;;
   e)  mavenOptions="$mavenOptions -e"
-      gradleOptions="$gradleOptions --stacktrace"
+      gradleOptions="$gradleOptions --stacktrace --info"
       ;;
   \?) usage;;
   esac
@@ -84,5 +85,10 @@ for target in "$@"; do
       fi
       ;;
 
+    it)
+      doBuild jib-core  ./gradlew $gradleOptions integrationTest
+      doBuild jib-maven-plugin   ./mvnw $mavenOptions -Pintegration-tests verify -U
+      doBuild jib-gradle-plugin  ./gradlew $gradleOptions integrationTest
+      ;;
   esac
 done

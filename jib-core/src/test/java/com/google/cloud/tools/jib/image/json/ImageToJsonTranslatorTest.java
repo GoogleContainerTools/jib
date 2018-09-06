@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC. All rights reserved.
+ * Copyright 2017 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -56,8 +56,8 @@ public class ImageToJsonTranslatorTest {
     Image.Builder<CachedLayer> testImageBuilder = Image.builder();
 
     testImageBuilder.setCreated(Instant.ofEpochSecond(20));
-    testImageBuilder.setEnvironmentVariable("VAR1", "VAL1");
-    testImageBuilder.setEnvironmentVariable("VAR2", "VAL2");
+    testImageBuilder.addEnvironmentVariable("VAR1", "VAL1");
+    testImageBuilder.addEnvironmentVariable("VAR2", "VAL2");
     testImageBuilder.setEntrypoint(Arrays.asList("some", "entrypoint", "command"));
     testImageBuilder.setJavaArguments(Arrays.asList("arg1", "arg2"));
     testImageBuilder.setExposedPorts(
@@ -66,6 +66,7 @@ public class ImageToJsonTranslatorTest {
             new Port(2000, Protocol.TCP),
             new Port(3000, Protocol.UDP)));
     testImageBuilder.addLabels(ImmutableMap.of("key1", "value1", "key2", "value2"));
+    testImageBuilder.setWorkingDirectory("/some/workspace");
 
     DescriptorDigest fakeDigest =
         DescriptorDigest.fromDigest(

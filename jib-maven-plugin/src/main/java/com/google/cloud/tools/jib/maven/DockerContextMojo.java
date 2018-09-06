@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaDockerContextGenerator;
+import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.annotations.VisibleForTesting;
@@ -25,6 +26,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.io.InsecureRecursiveDeleteException;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.List;
 import javax.annotation.Nullable;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -48,6 +50,10 @@ public class DockerContextMojo extends JibPluginConfiguration {
 
   @Override
   public void execute() throws MojoExecutionException {
+    if (isSkipped()) {
+      getLog().info("Skipping containerization because jib-maven-plugin: skip = true");
+      return;
+    }
     if ("pom".equals(getProject().getPackaging())) {
       getLog().info("Skipping containerization because packaging is 'pom'...");
       return;
@@ -61,7 +67,14 @@ public class DockerContextMojo extends JibPluginConfiguration {
 
     MavenProjectProperties mavenProjectProperties =
         MavenProjectProperties.getForProject(getProject(), mavenJibLogger, getExtraDirectory());
-    String mainClass = mavenProjectProperties.getMainClass(this);
+
+    List<String> entrypoint = getEntrypoint();
+    if (entrypoint.isEmpty()) {
+      String mainClass = mavenProjectProperties.getMainClass(this);
+      entrypoint = JavaEntrypointConstructor.makeDefaultEntrypoint(getJvmFlags(), mainClass);
+    } else if (getMainClass() != null || !getJvmFlags().isEmpty()) {
+      mavenJibLogger.warn("<mainClass> and <jvmFlags> are ignored when <entrypoint> is specified");
+    }
 
     try {
       // Validate port input, but don't save the output because we don't want the ranges expanded
@@ -70,8 +83,7 @@ public class DockerContextMojo extends JibPluginConfiguration {
 
       new JavaDockerContextGenerator(mavenProjectProperties.getJavaLayerConfigurations())
           .setBaseImage(getBaseImage())
-          .setJvmFlags(getJvmFlags())
-          .setMainClass(mainClass)
+          .setEntrypoint(entrypoint)
           .setJavaArguments(getArgs())
           .setExposedPorts(getExposedPorts())
           .setLabels(getLabels())

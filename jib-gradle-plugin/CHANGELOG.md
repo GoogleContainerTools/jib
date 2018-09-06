@@ -5,10 +5,20 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- `container.labels` configuration parameter for configuring labels ([#751](https://github.com/GoogleContainerTools/jib/issues/751))
-- `history` to layer metadata ([#875](https://github.com/GoogleContainerTools/jib/issues/875))
+- `container.environment` configuration parameter to configure environment variables ([#890](https://github.com/GoogleContainerTools/jib/issues/890))
 
 ### Changed
+
+### Fixed
+
+## 0.9.10
+
+### Added
+
+- `container.labels` configuration parameter for configuring labels ([#751](https://github.com/GoogleContainerTools/jib/issues/751))
+- `container.entrypoint` configuration parameter to set the entrypoint ([#579](https://github.com/GoogleContainerTools/jib/issues/579))
+- `history` to layer metadata ([#875](https://github.com/GoogleContainerTools/jib/issues/875))
+- Propagates working directory from the base image ([#902](https://github.com/GoogleContainerTools/jib/pull/902))
 
 ### Fixed
 
@@ -22,7 +32,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Reordered classpath in entrypoint to allow dependency patching ([#777](https://github.com/GoogleContainerTools/jib/issues/777))
+- Reordered classpath in entrypoint to use _resources_, _classes_, and then _dependencies_, to allow dependency patching
+  ([#777](https://github.com/GoogleContainerTools/jib/issues/777)).  Note that this classpath ordering differs from that used by Gradle's `run` task.
 - Changed logging level of missing build output directory message ([#677](https://github.com/GoogleContainerTools/jib/issues/677))
 
 ### Fixed

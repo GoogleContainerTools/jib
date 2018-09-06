@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -70,11 +70,8 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer>, Callable
     try (Timer ignored =
         new Timer(buildConfiguration.getBuildLogger(), String.format(DESCRIPTION, layerDigest))) {
       RegistryClient registryClient =
-          RegistryClient.factory(
-                  buildConfiguration.getBuildLogger(),
-                  buildConfiguration.getBaseImageConfiguration().getImageRegistry(),
-                  buildConfiguration.getBaseImageConfiguration().getImageRepository())
-              .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
+          buildConfiguration
+              .newBaseImageRegistryClientFactory()
               .setAuthorization(pullAuthorization)
               .newRegistryClient();
 

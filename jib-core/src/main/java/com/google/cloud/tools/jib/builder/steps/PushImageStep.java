@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -117,11 +117,8 @@ class PushImageStep implements AsyncStep<Void>, Callable<Void> {
   private Void afterAllPushed() throws IOException, RegistryException, ExecutionException {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       RegistryClient registryClient =
-          RegistryClient.factory(
-                  buildConfiguration.getBuildLogger(),
-                  buildConfiguration.getTargetImageConfiguration().getImageRegistry(),
-                  buildConfiguration.getTargetImageConfiguration().getImageRepository())
-              .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
+          buildConfiguration
+              .newTargetImageRegistryClientFactory()
               .setAuthorization(NonBlockingSteps.get(authenticatePushStep))
               .newRegistryClient();
 

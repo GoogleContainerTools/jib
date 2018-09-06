@@ -18,7 +18,7 @@ See [Milestones](https://github.com/GoogleContainerTools/jib/milestones) for pla
 You can containerize your application easily with one command:
 
 ```shell
-mvn compile com.google.cloud.tools:jib-maven-plugin:0.9.9:build -Dimage=<MY IMAGE>
+mvn compile com.google.cloud.tools:jib-maven-plugin:0.9.10:build -Dimage=<MY IMAGE>
 ```
 
 This builds and pushes a container image for your application to a container registry. *If you encounter authentication issues, see [Authentication Methods](#authentication-methods).*
@@ -26,7 +26,7 @@ This builds and pushes a container image for your application to a container reg
 To build to a Docker daemon, use:
 
 ```shell
-mvn compile com.google.cloud.tools:jib-maven-plugin:0.9.9:dockerBuild
+mvn compile com.google.cloud.tools:jib-maven-plugin:0.9.10:dockerBuild
 ```
 
 If you would like to set up Jib as part of your Maven build, follow the guide below.
@@ -44,7 +44,7 @@ In your Maven Java project, add the plugin to your `pom.xml`:
       <plugin>
         <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
-        <version>0.9.9</version>
+        <version>0.9.10</version>
         <configuration>
           <to>
             <image>myimage</image>
@@ -236,8 +236,10 @@ Property | Type | Default | Description
 `mainClass` | string | *Inferred\** | The main class to launch the application from.
 `args` | list | *None* | Default main method arguments to run your application with.
 `ports` | list | *None* | Ports that the container exposes at runtime (similar to Docker's [EXPOSE](https://docs.docker.com/engine/reference/builder/#expose) instruction).
+`labels` | map | *None* | Key-value pairs for applying image metadata (similar to Docker's [LABEL](https://docs.docker.com/engine/reference/builder/#label) instruction).
 `format` | string | `Docker` | Use `OCI` to build an [OCI container image](https://www.opencontainers.org/).
 `useCurrentTimestamp` | boolean | `false` | By default, Jib wipes all timestamps to guarantee reproducibility. If this parameter is set to `true`, Jib will set the image's creation timestamp to the time of the build, which sacrifices reproducibility for easily being able to tell when your image was created.
+`entrypoint` | list | *None* | The command to start the container with (similar to Docker's [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint) instruction). If set, then `jvmFlags` and `mainClass` are ignored.
 
 You can also configure HTTP connection/read timeouts for registry interactions using the `jib.httpTimeout` system property, configured in milliseconds via commandline (the default is `20000`; you can also set it to `0` for infinite timeout):
 
@@ -254,6 +256,7 @@ In this configuration, the image:
 * Is pushed to `localhost:5000/my-image:built-with-jib`
 * Runs by calling `java -Xms512m -Xdebug -Xmy:flag=jib-rules -cp app/libs/*:app/resources:app/classes mypackage.MyApp some args`
 * Exposes port 1000 for tcp (default), and ports 2000, 2001, 2002, and 2003 for udp
+* Has two labels (key1:value1 and key2:value2)
 * Is built as OCI format
 
 ```xml
@@ -280,6 +283,10 @@ In this configuration, the image:
       <port>1000</port>
       <port>2000-2003/udp</port>
     </ports>
+    <labels>
+      <key1>value1</key1>
+      <key2>value2</key2>
+    </labels>
     <format>OCI</format>
   </container>
 </configuration>

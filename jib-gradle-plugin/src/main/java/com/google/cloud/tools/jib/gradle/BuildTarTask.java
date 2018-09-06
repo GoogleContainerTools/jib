@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -38,7 +38,7 @@ import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.options.Option;
 
 /** Builds a container image to a tarball. */
-public class BuildTarTask extends DefaultTask {
+public class BuildTarTask extends DefaultTask implements JibTask {
 
   private static final String HELPFUL_SUGGESTIONS_PREFIX = "Building image tarball failed";
 
@@ -146,7 +146,8 @@ public class BuildTarTask extends DefaultTask {
     }
   }
 
-  BuildTarTask setJibExtension(JibExtension jibExtension) {
+  @Override
+  public BuildTarTask setJibExtension(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
     return this;
   }

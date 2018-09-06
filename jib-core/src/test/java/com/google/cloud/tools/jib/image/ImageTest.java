@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC. All rights reserved.
+ * Copyright 2017 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -49,8 +49,8 @@ public class ImageTest {
     Image<Layer> image =
         Image.builder()
             .setCreated(Instant.ofEpochSecond(10000))
-            .setEnvironmentVariable("crepecake", "is great")
-            .setEnvironmentVariable("VARIABLE", "VALUE")
+            .addEnvironmentVariable("crepecake", "is great")
+            .addEnvironmentVariable("VARIABLE", "VALUE")
             .setEntrypoint(Arrays.asList("some", "command"))
             .setJavaArguments(Arrays.asList("arg1", "arg2"))
             .setExposedPorts(
