@@ -169,7 +169,7 @@ class RegistryEndpointCaller<T> {
     }
 
     try {
-      logger.warn(
+      logger.info(
           "Cannot verify server at " + url + ". Attempting again with no TLS verification.");
       return call(url, getInsecureConnectionFactory());
 
@@ -182,7 +182,7 @@ class RegistryEndpointCaller<T> {
   private T fallBackToHttp(URL url) throws IOException, RegistryException {
     GenericUrl httpUrl = new GenericUrl(url);
     httpUrl.setScheme("http");
-    logger.warn(
+    logger.info(
         "Failed to connect to " + url + " over HTTPS. Attempting again with HTTP: " + httpUrl);
     return call(httpUrl.toURL(), connectionFactory);
   }
