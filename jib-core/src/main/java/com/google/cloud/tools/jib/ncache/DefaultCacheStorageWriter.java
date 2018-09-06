@@ -20,13 +20,16 @@ import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.filesystem.FileOperations;
+import com.google.cloud.tools.jib.filesystem.TemporaryDirectory;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.zip.GZIPOutputStream;
 
 /** Writes to the default cache storage engine. */
@@ -49,7 +52,8 @@ class DefaultCacheStorageWriter {
 
   /**
    * Attempts to move {@code source} to {@code destination}. If {@code destination} already exists,
-   * this does nothing.
+   * this does nothing. Attempts an atomic move first, and falls back to non-atomic if the
+   * filesystem does not support atomic moves.
    *
    * @param source the source path
    * @param destination the destination path
@@ -57,7 +61,7 @@ class DefaultCacheStorageWriter {
    */
   private static void moveIfDoesNotExist(Path source, Path destination) throws IOException {
     try {
-      Files.move(source, destination);
+      Files.move(source, destination, StandardCopyOption.ATOMIC_MOVE);
 
     } catch (FileAlreadyExistsException ignored) {
       // If the file already exists, we skip renaming and use the existing file. This happens if a
@@ -65,6 +69,14 @@ class DefaultCacheStorageWriter {
       //
       // Do not attempt to remove the try-catch block with the idea of checking file existence
       // before moving; there can be concurrent file moves.
+
+    } catch (AtomicMoveNotSupportedException ignored) {
+      try {
+        Files.move(source, destination);
+
+      } catch (FileAlreadyExistsException alsoIgnored) {
+        // Same reasoning
+      }
     }
   }
 
@@ -81,10 +93,13 @@ class DefaultCacheStorageWriter {
    *
    * <ul>
    *   <li>The {@link CacheWrite#getLayerBlob} and {@link CacheWrite#getMetadataBlob} are written to
-   *       the layer directory under {@code layers/} corresponding to the layer blob.
-   *   <li>The {@link CacheWrite#getSelector} is written to the selector file under {@code
-   *       selectors/}.
+   *       the layer directory under the layers directory corresponding to the layer blob.
+   *   <li>The {@link CacheWrite#getSelector} is written to the selector file under the selectors
+   *       directory.
    * </ul>
+   *
+   * Note that writes that fail to clean up unfinished temporary directories could result in stray
+   * directories in the layers directory. Cache reads should ignore these stray directories.
    *
    * @param cacheWrite the {@link CacheWrite} to write out
    * @return the {@link CacheEntry} representing the written entry
@@ -94,50 +109,46 @@ class DefaultCacheStorageWriter {
     // Creates the layers directory if it doesn't exist.
     Files.createDirectories(defaultCacheStorageFiles.getLayersDirectory());
 
-    // START ATOMIC
-    // TODO: Need to add correct shutdown hook / finally block
-
     // Creates the temporary directory.
-    Path temporaryLayerDirectory =
-        Files.createTempDirectory(defaultCacheStorageFiles.getLayersDirectory(), null);
-    temporaryLayerDirectory.toFile().deleteOnExit();
+    try (TemporaryDirectory temporaryDirectory =
+        new TemporaryDirectory(defaultCacheStorageFiles.getLayersDirectory())) {
+      Path temporaryLayerDirectory = temporaryDirectory.getDirectory();
 
-    // Writes the layer file to the temporary directory.
-    WrittenLayer writtenLayer =
-        writeLayerBlobToDirectory(cacheWrite.getLayerBlob(), temporaryLayerDirectory);
+      // Writes the layer file to the temporary directory.
+      WrittenLayer writtenLayer =
+          writeLayerBlobToDirectory(cacheWrite.getLayerBlob(), temporaryLayerDirectory);
 
-    // Writes the metadata to the temporary directory.
-    if (cacheWrite.getMetadataBlob().isPresent()) {
-      writeMetadataBlobToDirectory(cacheWrite.getMetadataBlob().get(), temporaryLayerDirectory);
+      // Writes the metadata to the temporary directory.
+      if (cacheWrite.getMetadataBlob().isPresent()) {
+        writeMetadataBlobToDirectory(cacheWrite.getMetadataBlob().get(), temporaryLayerDirectory);
+      }
+
+      // Moves the temporary directory to the final location.
+      moveIfDoesNotExist(
+          temporaryLayerDirectory,
+          defaultCacheStorageFiles.getLayerDirectory(writtenLayer.layerDigest));
+
+      // Updates cacheEntry with the blob information.
+      Path layerFile =
+          defaultCacheStorageFiles.getLayerFile(writtenLayer.layerDigest, writtenLayer.layerDiffId);
+      DefaultCacheEntry.Builder cacheEntryBuilder =
+          DefaultCacheEntry.builder()
+              .setLayerDigest(writtenLayer.layerDigest)
+              .setLayerDiffId(writtenLayer.layerDiffId)
+              .setLayerSize(writtenLayer.layerSize)
+              .setLayerBlob(Blobs.from(layerFile));
+      if (cacheWrite.getMetadataBlob().isPresent()) {
+        Path metadataFile = defaultCacheStorageFiles.getMetadataFile(writtenLayer.layerDigest);
+        cacheEntryBuilder.setMetadataBlob(Blobs.from(metadataFile)).build();
+      }
+
+      // Write the selector file.
+      if (cacheWrite.getSelector().isPresent()) {
+        writeSelector(cacheWrite.getSelector().get(), writtenLayer.layerDigest);
+      }
+
+      return cacheEntryBuilder.build();
     }
-
-    // Moves the temporary directory to the final location.
-    moveIfDoesNotExist(
-        temporaryLayerDirectory,
-        defaultCacheStorageFiles.getLayerDirectory(writtenLayer.layerDigest));
-
-    // END ATOMIC
-
-    // Updates cacheEntry with the blob information.
-    Path layerFile =
-        defaultCacheStorageFiles.getLayerFile(writtenLayer.layerDigest, writtenLayer.layerDiffId);
-    DefaultCacheEntry.Builder cacheEntryBuilder =
-        DefaultCacheEntry.builder()
-            .setLayerDigest(writtenLayer.layerDigest)
-            .setLayerDiffId(writtenLayer.layerDiffId)
-            .setLayerSize(writtenLayer.layerSize)
-            .setLayerBlob(Blobs.from(layerFile));
-    if (cacheWrite.getMetadataBlob().isPresent()) {
-      Path metadataFile = defaultCacheStorageFiles.getMetadataFile(writtenLayer.layerDigest);
-      cacheEntryBuilder.setMetadataBlob(Blobs.from(metadataFile)).build();
-    }
-
-    // Write the selector file.
-    if (cacheWrite.getSelector().isPresent()) {
-      writeSelector(cacheWrite.getSelector().get(), writtenLayer.layerDigest);
-    }
-
-    return cacheEntryBuilder.build();
   }
 
   /**
