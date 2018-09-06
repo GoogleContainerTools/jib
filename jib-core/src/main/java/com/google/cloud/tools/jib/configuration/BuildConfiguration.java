@@ -304,13 +304,26 @@ public class BuildConfiguration {
   }
 
   /**
-   * Creates a new {@link RegistryClient.Factory} and sets fields from the build configuration.
+   * Creates a new {@link RegistryClient.Factory} for the target image with fields from the build
+   * configuration.
    *
-   * @param imageConfiguration the {@link ImageConfiguration} to use for the server URL and image
-   *     name
    * @return a new {@link RegistryClient.Factory}
    */
-  public RegistryClient.Factory newRegistryClientFactory(ImageConfiguration imageConfiguration) {
+  public RegistryClient.Factory newBaseImageRegistryClientFactory() {
+    return newRegistryClientFactory(baseImageConfiguration);
+  }
+
+  /**
+   * Creates a new {@link RegistryClient.Factory} for the target image with fields from the build
+   * configuration.
+   *
+   * @return a new {@link RegistryClient.Factory}
+   */
+  public RegistryClient.Factory newTargetImageRegistryClientFactory() {
+    return newRegistryClientFactory(targetImageConfiguration);
+  }
+
+  private RegistryClient.Factory newRegistryClientFactory(ImageConfiguration imageConfiguration) {
     return RegistryClient.factory(
             getBuildLogger(),
             imageConfiguration.getImageRegistry(),

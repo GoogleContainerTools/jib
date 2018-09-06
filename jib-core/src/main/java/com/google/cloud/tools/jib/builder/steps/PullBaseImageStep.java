@@ -186,7 +186,7 @@ class PullBaseImageStep
           LayerCountMismatchException, BadContainerConfigurationFormatException {
     RegistryClient registryClient =
         buildConfiguration
-            .newRegistryClientFactory(buildConfiguration.getBaseImageConfiguration())
+            .newBaseImageRegistryClientFactory()
             .setAuthorization(registryAuthorization)
             .newRegistryClient();
 
