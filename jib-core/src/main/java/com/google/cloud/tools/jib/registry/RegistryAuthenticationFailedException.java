@@ -16,16 +16,34 @@
 
 package com.google.cloud.tools.jib.registry;
 
+import java.text.MessageFormat;
+
 /** Thrown because registry authentication failed. */
 public class RegistryAuthenticationFailedException extends Exception {
 
-  private static final String REASON_PREFIX = "Failed to authenticate with the registry because: ";
+  private static final String REASON = "Failed to authenticate with registry {0}/{1} because: {2}";
+  private final String serverUrl;
+  private final String imageName;
 
-  RegistryAuthenticationFailedException(Throwable cause) {
-    super(REASON_PREFIX + cause.getMessage(), cause);
+  RegistryAuthenticationFailedException(String serverUrl, String imageName, Throwable cause) {
+    super(MessageFormat.format(REASON, serverUrl, imageName, cause.getMessage()), cause);
+    this.serverUrl = serverUrl;
+    this.imageName = imageName;
   }
 
-  RegistryAuthenticationFailedException(String reason) {
-    super(REASON_PREFIX + reason);
+  RegistryAuthenticationFailedException(String serverUrl, String imageName, String reason) {
+    super(MessageFormat.format(REASON, serverUrl, imageName, reason));
+    this.serverUrl = serverUrl;
+    this.imageName = imageName;
+  }
+
+  /** @return the server being authenticated */
+  public String getServerUrl() {
+    return serverUrl;
+  }
+
+  /** @return the image being authenticated */
+  public String getImageName() {
+    return imageName;
   }
 }
