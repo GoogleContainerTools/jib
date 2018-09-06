@@ -16,19 +16,17 @@
 
 package com.google.cloud.tools.jib.event;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Multimap;
 import java.util.function.Consumer;
 
 /** Builds a set of event handlers to handle {@link JibEvent}s. */
 public class EventHandlers {
 
   /** Maps from {@link JibEvent} class to handlers for that event type. */
-  private final Map<Class<? extends JibEvent>, List<Handler<? extends JibEvent>>> handlers =
-      new HashMap<>();
+  private final Multimap<Class<? extends JibEvent>, Handler<? extends JibEvent>> handlers =
+      ArrayListMultimap.create();
 
   /**
    * Adds the {@code eventConsumer} to handle the {@link JibEvent} with class {@code eventClass}.
@@ -45,10 +43,7 @@ public class EventHandlers {
   public <E extends JibEvent> EventHandlers add(
       JibEventType<E> eventType, Consumer<E> eventConsumer) {
     Class<E> eventClass = eventType.getEventClass();
-    if (!handlers.containsKey(eventClass)) {
-      handlers.put(eventClass, new ArrayList<>());
-    }
-    handlers.get(eventClass).add(new Handler<>(eventClass, eventConsumer));
+    handlers.put(eventClass, new Handler<>(eventClass, eventConsumer));
     return this;
   }
 
@@ -68,7 +63,7 @@ public class EventHandlers {
    *
    * @return the map from {@link JibEvent} type to a list of {@link Handler}s
    */
-  Map<Class<? extends JibEvent>, List<Handler<? extends JibEvent>>> getHandlers() {
-    return Collections.unmodifiableMap(handlers);
+  ImmutableMultimap<Class<? extends JibEvent>, Handler<? extends JibEvent>> getHandlers() {
+    return ImmutableMultimap.copyOf(handlers);
   }
 }

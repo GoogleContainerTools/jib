@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.event;
 
+import com.google.common.base.Preconditions;
 import java.util.function.Consumer;
 
 /** Handles an emitted {@link JibEvent}. */
@@ -33,14 +34,9 @@ class Handler<E extends JibEvent> {
    * Handles a {@link JibEvent}.
    *
    * @param jibEvent the event to handle
-   * @return {@code true} if this {@link Handler} handled the event; {@code false} if this {@link
-   *     Handler} does not handle the event
    */
-  boolean handle(JibEvent jibEvent) {
-    if (eventClass.isInstance(jibEvent)) {
-      eventConsumer.accept(eventClass.cast(jibEvent));
-      return true;
-    }
-    return false;
+  void handle(JibEvent jibEvent) {
+    Preconditions.checkArgument(eventClass.isInstance(jibEvent));
+    eventConsumer.accept(eventClass.cast(jibEvent));
   }
 }
