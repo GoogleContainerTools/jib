@@ -29,7 +29,8 @@ public class RegistryAuthenticationFailedExceptionTest {
     Assert.assertEquals("serverUrl", exception.getServerUrl());
     Assert.assertEquals("imageName", exception.getImageName());
     Assert.assertEquals(
-        "Failed to authenticate with the registry because: message", exception.getMessage());
+        "Failed to authenticate with registry serverUrl/imageName because: message",
+        exception.getMessage());
   }
 
   @Test
@@ -41,6 +42,7 @@ public class RegistryAuthenticationFailedExceptionTest {
     Assert.assertEquals("imageName", exception.getImageName());
     Assert.assertSame(cause, exception.getCause());
     Assert.assertEquals(
-        "Failed to authenticate with the registry because: message", exception.getMessage());
+        "Failed to authenticate with registry serverUrl/imageName because: message",
+        exception.getMessage());
   }
 }
