@@ -17,8 +17,6 @@
 package com.google.cloud.tools.jib.ncache;
 
 import com.google.cloud.tools.jib.image.DescriptorDigest;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 /** Resolves the files used in the default cache storage engine. */
@@ -43,7 +41,18 @@ class DefaultCacheStorageFiles {
    * @return the layer contents file
    */
   Path getLayerFile(DescriptorDigest layerDigest, DescriptorDigest layerDiffId) {
-    return getLayerDirectory(layerDigest).resolve(layerDiffId.getHash() + LAYER_FILENAME_SUFFIX);
+    return getLayerDirectory(layerDigest).resolve(getLayerFilename(layerDiffId));
+  }
+
+  /**
+   * Gets the filename for the layer file. The filename is in the form {@code <layer diff
+   * ID>.layer}.
+   *
+   * @param layerDiffId the layer's diff ID
+   * @return the layer filename
+   */
+  String getLayerFilename(DescriptorDigest layerDiffId) {
+    return layerDiffId.getHash() + LAYER_FILENAME_SUFFIX;
   }
 
   /**
@@ -57,6 +66,15 @@ class DefaultCacheStorageFiles {
   }
 
   /**
+   * Gets the filename for the metadata file.
+   *
+   * @return the filename for the metadata file
+   */
+  String getMetadataFilename() {
+    return METADATA_FILENAME;
+  }
+
+  /**
    * Resolves a selector file.
    *
    * @param selector the selector digest
@@ -67,18 +85,21 @@ class DefaultCacheStorageFiles {
   }
 
   /**
-   * Creates a temporary file that is deleted on exit.
+   * Resolves the layers directory.
    *
-   * @return the file
-   * @throws IOException if an I/O exception occurs
+   * @return the directory with all the layer directories
    */
-  Path createTemporaryFile() throws IOException {
-    Path temporaryFile = Files.createTempFile(cacheDirectory, null, null);
-    temporaryFile.toFile().deleteOnExit();
-    return temporaryFile;
+  Path getLayersDirectory() {
+    return cacheDirectory.resolve(LAYERS_DIRECTORY);
   }
 
-  private Path getLayerDirectory(DescriptorDigest layerDigest) {
-    return cacheDirectory.resolve(LAYERS_DIRECTORY).resolve(layerDigest.getHash());
+  /**
+   * Gets the directory for the layer with digest {@code layerDigest}.
+   *
+   * @param layerDigest the digest of the layer
+   * @return the directory for that {@code layerDigest}
+   */
+  Path getLayerDirectory(DescriptorDigest layerDigest) {
+    return getLayersDirectory().resolve(layerDigest.getHash());
   }
 }
