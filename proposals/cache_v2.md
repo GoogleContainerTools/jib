@@ -149,3 +149,29 @@ This technique can be applied recursively within each bin as well (with a sentin
 By choosing a constant number of bins, the traversal at each directory is constant time. The total depth of the sharding is logarithmic to the number of files. *The overall traversal time is logarithmic.*
 
 In practice, an effective number of bins may be 256, named by the hex codes `00` through `ff`.
+
+### Locking
+
+All file writes will obtain an exclusive lock on the file and all file reads will obtain a shared lock on the file. However, obtaining locks on the same file during concurrent executions of Jib within the same JVM would result in an `OverlappingFileLockException`. Therefore, the cache cannot rely on `FileLock`s for concurrent I/O control on files.
+
+#### Save a cache entry
+
+Saving a cache entry requires saving the layer blob and metadata to a layer directory under `layers/` and the selector file to the `selectors/` directory. 
+
+The layer directory should be written atomically to avoid reads that may read an incomplete layer directory.
+
+The selector file can be written atomically anytime after the layer directory is fully written.
+
+All atomic writes should be done by first writing to a temporary location and then moving to the desired location.
+
+#### List the entries in the cache
+
+Listing the entries in the cache just requires obtaining a list of all the layer directories under `layers/`. Since the layer directory may write to a temporary directory within the `layers/` directory, the listing would just need to filter out those temporary directories.
+
+#### Retrieve a cache entry by layer digest
+
+Since layer directories are only moved to their intended location after finishing the atomic write, retrieving by layer digest (via finding the file at the intended location) would always retrieve a completely finished and valid layer directory.
+
+#### Retrieve a layer digest by a selector
+
+Since selectors are only written after the layer directory it selects is completely written, retrieving by selector would always retrieve a completely finished and valid layer directory.
