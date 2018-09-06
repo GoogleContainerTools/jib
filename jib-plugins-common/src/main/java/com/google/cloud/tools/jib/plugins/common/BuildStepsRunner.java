@@ -199,10 +199,12 @@ public class BuildStepsRunner {
 
       } else if (exceptionDuringBuildSteps instanceof RegistryAuthenticationFailedException
           && exceptionDuringBuildSteps.getCause() instanceof HttpResponseException) {
+        RegistryAuthenticationFailedException failureException =
+            (RegistryAuthenticationFailedException) exceptionDuringBuildSteps;
         handleRegistryUnauthorizedException(
             new RegistryUnauthorizedException(
-                buildConfiguration.getTargetImageConfiguration().getImageRegistry(),
-                buildConfiguration.getTargetImageConfiguration().getImageRepository(),
+                failureException.getServerUrl(),
+                failureException.getImageName(),
                 (HttpResponseException) exceptionDuringBuildSteps.getCause()),
             helpfulSuggestions);
 
