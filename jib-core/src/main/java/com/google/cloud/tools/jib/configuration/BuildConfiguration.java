@@ -304,7 +304,7 @@ public class BuildConfiguration {
   }
 
   /**
-   * Creates a new {@link RegistryClient.Factory} for the target image with fields from the build
+   * Creates a new {@link RegistryClient.Factory} for the base image with fields from the build
    * configuration.
    *
    * @return a new {@link RegistryClient.Factory}
