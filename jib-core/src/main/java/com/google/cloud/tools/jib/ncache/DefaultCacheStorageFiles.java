@@ -63,7 +63,7 @@ class DefaultCacheStorageFiles {
    * @return the selector file
    */
   Path getSelectorFile(DescriptorDigest selector) {
-    return getSelectorDirectory(selector);
+    return cacheDirectory.resolve(SELECTORS_DIRECTORY).resolve(selector.getHash());
   }
 
   /**
@@ -80,9 +80,5 @@ class DefaultCacheStorageFiles {
 
   private Path getLayerDirectory(DescriptorDigest layerDigest) {
     return cacheDirectory.resolve(LAYERS_DIRECTORY).resolve(layerDigest.getHash());
-  }
-
-  private Path getSelectorDirectory(DescriptorDigest selector) {
-    return cacheDirectory.resolve(SELECTORS_DIRECTORY).resolve(selector.getHash());
   }
 }

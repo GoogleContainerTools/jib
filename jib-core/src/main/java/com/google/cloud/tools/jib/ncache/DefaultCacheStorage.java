@@ -38,7 +38,7 @@ import java.util.Optional;
  *   ...
  * }</pre>
  *
- * Layers entires are stored in their own directories under the {@code layers/} directory. Each
+ * Layers entries are stored in their own directories under the {@code layers/} directory. Each
  * layer directory is named by the layer digest. Inside each layer directory, the layer contents is
  * the {@code .layer} file prefixed with the layer diff ID, and the metadata is the {@code metadata}
  * file.
