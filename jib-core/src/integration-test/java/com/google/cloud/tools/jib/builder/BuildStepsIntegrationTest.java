@@ -222,7 +222,7 @@ public class BuildStepsIntegrationTest {
         .setContainerConfiguration(containerConfiguration)
         .setAllowInsecureRegistries(true)
         .setLayerConfigurations(fakeLayerConfigurations)
-        .setCreatedBy("jib-integration-test")
+        .setToolName("jib-integration-test")
         .build();
   }
 }

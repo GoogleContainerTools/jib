@@ -51,10 +51,10 @@ public class RegistryClientTest {
             .getUserAgent()
             .startsWith("jib"));
 
-    RegistryClient.setUserAgentSuffix(null);
     Assert.assertTrue(
         testRegistryClientFactory
             .setAuthorization(mockAuthorization)
+            .setUserAgentSuffix(null)
             .newRegistryClient()
             .getUserAgent()
             .startsWith("jib"));
@@ -62,20 +62,14 @@ public class RegistryClientTest {
 
   @Test
   public void testGetUserAgent() {
-    RegistryClient.setUserAgentSuffix("some user agent suffix");
+    RegistryClient registryClient =
+        testRegistryClientFactory
+            .setAllowInsecureRegistries(true)
+            .setUserAgentSuffix("some user agent suffix")
+            .newRegistryClient();
 
-    Assert.assertTrue(
-        testRegistryClientFactory
-            .setAllowInsecureRegistries(true)
-            .newRegistryClient()
-            .getUserAgent()
-            .startsWith("jib "));
-    Assert.assertTrue(
-        testRegistryClientFactory
-            .setAllowInsecureRegistries(true)
-            .newRegistryClient()
-            .getUserAgent()
-            .endsWith(" some user agent suffix"));
+    Assert.assertTrue(registryClient.getUserAgent().startsWith("jib "));
+    Assert.assertTrue(registryClient.getUserAgent().endsWith(" some user agent suffix"));
   }
 
   @Test

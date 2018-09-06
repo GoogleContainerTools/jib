@@ -96,7 +96,7 @@ public class BuildConfigurationTest {
             .setTargetFormat(OCIManifestTemplate.class)
             .setAllowInsecureRegistries(true)
             .setLayerConfigurations(expectedLayerConfigurations)
-            .setCreatedBy(expectedCreatedBy);
+            .setToolName(expectedCreatedBy);
     BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
 
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
@@ -143,7 +143,7 @@ public class BuildConfigurationTest {
     Assert.assertEquals(expectedLayerConfigurations, buildConfiguration.getLayerConfigurations());
     Assert.assertEquals(
         expectedEntrypoint, buildConfiguration.getContainerConfiguration().getEntrypoint());
-    Assert.assertEquals(expectedCreatedBy, buildConfiguration.getCreatedBy());
+    Assert.assertEquals(expectedCreatedBy, buildConfiguration.getToolName());
   }
 
   @Test
@@ -179,7 +179,7 @@ public class BuildConfigurationTest {
     Assert.assertEquals(buildConfiguration.getTargetFormat(), V22ManifestTemplate.class);
     Assert.assertFalse(buildConfiguration.getAllowInsecureRegistries());
     Assert.assertEquals(Collections.emptyList(), buildConfiguration.getLayerConfigurations());
-    Assert.assertEquals("jib", buildConfiguration.getCreatedBy());
+    Assert.assertEquals("jib", buildConfiguration.getToolName());
   }
 
   @Test
