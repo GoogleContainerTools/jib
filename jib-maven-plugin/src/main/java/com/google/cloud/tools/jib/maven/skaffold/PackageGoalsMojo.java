@@ -16,9 +16,9 @@
 
 package com.google.cloud.tools.jib.maven.skaffold;
 
+import com.google.cloud.tools.jib.maven.MavenProjectProperties;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.lifecycle.LifecycleExecutor;
@@ -66,17 +66,15 @@ public class PackageGoalsMojo extends AbstractMojo {
       throw new MojoExecutionException("failed to calculate execution plan", ex);
     }
 
-    assert mavenExecutionPlan != null;
-
-    System.out.println(
-        mavenExecutionPlan
-            .getMojoExecutions()
-            .stream()
-            .filter(mojoExecution -> mojoExecution.getLifecyclePhase().equals("package"))
-            .filter(
-                mojoExecution ->
-                    mojoExecution.getPlugin().getArtifactId().equals("jib-maven-plugin"))
-            .map(MojoExecution::getGoal)
-            .collect(Collectors.joining(",")));
+    mavenExecutionPlan
+        .getMojoExecutions()
+        .stream()
+        .filter(mojoExecution -> "package".equals(mojoExecution.getLifecyclePhase()))
+        .filter(
+            mojoExecution ->
+                MavenProjectProperties.PLUGIN_NAME.equals(
+                    mojoExecution.getPlugin().getArtifactId()))
+        .map(MojoExecution::getGoal)
+        .forEach(System.out::println);
   }
 }

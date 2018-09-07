@@ -37,7 +37,8 @@ import org.apache.maven.project.MavenProject;
  * project level snapshots (sub-modules) unless the user has explicitly installed them (by only
  * requiring dependencyCollection). For use only within skaffold.
  *
- * <p>Expected use: "./mvnw jib:_skaffold-files" or "./mvnw jib:_skaffold-files -pl module -am"
+ * <p>Expected use: "./mvnw jib:_skaffold-files -q" or "./mvnw jib:_skaffold-files -pl module -am
+ * -q"
  */
 @Mojo(
     name = FilesMojo.GOAL_NAME,
