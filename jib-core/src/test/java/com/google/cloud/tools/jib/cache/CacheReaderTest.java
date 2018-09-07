@@ -30,6 +30,7 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.security.DigestException;
 import java.util.Comparator;
+import java.util.Optional;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -60,6 +61,8 @@ public class CacheReaderTest {
 
     // Copies the test resource cache to the temporary test cache folder.
     Path resourceCache = Paths.get(Resources.getResource("cache").toURI());
+    // TODO: Uncomment
+    // FileOperations.copy(ImmutableList.of(resourceCache), testCacheFolder);
     copyDirectory(resourceCache, testCacheFolder);
   }
 
@@ -97,8 +100,8 @@ public class CacheReaderTest {
           cacheReader.getLayerFile(
               ImmutableList.of(
                   new LayerEntry(
-                      ImmutableList.of(Paths.get("some", "source", "directory")),
-                      "some/extraction/path"))));
+                      Paths.get("some", "source", "directory"),
+                      Paths.get("some/extraction/path")))));
       Assert.assertNull(cacheReader.getLayerFile(ImmutableList.of()));
     }
   }
@@ -114,12 +117,15 @@ public class CacheReaderTest {
     // Copies test files to a modifiable temporary folder.
     Path resourceSourceFiles = Paths.get(Resources.getResource("layer").toURI());
     Path testSourceFiles = temporaryFolder.newFolder().toPath();
+    ImmutableList<Path> testSourceFilesContents = new DirectoryWalker(testSourceFiles).walk();
+    ImmutableList<Path> resourceSourceFilesContents =
+        new DirectoryWalker(resourceSourceFiles).walk();
     copyDirectory(resourceSourceFiles, testSourceFiles);
 
     // Walk the files in reverse order so that the subfiles are changed before the parent
     // directories are.
-    ImmutableList<Path> paths = new DirectoryWalker(testSourceFiles).walk();
-    paths = ImmutableList.sortedCopyOf(Comparator.reverseOrder(), paths);
+    ImmutableList<Path> paths =
+        ImmutableList.sortedCopyOf(Comparator.reverseOrder(), testSourceFilesContents);
     for (Path path : paths) {
       Files.setLastModifiedTime(path, olderLastModifiedTime);
     }
@@ -136,21 +142,38 @@ public class CacheReaderTest {
       Assert.assertNotNull(classesCachedLayer.getMetadata());
       classesCachedLayer
           .getMetadata()
-          .setEntry(ImmutableList.of(testSourceFiles.toString()), "/some/extraction/path");
+          .setEntries(
+              testSourceFilesContents
+                  .stream()
+                  .map(
+                      testSourceFile ->
+                          new LayerMetadata.LayerMetadataEntry(
+                              testSourceFile.toString(),
+                              Paths.get("/some/extraction/path")
+                                  .resolve(testSourceFiles.relativize(testSourceFile))
+                                  .toString()))
+                  .collect(ImmutableList.toImmutableList()));
     }
 
     try (Cache cache = Cache.init(testCacheFolder)) {
       CacheReader cacheReader = new CacheReader(cache);
 
       ImmutableList<LayerEntry> upToDateLayerEntries =
-          ImmutableList.of(
-              new LayerEntry(ImmutableList.of(testSourceFiles), "/some/extraction/path"));
+          testSourceFilesContents
+              .stream()
+              .map(
+                  testSourceFile ->
+                      new LayerEntry(
+                          testSourceFile,
+                          Paths.get("/some/extraction/path")
+                              .resolve(testSourceFiles.relativize(testSourceFile))))
+              .collect(ImmutableList.toImmutableList());
 
-      CachedLayerWithMetadata upToDateLayer =
+      Optional<CachedLayerWithMetadata> optionalUpToDateLayer =
           cacheReader.getUpToDateLayerByLayerEntries(upToDateLayerEntries);
-      Assert.assertNotNull(upToDateLayer);
       Assert.assertEquals(
-          classesCachedLayer.getBlobDescriptor(), upToDateLayer.getBlobDescriptor());
+          classesCachedLayer.getBlobDescriptor(),
+          optionalUpToDateLayer.orElseThrow(AssertionError::new).getBlobDescriptor());
 
       // Changes a file and checks that the change is detected.
       Files.setLastModifiedTime(
@@ -158,14 +181,28 @@ public class CacheReaderTest {
       Assert.assertNull(cacheReader.getUpToDateLayerByLayerEntries(upToDateLayerEntries));
       Assert.assertNull(
           cacheReader.getUpToDateLayerByLayerEntries(
-              ImmutableList.of(
-                  new LayerEntry(ImmutableList.of(testSourceFiles), "extractionPath"))));
+              testSourceFilesContents
+                  .stream()
+                  .map(
+                      testSourceFile ->
+                          new LayerEntry(
+                              testSourceFile,
+                              Paths.get("extractionPath")
+                                  .resolve(testSourceFiles.relativize(testSourceFile))))
+                  .collect(ImmutableList.toImmutableList())));
 
       // Any non-cached directory should be deemed modified.
       Assert.assertNull(
           cacheReader.getUpToDateLayerByLayerEntries(
-              ImmutableList.of(
-                  new LayerEntry(ImmutableList.of(resourceSourceFiles), "/some/extraction/path"))));
+              resourceSourceFilesContents
+                  .stream()
+                  .map(
+                      resourceSourceFile ->
+                          new LayerEntry(
+                              resourceSourceFile,
+                              Paths.get("/some/extraction/path")
+                                  .resolve(resourceSourceFiles.relativize(resourceSourceFile))))
+                  .collect(ImmutableList.toImmutableList())));
     }
   }
 }

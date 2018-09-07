@@ -19,9 +19,7 @@ package com.google.cloud.tools.jib.cache;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
-import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
-import java.util.List;
 
 /**
  * Metadata about an application layer stored in the cache. This is part of the {@link
@@ -32,19 +30,20 @@ class LayerMetadata {
   /** Entry into the layer metadata. */
   static class LayerMetadataEntry {
 
-    private ImmutableList<String> sourceFilesStrings;
+    private String sourceFilesString;
     private String extractionPath;
 
-    ImmutableList<String> getSourceFilesStrings() {
-      return sourceFilesStrings;
+    String getSourceFilesString() {
+      return sourceFilesString;
     }
 
     String getExtractionPath() {
       return extractionPath;
     }
 
-    private LayerMetadataEntry(ImmutableList<String> sourceFilesStrings, String extractionPath) {
-      this.sourceFilesStrings = sourceFilesStrings;
+    @VisibleForTesting
+    LayerMetadataEntry(String sourceFilesString, String extractionPath) {
+      this.sourceFilesString = sourceFilesString;
       this.extractionPath = extractionPath;
     }
   }
@@ -54,14 +53,9 @@ class LayerMetadata {
         ImmutableList.builderWithExpectedSize(layerEntries.size());
 
     for (LayerEntry layerEntry : layerEntries) {
-      List<Path> sourceFiles = layerEntry.getSourceFiles();
-      ImmutableList.Builder<String> sourceFilesStrings =
-          ImmutableList.builderWithExpectedSize(sourceFiles.size());
-      for (Path sourceFile : sourceFiles) {
-        sourceFilesStrings.add(sourceFile.toString());
-      }
       entries.add(
-          new LayerMetadataEntry(sourceFilesStrings.build(), layerEntry.getExtractionPath()));
+          new LayerMetadataEntry(
+              layerEntry.getSourceFileString(), layerEntry.getExtractionPathString()));
     }
 
     return new LayerMetadata(entries.build(), lastModifiedTime);
@@ -87,7 +81,7 @@ class LayerMetadata {
   }
 
   @VisibleForTesting
-  void setEntry(ImmutableList<String> sourceFilesStrings, String extractionPath) {
-    entries = ImmutableList.of(new LayerMetadataEntry(sourceFilesStrings, extractionPath));
+  void setEntries(ImmutableList<LayerMetadataEntry> layerMetadataEntries) {
+    entries = layerMetadataEntries;
   }
 }

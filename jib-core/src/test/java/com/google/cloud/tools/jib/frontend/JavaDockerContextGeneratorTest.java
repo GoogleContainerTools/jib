@@ -46,9 +46,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class JavaDockerContextGeneratorTest {
 
-  private static final String EXPECTED_DEPENDENCIES_PATH = "/app/libs/";
-  private static final String EXPECTED_RESOURCES_PATH = "/app/resources/";
-  private static final String EXPECTED_CLASSES_PATH = "/app/classes/";
+  private static final Path EXPECTED_DEPENDENCIES_PATH = Paths.get("/app/libs/");
+  private static final Path EXPECTED_RESOURCES_PATH = Paths.get("/app/resources/");
+  private static final Path EXPECTED_CLASSES_PATH = Paths.get("/app/classes/");
 
   private static void assertSameFiles(Path directory1, Path directory2) throws IOException {
     Deque<Path> directory1Paths = new ArrayDeque<>(new DirectoryWalker(directory1).walk());
@@ -98,15 +98,35 @@ public class JavaDockerContextGeneratorTest {
     Files.delete(targetDirectory);
 
     Mockito.when(mockJavaLayerConfigurations.getDependenciesLayerEntry())
-        .thenReturn(new LayerEntry(expectedDependenciesFiles, EXPECTED_DEPENDENCIES_PATH));
+        .thenReturn(
+            expectedDependenciesFiles
+                .stream()
+                .map(sourceFile -> new LayerEntry(sourceFile, EXPECTED_DEPENDENCIES_PATH))
+                .collect(ImmutableList.toImmutableList()));
     Mockito.when(mockJavaLayerConfigurations.getSnapshotDependenciesLayerEntry())
-        .thenReturn(new LayerEntry(expectedSnapshotDependenciesFiles, EXPECTED_DEPENDENCIES_PATH));
+        .thenReturn(
+            expectedSnapshotDependenciesFiles
+                .stream()
+                .map(sourceFile -> new LayerEntry(sourceFile, EXPECTED_DEPENDENCIES_PATH))
+                .collect(ImmutableList.toImmutableList()));
     Mockito.when(mockJavaLayerConfigurations.getResourcesLayerEntry())
-        .thenReturn(new LayerEntry(expectedResourcesFiles, EXPECTED_RESOURCES_PATH));
+        .thenReturn(
+            expectedResourcesFiles
+                .stream()
+                .map(sourceFile -> new LayerEntry(sourceFile, EXPECTED_DEPENDENCIES_PATH))
+                .collect(ImmutableList.toImmutableList()));
     Mockito.when(mockJavaLayerConfigurations.getClassesLayerEntry())
-        .thenReturn(new LayerEntry(expectedClassesFiles, EXPECTED_CLASSES_PATH));
+        .thenReturn(
+            expectedClassesFiles
+                .stream()
+                .map(sourceFile -> new LayerEntry(sourceFile, EXPECTED_DEPENDENCIES_PATH))
+                .collect(ImmutableList.toImmutableList()));
     Mockito.when(mockJavaLayerConfigurations.getExtraFilesLayerEntry())
-        .thenReturn(new LayerEntry(expectedExtraFiles, "/"));
+        .thenReturn(
+            expectedExtraFiles
+                .stream()
+                .map(sourceFile -> new LayerEntry(sourceFile, EXPECTED_DEPENDENCIES_PATH))
+                .collect(ImmutableList.toImmutableList()));
     new JavaDockerContextGenerator(mockJavaLayerConfigurations)
         .setBaseImage("somebaseimage")
         .generate(targetDirectory);
@@ -138,17 +158,17 @@ public class JavaDockerContextGeneratorTest {
 
     Mockito.when(mockJavaLayerConfigurations.getDependenciesLayerEntry())
         .thenReturn(
-            new LayerEntry(ImmutableList.of(Paths.get("ignored")), EXPECTED_DEPENDENCIES_PATH));
+            ImmutableList.of(new LayerEntry(Paths.get("ignored"), EXPECTED_DEPENDENCIES_PATH)));
     Mockito.when(mockJavaLayerConfigurations.getSnapshotDependenciesLayerEntry())
         .thenReturn(
-            new LayerEntry(ImmutableList.of(Paths.get("ignored")), EXPECTED_DEPENDENCIES_PATH));
+            ImmutableList.of(new LayerEntry(Paths.get("ignored"), EXPECTED_DEPENDENCIES_PATH)));
     Mockito.when(mockJavaLayerConfigurations.getResourcesLayerEntry())
         .thenReturn(
-            new LayerEntry(ImmutableList.of(Paths.get("ignored")), EXPECTED_RESOURCES_PATH));
+            ImmutableList.of(new LayerEntry(Paths.get("ignored"), EXPECTED_RESOURCES_PATH)));
     Mockito.when(mockJavaLayerConfigurations.getClassesLayerEntry())
-        .thenReturn(new LayerEntry(ImmutableList.of(Paths.get("ignored")), EXPECTED_CLASSES_PATH));
+        .thenReturn(ImmutableList.of(new LayerEntry(Paths.get("ignored"), EXPECTED_CLASSES_PATH)));
     Mockito.when(mockJavaLayerConfigurations.getExtraFilesLayerEntry())
-        .thenReturn(new LayerEntry(ImmutableList.of(Paths.get("ignored")), "/"));
+        .thenReturn(ImmutableList.of(new LayerEntry(Paths.get("ignored"), Paths.get("/"))));
     String dockerfile =
         new JavaDockerContextGenerator(mockJavaLayerConfigurations)
             .setBaseImage(expectedBaseImage)

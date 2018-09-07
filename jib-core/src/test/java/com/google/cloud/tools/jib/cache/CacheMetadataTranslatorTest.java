@@ -31,7 +31,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.security.DigestException;
-import java.util.Collections;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
@@ -44,9 +43,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class CacheMetadataTranslatorTest {
 
-  private static final List<String> CLASSES_LAYER_SOURCE_FILES =
-      Collections.singletonList(Paths.get("some", "source", "path").toString());
-  private static final String CLASSES_LAYER_EXTRACTION_PATH = "some/extraction/path";
+  private static final Path CLASSES_LAYER_SOURCE_FILE = Paths.get("some", "source", "path");
+  private static final Path CLASSES_LAYER_EXTRACTION_PATH = Paths.get("some/extraction/path");
   private static final FileTime CLASSES_LAYER_LAST_MODIFIED_TIME =
       FileTime.fromMillis(255073580723571L);
 
@@ -110,10 +108,10 @@ public class CacheMetadataTranslatorTest {
     Assert.assertEquals(classesLayerDiffId, classesLayer.getDiffId());
     Assert.assertNotNull(classesLayer.getMetadata());
     Assert.assertEquals(
-        CLASSES_LAYER_SOURCE_FILES,
-        classesLayer.getMetadata().getEntries().get(0).getSourceFilesStrings());
+        CLASSES_LAYER_SOURCE_FILE.toAbsolutePath().toString(),
+        classesLayer.getMetadata().getEntries().get(0).getSourceFilesString());
     Assert.assertEquals(
-        CLASSES_LAYER_EXTRACTION_PATH,
+        CLASSES_LAYER_EXTRACTION_PATH.toString(),
         classesLayer.getMetadata().getEntries().get(0).getExtractionPath());
     Assert.assertEquals(
         CLASSES_LAYER_LAST_MODIFIED_TIME, classesLayer.getMetadata().getLastModifiedTime());
@@ -133,12 +131,7 @@ public class CacheMetadataTranslatorTest {
     LayerMetadata classesLayerMetadata =
         LayerMetadata.from(
             ImmutableList.of(
-                new LayerEntry(
-                    CLASSES_LAYER_SOURCE_FILES
-                        .stream()
-                        .map(Paths::get)
-                        .collect(ImmutableList.toImmutableList()),
-                    CLASSES_LAYER_EXTRACTION_PATH)),
+                new LayerEntry(CLASSES_LAYER_SOURCE_FILE, CLASSES_LAYER_EXTRACTION_PATH)),
             CLASSES_LAYER_LAST_MODIFIED_TIME);
     CachedLayerWithMetadata classesLayer =
         new CachedLayerWithMetadata(classesCachedLayer, classesLayerMetadata);

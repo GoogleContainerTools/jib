@@ -94,8 +94,7 @@ public class CacheWriterTest {
     Mockito.when(mockReproducibleLayerBuilder.getLayerEntries())
         .thenReturn(
             ImmutableList.of(
-                new LayerEntry(
-                    ImmutableList.of(Paths.get("some/source/file")), "/some/extraction/path")));
+                new LayerEntry(Paths.get("some/source/file"), Paths.get("/some/extraction/path"))));
 
     CachedLayerWithMetadata cachedLayerWithMetadata =
         cacheWriter.writeLayer(mockReproducibleLayerBuilder);
@@ -107,7 +106,7 @@ public class CacheWriterTest {
     Assert.assertEquals(1, layerMetadata.getEntries().size());
     Assert.assertEquals(
         Collections.singletonList(Paths.get("some/source/file").toString()),
-        layerMetadata.getEntries().get(0).getSourceFilesStrings());
+        layerMetadata.getEntries().get(0).getSourceFilesString());
     Assert.assertEquals(
         "/some/extraction/path", layerMetadata.getEntries().get(0).getExtractionPath());
 
@@ -124,7 +123,7 @@ public class CacheWriterTest {
     ReproducibleLayerBuilder layerBuilder = Mockito.mock(ReproducibleLayerBuilder.class);
     Mockito.when(layerBuilder.build()).thenReturn(unwrittenLayer);
     LayerEntry layerEntry =
-        new LayerEntry(ImmutableList.of(Paths.get("some/source/file")), "/some/extraction/path");
+        new LayerEntry(Paths.get("some/source/file"), Paths.get("/some/extraction/path"));
     Mockito.when(layerBuilder.getLayerEntries()).thenReturn(ImmutableList.of(layerEntry));
 
     cacheWriter.writeLayer(layerBuilder);
@@ -145,7 +144,12 @@ public class CacheWriterTest {
 
   private long getTarGzModifiedTimeInCache() throws IOException {
     try (Stream<Path> stream = Files.walk(temporaryCacheDirectory.getRoot().toPath())) {
-      return stream.filter(CacheWriterTest::isTarGz).findFirst().get().toFile().lastModified();
+      return stream
+          .filter(CacheWriterTest::isTarGz)
+          .findFirst()
+          .orElseThrow(AssertionError::new)
+          .toFile()
+          .lastModified();
     }
   }
 

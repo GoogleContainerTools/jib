@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.image;
 
-import com.google.common.collect.ImmutableList;
 import java.nio.file.Path;
 
 /**
@@ -25,28 +24,58 @@ import java.nio.file.Path;
  */
 public class LayerEntry {
 
+  private final Path sourceFile;
+  private final Path extractionPath;
+
   /**
-   * The source files to build from. Source files that are directories will have all subfiles in the
-   * directory added (but not the directory itself).
+   * Instantiates with a source file and the path to place the source file in the container file
+   * system.
    *
-   * <p>The source files are specified as a list instead of a set to define the order in which they
-   * are added.
+   * @param sourceFile the source file to add to the layer
+   * @param extractionPath the path to place the source file in the container file system (relative
+   *     to root {@code /})
    */
-  private final ImmutableList<Path> sourceFiles;
-
-  /** The Unix-style path to add the source files to in the container image filesystem. */
-  private final String extractionPath;
-
-  public LayerEntry(ImmutableList<Path> sourceFiles, String extractionPath) {
-    this.sourceFiles = sourceFiles;
+  public LayerEntry(Path sourceFile, Path extractionPath) {
+    this.sourceFile = sourceFile;
     this.extractionPath = extractionPath;
   }
 
-  public ImmutableList<Path> getSourceFiles() {
-    return sourceFiles;
+  /**
+   * Gets the source file. Do <b>not</b> call {@link Path#toString} on this - use {@link
+   * #getSourceFileString} instead.
+   *
+   * @return the source file
+   */
+  public Path getSourceFile() {
+    return sourceFile;
   }
 
-  public String getExtractionPath() {
+  /**
+   * Gets the extraction path. Do <b>not</b> call {@link Path#toString} on this - use {@link
+   * #getExtractionPathString} instead.
+   *
+   * @return the extraction path
+   */
+  public Path getExtractionPath() {
     return extractionPath;
+  }
+
+  /**
+   * Gets the source file absolute path in string form.
+   *
+   * @return the source file absolute path
+   */
+  public String getSourceFileString() {
+    return sourceFile.toAbsolutePath().toString();
+  }
+
+  /**
+   * Gets the extraction path in string form. This does <b>not</b> convert the extraction path to an
+   * absolute path.
+   *
+   * @return the extraction path
+   */
+  public String getExtractionPathString() {
+    return extractionPath.toString();
   }
 }

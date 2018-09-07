@@ -55,12 +55,21 @@ public class BuildStepsIntegrationTest {
 
   @ClassRule public static final LocalRegistry localRegistry = new LocalRegistry(5000);
 
-  /** Lists the files in the {@code resourcePath} resources directory. */
-  private static ImmutableList<Path> getResourceFilesList(String resourcePath)
-      throws URISyntaxException, IOException {
+  /**
+   * Lists the files in the {@code resourcePath} resources directory and builds a {@link
+   * LayerConfiguration} from those files.
+   */
+  private static LayerConfiguration makeLayerConfiguration(
+      String resourcePath, Path pathInContainer) throws URISyntaxException, IOException {
     try (Stream<Path> fileStream =
         Files.list(Paths.get(Resources.getResource(resourcePath).toURI()))) {
-      return fileStream.collect(ImmutableList.toImmutableList());
+      ImmutableList<Path> sourceFiles = fileStream.collect(ImmutableList.toImmutableList());
+
+      LayerConfiguration.Builder layerConfigurationBuilder = LayerConfiguration.builder();
+      for (Path sourceFile : sourceFiles) {
+        layerConfigurationBuilder.addEntry(sourceFile, pathInContainer);
+      }
+      return layerConfigurationBuilder.build();
     }
   }
 
@@ -102,15 +111,9 @@ public class BuildStepsIntegrationTest {
   public void setUp() throws IOException, URISyntaxException {
     fakeLayerConfigurations =
         ImmutableList.of(
-            LayerConfiguration.builder()
-                .addEntry(getResourceFilesList("application/dependencies"), "/app/libs/")
-                .build(),
-            LayerConfiguration.builder()
-                .addEntry(getResourceFilesList("application/resources"), "/app/resources/")
-                .build(),
-            LayerConfiguration.builder()
-                .addEntry(getResourceFilesList("application/classes"), "/app/classes/")
-                .build());
+            makeLayerConfiguration("application/dependencies", Paths.get("/app/libs/")),
+            makeLayerConfiguration("application/resources", Paths.get("/app/resources/")),
+            makeLayerConfiguration("application/classes", Paths.get("/app/classes/")));
   }
 
   @Test

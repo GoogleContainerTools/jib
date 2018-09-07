@@ -104,10 +104,10 @@ class MavenLayerConfigurations {
     Collections.sort(extraFiles);
 
     return JavaLayerConfigurations.builder()
-        .setDependenciesFiles(dependenciesFiles)
-        .setSnapshotDependenciesFiles(snapshotDependenciesFiles)
-        .setResourcesFiles(resourcesFiles)
-        .setClassesFiles(classesFiles)
+        .setDependencyFiles(dependenciesFiles)
+        .setSnapshotDependencyFiles(snapshotDependenciesFiles)
+        .setResourceFiles(resourcesFiles)
+        .setClassFiles(classesFiles)
         .setExtraFiles(extraFiles)
         .build();
   }

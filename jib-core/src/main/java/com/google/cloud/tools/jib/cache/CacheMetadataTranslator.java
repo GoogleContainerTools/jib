@@ -58,19 +58,15 @@ public class CacheMetadataTranslator {
             ImmutableList.builderWithExpectedSize(
                 propertiesObjectTemplate.getLayerEntries().size());
         for (LayerEntryTemplate layerEntryTemplate : propertiesObjectTemplate.getLayerEntries()) {
-          if (layerEntryTemplate.getSourceFiles() == null
+          if (layerEntryTemplate.getSourceFile() == null
               || layerEntryTemplate.getExtractionPath() == null) {
             throw new CacheMetadataCorruptedException(
                 "Cannot translate cache metadata layer entry without source files or extraction path");
           }
           layerEntries.add(
               new LayerEntry(
-                  layerEntryTemplate
-                      .getSourceFiles()
-                      .stream()
-                      .map(Paths::get)
-                      .collect(ImmutableList.toImmutableList()),
-                  layerEntryTemplate.getExtractionPath()));
+                  Paths.get(layerEntryTemplate.getSourceFile()),
+                  Paths.get(layerEntryTemplate.getExtractionPath())));
         }
 
         layerMetadata =
@@ -113,7 +109,7 @@ public class CacheMetadataTranslator {
                 .map(
                     layerMetadataEntry ->
                         new LayerEntryTemplate(
-                            layerMetadataEntry.getSourceFilesStrings(),
+                            layerMetadataEntry.getSourceFilesString(),
                             layerMetadataEntry.getExtractionPath()))
                 .collect(Collectors.toList());
 

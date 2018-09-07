@@ -22,7 +22,6 @@ import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Streams;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
@@ -81,22 +80,9 @@ class CacheMetadata {
       return pairwiseCompareAllPass(
           layerEntries,
           metadataEntries,
-          (layerEntry, metadataEntry) -> {
-            // Checks extraction path not equal.
-            if (!layerEntry.getExtractionPath().equals(metadataEntry.getExtractionPath())) {
-              return false;
-            }
-
-            // Checks for any source file not equal.
-            if (layerEntry.getSourceFiles().size()
-                != metadataEntry.getSourceFilesStrings().size()) {
-              return false;
-            }
-            return pairwiseCompareAllPass(
-                layerEntry.getSourceFiles(),
-                metadataEntry.getSourceFilesStrings(),
-                (sourceFile, sourceFileString) -> sourceFile.equals(Paths.get(sourceFileString)));
-          });
+          (layerEntry, metadataEntry) ->
+              layerEntry.getExtractionPath().toString().equals(metadataEntry.getExtractionPath())
+                  && layerEntry.getSourceFileString().equals(metadataEntry.getSourceFilesString()));
     }
 
     private static <A, B> boolean pairwiseCompareAllPass(

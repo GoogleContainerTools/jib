@@ -82,23 +82,28 @@ public class JavaDockerContextGenerator {
   }
 
   /**
-   * Adds a copy directive for the {@code layerEntry} if it's not empty.
+   * Adds a copy directive for the {@code layerEntries} if it's not empty.
    *
    * @param listBuilder the {@link ImmutableList.Builder} to add to
-   * @param layerEntry the layer entry
+   * @param layerEntries the layer entries
    * @param directoryInContext the directory in the context to put the source files for the layer
    */
   private static void addIfNotEmpty(
       ImmutableList.Builder<CopyDirective> listBuilder,
-      LayerEntry layerEntry,
+      List<LayerEntry> layerEntries,
       String directoryInContext) {
-    if (layerEntry.getSourceFiles().isEmpty()) {
+    if (layerEntries.isEmpty()) {
       return;
     }
 
     listBuilder.add(
         new CopyDirective(
-            layerEntry.getSourceFiles(), directoryInContext, layerEntry.getExtractionPath()));
+            layerEntries
+                .stream()
+                .map(LayerEntry::getSourceFile)
+                .collect(ImmutableList.toImmutableList()),
+            directoryInContext,
+            layerEntries.get(0).getExtractionPathString().toString()));
   }
 
   /**
