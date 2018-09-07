@@ -36,7 +36,7 @@ import javax.annotation.Nullable;
  *
  * <pre>{@code
  * Jib.from(baseImage)
- *    .addFiles(sourceFiles, extractionPath)
+ *    .addLayer(sourceFiles, extractionPath)
  *    .setEntrypoint("myprogram", "--flag", "subcommand")
  *    .setProgramArguments("hello", "world")
  *    .addEnvironmentVariable("HOME", "/app")
