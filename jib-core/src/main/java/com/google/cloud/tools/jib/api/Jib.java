@@ -14,8 +14,8 @@
  * the License.
  */
 
-// TODO: Move to com.google.cloud.tools.jib
 package com.google.cloud.tools.jib.api;
+// TODO: Move to com.google.cloud.tools.jib
 
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
@@ -23,11 +23,25 @@ import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 /** Build containers with Jib. */
 public class Jib {
 
+  /**
+   * Starts building the container from a base image.
+   *
+   * @param baseImageReference the base image reference
+   * @return a new {@link JibContainerBuilder} to continue building the container
+   * @throws InvalidImageReferenceException if the {@code baseImageReference} is not a valid image
+   *     reference
+   */
   public static JibContainerBuilder from(String baseImageReference)
       throws InvalidImageReferenceException {
     return from(ImageReference.parse(baseImageReference));
   }
 
+  /**
+   * Starts building the container from a base image.
+   *
+   * @param baseImageReference the base image reference
+   * @return a new {@link JibContainerBuilder} to continue building the container
+   */
   public static JibContainerBuilder from(ImageReference baseImageReference) {
     return new JibContainerBuilder(baseImageReference);
   }

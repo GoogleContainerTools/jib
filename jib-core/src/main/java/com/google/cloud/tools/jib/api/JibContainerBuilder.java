@@ -14,8 +14,8 @@
  * the License.
  */
 
-// TODO: Move to com.google.cloud.tools.jib
 package com.google.cloud.tools.jib.api;
+// TODO: Move to com.google.cloud.tools.jib
 
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.configuration.Port;
@@ -63,77 +63,192 @@ public class JibContainerBuilder {
   }
 
   /**
-   * Adds a new layer to the container
+   * Adds a new layer to the container with {@code files} as the source files and {@code
+   * pathInContainer} as the path to copy the source files to in the container file system.
    *
-   * @param files adsf
-   * @param pathInContainer adsf
-   * @return asdf
+   * <p>Source files that are directories will be recursively copied. For example, if the source
+   * files are:
+   *
+   * <ul>
+   *   <li>{@code fileA}
+   *   <li>{@code fileB}
+   *   <li>{@code directory/}
+   * </ul>
+   *
+   * and the destination to copy to is {@code /path/in/container}, then the new layer will have the
+   * following entries for the container file system:
+   *
+   * <ul>
+   *   <li>{@code /path/in/container/fileA}
+   *   <li>{@code /path/in/container/fileB}
+   *   <li>{@code /path/in/container/directory/}
+   *   <li>{@code /path/in/container/directory/...} (all contents of {@code directory/})
+   * </ul>
+   *
+   * @param files the source files to copy to a new layer in the container
+   * @param pathInContainer the destination to copy the source files to in the container file system
+   * @return this
    */
   public JibContainerBuilder addFiles(List<Path> files, String pathInContainer) {
     addLayer(LayerConfiguration.builder().addEntry(files, pathInContainer).build());
     return this;
   }
 
+  /**
+   * Sets the layers (defined by a list of {@link LayerConfiguration}s). This replaces any
+   * previously-added layers.
+   *
+   * @param layerConfigurations the list of {@link LayerConfiguration}s
+   * @return this
+   */
   public JibContainerBuilder setLayers(List<LayerConfiguration> layerConfigurations) {
     this.layerConfigurations = new ArrayList<>(layerConfigurations);
     return this;
   }
 
+  /**
+   * Adds a layer (defined by a {@link LayerConfiguration}).
+   *
+   * @param layerConfiguration the {@link LayerConfiguration}
+   * @return this
+   */
   public JibContainerBuilder addLayer(LayerConfiguration layerConfiguration) {
     layerConfigurations.add(layerConfiguration);
     return this;
   }
 
+  /**
+   * Sets the container entrypoint. This is the beginning of the command that is run when the
+   * container starts. {@link #setProgramArguments} sets additional tokens.
+   *
+   * @param entrypointTokens a list of tokens for the entrypoint command
+   * @return this
+   */
   public JibContainerBuilder setEntrypoint(List<String> entrypointTokens) {
     entrypoint = ImmutableList.copyOf(entrypointTokens);
     return this;
   }
 
+  /**
+   * Sets the container entrypoint.
+   *
+   * @param entrypointTokens tokens for the entrypoint command
+   * @return this
+   * @see #setEntrypoint(List) for more details
+   */
   public JibContainerBuilder setEntrypoint(String... entrypointTokens) {
     setEntrypoint(Arrays.asList(entrypointTokens));
     return this;
   }
 
+  /**
+   * Sets the container entrypoint program arguments. These are additional tokens added to the end
+   * of the entrypoint command.
+   *
+   * <p>For example, if the entrypoint was {@code myprogram --flag subcommand} and program arguments
+   * were {@code hello world}, then the command that run when the container starts is {@code
+   * myprogram --flag subcommand hello world}.
+   *
+   * @param programArguments a list of program argument tokens
+   * @return this
+   */
   public JibContainerBuilder setProgramArguments(List<String> programArguments) {
     this.programArguments = ImmutableList.copyOf(programArguments);
     return this;
   }
 
+  /**
+   * Sets the container entrypoint program arguments.
+   *
+   * @param programArguments program arguments tokens
+   * @return this
+   * @see #setProgramArguments(List) for more details
+   */
   public JibContainerBuilder setProgramArguments(String... programArguments) {
     setProgramArguments(Arrays.asList(programArguments));
     return this;
   }
 
+  /**
+   * Sets the container environment. These environment variables are available to the program
+   * launched by the container entrypoint command. This replaces any previously-set environment
+   * variables.
+   *
+   * @param environmentMap a map of environment variable names to values
+   * @return this
+   */
   public JibContainerBuilder setEnvironment(Map<String, String> environmentMap) {
     environment = new HashMap<>(environmentMap);
     return this;
   }
 
+  /**
+   * Sets a variable in the container environment.
+   *
+   * @param name the environment variable name
+   * @param value the environment variable value
+   * @return this
+   * @see #setEnvironment for more details
+   */
   public JibContainerBuilder setEnvironmentVariable(String name, String value) {
     environment.put(name, value);
     return this;
   }
 
+  /**
+   * Sets the ports to expose from the container. Ports exposed will allow ingress traffic. This
+   * replaces any previously-set exposed ports.
+   *
+   * @param ports the list of ports to expose
+   * @return this
+   */
   public JibContainerBuilder setExposedPorts(List<Integer> ports) {
     this.ports = ports.stream().map(Port::tcp).collect(Collectors.toCollection(ArrayList::new));
     return this;
   }
 
+  /**
+   * Sets the ports to expose from the container. This replaces any previously-set exposed ports.
+   *
+   * @param ports the ports to expose
+   * @return this
+   * @see #setExposedPorts(List) for more details
+   */
   public JibContainerBuilder setExposedPorts(int... ports) {
     setExposedPorts(Arrays.stream(ports).boxed().collect(Collectors.toCollection(ArrayList::new)));
     return this;
   }
 
+  /**
+   * Adds a port to expose from the container.
+   *
+   * @param port the port to expose
+   * @return this
+   * @see #setExposedPorts(List) for more details
+   */
   public JibContainerBuilder addExposedPort(int port) {
     ports.add(Port.tcp(port));
     return this;
   }
 
+  /**
+   * Sets the labels for the container. This replaces any previously-set labels.
+   *
+   * @param labelMap a map of label keys to values
+   * @return this
+   */
   public JibContainerBuilder setLabels(Map<String, String> labelMap) {
     labels = new HashMap<>(labelMap);
     return this;
   }
 
+  /**
+   * Sets a label for the container.
+   *
+   * @param key the label key
+   * @param value the label value
+   * @return this
+   */
   public JibContainerBuilder setLabel(String key, String value) {
     labels.put(key, value);
     return this;
