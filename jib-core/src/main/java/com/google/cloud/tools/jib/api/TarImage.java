@@ -17,12 +17,13 @@
 package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import java.nio.file.Path;
 
 /**
  * Builds to a tarball archive.
  *
- * Usage example:
+ * <p>Usage example:
  *
  * <pre>{@code
  * TarImage tarImage = TarImage.named("myimage")
@@ -59,6 +60,17 @@ public class TarImage {
    */
   public static Builder named(ImageReference imageReference) {
     return new Builder(imageReference);
+  }
+
+  /**
+   * Configures the output tarball archive with an image reference to set as its tag.
+   *
+   * @param imageReference the image reference
+   * @return a {@link Builder} to finish constructing a new {@link TarImage}
+   * @throws InvalidImageReferenceException if {@code imageReference} is not a valid image reference
+   */
+  public static Builder named(String imageReference) throws InvalidImageReferenceException {
+    return named(ImageReference.parse(imageReference));
   }
 
   private final ImageReference imageReference;

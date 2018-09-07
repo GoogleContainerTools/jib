@@ -16,17 +16,24 @@
 
 package com.google.cloud.tools.jib.api;
 
+import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
+import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
-import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Builds to a container registry.
  *
- * The registry portion of the image reference determines which registry to push the image to. The repository portion is the namespace to push the image to. The tag is a label to easily identify an image among all the images in the repository. See {@link ImageReference} for more details.
+ * <p>The registry portion of the image reference determines which registry to push the image to.
+ * The repository portion is the namespace to push the image to. The tag is a label to easily
+ * identify an image among all the images in the repository. See {@link ImageReference} for more
+ * details.
  *
- * When configuring credentials (via {@link #setCredential} for example), make sure the credentials are valid push credentials for the repository specified via the image reference.
+ * <p>When configuring credentials (via {@link #setCredential} for example), make sure the
+ * credentials are valid push credentials for the repository specified via the image reference.
  */
 public class RegistryImage {
 
@@ -34,7 +41,7 @@ public class RegistryImage {
    * Instantiate with the image reference to push to.
    *
    * @param imageReference the image reference
-   * @return a new {@link DockerDaemonImage}
+   * @return a new {@link RegistryImage}
    */
   public static RegistryImage named(ImageReference imageReference) {
     return new RegistryImage(imageReference);
@@ -44,30 +51,63 @@ public class RegistryImage {
    * Instantiate with the image reference to push to.
    *
    * @param imageReference the image reference
-   * @return a new {@link DockerDaemonImage}
+   * @return a new {@link RegistryImage}
+   * @throws InvalidImageReferenceException if {@code imageReference} is not a valid image reference
    */
   public static RegistryImage named(String imageReference) throws InvalidImageReferenceException {
     return named(ImageReference.parse(imageReference));
   }
 
   private final ImageReference imageReference;
-  @Nullable
-  private CredentialRetrievers credentialRetrievers;
+  private List<CredentialRetriever> credentialRetrievers = new ArrayList<>();
 
   /** Instantiate with {@link #named}. */
   private RegistryImage(ImageReference imageReference) {
     this.imageReference = imageReference;
   }
 
+  /**
+   * Sets the credentials to use to push the image. This replaces any previously-added {@link
+   * CredentialRetriever}s.
+   *
+   * @param username the username
+   * @param password the password
+   * @return this
+   */
   RegistryImage setCredential(String username, String password) {
-
+    credentialRetrievers = new ArrayList<>();
+    credentialRetrievers.add(() -> Credential.basic(username, password));
+    return this;
   }
 
-  RegistryImage setCredentialRetrievers(CredentialRetrievers credentialRetrievers) {
-
-  }
-
+  /**
+   * Adds {@link CredentialRetriever} to fetch push credentials for the image. Credential retrievers
+   * are attempted in the order in which they are specified until credentials are successfully
+   * retrieved.
+   *
+   * <p>Example usage:
+   *
+   * <pre>{@code
+   * .addCredentialRetriever(() -> {
+   *   if (!Files.exists("secret.txt") {
+   *     return Optional.empty();
+   *   }
+   *   try {
+   *     String password = fetchPasswordFromFile("secret.txt");
+   *     return Credential.basic("myaccount", password);
+   *
+   *   } catch (IOException ex) {
+   *     throw new CredentialRetrievalException("Failed to load password", ex);
+   *   }
+   * })
+   * }</pre>
+   *
+   * @param credentialRetriever the {@link CredentialRetriever} to add
+   * @return this
+   * @see CredentialRetrieverFactory for useful pre-defined {@link CredentialRetriever}s
+   */
   RegistryImage addCredentialRetriever(CredentialRetriever credentialRetriever) {
-
+    credentialRetrievers.add(credentialRetriever);
+    return this;
   }
 }

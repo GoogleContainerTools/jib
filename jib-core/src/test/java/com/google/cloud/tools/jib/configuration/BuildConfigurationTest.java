@@ -47,7 +47,7 @@ public class BuildConfigurationTest {
     String expectedTargetImageName = "targetimage";
     String expectedTargetTag = "targettag";
     List<CredentialRetriever> credentialRetrievers =
-        Collections.singletonList(() -> new Credential("username", "password"));
+        Collections.singletonList(() -> Credential.basic("username", "password"));
     Instant expectedCreationTime = Instant.ofEpochSecond(10000);
     List<String> expectedEntrypoint = Arrays.asList("some", "entrypoint");
     List<String> expectedJavaArguments = Arrays.asList("arg1", "arg2");
@@ -116,7 +116,7 @@ public class BuildConfigurationTest {
     Assert.assertEquals(
         expectedTargetTag, buildConfiguration.getTargetImageConfiguration().getImageTag());
     Assert.assertEquals(
-        new Credential("username", "password"),
+        Credential.basic("username", "password"),
         buildConfiguration
             .getTargetImageConfiguration()
             .getCredentialRetrievers()

@@ -25,7 +25,8 @@ import java.nio.file.Paths;
 public class DockerDaemonImage {
 
   /**
-   * Instantiate with the image reference to tag the built image with. This is the name that shows up on the Docker daemon.
+   * Instantiate with the image reference to tag the built image with. This is the name that shows
+   * up on the Docker daemon.
    *
    * @param imageReference the image reference
    * @return a new {@link DockerDaemonImage}
@@ -35,10 +36,12 @@ public class DockerDaemonImage {
   }
 
   /**
-   * Instantiate with the image reference to tag the built image with. This is the name that shows up on the Docker daemon.
+   * Instantiate with the image reference to tag the built image with. This is the name that shows
+   * up on the Docker daemon.
    *
    * @param imageReference the image reference
    * @return a new {@link DockerDaemonImage}
+   * @throws InvalidImageReferenceException if {@code imageReference} is not a valid image reference
    */
   public static DockerDaemonImage named(String imageReference)
       throws InvalidImageReferenceException {
