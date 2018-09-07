@@ -162,11 +162,11 @@ The layer directory should be written atomically to avoid reads that may read an
 
 The selector file can be written atomically anytime after the layer directory is fully written.
 
-All atomic writes should be done by first writing to a temporary location and then moving to the desired location.
+All atomic writes should be done by first writing to a temporary location (outside of the cache) and then moving to the desired location.
 
 #### List the entries in the cache
 
-Listing the entries in the cache just requires obtaining a list of all the layer directories under `layers/`. Since the layer directory may write to a temporary directory within the `layers/` directory, the listing would just need to filter out those temporary directories.
+Listing the entries in the cache just requires obtaining a list of all the layer directories under `layers/`.
 
 #### Retrieve a cache entry by layer digest
 
