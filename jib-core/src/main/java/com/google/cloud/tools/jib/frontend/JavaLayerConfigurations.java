@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -64,7 +64,7 @@ public class JavaLayerConfigurations {
   /** Builds with each layer's files. */
   public static class Builder {
 
-    private Map<LayerType, List<Path>> layerFilesMap = new EnumMap<>(LayerType.class);
+    private final Map<LayerType, List<Path>> layerFilesMap = new EnumMap<>(LayerType.class);
 
     private Builder() {
       for (LayerType layerType : LayerType.values()) {

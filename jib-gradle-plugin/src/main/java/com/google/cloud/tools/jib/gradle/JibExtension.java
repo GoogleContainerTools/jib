@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -227,6 +227,12 @@ public class JibExtension {
   @Optional
   List<String> getJvmFlags() {
     return container.getJvmFlags();
+  }
+
+  @Internal
+  @Optional
+  Map<String, String> getEnvironment() {
+    return container.getEnvironment();
   }
 
   // TODO: Make @Internal (deprecated)

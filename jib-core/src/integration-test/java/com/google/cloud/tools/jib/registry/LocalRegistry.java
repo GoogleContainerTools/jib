@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -141,7 +141,8 @@ public class LocalRegistry extends ExternalResource {
 
   private void login() throws IOException, InterruptedException {
     if (username != null && password != null) {
-      new Command("docker", "login", "localhost:" + port, "-u", username, "-p", password).run();
+      new Command("docker", "login", "localhost:" + port, "-u", username, "--password-stdin")
+          .run(password.getBytes(StandardCharsets.UTF_8));
     }
   }
 

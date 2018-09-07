@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -199,10 +199,12 @@ public class BuildStepsRunner {
 
       } else if (exceptionDuringBuildSteps instanceof RegistryAuthenticationFailedException
           && exceptionDuringBuildSteps.getCause() instanceof HttpResponseException) {
+        RegistryAuthenticationFailedException failureException =
+            (RegistryAuthenticationFailedException) exceptionDuringBuildSteps;
         handleRegistryUnauthorizedException(
             new RegistryUnauthorizedException(
-                buildConfiguration.getTargetImageConfiguration().getImageRegistry(),
-                buildConfiguration.getTargetImageConfiguration().getImageRepository(),
+                failureException.getServerUrl(),
+                failureException.getImageName(),
                 (HttpResponseException) exceptionDuringBuildSteps.getCause()),
             helpfulSuggestions);
 

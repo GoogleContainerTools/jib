@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -159,5 +159,10 @@ public class HistoryEntry implements JsonTemplate {
   @Override
   public int hashCode() {
     return Objects.hash(author, creationTimestamp, createdBy, comment, emptyLayer);
+  }
+
+  @Override
+  public String toString() {
+    return createdBy == null ? "" : createdBy;
   }
 }

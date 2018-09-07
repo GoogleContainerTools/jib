@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.ImageToTarballTranslator;
+import com.google.cloud.tools.jib.filesystem.FileOperations;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
@@ -93,7 +94,8 @@ public class WriteTarFileStep implements AsyncStep<Void>, Callable<Void> {
     // Build the image to a tarball
     buildConfiguration.getBuildLogger().lifecycle("Building image to tar file...");
     Files.createDirectories(outputPath.getParent());
-    try (OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(outputPath))) {
+    try (OutputStream outputStream =
+        new BufferedOutputStream(FileOperations.newLockingOutputStream(outputPath))) {
       new ImageToTarballTranslator(image)
           .toTarballBlob(buildConfiguration.getTargetImageConfiguration().getImage())
           .writeTo(outputStream);
