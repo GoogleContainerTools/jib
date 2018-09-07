@@ -86,7 +86,8 @@ public class JibContainerBuilder {
    * </ul>
    *
    * @param files the source files to copy to a new layer in the container
-   * @param pathInContainer the destination to copy the source files to in the container file system
+   * @param pathInContainer the Unix-style path to copy the source files to in the container file
+   *     system
    * @return this
    */
   public JibContainerBuilder addFiles(List<Path> files, String pathInContainer) {
