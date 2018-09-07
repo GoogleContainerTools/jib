@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.configuration;
 
 import com.google.cloud.tools.jib.JibLogger;
-import com.google.cloud.tools.jib.configuration.Port.Protocol;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
 import com.google.cloud.tools.jib.image.ImageReference;
@@ -48,13 +47,12 @@ public class BuildConfigurationTest {
     String expectedTargetImageName = "targetimage";
     String expectedTargetTag = "targettag";
     List<CredentialRetriever> credentialRetrievers =
-        Collections.singletonList(() -> new Credential("username", "password"));
+        Collections.singletonList(() -> Credential.basic("username", "password"));
     Instant expectedCreationTime = Instant.ofEpochSecond(10000);
     List<String> expectedEntrypoint = Arrays.asList("some", "entrypoint");
     List<String> expectedJavaArguments = Arrays.asList("arg1", "arg2");
     Map<String, String> expectedEnvironment = ImmutableMap.of("key", "value");
-    ImmutableList<Port> expectedExposedPorts =
-        ImmutableList.of(new Port(1000, Protocol.TCP), new Port(2000, Protocol.TCP));
+    ImmutableList<Port> expectedExposedPorts = ImmutableList.of(Port.tcp(1000), Port.tcp(2000));
     Map<String, String> expectedLabels = ImmutableMap.of("key1", "value1", "key2", "value2");
     Class<? extends BuildableManifestTemplate> expectedTargetFormat = OCIManifestTemplate.class;
     CacheConfiguration expectedApplicationLayersCacheConfiguration =
@@ -118,7 +116,7 @@ public class BuildConfigurationTest {
     Assert.assertEquals(
         expectedTargetTag, buildConfiguration.getTargetImageConfiguration().getImageTag());
     Assert.assertEquals(
-        new Credential("username", "password"),
+        Credential.basic("username", "password"),
         buildConfiguration
             .getTargetImageConfiguration()
             .getCredentialRetrievers()

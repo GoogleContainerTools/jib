@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.configuration;
 
-import com.google.cloud.tools.jib.configuration.Port.Protocol;
 import com.google.common.collect.ImmutableMap;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -49,7 +48,7 @@ public class ContainerConfigurationTest {
     }
 
     // Exposed ports element should not be null.
-    List<Port> badPorts = Arrays.asList(new Port(1000, Protocol.TCP), null);
+    List<Port> badPorts = Arrays.asList(Port.tcp(1000), null);
     try {
       ContainerConfiguration.builder().setExposedPorts(badPorts);
       Assert.fail("The IllegalArgumentException should be thrown.");

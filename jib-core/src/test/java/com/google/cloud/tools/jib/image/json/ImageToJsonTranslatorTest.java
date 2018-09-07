@@ -20,7 +20,6 @@ import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.Port;
-import com.google.cloud.tools.jib.configuration.Port.Protocol;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
@@ -61,10 +60,7 @@ public class ImageToJsonTranslatorTest {
     testImageBuilder.setEntrypoint(Arrays.asList("some", "entrypoint", "command"));
     testImageBuilder.setJavaArguments(Arrays.asList("arg1", "arg2"));
     testImageBuilder.setExposedPorts(
-        ImmutableList.of(
-            new Port(1000, Protocol.TCP),
-            new Port(2000, Protocol.TCP),
-            new Port(3000, Protocol.UDP)));
+        ImmutableList.of(Port.tcp(1000), Port.tcp(2000), Port.udp(3000)));
     testImageBuilder.addLabels(ImmutableMap.of("key1", "value1", "key2", "value2"));
     testImageBuilder.setWorkingDirectory("/some/workspace");
 
@@ -118,8 +114,7 @@ public class ImageToJsonTranslatorTest {
 
   @Test
   public void testPortListToMap() {
-    ImmutableList<Port> input =
-        ImmutableList.of(new Port(1000, Protocol.TCP), new Port(2000, Protocol.UDP));
+    ImmutableList<Port> input = ImmutableList.of(Port.tcp(1000), Port.udp(2000));
     ImmutableSortedMap<String, Map<?, ?>> expected =
         ImmutableSortedMap.of("1000/tcp", ImmutableMap.of(), "2000/udp", ImmutableMap.of());
     Assert.assertEquals(expected, ImageToJsonTranslator.portListToMap(input));

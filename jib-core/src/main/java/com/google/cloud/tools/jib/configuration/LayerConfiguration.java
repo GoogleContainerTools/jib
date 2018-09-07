@@ -34,7 +34,7 @@ public class LayerConfiguration {
     private Builder() {}
 
     /**
-     * Sets a label for this layer.
+     * Sets a label for this layer. This label does not affect the contents of the layer.
      *
      * @param label the label
      * @return this
@@ -50,8 +50,27 @@ public class LayerConfiguration {
      * <p>The source files are specified as a list instead of a set to define the order in which
      * they are added.
      *
+     * <p>Source files that are directories will be recursively copied. For example, if the source
+     * files are:
+     *
+     * <ul>
+     *   <li>{@code fileA}
+     *   <li>{@code fileB}
+     *   <li>{@code directory/}
+     * </ul>
+     *
+     * and the destination to copy to is {@code /path/in/container}, then the new layer will have
+     * the following entries for the container file system:
+     *
+     * <ul>
+     *   <li>{@code /path/in/container/fileA}
+     *   <li>{@code /path/in/container/fileB}
+     *   <li>{@code /path/in/container/directory/}
+     *   <li>{@code /path/in/container/directory/...} (all contents of {@code directory/})
+     * </ul>
+     *
      * @param sourceFiles the source files to build from. Source files that are directories will
-     *     have all subfiles in the directory added (but not the directory itself)
+     *     have the directory added recursively
      * @param destinationOnImage Unix-style path to add the source files to in the container image
      *     filesystem
      * @return this
@@ -72,6 +91,11 @@ public class LayerConfiguration {
     }
   }
 
+  /**
+   * Gets a new {@link Builder} for {@link LayerConfiguration}.
+   *
+   * @return a new {@link Builder}
+   */
   public static Builder builder() {
     return new Builder();
   }
@@ -90,10 +114,20 @@ public class LayerConfiguration {
     this.layerEntries = layerEntries;
   }
 
+  /**
+   * Gets the label.
+   *
+   * @return the label
+   */
   public String getLabel() {
     return label;
   }
 
+  /**
+   * Gets the list of layer entries.
+   *
+   * @return the list of layer entries
+   */
   public ImmutableList<LayerEntry> getLayerEntries() {
     return layerEntries;
   }

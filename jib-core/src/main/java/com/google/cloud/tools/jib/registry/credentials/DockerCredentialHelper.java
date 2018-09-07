@@ -119,7 +119,7 @@ public class DockerCredentialHelper {
                 credentialHelper, serverUrl, output);
           }
 
-          return new Credential(dockerCredentials.Username, dockerCredentials.Secret);
+          return Credential.basic(dockerCredentials.Username, dockerCredentials.Secret).get();
 
         } catch (JsonProcessingException ex) {
           throw new CredentialHelperUnhandledServerUrlException(
