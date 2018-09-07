@@ -59,7 +59,8 @@ public class FilesMojoIntegrationTest {
     Path logFile = Paths.get(verifier.getBasedir()).resolve(verifier.getLogFileName());
     List<String> log = Files.readAllLines(logFile, StandardCharsets.UTF_8);
 
-    List<String> expectedResult = files.stream().map(Path::toString).collect(Collectors.toList());
+    List<String> expectedResult =
+        files.stream().map(Path::toAbsolutePath).map(Path::toString).collect(Collectors.toList());
 
     Assert.assertEquals(expectedResult, log);
   }
