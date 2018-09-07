@@ -27,7 +27,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -38,11 +37,11 @@ import javax.annotation.Nullable;
  * <pre>{@code
  * Jib.from(baseImage)
  *    .addFiles(sourceFiles, extractionPath)
- *    .setEntrypoint(entrypoint)
- *    .setProgramArguments(arguments)
- *    .addEnvironmentVariable(key, value)
- *    .addExposedPort(
- *    .addLabel(key, value)
+ *    .setEntrypoint("myprogram", "--flag", "subcommand")
+ *    .setProgramArguments("hello", "world")
+ *    .addEnvironmentVariable("HOME", "/app")
+ *    .addExposedPort(8080)
+ *    .addLabel("containerizer", "jib")
  *    .containerize(...);
  * }</pre>
  */
@@ -90,7 +89,7 @@ public class JibContainerBuilder {
    *     system
    * @return this
    */
-  public JibContainerBuilder addFiles(List<Path> files, String pathInContainer) {
+  public JibContainerBuilder addLayer(List<Path> files, String pathInContainer) {
     addLayer(LayerConfiguration.builder().addEntry(files, pathInContainer).build());
     return this;
   }
@@ -191,7 +190,7 @@ public class JibContainerBuilder {
    * @return this
    * @see #setEnvironment for more details
    */
-  public JibContainerBuilder setEnvironmentVariable(String name, String value) {
+  public JibContainerBuilder addEnvironmentVariable(String name, String value) {
     environment.put(name, value);
     return this;
   }
@@ -200,11 +199,14 @@ public class JibContainerBuilder {
    * Sets the ports to expose from the container. Ports exposed will allow ingress traffic. This
    * replaces any previously-set exposed ports.
    *
+   * <p>Use {@link Port#tcp} to expose a port for TCP traffic and {@link Port#udp} to expose a port
+   * for UDP traffic.
+   *
    * @param ports the list of ports to expose
    * @return this
    */
-  public JibContainerBuilder setExposedPorts(List<Integer> ports) {
-    this.ports = ports.stream().map(Port::tcp).collect(Collectors.toCollection(ArrayList::new));
+  public JibContainerBuilder setExposedPorts(List<Port> ports) {
+    this.ports = new ArrayList<>(ports);
     return this;
   }
 
@@ -215,8 +217,8 @@ public class JibContainerBuilder {
    * @return this
    * @see #setExposedPorts(List) for more details
    */
-  public JibContainerBuilder setExposedPorts(int... ports) {
-    setExposedPorts(Arrays.stream(ports).boxed().collect(Collectors.toCollection(ArrayList::new)));
+  public JibContainerBuilder setExposedPorts(Port... ports) {
+    setExposedPorts(Arrays.asList(ports));
     return this;
   }
 
@@ -227,8 +229,8 @@ public class JibContainerBuilder {
    * @return this
    * @see #setExposedPorts(List) for more details
    */
-  public JibContainerBuilder addExposedPort(int port) {
-    ports.add(Port.tcp(port));
+  public JibContainerBuilder addExposedPort(Port port) {
+    ports.add(port);
     return this;
   }
 
@@ -250,7 +252,7 @@ public class JibContainerBuilder {
    * @param value the label value
    * @return this
    */
-  public JibContainerBuilder setLabel(String key, String value) {
+  public JibContainerBuilder addLabel(String key, String value) {
     labels.put(key, value);
     return this;
   }

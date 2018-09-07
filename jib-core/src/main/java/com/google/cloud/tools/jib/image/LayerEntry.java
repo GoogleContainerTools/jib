@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.image;
 
 import com.google.common.collect.ImmutableList;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Represents an entry in the layer. A layer consists of many entries that can be converted into tar
@@ -38,6 +39,10 @@ public class LayerEntry {
   private final String extractionPath;
 
   public LayerEntry(ImmutableList<Path> sourceFiles, String extractionPath) {
+    // Validates that extractionPath is a valid Unix-style path. A non-Unix style path will be
+    // accepted if Paths#get can parse it.
+    Paths.get(extractionPath);
+
     this.sourceFiles = sourceFiles;
     this.extractionPath = extractionPath;
   }
