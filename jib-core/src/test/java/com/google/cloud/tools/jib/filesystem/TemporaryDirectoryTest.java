@@ -42,9 +42,7 @@ public class TemporaryDirectoryTest {
 
   @Test
   public void testClose_directoryDeleted() throws IOException, URISyntaxException {
-    Path parentDirectory = temporaryFolder.newFolder().toPath();
-
-    try (TemporaryDirectory temporaryDirectory = new TemporaryDirectory(parentDirectory)) {
+    try (TemporaryDirectory temporaryDirectory = new TemporaryDirectory()) {
       createFilesInDirectory(temporaryDirectory.getDirectory());
 
       temporaryDirectory.close();
@@ -54,17 +52,17 @@ public class TemporaryDirectoryTest {
 
   @Test
   public void testClose_directoryNotDeletedIfMoved() throws IOException, URISyntaxException {
-    Path parentDirectory = temporaryFolder.newFolder().toPath();
+    Path destinationParent = temporaryFolder.newFolder().toPath();
 
-    try (TemporaryDirectory temporaryDirectory = new TemporaryDirectory(parentDirectory)) {
+    try (TemporaryDirectory temporaryDirectory = new TemporaryDirectory()) {
       createFilesInDirectory(temporaryDirectory.getDirectory());
 
-      Assert.assertFalse(Files.exists(parentDirectory.resolve("destination")));
-      Files.move(temporaryDirectory.getDirectory(), parentDirectory.resolve("destination"));
+      Assert.assertFalse(Files.exists(destinationParent.resolve("destination")));
+      Files.move(temporaryDirectory.getDirectory(), destinationParent.resolve("destination"));
 
       temporaryDirectory.close();
       Assert.assertFalse(Files.exists(temporaryDirectory.getDirectory()));
-      Assert.assertTrue(Files.exists(parentDirectory.resolve("destination")));
+      Assert.assertTrue(Files.exists(destinationParent.resolve("destination")));
     }
   }
 }

@@ -110,8 +110,7 @@ class DefaultCacheStorageWriter {
     Files.createDirectories(defaultCacheStorageFiles.getLayersDirectory());
 
     // Creates the temporary directory.
-    try (TemporaryDirectory temporaryDirectory =
-        new TemporaryDirectory(defaultCacheStorageFiles.getLayersDirectory())) {
+    try (TemporaryDirectory temporaryDirectory = new TemporaryDirectory()) {
       Path temporaryLayerDirectory = temporaryDirectory.getDirectory();
 
       // Writes the layer file to the temporary directory.
