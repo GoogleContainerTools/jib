@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -51,10 +51,10 @@ public class RegistryClientTest {
             .getUserAgent()
             .startsWith("jib"));
 
-    RegistryClient.setUserAgentSuffix(null);
     Assert.assertTrue(
         testRegistryClientFactory
             .setAuthorization(mockAuthorization)
+            .setUserAgentSuffix(null)
             .newRegistryClient()
             .getUserAgent()
             .startsWith("jib"));
@@ -62,20 +62,14 @@ public class RegistryClientTest {
 
   @Test
   public void testGetUserAgent() {
-    RegistryClient.setUserAgentSuffix("some user agent suffix");
+    RegistryClient registryClient =
+        testRegistryClientFactory
+            .setAllowInsecureRegistries(true)
+            .setUserAgentSuffix("some user agent suffix")
+            .newRegistryClient();
 
-    Assert.assertTrue(
-        testRegistryClientFactory
-            .setAllowInsecureRegistries(true)
-            .newRegistryClient()
-            .getUserAgent()
-            .startsWith("jib "));
-    Assert.assertTrue(
-        testRegistryClientFactory
-            .setAllowInsecureRegistries(true)
-            .newRegistryClient()
-            .getUserAgent()
-            .endsWith(" some user agent suffix"));
+    Assert.assertTrue(registryClient.getUserAgent().startsWith("jib "));
+    Assert.assertTrue(registryClient.getUserAgent().endsWith(" some user agent suffix"));
   }
 
   @Test

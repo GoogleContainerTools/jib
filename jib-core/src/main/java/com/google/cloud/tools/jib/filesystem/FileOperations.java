@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,8 +18,13 @@ package com.google.cloud.tools.jib.filesystem;
 
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.EnumSet;
 
 /** Static methods for operating on the filesystem. */
 public class FileOperations {
@@ -50,6 +55,28 @@ public class FileOperations {
         copyPathConsumer.accept(sourceFile);
       }
     }
+  }
+
+  /**
+   * Acquires an exclusive lock on the {@code file} and opens an {@link OutputStream} to write to
+   * it. The file will be created if it does not exist, or truncated to length 0 if it does exist.
+   * The {@link OutputStream} must be closed to release the lock.
+   *
+   * @param file the file to write to
+   * @return an {@link OutputStream} that writes to the file
+   * @throws IOException if an I/O exception occurs
+   */
+  public static OutputStream newLockingOutputStream(Path file) throws IOException {
+    EnumSet<StandardOpenOption> createOrTruncate =
+        EnumSet.of(
+            StandardOpenOption.CREATE,
+            StandardOpenOption.WRITE,
+            StandardOpenOption.TRUNCATE_EXISTING);
+    // Channel is closed by outputStream.close().
+    FileChannel channel = FileChannel.open(file, createOrTruncate);
+    // Lock is released when channel is closed.
+    channel.lock();
+    return Channels.newOutputStream(channel);
   }
 
   private FileOperations() {}

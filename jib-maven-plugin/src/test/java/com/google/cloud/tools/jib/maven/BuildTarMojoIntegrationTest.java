@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,6 +31,9 @@ public class BuildTarMojoIntegrationTest {
 
   @ClassRule
   public static final TestProject simpleTestProject = new TestProject(testPlugin, "simple");
+
+  @ClassRule
+  public static final TestProject skippedTestProject = new TestProject(testPlugin, "empty");
 
   /**
    * Builds and runs jib:buildTar on a project at {@code projectRoot} pushing to {@code
@@ -66,5 +69,10 @@ public class BuildTarMojoIntegrationTest {
         Instant.parse(
             new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim());
     Assert.assertTrue(buildTime.isAfter(before) || buildTime.equals(before));
+  }
+
+  @Test
+  public void testExecute_skipJibGoal() throws VerificationException, IOException {
+    SkippedGoalVerifier.verifyGoalIsSkipped(skippedTestProject, BuildTarMojo.GOAL_NAME);
   }
 }

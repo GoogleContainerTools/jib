@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -73,6 +73,7 @@ public class BuildImageStepTest {
     Mockito.when(mockBuildConfiguration.getBuildLogger()).thenReturn(mockBuildLogger);
     Mockito.when(mockBuildConfiguration.getContainerConfiguration())
         .thenReturn(mockContainerConfiguration);
+    Mockito.when(mockBuildConfiguration.getToolName()).thenReturn("jib");
     Mockito.when(mockContainerConfiguration.getCreationTime()).thenReturn(Instant.EPOCH);
     Mockito.when(mockContainerConfiguration.getEnvironmentMap()).thenReturn(ImmutableMap.of());
     Mockito.when(mockContainerConfiguration.getProgramArguments()).thenReturn(ImmutableList.of());
@@ -97,6 +98,7 @@ public class BuildImageStepTest {
         Image.builder()
             .addEnvironment(ImmutableMap.of("BASE_ENV", "BASE_ENV_VALUE"))
             .addLabel("base.label", "base.label.value")
+            .setWorkingDirectory("/base/working/directory")
             .addHistory(nonEmptyLayerHistory)
             .addHistory(emptyLayerHistory)
             .addHistory(emptyLayerHistory)
@@ -159,6 +161,7 @@ public class BuildImageStepTest {
     Assert.assertEquals(
         ImmutableMap.of("base.label", "base.label.value", "my.label", "my.label.value"),
         image.getLabels());
+    Assert.assertEquals("/base/working/directory", image.getWorkingDirectory());
 
     Assert.assertEquals(image.getHistory().get(0), nonEmptyLayerHistory);
     Assert.assertEquals(image.getHistory().get(1), emptyLayerHistory);

@@ -41,7 +41,18 @@ class DefaultCacheStorageFiles {
    * @return the layer contents file
    */
   Path getLayerFile(DescriptorDigest layerDigest, DescriptorDigest layerDiffId) {
-    return getLayerDirectory(layerDigest).resolve(layerDiffId.getHash() + LAYER_FILENAME_SUFFIX);
+    return getLayerDirectory(layerDigest).resolve(getLayerFilename(layerDiffId));
+  }
+
+  /**
+   * Gets the filename for the layer file. The filename is in the form {@code <layer diff
+   * ID>.layer}.
+   *
+   * @param layerDiffId the layer's diff ID
+   * @return the layer filename
+   */
+  String getLayerFilename(DescriptorDigest layerDiffId) {
+    return layerDiffId.getHash() + LAYER_FILENAME_SUFFIX;
   }
 
   /**
@@ -55,13 +66,22 @@ class DefaultCacheStorageFiles {
   }
 
   /**
+   * Gets the filename for the metadata file.
+   *
+   * @return the filename for the metadata file
+   */
+  String getMetadataFilename() {
+    return METADATA_FILENAME;
+  }
+
+  /**
    * Resolves a selector file.
    *
    * @param selector the selector digest
    * @return the selector file
    */
   Path getSelectorFile(DescriptorDigest selector) {
-    return getSelectorDirectory(selector);
+    return cacheDirectory.resolve(SELECTORS_DIRECTORY).resolve(selector.getHash());
   }
 
   /**
@@ -73,11 +93,13 @@ class DefaultCacheStorageFiles {
     return cacheDirectory.resolve(LAYERS_DIRECTORY);
   }
 
-  private Path getLayerDirectory(DescriptorDigest layerDigest) {
-    return cacheDirectory.resolve(LAYERS_DIRECTORY).resolve(layerDigest.getHash());
-  }
-
-  private Path getSelectorDirectory(DescriptorDigest selector) {
-    return cacheDirectory.resolve(SELECTORS_DIRECTORY).resolve(selector.getHash());
+  /**
+   * Gets the directory for the layer with digest {@code layerDigest}.
+   *
+   * @param layerDigest the digest of the layer
+   * @return the directory for that {@code layerDigest}
+   */
+  Path getLayerDirectory(DescriptorDigest layerDigest) {
+    return getLayersDirectory().resolve(layerDigest.getHash());
   }
 }

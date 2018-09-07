@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,6 +34,8 @@ public class ContainerParameters {
 
   private boolean useCurrentTimestamp = false;
   private List<String> jvmFlags = Collections.emptyList();
+  private Map<String, String> environment = Collections.emptyMap();
+  private List<String> entrypoint = Collections.emptyList();
   @Nullable private String mainClass;
   private List<String> args = Collections.emptyList();
   private ImageFormat format = ImageFormat.Docker;
@@ -52,12 +54,32 @@ public class ContainerParameters {
 
   @Input
   @Optional
+  public List<String> getEntrypoint() {
+    return entrypoint;
+  }
+
+  public void setEntrypoint(List<String> entrypoint) {
+    this.entrypoint = entrypoint;
+  }
+
+  @Input
+  @Optional
   public List<String> getJvmFlags() {
     return jvmFlags;
   }
 
   public void setJvmFlags(List<String> jvmFlags) {
     this.jvmFlags = jvmFlags;
+  }
+
+  @Input
+  @Optional
+  public Map<String, String> getEnvironment() {
+    return environment;
+  }
+
+  public void setEnvironment(Map<String, String> environment) {
+    this.environment = environment;
   }
 
   @Input

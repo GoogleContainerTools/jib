@@ -29,7 +29,7 @@ public class DefaultCacheStorageFilesTest {
       new DefaultCacheStorageFiles(Paths.get("cache/directory"));
 
   @Test
-  public void testGetLayerFilename() throws DigestException {
+  public void testGetLayerFile() throws DigestException {
     DescriptorDigest layerDigest =
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
@@ -48,7 +48,18 @@ public class DefaultCacheStorageFilesTest {
   }
 
   @Test
-  public void testGetMetadataFilename() throws DigestException {
+  public void testGetLayerFilename() throws DigestException {
+    DescriptorDigest diffId =
+        DescriptorDigest.fromHash(
+            "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
+
+    Assert.assertEquals(
+        "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.layer",
+        testDefaultCacheStorageFiles.getLayerFilename(diffId));
+  }
+
+  @Test
+  public void testGetMetadataFile() throws DigestException {
     DescriptorDigest layerDigest =
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
@@ -64,7 +75,12 @@ public class DefaultCacheStorageFilesTest {
   }
 
   @Test
-  public void testGetSelectorFilename() throws DigestException {
+  public void testGetMetadataFilename() {
+    Assert.assertEquals("metadata", testDefaultCacheStorageFiles.getMetadataFilename());
+  }
+
+  @Test
+  public void testGetSelectorFile() throws DigestException {
     DescriptorDigest selector =
         DescriptorDigest.fromHash(
             "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc");
@@ -83,5 +99,20 @@ public class DefaultCacheStorageFilesTest {
     Assert.assertEquals(
         Paths.get("cache", "directory", "layers"),
         testDefaultCacheStorageFiles.getLayersDirectory());
+  }
+
+  @Test
+  public void testGetLayerDirectory() throws DigestException {
+    DescriptorDigest layerDigest =
+        DescriptorDigest.fromHash(
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+
+    Assert.assertEquals(
+        Paths.get(
+            "cache",
+            "directory",
+            "layers",
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+        testDefaultCacheStorageFiles.getLayerDirectory(layerDigest));
   }
 }
