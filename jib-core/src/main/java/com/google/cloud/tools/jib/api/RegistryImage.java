@@ -36,7 +36,7 @@ import java.util.List;
  * <p>When configuring credentials (via {@link #setCredential} for example), make sure the
  * credentials are valid push credentials for the repository specified via the image reference.
  */
-public class RegistryImage {
+public class RegistryImage implements ImageTarget {
 
   /**
    * Instantiate with the image reference to push to.

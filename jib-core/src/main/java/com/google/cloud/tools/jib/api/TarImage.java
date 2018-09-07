@@ -30,7 +30,7 @@ import java.nio.file.Path;
  *                             .saveTo(Paths.get("image.tar"));
  * }</pre>
  */
-public class TarImage {
+public class TarImage implements ImageTarget {
 
   /** Finishes constructing a {@link TarImage}. */
   public static class Builder {

@@ -22,7 +22,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /** Builds to the Docker daemon. */
-public class DockerDaemonImage {
+public class DockerDaemonImage implements ImageTarget {
 
   /**
    * Instantiate with the image reference to tag the built image with. This is the name that shows
