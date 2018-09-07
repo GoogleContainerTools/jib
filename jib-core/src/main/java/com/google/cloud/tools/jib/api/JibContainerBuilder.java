@@ -40,7 +40,7 @@ import javax.annotation.Nullable;
  *    .setEntrypoint("myprogram", "--flag", "subcommand")
  *    .setProgramArguments("hello", "world")
  *    .addEnvironmentVariable("HOME", "/app")
- *    .addExposedPort(8080)
+ *    .addExposedPort(Port.tcp(8080))
  *    .addLabel("containerizer", "jib")
  *    .containerize(...);
  * }</pre>
