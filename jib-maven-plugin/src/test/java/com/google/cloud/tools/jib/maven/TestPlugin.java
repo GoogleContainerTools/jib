@@ -28,7 +28,7 @@ import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.junit.rules.ExternalResource;
 
 /** Sets up the plugin for testing. */
-class TestPlugin extends ExternalResource {
+public class TestPlugin extends ExternalResource {
 
   private String pluginVersion;
 
