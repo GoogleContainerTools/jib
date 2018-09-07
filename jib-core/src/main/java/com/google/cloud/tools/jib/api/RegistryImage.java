@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -74,7 +75,7 @@ public class RegistryImage {
    * @param password the password
    * @return this
    */
-  RegistryImage setCredential(String username, String password) {
+  public RegistryImage setCredential(String username, String password) {
     credentialRetrievers = new ArrayList<>();
     credentialRetrievers.add(() -> Credential.basic(username, password));
     return this;
@@ -106,8 +107,16 @@ public class RegistryImage {
    * @return this
    * @see CredentialRetrieverFactory for useful pre-defined {@link CredentialRetriever}s
    */
-  RegistryImage addCredentialRetriever(CredentialRetriever credentialRetriever) {
+  public RegistryImage addCredentialRetriever(CredentialRetriever credentialRetriever) {
     credentialRetrievers.add(credentialRetriever);
     return this;
+  }
+
+  ImageReference getImageReference() {
+    return imageReference;
+  }
+
+  List<CredentialRetriever> getCredentialRetrievers() {
+    return Collections.unmodifiableList(credentialRetrievers);
   }
 }
