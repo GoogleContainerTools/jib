@@ -68,7 +68,8 @@ public class BuildAndCacheApplicationLayerStepTest {
 
       LayerConfiguration.Builder layerConfigurationBuilder = LayerConfiguration.builder();
       for (Path sourceFile : sourceFiles) {
-        layerConfigurationBuilder.addEntry(sourceFile, extractionPath);
+        layerConfigurationBuilder.addEntry(
+            sourceFile, extractionPath.resolve(sourceFile.getFileName()));
       }
       return layerConfigurationBuilder.build();
     }

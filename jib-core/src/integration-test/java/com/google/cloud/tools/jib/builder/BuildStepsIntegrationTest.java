@@ -67,7 +67,8 @@ public class BuildStepsIntegrationTest {
 
       LayerConfiguration.Builder layerConfigurationBuilder = LayerConfiguration.builder();
       for (Path sourceFile : sourceFiles) {
-        layerConfigurationBuilder.addEntry(sourceFile, pathInContainer);
+        layerConfigurationBuilder.addEntry(
+            sourceFile, pathInContainer.resolve(sourceFile.getFileName()));
       }
       return layerConfigurationBuilder.build();
     }

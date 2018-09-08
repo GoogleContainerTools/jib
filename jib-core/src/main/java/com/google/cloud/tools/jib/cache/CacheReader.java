@@ -119,6 +119,7 @@ public class CacheReader {
    * @throws IOException if reading the source files fails.
    * @throws CacheMetadataCorruptedException if reading the cache metadata fails.
    */
+  // TODO: I think this is broken currently.
   public Optional<CachedLayerWithMetadata> getUpToDateLayerByLayerEntries(
       ImmutableList<LayerEntry> layerEntries) throws IOException, CacheMetadataCorruptedException {
     // Grabs all the layers that have matching source files.
