@@ -39,18 +39,20 @@ public class JavaLayerConfigurationsTest {
         javaLayerConfigurations.getExtraFilesLayerEntry();
 
     Assert.assertEquals(
-        JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE,
-        dependenciesLayerEntry.get(0).getExtractionPathString());
+        Paths.get(JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
+            .resolve("dependency"),
+        dependenciesLayerEntry.get(0).getExtractionPath());
     Assert.assertEquals(
-        JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE,
-        snapshotDependenciesLayerEntry.get(0).getExtractionPathString());
+        Paths.get(JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
+            .resolve("snapshotDependency"),
+        snapshotDependenciesLayerEntry.get(0).getExtractionPath());
     Assert.assertEquals(
-        JavaEntrypointConstructor.DEFAULT_RESOURCES_PATH_ON_IMAGE,
-        resourcesLayerEntry.get(0).getExtractionPathString());
+        Paths.get(JavaEntrypointConstructor.DEFAULT_RESOURCES_PATH_ON_IMAGE).resolve("resource"),
+        resourcesLayerEntry.get(0).getExtractionPath());
     Assert.assertEquals(
-        JavaEntrypointConstructor.DEFAULT_CLASSES_PATH_ON_IMAGE,
-        classesLayerEntry.get(0).getExtractionPathString());
-    Assert.assertEquals("/", extraFilesLayerEntry.get(0).getExtractionPathString());
+        Paths.get(JavaEntrypointConstructor.DEFAULT_CLASSES_PATH_ON_IMAGE).resolve("class"),
+        classesLayerEntry.get(0).getExtractionPath());
+    Assert.assertEquals("/extra", extraFilesLayerEntry.get(0).getExtractionPathString());
 
     List<String> expectedLabels = new ArrayList<>();
     for (JavaLayerConfigurations.LayerType layerType : JavaLayerConfigurations.LayerType.values()) {

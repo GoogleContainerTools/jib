@@ -17,13 +17,12 @@
 package com.google.cloud.tools.jib.configuration;
 
 import com.google.cloud.tools.jib.image.LayerEntry;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -32,7 +31,7 @@ public class LayerConfigurationTest {
 
   @Test
   public void testAddEntryRecursive() throws IOException, URISyntaxException {
-    Path testDirectory = Paths.get(Resources.getResource("layer").toURI());
+    Path testDirectory = Paths.get(Resources.getResource("layer").toURI()).toAbsolutePath();
     Path testFile = Paths.get(Resources.getResource("fileA").toURI());
 
     LayerConfiguration layerConfiguration =
@@ -41,8 +40,8 @@ public class LayerConfigurationTest {
             .addEntryRecursive(testFile, Paths.get("/app/fileA"))
             .build();
 
-    List<LayerEntry> expectedLayerEntries =
-        ImmutableList.of(
+    ImmutableSet<LayerEntry> expectedLayerEntries =
+        ImmutableSet.of(
             new LayerEntry(testDirectory, Paths.get("/app/layer/")),
             new LayerEntry(testDirectory.resolve("a"), Paths.get("/app/layer/a/")),
             new LayerEntry(testDirectory.resolve("a/b"), Paths.get("/app/layer/a/b/")),
@@ -52,6 +51,7 @@ public class LayerConfigurationTest {
             new LayerEntry(testDirectory.resolve("foo"), Paths.get("/app/layer/foo")),
             new LayerEntry(testFile, Paths.get("/app/fileA")));
 
-    Assert.assertEquals(expectedLayerEntries, layerConfiguration.getLayerEntries());
+    Assert.assertEquals(
+        expectedLayerEntries, ImmutableSet.copyOf(layerConfiguration.getLayerEntries()));
   }
 }

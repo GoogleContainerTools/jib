@@ -105,7 +105,7 @@ public class CacheWriterTest {
     Assert.assertNotNull(layerMetadata);
     Assert.assertEquals(1, layerMetadata.getEntries().size());
     Assert.assertEquals(
-        Collections.singletonList(Paths.get("some/source/file").toString()),
+        Paths.get("some/source/file").toString(),
         layerMetadata.getEntries().get(0).getSourceFilesString());
     Assert.assertEquals(
         "/some/extraction/path", layerMetadata.getEntries().get(0).getExtractionPath());

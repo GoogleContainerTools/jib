@@ -98,8 +98,8 @@ public class ReproducibleLayerBuilderTest {
         new ReproducibleLayerBuilder(
             LayerConfiguration.builder()
                 .addEntryRecursive(layerDirectory, Paths.get("extract/here/apple/layer"))
-                .addEntry(blobA, Paths.get("extract/here/apple"))
-                .addEntry(blobA, Paths.get("extract/here/banana"))
+                .addEntry(blobA, Paths.get("extract/here/apple/blobA"))
+                .addEntry(blobA, Paths.get("extract/here/banana/blobA"))
                 .build()
                 .getLayerEntries());
 
@@ -164,13 +164,15 @@ public class ReproducibleLayerBuilderTest {
     Blob layer =
         new ReproducibleLayerBuilder(
                 ImmutableList.of(
-                    new LayerEntry(fileA1, extractionPath), new LayerEntry(fileB1, extractionPath)))
+                    new LayerEntry(fileA1, extractionPath.resolve("fileA")),
+                    new LayerEntry(fileB1, extractionPath.resolve("fileB"))))
             .build()
             .getBlob();
     Blob reproduced =
         new ReproducibleLayerBuilder(
                 ImmutableList.of(
-                    new LayerEntry(fileB2, extractionPath), new LayerEntry(fileA2, extractionPath)))
+                    new LayerEntry(fileB2, extractionPath.resolve("fileB")),
+                    new LayerEntry(fileA2, extractionPath.resolve("fileA"))))
             .build()
             .getBlob();
 

@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.image;
 
 import java.nio.file.Path;
+import java.util.Objects;
 
 /**
  * Represents an entry in the layer. A layer consists of many entries that can be converted into tar
@@ -61,13 +62,23 @@ public class LayerEntry {
   }
 
   /**
-   * Gets the source file absolute path in string form.
+   * Gets the source file path in string form.
    *
-   * @return the source file absolute path
+   * @return the source file path
    */
+  // TODO: Should use absolute path instead.
   public String getSourceFileString() {
-    return sourceFile.toAbsolutePath().toString();
+    return sourceFile.toString();
   }
+
+  // /**
+  //  * Gets the source file absolute path in string form.
+  //  *
+  //  * @return the source file absolute path
+  //  */
+  // public String getSourceFileString() {
+  //   return sourceFile.toAbsolutePath().toString();
+  // }
 
   /**
    * Gets the extraction path in string form. This does <b>not</b> convert the extraction path to an
@@ -77,5 +88,23 @@ public class LayerEntry {
    */
   public String getExtractionPathString() {
     return extractionPath.toString();
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    if (this == other) {
+      return true;
+    }
+    if (!(other instanceof LayerEntry)) {
+      return false;
+    }
+    LayerEntry otherLayerEntry = (LayerEntry) other;
+    return sourceFile.equals(otherLayerEntry.sourceFile)
+        && extractionPath.equals(otherLayerEntry.extractionPath);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(sourceFile, extractionPath);
   }
 }

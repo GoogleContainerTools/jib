@@ -155,7 +155,7 @@ public class CacheTest {
       Assert.assertNotNull(descriptorDigest1Layer);
       LayerMetadata layerMetadata = descriptorDigest1Layer.getMetadata();
       Assert.assertNotNull(layerMetadata);
-      Assert.assertEquals(1, layerMetadata.getEntries().size());
+      Assert.assertEquals(2, layerMetadata.getEntries().size());
       Assert.assertEquals(FileTime.from(Instant.EPOCH), layerMetadata.getLastModifiedTime());
       Assert.assertEquals(
           ImmutableList.of(layerEntry2A.getSourceFileString(), layerEntry2B.getSourceFileString()),

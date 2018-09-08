@@ -38,12 +38,12 @@ public class CacheMetadataLayerPropertiesObjectTemplate implements JsonTemplate 
     @Nullable private String extractionPath;
 
     @Nullable
-    public String getSourceFile() {
+    public String getSourceFileString() {
       return sourceFile;
     }
 
     @Nullable
-    public String getExtractionPath() {
+    public String getExtractionPathString() {
       return extractionPath;
     }
 

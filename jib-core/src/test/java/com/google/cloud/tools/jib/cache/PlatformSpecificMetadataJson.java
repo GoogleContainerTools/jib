@@ -29,9 +29,9 @@ public class PlatformSpecificMetadataJson {
    * the different path separator.
    */
   public static Path getMetadataJsonFile() throws URISyntaxException {
-    String metadataResourceFilename = "json/metadata-v2.json";
+    String metadataResourceFilename = "json/metadata-v3.json";
     if (System.getProperty("os.name").toLowerCase().contains("win")) {
-      metadataResourceFilename = "json/metadata_windows-v2.json";
+      metadataResourceFilename = "json/metadata_windows-v3.json";
     }
     // Loads the expected JSON string.
     return Paths.get(Resources.getResource(metadataResourceFilename).toURI());

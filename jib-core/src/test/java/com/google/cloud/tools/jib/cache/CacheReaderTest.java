@@ -100,8 +100,7 @@ public class CacheReaderTest {
           cacheReader.getLayerFile(
               ImmutableList.of(
                   new LayerEntry(
-                      Paths.get("some", "source", "directory"),
-                      Paths.get("some/extraction/path")))));
+                      Paths.get("/some/source/directory"), Paths.get("some/extraction/path")))));
       Assert.assertNull(cacheReader.getLayerFile(ImmutableList.of()));
     }
   }
@@ -117,10 +116,12 @@ public class CacheReaderTest {
     // Copies test files to a modifiable temporary folder.
     Path resourceSourceFiles = Paths.get(Resources.getResource("layer").toURI());
     Path testSourceFiles = temporaryFolder.newFolder().toPath();
+    copyDirectory(resourceSourceFiles, testSourceFiles);
+
+    // Gets the contents of
     ImmutableList<Path> testSourceFilesContents = new DirectoryWalker(testSourceFiles).walk();
     ImmutableList<Path> resourceSourceFilesContents =
         new DirectoryWalker(resourceSourceFiles).walk();
-    copyDirectory(resourceSourceFiles, testSourceFiles);
 
     // Walk the files in reverse order so that the subfiles are changed before the parent
     // directories are.
@@ -149,7 +150,7 @@ public class CacheReaderTest {
                       testSourceFile ->
                           new LayerMetadata.LayerMetadataEntry(
                               testSourceFile.toString(),
-                              Paths.get("/some/extraction/path")
+                              Paths.get("some/extraction/path")
                                   .resolve(testSourceFiles.relativize(testSourceFile))
                                   .toString()))
                   .collect(ImmutableList.toImmutableList()));
@@ -165,7 +166,7 @@ public class CacheReaderTest {
                   testSourceFile ->
                       new LayerEntry(
                           testSourceFile,
-                          Paths.get("/some/extraction/path")
+                          Paths.get("some/extraction/path")
                               .resolve(testSourceFiles.relativize(testSourceFile))))
               .collect(ImmutableList.toImmutableList());
 
@@ -178,31 +179,36 @@ public class CacheReaderTest {
       // Changes a file and checks that the change is detected.
       Files.setLastModifiedTime(
           testSourceFiles.resolve("a").resolve("b").resolve("bar"), newerLastModifiedTime);
-      Assert.assertNull(cacheReader.getUpToDateLayerByLayerEntries(upToDateLayerEntries));
-      Assert.assertNull(
-          cacheReader.getUpToDateLayerByLayerEntries(
-              testSourceFilesContents
-                  .stream()
-                  .map(
-                      testSourceFile ->
-                          new LayerEntry(
-                              testSourceFile,
-                              Paths.get("extractionPath")
-                                  .resolve(testSourceFiles.relativize(testSourceFile))))
-                  .collect(ImmutableList.toImmutableList())));
+      Assert.assertFalse(
+          cacheReader.getUpToDateLayerByLayerEntries(upToDateLayerEntries).isPresent());
+      Assert.assertFalse(
+          cacheReader
+              .getUpToDateLayerByLayerEntries(
+                  testSourceFilesContents
+                      .stream()
+                      .map(
+                          testSourceFile ->
+                              new LayerEntry(
+                                  testSourceFile,
+                                  Paths.get("extractionPath")
+                                      .resolve(testSourceFiles.relativize(testSourceFile))))
+                      .collect(ImmutableList.toImmutableList()))
+              .isPresent());
 
       // Any non-cached directory should be deemed modified.
-      Assert.assertNull(
-          cacheReader.getUpToDateLayerByLayerEntries(
-              resourceSourceFilesContents
-                  .stream()
-                  .map(
-                      resourceSourceFile ->
-                          new LayerEntry(
-                              resourceSourceFile,
-                              Paths.get("/some/extraction/path")
-                                  .resolve(resourceSourceFiles.relativize(resourceSourceFile))))
-                  .collect(ImmutableList.toImmutableList())));
+      Assert.assertFalse(
+          cacheReader
+              .getUpToDateLayerByLayerEntries(
+                  resourceSourceFilesContents
+                      .stream()
+                      .map(
+                          resourceSourceFile ->
+                              new LayerEntry(
+                                  resourceSourceFile,
+                                  Paths.get("/some/extraction/path")
+                                      .resolve(resourceSourceFiles.relativize(resourceSourceFile))))
+                      .collect(ImmutableList.toImmutableList()))
+              .isPresent());
     }
   }
 }

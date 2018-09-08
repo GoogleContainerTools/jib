@@ -103,7 +103,7 @@ public class JavaDockerContextGenerator {
                 .map(LayerEntry::getSourceFile)
                 .collect(ImmutableList.toImmutableList()),
             directoryInContext,
-            layerEntries.get(0).getExtractionPathString().toString()));
+            layerEntries.get(0).getExtractionPathString()));
   }
 
   /**
