@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.image;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import java.nio.file.Path;
 import java.util.Objects;
 
@@ -106,5 +108,11 @@ public class LayerEntry {
   @Override
   public int hashCode() {
     return Objects.hash(sourceFile, extractionPath);
+  }
+
+  @Override
+  @VisibleForTesting
+  public String toString() {
+    return getSourceFileString() + "\t" + getExtractionPathString();
   }
 }

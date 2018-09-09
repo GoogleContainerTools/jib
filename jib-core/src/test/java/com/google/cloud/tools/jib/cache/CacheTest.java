@@ -170,7 +170,7 @@ public class CacheTest {
           layerMetadata
               .getEntries()
               .stream()
-              .map(LayerMetadataEntry::getExtractionPath)
+              .map(LayerMetadataEntry::getExtractionPathString)
               .collect(ImmutableList.toImmutableList()));
     }
   }

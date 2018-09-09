@@ -108,7 +108,7 @@ public class CacheWriterTest {
         Paths.get("some/source/file").toString(),
         layerMetadata.getEntries().get(0).getSourceFilesString());
     Assert.assertEquals(
-        "/some/extraction/path", layerMetadata.getEntries().get(0).getExtractionPath());
+        "/some/extraction/path", layerMetadata.getEntries().get(0).getExtractionPathString());
 
     verifyCachedLayerIsExpected(getExpectedLayer(), cachedLayerWithMetadata);
   }

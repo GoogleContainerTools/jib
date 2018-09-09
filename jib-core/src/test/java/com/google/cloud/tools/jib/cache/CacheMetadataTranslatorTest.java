@@ -112,7 +112,7 @@ public class CacheMetadataTranslatorTest {
         classesLayer.getMetadata().getEntries().get(0).getSourceFilesString());
     Assert.assertEquals(
         CLASSES_LAYER_EXTRACTION_PATH.toString(),
-        classesLayer.getMetadata().getEntries().get(0).getExtractionPath());
+        classesLayer.getMetadata().getEntries().get(0).getExtractionPathString());
     Assert.assertEquals(
         CLASSES_LAYER_LAST_MODIFIED_TIME, classesLayer.getMetadata().getLastModifiedTime());
   }

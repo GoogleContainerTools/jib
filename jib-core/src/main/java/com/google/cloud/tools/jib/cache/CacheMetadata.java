@@ -21,10 +21,8 @@ import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Streams;
-import java.util.List;
-import java.util.function.BiPredicate;
-import java.util.function.Predicate;
+
+import java.util.Iterator;
 import javax.annotation.Nullable;
 
 /**
@@ -63,7 +61,7 @@ class CacheMetadata {
   static class LayerFilter {
 
     /**
-     * Checks if the layer entries matches the metadata layer entries
+     * Checks if the layer entries matches the metadata layer entries.
      *
      * @param layerEntries the layer entries to check
      * @param metadataEntries the metadata entries to match against
@@ -77,18 +75,21 @@ class CacheMetadata {
       if (layerEntries.size() != metadataEntries.size()) {
         return false;
       }
-      return pairwiseCompareAllPass(
-          layerEntries,
-          metadataEntries,
-          (layerEntry, metadataEntry) ->
-              layerEntry.getExtractionPath().toString().equals(metadataEntry.getExtractionPath())
-                  && layerEntry.getSourceFileString().equals(metadataEntry.getSourceFilesString()));
-    }
 
-    private static <A, B> boolean pairwiseCompareAllPass(
-        List<A> listA, List<B> listB, BiPredicate<A, B> compare) {
-      return Streams.zip(listA.stream(), listB.stream(), compare::test)
-          .allMatch(Predicate.isEqual(true));
+      // Pairwise-compares all the layer entries with the metadata layer entries.
+      Iterator<LayerEntry> layerEntriesIterator = layerEntries.iterator();
+      Iterator<LayerMetadata.LayerMetadataEntry> metadataEntriesIterator = metadataEntries.iterator();
+      while (layerEntriesIterator.hasNext() && metadataEntriesIterator.hasNext()) {
+        LayerEntry layerEntry = layerEntriesIterator.next();
+        LayerMetadata.LayerMetadataEntry metadataEntry = metadataEntriesIterator.next();
+
+        boolean areSourceFilesEqual = layerEntry.getSourceFileString().equals(metadataEntry.getSourceFilesString());
+        boolean areExtractionPathsEqual = layerEntry.getExtractionPathString().equals(metadataEntry.getExtractionPathString());
+        if (!areSourceFilesEqual || !areExtractionPathsEqual) {
+          return false;
+        }
+      }
+      return true;
     }
 
     private final ImageLayers<CachedLayerWithMetadata> layers;

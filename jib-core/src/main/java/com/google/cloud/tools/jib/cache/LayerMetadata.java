@@ -37,7 +37,7 @@ class LayerMetadata {
       return sourceFilesString;
     }
 
-    String getExtractionPath() {
+    String getExtractionPathString() {
       return extractionPath;
     }
 

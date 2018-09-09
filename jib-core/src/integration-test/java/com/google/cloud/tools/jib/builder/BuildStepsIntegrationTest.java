@@ -63,13 +63,9 @@ public class BuildStepsIntegrationTest {
       String resourcePath, Path pathInContainer) throws URISyntaxException, IOException {
     try (Stream<Path> fileStream =
         Files.list(Paths.get(Resources.getResource(resourcePath).toURI()))) {
-      ImmutableList<Path> sourceFiles = fileStream.collect(ImmutableList.toImmutableList());
-
       LayerConfiguration.Builder layerConfigurationBuilder = LayerConfiguration.builder();
-      for (Path sourceFile : sourceFiles) {
-        layerConfigurationBuilder.addEntry(
-            sourceFile, pathInContainer.resolve(sourceFile.getFileName()));
-      }
+      fileStream.forEach(sourceFile -> layerConfigurationBuilder.addEntry(
+          sourceFile, pathInContainer.resolve(sourceFile.getFileName())));
       return layerConfigurationBuilder.build();
     }
   }
