@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.ncache;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -55,15 +54,17 @@ public class DefaultCacheStorage implements CacheStorage {
    * @return a new {@link CacheStorage}
    */
   public static CacheStorage withDirectory(Path cacheDirectory) {
-    DefaultCacheStorageFiles defaultCacheStorageFiles =
-        new DefaultCacheStorageFiles(cacheDirectory);
-    return new DefaultCacheStorage(new DefaultCacheStorageWriter(defaultCacheStorageFiles));
+    return new DefaultCacheStorage(cacheDirectory);
   }
 
   private final DefaultCacheStorageWriter defaultCacheStorageWriter;
+  private final DefaultCacheStorageReader defaultCacheStorageReader;
 
-  private DefaultCacheStorage(DefaultCacheStorageWriter defaultCacheStorageWriter) {
-    this.defaultCacheStorageWriter = defaultCacheStorageWriter;
+  private DefaultCacheStorage(Path cacheDirectory) {
+    DefaultCacheStorageFiles defaultCacheStorageFiles =
+        new DefaultCacheStorageFiles(cacheDirectory);
+    this.defaultCacheStorageWriter = new DefaultCacheStorageWriter(defaultCacheStorageFiles);
+    this.defaultCacheStorageReader = new DefaultCacheStorageReader(defaultCacheStorageFiles);
   }
 
   @Override
@@ -72,9 +73,8 @@ public class DefaultCacheStorage implements CacheStorage {
   }
 
   @Override
-  public List<DescriptorDigest> listDigests() throws IOException {
-    // TODO: Implement
-    return Collections.emptyList();
+  public List<DescriptorDigest> listDigests() throws IOException, CacheCorruptedException {
+    return defaultCacheStorageReader.listDigests();
   }
 
   @Override

@@ -85,9 +85,9 @@ class DefaultCacheStorageFiles {
   }
 
   /**
-   * Resolves the layers directory.
+   * Resolves the {@link #LAYERS_DIRECTORY} in the {@link #cacheDirectory}.
    *
-   * @return the directory with all the layer directories
+   * @return the directory containing all the layer directories
    */
   Path getLayersDirectory() {
     return cacheDirectory.resolve(LAYERS_DIRECTORY);

@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.ncache;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
-import com.google.cloud.tools.jib.filesystem.FileOperations;
 import com.google.cloud.tools.jib.filesystem.TemporaryDirectory;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
@@ -165,7 +164,7 @@ class DefaultCacheStorageWriter {
 
     try (CountingDigestOutputStream compressedDigestOutputStream =
         new CountingDigestOutputStream(
-            new BufferedOutputStream(FileOperations.newLockingOutputStream(temporaryLayerFile)))) {
+            new BufferedOutputStream(Files.newOutputStream(temporaryLayerFile)))) {
       // Writes the layer with GZIP compression. The original bytes are captured as the layer's
       // diff ID and the bytes outputted from the GZIP compression are captured as the layer's
       // content descriptor.
