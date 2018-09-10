@@ -94,14 +94,14 @@ public class MavenLayerConfigurationsTest {
         MavenLayerConfigurations.getForProject(mockMavenProject, Paths.get("nonexistent/path"));
     Assert.assertEquals(
         expectedDependenciesFiles,
-        javaLayerConfigurations.getDependenciesLayerEntry().getSourceFiles());
+        javaLayerConfigurations.getDependencyLayerEntries().getSourceFiles());
     Assert.assertEquals(
         expectedSnapshotDependenciesFiles,
-        javaLayerConfigurations.getSnapshotDependenciesLayerEntry().getSourceFiles());
+        javaLayerConfigurations.getSnapshotDependencyLayerEntries().getSourceFiles());
     Assert.assertEquals(
-        expectedResourcesFiles, javaLayerConfigurations.getResourcesLayerEntry().getSourceFiles());
+        expectedResourcesFiles, javaLayerConfigurations.getResourceLayerEntries().getSourceFiles());
     Assert.assertEquals(
-        expectedClassesFiles, javaLayerConfigurations.getClassesLayerEntry().getSourceFiles());
+        expectedClassesFiles, javaLayerConfigurations.getClassLayerEntries().getSourceFiles());
   }
 
   @Test
@@ -118,7 +118,7 @@ public class MavenLayerConfigurationsTest {
             Paths.get(Resources.getResource("layer/foo").toURI()));
 
     Assert.assertEquals(
-        expectedExtraFiles, javaLayerConfigurations.getExtraFilesLayerEntry().getSourceFiles());
+        expectedExtraFiles, javaLayerConfigurations.getExtraFilesLayerEntries().getSourceFiles());
   }
 
   private Artifact makeArtifact(Path path) {

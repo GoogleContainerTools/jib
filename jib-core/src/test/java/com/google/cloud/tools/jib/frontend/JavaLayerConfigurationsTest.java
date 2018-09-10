@@ -29,14 +29,14 @@ public class JavaLayerConfigurationsTest {
             .build();
 
     ImmutableList<LayerEntry> dependenciesLayerEntry =
-        javaLayerConfigurations.getDependenciesLayerEntry();
+        javaLayerConfigurations.getDependencyLayerEntries();
     ImmutableList<LayerEntry> snapshotDependenciesLayerEntry =
-        javaLayerConfigurations.getSnapshotDependenciesLayerEntry();
+        javaLayerConfigurations.getSnapshotDependencyLayerEntries();
     ImmutableList<LayerEntry> resourcesLayerEntry =
-        javaLayerConfigurations.getResourcesLayerEntry();
-    ImmutableList<LayerEntry> classesLayerEntry = javaLayerConfigurations.getClassesLayerEntry();
+        javaLayerConfigurations.getResourceLayerEntries();
+    ImmutableList<LayerEntry> classesLayerEntry = javaLayerConfigurations.getClassLayerEntries();
     ImmutableList<LayerEntry> extraFilesLayerEntry =
-        javaLayerConfigurations.getExtraFilesLayerEntry();
+        javaLayerConfigurations.getExtraFilesLayerEntries();
 
     Assert.assertEquals(
         Paths.get(JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)

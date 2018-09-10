@@ -88,9 +88,15 @@ public class BuildStepsRunnerTest {
     Mockito.when(mockBuildConfiguration.getLayerConfigurations())
         .thenReturn(
             ImmutableList.of(
-                LayerConfiguration.builder().addEntry(ImmutableList.of(), "ignored").build(),
-                LayerConfiguration.builder().addEntry(ImmutableList.of(), "ignored").build(),
-                LayerConfiguration.builder().addEntry(ImmutableList.of(), "ignored").build()));
+                LayerConfiguration.builder()
+                    .addEntry(Paths.get("ignored"), Paths.get("ignored"))
+                    .build(),
+                LayerConfiguration.builder()
+                    .addEntry(Paths.get("ignored"), Paths.get("ignored"))
+                    .build(),
+                LayerConfiguration.builder()
+                    .addEntry(Paths.get("ignored"), Paths.get("ignored"))
+                    .build()));
   }
 
   @Test

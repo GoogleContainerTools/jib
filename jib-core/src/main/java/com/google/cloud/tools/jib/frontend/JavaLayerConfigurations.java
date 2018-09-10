@@ -134,27 +134,27 @@ public class JavaLayerConfigurations {
     return layerConfigurationMap.values().asList();
   }
 
-  public ImmutableList<LayerEntry> getDependenciesLayerEntry() {
-    return getLayerEntry(LayerType.DEPENDENCIES);
+  public ImmutableList<LayerEntry> getDependencyLayerEntries() {
+    return getLayerEntries(LayerType.DEPENDENCIES);
   }
 
-  public ImmutableList<LayerEntry> getSnapshotDependenciesLayerEntry() {
-    return getLayerEntry(LayerType.SNAPSHOT_DEPENDENCIES);
+  public ImmutableList<LayerEntry> getSnapshotDependencyLayerEntries() {
+    return getLayerEntries(LayerType.SNAPSHOT_DEPENDENCIES);
   }
 
-  public ImmutableList<LayerEntry> getResourcesLayerEntry() {
-    return getLayerEntry(LayerType.RESOURCES);
+  public ImmutableList<LayerEntry> getResourceLayerEntries() {
+    return getLayerEntries(LayerType.RESOURCES);
   }
 
-  public ImmutableList<LayerEntry> getClassesLayerEntry() {
-    return getLayerEntry(LayerType.CLASSES);
+  public ImmutableList<LayerEntry> getClassLayerEntries() {
+    return getLayerEntries(LayerType.CLASSES);
   }
 
-  public ImmutableList<LayerEntry> getExtraFilesLayerEntry() {
-    return getLayerEntry(LayerType.EXTRA_FILES);
+  public ImmutableList<LayerEntry> getExtraFilesLayerEntries() {
+    return getLayerEntries(LayerType.EXTRA_FILES);
   }
 
-  private ImmutableList<LayerEntry> getLayerEntry(LayerType layerType) {
+  private ImmutableList<LayerEntry> getLayerEntries(LayerType layerType) {
     return Preconditions.checkNotNull(layerConfigurationMap.get(layerType)).getLayerEntries();
   }
 }

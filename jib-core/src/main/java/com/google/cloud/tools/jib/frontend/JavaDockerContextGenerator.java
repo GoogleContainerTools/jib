@@ -151,23 +151,23 @@ public class JavaDockerContextGenerator {
     ImmutableList.Builder<CopyDirective> copyDirectivesBuilder = ImmutableList.builder();
     addIfNotEmpty(
         copyDirectivesBuilder,
-        javaLayerConfigurations.getDependenciesLayerEntry(),
+        javaLayerConfigurations.getDependencyLayerEntries(),
         DEPENDENCIES_LAYER_DIRECTORY);
     addIfNotEmpty(
         copyDirectivesBuilder,
-        javaLayerConfigurations.getSnapshotDependenciesLayerEntry(),
+        javaLayerConfigurations.getSnapshotDependencyLayerEntries(),
         SNAPSHOT_DEPENDENCIES_LAYER_DIRECTORY);
     addIfNotEmpty(
         copyDirectivesBuilder,
-        javaLayerConfigurations.getResourcesLayerEntry(),
+        javaLayerConfigurations.getResourceLayerEntries(),
         RESOURCES_LAYER_DIRECTORY);
     addIfNotEmpty(
         copyDirectivesBuilder,
-        javaLayerConfigurations.getClassesLayerEntry(),
+        javaLayerConfigurations.getClassLayerEntries(),
         CLASSES_LAYER_DIRECTORY);
     addIfNotEmpty(
         copyDirectivesBuilder,
-        javaLayerConfigurations.getExtraFilesLayerEntry(),
+        javaLayerConfigurations.getExtraFilesLayerEntries(),
         EXTRA_FILES_LAYER_DIRECTORY);
     copyDirectives = copyDirectivesBuilder.build();
   }
