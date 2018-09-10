@@ -21,8 +21,10 @@ import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /** Immutable configuration options for the builder process. */
@@ -34,7 +36,7 @@ public class BuildConfiguration {
     // All the parameters below are set to their default values.
     @Nullable private ImageConfiguration baseImageConfiguration;
     @Nullable private ImageConfiguration targetImageConfiguration;
-    private ImmutableList<String> targetImageTags = ImmutableList.of();
+    private ImmutableSet<String> targetImageTags = ImmutableSet.of();
     @Nullable private ContainerConfiguration containerConfiguration;
     @Nullable private CacheConfiguration applicationLayersCacheConfiguration;
     @Nullable private CacheConfiguration baseImageLayersCacheConfiguration;
@@ -75,11 +77,11 @@ public class BuildConfiguration {
      * Sets the tags to tag the target image with (in addition to the tag in the target image
      * configuration image reference set via {@link #setTargetImageConfiguration}).
      *
-     * @param tags a list of tags
+     * @param tags a set of tags
      * @return this
      */
-    public Builder setTargetImageTags(List<String> tags) {
-      this.targetImageTags = ImmutableList.copyOf(tags);
+    public Builder setTargetImageTags(Set<String> tags) {
+      this.targetImageTags = ImmutableSet.copyOf(tags);
       return this;
     }
 
@@ -228,7 +230,7 @@ public class BuildConfiguration {
   private final JibLogger buildLogger;
   private final ImageConfiguration baseImageConfiguration;
   private final ImageConfiguration targetImageConfiguration;
-  private final ImmutableList<String> targetImageTags;
+  private final ImmutableSet<String> targetImageTags;
   @Nullable private final ContainerConfiguration containerConfiguration;
   @Nullable private final CacheConfiguration applicationLayersCacheConfiguration;
   @Nullable private final CacheConfiguration baseImageLayersCacheConfiguration;
@@ -242,7 +244,7 @@ public class BuildConfiguration {
       JibLogger buildLogger,
       ImageConfiguration baseImageConfiguration,
       ImageConfiguration targetImageConfiguration,
-      ImmutableList<String> targetImageTags,
+      ImmutableSet<String> targetImageTags,
       @Nullable ContainerConfiguration containerConfiguration,
       @Nullable CacheConfiguration applicationLayersCacheConfiguration,
       @Nullable CacheConfiguration baseImageLayersCacheConfiguration,
@@ -275,7 +277,7 @@ public class BuildConfiguration {
     return targetImageConfiguration;
   }
 
-  public ImmutableList<String> getTargetImageTags() {
+  public ImmutableSet<String> getTargetImageTags() {
     return targetImageTags;
   }
 

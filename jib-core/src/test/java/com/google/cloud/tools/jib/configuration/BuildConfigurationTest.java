@@ -26,12 +26,14 @@ import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -47,7 +49,7 @@ public class BuildConfigurationTest {
     String expectedTargetServerUrl = "someotherserver";
     String expectedTargetImageName = "targetimage";
     String expectedTargetTag = "targettag";
-    List<String> expectedTargetImageTags = Arrays.asList("tag1", "tag2", "tag3");
+    Set<String> expectedTargetImageTags = ImmutableSet.of("tag1", "tag2", "tag3");
     List<CredentialRetriever> credentialRetrievers =
         Collections.singletonList(() -> new Credential("username", "password"));
     Instant expectedCreationTime = Instant.ofEpochSecond(10000);
