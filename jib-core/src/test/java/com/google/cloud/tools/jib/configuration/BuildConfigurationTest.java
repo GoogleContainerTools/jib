@@ -47,6 +47,7 @@ public class BuildConfigurationTest {
     String expectedTargetServerUrl = "someotherserver";
     String expectedTargetImageName = "targetimage";
     String expectedTargetTag = "targettag";
+    List<String> expectedTargetImageTags = Arrays.asList("tag1", "tag2", "tag3");
     List<CredentialRetriever> credentialRetrievers =
         Collections.singletonList(() -> new Credential("username", "password"));
     Instant expectedCreationTime = Instant.ofEpochSecond(10000);
@@ -90,6 +91,7 @@ public class BuildConfigurationTest {
         BuildConfiguration.builder(Mockito.mock(JibLogger.class))
             .setBaseImageConfiguration(baseImageConfiguration)
             .setTargetImageConfiguration(targetImageConfiguration)
+            .setTargetImageTags(expectedTargetImageTags)
             .setContainerConfiguration(containerConfiguration)
             .setApplicationLayersCacheConfiguration(expectedApplicationLayersCacheConfiguration)
             .setBaseImageLayersCacheConfiguration(expectedBaseImageLayersCacheConfiguration)
@@ -117,6 +119,7 @@ public class BuildConfigurationTest {
         buildConfiguration.getTargetImageConfiguration().getImageRepository());
     Assert.assertEquals(
         expectedTargetTag, buildConfiguration.getTargetImageConfiguration().getImageTag());
+    Assert.assertEquals(expectedTargetImageTags, buildConfiguration.getTargetImageTags());
     Assert.assertEquals(
         new Credential("username", "password"),
         buildConfiguration
@@ -172,6 +175,7 @@ public class BuildConfigurationTest {
             .setTargetImageConfiguration(targetImageConfiguration)
             .build();
 
+    Assert.assertTrue(buildConfiguration.getTargetImageTags().isEmpty());
     Assert.assertEquals(V22ManifestTemplate.class, buildConfiguration.getTargetFormat());
     Assert.assertNull(buildConfiguration.getApplicationLayersCacheConfiguration());
     Assert.assertNull(buildConfiguration.getBaseImageLayersCacheConfiguration());

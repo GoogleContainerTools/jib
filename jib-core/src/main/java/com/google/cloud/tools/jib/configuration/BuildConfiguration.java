@@ -28,11 +28,13 @@ import javax.annotation.Nullable;
 /** Immutable configuration options for the builder process. */
 public class BuildConfiguration {
 
+  /** Builds an immutable {@link BuildConfiguration}. Instantiate with {@link #builder}. */
   public static class Builder {
 
     // All the parameters below are set to their default values.
     @Nullable private ImageConfiguration baseImageConfiguration;
     @Nullable private ImageConfiguration targetImageConfiguration;
+    private ImmutableList<String> targetImageTags = ImmutableList.of();
     @Nullable private ContainerConfiguration containerConfiguration;
     @Nullable private CacheConfiguration applicationLayersCacheConfiguration;
     @Nullable private CacheConfiguration baseImageLayersCacheConfiguration;
@@ -66,6 +68,18 @@ public class BuildConfiguration {
      */
     public Builder setTargetImageConfiguration(ImageConfiguration imageConfiguration) {
       this.targetImageConfiguration = imageConfiguration;
+      return this;
+    }
+
+    /**
+     * Sets the tags to tag the target image with (in addition to the tag in the target image
+     * configuration image reference set via {@link #setTargetImageConfiguration}).
+     *
+     * @param tags a list of tags
+     * @return this
+     */
+    public Builder setTargetImageTags(List<String> tags) {
+      this.targetImageTags = ImmutableList.copyOf(tags);
       return this;
     }
 
@@ -179,6 +193,7 @@ public class BuildConfiguration {
               buildLogger,
               baseImageConfiguration,
               targetImageConfiguration,
+              targetImageTags,
               containerConfiguration,
               applicationLayersCacheConfiguration,
               baseImageLayersCacheConfiguration,
@@ -200,13 +215,20 @@ public class BuildConfiguration {
     }
   }
 
-  public static Builder builder(JibLogger buildLogger) {
-    return new Builder(buildLogger);
+  /**
+   * Creates a new {@link Builder} to build a {@link BuildConfiguration}.
+   *
+   * @param jibLogger the logger to log messages during build
+   * @return a new {@link Builder}
+   */
+  public static Builder builder(JibLogger jibLogger) {
+    return new Builder(jibLogger);
   }
 
   private final JibLogger buildLogger;
   private final ImageConfiguration baseImageConfiguration;
   private final ImageConfiguration targetImageConfiguration;
+  private final ImmutableList<String> targetImageTags;
   @Nullable private final ContainerConfiguration containerConfiguration;
   @Nullable private final CacheConfiguration applicationLayersCacheConfiguration;
   @Nullable private final CacheConfiguration baseImageLayersCacheConfiguration;
@@ -215,11 +237,12 @@ public class BuildConfiguration {
   private final ImmutableList<LayerConfiguration> layerConfigurations;
   private final String toolName;
 
-  /** Instantiate with {@link Builder#build}. */
+  /** Instantiate with {@link #builder}. */
   private BuildConfiguration(
       JibLogger buildLogger,
       ImageConfiguration baseImageConfiguration,
       ImageConfiguration targetImageConfiguration,
+      ImmutableList<String> targetImageTags,
       @Nullable ContainerConfiguration containerConfiguration,
       @Nullable CacheConfiguration applicationLayersCacheConfiguration,
       @Nullable CacheConfiguration baseImageLayersCacheConfiguration,
@@ -230,6 +253,7 @@ public class BuildConfiguration {
     this.buildLogger = buildLogger;
     this.baseImageConfiguration = baseImageConfiguration;
     this.targetImageConfiguration = targetImageConfiguration;
+    this.targetImageTags = targetImageTags;
     this.containerConfiguration = containerConfiguration;
     this.applicationLayersCacheConfiguration = applicationLayersCacheConfiguration;
     this.baseImageLayersCacheConfiguration = baseImageLayersCacheConfiguration;
@@ -249,6 +273,10 @@ public class BuildConfiguration {
 
   public ImageConfiguration getTargetImageConfiguration() {
     return targetImageConfiguration;
+  }
+
+  public ImmutableList<String> getTargetImageTags() {
+    return targetImageTags;
   }
 
   @Nullable
