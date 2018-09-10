@@ -1,9 +1,9 @@
 FROM somebaseimage
 
-COPY libs /app/libs
-COPY snapshot-libs /app/libs
-COPY resources /app/resources
-COPY classes /app/classes
+COPY libs /app/libs/
+COPY snapshot-libs /app/libs/
+COPY resources /app/resources/
+COPY classes /app/classes/
 COPY root /
 
 EXPOSE 1000/tcp

@@ -27,12 +27,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayDeque;
 import java.util.Arrays;
-import java.util.Deque;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -51,27 +48,36 @@ public class JavaDockerContextGeneratorTest {
   private static final Path EXPECTED_CLASSES_PATH = Paths.get("/app/classes/");
 
   private static void assertSameFiles(Path directory1, Path directory2) throws IOException {
-    Deque<Path> directory1Paths = new ArrayDeque<>(new DirectoryWalker(directory1).walk());
-
-    new DirectoryWalker(directory2)
-        .walk(
-            directory2Path ->
-                Assert.assertEquals(
-                    directory1.relativize(directory1Paths.pop()),
-                    directory2.relativize(directory2Path)));
-
-    Assert.assertEquals(0, directory1Paths.size());
-  }
-
-  private static ImmutableList<Path> listFilesInDirectory(Path directory) throws IOException {
-    try (Stream<Path> files = Files.list(directory)) {
-      return files.collect(ImmutableList.toImmutableList());
-    }
+    ImmutableList<Path> directory1Files =
+        new DirectoryWalker(directory1)
+            .walk()
+            .stream()
+            .map(directory1::relativize)
+            .collect(ImmutableList.toImmutableList());
+    ImmutableList<Path> directory2Files =
+        new DirectoryWalker(directory2)
+            .walk()
+            .stream()
+            .map(directory2::relativize)
+            .collect(ImmutableList.toImmutableList());
+    Assert.assertEquals(directory1Files, directory2Files);
   }
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Mock private JavaLayerConfigurations mockJavaLayerConfigurations;
+
+  private ImmutableList<LayerEntry> filesToLayerEntries(Path directory, Path extractionPathRoot)
+      throws IOException {
+    return new DirectoryWalker(directory)
+        .walk()
+        .stream()
+        .map(
+            sourceFile ->
+                new LayerEntry(
+                    sourceFile, extractionPathRoot.resolve(directory.relativize(sourceFile))))
+        .collect(ImmutableList.toImmutableList());
+  }
 
   @Test
   public void testGenerate() throws IOException, URISyntaxException {
@@ -82,13 +88,6 @@ public class JavaDockerContextGeneratorTest {
     Path testClasses = Paths.get(Resources.getResource("application/classes").toURI());
     Path testExtraFiles = Paths.get(Resources.getResource("layer").toURI());
 
-    ImmutableList<Path> expectedDependenciesFiles = listFilesInDirectory(testDependencies);
-    ImmutableList<Path> expectedSnapshotDependenciesFiles =
-        listFilesInDirectory(testSnapshotDependencies);
-    ImmutableList<Path> expectedResourcesFiles = listFilesInDirectory(testResources);
-    ImmutableList<Path> expectedClassesFiles = listFilesInDirectory(testClasses);
-    ImmutableList<Path> expectedExtraFiles = listFilesInDirectory(testExtraFiles);
-
     Path targetDirectory = temporaryFolder.newFolder().toPath();
 
     /*
@@ -98,52 +97,16 @@ public class JavaDockerContextGeneratorTest {
     Files.delete(targetDirectory);
 
     Mockito.when(mockJavaLayerConfigurations.getDependencyLayerEntries())
-        .thenReturn(
-            expectedDependenciesFiles
-                .stream()
-                .map(
-                    sourceFile ->
-                        new LayerEntry(
-                            sourceFile,
-                            EXPECTED_DEPENDENCIES_PATH.resolve(sourceFile.getFileName())))
-                .collect(ImmutableList.toImmutableList()));
+        .thenReturn(filesToLayerEntries(testDependencies, EXPECTED_DEPENDENCIES_PATH));
     Mockito.when(mockJavaLayerConfigurations.getSnapshotDependencyLayerEntries())
-        .thenReturn(
-            expectedSnapshotDependenciesFiles
-                .stream()
-                .map(
-                    sourceFile ->
-                        new LayerEntry(
-                            sourceFile,
-                            EXPECTED_DEPENDENCIES_PATH.resolve(sourceFile.getFileName())))
-                .collect(ImmutableList.toImmutableList()));
+        .thenReturn(filesToLayerEntries(testSnapshotDependencies, EXPECTED_DEPENDENCIES_PATH));
     Mockito.when(mockJavaLayerConfigurations.getResourceLayerEntries())
-        .thenReturn(
-            expectedResourcesFiles
-                .stream()
-                .map(
-                    sourceFile ->
-                        new LayerEntry(
-                            sourceFile, EXPECTED_RESOURCES_PATH.resolve(sourceFile.getFileName())))
-                .collect(ImmutableList.toImmutableList()));
+        .thenReturn(filesToLayerEntries(testResources, EXPECTED_RESOURCES_PATH));
     Mockito.when(mockJavaLayerConfigurations.getClassLayerEntries())
-        .thenReturn(
-            expectedClassesFiles
-                .stream()
-                .map(
-                    sourceFile ->
-                        new LayerEntry(
-                            sourceFile, EXPECTED_CLASSES_PATH.resolve(sourceFile.getFileName())))
-                .collect(ImmutableList.toImmutableList()));
+        .thenReturn(filesToLayerEntries(testClasses, EXPECTED_CLASSES_PATH));
     Mockito.when(mockJavaLayerConfigurations.getExtraFilesLayerEntries())
-        .thenReturn(
-            expectedExtraFiles
-                .stream()
-                .map(
-                    sourceFile ->
-                        new LayerEntry(
-                            sourceFile, Paths.get("/").resolve(sourceFile.getFileName())))
-                .collect(ImmutableList.toImmutableList()));
+        .thenReturn(filesToLayerEntries(testExtraFiles, Paths.get("/")));
+
     new JavaDockerContextGenerator(mockJavaLayerConfigurations)
         .setBaseImage("somebaseimage")
         .generate(targetDirectory);
