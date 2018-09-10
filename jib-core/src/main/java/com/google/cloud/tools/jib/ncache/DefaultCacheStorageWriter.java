@@ -215,6 +215,22 @@ class DefaultCacheStorageWriter {
     // Creates the selectors directory if it doesn't exist.
     Files.createDirectories(selectorFile.getParent());
 
-    Blobs.writeToFileWithLock(Blobs.from(layerDigest.getHash()), selectorFile);
+    // Writes the selector to a temporary file and then moves the file to the intended location.
+    Path temporarySelectorFile = Files.createTempFile(null, null);
+    temporarySelectorFile.toFile().deleteOnExit();
+    Blobs.writeToFileWithLock(Blobs.from(layerDigest.getHash()), temporarySelectorFile);
+
+    // Attempts an atomic move first, and falls back to non-atomic if the file system does not
+    // support atomic moves.
+    try {
+      Files.move(
+          temporarySelectorFile,
+          selectorFile,
+          StandardCopyOption.ATOMIC_MOVE,
+          StandardCopyOption.REPLACE_EXISTING);
+
+    } catch (AtomicMoveNotSupportedException ignored) {
+      Files.move(temporarySelectorFile, selectorFile, StandardCopyOption.REPLACE_EXISTING);
+    }
   }
 }
