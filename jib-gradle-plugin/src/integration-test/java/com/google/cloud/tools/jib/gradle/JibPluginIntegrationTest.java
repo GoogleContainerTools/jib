@@ -323,12 +323,12 @@ public class JibPluginIntegrationTest {
                 .toString())
         .run();
 
-    new DirectoryWalker(simpleTestProject
-        .getProjectRoot()
-        .resolve("build")
-        .resolve("jib-docker-context")).walk(path -> {
-          System.out.println("walking: " + path);
-    });
+    new DirectoryWalker(
+            simpleTestProject.getProjectRoot().resolve("build").resolve("jib-docker-context"))
+        .walk(
+            path -> {
+              System.out.println("walking: " + path);
+            });
 
     assertDockerInspect(imageName);
     Assert.assertEquals(
