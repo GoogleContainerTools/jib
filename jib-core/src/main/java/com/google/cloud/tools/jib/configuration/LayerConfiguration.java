@@ -24,7 +24,7 @@ import java.nio.file.Path;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/** Configures how to build a layer in the container image. */
+/** Configures how to build a layer in the container image. Instantiate with {@link #builder}. */
 public class LayerConfiguration {
 
   /** Builds a {@link LayerConfiguration}. */
@@ -78,7 +78,6 @@ public class LayerConfiguration {
      * @return this
      * @throws IOException if an exception occurred when recursively listing the directory
      */
-    // @Untested
     public Builder addEntryRecursive(Path sourceFile, Path pathInContainer) throws IOException {
       if (!Files.isDirectory(sourceFile)) {
         return addEntry(sourceFile, pathInContainer);
@@ -102,6 +101,11 @@ public class LayerConfiguration {
     }
   }
 
+  /**
+   * Builds a {@link LayerConfiguration}.
+   *
+   * @return a new {@link Builder}
+   */
   public static Builder builder() {
     return new Builder();
   }
@@ -110,7 +114,7 @@ public class LayerConfiguration {
   private final String label;
 
   /**
-   * Constructs a new layer configuration.
+   * Use {@link #builder} to instantiate.
    *
    * @param label an optional label for the layer
    * @param layerEntries the list of {@link LayerEntry}s

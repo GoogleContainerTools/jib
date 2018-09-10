@@ -44,12 +44,12 @@ public class JavaLayerConfigurations {
     EXTRA_FILES("extra files", "/");
 
     private final String label;
-    private final String extractionPath;
+    private final Path extractionPath;
 
     /** Initializes with a label for the layer and the layer files' default extraction path root. */
     LayerType(String label, String extractionPath) {
       this.label = label;
-      this.extractionPath = extractionPath;
+      this.extractionPath = Paths.get(extractionPath);
     }
 
     @VisibleForTesting
@@ -59,14 +59,13 @@ public class JavaLayerConfigurations {
 
     @VisibleForTesting
     Path getExtractionPath() {
-      return Paths.get(extractionPath);
+      return extractionPath;
     }
   }
 
   /** Builds with each layer's files. */
   public static class Builder {
 
-    // TODO: Change to use Multimap.
     private final Map<LayerType, List<Path>> layerFilesMap = new EnumMap<>(LayerType.class);
 
     private Builder() {

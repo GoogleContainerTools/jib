@@ -98,22 +98,22 @@ public class CacheTest {
         DescriptorDigest.fromHash(
             "6f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef");
 
-    LayerEntry layerEntry1A =
+    LayerEntry layerEntry1 =
         new LayerEntry(Paths.get("some", "file"), Paths.get("extractionPath1"));
-    LayerEntry layerEntry1B =
+    LayerEntry layerEntry2 =
         new LayerEntry(Paths.get("some", "other", "file"), Paths.get("extractionPath1"));
-    LayerEntry layerEntry2A =
+    LayerEntry layerEntry3 =
         new LayerEntry(Paths.get("another", "file"), Paths.get("extractionPath2"));
-    LayerEntry layerEntry2B =
+    LayerEntry layerEntry4 =
         new LayerEntry(Paths.get("yet", "another", "file"), Paths.get("extractionPath2"));
 
     LayerMetadata layerMetadata1 =
         LayerMetadata.from(
-            ImmutableList.of(layerEntry1A, layerEntry1B, layerEntry2A, layerEntry2B),
+            ImmutableList.of(layerEntry1, layerEntry2, layerEntry3, layerEntry4),
             FileTime.from(Instant.now()));
     LayerMetadata layerMetadata2 =
         LayerMetadata.from(
-            ImmutableList.of(layerEntry2A, layerEntry2B), FileTime.from(Instant.EPOCH));
+            ImmutableList.of(layerEntry3, layerEntry4), FileTime.from(Instant.EPOCH));
 
     DescriptorDigest mockDiffId =
         DescriptorDigest.fromHash(
@@ -158,7 +158,7 @@ public class CacheTest {
       Assert.assertEquals(2, layerMetadata.getEntries().size());
       Assert.assertEquals(FileTime.from(Instant.EPOCH), layerMetadata.getLastModifiedTime());
       Assert.assertEquals(
-          ImmutableList.of(layerEntry2A.getSourceFileString(), layerEntry2B.getSourceFileString()),
+          ImmutableList.of(layerEntry3.getSourceFileString(), layerEntry4.getSourceFileString()),
           layerMetadata
               .getEntries()
               .stream()
@@ -166,7 +166,7 @@ public class CacheTest {
               .collect(ImmutableList.toImmutableList()));
       Assert.assertEquals(
           ImmutableList.of(
-              layerEntry2A.getExtractionPathString(), layerEntry2B.getExtractionPathString()),
+              layerEntry3.getExtractionPathString(), layerEntry4.getExtractionPathString()),
           layerMetadata
               .getEntries()
               .stream()

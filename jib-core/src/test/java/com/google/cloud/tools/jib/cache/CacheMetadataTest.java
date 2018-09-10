@@ -72,8 +72,6 @@ public class CacheMetadataTest {
 
   @Test
   public void testFilter_doLayerEntriesMatchMetadataEntries_extractionPath() {
-    ImmutableList<LayerEntry> layerEntries =
-        ImmutableList.of(new LayerEntry(Paths.get("sourceFile"), Paths.get("extractionPath")));
     ImmutableList<LayerMetadata.LayerMetadataEntry> metadataEntries =
         LayerMetadata.from(
                 ImmutableList.of(
@@ -84,8 +82,8 @@ public class CacheMetadataTest {
 
     Assert.assertFalse(
         CacheMetadata.LayerFilter.doLayerEntriesMatchMetadataEntries(
-            layerEntries, metadataEntries));
-
+            ImmutableList.of(new LayerEntry(Paths.get("sourceFile"), Paths.get("extractionPath"))),
+            metadataEntries));
     Assert.assertTrue(
         CacheMetadata.LayerFilter.doLayerEntriesMatchMetadataEntries(
             ImmutableList.of(
@@ -95,18 +93,18 @@ public class CacheMetadataTest {
 
   @Test
   public void testFilter_doLayerEntriesMatchMetadataEntries_pass() {
-    LayerEntry layerEntry1A = new LayerEntry(Paths.get("sourceFile1"), Paths.get("extractionPath"));
-    LayerEntry layerEntry1B = new LayerEntry(Paths.get("sourceFile2"), Paths.get("extractionPath"));
-    LayerEntry layerEntry2A =
+    LayerEntry layerEntry1 = new LayerEntry(Paths.get("sourceFile1"), Paths.get("extractionPath"));
+    LayerEntry layerEntry2 = new LayerEntry(Paths.get("sourceFile2"), Paths.get("extractionPath"));
+    LayerEntry layerEntry3 =
         new LayerEntry(Paths.get("sourceFile3"), Paths.get("anotherExtractionPath"));
-    LayerEntry layerEntry2B =
+    LayerEntry layerEntry4 =
         new LayerEntry(Paths.get("sourceFile4"), Paths.get("anotherExtractionPath"));
 
     ImmutableList<LayerEntry> layerEntries =
-        ImmutableList.of(layerEntry1A, layerEntry1B, layerEntry2A, layerEntry2B);
+        ImmutableList.of(layerEntry1, layerEntry2, layerEntry3, layerEntry4);
     ImmutableList<LayerMetadata.LayerMetadataEntry> metadataEntries =
         LayerMetadata.from(
-                ImmutableList.of(layerEntry1A, layerEntry1B, layerEntry2A, layerEntry2B),
+                ImmutableList.of(layerEntry1, layerEntry2, layerEntry3, layerEntry4),
                 FileTime.fromMillis(0))
             .getEntries();
 

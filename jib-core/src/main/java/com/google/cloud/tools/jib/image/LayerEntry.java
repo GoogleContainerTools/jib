@@ -67,19 +67,9 @@ public class LayerEntry {
    *
    * @return the source file path
    */
-  // TODO: Should use absolute path instead.
   public String getSourceFileString() {
     return sourceFile.toString();
   }
-
-  // /**
-  //  * Gets the source file absolute path in string form.
-  //  *
-  //  * @return the source file absolute path
-  //  */
-  // public String getSourceFileString() {
-  //   return sourceFile.toAbsolutePath().toString();
-  // }
 
   /**
    * Gets the extraction path in string form. This does <b>not</b> convert the extraction path to an

@@ -30,21 +30,21 @@ class LayerMetadata {
   /** Entry into the layer metadata. */
   static class LayerMetadataEntry {
 
-    private String sourceFilesString;
-    private String extractionPath;
+    private final String sourceFilesString;
+    private final String extractionPathString;
 
     String getSourceFilesString() {
       return sourceFilesString;
     }
 
     String getExtractionPathString() {
-      return extractionPath;
+      return extractionPathString;
     }
 
     @VisibleForTesting
-    LayerMetadataEntry(String sourceFilesString, String extractionPath) {
+    LayerMetadataEntry(String sourceFilesString, String extractionPathString) {
       this.sourceFilesString = sourceFilesString;
-      this.extractionPath = extractionPath;
+      this.extractionPathString = extractionPathString;
     }
   }
 

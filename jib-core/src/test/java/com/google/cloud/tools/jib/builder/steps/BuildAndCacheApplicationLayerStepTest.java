@@ -52,7 +52,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class BuildAndCacheApplicationLayerStepTest {
 
   // TODO: Consolidate with BuildStepsIntegrationTest.
-  private static final Path EXTRACTION_PATH = Paths.get("/some/extraction/path/");
+  private static final Path EXTRACTION_PATH_ROOT = Paths.get("/some/extraction/path/");
 
   private static final Path EXTRA_FILES_LAYER_EXTRACTION_PATH = Paths.get("/extra");
 
@@ -60,17 +60,15 @@ public class BuildAndCacheApplicationLayerStepTest {
    * Lists the files in the {@code resourcePath} resources directory and creates a {@link
    * LayerConfiguration} with entries from those files.
    */
-  private static LayerConfiguration getLayerConfiguration(String resourcePath, Path extractionPath)
+  private static LayerConfiguration makeLayerConfiguration(String resourcePath, Path extractionPath)
       throws URISyntaxException, IOException {
     try (Stream<Path> fileStream =
         Files.list(Paths.get(Resources.getResource(resourcePath).toURI()))) {
-      ImmutableList<Path> sourceFiles = fileStream.collect(ImmutableList.toImmutableList());
-
       LayerConfiguration.Builder layerConfigurationBuilder = LayerConfiguration.builder();
-      for (Path sourceFile : sourceFiles) {
-        layerConfigurationBuilder.addEntry(
-            sourceFile, extractionPath.resolve(sourceFile.getFileName()));
-      }
+      fileStream.forEach(
+          sourceFile ->
+              layerConfigurationBuilder.addEntry(
+                  sourceFile, extractionPath.resolve(sourceFile.getFileName())));
       return layerConfigurationBuilder.build();
     }
   }
@@ -90,22 +88,22 @@ public class BuildAndCacheApplicationLayerStepTest {
   @Before
   public void setUp() throws IOException, URISyntaxException {
     fakeDependenciesLayerConfiguration =
-        getLayerConfiguration("application/dependencies", EXTRACTION_PATH.resolve("libs/"));
+        makeLayerConfiguration("application/dependencies", EXTRACTION_PATH_ROOT.resolve("libs"));
     fakeSnapshotDependenciesLayerConfiguration =
-        getLayerConfiguration(
-            "application/snapshot-dependencies", EXTRACTION_PATH.resolve("libs/"));
+        makeLayerConfiguration(
+            "application/snapshot-dependencies", EXTRACTION_PATH_ROOT.resolve("libs"));
     fakeResourcesLayerConfiguration =
-        getLayerConfiguration("application/resources", EXTRACTION_PATH.resolve("resources/"));
+        makeLayerConfiguration("application/resources", EXTRACTION_PATH_ROOT.resolve("resources"));
     fakeClassesLayerConfiguration =
-        getLayerConfiguration("application/classes", EXTRACTION_PATH.resolve("classes/"));
+        makeLayerConfiguration("application/classes", EXTRACTION_PATH_ROOT.resolve("classes"));
     fakeExtraFilesLayerConfiguration =
         LayerConfiguration.builder()
             .addEntry(
                 Paths.get(Resources.getResource("fileA").toURI()),
-                EXTRA_FILES_LAYER_EXTRACTION_PATH)
+                EXTRA_FILES_LAYER_EXTRACTION_PATH.resolve("fileA"))
             .addEntry(
                 Paths.get(Resources.getResource("fileB").toURI()),
-                EXTRA_FILES_LAYER_EXTRACTION_PATH)
+                EXTRA_FILES_LAYER_EXTRACTION_PATH.resolve("fileB"))
             .build();
     emptyLayerConfiguration = LayerConfiguration.builder().build();
     Mockito.when(mockBuildConfiguration.getBuildLogger()).thenReturn(new TestJibLogger());

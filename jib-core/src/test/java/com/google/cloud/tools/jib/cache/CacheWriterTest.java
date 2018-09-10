@@ -143,8 +143,8 @@ public class CacheWriterTest {
   }
 
   private long getTarGzModifiedTimeInCache() throws IOException {
-    try (Stream<Path> stream = Files.walk(temporaryCacheDirectory.getRoot().toPath())) {
-      return stream
+    try (Stream<Path> fileStream = Files.walk(temporaryCacheDirectory.getRoot().toPath())) {
+      return fileStream
           .filter(CacheWriterTest::isTarGz)
           .findFirst()
           .orElseThrow(AssertionError::new)

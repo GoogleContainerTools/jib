@@ -30,6 +30,7 @@ import javax.annotation.Nullable;
  */
 class CacheMetadata {
 
+  /** Builds a {@link CacheMetadata}. */
   static class Builder {
 
     private final ImageLayers.Builder<CachedLayerWithMetadata> layersBuilder =

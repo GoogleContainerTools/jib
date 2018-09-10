@@ -101,31 +101,48 @@ public class JavaDockerContextGeneratorTest {
         .thenReturn(
             expectedDependenciesFiles
                 .stream()
-                .map(sourceFile -> new LayerEntry(sourceFile, EXPECTED_DEPENDENCIES_PATH))
+                .map(
+                    sourceFile ->
+                        new LayerEntry(
+                            sourceFile,
+                            EXPECTED_DEPENDENCIES_PATH.resolve(sourceFile.getFileName())))
                 .collect(ImmutableList.toImmutableList()));
     Mockito.when(mockJavaLayerConfigurations.getSnapshotDependenciesLayerEntry())
         .thenReturn(
             expectedSnapshotDependenciesFiles
                 .stream()
-                .map(sourceFile -> new LayerEntry(sourceFile, EXPECTED_DEPENDENCIES_PATH))
+                .map(
+                    sourceFile ->
+                        new LayerEntry(
+                            sourceFile,
+                            EXPECTED_DEPENDENCIES_PATH.resolve(sourceFile.getFileName())))
                 .collect(ImmutableList.toImmutableList()));
     Mockito.when(mockJavaLayerConfigurations.getResourcesLayerEntry())
         .thenReturn(
             expectedResourcesFiles
                 .stream()
-                .map(sourceFile -> new LayerEntry(sourceFile, EXPECTED_DEPENDENCIES_PATH))
+                .map(
+                    sourceFile ->
+                        new LayerEntry(
+                            sourceFile, EXPECTED_RESOURCES_PATH.resolve(sourceFile.getFileName())))
                 .collect(ImmutableList.toImmutableList()));
     Mockito.when(mockJavaLayerConfigurations.getClassesLayerEntry())
         .thenReturn(
             expectedClassesFiles
                 .stream()
-                .map(sourceFile -> new LayerEntry(sourceFile, EXPECTED_DEPENDENCIES_PATH))
+                .map(
+                    sourceFile ->
+                        new LayerEntry(
+                            sourceFile, EXPECTED_CLASSES_PATH.resolve(sourceFile.getFileName())))
                 .collect(ImmutableList.toImmutableList()));
     Mockito.when(mockJavaLayerConfigurations.getExtraFilesLayerEntry())
         .thenReturn(
             expectedExtraFiles
                 .stream()
-                .map(sourceFile -> new LayerEntry(sourceFile, EXPECTED_DEPENDENCIES_PATH))
+                .map(
+                    sourceFile ->
+                        new LayerEntry(
+                            sourceFile, Paths.get("/").resolve(sourceFile.getFileName())))
                 .collect(ImmutableList.toImmutableList()));
     new JavaDockerContextGenerator(mockJavaLayerConfigurations)
         .setBaseImage("somebaseimage")

@@ -25,8 +25,8 @@ import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /** Translates {@link CacheMetadata} to and from {@link CacheMetadataTemplate}. */
 public class CacheMetadataTranslator {
@@ -101,17 +101,14 @@ public class CacheMetadataTranslator {
 
       if (cachedLayerWithMetadata.getMetadata() != null) {
         // Constructs the layer entry templates to add to the layer object template.
-        List<LayerEntryTemplate> layerEntryTemplates =
-            cachedLayerWithMetadata
-                .getMetadata()
-                .getEntries()
-                .stream()
-                .map(
-                    layerMetadataEntry ->
-                        new LayerEntryTemplate(
-                            layerMetadataEntry.getSourceFilesString(),
-                            layerMetadataEntry.getExtractionPathString()))
-                .collect(Collectors.toList());
+        ImmutableList<LayerMetadata.LayerMetadataEntry> metadataEntries =
+            cachedLayerWithMetadata.getMetadata().getEntries();
+        List<LayerEntryTemplate> layerEntryTemplates = new ArrayList<>(metadataEntries.size());
+        for (LayerMetadata.LayerMetadataEntry metadataEntry : metadataEntries) {
+          layerEntryTemplates.add(
+              new LayerEntryTemplate(
+                  metadataEntry.getSourceFilesString(), metadataEntry.getExtractionPathString()));
+        }
 
         layerObjectTemplate.setProperties(
             new CacheMetadataLayerPropertiesObjectTemplate()

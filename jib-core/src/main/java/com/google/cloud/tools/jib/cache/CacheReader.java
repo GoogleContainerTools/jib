@@ -34,10 +34,12 @@ import javax.annotation.Nullable;
 public class CacheReader {
 
   /**
-   * @param path the file to check.
-   * @return the last modified time for the file at {@code path}. Recursively finds the most recent
-   *     last modified time for all subfiles if the file is a directory.
-   * @throws IOException if checking the last modified time fails.
+   * Gets the last modified time for the file at {@code path}. Recursively finds the most recent
+   * last modified time for all subfiles if the file is a directory.
+   *
+   * @param path the file to check
+   * @return the last modified time for the file at {@code path}
+   * @throws IOException if checking the last modified time fails
    */
   private static FileTime getLastModifiedTime(Path path) throws IOException {
     if (Files.isDirectory(path)) {
@@ -119,7 +121,6 @@ public class CacheReader {
    * @throws IOException if reading the source files fails.
    * @throws CacheMetadataCorruptedException if reading the cache metadata fails.
    */
-  // TODO: I think this is broken currently.
   public Optional<CachedLayerWithMetadata> getUpToDateLayerByLayerEntries(
       ImmutableList<LayerEntry> layerEntries) throws IOException, CacheMetadataCorruptedException {
     // Grabs all the layers that have matching source files.
