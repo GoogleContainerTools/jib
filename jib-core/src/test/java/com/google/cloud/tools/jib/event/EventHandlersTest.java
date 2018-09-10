@@ -52,9 +52,7 @@ public class EventHandlersTest {
         new EventHandlers()
             .add(
                 new JibEventType<>(TestJibEvent1.class),
-                testJibEvent1 -> {
-                  Assert.assertEquals("payload", testJibEvent1.getPayload());
-                })
+                testJibEvent1 -> Assert.assertEquals("payload", testJibEvent1.getPayload()))
             .add(
                 new JibEventType<>(TestJibEvent2.class),
                 testJibEvent2 -> testJibEvent2.sayHello("Jib"))
@@ -71,17 +69,10 @@ public class EventHandlersTest {
     TestJibEvent2 testJibEvent2 = new TestJibEvent2();
 
     // Checks that the handlers handled their respective event types.
-    Assert.assertTrue(
-        eventHandlers.getHandlers().get(JibEvent.class).get(0).handle(mockTestJibEvent1));
-    Assert.assertTrue(eventHandlers.getHandlers().get(JibEvent.class).get(0).handle(testJibEvent2));
-    Assert.assertTrue(
-        eventHandlers.getHandlers().get(TestJibEvent1.class).get(0).handle(mockTestJibEvent1));
-    Assert.assertTrue(
-        eventHandlers.getHandlers().get(TestJibEvent2.class).get(0).handle(testJibEvent2));
-    Assert.assertFalse(
-        eventHandlers.getHandlers().get(TestJibEvent1.class).get(0).handle(testJibEvent2));
-    Assert.assertFalse(
-        eventHandlers.getHandlers().get(TestJibEvent2.class).get(0).handle(mockTestJibEvent1));
+    eventHandlers.getHandlers().get(JibEvent.class).asList().get(0).handle(mockTestJibEvent1);
+    eventHandlers.getHandlers().get(JibEvent.class).asList().get(0).handle(testJibEvent2);
+    eventHandlers.getHandlers().get(TestJibEvent1.class).asList().get(0).handle(mockTestJibEvent1);
+    eventHandlers.getHandlers().get(TestJibEvent2.class).asList().get(0).handle(testJibEvent2);
 
     Assert.assertEquals(2, counter[0]);
     Mockito.verify(mockTestJibEvent1).getPayload();
