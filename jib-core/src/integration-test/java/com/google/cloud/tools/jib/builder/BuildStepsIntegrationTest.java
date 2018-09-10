@@ -64,8 +64,10 @@ public class BuildStepsIntegrationTest {
     try (Stream<Path> fileStream =
         Files.list(Paths.get(Resources.getResource(resourcePath).toURI()))) {
       LayerConfiguration.Builder layerConfigurationBuilder = LayerConfiguration.builder();
-      fileStream.forEach(sourceFile -> layerConfigurationBuilder.addEntry(
-          sourceFile, pathInContainer.resolve(sourceFile.getFileName())));
+      fileStream.forEach(
+          sourceFile ->
+              layerConfigurationBuilder.addEntry(
+                  sourceFile, pathInContainer.resolve(sourceFile.getFileName())));
       return layerConfigurationBuilder.build();
     }
   }

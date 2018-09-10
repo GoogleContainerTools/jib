@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.image;
 
 import com.google.common.annotations.VisibleForTesting;
-
 import java.nio.file.Path;
 import java.util.Objects;
 

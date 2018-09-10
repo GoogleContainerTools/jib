@@ -21,7 +21,6 @@ import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
-
 import java.util.Iterator;
 import javax.annotation.Nullable;
 
@@ -78,13 +77,16 @@ class CacheMetadata {
 
       // Pairwise-compares all the layer entries with the metadata layer entries.
       Iterator<LayerEntry> layerEntriesIterator = layerEntries.iterator();
-      Iterator<LayerMetadata.LayerMetadataEntry> metadataEntriesIterator = metadataEntries.iterator();
+      Iterator<LayerMetadata.LayerMetadataEntry> metadataEntriesIterator =
+          metadataEntries.iterator();
       while (layerEntriesIterator.hasNext() && metadataEntriesIterator.hasNext()) {
         LayerEntry layerEntry = layerEntriesIterator.next();
         LayerMetadata.LayerMetadataEntry metadataEntry = metadataEntriesIterator.next();
 
-        boolean areSourceFilesEqual = layerEntry.getSourceFileString().equals(metadataEntry.getSourceFilesString());
-        boolean areExtractionPathsEqual = layerEntry.getExtractionPathString().equals(metadataEntry.getExtractionPathString());
+        boolean areSourceFilesEqual =
+            layerEntry.getSourceFileString().equals(metadataEntry.getSourceFilesString());
+        boolean areExtractionPathsEqual =
+            layerEntry.getExtractionPathString().equals(metadataEntry.getExtractionPathString());
         if (!areSourceFilesEqual || !areExtractionPathsEqual) {
           return false;
         }
