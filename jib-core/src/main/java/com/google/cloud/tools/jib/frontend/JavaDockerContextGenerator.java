@@ -267,10 +267,10 @@ public class JavaDockerContextGenerator {
       // Copies the source files to the directoryInContext.
       for (LayerEntry layerEntry : copyDirective.layerEntries) {
         // This resolves the path to copy the source file to in the {@code directory}.
-        // For example, for a 'baseDirectory' of 'target/jib-docker-context', a 'baseExtractionPath'
-        // of '/app/classes', and an 'actualExtractionPath' of
+        // For example, for a 'baseDirectory' of 'target/jib-docker-context/classes', a
+        // 'baseExtractionPath' of '/app/classes', and an 'actualExtractionPath' of
         // '/app/classes/com/test/HelloWorld.class', the resolved destination would be
-        // 'target/jib-docker-context/com/test/HelloWorld.class'.
+        // 'target/jib-docker-context/classes/com/test/HelloWorld.class'.
         Path destination =
             directoryInContext.resolve(
                 Paths.get(copyDirective.extractionPath).relativize(layerEntry.getExtractionPath()));
