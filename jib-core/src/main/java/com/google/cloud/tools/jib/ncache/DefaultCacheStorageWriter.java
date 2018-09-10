@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.ncache;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
-import com.google.cloud.tools.jib.filesystem.FileOperations;
 import com.google.cloud.tools.jib.filesystem.TemporaryDirectory;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
@@ -165,7 +164,7 @@ class DefaultCacheStorageWriter {
 
     try (CountingDigestOutputStream compressedDigestOutputStream =
         new CountingDigestOutputStream(
-            new BufferedOutputStream(FileOperations.newLockingOutputStream(temporaryLayerFile)))) {
+            new BufferedOutputStream(Files.newOutputStream(temporaryLayerFile)))) {
       // Writes the layer with GZIP compression. The original bytes are captured as the layer's
       // diff ID and the bytes outputted from the GZIP compression are captured as the layer's
       // content descriptor.
@@ -215,6 +214,22 @@ class DefaultCacheStorageWriter {
     // Creates the selectors directory if it doesn't exist.
     Files.createDirectories(selectorFile.getParent());
 
-    Blobs.writeToFileWithLock(Blobs.from(layerDigest.getHash()), selectorFile);
+    // Writes the selector to a temporary file and then moves the file to the intended location.
+    Path temporarySelectorFile = Files.createTempFile(null, null);
+    temporarySelectorFile.toFile().deleteOnExit();
+    Blobs.writeToFileWithLock(Blobs.from(layerDigest.getHash()), temporarySelectorFile);
+
+    // Attempts an atomic move first, and falls back to non-atomic if the file system does not
+    // support atomic moves.
+    try {
+      Files.move(
+          temporarySelectorFile,
+          selectorFile,
+          StandardCopyOption.ATOMIC_MOVE,
+          StandardCopyOption.REPLACE_EXISTING);
+
+    } catch (AtomicMoveNotSupportedException ignored) {
+      Files.move(temporarySelectorFile, selectorFile, StandardCopyOption.REPLACE_EXISTING);
+    }
   }
 }

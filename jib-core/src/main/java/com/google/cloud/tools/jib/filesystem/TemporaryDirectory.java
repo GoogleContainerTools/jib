@@ -16,32 +16,18 @@
 
 package com.google.cloud.tools.jib.filesystem;
 
+import com.google.common.io.MoreFiles;
+import com.google.common.io.RecursiveDeleteOption;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * A temporary directory that tries to delete itself upon close. Note that deletion is <b>NOT</b>
  * guaranteed.
  */
 public class TemporaryDirectory implements Closeable {
-
-  private static void recursivelyDelete(Path file) throws IOException {
-    if (!Files.isDirectory(file)) {
-      Files.deleteIfExists(file);
-      return;
-    }
-
-    try (Stream<Path> subFiles = Files.list(file)) {
-      for (Path subFile : subFiles.collect(Collectors.toList())) {
-        recursivelyDelete(subFile);
-      }
-    }
-    Files.delete(file);
-  }
 
   private final Path temporaryDirectory;
 
@@ -65,6 +51,8 @@ public class TemporaryDirectory implements Closeable {
 
   @Override
   public void close() throws IOException {
-    recursivelyDelete(temporaryDirectory);
+    if (Files.exists(temporaryDirectory)) {
+      MoreFiles.deleteRecursively(temporaryDirectory, RecursiveDeleteOption.ALLOW_INSECURE);
+    }
   }
 }

@@ -163,7 +163,7 @@ public class RegistryEndpointCallerTest {
     Mockito.verifyNoMoreInteractions(mockInsecureConnectionFactory);
 
     Mockito.verify(mockBuildLogger)
-        .warn(
+        .info(
             "Cannot verify server at https://apiRouteBase/api. Attempting again with no TLS verification.");
   }
 
@@ -190,10 +190,10 @@ public class RegistryEndpointCallerTest {
     Mockito.verifyNoMoreInteractions(mockInsecureConnectionFactory);
 
     Mockito.verify(mockBuildLogger)
-        .warn(
+        .info(
             "Cannot verify server at https://apiRouteBase/api. Attempting again with no TLS verification.");
     Mockito.verify(mockBuildLogger)
-        .warn(
+        .info(
             "Failed to connect to https://apiRouteBase/api over HTTPS. Attempting again with HTTP: http://apiRouteBase/api");
   }
 
@@ -216,7 +216,7 @@ public class RegistryEndpointCallerTest {
     Mockito.verifyNoMoreInteractions(mockInsecureConnectionFactory);
 
     Mockito.verify(mockBuildLogger)
-        .warn(
+        .info(
             "Failed to connect to https://apiRouteBase/api over HTTPS. Attempting again with HTTP: http://apiRouteBase/api");
   }
 
@@ -338,10 +338,10 @@ public class RegistryEndpointCallerTest {
     Mockito.verifyNoMoreInteractions(mockInsecureConnectionFactory);
 
     Mockito.verify(mockBuildLogger)
-        .warn(
+        .info(
             "Cannot verify server at https://apiRouteBase/api. Attempting again with no TLS verification.");
     Mockito.verify(mockBuildLogger)
-        .warn(
+        .info(
             "Failed to connect to https://apiRouteBase/api over HTTPS. Attempting again with HTTP: http://apiRouteBase/api");
   }
 
