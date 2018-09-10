@@ -99,6 +99,7 @@ public class MavenLayerConfigurationsTest {
         ImmutableList.of(
             applicationDirectory.resolve("output/HelloWorld.class"),
             applicationDirectory.resolve("output/package"),
+            applicationDirectory.resolve("output/package/some.class"),
             applicationDirectory.resolve("output/some.class"));
 
     JavaLayerConfigurations javaLayerConfigurations =
