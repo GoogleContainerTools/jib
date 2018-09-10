@@ -57,6 +57,8 @@ public class JavaDockerContextGenerator {
   private static final String SNAPSHOT_DEPENDENCIES_LAYER_DIRECTORY = "snapshot-libs";
   private static final String RESOURCES_LAYER_DIRECTORY = "resources";
   private static final String CLASSES_LAYER_DIRECTORY = "classes";
+  // TODO: remove this once we put files in WAR into the relevant layers (i.e., dependencies,
+  // snapshot dependencies, resources, and classes layers). Should copy files in the right
   private static final String EXPLODED_WAR_LAYER_DIRECTORY = "exploded-war";
   private static final String EXTRA_FILES_LAYER_DIRECTORY = "root";
 
@@ -161,6 +163,9 @@ public class JavaDockerContextGenerator {
         copyDirectivesBuilder,
         javaLayerConfigurations.getClassesLayerEntry(),
         CLASSES_LAYER_DIRECTORY);
+    // TODO: remove this once we put files in WAR into the relevant layers (i.e., dependencies,
+    // snapshot dependencies, resources, and classes layers). Should copy files in the right
+    // directories. (For example, "resources" will go into the webapp root.)
     addIfNotEmpty(
         copyDirectivesBuilder,
         javaLayerConfigurations.getExplodedWarEntry(),

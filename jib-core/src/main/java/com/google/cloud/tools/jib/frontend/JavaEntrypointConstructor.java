@@ -45,7 +45,7 @@ public class JavaEntrypointConstructor {
    * @see <a href="https://github.com/GoogleContainerTools/distroless/blob/master/java/jetty/BUILD">
    *     https://github.com/GoogleContainerTools/distroless/blob/master/java/jetty/BUILD</a>
    */
-  // TODO: inherit CMD and ENTRYPOINT from the base image and remove this. 
+  // TODO: inherit CMD and ENTRYPOINT from the base image and remove this.
   public static List<String> makeDistrolessJettyEntrypoint() {
     return Arrays.asList("java", "-jar", "/jetty/start.jar");
   }
