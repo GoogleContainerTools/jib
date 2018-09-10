@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
+import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
@@ -140,16 +141,39 @@ public class GradleLayerConfigurationsTest {
             mockProject, mockGradleJibLogger, Paths.get("nonexistent/path"));
     Assert.assertEquals(
         expectedDependenciesFiles,
-        javaLayerConfigurations.getDependenciesLayerEntry().getSourceFiles());
+        javaLayerConfigurations
+            .getDependencyLayerEntries()
+            .stream()
+            .map(LayerEntry::getSourceFile)
+            .collect(ImmutableList.toImmutableList()));
     Assert.assertEquals(
         expectedSnapshotDependenciesFiles,
-        javaLayerConfigurations.getSnapshotDependenciesLayerEntry().getSourceFiles());
+        javaLayerConfigurations
+            .getSnapshotDependencyLayerEntries()
+            .stream()
+            .map(LayerEntry::getSourceFile)
+            .collect(ImmutableList.toImmutableList()));
     Assert.assertEquals(
-        expectedResourcesFiles, javaLayerConfigurations.getResourcesLayerEntry().getSourceFiles());
+        expectedResourcesFiles,
+        javaLayerConfigurations
+            .getResourceLayerEntries()
+            .stream()
+            .map(LayerEntry::getSourceFile)
+            .collect(ImmutableList.toImmutableList()));
     Assert.assertEquals(
-        expectedClassesFiles, javaLayerConfigurations.getClassesLayerEntry().getSourceFiles());
+        expectedClassesFiles,
+        javaLayerConfigurations
+            .getClassLayerEntries()
+            .stream()
+            .map(LayerEntry::getSourceFile)
+            .collect(ImmutableList.toImmutableList()));
     Assert.assertEquals(
-        expectedExtraFiles, javaLayerConfigurations.getExtraFilesLayerEntry().getSourceFiles());
+        expectedExtraFiles,
+        javaLayerConfigurations
+            .getExtraFilesLayerEntries()
+            .stream()
+            .map(LayerEntry::getSourceFile)
+            .collect(ImmutableList.toImmutableList()));
   }
 
   @Test
@@ -178,11 +202,19 @@ public class GradleLayerConfigurationsTest {
 
     ImmutableList<Path> expectedExtraFiles =
         ImmutableList.of(
-            Paths.get(Resources.getResource("layer/a").toURI()),
-            Paths.get(Resources.getResource("layer/c").toURI()),
-            Paths.get(Resources.getResource("layer/foo").toURI()));
+            extraFilesDirectory.resolve("a"),
+            extraFilesDirectory.resolve("a/b"),
+            extraFilesDirectory.resolve("a/b/bar"),
+            extraFilesDirectory.resolve("c"),
+            extraFilesDirectory.resolve("c/cat"),
+            extraFilesDirectory.resolve("foo"));
 
     Assert.assertEquals(
-        expectedExtraFiles, javaLayerConfigurations.getExtraFilesLayerEntry().getSourceFiles());
+        expectedExtraFiles,
+        javaLayerConfigurations
+            .getExtraFilesLayerEntries()
+            .stream()
+            .map(LayerEntry::getSourceFile)
+            .collect(ImmutableList.toImmutableList()));
   }
 }

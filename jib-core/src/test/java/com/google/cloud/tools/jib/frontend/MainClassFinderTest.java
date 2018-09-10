@@ -17,8 +17,9 @@
 package com.google.cloud.tools.jib.frontend;
 
 import com.google.cloud.tools.jib.JibLogger;
-import com.google.common.collect.ImmutableList;
+import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.common.io.Resources;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -36,23 +37,21 @@ public class MainClassFinderTest {
   @Mock private JibLogger mockBuildLogger;
 
   @Test
-  public void testFindMainClass_simple() throws URISyntaxException {
+  public void testFindMainClass_simple() throws URISyntaxException, IOException {
     Path rootDirectory = Paths.get(Resources.getResource("class-finder-tests/simple").toURI());
     MainClassFinder.Result mainClassFinderResult =
-        new MainClassFinder(ImmutableList.of(rootDirectory.resolve("child")), mockBuildLogger)
-            .find();
+        new MainClassFinder(new DirectoryWalker(rootDirectory).walk(), mockBuildLogger).find();
     Assert.assertTrue(mainClassFinderResult.isSuccess());
     Assert.assertThat(
         mainClassFinderResult.getFoundMainClass(), CoreMatchers.containsString("HelloWorld"));
   }
 
   @Test
-  public void testFindMainClass_subdirectories() throws URISyntaxException {
+  public void testFindMainClass_subdirectories() throws URISyntaxException, IOException {
     Path rootDirectory =
         Paths.get(Resources.getResource("class-finder-tests/subdirectories").toURI());
     MainClassFinder.Result mainClassFinderResult =
-        new MainClassFinder(ImmutableList.of(rootDirectory.resolve("child")), mockBuildLogger)
-            .find();
+        new MainClassFinder(new DirectoryWalker(rootDirectory).walk(), mockBuildLogger).find();
     Assert.assertTrue(mainClassFinderResult.isSuccess());
     Assert.assertThat(
         mainClassFinderResult.getFoundMainClass(),
@@ -60,11 +59,10 @@ public class MainClassFinderTest {
   }
 
   @Test
-  public void testFindMainClass_noClass() throws URISyntaxException {
+  public void testFindMainClass_noClass() throws URISyntaxException, IOException {
     Path rootDirectory = Paths.get(Resources.getResource("class-finder-tests/no-main").toURI());
     MainClassFinder.Result mainClassFinderResult =
-        new MainClassFinder(ImmutableList.of(rootDirectory.resolve("child")), mockBuildLogger)
-            .find();
+        new MainClassFinder(new DirectoryWalker(rootDirectory).walk(), mockBuildLogger).find();
     Assert.assertFalse(mainClassFinderResult.isSuccess());
     Assert.assertEquals(
         MainClassFinder.Result.ErrorType.MAIN_CLASS_NOT_FOUND,
@@ -72,11 +70,10 @@ public class MainClassFinderTest {
   }
 
   @Test
-  public void testFindMainClass_multiple() throws URISyntaxException {
+  public void testFindMainClass_multiple() throws URISyntaxException, IOException {
     Path rootDirectory = Paths.get(Resources.getResource("class-finder-tests/multiple").toURI());
     MainClassFinder.Result mainClassFinderResult =
-        new MainClassFinder(ImmutableList.of(rootDirectory.resolve("child")), mockBuildLogger)
-            .find();
+        new MainClassFinder(new DirectoryWalker(rootDirectory).walk(), mockBuildLogger).find();
     Assert.assertFalse(mainClassFinderResult.isSuccess());
     Assert.assertEquals(
         MainClassFinder.Result.ErrorType.MULTIPLE_MAIN_CLASSES,
@@ -88,47 +85,43 @@ public class MainClassFinderTest {
   }
 
   @Test
-  public void testFindMainClass_extension() throws URISyntaxException {
+  public void testFindMainClass_extension() throws URISyntaxException, IOException {
     Path rootDirectory = Paths.get(Resources.getResource("class-finder-tests/extension").toURI());
     MainClassFinder.Result mainClassFinderResult =
-        new MainClassFinder(ImmutableList.of(rootDirectory.resolve("child")), mockBuildLogger)
-            .find();
+        new MainClassFinder(new DirectoryWalker(rootDirectory).walk(), mockBuildLogger).find();
     Assert.assertTrue(mainClassFinderResult.isSuccess());
     Assert.assertThat(
         mainClassFinderResult.getFoundMainClass(), CoreMatchers.containsString("main.MainClass"));
   }
 
   @Test
-  public void testFindMainClass_importedMethods() throws URISyntaxException {
+  public void testFindMainClass_importedMethods() throws URISyntaxException, IOException {
     Path rootDirectory =
         Paths.get(Resources.getResource("class-finder-tests/imported-methods").toURI());
     MainClassFinder.Result mainClassFinderResult =
-        new MainClassFinder(ImmutableList.of(rootDirectory.resolve("child")), mockBuildLogger)
-            .find();
+        new MainClassFinder(new DirectoryWalker(rootDirectory).walk(), mockBuildLogger).find();
     Assert.assertTrue(mainClassFinderResult.isSuccess());
     Assert.assertThat(
         mainClassFinderResult.getFoundMainClass(), CoreMatchers.containsString("main.MainClass"));
   }
 
   @Test
-  public void testFindMainClass_externalClasses() throws URISyntaxException {
+  public void testFindMainClass_externalClasses() throws URISyntaxException, IOException {
     Path rootDirectory =
         Paths.get(Resources.getResource("class-finder-tests/external-classes").toURI());
     MainClassFinder.Result mainClassFinderResult =
-        new MainClassFinder(ImmutableList.of(rootDirectory.resolve("child")), mockBuildLogger)
-            .find();
+        new MainClassFinder(new DirectoryWalker(rootDirectory).walk(), mockBuildLogger).find();
     Assert.assertTrue(mainClassFinderResult.isSuccess());
     Assert.assertThat(
         mainClassFinderResult.getFoundMainClass(), CoreMatchers.containsString("main.MainClass"));
   }
 
   @Test
-  public void testFindMainClass_innerClasses() throws URISyntaxException {
+  public void testFindMainClass_innerClasses() throws URISyntaxException, IOException {
     Path rootDirectory =
         Paths.get(Resources.getResource("class-finder-tests/inner-classes").toURI());
     MainClassFinder.Result mainClassFinderResult =
-        new MainClassFinder(ImmutableList.of(rootDirectory.resolve("child")), mockBuildLogger)
-            .find();
+        new MainClassFinder(new DirectoryWalker(rootDirectory).walk(), mockBuildLogger).find();
     Assert.assertTrue(mainClassFinderResult.isSuccess());
     Assert.assertThat(
         mainClassFinderResult.getFoundMainClass(),

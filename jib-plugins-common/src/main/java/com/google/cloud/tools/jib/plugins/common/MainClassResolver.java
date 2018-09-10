@@ -142,12 +142,6 @@ public class MainClassResolver {
                     + String.join(", ", mainClassFinderResult.getFoundMainClasses()),
                 projectProperties.getPluginName()));
 
-      case IO_EXCEPTION:
-        throw new MainClassInferenceException(
-            HelpfulSuggestions.forMainClassNotFound(
-                "Failed to get main class", projectProperties.getPluginName()),
-            mainClassFinderResult.getErrorCause());
-
       default:
         throw new IllegalStateException("Cannot reach here");
     }

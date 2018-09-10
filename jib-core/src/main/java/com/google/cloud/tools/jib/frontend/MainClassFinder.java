@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.frontend;
 
 import com.google.cloud.tools.jib.JibLogger;
-import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -25,19 +24,14 @@ import java.io.InputStream;
 import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtMethod;
 import javassist.NotFoundException;
 import javax.annotation.Nullable;
 
-/** Finds main classes in directories. */
-// TODO: Change to file main classes in a list of class files.
+/** Finds main classes in a list of class files.. */
 public class MainClassFinder {
 
   /** The result of a call to {@link #find}. */
@@ -45,9 +39,6 @@ public class MainClassFinder {
 
     /** The type of error. */
     public enum ErrorType {
-
-      // An IOException occurred.
-      IO_EXCEPTION,
 
       // Did not find any main class.
       MAIN_CLASS_NOT_FOUND,
@@ -57,35 +48,26 @@ public class MainClassFinder {
     }
 
     private static Result success(String foundMainClass) {
-      return new Result(true, Collections.singletonList(foundMainClass), null, null);
+      return new Result(true, Collections.singletonList(foundMainClass), null);
     }
 
     private static Result mainClassNotFound() {
-      return new Result(false, Collections.emptyList(), ErrorType.MAIN_CLASS_NOT_FOUND, null);
+      return new Result(false, Collections.emptyList(), ErrorType.MAIN_CLASS_NOT_FOUND);
     }
 
     private static Result multipleMainClasses(List<String> foundMainClasses) {
-      return new Result(false, foundMainClasses, ErrorType.MULTIPLE_MAIN_CLASSES, null);
-    }
-
-    private static Result ioException(IOException ioException) {
-      return new Result(false, Collections.emptyList(), ErrorType.IO_EXCEPTION, ioException);
+      return new Result(false, foundMainClasses, ErrorType.MULTIPLE_MAIN_CLASSES);
     }
 
     private final boolean isSuccess;
     private final List<String> foundMainClasses;
     @Nullable private final ErrorType errorType;
-    @Nullable private final Throwable errorCause;
 
     private Result(
-        boolean isSuccess,
-        List<String> foundMainClasses,
-        @Nullable ErrorType errorType,
-        @Nullable Throwable errorCause) {
+        boolean isSuccess, List<String> foundMainClasses, @Nullable ErrorType errorType) {
       this.isSuccess = isSuccess;
       this.foundMainClasses = foundMainClasses;
       this.errorType = errorType;
-      this.errorCause = errorCause;
     }
 
     /**
@@ -118,16 +100,6 @@ public class MainClassFinder {
     }
 
     /**
-     * Gets the cause of the error. Call only if {@link #getErrorType} is {@link
-     * ErrorType#IO_EXCEPTION}.
-     *
-     * @return the cause of the error, or {@code null} if not available
-     */
-    public Throwable getErrorCause() {
-      return Preconditions.checkNotNull(errorCause);
-    }
-
-    /**
      * Gets the found main classes.
      *
      * @return the found main classes
@@ -137,66 +109,56 @@ public class MainClassFinder {
     }
   }
 
-  private final ImmutableList<Path> classesFiles;
+  private final ImmutableList<Path> files;
   private final JibLogger buildLogger;
 
   /**
-   * Finds a class with {@code psvm} in {@code classesFiles}.
+   * Finds a class with {@code psvm} in {@code files}.
    *
-   * @param classesFiles the classes files to check
+   * @param files the files to check
    * @param buildLogger used for displaying status messages.
    */
-  public MainClassFinder(ImmutableList<Path> classesFiles, JibLogger buildLogger) {
-    this.classesFiles = classesFiles;
+  public MainClassFinder(ImmutableList<Path> files, JibLogger buildLogger) {
+    this.files = files;
     this.buildLogger = buildLogger;
   }
 
   /**
-   * Tries to find a class with {@code psvm} in {@link #classesFiles}.
+   * Tries to find a class with {@code psvm} in {@link #files}.
    *
    * @return the {@link Result} of the main class finding attempt
    */
   public Result find() {
-    try {
-      List<String> mainClasses = new ArrayList<>();
-      Set<Path> roots = new HashSet<>();
-      for (Path classPath : classesFiles) {
-        roots.add(classPath.getParent());
-      }
-      for (Path root : roots) {
-        mainClasses.addAll(findMainClasses(root));
-      }
-
-      if (mainClasses.size() == 1) {
-        // Valid class found.
-        return Result.success(mainClasses.get(0));
-      }
-      if (mainClasses.size() == 0) {
-        // No main class found anywhere.
-        return Result.mainClassNotFound();
-      }
-      // More than one main class found.
-      return Result.multipleMainClasses(mainClasses);
-
-    } catch (IOException ex) {
-      return Result.ioException(ex);
+    List<String> mainClasses = new ArrayList<>();
+    for (Path file : files) {
+      findMainClass(file).ifPresent(mainClasses::add);
     }
+
+    if (mainClasses.size() == 1) {
+      // Valid class found.
+      return Result.success(mainClasses.get(0));
+    }
+    if (mainClasses.size() == 0) {
+      // No main class found anywhere.
+      return Result.mainClassNotFound();
+    }
+    // More than one main class found.
+    return Result.multipleMainClasses(mainClasses);
   }
 
   /**
-   * Finds the classes with {@code public static void main(String[] args)} in {@code rootDirectory}.
+   * Checks the {@code file} for being a {@code .class} file with {@code public static void
+   * main(String[] args)}.
    *
-   * @param rootDirectory directory containing the {@code .class} files.
-   * @return a list of class names containing a main method.
-   * @throws IOException if searching the root directory fails.
+   * @param file the file
+   * @return name of the class containing a main method, or {@link Optional#empty} if {@code
+   *     classFile} is not a class
    */
-  private List<String> findMainClasses(Path rootDirectory) throws IOException {
-    // Makes sure rootDirectory is valid.
-    if (!Files.exists(rootDirectory) || !Files.isDirectory(rootDirectory)) {
-      return Collections.emptyList();
+  private Optional<String> findMainClass(Path file) {
+    // Makes sure classFile is valid.
+    if (!Files.exists(file) || !Files.isRegularFile(file) || !file.toString().endsWith(".class")) {
+      return Optional.empty();
     }
-
-    List<String> classNames = new ArrayList<>();
 
     ClassPool classPool = new ClassPool();
     classPool.appendSystemPath();
@@ -204,37 +166,31 @@ public class MainClassFinder {
     try {
       CtClass[] mainMethodParams = new CtClass[] {classPool.get("java.lang.String[]")};
 
-      new DirectoryWalker(rootDirectory)
-          .filter(Files::isRegularFile)
-          .filter(path -> path.toString().endsWith(".class"))
-          .walk(
-              classFile -> {
-                try (InputStream classFileInputStream = Files.newInputStream(classFile)) {
-                  CtClass fileClass = classPool.makeClass(classFileInputStream);
+      try (InputStream classFileInputStream = Files.newInputStream(file)) {
+        CtClass fileClass = classPool.makeClass(classFileInputStream);
 
-                  // Check if class contains 'public static void main(String[] args)'.
-                  CtMethod mainMethod = fileClass.getDeclaredMethod("main", mainMethodParams);
+        // Check if class contains 'public static void main(String[] args)'.
+        CtMethod mainMethod = fileClass.getDeclaredMethod("main", mainMethodParams);
 
-                  if (CtClass.voidType.equals(mainMethod.getReturnType())
-                      && Modifier.isStatic(mainMethod.getModifiers())
-                      && Modifier.isPublic(mainMethod.getModifiers())) {
-                    classNames.add(fileClass.getName());
-                  }
+        if (CtClass.voidType.equals(mainMethod.getReturnType())
+            && Modifier.isStatic(mainMethod.getModifiers())
+            && Modifier.isPublic(mainMethod.getModifiers())) {
+          return Optional.of(fileClass.getName());
+        }
 
-                } catch (NotFoundException ex) {
-                  // Ignores main method not found.
+      } catch (NotFoundException ex) {
+        // Ignores main method not found.
 
-                } catch (IOException ex) {
-                  // Could not read class file.
-                  buildLogger.warn("Could not read class file: " + classFile);
-                }
-              });
-
-      return classNames;
+      } catch (IOException ex) {
+        // Could not read class file.
+        buildLogger.warn("Could not read file: " + file);
+      }
 
     } catch (NotFoundException ex) {
       // Thrown if 'java.lang.String' is not found in classPool.
       throw new RuntimeException(ex);
     }
+
+    return Optional.empty();
   }
 }
