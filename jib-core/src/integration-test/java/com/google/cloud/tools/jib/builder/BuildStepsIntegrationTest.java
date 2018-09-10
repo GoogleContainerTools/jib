@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -64,6 +64,34 @@ public class BuildStepsIntegrationTest {
     }
   }
 
+  private static void assertDockerInspect(String imageReference)
+      throws IOException, InterruptedException {
+    String dockerContainerConfig = new Command("docker", "inspect", imageReference).run();
+    Assert.assertThat(
+        dockerContainerConfig,
+        CoreMatchers.containsString(
+            "            \"ExposedPorts\": {\n"
+                + "                \"1000/tcp\": {},\n"
+                + "                \"2000/tcp\": {},\n"
+                + "                \"2001/tcp\": {},\n"
+                + "                \"2002/tcp\": {},\n"
+                + "                \"3000/udp\": {}"));
+    Assert.assertThat(
+        dockerContainerConfig,
+        CoreMatchers.containsString(
+            "            \"Labels\": {\n"
+                + "                \"key1\": \"value1\",\n"
+                + "                \"key2\": \"value2\"\n"
+                + "            }"));
+    String dockerConfigEnv =
+        new Command("docker", "inspect", "-f", "{{.Config.Env}}", imageReference).run();
+    Assert.assertThat(
+        dockerConfigEnv, CoreMatchers.containsString("env1=envvalue1 env2=envvalue2"));
+    String history = new Command("docker", "history", imageReference).run();
+    Assert.assertThat(history, CoreMatchers.containsString("jib-integration-test"));
+    Assert.assertThat(history, CoreMatchers.containsString("bazel build ..."));
+  }
+
   private static final TestJibLogger logger = new TestJibLogger();
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -104,18 +132,7 @@ public class BuildStepsIntegrationTest {
 
     String imageReference = "localhost:5000/testimage:testtag";
     localRegistry.pull(imageReference);
-    Assert.assertThat(
-        new Command("docker", "inspect", imageReference).run(),
-        CoreMatchers.containsString(
-            "            \"ExposedPorts\": {\n"
-                + "                \"1000/tcp\": {},\n"
-                + "                \"2000/tcp\": {},\n"
-                + "                \"2001/tcp\": {},\n"
-                + "                \"2002/tcp\": {},\n"
-                + "                \"3000/udp\": {}"));
-    String history = new Command("docker", "history", imageReference).run();
-    Assert.assertThat(history, CoreMatchers.containsString("jib-integration-test"));
-    Assert.assertThat(history, CoreMatchers.containsString("bazel build ..."));
+    assertDockerInspect(imageReference);
     Assert.assertEquals(
         "Hello, world. An argument.\n", new Command("docker", "run", imageReference).run());
   }
@@ -152,26 +169,7 @@ public class BuildStepsIntegrationTest {
             new Caches.Initializer(cacheDirectory, false, cacheDirectory, false))
         .run();
 
-    String dockerContainerConfig = new Command("docker", "inspect", imageReference).run();
-    Assert.assertThat(
-        dockerContainerConfig,
-        CoreMatchers.containsString(
-            "            \"ExposedPorts\": {\n"
-                + "                \"1000/tcp\": {},\n"
-                + "                \"2000/tcp\": {},\n"
-                + "                \"2001/tcp\": {},\n"
-                + "                \"2002/tcp\": {},\n"
-                + "                \"3000/udp\": {}"));
-    Assert.assertThat(
-        dockerContainerConfig,
-        CoreMatchers.containsString(
-            "            \"Labels\": {\n"
-                + "                \"key1\": \"value1\",\n"
-                + "                \"key2\": \"value2\"\n"
-                + "            }"));
-    String history = new Command("docker", "history", imageReference).run();
-    Assert.assertThat(history, CoreMatchers.containsString("jib-integration-test"));
-    Assert.assertThat(history, CoreMatchers.containsString("bazel build ..."));
+    assertDockerInspect(imageReference);
     Assert.assertEquals(
         "Hello, world. An argument.\n", new Command("docker", "run", imageReference).run());
   }
@@ -213,6 +211,7 @@ public class BuildStepsIntegrationTest {
                 JavaEntrypointConstructor.makeDefaultEntrypoint(
                     Collections.emptyList(), "HelloWorld"))
             .setProgramArguments(Collections.singletonList("An argument."))
+            .setEnvironment(ImmutableMap.of("env1", "envvalue1", "env2", "envvalue2"))
             .setExposedPorts(
                 ExposedPortsParser.parse(Arrays.asList("1000", "2000-2002/tcp", "3000/udp")))
             .setLabels(ImmutableMap.of("key1", "value1", "key2", "value2"))
@@ -223,7 +222,7 @@ public class BuildStepsIntegrationTest {
         .setContainerConfiguration(containerConfiguration)
         .setAllowInsecureRegistries(true)
         .setLayerConfigurations(fakeLayerConfigurations)
-        .setCreatedBy("jib-integration-test")
+        .setToolName("jib-integration-test")
         .build();
   }
 }

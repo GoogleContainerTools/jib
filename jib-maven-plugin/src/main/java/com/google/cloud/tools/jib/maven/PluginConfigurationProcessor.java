@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,7 +28,6 @@ import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
-import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.base.Preconditions;
 import java.time.Instant;
 import java.util.List;
@@ -37,9 +36,6 @@ import org.apache.maven.plugin.MojoExecutionException;
 
 /** Configures and provides builders for the image building goals. */
 class PluginConfigurationProcessor {
-
-  /** {@code User-Agent} header suffix to send to the registry. */
-  private static final String USER_AGENT_SUFFIX = "jib-maven-plugin";
 
   /**
    * Sets up {@link BuildConfiguration} that is common among the image building goals. This includes
@@ -63,7 +59,6 @@ class PluginConfigurationProcessor {
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
     MavenJibLogger.disableHttpLogging();
-    RegistryClient.setUserAgentSuffix(USER_AGENT_SUFFIX);
 
     ImageReference baseImage = parseImageReference(jibPluginConfiguration.getBaseImage(), "from");
 
@@ -128,7 +123,7 @@ class PluginConfigurationProcessor {
 
     BuildConfiguration.Builder buildConfigurationBuilder =
         BuildConfiguration.builder(logger)
-            .setCreatedBy("jib-maven-plugin")
+            .setToolName(MavenProjectProperties.TOOL_NAME)
             .setAllowInsecureRegistries(jibPluginConfiguration.getAllowInsecureRegistries())
             .setLayerConfigurations(
                 projectProperties.getJavaLayerConfigurations().getLayerConfigurations());

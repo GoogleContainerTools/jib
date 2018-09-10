@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -73,7 +73,7 @@ public class BuildImageStepTest {
     Mockito.when(mockBuildConfiguration.getBuildLogger()).thenReturn(mockBuildLogger);
     Mockito.when(mockBuildConfiguration.getContainerConfiguration())
         .thenReturn(mockContainerConfiguration);
-    Mockito.when(mockBuildConfiguration.getCreatedBy()).thenReturn("jib");
+    Mockito.when(mockBuildConfiguration.getToolName()).thenReturn("jib");
     Mockito.when(mockContainerConfiguration.getCreationTime()).thenReturn(Instant.EPOCH);
     Mockito.when(mockContainerConfiguration.getEnvironmentMap()).thenReturn(ImmutableMap.of());
     Mockito.when(mockContainerConfiguration.getProgramArguments()).thenReturn(ImmutableList.of());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,7 +29,6 @@ import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
-import com.google.cloud.tools.jib.registry.RegistryClient;
 import java.time.Instant;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -37,9 +36,6 @@ import org.gradle.api.GradleException;
 
 /** Configures and provides builders for the image building tasks. */
 class PluginConfigurationProcessor {
-
-  /** {@code User-Agent} header suffix to send to the registry. */
-  private static final String USER_AGENT_SUFFIX = "jib-gradle-plugin";
 
   /**
    * Sets up {@link BuildConfiguration} that is common among the image building tasks. This includes
@@ -60,7 +56,6 @@ class PluginConfigurationProcessor {
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
     GradleJibLogger.disableHttpLogging();
-    RegistryClient.setUserAgentSuffix(USER_AGENT_SUFFIX);
 
     ImageReference baseImage = ImageReference.parse(jibExtension.getBaseImage());
 
@@ -97,6 +92,7 @@ class PluginConfigurationProcessor {
     ContainerConfiguration.Builder containerConfigurationBuilder =
         ContainerConfiguration.builder()
             .setEntrypoint(entrypoint)
+            .setEnvironment(jibExtension.getEnvironment())
             .setProgramArguments(jibExtension.getArgs())
             .setExposedPorts(ExposedPortsParser.parse(jibExtension.getExposedPorts()))
             .setLabels(jibExtension.getLabels());
@@ -108,7 +104,7 @@ class PluginConfigurationProcessor {
 
     BuildConfiguration.Builder buildConfigurationBuilder =
         BuildConfiguration.builder(logger)
-            .setCreatedBy("jib-gradle-plugin")
+            .setToolName(GradleProjectProperties.TOOL_NAME)
             .setAllowInsecureRegistries(jibExtension.getAllowInsecureRegistries())
             .setLayerConfigurations(
                 projectProperties.getJavaLayerConfigurations().getLayerConfigurations());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -169,7 +169,7 @@ class RegistryEndpointCaller<T> {
     }
 
     try {
-      logger.warn(
+      logger.info(
           "Cannot verify server at " + url + ". Attempting again with no TLS verification.");
       return call(url, getInsecureConnectionFactory());
 
@@ -182,7 +182,7 @@ class RegistryEndpointCaller<T> {
   private T fallBackToHttp(URL url) throws IOException, RegistryException {
     GenericUrl httpUrl = new GenericUrl(url);
     httpUrl.setScheme("http");
-    logger.warn(
+    logger.info(
         "Failed to connect to " + url + " over HTTPS. Attempting again with HTTP: " + httpUrl);
     return call(httpUrl.toURL(), connectionFactory);
   }

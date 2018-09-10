@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -138,7 +138,7 @@ class BuildImageStep
             HistoryEntry.builder()
                 .setCreationTimestamp(layerCreationTime)
                 .setAuthor("Jib")
-                .setCreatedBy(buildConfiguration.getCreatedBy())
+                .setCreatedBy(buildConfiguration.getToolName())
                 .build());
       }
       if (containerConfiguration != null) {

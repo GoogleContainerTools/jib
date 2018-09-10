@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -38,6 +38,9 @@ public class DockerContextMojoIntegrationTest {
   @ClassRule
   public static final TestProject simpleTestProject = new TestProject(testPlugin, "simple");
 
+  @ClassRule
+  public static final TestProject skippedTestProject = new TestProject(testPlugin, "empty");
+
   @Test
   public void testExecute() throws VerificationException, IOException, InterruptedException {
     Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
@@ -71,5 +74,9 @@ public class DockerContextMojoIntegrationTest {
 
     Assert.assertEquals(
         "Hello, world. An argument.\nfoo\ncat\n", new Command("docker", "run", imageName).run());
+  }
+
+  public void testExecute_skipJibGoal() throws VerificationException, IOException {
+    SkippedGoalVerifier.verifyGoalIsSkipped(skippedTestProject, BuildDockerMojo.GOAL_NAME);
   }
 }

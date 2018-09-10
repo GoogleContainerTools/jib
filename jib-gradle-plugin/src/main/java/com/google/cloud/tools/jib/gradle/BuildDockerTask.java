@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,7 +35,7 @@ import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.options.Option;
 
 /** Builds a container image and exports to the default Docker daemon. */
-public class BuildDockerTask extends DefaultTask {
+public class BuildDockerTask extends DefaultTask implements JibTask {
 
   private static final String HELPFUL_SUGGESTIONS_PREFIX = "Build to Docker daemon failed";
 
@@ -119,7 +119,8 @@ public class BuildDockerTask extends DefaultTask {
     }
   }
 
-  BuildDockerTask setJibExtension(JibExtension jibExtension) {
+  @Override
+  public BuildDockerTask setJibExtension(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
     return this;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -45,6 +45,10 @@ public class BuildTarMojo extends JibPluginConfiguration {
 
   @Override
   public void execute() throws MojoExecutionException {
+    if (isSkipped()) {
+      getLog().info("Skipping containerization because jib-maven-plugin: skip = true");
+      return;
+    }
     if ("pom".equals(getProject().getPackaging())) {
       getLog().info("Skipping containerization because packaging is 'pom'...");
       return;

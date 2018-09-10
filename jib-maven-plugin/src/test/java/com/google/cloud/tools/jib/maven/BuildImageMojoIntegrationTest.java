@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -58,6 +58,9 @@ public class BuildImageMojoIntegrationTest {
 
   @ClassRule
   public static final TestProject emptyTestProject = new TestProject(testPlugin, "empty");
+
+  @ClassRule
+  public static final TestProject skippedTestProject = new TestProject(testPlugin, "empty");
 
   @ClassRule
   public static final TestProject defaultTargetTestProject =
@@ -258,7 +261,7 @@ public class BuildImageMojoIntegrationTest {
       throws IOException, InterruptedException, VerificationException {
     String targetImage = "localhost:6000/compleximage:maven" + System.nanoTime();
     Assert.assertEquals(
-        "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\n",
+        "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
         buildAndRunComplex(targetImage, "testuser2", "testpassword2", localRegistry2));
   }
 
@@ -267,7 +270,12 @@ public class BuildImageMojoIntegrationTest {
       throws IOException, InterruptedException, VerificationException {
     String targetImage = "localhost:5000/compleximage:maven" + System.nanoTime();
     Assert.assertEquals(
-        "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\n",
+        "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
         buildAndRunComplex(targetImage, "testuser", "testpassword", localRegistry1));
+  }
+
+  @Test
+  public void testExecute_skipJibGoal() throws VerificationException, IOException {
+    SkippedGoalVerifier.verifyGoalIsSkipped(skippedTestProject, BuildImageMojo.GOAL_NAME);
   }
 }

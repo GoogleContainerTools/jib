@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -122,6 +122,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Parameter private List<String> jvmFlags = Collections.emptyList();
 
+    @Parameter private Map<String, String> environment = Collections.emptyMap();
+
     @Nullable @Parameter private String mainClass;
 
     @Parameter private List<String> args = Collections.emptyList();
@@ -152,8 +154,6 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
   @Deprecated @Parameter private List<String> jvmFlags = Collections.emptyList();
 
-  @Nullable @Parameter private Map<String, String> environment;
-
   @Deprecated @Nullable @Parameter private String mainClass;
 
   @Deprecated @Parameter private List<String> args = Collections.emptyList();
@@ -169,6 +169,9 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   @Nullable
   @Parameter(defaultValue = "${project.basedir}/src/main/jib", required = true)
   private String extraDirectory;
+
+  @Parameter(defaultValue = "false", property = "jib.skip")
+  private boolean skip;
 
   @Nullable @Component protected SettingsDecrypter settingsDecrypter;
 
@@ -265,7 +268,7 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
   @Nullable
   Map<String, String> getEnvironment() {
-    return environment;
+    return container.environment;
   }
 
   @Nullable
@@ -300,6 +303,10 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   Path getExtraDirectory() {
     // TODO: Should inform user about nonexistent directory if using custom directory.
     return Paths.get(Preconditions.checkNotNull(extraDirectory));
+  }
+
+  boolean isSkipped() {
+    return skip;
   }
 
   SettingsDecrypter getSettingsDecrypter() {

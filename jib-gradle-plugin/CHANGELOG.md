@@ -5,12 +5,20 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- `container.environment` configuration parameter to configure environment variables ([#890](https://github.com/GoogleContainerTools/jib/issues/890))
+
+### Changed
+
+### Fixed
+
+## 0.9.10
+
+### Added
+
 - `container.labels` configuration parameter for configuring labels ([#751](https://github.com/GoogleContainerTools/jib/issues/751))
 - `container.entrypoint` configuration parameter to set the entrypoint ([#579](https://github.com/GoogleContainerTools/jib/issues/579))
 - `history` to layer metadata ([#875](https://github.com/GoogleContainerTools/jib/issues/875))
 - Propagates working directory from the base image ([#902](https://github.com/GoogleContainerTools/jib/pull/902))
-
-### Changed
 
 ### Fixed
 

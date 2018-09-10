@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,7 +34,13 @@ import org.codehaus.plexus.util.xml.Xpp3Dom;
 /** Obtains information about a {@link MavenProject}. */
 class MavenProjectProperties implements ProjectProperties {
 
+  /** Used to generate the User-Agent header and history metadata. */
+  static final String TOOL_NAME = "jib-maven-plugin";
+
+  /** Used for logging during main class inference. */
   private static final String PLUGIN_NAME = "jib-maven-plugin";
+
+  /** Used for logging during main class inference. */
   private static final String JAR_PLUGIN_NAME = "'maven-jar-plugin'";
 
   /**

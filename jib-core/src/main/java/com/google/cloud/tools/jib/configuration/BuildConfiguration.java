@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.configuration;
 import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
+import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +39,7 @@ public class BuildConfiguration {
     private boolean allowInsecureRegistries = false;
     private ImmutableList<LayerConfiguration> layerConfigurations = ImmutableList.of();
     private Class<? extends BuildableManifestTemplate> targetFormat = V22ManifestTemplate.class;
-    private String createdBy = "jib";
+    private String toolName = "jib";
 
     private JibLogger buildLogger;
 
@@ -137,14 +138,13 @@ public class BuildConfiguration {
     }
 
     /**
-     * Sets the command that created the image layers (for the "Created By" field in the container's
-     * history).
+     * Sets the name of the tool that is executing the build.
      *
-     * @param createdBy the field value
+     * @param toolName the tool name
      * @return this
      */
-    public Builder setCreatedBy(String createdBy) {
-      this.createdBy = createdBy;
+    public Builder setToolName(String toolName) {
+      this.toolName = toolName;
       return this;
     }
 
@@ -185,7 +185,7 @@ public class BuildConfiguration {
               targetFormat,
               allowInsecureRegistries,
               layerConfigurations,
-              createdBy);
+              toolName);
 
         case 1:
           throw new IllegalStateException(errorMessages.get(0));
@@ -213,7 +213,7 @@ public class BuildConfiguration {
   private Class<? extends BuildableManifestTemplate> targetFormat;
   private final boolean allowInsecureRegistries;
   private final ImmutableList<LayerConfiguration> layerConfigurations;
-  private final String createdBy;
+  private final String toolName;
 
   /** Instantiate with {@link Builder#build}. */
   private BuildConfiguration(
@@ -226,7 +226,7 @@ public class BuildConfiguration {
       Class<? extends BuildableManifestTemplate> targetFormat,
       boolean allowInsecureRegistries,
       ImmutableList<LayerConfiguration> layerConfigurations,
-      String createdBy) {
+      String toolName) {
     this.buildLogger = buildLogger;
     this.baseImageConfiguration = baseImageConfiguration;
     this.targetImageConfiguration = targetImageConfiguration;
@@ -236,7 +236,7 @@ public class BuildConfiguration {
     this.targetFormat = targetFormat;
     this.allowInsecureRegistries = allowInsecureRegistries;
     this.layerConfigurations = layerConfigurations;
-    this.createdBy = createdBy;
+    this.toolName = toolName;
   }
 
   public JibLogger getBuildLogger() {
@@ -260,8 +260,8 @@ public class BuildConfiguration {
     return targetFormat;
   }
 
-  public String getCreatedBy() {
-    return createdBy;
+  public String getToolName() {
+    return toolName;
   }
 
   /**
@@ -301,5 +301,34 @@ public class BuildConfiguration {
    */
   public ImmutableList<LayerConfiguration> getLayerConfigurations() {
     return layerConfigurations;
+  }
+
+  /**
+   * Creates a new {@link RegistryClient.Factory} for the base image with fields from the build
+   * configuration.
+   *
+   * @return a new {@link RegistryClient.Factory}
+   */
+  public RegistryClient.Factory newBaseImageRegistryClientFactory() {
+    return newRegistryClientFactory(baseImageConfiguration);
+  }
+
+  /**
+   * Creates a new {@link RegistryClient.Factory} for the target image with fields from the build
+   * configuration.
+   *
+   * @return a new {@link RegistryClient.Factory}
+   */
+  public RegistryClient.Factory newTargetImageRegistryClientFactory() {
+    return newRegistryClientFactory(targetImageConfiguration);
+  }
+
+  private RegistryClient.Factory newRegistryClientFactory(ImageConfiguration imageConfiguration) {
+    return RegistryClient.factory(
+            getBuildLogger(),
+            imageConfiguration.getImageRegistry(),
+            imageConfiguration.getImageRepository())
+        .setAllowInsecureRegistries(getAllowInsecureRegistries())
+        .setUserAgentSuffix(getToolName());
   }
 }
