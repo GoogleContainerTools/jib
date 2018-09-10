@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.JibLogger;
+import java.io.File;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import org.junit.Assert;
@@ -69,7 +70,7 @@ public class JibPluginConfigurationTest {
     testPluginConfiguration.setMainClass("mainClass");
     testPluginConfiguration.setArgs(Arrays.asList("arg1", "arg2", "arg3"));
     testPluginConfiguration.setFormat("OCI");
-    testPluginConfiguration.setExtraDirectory("some/path");
+    testPluginConfiguration.setExtraDirectory(new File("some/path"));
 
     testPluginConfiguration.handleDeprecatedParameters(mockLogger);
 

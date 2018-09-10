@@ -16,13 +16,16 @@
 
 package com.google.cloud.tools.jib.maven.skaffold;
 
+import com.google.cloud.tools.jib.maven.MavenProjectProperties;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableSet;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Objects;
 import javax.annotation.Nullable;
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.model.FileSet;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -51,9 +54,15 @@ public class FilesMojo extends AbstractMojo {
   @Parameter(defaultValue = "${project}", readonly = true)
   private MavenProject project;
 
+  // This parameter is cloned from JibPluginConfiguration
+  @Nullable
+  @Parameter(defaultValue = "${project.basedir}/src/main/jib", required = true)
+  private File extraDirectory;
+
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
     Preconditions.checkNotNull(project);
+    Preconditions.checkNotNull(extraDirectory);
 
     // print out pom configuration files
     System.out.println(project.getFile());
@@ -64,6 +73,19 @@ public class FilesMojo extends AbstractMojo {
 
     // print out sources directory
     System.out.println(project.getBuild().getSourceDirectory());
+
+    // print out resources directory
+    ImmutableSet.copyOf(project.getBuild().getResources())
+        .stream()
+        .map(FileSet::getDirectory)
+        .forEach(System.out::println);
+
+    // this seems weird, but we will only print out the "jib" directory on projects where
+    // the plugin is explicitly configured (even though _skaffold-files is a jib-maven-plugin goal).
+    if (project.getPlugin(MavenProjectProperties.PLUGIN_KEY) != null) {
+      // print out extra directory
+      System.out.println(extraDirectory.getAbsoluteFile().toPath());
+    }
 
     // print out all SNAPSHOT, non-project artifacts
     project

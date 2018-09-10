@@ -44,12 +44,13 @@ public class PackageGoalsMojoIntegrationTest {
       throws VerificationException, IOException {
     Verifier verifier = new Verifier(projectRoot.toString());
     verifier.setAutoclean(false);
-    verifier.setCliOptions(
-        Arrays.asList(
-            "-q",
-            "-pl",
-            "complex-service",
-            Strings.isNullOrEmpty(profilesString) ? "" : "-P" + profilesString));
+    verifier.addCliOption("-q");
+    verifier.addCliOption("-pl");
+    verifier.addCliOption("complex-service");
+    verifier.addCliOption("-am");
+    if (!Strings.isNullOrEmpty(profilesString)) {
+      verifier.addCliOption("-P" + profilesString);
+    }
     verifier.executeGoal("jib:" + PackageGoalsMojo.GOAL_NAME);
 
     verifier.verifyErrorFreeLog();

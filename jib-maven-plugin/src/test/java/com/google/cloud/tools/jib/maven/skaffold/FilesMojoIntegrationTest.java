@@ -44,15 +44,17 @@ public class FilesMojoIntegrationTest {
   @ClassRule
   public static final TestProject multiTestProject = new TestProject(testPlugin, "multi");
 
-  private void verifyGoals(Path projectRoot, String module, List<Path> files)
+  private void verifyFiles(Path projectRoot, String module, List<Path> files)
       throws VerificationException, IOException {
 
     Verifier verifier = new Verifier(projectRoot.toString());
     verifier.setAutoclean(false);
-    verifier.setCliOptions(
-        Strings.isNullOrEmpty(module)
-            ? ImmutableList.of("-q")
-            : ImmutableList.of("-q", "-pl", module, "-am"));
+    verifier.addCliOption("-q");
+    if (!Strings.isNullOrEmpty(module)) {
+      verifier.addCliOption("-pl");
+      verifier.addCliOption(module);
+      verifier.addCliOption("-am");
+    }
     verifier.executeGoal("jib:" + FilesMojo.GOAL_NAME);
 
     verifier.verifyErrorFreeLog();
@@ -69,10 +71,14 @@ public class FilesMojoIntegrationTest {
   public void testFilesMojo_singleModule() throws VerificationException, IOException {
     Path projectRoot = simpleTestProject.getProjectRoot();
 
-    verifyGoals(
+    verifyFiles(
         projectRoot,
         null,
-        ImmutableList.of(projectRoot.resolve("pom.xml"), projectRoot.resolve("src/main/java")));
+        ImmutableList.of(
+            projectRoot.resolve("pom.xml"),
+            projectRoot.resolve("src/main/java"),
+            projectRoot.resolve("src/main/resources"),
+            projectRoot.resolve("src/main/jib")));
   }
 
   @Test
@@ -80,13 +86,15 @@ public class FilesMojoIntegrationTest {
     Path projectRoot = multiTestProject.getProjectRoot();
     Path simpleServiceRoot = projectRoot.resolve("simple-service");
 
-    verifyGoals(
+    verifyFiles(
         projectRoot,
         "simple-service",
         ImmutableList.of(
             projectRoot.resolve("pom.xml"),
             simpleServiceRoot.resolve("pom.xml"),
-            simpleServiceRoot.resolve("src/main/java")));
+            simpleServiceRoot.resolve("src/main/java"),
+            simpleServiceRoot.resolve("src/main/resources"),
+            simpleServiceRoot.resolve("src/main/jib")));
   }
 
   @Test
@@ -95,14 +103,18 @@ public class FilesMojoIntegrationTest {
     Path complexServiceRoot = projectRoot.resolve("complex-service");
     Path libRoot = projectRoot.resolve("lib");
 
-    verifyGoals(
+    verifyFiles(
         projectRoot,
         "complex-service",
         ImmutableList.of(
             projectRoot.resolve("pom.xml"),
             libRoot.resolve("pom.xml"),
             libRoot.resolve("src/main/java"),
+            libRoot.resolve("src/main/resources"),
             complexServiceRoot.resolve("pom.xml"),
-            complexServiceRoot.resolve("src/main/java")));
+            complexServiceRoot.resolve("src/main/java"),
+            complexServiceRoot.resolve("src/main/resources1"),
+            complexServiceRoot.resolve("src/main/resources2"),
+            complexServiceRoot.resolve("src/main/other-jib")));
   }
 }

@@ -42,6 +42,8 @@ public class TestPlugin extends ExternalResource {
     Verifier verifier = new Verifier(".", true);
     verifier.setAutoclean(false);
     verifier.addCliOption("-DskipTests");
+    verifier.addCliOption("-Dfmt.skip");
+    verifier.addCliOption("-Dcheckstyle.skip");
     verifier.executeGoal("install");
 
     // Reads the project version.
