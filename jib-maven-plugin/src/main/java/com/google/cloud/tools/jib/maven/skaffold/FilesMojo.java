@@ -135,11 +135,11 @@ public class FilesMojo extends AbstractMojo {
         };
 
     try {
-      DependencyResolutionResult t =
+      DependencyResolutionResult resolutionResult =
           projectDependenciesResolver.resolve(
               new DefaultDependencyResolutionRequest(project, session.getRepositorySession())
                   .setResolutionFilter(ignoreProjectDependenciesFilter));
-      t.getDependencies()
+      resolutionResult.getDependencies()
           .stream()
           .map(org.eclipse.aether.graph.Dependency::getArtifact)
           .filter(org.eclipse.aether.artifact.Artifact::isSnapshot)
