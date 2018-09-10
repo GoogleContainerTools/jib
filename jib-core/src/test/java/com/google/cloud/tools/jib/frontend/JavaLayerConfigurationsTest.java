@@ -52,7 +52,7 @@ public class JavaLayerConfigurationsTest {
     Assert.assertEquals(
         Paths.get(JavaEntrypointConstructor.DEFAULT_CLASSES_PATH_ON_IMAGE).resolve("class"),
         classesLayerEntry.get(0).getExtractionPath());
-    Assert.assertEquals("/extra", extraFilesLayerEntry.get(0).getExtractionPathString());
+    Assert.assertEquals(Paths.get("/extra"), extraFilesLayerEntry.get(0).getExtractionPath());
 
     List<String> expectedLabels = new ArrayList<>();
     for (JavaLayerConfigurations.LayerType layerType : JavaLayerConfigurations.LayerType.values()) {

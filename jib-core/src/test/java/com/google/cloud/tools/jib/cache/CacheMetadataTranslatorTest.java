@@ -108,7 +108,7 @@ public class CacheMetadataTranslatorTest {
     Assert.assertEquals(classesLayerDiffId, classesLayer.getDiffId());
     Assert.assertNotNull(classesLayer.getMetadata());
     Assert.assertEquals(
-        CLASSES_LAYER_SOURCE_FILE.toAbsolutePath().toString(),
+        CLASSES_LAYER_SOURCE_FILE.toString(),
         classesLayer.getMetadata().getEntries().get(0).getSourceFilesString());
     Assert.assertEquals(
         CLASSES_LAYER_EXTRACTION_PATH.toString(),

@@ -62,8 +62,8 @@ public class CacheMetadataTemplateTest {
             .setLayerEntries(
                 Collections.singletonList(
                     new LayerEntryTemplate(
-                        Paths.get("/some/source/path").toAbsolutePath().toString(),
-                        "some/extraction/path")))
+                        Paths.get("/some/source/path").toString(),
+                        Paths.get("some/extraction/path").toString())))
             .setLastModifiedTime(FileTime.fromMillis(255073580723571L));
     CacheMetadataLayerObjectTemplate classesLayerTemplate =
         new CacheMetadataLayerObjectTemplate()
