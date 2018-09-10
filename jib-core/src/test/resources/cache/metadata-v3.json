@@ -23,7 +23,7 @@
       "properties": {
         "layerEntries": [
           {
-            "sourceFile": "/some/source/directory",
+            "sourceFile": "/some/source/path",
             "extractionPath": "some/extraction/path"
           }
         ],

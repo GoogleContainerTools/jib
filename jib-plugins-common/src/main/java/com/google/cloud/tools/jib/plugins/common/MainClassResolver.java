@@ -21,7 +21,6 @@ import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
-import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
 import java.nio.file.Path;
 import javax.annotation.Nullable;
@@ -117,19 +116,16 @@ public class MainClassResolver {
             .getJavaLayerConfigurations()
             .getClassLayerEntries()
             .stream()
-            .peek(layerEntry -> Verify.verify(layerEntry != null))
             .map(LayerEntry::getSourceFile)
             .collect(ImmutableList.toImmutableList());
 
     MainClassFinder.Result mainClassFinderResult =
         new MainClassFinder(classesSourceFiles, projectProperties.getLogger()).find();
 
-    if (mainClassFinderResult.isSuccess()) {
-      return mainClassFinderResult.getFoundMainClass();
-    }
+    switch (mainClassFinderResult.getType()) {
+      case MAIN_CLASS_FOUND:
+        return mainClassFinderResult.getFoundMainClass();
 
-    Verify.verify(mainClassFinderResult.getErrorType() != null);
-    switch (mainClassFinderResult.getErrorType()) {
       case MAIN_CLASS_NOT_FOUND:
         throw new MainClassInferenceException(
             HelpfulSuggestions.forMainClassNotFound(

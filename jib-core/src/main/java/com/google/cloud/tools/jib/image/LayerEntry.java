@@ -31,7 +31,9 @@ public class LayerEntry {
 
   /**
    * Instantiates with a source file and the path to place the source file in the container file
-   * system.
+   * system. For example, adding a file {@code HelloWorld.class} to be in container file system at
+   * {@code /app/classes/HelloWorld.class} would be {@code new
+   * LayerEntry(Paths.get("HelloWorld.class"), Paths.get("/app/classes/HelloWorld.class"))}.
    *
    * @param sourceFile the source file to add to the layer
    * @param extractionPath the path to place the source file in the container file system (relative
@@ -43,8 +45,12 @@ public class LayerEntry {
   }
 
   /**
-   * Gets the source file. Do <b>not</b> call {@link Path#toString} on this - use {@link
-   * #getSourceFileString} instead.
+   * Gets the source file.
+   *
+   * <p>Do <b>not</b> call {@link Path#toString} on this - use {@link #getSourceFileString} instead.
+   * This path can be relative or absolute, and {@link #getSourceFileString} can also be relative or
+   * absolute, but callers should rely on {@link #getSourceFileString} for the serialized form since
+   * the serialization could change independently of the path representation.
    *
    * @return the source file
    */
@@ -53,8 +59,12 @@ public class LayerEntry {
   }
 
   /**
-   * Gets the extraction path. Do <b>not</b> call {@link Path#toString} on this - use {@link
-   * #getExtractionPathString} instead.
+   * Gets the extraction path.
+   *
+   * <p>Do <b>not</b> call {@link Path#toString} on this - use {@link #getExtractionPathString}
+   * instead. This path can be relative or absolute, and {@link #getExtractionPathString} can also
+   * be relative or absolute, but callers should rely on {@link #getExtractionPathString} for the
+   * serialized form since the serialization could change independently of the path representation.
    *
    * @return the extraction path
    */

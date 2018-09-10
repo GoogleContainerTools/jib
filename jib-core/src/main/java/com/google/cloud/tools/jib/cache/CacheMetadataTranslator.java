@@ -107,7 +107,7 @@ public class CacheMetadataTranslator {
         for (LayerMetadata.LayerMetadataEntry metadataEntry : metadataEntries) {
           layerEntryTemplates.add(
               new LayerEntryTemplate(
-                  metadataEntry.getSourceFilesString(), metadataEntry.getExtractionPathString()));
+                  metadataEntry.getSourceFileString(), metadataEntry.getExtractionPathString()));
         }
 
         layerObjectTemplate.setProperties(

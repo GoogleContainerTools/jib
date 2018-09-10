@@ -24,12 +24,14 @@ import java.io.InputStream;
 import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtMethod;
 import javassist.NotFoundException;
-import javax.annotation.Nullable;
 
 /** Finds main classes in a list of class files.. */
 public class MainClassFinder {
@@ -37,8 +39,11 @@ public class MainClassFinder {
   /** The result of a call to {@link #find}. */
   public static class Result {
 
-    /** The type of error. */
-    public enum ErrorType {
+    /** The type of result. */
+    public enum Type {
+
+      // Found a single main class.
+      MAIN_CLASS_FOUND,
 
       // Did not find any main class.
       MAIN_CLASS_NOT_FOUND,
@@ -48,55 +53,43 @@ public class MainClassFinder {
     }
 
     private static Result success(String foundMainClass) {
-      return new Result(true, Collections.singletonList(foundMainClass), null);
+      return new Result(Type.MAIN_CLASS_FOUND, Collections.singletonList(foundMainClass));
     }
 
     private static Result mainClassNotFound() {
-      return new Result(false, Collections.emptyList(), ErrorType.MAIN_CLASS_NOT_FOUND);
+      return new Result(Type.MAIN_CLASS_NOT_FOUND, Collections.emptyList());
     }
 
     private static Result multipleMainClasses(List<String> foundMainClasses) {
-      return new Result(false, foundMainClasses, ErrorType.MULTIPLE_MAIN_CLASSES);
+      return new Result(Type.MULTIPLE_MAIN_CLASSES, foundMainClasses);
     }
 
-    private final boolean isSuccess;
+    private final Type type;
     private final List<String> foundMainClasses;
-    @Nullable private final ErrorType errorType;
 
-    private Result(
-        boolean isSuccess, List<String> foundMainClasses, @Nullable ErrorType errorType) {
-      this.isSuccess = isSuccess;
+    private Result(Type type, List<String> foundMainClasses) {
       this.foundMainClasses = foundMainClasses;
-      this.errorType = errorType;
+      this.type = type;
     }
 
     /**
-     * Gets whether or not this result is a success.
-     *
-     * @return {@code true} if successful; {@code false} if not
-     */
-    public boolean isSuccess() {
-      return isSuccess;
-    }
-
-    /**
-     * Gets the found main class. Only call if {@link #isSuccess} is {@code true}.
+     * Gets the found main class. Only call if {@link #getType} is {@link Type#MAIN_CLASS_FOUND}.
      *
      * @return the found main class
      */
     public String getFoundMainClass() {
-      Preconditions.checkArgument(isSuccess);
-      Preconditions.checkArgument(foundMainClasses.size() == 1);
+      Preconditions.checkState(Type.MAIN_CLASS_FOUND == type);
+      Preconditions.checkState(foundMainClasses.size() == 1);
       return foundMainClasses.get(0);
     }
 
     /**
-     * Gets the type of error. Call only if {@link #isSuccess} is {@code false}.
+     * Gets the type of the result.
      *
-     * @return the type of error, or {@code null} if successful
+     * @return the type of the result
      */
-    public ErrorType getErrorType() {
-      return Preconditions.checkNotNull(errorType);
+    public Type getType() {
+      return Preconditions.checkNotNull(type);
     }
 
     /**

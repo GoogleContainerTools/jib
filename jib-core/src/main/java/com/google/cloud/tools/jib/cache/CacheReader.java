@@ -34,11 +34,11 @@ import javax.annotation.Nullable;
 public class CacheReader {
 
   /**
-   * Gets the last modified time for the file at {@code path}. Recursively finds the most recent
-   * last modified time for all subfiles if the file is a directory.
+   * Gets the last modified time for the file at {@code path}. If {@code path} is a directory, then
+   * gets the latest modified time of its subfiles.
    *
    * @param path the file to check
-   * @return the last modified time for the file at {@code path}
+   * @return the last modified time
    * @throws IOException if checking the last modified time fails
    */
   private static FileTime getLastModifiedTime(Path path) throws IOException {

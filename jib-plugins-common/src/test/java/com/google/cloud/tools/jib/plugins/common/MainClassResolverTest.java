@@ -43,7 +43,7 @@ public class MainClassResolverTest {
   @Mock private ProjectProperties mockProjectProperties;
   @Mock private JavaLayerConfigurations mockJavaLayerConfigurations;
 
-  private final Path fakeClassesPath = Paths.get("a/b/c");
+  private final Path FAKE_CLASSES_PATH = Paths.get("a/b/c");
 
   @Before
   public void setup() {
@@ -67,7 +67,7 @@ public class MainClassResolverTest {
   public void testResolveMainClass_notValid() throws MainClassInferenceException {
     Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("${start-class}");
     Mockito.when(mockProjectProperties.getJavaLayerConfigurations().getClassLayerEntries())
-        .thenReturn(ImmutableList.of(new LayerEntry(fakeClassesPath, Paths.get("ignored"))));
+        .thenReturn(ImmutableList.of(new LayerEntry(FAKE_CLASSES_PATH, Paths.get("ignored"))));
     Assert.assertEquals(
         "${start-class}", MainClassResolver.resolveMainClass(null, mockProjectProperties));
     Mockito.verify(mockBuildLogger).warn("'mainClass' is not a valid Java class : ${start-class}");

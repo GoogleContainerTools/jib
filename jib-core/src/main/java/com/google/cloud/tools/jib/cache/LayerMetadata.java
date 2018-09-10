@@ -30,11 +30,14 @@ class LayerMetadata {
   /** Entry into the layer metadata. */
   static class LayerMetadataEntry {
 
-    private final String sourceFilesString;
+    /** The source file path string, in OS-specific format. */
+    private final String sourceFileString;
+
+    /** The extraction path string, in OS-specific format. */
     private final String extractionPathString;
 
-    String getSourceFilesString() {
-      return sourceFilesString;
+    String getSourceFileString() {
+      return sourceFileString;
     }
 
     String getExtractionPathString() {
@@ -42,8 +45,8 @@ class LayerMetadata {
     }
 
     @VisibleForTesting
-    LayerMetadataEntry(String sourceFilesString, String extractionPathString) {
-      this.sourceFilesString = sourceFilesString;
+    LayerMetadataEntry(String sourceFileString, String extractionPathString) {
+      this.sourceFileString = sourceFileString;
       this.extractionPathString = extractionPathString;
     }
   }

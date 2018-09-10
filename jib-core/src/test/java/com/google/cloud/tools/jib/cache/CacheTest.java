@@ -162,7 +162,7 @@ public class CacheTest {
           layerMetadata
               .getEntries()
               .stream()
-              .map(LayerMetadataEntry::getSourceFilesString)
+              .map(LayerMetadataEntry::getSourceFileString)
               .collect(ImmutableList.toImmutableList()));
       Assert.assertEquals(
           ImmutableList.of(

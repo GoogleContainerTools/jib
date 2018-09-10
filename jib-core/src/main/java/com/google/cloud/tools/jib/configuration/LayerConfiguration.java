@@ -73,7 +73,7 @@ public class LayerConfiguration {
      * at {@code /path/in/container/**}.
      *
      * @param sourceFile the source file to add to the layer recursively
-     * @param pathInContainer the path to add the source files to in the container file system
+     * @param pathInContainer the path to add the source file to in the container file system
      *     (relative to root {@code /})
      * @return this
      * @throws IOException if an exception occurred when recursively listing the directory

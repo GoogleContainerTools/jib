@@ -61,8 +61,6 @@ public class CacheReaderTest {
 
     // Copies the test resource cache to the temporary test cache folder.
     Path resourceCache = Paths.get(Resources.getResource("cache").toURI());
-    // TODO: Uncomment
-    // FileOperations.copy(ImmutableList.of(resourceCache), testCacheFolder);
     copyDirectory(resourceCache, testCacheFolder);
   }
 
@@ -100,7 +98,7 @@ public class CacheReaderTest {
           cacheReader.getLayerFile(
               ImmutableList.of(
                   new LayerEntry(
-                      Paths.get("/some/source/directory"), Paths.get("some/extraction/path")))));
+                      Paths.get("/some/source/path"), Paths.get("some/extraction/path")))));
       Assert.assertNull(cacheReader.getLayerFile(ImmutableList.of()));
     }
   }
