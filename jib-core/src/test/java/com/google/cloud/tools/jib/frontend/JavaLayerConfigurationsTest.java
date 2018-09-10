@@ -25,34 +25,40 @@ public class JavaLayerConfigurationsTest {
             .setSnapshotDependencyFiles(Collections.singletonList(Paths.get("snapshotDependency")))
             .setResourceFiles(Collections.singletonList(Paths.get("resource")))
             .setClassFiles(Collections.singletonList(Paths.get("class")))
+            .setExplodedWarFiles(Collections.singletonList(Paths.get("exploded-war")))
             .setExtraFiles(Collections.singletonList(Paths.get("extra")))
             .build();
 
-    ImmutableList<LayerEntry> dependenciesLayerEntry =
+    ImmutableList<LayerEntry> dependencyLayerEntries =
         javaLayerConfigurations.getDependencyLayerEntries();
-    ImmutableList<LayerEntry> snapshotDependenciesLayerEntry =
+    ImmutableList<LayerEntry> snapshotDependencyLayerEntries =
         javaLayerConfigurations.getSnapshotDependencyLayerEntries();
-    ImmutableList<LayerEntry> resourcesLayerEntry =
+    ImmutableList<LayerEntry> resourceLayerEntries =
         javaLayerConfigurations.getResourceLayerEntries();
-    ImmutableList<LayerEntry> classesLayerEntry = javaLayerConfigurations.getClassLayerEntries();
-    ImmutableList<LayerEntry> extraFilesLayerEntry =
+    ImmutableList<LayerEntry> classLayerEntries = javaLayerConfigurations.getClassLayerEntries();
+    ImmutableList<LayerEntry> explodedWarLayerEntries =
+        javaLayerConfigurations.getExplodedWarEntries();
+    ImmutableList<LayerEntry> extraFilesLayerEntries =
         javaLayerConfigurations.getExtraFilesLayerEntries();
 
     Assert.assertEquals(
         Paths.get(JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
             .resolve("dependency"),
-        dependenciesLayerEntry.get(0).getExtractionPath());
+        dependencyLayerEntries.get(0).getExtractionPath());
     Assert.assertEquals(
         Paths.get(JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
             .resolve("snapshotDependency"),
-        snapshotDependenciesLayerEntry.get(0).getExtractionPath());
+        snapshotDependencyLayerEntries.get(0).getExtractionPath());
     Assert.assertEquals(
         Paths.get(JavaEntrypointConstructor.DEFAULT_RESOURCES_PATH_ON_IMAGE).resolve("resource"),
-        resourcesLayerEntry.get(0).getExtractionPath());
+        resourceLayerEntries.get(0).getExtractionPath());
     Assert.assertEquals(
         Paths.get(JavaEntrypointConstructor.DEFAULT_CLASSES_PATH_ON_IMAGE).resolve("class"),
-        classesLayerEntry.get(0).getExtractionPath());
-    Assert.assertEquals(Paths.get("/extra"), extraFilesLayerEntry.get(0).getExtractionPath());
+        classLayerEntries.get(0).getExtractionPath());
+    Assert.assertEquals(
+        Paths.get(JavaEntrypointConstructor.DEFAULT_JETTY_BASE_ON_IMAGE).resolve("exploded-war"),
+        explodedWarLayerEntries.get(0).getExtractionPath());
+    Assert.assertEquals(Paths.get("/extra"), extraFilesLayerEntries.get(0).getExtractionPath());
 
     List<String> expectedLabels = new ArrayList<>();
     for (JavaLayerConfigurations.LayerType layerType : JavaLayerConfigurations.LayerType.values()) {
@@ -72,6 +78,7 @@ public class JavaLayerConfigurationsTest {
         Collections.singletonList(Paths.get("snapshot dependency"));
     List<Path> resourceFiles = Collections.singletonList(Paths.get("resource"));
     List<Path> classFiles = Collections.singletonList(Paths.get("class"));
+    List<Path> explodedWarFiles = Collections.singletonList(Paths.get("exploded war"));
     List<Path> extraFiles = Collections.singletonList(Paths.get("extra file"));
 
     JavaLayerConfigurations javaLayerConfigurations =
@@ -80,12 +87,18 @@ public class JavaLayerConfigurationsTest {
             .setSnapshotDependencyFiles(snapshotDependencyFiles)
             .setResourceFiles(resourceFiles)
             .setClassFiles(classFiles)
+            .setExplodedWarFiles(explodedWarFiles)
             .setExtraFiles(extraFiles)
             .build();
 
     List<List<Path>> expectedFiles =
         Arrays.asList(
-            dependencyFiles, snapshotDependencyFiles, resourceFiles, classFiles, extraFiles);
+            dependencyFiles,
+            snapshotDependencyFiles,
+            resourceFiles,
+            classFiles,
+            explodedWarFiles,
+            extraFiles);
     List<List<Path>> actualFiles = new ArrayList<>();
     for (LayerConfiguration layerConfiguration : javaLayerConfigurations.getLayerConfigurations()) {
       actualFiles.add(

@@ -41,6 +41,9 @@ public class JavaLayerConfigurations {
         "snapshot dependencies", JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE),
     RESOURCES("resources", JavaEntrypointConstructor.DEFAULT_RESOURCES_PATH_ON_IMAGE),
     CLASSES("classes", JavaEntrypointConstructor.DEFAULT_CLASSES_PATH_ON_IMAGE),
+    // TODO: remove this once we put files in WAR into the relevant layers (i.e., dependencies,
+    // snapshot dependencies, resources, and classes layers). Should copy files in the right
+    EXPLODED_WAR("exploded war", JavaEntrypointConstructor.DEFAULT_JETTY_BASE_ON_IMAGE),
     EXTRA_FILES("extra files", "/");
 
     private final String label;
@@ -99,6 +102,13 @@ public class JavaLayerConfigurations {
       return this;
     }
 
+    // TODO: remove this and put files in WAR into the relevant layers (i.e., dependencies, snapshot
+    // dependencies, resources, and classes layers).
+    public Builder setExplodedWarFiles(List<Path> explodedWarFiles) {
+      layerFilesMap.put(LayerType.EXPLODED_WAR, explodedWarFiles);
+      return this;
+    }
+
     public JavaLayerConfigurations build() throws IOException {
       ImmutableMap.Builder<LayerType, LayerConfiguration> layerConfigurationsMap =
           ImmutableMap.builderWithExpectedSize(LayerType.values().length);
@@ -152,6 +162,12 @@ public class JavaLayerConfigurations {
 
   public ImmutableList<LayerEntry> getExtraFilesLayerEntries() {
     return getLayerEntries(LayerType.EXTRA_FILES);
+  }
+
+  // TODO: remove this once we put files in WAR into the relevant layers (i.e., dependencies,
+  // snapshot dependencies, resources, and classes layers). Should copy files in the right
+  public ImmutableList<LayerEntry> getExplodedWarEntries() {
+    return getLayerEntries(LayerType.EXPLODED_WAR);
   }
 
   private ImmutableList<LayerEntry> getLayerEntries(LayerType layerType) {
