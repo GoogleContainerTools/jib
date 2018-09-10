@@ -107,6 +107,17 @@ public class JibContainerBuilder {
   }
 
   /**
+   * Sets the layers. This replaces any previously-added layers.
+   *
+   * @param layerConfigurations the {@link LayerConfiguration}s
+   * @return this
+   */
+  public JibContainerBuilder setLayers(LayerConfiguration... layerConfigurations) {
+    setLayers(Arrays.asList(layerConfigurations));
+    return this;
+  }
+
+  /**
    * Adds a layer (defined by a {@link LayerConfiguration}).
    *
    * @param layerConfiguration the {@link LayerConfiguration}
