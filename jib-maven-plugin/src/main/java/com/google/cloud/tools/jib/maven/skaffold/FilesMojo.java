@@ -93,17 +93,18 @@ public class FilesMojo extends AbstractMojo {
       return;
     }
 
-    // print out sources directory
+    // print out sources directory (resolved by maven to be an absolute path)
     System.out.println(project.getBuild().getSourceDirectory());
 
-    // print out resources directory
+    // print out resources directory (resolved by maven to be an absolute path)
     ImmutableSet.copyOf(project.getBuild().getResources())
         .stream()
         .map(FileSet::getDirectory)
         .forEach(System.out::println);
 
-    // this seems weird, but we will only print out the "jib" directory on projects where
-    // the plugin is explicitly configured (even though _skaffold-files is a jib-maven-plugin goal).
+    // this seems weird, but we will only print out the jib "extraFiles" directory on projects where
+    // the plugin is explicitly configured (even though _skaffold-files is a jib-maven-plugin goal
+    // and is expected to run on all projects irrespective of their configuring of the jib plugin).
     if (project.getPlugin(MavenProjectProperties.PLUGIN_KEY) != null) {
       // print out extra directory
       System.out.println(extraDirectory.getAbsoluteFile().toPath());
