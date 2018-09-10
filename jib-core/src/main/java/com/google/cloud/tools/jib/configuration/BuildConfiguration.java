@@ -36,7 +36,7 @@ public class BuildConfiguration {
     // All the parameters below are set to their default values.
     @Nullable private ImageConfiguration baseImageConfiguration;
     @Nullable private ImageConfiguration targetImageConfiguration;
-    private ImmutableSet<String> targetImageTags = ImmutableSet.of();
+    private ImmutableSet<String> additionalTargetImageTags = ImmutableSet.of();
     @Nullable private ContainerConfiguration containerConfiguration;
     @Nullable private CacheConfiguration applicationLayersCacheConfiguration;
     @Nullable private CacheConfiguration baseImageLayersCacheConfiguration;
@@ -80,8 +80,8 @@ public class BuildConfiguration {
      * @param tags a set of tags
      * @return this
      */
-    public Builder setTargetImageTags(Set<String> tags) {
-      this.targetImageTags = ImmutableSet.copyOf(tags);
+    public Builder setAdditionalTargetImageTags(Set<String> tags) {
+      additionalTargetImageTags = ImmutableSet.copyOf(tags);
       return this;
     }
 
@@ -195,7 +195,7 @@ public class BuildConfiguration {
               buildLogger,
               baseImageConfiguration,
               targetImageConfiguration,
-              targetImageTags,
+              additionalTargetImageTags,
               containerConfiguration,
               applicationLayersCacheConfiguration,
               baseImageLayersCacheConfiguration,
@@ -230,7 +230,7 @@ public class BuildConfiguration {
   private final JibLogger buildLogger;
   private final ImageConfiguration baseImageConfiguration;
   private final ImageConfiguration targetImageConfiguration;
-  private final ImmutableSet<String> targetImageTags;
+  private final ImmutableSet<String> additionalTargetImageTags;
   @Nullable private final ContainerConfiguration containerConfiguration;
   @Nullable private final CacheConfiguration applicationLayersCacheConfiguration;
   @Nullable private final CacheConfiguration baseImageLayersCacheConfiguration;
@@ -244,7 +244,7 @@ public class BuildConfiguration {
       JibLogger buildLogger,
       ImageConfiguration baseImageConfiguration,
       ImageConfiguration targetImageConfiguration,
-      ImmutableSet<String> targetImageTags,
+      ImmutableSet<String> additionalTargetImageTags,
       @Nullable ContainerConfiguration containerConfiguration,
       @Nullable CacheConfiguration applicationLayersCacheConfiguration,
       @Nullable CacheConfiguration baseImageLayersCacheConfiguration,
@@ -255,7 +255,7 @@ public class BuildConfiguration {
     this.buildLogger = buildLogger;
     this.baseImageConfiguration = baseImageConfiguration;
     this.targetImageConfiguration = targetImageConfiguration;
-    this.targetImageTags = targetImageTags;
+    this.additionalTargetImageTags = additionalTargetImageTags;
     this.containerConfiguration = containerConfiguration;
     this.applicationLayersCacheConfiguration = applicationLayersCacheConfiguration;
     this.baseImageLayersCacheConfiguration = baseImageLayersCacheConfiguration;
@@ -277,8 +277,8 @@ public class BuildConfiguration {
     return targetImageConfiguration;
   }
 
-  public ImmutableSet<String> getTargetImageTags() {
-    return targetImageTags;
+  public ImmutableSet<String> getAdditionalTargetImageTags() {
+    return additionalTargetImageTags;
   }
 
   @Nullable
