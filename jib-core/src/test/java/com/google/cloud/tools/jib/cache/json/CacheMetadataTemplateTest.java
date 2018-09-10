@@ -128,7 +128,7 @@ public class CacheMetadataTemplateTest {
         Paths.get("/some/source/path").toString(),
         classesLayerTemplate.getProperties().getLayerEntries().get(0).getSourceFileString());
     Assert.assertEquals(
-        "some/extraction/path",
+        Paths.get("some/extraction/path").toString(),
         classesLayerTemplate.getProperties().getLayerEntries().get(0).getExtractionPathString());
     Assert.assertEquals(
         FileTime.fromMillis(255073580723571L),
