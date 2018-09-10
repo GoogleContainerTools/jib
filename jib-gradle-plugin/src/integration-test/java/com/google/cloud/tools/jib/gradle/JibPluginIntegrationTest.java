@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
+import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -321,6 +322,13 @@ public class JibPluginIntegrationTest {
                 .resolve("jib-docker-context")
                 .toString())
         .run();
+
+    new DirectoryWalker(simpleTestProject
+        .getProjectRoot()
+        .resolve("build")
+        .resolve("jib-docker-context")).walk(path -> {
+          System.out.println("walking: " + path);
+    });
 
     assertDockerInspect(imageName);
     Assert.assertEquals(
