@@ -25,12 +25,15 @@ import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryException;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
@@ -126,14 +129,22 @@ class PushImageStep implements AsyncStep<Void>, Callable<Void> {
       ImageToJsonTranslator imageToJsonTranslator =
           new ImageToJsonTranslator(NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep)));
 
-      // Pushes the image manifest.
+      // Gets the image manifest to push.
       BuildableManifestTemplate manifestTemplate =
           imageToJsonTranslator.getManifestTemplate(
               buildConfiguration.getTargetFormat(),
               NonBlockingSteps.get(
                   NonBlockingSteps.get(NonBlockingSteps.get(pushContainerConfigurationStep))));
-      registryClient.pushManifest(
-          manifestTemplate, buildConfiguration.getTargetImageConfiguration().getImageTag());
+
+      // Pushes to all target image tags.
+      Set<String> tags = new HashSet<>(1 + buildConfiguration.getTargetImageTags().size());
+      tags.add(buildConfiguration.getTargetImageConfiguration().getImageTag());
+      tags.addAll(buildConfiguration.getTargetImageTags());
+
+      // TODO: Parallelize.
+      for (String tag : tags) {
+        registryClient.pushManifest(manifestTemplate, tag);
+      }
     }
 
     return null;
