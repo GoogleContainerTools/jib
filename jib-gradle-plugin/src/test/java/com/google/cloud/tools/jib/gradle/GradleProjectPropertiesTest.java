@@ -46,7 +46,7 @@ public class GradleProjectPropertiesTest {
   @Mock private Jar mockJar2;
   @Mock private Project mockProject;
   @Mock private Convention mockConvention;
-  @Mock WarPluginConvention mockWarPluginConvection;
+  @Mock private WarPluginConvention mockWarPluginConvection;
   @Mock private TaskContainer mockTaskContainer;
   @Mock private GradleJibLogger mockGradleJibLogger;
   @Mock private JavaLayerConfigurations mockJavaLayerConfigurations;

@@ -125,7 +125,7 @@ class GradleProjectProperties implements ProjectProperties {
 
   @Override
   public boolean isWarProject() {
-    // TODO: replace with "getWar(project) != null" once ready
+    // TODO: replace with "getWarTask(project) != null" once ready
     return false;
   }
 
