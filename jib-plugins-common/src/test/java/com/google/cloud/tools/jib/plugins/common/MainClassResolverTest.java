@@ -129,7 +129,8 @@ public class MainClassResolverTest {
   public void testResolveMainClass_noneInferredWithBackup() throws MainClassInferenceException {
     Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("${start-class}");
     Mockito.when(mockProjectProperties.getJavaLayerConfigurations().getClassLayerEntries())
-        .thenReturn(ImmutableList.of(new LayerEntry(Paths.get("ignored"), Paths.get("ignored"))));
+        .thenReturn(
+            ImmutableList.of(new LayerEntry(Paths.get("parent/ignored"), Paths.get("ignored"))));
     Assert.assertEquals(
         "${start-class}", MainClassResolver.resolveMainClass(null, mockProjectProperties));
     Mockito.verify(mockBuildLogger).warn("'mainClass' is not a valid Java class : ${start-class}");
@@ -138,7 +139,8 @@ public class MainClassResolverTest {
   @Test
   public void testResolveMainClass_noneInferredWithoutBackup() {
     Mockito.when(mockJavaLayerConfigurations.getClassLayerEntries())
-        .thenReturn(ImmutableList.of(new LayerEntry(Paths.get("ignored"), Paths.get("ignored"))));
+        .thenReturn(
+            ImmutableList.of(new LayerEntry(Paths.get("parent/ignored"), Paths.get("ignored"))));
     try {
       MainClassResolver.resolveMainClass(null, mockProjectProperties);
       Assert.fail();

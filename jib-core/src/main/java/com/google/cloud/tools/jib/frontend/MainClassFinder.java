@@ -36,6 +36,8 @@ import javassist.CtMethod;
 import javassist.NotFoundException;
 import javax.annotation.Nullable;
 
+/** Finds main classes in directories. */
+// TODO: Change to file main classes in a list of class files.
 public class MainClassFinder {
 
   /** The result of a call to {@link #find}. */

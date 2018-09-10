@@ -117,6 +117,7 @@ public class MainClassResolver {
             .getJavaLayerConfigurations()
             .getClassLayerEntries()
             .stream()
+            .peek(layerEntry -> Verify.verify(layerEntry != null))
             .map(LayerEntry::getSourceFile)
             .collect(ImmutableList.toImmutableList());
 
