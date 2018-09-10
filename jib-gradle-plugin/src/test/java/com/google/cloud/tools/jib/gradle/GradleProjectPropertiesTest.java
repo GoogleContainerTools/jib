@@ -97,20 +97,20 @@ public class GradleProjectPropertiesTest {
 
   @Test
   public void testGetWar_warProject() {
-    Assert.assertNotNull(GradleProjectProperties.getWar(mockProject));
+    Assert.assertNotNull(GradleProjectProperties.getWarTask(mockProject));
   }
 
   @Test
   public void testGetWar_noWarPlugin() {
     Mockito.when(mockConvention.findPlugin(WarPluginConvention.class)).thenReturn(null);
 
-    Assert.assertNull(GradleProjectProperties.getWar(mockProject));
+    Assert.assertNull(GradleProjectProperties.getWarTask(mockProject));
   }
 
   @Test
   public void testGetWar_noWarTask() {
     Mockito.when(mockTaskContainer.findByName("war")).thenReturn(null);
 
-    Assert.assertNull(GradleProjectProperties.getWar(mockProject));
+    Assert.assertNull(GradleProjectProperties.getWarTask(mockProject));
   }
 }

@@ -65,7 +65,7 @@ class GradleProjectProperties implements ProjectProperties {
   }
 
   @Nullable
-  static War getWar(Project project) {
+  static War getWarTask(Project project) {
     WarPluginConvention warPluginConvention =
         project.getConvention().findPlugin(WarPluginConvention.class);
     if (warPluginConvention == null) {
