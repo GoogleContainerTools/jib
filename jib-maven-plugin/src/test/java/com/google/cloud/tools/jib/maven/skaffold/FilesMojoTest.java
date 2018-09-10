@@ -34,7 +34,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 /** Integration tests for {@link FilesMojo}. */
-public class FilesMojoIntegrationTest {
+public class FilesMojoTest {
 
   @ClassRule public static final TestPlugin testPlugin = new TestPlugin();
 
@@ -115,6 +115,10 @@ public class FilesMojoIntegrationTest {
             complexServiceRoot.resolve("src/main/java"),
             complexServiceRoot.resolve("src/main/resources1"),
             complexServiceRoot.resolve("src/main/resources2"),
-            complexServiceRoot.resolve("src/main/other-jib")));
+            complexServiceRoot.resolve("src/main/other-jib"),
+            // this test expects standard .m2 locations
+            Paths.get(System.getProperty("user.home"))
+                .resolve(
+                    ".m2/repository/com/google/guava/guava/HEAD-jre-SNAPSHOT/guava-HEAD-jre-SNAPSHOT.jar")));
   }
 }

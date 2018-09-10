@@ -33,7 +33,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 /** Integration tests for {@link PackageGoalsMojo}. */
-public class PackageGoalsMojoIntegrationTest {
+public class PackageGoalsMojoTest {
 
   @ClassRule public static final TestPlugin testPlugin = new TestPlugin();
 

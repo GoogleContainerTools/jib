@@ -21,22 +21,30 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import java.io.File;
-import java.nio.file.Path;
-import java.util.Objects;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.FileSet;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.project.DefaultDependencyResolutionRequest;
+import org.apache.maven.project.DependencyResolutionException;
+import org.apache.maven.project.DependencyResolutionResult;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.project.ProjectDependenciesResolver;
+import org.eclipse.aether.graph.DependencyFilter;
 
 /**
  * Print out changing source dependencies on a module. In multimodule applications it should be run
- * by activating a single module and it's dependent modules. Dependency collection will ignore
+ * by activating a single module and its dependent modules. Dependency collection will ignore
  * project level snapshots (sub-modules) unless the user has explicitly installed them (by only
  * requiring dependencyCollection). For use only within skaffold.
  *
@@ -51,8 +59,19 @@ public class FilesMojo extends AbstractMojo {
   @VisibleForTesting static final String GOAL_NAME = "_skaffold-files";
 
   @Nullable
-  @Parameter(defaultValue = "${project}", readonly = true)
+  @Parameter(defaultValue = "${session}", required = true, readonly = true)
+  private MavenSession session;
+
+  @Nullable
+  @Parameter(defaultValue = "${project}", required = true, readonly = true)
   private MavenProject project;
+
+  @Nullable
+  @Parameter(defaultValue = "${reactorProjects}", required = true, readonly = true)
+  private List<MavenProject> projects;
+
+  // TODO: This is internal maven, we should find a better way to do this
+  @Nullable @Component private ProjectDependenciesResolver projectDependenciesResolver;
 
   // This parameter is cloned from JibPluginConfiguration
   @Nullable
@@ -62,7 +81,10 @@ public class FilesMojo extends AbstractMojo {
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
     Preconditions.checkNotNull(project);
+    Preconditions.checkNotNull(projects);
+    Preconditions.checkNotNull(session);
     Preconditions.checkNotNull(extraDirectory);
+    Preconditions.checkNotNull(projectDependenciesResolver);
 
     // print out pom configuration files
     System.out.println(project.getFile());
@@ -87,16 +109,45 @@ public class FilesMojo extends AbstractMojo {
       System.out.println(extraDirectory.getAbsoluteFile().toPath());
     }
 
-    // print out all SNAPSHOT, non-project artifacts
-    project
-        .getArtifacts()
-        .stream()
-        .filter(Artifact::isSnapshot)
-        .map(Artifact::getFile)
-        .filter(Objects::nonNull)
-        .map(File::toPath)
-        .map(Path::toAbsolutePath)
-        .map(Path::toString)
-        .forEach(System.out::println);
+
+    // Grab non-project SNAPSHOT dependencies for this project
+    // TODO: this whole sections relies on internal maven API, it could break. We need to explore
+    // TODO: better ways to resolve dependencies using the public maven API.
+    Set<String> projectArtifacts =
+        projects
+            .stream()
+            .map(MavenProject::getArtifact)
+            .map(Artifact::toString)
+            .collect(Collectors.toSet());
+
+    DependencyFilter ignoreProjectDependenciesFilter =
+        (node, parents) -> {
+          if (node == null || node.getDependency() == null) {
+            // if nothing, then ignore
+            return false;
+          }
+          if (projectArtifacts.contains(node.getArtifact().toString())) {
+            // ignore project dependency artifacts, ignore
+            return false;
+          }
+          // we only want compile/runtime deps
+          return Artifact.SCOPE_COMPILE_PLUS_RUNTIME.contains(node.getDependency().getScope());
+        };
+
+    try {
+      DependencyResolutionResult t =
+          projectDependenciesResolver.resolve(
+              new DefaultDependencyResolutionRequest(project, session.getRepositorySession())
+                  .setResolutionFilter(ignoreProjectDependenciesFilter));
+      t.getDependencies()
+          .stream()
+          .map(org.eclipse.aether.graph.Dependency::getArtifact)
+          .filter(org.eclipse.aether.artifact.Artifact::isSnapshot)
+          .map(org.eclipse.aether.artifact.Artifact::getFile)
+          .forEach(System.out::println);
+
+    } catch (DependencyResolutionException ex) {
+      throw new MojoExecutionException("Failed to resolve dependencies", ex);
+    }
   }
 }

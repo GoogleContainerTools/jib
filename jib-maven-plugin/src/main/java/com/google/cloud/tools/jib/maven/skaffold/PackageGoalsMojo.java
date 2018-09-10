@@ -34,11 +34,11 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 
 /**
  * Print out all jib goals tied to the package phase. Useful in multimodule situations to determine
- * if the correct jib goals are configured when running skaffold.
+ * if the correct jib goals are configured when running skaffold. For use only within skaffold.
  *
  * <p>It is intended to be used from the root project and only in multimodule situations:
  *
- * <p>./mvnw jib:_skaffold-package-goals -pl module [-Pprofile]
+ * <p>./mvnw jib:_skaffold-package-goals -q -pl module [-Pprofile]
  */
 @Mojo(
     name = PackageGoalsMojo.GOAL_NAME,
