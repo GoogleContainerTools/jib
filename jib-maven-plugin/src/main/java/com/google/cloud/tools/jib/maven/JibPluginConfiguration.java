@@ -301,11 +301,6 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     return allowInsecureRegistries;
   }
 
-  /**
-   * Directory where non-java container files should be placed.
-   *
-   * @return path to extras directory, if not absolute then resolve against this project directory.
-   */
   Path getExtraDirectory() {
     // TODO: Should inform user about nonexistent directory if using custom directory.
     return Preconditions.checkNotNull(extraDirectory).toPath();

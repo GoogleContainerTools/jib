@@ -110,7 +110,6 @@ public class FilesMojo extends AbstractMojo {
       System.out.println(extraDirectory.getAbsoluteFile().toPath());
     }
 
-
     // Grab non-project SNAPSHOT dependencies for this project
     // TODO: this whole sections relies on internal maven API, it could break. We need to explore
     // TODO: better ways to resolve dependencies using the public maven API.
