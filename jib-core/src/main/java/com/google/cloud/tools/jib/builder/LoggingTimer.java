@@ -22,6 +22,14 @@ import java.util.function.Consumer;
 /** Gets {@link com.google.cloud.tools.jib.builder.Timer}s that produces consumable log messages. */
 public class LoggingTimer {
 
+  private static StringBuilder getTabs(int depth) {
+    StringBuilder tabs = new StringBuilder();
+    for (int i = 0; i < depth; i++) {
+      tabs.append("\t");
+    }
+    return tabs;
+  }
+
   /**
    * Creates a new {@link com.google.cloud.tools.jib.builder.Timer} that produces consumable log
    * messages..
@@ -43,7 +51,7 @@ public class LoggingTimer {
    * @return a new {@link com.google.cloud.tools.jib.builder.Timer}
    */
   public static Timer newTimer(Consumer<String> logMessageConsumer, String label, int depth) {
-    logMessageConsumer.accept(getTabs(depth).append("RUNNING\t").append(label).toString());
+    logMessageConsumer.accept(getTabs(depth).append("TIMING\t").append(label).toString());
 
     return new Timer(
         nanoTime ->
@@ -55,14 +63,6 @@ public class LoggingTimer {
                     .append(nanoTime / 1000 / 1000.0)
                     .append(" ms")
                     .toString()));
-  }
-
-  private static StringBuilder getTabs(int depth) {
-    StringBuilder tabs = new StringBuilder();
-    for (int i = 0; i < depth; i++) {
-      tabs.append("\t");
-    }
-    return tabs;
   }
 
   private LoggingTimer() {}

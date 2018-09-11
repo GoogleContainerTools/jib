@@ -34,7 +34,7 @@ public class LoggingTimerTest {
 
     String startLogMessage = logMessageQueue.poll();
     Assert.assertNotNull(startLogMessage);
-    Assert.assertTrue(startLogMessage.matches("RUNNING\tlabel"));
+    Assert.assertTrue(startLogMessage.matches("TIMING\tlabel"));
 
     String lapLogMessage = logMessageQueue.poll();
     Assert.assertNotNull(lapLogMessage);
