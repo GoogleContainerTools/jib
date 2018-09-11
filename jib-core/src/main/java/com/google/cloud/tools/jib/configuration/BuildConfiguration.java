@@ -30,6 +30,13 @@ import javax.annotation.Nullable;
 /** Immutable configuration options for the builder process. */
 public class BuildConfiguration {
 
+  /** The default target format of the container manifest. */
+  private static final Class<? extends BuildableManifestTemplate> DEFAULT_TARGET_FORMAT =
+      V22ManifestTemplate.class;
+
+  /** The default tool identifier. */
+  private static final String DEFAULT_TOOL_NAME = "jib";
+
   /** Builds an immutable {@link BuildConfiguration}. Instantiate with {@link #builder}. */
   public static class Builder {
 
@@ -42,8 +49,8 @@ public class BuildConfiguration {
     @Nullable private CacheConfiguration baseImageLayersCacheConfiguration;
     private boolean allowInsecureRegistries = false;
     private ImmutableList<LayerConfiguration> layerConfigurations = ImmutableList.of();
-    private Class<? extends BuildableManifestTemplate> targetFormat = V22ManifestTemplate.class;
-    private String toolName = "jib";
+    private Class<? extends BuildableManifestTemplate> targetFormat = DEFAULT_TARGET_FORMAT;
+    private String toolName = DEFAULT_TOOL_NAME;
 
     private JibLogger buildLogger;
 

@@ -130,6 +130,11 @@ class MavenProjectProperties implements ProjectProperties {
     return JAR_PLUGIN_NAME;
   }
 
+  @Override
+  public boolean isWarProject() {
+    return false; // TODO: to be implemented. For now, assume false.
+  }
+
   /**
    * Tries to resolve the main class.
    *

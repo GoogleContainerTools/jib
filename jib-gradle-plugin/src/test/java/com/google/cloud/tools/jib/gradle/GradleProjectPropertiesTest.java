@@ -24,6 +24,10 @@ import org.gradle.api.Project;
 import org.gradle.api.internal.file.FileResolver;
 import org.gradle.api.java.archives.Manifest;
 import org.gradle.api.java.archives.internal.DefaultManifest;
+import org.gradle.api.plugins.Convention;
+import org.gradle.api.plugins.WarPluginConvention;
+import org.gradle.api.tasks.TaskContainer;
+import org.gradle.api.tasks.bundling.War;
 import org.gradle.jvm.tasks.Jar;
 import org.junit.Assert;
 import org.junit.Before;
@@ -41,6 +45,9 @@ public class GradleProjectPropertiesTest {
   @Mock private Jar mockJar;
   @Mock private Jar mockJar2;
   @Mock private Project mockProject;
+  @Mock private Convention mockConvention;
+  @Mock private WarPluginConvention mockWarPluginConvection;
+  @Mock private TaskContainer mockTaskContainer;
   @Mock private GradleJibLogger mockGradleJibLogger;
   @Mock private JavaLayerConfigurations mockJavaLayerConfigurations;
 
@@ -50,6 +57,12 @@ public class GradleProjectPropertiesTest {
   @Before
   public void setup() {
     manifest = new DefaultManifest(mockFileResolver);
+    Mockito.when(mockProject.getConvention()).thenReturn(mockConvention);
+    Mockito.when(mockConvention.findPlugin(WarPluginConvention.class))
+        .thenReturn(mockWarPluginConvection);
+    Mockito.when(mockWarPluginConvection.getProject()).thenReturn(mockProject);
+    Mockito.when(mockProject.getTasks()).thenReturn(mockTaskContainer);
+    Mockito.when(mockTaskContainer.findByName("war")).thenReturn(Mockito.mock(War.class));
     Mockito.when(mockJar.getManifest()).thenReturn(manifest);
 
     gradleProjectProperties =
@@ -75,5 +88,29 @@ public class GradleProjectPropertiesTest {
     Mockito.when(mockProject.getTasksByName("jar", false))
         .thenReturn(ImmutableSet.of(mockJar, mockJar2));
     Assert.assertNull(gradleProjectProperties.getMainClassFromJar());
+  }
+
+  @Test
+  public void testIsWarProject() {
+    Assert.assertFalse(gradleProjectProperties.isWarProject());
+  }
+
+  @Test
+  public void testGetWar_warProject() {
+    Assert.assertNotNull(GradleProjectProperties.getWarTask(mockProject));
+  }
+
+  @Test
+  public void testGetWar_noWarPlugin() {
+    Mockito.when(mockConvention.findPlugin(WarPluginConvention.class)).thenReturn(null);
+
+    Assert.assertNull(GradleProjectProperties.getWarTask(mockProject));
+  }
+
+  @Test
+  public void testGetWar_noWarTask() {
+    Mockito.when(mockTaskContainer.findByName("war")).thenReturn(null);
+
+    Assert.assertNull(GradleProjectProperties.getWarTask(mockProject));
   }
 }
