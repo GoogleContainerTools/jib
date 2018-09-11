@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 
 /** Build containers with Jib. */
+// TODO: Add tests once JibContainerBuilder#containerize() is added.
 public class Jib {
 
   /**

@@ -45,6 +45,7 @@ import javax.annotation.Nullable;
  *    .containerize(...);
  * }</pre>
  */
+// TODO: Add tests once containerize() is added.
 public class JibContainerBuilder {
 
   private final ImageReference baseImageReference;
@@ -132,23 +133,23 @@ public class JibContainerBuilder {
    * Sets the container entrypoint. This is the beginning of the command that is run when the
    * container starts. {@link #setProgramArguments} sets additional tokens.
    *
-   * @param entrypointTokens a list of tokens for the entrypoint command
+   * @param entrypoint a list of the entrypoint command
    * @return this
    */
-  public JibContainerBuilder setEntrypoint(List<String> entrypointTokens) {
-    entrypoint = ImmutableList.copyOf(entrypointTokens);
+  public JibContainerBuilder setEntrypoint(List<String> entrypoint) {
+    this.entrypoint = ImmutableList.copyOf(entrypoint);
     return this;
   }
 
   /**
    * Sets the container entrypoint.
    *
-   * @param entrypointTokens tokens for the entrypoint command
+   * @param entrypoint the entrypoint command
    * @return this
    * @see #setEntrypoint(List) for more details
    */
-  public JibContainerBuilder setEntrypoint(String... entrypointTokens) {
-    setEntrypoint(Arrays.asList(entrypointTokens));
+  public JibContainerBuilder setEntrypoint(String... entrypoint) {
+    setEntrypoint(Arrays.asList(entrypoint));
     return this;
   }
 
