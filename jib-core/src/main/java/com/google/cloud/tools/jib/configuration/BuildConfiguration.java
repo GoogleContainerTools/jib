@@ -29,11 +29,11 @@ import javax.annotation.Nullable;
 public class BuildConfiguration {
 
   /** The default target format of the container manifest. */
-  static final Class<? extends BuildableManifestTemplate> DEFAULT_TARGET_FORMAT =
+  private static final Class<? extends BuildableManifestTemplate> DEFAULT_TARGET_FORMAT =
       V22ManifestTemplate.class;
 
   /** The default tool identifier. */
-  static final String DEFAULT_TOOL_NAME = "jib";
+  private static final String DEFAULT_TOOL_NAME = "jib";
 
   public static class Builder {
 

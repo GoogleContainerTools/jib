@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
+import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.nio.file.Paths;
@@ -171,14 +172,13 @@ public class BuildConfigurationTest {
             .setTargetImageConfiguration(targetImageConfiguration)
             .build();
 
-    Assert.assertEquals(
-        BuildConfiguration.DEFAULT_TARGET_FORMAT, buildConfiguration.getTargetFormat());
+    Assert.assertEquals(V22ManifestTemplate.class, buildConfiguration.getTargetFormat());
     Assert.assertNull(buildConfiguration.getApplicationLayersCacheConfiguration());
     Assert.assertNull(buildConfiguration.getBaseImageLayersCacheConfiguration());
     Assert.assertNull(buildConfiguration.getContainerConfiguration());
     Assert.assertFalse(buildConfiguration.getAllowInsecureRegistries());
     Assert.assertEquals(Collections.emptyList(), buildConfiguration.getLayerConfigurations());
-    Assert.assertEquals(BuildConfiguration.DEFAULT_TOOL_NAME, buildConfiguration.getToolName());
+    Assert.assertEquals("jib", buildConfiguration.getToolName());
   }
 
   @Test
