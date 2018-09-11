@@ -32,7 +32,7 @@ public class ContainerConfiguration {
   /** Builder for instantiating a {@link ContainerConfiguration}. */
   public static class Builder {
 
-    private Instant creationTime = Instant.EPOCH;
+    private Instant creationTime = BuildConfiguration.DEFAULT_CREATION_TIME;
     @Nullable private ImmutableList<String> entrypoint;
     @Nullable private ImmutableList<String> programArguments;
     @Nullable private ImmutableMap<String, String> environmentMap;
