@@ -22,7 +22,5 @@ import org.junit.Test;
 public class PushImageStepTest {
 
   @Test
-  public void push() {
-
-  }
+  public void push() {}
 }
