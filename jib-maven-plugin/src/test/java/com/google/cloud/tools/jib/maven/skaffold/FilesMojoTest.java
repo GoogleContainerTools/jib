@@ -33,7 +33,7 @@ import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-/** Integration tests for {@link FilesMojo}. */
+/** Tests for {@link FilesMojo}. */
 public class FilesMojoTest {
 
   @ClassRule public static final TestPlugin testPlugin = new TestPlugin();

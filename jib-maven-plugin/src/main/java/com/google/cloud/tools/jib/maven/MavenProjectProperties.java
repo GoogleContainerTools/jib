@@ -37,7 +37,7 @@ public class MavenProjectProperties implements ProjectProperties {
   /** Used for logging during main class inference and analysis of user configuration. */
   public static final String PLUGIN_NAME = "jib-maven-plugin";
 
-  /** Used to indentify this plugin when interacting with the maven system. */
+  /** Used to identify this plugin when interacting with the maven system. */
   public static final String PLUGIN_KEY = "com.google.cloud.tools:" + PLUGIN_NAME;
 
   /** Used to generate the User-Agent header and history metadata. */

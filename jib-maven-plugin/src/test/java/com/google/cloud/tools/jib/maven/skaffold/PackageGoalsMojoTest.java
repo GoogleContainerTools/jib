@@ -32,7 +32,7 @@ import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-/** Integration tests for {@link PackageGoalsMojo}. */
+/** Tests for {@link PackageGoalsMojo}. */
 public class PackageGoalsMojoTest {
 
   @ClassRule public static final TestPlugin testPlugin = new TestPlugin();
