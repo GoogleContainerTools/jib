@@ -14,10 +14,12 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.event;
+package com.google.cloud.tools.jib.ncache;
 
-/**
- * Type for events emitted by Jib Core. Implementation classes should <b>not</b> inherit from each
- * other.
- */
-public interface JibEvent {}
+/** Thrown if the the cache was found to be corrupted. */
+public class CacheCorruptedException extends Exception {
+
+  CacheCorruptedException(String message, Throwable cause) {
+    super(message, cause);
+  }
+}

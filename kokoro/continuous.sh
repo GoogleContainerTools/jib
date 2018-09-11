@@ -19,6 +19,16 @@ docker kill $(docker ps --all --quiet) || true
 # Sets the integration testing project.
 export JIB_INTEGRATION_TESTING_PROJECT=jib-integration-testing
 
+# Restarting Docker for Mac to get around the certificate expiration issue:
+# b/112707824
+# https://github.com/GoogleContainerTools/jib/issues/730#issuecomment-413603874
+# https://github.com/moby/moby/issues/11534
+# TODO: remove this temporary fix once b/112707824 is permanently fixed.
+if [ "${KOKORO_JOB_CLUSTER}" = "MACOS_EXTERNAL" ]; then
+  osascript -e 'quit app "Docker"'
+  open -a Docker
+fi
+
 (cd github/jib/jib-core; ./gradlew clean build integrationTest --info --stacktrace)
 (cd github/jib/jib-plugins-common; ./gradlew clean build --info --stacktrace)
 (cd github/jib/jib-maven-plugin; ./mvnw clean install -P integration-tests -B -U -X)
