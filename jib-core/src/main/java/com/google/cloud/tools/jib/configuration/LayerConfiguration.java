@@ -51,11 +51,11 @@ public class LayerConfiguration {
      * container file system.
      *
      * <p>For example, {@code addEntry(Paths.get("myfile"), Paths.get("/path/in/container"))} would
-     * add {@code myfile} to the container to be accessed at {@code /path/in/container}.
+     * add {@code myfile} to the container to be accessed as {@code /path/in/container}.
      *
      * @param sourceFile the source file to add to the layer
-     * @param pathInContainer the path to add the source file to in the container file system
-     *     (relative to root {@code /})
+     * @param pathInContainer the path in the container file system corresponding to the {@code
+     *     sourceFile} (relative to root {@code /})
      * @return this
      */
     public Builder addEntry(Path sourceFile, Path pathInContainer) {
@@ -73,8 +73,8 @@ public class LayerConfiguration {
      * at {@code /path/in/container/**}.
      *
      * @param sourceFile the source file to add to the layer recursively
-     * @param pathInContainer the path to add the source file to in the container file system
-     *     (relative to root {@code /})
+     * @param pathInContainer the path in the container file system corresponding to the {@code
+     *     sourceFile} (relative to root {@code /})
      * @return this
      * @throws IOException if an exception occurred when recursively listing the directory
      */
