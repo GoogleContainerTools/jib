@@ -21,11 +21,11 @@ import com.google.cloud.tools.jib.event.JibEvent;
 /** Log message event. */
 public class LogEvent implements JibEvent {
 
-  /** Log level. */
+  /** Log levels, in order of verbosity. */
   public enum Level {
     ERROR,
-    LIFECYCLE,
     WARN,
+    LIFECYCLE,
     INFO,
     DEBUG
   }
