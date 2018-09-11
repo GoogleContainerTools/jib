@@ -34,7 +34,6 @@ class FileBlob implements Blob {
 
   @Override
   public BlobDescriptor writeTo(OutputStream outputStream) throws IOException {
-    // TODO: Acquire shared lock.
     try (InputStream fileStream = new BufferedInputStream(Files.newInputStream(file))) {
       return BlobDescriptor.fromPipe(fileStream, outputStream);
     }
