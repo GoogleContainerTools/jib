@@ -110,7 +110,7 @@ public class CacheReader {
   }
 
   /**
-   * Gets an up-to-date layer that is built from the {@code sourceFiles}.
+   * Gets an up-to-date layer that is built from the {@code layerEntries}.
    *
    * <p>The method returns the first up-to-date layer found. This is safe because the source files
    * will not have been modified since creation of any up-to-date layer (ie. all up-to-date layers
