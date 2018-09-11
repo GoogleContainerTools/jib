@@ -124,6 +124,7 @@ class PluginConfigurationProcessor {
     BuildConfiguration.Builder buildConfigurationBuilder =
         BuildConfiguration.builder(logger)
             .setToolName(MavenProjectProperties.TOOL_NAME)
+            .setEventEmitter(projectProperties.getEventEmitter())
             .setAllowInsecureRegistries(jibPluginConfiguration.getAllowInsecureRegistries())
             .setLayerConfigurations(
                 projectProperties.getJavaLayerConfigurations().getLayerConfigurations());

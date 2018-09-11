@@ -14,42 +14,43 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.gradle;
+package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import java.util.function.Consumer;
-import org.gradle.api.logging.Logger;
+import org.apache.maven.plugin.logging.Log;
 
-/** Handles {@link LogEvent}s by passing to the Gradle {@link Logger}. */
+/** Handles {@link LogEvent}s by passing to the Maven {@link Log}. */
 class LogEventHandler implements Consumer<LogEvent> {
 
-  private final Logger logger;
+  private final Log log;
 
-  LogEventHandler(Logger logger) {
-    this.logger = logger;
+  LogEventHandler(Log log) {
+    this.log = log;
   }
 
   @Override
   public void accept(LogEvent logEvent) {
     switch (logEvent.getLevel()) {
       case LIFECYCLE:
-        logger.lifecycle(logEvent.getMessage());
+        log.info(logEvent.getMessage());
         break;
 
       case DEBUG:
-        logger.debug(logEvent.getMessage());
+        log.debug(logEvent.getMessage());
         break;
 
       case ERROR:
-        logger.error(logEvent.getMessage());
+        log.error(logEvent.getMessage());
         break;
 
       case INFO:
-        logger.info(logEvent.getMessage());
+        // Use lifecycle for progress-indicating messages.
+        log.debug(logEvent.getMessage());
         break;
 
       case WARN:
-        logger.warn("warning: " + logEvent.getMessage());
+        log.warn("warning: " + logEvent.getMessage());
         break;
 
       default:
