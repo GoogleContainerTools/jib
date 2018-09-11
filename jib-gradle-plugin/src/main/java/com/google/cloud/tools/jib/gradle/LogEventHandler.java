@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.event.events.LogEvent;
-import com.google.cloud.tools.jib.event.events.LogEvent.Level;
 import java.util.function.Consumer;
 import org.gradle.api.logging.Logger;
 

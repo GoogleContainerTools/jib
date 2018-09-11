@@ -47,8 +47,8 @@ class GradleLayerConfigurations {
    * @return a {@link JavaLayerConfigurations} for the layers for the Gradle {@link Project}
    * @throws IOException if an I/O exception occurred during resolution
    */
-  static JavaLayerConfigurations getForProject(
-      Project project, Logger logger, Path extraDirectory) throws IOException {
+  static JavaLayerConfigurations getForProject(Project project, Logger logger, Path extraDirectory)
+      throws IOException {
     JavaPluginConvention javaPluginConvention =
         project.getConvention().getPlugin(JavaPluginConvention.class);
 

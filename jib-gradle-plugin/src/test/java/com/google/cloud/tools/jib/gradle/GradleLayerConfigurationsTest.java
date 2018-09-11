@@ -30,6 +30,7 @@ import java.util.Set;
 import org.gradle.api.Project;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.file.AbstractFileCollection;
+import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.Convention;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.SourceSet;
@@ -73,7 +74,7 @@ public class GradleLayerConfigurationsTest {
   @Mock private SourceSetContainer mockSourceSetContainer;
   @Mock private SourceSet mockMainSourceSet;
   @Mock private SourceSetOutput mockMainSourceSetOutput;
-  @Mock private GradleJibLogger mockGradleJibLogger;
+  @Mock private Logger mockLogger;
 
   @Before
   public void setUp() throws URISyntaxException {
@@ -137,7 +138,7 @@ public class GradleLayerConfigurationsTest {
 
     JavaLayerConfigurations javaLayerConfigurations =
         GradleLayerConfigurations.getForProject(
-            mockProject, mockGradleJibLogger, Paths.get("nonexistent/path"));
+            mockProject, mockLogger, Paths.get("nonexistent/path"));
     Assert.assertEquals(
         expectedDependenciesFiles,
         javaLayerConfigurations.getDependenciesLayerEntry().getSourceFiles());
@@ -158,14 +159,12 @@ public class GradleLayerConfigurationsTest {
     Mockito.when(mockMainSourceSetOutput.getClassesDirs())
         .thenReturn(new TestFileCollection(ImmutableSet.of(nonexistentFile)));
 
-    GradleLayerConfigurations.getForProject(
-        mockProject, mockGradleJibLogger, Paths.get("nonexistent/path"));
+    GradleLayerConfigurations.getForProject(mockProject, mockLogger, Paths.get("nonexistent/path"));
 
-    Mockito.verify(mockGradleJibLogger)
+    Mockito.verify(mockLogger)
         .info("Adding corresponding output directories of source sets to image");
-    Mockito.verify(mockGradleJibLogger).info("\t'" + nonexistentFile + "' (not found, skipped)");
-    Mockito.verify(mockGradleJibLogger)
-        .warn("No classes files were found - did you compile your project?");
+    Mockito.verify(mockLogger).info("\t'" + nonexistentFile + "' (not found, skipped)");
+    Mockito.verify(mockLogger).warn("No classes files were found - did you compile your project?");
   }
 
   @Test
@@ -173,8 +172,7 @@ public class GradleLayerConfigurationsTest {
     Path extraFilesDirectory = Paths.get(Resources.getResource("layer").toURI());
 
     JavaLayerConfigurations javaLayerConfigurations =
-        GradleLayerConfigurations.getForProject(
-            mockProject, mockGradleJibLogger, extraFilesDirectory);
+        GradleLayerConfigurations.getForProject(mockProject, mockLogger, extraFilesDirectory);
 
     ImmutableList<Path> expectedExtraFiles =
         ImmutableList.of(

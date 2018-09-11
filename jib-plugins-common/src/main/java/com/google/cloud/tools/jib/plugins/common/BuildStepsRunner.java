@@ -161,6 +161,10 @@ public class BuildStepsRunner {
 
       for (LayerConfiguration layerConfiguration :
           buildSteps.getBuildConfiguration().getLayerConfigurations()) {
+        if (layerConfiguration.getLayerEntries().isEmpty()) {
+          continue;
+        }
+
         buildLogger.info("\t" + capitalizeFirstLetter(layerConfiguration.getLabel()) + ":");
 
         for (LayerEntry layerEntry : layerConfiguration.getLayerEntries()) {
