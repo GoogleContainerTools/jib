@@ -61,8 +61,12 @@ public class DefaultCacheEntry implements CacheEntry {
       return this;
     }
 
-    public Optional<Blob> getLayerBlob() {
-      return Optional.ofNullable(layerBlob);
+    public boolean hasLayerBlob() {
+      return layerBlob != null;
+    }
+
+    public boolean hasMetadataBlob() {
+      return metadataBlob != null;
     }
 
     public CacheEntry build() {

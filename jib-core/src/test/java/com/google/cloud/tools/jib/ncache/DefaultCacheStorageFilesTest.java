@@ -31,9 +31,12 @@ public class DefaultCacheStorageFilesTest {
 
   @Test
   public void testIsLayerFile() {
-    Assert.assertTrue(DefaultCacheStorageFiles.isLayerFile(Paths.get(".layer")));
     Assert.assertTrue(
-        DefaultCacheStorageFiles.isLayerFile(Paths.get("is", "layer", "file", "layerfile.layer")));
+        DefaultCacheStorageFiles.isLayerFile(
+            Paths.get("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
+    Assert.assertTrue(
+        DefaultCacheStorageFiles.isLayerFile(
+            Paths.get("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")));
     Assert.assertFalse(DefaultCacheStorageFiles.isLayerFile(Paths.get("is.not.layer.file")));
   }
 
@@ -53,12 +56,12 @@ public class DefaultCacheStorageFilesTest {
             Paths.get(
                 "layer",
                 "file",
-                "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.layer")));
+                "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")));
     Assert.assertEquals(
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
         DefaultCacheStorageFiles.getDiffId(
-            Paths.get("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.layer")));
+            Paths.get("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
   }
 
   @Test
@@ -70,7 +73,7 @@ public class DefaultCacheStorageFilesTest {
     } catch (CacheCorruptedException ex) {
       Assert.assertEquals(
           "Layer file did not include valid diff ID: not long enough", ex.getMessage());
-      Assert.assertThat(ex.getCause(), CoreMatchers.instanceOf(IndexOutOfBoundsException.class));
+      Assert.assertThat(ex.getCause(), CoreMatchers.instanceOf(DigestException.class));
     }
 
     try {
@@ -103,7 +106,7 @@ public class DefaultCacheStorageFilesTest {
             "directory",
             "layers",
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-            "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.layer"),
+            "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"),
         testDefaultCacheStorageFiles.getLayerFile(layerDigest, diffId));
   }
 
@@ -114,7 +117,7 @@ public class DefaultCacheStorageFilesTest {
             "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
 
     Assert.assertEquals(
-        "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.layer",
+        "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
         testDefaultCacheStorageFiles.getLayerFilename(diffId));
   }
 

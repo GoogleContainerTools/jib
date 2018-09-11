@@ -24,7 +24,6 @@ import java.security.DigestException;
 class DefaultCacheStorageFiles {
 
   private static final String LAYERS_DIRECTORY = "layers";
-  private static final String LAYER_FILENAME_SUFFIX = ".layer";
   private static final String METADATA_FILENAME = "metadata";
   private static final String SELECTORS_DIRECTORY = "selectors";
 
@@ -35,7 +34,7 @@ class DefaultCacheStorageFiles {
    * @return {@code true} if {@code file} is a layer contents file; {@code false} otherwise
    */
   static boolean isLayerFile(Path file) {
-    return file.getFileName().toString().endsWith(LAYER_FILENAME_SUFFIX);
+    return file.getFileName().toString().length() == DescriptorDigest.HASH_LENGTH;
   }
 
   /**
@@ -57,7 +56,7 @@ class DefaultCacheStorageFiles {
    */
   static DescriptorDigest getDiffId(Path layerFile) throws CacheCorruptedException {
     try {
-      String diffId = layerFile.getFileName().toString().substring(0, DescriptorDigest.HASH_LENGTH);
+      String diffId = layerFile.getFileName().toString();
       return DescriptorDigest.fromHash(diffId);
 
     } catch (DigestException | IndexOutOfBoundsException ex) {
@@ -91,7 +90,7 @@ class DefaultCacheStorageFiles {
    * @return the layer filename
    */
   String getLayerFilename(DescriptorDigest layerDiffId) {
-    return layerDiffId.getHash() + LAYER_FILENAME_SUFFIX;
+    return layerDiffId.getHash();
   }
 
   /**

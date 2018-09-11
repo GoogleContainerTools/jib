@@ -82,7 +82,7 @@ class DefaultCacheStorageReader {
     try (Stream<Path> filesInLayerDirectory = Files.list(layerDirectory)) {
       for (Path fileInLayerDirectory : filesInLayerDirectory.collect(Collectors.toList())) {
         if (DefaultCacheStorageFiles.isLayerFile(fileInLayerDirectory)) {
-          if (cacheEntryBuilder.getLayerBlob().isPresent()) {
+          if (cacheEntryBuilder.hasLayerBlob()) {
             throw new CacheCorruptedException(
                 "Multiple layer files found for layer with digest "
                     + layerDigest.getHash()
@@ -95,6 +95,13 @@ class DefaultCacheStorageReader {
               .setLayerSize(Files.size(fileInLayerDirectory));
 
         } else if (DefaultCacheStorageFiles.isMetadataFile(fileInLayerDirectory)) {
+          if (cacheEntryBuilder.hasMetadataBlob()) {
+            throw new CacheCorruptedException(
+                "Multiple metadata files found for layer with digest "
+                    + layerDigest.getHash()
+                    + " in directory: "
+                    + layerDirectory);
+          }
           cacheEntryBuilder.setMetadataBlob(Blobs.from(fileInLayerDirectory));
         }
       }
