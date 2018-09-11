@@ -106,7 +106,7 @@ public class JavaLayerConfigurations {
             layerType,
             LayerConfiguration.builder()
                 .addEntry(layerFiles, layerType.getExtractionPath())
-                .setLabel(layerType.getLabel())
+                .setName(layerType.getLabel())
                 .build());
       }
       return new JavaLayerConfigurations(layerConfigurationsMap.build());

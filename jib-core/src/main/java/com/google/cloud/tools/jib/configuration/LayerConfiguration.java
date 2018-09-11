@@ -29,18 +29,18 @@ public class LayerConfiguration {
   public static class Builder {
 
     private final ImmutableList.Builder<LayerEntry> layerEntries = ImmutableList.builder();
-    private String label = "";
+    private String name = "";
 
     private Builder() {}
 
     /**
-     * Sets a label for this layer. This label does not affect the contents of the layer.
+     * Sets a name for this layer. This name does not affect the contents of the layer.
      *
-     * @param label the label
+     * @param name the name
      * @return this
      */
-    public Builder setLabel(String label) {
-      this.label = label;
+    public Builder setName(String name) {
+      this.name = name;
       return this;
     }
 
@@ -87,7 +87,7 @@ public class LayerConfiguration {
      * @return the built {@link LayerConfiguration}
      */
     public LayerConfiguration build() {
-      return new LayerConfiguration(label, layerEntries.build());
+      return new LayerConfiguration(name, layerEntries.build());
     }
   }
 
@@ -101,26 +101,26 @@ public class LayerConfiguration {
   }
 
   private final ImmutableList<LayerEntry> layerEntries;
-  private final String label;
+  private final String name;
 
   /**
    * Constructs a new layer configuration.
    *
-   * @param label an optional label for the layer
+   * @param name an optional name for the layer
    * @param layerEntries the list of {@link LayerEntry}s
    */
-  private LayerConfiguration(String label, ImmutableList<LayerEntry> layerEntries) {
-    this.label = label;
+  private LayerConfiguration(String name, ImmutableList<LayerEntry> layerEntries) {
+    this.name = name;
     this.layerEntries = layerEntries;
   }
 
   /**
-   * Gets the label.
+   * Gets the name.
    *
-   * @return the label
+   * @return the name
    */
-  public String getLabel() {
-    return label;
+  public String getName() {
+    return name;
   }
 
   /**

@@ -50,7 +50,7 @@ public class JavaLayerConfigurationsTest {
     }
     List<String> actualLabels = new ArrayList<>();
     for (LayerConfiguration layerConfiguration : javaLayerConfigurations.getLayerConfigurations()) {
-      actualLabels.add(layerConfiguration.getLabel());
+      actualLabels.add(layerConfiguration.getName());
     }
     Assert.assertEquals(expectedLabels, actualLabels);
   }
