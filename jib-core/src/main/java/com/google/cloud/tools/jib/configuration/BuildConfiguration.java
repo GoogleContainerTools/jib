@@ -17,12 +17,14 @@
 package com.google.cloud.tools.jib.configuration;
 
 import com.google.cloud.tools.jib.JibLogger;
+import com.google.cloud.tools.jib.event.EventEmitter;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** Immutable configuration options for the builder process. */
@@ -40,6 +42,7 @@ public class BuildConfiguration {
     private ImmutableList<LayerConfiguration> layerConfigurations = ImmutableList.of();
     private Class<? extends BuildableManifestTemplate> targetFormat = V22ManifestTemplate.class;
     private String toolName = "jib";
+    @Nullable private EventEmitter eventEmitter;
 
     private JibLogger buildLogger;
 
@@ -149,6 +152,17 @@ public class BuildConfiguration {
     }
 
     /**
+     * Sets the {@link EventEmitter} to emit events with.
+     *
+     * @param eventEmitter the {@link EventEmitter}
+     * @return this
+     */
+    public Builder setEventEmitter(EventEmitter eventEmitter) {
+      this.eventEmitter = eventEmitter;
+      return this;
+    }
+
+    /**
      * Builds a new {@link BuildConfiguration} using the parameters passed into the builder.
      *
      * @return the corresponding build configuration
@@ -185,7 +199,8 @@ public class BuildConfiguration {
               targetFormat,
               allowInsecureRegistries,
               layerConfigurations,
-              toolName);
+              toolName,
+              eventEmitter);
 
         case 1:
           throw new IllegalStateException(errorMessages.get(0));
@@ -214,6 +229,7 @@ public class BuildConfiguration {
   private final boolean allowInsecureRegistries;
   private final ImmutableList<LayerConfiguration> layerConfigurations;
   private final String toolName;
+  @Nullable private final EventEmitter eventEmitter;
 
   /** Instantiate with {@link Builder#build}. */
   private BuildConfiguration(
@@ -226,7 +242,8 @@ public class BuildConfiguration {
       Class<? extends BuildableManifestTemplate> targetFormat,
       boolean allowInsecureRegistries,
       ImmutableList<LayerConfiguration> layerConfigurations,
-      String toolName) {
+      String toolName,
+      @Nullable EventEmitter eventEmitter) {
     this.buildLogger = buildLogger;
     this.baseImageConfiguration = baseImageConfiguration;
     this.targetImageConfiguration = targetImageConfiguration;
@@ -237,6 +254,7 @@ public class BuildConfiguration {
     this.allowInsecureRegistries = allowInsecureRegistries;
     this.layerConfigurations = layerConfigurations;
     this.toolName = toolName;
+    this.eventEmitter = eventEmitter;
   }
 
   public JibLogger getBuildLogger() {
@@ -262,6 +280,10 @@ public class BuildConfiguration {
 
   public String getToolName() {
     return toolName;
+  }
+
+  public Optional<EventEmitter> getEventEmitter() {
+    return Optional.ofNullable(eventEmitter);
   }
 
   /**

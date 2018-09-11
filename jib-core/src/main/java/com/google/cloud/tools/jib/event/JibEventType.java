@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.event;
 
+import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.common.annotations.VisibleForTesting;
 
 /** Holds references to all {@link JibEvent} types. */
@@ -23,6 +24,9 @@ public class JibEventType<E extends JibEvent> {
 
   /** All event types. Handlers for this will always be called first. */
   public static final JibEventType<JibEvent> ALL = new JibEventType<>(JibEvent.class);
+
+  /** Log message event. */
+  public static final JibEventType<LogEvent> LOG = new JibEventType<>(LogEvent.class);
 
   // TODO: Add entries for all JibEvent types.
 
