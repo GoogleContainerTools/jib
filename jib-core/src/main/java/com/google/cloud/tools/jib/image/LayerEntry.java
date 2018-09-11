@@ -23,6 +23,14 @@ import java.util.Objects;
 /**
  * Represents an entry in the layer. A layer consists of many entries that can be converted into tar
  * archive entries.
+ *
+ * <p>Note that:
+ *
+ * <ul>
+ *   <li>Entry source files can be either files or directories.
+ *   <li>A directory is a single tar archive entry - its contents are not added. To add the contents
+ *       of a directory, each subfile should have be its own {@link LayerEntry}.
+ * </ul>
  */
 public class LayerEntry {
 
@@ -31,9 +39,16 @@ public class LayerEntry {
 
   /**
    * Instantiates with a source file and the path to place the source file in the container file
-   * system. For example, adding a file {@code HelloWorld.class} to be in container file system at
-   * {@code /app/classes/HelloWorld.class} would be {@code new
-   * LayerEntry(Paths.get("HelloWorld.class"), Paths.get("/app/classes/HelloWorld.class"))}.
+   * system.
+   *
+   * <p>For example, adding a file {@code HelloWorld.class} to be in container file system at {@code
+   * /app/classes/HelloWorld.class} would be {@code new LayerEntry(Paths.get("HelloWorld.class"),
+   * Paths.get("/app/classes/HelloWorld.class"))}.
+   *
+   * <p>For example, adding a directory {@code com/} to be in the container file system at {@code
+   * /app/classes/com/} would be {@code new LayerEntry(Paths.get("com"),
+   * Paths.get("/app/classes/com"))}. This would only be the {@code com/} directory itself and
+   * <b>not</b> its contents.
    *
    * @param sourceFile the source file to add to the layer
    * @param extractionPath the path to place the source file in the container file system (relative

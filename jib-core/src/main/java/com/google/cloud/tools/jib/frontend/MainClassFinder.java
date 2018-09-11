@@ -117,7 +117,7 @@ public class MainClassFinder {
   }
 
   /**
-   * Tries to find a class with {@code psvm} in {@link #files}.
+   * Tries to find classes with {@code public static void main(String[] args)} in {@link #files}.
    *
    * @return the {@link Result} of the main class finding attempt
    */

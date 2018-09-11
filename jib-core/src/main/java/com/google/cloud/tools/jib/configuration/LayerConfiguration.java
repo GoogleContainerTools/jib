@@ -69,8 +69,8 @@ public class LayerConfiguration {
      *
      * <p>For example, {@code addEntryRecursive(Paths.get("mydirectory"),
      * Paths.get("/path/in/container"))} would add {@code mydirectory} to the container to be
-     * accessed at {@code /path/in/container} and the contents of {@code mydirectory} to be accessed
-     * at {@code /path/in/container/**}.
+     * accessed as {@code /path/in/container} and {@code mydirectory/fileA} to be accessed as {@code
+     * /path/in/container/fileA}.
      *
      * @param sourceFile the source file to add to the layer recursively
      * @param pathInContainer the path in the container file system corresponding to the {@code
