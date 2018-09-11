@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.frontend;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.cloud.tools.jib.filesystem.FileOperations;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -29,6 +28,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -67,8 +67,8 @@ public class JavaDockerContextGenerator {
   /** Represents a Dockerfile {@code COPY} directive. */
   private static class CopyDirective {
 
-    /** The source files to put into the context. */
-    private final ImmutableList<Path> sourceFiles;
+    /** The layer entries to put into the context. */
+    private final ImmutableList<LayerEntry> layerEntries;
 
     /** The directory in the context to put the source files for the layer */
     private final String directoryInContext;
@@ -77,31 +77,31 @@ public class JavaDockerContextGenerator {
     private final String extractionPath;
 
     private CopyDirective(
-        ImmutableList<Path> sourceFiles, String directoryInContext, String extractionPath) {
-      this.sourceFiles = sourceFiles;
+        ImmutableList<LayerEntry> layerEntries, String directoryInContext, String extractionPath) {
+      this.layerEntries = layerEntries;
       this.directoryInContext = directoryInContext;
       this.extractionPath = extractionPath;
     }
   }
 
   /**
-   * Adds a copy directive for the {@code layerEntry} if it's not empty.
+   * Adds a copy directive for the {@code layerEntries} if it's not empty.
    *
    * @param listBuilder the {@link ImmutableList.Builder} to add to
-   * @param layerEntry the layer entry
+   * @param layerEntries the layer entries
    * @param directoryInContext the directory in the context to put the source files for the layer
+   * @param extractionPath the extraction path to extract the directory to
    */
   private static void addIfNotEmpty(
       ImmutableList.Builder<CopyDirective> listBuilder,
-      LayerEntry layerEntry,
-      String directoryInContext) {
-    if (layerEntry.getSourceFiles().isEmpty()) {
+      ImmutableList<LayerEntry> layerEntries,
+      String directoryInContext,
+      String extractionPath) {
+    if (layerEntries.isEmpty()) {
       return;
     }
 
-    listBuilder.add(
-        new CopyDirective(
-            layerEntry.getSourceFiles(), directoryInContext, layerEntry.getExtractionPath()));
+    listBuilder.add(new CopyDirective(layerEntries, directoryInContext, extractionPath));
   }
 
   /**
@@ -149,31 +149,37 @@ public class JavaDockerContextGenerator {
     ImmutableList.Builder<CopyDirective> copyDirectivesBuilder = ImmutableList.builder();
     addIfNotEmpty(
         copyDirectivesBuilder,
-        javaLayerConfigurations.getDependenciesLayerEntry(),
-        DEPENDENCIES_LAYER_DIRECTORY);
+        javaLayerConfigurations.getDependencyLayerEntries(),
+        DEPENDENCIES_LAYER_DIRECTORY,
+        JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE);
     addIfNotEmpty(
         copyDirectivesBuilder,
-        javaLayerConfigurations.getSnapshotDependenciesLayerEntry(),
-        SNAPSHOT_DEPENDENCIES_LAYER_DIRECTORY);
+        javaLayerConfigurations.getSnapshotDependencyLayerEntries(),
+        SNAPSHOT_DEPENDENCIES_LAYER_DIRECTORY,
+        JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE);
     addIfNotEmpty(
         copyDirectivesBuilder,
-        javaLayerConfigurations.getResourcesLayerEntry(),
-        RESOURCES_LAYER_DIRECTORY);
+        javaLayerConfigurations.getResourceLayerEntries(),
+        RESOURCES_LAYER_DIRECTORY,
+        JavaEntrypointConstructor.DEFAULT_RESOURCES_PATH_ON_IMAGE);
     addIfNotEmpty(
         copyDirectivesBuilder,
-        javaLayerConfigurations.getClassesLayerEntry(),
-        CLASSES_LAYER_DIRECTORY);
+        javaLayerConfigurations.getClassLayerEntries(),
+        CLASSES_LAYER_DIRECTORY,
+        JavaEntrypointConstructor.DEFAULT_CLASSES_PATH_ON_IMAGE);
     // TODO: remove this once we put files in WAR into the relevant layers (i.e., dependencies,
     // snapshot dependencies, resources, and classes layers). Should copy files in the right
     // directories. (For example, "resources" will go into the webapp root.)
     addIfNotEmpty(
         copyDirectivesBuilder,
-        javaLayerConfigurations.getExplodedWarEntry(),
-        EXPLODED_WAR_LAYER_DIRECTORY);
+        javaLayerConfigurations.getExplodedWarEntries(),
+        EXPLODED_WAR_LAYER_DIRECTORY,
+        JavaEntrypointConstructor.DEFAULT_JETTY_BASE_ON_IMAGE);
     addIfNotEmpty(
         copyDirectivesBuilder,
-        javaLayerConfigurations.getExtraFilesLayerEntry(),
-        EXTRA_FILES_LAYER_DIRECTORY);
+        javaLayerConfigurations.getExtraFilesLayerEntries(),
+        EXTRA_FILES_LAYER_DIRECTORY,
+        "/");
     copyDirectives = copyDirectivesBuilder.build();
   }
 
@@ -269,8 +275,23 @@ public class JavaDockerContextGenerator {
       Path directoryInContext = targetDirectory.resolve(copyDirective.directoryInContext);
       Files.createDirectory(directoryInContext);
 
-      // Copies dependencies.
-      FileOperations.copy(copyDirective.sourceFiles, directoryInContext);
+      // Copies the source files to the directoryInContext.
+      for (LayerEntry layerEntry : copyDirective.layerEntries) {
+        // This resolves the path to copy the source file to in the {@code directory}.
+        // For example, for a 'baseDirectory' of 'target/jib-docker-context/classes', a
+        // 'baseExtractionPath' of '/app/classes', and an 'actualExtractionPath' of
+        // '/app/classes/com/test/HelloWorld.class', the resolved destination would be
+        // 'target/jib-docker-context/classes/com/test/HelloWorld.class'.
+        Path destination =
+            directoryInContext.resolve(
+                Paths.get(copyDirective.extractionPath).relativize(layerEntry.getExtractionPath()));
+
+        if (Files.isDirectory(layerEntry.getSourceFile())) {
+          Files.createDirectories(destination);
+        } else {
+          Files.copy(layerEntry.getSourceFile(), destination);
+        }
+      }
     }
 
     // Creates the Dockerfile.

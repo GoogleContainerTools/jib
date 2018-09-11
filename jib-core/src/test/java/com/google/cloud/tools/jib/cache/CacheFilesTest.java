@@ -41,7 +41,7 @@ public class CacheFilesTest {
 
     Path metadataFile = CacheFiles.getMetadataFile(mockPath);
 
-    Assert.assertEquals("metadata-v2.json", fileNameCaptor.getValue());
+    Assert.assertEquals("metadata-v3.json", fileNameCaptor.getValue());
     Assert.assertEquals(mockPath, metadataFile);
   }
 
