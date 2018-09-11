@@ -21,8 +21,10 @@ import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /** Immutable configuration options for the builder process. */
@@ -35,11 +37,13 @@ public class BuildConfiguration {
   /** The default tool identifier. */
   private static final String DEFAULT_TOOL_NAME = "jib";
 
+  /** Builds an immutable {@link BuildConfiguration}. Instantiate with {@link #builder}. */
   public static class Builder {
 
     // All the parameters below are set to their default values.
     @Nullable private ImageConfiguration baseImageConfiguration;
     @Nullable private ImageConfiguration targetImageConfiguration;
+    private ImmutableSet<String> additionalTargetImageTags = ImmutableSet.of();
     @Nullable private ContainerConfiguration containerConfiguration;
     @Nullable private CacheConfiguration applicationLayersCacheConfiguration;
     @Nullable private CacheConfiguration baseImageLayersCacheConfiguration;
@@ -73,6 +77,18 @@ public class BuildConfiguration {
      */
     public Builder setTargetImageConfiguration(ImageConfiguration imageConfiguration) {
       this.targetImageConfiguration = imageConfiguration;
+      return this;
+    }
+
+    /**
+     * Sets the tags to tag the target image with (in addition to the tag in the target image
+     * configuration image reference set via {@link #setTargetImageConfiguration}).
+     *
+     * @param tags a set of tags
+     * @return this
+     */
+    public Builder setAdditionalTargetImageTags(Set<String> tags) {
+      additionalTargetImageTags = ImmutableSet.copyOf(tags);
       return this;
     }
 
@@ -186,6 +202,7 @@ public class BuildConfiguration {
               buildLogger,
               baseImageConfiguration,
               targetImageConfiguration,
+              additionalTargetImageTags,
               containerConfiguration,
               applicationLayersCacheConfiguration,
               baseImageLayersCacheConfiguration,
@@ -207,13 +224,20 @@ public class BuildConfiguration {
     }
   }
 
-  public static Builder builder(JibLogger buildLogger) {
-    return new Builder(buildLogger);
+  /**
+   * Creates a new {@link Builder} to build a {@link BuildConfiguration}.
+   *
+   * @param jibLogger the logger to log messages during build
+   * @return a new {@link Builder}
+   */
+  public static Builder builder(JibLogger jibLogger) {
+    return new Builder(jibLogger);
   }
 
   private final JibLogger buildLogger;
   private final ImageConfiguration baseImageConfiguration;
   private final ImageConfiguration targetImageConfiguration;
+  private final ImmutableSet<String> additionalTargetImageTags;
   @Nullable private final ContainerConfiguration containerConfiguration;
   @Nullable private final CacheConfiguration applicationLayersCacheConfiguration;
   @Nullable private final CacheConfiguration baseImageLayersCacheConfiguration;
@@ -222,11 +246,12 @@ public class BuildConfiguration {
   private final ImmutableList<LayerConfiguration> layerConfigurations;
   private final String toolName;
 
-  /** Instantiate with {@link Builder#build}. */
+  /** Instantiate with {@link #builder}. */
   private BuildConfiguration(
       JibLogger buildLogger,
       ImageConfiguration baseImageConfiguration,
       ImageConfiguration targetImageConfiguration,
+      ImmutableSet<String> additionalTargetImageTags,
       @Nullable ContainerConfiguration containerConfiguration,
       @Nullable CacheConfiguration applicationLayersCacheConfiguration,
       @Nullable CacheConfiguration baseImageLayersCacheConfiguration,
@@ -237,6 +262,7 @@ public class BuildConfiguration {
     this.buildLogger = buildLogger;
     this.baseImageConfiguration = baseImageConfiguration;
     this.targetImageConfiguration = targetImageConfiguration;
+    this.additionalTargetImageTags = additionalTargetImageTags;
     this.containerConfiguration = containerConfiguration;
     this.applicationLayersCacheConfiguration = applicationLayersCacheConfiguration;
     this.baseImageLayersCacheConfiguration = baseImageLayersCacheConfiguration;
@@ -256,6 +282,10 @@ public class BuildConfiguration {
 
   public ImageConfiguration getTargetImageConfiguration() {
     return targetImageConfiguration;
+  }
+
+  public ImmutableSet<String> getAdditionalTargetImageTags() {
+    return additionalTargetImageTags;
   }
 
   @Nullable
