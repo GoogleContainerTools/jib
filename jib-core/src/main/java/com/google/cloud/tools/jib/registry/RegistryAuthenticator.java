@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.registry;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.jib.JibLogger;
+import com.google.cloud.tools.jib.JibSystemProperties;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
@@ -266,7 +267,7 @@ public class RegistryAuthenticator {
 
       try (Connection connection = Connection.getConnectionFactory().apply(authenticationUrl)) {
         Request.Builder requestBuilder =
-            Request.builder().setHttpTimeout(Integer.getInteger("jib.httpTimeout"));
+            Request.builder().setHttpTimeout(Integer.getInteger(JibSystemProperties.HTTP_TIMEOUT));
         if (authorization != null) {
           requestBuilder.setAuthorization(authorization);
         }

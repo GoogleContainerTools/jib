@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.JibSystemProperties;
 import com.google.cloud.tools.jib.async.AsyncSteps;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.cache.Cache;
@@ -72,7 +73,7 @@ public class StepsRunner {
     this.applicationLayersCache = applicationLayersCache;
 
     ExecutorService executorService =
-        Boolean.getBoolean("jibSerialize")
+        Boolean.getBoolean(JibSystemProperties.SERIALIZE)
             ? MoreExecutors.newDirectExecutorService()
             : Executors.newCachedThreadPool();
     listeningExecutorService = MoreExecutors.listeningDecorator(executorService);

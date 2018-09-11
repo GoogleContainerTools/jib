@@ -20,6 +20,7 @@ import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.JibLogger;
+import com.google.cloud.tools.jib.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Connection;
 import com.google.cloud.tools.jib.http.Request;
@@ -211,13 +212,14 @@ class RegistryEndpointCaller<T> {
   private T call(URL url, Function<URL, Connection> connectionFactory)
       throws IOException, RegistryException {
     // Only sends authorization if using HTTPS or explicitly forcing over HTTP.
-    boolean sendCredentials = isHttpsProtocol(url) || Boolean.getBoolean("sendCredentialsOverHttp");
+    boolean sendCredentials =
+        isHttpsProtocol(url) || Boolean.getBoolean(JibSystemProperties.SEND_CREDENTIALS_OVER_HTTP);
 
     try (Connection connection = connectionFactory.apply(url)) {
       Request.Builder requestBuilder =
           Request.builder()
               .setUserAgent(userAgent)
-              .setHttpTimeout(Integer.getInteger("jib.httpTimeout"))
+              .setHttpTimeout(Integer.getInteger(JibSystemProperties.HTTP_TIMEOUT))
               .setAccept(registryEndpointProvider.getAccept())
               .setBody(registryEndpointProvider.getContent());
       if (sendCredentials) {

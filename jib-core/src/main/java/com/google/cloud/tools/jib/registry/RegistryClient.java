@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.registry;
 
 import com.google.cloud.tools.jib.JibLogger;
+import com.google.cloud.tools.jib.JibSystemProperties;
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
@@ -137,7 +138,7 @@ public class RegistryClient {
      *     string.
      */
     private String makeUserAgent() {
-      if (!Strings.isNullOrEmpty(System.getProperty("_JIB_DISABLE_USER_AGENT"))) {
+      if (!Strings.isNullOrEmpty(System.getProperty(JibSystemProperties.DISABLE_USER_AGENT))) {
         return "";
       }
 

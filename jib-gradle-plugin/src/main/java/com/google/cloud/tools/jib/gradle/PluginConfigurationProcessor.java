@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.JibLogger;
+import com.google.cloud.tools.jib.JibSystemProperties;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
@@ -59,7 +60,7 @@ class PluginConfigurationProcessor {
 
     ImageReference baseImage = ImageReference.parse(jibExtension.getBaseImage());
 
-    if (Boolean.getBoolean("sendCredentialsOverHttp")) {
+    if (Boolean.getBoolean(JibSystemProperties.SEND_CREDENTIALS_OVER_HTTP)) {
       logger.warn(
           "Authentication over HTTP is enabled. It is strongly recommended that you do not enable "
               + "this on a public network!");

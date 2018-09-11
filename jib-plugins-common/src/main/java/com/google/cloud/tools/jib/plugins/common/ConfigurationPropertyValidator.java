@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.cloud.tools.jib.JibLogger;
+import com.google.cloud.tools.jib.JibSystemProperties;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.ImageReference;
@@ -38,7 +39,7 @@ public class ConfigurationPropertyValidator {
    */
   public static <T extends Throwable> void checkHttpTimeoutProperty(
       Function<String, T> exceptionFactory) throws T {
-    String value = System.getProperty("jib.httpTimeout");
+    String value = System.getProperty(JibSystemProperties.HTTP_TIMEOUT);
     if (value == null) {
       return;
     }

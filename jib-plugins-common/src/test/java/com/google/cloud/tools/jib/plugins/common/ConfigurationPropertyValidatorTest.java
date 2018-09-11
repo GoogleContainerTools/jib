@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.cloud.tools.jib.JibLogger;
+import com.google.cloud.tools.jib.JibSystemProperties;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
@@ -38,18 +39,18 @@ public class ConfigurationPropertyValidatorTest {
 
   @After
   public void tearDown() {
-    System.clearProperty("jib.httpTimeout");
+    System.clearProperty(JibSystemProperties.HTTP_TIMEOUT);
   }
 
   @Test
   public void testCheckHttpTimeoutSystemProperty_ok() throws Exception {
-    Assert.assertNull(System.getProperty("jib.httpTimeout"));
+    Assert.assertNull(System.getProperty(JibSystemProperties.HTTP_TIMEOUT));
     ConfigurationPropertyValidator.checkHttpTimeoutProperty(Exception::new);
   }
 
   @Test
   public void testCheckHttpTimeoutSystemProperty_stringValue() {
-    System.setProperty("jib.httpTimeout", "random string");
+    System.setProperty(JibSystemProperties.HTTP_TIMEOUT, "random string");
     try {
       ConfigurationPropertyValidator.checkHttpTimeoutProperty(Exception::new);
       Assert.fail("Should error with a non-integer timeout");
@@ -60,7 +61,7 @@ public class ConfigurationPropertyValidatorTest {
 
   @Test
   public void testCheckHttpTimeoutSystemProperty_negativeValue() {
-    System.setProperty("jib.httpTimeout", "-80");
+    System.setProperty(JibSystemProperties.HTTP_TIMEOUT, "-80");
     try {
       ConfigurationPropertyValidator.checkHttpTimeoutProperty(Exception::new);
       Assert.fail("Should error with a negative timeout");
