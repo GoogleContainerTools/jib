@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Resources;
@@ -32,9 +33,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileTime;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.hamcrest.CoreMatchers;
@@ -92,42 +90,18 @@ public class ReproducibleLayerBuilderTest {
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
-  public void testBuildAsTarArchiveEntries() throws URISyntaxException, IOException {
-    Path testDirectory = Paths.get(Resources.getResource("layer").toURI());
-    Path testFile = Paths.get(Resources.getResource("fileA").toURI());
-
-    List<TarArchiveEntry> tarArchiveEntries =
-        ReproducibleLayerBuilder.buildAsTarArchiveEntries(
-            new LayerEntry(ImmutableList.of(testDirectory, testFile), "/app/"));
-
-    List<TarArchiveEntry> expectedTarArchiveEntries =
-        ImmutableList.of(
-            new TarArchiveEntry(
-                testDirectory.resolve("a").resolve("b").resolve("bar").toFile(),
-                "/app/layer/a/b/bar"),
-            new TarArchiveEntry(
-                testDirectory.resolve("c").resolve("cat").toFile(), "/app/layer/c/cat"),
-            new TarArchiveEntry(testDirectory.resolve("foo").toFile(), "/app/layer/foo"),
-            new TarArchiveEntry(testFile.toFile(), "/app/fileA"));
-
-    Assert.assertEquals(expectedTarArchiveEntries.size(), tarArchiveEntries.size());
-    for (int entryIndex = 0; entryIndex < expectedTarArchiveEntries.size(); entryIndex++) {
-      TarArchiveEntry expectedTarArchiveEntry = expectedTarArchiveEntries.get(entryIndex);
-      TarArchiveEntry tarArchiveEntry = tarArchiveEntries.get(entryIndex);
-      Assert.assertEquals(expectedTarArchiveEntry.getFile(), tarArchiveEntry.getFile());
-      Assert.assertEquals(expectedTarArchiveEntry.getName(), tarArchiveEntry.getName());
-    }
-  }
-
-  @Test
   public void testBuild() throws URISyntaxException, IOException {
     Path layerDirectory = Paths.get(Resources.getResource("layer").toURI());
     Path blobA = Paths.get(Resources.getResource("blobA").toURI());
 
     ReproducibleLayerBuilder layerBuilder =
-        new ReproducibleLayerBuilder()
-            .addFiles(Arrays.asList(layerDirectory, blobA), "extract/here/apple")
-            .addFiles(Collections.singletonList(blobA), "extract/here/banana");
+        new ReproducibleLayerBuilder(
+            LayerConfiguration.builder()
+                .addEntryRecursive(layerDirectory, Paths.get("extract/here/apple/layer"))
+                .addEntry(blobA, Paths.get("extract/here/apple/blobA"))
+                .addEntry(blobA, Paths.get("extract/here/banana/blobA"))
+                .build()
+                .getLayerEntries());
 
     // Writes the layer tar to a temporary file.
     UnwrittenLayer unwrittenLayer = layerBuilder.build();
@@ -171,7 +145,7 @@ public class ReproducibleLayerBuilderTest {
     Path root1 = Files.createDirectories(testRoot.resolve("files1"));
     Path root2 = Files.createDirectories(testRoot.resolve("files2"));
 
-    String extractionPath = "/somewhere";
+    Path extractionPath = Paths.get("/somewhere");
 
     // TODO: Currently this test only covers variation in order and modified time, even though
     // TODO: the code is designed to clean up userid/groupid, this test does not check that yet.
@@ -188,13 +162,17 @@ public class ReproducibleLayerBuilderTest {
 
     // create layers of exact same content but ordered differently and with different timestamps
     Blob layer =
-        new ReproducibleLayerBuilder()
-            .addFiles(Arrays.asList(fileA1, fileB1), extractionPath)
+        new ReproducibleLayerBuilder(
+                ImmutableList.of(
+                    new LayerEntry(fileA1, extractionPath.resolve("fileA")),
+                    new LayerEntry(fileB1, extractionPath.resolve("fileB"))))
             .build()
             .getBlob();
     Blob reproduced =
-        new ReproducibleLayerBuilder()
-            .addFiles(Arrays.asList(fileB2, fileA2), extractionPath)
+        new ReproducibleLayerBuilder(
+                ImmutableList.of(
+                    new LayerEntry(fileB2, extractionPath.resolve("fileB")),
+                    new LayerEntry(fileA2, extractionPath.resolve("fileA"))))
             .build()
             .getBlob();
 
