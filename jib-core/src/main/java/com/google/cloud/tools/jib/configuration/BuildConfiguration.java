@@ -21,7 +21,6 @@ import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.collect.ImmutableList;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -29,15 +28,12 @@ import javax.annotation.Nullable;
 /** Immutable configuration options for the builder process. */
 public class BuildConfiguration {
 
-  /** The default creation time of the container (constant to ensure reproducibility by default). */
-  public static final Instant DEFAULT_CREATION_TIME = Instant.EPOCH;
-
   /** The default target format of the container manifest. */
-  public static final Class<? extends BuildableManifestTemplate> DEFAULT_TARGET_FORMAT =
+  static final Class<? extends BuildableManifestTemplate> DEFAULT_TARGET_FORMAT =
       V22ManifestTemplate.class;
 
   /** The default tool identifier. */
-  public static final String DEFAULT_TOOL_NAME = "jib";
+  static final String DEFAULT_TOOL_NAME = "jib";
 
   public static class Builder {
 
