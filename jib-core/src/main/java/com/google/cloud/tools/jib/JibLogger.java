@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib;
 
+/** Logging interface for logging messages during Jib execution. */
 public interface JibLogger {
 
   void error(CharSequence message);
