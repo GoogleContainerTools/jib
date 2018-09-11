@@ -176,7 +176,6 @@ public class BuildConfigurationTest {
     Assert.assertNull(buildConfiguration.getApplicationLayersCacheConfiguration());
     Assert.assertNull(buildConfiguration.getBaseImageLayersCacheConfiguration());
     Assert.assertNull(buildConfiguration.getContainerConfiguration());
-    Assert.assertEquals(buildConfiguration.getTargetFormat(), V22ManifestTemplate.class);
     Assert.assertFalse(buildConfiguration.getAllowInsecureRegistries());
     Assert.assertEquals(Collections.emptyList(), buildConfiguration.getLayerConfigurations());
     Assert.assertEquals("jib", buildConfiguration.getToolName());
