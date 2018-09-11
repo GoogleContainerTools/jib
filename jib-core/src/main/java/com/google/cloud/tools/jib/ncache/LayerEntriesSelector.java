@@ -29,9 +29,10 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * A selector based on {@link LayerEntry}s for a layer. Selectors are secondary references for a cache entries.
+ * Generates a selector based on {@link LayerEntry}s for a layer. Selectors are secondary references
+ * for a cache entries.
  *
- * The selector is the SHA256 hash of the list of layer entries serialized in the following form:
+ * <p>The selector is the SHA256 hash of the list of layer entries serialized in the following form:
  *
  * <pre>{@code
  * [
@@ -80,7 +81,8 @@ class LayerEntriesSelector {
     }
 
     /**
-     * Serializes a list of {@link LayerEntry}s into a new {@link LayerEntriesTemplate}. The list is sorted by source file first, then extraction path (see {@link LayerEntryTemplate#compareTo}).
+     * Serializes a list of {@link LayerEntry}s into a new {@link LayerEntriesTemplate}. The list is
+     * sorted by source file first, then extraction path (see {@link LayerEntryTemplate#compareTo}).
      *
      * @param layerEntries the list of {@link LayerEntry}s
      */
@@ -93,7 +95,8 @@ class LayerEntriesSelector {
   }
 
   /**
-   * Generates a selector for the list of {@link LayerEntry}s. The selector is unique to each unique set of layer entries, regardless of order. TODO: Should we care about order?
+   * Generates a selector for the list of {@link LayerEntry}s. The selector is unique to each unique
+   * set of layer entries, regardless of order. TODO: Should we care about order?
    *
    * @param layerEntries the layer entries
    * @return the selector
@@ -101,7 +104,9 @@ class LayerEntriesSelector {
    */
   static DescriptorDigest generateSelector(ImmutableList<LayerEntry> layerEntries)
       throws IOException {
-    return JsonTemplateMapper.toBlob(new LayerEntriesTemplate(layerEntries)).writeTo(ByteStreams.nullOutputStream()).getDigest();
+    return JsonTemplateMapper.toBlob(new LayerEntriesTemplate(layerEntries))
+        .writeTo(ByteStreams.nullOutputStream())
+        .getDigest();
   }
 
   private LayerEntriesSelector() {}

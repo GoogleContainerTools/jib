@@ -20,9 +20,9 @@ import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Optional;
 
+/** Cache for storing data to be shared between Jib executions. */
 public class Cache {
 
   private final CacheStorage cacheStorage;
@@ -35,15 +35,29 @@ public class Cache {
    * Retrieves the {@link CacheEntry} that was built from the {@code layerEntries}.
    *
    * @param layerEntries the layer entries to match against
-   * @return a {@link CacheEntry} that was built from {@code layerEntries}, or {@link Optional#empty} if none found
+   * @return a {@link CacheEntry} that was built from {@code layerEntries}, or {@link
+   *     Optional#empty} if none found
+   * @throws IOException if an I/O exception occurs
+   * @throws CacheCorruptedException if the cache is corrupted
    */
   public Optional<CacheEntry> retrieveCacheEntry(ImmutableList<LayerEntry> layerEntries)
-      throws IOException {
-    Optional<DescriptorDigest> optionalSelectedLayerDigest = cacheStorage.select(LayerEntriesSelector.generateSelector(layerEntries));
+      throws IOException, CacheCorruptedException {
+    Optional<DescriptorDigest> optionalSelectedLayerDigest =
+        cacheStorage.select(LayerEntriesSelector.generateSelector(layerEntries));
     if (!optionalSelectedLayerDigest.isPresent()) {
       return Optional.empty();
     }
 
     return cacheStorage.retrieve(optionalSelectedLayerDigest.get());
+  }
+
+  public Optional<CacheEntry> retrieveCacheEntry(DescriptorDigest layerDigest) {
+    // TODO: Implement
+    return Optional.empty();
+  }
+
+  public Optional<CacheEntry> write(CacheWrite cacheWrite) {
+    // TODO: Implement
+    return Optional.empty();
   }
 }
