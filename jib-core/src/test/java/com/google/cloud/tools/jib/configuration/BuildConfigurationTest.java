@@ -67,7 +67,9 @@ public class BuildConfigurationTest {
         CacheConfiguration.forPath(Paths.get("base/image/layers"));
     List<LayerConfiguration> expectedLayerConfigurations =
         Collections.singletonList(
-            LayerConfiguration.builder().addEntry(Collections.emptyList(), "destination").build());
+            LayerConfiguration.builder()
+                .addEntry(Paths.get("sourceFile"), Paths.get("pathInContainer"))
+                .build());
     String expectedCreatedBy = "createdBy";
 
     ImageConfiguration baseImageConfiguration =

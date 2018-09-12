@@ -27,16 +27,19 @@ import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** Reads image content from the cache. */
 public class CacheReader {
 
   /**
-   * @param path the file to check.
-   * @return the last modified time for the file at {@code path}. Recursively finds the most recent
-   *     last modified time for all subfiles if the file is a directory.
-   * @throws IOException if checking the last modified time fails.
+   * Gets the last modified time for the file at {@code path}. If {@code path} is a directory, then
+   * gets the latest modified time of its subfiles.
+   *
+   * @param path the file to check
+   * @return the last modified time
+   * @throws IOException if checking the last modified time fails
    */
   private static FileTime getLastModifiedTime(Path path) throws IOException {
     if (Files.isDirectory(path)) {
@@ -118,24 +121,21 @@ public class CacheReader {
    * @throws IOException if reading the source files fails.
    * @throws CacheMetadataCorruptedException if reading the cache metadata fails.
    */
-  @Nullable
-  public CachedLayerWithMetadata getUpToDateLayerByLayerEntries(
+  public Optional<CachedLayerWithMetadata> getUpToDateLayerByLayerEntries(
       ImmutableList<LayerEntry> layerEntries) throws IOException, CacheMetadataCorruptedException {
     // Grabs all the layers that have matching source files.
     ImageLayers<CachedLayerWithMetadata> cachedLayersWithSourceFiles =
         cache.getMetadata().filterLayers().byLayerEntries(layerEntries).filter();
     if (cachedLayersWithSourceFiles.isEmpty()) {
-      return null;
+      return Optional.empty();
     }
 
     // Determines the latest modification time for the source files.
     FileTime sourceFilesLastModifiedTime = FileTime.from(Instant.MIN);
     for (LayerEntry layerEntry : layerEntries) {
-      for (Path path : layerEntry.getSourceFiles()) {
-        FileTime lastModifiedTime = getLastModifiedTime(path);
-        if (lastModifiedTime.compareTo(sourceFilesLastModifiedTime) > 0) {
-          sourceFilesLastModifiedTime = lastModifiedTime;
-        }
+      FileTime lastModifiedTime = getLastModifiedTime(layerEntry.getSourceFile());
+      if (lastModifiedTime.compareTo(sourceFilesLastModifiedTime) > 0) {
+        sourceFilesLastModifiedTime = lastModifiedTime;
       }
     }
 
@@ -148,10 +148,10 @@ public class CacheReader {
       if (sourceFilesLastModifiedTime.compareTo(cachedLayer.getMetadata().getLastModifiedTime())
           <= 0) {
         // This layer is an up-to-date layer.
-        return cachedLayer;
+        return Optional.of(cachedLayer);
       }
     }
 
-    return null;
+    return Optional.empty();
   }
 }
