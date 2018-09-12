@@ -115,6 +115,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
             .setBaseImageConfiguration(
                 pluginConfigurationProcessor.getBaseImageConfigurationBuilder().build())
             .setTargetImageConfiguration(targetImageConfiguration)
+            .setAdditionalTargetImageTags(jibExtension.getTo().getTags())
             .setContainerConfiguration(
                 pluginConfigurationProcessor.getContainerConfigurationBuilder().build())
             .setTargetFormat(jibExtension.getFormat())

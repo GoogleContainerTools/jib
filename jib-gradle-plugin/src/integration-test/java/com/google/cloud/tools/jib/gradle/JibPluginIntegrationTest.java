@@ -191,6 +191,11 @@ public class JibPluginIntegrationTest {
   }
 
   @Test
+  public void testBuild_multipleTags() throws IOException, InterruptedException {
+    // TODO: Implement
+  }
+
+  @Test
   public void testBuild_simple() throws IOException, InterruptedException {
     String targetImage =
         "gcr.io/"

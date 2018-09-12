@@ -17,9 +17,7 @@
 package com.google.cloud.tools.jib.gradle;
 
 import javax.annotation.Nullable;
-import javax.inject.Inject;
 import org.gradle.api.Action;
-import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.Optional;
@@ -31,47 +29,25 @@ import org.gradle.api.tasks.Optional;
  * <p>{@code image} (required) is the image reference and {@code credHelper} (optional) is the name
  * (after {@code docker-credential} of the credential helper for accessing the {@code image}.
  */
-public class ImageParameters {
-
-  private AuthParameters auth;
-
-  @Nullable private String image;
-  @Nullable private String credHelper;
-
-  @Inject
-  public ImageParameters(ObjectFactory objectFactory, String imageDescriptor) {
-    auth = objectFactory.newInstance(AuthParameters.class, imageDescriptor + ".auth");
-  }
+interface ImageParameters {
 
   @Input
   @Nullable
   @Optional
-  public String getImage() {
-    return image;
-  }
+  String getImage();
 
-  public void setImage(String image) {
-    this.image = image;
-  }
+  void setImage(String image);
 
   @Input
   @Nullable
   @Optional
-  public String getCredHelper() {
-    return credHelper;
-  }
+  String getCredHelper();
 
-  public void setCredHelper(String credHelper) {
-    this.credHelper = credHelper;
-  }
+  void setCredHelper(String credHelper);
 
   @Nested
   @Optional
-  AuthParameters getAuth() {
-    return auth;
-  }
+  AuthParameters getAuth();
 
-  public void auth(Action<? super AuthParameters> action) {
-    action.execute(auth);
-  }
+  void auth(Action<? super AuthParameters> action);
 }
