@@ -31,11 +31,6 @@ public class Port {
     Protocol(String stringRepresentation) {
       this.stringRepresentation = stringRepresentation;
     }
-
-    @Override
-    public String toString() {
-      return stringRepresentation;
-    }
   }
 
   /**
@@ -73,11 +68,11 @@ public class Port {
   }
 
   private final int port;
-  private final Protocol protocol;
+  private final String protocol;
 
   private Port(int port, Protocol protocol) {
     this.port = port;
-    this.protocol = protocol;
+    this.protocol = protocol.stringRepresentation;
   }
 
   /**
@@ -94,7 +89,7 @@ public class Port {
    *
    * @return the protocol
    */
-  public Protocol getProtocol() {
+  public String getProtocol() {
     return protocol;
   }
 
@@ -107,12 +102,12 @@ public class Port {
       return false;
     }
     Port otherPort = (Port) other;
-    return port == otherPort.port && protocol == otherPort.protocol;
+    return port == otherPort.port && protocol.equals(otherPort.protocol);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(port, protocol.toString());
+    return Objects.hash(port, protocol);
   }
 
   /**
