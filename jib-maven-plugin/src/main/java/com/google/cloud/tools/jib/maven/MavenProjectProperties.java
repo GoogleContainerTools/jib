@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.JibLogger;
+import com.google.cloud.tools.jib.event.DefaultEventEmitter;
 import com.google.cloud.tools.jib.event.EventEmitter;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEventType;
@@ -24,6 +25,7 @@ import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.MainClassResolver;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
+import com.google.cloud.tools.jib.plugins.common.TimerEventHandler;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -72,7 +74,10 @@ class MavenProjectProperties implements ProjectProperties {
   }
 
   private static EventEmitter makeEventEmitter(Log log) {
-    return new EventEmitter(new EventHandlers().add(JibEventType.LOG, new LogEventHandler(log)));
+    return new DefaultEventEmitter(
+        new EventHandlers()
+            .add(JibEventType.LOG, new LogEventHandler(log))
+            .add(JibEventType.TIMER, new TimerEventHandler(log::debug)));
   }
 
   private final MavenProject project;

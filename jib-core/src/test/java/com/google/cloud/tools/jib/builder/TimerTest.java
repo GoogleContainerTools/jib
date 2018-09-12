@@ -16,9 +16,7 @@
 
 package com.google.cloud.tools.jib.builder;
 
-import com.google.common.base.Preconditions;
-import java.util.ArrayDeque;
-import java.util.Deque;
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Test;
@@ -26,20 +24,22 @@ import org.junit.Test;
 /** Tests for {@link Timer}. */
 public class TimerTest {
 
-  private final Deque<Long> times = new ArrayDeque<>();
-
   @Test
-  public void test_smoke() throws InterruptedException {
-    try (Timer timer = new Timer(times::offer)) {
-      TimeUnit.MILLISECONDS.sleep(1);
-      timer.lap();
-      TimeUnit.MILLISECONDS.sleep(10);
-      timer.lap();
-    }
-    long time1 = Preconditions.checkNotNull(times.poll());
-    long time2 = Preconditions.checkNotNull(times.poll());
-    long time3 = Preconditions.checkNotNull(times.poll());
-    Assert.assertTrue(time2 > time1);
-    Assert.assertTrue(time1 > time3);
+  public void testLap() throws InterruptedException {
+    Timer parentTimer = new Timer();
+    TimeUnit.MILLISECONDS.sleep(5);
+    Duration parentDuration1 = parentTimer.lap();
+    TimeUnit.MILLISECONDS.sleep(10);
+    Duration parentDuration2 = parentTimer.lap();
+    TimeUnit.MILLISECONDS.sleep(1);
+
+    Timer childTimer = new Timer(parentTimer);
+    Duration childDuration = childTimer.lap();
+
+    Duration parentDuration3 = parentTimer.lap();
+
+    Assert.assertTrue(parentDuration2.compareTo(parentDuration1) > 0);
+    Assert.assertTrue(parentDuration1.compareTo(parentDuration3) > 0);
+    Assert.assertTrue(parentDuration3.compareTo(childDuration) > 0);
   }
 }

@@ -16,36 +16,42 @@
 
 package com.google.cloud.tools.jib.builder;
 
-import java.io.Closeable;
-import java.util.function.Consumer;
+import com.google.cloud.tools.jib.event.events.TimerEvent;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Optional;
+import javax.annotation.Nullable;
 
 /** Times code execution intervals. Call {@link #lap} at the end of each interval. */
 // TODO: Replace com.google.cloud.tools.jib.Timer with this.
-public class Timer implements Closeable {
+class Timer implements TimerEvent.Timer {
 
-  /** Consumes time in nanoseconds. */
-  private final Consumer<Long> timeConsumer;
+  @Nullable private final Timer parentTimer;
 
-  private long startTime = System.nanoTime();
+  private Instant startTime = Instant.now();
 
-  /**
-   * Instantiate with a consumer for timed laps.
-   *
-   * @param timeConsumer consumes time in nanoseconds
-   */
-  Timer(Consumer<Long> timeConsumer) {
-    this.timeConsumer = timeConsumer;
+  Timer() {
+    this(null);
   }
 
-  /** Consumes the time since last lap or creation. */
-  public void lap() {
-    long time = System.nanoTime() - startTime;
-    timeConsumer.accept(time);
-    startTime = System.nanoTime();
+  Timer(@Nullable Timer parentTimer) {
+    this.parentTimer = parentTimer;
   }
 
   @Override
-  public void close() {
-    lap();
+  public Optional<? extends Timer> getParent() {
+    return Optional.ofNullable(parentTimer);
+  }
+
+  /**
+   * Captures the time since last lap or creation, and resets the start time.
+   *
+   * @return the duration of the last lap, or since creation
+   */
+  Duration lap() {
+    Instant now = Instant.now();
+    Duration duration = Duration.between(startTime, now);
+    startTime = now;
+    return duration;
   }
 }

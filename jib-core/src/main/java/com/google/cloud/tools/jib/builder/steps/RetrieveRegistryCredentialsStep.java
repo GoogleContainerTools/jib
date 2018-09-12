@@ -17,8 +17,7 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.async.AsyncStep;
-import com.google.cloud.tools.jib.builder.LoggingTimer;
-import com.google.cloud.tools.jib.builder.Timer;
+import com.google.cloud.tools.jib.builder.TimerEventEmitter;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
@@ -90,9 +89,7 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
     String description = makeDescription(registry);
     eventEmitter.emit(LogEvent.lifecycle(description + "..."));
 
-    try (Timer ignored =
-        LoggingTimer.newTimer(
-            logMessage -> eventEmitter.emit(LogEvent.debug(logMessage)), description)) {
+    try (TimerEventEmitter ignored = new TimerEventEmitter(eventEmitter, description)) {
       for (CredentialRetriever credentialRetriever : credentialRetrievers) {
         Credential credential = credentialRetriever.retrieve();
         if (credential != null) {
