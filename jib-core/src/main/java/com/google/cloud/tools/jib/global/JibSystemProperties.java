@@ -33,7 +33,8 @@ public class JibSystemProperties {
 
   /**
    * Gets the HTTP connection/read timeouts for registry interactions in milliseconds. This is
-   * defined by the {@code jib.httpTimeout} system property.
+   * defined by the {@code jib.httpTimeout} system property. The default value is 20000 if the
+   * system property is not set, and 0 indicates an infinite timeout.
    *
    * @return the HTTP connection/read timeouts for registry interactions in milliseconds
    */
@@ -69,8 +70,7 @@ public class JibSystemProperties {
    * Gets whether or not to enable the User-Agent header. This is defined by the {@code
    * _JIB_DISABLE_USER_AGENT} system property.
    *
-   * @return {@code true} if the {@code _JIB_DISABLE_USER_AGENT} system property is set to a null or
-   *     empty string, {@code false} if not
+   * @return {@code true} if the User-Agent header is enabled, {@code false} if not
    */
   public static boolean isUserAgentEnabled() {
     return Strings.isNullOrEmpty(System.getProperty(DISABLE_USER_AGENT));
