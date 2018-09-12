@@ -40,6 +40,7 @@ public class Cache {
    * @throws IOException if an I/O exception occurs
    * @throws CacheCorruptedException if the cache is corrupted
    */
+  // TODO: Add test once other unimplemented methods are implemented.
   public Optional<CacheEntry> retrieveCacheEntry(ImmutableList<LayerEntry> layerEntries)
       throws IOException, CacheCorruptedException {
     Optional<DescriptorDigest> optionalSelectedLayerDigest =
