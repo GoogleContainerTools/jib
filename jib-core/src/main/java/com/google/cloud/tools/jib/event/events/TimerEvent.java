@@ -33,8 +33,14 @@ public class TimerEvent implements JibEvent {
 
   /** The state of the timing. */
   public enum State {
+
+    /** The timer has started timing. Duration will be 0. */
     START,
+
+    /** The timer is still in progress. Duration captures the time since the last event. */
     IN_PROGRESS,
+
+    /** The timer has finished timing. Duration captures the time since the last event. */
     FINISHED
   }
 
@@ -69,18 +75,39 @@ public class TimerEvent implements JibEvent {
     this.description = description;
   }
 
+  /**
+   * Gets the state of the timer.
+   *
+   * @return the state of the timer
+   * @see State
+   */
   public State getState() {
     return state;
   }
 
+  /**
+   * Gets the timer this event is for.
+   *
+   * @return the timer
+   */
   public Timer getTimer() {
     return timer;
   }
 
+  /**
+   * Gets the duration since the last {@link TimerEvent} for this timer.
+   *
+   * @return the duration since the last {@link TimerEvent} for this timer.
+   */
   public Duration getDuration() {
     return duration;
   }
 
+  /**
+   * Gets the description associated with this event.
+   *
+   * @return the description
+   */
   public String getDescription() {
     return description;
   }

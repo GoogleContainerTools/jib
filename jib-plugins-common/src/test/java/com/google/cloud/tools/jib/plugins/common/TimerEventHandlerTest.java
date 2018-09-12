@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.cloud.tools.jib.event.events.TimerEvent;
 import com.google.cloud.tools.jib.event.events.TimerEvent.State;
-import com.google.cloud.tools.jib.plugins.common.TimerEventHandler;
 import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -26,7 +25,7 @@ import java.util.Optional;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** Tests for {@link TimerEventHandler}. */
+/** Tests for {@link com.google.cloud.tools.jib.plugins.common.TimerEventHandler}. */
 public class TimerEventHandlerTest {
 
   private final Deque<String> logMessageQueue = new ArrayDeque<>();
