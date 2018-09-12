@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.Resources;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -81,7 +82,7 @@ public class CacheMetadataTranslatorTest {
     Path fakePath = Paths.get("fake/path");
 
     // Loads the expected JSON string.
-    Path jsonFile = PlatformSpecificMetadataJson.getMetadataJsonFile();
+    Path jsonFile = Paths.get(Resources.getResource("json/metadata-v3.json").toURI());
 
     // Deserializes into a metadata JSON object.
     CacheMetadataTemplate metadataTemplate =
@@ -119,7 +120,7 @@ public class CacheMetadataTranslatorTest {
 
   @Test
   public void testToTemplate() throws URISyntaxException, IOException {
-    Path jsonFile = PlatformSpecificMetadataJson.getMetadataJsonFile();
+    Path jsonFile = Paths.get(Resources.getResource("json/metadata-v3.json").toURI());
     String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
 
     CachedLayer baseCachedLayer =
