@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.event.events;
 
+import com.google.cloud.tools.jib.event.DefaultEventEmitter;
 import com.google.cloud.tools.jib.event.EventEmitter;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEventType;
@@ -33,7 +34,7 @@ public class LogEventTest {
   // Note that in actual code, the event handler should NOT perform thread unsafe operations like
   // here.
   private final EventEmitter eventEmitter =
-      new EventEmitter(new EventHandlers().add(JibEventType.LOG, receivedLogEvents::offer));
+      new DefaultEventEmitter(new EventHandlers().add(JibEventType.LOG, receivedLogEvents::offer));
 
   @Test
   public void testFactories() {

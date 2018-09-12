@@ -45,7 +45,7 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
     return new RetrieveRegistryCredentialsStep(
         listeningExecutorService,
         // TODO: Replace with ExecutionMainframe.emit so that it is never nullable.
-        buildConfiguration.getEventEmitter().orElse(null),
+        buildConfiguration.getEventEmitter(),
         buildConfiguration.getBaseImageConfiguration().getImageRegistry(),
         buildConfiguration.getBaseImageConfiguration().getCredentialRetrievers());
   }
@@ -55,12 +55,12 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
       ListeningExecutorService listeningExecutorService, BuildConfiguration buildConfiguration) {
     return new RetrieveRegistryCredentialsStep(
         listeningExecutorService,
-        buildConfiguration.getEventEmitter().orElse(null),
+        buildConfiguration.getEventEmitter(),
         buildConfiguration.getTargetImageConfiguration().getImageRegistry(),
         buildConfiguration.getTargetImageConfiguration().getCredentialRetrievers());
   }
 
-  @Nullable private final EventEmitter eventEmitter;
+  private final EventEmitter eventEmitter;
   private final String registry;
   private final ImmutableList<CredentialRetriever> credentialRetrievers;
 
@@ -69,7 +69,7 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
   @VisibleForTesting
   RetrieveRegistryCredentialsStep(
       ListeningExecutorService listeningExecutorService,
-      @Nullable EventEmitter eventEmitter,
+      EventEmitter eventEmitter,
       String registry,
       ImmutableList<CredentialRetriever> credentialRetrievers) {
     this.eventEmitter = eventEmitter;
@@ -88,10 +88,11 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
   @Nullable
   public Credential call() throws CredentialRetrievalException {
     String description = makeDescription(registry);
-    emit(LogEvent.lifecycle(description + "..."));
+    eventEmitter.emit(LogEvent.lifecycle(description + "..."));
 
     try (Timer ignored =
-        LoggingTimer.newTimer(logMessage -> emit(LogEvent.debug(logMessage)), description)) {
+        LoggingTimer.newTimer(
+            logMessage -> eventEmitter.emit(LogEvent.debug(logMessage)), description)) {
       for (CredentialRetriever credentialRetriever : credentialRetrievers) {
         Credential credential = credentialRetriever.retrieve();
         if (credential != null) {
@@ -101,15 +102,9 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
 
       // If no credentials found, give an info (not warning because in most cases, the base image is
       // public and does not need extra credentials) and return null.
-      emit(LogEvent.info("No credentials could be retrieved for registry " + registry));
+      eventEmitter.emit(
+          LogEvent.info("No credentials could be retrieved for registry " + registry));
       return null;
     }
-  }
-
-  private void emit(LogEvent logEvent) {
-    if (eventEmitter == null) {
-      return;
-    }
-    eventEmitter.emit(logEvent);
   }
 }

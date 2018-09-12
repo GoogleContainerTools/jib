@@ -25,7 +25,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -53,7 +52,10 @@ public class BuildConfiguration {
     private ImmutableList<LayerConfiguration> layerConfigurations = ImmutableList.of();
     private Class<? extends BuildableManifestTemplate> targetFormat = DEFAULT_TARGET_FORMAT;
     private String toolName = DEFAULT_TOOL_NAME;
-    @Nullable private EventEmitter eventEmitter;
+    private EventEmitter eventEmitter =
+        jibEvent -> {
+          /* No-op EventEmitter. */
+        };
 
     private JibLogger buildLogger;
 
@@ -260,7 +262,7 @@ public class BuildConfiguration {
   private final boolean allowInsecureRegistries;
   private final ImmutableList<LayerConfiguration> layerConfigurations;
   private final String toolName;
-  @Nullable private final EventEmitter eventEmitter;
+  private final EventEmitter eventEmitter;
 
   /** Instantiate with {@link #builder}. */
   private BuildConfiguration(
@@ -275,7 +277,7 @@ public class BuildConfiguration {
       boolean allowInsecureRegistries,
       ImmutableList<LayerConfiguration> layerConfigurations,
       String toolName,
-      @Nullable EventEmitter eventEmitter) {
+      EventEmitter eventEmitter) {
     this.buildLogger = buildLogger;
     this.baseImageConfiguration = baseImageConfiguration;
     this.targetImageConfiguration = targetImageConfiguration;
@@ -319,8 +321,8 @@ public class BuildConfiguration {
     return toolName;
   }
 
-  public Optional<EventEmitter> getEventEmitter() {
-    return Optional.ofNullable(eventEmitter);
+  public EventEmitter getEventEmitter() {
+    return eventEmitter;
   }
 
   /**

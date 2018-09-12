@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
+import com.google.cloud.tools.jib.event.DefaultEventEmitter;
 import com.google.cloud.tools.jib.event.EventEmitter;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEventType;
@@ -47,7 +48,7 @@ public class RetrieveRegistryCredentialsStepTest {
   // Note that in actual code, the event handler should NOT perform thread unsafe operations like
   // here.
   private final EventEmitter eventEmitter =
-      new EventEmitter(
+      new DefaultEventEmitter(
           new EventHandlers()
               .add(JibEventType.LOG, logEvent -> logMessages.append(logEvent.getMessage())));
 
