@@ -136,6 +136,7 @@ class PushImageStep implements AsyncStep<Void>, Callable<Void> {
       // Pushes to all target image tags.
       // TODO: Parallelize.
       for (String tag : buildConfiguration.getAllTargetImageTags()) {
+        buildConfiguration.getBuildLogger().info("Tagging with " + tag + "...");
         registryClient.pushManifest(manifestTemplate, tag);
       }
     }
