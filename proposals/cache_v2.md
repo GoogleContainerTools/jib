@@ -79,7 +79,7 @@ For example, the cache directory structure looks like:
 ```
 layers/
   36a2b7401dcddc50a35aeaa81085718b9d5fbce9d607c55a1d79beec2469f9ac/
-    326a609681777ee4ca02b1898579c9e07801ef066a629a3c59fa6df6ab42b7aa.layer
+    326a609681777ee4ca02b1898579c9e07801ef066a629a3c59fa6df6ab42b7aa
     metadata
 selectors/
   65de3b72aaf98e4f300ccdf7d64bf9a3b1e23c8c44a1242265f717db1a0877e9
@@ -87,7 +87,7 @@ selectors/
 
 The `layers/` directory consists of directories for each layer, named by the layer digest.
 Inside each of the layer directories:
-- The layer tarball is named by the layer diff ID with extension `.layer`
+- The layer tarball is named by the layer diff ID
 - The metadata is stored in the file `metadata`
 
 The `selectors/` directory consists of a file for each selector, named by the selector digest. The selector file contents will be the digest of the layer the selector references. In the example, `selectors/65de3b72aaf98e4f300ccdf7d64bf9a3b1e23c8c44a1242265f717db1a0877e9` will have contents `36a2b7401dcddc50a35aeaa81085718b9d5fbce9d607c55a1d79beec2469f9ac`.
