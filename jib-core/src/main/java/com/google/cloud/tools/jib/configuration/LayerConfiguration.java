@@ -17,12 +17,14 @@
 package com.google.cloud.tools.jib.configuration;
 
 import com.google.cloud.tools.jib.image.LayerEntry;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-/** Configures how to build a layer in the container image. */
+/** Configures how to build a layer in the container image. Instantiate with {@link #builder}. */
 public class LayerConfiguration {
 
   /** Builds a {@link LayerConfiguration}. */
@@ -45,39 +47,51 @@ public class LayerConfiguration {
     }
 
     /**
-     * Adds an entry to the layer.
+     * Adds an entry to the layer. Only adds the single source file to the exact path in the
+     * container file system.
      *
-     * <p>The source files are specified as a list instead of a set to define the order in which
-     * they are added.
+     * <p>For example, {@code addEntry(Paths.get("myfile"), Paths.get("/path/in/container"))} adds a
+     * file {@code myfile} to the container file system at {@code /path/in/container}.
      *
-     * <p>Source files that are directories will be recursively copied. For example, if the source
-     * files are:
+     * <p>For example, {@code addEntry(Paths.get("mydirectory"), Paths.get("/path/in/container"))}
+     * adds a directory {@code mydirectory/} to the container file system at {@code
+     * /path/in/container/}. This does <b>not</b> add the contents of {@code mydirectory}.
      *
-     * <ul>
-     *   <li>{@code fileA}
-     *   <li>{@code fileB}
-     *   <li>{@code directory/}
-     * </ul>
-     *
-     * and the destination to copy to is {@code /path/in/container}, then the new layer will have
-     * the following entries for the container file system:
-     *
-     * <ul>
-     *   <li>{@code /path/in/container/fileA}
-     *   <li>{@code /path/in/container/fileB}
-     *   <li>{@code /path/in/container/directory/}
-     *   <li>{@code /path/in/container/directory/...} (all contents of {@code directory/})
-     * </ul>
-     *
-     * @param sourceFiles the source files to build from. Source files that are directories will
-     *     have the directory added recursively
-     * @param destinationOnImage Unix-style path to add the source files to in the container image
-     *     filesystem
+     * @param sourceFile the source file to add to the layer
+     * @param pathInContainer the path in the container file system corresponding to the {@code
+     *     sourceFile} (relative to root {@code /})
      * @return this
      */
-    public Builder addEntry(List<Path> sourceFiles, String destinationOnImage) {
-      Preconditions.checkArgument(!sourceFiles.contains(null));
-      this.layerEntries.add(new LayerEntry(ImmutableList.copyOf(sourceFiles), destinationOnImage));
+    public Builder addEntry(Path sourceFile, Path pathInContainer) {
+      layerEntries.add(new LayerEntry(sourceFile, pathInContainer));
+      return this;
+    }
+
+    /**
+     * Adds an entry to the layer. If the source file is a directory, the directory and its contents
+     * will be added recursively.
+     *
+     * <p>For example, {@code addEntryRecursive(Paths.get("mydirectory",
+     * Paths.get("/path/in/container"))} adds {@code mydirectory} to the container file system at
+     * {@code /path/in/container} such that {@code mydirectory/subfile} is found at {@code
+     * /path/in/container/subfile}.
+     *
+     * @param sourceFile the source file to add to the layer recursively
+     * @param pathInContainer the path in the container file system corresponding to the {@code
+     *     sourceFile} (relative to root {@code /})
+     * @return this
+     * @throws IOException if an exception occurred when recursively listing the directory
+     */
+    public Builder addEntryRecursive(Path sourceFile, Path pathInContainer) throws IOException {
+      if (!Files.isDirectory(sourceFile)) {
+        return addEntry(sourceFile, pathInContainer);
+      }
+      addEntry(sourceFile, pathInContainer);
+      try (Stream<Path> files = Files.list(sourceFile)) {
+        for (Path file : files.collect(Collectors.toList())) {
+          addEntryRecursive(file, pathInContainer.resolve(file.getFileName()));
+        }
+      }
       return this;
     }
 
@@ -104,7 +118,7 @@ public class LayerConfiguration {
   private final String name;
 
   /**
-   * Constructs a new layer configuration.
+   * Use {@link #builder} to instantiate.
    *
    * @param name an optional name for the layer
    * @param layerEntries the list of {@link LayerEntry}s

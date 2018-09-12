@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.common.collect.ImmutableList;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -86,13 +87,20 @@ public class JibContainerBuilder {
    * </ul>
    *
    * @param files the source files to copy to a new layer in the container
-   * @param pathInContainer the Unix-style path to copy the source files to in the container file
-   *     system
+   * @param pathInContainer the path in the container file system corresponding to the {@code
+   *     sourceFile} (relative to root {@code /})
    * @return this
+   * @throws IOException if an exception occurred when recursively listing any directories
    */
-  public JibContainerBuilder addLayer(List<Path> files, String pathInContainer) {
-    addLayer(LayerConfiguration.builder().addEntry(files, pathInContainer).build());
-    return this;
+  public JibContainerBuilder addLayer(List<Path> files, Path pathInContainer) throws IOException {
+    LayerConfiguration.Builder layerConfigurationBuilder = LayerConfiguration.builder();
+
+    for (Path file : files) {
+      layerConfigurationBuilder.addEntryRecursive(
+          file, pathInContainer.resolve(file.getFileName()));
+    }
+
+    return addLayer(layerConfigurationBuilder.build());
   }
 
   /**
@@ -114,8 +122,7 @@ public class JibContainerBuilder {
    * @return this
    */
   public JibContainerBuilder setLayers(LayerConfiguration... layerConfigurations) {
-    setLayers(Arrays.asList(layerConfigurations));
-    return this;
+    return setLayers(Arrays.asList(layerConfigurations));
   }
 
   /**
@@ -149,8 +156,7 @@ public class JibContainerBuilder {
    * @see #setEntrypoint(List) for more details
    */
   public JibContainerBuilder setEntrypoint(String... entrypoint) {
-    setEntrypoint(Arrays.asList(entrypoint));
-    return this;
+    return setEntrypoint(Arrays.asList(entrypoint));
   }
 
   /**
@@ -177,8 +183,7 @@ public class JibContainerBuilder {
    * @see #setProgramArguments(List) for more details
    */
   public JibContainerBuilder setProgramArguments(String... programArguments) {
-    setProgramArguments(Arrays.asList(programArguments));
-    return this;
+    return setProgramArguments(Arrays.asList(programArguments));
   }
 
   /**
@@ -230,8 +235,7 @@ public class JibContainerBuilder {
    * @see #setExposedPorts(List) for more details
    */
   public JibContainerBuilder setExposedPorts(Port... ports) {
-    setExposedPorts(Arrays.asList(ports));
-    return this;
+    return setExposedPorts(Arrays.asList(ports));
   }
 
   /**

@@ -47,9 +47,10 @@ import java.util.List;
  *       "properties": {
  *         "layerEntries": [
  *           {
- *             "sourceFiles": ["build/classes"],
+ *             "sourceFile": "build/classes",
  *             "extractionPath": "/app/classes"
  *           },
+ *           ...
  *         ],
  *         "lastModifiedTime": 255073580723571
  *       }
