@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.image;
 import com.google.common.annotations.VisibleForTesting;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.StringJoiner;
 
 /**
  * Represents an entry in the layer. A layer consists of many entries that can be converted into tar
@@ -33,6 +34,21 @@ import java.util.Objects;
  * </ul>
  */
 public class LayerEntry {
+
+  /**
+   * Stringifies {@code path} in unix form.
+   *
+   * @param path the path
+   * @return the string form of the path
+   */
+  private static String toUnixPath(Path path) {
+    StringJoiner pathJoiner =
+        path.isAbsolute() ? new StringJoiner("/", "/", "") : new StringJoiner("/");
+    for (Path pathComponent : path) {
+      pathJoiner.add(pathComponent.toString());
+    }
+    return pathJoiner.toString();
+  }
 
   private final Path sourceFile;
   private final Path extractionPath;
@@ -93,7 +109,7 @@ public class LayerEntry {
    * @return the source file path
    */
   public String getSourceFileString() {
-    return sourceFile.toString();
+    return toUnixPath(sourceFile);
   }
 
   /**
@@ -103,7 +119,7 @@ public class LayerEntry {
    * @return the extraction path
    */
   public String getExtractionPathString() {
-    return extractionPath.toString();
+    return toUnixPath(extractionPath);
   }
 
   @Override

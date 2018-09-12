@@ -16,10 +16,10 @@
 
 package com.google.cloud.tools.jib.cache.json;
 
-import com.google.cloud.tools.jib.cache.PlatformSpecificMetadataJson;
 import com.google.cloud.tools.jib.cache.json.CacheMetadataLayerPropertiesObjectTemplate.LayerEntryTemplate;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import com.google.common.io.Resources;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -40,7 +40,7 @@ public class CacheMetadataTemplateTest {
   @Test
   public void testToJson() throws URISyntaxException, IOException, DigestException {
     // Loads the expected JSON string.
-    Path jsonFile = PlatformSpecificMetadataJson.getMetadataJsonFile();
+    Path jsonFile = Paths.get(Resources.getResource("json/metadata-v3.json").toURI());
     String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
 
     CacheMetadataTemplate cacheMetadataTemplate = new CacheMetadataTemplate();
@@ -88,7 +88,7 @@ public class CacheMetadataTemplateTest {
   @Test
   public void testFromJson() throws URISyntaxException, IOException, DigestException {
     // Loads the expected JSON string.
-    Path jsonFile = PlatformSpecificMetadataJson.getMetadataJsonFile();
+    Path jsonFile = Paths.get(Resources.getResource("json/metadata-v3.json").toURI());
 
     // Deserializes into a metadata JSON object.
     CacheMetadataTemplate metadataTemplate =

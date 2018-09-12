@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.cache.LayerMetadata.LayerMetadataEntry;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -70,7 +71,7 @@ public class CacheTest {
       throws URISyntaxException, IOException, CacheMetadataCorruptedException {
     Path cacheDirectory = temporaryCacheDirectory.newFolder().toPath();
 
-    Path resourceMetadataJsonPath = PlatformSpecificMetadataJson.getMetadataJsonFile();
+    Path resourceMetadataJsonPath = Paths.get(Resources.getResource("json/metadata-v3.json").toURI());
     Path testMetadataJsonPath = cacheDirectory.resolve(CacheFiles.METADATA_FILENAME);
     Files.copy(resourceMetadataJsonPath, testMetadataJsonPath);
 
@@ -87,7 +88,7 @@ public class CacheTest {
       throws IOException, CacheMetadataCorruptedException, DigestException, URISyntaxException {
     Path cacheDirectory = temporaryCacheDirectory.newFolder().toPath();
 
-    Path resourceMetadataJsonPath = PlatformSpecificMetadataJson.getMetadataJsonFile();
+    Path resourceMetadataJsonPath = Paths.get(Resources.getResource("json/metadata-v3.json").toURI());
     Path testMetadataJsonPath = cacheDirectory.resolve(CacheFiles.METADATA_FILENAME);
     Files.copy(resourceMetadataJsonPath, testMetadataJsonPath);
 
