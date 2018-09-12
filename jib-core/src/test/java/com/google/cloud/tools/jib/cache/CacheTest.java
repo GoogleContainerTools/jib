@@ -71,7 +71,8 @@ public class CacheTest {
       throws URISyntaxException, IOException, CacheMetadataCorruptedException {
     Path cacheDirectory = temporaryCacheDirectory.newFolder().toPath();
 
-    Path resourceMetadataJsonPath = Paths.get(Resources.getResource("json/metadata-v3.json").toURI());
+    Path resourceMetadataJsonPath =
+        Paths.get(Resources.getResource("json/metadata-v3.json").toURI());
     Path testMetadataJsonPath = cacheDirectory.resolve(CacheFiles.METADATA_FILENAME);
     Files.copy(resourceMetadataJsonPath, testMetadataJsonPath);
 
@@ -88,7 +89,8 @@ public class CacheTest {
       throws IOException, CacheMetadataCorruptedException, DigestException, URISyntaxException {
     Path cacheDirectory = temporaryCacheDirectory.newFolder().toPath();
 
-    Path resourceMetadataJsonPath = Paths.get(Resources.getResource("json/metadata-v3.json").toURI());
+    Path resourceMetadataJsonPath =
+        Paths.get(Resources.getResource("json/metadata-v3.json").toURI());
     Path testMetadataJsonPath = cacheDirectory.resolve(CacheFiles.METADATA_FILENAME);
     Files.copy(resourceMetadataJsonPath, testMetadataJsonPath);
 
