@@ -126,14 +126,18 @@ class PushImageStep implements AsyncStep<Void>, Callable<Void> {
       ImageToJsonTranslator imageToJsonTranslator =
           new ImageToJsonTranslator(NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep)));
 
-      // Pushes the image manifest.
+      // Gets the image manifest to push.
       BuildableManifestTemplate manifestTemplate =
           imageToJsonTranslator.getManifestTemplate(
               buildConfiguration.getTargetFormat(),
               NonBlockingSteps.get(
                   NonBlockingSteps.get(NonBlockingSteps.get(pushContainerConfigurationStep))));
-      registryClient.pushManifest(
-          manifestTemplate, buildConfiguration.getTargetImageConfiguration().getImageTag());
+
+      // Pushes to all target image tags.
+      // TODO: Parallelize.
+      for (String tag : buildConfiguration.getAllTargetImageTags()) {
+        registryClient.pushManifest(manifestTemplate, tag);
+      }
     }
 
     return null;

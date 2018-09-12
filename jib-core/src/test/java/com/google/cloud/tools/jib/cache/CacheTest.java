@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.cache;
 
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
+import com.google.cloud.tools.jib.cache.LayerMetadata.LayerMetadataEntry;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
@@ -98,19 +99,21 @@ public class CacheTest {
             "6f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef");
 
     LayerEntry layerEntry1 =
-        new LayerEntry(
-            ImmutableList.of(Paths.get("some", "file"), Paths.get("some", "other", "file")),
-            "extractionPath1");
+        new LayerEntry(Paths.get("some", "file"), Paths.get("extractionPath1"));
     LayerEntry layerEntry2 =
-        new LayerEntry(
-            ImmutableList.of(Paths.get("another", "file"), Paths.get("yet", "another", "file")),
-            "extractionPath2");
+        new LayerEntry(Paths.get("some", "other", "file"), Paths.get("extractionPath1"));
+    LayerEntry layerEntry3 =
+        new LayerEntry(Paths.get("another", "file"), Paths.get("extractionPath2"));
+    LayerEntry layerEntry4 =
+        new LayerEntry(Paths.get("yet", "another", "file"), Paths.get("extractionPath2"));
 
     LayerMetadata layerMetadata1 =
         LayerMetadata.from(
-            ImmutableList.of(layerEntry1, layerEntry2), FileTime.from(Instant.now()));
+            ImmutableList.of(layerEntry1, layerEntry2, layerEntry3, layerEntry4),
+            FileTime.from(Instant.now()));
     LayerMetadata layerMetadata2 =
-        LayerMetadata.from(ImmutableList.of(layerEntry2), FileTime.from(Instant.EPOCH));
+        LayerMetadata.from(
+            ImmutableList.of(layerEntry3, layerEntry4), FileTime.from(Instant.EPOCH));
 
     DescriptorDigest mockDiffId =
         DescriptorDigest.fromHash(
@@ -152,17 +155,23 @@ public class CacheTest {
       Assert.assertNotNull(descriptorDigest1Layer);
       LayerMetadata layerMetadata = descriptorDigest1Layer.getMetadata();
       Assert.assertNotNull(layerMetadata);
-      Assert.assertEquals(1, layerMetadata.getEntries().size());
+      Assert.assertEquals(2, layerMetadata.getEntries().size());
       Assert.assertEquals(FileTime.from(Instant.EPOCH), layerMetadata.getLastModifiedTime());
       Assert.assertEquals(
-          layerEntry2
-              .getSourceFiles()
+          ImmutableList.of(layerEntry3.getSourceFileString(), layerEntry4.getSourceFileString()),
+          layerMetadata
+              .getEntries()
               .stream()
-              .map(Path::toString)
-              .collect(ImmutableList.toImmutableList()),
-          layerMetadata.getEntries().get(0).getSourceFilesStrings());
+              .map(LayerMetadataEntry::getSourceFileString)
+              .collect(ImmutableList.toImmutableList()));
       Assert.assertEquals(
-          layerEntry2.getExtractionPath(), layerMetadata.getEntries().get(0).getExtractionPath());
+          ImmutableList.of(
+              layerEntry3.getExtractionPathString(), layerEntry4.getExtractionPathString()),
+          layerMetadata
+              .getEntries()
+              .stream()
+              .map(LayerMetadataEntry::getExtractionPathString)
+              .collect(ImmutableList.toImmutableList()));
     }
   }
 }
