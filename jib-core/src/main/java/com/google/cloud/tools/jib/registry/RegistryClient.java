@@ -29,7 +29,6 @@ import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URL;
@@ -138,7 +137,7 @@ public class RegistryClient {
      *     string.
      */
     private String makeUserAgent() {
-      if (!Strings.isNullOrEmpty(System.getProperty(JibSystemProperties.DISABLE_USER_AGENT))) {
+      if (!JibSystemProperties.isUserAgentEnabled()) {
         return "";
       }
 

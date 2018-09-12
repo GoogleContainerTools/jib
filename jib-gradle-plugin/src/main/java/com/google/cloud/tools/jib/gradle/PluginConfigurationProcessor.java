@@ -53,7 +53,7 @@ class PluginConfigurationProcessor {
       JibLogger logger, JibExtension jibExtension, GradleProjectProperties projectProperties)
       throws InvalidImageReferenceException {
     jibExtension.handleDeprecatedParameters(logger);
-    ConfigurationPropertyValidator.checkHttpTimeoutProperty(GradleException::new);
+    JibSystemProperties.checkHttpTimeoutProperty(GradleException::new);
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
     GradleJibLogger.disableHttpLogging();

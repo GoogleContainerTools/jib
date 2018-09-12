@@ -73,7 +73,7 @@ public class StepsRunner {
     this.applicationLayersCache = applicationLayersCache;
 
     ExecutorService executorService =
-        Boolean.getBoolean(JibSystemProperties.SERIALIZE)
+        JibSystemProperties.isSerializedExecutionEnabled()
             ? MoreExecutors.newDirectExecutorService()
             : Executors.newCachedThreadPool();
     listeningExecutorService = MoreExecutors.listeningDecorator(executorService);

@@ -213,13 +213,13 @@ class RegistryEndpointCaller<T> {
       throws IOException, RegistryException {
     // Only sends authorization if using HTTPS or explicitly forcing over HTTP.
     boolean sendCredentials =
-        isHttpsProtocol(url) || Boolean.getBoolean(JibSystemProperties.SEND_CREDENTIALS_OVER_HTTP);
+        isHttpsProtocol(url) || JibSystemProperties.isSendCredentialsOverHttpEnabled();
 
     try (Connection connection = connectionFactory.apply(url)) {
       Request.Builder requestBuilder =
           Request.builder()
               .setUserAgent(userAgent)
-              .setHttpTimeout(Integer.getInteger(JibSystemProperties.HTTP_TIMEOUT))
+              .setHttpTimeout(JibSystemProperties.getHttpTimeout())
               .setAccept(registryEndpointProvider.getAccept())
               .setBody(registryEndpointProvider.getContent());
       if (sendCredentials) {

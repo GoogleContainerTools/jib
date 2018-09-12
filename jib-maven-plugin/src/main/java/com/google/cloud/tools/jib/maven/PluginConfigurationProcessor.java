@@ -56,7 +56,7 @@ class PluginConfigurationProcessor {
       MavenProjectProperties projectProperties)
       throws MojoExecutionException {
     jibPluginConfiguration.handleDeprecatedParameters(logger);
-    ConfigurationPropertyValidator.checkHttpTimeoutProperty(MojoExecutionException::new);
+    JibSystemProperties.checkHttpTimeoutProperty(MojoExecutionException::new);
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
     MavenJibLogger.disableHttpLogging();
@@ -64,7 +64,7 @@ class PluginConfigurationProcessor {
     ImageReference baseImage = parseImageReference(jibPluginConfiguration.getBaseImage(), "from");
 
     // Checks Maven settings for registry credentials.
-    if (Boolean.getBoolean(JibSystemProperties.SEND_CREDENTIALS_OVER_HTTP)) {
+    if (JibSystemProperties.isSendCredentialsOverHttpEnabled()) {
       logger.warn(
           "Authentication over HTTP is enabled. It is strongly recommended that you do not enable "
               + "this on a public network!");

@@ -267,7 +267,7 @@ public class RegistryAuthenticator {
 
       try (Connection connection = Connection.getConnectionFactory().apply(authenticationUrl)) {
         Request.Builder requestBuilder =
-            Request.builder().setHttpTimeout(Integer.getInteger(JibSystemProperties.HTTP_TIMEOUT));
+            Request.builder().setHttpTimeout(JibSystemProperties.getHttpTimeout());
         if (authorization != null) {
           requestBuilder.setAuthorization(authorization);
         }
