@@ -50,8 +50,12 @@ public class LayerConfiguration {
      * Adds an entry to the layer. Only adds the single source file to the exact path in the
      * container file system.
      *
-     * <p>For example, {@code addEntry(Paths.get("myfile"), Paths.get("/path/in/container"))} would
-     * add {@code myfile} to the container to be accessed as {@code /path/in/container}.
+     * <p>For example, {@code addEntry(Paths.get("myfile"), Paths.get("/path/in/container"))} adds a
+     * file {@code myfile} to the container file system at {@code /path/in/container}.
+     *
+     * <p>For example, {@code addEntry(Paths.get("mydirectory"), Paths.get("/path/in/container"))}
+     * adds a directory {@code mydirectory/} to the container file system at {@code
+     * /path/in/container/}. This does <b>not</b> add the contents of {@code mydirectory}.
      *
      * @param sourceFile the source file to add to the layer
      * @param pathInContainer the path in the container file system corresponding to the {@code
@@ -67,10 +71,10 @@ public class LayerConfiguration {
      * Adds an entry to the layer. If the source file is a directory, the directory and its contents
      * will be added recursively.
      *
-     * <p>For example, {@code addEntryRecursive(Paths.get("mydirectory"),
-     * Paths.get("/path/in/container"))} would add {@code mydirectory} to the container to be
-     * accessed as {@code /path/in/container} and {@code mydirectory/fileA} to be accessed as {@code
-     * /path/in/container/fileA}.
+     * <p>For example, {@code addEntryRecursive(Paths.get("mydirectory",
+     * Paths.get("/path/in/container"))} adds {@code mydirectory} to the container file system at
+     * {@code /path/in/container} such that {@code mydirectory/subfile} is found at {@code
+     * /path/in/container/subfile}.
      *
      * @param sourceFile the source file to add to the layer recursively
      * @param pathInContainer the path in the container file system corresponding to the {@code

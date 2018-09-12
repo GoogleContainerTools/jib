@@ -33,7 +33,10 @@ import javassist.CtClass;
 import javassist.CtMethod;
 import javassist.NotFoundException;
 
-/** Finds main classes in a list of class files.. */
+/**
+ * Finds main classes in a list of class files. Main classes are classes that define the {@code
+ * public static void main(String[] args)} method.
+ */
 public class MainClassFinder {
 
   /** The result of a call to {@link #find}. */
@@ -106,7 +109,7 @@ public class MainClassFinder {
   private final JibLogger buildLogger;
 
   /**
-   * Finds a class with {@code psvm} in {@code files}.
+   * Finds a class with {@code psvm} (see class javadoc) in {@code files}.
    *
    * @param files the files to check
    * @param buildLogger used for displaying status messages.
@@ -117,7 +120,7 @@ public class MainClassFinder {
   }
 
   /**
-   * Tries to find classes with {@code public static void main(String[] args)} in {@link #files}.
+   * Tries to find classes with {@code psvm} (see class javadoc) in {@link #files}.
    *
    * @return the {@link Result} of the main class finding attempt
    */
@@ -162,7 +165,7 @@ public class MainClassFinder {
       try (InputStream classFileInputStream = Files.newInputStream(file)) {
         CtClass fileClass = classPool.makeClass(classFileInputStream);
 
-        // Check if class contains 'public static void main(String[] args)'.
+        // Check if class contains 'psvm' (see class javadoc).
         CtMethod mainMethod = fileClass.getDeclaredMethod("main", mainMethodParams);
 
         if (CtClass.voidType.equals(mainMethod.getReturnType())
