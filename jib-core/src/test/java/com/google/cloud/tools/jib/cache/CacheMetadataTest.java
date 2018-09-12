@@ -72,37 +72,40 @@ public class CacheMetadataTest {
 
   @Test
   public void testFilter_doLayerEntriesMatchMetadataEntries_extractionPath() {
-    ImmutableList<LayerEntry> layerEntries =
-        ImmutableList.of(new LayerEntry(ImmutableList.of(), "extractionPath"));
     ImmutableList<LayerMetadata.LayerMetadataEntry> metadataEntries =
         LayerMetadata.from(
-                ImmutableList.of(new LayerEntry(ImmutableList.of(), "anotherExtractionPath")),
+                ImmutableList.of(
+                    new LayerEntry(
+                        Paths.get("anotherSourceFile"), Paths.get("anotherExtractionPath"))),
                 FileTime.fromMillis(0))
             .getEntries();
 
     Assert.assertFalse(
         CacheMetadata.LayerFilter.doLayerEntriesMatchMetadataEntries(
-            layerEntries, metadataEntries));
-
+            ImmutableList.of(new LayerEntry(Paths.get("sourceFile"), Paths.get("extractionPath"))),
+            metadataEntries));
     Assert.assertTrue(
         CacheMetadata.LayerFilter.doLayerEntriesMatchMetadataEntries(
-            ImmutableList.of(new LayerEntry(ImmutableList.of(), "anotherExtractionPath")),
+            ImmutableList.of(
+                new LayerEntry(Paths.get("anotherSourceFile"), Paths.get("anotherExtractionPath"))),
             metadataEntries));
   }
 
   @Test
   public void testFilter_doLayerEntriesMatchMetadataEntries_pass() {
-    LayerEntry layerEntry1 =
-        new LayerEntry(
-            ImmutableList.of(Paths.get("sourceFile1"), Paths.get("sourceFile2")), "extractionPath");
-    LayerEntry layerEntry2 =
-        new LayerEntry(
-            ImmutableList.of(Paths.get("sourceFile3"), Paths.get("sourceFile4")),
-            "anotherExtractionPath");
+    LayerEntry layerEntry1 = new LayerEntry(Paths.get("sourceFile1"), Paths.get("extractionPath"));
+    LayerEntry layerEntry2 = new LayerEntry(Paths.get("sourceFile2"), Paths.get("extractionPath"));
+    LayerEntry layerEntry3 =
+        new LayerEntry(Paths.get("sourceFile3"), Paths.get("anotherExtractionPath"));
+    LayerEntry layerEntry4 =
+        new LayerEntry(Paths.get("sourceFile4"), Paths.get("anotherExtractionPath"));
 
-    ImmutableList<LayerEntry> layerEntries = ImmutableList.of(layerEntry1, layerEntry2);
+    ImmutableList<LayerEntry> layerEntries =
+        ImmutableList.of(layerEntry1, layerEntry2, layerEntry3, layerEntry4);
     ImmutableList<LayerMetadata.LayerMetadataEntry> metadataEntries =
-        LayerMetadata.from(ImmutableList.of(layerEntry1, layerEntry2), FileTime.fromMillis(0))
+        LayerMetadata.from(
+                ImmutableList.of(layerEntry1, layerEntry2, layerEntry3, layerEntry4),
+                FileTime.fromMillis(0))
             .getEntries();
 
     Assert.assertTrue(
@@ -115,25 +118,24 @@ public class CacheMetadataTest {
     List<CachedLayer> mockLayers =
         Stream.generate(CacheMetadataTest::mockCachedLayer).limit(6).collect(Collectors.toList());
 
-    LayerEntry fakeLayerEntry =
-        new LayerEntry(
-            ImmutableList.of(Paths.get("some/source/file"), Paths.get("some/source/directory")),
-            "extractionPath");
+    LayerEntry fakeLayerEntry1 =
+        new LayerEntry(Paths.get("some/source/file"), Paths.get("extractionPath"));
+    LayerEntry fakeLayerEntry2 =
+        new LayerEntry(Paths.get("some/source/directory"), Paths.get("extractionPath"));
 
     LayerMetadata fakeExpectedSourceFilesClassesLayerMetadata =
-        LayerMetadata.from(ImmutableList.of(fakeLayerEntry), FileTime.fromMillis(0));
+        LayerMetadata.from(
+            ImmutableList.of(fakeLayerEntry1, fakeLayerEntry2), FileTime.fromMillis(0));
     LayerMetadata fakeExpectedSourceFilesResourcesLayerMetadata =
-        LayerMetadata.from(ImmutableList.of(fakeLayerEntry), FileTime.fromMillis(0));
+        LayerMetadata.from(
+            ImmutableList.of(fakeLayerEntry1, fakeLayerEntry2), FileTime.fromMillis(0));
     LayerMetadata fakeOtherSourceFilesLayerMetadata =
         LayerMetadata.from(
             ImmutableList.of(
-                new LayerEntry(
-                    ImmutableList.of(Paths.get("not/the/same/source/file")), "extractionPath")),
+                new LayerEntry(Paths.get("not/the/same/source/file"), Paths.get("extractionPath"))),
             FileTime.fromMillis(0));
     LayerMetadata fakeEmptySourceFilesLayerMetadata =
-        LayerMetadata.from(
-            ImmutableList.of(new LayerEntry(ImmutableList.of(), "extractionPath")),
-            FileTime.fromMillis(0));
+        LayerMetadata.from(ImmutableList.of(), FileTime.fromMillis(0));
 
     List<CachedLayerWithMetadata> cachedLayers =
         Arrays.asList(
@@ -154,7 +156,10 @@ public class CacheMetadataTest {
     CacheMetadata cacheMetadata = cacheMetadataBuilder.build();
 
     ImageLayers<CachedLayerWithMetadata> filteredLayers =
-        cacheMetadata.filterLayers().byLayerEntries(ImmutableList.of(fakeLayerEntry)).filter();
+        cacheMetadata
+            .filterLayers()
+            .byLayerEntries(ImmutableList.of(fakeLayerEntry1, fakeLayerEntry2))
+            .filter();
 
     Assert.assertEquals(3, filteredLayers.size());
     Assert.assertEquals(
@@ -172,8 +177,7 @@ public class CacheMetadataTest {
 
     LayerEntry fakeLayerEntry =
         new LayerEntry(
-            ImmutableList.of(Paths.get("some/source/file", "some/source/directory")),
-            "extractionPath");
+            Paths.get("some/source/file", "some/source/directory"), Paths.get("extractionPath"));
 
     LayerMetadata fakeSourceFilesLayerMetadata =
         LayerMetadata.from(ImmutableList.of(fakeLayerEntry), FileTime.fromMillis(0));
@@ -205,16 +209,12 @@ public class CacheMetadataTest {
 
     LayerEntry fakeLayerEntry =
         new LayerEntry(
-            ImmutableList.of(Paths.get("some/source/file", "some/source/directory")),
-            "extractionPath");
-    LayerEntry fakeLayerEntryWithNoSourceFiles =
-        new LayerEntry(ImmutableList.of(), "extractionPath");
+            Paths.get("some/source/file", "some/source/directory"), Paths.get("extractionPath"));
 
     LayerMetadata fakeSourceFilesLayerMetadata =
         LayerMetadata.from(ImmutableList.of(fakeLayerEntry), FileTime.fromMillis(0));
     LayerMetadata fakeEmptySourceFilesLayerMetadata =
-        LayerMetadata.from(
-            ImmutableList.of(fakeLayerEntryWithNoSourceFiles), FileTime.fromMillis(0));
+        LayerMetadata.from(ImmutableList.of(), FileTime.fromMillis(0));
 
     List<CachedLayerWithMetadata> cachedLayers =
         Arrays.asList(
@@ -228,10 +228,7 @@ public class CacheMetadataTest {
     CacheMetadata cacheMetadata = cacheMetadataBuilder.build();
 
     ImageLayers<CachedLayerWithMetadata> filteredLayers =
-        cacheMetadata
-            .filterLayers()
-            .byLayerEntries(ImmutableList.of(fakeLayerEntryWithNoSourceFiles))
-            .filter();
+        cacheMetadata.filterLayers().byLayerEntries(ImmutableList.of()).filter();
 
     Assert.assertEquals(1, filteredLayers.size());
     Assert.assertEquals(fakeEmptySourceFilesLayerMetadata, filteredLayers.get(0).getMetadata());

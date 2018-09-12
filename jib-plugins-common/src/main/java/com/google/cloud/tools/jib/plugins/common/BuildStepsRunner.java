@@ -168,9 +168,7 @@ public class BuildStepsRunner {
         buildLogger.info("\t" + capitalizeFirstLetter(layerConfiguration.getLabel()) + ":");
 
         for (LayerEntry layerEntry : layerConfiguration.getLayerEntries()) {
-          for (Path sourceFile : layerEntry.getSourceFiles()) {
-            buildLogger.info("\t\t" + sourceFile);
-          }
+          buildLogger.info("\t\t" + layerEntry.getSourceFile());
         }
       }
 
@@ -184,8 +182,6 @@ public class BuildStepsRunner {
           helpfulSuggestions.forCacheNeedsClean(), cacheMetadataCorruptedException);
 
     } catch (ExecutionException executionException) {
-      BuildConfiguration buildConfiguration = buildSteps.getBuildConfiguration();
-
       Throwable exceptionDuringBuildSteps = executionException.getCause();
 
       if (exceptionDuringBuildSteps instanceof HttpHostConnectException) {
