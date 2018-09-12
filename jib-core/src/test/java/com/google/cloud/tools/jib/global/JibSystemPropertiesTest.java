@@ -29,18 +29,18 @@ public class JibSystemPropertiesTest {
   }
 
   @Test
-  public void testCheckHttpTimeoutSystemProperty_ok() throws Exception {
+  public void testCheckHttpTimeoutSystemProperty_ok() throws NumberFormatException {
     Assert.assertNull(System.getProperty(JibSystemProperties.HTTP_TIMEOUT));
-    JibSystemProperties.checkHttpTimeoutProperty(Exception::new);
+    JibSystemProperties.checkHttpTimeoutProperty();
   }
 
   @Test
   public void testCheckHttpTimeoutSystemProperty_stringValue() {
     System.setProperty(JibSystemProperties.HTTP_TIMEOUT, "random string");
     try {
-      JibSystemProperties.checkHttpTimeoutProperty(Exception::new);
+      JibSystemProperties.checkHttpTimeoutProperty();
       Assert.fail("Should error with a non-integer timeout");
-    } catch (Exception ex) {
+    } catch (NumberFormatException ex) {
       Assert.assertEquals("jib.httpTimeout must be an integer: random string", ex.getMessage());
     }
   }
@@ -49,9 +49,9 @@ public class JibSystemPropertiesTest {
   public void testCheckHttpTimeoutSystemProperty_negativeValue() {
     System.setProperty(JibSystemProperties.HTTP_TIMEOUT, "-80");
     try {
-      JibSystemProperties.checkHttpTimeoutProperty(Exception::new);
+      JibSystemProperties.checkHttpTimeoutProperty();
       Assert.fail("Should error with a negative timeout");
-    } catch (Exception ex) {
+    } catch (NumberFormatException ex) {
       Assert.assertEquals("jib.httpTimeout cannot be negative: -80", ex.getMessage());
     }
   }

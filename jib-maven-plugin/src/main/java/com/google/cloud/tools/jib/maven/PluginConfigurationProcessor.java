@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
@@ -25,6 +24,7 @@ import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
+import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
@@ -56,7 +56,11 @@ class PluginConfigurationProcessor {
       MavenProjectProperties projectProperties)
       throws MojoExecutionException {
     jibPluginConfiguration.handleDeprecatedParameters(logger);
-    JibSystemProperties.checkHttpTimeoutProperty(MojoExecutionException::new);
+    try {
+      JibSystemProperties.checkHttpTimeoutProperty();
+    } catch (NumberFormatException ex) {
+      throw new MojoExecutionException(ex.getMessage(), ex);
+    }
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
     MavenJibLogger.disableHttpLogging();

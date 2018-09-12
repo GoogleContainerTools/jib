@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.global;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
-import java.util.function.Function;
 
 /** Names of system properties defined/used by Jib. */
 public class JibSystemProperties {
@@ -38,7 +37,10 @@ public class JibSystemProperties {
    *
    * @return the HTTP connection/read timeouts for registry interactions in milliseconds
    */
-  public static Integer getHttpTimeout() {
+  public static int getHttpTimeout() {
+    if (Integer.getInteger(HTTP_TIMEOUT) == null) {
+      return 20000;
+    }
     return Integer.getInteger(HTTP_TIMEOUT);
   }
 
@@ -78,22 +80,21 @@ public class JibSystemProperties {
    * Checks the {@code jib.httpTimeout} system property for invalid (non-integer or negative)
    * values.
    *
-   * @param exceptionFactory factory to create an exception with the given description
-   * @param <T> the exception type to throw if invalid values
-   * @throws T if invalid values
+   * @throws NumberFormatException if invalid values
    */
-  public static <T extends Throwable> void checkHttpTimeoutProperty(
-      Function<String, T> exceptionFactory) throws T {
+  public static void checkHttpTimeoutProperty() throws NumberFormatException {
     String value = System.getProperty(HTTP_TIMEOUT);
     if (value == null) {
       return;
     }
+    int parsed;
     try {
-      if (Integer.parseInt(value) < 0) {
-        throw exceptionFactory.apply(HTTP_TIMEOUT + " cannot be negative: " + value);
-      }
+      parsed = Integer.parseInt(value);
     } catch (NumberFormatException ex) {
-      throw exceptionFactory.apply(HTTP_TIMEOUT + " must be an integer: " + value);
+      throw new NumberFormatException(HTTP_TIMEOUT + " must be an integer: " + value);
+    }
+    if (parsed < 0) {
+      throw new NumberFormatException(HTTP_TIMEOUT + " cannot be negative: " + value);
     }
   }
 

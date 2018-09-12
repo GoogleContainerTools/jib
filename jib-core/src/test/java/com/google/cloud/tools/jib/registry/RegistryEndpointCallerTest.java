@@ -427,7 +427,7 @@ public class RegistryEndpointCallerTest {
 
     // We fall back to the default timeout:
     // https://github.com/GoogleContainerTools/jib/pull/656#discussion_r203562639
-    Assert.assertNull(mockConnection.getRequestedHttpTimeout());
+    Assert.assertEquals(20000, mockConnection.getRequestedHttpTimeout().intValue());
   }
 
   @Test
@@ -438,7 +438,7 @@ public class RegistryEndpointCallerTest {
     System.setProperty(JibSystemProperties.HTTP_TIMEOUT, "random string");
     secureEndpointCaller.call();
 
-    Assert.assertNull(mockConnection.getRequestedHttpTimeout());
+    Assert.assertEquals(20000, mockConnection.getRequestedHttpTimeout().intValue());
   }
 
   @Test
