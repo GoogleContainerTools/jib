@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib;
+package com.google.cloud.tools.jib.global;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
@@ -33,18 +33,20 @@ public class JibSystemProperties {
   private static final String DISABLE_USER_AGENT = "_JIB_DISABLE_USER_AGENT";
 
   /**
-   * Gets the HTTP connection/read timeouts for registry interactions in milliseconds.
+   * Gets the HTTP connection/read timeouts for registry interactions in milliseconds. This is
+   * defined by the {@code jib.httpTimeout} system property.
    *
-   * @return the value of the {@code jib.httpTimeout} system property
+   * @return the HTTP connection/read timeouts for registry interactions in milliseconds
    */
   public static Integer getHttpTimeout() {
     return Integer.getInteger(HTTP_TIMEOUT);
   }
 
   /**
-   * Gets whether or not to serialize Jib's execution.
+   * Gets whether or not to serialize Jib's execution. This is defined by the {@code jibSerialize}
+   * system property.
    *
-   * @return the value of the {@code jibSerialize} system property
+   * @return {@code true} if Jib's execution should be serialized, {@code false} if not
    */
   public static boolean isSerializedExecutionEnabled() {
     return Boolean.getBoolean(SERIALIZE);
@@ -52,18 +54,21 @@ public class JibSystemProperties {
 
   /**
    * Gets whether or not to allow sending authentication information over insecure HTTP connections.
+   * This is defined by the {@code sendCredentialsOverHttp} system property.
    *
-   * @return the value of the {@code sendCredentialsOverHttp} system property
+   * @return {@code true} if authentication information is allowed to be sent over insecure
+   *     connections, {@code false} if not
    */
   public static boolean isSendCredentialsOverHttpEnabled() {
     return Boolean.getBoolean(SEND_CREDENTIALS_OVER_HTTP);
   }
 
   /**
-   * Gets whether or not to enable the User-Agent header.
+   * Gets whether or not to enable the User-Agent header. This is defined by the {@code
+   * _JIB_DISABLE_USER_AGENT} system property.
    *
    * @return {@code true} if the {@code _JIB_DISABLE_USER_AGENT} system property is set to a null or
-   *     empty string, otherwise {@code false}
+   *     empty string, {@code false} if not
    */
   public static boolean isUserAgentEnabled() {
     return Strings.isNullOrEmpty(System.getProperty(DISABLE_USER_AGENT));

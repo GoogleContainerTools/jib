@@ -60,7 +60,7 @@ class PluginConfigurationProcessor {
 
     ImageReference baseImage = ImageReference.parse(jibExtension.getBaseImage());
 
-    if (Boolean.getBoolean(JibSystemProperties.SEND_CREDENTIALS_OVER_HTTP)) {
+    if (JibSystemProperties.isSendCredentialsOverHttpEnabled()) {
       logger.warn(
           "Authentication over HTTP is enabled. It is strongly recommended that you do not enable "
               + "this on a public network!");

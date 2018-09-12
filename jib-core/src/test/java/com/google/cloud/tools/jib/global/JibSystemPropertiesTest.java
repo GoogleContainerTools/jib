@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,12 +14,13 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib;
+package com.google.cloud.tools.jib.global;
 
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 
+/** Tests for {@link JibSystemProperties}. */
 public class JibSystemPropertiesTest {
 
   @After
