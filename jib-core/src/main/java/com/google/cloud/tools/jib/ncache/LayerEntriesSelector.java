@@ -21,12 +21,14 @@ import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.json.ListOfJsonTemplate;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Generates a selector based on {@link LayerEntry}s for a layer. Selectors are secondary references
@@ -50,12 +52,14 @@ import java.util.List;
 class LayerEntriesSelector {
 
   /** Serialized form of a {@link LayerEntry}. */
-  private static class LayerEntryTemplate implements JsonTemplate, Comparable<LayerEntryTemplate> {
+  @VisibleForTesting
+  static class LayerEntryTemplate implements JsonTemplate, Comparable<LayerEntryTemplate> {
 
     private final String sourceFile;
     private final String extractionPath;
 
-    private LayerEntryTemplate(LayerEntry layerEntry) {
+    @VisibleForTesting
+    LayerEntryTemplate(LayerEntry layerEntry) {
       sourceFile = layerEntry.getSourceFileString();
       extractionPath = layerEntry.getExtractionPathString();
     }
@@ -68,10 +72,29 @@ class LayerEntriesSelector {
       }
       return extractionPath.compareTo(otherLayerEntryTemplate.extractionPath);
     }
+
+    @Override
+    public boolean equals(Object other) {
+      if (this == other) {
+        return true;
+      }
+      if (!(other instanceof LayerEntryTemplate)) {
+        return false;
+      }
+      LayerEntryTemplate otherLayerEntryTemplate = (LayerEntryTemplate) other;
+      return sourceFile.equals(otherLayerEntryTemplate.sourceFile)
+          && extractionPath.equals(otherLayerEntryTemplate.extractionPath);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(sourceFile, extractionPath);
+    }
   }
 
   /** Serialized form of a list of {@link LayerEntry}s. */
-  private static class LayerEntriesTemplate implements ListOfJsonTemplate<LayerEntryTemplate> {
+  @VisibleForTesting
+  static class LayerEntriesTemplate implements ListOfJsonTemplate<LayerEntryTemplate> {
 
     private final List<LayerEntryTemplate> layerEntryTemplates = new ArrayList<>();
 
@@ -86,7 +109,8 @@ class LayerEntriesSelector {
      *
      * @param layerEntries the list of {@link LayerEntry}s
      */
-    private LayerEntriesTemplate(ImmutableList<LayerEntry> layerEntries) {
+    @VisibleForTesting
+    LayerEntriesTemplate(ImmutableList<LayerEntry> layerEntries) {
       for (LayerEntry layerEntry : layerEntries) {
         layerEntryTemplates.add(new LayerEntryTemplate(layerEntry));
       }
