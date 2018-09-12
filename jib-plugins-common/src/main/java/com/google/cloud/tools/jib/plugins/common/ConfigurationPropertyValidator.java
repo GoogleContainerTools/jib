@@ -22,34 +22,10 @@ import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.common.base.Strings;
-import java.util.function.Function;
 import javax.annotation.Nullable;
 
 /** Validator for plugin configuration parameters and system properties. */
 public class ConfigurationPropertyValidator {
-
-  /**
-   * Checks the {@code jib.httpTimeout} system property for invalid (non-integer or negative)
-   * values.
-   *
-   * @param exceptionFactory factory to create an exception with the given description
-   * @param <T> the exception type to throw if invalid values
-   * @throws T if invalid values
-   */
-  public static <T extends Throwable> void checkHttpTimeoutProperty(
-      Function<String, T> exceptionFactory) throws T {
-    String value = System.getProperty("jib.httpTimeout");
-    if (value == null) {
-      return;
-    }
-    try {
-      if (Integer.parseInt(value) < 0) {
-        throw exceptionFactory.apply("jib.httpTimeout cannot be negative: " + value);
-      }
-    } catch (NumberFormatException ex) {
-      throw exceptionFactory.apply("jib.httpTimeout must be an integer: " + value);
-    }
-  }
 
   /**
    * Gets a {@link Credential} from a username and password. First tries system properties, then
