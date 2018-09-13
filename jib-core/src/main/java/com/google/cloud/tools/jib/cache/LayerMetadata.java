@@ -30,10 +30,10 @@ class LayerMetadata {
   /** Entry into the layer metadata. */
   static class LayerMetadataEntry {
 
-    /** The source file path string, in OS-specific format. */
+    /** The source file path string, in Unix form. The path should be an absolute path. */
     private final String absoluteSourceFileString;
 
-    /** The extraction path string, in OS-specific format. */
+    /** The extraction path string, in Unix form. The path should be an absolute path. */
     private final String absoluteExtractionPathString;
 
     String getAbsoluteSourceFileString() {

@@ -43,7 +43,7 @@ public class LayerEntry {
    * @param path the path
    * @return the string form of the absolute path
    */
-  private static String toAbsoluteUnixPath(Path path) {
+  private static String toUnixPath(Path path) {
     Preconditions.checkArgument(path.isAbsolute());
     StringJoiner pathJoiner = new StringJoiner("/", "/", "");
     for (Path pathComponent : path) {
@@ -80,8 +80,7 @@ public class LayerEntry {
    * Gets the source file.
    *
    * <p>Do <b>not</b> call {@link Path#toString} on this - use {@link #getAbsoluteSourceFileString}
-   * instead. This path can be relative or absolute, and {@link #getAbsoluteSourceFileString} can
-   * also be relative or absolute, but callers should rely on {@link #getAbsoluteSourceFileString}
+   * instead. This path can be relative or absolute, but {@link #getAbsoluteSourceFileString} can only be absolute. Callers should rely on {@link #getAbsoluteSourceFileString}
    * for the serialized form since the serialization could change independently of the path
    * representation.
    *
@@ -95,8 +94,8 @@ public class LayerEntry {
    * Gets the extraction path.
    *
    * <p>Do <b>not</b> call {@link Path#toString} on this - use {@link
-   * #getAbsoluteExtractionPathString} instead. This path can be relative or absolute, and {@link
-   * #getAbsoluteExtractionPathString} can also be relative or absolute, but callers should rely on
+   * #getAbsoluteExtractionPathString} instead. This path can be relative or absolute, but {@link
+   * #getAbsoluteExtractionPathString} can only be absolute. Callers should rely on
    * {@link #getAbsoluteExtractionPathString} for the serialized form since the serialization could
    * change independently of the path representation.
    *
@@ -113,7 +112,7 @@ public class LayerEntry {
    * @return the source file path
    */
   public String getAbsoluteSourceFileString() {
-    return toAbsoluteUnixPath(sourceFile.toAbsolutePath());
+    return toUnixPath(sourceFile.toAbsolutePath());
   }
 
   /**
@@ -123,7 +122,7 @@ public class LayerEntry {
    * @return the extraction path
    */
   public String getAbsoluteExtractionPathString() {
-    return toAbsoluteUnixPath(Paths.get("/").resolve(extractionPath));
+    return toUnixPath(Paths.get("/").resolve(extractionPath));
   }
 
   @Override
