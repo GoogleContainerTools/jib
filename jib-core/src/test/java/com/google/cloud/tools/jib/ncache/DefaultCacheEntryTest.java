@@ -65,13 +65,15 @@ public class DefaultCacheEntryTest {
 
   @Test
   public void testBuilder_noMetadataBlob() throws IOException {
-    CacheEntry cacheEntry =
+    DefaultCacheEntry.Builder cacheEntryBuilder =
         DefaultCacheEntry.builder()
             .setLayerDigest(mockLayerDigest)
             .setLayerDiffId(mockLayerDiffId)
-            .setLayerSize(1337)
-            .setLayerBlob(Blobs.from("layerBlob"))
-            .build();
+            .setLayerSize(1337);
+    Assert.assertFalse(cacheEntryBuilder.hasLayerBlob());
+    cacheEntryBuilder.setLayerBlob(Blobs.from("layerBlob"));
+    Assert.assertTrue(cacheEntryBuilder.hasLayerBlob());
+    CacheEntry cacheEntry = cacheEntryBuilder.build();
     Assert.assertEquals(mockLayerDigest, cacheEntry.getLayerDigest());
     Assert.assertEquals(mockLayerDiffId, cacheEntry.getLayerDiffId());
     Assert.assertEquals(1337, cacheEntry.getLayerSize());
@@ -81,14 +83,16 @@ public class DefaultCacheEntryTest {
 
   @Test
   public void testBuilder_withMetadataBlob() throws IOException {
-    CacheEntry cacheEntry =
+    DefaultCacheEntry.Builder cacheEntryBuilder =
         DefaultCacheEntry.builder()
             .setLayerDigest(mockLayerDigest)
             .setLayerDiffId(mockLayerDiffId)
             .setLayerSize(1337)
-            .setLayerBlob(Blobs.from("layerBlob"))
-            .setMetadataBlob(Blobs.from("metadataBlob"))
-            .build();
+            .setLayerBlob(Blobs.from("layerBlob"));
+    Assert.assertFalse(cacheEntryBuilder.hasMetadataBlob());
+    cacheEntryBuilder.setMetadataBlob(Blobs.from("metadataBlob"));
+    Assert.assertTrue(cacheEntryBuilder.hasMetadataBlob());
+    CacheEntry cacheEntry = cacheEntryBuilder.build();
     Assert.assertEquals(mockLayerDigest, cacheEntry.getLayerDigest());
     Assert.assertEquals(mockLayerDiffId, cacheEntry.getLayerDiffId());
     Assert.assertEquals(1337, cacheEntry.getLayerSize());

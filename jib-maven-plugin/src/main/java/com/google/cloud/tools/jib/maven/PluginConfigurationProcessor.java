@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
+import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
@@ -55,7 +56,11 @@ class PluginConfigurationProcessor {
       MavenProjectProperties projectProperties)
       throws MojoExecutionException {
     jibPluginConfiguration.handleDeprecatedParameters(logger);
-    ConfigurationPropertyValidator.checkHttpTimeoutProperty(MojoExecutionException::new);
+    try {
+      JibSystemProperties.checkHttpTimeoutProperty();
+    } catch (NumberFormatException ex) {
+      throw new MojoExecutionException(ex.getMessage(), ex);
+    }
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
     MavenJibLogger.disableHttpLogging();
@@ -63,7 +68,7 @@ class PluginConfigurationProcessor {
     ImageReference baseImage = parseImageReference(jibPluginConfiguration.getBaseImage(), "from");
 
     // Checks Maven settings for registry credentials.
-    if (Boolean.getBoolean("sendCredentialsOverHttp")) {
+    if (JibSystemProperties.isSendCredentialsOverHttpEnabled()) {
       logger.warn(
           "Authentication over HTTP is enabled. It is strongly recommended that you do not enable "
               + "this on a public network!");

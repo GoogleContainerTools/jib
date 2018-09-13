@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaDockerContextGenerator;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
-import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
+import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -61,7 +61,11 @@ public class DockerContextMojo extends JibPluginConfiguration {
 
     MavenJibLogger mavenJibLogger = new MavenJibLogger(getLog());
     handleDeprecatedParameters(mavenJibLogger);
-    ConfigurationPropertyValidator.checkHttpTimeoutProperty(MojoExecutionException::new);
+    try {
+      JibSystemProperties.checkHttpTimeoutProperty();
+    } catch (NumberFormatException ex) {
+      throw new MojoExecutionException(ex.getMessage(), ex);
+    }
 
     Preconditions.checkNotNull(targetDir);
 

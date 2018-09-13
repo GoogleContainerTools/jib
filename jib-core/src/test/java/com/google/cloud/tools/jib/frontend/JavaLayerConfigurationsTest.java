@@ -62,11 +62,11 @@ public class JavaLayerConfigurationsTest {
 
     List<String> expectedLabels = new ArrayList<>();
     for (JavaLayerConfigurations.LayerType layerType : JavaLayerConfigurations.LayerType.values()) {
-      expectedLabels.add(layerType.getLabel());
+      expectedLabels.add(layerType.getName());
     }
     List<String> actualLabels = new ArrayList<>();
     for (LayerConfiguration layerConfiguration : javaLayerConfigurations.getLayerConfigurations()) {
-      actualLabels.add(layerConfiguration.getLabel());
+      actualLabels.add(layerConfiguration.getName());
     }
     Assert.assertEquals(expectedLabels, actualLabels);
   }
