@@ -37,6 +37,8 @@ import java.util.StringJoiner;
  */
 public class LayerEntry {
 
+  private static final Path ROOT = Paths.get("/");
+
   /**
    * Stringifies {@code path} in Unix form. The path must be absolute.
    *
@@ -44,7 +46,7 @@ public class LayerEntry {
    * @return the string form of the absolute path
    */
   private static String toUnixPath(Path path) {
-    Preconditions.checkArgument(path.isAbsolute());
+    Preconditions.checkArgument(path.startsWith(ROOT));
     StringJoiner pathJoiner = new StringJoiner("/", "/", "");
     for (Path pathComponent : path) {
       pathJoiner.add(pathComponent.toString());
@@ -122,7 +124,7 @@ public class LayerEntry {
    * @return the extraction path
    */
   public String getAbsoluteExtractionPathString() {
-    return toUnixPath(Paths.get("/").resolve(extractionPath));
+    return toUnixPath(ROOT.resolve(extractionPath));
   }
 
   @Override
