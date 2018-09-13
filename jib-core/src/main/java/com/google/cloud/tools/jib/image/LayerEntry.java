@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.image;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.StringJoiner;
 
@@ -71,7 +72,7 @@ public class LayerEntry {
    */
   public LayerEntry(Path sourceFile, Path extractionPath) {
     this.sourceFile = sourceFile;
-    this.extractionPath = extractionPath;
+    this.extractionPath = Paths.get("/").resolve(extractionPath);
   }
 
   /**
@@ -103,12 +104,12 @@ public class LayerEntry {
   }
 
   /**
-   * Gets the source file path in string form.
+   * Gets the source file absolute path in string form.
    *
    * @return the source file path
    */
   public String getSourceFileString() {
-    return toUnixPath(sourceFile);
+    return toUnixPath(sourceFile.toAbsolutePath());
   }
 
   /**
@@ -118,7 +119,7 @@ public class LayerEntry {
    * @return the extraction path
    */
   public String getExtractionPathString() {
-    return toUnixPath(extractionPath);
+    return toUnixPath(extractionPath.toAbsolutePath());
   }
 
   @Override

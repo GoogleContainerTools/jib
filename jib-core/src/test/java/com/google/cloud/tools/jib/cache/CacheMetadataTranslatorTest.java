@@ -44,8 +44,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class CacheMetadataTranslatorTest {
 
-  private static final Path CLASSES_LAYER_SOURCE_FILE = Paths.get("/some/source/path");
-  private static final Path CLASSES_LAYER_EXTRACTION_PATH = Paths.get("some/extraction/path");
+  private static final String CLASSES_LAYER_SOURCE_FILE = "/some/source/path";
+  private static final String CLASSES_LAYER_EXTRACTION_PATH = "/some/extraction/path";
   private static final FileTime CLASSES_LAYER_LAST_MODIFIED_TIME =
       FileTime.fromMillis(255073580723571L);
 
@@ -109,10 +109,10 @@ public class CacheMetadataTranslatorTest {
     Assert.assertEquals(classesLayerDiffId, classesLayer.getDiffId());
     Assert.assertNotNull(classesLayer.getMetadata());
     Assert.assertEquals(
-        CLASSES_LAYER_SOURCE_FILE.toString(),
+        CLASSES_LAYER_SOURCE_FILE,
         classesLayer.getMetadata().getEntries().get(0).getSourceFileString());
     Assert.assertEquals(
-        CLASSES_LAYER_EXTRACTION_PATH.toString(),
+        CLASSES_LAYER_EXTRACTION_PATH,
         classesLayer.getMetadata().getEntries().get(0).getExtractionPathString());
     Assert.assertEquals(
         CLASSES_LAYER_LAST_MODIFIED_TIME, classesLayer.getMetadata().getLastModifiedTime());
@@ -132,7 +132,9 @@ public class CacheMetadataTranslatorTest {
     LayerMetadata classesLayerMetadata =
         LayerMetadata.from(
             ImmutableList.of(
-                new LayerEntry(CLASSES_LAYER_SOURCE_FILE, CLASSES_LAYER_EXTRACTION_PATH)),
+                new LayerEntry(
+                    Paths.get(CLASSES_LAYER_SOURCE_FILE),
+                    Paths.get(CLASSES_LAYER_EXTRACTION_PATH))),
             CLASSES_LAYER_LAST_MODIFIED_TIME);
     CachedLayerWithMetadata classesLayer =
         new CachedLayerWithMetadata(classesCachedLayer, classesLayerMetadata);
