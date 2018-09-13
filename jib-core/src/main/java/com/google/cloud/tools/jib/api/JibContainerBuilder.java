@@ -140,6 +140,12 @@ public class JibContainerBuilder {
    * Sets the container entrypoint. This is the beginning of the command that is run when the
    * container starts. {@link #setProgramArguments} sets additional tokens.
    *
+   * <p>This is similar to <a
+   * href="https://docs.docker.com/engine/reference/builder/#exec-form-entrypoint-example">{@code
+   * ENTRYPOINT} in Dockerfiles</a> or {@code command} in the <a
+   * href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/#container-v1-core">Kubernetes
+   * Container spec</a>.
+   *
    * @param entrypoint a list of the entrypoint command
    * @return this
    */
@@ -162,6 +168,11 @@ public class JibContainerBuilder {
   /**
    * Sets the container entrypoint program arguments. These are additional tokens added to the end
    * of the entrypoint command.
+   *
+   * <p>This is similar to <a href="https://docs.docker.com/engine/reference/builder/#cmd">{@code
+   * CMD} in Dockerfiles</a> or {@code args} in the <a
+   * href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/#container-v1-core">Kubernetes
+   * Container spec</a>.
    *
    * <p>For example, if the entrypoint was {@code myprogram --flag subcommand} and program arguments
    * were {@code hello world}, then the command that run when the container starts is {@code
@@ -191,6 +202,11 @@ public class JibContainerBuilder {
    * launched by the container entrypoint command. This replaces any previously-set environment
    * variables.
    *
+   * <p>This is similar to <a href="https://docs.docker.com/engine/reference/builder/#env">{@code
+   * ENV} in Dockerfiles</a> or {@code env} in the <a
+   * href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/#container-v1-core">Kubernetes
+   * Container spec</a>.
+   *
    * @param environmentMap a map of environment variable names to values
    * @return this
    */
@@ -218,6 +234,11 @@ public class JibContainerBuilder {
    *
    * <p>Use {@link Port#tcp} to expose a port for TCP traffic and {@link Port#udp} to expose a port
    * for UDP traffic.
+   *
+   * <p>This is similar to <a href="https://docs.docker.com/engine/reference/builder/#expose">{@code
+   * EXPOSE} in Dockerfiles</a> or {@code ports} in the <a
+   * href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/#container-v1-core">Kubernetes
+   * Container spec</a>.
    *
    * @param ports the list of ports to expose
    * @return this
@@ -252,6 +273,9 @@ public class JibContainerBuilder {
 
   /**
    * Sets the labels for the container. This replaces any previously-set labels.
+   *
+   * <p>This is similar to <a href="https://docs.docker.com/engine/reference/builder/#label">{@code
+   * LABEL} in Dockerfiles</a>.
    *
    * @param labelMap a map of label keys to values
    * @return this
