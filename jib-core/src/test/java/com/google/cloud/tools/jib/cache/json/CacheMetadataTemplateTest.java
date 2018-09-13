@@ -125,10 +125,10 @@ public class CacheMetadataTemplateTest {
     Assert.assertNotNull(classesLayerTemplate.getProperties());
     Assert.assertEquals(1, classesLayerTemplate.getProperties().getLayerEntries().size());
     Assert.assertEquals(
-        Paths.get("/some/source/path").toString(),
+        "/some/source/path",
         classesLayerTemplate.getProperties().getLayerEntries().get(0).getSourceFileString());
     Assert.assertEquals(
-        Paths.get("some/extraction/path").toString(),
+        "some/extraction/path",
         classesLayerTemplate.getProperties().getLayerEntries().get(0).getExtractionPathString());
     Assert.assertEquals(
         FileTime.fromMillis(255073580723571L),

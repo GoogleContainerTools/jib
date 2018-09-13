@@ -70,7 +70,7 @@ public class LayerEntry {
    *     sourceFile} (relative to root {@code /})
    */
   public LayerEntry(Path sourceFile, Path extractionPath) {
-    this.sourceFile = sourceFile;
+    this.sourceFile = sourceFile.toAbsolutePath();
     this.extractionPath = extractionPath;
   }
 
@@ -103,12 +103,12 @@ public class LayerEntry {
   }
 
   /**
-   * Gets the source file path in string form.
+   * Gets the source file absolute path in string form.
    *
    * @return the source file path
    */
   public String getSourceFileString() {
-    return toUnixPath(sourceFile);
+    return toUnixPath(sourceFile.toAbsolutePath());
   }
 
   /**

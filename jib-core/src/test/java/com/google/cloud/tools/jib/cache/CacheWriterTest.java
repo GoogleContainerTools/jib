@@ -94,7 +94,8 @@ public class CacheWriterTest {
     Mockito.when(mockReproducibleLayerBuilder.getLayerEntries())
         .thenReturn(
             ImmutableList.of(
-                new LayerEntry(Paths.get("some/source/file"), Paths.get("/some/extraction/path"))));
+                new LayerEntry(
+                    Paths.get("/some/source/file"), Paths.get("/some/extraction/path"))));
 
     CachedLayerWithMetadata cachedLayerWithMetadata =
         cacheWriter.writeLayer(mockReproducibleLayerBuilder);
@@ -105,11 +106,9 @@ public class CacheWriterTest {
     Assert.assertNotNull(layerMetadata);
     Assert.assertEquals(1, layerMetadata.getEntries().size());
     Assert.assertEquals(
-        Paths.get("some/source/file").toString(),
-        layerMetadata.getEntries().get(0).getSourceFileString());
+        "/some/source/file", layerMetadata.getEntries().get(0).getSourceFileString());
     Assert.assertEquals(
-        Paths.get("/some/extraction/path").toString(),
-        layerMetadata.getEntries().get(0).getExtractionPathString());
+        "/some/extraction/path", layerMetadata.getEntries().get(0).getExtractionPathString());
 
     verifyCachedLayerIsExpected(getExpectedLayer(), cachedLayerWithMetadata);
   }
