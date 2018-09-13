@@ -21,17 +21,8 @@ import java.util.Objects;
 /** Represents a port number with a protocol (TCP or UDP). */
 public class Port {
 
-  /** Represents the protocol for the port. */
-  private enum Protocol {
-    TCP("tcp"),
-    UDP("udp");
-
-    private final String stringRepresentation;
-
-    Protocol(String stringRepresentation) {
-      this.stringRepresentation = stringRepresentation;
-    }
-  }
+  private static final String TCP_PROTOCOL = "tcp";
+  private static final String UDP_PROTOCOL = "udp";
 
   /**
    * Create a new {@link Port} with TCP protocol.
@@ -40,7 +31,7 @@ public class Port {
    * @return the new {@link Port}
    */
   public static Port tcp(int port) {
-    return new Port(port, Protocol.TCP);
+    return new Port(port, TCP_PROTOCOL);
   }
 
   /**
@@ -50,7 +41,7 @@ public class Port {
    * @return the new {@link Port}
    */
   public static Port udp(int port) {
-    return new Port(port, Protocol.UDP);
+    return new Port(port, UDP_PROTOCOL);
   }
 
   /**
@@ -62,17 +53,16 @@ public class Port {
    * @return the {@link Port}
    */
   public static Port parseProtocol(int port, String protocolString) {
-    Protocol protocol =
-        Protocol.UDP.toString().equalsIgnoreCase(protocolString) ? Protocol.UDP : Protocol.TCP;
+    String protocol = UDP_PROTOCOL.equalsIgnoreCase(protocolString) ? UDP_PROTOCOL : TCP_PROTOCOL;
     return new Port(port, protocol);
   }
 
   private final int port;
   private final String protocol;
 
-  private Port(int port, Protocol protocol) {
+  private Port(int port, String protocol) {
     this.port = port;
-    this.protocol = protocol.stringRepresentation;
+    this.protocol = protocol;
   }
 
   /**
