@@ -65,15 +65,15 @@ public class BuildStepsRunner {
     return new StringBuilder().append("\u001B[36m").append(innerText).append("\u001B[0m");
   }
 
-  private static String getSuccessMessageForBuildImage(
+  private static String buildMessageWithTargetImageReferences(
       BuildConfiguration buildConfiguration, String prefix, String suffix) {
     String targetRegistry = buildConfiguration.getTargetImageConfiguration().getImageRegistry();
-    String targetRepository = buildConfiguration.getTargetImageConfiguration().getImageRegistry();
+    String targetRepository = buildConfiguration.getTargetImageConfiguration().getImageRepository();
 
     StringJoiner successMessageBuilder = new StringJoiner(", ", prefix, suffix);
     for (String tag : buildConfiguration.getAllTargetImageTags()) {
       successMessageBuilder.add(
-          ImageReference.of(targetRegistry, targetRepository, tag).toString());
+          colorCyan(ImageReference.of(targetRegistry, targetRepository, tag).toString()));
     }
     return successMessageBuilder.toString();
   }
@@ -91,10 +91,10 @@ public class BuildStepsRunner {
         BuildSteps.forBuildToDockerRegistry(
             buildConfiguration, getCacheInitializer(buildConfiguration)),
         String.format(
-            getSuccessMessageForBuildImage(
+            buildMessageWithTargetImageReferences(
                 buildConfiguration, STARTUP_MESSAGE_PREFIX_FOR_DOCKER_REGISTRY, "..."),
             buildConfiguration.getTargetImageConfiguration().getImage()),
-        getSuccessMessageForBuildImage(
+        buildMessageWithTargetImageReferences(
             buildConfiguration, SUCCESS_MESSAGE_PREFIX_FOR_DOCKER_REGISTRY, ""));
   }
 
@@ -110,9 +110,9 @@ public class BuildStepsRunner {
     return new BuildStepsRunner(
         BuildSteps.forBuildToDockerDaemon(
             buildConfiguration, getCacheInitializer(buildConfiguration)),
-        getSuccessMessageForBuildImage(
+        buildMessageWithTargetImageReferences(
             buildConfiguration, STARTUP_MESSAGE_PREFIX_FOR_DOCKER_DAEMON, "..."),
-        getSuccessMessageForBuildImage(
+        buildMessageWithTargetImageReferences(
             buildConfiguration, SUCCESS_MESSAGE_PREFIX_FOR_DOCKER_DAEMON, ""));
   }
 
