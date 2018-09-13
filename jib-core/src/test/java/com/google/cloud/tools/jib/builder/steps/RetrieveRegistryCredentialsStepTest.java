@@ -46,18 +46,20 @@ public class RetrieveRegistryCredentialsStepTest {
   public void testCall_retrieved() throws CredentialRetrievalException {
     BuildConfiguration buildConfiguration =
         makeFakeBuildConfiguration(
-            Arrays.asList(Optional::empty, () -> Credential.basic("baseusername", "basepassword")),
             Arrays.asList(
-                () -> Credential.basic("targetusername", "targetpassword"),
-                () -> Credential.basic("ignored", "ignored")));
+                Optional::empty,
+                () -> Optional.of(Credential.basic("baseusername", "basepassword"))),
+            Arrays.asList(
+                () -> Optional.of(Credential.basic("targetusername", "targetpassword")),
+                () -> Optional.of(Credential.basic("ignored", "ignored"))));
 
     Assert.assertEquals(
-        Credential.basic("baseusername", "basepassword").orElseThrow(AssertionError::new),
+        Credential.basic("baseusername", "basepassword"),
         RetrieveRegistryCredentialsStep.forBaseImage(
                 mockListeningExecutorService, buildConfiguration)
             .call());
     Assert.assertEquals(
-        Credential.basic("targetusername", "targetpassword").orElseThrow(AssertionError::new),
+        Credential.basic("targetusername", "targetpassword"),
         RetrieveRegistryCredentialsStep.forTargetImage(
                 mockListeningExecutorService, buildConfiguration)
             .call());

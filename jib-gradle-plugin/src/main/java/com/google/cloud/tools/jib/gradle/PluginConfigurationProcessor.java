@@ -32,7 +32,7 @@ import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
 import java.time.Instant;
 import java.util.List;
-import javax.annotation.Nullable;
+import java.util.Optional;
 
 /** Configures and provides builders for the image building tasks. */
 class PluginConfigurationProcessor {
@@ -66,15 +66,15 @@ class PluginConfigurationProcessor {
     }
     DefaultCredentialRetrievers defaultCredentialRetrievers =
         DefaultCredentialRetrievers.init(CredentialRetrieverFactory.forImage(baseImage, logger));
-    Credential fromCredential =
+    Optional<Credential> optionFromCredential =
         ConfigurationPropertyValidator.getImageCredential(
             logger,
             "jib.from.auth.username",
             "jib.from.auth.password",
             jibExtension.getFrom().getAuth());
-    if (fromCredential != null) {
-      defaultCredentialRetrievers.setKnownCredential(fromCredential, "jib.from.auth");
-    }
+    optionFromCredential.ifPresent(
+        fromCredential ->
+            defaultCredentialRetrievers.setKnownCredential(fromCredential, "jib.from.auth"));
     defaultCredentialRetrievers.setCredentialHelperSuffix(jibExtension.getFrom().getCredHelper());
 
     ImageConfiguration.Builder baseImageConfigurationBuilder =
@@ -121,23 +121,23 @@ class PluginConfigurationProcessor {
         buildConfigurationBuilder,
         baseImageConfigurationBuilder,
         containerConfigurationBuilder,
-        fromCredential);
+        optionFromCredential.isPresent());
   }
 
   private final BuildConfiguration.Builder buildConfigurationBuilder;
   private final ImageConfiguration.Builder baseImageConfigurationBuilder;
   private final ContainerConfiguration.Builder containerConfigurationBuilder;
-  @Nullable private final Credential baseImageCredential;
+  private final boolean isBaseImageCredentialPresent;
 
   private PluginConfigurationProcessor(
       BuildConfiguration.Builder buildConfigurationBuilder,
       ImageConfiguration.Builder baseImageConfigurationBuilder,
       ContainerConfiguration.Builder containerConfigurationBuilder,
-      @Nullable Credential baseImageCredential) {
+      boolean isBaseImageCredentialPresent) {
     this.buildConfigurationBuilder = buildConfigurationBuilder;
     this.baseImageConfigurationBuilder = baseImageConfigurationBuilder;
     this.containerConfigurationBuilder = containerConfigurationBuilder;
-    this.baseImageCredential = baseImageCredential;
+    this.isBaseImageCredentialPresent = isBaseImageCredentialPresent;
   }
 
   BuildConfiguration.Builder getBuildConfigurationBuilder() {
@@ -152,8 +152,7 @@ class PluginConfigurationProcessor {
     return containerConfigurationBuilder;
   }
 
-  @Nullable
-  Credential getBaseImageCredential() {
-    return baseImageCredential;
+  boolean isBaseImageCredentialPresent() {
+    return isBaseImageCredentialPresent;
   }
 }

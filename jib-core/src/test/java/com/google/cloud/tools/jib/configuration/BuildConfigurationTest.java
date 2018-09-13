@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
@@ -51,7 +52,7 @@ public class BuildConfigurationTest {
     Set<String> additionalTargetImageTags = ImmutableSet.of("tag1", "tag2", "tag3");
     Set<String> expectedTargetImageTags = ImmutableSet.of("targettag", "tag1", "tag2", "tag3");
     List<CredentialRetriever> credentialRetrievers =
-        Collections.singletonList(() -> Credential.basic("username", "password"));
+        Collections.singletonList(() -> Optional.of(Credential.basic("username", "password")));
     Instant expectedCreationTime = Instant.ofEpochSecond(10000);
     List<String> expectedEntrypoint = Arrays.asList("some", "entrypoint");
     List<String> expectedJavaArguments = Arrays.asList("arg1", "arg2");
@@ -129,7 +130,8 @@ public class BuildConfigurationTest {
             .getTargetImageConfiguration()
             .getCredentialRetrievers()
             .get(0)
-            .retrieve());
+            .retrieve()
+            .orElseThrow(AssertionError::new));
     Assert.assertEquals(
         expectedJavaArguments,
         buildConfiguration.getContainerConfiguration().getProgramArguments());

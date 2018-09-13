@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.configuration.credentials;
 
 import java.util.Objects;
-import java.util.Optional;
 
 // TODO: Move to lower-level package - probably at same level as Authorization.
 /** Holds credentials (username and password). */
@@ -28,10 +27,10 @@ public class Credential {
    *
    * @param username the username
    * @param password the password
-   * @return a new {@link Optional} that contains a {@link Credential}
+   * @return a new {@link Credential}
    */
-  public static Optional<Credential> basic(String username, String password) {
-    return Optional.of(new Credential(username, password));
+  public static Credential basic(String username, String password) {
+    return new Credential(username, password);
   }
 
   private final String username;

@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Builds to a container registry.
@@ -79,7 +80,7 @@ public class RegistryImage {
    */
   public RegistryImage setCredential(String username, String password) {
     credentialRetrievers = new ArrayList<>();
-    credentialRetrievers.add(() -> Credential.basic(username, password));
+    credentialRetrievers.add(() -> Optional.of(Credential.basic(username, password)));
     return this;
   }
 
