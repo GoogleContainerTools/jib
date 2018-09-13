@@ -29,8 +29,8 @@ import java.util.StringJoiner;
  *
  * <ul>
  *   <li>Entry source files can be either files or directories.
- *   <li>A directory is a single tar archive entry - its contents are not added. To add the contents
- *       of a directory, each subfile should have be its own {@link LayerEntry}.
+ *   <li>Adding a directory does not include the contents of the directory. Each file under a
+ *       directory must be added as a separate {@link LayerEntry}.
  * </ul>
  */
 public class LayerEntry {
@@ -57,18 +57,17 @@ public class LayerEntry {
    * Instantiates with a source file and the path to place the source file in the container file
    * system.
    *
-   * <p>For example, adding a file {@code HelloWorld.class} to be in container file system at {@code
-   * /app/classes/HelloWorld.class} would be {@code new LayerEntry(Paths.get("HelloWorld.class"),
-   * Paths.get("/app/classes/HelloWorld.class"))}.
+   * <p>For example, {@code new LayerEntry(Paths.get("HelloWorld.class"),
+   * Paths.get("/app/classes/HelloWorld.class"))} adds a file {@code HelloWorld.class} to the
+   * container file system at {@code /app/classes/HelloWorld.class}.
    *
-   * <p>For example, adding a directory {@code com/} to be in the container file system at {@code
-   * /app/classes/com/} would be {@code new LayerEntry(Paths.get("com"),
-   * Paths.get("/app/classes/com"))}. This would only be the {@code com/} directory itself and
-   * <b>not</b> its contents.
+   * <p>For example, {@code new LayerEntry(Paths.get("com"), Paths.get("/app/classes/com"))} adds a
+   * directory to the container file system at {@code /app/classes/com}. This does <b>not</b> add
+   * the contents of {@code com/}.
    *
    * @param sourceFile the source file to add to the layer
-   * @param extractionPath the path to place the source file in the container file system (relative
-   *     to root {@code /})
+   * @param extractionPath the path in the container file system corresponding to the {@code
+   *     sourceFile} (relative to root {@code /})
    */
   public LayerEntry(Path sourceFile, Path extractionPath) {
     this.sourceFile = sourceFile;

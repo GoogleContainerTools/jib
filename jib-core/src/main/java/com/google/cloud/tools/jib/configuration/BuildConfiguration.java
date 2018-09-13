@@ -284,8 +284,12 @@ public class BuildConfiguration {
     return targetImageConfiguration;
   }
 
-  public ImmutableSet<String> getAdditionalTargetImageTags() {
-    return additionalTargetImageTags;
+  public ImmutableSet<String> getAllTargetImageTags() {
+    ImmutableSet.Builder<String> allTargetImageTags =
+        ImmutableSet.builderWithExpectedSize(1 + additionalTargetImageTags.size());
+    allTargetImageTags.add(targetImageConfiguration.getImageTag());
+    allTargetImageTags.addAll(additionalTargetImageTags);
+    return allTargetImageTags.build();
   }
 
   @Nullable

@@ -20,7 +20,6 @@ import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,39 +34,6 @@ public class ConfigurationPropertyValidatorTest {
   @Mock private JibLogger mockLogger;
   @Mock private AuthProperty mockAuth;
   @Mock private ImageReference mockImageReference;
-
-  @After
-  public void tearDown() {
-    System.clearProperty("jib.httpTimeout");
-  }
-
-  @Test
-  public void testCheckHttpTimeoutSystemProperty_ok() throws Exception {
-    Assert.assertNull(System.getProperty("jib.httpTimeout"));
-    ConfigurationPropertyValidator.checkHttpTimeoutProperty(Exception::new);
-  }
-
-  @Test
-  public void testCheckHttpTimeoutSystemProperty_stringValue() {
-    System.setProperty("jib.httpTimeout", "random string");
-    try {
-      ConfigurationPropertyValidator.checkHttpTimeoutProperty(Exception::new);
-      Assert.fail("Should error with a non-integer timeout");
-    } catch (Exception ex) {
-      Assert.assertEquals("jib.httpTimeout must be an integer: random string", ex.getMessage());
-    }
-  }
-
-  @Test
-  public void testCheckHttpTimeoutSystemProperty_negativeValue() {
-    System.setProperty("jib.httpTimeout", "-80");
-    try {
-      ConfigurationPropertyValidator.checkHttpTimeoutProperty(Exception::new);
-      Assert.fail("Should error with a negative timeout");
-    } catch (Exception ex) {
-      Assert.assertEquals("jib.httpTimeout cannot be negative: -80", ex.getMessage());
-    }
-  }
 
   @Test
   public void testGetImageAuth() {
