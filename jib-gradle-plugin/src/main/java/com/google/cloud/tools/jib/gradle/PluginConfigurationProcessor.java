@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
+import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
@@ -32,7 +33,6 @@ import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
 import java.time.Instant;
 import java.util.List;
 import javax.annotation.Nullable;
-import org.gradle.api.GradleException;
 
 /** Configures and provides builders for the image building tasks. */
 class PluginConfigurationProcessor {
@@ -50,16 +50,16 @@ class PluginConfigurationProcessor {
    */
   static PluginConfigurationProcessor processCommonConfiguration(
       JibLogger logger, JibExtension jibExtension, GradleProjectProperties projectProperties)
-      throws InvalidImageReferenceException {
+      throws InvalidImageReferenceException, NumberFormatException {
     jibExtension.handleDeprecatedParameters(logger);
-    ConfigurationPropertyValidator.checkHttpTimeoutProperty(GradleException::new);
+    JibSystemProperties.checkHttpTimeoutProperty();
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
     GradleJibLogger.disableHttpLogging();
 
     ImageReference baseImage = ImageReference.parse(jibExtension.getBaseImage());
 
-    if (Boolean.getBoolean("sendCredentialsOverHttp")) {
+    if (JibSystemProperties.isSendCredentialsOverHttpEnabled()) {
       logger.warn(
           "Authentication over HTTP is enabled. It is strongly recommended that you do not enable "
               + "this on a public network!");
