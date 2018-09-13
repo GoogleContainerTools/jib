@@ -50,20 +50,20 @@ public class JavaLayerConfigurations {
     EXPLODED_WAR("exploded war", "", true),
     EXTRA_FILES("extra files", "/", false);
 
-    private final String label;
+    private final String name;
     private final Path extractionPath;
     private final boolean appRootRelative;
 
-    /** Initializes with a label for the layer and the layer files' default extraction path root. */
-    LayerType(String label, String extractionPath, boolean appRootRelative) {
-      this.label = label;
+    /** Initializes with a name for the layer and the layer files' default extraction path root. */
+    LayerType(String name, String extractionPath, boolean appRootRelative) {
+      this.name = name;
       this.extractionPath = Paths.get(extractionPath);
       this.appRootRelative = appRootRelative;
     }
 
     @VisibleForTesting
-    String getLabel() {
-      return label;
+    String getName() {
+      return name;
     }
 
     private Path getExtractionPath() {
@@ -131,7 +131,7 @@ public class JavaLayerConfigurations {
           ImmutableMap.builderWithExpectedSize(LayerType.values().length);
       for (LayerType layerType : LayerType.values()) {
         LayerConfiguration.Builder layerConfigurationBuilder =
-            LayerConfiguration.builder().setLabel(layerType.getLabel());
+            LayerConfiguration.builder().setName(layerType.getName());
 
         // Adds all the layer files recursively.
         List<Path> layerFiles = Preconditions.checkNotNull(layerFilesMap.get(layerType));
