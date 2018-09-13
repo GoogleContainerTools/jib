@@ -204,11 +204,11 @@ public class ImageReference {
   /**
    * Gets an {@link ImageReference} with the same registry and repository, but a different tag.
    *
-   * @param tag the new tag
+   * @param newTag the new tag
    * @return an {@link ImageReference} with the same registry/repository and the new tag
    */
-  public ImageReference retag(String tag) {
-    return ImageReference.of(registry, repository, tag);
+  public ImageReference withTag(String newTag) {
+    return ImageReference.of(registry, repository, newTag);
   }
 
   /** @return the image reference in Docker-readable format (inverse of {@link #parse}) */
