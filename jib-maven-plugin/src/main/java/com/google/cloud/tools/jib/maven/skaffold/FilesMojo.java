@@ -127,7 +127,7 @@ public class FilesMojo extends AbstractMojo {
             return false;
           }
           if (projectArtifacts.contains(node.getArtifact().toString())) {
-            // ignore project dependency artifacts, ignore
+            // ignore project dependency artifacts
             return false;
           }
           // we only want compile/runtime deps
