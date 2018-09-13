@@ -31,23 +31,23 @@ class LayerMetadata {
   static class LayerMetadataEntry {
 
     /** The source file path string, in OS-specific format. */
-    private final String sourceFileString;
+    private final String absoluteSourceFileString;
 
     /** The extraction path string, in OS-specific format. */
-    private final String extractionPathString;
+    private final String absoluteExtractionPathString;
 
-    String getSourceFileString() {
-      return sourceFileString;
+    String getAbsoluteSourceFileString() {
+      return absoluteSourceFileString;
     }
 
-    String getExtractionPathString() {
-      return extractionPathString;
+    String getAbsoluteExtractionPathString() {
+      return absoluteExtractionPathString;
     }
 
     @VisibleForTesting
-    LayerMetadataEntry(String sourceFileString, String extractionPathString) {
-      this.sourceFileString = sourceFileString;
-      this.extractionPathString = extractionPathString;
+    LayerMetadataEntry(String absoluteSourceFileString, String absoluteExtractionPathString) {
+      this.absoluteSourceFileString = absoluteSourceFileString;
+      this.absoluteExtractionPathString = absoluteExtractionPathString;
     }
   }
 
@@ -58,7 +58,8 @@ class LayerMetadata {
     for (LayerEntry layerEntry : layerEntries) {
       entries.add(
           new LayerMetadataEntry(
-              layerEntry.getSourceFileString(), layerEntry.getExtractionPathString()));
+              layerEntry.getAbsoluteSourceFileString(),
+              layerEntry.getAbsoluteExtractionPathString()));
     }
 
     return new LayerMetadata(entries.build(), lastModifiedTime);
