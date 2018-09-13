@@ -80,9 +80,9 @@ public class LayerEntry {
    * Gets the source file.
    *
    * <p>Do <b>not</b> call {@link Path#toString} on this - use {@link #getAbsoluteSourceFileString}
-   * instead. This path can be relative or absolute, but {@link #getAbsoluteSourceFileString} can only be absolute. Callers should rely on {@link #getAbsoluteSourceFileString}
-   * for the serialized form since the serialization could change independently of the path
-   * representation.
+   * instead. This path can be relative or absolute, but {@link #getAbsoluteSourceFileString} can
+   * only be absolute. Callers should rely on {@link #getAbsoluteSourceFileString} for the
+   * serialized form since the serialization could change independently of the path representation.
    *
    * @return the source file
    */
@@ -95,9 +95,9 @@ public class LayerEntry {
    *
    * <p>Do <b>not</b> call {@link Path#toString} on this - use {@link
    * #getAbsoluteExtractionPathString} instead. This path can be relative or absolute, but {@link
-   * #getAbsoluteExtractionPathString} can only be absolute. Callers should rely on
-   * {@link #getAbsoluteExtractionPathString} for the serialized form since the serialization could
-   * change independently of the path representation.
+   * #getAbsoluteExtractionPathString} can only be absolute. Callers should rely on {@link
+   * #getAbsoluteExtractionPathString} for the serialized form since the serialization could change
+   * independently of the path representation.
    *
    * @return the extraction path
    */
