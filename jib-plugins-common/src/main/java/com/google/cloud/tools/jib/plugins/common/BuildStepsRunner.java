@@ -90,10 +90,8 @@ public class BuildStepsRunner {
     return new BuildStepsRunner(
         BuildSteps.forBuildToDockerRegistry(
             buildConfiguration, getCacheInitializer(buildConfiguration)),
-        String.format(
-            buildMessageWithTargetImageReferences(
-                buildConfiguration, STARTUP_MESSAGE_PREFIX_FOR_DOCKER_REGISTRY, "..."),
-            buildConfiguration.getTargetImageConfiguration().getImage()),
+        buildMessageWithTargetImageReferences(
+            buildConfiguration, STARTUP_MESSAGE_PREFIX_FOR_DOCKER_REGISTRY, "..."),
         buildMessageWithTargetImageReferences(
             buildConfiguration, SUCCESS_MESSAGE_PREFIX_FOR_DOCKER_REGISTRY, ""));
   }
