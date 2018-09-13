@@ -42,22 +42,24 @@ public class JavaLayerConfigurationsTest {
         javaLayerConfigurations.getExtraFilesLayerEntries();
 
     Assert.assertEquals(
-        Paths.get(JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
-            .resolve("dependency"),
+        Paths.get(
+            "/app/" + JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE + "/dependency"),
         dependencyLayerEntries.get(0).getExtractionPath());
     Assert.assertEquals(
-        Paths.get(JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
-            .resolve("snapshotDependency"),
+        Paths.get(
+            "/app/"
+                + JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE
+                + "/snapshotDependency"),
         snapshotDependencyLayerEntries.get(0).getExtractionPath());
     Assert.assertEquals(
-        Paths.get(JavaEntrypointConstructor.DEFAULT_RESOURCES_PATH_ON_IMAGE).resolve("resource"),
+        Paths.get(
+            "/app/" + JavaEntrypointConstructor.DEFAULT_RESOURCES_PATH_ON_IMAGE + "/resource"),
         resourceLayerEntries.get(0).getExtractionPath());
     Assert.assertEquals(
-        Paths.get(JavaEntrypointConstructor.DEFAULT_CLASSES_PATH_ON_IMAGE).resolve("class"),
+        Paths.get("/app/" + JavaEntrypointConstructor.DEFAULT_CLASSES_PATH_ON_IMAGE + "/class"),
         classLayerEntries.get(0).getExtractionPath());
     Assert.assertEquals(
-        Paths.get(JavaEntrypointConstructor.DEFAULT_JETTY_BASE_ON_IMAGE).resolve("exploded-war"),
-        explodedWarLayerEntries.get(0).getExtractionPath());
+        Paths.get("/app/exploded-war"), explodedWarLayerEntries.get(0).getExtractionPath());
     Assert.assertEquals(Paths.get("/extra"), extraFilesLayerEntries.get(0).getExtractionPath());
 
     List<String> expectedLabels = new ArrayList<>();

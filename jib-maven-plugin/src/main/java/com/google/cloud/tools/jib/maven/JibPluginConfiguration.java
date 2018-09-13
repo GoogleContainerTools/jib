@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.JibLogger;
+import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -79,8 +80,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     }
 
     private void setPropertyDescriptors(String descriptorPrefix) {
-      this.usernameDescriptor = descriptorPrefix + "<username>";
-      this.passwordDescriptor = descriptorPrefix + "<password>";
+      usernameDescriptor = descriptorPrefix + "<username>";
+      passwordDescriptor = descriptorPrefix + "<password>";
     }
   }
 
@@ -135,6 +136,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     @Parameter private List<String> ports = Collections.emptyList();
 
     @Parameter private Map<String, String> labels = Collections.emptyMap();
+
+    @Parameter private String appRoot = ContainerConfiguration.DEFAULT_APP_ROOT;
   }
 
   @Nullable
@@ -286,6 +289,10 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
   Map<String, String> getLabels() {
     return container.labels;
+  }
+
+  String getAppRoot() {
+    return container.appRoot;
   }
 
   String getFormat() {

@@ -46,7 +46,7 @@ public class JavaDockerContextGeneratorTest {
   private static final Path EXPECTED_DEPENDENCIES_PATH = Paths.get("/app/libs/");
   private static final Path EXPECTED_RESOURCES_PATH = Paths.get("/app/resources/");
   private static final Path EXPECTED_CLASSES_PATH = Paths.get("/app/classes/");
-  private static final Path EXPECTED_EXPLODED_WAR_PATH = Paths.get("/jetty/webapps/ROOT/");
+  private static final Path EXPECTED_EXPLODED_WAR_PATH = Paths.get("/app/");
 
   private static void assertSameFiles(Path directory1, Path directory2) throws IOException {
     ImmutableList<Path> directory1Files =
@@ -98,6 +98,7 @@ public class JavaDockerContextGeneratorTest {
      */
     Files.delete(targetDirectory);
 
+    Mockito.when(mockJavaLayerConfigurations.getAppRoot()).thenReturn(Paths.get("/app"));
     Mockito.when(mockJavaLayerConfigurations.getDependencyLayerEntries())
         .thenReturn(filesToLayerEntries(testDependencies, EXPECTED_DEPENDENCIES_PATH));
     Mockito.when(mockJavaLayerConfigurations.getSnapshotDependencyLayerEntries())
@@ -141,6 +142,7 @@ public class JavaDockerContextGeneratorTest {
             "key3",
             "value3");
 
+    Mockito.when(mockJavaLayerConfigurations.getAppRoot()).thenReturn(Paths.get("/app"));
     Mockito.when(mockJavaLayerConfigurations.getDependencyLayerEntries())
         .thenReturn(
             ImmutableList.of(new LayerEntry(Paths.get("ignored"), EXPECTED_DEPENDENCIES_PATH)));
@@ -162,7 +164,7 @@ public class JavaDockerContextGeneratorTest {
             .setBaseImage(expectedBaseImage)
             .setEntrypoint(
                 JavaEntrypointConstructor.makeDefaultEntrypoint(
-                    expectedJvmFlags, expectedMainClass))
+                    "/app", expectedJvmFlags, expectedMainClass))
             .setJavaArguments(expectedJavaArguments)
             .setEnvironment(expectedEnv)
             .setExposedPorts(exposedPorts)

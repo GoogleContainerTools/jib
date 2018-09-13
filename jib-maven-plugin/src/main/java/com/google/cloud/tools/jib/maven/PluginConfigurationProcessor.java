@@ -106,9 +106,12 @@ class PluginConfigurationProcessor {
     List<String> entrypoint = jibPluginConfiguration.getEntrypoint();
     if (entrypoint.isEmpty()) {
       String mainClass = projectProperties.getMainClass(jibPluginConfiguration);
+      // TODO: need to validate appRoot is a valid, absolute path (in Unix-style since we don't
+      // seem to support Windows images?)
+      String appRoot = jibPluginConfiguration.getAppRoot();
       entrypoint =
           JavaEntrypointConstructor.makeDefaultEntrypoint(
-              jibPluginConfiguration.getJvmFlags(), mainClass);
+              appRoot, jibPluginConfiguration.getJvmFlags(), mainClass);
     } else if (jibPluginConfiguration.getMainClass() != null
         || !jibPluginConfiguration.getJvmFlags().isEmpty()) {
       logger.warn("<mainClass> and <jvmFlags> are ignored when <entrypoint> is specified");

@@ -131,6 +131,11 @@ public class JavaDockerContextGenerator {
     return joiner.toString();
   }
 
+  @VisibleForTesting
+  static String getUnixPath(Path path) {
+    return path.toString().replaceAll(System.getProperty("file.separator"), "/");
+  }
+
   private final ImmutableList<CopyDirective> copyDirectives;
 
   @Nullable private String baseImage;
@@ -146,27 +151,30 @@ public class JavaDockerContextGenerator {
    * @param javaLayerConfigurations the {@link JavaLayerConfigurations}
    */
   public JavaDockerContextGenerator(JavaLayerConfigurations javaLayerConfigurations) {
+    String appRoot = getUnixPath(javaLayerConfigurations.getAppRoot());
+    appRoot = appRoot.endsWith("/") ? appRoot : appRoot + '/';
+
     ImmutableList.Builder<CopyDirective> copyDirectivesBuilder = ImmutableList.builder();
     addIfNotEmpty(
         copyDirectivesBuilder,
         javaLayerConfigurations.getDependencyLayerEntries(),
         DEPENDENCIES_LAYER_DIRECTORY,
-        JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE);
+        appRoot + JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE);
     addIfNotEmpty(
         copyDirectivesBuilder,
         javaLayerConfigurations.getSnapshotDependencyLayerEntries(),
         SNAPSHOT_DEPENDENCIES_LAYER_DIRECTORY,
-        JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE);
+        appRoot + JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE);
     addIfNotEmpty(
         copyDirectivesBuilder,
         javaLayerConfigurations.getResourceLayerEntries(),
         RESOURCES_LAYER_DIRECTORY,
-        JavaEntrypointConstructor.DEFAULT_RESOURCES_PATH_ON_IMAGE);
+        appRoot + JavaEntrypointConstructor.DEFAULT_RESOURCES_PATH_ON_IMAGE);
     addIfNotEmpty(
         copyDirectivesBuilder,
         javaLayerConfigurations.getClassLayerEntries(),
         CLASSES_LAYER_DIRECTORY,
-        JavaEntrypointConstructor.DEFAULT_CLASSES_PATH_ON_IMAGE);
+        appRoot + JavaEntrypointConstructor.DEFAULT_CLASSES_PATH_ON_IMAGE);
     // TODO: remove this once we put files in WAR into the relevant layers (i.e., dependencies,
     // snapshot dependencies, resources, and classes layers). Should copy files in the right
     // directories. (For example, "resources" will go into the webapp root.)
@@ -174,7 +182,7 @@ public class JavaDockerContextGenerator {
         copyDirectivesBuilder,
         javaLayerConfigurations.getExplodedWarEntries(),
         EXPLODED_WAR_LAYER_DIRECTORY,
-        JavaEntrypointConstructor.DEFAULT_JETTY_BASE_ON_IMAGE);
+        appRoot);
     addIfNotEmpty(
         copyDirectivesBuilder,
         javaLayerConfigurations.getExtraFilesLayerEntries(),

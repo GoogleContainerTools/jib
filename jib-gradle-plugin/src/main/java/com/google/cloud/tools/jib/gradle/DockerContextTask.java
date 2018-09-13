@@ -114,8 +114,12 @@ public class DockerContextTask extends DefaultTask implements JibTask {
     List<String> entrypoint = jibExtension.getContainer().getEntrypoint();
     if (entrypoint.isEmpty()) {
       String mainClass = gradleProjectProperties.getMainClass(jibExtension);
+      // TODO: need to validate appRoot is a valid, absolute path (in Unix-style since we don't
+      // seem to support Windows images?)
+      String appRoot = jibExtension.getContainer().getAppRoot();
       entrypoint =
-          JavaEntrypointConstructor.makeDefaultEntrypoint(jibExtension.getJvmFlags(), mainClass);
+          JavaEntrypointConstructor.makeDefaultEntrypoint(
+              appRoot, jibExtension.getJvmFlags(), mainClass);
     } else if (jibExtension.getMainClass() != null || !jibExtension.getJvmFlags().isEmpty()) {
       gradleJibLogger.warn("mainClass and jvmFlags are ignored when entrypoint is specified");
     }

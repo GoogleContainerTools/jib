@@ -47,6 +47,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.doReturn(mockMavenSession).when(mockJibPluginConfiguration).getSession();
     Mockito.doReturn(mockMavenSettings).when(mockMavenSession).getSettings();
 
+    Mockito.doReturn("/app").when(mockJibPluginConfiguration).getAppRoot();
     Mockito.doReturn("gcr.io/distroless/java").when(mockJibPluginConfiguration).getBaseImage();
     Mockito.doReturn(new AuthConfiguration()).when(mockJibPluginConfiguration).getBaseImageAuth();
     Mockito.doReturn(Collections.emptyList()).when(mockJibPluginConfiguration).getEntrypoint();

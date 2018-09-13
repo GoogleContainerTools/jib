@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.frontend;
 
+import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.annotations.VisibleForTesting;
@@ -36,23 +37,28 @@ public class JavaLayerConfigurations {
   /** Represents the different types of layers for a Java application. */
   @VisibleForTesting
   enum LayerType {
-    DEPENDENCIES("dependencies", JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE),
+    DEPENDENCIES(
+        "dependencies", JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE, true),
     SNAPSHOT_DEPENDENCIES(
-        "snapshot dependencies", JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE),
-    RESOURCES("resources", JavaEntrypointConstructor.DEFAULT_RESOURCES_PATH_ON_IMAGE),
-    CLASSES("classes", JavaEntrypointConstructor.DEFAULT_CLASSES_PATH_ON_IMAGE),
+        "snapshot dependencies",
+        JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE,
+        true),
+    RESOURCES("resources", JavaEntrypointConstructor.DEFAULT_RESOURCES_PATH_ON_IMAGE, true),
+    CLASSES("classes", JavaEntrypointConstructor.DEFAULT_CLASSES_PATH_ON_IMAGE, true),
     // TODO: remove this once we put files in WAR into the relevant layers (i.e., dependencies,
     // snapshot dependencies, resources, and classes layers). Should copy files in the right
-    EXPLODED_WAR("exploded war", JavaEntrypointConstructor.DEFAULT_JETTY_BASE_ON_IMAGE),
-    EXTRA_FILES("extra files", "/");
+    EXPLODED_WAR("exploded war", "", true),
+    EXTRA_FILES("extra files", "/", false);
 
     private final String label;
     private final Path extractionPath;
+    private final boolean appRootRelative;
 
     /** Initializes with a label for the layer and the layer files' default extraction path root. */
-    LayerType(String label, String extractionPath) {
+    LayerType(String label, String extractionPath, boolean appRootRelative) {
       this.label = label;
       this.extractionPath = Paths.get(extractionPath);
+      this.appRootRelative = appRootRelative;
     }
 
     @VisibleForTesting
@@ -60,9 +66,12 @@ public class JavaLayerConfigurations {
       return label;
     }
 
-    @VisibleForTesting
-    Path getExtractionPath() {
+    private Path getExtractionPath() {
       return extractionPath;
+    }
+
+    private boolean isAppRootRelative() {
+      return appRootRelative;
     }
   }
 
@@ -70,11 +79,17 @@ public class JavaLayerConfigurations {
   public static class Builder {
 
     private final Map<LayerType, List<Path>> layerFilesMap = new EnumMap<>(LayerType.class);
+    private Path appRoot = Paths.get(ContainerConfiguration.DEFAULT_APP_ROOT);
 
     private Builder() {
       for (LayerType layerType : LayerType.values()) {
         layerFilesMap.put(layerType, new ArrayList<>());
       }
+    }
+
+    public Builder setAppRoot(Path appRoot) {
+      this.appRoot = appRoot;
+      return this;
     }
 
     public Builder setDependencyFiles(List<Path> dependencyFiles) {
@@ -110,6 +125,8 @@ public class JavaLayerConfigurations {
     }
 
     public JavaLayerConfigurations build() throws IOException {
+      Preconditions.checkState(appRoot.isAbsolute(), "'appRoot' must be an absolute path");
+
       ImmutableMap.Builder<LayerType, LayerConfiguration> layerConfigurationsMap =
           ImmutableMap.builderWithExpectedSize(LayerType.values().length);
       for (LayerType layerType : LayerType.values()) {
@@ -119,13 +136,15 @@ public class JavaLayerConfigurations {
         // Adds all the layer files recursively.
         List<Path> layerFiles = Preconditions.checkNotNull(layerFilesMap.get(layerType));
         for (Path layerFile : layerFiles) {
-          layerConfigurationBuilder.addEntryRecursive(
-              layerFile, layerType.getExtractionPath().resolve(layerFile.getFileName()));
+          Path toExtract = layerType.getExtractionPath().resolve(layerFile.getFileName());
+          Path pathInContainer =
+              layerType.isAppRootRelative() ? appRoot.resolve(toExtract) : toExtract;
+          layerConfigurationBuilder.addEntryRecursive(layerFile, pathInContainer);
         }
 
         layerConfigurationsMap.put(layerType, layerConfigurationBuilder.build());
       }
-      return new JavaLayerConfigurations(layerConfigurationsMap.build());
+      return new JavaLayerConfigurations(appRoot, layerConfigurationsMap.build());
     }
   }
 
@@ -134,10 +153,16 @@ public class JavaLayerConfigurations {
   }
 
   private final ImmutableMap<LayerType, LayerConfiguration> layerConfigurationMap;
+  private final Path appRoot;
 
   private JavaLayerConfigurations(
-      ImmutableMap<LayerType, LayerConfiguration> layerConfigurationsMap) {
-    this.layerConfigurationMap = layerConfigurationsMap;
+      Path appRoot, ImmutableMap<LayerType, LayerConfiguration> layerConfigurationsMap) {
+    this.appRoot = appRoot;
+    layerConfigurationMap = layerConfigurationsMap;
+  }
+
+  public Path getAppRoot() {
+    return appRoot;
   }
 
   public ImmutableList<LayerConfiguration> getLayerConfigurations() {

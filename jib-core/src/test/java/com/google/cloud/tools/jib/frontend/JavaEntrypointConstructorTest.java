@@ -49,7 +49,8 @@ public class JavaEntrypointConstructorTest {
 
     // Checks that this is also the default entrypoint.
     Assert.assertEquals(
-        JavaEntrypointConstructor.makeDefaultEntrypoint(expectedJvmFlags, expectedMainClass),
+        JavaEntrypointConstructor.makeDefaultEntrypoint(
+            "/app", expectedJvmFlags, expectedMainClass),
         entrypoint);
   }
 
