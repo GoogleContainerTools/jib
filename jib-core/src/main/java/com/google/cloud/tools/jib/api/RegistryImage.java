@@ -15,6 +15,7 @@
  */
 
 package com.google.cloud.tools.jib.api;
+// TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
@@ -36,6 +37,7 @@ import java.util.List;
  * <p>When configuring credentials (via {@link #setCredential} for example), make sure the
  * credentials are valid push credentials for the repository specified via the image reference.
  */
+// TODO: Add tests once JibContainerBuilder#containerize() is added.
 public class RegistryImage {
 
   /**
