@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.image.json;
 
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.configuration.Port;
-import com.google.cloud.tools.jib.configuration.Port.Protocol;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.DigestOnlyLayer;
 import com.google.cloud.tools.jib.image.Image;
@@ -191,7 +190,7 @@ public class JsonToImageTranslator {
 
       int portNumber = Integer.parseInt(matcher.group("portNum"));
       String protocol = matcher.group("protocol");
-      ports.add(new Port(portNumber, Protocol.getFromString(protocol)));
+      ports.add(Port.parseProtocol(portNumber, protocol));
     }
     return ports.build();
   }

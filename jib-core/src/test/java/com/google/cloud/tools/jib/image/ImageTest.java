@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.configuration.Port;
-import com.google.cloud.tools.jib.configuration.Port.Protocol;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.time.Instant;
@@ -53,8 +52,7 @@ public class ImageTest {
             .addEnvironmentVariable("VARIABLE", "VALUE")
             .setEntrypoint(Arrays.asList("some", "command"))
             .setJavaArguments(Arrays.asList("arg1", "arg2"))
-            .setExposedPorts(
-                ImmutableList.of(new Port(1000, Protocol.TCP), new Port(2000, Protocol.TCP)))
+            .setExposedPorts(ImmutableList.of(Port.tcp(1000), Port.tcp(2000)))
             .addLayer(mockLayer)
             .build();
 
@@ -65,8 +63,6 @@ public class ImageTest {
         ImmutableMap.of("crepecake", "is great", "VARIABLE", "VALUE"), image.getEnvironment());
     Assert.assertEquals(Arrays.asList("some", "command"), image.getEntrypoint());
     Assert.assertEquals(Arrays.asList("arg1", "arg2"), image.getJavaArguments());
-    Assert.assertEquals(
-        ImmutableList.of(new Port(1000, Protocol.TCP), new Port(2000, Protocol.TCP)),
-        image.getExposedPorts());
+    Assert.assertEquals(ImmutableList.of(Port.tcp(1000), Port.tcp(2000)), image.getExposedPorts());
   }
 }

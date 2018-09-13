@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.image.json;
 
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.configuration.Port;
-import com.google.cloud.tools.jib.configuration.Port.Protocol;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
@@ -89,11 +88,7 @@ public class JsonToImageTranslatorTest {
             ImmutableMap.of(),
             "3000/udp",
             ImmutableMap.of());
-    ImmutableList<Port> expected =
-        ImmutableList.of(
-            new Port(1000, Protocol.TCP),
-            new Port(2000, Protocol.TCP),
-            new Port(3000, Protocol.UDP));
+    ImmutableList<Port> expected = ImmutableList.of(Port.tcp(1000), Port.tcp(2000), Port.udp(3000));
     Assert.assertEquals(expected, JsonToImageTranslator.portMapToList(input));
 
     ImmutableList<Map<String, Map<?, ?>>> badInputs =
@@ -187,10 +182,6 @@ public class JsonToImageTranslatorTest {
     Assert.assertEquals(ImmutableMap.of("VAR1", "VAL1", "VAR2", "VAL2"), image.getEnvironment());
     Assert.assertEquals("/some/workspace", image.getWorkingDirectory());
     Assert.assertEquals(
-        ImmutableList.of(
-            new Port(1000, Protocol.TCP),
-            new Port(2000, Protocol.TCP),
-            new Port(3000, Protocol.UDP)),
-        image.getExposedPorts());
+        ImmutableList.of(Port.tcp(1000), Port.tcp(2000), Port.udp(3000)), image.getExposedPorts());
   }
 }
