@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.cache.Caches.Initializer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
+import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.registry.InsecureRegistryException;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
@@ -38,11 +39,44 @@ import com.google.common.base.Verify;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
+import java.util.StringJoiner;
 import java.util.concurrent.ExecutionException;
 import org.apache.http.conn.HttpHostConnectException;
 
 /** Runs a {@link BuildSteps} and builds helpful error messages. */
 public class BuildStepsRunner {
+
+  private static final String STARTUP_MESSAGE_PREFIX_FOR_DOCKER_REGISTRY =
+      "Containerizing application to ";
+  private static final String SUCCESS_MESSAGE_PREFIX_FOR_DOCKER_REGISTRY =
+      "Built and pushed image as ";
+
+  private static final String STARTUP_MESSAGE_PREFIX_FOR_DOCKER_DAEMON =
+      "Containerizing application to Docker daemon as ";
+  private static final String SUCCESS_MESSAGE_PREFIX_FOR_DOCKER_DAEMON =
+      "Built image to Docker daemon as ";
+
+  private static final String STARTUP_MESSAGE_FORMAT_FOR_TARBALL =
+      "Containerizing application to file at '%s'...";
+  private static final String SUCCESS_MESSAGE_FORMAT_FOR_TARBALL =
+      "Built image tarball at \u001B[36m%s\u001B[0m";
+
+  private static CharSequence colorCyan(CharSequence innerText) {
+    return new StringBuilder().append("\u001B[36m").append(innerText).append("\u001B[0m");
+  }
+
+  private static String getSuccessMessageForBuildImage(
+      BuildConfiguration buildConfiguration, String prefix, String suffix) {
+    String targetRegistry = buildConfiguration.getTargetImageConfiguration().getImageRegistry();
+    String targetRepository = buildConfiguration.getTargetImageConfiguration().getImageRegistry();
+
+    StringJoiner successMessageBuilder = new StringJoiner(", ", prefix, suffix);
+    for (String tag : buildConfiguration.getAllTargetImageTags()) {
+      successMessageBuilder.add(
+          ImageReference.of(targetRegistry, targetRepository, tag).toString());
+    }
+    return successMessageBuilder.toString();
+  }
 
   /**
    * Creates a runner to build an image. Creates a directory for the cache, if needed.
@@ -55,7 +89,13 @@ public class BuildStepsRunner {
       throws CacheDirectoryCreationException {
     return new BuildStepsRunner(
         BuildSteps.forBuildToDockerRegistry(
-            buildConfiguration, getCacheInitializer(buildConfiguration)));
+            buildConfiguration, getCacheInitializer(buildConfiguration)),
+        String.format(
+            getSuccessMessageForBuildImage(
+                buildConfiguration, STARTUP_MESSAGE_PREFIX_FOR_DOCKER_REGISTRY, "..."),
+            buildConfiguration.getTargetImageConfiguration().getImage()),
+        getSuccessMessageForBuildImage(
+            buildConfiguration, SUCCESS_MESSAGE_PREFIX_FOR_DOCKER_REGISTRY, ""));
   }
 
   /**
@@ -69,7 +109,11 @@ public class BuildStepsRunner {
       throws CacheDirectoryCreationException {
     return new BuildStepsRunner(
         BuildSteps.forBuildToDockerDaemon(
-            buildConfiguration, getCacheInitializer(buildConfiguration)));
+            buildConfiguration, getCacheInitializer(buildConfiguration)),
+        getSuccessMessageForBuildImage(
+            buildConfiguration, STARTUP_MESSAGE_PREFIX_FOR_DOCKER_DAEMON, "..."),
+        getSuccessMessageForBuildImage(
+            buildConfiguration, SUCCESS_MESSAGE_PREFIX_FOR_DOCKER_DAEMON, ""));
   }
 
   /**
@@ -84,7 +128,9 @@ public class BuildStepsRunner {
       throws CacheDirectoryCreationException {
     return new BuildStepsRunner(
         BuildSteps.forBuildToTar(
-            outputPath, buildConfiguration, getCacheInitializer(buildConfiguration)));
+            outputPath, buildConfiguration, getCacheInitializer(buildConfiguration)),
+        String.format(STARTUP_MESSAGE_FORMAT_FOR_TARBALL, outputPath.toString()),
+        String.format(SUCCESS_MESSAGE_FORMAT_FOR_TARBALL, outputPath.toString()));
   }
 
   // TODO: Move this up to somewhere where defaults for cache location are provided and ownership is
@@ -136,10 +182,14 @@ public class BuildStepsRunner {
   }
 
   private final BuildSteps buildSteps;
+  private final String startupMessage;
+  private final String successMessage;
 
   @VisibleForTesting
-  BuildStepsRunner(BuildSteps buildSteps) {
+  BuildStepsRunner(BuildSteps buildSteps, String startupMessage, String successMessage) {
     this.buildSteps = buildSteps;
+    this.startupMessage = startupMessage;
+    this.successMessage = successMessage;
   }
 
   /**
@@ -154,7 +204,7 @@ public class BuildStepsRunner {
       JibLogger buildLogger = buildSteps.getBuildConfiguration().getBuildLogger();
 
       buildLogger.lifecycle("");
-      buildLogger.lifecycle(buildSteps.getStartupMessage());
+      buildLogger.lifecycle(startupMessage);
 
       // Logs the different source files used.
       buildLogger.info("Containerizing application with the following files:");
@@ -171,7 +221,7 @@ public class BuildStepsRunner {
       buildSteps.run();
 
       buildLogger.lifecycle("");
-      buildLogger.lifecycle(buildSteps.getSuccessMessage());
+      buildLogger.lifecycle(successMessage);
 
     } catch (CacheMetadataCorruptedException cacheMetadataCorruptedException) {
       throw new BuildStepsExecutionException(
