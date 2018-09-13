@@ -94,12 +94,13 @@ class LoadDockerStep implements AsyncStep<Void>, Callable<Void> {
     DockerClient dockerClient = new DockerClient();
     dockerClient.load(new ImageToTarballTranslator(image).toTarballBlob(targetImageReference));
 
-    // Tags the image with all the tags. This only needs to be done for additional tags, so this can
-    // be skipped if there is only one tag - the load above already loads that tag.
-    if (buildConfiguration.getAllTargetImageTags().size() > 1) {
-      for (String tag : buildConfiguration.getAllTargetImageTags()) {
-        dockerClient.tag(targetImageReference, targetImageReference.withTag(tag));
+    // Tags the image with all the additional tags, skipping the one 'docker load' already loaded.
+    for (String tag : buildConfiguration.getAllTargetImageTags()) {
+      if (tag.equals(targetImageReference.getTag())) {
+        continue;
       }
+
+      dockerClient.tag(targetImageReference, targetImageReference.withTag(tag));
     }
 
     return null;
