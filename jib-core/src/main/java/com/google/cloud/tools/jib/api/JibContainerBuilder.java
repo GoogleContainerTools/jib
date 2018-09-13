@@ -15,12 +15,13 @@
  */
 
 package com.google.cloud.tools.jib.api;
-// TODO: Move to com.google.cloud.tools.jib
+// TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.common.collect.ImmutableList;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,15 +37,16 @@ import javax.annotation.Nullable;
  *
  * <pre>{@code
  * Jib.from(baseImage)
- *    .addFiles(sourceFiles, extractionPath)
+ *    .addLayer(sourceFiles, extractionPath)
  *    .setEntrypoint("myprogram", "--flag", "subcommand")
  *    .setProgramArguments("hello", "world")
  *    .addEnvironmentVariable("HOME", "/app")
- *    .addExposedPort(8080)
+ *    .addExposedPort(Port.tcp(8080))
  *    .addLabel("containerizer", "jib")
  *    .containerize(...);
  * }</pre>
  */
+// TODO: Add tests once containerize() is added.
 public class JibContainerBuilder {
 
   private final ImageReference baseImageReference;
@@ -85,13 +87,20 @@ public class JibContainerBuilder {
    * </ul>
    *
    * @param files the source files to copy to a new layer in the container
-   * @param pathInContainer the Unix-style path to copy the source files to in the container file
-   *     system
+   * @param pathInContainer the path in the container file system corresponding to the {@code
+   *     sourceFile} (relative to root {@code /})
    * @return this
+   * @throws IOException if an exception occurred when recursively listing any directories
    */
-  public JibContainerBuilder addLayer(List<Path> files, String pathInContainer) {
-    addLayer(LayerConfiguration.builder().addEntry(files, pathInContainer).build());
-    return this;
+  public JibContainerBuilder addLayer(List<Path> files, Path pathInContainer) throws IOException {
+    LayerConfiguration.Builder layerConfigurationBuilder = LayerConfiguration.builder();
+
+    for (Path file : files) {
+      layerConfigurationBuilder.addEntryRecursive(
+          file, pathInContainer.resolve(file.getFileName()));
+    }
+
+    return addLayer(layerConfigurationBuilder.build());
   }
 
   /**
@@ -104,6 +113,16 @@ public class JibContainerBuilder {
   public JibContainerBuilder setLayers(List<LayerConfiguration> layerConfigurations) {
     this.layerConfigurations = new ArrayList<>(layerConfigurations);
     return this;
+  }
+
+  /**
+   * Sets the layers. This replaces any previously-added layers.
+   *
+   * @param layerConfigurations the {@link LayerConfiguration}s
+   * @return this
+   */
+  public JibContainerBuilder setLayers(LayerConfiguration... layerConfigurations) {
+    return setLayers(Arrays.asList(layerConfigurations));
   }
 
   /**
@@ -121,29 +140,39 @@ public class JibContainerBuilder {
    * Sets the container entrypoint. This is the beginning of the command that is run when the
    * container starts. {@link #setProgramArguments} sets additional tokens.
    *
-   * @param entrypointTokens a list of tokens for the entrypoint command
+   * <p>This is similar to <a
+   * href="https://docs.docker.com/engine/reference/builder/#exec-form-entrypoint-example">{@code
+   * ENTRYPOINT} in Dockerfiles</a> or {@code command} in the <a
+   * href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/#container-v1-core">Kubernetes
+   * Container spec</a>.
+   *
+   * @param entrypoint a list of the entrypoint command
    * @return this
    */
-  public JibContainerBuilder setEntrypoint(List<String> entrypointTokens) {
-    entrypoint = ImmutableList.copyOf(entrypointTokens);
+  public JibContainerBuilder setEntrypoint(List<String> entrypoint) {
+    this.entrypoint = ImmutableList.copyOf(entrypoint);
     return this;
   }
 
   /**
    * Sets the container entrypoint.
    *
-   * @param entrypointTokens tokens for the entrypoint command
+   * @param entrypoint the entrypoint command
    * @return this
    * @see #setEntrypoint(List) for more details
    */
-  public JibContainerBuilder setEntrypoint(String... entrypointTokens) {
-    setEntrypoint(Arrays.asList(entrypointTokens));
-    return this;
+  public JibContainerBuilder setEntrypoint(String... entrypoint) {
+    return setEntrypoint(Arrays.asList(entrypoint));
   }
 
   /**
    * Sets the container entrypoint program arguments. These are additional tokens added to the end
    * of the entrypoint command.
+   *
+   * <p>This is similar to <a href="https://docs.docker.com/engine/reference/builder/#cmd">{@code
+   * CMD} in Dockerfiles</a> or {@code args} in the <a
+   * href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/#container-v1-core">Kubernetes
+   * Container spec</a>.
    *
    * <p>For example, if the entrypoint was {@code myprogram --flag subcommand} and program arguments
    * were {@code hello world}, then the command that run when the container starts is {@code
@@ -165,14 +194,18 @@ public class JibContainerBuilder {
    * @see #setProgramArguments(List) for more details
    */
   public JibContainerBuilder setProgramArguments(String... programArguments) {
-    setProgramArguments(Arrays.asList(programArguments));
-    return this;
+    return setProgramArguments(Arrays.asList(programArguments));
   }
 
   /**
    * Sets the container environment. These environment variables are available to the program
    * launched by the container entrypoint command. This replaces any previously-set environment
    * variables.
+   *
+   * <p>This is similar to <a href="https://docs.docker.com/engine/reference/builder/#env">{@code
+   * ENV} in Dockerfiles</a> or {@code env} in the <a
+   * href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/#container-v1-core">Kubernetes
+   * Container spec</a>.
    *
    * @param environmentMap a map of environment variable names to values
    * @return this
@@ -202,6 +235,11 @@ public class JibContainerBuilder {
    * <p>Use {@link Port#tcp} to expose a port for TCP traffic and {@link Port#udp} to expose a port
    * for UDP traffic.
    *
+   * <p>This is similar to <a href="https://docs.docker.com/engine/reference/builder/#expose">{@code
+   * EXPOSE} in Dockerfiles</a> or {@code ports} in the <a
+   * href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/#container-v1-core">Kubernetes
+   * Container spec</a>.
+   *
    * @param ports the list of ports to expose
    * @return this
    */
@@ -218,8 +256,7 @@ public class JibContainerBuilder {
    * @see #setExposedPorts(List) for more details
    */
   public JibContainerBuilder setExposedPorts(Port... ports) {
-    setExposedPorts(Arrays.asList(ports));
-    return this;
+    return setExposedPorts(Arrays.asList(ports));
   }
 
   /**
@@ -236,6 +273,9 @@ public class JibContainerBuilder {
 
   /**
    * Sets the labels for the container. This replaces any previously-set labels.
+   *
+   * <p>This is similar to <a href="https://docs.docker.com/engine/reference/builder/#label">{@code
+   * LABEL} in Dockerfiles</a>.
    *
    * @param labelMap a map of label keys to values
    * @return this

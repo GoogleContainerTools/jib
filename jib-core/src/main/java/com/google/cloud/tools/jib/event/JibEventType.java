@@ -21,7 +21,7 @@ import com.google.common.annotations.VisibleForTesting;
 /** Holds references to all {@link JibEvent} types. */
 public class JibEventType<E extends JibEvent> {
 
-  /** All event types. */
+  /** All event types. Handlers for this will always be called first. */
   public static final JibEventType<JibEvent> ALL = new JibEventType<>(JibEvent.class);
 
   // TODO: Add entries for all JibEvent types.

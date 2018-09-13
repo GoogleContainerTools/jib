@@ -16,42 +16,116 @@
 
 package com.google.cloud.tools.jib.image;
 
-import com.google.common.collect.ImmutableList;
+import com.google.common.annotations.VisibleForTesting;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.Objects;
 
 /**
  * Represents an entry in the layer. A layer consists of many entries that can be converted into tar
  * archive entries.
+ *
+ * <p>Note that:
+ *
+ * <ul>
+ *   <li>Entry source files can be either files or directories.
+ *   <li>Adding a directory does not include the contents of the directory. Each file under a
+ *       directory must be added as a separate {@link LayerEntry}.
+ * </ul>
  */
 public class LayerEntry {
 
+  private final Path sourceFile;
+  private final Path extractionPath;
+
   /**
-   * The source files to build from. Source files that are directories will have all subfiles in the
-   * directory added (but not the directory itself).
+   * Instantiates with a source file and the path to place the source file in the container file
+   * system.
    *
-   * <p>The source files are specified as a list instead of a set to define the order in which they
-   * are added.
+   * <p>For example, {@code new LayerEntry(Paths.get("HelloWorld.class"),
+   * Paths.get("/app/classes/HelloWorld.class"))} adds a file {@code HelloWorld.class} to the
+   * container file system at {@code /app/classes/HelloWorld.class}.
+   *
+   * <p>For example, {@code new LayerEntry(Paths.get("com"), Paths.get("/app/classes/com"))} adds a
+   * directory to the container file system at {@code /app/classes/com}. This does <b>not</b> add
+   * the contents of {@code com/}.
+   *
+   * @param sourceFile the source file to add to the layer
+   * @param extractionPath the path in the container file system corresponding to the {@code
+   *     sourceFile} (relative to root {@code /})
    */
-  private final ImmutableList<Path> sourceFiles;
-
-  /** The Unix-style path to add the source files to in the container image filesystem. */
-  private final String extractionPath;
-
-  public LayerEntry(ImmutableList<Path> sourceFiles, String extractionPath) {
-    // Validates that extractionPath is a valid Unix-style path. A non-Unix style path will be
-    // accepted if Paths#get can parse it.
-    Paths.get(extractionPath);
-
-    this.sourceFiles = sourceFiles;
+  public LayerEntry(Path sourceFile, Path extractionPath) {
+    this.sourceFile = sourceFile;
     this.extractionPath = extractionPath;
   }
 
-  public ImmutableList<Path> getSourceFiles() {
-    return sourceFiles;
+  /**
+   * Gets the source file.
+   *
+   * <p>Do <b>not</b> call {@link Path#toString} on this - use {@link #getSourceFileString} instead.
+   * This path can be relative or absolute, and {@link #getSourceFileString} can also be relative or
+   * absolute, but callers should rely on {@link #getSourceFileString} for the serialized form since
+   * the serialization could change independently of the path representation.
+   *
+   * @return the source file
+   */
+  public Path getSourceFile() {
+    return sourceFile;
   }
 
-  public String getExtractionPath() {
+  /**
+   * Gets the extraction path.
+   *
+   * <p>Do <b>not</b> call {@link Path#toString} on this - use {@link #getExtractionPathString}
+   * instead. This path can be relative or absolute, and {@link #getExtractionPathString} can also
+   * be relative or absolute, but callers should rely on {@link #getExtractionPathString} for the
+   * serialized form since the serialization could change independently of the path representation.
+   *
+   * @return the extraction path
+   */
+  public Path getExtractionPath() {
     return extractionPath;
+  }
+
+  /**
+   * Gets the source file path in string form.
+   *
+   * @return the source file path
+   */
+  public String getSourceFileString() {
+    return sourceFile.toString();
+  }
+
+  /**
+   * Gets the extraction path in string form. This does <b>not</b> convert the extraction path to an
+   * absolute path.
+   *
+   * @return the extraction path
+   */
+  public String getExtractionPathString() {
+    return extractionPath.toString();
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    if (this == other) {
+      return true;
+    }
+    if (!(other instanceof LayerEntry)) {
+      return false;
+    }
+    LayerEntry otherLayerEntry = (LayerEntry) other;
+    return sourceFile.equals(otherLayerEntry.sourceFile)
+        && extractionPath.equals(otherLayerEntry.extractionPath);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(sourceFile, extractionPath);
+  }
+
+  @Override
+  @VisibleForTesting
+  public String toString() {
+    return getSourceFileString() + "\t" + getExtractionPathString();
   }
 }

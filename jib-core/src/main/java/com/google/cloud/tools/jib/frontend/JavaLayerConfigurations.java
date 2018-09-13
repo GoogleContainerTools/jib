@@ -22,7 +22,9 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
@@ -39,24 +41,27 @@ public class JavaLayerConfigurations {
         "snapshot dependencies", JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE),
     RESOURCES("resources", JavaEntrypointConstructor.DEFAULT_RESOURCES_PATH_ON_IMAGE),
     CLASSES("classes", JavaEntrypointConstructor.DEFAULT_CLASSES_PATH_ON_IMAGE),
+    // TODO: remove this once we put files in WAR into the relevant layers (i.e., dependencies,
+    // snapshot dependencies, resources, and classes layers). Should copy files in the right
+    EXPLODED_WAR("exploded war", JavaEntrypointConstructor.DEFAULT_JETTY_BASE_ON_IMAGE),
     EXTRA_FILES("extra files", "/");
 
-    private final String label;
-    private final String extractionPath;
+    private final String name;
+    private final Path extractionPath;
 
-    /** Initializes with a label for the layer and the layer files' default extraction path root. */
-    LayerType(String label, String extractionPath) {
-      this.label = label;
-      this.extractionPath = extractionPath;
+    /** Initializes with a name for the layer and the layer files' default extraction path root. */
+    LayerType(String name, String extractionPath) {
+      this.name = name;
+      this.extractionPath = Paths.get(extractionPath);
     }
 
     @VisibleForTesting
-    String getLabel() {
-      return label;
+    String getName() {
+      return name;
     }
 
     @VisibleForTesting
-    String getExtractionPath() {
+    Path getExtractionPath() {
       return extractionPath;
     }
   }
@@ -72,23 +77,23 @@ public class JavaLayerConfigurations {
       }
     }
 
-    public Builder setDependenciesFiles(List<Path> dependenciesFiles) {
-      layerFilesMap.put(LayerType.DEPENDENCIES, dependenciesFiles);
+    public Builder setDependencyFiles(List<Path> dependencyFiles) {
+      layerFilesMap.put(LayerType.DEPENDENCIES, dependencyFiles);
       return this;
     }
 
-    public Builder setSnapshotDependenciesFiles(List<Path> snapshotDependenciesFiles) {
-      layerFilesMap.put(LayerType.SNAPSHOT_DEPENDENCIES, snapshotDependenciesFiles);
+    public Builder setSnapshotDependencyFiles(List<Path> snapshotDependencyFiles) {
+      layerFilesMap.put(LayerType.SNAPSHOT_DEPENDENCIES, snapshotDependencyFiles);
       return this;
     }
 
-    public Builder setResourcesFiles(List<Path> resourcesFiles) {
-      layerFilesMap.put(LayerType.RESOURCES, resourcesFiles);
+    public Builder setResourceFiles(List<Path> resourceFiles) {
+      layerFilesMap.put(LayerType.RESOURCES, resourceFiles);
       return this;
     }
 
-    public Builder setClassesFiles(List<Path> classesFiles) {
-      layerFilesMap.put(LayerType.CLASSES, classesFiles);
+    public Builder setClassFiles(List<Path> classFiles) {
+      layerFilesMap.put(LayerType.CLASSES, classFiles);
       return this;
     }
 
@@ -97,17 +102,28 @@ public class JavaLayerConfigurations {
       return this;
     }
 
-    public JavaLayerConfigurations build() {
+    // TODO: remove this and put files in WAR into the relevant layers (i.e., dependencies, snapshot
+    // dependencies, resources, and classes layers).
+    public Builder setExplodedWarFiles(List<Path> explodedWarFiles) {
+      layerFilesMap.put(LayerType.EXPLODED_WAR, explodedWarFiles);
+      return this;
+    }
+
+    public JavaLayerConfigurations build() throws IOException {
       ImmutableMap.Builder<LayerType, LayerConfiguration> layerConfigurationsMap =
           ImmutableMap.builderWithExpectedSize(LayerType.values().length);
       for (LayerType layerType : LayerType.values()) {
+        LayerConfiguration.Builder layerConfigurationBuilder =
+            LayerConfiguration.builder().setName(layerType.getName());
+
+        // Adds all the layer files recursively.
         List<Path> layerFiles = Preconditions.checkNotNull(layerFilesMap.get(layerType));
-        layerConfigurationsMap.put(
-            layerType,
-            LayerConfiguration.builder()
-                .addEntry(layerFiles, layerType.getExtractionPath())
-                .setLabel(layerType.getLabel())
-                .build());
+        for (Path layerFile : layerFiles) {
+          layerConfigurationBuilder.addEntryRecursive(
+              layerFile, layerType.getExtractionPath().resolve(layerFile.getFileName()));
+        }
+
+        layerConfigurationsMap.put(layerType, layerConfigurationBuilder.build());
       }
       return new JavaLayerConfigurations(layerConfigurationsMap.build());
     }
@@ -128,29 +144,33 @@ public class JavaLayerConfigurations {
     return layerConfigurationMap.values().asList();
   }
 
-  public LayerEntry getDependenciesLayerEntry() {
-    return getLayerEntry(LayerType.DEPENDENCIES);
+  public ImmutableList<LayerEntry> getDependencyLayerEntries() {
+    return getLayerEntries(LayerType.DEPENDENCIES);
   }
 
-  public LayerEntry getSnapshotDependenciesLayerEntry() {
-    return getLayerEntry(LayerType.SNAPSHOT_DEPENDENCIES);
+  public ImmutableList<LayerEntry> getSnapshotDependencyLayerEntries() {
+    return getLayerEntries(LayerType.SNAPSHOT_DEPENDENCIES);
   }
 
-  public LayerEntry getResourcesLayerEntry() {
-    return getLayerEntry(LayerType.RESOURCES);
+  public ImmutableList<LayerEntry> getResourceLayerEntries() {
+    return getLayerEntries(LayerType.RESOURCES);
   }
 
-  public LayerEntry getClassesLayerEntry() {
-    return getLayerEntry(LayerType.CLASSES);
+  public ImmutableList<LayerEntry> getClassLayerEntries() {
+    return getLayerEntries(LayerType.CLASSES);
   }
 
-  public LayerEntry getExtraFilesLayerEntry() {
-    return getLayerEntry(LayerType.EXTRA_FILES);
+  public ImmutableList<LayerEntry> getExtraFilesLayerEntries() {
+    return getLayerEntries(LayerType.EXTRA_FILES);
   }
 
-  private LayerEntry getLayerEntry(LayerType layerType) {
-    return Preconditions.checkNotNull(layerConfigurationMap.get(layerType))
-        .getLayerEntries()
-        .get(0);
+  // TODO: remove this once we put files in WAR into the relevant layers (i.e., dependencies,
+  // snapshot dependencies, resources, and classes layers). Should copy files in the right
+  public ImmutableList<LayerEntry> getExplodedWarEntries() {
+    return getLayerEntries(LayerType.EXPLODED_WAR);
+  }
+
+  private ImmutableList<LayerEntry> getLayerEntries(LayerType layerType) {
+    return Preconditions.checkNotNull(layerConfigurationMap.get(layerType)).getLayerEntries();
   }
 }

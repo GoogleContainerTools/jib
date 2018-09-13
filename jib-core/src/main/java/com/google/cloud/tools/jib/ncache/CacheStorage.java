@@ -47,10 +47,11 @@ public interface CacheStorage {
   /**
    * Lists all the layer digests stored.
    *
-   * @return the list of layer digests (that can be retrieved via {@link #retrieve}
+   * @return the list of layer digests (that can be retrieved via {@link #retrieve})
+   * @throws CacheCorruptedException if the cache was found to be corrupted
    * @throws IOException if an I/O exception occurs
    */
-  List<DescriptorDigest> listDigests() throws IOException;
+  List<DescriptorDigest> listDigests() throws IOException, CacheCorruptedException;
 
   /**
    * Retrieves the {@link CacheEntry} for the layer with digest {@code layerDigest}.
