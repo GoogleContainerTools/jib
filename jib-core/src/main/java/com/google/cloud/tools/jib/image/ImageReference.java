@@ -201,6 +201,16 @@ public class ImageReference {
     return DEFAULT_TAG.equals(tag);
   }
 
+  /**
+   * Gets an {@link ImageReference} with the same registry and repository, but a different tag.
+   *
+   * @param tag the new tag
+   * @return an {@link ImageReference} with the same registry/repository and the new tag
+   */
+  public ImageReference retag(String tag) {
+    return ImageReference.of(registry, repository, tag);
+  }
+
   /** @return the image reference in Docker-readable format (inverse of {@link #parse}) */
   @Override
   public String toString() {
