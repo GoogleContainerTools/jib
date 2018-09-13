@@ -34,13 +34,19 @@ public class TimerEvent implements JibEvent {
   /** The state of the timing. */
   public enum State {
 
-    /** The timer has started timing. Duration will be 0. */
+    /** The timer has started timing. {@link #getDuration} is 0. {@link #getElapsed} is 0. */
     START,
 
-    /** The timer is still in progress. Duration captures the time since the last event. */
+    /**
+     * The timer is still in progress. {@link #getDuration} is the time since the last event. {@link
+     * #getElapsed} is the total elapsed time.
+     */
     IN_PROGRESS,
 
-    /** The timer has finished timing. Duration captures the time since the last event. */
+    /**
+     * The timer has finished timing. {@link #getDuration} is the time since the last event. {@link
+     * #getElapsed} is the total elapsed time.
+     */
     FINISHED
   }
 
