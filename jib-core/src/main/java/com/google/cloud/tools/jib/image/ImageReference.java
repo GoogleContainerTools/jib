@@ -149,7 +149,7 @@ public class ImageReference {
    *
    * @param registry the image registry, or {@code null} to use the default registry (Docker Hub)
    * @param repository the image repository
-   * @param tag the image tag, or {@code null} to ues the default tag ({@code latest})
+   * @param tag the image tag, or {@code null} to use the default tag ({@code latest})
    * @return an {@link ImageReference} built from the given registry, repository, and tag
    */
   public static ImageReference of(
@@ -176,7 +176,7 @@ public class ImageReference {
 
   /**
    * Returns {@code true} if {@code repository} is a valid repository string. For example, a valid
-   * registry could be {@code distroless} or {@code my/container-image/repository}.
+   * repository could be {@code distroless} or {@code my/container-image/repository}.
    *
    * @param repository the repository to check
    * @return {@code true} if is a valid repository; {@code false} otherwise
