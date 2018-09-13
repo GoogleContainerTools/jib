@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.frontend;
 
 import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.configuration.Port;
-import com.google.cloud.tools.jib.configuration.Port.Protocol;
 import com.google.common.collect.ImmutableList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -42,17 +41,17 @@ public class ExposedPortsParserTest {
     ImmutableList<Port> expected =
         new ImmutableList.Builder<Port>()
             .add(
-                new Port(1000, Protocol.TCP),
-                new Port(2000, Protocol.TCP),
-                new Port(2001, Protocol.TCP),
-                new Port(2002, Protocol.TCP),
-                new Port(2003, Protocol.TCP),
-                new Port(3000, Protocol.TCP),
-                new Port(4000, Protocol.TCP),
-                new Port(5000, Protocol.UDP),
-                new Port(6000, Protocol.UDP),
-                new Port(6001, Protocol.UDP),
-                new Port(6002, Protocol.UDP))
+                Port.tcp(1000),
+                Port.tcp(2000),
+                Port.tcp(2001),
+                Port.tcp(2002),
+                Port.tcp(2003),
+                Port.tcp(3000),
+                Port.tcp(4000),
+                Port.udp(5000),
+                Port.udp(6000),
+                Port.udp(6001),
+                Port.udp(6002))
             .build();
     ImmutableList<Port> result = ExposedPortsParser.parse(goodInputs);
     Assert.assertEquals(expected, result);

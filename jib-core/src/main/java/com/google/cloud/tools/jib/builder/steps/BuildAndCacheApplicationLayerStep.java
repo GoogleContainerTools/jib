@@ -58,7 +58,7 @@ class BuildAndCacheApplicationLayerStep
 
         buildAndCacheApplicationLayerSteps.add(
             new BuildAndCacheApplicationLayerStep(
-                layerConfiguration.getLabel(),
+                layerConfiguration.getName(),
                 listeningExecutorService,
                 buildConfiguration,
                 layerConfiguration,

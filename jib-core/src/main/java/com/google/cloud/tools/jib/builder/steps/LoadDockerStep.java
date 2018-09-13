@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.docker.ImageToTarballTranslator;
 import com.google.cloud.tools.jib.image.Image;
+import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -85,13 +86,22 @@ class LoadDockerStep implements AsyncStep<Void>, Callable<Void> {
   private Void afterPushBaseImageLayerFuturesFuture()
       throws ExecutionException, InterruptedException, IOException {
     Image<CachedLayer> image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
+    ImageReference targetImageReference =
+        buildConfiguration.getTargetImageConfiguration().getImage();
 
     // Load the image to docker daemon.
     buildConfiguration.getBuildLogger().lifecycle("Loading to Docker daemon...");
-    new DockerClient()
-        .load(
-            new ImageToTarballTranslator(image)
-                .toTarballBlob(buildConfiguration.getTargetImageConfiguration().getImage()));
+    DockerClient dockerClient = new DockerClient();
+    dockerClient.load(new ImageToTarballTranslator(image).toTarballBlob(targetImageReference));
+
+    // Tags the image with all the additional tags, skipping the one 'docker load' already loaded.
+    for (String tag : buildConfiguration.getAllTargetImageTags()) {
+      if (tag.equals(targetImageReference.getTag())) {
+        continue;
+      }
+
+      dockerClient.tag(targetImageReference, targetImageReference.withTag(tag));
+    }
 
     return null;
   }

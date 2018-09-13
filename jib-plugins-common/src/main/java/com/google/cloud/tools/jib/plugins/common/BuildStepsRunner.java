@@ -209,7 +209,7 @@ public class BuildStepsRunner {
 
       for (LayerConfiguration layerConfiguration :
           buildSteps.getBuildConfiguration().getLayerConfigurations()) {
-        buildLogger.info("\t" + capitalizeFirstLetter(layerConfiguration.getLabel()) + ":");
+        buildLogger.info("\t" + capitalizeFirstLetter(layerConfiguration.getName()) + ":");
 
         for (LayerEntry layerEntry : layerConfiguration.getLayerEntries()) {
           buildLogger.info("\t\t" + layerEntry.getSourceFile());

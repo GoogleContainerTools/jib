@@ -78,9 +78,9 @@ public class DefaultCacheStorage implements CacheStorage {
   }
 
   @Override
-  public Optional<CacheEntry> retrieve(DescriptorDigest layerDigest) throws IOException {
-    // TODO: Implement
-    return Optional.empty();
+  public Optional<CacheEntry> retrieve(DescriptorDigest layerDigest)
+      throws IOException, CacheCorruptedException {
+    return defaultCacheStorageReader.retrieve(layerDigest);
   }
 
   @Override
