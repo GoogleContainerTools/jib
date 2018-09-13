@@ -75,8 +75,8 @@ class GradleProjectProperties implements ProjectProperties {
   private static EventEmitter makeEventEmitter(Logger logger) {
     return new DefaultEventEmitter(
         new EventHandlers()
-            .add(JibEventType.LOG, new LogEventHandler(logger))
-            .add(JibEventType.TIMER, new TimerEventHandler(logger::debug)));
+            .add(JibEventType.LOGGING, new LogEventHandler(logger))
+            .add(JibEventType.TIMING, new TimerEventHandler(logger::debug)));
   }
 
   @Nullable

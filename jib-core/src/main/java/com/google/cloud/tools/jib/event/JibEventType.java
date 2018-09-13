@@ -27,10 +27,10 @@ public class JibEventType<E extends JibEvent> {
   public static final JibEventType<JibEvent> ALL = new JibEventType<>(JibEvent.class);
 
   /** Log message event. */
-  public static final JibEventType<LogEvent> LOG = new JibEventType<>(LogEvent.class);
+  public static final JibEventType<LogEvent> LOGGING = new JibEventType<>(LogEvent.class);
 
   /** Timer event for timing various part of Jib's execution. */
-  public static final JibEventType<TimerEvent> TIMER = new JibEventType<>(TimerEvent.class);
+  public static final JibEventType<TimerEvent> TIMING = new JibEventType<>(TimerEvent.class);
 
   // TODO: Add entries for all JibEvent types.
 

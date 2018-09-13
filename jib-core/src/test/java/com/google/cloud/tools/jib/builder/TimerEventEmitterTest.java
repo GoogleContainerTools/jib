@@ -22,39 +22,49 @@ import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.TimerEvent;
 import com.google.cloud.tools.jib.event.events.TimerEvent.State;
+import java.time.Clock;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link TimerEventEmitter}. */
+@RunWith(MockitoJUnitRunner.class)
 public class TimerEventEmitterTest {
 
   private final Deque<TimerEvent> timerEventQueue = new ArrayDeque<>();
 
-  @Test
-  public void testLogging() throws InterruptedException {
-    EventEmitter eventEmitter =
-        new DefaultEventEmitter(new EventHandlers().add(JibEventType.TIMER, timerEventQueue::add));
+  @Mock private Clock mockClock;
 
+  @Test
+  public void testLogging() {
+    EventEmitter eventEmitter =
+        new DefaultEventEmitter(new EventHandlers().add(JibEventType.TIMING, timerEventQueue::add));
+
+    Mockito.when(mockClock.instant()).thenReturn(Instant.EPOCH);
     try (TimerEventEmitter parentTimerEventEmitter =
-        new TimerEventEmitter(eventEmitter, "description")) {
-      TimeUnit.MILLISECONDS.sleep(1);
+        new TimerEventEmitter(eventEmitter, "description", mockClock, null)) {
+      Mockito.when(mockClock.instant()).thenReturn(Instant.EPOCH.plusMillis(1));
       parentTimerEventEmitter.lap();
+      Mockito.when(mockClock.instant()).thenReturn(Instant.EPOCH.plusMillis(1).plusNanos(1));
       try (TimerEventEmitter ignored = parentTimerEventEmitter.subTimer("child description")) {
-        TimeUnit.MILLISECONDS.sleep(1);
+        Mockito.when(mockClock.instant()).thenReturn(Instant.EPOCH.plusMillis(2));
         // Laps on close.
       }
     }
 
-    TimerEvent.Timer parentTimer = verifyNextTimerEvent(null, State.START, "description");
-    verifyNextTimerEvent(null, State.IN_PROGRESS, "description");
-    verifyNextTimerEvent(parentTimer, State.START, "child description");
-    verifyNextTimerEvent(parentTimer, State.FINISHED, "child description");
-    verifyNextTimerEvent(null, State.FINISHED, "description");
+    TimerEvent.Timer parentTimer = verifyNextTimerEvent(null, State.START, "description", false);
+    verifyNextTimerEvent(null, State.IN_PROGRESS, "description", false);
+    verifyNextTimerEvent(parentTimer, State.START, "child description", false);
+    verifyNextTimerEvent(parentTimer, State.FINISHED, "child description", false);
+    verifyNextTimerEvent(null, State.FINISHED, "description", true);
 
     Assert.assertTrue(timerEventQueue.isEmpty());
   }
@@ -66,12 +76,14 @@ public class TimerEventEmitterTest {
    *     none expected
    * @param expectedState the expected {@link TimerEvent.State}
    * @param expectedDescription the expected description
+   * @param hasLapped {@code true} if the timer has already lapped; {@code false} if it has not
    * @return the verified {@link TimerEvent}
    */
   private TimerEvent.Timer verifyNextTimerEvent(
       @Nullable TimerEvent.Timer expectedParentTimer,
       State expectedState,
-      String expectedDescription) {
+      String expectedDescription,
+      boolean hasLapped) {
     TimerEvent timerEvent = timerEventQueue.poll();
     Assert.assertNotNull(timerEvent);
 
@@ -84,8 +96,14 @@ public class TimerEventEmitterTest {
     Assert.assertEquals(expectedState, timerEvent.getState());
     if (expectedState == State.START) {
       Assert.assertEquals(Duration.ZERO, timerEvent.getDuration());
+      Assert.assertEquals(Duration.ZERO, timerEvent.getElapsed());
     } else {
       Assert.assertTrue(timerEvent.getDuration().compareTo(Duration.ZERO) > 0);
+      if (hasLapped) {
+        Assert.assertTrue(timerEvent.getElapsed().compareTo(timerEvent.getDuration()) > 0);
+      } else {
+        Assert.assertEquals(0, timerEvent.getElapsed().compareTo(timerEvent.getDuration()));
+      }
     }
     Assert.assertEquals(expectedDescription, timerEvent.getDescription());
 

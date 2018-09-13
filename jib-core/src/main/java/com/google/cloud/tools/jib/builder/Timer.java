@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.event.events.TimerEvent;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
@@ -26,16 +27,18 @@ import javax.annotation.Nullable;
 // TODO: Replace com.google.cloud.tools.jib.Timer with this.
 class Timer implements TimerEvent.Timer {
 
+  private final Clock clock;
   @Nullable private final Timer parentTimer;
 
-  private Instant startTime = Instant.now();
+  private final Instant startTime;
+  private Instant lapStartTime;
 
-  Timer() {
-    this(null);
-  }
-
-  Timer(@Nullable Timer parentTimer) {
+  Timer(Clock clock, @Nullable Timer parentTimer) {
+    this.clock = clock;
     this.parentTimer = parentTimer;
+
+    startTime = clock.instant();
+    lapStartTime = startTime;
   }
 
   @Override
@@ -49,9 +52,18 @@ class Timer implements TimerEvent.Timer {
    * @return the duration of the last lap, or since creation
    */
   Duration lap() {
-    Instant now = Instant.now();
-    Duration duration = Duration.between(startTime, now);
-    startTime = now;
+    Instant now = clock.instant();
+    Duration duration = Duration.between(lapStartTime, now);
+    lapStartTime = now;
     return duration;
+  }
+
+  /**
+   * Gets the total elapsed time since creation.
+   *
+   * @return the total elapsed time
+   */
+  Duration getElapsedTime() {
+    return Duration.between(startTime, clock.instant());
   }
 }

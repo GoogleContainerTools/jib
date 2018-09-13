@@ -19,43 +19,63 @@ package com.google.cloud.tools.jib.builder;
 import com.google.cloud.tools.jib.event.EventEmitter;
 import com.google.cloud.tools.jib.event.events.TimerEvent;
 import com.google.cloud.tools.jib.event.events.TimerEvent.State;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.Closeable;
+import java.time.Clock;
 import java.time.Duration;
+import javax.annotation.Nullable;
 
 /** Handles {@link Timer}s to emit {@link TimerEvent}s. */
 public class TimerEventEmitter implements Closeable {
 
+  private static final Clock DEFAULT_CLOCK = Clock.systemUTC();
+
   private final EventEmitter eventEmitter;
   private final String description;
 
+  private final Clock clock;
   private final Timer timer;
 
   public TimerEventEmitter(EventEmitter eventEmitter, String description) {
-    this(eventEmitter, description, new Timer());
+    this(eventEmitter, description, DEFAULT_CLOCK, null);
   }
 
-  private TimerEventEmitter(EventEmitter eventEmitter, String description, Timer timer) {
+  @VisibleForTesting
+  TimerEventEmitter(
+      EventEmitter eventEmitter, String description, Clock clock, @Nullable Timer parentTimer) {
     this.eventEmitter = eventEmitter;
     this.description = description;
-    this.timer = timer;
+    this.clock = clock;
+    this.timer = new Timer(clock, parentTimer);
 
     emitTimerEvent(State.START, Duration.ZERO);
   }
 
+  /**
+   * Creates a new {@link TimerEventEmitter} with its parent timer as this.
+   *
+   * @param description a new description
+   * @return the new {@link TimerEventEmitter}
+   */
   public TimerEventEmitter subTimer(String description) {
-    return new TimerEventEmitter(eventEmitter, description, new Timer(timer));
+    return new TimerEventEmitter(eventEmitter, description, clock, timer);
   }
 
+  /**
+   * Captures the time since last lap or creation and emits an {@link State#IN_PROGRESS} {@link
+   * TimerEvent}.
+   */
   public void lap() {
     emitTimerEvent(State.IN_PROGRESS, timer.lap());
   }
 
+  /** Laps and emits an {@link State#FINISHED} {@link TimerEvent} upon close. */
   @Override
   public void close() {
     emitTimerEvent(State.FINISHED, timer.lap());
   }
 
   private void emitTimerEvent(State state, Duration duration) {
-    eventEmitter.emit(new TimerEvent(state, timer, duration, description));
+    eventEmitter.emit(new TimerEvent(state, timer, duration, timer.getElapsedTime(), description));
   }
 }

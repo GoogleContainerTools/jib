@@ -58,6 +58,7 @@ public class TimerEvent implements JibEvent {
   private final State state;
   private final Timer timer;
   private final Duration duration;
+  private final Duration elapsed;
   private final String description;
 
   /**
@@ -66,12 +67,15 @@ public class TimerEvent implements JibEvent {
    * @param state the state of the {@link Timer}
    * @param timer the {@link Timer}
    * @param duration the lap duration
+   * @param elapsed the total elapsed time since the timer was created
    * @param description the description of this event
    */
-  public TimerEvent(State state, Timer timer, Duration duration, String description) {
+  public TimerEvent(
+      State state, Timer timer, Duration duration, Duration elapsed, String description) {
     this.state = state;
     this.timer = timer;
     this.duration = duration;
+    this.elapsed = elapsed;
     this.description = description;
   }
 
@@ -101,6 +105,15 @@ public class TimerEvent implements JibEvent {
    */
   public Duration getDuration() {
     return duration;
+  }
+
+  /**
+   * Gets the total elapsed duration since this timer was created.
+   *
+   * @return the duration since this timer was created
+   */
+  public Duration getElapsed() {
+    return elapsed;
   }
 
   /**

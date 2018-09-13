@@ -16,26 +16,37 @@
 
 package com.google.cloud.tools.jib.builder;
 
+import java.time.Clock;
 import java.time.Duration;
-import java.util.concurrent.TimeUnit;
+import java.time.Instant;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link Timer}. */
+@RunWith(MockitoJUnitRunner.class)
 public class TimerTest {
 
-  @Test
-  public void testLap() throws InterruptedException {
-    Timer parentTimer = new Timer();
-    TimeUnit.MILLISECONDS.sleep(5);
-    Duration parentDuration1 = parentTimer.lap();
-    TimeUnit.MILLISECONDS.sleep(10);
-    Duration parentDuration2 = parentTimer.lap();
-    TimeUnit.MILLISECONDS.sleep(1);
+  @Mock private Clock mockClock;
 
-    Timer childTimer = new Timer(parentTimer);
+  @Test
+  public void testLap() {
+    Mockito.when(mockClock.instant()).thenReturn(Instant.EPOCH);
+    Timer parentTimer = new Timer(mockClock, null);
+    Mockito.when(mockClock.instant()).thenReturn(Instant.EPOCH.plusMillis(5));
+    Duration parentDuration1 = parentTimer.lap();
+    Mockito.when(mockClock.instant()).thenReturn(Instant.EPOCH.plusMillis(15));
+    Duration parentDuration2 = parentTimer.lap();
+
+    Mockito.when(mockClock.instant()).thenReturn(Instant.EPOCH.plusMillis(16));
+    Timer childTimer = new Timer(mockClock, parentTimer);
+    Mockito.when(mockClock.instant()).thenReturn(Instant.EPOCH.plusMillis(16).plusNanos(1));
     Duration childDuration = childTimer.lap();
 
+    Mockito.when(mockClock.instant()).thenReturn(Instant.EPOCH.plusMillis(16).plusNanos(2));
     Duration parentDuration3 = parentTimer.lap();
 
     Assert.assertTrue(parentDuration2.compareTo(parentDuration1) > 0);

@@ -50,7 +50,7 @@ public class RetrieveRegistryCredentialsStepTest {
   private final EventEmitter eventEmitter =
       new DefaultEventEmitter(
           new EventHandlers()
-              .add(JibEventType.LOG, logEvent -> logMessages.append(logEvent.getMessage())));
+              .add(JibEventType.LOGGING, logEvent -> logMessages.append(logEvent.getMessage())));
 
   @Mock private ListeningExecutorService mockListeningExecutorService;
   // TODO: Remove once JibLogger is all replaced by EventEmitter.

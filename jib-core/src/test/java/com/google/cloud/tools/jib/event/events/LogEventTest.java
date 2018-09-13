@@ -34,7 +34,8 @@ public class LogEventTest {
   // Note that in actual code, the event handler should NOT perform thread unsafe operations like
   // here.
   private final EventEmitter eventEmitter =
-      new DefaultEventEmitter(new EventHandlers().add(JibEventType.LOG, receivedLogEvents::offer));
+      new DefaultEventEmitter(
+          new EventHandlers().add(JibEventType.LOGGING, receivedLogEvents::offer));
 
   @Test
   public void testFactories() {

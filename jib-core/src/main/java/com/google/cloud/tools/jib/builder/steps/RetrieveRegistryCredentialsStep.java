@@ -43,7 +43,6 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
       ListeningExecutorService listeningExecutorService, BuildConfiguration buildConfiguration) {
     return new RetrieveRegistryCredentialsStep(
         listeningExecutorService,
-        // TODO: Replace with ExecutionMainframe.emit so that it is never nullable.
         buildConfiguration.getEventEmitter(),
         buildConfiguration.getBaseImageConfiguration().getImageRegistry(),
         buildConfiguration.getBaseImageConfiguration().getCredentialRetrievers());
