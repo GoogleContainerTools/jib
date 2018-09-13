@@ -45,7 +45,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class CacheMetadataTranslatorTest {
 
   private static final String CLASSES_LAYER_SOURCE_FILE = "/some/source/path";
-  private static final String CLASSES_LAYER_EXTRACTION_PATH = "some/extraction/path";
+  private static final String CLASSES_LAYER_EXTRACTION_PATH = "/some/extraction/path";
   private static final FileTime CLASSES_LAYER_LAST_MODIFIED_TIME =
       FileTime.fromMillis(255073580723571L);
 
