@@ -37,15 +37,14 @@ import java.util.StringJoiner;
 public class LayerEntry {
 
   /**
-   * Stringifies {@code path} in unix form.
+   * Stringifies {@code path} to an absolute Unix form.
    *
    * @param path the path
    * @return the string form of the path
    */
-  private static String toUnixPath(Path path) {
-    StringJoiner pathJoiner =
-        path.isAbsolute() ? new StringJoiner("/", "/", "") : new StringJoiner("/");
-    for (Path pathComponent : path) {
+  private static String toAbsoluteUnixPath(Path path) {
+    StringJoiner pathJoiner = new StringJoiner("/", "/", "");
+    for (Path pathComponent : path.toAbsolutePath()) {
       pathJoiner.add(pathComponent.toString());
     }
     return pathJoiner.toString();
@@ -109,7 +108,7 @@ public class LayerEntry {
    * @return the source file path
    */
   public String getSourceFileString() {
-    return toUnixPath(sourceFile.toAbsolutePath());
+    return toAbsoluteUnixPath(sourceFile);
   }
 
   /**
@@ -119,7 +118,7 @@ public class LayerEntry {
    * @return the extraction path
    */
   public String getExtractionPathString() {
-    return toUnixPath(extractionPath.toAbsolutePath());
+    return toAbsoluteUnixPath(extractionPath);
   }
 
   @Override
