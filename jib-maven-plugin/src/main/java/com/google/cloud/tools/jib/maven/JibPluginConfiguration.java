@@ -22,8 +22,8 @@ import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.io.File;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -169,9 +169,10 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   @Parameter(defaultValue = "false", required = true)
   private boolean allowInsecureRegistries;
 
+  // this parameter is cloned in FilesMojo
   @Nullable
   @Parameter(defaultValue = "${project.basedir}/src/main/jib", required = true)
-  private String extraDirectory;
+  private File extraDirectory;
 
   @Parameter(defaultValue = "false", property = "jib.skip")
   private boolean skip;
@@ -309,7 +310,7 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
   Path getExtraDirectory() {
     // TODO: Should inform user about nonexistent directory if using custom directory.
-    return Paths.get(Preconditions.checkNotNull(extraDirectory));
+    return Preconditions.checkNotNull(extraDirectory).toPath();
   }
 
   boolean isSkipped() {
@@ -346,7 +347,7 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   }
 
   @VisibleForTesting
-  void setExtraDirectory(String extraDirectory) {
+  void setExtraDirectory(File extraDirectory) {
     this.extraDirectory = extraDirectory;
   }
 }

@@ -238,7 +238,7 @@ public class BuildImageMojoIntegrationTest {
   }
 
   @Test
-  public void testExecute_defaultTarget() {
+  public void testExecute_defaultTarget() throws IOException {
     // Test error when 'to' is missing
     try {
       Verifier verifier = new Verifier(defaultTargetTestProject.getProjectRoot().toString());

@@ -18,8 +18,8 @@ package com.google.cloud.tools.jib.ncache;
 
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import java.io.IOException;
-import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Interface for queries to a cache storage engine.
@@ -47,11 +47,11 @@ public interface CacheStorage {
   /**
    * Lists all the layer digests stored.
    *
-   * @return the list of layer digests (that can be retrieved via {@link #retrieve})
+   * @return the set of layer digests (that can be retrieved via {@link #retrieve})
    * @throws CacheCorruptedException if the cache was found to be corrupted
    * @throws IOException if an I/O exception occurs
    */
-  List<DescriptorDigest> listDigests() throws IOException, CacheCorruptedException;
+  Set<DescriptorDigest> listDigests() throws IOException, CacheCorruptedException;
 
   /**
    * Retrieves the {@link CacheEntry} for the layer with digest {@code layerDigest}.
