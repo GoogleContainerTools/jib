@@ -46,7 +46,8 @@ public class LayerEntry {
    * @return the string form of the absolute path
    */
   private static String toUnixPath(Path path) {
-    Preconditions.checkArgument(path.getRoot() != null, "Tried to stringify a non-absolute path: %s", path);
+    Preconditions.checkArgument(
+        path.getRoot() != null, "Tried to stringify a non-absolute path: %s", path);
 
     StringJoiner pathJoiner = new StringJoiner("/", "/", "");
     for (Path pathComponent : path) {
