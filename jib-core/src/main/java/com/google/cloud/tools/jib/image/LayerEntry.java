@@ -52,7 +52,7 @@ public class LayerEntry {
       System.out.println(p);
     }
     System.out.println("/path");
-    Preconditions.checkArgument(path.isAbsolute() || path.startsWith("/"));
+    Preconditions.checkArgument(path.isAbsolute());
     StringJoiner pathJoiner = new StringJoiner("/", "/", "");
     for (Path pathComponent : path) {
       pathJoiner.add(pathComponent.toString());
