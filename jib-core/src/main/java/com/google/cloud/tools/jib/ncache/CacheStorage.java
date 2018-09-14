@@ -45,7 +45,7 @@ public interface CacheStorage {
   CacheEntry write(CacheWrite cacheWrite) throws IOException;
 
   /**
-   * Fetch all the layer digests stored.
+   * Fetches all the layer digests stored.
    *
    * @return the set of layer digests (that can be retrieved via {@link #retrieve})
    * @throws CacheCorruptedException if the cache was found to be corrupted
