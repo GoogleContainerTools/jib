@@ -28,7 +28,7 @@ import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.junit.rules.ExternalResource;
 
 /** Sets up the plugin for testing. */
-class TestPlugin extends ExternalResource {
+public class TestPlugin extends ExternalResource {
 
   private String pluginVersion;
 
@@ -42,6 +42,8 @@ class TestPlugin extends ExternalResource {
     Verifier verifier = new Verifier(".", true);
     verifier.setAutoclean(false);
     verifier.addCliOption("-DskipTests");
+    verifier.addCliOption("-Dfmt.skip");
+    verifier.addCliOption("-Dcheckstyle.skip");
     verifier.executeGoal("install");
 
     // Reads the project version.

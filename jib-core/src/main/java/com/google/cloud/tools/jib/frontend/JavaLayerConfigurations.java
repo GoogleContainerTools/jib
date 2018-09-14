@@ -46,18 +46,18 @@ public class JavaLayerConfigurations {
     EXPLODED_WAR("exploded war", JavaEntrypointConstructor.DEFAULT_JETTY_BASE_ON_IMAGE),
     EXTRA_FILES("extra files", "/");
 
-    private final String label;
+    private final String name;
     private final Path extractionPath;
 
-    /** Initializes with a label for the layer and the layer files' default extraction path root. */
-    LayerType(String label, String extractionPath) {
-      this.label = label;
+    /** Initializes with a name for the layer and the layer files' default extraction path root. */
+    LayerType(String name, String extractionPath) {
+      this.name = name;
       this.extractionPath = Paths.get(extractionPath);
     }
 
     @VisibleForTesting
-    String getLabel() {
-      return label;
+    String getName() {
+      return name;
     }
 
     @VisibleForTesting
@@ -114,7 +114,7 @@ public class JavaLayerConfigurations {
           ImmutableMap.builderWithExpectedSize(LayerType.values().length);
       for (LayerType layerType : LayerType.values()) {
         LayerConfiguration.Builder layerConfigurationBuilder =
-            LayerConfiguration.builder().setLabel(layerType.getLabel());
+            LayerConfiguration.builder().setName(layerType.getName());
 
         // Adds all the layer files recursively.
         List<Path> layerFiles = Preconditions.checkNotNull(layerFilesMap.get(layerType));
