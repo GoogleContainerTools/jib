@@ -30,7 +30,8 @@ public class JavaEntrypointConstructor {
 
   public static List<String> makeDefaultEntrypoint(
       String appRoot, List<String> jvmFlags, String mainClass) {
-    Preconditions.checkArgument(appRoot.startsWith("/"));
+    Preconditions.checkArgument(
+        appRoot.startsWith("/"), "appRoot should be an absolute path in Unix-style");
     appRoot = appRoot.endsWith("/") ? appRoot : appRoot + '/';
 
     return makeEntrypoint(

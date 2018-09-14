@@ -165,8 +165,8 @@ public class JavaLayerConfigurations {
   }
 
   /**
-   * Returns the Unix-style, absolute path for the application root in the container image. May or
-   * may not end with a trailing forward slash ('/').
+   * Returns the Unix-style, absolute path for the application root in the container image. The path
+   * may or may not end with a forward slash ('/').
    *
    * @return Unix-style, absolute path for the application root
    */
