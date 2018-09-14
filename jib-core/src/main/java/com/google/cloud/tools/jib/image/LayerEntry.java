@@ -46,6 +46,12 @@ public class LayerEntry {
    * @return the string form of the absolute path
    */
   private static String toUnixPath(Path path) {
+    System.out.println("path: " + path);
+    System.out.println("path components");
+    for (Path p : path) {
+      System.out.println(p);
+    }
+    System.out.println("/path");
     Preconditions.checkArgument(path.startsWith("/"));
     StringJoiner pathJoiner = new StringJoiner("/", "/", "");
     for (Path pathComponent : path) {
