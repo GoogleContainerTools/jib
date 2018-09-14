@@ -81,24 +81,16 @@ public class JavaLayerConfigurationsTest {
 
   @Test
   public void testSetFiles() throws IOException {
-    List<Path> dependencyFiles = Collections.singletonList(Paths.get("/dependency"));
-    List<Path> snapshotDependencyFiles =
-        Collections.singletonList(Paths.get("/snapshot dependency"));
-    List<Path> resourceFiles = Collections.singletonList(Paths.get("/resource"));
-    List<Path> classFiles = Collections.singletonList(Paths.get("/class"));
-    List<Path> explodedWarFiles = Collections.singletonList(Paths.get("/exploded war"));
-    List<Path> extraFiles = Collections.singletonList(Paths.get("/extra file"));
-
     JavaLayerConfigurations javaLayerConfigurations = createFakeConfigurations("/whatever");
 
     List<List<Path>> expectedFiles =
         Arrays.asList(
-            dependencyFiles,
-            snapshotDependencyFiles,
-            resourceFiles,
-            classFiles,
-            explodedWarFiles,
-            extraFiles);
+            Collections.singletonList(Paths.get("dependency")),
+            Collections.singletonList(Paths.get("snapshot dependency")),
+            Collections.singletonList(Paths.get("resource")),
+            Collections.singletonList(Paths.get("class")),
+            Collections.singletonList(Paths.get("exploded war")),
+            Collections.singletonList(Paths.get("extra file")));
     List<List<Path>> actualFiles =
         javaLayerConfigurations
             .getLayerConfigurations()
