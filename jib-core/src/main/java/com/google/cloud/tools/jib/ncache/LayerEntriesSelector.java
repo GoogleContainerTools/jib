@@ -60,8 +60,8 @@ class LayerEntriesSelector {
 
     @VisibleForTesting
     LayerEntryTemplate(LayerEntry layerEntry) {
-      sourceFile = layerEntry.getSourceFileString();
-      extractionPath = layerEntry.getExtractionPathString();
+      sourceFile = layerEntry.getAbsoluteSourceFileString();
+      extractionPath = layerEntry.getAbsoluteExtractionPathString();
     }
 
     @Override

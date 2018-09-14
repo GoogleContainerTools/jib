@@ -106,9 +106,10 @@ public class CacheWriterTest {
     Assert.assertNotNull(layerMetadata);
     Assert.assertEquals(1, layerMetadata.getEntries().size());
     Assert.assertEquals(
-        "/some/source/file", layerMetadata.getEntries().get(0).getSourceFileString());
+        "/some/source/file", layerMetadata.getEntries().get(0).getAbsoluteSourceFileString());
     Assert.assertEquals(
-        "/some/extraction/path", layerMetadata.getEntries().get(0).getExtractionPathString());
+        "/some/extraction/path",
+        layerMetadata.getEntries().get(0).getAbsoluteExtractionPathString());
 
     verifyCachedLayerIsExpected(getExpectedLayer(), cachedLayerWithMetadata);
   }

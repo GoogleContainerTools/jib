@@ -161,19 +161,21 @@ public class CacheTest {
       Assert.assertEquals(2, layerMetadata.getEntries().size());
       Assert.assertEquals(FileTime.from(Instant.EPOCH), layerMetadata.getLastModifiedTime());
       Assert.assertEquals(
-          ImmutableList.of(layerEntry3.getSourceFileString(), layerEntry4.getSourceFileString()),
+          ImmutableList.of(
+              layerEntry3.getAbsoluteSourceFileString(), layerEntry4.getAbsoluteSourceFileString()),
           layerMetadata
               .getEntries()
               .stream()
-              .map(LayerMetadataEntry::getSourceFileString)
+              .map(LayerMetadataEntry::getAbsoluteSourceFileString)
               .collect(ImmutableList.toImmutableList()));
       Assert.assertEquals(
           ImmutableList.of(
-              layerEntry3.getExtractionPathString(), layerEntry4.getExtractionPathString()),
+              layerEntry3.getAbsoluteExtractionPathString(),
+              layerEntry4.getAbsoluteExtractionPathString()),
           layerMetadata
               .getEntries()
               .stream()
-              .map(LayerMetadataEntry::getExtractionPathString)
+              .map(LayerMetadataEntry::getAbsoluteExtractionPathString)
               .collect(ImmutableList.toImmutableList()));
     }
   }
