@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -40,17 +39,15 @@ public class DockerContextTaskTest {
 
   @Rule public final TemporaryFolder projectRoot = new TemporaryFolder();
 
-  @Mock private JibExtension jibExtension;
   @Mock private ContainerParameters ContainerParameters;
 
   private DockerContextTask task;
-  private Path dockerfile;
 
   @Before
   public void setUp() throws IOException {
-    File contextFolder = projectRoot.newFolder("build", "jib-docker-context");
-    dockerfile = contextFolder.toPath().resolve("Dockerfile");
+    projectRoot.newFolder("build", "jib-docker-context");
 
+    JibExtension jibExtension = Mockito.mock(JibExtension.class);
     Mockito.when(jibExtension.getContainer()).thenReturn(ContainerParameters);
     Mockito.when(jibExtension.getExtraDirectoryPath()).thenReturn(projectRoot.getRoot().toPath());
     Mockito.when(jibExtension.getMainClass()).thenReturn("MainClass");
@@ -69,7 +66,7 @@ public class DockerContextTaskTest {
     task.generateDockerContext();
 
     Assert.assertEquals(
-        "ENTRYPOINT [\"java\",\"-cp\",\"/app/resources/:/app/classes/:/app/libs/*\",\"MainClass\"]", 
+        "ENTRYPOINT [\"java\",\"-cp\",\"/app/resources/:/app/classes/:/app/libs/*\",\"MainClass\"]",
         getEntrypoint());
   }
 
@@ -79,7 +76,7 @@ public class DockerContextTaskTest {
     task.generateDockerContext();
 
     Assert.assertEquals(
-        "ENTRYPOINT [\"java\",\"-cp\",\"/resources/:/classes/:/libs/*\",\"MainClass\"]", 
+        "ENTRYPOINT [\"java\",\"-cp\",\"/resources/:/classes/:/libs/*\",\"MainClass\"]",
         getEntrypoint());
   }
 
@@ -92,8 +89,7 @@ public class DockerContextTaskTest {
       Assert.fail();
     } catch (GradleException ex) {
       Assert.assertEquals(
-          "container.appRoot (relative/path) is not an absolute Unix-style path",
-          ex.getMessage());
+          "container.appRoot (relative/path) is not an absolute Unix-style path", ex.getMessage());
     }
   }
 
@@ -126,6 +122,7 @@ public class DockerContextTaskTest {
   }
 
   private String getEntrypoint() throws IOException {
+    Path dockerfile = projectRoot.getRoot().toPath().resolve("build/jib-docker-context/Dockerfile");
     List<String> lines = Files.readAllLines(dockerfile);
     return lines.stream().filter(line -> line.startsWith("ENTRYPOINT")).findFirst().get();
   }

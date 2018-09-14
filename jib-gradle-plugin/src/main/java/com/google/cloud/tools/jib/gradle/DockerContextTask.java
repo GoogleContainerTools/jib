@@ -38,6 +38,7 @@ import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.options.Option;
 
+/** Test for {@link DockerContextTask}. */
 public class DockerContextTask extends DefaultTask implements JibTask {
 
   @Nullable private String targetDir;

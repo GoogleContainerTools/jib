@@ -124,6 +124,7 @@ public class ConfigurationPropertyValidator {
   /**
    * Checks if the path string is absolute in Unix-style (using forward slashes).
    *
+   * @param path path to test
    * @return {@code true} if absolute in Unix-style; {@code false} otherwise
    */
   public static boolean isAbsoluteUnixPath(String path) {

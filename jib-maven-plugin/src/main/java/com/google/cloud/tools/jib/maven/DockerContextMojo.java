@@ -47,7 +47,8 @@ public class DockerContextMojo extends JibPluginConfiguration {
       property = "jibTargetDir",
       defaultValue = "${project.build.directory}/jib-docker-context",
       required = true)
-  private String targetDir;
+  @VisibleForTesting
+  String targetDir;
 
   @Override
   public void execute() throws MojoExecutionException {

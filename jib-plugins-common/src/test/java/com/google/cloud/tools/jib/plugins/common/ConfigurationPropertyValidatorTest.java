@@ -161,7 +161,7 @@ public class ConfigurationPropertyValidatorTest {
 
   @Test
   public void testIsAbsoluteUnixPath_windowsPath() {
-    Assert.assertFalse(ConfigurationPropertyValidator.isAbsoluteUnixPath("windows\\path"));
+    Assert.assertFalse(ConfigurationPropertyValidator.isAbsoluteUnixPath("\\windows\\path"));
   }
 
   @Test

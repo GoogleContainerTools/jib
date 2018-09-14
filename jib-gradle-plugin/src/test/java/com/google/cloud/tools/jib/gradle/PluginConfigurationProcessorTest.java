@@ -143,8 +143,7 @@ public class PluginConfigurationProcessorTest {
       Assert.fail();
     } catch (GradleException ex) {
       Assert.assertEquals(
-          "container.appRoot (relative/path) is not an absolute Unix-style path",
-          ex.getMessage());
+          "container.appRoot (relative/path) is not an absolute Unix-style path", ex.getMessage());
     }
   }
 
