@@ -33,6 +33,7 @@ import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
 import java.time.Instant;
 import java.util.List;
 import javax.annotation.Nullable;
+import org.gradle.api.GradleException;
 
 /** Configures and provides builders for the image building tasks. */
 class PluginConfigurationProcessor {
@@ -53,6 +54,12 @@ class PluginConfigurationProcessor {
       throws InvalidImageReferenceException, NumberFormatException {
     jibExtension.handleDeprecatedParameters(logger);
     JibSystemProperties.checkHttpTimeoutProperty();
+
+    String appRoot = jibExtension.getContainer().getAppRoot();
+    if (!ConfigurationPropertyValidator.isAbsoluteUnixPath(appRoot)) {
+      throw new GradleException(
+          "container.appRoot (" + appRoot + ") is not an absolute Unix-style path");
+    }
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
     GradleJibLogger.disableHttpLogging();
@@ -86,7 +93,7 @@ class PluginConfigurationProcessor {
       String mainClass = projectProperties.getMainClass(jibExtension);
       entrypoint =
           JavaEntrypointConstructor.makeDefaultEntrypoint(
-              "/app", jibExtension.getJvmFlags(), mainClass);
+              appRoot, jibExtension.getJvmFlags(), mainClass);
     } else if (jibExtension.getMainClass() != null || !jibExtension.getJvmFlags().isEmpty()) {
       logger.warn("mainClass and jvmFlags are ignored when entrypoint is specified");
     }

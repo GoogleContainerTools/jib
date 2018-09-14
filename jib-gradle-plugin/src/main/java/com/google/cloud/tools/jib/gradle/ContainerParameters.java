@@ -141,7 +141,7 @@ public class ContainerParameters {
     return appRoot;
   }
 
-  public void getAppRoot(String appRoot) {
+  public void setAppRoot(String appRoot) {
     this.appRoot = appRoot;
   }
 }

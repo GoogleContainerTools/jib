@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaDockerContextGenerator;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
+import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.base.Preconditions;
 import com.google.common.io.InsecureRecursiveDeleteException;
@@ -106,6 +107,12 @@ public class DockerContextTask extends DefaultTask implements JibTask {
     jibExtension.handleDeprecatedParameters(gradleJibLogger);
     JibSystemProperties.checkHttpTimeoutProperty();
 
+    String appRoot = jibExtension.getContainer().getAppRoot();
+    if (!ConfigurationPropertyValidator.isAbsoluteUnixPath(appRoot)) {
+      throw new GradleException(
+          "container.appRoot (" + appRoot + ") is not an absolute Unix-style path");
+    }
+
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(
             getProject(), gradleJibLogger, jibExtension.getExtraDirectoryPath());
@@ -114,9 +121,6 @@ public class DockerContextTask extends DefaultTask implements JibTask {
     List<String> entrypoint = jibExtension.getContainer().getEntrypoint();
     if (entrypoint.isEmpty()) {
       String mainClass = gradleProjectProperties.getMainClass(jibExtension);
-      // TODO: need to validate appRoot is a valid, absolute path (in Unix-style since we don't
-      // seem to support Windows images?)
-      String appRoot = jibExtension.getContainer().getAppRoot();
       entrypoint =
           JavaEntrypointConstructor.makeDefaultEntrypoint(
               appRoot, jibExtension.getJvmFlags(), mainClass);

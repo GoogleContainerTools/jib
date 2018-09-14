@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaDockerContextGenerator;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
+import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -67,6 +68,11 @@ public class DockerContextMojo extends JibPluginConfiguration {
       throw new MojoExecutionException(ex.getMessage(), ex);
     }
 
+    if (!ConfigurationPropertyValidator.isAbsoluteUnixPath(getAppRoot())) {
+      throw new MojoExecutionException(
+          "<container><appRoot> (" + getAppRoot() + ") is not an absolute Unix-style path");
+    }
+
     Preconditions.checkNotNull(targetDir);
 
     MavenProjectProperties mavenProjectProperties =
@@ -75,11 +81,8 @@ public class DockerContextMojo extends JibPluginConfiguration {
     List<String> entrypoint = getEntrypoint();
     if (entrypoint.isEmpty()) {
       String mainClass = mavenProjectProperties.getMainClass(this);
-      // TODO: need to validate appRoot is a valid, absolute path (in Unix-style since we don't
-      // seem to support Windows images?)
-      String appRoot = getAppRoot();
       entrypoint =
-          JavaEntrypointConstructor.makeDefaultEntrypoint(appRoot, getJvmFlags(), mainClass);
+          JavaEntrypointConstructor.makeDefaultEntrypoint(getAppRoot(), getJvmFlags(), mainClass);
     } else if (getMainClass() != null || !getJvmFlags().isEmpty()) {
       mavenJibLogger.warn("<mainClass> and <jvmFlags> are ignored when <entrypoint> is specified");
     }
