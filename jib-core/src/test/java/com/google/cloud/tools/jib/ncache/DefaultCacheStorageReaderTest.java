@@ -67,12 +67,12 @@ public class DefaultCacheStorageReaderTest {
     // Checks that layer directories created are all listed.
     Assert.assertEquals(
         new HashSet<>(Arrays.asList(layerDigest1, layerDigest2)),
-        defaultCacheStorageReader.listDigests());
+        defaultCacheStorageReader.fetchDigests());
 
     // Checks that non-digest directories means the cache is corrupted.
     Files.createDirectory(defaultCacheStorageFiles.getLayersDirectory().resolve("not a hash"));
     try {
-      defaultCacheStorageReader.listDigests();
+      defaultCacheStorageReader.fetchDigests();
       Assert.fail("Listing digests should have failed");
 
     } catch (CacheCorruptedException ex) {

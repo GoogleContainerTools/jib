@@ -73,8 +73,8 @@ public class DefaultCacheStorage implements CacheStorage {
   }
 
   @Override
-  public Set<DescriptorDigest> listDigests() throws IOException, CacheCorruptedException {
-    return defaultCacheStorageReader.listDigests();
+  public Set<DescriptorDigest> fetchDigests() throws IOException, CacheCorruptedException {
+    return defaultCacheStorageReader.fetchDigests();
   }
 
   @Override
