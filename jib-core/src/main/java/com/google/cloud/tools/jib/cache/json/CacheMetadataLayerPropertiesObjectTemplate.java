@@ -47,9 +47,9 @@ public class CacheMetadataLayerPropertiesObjectTemplate implements JsonTemplate 
       return extractionPath;
     }
 
-    public LayerEntryTemplate(String sourceFile, String extractionPath) {
-      this.sourceFile = sourceFile;
-      this.extractionPath = extractionPath;
+    public LayerEntryTemplate(String absoluteSourceFile, String absoluteExtractionPath) {
+      sourceFile = absoluteSourceFile;
+      extractionPath = absoluteExtractionPath;
     }
 
     /** For Jackson JSON templating. */
