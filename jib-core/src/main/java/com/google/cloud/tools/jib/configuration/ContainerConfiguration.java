@@ -33,8 +33,8 @@ public class ContainerConfiguration {
   public static final Instant DEFAULT_CREATION_TIME = Instant.EPOCH;
 
   /**
-   * The default app root in the image. For example, if this is set to {@code "/helloworld-app"},
-   * dependency JARs will be in {@code "/helloworld-app/libs"}.
+   * The default app root in the image. For example, if this is set to {@code "/app"}, dependency
+   * JARs will be in {@code "/app/libs"}.
    */
   public static final String DEFAULT_APP_ROOT = "/app";
 

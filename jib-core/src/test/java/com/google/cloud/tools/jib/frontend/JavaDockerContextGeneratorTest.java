@@ -98,7 +98,7 @@ public class JavaDockerContextGeneratorTest {
      */
     Files.delete(targetDirectory);
 
-    Mockito.when(mockJavaLayerConfigurations.getAppRoot()).thenReturn(Paths.get("/app"));
+    Mockito.when(mockJavaLayerConfigurations.getAppRoot()).thenReturn("/app");
     Mockito.when(mockJavaLayerConfigurations.getDependencyLayerEntries())
         .thenReturn(filesToLayerEntries(testDependencies, EXPECTED_DEPENDENCIES_PATH));
     Mockito.when(mockJavaLayerConfigurations.getSnapshotDependencyLayerEntries())
@@ -142,7 +142,7 @@ public class JavaDockerContextGeneratorTest {
             "key3",
             "value3");
 
-    Mockito.when(mockJavaLayerConfigurations.getAppRoot()).thenReturn(Paths.get("/app"));
+    Mockito.when(mockJavaLayerConfigurations.getAppRoot()).thenReturn("/app");
     Mockito.when(mockJavaLayerConfigurations.getDependencyLayerEntries())
         .thenReturn(
             ImmutableList.of(new LayerEntry(Paths.get("ignored"), EXPECTED_DEPENDENCIES_PATH)));

@@ -131,11 +131,6 @@ public class JavaDockerContextGenerator {
     return joiner.toString();
   }
 
-  @VisibleForTesting
-  static String getUnixPath(Path path) {
-    return path.toString().replaceAll(System.getProperty("file.separator"), "/");
-  }
-
   private final ImmutableList<CopyDirective> copyDirectives;
 
   @Nullable private String baseImage;
@@ -151,7 +146,7 @@ public class JavaDockerContextGenerator {
    * @param javaLayerConfigurations the {@link JavaLayerConfigurations}
    */
   public JavaDockerContextGenerator(JavaLayerConfigurations javaLayerConfigurations) {
-    String appRoot = getUnixPath(javaLayerConfigurations.getAppRoot());
+    String appRoot = javaLayerConfigurations.getAppRoot();
     appRoot = appRoot.endsWith("/") ? appRoot : appRoot + '/';
 
     ImmutableList.Builder<CopyDirective> copyDirectivesBuilder = ImmutableList.builder();

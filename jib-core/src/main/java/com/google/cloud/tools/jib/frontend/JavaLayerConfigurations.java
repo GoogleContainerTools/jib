@@ -79,7 +79,7 @@ public class JavaLayerConfigurations {
   public static class Builder {
 
     private final Map<LayerType, List<Path>> layerFilesMap = new EnumMap<>(LayerType.class);
-    private Path appRoot = Paths.get(ContainerConfiguration.DEFAULT_APP_ROOT);
+    private String appRoot = ContainerConfiguration.DEFAULT_APP_ROOT;
 
     private Builder() {
       for (LayerType layerType : LayerType.values()) {
@@ -87,7 +87,7 @@ public class JavaLayerConfigurations {
       }
     }
 
-    public Builder setAppRoot(Path appRoot) {
+    public Builder setAppRoot(String appRoot) {
       this.appRoot = appRoot;
       return this;
     }
@@ -125,7 +125,10 @@ public class JavaLayerConfigurations {
     }
 
     public JavaLayerConfigurations build() throws IOException {
-      Preconditions.checkState(appRoot.isAbsolute(), "'appRoot' must be an absolute path");
+      // Windows filenames cannot have "/", so this also blocks Windows-style path.
+      Preconditions.checkState(
+          appRoot.startsWith("/"), "appRoot should be an absolute path in Unix-style");
+      Path appRootPath = Paths.get(appRoot);
 
       ImmutableMap.Builder<LayerType, LayerConfiguration> layerConfigurationsMap =
           ImmutableMap.builderWithExpectedSize(LayerType.values().length);
@@ -138,7 +141,7 @@ public class JavaLayerConfigurations {
         for (Path layerFile : layerFiles) {
           Path toExtract = layerType.getExtractionPath().resolve(layerFile.getFileName());
           Path pathInContainer =
-              layerType.isAppRootRelative() ? appRoot.resolve(toExtract) : toExtract;
+              layerType.isAppRootRelative() ? appRootPath.resolve(toExtract) : toExtract;
           layerConfigurationBuilder.addEntryRecursive(layerFile, pathInContainer);
         }
 
@@ -153,15 +156,20 @@ public class JavaLayerConfigurations {
   }
 
   private final ImmutableMap<LayerType, LayerConfiguration> layerConfigurationMap;
-  private final Path appRoot;
+  private final String appRoot;
 
   private JavaLayerConfigurations(
-      Path appRoot, ImmutableMap<LayerType, LayerConfiguration> layerConfigurationsMap) {
+      String appRoot, ImmutableMap<LayerType, LayerConfiguration> layerConfigurationsMap) {
     this.appRoot = appRoot;
     layerConfigurationMap = layerConfigurationsMap;
   }
 
-  public Path getAppRoot() {
+  /**
+   * Returns the Unix-style, absolute path for the application root in the container image.
+   *
+   * @return Unix-style, absolute path for the application root
+   */
+  public String getAppRoot() {
     return appRoot;
   }
 
