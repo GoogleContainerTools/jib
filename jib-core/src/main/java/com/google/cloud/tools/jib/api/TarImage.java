@@ -55,7 +55,8 @@ public class TarImage {
   }
 
   /**
-   * Configures the output tarball archive with an image reference to set as its tag.
+   * Configures the output tarball archive with an image reference. This image reference will be the
+   * name of the image if loaded into the Docker daemon.
    *
    * @param imageReference the image reference
    * @return a {@link Builder} to finish constructing a new {@link TarImage}
