@@ -45,7 +45,7 @@ class DefaultCacheStorageReader {
    * @throws CacheCorruptedException if the cache was found to be corrupted
    * @throws IOException if an I/O exception occurs
    */
-  Set<DescriptorDigest> listDigests() throws IOException, CacheCorruptedException {
+  Set<DescriptorDigest> fetchDigests() throws IOException, CacheCorruptedException {
     try (Stream<Path> layerDirectories =
         Files.list(defaultCacheStorageFiles.getLayersDirectory())) {
       List<Path> layerDirectoriesList = layerDirectories.collect(Collectors.toList());
