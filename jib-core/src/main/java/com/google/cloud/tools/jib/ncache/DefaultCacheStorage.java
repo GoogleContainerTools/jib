@@ -19,8 +19,8 @@ package com.google.cloud.tools.jib.ncache;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Default implementation of {@link CacheStorage}. This storage engine stores cache entries in a
@@ -73,14 +73,14 @@ public class DefaultCacheStorage implements CacheStorage {
   }
 
   @Override
-  public List<DescriptorDigest> listDigests() throws IOException, CacheCorruptedException {
-    return defaultCacheStorageReader.listDigests();
+  public Set<DescriptorDigest> fetchDigests() throws IOException, CacheCorruptedException {
+    return defaultCacheStorageReader.fetchDigests();
   }
 
   @Override
-  public Optional<CacheEntry> retrieve(DescriptorDigest layerDigest) throws IOException {
-    // TODO: Implement
-    return Optional.empty();
+  public Optional<CacheEntry> retrieve(DescriptorDigest layerDigest)
+      throws IOException, CacheCorruptedException {
+    return defaultCacheStorageReader.retrieve(layerDigest);
   }
 
   @Override

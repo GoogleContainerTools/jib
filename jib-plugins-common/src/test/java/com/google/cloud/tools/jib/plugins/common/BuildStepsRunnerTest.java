@@ -81,7 +81,7 @@ public class BuildStepsRunnerTest {
 
   @Before
   public void setUpMocks() {
-    testBuildImageStepsRunner = new BuildStepsRunner(mockBuildSteps);
+    testBuildImageStepsRunner = new BuildStepsRunner(mockBuildSteps, "ignored", "ignored");
 
     Mockito.when(mockBuildSteps.getBuildConfiguration()).thenReturn(mockBuildConfiguration);
     Mockito.when(mockBuildConfiguration.getBuildLogger()).thenReturn(mockBuildLogger);

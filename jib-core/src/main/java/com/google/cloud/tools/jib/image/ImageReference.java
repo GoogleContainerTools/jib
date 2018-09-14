@@ -75,6 +75,16 @@ public class ImageReference {
   private static final Pattern REFERENCE_PATTERN = Pattern.compile(REFERENCE_REGEX);
 
   /**
+   * Parses a string {@code reference} into an {@link ImageReference}.
+   *
+   * <p>Image references should generally be in the form: {@code <registry>/<repository>:<tag>} For
+   * example, an image reference could be {@code gcr.io/distroless/java:debug}.
+   *
+   * <p>See <a
+   * href="https://docs.docker.com/engine/reference/commandline/tag/#extended-description">https://docs.docker.com/engine/reference/commandline/tag/#extended-description</a>
+   * for a description of valid image reference format. Note, however, that the image reference is
+   * referred confusingly as {@code tag} on that page.
+   *
    * @param reference the string to parse
    * @return an {@link ImageReference} parsed from the string
    * @throws InvalidImageReferenceException if {@code reference} is formatted incorrectly
@@ -134,9 +144,12 @@ public class ImageReference {
   }
 
   /**
-   * @param registry the image registry
+   * Constructs an {@link ImageReference} from the image reference components, consisting of an
+   * optional registry, a repository, and an optional tag.
+   *
+   * @param registry the image registry, or {@code null} to use the default registry (Docker Hub)
    * @param repository the image repository
-   * @param tag the image tag
+   * @param tag the image tag, or {@code null} to use the default tag ({@code latest})
    * @return an {@link ImageReference} built from the given registry, repository, and tag
    */
   public static ImageReference of(
@@ -151,6 +164,9 @@ public class ImageReference {
   }
 
   /**
+   * Returns {@code true} if {@code registry} is a valid registry string. For example, a valid
+   * registry could be {@code gcr.io} or {@code localhost:5000}.
+   *
    * @param registry the registry to check
    * @return {@code true} if is a valid registry; {@code false} otherwise
    */
@@ -159,6 +175,9 @@ public class ImageReference {
   }
 
   /**
+   * Returns {@code true} if {@code repository} is a valid repository string. For example, a valid
+   * repository could be {@code distroless} or {@code my/container-image/repository}.
+   *
    * @param repository the repository to check
    * @return {@code true} if is a valid repository; {@code false} otherwise
    */
@@ -167,6 +186,9 @@ public class ImageReference {
   }
 
   /**
+   * Returns {@code true} if {@code tag} is a valid tag string. For example, a valid tag could be
+   * {@code v120.5-release}.
+   *
    * @param tag the tag to check
    * @return {@code true} if is a valid tag; {@code false} otherwise
    */
@@ -174,34 +196,81 @@ public class ImageReference {
     return tag.matches(TAG_REGEX);
   }
 
+  /**
+   * Returns {@code true} if {@code tag} is the default tag ((@code latest} or empty); {@code false}
+   * if not.
+   *
+   * @param tag the tag to check
+   * @return {@code true} if {@code tag} is the default tag ((@code latest} or empty); {@code false}
+   *     if not
+   */
+  public static boolean isDefaultTag(String tag) {
+    return tag.isEmpty() || DEFAULT_TAG.equals(tag);
+  }
+
   private final String registry;
   private final String repository;
   private final String tag;
 
-  /** Use {@link #parse} to construct. */
+  /** Construct with {@link #parse}. */
   private ImageReference(String registry, String repository, String tag) {
     this.registry = registry;
     this.repository = repository;
     this.tag = tag;
   }
 
+  /**
+   * Gets the registry portion of the {@link ImageReference}.
+   *
+   * @return the registry
+   */
   public String getRegistry() {
     return registry;
   }
 
+  /**
+   * Gets the repository portion of the {@link ImageReference}.
+   *
+   * @return the repository
+   */
   public String getRepository() {
     return repository;
   }
 
+  /**
+   * Gets the tag portion of the {@link ImageReference}.
+   *
+   * @return the tag
+   */
   public String getTag() {
     return tag;
   }
 
+  /**
+   * Returns {@code true} if the {@link ImageReference} uses the default tag ((@code latest} or
+   * empty); {@code false} if not
+   *
+   * @return {@code true} if uses the default tag; {@code false} if not
+   */
   public boolean usesDefaultTag() {
-    return DEFAULT_TAG.equals(tag);
+    return isDefaultTag(tag);
   }
 
-  /** @return the image reference in Docker-readable format (inverse of {@link #parse}) */
+  /**
+   * Gets an {@link ImageReference} with the same registry and repository, but a different tag.
+   *
+   * @param newTag the new tag
+   * @return an {@link ImageReference} with the same registry/repository and the new tag
+   */
+  public ImageReference withTag(String newTag) {
+    return ImageReference.of(registry, repository, newTag);
+  }
+
+  /**
+   * Stringifies the {@link ImageReference}.
+   *
+   * @return the image reference in Docker-readable format (inverse of {@link #parse})
+   */
   @Override
   public String toString() {
     StringBuilder referenceString = new StringBuilder();
@@ -227,7 +296,11 @@ public class ImageReference {
     return referenceString.toString();
   }
 
-  /** @return the image reference in Docker-readable format, without hiding the tag. */
+  /**
+   * Stringifies the {@link ImageReference}, without hiding the tag.
+   *
+   * @return the image reference in Docker-readable format, without hiding the tag
+   */
   public String toStringWithTag() {
     return this + (usesDefaultTag() ? ":" + DEFAULT_TAG : "");
   }

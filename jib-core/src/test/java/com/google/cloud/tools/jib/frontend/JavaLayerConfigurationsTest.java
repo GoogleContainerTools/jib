@@ -62,24 +62,24 @@ public class JavaLayerConfigurationsTest {
 
     List<String> expectedLabels = new ArrayList<>();
     for (JavaLayerConfigurations.LayerType layerType : JavaLayerConfigurations.LayerType.values()) {
-      expectedLabels.add(layerType.getLabel());
+      expectedLabels.add(layerType.getName());
     }
     List<String> actualLabels = new ArrayList<>();
     for (LayerConfiguration layerConfiguration : javaLayerConfigurations.getLayerConfigurations()) {
-      actualLabels.add(layerConfiguration.getLabel());
+      actualLabels.add(layerConfiguration.getName());
     }
     Assert.assertEquals(expectedLabels, actualLabels);
   }
 
   @Test
   public void testSetFiles() throws IOException {
-    List<Path> dependencyFiles = Collections.singletonList(Paths.get("dependency"));
+    List<Path> dependencyFiles = Collections.singletonList(Paths.get("/dependency"));
     List<Path> snapshotDependencyFiles =
-        Collections.singletonList(Paths.get("snapshot dependency"));
-    List<Path> resourceFiles = Collections.singletonList(Paths.get("resource"));
-    List<Path> classFiles = Collections.singletonList(Paths.get("class"));
-    List<Path> explodedWarFiles = Collections.singletonList(Paths.get("exploded war"));
-    List<Path> extraFiles = Collections.singletonList(Paths.get("extra file"));
+        Collections.singletonList(Paths.get("/snapshot dependency"));
+    List<Path> resourceFiles = Collections.singletonList(Paths.get("/resource"));
+    List<Path> classFiles = Collections.singletonList(Paths.get("/class"));
+    List<Path> explodedWarFiles = Collections.singletonList(Paths.get("/exploded war"));
+    List<Path> extraFiles = Collections.singletonList(Paths.get("/extra file"));
 
     JavaLayerConfigurations javaLayerConfigurations =
         JavaLayerConfigurations.builder()
