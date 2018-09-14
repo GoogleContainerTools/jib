@@ -47,11 +47,14 @@ public class LayerEntry {
    */
   private static String toUnixPath(Path path) {
     System.out.println("path: " + path);
+    System.out.println("path root: " + path.getRoot());
     System.out.println("path components");
     for (Path p : path) {
       System.out.println(p);
     }
     System.out.println("/path");
+    // This works:
+    // Preconditions.checkArgument(path.isAbsolute() || path.startsWith("/"));
     Preconditions.checkArgument(path.isAbsolute());
     StringJoiner pathJoiner = new StringJoiner("/", "/", "");
     for (Path pathComponent : path) {
