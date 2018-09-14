@@ -89,7 +89,7 @@ Build your container image with:
 gradle jib
 ```
 
-Subsequent builds are much faster than the initial build. 
+Subsequent builds are much faster than the initial build.
 
 *Having trouble? Let us know by [submitting an issue](/../../issues/new), contacting us on [Gitter](https://gitter.im/google/jib), or posting to the [Jib users forum](https://groups.google.com/forum/#!forum/jib-users).*
 
@@ -199,7 +199,6 @@ Property | Type | Default | Description
 `format` | `String` | `Docker` | Use `OCI` to build an [OCI container image](https://www.opencontainers.org/).
 `useCurrentTimestamp` | `boolean` | `false` | By default, Jib wipes all timestamps to guarantee reproducibility. If this parameter is set to `true`, Jib will set the image's creation timestamp to the time of the build, which sacrifices reproducibility for easily being able to tell when your image was created.
 `entrypoint` | `List<String>` | *None* | The command to start the container with (similar to Docker's [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint) instruction). If set, then `jvmFlags` and `mainClass` are ignored.
-`appRoot` | `String` | `/app` | The root directory where the app will be placed in the image. Must be absolute in Unix-style.
 
 You can also configure HTTP connection/read timeouts for registry interactions using the `jib.httpTimeout` system property, configured in milliseconds via commandline (the default is `20000`; you can also set it to `0` for infinite timeout):
 
@@ -274,7 +273,7 @@ Some common credential helpers include:
 
 Configure credential helpers to use by specifying them as a `credHelper` for their respective image in the `jib` extension.
 
-*Example configuration:* 
+*Example configuration:*
 ```groovy
 jib {
   from {
@@ -311,7 +310,7 @@ jib {
 }
 ```
 
-These credentials can be stored in `gradle.properties`, retrieved from a command (like `gcloud auth print-access-token`), or read in from a file. 
+These credentials can be stored in `gradle.properties`, retrieved from a command (like `gcloud auth print-access-token`), or read in from a file.
 
 For example, you can use a key file for authentication (for GCR, see [Using a JSON key file](https://cloud.google.com/container-registry/docs/advanced-authentication#using_a_json_key_file)):
 
