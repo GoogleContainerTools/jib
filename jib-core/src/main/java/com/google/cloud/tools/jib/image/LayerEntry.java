@@ -37,8 +37,6 @@ import java.util.StringJoiner;
  */
 public class LayerEntry {
 
-  private static final Path ROOT = Paths.get("/");
-
   /**
    * Stringifies {@code path} in Unix form. The path must be absolute.
    *
@@ -110,8 +108,8 @@ public class LayerEntry {
   }
 
   /**
-   * Get the source file as an absolute path in Unix form. The path is made to absolute first, if
-   * not already absolute.
+   * Get the source file as an absolute path in Unix form. The path is made absolute first, if not
+   * already absolute.
    *
    * @return the source file path
    */
@@ -126,7 +124,7 @@ public class LayerEntry {
    * @return the extraction path
    */
   public String getAbsoluteExtractionPathString() {
-    return toUnixPath(ROOT.resolve(extractionPath));
+    return toUnixPath(Paths.get("/").resolve(extractionPath));
   }
 
   @Override
