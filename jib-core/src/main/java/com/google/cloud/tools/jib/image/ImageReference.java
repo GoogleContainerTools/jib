@@ -197,13 +197,15 @@ public class ImageReference {
   }
 
   /**
-   * Returns {@code true} if {@code tag} is the default tag (@code latest}; {@code false} if not.
+   * Returns {@code true} if {@code tag} is the default tag ((@code latest} or empty); {@code false}
+   * if not.
    *
    * @param tag the tag to check
-   * @return {@code true} if {@code tag} is the default tag (@code latest}; {@code false} if not
+   * @return {@code true} if {@code tag} is the default tag ((@code latest} or empty); {@code false}
+   *     if not
    */
   public static boolean isDefaultTag(String tag) {
-    return tag.length() == 0 || DEFAULT_TAG.equals(tag);
+    return tag.isEmpty() || DEFAULT_TAG.equals(tag);
   }
 
   private final String registry;
@@ -245,8 +247,8 @@ public class ImageReference {
   }
 
   /**
-   * Returns {@code true} if the {@link ImageReference} uses the default tag {@code latest}; {@code
-   * false} if not
+   * Returns {@code true} if the {@link ImageReference} uses the default tag ((@code latest} or
+   * empty); {@code false} if not
    *
    * @return {@code true} if uses the default tag; {@code false} if not
    */
