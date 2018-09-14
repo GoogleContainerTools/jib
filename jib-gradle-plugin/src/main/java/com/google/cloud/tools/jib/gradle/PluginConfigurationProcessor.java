@@ -39,6 +39,23 @@ import org.gradle.api.GradleException;
 class PluginConfigurationProcessor {
 
   /**
+   * Gets the value of the {@code container.appRoot} parameter. Throws {@link GradleException} if it
+   * is not an absolute path in Unix-style.
+   *
+   * @param jibExtension the Jib plugin extension
+   * @return the app root value
+   * @throws GradleException if the app root is not an absolute path in Unix-style
+   */
+  static String getAppRootChecked(JibExtension jibExtension) {
+    String appRoot = jibExtension.getContainer().getAppRoot();
+    if (!ConfigurationPropertyValidator.isAbsoluteUnixPath(appRoot)) {
+      throw new GradleException(
+          "container.appRoot (" + appRoot + ") is not an absolute Unix-style path");
+    }
+    return appRoot;
+  }
+
+  /**
    * Sets up {@link BuildConfiguration} that is common among the image building tasks. This includes
    * setting up the base image reference/authorization, container configuration, cache
    * configuration, and layer configuration.
@@ -54,12 +71,6 @@ class PluginConfigurationProcessor {
       throws InvalidImageReferenceException, NumberFormatException {
     jibExtension.handleDeprecatedParameters(logger);
     JibSystemProperties.checkHttpTimeoutProperty();
-
-    String appRoot = jibExtension.getContainer().getAppRoot();
-    if (!ConfigurationPropertyValidator.isAbsoluteUnixPath(appRoot)) {
-      throw new GradleException(
-          "container.appRoot (" + appRoot + ") is not an absolute Unix-style path");
-    }
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
     GradleJibLogger.disableHttpLogging();
@@ -93,7 +104,7 @@ class PluginConfigurationProcessor {
       String mainClass = projectProperties.getMainClass(jibExtension);
       entrypoint =
           JavaEntrypointConstructor.makeDefaultEntrypoint(
-              appRoot, jibExtension.getJvmFlags(), mainClass);
+              jibExtension.getContainer().getAppRoot(), jibExtension.getJvmFlags(), mainClass);
     } else if (jibExtension.getMainClass() != null || !jibExtension.getJvmFlags().isEmpty()) {
       logger.warn("mainClass and jvmFlags are ignored when entrypoint is specified");
     }

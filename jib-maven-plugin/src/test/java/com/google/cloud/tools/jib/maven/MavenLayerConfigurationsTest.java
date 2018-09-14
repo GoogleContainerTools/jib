@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Set;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.model.Build;
@@ -47,6 +48,14 @@ public class MavenLayerConfigurationsTest {
     return layerEntries
         .stream()
         .map(LayerEntry::getSourceFile)
+        .collect(ImmutableList.toImmutableList());
+  }
+
+  private static ImmutableList<String> getExtractionPatFromLayerEntries(
+      ImmutableList<LayerEntry> layerEntries) {
+    return layerEntries
+        .stream()
+        .map(LayerEntry::getAbsoluteExtractionPathString)
         .collect(ImmutableList.toImmutableList());
   }
 
@@ -139,6 +148,42 @@ public class MavenLayerConfigurationsTest {
     Assert.assertEquals(
         expectedExtraFiles,
         getSourceFilesFromLayerEntries(javaLayerConfigurations.getExtraFilesLayerEntries()));
+  }
+
+  @Test
+  public void testGetForProject_nonDefaultAppRoot() throws URISyntaxException, IOException {
+    Path extraFilesDirectory = Paths.get(Resources.getResource("layer").toURI());
+
+    JavaLayerConfigurations configuration =
+        MavenLayerConfigurations.getForProject(mockMavenProject, extraFilesDirectory, "/my/app");
+
+    Assert.assertEquals(
+        Arrays.asList(
+            "/my/app/libs/dependency-1.0.0.jar",
+            "/my/app/libs/libraryA.jar",
+            "/my/app/libs/libraryB.jar"),
+        getExtractionPatFromLayerEntries(configuration.getDependencyLayerEntries()));
+    Assert.assertEquals(
+        Arrays.asList("/my/app/libs/dependencyX-1.0.0-SNAPSHOT.jar"),
+        getExtractionPatFromLayerEntries(configuration.getSnapshotDependencyLayerEntries()));
+    Assert.assertEquals(
+        Arrays.asList(
+            "/my/app/resources/directory",
+            "/my/app/resources/directory/somefile",
+            "/my/app/resources/resourceA",
+            "/my/app/resources/resourceB",
+            "/my/app/resources/world"),
+        getExtractionPatFromLayerEntries(configuration.getResourceLayerEntries()));
+    Assert.assertEquals(
+        Arrays.asList(
+            "/my/app/classes/HelloWorld.class",
+            "/my/app/classes/package",
+            "/my/app/classes/package/some.class",
+            "/my/app/classes/some.class"),
+        getExtractionPatFromLayerEntries(configuration.getClassLayerEntries()));
+    Assert.assertEquals(
+        Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"),
+        getExtractionPatFromLayerEntries(configuration.getExtraFilesLayerEntries()));
   }
 
   private Artifact makeArtifact(Path path) {

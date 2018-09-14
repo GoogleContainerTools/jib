@@ -39,6 +39,24 @@ import org.apache.maven.plugin.MojoExecutionException;
 class PluginConfigurationProcessor {
 
   /**
+   * Gets the value of the {@code <container><appRoot>} parameter. Throws {@link GradleException} if
+   * it is not an absolute path in Unix-style.
+   *
+   * @param jibPluginConfiguration the Jib plugin configuration
+   * @return the app root value
+   * @throws MojoExecutionException if the app root is not an absolute path in Unix-style
+   */
+  static String getAppRootChecked(JibPluginConfiguration jibPluginConfiguration)
+      throws MojoExecutionException {
+    String appRoot = jibPluginConfiguration.getAppRoot();
+    if (!ConfigurationPropertyValidator.isAbsoluteUnixPath(appRoot)) {
+      throw new MojoExecutionException(
+          "<container><appRoot> (" + appRoot + ") is not an absolute Unix-style path");
+    }
+    return appRoot;
+  }
+
+  /**
    * Sets up {@link BuildConfiguration} that is common among the image building goals. This includes
    * setting up the base image reference/authorization, container configuration, cache
    * configuration, and layer configuration.
@@ -61,12 +79,6 @@ class PluginConfigurationProcessor {
       JibSystemProperties.checkHttpTimeoutProperty();
     } catch (NumberFormatException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex);
-    }
-
-    String appRoot = jibPluginConfiguration.getAppRoot();
-    if (!ConfigurationPropertyValidator.isAbsoluteUnixPath(appRoot)) {
-      throw new MojoExecutionException(
-          "<container><appRoot> (" + appRoot + ") is not an absolute Unix-style path");
     }
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
@@ -115,7 +127,7 @@ class PluginConfigurationProcessor {
       String mainClass = projectProperties.getMainClass(jibPluginConfiguration);
       entrypoint =
           JavaEntrypointConstructor.makeDefaultEntrypoint(
-              appRoot, jibPluginConfiguration.getJvmFlags(), mainClass);
+              jibPluginConfiguration.getAppRoot(), jibPluginConfiguration.getJvmFlags(), mainClass);
     } else if (jibPluginConfiguration.getMainClass() != null
         || !jibPluginConfiguration.getJvmFlags().isEmpty()) {
       logger.warn("<mainClass> and <jvmFlags> are ignored when <entrypoint> is specified");

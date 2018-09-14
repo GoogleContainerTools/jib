@@ -55,9 +55,10 @@ public class BuildTarMojo extends JibPluginConfiguration {
     }
 
     MavenJibLogger mavenJibLogger = new MavenJibLogger(getLog());
+    String appRoot = PluginConfigurationProcessor.getAppRootChecked(this);
     MavenProjectProperties mavenProjectProperties =
         MavenProjectProperties.getForProject(
-            getProject(), mavenJibLogger, getExtraDirectory(), getAppRoot());
+            getProject(), mavenJibLogger, getExtraDirectory(), appRoot);
 
     try {
       MavenHelpfulSuggestionsBuilder mavenHelpfulSuggestionsBuilder =

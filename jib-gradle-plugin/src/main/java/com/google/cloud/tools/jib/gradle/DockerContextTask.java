@@ -20,7 +20,6 @@ import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaDockerContextGenerator;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
-import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.base.Preconditions;
 import com.google.common.io.InsecureRecursiveDeleteException;
@@ -107,18 +106,10 @@ public class DockerContextTask extends DefaultTask implements JibTask {
     jibExtension.handleDeprecatedParameters(gradleJibLogger);
     JibSystemProperties.checkHttpTimeoutProperty();
 
-    String appRoot = jibExtension.getContainer().getAppRoot();
-    if (!ConfigurationPropertyValidator.isAbsoluteUnixPath(appRoot)) {
-      throw new GradleException(
-          "container.appRoot (" + appRoot + ") is not an absolute Unix-style path");
-    }
-
+    String appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(
-            getProject(),
-            gradleJibLogger,
-            jibExtension.getExtraDirectoryPath(),
-            jibExtension.getContainer().getAppRoot());
+            getProject(), gradleJibLogger, jibExtension.getExtraDirectoryPath(), appRoot);
     String targetDir = getTargetDir();
 
     List<String> entrypoint = jibExtension.getContainer().getEntrypoint();

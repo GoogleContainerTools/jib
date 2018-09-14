@@ -127,8 +127,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testEntrypointClasspath_nonDefaultAppRoot()
-      throws NumberFormatException, MojoExecutionException {
+  public void testEntrypointClasspath_nonDefaultAppRoot() throws MojoExecutionException {
     Mockito.doReturn("/my/app").when(mockJibPluginConfiguration).getAppRoot();
 
     PluginConfigurationProcessor processor =
@@ -141,12 +140,19 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testAppRoot_errorOnNonAbsolutePath() throws NumberFormatException {
+  public void testGetAppRootChecked() throws MojoExecutionException {
+    Mockito.doReturn("/some/root").when(mockJibPluginConfiguration).getAppRoot();
+
+    Assert.assertEquals(
+        "/some/root", PluginConfigurationProcessor.getAppRootChecked(mockJibPluginConfiguration));
+  }
+
+  @Test
+  public void testGetAppRootChecked_errorOnNonAbsolutePath() {
     Mockito.doReturn("relative/path").when(mockJibPluginConfiguration).getAppRoot();
 
     try {
-      PluginConfigurationProcessor.processCommonConfiguration(
-          mockMavenJibLogger, mockJibPluginConfiguration, mockProjectProperties);
+      PluginConfigurationProcessor.getAppRootChecked(mockJibPluginConfiguration);
       Assert.fail();
     } catch (MojoExecutionException ex) {
       Assert.assertEquals(
@@ -156,12 +162,11 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testAppRoot_errorOnWindowsPath() throws NumberFormatException {
+  public void testGetAppRootChecked_errorOnWindowsPath() {
     Mockito.doReturn("\\windows\\path").when(mockJibPluginConfiguration).getAppRoot();
 
     try {
-      PluginConfigurationProcessor.processCommonConfiguration(
-          mockMavenJibLogger, mockJibPluginConfiguration, mockProjectProperties);
+      PluginConfigurationProcessor.getAppRootChecked(mockJibPluginConfiguration);
       Assert.fail();
     } catch (MojoExecutionException ex) {
       Assert.assertEquals(
@@ -171,12 +176,11 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testAppRoot_errorOnWindowsPathWithDriveLetter() throws NumberFormatException {
+  public void testGetAppRootChecked_errorOnWindowsPathWithDriveLetter() {
     Mockito.doReturn("C:\\windows\\path").when(mockJibPluginConfiguration).getAppRoot();
 
     try {
-      PluginConfigurationProcessor.processCommonConfiguration(
-          mockMavenJibLogger, mockJibPluginConfiguration, mockProjectProperties);
+      PluginConfigurationProcessor.getAppRootChecked(mockJibPluginConfiguration);
       Assert.fail();
     } catch (MojoExecutionException ex) {
       Assert.assertEquals(

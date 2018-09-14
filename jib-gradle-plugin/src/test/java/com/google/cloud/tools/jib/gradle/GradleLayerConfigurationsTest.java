@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import org.gradle.api.Project;
@@ -73,6 +74,14 @@ public class GradleLayerConfigurationsTest {
     return layerEntries
         .stream()
         .map(LayerEntry::getSourceFile)
+        .collect(ImmutableList.toImmutableList());
+  }
+
+  private static ImmutableList<String> getExtractionPatFromLayerEntries(
+      ImmutableList<LayerEntry> layerEntries) {
+    return layerEntries
+        .stream()
+        .map(LayerEntry::getAbsoluteExtractionPathString)
         .collect(ImmutableList.toImmutableList());
   }
 
@@ -137,7 +146,7 @@ public class GradleLayerConfigurationsTest {
             applicationDirectory.resolve("resources/world"));
     ImmutableList<Path> expectedClassesFiles =
         ImmutableList.of(
-            applicationDirectory.resolve("classes").resolve("HelloWorld.class"),
+            applicationDirectory.resolve("classes/HelloWorld.class"),
             applicationDirectory.resolve("classes/some.class"));
     ImmutableList<Path> expectedExtraFiles = ImmutableList.of();
 
@@ -198,5 +207,36 @@ public class GradleLayerConfigurationsTest {
     Assert.assertEquals(
         expectedExtraFiles,
         getSourceFilesFromLayerEntries(javaLayerConfigurations.getExtraFilesLayerEntries()));
+  }
+
+  @Test
+  public void testGetForProject_nonDefaultAppRoot() throws IOException, URISyntaxException {
+    Path extraFilesDirectory = Paths.get(Resources.getResource("layer").toURI());
+
+    JavaLayerConfigurations configuration =
+        GradleLayerConfigurations.getForProject(
+            mockProject, mockGradleJibLogger, extraFilesDirectory, "/my/app");
+
+    Assert.assertEquals(
+        Arrays.asList(
+            "/my/app/libs/dependency-1.0.0.jar",
+            "/my/app/libs/libraryA.jar",
+            "/my/app/libs/libraryB.jar"),
+        getExtractionPatFromLayerEntries(configuration.getDependencyLayerEntries()));
+    Assert.assertEquals(
+        Arrays.asList("/my/app/libs/dependencyX-1.0.0-SNAPSHOT.jar"),
+        getExtractionPatFromLayerEntries(configuration.getSnapshotDependencyLayerEntries()));
+    Assert.assertEquals(
+        Arrays.asList(
+            "/my/app/resources/resourceA",
+            "/my/app/resources/resourceB",
+            "/my/app/resources/world"),
+        getExtractionPatFromLayerEntries(configuration.getResourceLayerEntries()));
+    Assert.assertEquals(
+        Arrays.asList("/my/app/classes/HelloWorld.class", "/my/app/classes/some.class"),
+        getExtractionPatFromLayerEntries(configuration.getClassLayerEntries()));
+    Assert.assertEquals(
+        Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"),
+        getExtractionPatFromLayerEntries(configuration.getExtraFilesLayerEntries()));
   }
 }

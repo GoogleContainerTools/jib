@@ -119,8 +119,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testEntrypointClasspath_nonDefaultAppRoot()
-      throws NumberFormatException, InvalidImageReferenceException {
+  public void testEntrypointClasspath_nonDefaultAppRoot() throws InvalidImageReferenceException {
     Mockito.doReturn("/my/app").when(mockContainerParameters).getAppRoot();
 
     PluginConfigurationProcessor processor =
@@ -133,13 +132,19 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testAppRoot_errorOnNonAbsolutePath()
-      throws NumberFormatException, InvalidImageReferenceException {
+  public void testGetAppRootChecked() {
+    Mockito.doReturn("/some/root").when(mockContainerParameters).getAppRoot();
+
+    Assert.assertEquals(
+        "/some/root", PluginConfigurationProcessor.getAppRootChecked(mockJibExtension));
+  }
+
+  @Test
+  public void testGetAppRootChecked_errorOnNonAbsolutePath() {
     Mockito.doReturn("relative/path").when(mockContainerParameters).getAppRoot();
 
     try {
-      PluginConfigurationProcessor.processCommonConfiguration(
-          mockGradleJibLogger, mockJibExtension, mockProjectProperties);
+      PluginConfigurationProcessor.getAppRootChecked(mockJibExtension);
       Assert.fail();
     } catch (GradleException ex) {
       Assert.assertEquals(
@@ -148,13 +153,11 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testAppRoot_errorOnWindowsPath()
-      throws NumberFormatException, InvalidImageReferenceException {
+  public void testGetAppRootChecked_errorOnWindowsPath() {
     Mockito.doReturn("\\windows\\path").when(mockContainerParameters).getAppRoot();
 
     try {
-      PluginConfigurationProcessor.processCommonConfiguration(
-          mockGradleJibLogger, mockJibExtension, mockProjectProperties);
+      PluginConfigurationProcessor.getAppRootChecked(mockJibExtension);
       Assert.fail();
     } catch (GradleException ex) {
       Assert.assertEquals(
@@ -164,13 +167,11 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testAppRoot_errorOnWindowsPathWithDriveLetter()
-      throws NumberFormatException, InvalidImageReferenceException {
+  public void testGetAppRootChecked_errorOnWindowsPathWithDriveLetter() {
     Mockito.doReturn("C:\\windows\\path").when(mockContainerParameters).getAppRoot();
 
     try {
-      PluginConfigurationProcessor.processCommonConfiguration(
-          mockGradleJibLogger, mockJibExtension, mockProjectProperties);
+      PluginConfigurationProcessor.getAppRootChecked(mockJibExtension);
       Assert.fail();
     } catch (GradleException ex) {
       Assert.assertEquals(
