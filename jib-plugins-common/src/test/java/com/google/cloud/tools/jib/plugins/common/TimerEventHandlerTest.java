@@ -36,15 +36,22 @@ public class TimerEventHandlerTest {
   public void testAccept() {
     TimerEventHandler timerEventHandler = new TimerEventHandler(logMessageQueue::add);
 
-    timerEventHandler.accept(new TimerEvent(State.START, ROOT_TIMER, Duration.ZERO, "description"));
     timerEventHandler.accept(
-        new TimerEvent(State.IN_PROGRESS, ROOT_TIMER, Duration.ofMillis(10), "description"));
+        new TimerEvent(State.START, ROOT_TIMER, Duration.ZERO, Duration.ZERO, "description"));
     timerEventHandler.accept(
-        new TimerEvent(State.FINISHED, ROOT_TIMER, Duration.ofMillis(100), "description"));
+        new TimerEvent(
+            State.IN_PROGRESS, ROOT_TIMER, Duration.ofMillis(10), Duration.ZERO, "description"));
+    timerEventHandler.accept(
+        new TimerEvent(
+            State.FINISHED, ROOT_TIMER, Duration.ofMillis(100), Duration.ZERO, "description"));
 
     timerEventHandler.accept(
         new TimerEvent(
-            State.IN_PROGRESS, () -> Optional.of(ROOT_TIMER), Duration.ZERO, "child description"));
+            State.IN_PROGRESS,
+            () -> Optional.of(ROOT_TIMER),
+            Duration.ZERO,
+            Duration.ZERO,
+            "child description"));
 
     String rootStartMessage = logMessageQueue.poll();
     Assert.assertNotNull(rootStartMessage);

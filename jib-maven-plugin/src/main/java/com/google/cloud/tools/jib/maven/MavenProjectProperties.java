@@ -79,8 +79,8 @@ public class MavenProjectProperties implements ProjectProperties {
   private static EventEmitter makeEventEmitter(Log log) {
     return new DefaultEventEmitter(
         new EventHandlers()
-            .add(JibEventType.LOG, new LogEventHandler(log))
-            .add(JibEventType.TIMER, new TimerEventHandler(log::debug)));
+            .add(JibEventType.LOGGING, new LogEventHandler(log))
+            .add(JibEventType.TIMING, new TimerEventHandler(log::debug)));
   }
 
   private final MavenProject project;
