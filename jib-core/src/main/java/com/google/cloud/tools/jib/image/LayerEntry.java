@@ -17,8 +17,11 @@
 package com.google.cloud.tools.jib.image;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Objects;
+import java.util.StringJoiner;
 
 /**
  * Represents an entry in the layer. A layer consists of many entries that can be converted into tar
@@ -33,6 +36,23 @@ import java.util.Objects;
  * </ul>
  */
 public class LayerEntry {
+
+  /**
+   * Stringifies {@code path} in Unix form. The path must be absolute.
+   *
+   * @param path the path
+   * @return the string form of the absolute path
+   */
+  private static String toUnixPath(Path path) {
+    Preconditions.checkArgument(
+        path.getRoot() != null, "Tried to stringify a non-absolute path: %s", path);
+
+    StringJoiner pathJoiner = new StringJoiner("/", "/", "");
+    for (Path pathComponent : path) {
+      pathJoiner.add(pathComponent.toString());
+    }
+    return pathJoiner.toString();
+  }
 
   private final Path sourceFile;
   private final Path extractionPath;
@@ -61,10 +81,10 @@ public class LayerEntry {
   /**
    * Gets the source file.
    *
-   * <p>Do <b>not</b> call {@link Path#toString} on this - use {@link #getSourceFileString} instead.
-   * This path can be relative or absolute, and {@link #getSourceFileString} can also be relative or
-   * absolute, but callers should rely on {@link #getSourceFileString} for the serialized form since
-   * the serialization could change independently of the path representation.
+   * <p>Do <b>not</b> call {@link Path#toString} on this - use {@link #getAbsoluteSourceFileString}
+   * instead. This path can be relative or absolute, but {@link #getAbsoluteSourceFileString} can
+   * only be absolute. Callers should rely on {@link #getAbsoluteSourceFileString} for the
+   * serialized form since the serialization could change independently of the path representation.
    *
    * @return the source file
    */
@@ -75,10 +95,11 @@ public class LayerEntry {
   /**
    * Gets the extraction path.
    *
-   * <p>Do <b>not</b> call {@link Path#toString} on this - use {@link #getExtractionPathString}
-   * instead. This path can be relative or absolute, and {@link #getExtractionPathString} can also
-   * be relative or absolute, but callers should rely on {@link #getExtractionPathString} for the
-   * serialized form since the serialization could change independently of the path representation.
+   * <p>Do <b>not</b> call {@link Path#toString} on this - use {@link
+   * #getAbsoluteExtractionPathString} instead. This path can be relative or absolute, but {@link
+   * #getAbsoluteExtractionPathString} can only be absolute. Callers should rely on {@link
+   * #getAbsoluteExtractionPathString} for the serialized form since the serialization could change
+   * independently of the path representation.
    *
    * @return the extraction path
    */
@@ -87,22 +108,23 @@ public class LayerEntry {
   }
 
   /**
-   * Gets the source file path in string form.
+   * Get the source file as an absolute path in Unix form. The path is made absolute first, if not
+   * already absolute.
    *
    * @return the source file path
    */
-  public String getSourceFileString() {
-    return sourceFile.toString();
+  public String getAbsoluteSourceFileString() {
+    return toUnixPath(sourceFile.toAbsolutePath());
   }
 
   /**
-   * Gets the extraction path in string form. This does <b>not</b> convert the extraction path to an
-   * absolute path.
+   * Gets the extraction path as an absolute path in Unix form. The path is made absolute first, if
+   * not already absolute.
    *
    * @return the extraction path
    */
-  public String getExtractionPathString() {
-    return extractionPath.toString();
+  public String getAbsoluteExtractionPathString() {
+    return toUnixPath(Paths.get("/").resolve(extractionPath));
   }
 
   @Override
@@ -126,6 +148,6 @@ public class LayerEntry {
   @Override
   @VisibleForTesting
   public String toString() {
-    return getSourceFileString() + "\t" + getExtractionPathString();
+    return getAbsoluteSourceFileString() + "\t" + getAbsoluteExtractionPathString();
   }
 }

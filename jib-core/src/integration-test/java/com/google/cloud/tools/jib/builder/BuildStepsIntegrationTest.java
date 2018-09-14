@@ -219,6 +219,36 @@ public class BuildStepsIntegrationTest {
   }
 
   @Test
+  public void testSteps_forBuildToDockerDaemon_multipleTags()
+      throws IOException, InterruptedException, CacheMetadataCorruptedException, ExecutionException,
+          CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
+    String imageReference = "testdocker";
+    BuildConfiguration buildConfiguration =
+        getBuildConfigurationBuilder(
+                ImageReference.of("gcr.io", "distroless/java", "latest"),
+                ImageReference.of(null, imageReference, null))
+            .setAdditionalTargetImageTags(ImmutableSet.of("testtag2", "testtag3"))
+            .build();
+    Path cacheDirectory = temporaryFolder.newFolder().toPath();
+    BuildSteps.forBuildToDockerDaemon(
+            buildConfiguration,
+            new Caches.Initializer(cacheDirectory, false, cacheDirectory, false))
+        .run();
+
+    assertDockerInspect(imageReference);
+    Assert.assertEquals(
+        "Hello, world. An argument.\n", new Command("docker", "run", imageReference).run());
+    assertDockerInspect(imageReference + ":testtag2");
+    Assert.assertEquals(
+        "Hello, world. An argument.\n",
+        new Command("docker", "run", imageReference + ":testtag2").run());
+    assertDockerInspect(imageReference + ":testtag3");
+    Assert.assertEquals(
+        "Hello, world. An argument.\n",
+        new Command("docker", "run", imageReference + ":testtag3").run());
+  }
+
+  @Test
   public void testSteps_forBuildToTarball()
       throws IOException, InterruptedException, CacheMetadataCorruptedException, ExecutionException,
           CacheDirectoryNotOwnedException, CacheDirectoryCreationException {

@@ -85,9 +85,13 @@ class CacheMetadata {
         LayerMetadata.LayerMetadataEntry metadataEntry = metadataEntriesIterator.next();
 
         boolean areSourceFilesEqual =
-            layerEntry.getSourceFileString().equals(metadataEntry.getSourceFileString());
+            layerEntry
+                .getAbsoluteSourceFileString()
+                .equals(metadataEntry.getAbsoluteSourceFileString());
         boolean areExtractionPathsEqual =
-            layerEntry.getExtractionPathString().equals(metadataEntry.getExtractionPathString());
+            layerEntry
+                .getAbsoluteExtractionPathString()
+                .equals(metadataEntry.getAbsoluteExtractionPathString());
         if (!areSourceFilesEqual || !areExtractionPathsEqual) {
           return false;
         }

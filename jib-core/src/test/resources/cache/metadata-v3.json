@@ -24,7 +24,7 @@
         "layerEntries": [
           {
             "sourceFile": "/some/source/path",
-            "extractionPath": "some/extraction/path"
+            "extractionPath": "/some/extraction/path"
           }
         ],
         "lastModifiedTime": 1000
