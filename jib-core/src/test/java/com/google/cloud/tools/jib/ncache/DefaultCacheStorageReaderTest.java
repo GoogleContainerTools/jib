@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.security.DigestException;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Optional;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
@@ -65,7 +66,8 @@ public class DefaultCacheStorageReaderTest {
 
     // Checks that layer directories created are all listed.
     Assert.assertEquals(
-        Arrays.asList(layerDigest1, layerDigest2), defaultCacheStorageReader.listDigests());
+        new HashSet<>(Arrays.asList(layerDigest1, layerDigest2)),
+        defaultCacheStorageReader.listDigests());
 
     // Checks that non-digest directories means the cache is corrupted.
     Files.createDirectory(defaultCacheStorageFiles.getLayersDirectory().resolve("not a hash"));

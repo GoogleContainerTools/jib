@@ -22,9 +22,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.DigestException;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -44,11 +45,11 @@ class DefaultCacheStorageReader {
    * @throws CacheCorruptedException if the cache was found to be corrupted
    * @throws IOException if an I/O exception occurs
    */
-  List<DescriptorDigest> listDigests() throws IOException, CacheCorruptedException {
+  Set<DescriptorDigest> listDigests() throws IOException, CacheCorruptedException {
     try (Stream<Path> layerDirectories =
         Files.list(defaultCacheStorageFiles.getLayersDirectory())) {
       List<Path> layerDirectoriesList = layerDirectories.collect(Collectors.toList());
-      List<DescriptorDigest> layerDigests = new ArrayList<>(layerDirectoriesList.size());
+      Set<DescriptorDigest> layerDigests = new HashSet<>(layerDirectoriesList.size());
       for (Path layerDirectory : layerDirectoriesList) {
         try {
           layerDigests.add(DescriptorDigest.fromHash(layerDirectory.getFileName().toString()));
