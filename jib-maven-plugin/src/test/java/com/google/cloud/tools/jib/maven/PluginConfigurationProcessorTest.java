@@ -47,13 +47,13 @@ public class PluginConfigurationProcessorTest {
     Mockito.doReturn(mockMavenSession).when(mockJibPluginConfiguration).getSession();
     Mockito.doReturn(mockMavenSettings).when(mockMavenSession).getSettings();
 
-    Mockito.doReturn("/app").when(mockJibPluginConfiguration).getAppRoot();
     Mockito.doReturn("gcr.io/distroless/java").when(mockJibPluginConfiguration).getBaseImage();
     Mockito.doReturn(new AuthConfiguration()).when(mockJibPluginConfiguration).getBaseImageAuth();
     Mockito.doReturn(Collections.emptyList()).when(mockJibPluginConfiguration).getEntrypoint();
     Mockito.doReturn(Collections.emptyList()).when(mockJibPluginConfiguration).getJvmFlags();
     Mockito.doReturn(Collections.emptyList()).when(mockJibPluginConfiguration).getArgs();
     Mockito.doReturn(Collections.emptyList()).when(mockJibPluginConfiguration).getExposedPorts();
+    Mockito.doReturn("/app").when(mockJibPluginConfiguration).getAppRoot();
 
     Mockito.doReturn(JavaLayerConfigurations.builder().build())
         .when(mockProjectProperties)
@@ -124,6 +124,65 @@ public class PluginConfigurationProcessorTest {
     Assert.assertEquals(Arrays.asList("custom", "entrypoint"), configuration.getEntrypoint());
     Mockito.verify(mockMavenJibLogger)
         .warn("<mainClass> and <jvmFlags> are ignored when <entrypoint> is specified");
+  }
+
+  @Test
+  public void testEntrypointClasspath_nonDefaultAppRoot()
+      throws NumberFormatException, MojoExecutionException {
+    Mockito.doReturn("/my/app").when(mockJibPluginConfiguration).getAppRoot();
+
+    PluginConfigurationProcessor processor =
+        PluginConfigurationProcessor.processCommonConfiguration(
+            mockMavenJibLogger, mockJibPluginConfiguration, mockProjectProperties);
+    ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
+
+    Assert.assertEquals(
+        "/my/app/resources/:/my/app/classes/:/my/app/libs/*", configuration.getEntrypoint().get(2));
+  }
+
+  @Test
+  public void testAppRoot_errorOnNonAbsolutePath() throws NumberFormatException {
+    Mockito.doReturn("relative/path").when(mockJibPluginConfiguration).getAppRoot();
+
+    try {
+      PluginConfigurationProcessor.processCommonConfiguration(
+          mockMavenJibLogger, mockJibPluginConfiguration, mockProjectProperties);
+      Assert.fail();
+    } catch (MojoExecutionException ex) {
+      Assert.assertEquals(
+          "<container><appRoot> (relative/path) is not an absolute Unix-style path",
+          ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testAppRoot_errorOnWindowsPath() throws NumberFormatException {
+    Mockito.doReturn("\\windows\\path").when(mockJibPluginConfiguration).getAppRoot();
+
+    try {
+      PluginConfigurationProcessor.processCommonConfiguration(
+          mockMavenJibLogger, mockJibPluginConfiguration, mockProjectProperties);
+      Assert.fail();
+    } catch (MojoExecutionException ex) {
+      Assert.assertEquals(
+          "<container><appRoot> (\\windows\\path) is not an absolute Unix-style path",
+          ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testAppRoot_errorOnWindowsPathWithDriveLetter() throws NumberFormatException {
+    Mockito.doReturn("C:\\windows\\path").when(mockJibPluginConfiguration).getAppRoot();
+
+    try {
+      PluginConfigurationProcessor.processCommonConfiguration(
+          mockMavenJibLogger, mockJibPluginConfiguration, mockProjectProperties);
+      Assert.fail();
+    } catch (MojoExecutionException ex) {
+      Assert.assertEquals(
+          "<container><appRoot> (C:\\windows\\path) is not an absolute Unix-style path",
+          ex.getMessage());
+    }
   }
 
   // TODO should test other behaviours

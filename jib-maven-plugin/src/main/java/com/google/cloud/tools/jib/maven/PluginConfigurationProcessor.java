@@ -48,7 +48,8 @@ class PluginConfigurationProcessor {
    *     data
    * @param projectProperties used for providing additional information
    * @return a new {@link PluginConfigurationProcessor} containing pre-configured builders
-   * @throws MojoExecutionException if the http timeout system property is misconfigured
+   * @throws MojoExecutionException if the http timeout system property or the appRoot container
+   *     parameter is misconfigured
    */
   static PluginConfigurationProcessor processCommonConfiguration(
       MavenJibLogger logger,
@@ -60,6 +61,12 @@ class PluginConfigurationProcessor {
       JibSystemProperties.checkHttpTimeoutProperty();
     } catch (NumberFormatException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex);
+    }
+
+    String appRoot = jibPluginConfiguration.getAppRoot();
+    if (!ConfigurationPropertyValidator.isAbsoluteUnixPath(appRoot)) {
+      throw new MojoExecutionException(
+          "<container><appRoot> (" + appRoot + ") is not an absolute Unix-style path");
     }
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
@@ -106,9 +113,6 @@ class PluginConfigurationProcessor {
     List<String> entrypoint = jibPluginConfiguration.getEntrypoint();
     if (entrypoint.isEmpty()) {
       String mainClass = projectProperties.getMainClass(jibPluginConfiguration);
-      // TODO: need to validate appRoot is a valid, absolute path (in Unix-style since we don't
-      // seem to support Windows images?)
-      String appRoot = jibPluginConfiguration.getAppRoot();
       entrypoint =
           JavaEntrypointConstructor.makeDefaultEntrypoint(
               appRoot, jibPluginConfiguration.getJvmFlags(), mainClass);
