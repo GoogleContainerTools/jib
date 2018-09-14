@@ -26,7 +26,11 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.model.Build;
 import org.apache.maven.project.MavenProject;
@@ -51,12 +55,9 @@ public class MavenLayerConfigurationsTest {
         .collect(ImmutableList.toImmutableList());
   }
 
-  private static ImmutableList<String> getExtractionPatFromLayerEntries(
-      ImmutableList<LayerEntry> layerEntries) {
-    return layerEntries
-        .stream()
-        .map(LayerEntry::getAbsoluteExtractionPathString)
-        .collect(ImmutableList.toImmutableList());
+  private static List<String> getExtractionPatFromLayerEntries(List<LayerEntry> layerEntries) {
+    Stream<LayerEntry> stream = layerEntries.stream();
+    return stream.map(LayerEntry::getAbsoluteExtractionPathString).collect(Collectors.toList());
   }
 
   @Rule public TestRepository testRepository = new TestRepository();
@@ -158,11 +159,13 @@ public class MavenLayerConfigurationsTest {
         MavenLayerConfigurations.getForProject(mockMavenProject, extraFilesDirectory, "/my/app");
 
     Assert.assertEquals(
-        Arrays.asList(
-            "/my/app/libs/dependency-1.0.0.jar",
-            "/my/app/libs/libraryA.jar",
-            "/my/app/libs/libraryB.jar"),
-        getExtractionPatFromLayerEntries(configuration.getDependencyLayerEntries()));
+        // on windows, these files may be in a different order, so use Set
+        new HashSet<>(
+            Arrays.asList(
+                "/my/app/libs/dependency-1.0.0.jar",
+                "/my/app/libs/libraryA.jar",
+                "/my/app/libs/libraryB.jar")),
+        new HashSet<>(getExtractionPatFromLayerEntries(configuration.getDependencyLayerEntries())));
     Assert.assertEquals(
         Arrays.asList("/my/app/libs/dependencyX-1.0.0-SNAPSHOT.jar"),
         getExtractionPatFromLayerEntries(configuration.getSnapshotDependencyLayerEntries()));

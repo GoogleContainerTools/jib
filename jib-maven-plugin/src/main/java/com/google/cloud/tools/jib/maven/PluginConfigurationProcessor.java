@@ -39,8 +39,8 @@ import org.apache.maven.plugin.MojoExecutionException;
 class PluginConfigurationProcessor {
 
   /**
-   * Gets the value of the {@code <container><appRoot>} parameter. Throws {@link GradleException} if
-   * it is not an absolute path in Unix-style.
+   * Gets the value of the {@code <container><appRoot>} parameter. Throws {@link
+   * MojoExecutionException} if it is not an absolute path in Unix-style.
    *
    * @param jibPluginConfiguration the Jib plugin configuration
    * @return the app root value
@@ -66,8 +66,7 @@ class PluginConfigurationProcessor {
    *     data
    * @param projectProperties used for providing additional information
    * @return a new {@link PluginConfigurationProcessor} containing pre-configured builders
-   * @throws MojoExecutionException if the http timeout system property or the appRoot container
-   *     parameter is misconfigured
+   * @throws MojoExecutionException if the http timeout system property is misconfigured
    */
   static PluginConfigurationProcessor processCommonConfiguration(
       MavenJibLogger logger,

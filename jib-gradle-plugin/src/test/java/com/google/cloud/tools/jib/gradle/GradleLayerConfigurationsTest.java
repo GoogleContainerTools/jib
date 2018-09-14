@@ -28,7 +28,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.gradle.api.Project;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.file.AbstractFileCollection;
@@ -77,12 +80,9 @@ public class GradleLayerConfigurationsTest {
         .collect(ImmutableList.toImmutableList());
   }
 
-  private static ImmutableList<String> getExtractionPatFromLayerEntries(
-      ImmutableList<LayerEntry> layerEntries) {
-    return layerEntries
-        .stream()
-        .map(LayerEntry::getAbsoluteExtractionPathString)
-        .collect(ImmutableList.toImmutableList());
+  private static List<String> getExtractionPatFromLayerEntries(List<LayerEntry> layerEntries) {
+    Stream<LayerEntry> stream = layerEntries.stream();
+    return stream.map(LayerEntry::getAbsoluteExtractionPathString).collect(Collectors.toList());
   }
 
   @Mock private Project mockProject;
