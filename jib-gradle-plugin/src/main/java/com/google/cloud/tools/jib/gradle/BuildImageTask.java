@@ -73,7 +73,10 @@ public class BuildImageTask extends DefaultTask implements JibTask {
     GradleJibLogger gradleJibLogger = new GradleJibLogger(getLogger());
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(
-            getProject(), gradleJibLogger, jibExtension.getExtraDirectoryPath());
+            getProject(),
+            gradleJibLogger,
+            jibExtension.getExtraDirectoryPath(),
+            jibExtension.getContainer().getAppRoot());
 
     if (Strings.isNullOrEmpty(jibExtension.getTargetImage())) {
       throw new GradleException(

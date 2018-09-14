@@ -59,7 +59,8 @@ public class BuildDockerMojo extends JibPluginConfiguration {
 
     MavenJibLogger mavenJibLogger = new MavenJibLogger(getLog());
     MavenProjectProperties mavenProjectProperties =
-        MavenProjectProperties.getForProject(getProject(), mavenJibLogger, getExtraDirectory());
+        MavenProjectProperties.getForProject(
+            getProject(), mavenJibLogger, getExtraDirectory(), getAppRoot());
 
     try {
       MavenHelpfulSuggestionsBuilder mavenHelpfulSuggestionsBuilder =

@@ -50,15 +50,18 @@ public class MavenProjectProperties implements ProjectProperties {
    * @param project the {@link MavenProject} for the plugin.
    * @param mavenJibLogger the logger used for printing status messages.
    * @param extraDirectory path to the directory for the extra files layer
+   * @param appRoot root directory in the image where the app will be placed
    * @return a MavenProjectProperties from the given project and logger.
    * @throws MojoExecutionException if no class files are found in the output directory.
    */
   static MavenProjectProperties getForProject(
-      MavenProject project, MavenJibLogger mavenJibLogger, Path extraDirectory)
+      MavenProject project, MavenJibLogger mavenJibLogger, Path extraDirectory, String appRoot)
       throws MojoExecutionException {
     try {
       return new MavenProjectProperties(
-          project, mavenJibLogger, MavenLayerConfigurations.getForProject(project, extraDirectory));
+          project,
+          mavenJibLogger,
+          MavenLayerConfigurations.getForProject(project, extraDirectory, appRoot));
     } catch (IOException ex) {
       throw new MojoExecutionException(
           "Obtaining project build output files failed; make sure you have compiled your project "

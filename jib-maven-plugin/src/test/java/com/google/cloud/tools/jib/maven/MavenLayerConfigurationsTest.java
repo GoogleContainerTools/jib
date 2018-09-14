@@ -103,7 +103,8 @@ public class MavenLayerConfigurationsTest {
             applicationDirectory.resolve("output/some.class"));
 
     JavaLayerConfigurations javaLayerConfigurations =
-        MavenLayerConfigurations.getForProject(mockMavenProject, Paths.get("nonexistent/path"));
+        MavenLayerConfigurations.getForProject(
+            mockMavenProject, Paths.get("nonexistent/path"), "/app");
     Assert.assertEquals(
         expectedDependenciesFiles,
         getSourceFilesFromLayerEntries(javaLayerConfigurations.getDependencyLayerEntries()));
@@ -124,7 +125,7 @@ public class MavenLayerConfigurationsTest {
     Path extraFilesDirectory = Paths.get(Resources.getResource("layer").toURI());
 
     JavaLayerConfigurations javaLayerConfigurations =
-        MavenLayerConfigurations.getForProject(mockMavenProject, extraFilesDirectory);
+        MavenLayerConfigurations.getForProject(mockMavenProject, extraFilesDirectory, "/app");
 
     ImmutableList<Path> expectedExtraFiles =
         ImmutableList.of(

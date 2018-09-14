@@ -102,7 +102,10 @@ public class BuildTarTask extends DefaultTask implements JibTask {
     GradleJibLogger gradleJibLogger = new GradleJibLogger(getLogger());
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(
-            getProject(), gradleJibLogger, jibExtension.getExtraDirectoryPath());
+            getProject(),
+            gradleJibLogger,
+            jibExtension.getExtraDirectoryPath(),
+            jibExtension.getContainer().getAppRoot());
 
     GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
         new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);

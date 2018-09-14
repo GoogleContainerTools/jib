@@ -43,11 +43,13 @@ class GradleLayerConfigurations {
    * @param project the Gradle {@link Project}
    * @param gradleJibLogger the build logger for providing feedback about the resolution
    * @param extraDirectory path to the directory for the extra files layer
+   * @param appRoot root directory in the image where the app will be placed
    * @return a {@link JavaLayerConfigurations} for the layers for the Gradle {@link Project}
    * @throws IOException if an I/O exception occurred during resolution
    */
   static JavaLayerConfigurations getForProject(
-      Project project, GradleJibLogger gradleJibLogger, Path extraDirectory) throws IOException {
+      Project project, GradleJibLogger gradleJibLogger, Path extraDirectory, String appRoot)
+      throws IOException {
     JavaPluginConvention javaPluginConvention =
         project.getConvention().getPlugin(JavaPluginConvention.class);
 
@@ -115,6 +117,7 @@ class GradleLayerConfigurations {
     Collections.sort(extraFiles);
 
     return JavaLayerConfigurations.builder()
+        .setAppRoot(appRoot)
         .setDependencyFiles(dependenciesFiles)
         .setSnapshotDependencyFiles(snapshotDependenciesFiles)
         .setResourceFiles(resourcesFiles)

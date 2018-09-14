@@ -143,7 +143,7 @@ public class GradleLayerConfigurationsTest {
 
     JavaLayerConfigurations javaLayerConfigurations =
         GradleLayerConfigurations.getForProject(
-            mockProject, mockGradleJibLogger, Paths.get("nonexistent/path"));
+            mockProject, mockGradleJibLogger, Paths.get("nonexistent/path"), "/app");
     Assert.assertEquals(
         expectedDependenciesFiles,
         getSourceFilesFromLayerEntries(javaLayerConfigurations.getDependencyLayerEntries()));
@@ -169,7 +169,7 @@ public class GradleLayerConfigurationsTest {
         .thenReturn(new TestFileCollection(ImmutableSet.of(nonexistentFile)));
 
     GradleLayerConfigurations.getForProject(
-        mockProject, mockGradleJibLogger, Paths.get("nonexistent/path"));
+        mockProject, mockGradleJibLogger, Paths.get("nonexistent/path"), "/app");
 
     Mockito.verify(mockGradleJibLogger)
         .info("Adding corresponding output directories of source sets to image");
@@ -184,7 +184,7 @@ public class GradleLayerConfigurationsTest {
 
     JavaLayerConfigurations javaLayerConfigurations =
         GradleLayerConfigurations.getForProject(
-            mockProject, mockGradleJibLogger, extraFilesDirectory);
+            mockProject, mockGradleJibLogger, extraFilesDirectory, "/app");
 
     ImmutableList<Path> expectedExtraFiles =
         ImmutableList.of(

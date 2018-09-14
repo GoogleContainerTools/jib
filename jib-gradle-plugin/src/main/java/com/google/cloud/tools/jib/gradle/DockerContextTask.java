@@ -115,7 +115,10 @@ public class DockerContextTask extends DefaultTask implements JibTask {
 
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(
-            getProject(), gradleJibLogger, jibExtension.getExtraDirectoryPath());
+            getProject(),
+            gradleJibLogger,
+            jibExtension.getExtraDirectoryPath(),
+            jibExtension.getContainer().getAppRoot());
     String targetDir = getTargetDir();
 
     List<String> entrypoint = jibExtension.getContainer().getEntrypoint();
