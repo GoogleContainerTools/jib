@@ -48,6 +48,7 @@ public class LayerEntry {
   private static String toUnixPath(Path path) {
     System.out.println("path: " + path);
     System.out.println("path root: " + path.getRoot());
+    System.out.println("path root: " + Paths.get("aasdf/jkl/breerb").getRoot());
     System.out.println("path components");
     for (Path p : path) {
       System.out.println(p);
