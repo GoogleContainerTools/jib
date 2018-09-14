@@ -46,17 +46,8 @@ public class LayerEntry {
    * @return the string form of the absolute path
    */
   private static String toUnixPath(Path path) {
-    System.out.println("path: " + path);
-    System.out.println("path root: " + path.getRoot());
-    System.out.println("path root: " + Paths.get("aasdf/jkl/breerb").getRoot());
-    System.out.println("path components");
-    for (Path p : path) {
-      System.out.println(p);
-    }
-    System.out.println("/path");
-    // This works:
-    // Preconditions.checkArgument(path.isAbsolute() || path.startsWith("/"));
-    Preconditions.checkArgument(path.isAbsolute());
+    Preconditions.checkArgument(path.getRoot() != null, "Tried to stringify a non-absolute path: %s", path);
+
     StringJoiner pathJoiner = new StringJoiner("/", "/", "");
     for (Path pathComponent : path) {
       pathJoiner.add(pathComponent.toString());
