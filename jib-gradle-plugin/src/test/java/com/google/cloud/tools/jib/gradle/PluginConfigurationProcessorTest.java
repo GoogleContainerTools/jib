@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.common.collect.ImmutableList;
 import java.util.Arrays;
 import java.util.Collections;
 import org.gradle.api.GradleException;
@@ -128,8 +129,23 @@ public class PluginConfigurationProcessorTest {
             mockLogger, mockJibExtension, mockProjectProperties);
     ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
 
+    Assert.assertEquals("java", configuration.getEntrypoint().get(0));
+    Assert.assertEquals("-cp", configuration.getEntrypoint().get(1));
     Assert.assertEquals(
         "/my/app/resources:/my/app/classes:/my/app/libs/*", configuration.getEntrypoint().get(2));
+  }
+
+  @Test
+  public void testWebappEntrypoint_default() throws InvalidImageReferenceException {
+    Mockito.doReturn(true).when(mockProjectProperties).isWarProject();
+
+    PluginConfigurationProcessor processor =
+        PluginConfigurationProcessor.processCommonConfiguration(
+            mockLogger, mockJibExtension, mockProjectProperties);
+    ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
+
+    Assert.assertEquals(
+        ImmutableList.of("java", "-jar", "/jetty/start.jar"), configuration.getEntrypoint());
   }
 
   @Test

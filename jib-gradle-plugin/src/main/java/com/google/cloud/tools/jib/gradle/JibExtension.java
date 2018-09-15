@@ -63,7 +63,6 @@ import org.gradle.api.tasks.Optional;
 public class JibExtension {
 
   // Defines default configuration values.
-  private static final String DEFAULT_FROM_IMAGE = "gcr.io/distroless/java";
   private static final boolean DEFAULT_USE_ONLY_PROJECT_CACHE = false;
   private static final boolean DEFAULT_ALLOW_INSECURE_REGISTIRIES = false;
 
@@ -98,8 +97,6 @@ public class JibExtension {
     allowInsecureRegistries = objectFactory.property(Boolean.class);
     extraDirectory = objectFactory.property(Path.class);
 
-    // Sets defaults.
-    from.setImage(DEFAULT_FROM_IMAGE);
     jvmFlags.set(Collections.emptyList());
     args.set(Collections.emptyList());
     useOnlyProjectCache.set(DEFAULT_USE_ONLY_PROJECT_CACHE);

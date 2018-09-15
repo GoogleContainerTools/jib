@@ -4,7 +4,6 @@ COPY libs /
 COPY snapshot-libs /
 COPY resources /
 COPY classes /
-COPY exploded-war /
 COPY root /
 
 EXPOSE 1000/tcp

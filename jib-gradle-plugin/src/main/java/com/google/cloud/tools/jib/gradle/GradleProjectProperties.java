@@ -91,6 +91,14 @@ class GradleProjectProperties implements ProjectProperties {
     return (War) warPluginConvention.getProject().getTasks().findByName("war");
   }
 
+  static File getExplodedWarDirectory(Project project) {
+    return project
+        .getBuildDir()
+        .toPath()
+        .resolve(ProjectProperties.EXPLODED_WAR_DIRECTORY_NAME)
+        .toFile();
+  }
+
   private final Project project;
   private final EventDispatcher eventDispatcher;
   private final JavaLayerConfigurations javaLayerConfigurations;
@@ -142,8 +150,7 @@ class GradleProjectProperties implements ProjectProperties {
 
   @Override
   public boolean isWarProject() {
-    // TODO: replace with "getWarTask(project) != null" once ready
-    return false;
+    return getWarTask(project) != null;
   }
 
   /**

@@ -38,9 +38,6 @@ public class JavaLayerConfigurations {
     SNAPSHOT_DEPENDENCIES("snapshot dependencies"),
     RESOURCES("resources"),
     CLASSES("classes"),
-    // TODO: remove this once we put files in WAR into the relevant layers (i.e., dependencies,
-    // snapshot dependencies, resources, and classes layers). Should copy files in the right
-    EXPLODED_WAR("exploded war"),
     EXTRA_FILES("extra files");
 
     private final String name;
@@ -164,27 +161,6 @@ public class JavaLayerConfigurations {
       return this;
     }
 
-    /**
-     * Adds a file to the exploded WAR layer. If the source file is a directory, the directory and
-     * its contents will be added recursively. See {@link
-     * LayerConfiguration.Builder#addEntryRecursive} for concrete examples about how the file will
-     * be placed in the image.
-     *
-     * @param sourceFile the source file to add to the layer
-     * @param pathInContainer the path in the container file system corresponding to the {@code
-     *     sourceFile}
-     * @return this
-     * @throws IOException if an exception occurred when recursively listing the directory
-     */
-    // TODO: remove this and put files in WAR into the relevant layers (i.e., dependencies, snapshot
-    // dependencies, resources, and classes layers).
-    public Builder addExplodedWarFile(Path sourceFile, AbsoluteUnixPath pathInContainer)
-        throws IOException {
-      Preconditions.checkNotNull(layerBuilders.get(LayerType.EXPLODED_WAR))
-          .addEntryRecursive(sourceFile, pathInContainer);
-      return this;
-    }
-
     public JavaLayerConfigurations build() {
       ImmutableMap.Builder<LayerType, LayerConfiguration> layerConfigurationsMap =
           ImmutableMap.builderWithExpectedSize(layerBuilders.size());
@@ -235,12 +211,6 @@ public class JavaLayerConfigurations {
 
   public ImmutableList<LayerEntry> getExtraFilesLayerEntries() {
     return getLayerEntries(LayerType.EXTRA_FILES);
-  }
-
-  // TODO: remove this once we put files in WAR into the relevant layers (i.e., dependencies,
-  // snapshot dependencies, resources, and classes layers). Should copy files in the right
-  public ImmutableList<LayerEntry> getExplodedWarEntries() {
-    return getLayerEntries(LayerType.EXPLODED_WAR);
   }
 
   private ImmutableList<LayerEntry> getLayerEntries(LayerType layerType) {
