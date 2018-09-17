@@ -32,24 +32,6 @@ import javax.annotation.concurrent.Immutable;
 public class AbsoluteUnixPath {
 
   /**
-   * Gets a new {@link AbsoluteUnixPath} from a {@link Path}. The {@code path} must be absolute
-   * (indicated by a non-null {@link Path#getRoot}).
-   *
-   * @param path the absolute {@link Path} to convert to an {@link AbsoluteUnixPath}.
-   * @return a new {@link AbsoluteUnixPath}
-   */
-  public static AbsoluteUnixPath fromPath(Path path) {
-    Preconditions.checkArgument(
-        path.getRoot() != null, "Cannot create AbsoluteUnixPath from non-absolute Path: " + path);
-
-    StringJoiner pathJoiner = new StringJoiner("/", "/", "");
-    for (Path pathComponent : path) {
-      pathJoiner.add(pathComponent.getFileName().toString());
-    }
-    return new AbsoluteUnixPath(pathJoiner.toString());
-  }
-
-  /**
    * Gets a new {@link AbsoluteUnixPath} from a Unix-style path string. The path must begin with a
    * forward slash ({@code /}).
    *
@@ -62,6 +44,24 @@ public class AbsoluteUnixPath {
     return fromPath(Paths.get(path));
   }
 
+  /**
+   * Gets a new {@link AbsoluteUnixPath} from a {@link Path}. The {@code path} must be absolute
+   * (indicated by a non-null {@link Path#getRoot}).
+   *
+   * @param path the absolute {@link Path} to convert to an {@link AbsoluteUnixPath}.
+   * @return a new {@link AbsoluteUnixPath}
+   */
+  private static AbsoluteUnixPath fromPath(Path path) {
+    Preconditions.checkArgument(
+        path.getRoot() != null, "Cannot create AbsoluteUnixPath from non-absolute Path: " + path);
+
+    StringJoiner pathJoiner = new StringJoiner("/", "/", "");
+    for (Path pathComponent : path) {
+      pathJoiner.add(pathComponent.getFileName().toString());
+    }
+    return new AbsoluteUnixPath(pathJoiner.toString());
+  }
+
   /** Unix-style path, in absolute form. Does not end with trailing slash. */
   private final String unixPath;
 
@@ -72,13 +72,12 @@ public class AbsoluteUnixPath {
   /**
    * Resolves this path against another relative path.
    *
-   * @param path the relative path to resolve against
+   * @param relativeUnixPath the relative path to resolve against
    * @return a new {@link AbsoluteUnixPath} representing the resolved path
    */
-  public AbsoluteUnixPath resolve(Path path) {
-    Preconditions.checkArgument(
-        path.getRoot() == null, "Cannot resolve AbsoluteUnixPath against absolute Path: " + path);
-    return AbsoluteUnixPath.fromPath(Paths.get(unixPath).resolve(path));
+  public AbsoluteUnixPath resolve(RelativeUnixPath relativeUnixPath) {
+    return AbsoluteUnixPath.fromPath(
+        Paths.get(unixPath).resolve(relativeUnixPath.getRelativePath()));
   }
 
   /**
