@@ -74,7 +74,7 @@ public class RegistryAuthenticatorTest {
 
     } catch (RegistryAuthenticationFailedException ex) {
       Assert.assertEquals(
-          "Failed to authenticate with the registry because: 'Bearer' was not found in the 'WWW-Authenticate' header, tried to parse: realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
+          "Failed to authenticate with registry someserver/someimage because: 'Bearer' was not found in the 'WWW-Authenticate' header, tried to parse: realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
           ex.getMessage());
     }
   }
@@ -88,7 +88,7 @@ public class RegistryAuthenticatorTest {
 
     } catch (RegistryAuthenticationFailedException ex) {
       Assert.assertEquals(
-          "Failed to authenticate with the registry because: 'realm' was not found in the 'WWW-Authenticate' header, tried to parse: Bearer scope=\"somescope\"",
+          "Failed to authenticate with registry someserver/someimage because: 'realm' was not found in the 'WWW-Authenticate' header, tried to parse: Bearer scope=\"somescope\"",
           ex.getMessage());
     }
   }

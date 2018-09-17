@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
+import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
@@ -67,6 +68,14 @@ public class GradleLayerConfigurationsTest {
     }
   }
 
+  private static ImmutableList<Path> getSourceFilesFromLayerEntries(
+      ImmutableList<LayerEntry> layerEntries) {
+    return layerEntries
+        .stream()
+        .map(LayerEntry::getSourceFile)
+        .collect(ImmutableList.toImmutableList());
+  }
+
   @Mock private Project mockProject;
   @Mock private Convention mockConvention;
   @Mock private JavaPluginConvention mockJavaPluginConvention;
@@ -112,27 +121,24 @@ public class GradleLayerConfigurationsTest {
 
   @Test
   public void test_correctFiles() throws URISyntaxException, IOException {
+    Path applicationDirectory = Paths.get(Resources.getResource("application").toURI());
     ImmutableList<Path> expectedDependenciesFiles =
         ImmutableList.of(
-            Paths.get(
-                Resources.getResource("application/dependencies/dependency-1.0.0.jar").toURI()),
-            Paths.get(Resources.getResource("application/dependencies/libraryA.jar").toURI()),
-            Paths.get(Resources.getResource("application/dependencies/libraryB.jar").toURI()));
+            applicationDirectory.resolve("dependencies/dependency-1.0.0.jar"),
+            applicationDirectory.resolve("dependencies/libraryA.jar"),
+            applicationDirectory.resolve("dependencies/libraryB.jar"));
     ImmutableList<Path> expectedSnapshotDependenciesFiles =
         ImmutableList.of(
-            Paths.get(
-                Resources.getResource("application/dependencies/dependencyX-1.0.0-SNAPSHOT.jar")
-                    .toURI()));
+            applicationDirectory.resolve("dependencies/dependencyX-1.0.0-SNAPSHOT.jar"));
     ImmutableList<Path> expectedResourcesFiles =
         ImmutableList.of(
-            Paths.get(Resources.getResource("application/resources").toURI()).resolve("resourceA"),
-            Paths.get(Resources.getResource("application/resources").toURI()).resolve("resourceB"),
-            Paths.get(Resources.getResource("application/resources").toURI()).resolve("world"));
+            applicationDirectory.resolve("resources/resourceA"),
+            applicationDirectory.resolve("resources/resourceB"),
+            applicationDirectory.resolve("resources/world"));
     ImmutableList<Path> expectedClassesFiles =
         ImmutableList.of(
-            Paths.get(Resources.getResource("application/classes").toURI())
-                .resolve("HelloWorld.class"),
-            Paths.get(Resources.getResource("application/classes").toURI()).resolve("some.class"));
+            applicationDirectory.resolve("classes").resolve("HelloWorld.class"),
+            applicationDirectory.resolve("classes/some.class"));
     ImmutableList<Path> expectedExtraFiles = ImmutableList.of();
 
     JavaLayerConfigurations javaLayerConfigurations =
@@ -140,16 +146,20 @@ public class GradleLayerConfigurationsTest {
             mockProject, mockGradleJibLogger, Paths.get("nonexistent/path"));
     Assert.assertEquals(
         expectedDependenciesFiles,
-        javaLayerConfigurations.getDependenciesLayerEntry().getSourceFiles());
+        getSourceFilesFromLayerEntries(javaLayerConfigurations.getDependencyLayerEntries()));
     Assert.assertEquals(
         expectedSnapshotDependenciesFiles,
-        javaLayerConfigurations.getSnapshotDependenciesLayerEntry().getSourceFiles());
+        getSourceFilesFromLayerEntries(
+            javaLayerConfigurations.getSnapshotDependencyLayerEntries()));
     Assert.assertEquals(
-        expectedResourcesFiles, javaLayerConfigurations.getResourcesLayerEntry().getSourceFiles());
+        expectedResourcesFiles,
+        getSourceFilesFromLayerEntries(javaLayerConfigurations.getResourceLayerEntries()));
     Assert.assertEquals(
-        expectedClassesFiles, javaLayerConfigurations.getClassesLayerEntry().getSourceFiles());
+        expectedClassesFiles,
+        getSourceFilesFromLayerEntries(javaLayerConfigurations.getClassLayerEntries()));
     Assert.assertEquals(
-        expectedExtraFiles, javaLayerConfigurations.getExtraFilesLayerEntry().getSourceFiles());
+        expectedExtraFiles,
+        getSourceFilesFromLayerEntries(javaLayerConfigurations.getExtraFilesLayerEntries()));
   }
 
   @Test
@@ -178,11 +188,15 @@ public class GradleLayerConfigurationsTest {
 
     ImmutableList<Path> expectedExtraFiles =
         ImmutableList.of(
-            Paths.get(Resources.getResource("layer/a").toURI()),
-            Paths.get(Resources.getResource("layer/c").toURI()),
-            Paths.get(Resources.getResource("layer/foo").toURI()));
+            extraFilesDirectory.resolve("a"),
+            extraFilesDirectory.resolve("a/b"),
+            extraFilesDirectory.resolve("a/b/bar"),
+            extraFilesDirectory.resolve("c"),
+            extraFilesDirectory.resolve("c/cat"),
+            extraFilesDirectory.resolve("foo"));
 
     Assert.assertEquals(
-        expectedExtraFiles, javaLayerConfigurations.getExtraFilesLayerEntry().getSourceFiles());
+        expectedExtraFiles,
+        getSourceFilesFromLayerEntries(javaLayerConfigurations.getExtraFilesLayerEntries()));
   }
 }

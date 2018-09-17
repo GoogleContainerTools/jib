@@ -23,10 +23,6 @@ import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
-import com.google.cloud.tools.jib.json.JsonTemplateMapper;
-import com.google.cloud.tools.jib.registry.json.ErrorEntryTemplate;
-import com.google.cloud.tools.jib.registry.json.ErrorResponseTemplate;
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
@@ -71,34 +67,15 @@ class BlobChecker implements RegistryEndpointProvider<BlobDescriptor> {
     }
 
     // Finds a BLOB_UNKNOWN error response code.
-    String errorContent = httpResponseException.getContent();
-    if (errorContent == null) {
+    if (httpResponseException.getContent() == null) {
       // TODO: The Google HTTP client gives null content for HEAD requests. Make the content never
       // be null, even for HEAD requests.
       return null;
+    }
 
-    } else {
-      try {
-        ErrorResponseTemplate errorResponse =
-            JsonTemplateMapper.readJson(errorContent, ErrorResponseTemplate.class);
-        List<ErrorEntryTemplate> errors = errorResponse.getErrors();
-        if (errors.size() == 1) {
-          String errorCodeString = errors.get(0).getCode();
-          if (errorCodeString == null) {
-            // Did not get an error code back.
-            throw httpResponseException;
-          }
-          ErrorCodes errorCode = ErrorCodes.valueOf(errorCodeString);
-          if (errorCode.equals(ErrorCodes.BLOB_UNKNOWN)) {
-            return null;
-          }
-        }
-
-      } catch (IOException ex) {
-        throw new RegistryErrorExceptionBuilder(getActionDescription(), ex)
-            .addReason("Failed to parse registry error response body")
-            .build();
-      }
+    ErrorCodes errorCode = ErrorResponseUtil.getErrorCode(httpResponseException);
+    if (errorCode == ErrorCodes.BLOB_UNKNOWN) {
+      return null;
     }
 
     // BLOB_UNKNOWN was not found as a error response code.

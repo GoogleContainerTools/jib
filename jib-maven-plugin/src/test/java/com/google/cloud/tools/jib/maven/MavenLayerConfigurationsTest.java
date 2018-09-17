@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
+import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
@@ -40,6 +41,14 @@ import org.mockito.junit.MockitoJUnitRunner;
 /** Tests for {@link MavenLayerConfigurations}. */
 @RunWith(MockitoJUnitRunner.class)
 public class MavenLayerConfigurationsTest {
+
+  private static ImmutableList<Path> getSourceFilesFromLayerEntries(
+      ImmutableList<LayerEntry> layerEntries) {
+    return layerEntries
+        .stream()
+        .map(LayerEntry::getSourceFile)
+        .collect(ImmutableList.toImmutableList());
+  }
 
   @Rule public TestRepository testRepository = new TestRepository();
 
@@ -78,30 +87,36 @@ public class MavenLayerConfigurationsTest {
     ImmutableList<Path> expectedSnapshotDependenciesFiles =
         ImmutableList.of(
             testRepository.artifactPathOnDisk("com.test", "dependencyX", "1.0.0-SNAPSHOT"));
+    Path applicationDirectory = Paths.get(Resources.getResource("application").toURI());
     ImmutableList<Path> expectedResourcesFiles =
         ImmutableList.of(
-            Paths.get(Resources.getResource("application/output/directory").toURI()),
-            Paths.get(Resources.getResource("application/output/resourceA").toURI()),
-            Paths.get(Resources.getResource("application/output/resourceB").toURI()),
-            Paths.get(Resources.getResource("application/output/world").toURI()));
+            applicationDirectory.resolve("output/directory"),
+            applicationDirectory.resolve("output/directory/somefile"),
+            applicationDirectory.resolve("output/resourceA"),
+            applicationDirectory.resolve("output/resourceB"),
+            applicationDirectory.resolve("output/world"));
     ImmutableList<Path> expectedClassesFiles =
         ImmutableList.of(
-            Paths.get(Resources.getResource("application/output/HelloWorld.class").toURI()),
-            Paths.get(Resources.getResource("application/output/package").toURI()),
-            Paths.get(Resources.getResource("application/output/some.class").toURI()));
+            applicationDirectory.resolve("output/HelloWorld.class"),
+            applicationDirectory.resolve("output/package"),
+            applicationDirectory.resolve("output/package/some.class"),
+            applicationDirectory.resolve("output/some.class"));
 
     JavaLayerConfigurations javaLayerConfigurations =
         MavenLayerConfigurations.getForProject(mockMavenProject, Paths.get("nonexistent/path"));
     Assert.assertEquals(
         expectedDependenciesFiles,
-        javaLayerConfigurations.getDependenciesLayerEntry().getSourceFiles());
+        getSourceFilesFromLayerEntries(javaLayerConfigurations.getDependencyLayerEntries()));
     Assert.assertEquals(
         expectedSnapshotDependenciesFiles,
-        javaLayerConfigurations.getSnapshotDependenciesLayerEntry().getSourceFiles());
+        getSourceFilesFromLayerEntries(
+            javaLayerConfigurations.getSnapshotDependencyLayerEntries()));
     Assert.assertEquals(
-        expectedResourcesFiles, javaLayerConfigurations.getResourcesLayerEntry().getSourceFiles());
+        expectedResourcesFiles,
+        getSourceFilesFromLayerEntries(javaLayerConfigurations.getResourceLayerEntries()));
     Assert.assertEquals(
-        expectedClassesFiles, javaLayerConfigurations.getClassesLayerEntry().getSourceFiles());
+        expectedClassesFiles,
+        getSourceFilesFromLayerEntries(javaLayerConfigurations.getClassLayerEntries()));
   }
 
   @Test
@@ -113,12 +128,16 @@ public class MavenLayerConfigurationsTest {
 
     ImmutableList<Path> expectedExtraFiles =
         ImmutableList.of(
-            Paths.get(Resources.getResource("layer/a").toURI()),
-            Paths.get(Resources.getResource("layer/c").toURI()),
-            Paths.get(Resources.getResource("layer/foo").toURI()));
+            extraFilesDirectory.resolve("a"),
+            extraFilesDirectory.resolve("a/b"),
+            extraFilesDirectory.resolve("a/b/bar"),
+            extraFilesDirectory.resolve("c"),
+            extraFilesDirectory.resolve("c/cat"),
+            extraFilesDirectory.resolve("foo"));
 
     Assert.assertEquals(
-        expectedExtraFiles, javaLayerConfigurations.getExtraFilesLayerEntry().getSourceFiles());
+        expectedExtraFiles,
+        getSourceFilesFromLayerEntries(javaLayerConfigurations.getExtraFilesLayerEntries()));
   }
 
   private Artifact makeArtifact(Path path) {

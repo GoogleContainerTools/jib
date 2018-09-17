@@ -117,11 +117,8 @@ class PushImageStep implements AsyncStep<Void>, Callable<Void> {
   private Void afterAllPushed() throws IOException, RegistryException, ExecutionException {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       RegistryClient registryClient =
-          RegistryClient.factory(
-                  buildConfiguration.getBuildLogger(),
-                  buildConfiguration.getTargetImageConfiguration().getImageRegistry(),
-                  buildConfiguration.getTargetImageConfiguration().getImageRepository())
-              .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
+          buildConfiguration
+              .newTargetImageRegistryClientFactory()
               .setAuthorization(NonBlockingSteps.get(authenticatePushStep))
               .newRegistryClient();
 
@@ -129,14 +126,18 @@ class PushImageStep implements AsyncStep<Void>, Callable<Void> {
       ImageToJsonTranslator imageToJsonTranslator =
           new ImageToJsonTranslator(NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep)));
 
-      // Pushes the image manifest.
+      // Gets the image manifest to push.
       BuildableManifestTemplate manifestTemplate =
           imageToJsonTranslator.getManifestTemplate(
               buildConfiguration.getTargetFormat(),
               NonBlockingSteps.get(
                   NonBlockingSteps.get(NonBlockingSteps.get(pushContainerConfigurationStep))));
-      registryClient.pushManifest(
-          manifestTemplate, buildConfiguration.getTargetImageConfiguration().getImageTag());
+
+      // Pushes to all target image tags.
+      // TODO: Parallelize.
+      for (String tag : buildConfiguration.getAllTargetImageTags()) {
+        registryClient.pushManifest(manifestTemplate, tag);
+      }
     }
 
     return null;

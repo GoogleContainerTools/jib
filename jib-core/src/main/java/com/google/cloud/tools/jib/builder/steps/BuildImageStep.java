@@ -121,7 +121,9 @@ class BuildImageStep
 
       // Add history elements for non-empty layers that don't have one yet
       Instant layerCreationTime =
-          containerConfiguration == null ? Instant.EPOCH : containerConfiguration.getCreationTime();
+          containerConfiguration == null
+              ? ContainerConfiguration.DEFAULT_CREATION_TIME
+              : containerConfiguration.getCreationTime();
       for (int count = 0; count < baseImageLayers.size() - nonEmptyLayerCount; count++) {
         imageBuilder.addHistory(
             HistoryEntry.builder()
@@ -138,7 +140,7 @@ class BuildImageStep
             HistoryEntry.builder()
                 .setCreationTimestamp(layerCreationTime)
                 .setAuthor("Jib")
-                .setCreatedBy(buildConfiguration.getCreatedBy())
+                .setCreatedBy(buildConfiguration.getToolName())
                 .build());
       }
       if (containerConfiguration != null) {

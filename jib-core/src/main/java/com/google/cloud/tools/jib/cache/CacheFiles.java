@@ -23,7 +23,7 @@ import java.nio.file.Path;
 class CacheFiles {
 
   /** Increment the version prefix when the metadata format changes. */
-  static final String METADATA_FILENAME = "metadata-v2.json";
+  static final String METADATA_FILENAME = "metadata-v3.json";
 
   private static final String LAYER_FILE_EXTENSION = ".tar.gz";
 

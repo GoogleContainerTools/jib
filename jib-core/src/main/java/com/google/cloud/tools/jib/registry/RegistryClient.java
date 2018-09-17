@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
+import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
@@ -28,7 +29,6 @@ import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URL;
@@ -70,6 +70,7 @@ public class RegistryClient {
     private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
 
     private boolean allowInsecureRegistries = false;
+    @Nullable private String userAgentSuffix;
     @Nullable private Authorization authorization;
 
     private Factory(
@@ -103,6 +104,17 @@ public class RegistryClient {
     }
 
     /**
+     * Sets a suffix to append to {@code User-Agent} headers.
+     *
+     * @param userAgentSuffix the suffix to append
+     * @return this
+     */
+    public Factory setUserAgentSuffix(@Nullable String userAgentSuffix) {
+      this.userAgentSuffix = userAgentSuffix;
+      return this;
+    }
+
+    /**
      * Creates a new {@link RegistryClient}.
      *
      * @return the new {@link RegistryClient}
@@ -115,9 +127,32 @@ public class RegistryClient {
           allowInsecureRegistries,
           makeUserAgent());
     }
-  }
 
-  @Nullable private static String userAgentSuffix;
+    /**
+     * The {@code User-Agent} is in the form of {@code jib <version> <type>}. For example: {@code
+     * jib 0.9.0 jib-maven-plugin}.
+     *
+     * @return the {@code User-Agent} header to send. The {@code User-Agent} can be disabled by
+     *     setting the system property variable {@code _JIB_DISABLE_USER_AGENT} to any non-empty
+     *     string.
+     */
+    private String makeUserAgent() {
+      if (!JibSystemProperties.isUserAgentEnabled()) {
+        return "";
+      }
+
+      String version = RegistryClient.class.getPackage().getImplementationVersion();
+      StringBuilder userAgentBuilder = new StringBuilder();
+      userAgentBuilder.append("jib");
+      if (version != null) {
+        userAgentBuilder.append(" ").append(version);
+      }
+      if (userAgentSuffix != null) {
+        userAgentBuilder.append(" ").append(userAgentSuffix);
+      }
+      return userAgentBuilder.toString();
+    }
+  }
 
   /**
    * Creates a new {@link Factory} for building a {@link RegistryClient}.
@@ -129,42 +164,6 @@ public class RegistryClient {
    */
   public static Factory factory(JibLogger buildLogger, String serverUrl, String imageName) {
     return new Factory(buildLogger, new RegistryEndpointRequestProperties(serverUrl, imageName));
-  }
-
-  // TODO: Inject via a RegistryClient.Factory.
-  /**
-   * Sets a suffix to append to {@code User-Agent} headers.
-   *
-   * @param userAgentSuffix the suffix to append
-   */
-  public static void setUserAgentSuffix(@Nullable String userAgentSuffix) {
-    RegistryClient.userAgentSuffix = userAgentSuffix;
-  }
-
-  /**
-   * The {@code User-Agent} is in the form of {@code jib <version> <type>}. For example: {@code jib
-   * 0.9.0 jib-maven-plugin}.
-   *
-   * @return the {@code User-Agent} header to send. The {@code User-Agent} can be disabled by
-   *     setting the system property variable {@code _JIB_DISABLE_USER_AGENT} to any non-empty
-   *     string.
-   */
-  @VisibleForTesting
-  static String makeUserAgent() {
-    if (!Strings.isNullOrEmpty(System.getProperty("_JIB_DISABLE_USER_AGENT"))) {
-      return "";
-    }
-
-    String version = RegistryClient.class.getPackage().getImplementationVersion();
-    StringBuilder userAgentBuilder = new StringBuilder();
-    userAgentBuilder.append("jib");
-    if (version != null) {
-      userAgentBuilder.append(" ").append(version);
-    }
-    if (userAgentSuffix != null) {
-      userAgentBuilder.append(" ").append(userAgentSuffix);
-    }
-    return userAgentBuilder.toString();
   }
 
   private final JibLogger buildLogger;

@@ -22,6 +22,7 @@ import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Connection;
@@ -123,8 +124,8 @@ public class RegistryEndpointCallerTest {
 
   @After
   public void tearDown() {
-    System.clearProperty("jib.httpTimeout");
-    System.clearProperty("sendCredentialsOverHttp");
+    System.clearProperty(JibSystemProperties.HTTP_TIMEOUT);
+    System.clearProperty(JibSystemProperties.SEND_CREDENTIALS_OVER_HTTP);
   }
 
   @Test
@@ -163,7 +164,7 @@ public class RegistryEndpointCallerTest {
     Mockito.verifyNoMoreInteractions(mockInsecureConnectionFactory);
 
     Mockito.verify(mockBuildLogger)
-        .warn(
+        .info(
             "Cannot verify server at https://apiRouteBase/api. Attempting again with no TLS verification.");
   }
 
@@ -190,10 +191,10 @@ public class RegistryEndpointCallerTest {
     Mockito.verifyNoMoreInteractions(mockInsecureConnectionFactory);
 
     Mockito.verify(mockBuildLogger)
-        .warn(
+        .info(
             "Cannot verify server at https://apiRouteBase/api. Attempting again with no TLS verification.");
     Mockito.verify(mockBuildLogger)
-        .warn(
+        .info(
             "Failed to connect to https://apiRouteBase/api over HTTPS. Attempting again with HTTP: http://apiRouteBase/api");
   }
 
@@ -216,7 +217,7 @@ public class RegistryEndpointCallerTest {
     Mockito.verifyNoMoreInteractions(mockInsecureConnectionFactory);
 
     Mockito.verify(mockBuildLogger)
-        .warn(
+        .info(
             "Failed to connect to https://apiRouteBase/api over HTTPS. Attempting again with HTTP: http://apiRouteBase/api");
   }
 
@@ -321,7 +322,7 @@ public class RegistryEndpointCallerTest {
     Mockito.when(mockInsecureConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
         .thenThrow(Mockito.mock(SSLPeerUnverifiedException.class)); // server is not HTTPS
 
-    System.setProperty("sendCredentialsOverHttp", "true");
+    System.setProperty(JibSystemProperties.SEND_CREDENTIALS_OVER_HTTP, "true");
     RegistryEndpointCaller<String> insecureEndpointCaller = createRegistryEndpointCaller(true, -1);
     Assert.assertEquals("body", insecureEndpointCaller.call());
 
@@ -338,10 +339,10 @@ public class RegistryEndpointCallerTest {
     Mockito.verifyNoMoreInteractions(mockInsecureConnectionFactory);
 
     Mockito.verify(mockBuildLogger)
-        .warn(
+        .info(
             "Cannot verify server at https://apiRouteBase/api. Attempting again with no TLS verification.");
     Mockito.verify(mockBuildLogger)
-        .warn(
+        .info(
             "Failed to connect to https://apiRouteBase/api over HTTPS. Attempting again with HTTP: http://apiRouteBase/api");
   }
 
@@ -421,12 +422,12 @@ public class RegistryEndpointCallerTest {
     MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
     Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
 
-    Assert.assertNull(System.getProperty("jib.httpTimeout"));
+    Assert.assertNull(System.getProperty(JibSystemProperties.HTTP_TIMEOUT));
     secureEndpointCaller.call();
 
     // We fall back to the default timeout:
     // https://github.com/GoogleContainerTools/jib/pull/656#discussion_r203562639
-    Assert.assertNull(mockConnection.getRequestedHttpTimeout());
+    Assert.assertEquals(20000, mockConnection.getRequestedHttpTimeout().intValue());
   }
 
   @Test
@@ -434,10 +435,10 @@ public class RegistryEndpointCallerTest {
     MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
     Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
 
-    System.setProperty("jib.httpTimeout", "random string");
+    System.setProperty(JibSystemProperties.HTTP_TIMEOUT, "random string");
     secureEndpointCaller.call();
 
-    Assert.assertNull(mockConnection.getRequestedHttpTimeout());
+    Assert.assertEquals(20000, mockConnection.getRequestedHttpTimeout().intValue());
   }
 
   @Test
@@ -445,7 +446,7 @@ public class RegistryEndpointCallerTest {
     MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
     Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
 
-    System.setProperty("jib.httpTimeout", "-1");
+    System.setProperty(JibSystemProperties.HTTP_TIMEOUT, "-1");
     secureEndpointCaller.call();
 
     // We let the negative value pass through:
@@ -455,7 +456,7 @@ public class RegistryEndpointCallerTest {
 
   @Test
   public void testHttpTimeout_0accepted() throws IOException, RegistryException {
-    System.setProperty("jib.httpTimeout", "0");
+    System.setProperty(JibSystemProperties.HTTP_TIMEOUT, "0");
 
     MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
     Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
@@ -467,7 +468,7 @@ public class RegistryEndpointCallerTest {
 
   @Test
   public void testHttpTimeout() throws IOException, RegistryException {
-    System.setProperty("jib.httpTimeout", "7593");
+    System.setProperty(JibSystemProperties.HTTP_TIMEOUT, "7593");
 
     MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
     Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);

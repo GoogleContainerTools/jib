@@ -32,9 +32,18 @@ import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 
 /** Obtains information about a {@link MavenProject}. */
-class MavenProjectProperties implements ProjectProperties {
+public class MavenProjectProperties implements ProjectProperties {
 
-  private static final String PLUGIN_NAME = "jib-maven-plugin";
+  /** Used for logging during main class inference and analysis of user configuration. */
+  public static final String PLUGIN_NAME = "jib-maven-plugin";
+
+  /** Used to identify this plugin when interacting with the maven system. */
+  public static final String PLUGIN_KEY = "com.google.cloud.tools:" + PLUGIN_NAME;
+
+  /** Used to generate the User-Agent header and history metadata. */
+  static final String TOOL_NAME = "jib-maven-plugin";
+
+  /** Used for logging during main class inference. */
   private static final String JAR_PLUGIN_NAME = "'maven-jar-plugin'";
 
   /**
@@ -122,6 +131,11 @@ class MavenProjectProperties implements ProjectProperties {
   @Override
   public String getJarPluginName() {
     return JAR_PLUGIN_NAME;
+  }
+
+  @Override
+  public boolean isWarProject() {
+    return false; // TODO: to be implemented. For now, assume false.
   }
 
   /**

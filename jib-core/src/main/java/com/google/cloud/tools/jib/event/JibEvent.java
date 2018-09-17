@@ -16,5 +16,8 @@
 
 package com.google.cloud.tools.jib.event;
 
-/** Type for events emitted by Jib Core. */
+/**
+ * Type for events emitted by Jib Core. Implementation classes should <b>not</b> inherit from each
+ * other.
+ */
 public interface JibEvent {}

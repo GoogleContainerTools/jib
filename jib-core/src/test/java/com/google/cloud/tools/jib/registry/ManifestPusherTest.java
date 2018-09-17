@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.registry;
 
+import com.google.api.client.http.HttpHeaders;
+import com.google.api.client.http.HttpResponseException;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
@@ -30,6 +32,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import org.apache.http.HttpStatus;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -100,5 +104,87 @@ public class ManifestPusherTest {
   @Test
   public void testGetAccept() {
     Assert.assertEquals(0, testManifestPusher.getAccept().size());
+  }
+
+  /** Docker Registry 2.0 and 2.1 return 400 / TAG_INVALID. */
+  @Test
+  public void testHandleHttpResponseException_dockerRegistry_tagInvalid()
+      throws HttpResponseException {
+    HttpResponseException exception =
+        new HttpResponseException.Builder(
+                HttpStatus.SC_BAD_REQUEST, "Bad Request", new HttpHeaders())
+            .setContent(
+                "{\"errors\":[{\"code\":\"TAG_INVALID\",\"message\":\"manifest tag did not match URI\"}]}")
+            .build();
+    try {
+      testManifestPusher.handleHttpResponseException(exception);
+      Assert.fail();
+
+    } catch (RegistryErrorException ex) {
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.containsString(
+              "Registry may not support Image Manifest Version 2, Schema 2"));
+    }
+  }
+
+  /** Docker Registry 2.2 returns a 400 / MANIFEST_INVALID. */
+  @Test
+  public void testHandleHttpResponseException_dockerRegistry_manifestInvalid()
+      throws HttpResponseException {
+    HttpResponseException exception =
+        new HttpResponseException.Builder(
+                HttpStatus.SC_BAD_REQUEST, "Bad Request", new HttpHeaders())
+            .setContent(
+                "{\"errors\":[{\"code\":\"MANIFEST_INVALID\",\"message\":\"manifest invalid\",\"detail\":{}}]}")
+            .build();
+    try {
+      testManifestPusher.handleHttpResponseException(exception);
+      Assert.fail();
+
+    } catch (RegistryErrorException ex) {
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.containsString(
+              "Registry may not support Image Manifest Version 2, Schema 2"));
+    }
+  }
+
+  /** Quay.io returns an undocumented 415 / MANIFEST_INVALID. */
+  @Test
+  public void testHandleHttpResponseException_quayIo() throws HttpResponseException {
+    HttpResponseException exception =
+        new HttpResponseException.Builder(
+                HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE, "UNSUPPORTED MEDIA TYPE", new HttpHeaders())
+            .setContent(
+                "{\"errors\":[{\"code\":\"MANIFEST_INVALID\",\"detail\":"
+                    + "{\"message\":\"manifest schema version not supported\"},\"message\":\"manifest invalid\"}]}")
+            .build();
+    try {
+      testManifestPusher.handleHttpResponseException(exception);
+      Assert.fail();
+
+    } catch (RegistryErrorException ex) {
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.containsString(
+              "Registry may not support Image Manifest Version 2, Schema 2"));
+    }
+  }
+
+  @Test
+  public void testHandleHttpResponseException_otherError() throws RegistryErrorException {
+    HttpResponseException exception =
+        new HttpResponseException.Builder(
+                HttpStatus.SC_UNAUTHORIZED, "Unauthorized", new HttpHeaders())
+            .setContent("{\"errors\":[{\"code\":\"UNAUTHORIZED\",\"message\":\"Unauthorized\"]}}")
+            .build();
+    try {
+      testManifestPusher.handleHttpResponseException(exception);
+      Assert.fail();
+
+    } catch (HttpResponseException ex) {
+      Assert.assertSame(exception, ex);
+    }
   }
 }

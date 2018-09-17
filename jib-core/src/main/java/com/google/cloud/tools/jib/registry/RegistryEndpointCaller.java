@@ -20,6 +20,7 @@ import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.JibLogger;
+import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Connection;
 import com.google.cloud.tools.jib.http.Request;
@@ -169,7 +170,7 @@ class RegistryEndpointCaller<T> {
     }
 
     try {
-      logger.warn(
+      logger.info(
           "Cannot verify server at " + url + ". Attempting again with no TLS verification.");
       return call(url, getInsecureConnectionFactory());
 
@@ -182,7 +183,7 @@ class RegistryEndpointCaller<T> {
   private T fallBackToHttp(URL url) throws IOException, RegistryException {
     GenericUrl httpUrl = new GenericUrl(url);
     httpUrl.setScheme("http");
-    logger.warn(
+    logger.info(
         "Failed to connect to " + url + " over HTTPS. Attempting again with HTTP: " + httpUrl);
     return call(httpUrl.toURL(), connectionFactory);
   }
@@ -211,13 +212,14 @@ class RegistryEndpointCaller<T> {
   private T call(URL url, Function<URL, Connection> connectionFactory)
       throws IOException, RegistryException {
     // Only sends authorization if using HTTPS or explicitly forcing over HTTP.
-    boolean sendCredentials = isHttpsProtocol(url) || Boolean.getBoolean("sendCredentialsOverHttp");
+    boolean sendCredentials =
+        isHttpsProtocol(url) || JibSystemProperties.isSendCredentialsOverHttpEnabled();
 
     try (Connection connection = connectionFactory.apply(url)) {
       Request.Builder requestBuilder =
           Request.builder()
               .setUserAgent(userAgent)
-              .setHttpTimeout(Integer.getInteger("jib.httpTimeout"))
+              .setHttpTimeout(JibSystemProperties.getHttpTimeout())
               .setAccept(registryEndpointProvider.getAccept())
               .setBody(registryEndpointProvider.getContent());
       if (sendCredentials) {

@@ -31,33 +31,16 @@ import java.util.concurrent.ExecutionException;
 /** Steps for building an image. */
 public class BuildSteps {
 
+  private static final String DESCRIPTION_FOR_DOCKER_REGISTRY = "Building and pushing image";
+  private static final String DESCRIPTION_FOR_DOCKER_DAEMON = "Building image to Docker daemon";
+  private static final String DESCRIPTION_FOR_TARBALL = "Building image tarball";
+
   /** Accepts {@link StepsRunner} by running the appropriate steps. */
   @FunctionalInterface
   private interface StepsRunnerConsumer {
 
     void accept(StepsRunner stepsRunner) throws ExecutionException, InterruptedException;
   }
-
-  private static final String DESCRIPTION_FOR_DOCKER_REGISTRY = "Building and pushing image";
-  private static final String STARTUP_MESSAGE_FORMAT_FOR_DOCKER_REGISTRY =
-      "Containerizing application to %s...";
-  // String parameter (target image reference) in cyan.
-  private static final String SUCCESS_MESSAGE_FORMAT_FOR_DOCKER_REGISTRY =
-      "Built and pushed image as \u001B[36m%s\u001B[0m";
-
-  private static final String DESCRIPTION_FOR_DOCKER_DAEMON = "Building image to Docker daemon";
-  private static final String STARTUP_MESSAGE_FORMAT_FOR_DOCKER_DAEMON =
-      "Containerizing application to Docker daemon as %s...";
-  // String parameter (target image reference) in cyan.
-  private static final String SUCCESS_MESSAGE_FORMAT_FOR_DOCKER_DAEMON =
-      "Built image to Docker daemon as \u001B[36m%s\u001B[0m";
-
-  private static final String DESCRIPTION_FOR_TARBALL = "Building image tarball";
-  private static final String STARTUP_MESSAGE_FORMAT_FOR_TARBALL =
-      "Containerizing application to file at '%s'...";
-  // String parameter (target file) in cyan.
-  private static final String SUCCESS_MESSAGE_FORMAT_FOR_TARBALL =
-      "Built image tarball at \u001B[36m%s\u001B[0m";
 
   /**
    * All the steps to build an image to a Docker registry.
@@ -72,12 +55,6 @@ public class BuildSteps {
         DESCRIPTION_FOR_DOCKER_REGISTRY,
         buildConfiguration,
         cachesInitializer,
-        String.format(
-            STARTUP_MESSAGE_FORMAT_FOR_DOCKER_REGISTRY,
-            buildConfiguration.getTargetImageConfiguration().getImage()),
-        String.format(
-            SUCCESS_MESSAGE_FORMAT_FOR_DOCKER_REGISTRY,
-            buildConfiguration.getTargetImageConfiguration().getImage()),
         stepsRunner ->
             stepsRunner
                 .runRetrieveTargetRegistryCredentialsStep()
@@ -107,12 +84,6 @@ public class BuildSteps {
         DESCRIPTION_FOR_DOCKER_DAEMON,
         buildConfiguration,
         cachesInitializer,
-        String.format(
-            STARTUP_MESSAGE_FORMAT_FOR_DOCKER_DAEMON,
-            buildConfiguration.getTargetImageConfiguration().getImage()),
-        String.format(
-            SUCCESS_MESSAGE_FORMAT_FOR_DOCKER_DAEMON,
-            buildConfiguration.getTargetImageConfiguration().getImage()),
         stepsRunner ->
             stepsRunner
                 .runPullBaseImageStep()
@@ -140,8 +111,6 @@ public class BuildSteps {
         DESCRIPTION_FOR_TARBALL,
         buildConfiguration,
         cachesInitializer,
-        String.format(STARTUP_MESSAGE_FORMAT_FOR_TARBALL, outputPath.toString()),
-        String.format(SUCCESS_MESSAGE_FORMAT_FOR_TARBALL, outputPath.toString()),
         stepsRunner ->
             stepsRunner
                 .runPullBaseImageStep()
@@ -156,28 +125,20 @@ public class BuildSteps {
   private final String description;
   private final BuildConfiguration buildConfiguration;
   private final Caches.Initializer cachesInitializer;
-  private final String startupMessage;
-  private final String successMessage;
   private final StepsRunnerConsumer stepsRunnerConsumer;
 
   /**
    * @param description a description of what the steps do
-   * @param startupMessage shown when the steps start running
-   * @param successMessage shown when the steps finish successfully
    * @param stepsRunnerConsumer accepts a {@link StepsRunner} by running the necessary steps
    */
   private BuildSteps(
       String description,
       BuildConfiguration buildConfiguration,
       Caches.Initializer cachesInitializer,
-      String startupMessage,
-      String successMessage,
       StepsRunnerConsumer stepsRunnerConsumer) {
     this.description = description;
     this.buildConfiguration = buildConfiguration;
     this.cachesInitializer = cachesInitializer;
-    this.startupMessage = startupMessage;
-    this.successMessage = successMessage;
     this.stepsRunnerConsumer = stepsRunnerConsumer;
   }
 
@@ -185,20 +146,12 @@ public class BuildSteps {
     return buildConfiguration;
   }
 
-  public String getStartupMessage() {
-    return startupMessage;
-  }
-
-  public String getSuccessMessage() {
-    return successMessage;
-  }
-
   public void run()
       throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
           CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
     buildConfiguration.getBuildLogger().lifecycle("");
 
-    try (Timer timer = new Timer(buildConfiguration.getBuildLogger(), description)) {
+    try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), description)) {
       try (Caches caches = cachesInitializer.init()) {
         Cache baseImageLayersCache = caches.getBaseCache();
         Cache applicationLayersCache = caches.getApplicationCache();

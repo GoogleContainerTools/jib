@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.configuration;
 
 import com.google.cloud.tools.jib.JibLogger;
-import com.google.cloud.tools.jib.configuration.Port.Protocol;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
 import com.google.cloud.tools.jib.image.ImageReference;
@@ -26,12 +25,14 @@ import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -47,14 +48,15 @@ public class BuildConfigurationTest {
     String expectedTargetServerUrl = "someotherserver";
     String expectedTargetImageName = "targetimage";
     String expectedTargetTag = "targettag";
+    Set<String> additionalTargetImageTags = ImmutableSet.of("tag1", "tag2", "tag3");
+    Set<String> expectedTargetImageTags = ImmutableSet.of("targettag", "tag1", "tag2", "tag3");
     List<CredentialRetriever> credentialRetrievers =
         Collections.singletonList(() -> new Credential("username", "password"));
     Instant expectedCreationTime = Instant.ofEpochSecond(10000);
     List<String> expectedEntrypoint = Arrays.asList("some", "entrypoint");
     List<String> expectedJavaArguments = Arrays.asList("arg1", "arg2");
     Map<String, String> expectedEnvironment = ImmutableMap.of("key", "value");
-    ImmutableList<Port> expectedExposedPorts =
-        ImmutableList.of(new Port(1000, Protocol.TCP), new Port(2000, Protocol.TCP));
+    ImmutableList<Port> expectedExposedPorts = ImmutableList.of(Port.tcp(1000), Port.tcp(2000));
     Map<String, String> expectedLabels = ImmutableMap.of("key1", "value1", "key2", "value2");
     Class<? extends BuildableManifestTemplate> expectedTargetFormat = OCIManifestTemplate.class;
     CacheConfiguration expectedApplicationLayersCacheConfiguration =
@@ -63,7 +65,9 @@ public class BuildConfigurationTest {
         CacheConfiguration.forPath(Paths.get("base/image/layers"));
     List<LayerConfiguration> expectedLayerConfigurations =
         Collections.singletonList(
-            LayerConfiguration.builder().addEntry(Collections.emptyList(), "destination").build());
+            LayerConfiguration.builder()
+                .addEntry(Paths.get("sourceFile"), Paths.get("pathInContainer"))
+                .build());
     String expectedCreatedBy = "createdBy";
 
     ImageConfiguration baseImageConfiguration =
@@ -90,13 +94,14 @@ public class BuildConfigurationTest {
         BuildConfiguration.builder(Mockito.mock(JibLogger.class))
             .setBaseImageConfiguration(baseImageConfiguration)
             .setTargetImageConfiguration(targetImageConfiguration)
+            .setAdditionalTargetImageTags(additionalTargetImageTags)
             .setContainerConfiguration(containerConfiguration)
             .setApplicationLayersCacheConfiguration(expectedApplicationLayersCacheConfiguration)
             .setBaseImageLayersCacheConfiguration(expectedBaseImageLayersCacheConfiguration)
             .setTargetFormat(OCIManifestTemplate.class)
             .setAllowInsecureRegistries(true)
             .setLayerConfigurations(expectedLayerConfigurations)
-            .setCreatedBy(expectedCreatedBy);
+            .setToolName(expectedCreatedBy);
     BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
 
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
@@ -117,6 +122,7 @@ public class BuildConfigurationTest {
         buildConfiguration.getTargetImageConfiguration().getImageRepository());
     Assert.assertEquals(
         expectedTargetTag, buildConfiguration.getTargetImageConfiguration().getImageTag());
+    Assert.assertEquals(expectedTargetImageTags, buildConfiguration.getAllTargetImageTags());
     Assert.assertEquals(
         new Credential("username", "password"),
         buildConfiguration
@@ -143,7 +149,7 @@ public class BuildConfigurationTest {
     Assert.assertEquals(expectedLayerConfigurations, buildConfiguration.getLayerConfigurations());
     Assert.assertEquals(
         expectedEntrypoint, buildConfiguration.getContainerConfiguration().getEntrypoint());
-    Assert.assertEquals(expectedCreatedBy, buildConfiguration.getCreatedBy());
+    Assert.assertEquals(expectedCreatedBy, buildConfiguration.getToolName());
   }
 
   @Test
@@ -172,14 +178,14 @@ public class BuildConfigurationTest {
             .setTargetImageConfiguration(targetImageConfiguration)
             .build();
 
+    Assert.assertEquals(ImmutableSet.of("targettag"), buildConfiguration.getAllTargetImageTags());
     Assert.assertEquals(V22ManifestTemplate.class, buildConfiguration.getTargetFormat());
     Assert.assertNull(buildConfiguration.getApplicationLayersCacheConfiguration());
     Assert.assertNull(buildConfiguration.getBaseImageLayersCacheConfiguration());
     Assert.assertNull(buildConfiguration.getContainerConfiguration());
-    Assert.assertEquals(buildConfiguration.getTargetFormat(), V22ManifestTemplate.class);
     Assert.assertFalse(buildConfiguration.getAllowInsecureRegistries());
     Assert.assertEquals(Collections.emptyList(), buildConfiguration.getLayerConfigurations());
-    Assert.assertEquals("jib", buildConfiguration.getCreatedBy());
+    Assert.assertEquals("jib", buildConfiguration.getToolName());
   }
 
   @Test

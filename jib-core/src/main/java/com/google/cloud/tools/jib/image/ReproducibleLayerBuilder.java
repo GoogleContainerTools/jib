@@ -16,14 +16,10 @@
 
 package com.google.cloud.tools.jib.image;
 
-import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.tar.TarStreamBuilder;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -85,77 +81,27 @@ public class ReproducibleLayerBuilder {
     }
   }
 
-  /**
-   * Builds the {@link TarArchiveEntry}s for adding this {@link LayerEntry} to a tarball archive.
-   *
-   * @return the list of {@link TarArchiveEntry}
-   * @throws IOException if walking a source file that is a directory failed
-   */
-  @VisibleForTesting
-  static List<TarArchiveEntry> buildAsTarArchiveEntries(LayerEntry layerEntry) throws IOException {
-    List<TarArchiveEntry> tarArchiveEntries = new ArrayList<>();
+  private final ImmutableList<LayerEntry> layerEntries;
 
-    // Adds the files to extract relative to the extraction path.
-    for (Path sourceFile : layerEntry.getSourceFiles()) {
-      if (Files.isDirectory(sourceFile)) {
-        new DirectoryWalker(sourceFile)
-            .filterRoot()
-            .filter(path -> !Files.isDirectory(path))
-            .walk(
-                path -> {
-                  Path sourceFileRelativePath = sourceFile.getParent().relativize(path);
-                  Path extractionPath =
-                      Paths.get(layerEntry.getExtractionPath()).resolve(sourceFileRelativePath);
-                  tarArchiveEntries.add(
-                      new TarArchiveEntry(path.toFile(), extractionPath.toString()));
-                });
-      } else {
-        Path extractionPath =
-            Paths.get(layerEntry.getExtractionPath()).resolve(sourceFile.getFileName());
-        TarArchiveEntry tarArchiveEntry =
-            new TarArchiveEntry(sourceFile.toFile(), extractionPath.toString());
-        tarArchiveEntries.add(tarArchiveEntry);
-      }
-    }
-
-    return tarArchiveEntries;
-  }
-
-  private final ImmutableList.Builder<LayerEntry> layerEntries = ImmutableList.builder();
-
-  public ReproducibleLayerBuilder() {}
-
-  /**
-   * Adds the {@code sourceFiles} to be extracted on the image at {@code extractionPath}. The order
-   * in which files are added matters.
-   *
-   * @param sourceFiles the source files to build from
-   * @param extractionPath the Unix-style path to add the source files to in the container image
-   *     filesystem
-   * @return this
-   */
-  public ReproducibleLayerBuilder addFiles(List<Path> sourceFiles, String extractionPath) {
-    this.layerEntries.add(new LayerEntry(ImmutableList.copyOf(sourceFiles), extractionPath));
-    return this;
+  public ReproducibleLayerBuilder(ImmutableList<LayerEntry> layerEntries) {
+    this.layerEntries = layerEntries;
   }
 
   /**
    * Builds and returns the layer.
    *
    * @return the new layer
-   * @throws IOException if walking the source files fails
    */
-  public UnwrittenLayer build() throws IOException {
+  public UnwrittenLayer build() {
     UniqueTarArchiveEntries uniqueTarArchiveEntries = new UniqueTarArchiveEntries();
 
     // Adds all the layer entries as tar entries.
-    List<LayerEntry> layerEntries = this.layerEntries.build();
     for (LayerEntry layerEntry : layerEntries) {
-      // Converts layerEntry to list of TarArchiveEntrys.
-      List<TarArchiveEntry> tarArchiveEntries = buildAsTarArchiveEntries(layerEntry);
       // Adds the entries to uniqueTarArchiveEntries, which makes sure all entries are unique and
       // adds parent directories for each extraction path.
-      tarArchiveEntries.forEach(uniqueTarArchiveEntries::add);
+      uniqueTarArchiveEntries.add(
+          new TarArchiveEntry(
+              layerEntry.getSourceFile().toFile(), layerEntry.getAbsoluteExtractionPathString()));
     }
 
     // Gets the entries sorted by extraction path.
@@ -183,6 +129,6 @@ public class ReproducibleLayerBuilder {
   }
 
   public ImmutableList<LayerEntry> getLayerEntries() {
-    return layerEntries.build();
+    return layerEntries;
   }
 }

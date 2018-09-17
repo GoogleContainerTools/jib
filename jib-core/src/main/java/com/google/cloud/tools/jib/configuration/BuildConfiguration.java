@@ -19,26 +19,38 @@ package com.google.cloud.tools.jib.configuration;
 import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
+import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /** Immutable configuration options for the builder process. */
 public class BuildConfiguration {
 
+  /** The default target format of the container manifest. */
+  private static final Class<? extends BuildableManifestTemplate> DEFAULT_TARGET_FORMAT =
+      V22ManifestTemplate.class;
+
+  /** The default tool identifier. */
+  private static final String DEFAULT_TOOL_NAME = "jib";
+
+  /** Builds an immutable {@link BuildConfiguration}. Instantiate with {@link #builder}. */
   public static class Builder {
 
     // All the parameters below are set to their default values.
     @Nullable private ImageConfiguration baseImageConfiguration;
     @Nullable private ImageConfiguration targetImageConfiguration;
+    private ImmutableSet<String> additionalTargetImageTags = ImmutableSet.of();
     @Nullable private ContainerConfiguration containerConfiguration;
     @Nullable private CacheConfiguration applicationLayersCacheConfiguration;
     @Nullable private CacheConfiguration baseImageLayersCacheConfiguration;
     private boolean allowInsecureRegistries = false;
     private ImmutableList<LayerConfiguration> layerConfigurations = ImmutableList.of();
-    private Class<? extends BuildableManifestTemplate> targetFormat = V22ManifestTemplate.class;
-    private String createdBy = "jib";
+    private Class<? extends BuildableManifestTemplate> targetFormat = DEFAULT_TARGET_FORMAT;
+    private String toolName = DEFAULT_TOOL_NAME;
 
     private JibLogger buildLogger;
 
@@ -65,6 +77,18 @@ public class BuildConfiguration {
      */
     public Builder setTargetImageConfiguration(ImageConfiguration imageConfiguration) {
       this.targetImageConfiguration = imageConfiguration;
+      return this;
+    }
+
+    /**
+     * Sets the tags to tag the target image with (in addition to the tag in the target image
+     * configuration image reference set via {@link #setTargetImageConfiguration}).
+     *
+     * @param tags a set of tags
+     * @return this
+     */
+    public Builder setAdditionalTargetImageTags(Set<String> tags) {
+      additionalTargetImageTags = ImmutableSet.copyOf(tags);
       return this;
     }
 
@@ -137,14 +161,13 @@ public class BuildConfiguration {
     }
 
     /**
-     * Sets the command that created the image layers (for the "Created By" field in the container's
-     * history).
+     * Sets the name of the tool that is executing the build.
      *
-     * @param createdBy the field value
+     * @param toolName the tool name
      * @return this
      */
-    public Builder setCreatedBy(String createdBy) {
-      this.createdBy = createdBy;
+    public Builder setToolName(String toolName) {
+      this.toolName = toolName;
       return this;
     }
 
@@ -179,13 +202,14 @@ public class BuildConfiguration {
               buildLogger,
               baseImageConfiguration,
               targetImageConfiguration,
+              additionalTargetImageTags,
               containerConfiguration,
               applicationLayersCacheConfiguration,
               baseImageLayersCacheConfiguration,
               targetFormat,
               allowInsecureRegistries,
               layerConfigurations,
-              createdBy);
+              toolName);
 
         case 1:
           throw new IllegalStateException(errorMessages.get(0));
@@ -200,43 +224,52 @@ public class BuildConfiguration {
     }
   }
 
-  public static Builder builder(JibLogger buildLogger) {
-    return new Builder(buildLogger);
+  /**
+   * Creates a new {@link Builder} to build a {@link BuildConfiguration}.
+   *
+   * @param jibLogger the logger to log messages during build
+   * @return a new {@link Builder}
+   */
+  public static Builder builder(JibLogger jibLogger) {
+    return new Builder(jibLogger);
   }
 
   private final JibLogger buildLogger;
   private final ImageConfiguration baseImageConfiguration;
   private final ImageConfiguration targetImageConfiguration;
+  private final ImmutableSet<String> additionalTargetImageTags;
   @Nullable private final ContainerConfiguration containerConfiguration;
   @Nullable private final CacheConfiguration applicationLayersCacheConfiguration;
   @Nullable private final CacheConfiguration baseImageLayersCacheConfiguration;
   private Class<? extends BuildableManifestTemplate> targetFormat;
   private final boolean allowInsecureRegistries;
   private final ImmutableList<LayerConfiguration> layerConfigurations;
-  private final String createdBy;
+  private final String toolName;
 
-  /** Instantiate with {@link Builder#build}. */
+  /** Instantiate with {@link #builder}. */
   private BuildConfiguration(
       JibLogger buildLogger,
       ImageConfiguration baseImageConfiguration,
       ImageConfiguration targetImageConfiguration,
+      ImmutableSet<String> additionalTargetImageTags,
       @Nullable ContainerConfiguration containerConfiguration,
       @Nullable CacheConfiguration applicationLayersCacheConfiguration,
       @Nullable CacheConfiguration baseImageLayersCacheConfiguration,
       Class<? extends BuildableManifestTemplate> targetFormat,
       boolean allowInsecureRegistries,
       ImmutableList<LayerConfiguration> layerConfigurations,
-      String createdBy) {
+      String toolName) {
     this.buildLogger = buildLogger;
     this.baseImageConfiguration = baseImageConfiguration;
     this.targetImageConfiguration = targetImageConfiguration;
+    this.additionalTargetImageTags = additionalTargetImageTags;
     this.containerConfiguration = containerConfiguration;
     this.applicationLayersCacheConfiguration = applicationLayersCacheConfiguration;
     this.baseImageLayersCacheConfiguration = baseImageLayersCacheConfiguration;
     this.targetFormat = targetFormat;
     this.allowInsecureRegistries = allowInsecureRegistries;
     this.layerConfigurations = layerConfigurations;
-    this.createdBy = createdBy;
+    this.toolName = toolName;
   }
 
   public JibLogger getBuildLogger() {
@@ -251,6 +284,14 @@ public class BuildConfiguration {
     return targetImageConfiguration;
   }
 
+  public ImmutableSet<String> getAllTargetImageTags() {
+    ImmutableSet.Builder<String> allTargetImageTags =
+        ImmutableSet.builderWithExpectedSize(1 + additionalTargetImageTags.size());
+    allTargetImageTags.add(targetImageConfiguration.getImageTag());
+    allTargetImageTags.addAll(additionalTargetImageTags);
+    return allTargetImageTags.build();
+  }
+
   @Nullable
   public ContainerConfiguration getContainerConfiguration() {
     return containerConfiguration;
@@ -260,8 +301,8 @@ public class BuildConfiguration {
     return targetFormat;
   }
 
-  public String getCreatedBy() {
-    return createdBy;
+  public String getToolName() {
+    return toolName;
   }
 
   /**
@@ -301,5 +342,34 @@ public class BuildConfiguration {
    */
   public ImmutableList<LayerConfiguration> getLayerConfigurations() {
     return layerConfigurations;
+  }
+
+  /**
+   * Creates a new {@link RegistryClient.Factory} for the base image with fields from the build
+   * configuration.
+   *
+   * @return a new {@link RegistryClient.Factory}
+   */
+  public RegistryClient.Factory newBaseImageRegistryClientFactory() {
+    return newRegistryClientFactory(baseImageConfiguration);
+  }
+
+  /**
+   * Creates a new {@link RegistryClient.Factory} for the target image with fields from the build
+   * configuration.
+   *
+   * @return a new {@link RegistryClient.Factory}
+   */
+  public RegistryClient.Factory newTargetImageRegistryClientFactory() {
+    return newRegistryClientFactory(targetImageConfiguration);
+  }
+
+  private RegistryClient.Factory newRegistryClientFactory(ImageConfiguration imageConfiguration) {
+    return RegistryClient.factory(
+            getBuildLogger(),
+            imageConfiguration.getImageRegistry(),
+            imageConfiguration.getImageRepository())
+        .setAllowInsecureRegistries(getAllowInsecureRegistries())
+        .setUserAgentSuffix(getToolName());
   }
 }
