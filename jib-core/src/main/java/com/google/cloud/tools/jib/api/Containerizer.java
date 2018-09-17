@@ -18,11 +18,13 @@ package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.event.EventHandlers;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.annotation.Nullable;
 
 /** Configures how to containerize. */
+// TODO: Add tests once JibContainerBuilder#containerize() is added.
 public class Containerizer {
 
   /**
@@ -99,18 +101,15 @@ public class Containerizer {
     return imageTarget;
   }
 
-  @Nullable
-  ExecutorService getExecutorService() {
-    return executorService;
+  Optional<ExecutorService> getExecutorService() {
+    return Optional.ofNullable(executorService);
   }
 
-  @Nullable
-  CacheConfiguration getCacheConfiguration() {
-    return cacheConfiguration;
+  Optional<CacheConfiguration> getCacheConfiguration() {
+    return Optional.ofNullable(cacheConfiguration);
   }
 
-  @Nullable
-  EventHandlers getEventHandlers() {
-    return eventHandlers;
+  Optional<EventHandlers> getEventHandlers() {
+    return Optional.ofNullable(eventHandlers);
   }
 }
