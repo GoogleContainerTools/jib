@@ -24,7 +24,7 @@ import org.gradle.api.model.ObjectFactory;
 /** {@link ImageParameters} that configure the base image. */
 public class BaseImageParameters implements ImageParameters {
 
-  private AuthParameters auth;
+  private final AuthParameters auth;
 
   @Nullable private String image;
   @Nullable private String credHelper;

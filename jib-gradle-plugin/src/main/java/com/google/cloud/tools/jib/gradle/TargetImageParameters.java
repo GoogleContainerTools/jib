@@ -28,7 +28,7 @@ import org.gradle.api.tasks.Optional;
 /** {@link ImageParameters} that configure the target image. */
 public class TargetImageParameters implements ImageParameters {
 
-  private AuthParameters auth;
+  private final AuthParameters auth;
 
   @Nullable private String image;
   private Set<String> tags = Collections.emptySet();
