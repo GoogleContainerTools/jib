@@ -13,9 +13,10 @@ Design for Jib Core as a Java library for building container images.
 - `JibContainerBuilder from(ImageReference imageReference)`
 
 `JibContainerBuilder` - configures the container to build
-- `JibContainerBuilder addLayer(List<Path> files, Path pathInContainer)`
+- `JibContainerBuilder layer(List<Path> files, Path pathInContainer)`
+- `JibContainerBuilder layer(LayerConfiguration)`
 - `JibContainerBuilder setLayers(List<LayerConfiguration>/LayerConfiguration...)`
-- `JibContainerBuilder addLayer(LayerConfiguration)`
+
 - `JibContainerBuilder setEntrypoint(List<String>/String...)`
 - `JibContainerBuilder setProgramArguments(List<String>/String...)`
 - `JibContainerBuilder setEnvironment(Map<String, String> environmentMap)`
@@ -30,7 +31,7 @@ Three `TargetImage` types (`RegistryImage`, `DockerDaemonImage`, and `TarImage`)
 
 `RegistryImage` - builds to a container registry
 - `static RegistryImage named(ImageReference/String)`
-- `RegistryImage setCredential(String username, String password)`
+- `RegistryImage addCredential(String username, String password)`
 - `RegistryImage addCredentialRetriever(CredentialRetriever)`
 
 `DockerDaemonImage` - builds to a Docker daemon
