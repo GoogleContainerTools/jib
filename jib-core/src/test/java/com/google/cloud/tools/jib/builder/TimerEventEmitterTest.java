@@ -61,7 +61,7 @@ public class TimerEventEmitterTest {
     }
 
     TimerEvent.Timer parentTimer = verifyNextTimerEvent(null, State.START, "description", false);
-    verifyNextTimerEvent(null, State.IN_PROGRESS, "description", false);
+    verifyNextTimerEvent(null, State.LAP, "description", false);
     verifyNextTimerEvent(parentTimer, State.START, "child description", false);
     verifyNextTimerEvent(parentTimer, State.FINISHED, "child description", false);
     verifyNextTimerEvent(null, State.FINISHED, "description", true);

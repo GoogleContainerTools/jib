@@ -62,11 +62,10 @@ public class TimerEventEmitter implements Closeable {
   }
 
   /**
-   * Captures the time since last lap or creation and emits an {@link State#IN_PROGRESS} {@link
-   * TimerEvent}.
+   * Captures the time since last lap or creation and emits an {@link State#LAP} {@link TimerEvent}.
    */
   public void lap() {
-    emitTimerEvent(State.IN_PROGRESS, timer.lap());
+    emitTimerEvent(State.LAP, timer.lap());
   }
 
   /** Laps and emits an {@link State#FINISHED} {@link TimerEvent} upon close. */

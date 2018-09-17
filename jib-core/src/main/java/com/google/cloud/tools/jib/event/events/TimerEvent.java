@@ -23,9 +23,9 @@ import java.util.Optional;
 /**
  * Timer event for timing various part of Jib's execution.
  *
- * <p>Timer events follow a specific {@link Timer} through a {@link State#START}, {@link
- * State#IN_PROGRESS}, and {@link State#FINISHED} states. The duration indicates the duration since
- * the last {@link TimerEvent} emitted for the {@link Timer}.
+ * <p>Timer events follow a specific {@link Timer} through a {@link State#START}, {@link State#LAP},
+ * and {@link State#FINISHED} states. The duration indicates the duration since the last {@link
+ * TimerEvent} emitted for the {@link Timer}.
  *
  * <p>Timers can also define a hierarchy.
  */
@@ -38,10 +38,10 @@ public class TimerEvent implements JibEvent {
     START,
 
     /**
-     * The timer is still in progress. {@link #getDuration} is the time since the last event. {@link
+     * The timer timed a lap. {@link #getDuration} is the time since the last event. {@link
      * #getElapsed} is the total elapsed time.
      */
-    IN_PROGRESS,
+    LAP,
 
     /**
      * The timer has finished timing. {@link #getDuration} is the time since the last event. {@link
