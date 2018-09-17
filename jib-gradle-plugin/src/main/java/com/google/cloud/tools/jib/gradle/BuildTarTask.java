@@ -132,7 +132,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
         gradleHelpfulSuggestionsBuilder
             .setBaseImageReference(buildConfiguration.getBaseImageConfiguration().getImage())
             .setBaseImageHasConfiguredCredentials(
-                pluginConfigurationProcessor.getBaseImageCredential() != null)
+                pluginConfigurationProcessor.isBaseImageCredentialPresent())
             .setTargetImageReference(buildConfiguration.getTargetImageConfiguration().getImage())
             .build();
 

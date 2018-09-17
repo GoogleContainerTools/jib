@@ -27,7 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import javax.annotation.Nullable;
+import java.util.Optional;
 
 /**
  * Retrieves registry credentials from the Docker config.
@@ -68,13 +68,12 @@ public class DockerConfigCredentialRetriever {
   /**
    * Retrieves credentials for a registry. Tries all possible known aliases.
    *
-   * @return {@link Credential} found for {@code registry}, or {@code null} if not found
+   * @return {@link Credential} found for {@code registry}, or {@link Optional#empty} if not found
    * @throws IOException if failed to parse the config JSON
    */
-  @Nullable
-  public Credential retrieve() throws IOException {
+  public Optional<Credential> retrieve() throws IOException {
     if (!Files.exists(dockerConfigFile)) {
-      return null;
+      return Optional.empty();
     }
     DockerConfig dockerConfig =
         new DockerConfig(
@@ -86,11 +85,10 @@ public class DockerConfigCredentialRetriever {
    * Retrieves credentials for a registry alias from a {@link DockerConfig}.
    *
    * @param dockerConfig the {@link DockerConfig} to retrieve from
-   * @return the retrieved credentials, or {@code null} if none are found
+   * @return the retrieved credentials, or {@code Optional#empty} if none are found
    */
   @VisibleForTesting
-  @Nullable
-  Credential retrieve(DockerConfig dockerConfig) {
+  Optional<Credential> retrieve(DockerConfig dockerConfig) {
     for (String registryAlias : RegistryAliasGroup.getAliasesGroup(registry)) {
       // First, tries to find defined auth.
       String auth = dockerConfig.getAuthFor(registryAlias);
@@ -100,7 +98,7 @@ public class DockerConfigCredentialRetriever {
             new String(Base64.decodeBase64(auth), StandardCharsets.UTF_8);
         String username = usernameColonPassword.substring(0, usernameColonPassword.indexOf(":"));
         String password = usernameColonPassword.substring(usernameColonPassword.indexOf(":") + 1);
-        return new Credential(username, password);
+        return Optional.of(Credential.basic(username, password));
       }
 
       // Then, tries to use a defined credHelpers credential helper.
@@ -109,7 +107,7 @@ public class DockerConfigCredentialRetriever {
       if (dockerCredentialHelper != null) {
         try {
           // Tries with the given registry alias (may be the original registry).
-          return dockerCredentialHelper.retrieve();
+          return Optional.of(dockerCredentialHelper.retrieve());
 
         } catch (IOException
             | CredentialHelperUnhandledServerUrlException
@@ -118,6 +116,6 @@ public class DockerConfigCredentialRetriever {
         }
       }
     }
-    return null;
+    return Optional.empty();
   }
 }
