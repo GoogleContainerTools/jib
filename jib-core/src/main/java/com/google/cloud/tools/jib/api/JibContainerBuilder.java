@@ -17,6 +17,8 @@
 package com.google.cloud.tools.jib.api;
 // TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
+import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.image.ImageReference;
@@ -297,5 +299,12 @@ public class JibContainerBuilder {
     return this;
   }
 
-  // TODO: Add containerize(...).
+  private ContainerConfiguration toContainerConfiguration() {
+    ContainerConfiguration.Builder containerConfigurationBuilder = ContainerConfiguration.builder();
+    containerConfigurationBuilder.
+  }
+
+  private BuildConfiguration toBuildConfiguration() {
+    
+  }
 }
