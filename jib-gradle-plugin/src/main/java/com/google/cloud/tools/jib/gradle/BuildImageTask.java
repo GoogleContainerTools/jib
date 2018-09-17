@@ -30,6 +30,7 @@ import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.util.Optional;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -89,15 +90,15 @@ public class BuildImageTask extends DefaultTask implements JibTask {
     DefaultCredentialRetrievers defaultCredentialRetrievers =
         DefaultCredentialRetrievers.init(
             CredentialRetrieverFactory.forImage(targetImage, gradleJibLogger));
-    Credential toCredential =
+    Optional<Credential> optionalToCredential =
         ConfigurationPropertyValidator.getImageCredential(
             gradleJibLogger,
             "jib.to.auth.username",
             "jib.to.auth.password",
             jibExtension.getTo().getAuth());
-    if (toCredential != null) {
-      defaultCredentialRetrievers.setKnownCredential(toCredential, "jib.to.auth");
-    }
+    optionalToCredential.ifPresent(
+        toCredential ->
+            defaultCredentialRetrievers.setKnownCredential(toCredential, "jib.to.auth"));
     defaultCredentialRetrievers.setCredentialHelperSuffix(jibExtension.getTo().getCredHelper());
 
     ImageConfiguration targetImageConfiguration =
@@ -124,9 +125,9 @@ public class BuildImageTask extends DefaultTask implements JibTask {
         new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension)
             .setBaseImageReference(buildConfiguration.getBaseImageConfiguration().getImage())
             .setBaseImageHasConfiguredCredentials(
-                pluginConfigurationProcessor.getBaseImageCredential() != null)
+                pluginConfigurationProcessor.isBaseImageCredentialPresent())
             .setTargetImageReference(buildConfiguration.getTargetImageConfiguration().getImage())
-            .setTargetImageHasConfiguredCredentials(toCredential != null)
+            .setTargetImageHasConfiguredCredentials(optionalToCredential.isPresent())
             .build();
 
     try {

@@ -22,18 +22,39 @@ import java.util.Objects;
 /** Holds credentials (username and password). */
 public class Credential {
 
+  /**
+   * Gets a {@link Credential} configured with a username and password.
+   *
+   * @param username the username
+   * @param password the password
+   * @return a new {@link Credential}
+   */
+  public static Credential basic(String username, String password) {
+    return new Credential(username, password);
+  }
+
   private final String username;
   private final String password;
 
-  public Credential(String username, String password) {
+  private Credential(String username, String password) {
     this.username = username;
     this.password = password;
   }
 
+  /**
+   * Gets the username.
+   *
+   * @return the username
+   */
   public String getUsername() {
     return username;
   }
 
+  /**
+   * Gets the password.
+   *
+   * @return the password
+   */
   public String getPassword() {
     return password;
   }

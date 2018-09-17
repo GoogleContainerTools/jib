@@ -28,6 +28,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
@@ -90,9 +91,9 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
 
     try (TimerEventEmitter ignored = new TimerEventEmitter(eventEmitter, description)) {
       for (CredentialRetriever credentialRetriever : credentialRetrievers) {
-        Credential credential = credentialRetriever.retrieve();
-        if (credential != null) {
-          return credential;
+        Optional<Credential> optionalCredential = credentialRetriever.retrieve();
+        if (optionalCredential.isPresent()) {
+          return optionalCredential.get();
         }
       }
 

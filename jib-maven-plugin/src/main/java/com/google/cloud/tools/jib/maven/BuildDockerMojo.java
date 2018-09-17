@@ -91,7 +91,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
           mavenHelpfulSuggestionsBuilder
               .setBaseImageReference(buildConfiguration.getBaseImageConfiguration().getImage())
               .setBaseImageHasConfiguredCredentials(
-                  pluginConfigurationProcessor.getBaseImageCredential() != null)
+                  pluginConfigurationProcessor.isBaseImageCredentialPresent())
               .setTargetImageReference(buildConfiguration.getTargetImageConfiguration().getImage())
               .build();
 

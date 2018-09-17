@@ -32,7 +32,7 @@ import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
 import com.google.common.base.Preconditions;
 import java.time.Instant;
 import java.util.List;
-import javax.annotation.Nullable;
+import java.util.Optional;
 import org.apache.maven.plugin.MojoExecutionException;
 
 /** Configures and provides builders for the image building goals. */
@@ -80,21 +80,21 @@ class PluginConfigurationProcessor {
             logger);
     DefaultCredentialRetrievers defaultCredentialRetrievers =
         DefaultCredentialRetrievers.init(CredentialRetrieverFactory.forImage(baseImage, logger));
-    Credential fromCredential =
+    Optional<Credential> optionalFromCredential =
         ConfigurationPropertyValidator.getImageCredential(
             logger,
             "jib.from.auth.username",
             "jib.from.auth.password",
             jibPluginConfiguration.getBaseImageAuth());
-    if (fromCredential == null) {
-      fromCredential = mavenSettingsServerCredentials.retrieve(baseImage.getRegistry());
-      if (fromCredential != null) {
-        defaultCredentialRetrievers.setInferredCredential(
-            fromCredential, MavenSettingsServerCredentials.CREDENTIAL_SOURCE);
-      }
-    } else {
+    if (optionalFromCredential.isPresent()) {
       defaultCredentialRetrievers.setKnownCredential(
-          fromCredential, "jib-maven-plugin <from><auth> configuration");
+          optionalFromCredential.get(), "jib-maven-plugin <from><auth> configuration");
+    } else {
+      optionalFromCredential = mavenSettingsServerCredentials.retrieve(baseImage.getRegistry());
+      optionalFromCredential.ifPresent(
+          fromCredential ->
+              defaultCredentialRetrievers.setInferredCredential(
+                  fromCredential, MavenSettingsServerCredentials.CREDENTIAL_SOURCE));
     }
     defaultCredentialRetrievers.setCredentialHelperSuffix(
         jibPluginConfiguration.getBaseImageCredentialHelperName());
@@ -147,7 +147,7 @@ class PluginConfigurationProcessor {
         baseImageConfiguration,
         containerConfigurationBuilder,
         mavenSettingsServerCredentials,
-        fromCredential);
+        optionalFromCredential.isPresent());
   }
 
   /**
@@ -167,19 +167,19 @@ class PluginConfigurationProcessor {
   private final ImageConfiguration.Builder baseImageConfigurationBuilder;
   private final ContainerConfiguration.Builder containerConfigurationBuilder;
   private final MavenSettingsServerCredentials mavenSettingsServerCredentials;
-  @Nullable private final Credential baseImageCredential;
+  private final boolean isBaseImageCredentialPresent;
 
   private PluginConfigurationProcessor(
       BuildConfiguration.Builder buildConfigurationBuilder,
       ImageConfiguration.Builder baseImageConfigurationBuilder,
       ContainerConfiguration.Builder containerConfigurationBuilder,
       MavenSettingsServerCredentials mavenSettingsServerCredentials,
-      @Nullable Credential baseImageCredential) {
+      boolean isBaseImageCredentialPresent) {
     this.buildConfigurationBuilder = buildConfigurationBuilder;
     this.baseImageConfigurationBuilder = baseImageConfigurationBuilder;
     this.containerConfigurationBuilder = containerConfigurationBuilder;
     this.mavenSettingsServerCredentials = mavenSettingsServerCredentials;
-    this.baseImageCredential = baseImageCredential;
+    this.isBaseImageCredentialPresent = isBaseImageCredentialPresent;
   }
 
   BuildConfiguration.Builder getBuildConfigurationBuilder() {
@@ -198,8 +198,7 @@ class PluginConfigurationProcessor {
     return mavenSettingsServerCredentials;
   }
 
-  @Nullable
-  Credential getBaseImageCredential() {
-    return baseImageCredential;
+  boolean isBaseImageCredentialPresent() {
+    return isBaseImageCredentialPresent;
   }
 }

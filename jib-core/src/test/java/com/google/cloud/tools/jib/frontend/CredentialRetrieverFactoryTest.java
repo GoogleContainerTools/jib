@@ -28,6 +28,7 @@ import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelper;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,7 +41,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class CredentialRetrieverFactoryTest {
 
-  private static final Credential FAKE_CREDENTIALS = new Credential("username", "password");
+  private static final Credential FAKE_CREDENTIALS = Credential.basic("username", "password");
 
   /**
    * Returns a {@link DockerCredentialHelperFactory} that checks given parameters upon creating a
@@ -93,7 +94,8 @@ public class CredentialRetrieverFactoryTest {
         FAKE_CREDENTIALS,
         credentialRetrieverFactory
             .dockerCredentialHelper(Paths.get("docker-credential-helper"))
-            .retrieve());
+            .retrieve()
+            .orElseThrow(AssertionError::new));
 
     Mockito.verify(mockJibLogger).info("Using docker-credential-helper for registry");
   }
@@ -110,7 +112,11 @@ public class CredentialRetrieverFactoryTest {
                 mockDockerCredentialHelper));
 
     Assert.assertEquals(
-        FAKE_CREDENTIALS, credentialRetrieverFactory.inferCredentialHelper().retrieve());
+        FAKE_CREDENTIALS,
+        credentialRetrieverFactory
+            .inferCredentialHelper()
+            .retrieve()
+            .orElseThrow(AssertionError::new));
     Mockito.verify(mockJibLogger).info("Using docker-credential-gcr for something.gcr.io");
   }
 
@@ -128,7 +134,7 @@ public class CredentialRetrieverFactoryTest {
     Mockito.when(mockCredentialHelperNotFoundException.getMessage()).thenReturn("warning");
     Mockito.when(mockCredentialHelperNotFoundException.getCause())
         .thenReturn(new IOException("the root cause"));
-    Assert.assertNull(credentialRetrieverFactory.inferCredentialHelper().retrieve());
+    Assert.assertFalse(credentialRetrieverFactory.inferCredentialHelper().retrieve().isPresent());
     Mockito.verify(mockJibLogger).warn("warning");
     Mockito.verify(mockJibLogger).info("  Caused by: the root cause");
   }
@@ -139,11 +145,15 @@ public class CredentialRetrieverFactoryTest {
         CredentialRetrieverFactory.forImage(
             ImageReference.of("registry", null, null), mockJibLogger);
 
-    Mockito.when(mockDockerConfigCredentialRetriever.retrieve()).thenReturn(FAKE_CREDENTIALS);
+    Mockito.when(mockDockerConfigCredentialRetriever.retrieve())
+        .thenReturn(Optional.of(FAKE_CREDENTIALS));
 
     Assert.assertEquals(
         FAKE_CREDENTIALS,
-        credentialRetrieverFactory.dockerConfig(mockDockerConfigCredentialRetriever).retrieve());
+        credentialRetrieverFactory
+            .dockerConfig(mockDockerConfigCredentialRetriever)
+            .retrieve()
+            .orElseThrow(AssertionError::new));
 
     Mockito.verify(mockJibLogger).info("Using credentials from Docker config for registry");
   }
