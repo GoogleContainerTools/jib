@@ -79,7 +79,7 @@ public class RegistryImage {
    * @return this
    */
   public RegistryImage addCredential(String username, String password) {
-    credentialRetrievers.add(() -> Optional.of(Credential.basic(username, password)));
+    addCredentialRetriever(() -> Optional.of(Credential.basic(username, password)));
     return this;
   }
 
