@@ -32,7 +32,7 @@ import java.nio.file.Path;
  * }</pre>
  */
 // TODO: Add tests once JibContainerBuilder#containerize() is added.
-public class TarImage implements ImageTarget {
+public class TarImage implements TargetImage {
 
   /** Finishes constructing a {@link TarImage}. */
   public static class Builder {

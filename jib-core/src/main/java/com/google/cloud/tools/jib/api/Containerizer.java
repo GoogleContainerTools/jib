@@ -59,14 +59,14 @@ public class Containerizer {
     return new Containerizer(tarImage);
   }
 
-  private final ImageTarget imageTarget;
+  private final TargetImage targetImage;
   @Nullable private ExecutorService executorService;
   @Nullable private CacheConfiguration cacheConfiguration;
   @Nullable private EventHandlers eventHandlers;
 
   /** Instantiate with {@link #to}. */
-  private Containerizer(ImageTarget imageTarget) {
-    this.imageTarget = imageTarget;
+  private Containerizer(TargetImage targetImage) {
+    this.targetImage = targetImage;
   }
 
   /**
@@ -98,8 +98,8 @@ public class Containerizer {
     return this;
   }
 
-  ImageTarget getImageTarget() {
-    return imageTarget;
+  TargetImage getTargetImage() {
+    return targetImage;
   }
 
   Optional<ExecutorService> getExecutorService() {
