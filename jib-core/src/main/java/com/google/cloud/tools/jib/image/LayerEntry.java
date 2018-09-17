@@ -118,10 +118,4 @@ public class LayerEntry {
   public int hashCode() {
     return Objects.hash(sourceFile, extractionPath);
   }
-
-  // @Override
-  // @VisibleForTesting
-  // public String toString() {
-  //   return getAbsoluteSourceFileString() + "\t" + getAbsoluteExtractionPathString();
-  // }
 }
