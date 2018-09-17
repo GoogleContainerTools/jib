@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.frontend;
 
-import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.annotations.VisibleForTesting;
@@ -54,7 +53,16 @@ public class JavaLayerConfigurations {
     private final Path extractionPath;
     private final boolean appRootRelative;
 
-    /** Initializes with a name for the layer and the layer files' default extraction path root. */
+    /**
+     * Initializes with a name for the layer and the layer files' default extraction path root.
+     *
+     * @param name name to set for the layer; does not affect the contents of the layer
+     * @param extractionPath root directory in the image where the files in the layer will be
+     *     extracted; the final extraction path depends on the value of the {@code appRootRelative}
+     *     parameter
+     * @param appRootRelative if {@code true}, {@code extractionPath} will additionally be relative
+     *     to the app root directory configured when building {@link #JavaLayerConfigurations}
+     */
     LayerType(String name, String extractionPath, boolean appRootRelative) {
       this.name = name;
       this.extractionPath = Paths.get(extractionPath);
@@ -65,21 +73,13 @@ public class JavaLayerConfigurations {
     String getName() {
       return name;
     }
-
-    private Path getExtractionPath() {
-      return extractionPath;
-    }
-
-    private boolean isAppRootRelative() {
-      return appRootRelative;
-    }
   }
 
   /** Builds with each layer's files. */
   public static class Builder {
 
     private final Map<LayerType, List<Path>> layerFilesMap = new EnumMap<>(LayerType.class);
-    private String appRoot = ContainerConfiguration.DEFAULT_APP_ROOT;
+    private String appRoot = DEFAULT_APP_ROOT;
 
     private Builder() {
       for (LayerType layerType : LayerType.values()) {
@@ -139,9 +139,9 @@ public class JavaLayerConfigurations {
         // Adds all the layer files recursively.
         List<Path> layerFiles = Preconditions.checkNotNull(layerFilesMap.get(layerType));
         for (Path layerFile : layerFiles) {
-          Path toExtract = layerType.getExtractionPath().resolve(layerFile.getFileName());
+          Path extractTo = layerType.extractionPath.resolve(layerFile.getFileName());
           Path pathInContainer =
-              layerType.isAppRootRelative() ? appRootPath.resolve(toExtract) : toExtract;
+              layerType.appRootRelative ? appRootPath.resolve(extractTo) : extractTo;
           layerConfigurationBuilder.addEntryRecursive(layerFile, pathInContainer);
         }
 
@@ -154,6 +154,12 @@ public class JavaLayerConfigurations {
   public static Builder builder() {
     return new Builder();
   }
+
+  /**
+   * The default app root in the image. For example, if this is set to {@code "/app"}, dependency
+   * JARs will be in {@code "/app/libs"}.
+   */
+  public static final String DEFAULT_APP_ROOT = "/app";
 
   private final ImmutableMap<LayerType, LayerConfiguration> layerConfigurationMap;
   private final String appRoot;

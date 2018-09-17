@@ -1,6 +1,5 @@
 package com.google.cloud.tools.jib.frontend;
 
-import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.Builder;
 import com.google.cloud.tools.jib.image.LayerEntry;
@@ -64,7 +63,7 @@ public class JavaLayerConfigurationsTest {
   @Test
   public void testDefault() throws IOException {
     JavaLayerConfigurations javaLayerConfigurations =
-        createFakeConfigurations(ContainerConfiguration.DEFAULT_APP_ROOT);
+        createFakeConfigurations(JavaLayerConfigurations.DEFAULT_APP_ROOT);
 
     verifyExtractionPath(javaLayerConfigurations, "/app/");
 
