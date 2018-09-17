@@ -35,7 +35,7 @@ import java.util.Optional;
  * identify an image among all the images in the repository. See {@link ImageReference} for more
  * details.
  *
- * <p>When configuring credentials (via {@link #setCredential} for example), make sure the
+ * <p>When configuring credentials (via {@link #addCredential} for example), make sure the
  * credentials are valid push credentials for the repository specified via the image reference.
  */
 // TODO: Add tests once JibContainerBuilder#containerize() is added.
@@ -71,15 +71,14 @@ public class RegistryImage {
   }
 
   /**
-   * Sets the credentials to use to push the image. This replaces any previously-added {@link
-   * CredentialRetriever}s.
+   * Adds a username-password credential to use to push the image. This is a shorthand for {@code
+   * addCredentialRetriever(() -> Optional.of(Credential.basic(username, password)))}.
    *
    * @param username the username
    * @param password the password
    * @return this
    */
-  public RegistryImage setCredential(String username, String password) {
-    credentialRetrievers = new ArrayList<>();
+  public RegistryImage addCredential(String username, String password) {
     credentialRetrievers.add(() -> Optional.of(Credential.basic(username, password)));
     return this;
   }

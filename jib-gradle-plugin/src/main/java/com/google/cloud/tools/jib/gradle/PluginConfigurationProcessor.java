@@ -66,13 +66,13 @@ class PluginConfigurationProcessor {
     }
     DefaultCredentialRetrievers defaultCredentialRetrievers =
         DefaultCredentialRetrievers.init(CredentialRetrieverFactory.forImage(baseImage, logger));
-    Optional<Credential> optionFromCredential =
+    Optional<Credential> optionalFromCredential =
         ConfigurationPropertyValidator.getImageCredential(
             logger,
             "jib.from.auth.username",
             "jib.from.auth.password",
             jibExtension.getFrom().getAuth());
-    optionFromCredential.ifPresent(
+    optionalFromCredential.ifPresent(
         fromCredential ->
             defaultCredentialRetrievers.setKnownCredential(fromCredential, "jib.from.auth"));
     defaultCredentialRetrievers.setCredentialHelperSuffix(jibExtension.getFrom().getCredHelper());
@@ -121,7 +121,7 @@ class PluginConfigurationProcessor {
         buildConfigurationBuilder,
         baseImageConfigurationBuilder,
         containerConfigurationBuilder,
-        optionFromCredential.isPresent());
+        optionalFromCredential.isPresent());
   }
 
   private final BuildConfiguration.Builder buildConfigurationBuilder;
