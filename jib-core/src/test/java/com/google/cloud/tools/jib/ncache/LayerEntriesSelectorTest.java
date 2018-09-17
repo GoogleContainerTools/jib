@@ -72,6 +72,16 @@ public class LayerEntriesSelectorTest {
   @Test
   public void testGenerateSelector_empty() throws IOException {
     DescriptorDigest expectedSelector =
+        JsonTemplateMapper.toBlob(new LayerEntriesTemplate(ImmutableList.of()))
+            .writeTo(ByteStreams.nullOutputStream())
+            .getDigest();
+    Assert.assertEquals(
+        expectedSelector, LayerEntriesSelector.generateSelector(ImmutableList.of()));
+  }
+
+  @Test
+  public void testGenerateSelector() throws IOException {
+    DescriptorDigest expectedSelector =
         JsonTemplateMapper.toBlob(new LayerEntriesTemplate(IN_ORDER_LAYER_ENTRIES))
             .writeTo(ByteStreams.nullOutputStream())
             .getDigest();
