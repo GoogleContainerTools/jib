@@ -87,7 +87,9 @@ public class JavaEntrypointConstructorTest {
           "relative/path", Collections.emptyList(), "MainClass");
       Assert.fail();
     } catch (IllegalArgumentException ex) {
-      Assert.assertEquals("appRoot should be an absolute path in Unix-style", ex.getMessage());
+      Assert.assertEquals(
+          "appRoot should be an absolute path in Unix-style: relative/path",
+          ex.getMessage());
     }
   }
 
@@ -98,7 +100,9 @@ public class JavaEntrypointConstructorTest {
           "\\windows\\path", Collections.emptyList(), "MyMain");
       Assert.fail();
     } catch (IllegalArgumentException ex) {
-      Assert.assertEquals("appRoot should be an absolute path in Unix-style", ex.getMessage());
+      Assert.assertEquals(
+          "appRoot should be an absolute path in Unix-style: \\windows\\path",
+          ex.getMessage());
     }
   }
 
@@ -109,7 +113,9 @@ public class JavaEntrypointConstructorTest {
           "D:\\windows\\path", Collections.emptyList(), "MyMain");
       Assert.fail();
     } catch (IllegalArgumentException ex) {
-      Assert.assertEquals("appRoot should be an absolute path in Unix-style", ex.getMessage());
+      Assert.assertEquals(
+          "appRoot should be an absolute path in Unix-style: D:\\windows\\path",
+          ex.getMessage());
     }
   }
 

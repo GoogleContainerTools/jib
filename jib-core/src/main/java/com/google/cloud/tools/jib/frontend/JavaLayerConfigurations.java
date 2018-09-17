@@ -118,8 +118,8 @@ public class JavaLayerConfigurations {
       ImmutableMap.Builder<LayerType, LayerConfiguration> layerConfigurationsMap =
           ImmutableMap.builderWithExpectedSize(LayerType.values().length);
       for (LayerType layerType : LayerType.values()) {
-        // Windows filenames cannot have "/", so this also blocks Windows-style path.
         String extractionPath = Preconditions.checkNotNull(extractionPathMap.get(layerType));
+        // Windows filenames cannot have "/", so this also blocks Windows-style path.
         Preconditions.checkState(
             extractionPath.startsWith("/"),
             "extractionPath should be an absolute path in Unix-style: " + extractionPath);
