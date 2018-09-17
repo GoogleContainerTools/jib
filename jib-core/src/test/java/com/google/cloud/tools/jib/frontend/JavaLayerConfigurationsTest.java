@@ -1,6 +1,7 @@
 package com.google.cloud.tools.jib.frontend;
 
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -42,23 +43,26 @@ public class JavaLayerConfigurationsTest {
         javaLayerConfigurations.getExtraFilesLayerEntries();
 
     Assert.assertEquals(
-        Paths.get(JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
-            .resolve("dependency"),
+        AbsoluteUnixPath.get(
+            JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE + "dependency"),
         dependencyLayerEntries.get(0).getExtractionPath());
     Assert.assertEquals(
-        Paths.get(JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE)
-            .resolve("snapshotDependency"),
+        AbsoluteUnixPath.get(
+            JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE + "snapshotDependency"),
         snapshotDependencyLayerEntries.get(0).getExtractionPath());
     Assert.assertEquals(
-        Paths.get(JavaEntrypointConstructor.DEFAULT_RESOURCES_PATH_ON_IMAGE).resolve("resource"),
+        AbsoluteUnixPath.get(
+            JavaEntrypointConstructor.DEFAULT_RESOURCES_PATH_ON_IMAGE + "resource"),
         resourceLayerEntries.get(0).getExtractionPath());
     Assert.assertEquals(
-        Paths.get(JavaEntrypointConstructor.DEFAULT_CLASSES_PATH_ON_IMAGE).resolve("class"),
+        AbsoluteUnixPath.get(JavaEntrypointConstructor.DEFAULT_CLASSES_PATH_ON_IMAGE + "class"),
         classLayerEntries.get(0).getExtractionPath());
     Assert.assertEquals(
-        Paths.get(JavaEntrypointConstructor.DEFAULT_JETTY_BASE_ON_IMAGE).resolve("exploded-war"),
+        AbsoluteUnixPath.get(
+            JavaEntrypointConstructor.DEFAULT_JETTY_BASE_ON_IMAGE + "exploded-war"),
         explodedWarLayerEntries.get(0).getExtractionPath());
-    Assert.assertEquals(Paths.get("/extra"), extraFilesLayerEntries.get(0).getExtractionPath());
+    Assert.assertEquals(
+        AbsoluteUnixPath.get("/extra"), extraFilesLayerEntries.get(0).getExtractionPath());
 
     List<String> expectedLabels = new ArrayList<>();
     for (JavaLayerConfigurations.LayerType layerType : JavaLayerConfigurations.LayerType.values()) {

@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.configuration;
 
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -62,7 +63,8 @@ public class LayerConfiguration {
      *     sourceFile} (relative to root {@code /})
      * @return this
      */
-    public Builder addEntry(Path sourceFile, Path pathInContainer) {
+    // TODO: Fix up the javadoc.
+    public Builder addEntry(Path sourceFile, AbsoluteUnixPath pathInContainer) {
       layerEntries.add(new LayerEntry(sourceFile, pathInContainer));
       return this;
     }
@@ -82,7 +84,9 @@ public class LayerConfiguration {
      * @return this
      * @throws IOException if an exception occurred when recursively listing the directory
      */
-    public Builder addEntryRecursive(Path sourceFile, Path pathInContainer) throws IOException {
+    // TODO: Fix up the javadoc.
+    public Builder addEntryRecursive(Path sourceFile, AbsoluteUnixPath pathInContainer)
+        throws IOException {
       if (!Files.isDirectory(sourceFile)) {
         return addEntry(sourceFile, pathInContainer);
       }

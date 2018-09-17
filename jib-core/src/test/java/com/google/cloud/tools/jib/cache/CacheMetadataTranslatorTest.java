@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.cache;
 
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.cache.json.CacheMetadataTemplate;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
@@ -134,7 +135,7 @@ public class CacheMetadataTranslatorTest {
             ImmutableList.of(
                 new LayerEntry(
                     Paths.get(CLASSES_LAYER_SOURCE_FILE),
-                    Paths.get(CLASSES_LAYER_EXTRACTION_PATH))),
+                    AbsoluteUnixPath.get(CLASSES_LAYER_EXTRACTION_PATH))),
             CLASSES_LAYER_LAST_MODIFIED_TIME);
     CachedLayerWithMetadata classesLayer =
         new CachedLayerWithMetadata(classesCachedLayer, classesLayerMetadata);

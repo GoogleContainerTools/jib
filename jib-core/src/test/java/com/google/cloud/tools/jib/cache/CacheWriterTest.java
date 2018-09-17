@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.cache;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.LayerEntry;
@@ -95,7 +96,8 @@ public class CacheWriterTest {
         .thenReturn(
             ImmutableList.of(
                 new LayerEntry(
-                    Paths.get("/some/source/file"), Paths.get("/some/extraction/path"))));
+                    Paths.get("/some/source/file"),
+                    AbsoluteUnixPath.get("/some/extraction/path"))));
 
     CachedLayerWithMetadata cachedLayerWithMetadata =
         cacheWriter.writeLayer(mockReproducibleLayerBuilder);
@@ -124,7 +126,8 @@ public class CacheWriterTest {
     ReproducibleLayerBuilder layerBuilder = Mockito.mock(ReproducibleLayerBuilder.class);
     Mockito.when(layerBuilder.build()).thenReturn(unwrittenLayer);
     LayerEntry layerEntry =
-        new LayerEntry(Paths.get("some/source/file"), Paths.get("/some/extraction/path"));
+        new LayerEntry(
+            Paths.get("some/source/file"), AbsoluteUnixPath.get("/some/extraction/path"));
     Mockito.when(layerBuilder.getLayerEntries()).thenReturn(ImmutableList.of(layerEntry));
 
     cacheWriter.writeLayer(layerBuilder);

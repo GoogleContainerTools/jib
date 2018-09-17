@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.image;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Resources;
@@ -97,9 +98,10 @@ public class ReproducibleLayerBuilderTest {
     ReproducibleLayerBuilder layerBuilder =
         new ReproducibleLayerBuilder(
             LayerConfiguration.builder()
-                .addEntryRecursive(layerDirectory, Paths.get("extract/here/apple/layer"))
-                .addEntry(blobA, Paths.get("extract/here/apple/blobA"))
-                .addEntry(blobA, Paths.get("extract/here/banana/blobA"))
+                .addEntryRecursive(
+                    layerDirectory, AbsoluteUnixPath.get("/extract/here/apple/layer"))
+                .addEntry(blobA, AbsoluteUnixPath.get("/extract/here/apple/blobA"))
+                .addEntry(blobA, AbsoluteUnixPath.get("/extract/here/banana/blobA"))
                 .build()
                 .getLayerEntries());
 
@@ -145,7 +147,7 @@ public class ReproducibleLayerBuilderTest {
     Path root1 = Files.createDirectories(testRoot.resolve("files1"));
     Path root2 = Files.createDirectories(testRoot.resolve("files2"));
 
-    Path extractionPath = Paths.get("/somewhere");
+    AbsoluteUnixPath extractionPath = AbsoluteUnixPath.get("/somewhere");
 
     // TODO: Currently this test only covers variation in order and modified time, even though
     // TODO: the code is designed to clean up userid/groupid, this test does not check that yet.
@@ -164,15 +166,15 @@ public class ReproducibleLayerBuilderTest {
     Blob layer =
         new ReproducibleLayerBuilder(
                 ImmutableList.of(
-                    new LayerEntry(fileA1, extractionPath.resolve("fileA")),
-                    new LayerEntry(fileB1, extractionPath.resolve("fileB"))))
+                    new LayerEntry(fileA1, extractionPath.resolve(Paths.get("fileA"))),
+                    new LayerEntry(fileB1, extractionPath.resolve(Paths.get("fileB")))))
             .build()
             .getBlob();
     Blob reproduced =
         new ReproducibleLayerBuilder(
                 ImmutableList.of(
-                    new LayerEntry(fileB2, extractionPath.resolve("fileB")),
-                    new LayerEntry(fileA2, extractionPath.resolve("fileA"))))
+                    new LayerEntry(fileB2, extractionPath.resolve(Paths.get("fileB"))),
+                    new LayerEntry(fileA2, extractionPath.resolve(Paths.get("fileA")))))
             .build()
             .getBlob();
 

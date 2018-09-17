@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.frontend;
 
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -24,7 +25,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
@@ -47,12 +47,12 @@ public class JavaLayerConfigurations {
     EXTRA_FILES("extra files", "/");
 
     private final String name;
-    private final Path extractionPath;
+    private final AbsoluteUnixPath extractionPath;
 
     /** Initializes with a name for the layer and the layer files' default extraction path root. */
     LayerType(String name, String extractionPath) {
       this.name = name;
-      this.extractionPath = Paths.get(extractionPath);
+      this.extractionPath = AbsoluteUnixPath.get(extractionPath);
     }
 
     @VisibleForTesting
@@ -61,7 +61,7 @@ public class JavaLayerConfigurations {
     }
 
     @VisibleForTesting
-    Path getExtractionPath() {
+    AbsoluteUnixPath getExtractionPath() {
       return extractionPath;
     }
   }
