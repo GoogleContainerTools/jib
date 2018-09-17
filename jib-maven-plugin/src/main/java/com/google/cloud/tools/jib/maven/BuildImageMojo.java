@@ -31,6 +31,7 @@ import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import java.util.Arrays;
+import java.util.Optional;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -93,21 +94,21 @@ public class BuildImageMojo extends JibPluginConfiguration {
     DefaultCredentialRetrievers defaultCredentialRetrievers =
         DefaultCredentialRetrievers.init(
             CredentialRetrieverFactory.forImage(targetImage, mavenJibLogger));
-    Credential toCredential =
+    Optional<Credential> optionalToCredential =
         ConfigurationPropertyValidator.getImageCredential(
             mavenJibLogger, "jib.to.auth.username", "jib.to.auth.password", getTargetImageAuth());
-    if (toCredential == null) {
-      toCredential =
+    if (optionalToCredential.isPresent()) {
+      defaultCredentialRetrievers.setKnownCredential(
+          optionalToCredential.get(), "jib-maven-plugin <to><auth> configuration");
+    } else {
+      optionalToCredential =
           pluginConfigurationProcessor
               .getMavenSettingsServerCredentials()
               .retrieve(targetImage.getRegistry());
-      if (toCredential != null) {
-        defaultCredentialRetrievers.setInferredCredential(
-            toCredential, MavenSettingsServerCredentials.CREDENTIAL_SOURCE);
-      }
-    } else {
-      defaultCredentialRetrievers.setKnownCredential(
-          toCredential, "jib-maven-plugin <to><auth> configuration");
+      optionalToCredential.ifPresent(
+          toCredential ->
+              defaultCredentialRetrievers.setInferredCredential(
+                  toCredential, MavenSettingsServerCredentials.CREDENTIAL_SOURCE));
     }
     defaultCredentialRetrievers.setCredentialHelperSuffix(getTargetImageCredentialHelperName());
 
@@ -131,9 +132,9 @@ public class BuildImageMojo extends JibPluginConfiguration {
         new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this)
             .setBaseImageReference(buildConfiguration.getBaseImageConfiguration().getImage())
             .setBaseImageHasConfiguredCredentials(
-                pluginConfigurationProcessor.getBaseImageCredential() != null)
+                pluginConfigurationProcessor.isBaseImageCredentialPresent())
             .setTargetImageReference(buildConfiguration.getTargetImageConfiguration().getImage())
-            .setTargetImageHasConfiguredCredentials(toCredential != null)
+            .setTargetImageHasConfiguredCredentials(optionalToCredential.isPresent())
             .build();
 
     try {

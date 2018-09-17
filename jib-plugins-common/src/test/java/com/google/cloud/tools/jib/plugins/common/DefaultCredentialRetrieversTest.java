@@ -40,8 +40,8 @@ public class DefaultCredentialRetrieversTest {
   @Mock private CredentialRetriever mockInferCredentialHelperCredentialRetriever;
   @Mock private CredentialRetriever mockDockerConfigCredentialRetriever;
 
-  private final Credential knownCredential = new Credential("username", "password");
-  private final Credential inferredCredential = new Credential("username2", "password2");
+  private final Credential knownCredential = Credential.basic("username", "password");
+  private final Credential inferredCredential = Credential.basic("username2", "password2");
 
   @Before
   public void setUp() {
