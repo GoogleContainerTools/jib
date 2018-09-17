@@ -17,7 +17,5 @@
 package com.google.cloud.tools.jib.api;
 // TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
-/** Represents a source image Jib can use (for example, as the base image). */
-interface SourceImage {
-
-}
+/** Represents a source image for Jib to use (for example, as a base image). */
+interface SourceImage {}
