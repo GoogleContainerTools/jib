@@ -17,10 +17,10 @@
 package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.cloud.tools.jib.frontend.MainClassFinder;
+import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
-import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
 import java.nio.file.Path;
 import javax.annotation.Nullable;
@@ -112,17 +112,20 @@ public class MainClassResolver {
                 + "; attempting to infer main class.");
 
     ImmutableList<Path> classesSourceFiles =
-        projectProperties.getJavaLayerConfigurations().getClassesLayerEntry().getSourceFiles();
+        projectProperties
+            .getJavaLayerConfigurations()
+            .getClassLayerEntries()
+            .stream()
+            .map(LayerEntry::getSourceFile)
+            .collect(ImmutableList.toImmutableList());
 
     MainClassFinder.Result mainClassFinderResult =
         new MainClassFinder(classesSourceFiles, projectProperties.getLogger()).find();
 
-    if (mainClassFinderResult.isSuccess()) {
-      return mainClassFinderResult.getFoundMainClass();
-    }
+    switch (mainClassFinderResult.getType()) {
+      case MAIN_CLASS_FOUND:
+        return mainClassFinderResult.getFoundMainClass();
 
-    Verify.verify(mainClassFinderResult.getErrorType() != null);
-    switch (mainClassFinderResult.getErrorType()) {
       case MAIN_CLASS_NOT_FOUND:
         throw new MainClassInferenceException(
             HelpfulSuggestions.forMainClassNotFound(
@@ -134,12 +137,6 @@ public class MainClassResolver {
                 "Multiple valid main classes were found: "
                     + String.join(", ", mainClassFinderResult.getFoundMainClasses()),
                 projectProperties.getPluginName()));
-
-      case IO_EXCEPTION:
-        throw new MainClassInferenceException(
-            HelpfulSuggestions.forMainClassNotFound(
-                "Failed to get main class", projectProperties.getPluginName()),
-            mainClassFinderResult.getErrorCause());
 
       default:
         throw new IllegalStateException("Cannot reach here");

@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
+import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
@@ -28,7 +29,6 @@ import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URL;
@@ -137,7 +137,7 @@ public class RegistryClient {
      *     string.
      */
     private String makeUserAgent() {
-      if (!Strings.isNullOrEmpty(System.getProperty("_JIB_DISABLE_USER_AGENT"))) {
+      if (!JibSystemProperties.isUserAgentEnabled()) {
         return "";
       }
 

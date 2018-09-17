@@ -61,6 +61,14 @@ public class DefaultCacheEntry implements CacheEntry {
       return this;
     }
 
+    public boolean hasLayerBlob() {
+      return layerBlob != null;
+    }
+
+    public boolean hasMetadataBlob() {
+      return metadataBlob != null;
+    }
+
     public CacheEntry build() {
       return new DefaultCacheEntry(
           Preconditions.checkNotNull(layerDigest, "layerDigest required"),

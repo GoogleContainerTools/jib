@@ -20,7 +20,7 @@ import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
-import org.junit.After;
+import java.util.Optional;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,39 +36,6 @@ public class ConfigurationPropertyValidatorTest {
   @Mock private AuthProperty mockAuth;
   @Mock private ImageReference mockImageReference;
 
-  @After
-  public void tearDown() {
-    System.clearProperty("jib.httpTimeout");
-  }
-
-  @Test
-  public void testCheckHttpTimeoutSystemProperty_ok() throws Exception {
-    Assert.assertNull(System.getProperty("jib.httpTimeout"));
-    ConfigurationPropertyValidator.checkHttpTimeoutProperty(Exception::new);
-  }
-
-  @Test
-  public void testCheckHttpTimeoutSystemProperty_stringValue() {
-    System.setProperty("jib.httpTimeout", "random string");
-    try {
-      ConfigurationPropertyValidator.checkHttpTimeoutProperty(Exception::new);
-      Assert.fail("Should error with a non-integer timeout");
-    } catch (Exception ex) {
-      Assert.assertEquals("jib.httpTimeout must be an integer: random string", ex.getMessage());
-    }
-  }
-
-  @Test
-  public void testCheckHttpTimeoutSystemProperty_negativeValue() {
-    System.setProperty("jib.httpTimeout", "-80");
-    try {
-      ConfigurationPropertyValidator.checkHttpTimeoutProperty(Exception::new);
-      Assert.fail("Should error with a negative timeout");
-    } catch (Exception ex) {
-      Assert.assertEquals("jib.httpTimeout cannot be negative: -80", ex.getMessage());
-    }
-  }
-
   @Test
   public void testGetImageAuth() {
     Mockito.when(mockAuth.getUsernamePropertyDescriptor()).thenReturn("user");
@@ -79,22 +46,22 @@ public class ConfigurationPropertyValidatorTest {
     // System properties set
     System.setProperty("jib.test.auth.user", "abcde");
     System.setProperty("jib.test.auth.pass", "12345");
-    Credential expected = new Credential("abcde", "12345");
-    Credential actual =
+    Credential expected = Credential.basic("abcde", "12345");
+    Optional<Credential> actual =
         ConfigurationPropertyValidator.getImageCredential(
             mockLogger, "jib.test.auth.user", "jib.test.auth.pass", mockAuth);
-    Assert.assertNotNull(actual);
-    Assert.assertEquals(expected.toString(), actual.toString());
+    Assert.assertTrue(actual.isPresent());
+    Assert.assertEquals(expected.toString(), actual.get().toString());
 
     // Auth set in configuration
     System.clearProperty("jib.test.auth.user");
     System.clearProperty("jib.test.auth.pass");
-    expected = new Credential("vwxyz", "98765");
+    expected = Credential.basic("vwxyz", "98765");
     actual =
         ConfigurationPropertyValidator.getImageCredential(
             mockLogger, "jib.test.auth.user", "jib.test.auth.pass", mockAuth);
-    Assert.assertNotNull(actual);
-    Assert.assertEquals(expected.toString(), actual.toString());
+    Assert.assertTrue(actual.isPresent());
+    Assert.assertEquals(expected.toString(), actual.get().toString());
     Mockito.verify(mockLogger, Mockito.never()).warn(Mockito.any());
 
     // Auth completely missing
@@ -103,7 +70,7 @@ public class ConfigurationPropertyValidatorTest {
     actual =
         ConfigurationPropertyValidator.getImageCredential(
             mockLogger, "jib.test.auth.user", "jib.test.auth.pass", mockAuth);
-    Assert.assertNull(actual);
+    Assert.assertFalse(actual.isPresent());
 
     // Password missing
     Mockito.when(mockAuth.getUsername()).thenReturn("vwxyz");
@@ -111,7 +78,7 @@ public class ConfigurationPropertyValidatorTest {
     actual =
         ConfigurationPropertyValidator.getImageCredential(
             mockLogger, "jib.test.auth.user", "jib.test.auth.pass", mockAuth);
-    Assert.assertNull(actual);
+    Assert.assertFalse(actual.isPresent());
     Mockito.verify(mockLogger)
         .warn("pass is missing from build configuration; ignoring auth section.");
 
@@ -121,7 +88,7 @@ public class ConfigurationPropertyValidatorTest {
     actual =
         ConfigurationPropertyValidator.getImageCredential(
             mockLogger, "jib.test.auth.user", "jib.test.auth.pass", mockAuth);
-    Assert.assertNull(actual);
+    Assert.assertFalse(actual.isPresent());
     Mockito.verify(mockLogger)
         .warn("user is missing from build configuration; ignoring auth section.");
   }

@@ -15,6 +15,7 @@
  */
 
 package com.google.cloud.tools.jib.api;
+// TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
@@ -30,6 +31,7 @@ import java.nio.file.Path;
  *                             .saveTo(Paths.get("image.tar"));
  * }</pre>
  */
+// TODO: Add tests once JibContainerBuilder#containerize() is added.
 public class TarImage implements ImageTarget {
 
   /** Finishes constructing a {@link TarImage}. */
@@ -53,7 +55,8 @@ public class TarImage implements ImageTarget {
   }
 
   /**
-   * Configures the output tarball archive with an image reference to set as its tag.
+   * Configures the output tarball archive with an image reference. This image reference will be the
+   * name of the image if loaded into the Docker daemon.
    *
    * @param imageReference the image reference
    * @return a {@link Builder} to finish constructing a new {@link TarImage}

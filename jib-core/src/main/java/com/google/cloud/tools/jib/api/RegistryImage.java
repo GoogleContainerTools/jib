@@ -15,6 +15,7 @@
  */
 
 package com.google.cloud.tools.jib.api;
+// TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
@@ -24,6 +25,7 @@ import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Builds to a container registry.
@@ -33,9 +35,10 @@ import java.util.List;
  * identify an image among all the images in the repository. See {@link ImageReference} for more
  * details.
  *
- * <p>When configuring credentials (via {@link #setCredential} for example), make sure the
+ * <p>When configuring credentials (via {@link #addCredential} for example), make sure the
  * credentials are valid push credentials for the repository specified via the image reference.
  */
+// TODO: Add tests once JibContainerBuilder#containerize() is added.
 public class RegistryImage implements ImageTarget {
 
   /**
@@ -68,16 +71,15 @@ public class RegistryImage implements ImageTarget {
   }
 
   /**
-   * Sets the credentials to use to push the image. This replaces any previously-added {@link
-   * CredentialRetriever}s.
+   * Adds a username-password credential to use to push the image. This is a shorthand for {@code
+   * addCredentialRetriever(() -> Optional.of(Credential.basic(username, password)))}.
    *
    * @param username the username
    * @param password the password
    * @return this
    */
-  public RegistryImage setCredential(String username, String password) {
-    credentialRetrievers = new ArrayList<>();
-    credentialRetrievers.add(() -> Credential.basic(username, password));
+  public RegistryImage addCredential(String username, String password) {
+    addCredentialRetriever(() -> Optional.of(Credential.basic(username, password)));
     return this;
   }
 

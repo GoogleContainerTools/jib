@@ -81,16 +81,22 @@ public class BuildStepsRunnerTest {
 
   @Before
   public void setUpMocks() {
-    testBuildImageStepsRunner = new BuildStepsRunner(mockBuildSteps);
+    testBuildImageStepsRunner = new BuildStepsRunner(mockBuildSteps, "ignored", "ignored");
 
     Mockito.when(mockBuildSteps.getBuildConfiguration()).thenReturn(mockBuildConfiguration);
     Mockito.when(mockBuildConfiguration.getBuildLogger()).thenReturn(mockBuildLogger);
     Mockito.when(mockBuildConfiguration.getLayerConfigurations())
         .thenReturn(
             ImmutableList.of(
-                LayerConfiguration.builder().addEntry(ImmutableList.of(), "ignored").build(),
-                LayerConfiguration.builder().addEntry(ImmutableList.of(), "ignored").build(),
-                LayerConfiguration.builder().addEntry(ImmutableList.of(), "ignored").build()));
+                LayerConfiguration.builder()
+                    .addEntry(Paths.get("ignored"), Paths.get("ignored"))
+                    .build(),
+                LayerConfiguration.builder()
+                    .addEntry(Paths.get("ignored"), Paths.get("ignored"))
+                    .build(),
+                LayerConfiguration.builder()
+                    .addEntry(Paths.get("ignored"), Paths.get("ignored"))
+                    .build()));
   }
 
   @Test

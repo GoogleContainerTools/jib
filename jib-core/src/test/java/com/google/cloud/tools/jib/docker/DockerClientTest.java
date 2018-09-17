@@ -17,6 +17,8 @@
 package com.google.cloud.tools.jib.docker;
 
 import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.common.io.ByteStreams;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -25,6 +27,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Collections;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -66,7 +70,7 @@ public class DockerClientTest {
     DockerClient testDockerClient =
         new DockerClient(
             subcommand -> {
-              Assert.assertEquals("load", subcommand.get(0));
+              Assert.assertEquals(Collections.singletonList("load"), subcommand);
               return mockProcessBuilder;
             });
     Mockito.when(mockProcess.waitFor()).thenReturn(0);
@@ -140,7 +144,7 @@ public class DockerClientTest {
       Assert.fail("Write should have failed");
 
     } catch (IOException ex) {
-      Assert.assertTrue(expectedIOException == ex);
+      Assert.assertSame(expectedIOException, ex);
     }
   }
 
@@ -159,6 +163,42 @@ public class DockerClientTest {
 
     } catch (IOException ex) {
       Assert.assertEquals("'docker load' command failed with output: failed", ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testTag() throws InterruptedException, IOException, InvalidImageReferenceException {
+    DockerClient testDockerClient =
+        new DockerClient(
+            subcommand -> {
+              Assert.assertEquals(Arrays.asList("tag", "original", "new"), subcommand);
+              return mockProcessBuilder;
+            });
+    Mockito.when(mockProcess.waitFor()).thenReturn(0);
+
+    testDockerClient.tag(ImageReference.of(null, "original", null), ImageReference.parse("new"));
+  }
+
+  @Test
+  public void testTag_fail()
+      throws InterruptedException, IOException, InvalidImageReferenceException {
+    DockerClient testDockerClient =
+        new DockerClient(
+            subcommand -> {
+              Assert.assertEquals(Arrays.asList("tag", "original", "new"), subcommand);
+              return mockProcessBuilder;
+            });
+    Mockito.when(mockProcess.waitFor()).thenReturn(1);
+
+    Mockito.when(mockProcess.getErrorStream())
+        .thenReturn(new ByteArrayInputStream("error".getBytes(StandardCharsets.UTF_8)));
+
+    try {
+      testDockerClient.tag(ImageReference.of(null, "original", null), ImageReference.parse("new"));
+      Assert.fail("docker tag should have failed");
+
+    } catch (IOException ex) {
+      Assert.assertEquals("'docker tag' command failed with error: error", ex.getMessage());
     }
   }
 }

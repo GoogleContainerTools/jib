@@ -16,10 +16,10 @@
 
 package com.google.cloud.tools.jib.cache.json;
 
-import com.google.cloud.tools.jib.cache.PlatformSpecificMetadataJson;
 import com.google.cloud.tools.jib.cache.json.CacheMetadataLayerPropertiesObjectTemplate.LayerEntryTemplate;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import com.google.common.io.Resources;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -40,7 +40,7 @@ public class CacheMetadataTemplateTest {
   @Test
   public void testToJson() throws URISyntaxException, IOException, DigestException {
     // Loads the expected JSON string.
-    Path jsonFile = PlatformSpecificMetadataJson.getMetadataJsonFile();
+    Path jsonFile = Paths.get(Resources.getResource("json/metadata-v3.json").toURI());
     String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
 
     CacheMetadataTemplate cacheMetadataTemplate = new CacheMetadataTemplate();
@@ -61,9 +61,7 @@ public class CacheMetadataTemplateTest {
         new CacheMetadataLayerPropertiesObjectTemplate()
             .setLayerEntries(
                 Collections.singletonList(
-                    new LayerEntryTemplate(
-                        Collections.singletonList(Paths.get("some", "source", "path").toString()),
-                        "some/extraction/path")))
+                    new LayerEntryTemplate("/some/source/path", "/some/extraction/path")))
             .setLastModifiedTime(FileTime.fromMillis(255073580723571L));
     CacheMetadataLayerObjectTemplate classesLayerTemplate =
         new CacheMetadataLayerObjectTemplate()
@@ -88,7 +86,7 @@ public class CacheMetadataTemplateTest {
   @Test
   public void testFromJson() throws URISyntaxException, IOException, DigestException {
     // Loads the expected JSON string.
-    Path jsonFile = PlatformSpecificMetadataJson.getMetadataJsonFile();
+    Path jsonFile = Paths.get(Resources.getResource("json/metadata-v3.json").toURI());
 
     // Deserializes into a metadata JSON object.
     CacheMetadataTemplate metadataTemplate =
@@ -125,11 +123,11 @@ public class CacheMetadataTemplateTest {
     Assert.assertNotNull(classesLayerTemplate.getProperties());
     Assert.assertEquals(1, classesLayerTemplate.getProperties().getLayerEntries().size());
     Assert.assertEquals(
-        Collections.singletonList(Paths.get("some", "source", "path").toString()),
-        classesLayerTemplate.getProperties().getLayerEntries().get(0).getSourceFiles());
+        "/some/source/path",
+        classesLayerTemplate.getProperties().getLayerEntries().get(0).getSourceFileString());
     Assert.assertEquals(
-        "some/extraction/path",
-        classesLayerTemplate.getProperties().getLayerEntries().get(0).getExtractionPath());
+        "/some/extraction/path",
+        classesLayerTemplate.getProperties().getLayerEntries().get(0).getExtractionPathString());
     Assert.assertEquals(
         FileTime.fromMillis(255073580723571L),
         classesLayerTemplate.getProperties().getLastModifiedTime());

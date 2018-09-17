@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.Resources;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -31,7 +32,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.security.DigestException;
-import java.util.Collections;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
@@ -44,9 +44,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class CacheMetadataTranslatorTest {
 
-  private static final List<String> CLASSES_LAYER_SOURCE_FILES =
-      Collections.singletonList(Paths.get("some", "source", "path").toString());
-  private static final String CLASSES_LAYER_EXTRACTION_PATH = "some/extraction/path";
+  private static final String CLASSES_LAYER_SOURCE_FILE = "/some/source/path";
+  private static final String CLASSES_LAYER_EXTRACTION_PATH = "/some/extraction/path";
   private static final FileTime CLASSES_LAYER_LAST_MODIFIED_TIME =
       FileTime.fromMillis(255073580723571L);
 
@@ -83,7 +82,7 @@ public class CacheMetadataTranslatorTest {
     Path fakePath = Paths.get("fake/path");
 
     // Loads the expected JSON string.
-    Path jsonFile = PlatformSpecificMetadataJson.getMetadataJsonFile();
+    Path jsonFile = Paths.get(Resources.getResource("json/metadata-v3.json").toURI());
 
     // Deserializes into a metadata JSON object.
     CacheMetadataTemplate metadataTemplate =
@@ -110,18 +109,18 @@ public class CacheMetadataTranslatorTest {
     Assert.assertEquals(classesLayerDiffId, classesLayer.getDiffId());
     Assert.assertNotNull(classesLayer.getMetadata());
     Assert.assertEquals(
-        CLASSES_LAYER_SOURCE_FILES,
-        classesLayer.getMetadata().getEntries().get(0).getSourceFilesStrings());
+        CLASSES_LAYER_SOURCE_FILE,
+        classesLayer.getMetadata().getEntries().get(0).getAbsoluteSourceFileString());
     Assert.assertEquals(
         CLASSES_LAYER_EXTRACTION_PATH,
-        classesLayer.getMetadata().getEntries().get(0).getExtractionPath());
+        classesLayer.getMetadata().getEntries().get(0).getAbsoluteExtractionPathString());
     Assert.assertEquals(
         CLASSES_LAYER_LAST_MODIFIED_TIME, classesLayer.getMetadata().getLastModifiedTime());
   }
 
   @Test
   public void testToTemplate() throws URISyntaxException, IOException {
-    Path jsonFile = PlatformSpecificMetadataJson.getMetadataJsonFile();
+    Path jsonFile = Paths.get(Resources.getResource("json/metadata-v3.json").toURI());
     String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
 
     CachedLayer baseCachedLayer =
@@ -134,11 +133,8 @@ public class CacheMetadataTranslatorTest {
         LayerMetadata.from(
             ImmutableList.of(
                 new LayerEntry(
-                    CLASSES_LAYER_SOURCE_FILES
-                        .stream()
-                        .map(Paths::get)
-                        .collect(ImmutableList.toImmutableList()),
-                    CLASSES_LAYER_EXTRACTION_PATH)),
+                    Paths.get(CLASSES_LAYER_SOURCE_FILE),
+                    Paths.get(CLASSES_LAYER_EXTRACTION_PATH))),
             CLASSES_LAYER_LAST_MODIFIED_TIME);
     CachedLayerWithMetadata classesLayer =
         new CachedLayerWithMetadata(classesCachedLayer, classesLayerMetadata);

@@ -25,12 +25,12 @@ import com.google.cloud.tools.jib.cache.CacheWriter;
 import com.google.cloud.tools.jib.cache.CachedLayerWithMetadata;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
-import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.image.ReproducibleLayerBuilder;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 
 /** Builds and caches application layers. */
@@ -52,16 +52,13 @@ class BuildAndCacheApplicationLayerStep
           ImmutableList.builderWithExpectedSize(buildConfiguration.getLayerConfigurations().size());
       for (LayerConfiguration layerConfiguration : buildConfiguration.getLayerConfigurations()) {
         // Skips the layer if empty.
-        if (layerConfiguration
-            .getLayerEntries()
-            .stream()
-            .allMatch(layerEntry -> layerEntry.getSourceFiles().isEmpty())) {
+        if (layerConfiguration.getLayerEntries().isEmpty()) {
           continue;
         }
 
         buildAndCacheApplicationLayerSteps.add(
             new BuildAndCacheApplicationLayerStep(
-                layerConfiguration.getLabel(),
+                layerConfiguration.getName(),
                 listeningExecutorService,
                 buildConfiguration,
                 layerConfiguration,
@@ -105,20 +102,16 @@ class BuildAndCacheApplicationLayerStep
 
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), description)) {
       // Don't build the layer if it exists already.
-      CachedLayerWithMetadata cachedLayer =
+      Optional<CachedLayerWithMetadata> optionalCachedLayer =
           new CacheReader(cache)
               .getUpToDateLayerByLayerEntries(layerConfiguration.getLayerEntries());
-      if (cachedLayer != null) {
-        return cachedLayer;
+      if (optionalCachedLayer.isPresent()) {
+        return optionalCachedLayer.get();
       }
 
-      ReproducibleLayerBuilder reproducibleLayerBuilder = new ReproducibleLayerBuilder();
-      for (LayerEntry layerEntry : layerConfiguration.getLayerEntries()) {
-        reproducibleLayerBuilder.addFiles(
-            layerEntry.getSourceFiles(), layerEntry.getExtractionPath());
-      }
-
-      cachedLayer = new CacheWriter(cache).writeLayer(reproducibleLayerBuilder);
+      CachedLayerWithMetadata cachedLayer =
+          new CacheWriter(cache)
+              .writeLayer(new ReproducibleLayerBuilder(layerConfiguration.getLayerEntries()));
 
       buildConfiguration
           .getBuildLogger()
