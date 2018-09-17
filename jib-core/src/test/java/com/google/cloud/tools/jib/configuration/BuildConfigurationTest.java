@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.configuration;
 import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
@@ -67,7 +68,7 @@ public class BuildConfigurationTest {
     List<LayerConfiguration> expectedLayerConfigurations =
         Collections.singletonList(
             LayerConfiguration.builder()
-                .addEntry(Paths.get("sourceFile"), Paths.get("pathInContainer"))
+                .addEntry(Paths.get("sourceFile"), AbsoluteUnixPath.get("/pathInContainer"))
                 .build());
     String expectedCreatedBy = "createdBy";
 

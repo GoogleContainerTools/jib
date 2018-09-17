@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.cache;
 
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.ImageLayers;
 import com.google.cloud.tools.jib.image.LayerEntry;
@@ -76,29 +77,35 @@ public class CacheMetadataTest {
         LayerMetadata.from(
                 ImmutableList.of(
                     new LayerEntry(
-                        Paths.get("anotherSourceFile"), Paths.get("anotherExtractionPath"))),
+                        Paths.get("anotherSourceFile"),
+                        AbsoluteUnixPath.get("/anotherExtractionPath"))),
                 FileTime.fromMillis(0))
             .getEntries();
 
     Assert.assertFalse(
         CacheMetadata.LayerFilter.doLayerEntriesMatchMetadataEntries(
-            ImmutableList.of(new LayerEntry(Paths.get("sourceFile"), Paths.get("extractionPath"))),
+            ImmutableList.of(
+                new LayerEntry(Paths.get("sourceFile"), AbsoluteUnixPath.get("/extractionPath"))),
             metadataEntries));
     Assert.assertTrue(
         CacheMetadata.LayerFilter.doLayerEntriesMatchMetadataEntries(
             ImmutableList.of(
-                new LayerEntry(Paths.get("anotherSourceFile"), Paths.get("anotherExtractionPath"))),
+                new LayerEntry(
+                    Paths.get("anotherSourceFile"),
+                    AbsoluteUnixPath.get("/anotherExtractionPath"))),
             metadataEntries));
   }
 
   @Test
   public void testFilter_doLayerEntriesMatchMetadataEntries_pass() {
-    LayerEntry layerEntry1 = new LayerEntry(Paths.get("sourceFile1"), Paths.get("extractionPath"));
-    LayerEntry layerEntry2 = new LayerEntry(Paths.get("sourceFile2"), Paths.get("extractionPath"));
+    LayerEntry layerEntry1 =
+        new LayerEntry(Paths.get("sourceFile1"), AbsoluteUnixPath.get("/extractionPath"));
+    LayerEntry layerEntry2 =
+        new LayerEntry(Paths.get("sourceFile2"), AbsoluteUnixPath.get("/extractionPath"));
     LayerEntry layerEntry3 =
-        new LayerEntry(Paths.get("sourceFile3"), Paths.get("anotherExtractionPath"));
+        new LayerEntry(Paths.get("sourceFile3"), AbsoluteUnixPath.get("/anotherExtractionPath"));
     LayerEntry layerEntry4 =
-        new LayerEntry(Paths.get("sourceFile4"), Paths.get("anotherExtractionPath"));
+        new LayerEntry(Paths.get("sourceFile4"), AbsoluteUnixPath.get("/anotherExtractionPath"));
 
     ImmutableList<LayerEntry> layerEntries =
         ImmutableList.of(layerEntry1, layerEntry2, layerEntry3, layerEntry4);
@@ -119,9 +126,9 @@ public class CacheMetadataTest {
         Stream.generate(CacheMetadataTest::mockCachedLayer).limit(6).collect(Collectors.toList());
 
     LayerEntry fakeLayerEntry1 =
-        new LayerEntry(Paths.get("some/source/file"), Paths.get("extractionPath"));
+        new LayerEntry(Paths.get("some/source/file"), AbsoluteUnixPath.get("/extractionPath"));
     LayerEntry fakeLayerEntry2 =
-        new LayerEntry(Paths.get("some/source/directory"), Paths.get("extractionPath"));
+        new LayerEntry(Paths.get("some/source/directory"), AbsoluteUnixPath.get("/extractionPath"));
 
     LayerMetadata fakeExpectedSourceFilesClassesLayerMetadata =
         LayerMetadata.from(
@@ -132,7 +139,9 @@ public class CacheMetadataTest {
     LayerMetadata fakeOtherSourceFilesLayerMetadata =
         LayerMetadata.from(
             ImmutableList.of(
-                new LayerEntry(Paths.get("not/the/same/source/file"), Paths.get("extractionPath"))),
+                new LayerEntry(
+                    Paths.get("not/the/same/source/file"),
+                    AbsoluteUnixPath.get("/extractionPath"))),
             FileTime.fromMillis(0));
     LayerMetadata fakeEmptySourceFilesLayerMetadata =
         LayerMetadata.from(ImmutableList.of(), FileTime.fromMillis(0));
@@ -177,7 +186,8 @@ public class CacheMetadataTest {
 
     LayerEntry fakeLayerEntry =
         new LayerEntry(
-            Paths.get("some/source/file", "some/source/directory"), Paths.get("extractionPath"));
+            Paths.get("some/source/file", "some/source/directory"),
+            AbsoluteUnixPath.get("/extractionPath"));
 
     LayerMetadata fakeSourceFilesLayerMetadata =
         LayerMetadata.from(ImmutableList.of(fakeLayerEntry), FileTime.fromMillis(0));
@@ -209,7 +219,8 @@ public class CacheMetadataTest {
 
     LayerEntry fakeLayerEntry =
         new LayerEntry(
-            Paths.get("some/source/file", "some/source/directory"), Paths.get("extractionPath"));
+            Paths.get("some/source/file", "some/source/directory"),
+            AbsoluteUnixPath.get("/extractionPath"));
 
     LayerMetadata fakeSourceFilesLayerMetadata =
         LayerMetadata.from(ImmutableList.of(fakeLayerEntry), FileTime.fromMillis(0));
