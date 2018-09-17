@@ -9,8 +9,9 @@ Design for Jib Core as a Java library for building container images.
 # Proposed API
 
 `Jib` - the main entrypoint for using Jib Core
-- `JibContainerBuilder from(String imageReference)`
-- `JibContainerBuilder from(ImageReference imageReference)`
+- `JibContainerBuilder from(String baseImageReference)`
+- `JibContainerBuilder from(ImageReference baseImageReference)`
+- `JibContainerBuilder from(RegistryImage baseImage)`
 
 `JibContainerBuilder` - configures the container to build
 - `JibContainerBuilder layer(List<Path> files, Path pathInContainer)`
