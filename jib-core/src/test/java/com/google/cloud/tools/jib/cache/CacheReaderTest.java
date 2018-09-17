@@ -148,7 +148,7 @@ public class CacheReaderTest {
                       testSourceFile ->
                           new LayerMetadata.LayerMetadataEntry(
                               testSourceFile.toString(),
-                              Paths.get("/some/extraction/path")
+                              AbsoluteUnixPath.get("/some/extraction/path")
                                   .resolve(testSourceFilesPath.relativize(testSourceFile))
                                   .toString()))
                   .collect(ImmutableList.toImmutableList()));
