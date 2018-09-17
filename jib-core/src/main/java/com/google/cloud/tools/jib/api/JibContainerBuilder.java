@@ -19,9 +19,9 @@ package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
+import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.configuration.Port;
-import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -51,7 +51,7 @@ import javax.annotation.Nullable;
 // TODO: Add tests once containerize() is added.
 public class JibContainerBuilder {
 
-  private final ImageReference baseImageReference;
+  private final SourceImage baseImage;
 
   private List<LayerConfiguration> layerConfigurations = new ArrayList<>();
   private Map<String, String> environment = new HashMap<>();
@@ -61,8 +61,8 @@ public class JibContainerBuilder {
   @Nullable private ImmutableList<String> programArguments;
 
   /** Instantiate with {@link Jib#from}. */
-  JibContainerBuilder(ImageReference baseImageReference) {
-    this.baseImageReference = baseImageReference;
+  JibContainerBuilder(SourceImage baseImage) {
+    this.baseImage = baseImage;
   }
 
   /**
@@ -300,11 +300,19 @@ public class JibContainerBuilder {
   }
 
   private ContainerConfiguration toContainerConfiguration() {
-    ContainerConfiguration.Builder containerConfigurationBuilder = ContainerConfiguration.builder();
-    containerConfigurationBuilder.
+    return ContainerConfiguration.builder().setEntrypoint(entrypoint).setProgramArguments(programArguments).setEnvironment(environment).setExposedPorts(ports).setLabels(labels).build();
   }
 
   private BuildConfiguration toBuildConfiguration() {
-    
+    BuildConfiguration.Builder buildConfigurationBuilder = BuildConfiguration.builder();
+
+    buildConfigurationBuilder.setBaseImageConfiguration(toImageConfiguration(baseImage));
+
+    // TODO: Allow users to configure this.
+    buildConfigurationBuilder.setToolName("jib-core");
+  }
+
+  private static ImageConfiguration toImageConfiguration(RegistryImage registryImage) {
+    return ImageConfiguration.builder(registryImage.getImageReference()).setCredentialRetrievers(registryImage.getCredentialRetrievers()).build();
   }
 }
