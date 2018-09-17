@@ -32,6 +32,12 @@ public class ContainerConfiguration {
   /** The default creation time of the container (constant to ensure reproducibility by default). */
   public static final Instant DEFAULT_CREATION_TIME = Instant.EPOCH;
 
+  /**
+   * The default app root in the image. For example, if this is set to {@code "/app"}, dependency
+   * JARs will be in {@code "/app/libs"}.
+   */
+  public static final String DEFAULT_APP_ROOT = "/app";
+
   /** Builder for instantiating a {@link ContainerConfiguration}. */
   public static class Builder {
 

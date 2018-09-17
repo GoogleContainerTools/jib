@@ -1,7 +1,6 @@
 package com.google.cloud.tools.jib.frontend;
 
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
-import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.Builder;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -17,43 +16,16 @@ import org.junit.Test;
 /** Tests for {@link JavaLayerConfigurations}. */
 public class JavaLayerConfigurationsTest {
 
-  private static JavaLayerConfigurations createFakeConfigurations(String appRoot)
-      throws IOException {
+  private static JavaLayerConfigurations createFakeConfigurations() throws IOException {
     return JavaLayerConfigurations.builder()
-        .setAppRoot(appRoot)
-        .setDependencyFiles(Collections.singletonList(Paths.get("dependency")))
-        .setSnapshotDependencyFiles(Collections.singletonList(Paths.get("snapshot dependency")))
-        .setResourceFiles(Collections.singletonList(Paths.get("resource")))
-        .setClassFiles(Collections.singletonList(Paths.get("class")))
-        .setExplodedWarFiles(Collections.singletonList(Paths.get("exploded war")))
-        .setExtraFiles(Collections.singletonList(Paths.get("extra file")))
+        .setDependencyFiles(Collections.singletonList(Paths.get("dependency")), "/dependency/path")
+        .setSnapshotDependencyFiles(
+            Collections.singletonList(Paths.get("snapshot dependency")), "/snapshots")
+        .setResourceFiles(Collections.singletonList(Paths.get("resource")), "/resources/here")
+        .setClassFiles(Collections.singletonList(Paths.get("class")), "/classes/go/here")
+        .setExplodedWarFiles(Collections.singletonList(Paths.get("exploded war")), "/for/war")
+        .setExtraFiles(Collections.singletonList(Paths.get("extra file")), "/some/extras")
         .build();
-  }
-
-  private static void verifyExtractionPath(JavaLayerConfigurations configurations, String appRoot) {
-    Assert.assertEquals(
-        Paths.get(
-            appRoot + JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE + "/dependency"),
-        configurations.getDependencyLayerEntries().get(0).getExtractionPath());
-    Assert.assertEquals(
-        Paths.get(
-            appRoot
-                + JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE
-                + "/snapshot dependency"),
-        configurations.getSnapshotDependencyLayerEntries().get(0).getExtractionPath());
-    Assert.assertEquals(
-        Paths.get(
-            appRoot + JavaEntrypointConstructor.DEFAULT_RESOURCES_PATH_ON_IMAGE + "/resource"),
-        configurations.getResourceLayerEntries().get(0).getExtractionPath());
-    Assert.assertEquals(
-        Paths.get(appRoot + JavaEntrypointConstructor.DEFAULT_CLASSES_PATH_ON_IMAGE + "/class"),
-        configurations.getClassLayerEntries().get(0).getExtractionPath());
-    Assert.assertEquals(
-        Paths.get(appRoot + "exploded war"),
-        configurations.getExplodedWarEntries().get(0).getExtractionPath());
-    Assert.assertEquals(
-        Paths.get("/extra file"),
-        configurations.getExtraFilesLayerEntries().get(0).getExtractionPath());
   }
 
   private static List<Path> layerEntriesToSourceFiles(List<LayerEntry> entries) {
@@ -61,11 +33,8 @@ public class JavaLayerConfigurationsTest {
   }
 
   @Test
-  public void testDefault() throws IOException {
-    JavaLayerConfigurations javaLayerConfigurations =
-        createFakeConfigurations(JavaLayerConfigurations.DEFAULT_APP_ROOT);
-
-    verifyExtractionPath(javaLayerConfigurations, "/app/");
+  public void testLabels() throws IOException {
+    JavaLayerConfigurations javaLayerConfigurations = createFakeConfigurations();
 
     List<String> expectedLabels = new ArrayList<>();
     for (JavaLayerConfigurations.LayerType layerType : JavaLayerConfigurations.LayerType.values()) {
@@ -79,8 +48,8 @@ public class JavaLayerConfigurationsTest {
   }
 
   @Test
-  public void testSetFiles() throws IOException {
-    JavaLayerConfigurations javaLayerConfigurations = createFakeConfigurations("/whatever");
+  public void testSetFiles_files() throws IOException {
+    JavaLayerConfigurations javaLayerConfigurations = createFakeConfigurations();
 
     List<List<Path>> expectedFiles =
         Arrays.asList(
@@ -101,48 +70,33 @@ public class JavaLayerConfigurationsTest {
   }
 
   @Test
-  public void testGetAppRoot() throws IOException {
+  public void testSetFiles_extractionPaths() throws IOException {
+    JavaLayerConfigurations configurations = createFakeConfigurations();
+
+    Assert.assertEquals("/dependency/path", configurations.getDependencyDefaultExtractionPath());
+    Assert.assertEquals("/snapshots", configurations.getSnapshotDependencyDefaultExtractionPath());
+    Assert.assertEquals("/resources/here", configurations.getResourceDefaultExtractionPath());
+    Assert.assertEquals("/classes/go/here", configurations.getClassDefaultExtractionPath());
+    Assert.assertEquals("/for/war", configurations.getExplodedWarDefaultExtractionPath());
+    Assert.assertEquals("/some/extras", configurations.getExtraFilesDefaultExtractionPath());
+
     Assert.assertEquals(
-        "/my/app/root",
-        JavaLayerConfigurations.builder().setAppRoot("/my/app/root").build().getAppRoot());
-  }
-
-  @Test
-  public void testSetAppRoot_nonAbsolute() throws IOException {
-    Builder appRoot = JavaLayerConfigurations.builder().setAppRoot("relative/path");
-    try {
-      appRoot.build();
-      Assert.fail();
-    } catch (IllegalStateException ex) {
-      Assert.assertEquals("appRoot should be an absolute path in Unix-style", ex.getMessage());
-    }
-  }
-
-  @Test
-  public void testSetAppRoot_windowsPath() throws IOException {
-    Builder appRoot = JavaLayerConfigurations.builder().setAppRoot("\\windows\\path");
-    try {
-      appRoot.build();
-      Assert.fail();
-    } catch (IllegalStateException ex) {
-      Assert.assertEquals("appRoot should be an absolute path in Unix-style", ex.getMessage());
-    }
-  }
-
-  @Test
-  public void testSetAppRoot_windowsPathWithDriveLetter() throws IOException {
-    Builder appRoot = JavaLayerConfigurations.builder().setAppRoot("D:\\windows\\path");
-    try {
-      appRoot.build();
-      Assert.fail();
-    } catch (IllegalStateException ex) {
-      Assert.assertEquals("appRoot should be an absolute path in Unix-style", ex.getMessage());
-    }
-  }
-
-  @Test
-  public void testExtractionPath_nonDefaultAppRoot() throws IOException {
-    JavaLayerConfigurations configurations = createFakeConfigurations("/my/app/root");
-    verifyExtractionPath(configurations, "/my/app/root/");
+        Paths.get("/dependency/path/dependency"),
+        configurations.getDependencyLayerEntries().get(0).getExtractionPath());
+    Assert.assertEquals(
+        Paths.get("/snapshots/snapshot dependency"),
+        configurations.getSnapshotDependencyLayerEntries().get(0).getExtractionPath());
+    Assert.assertEquals(
+        Paths.get("/resources/here/resource"),
+        configurations.getResourceLayerEntries().get(0).getExtractionPath());
+    Assert.assertEquals(
+        Paths.get("/classes/go/here/class"),
+        configurations.getClassLayerEntries().get(0).getExtractionPath());
+    Assert.assertEquals(
+        Paths.get("/for/war/exploded war"),
+        configurations.getExplodedWarEntries().get(0).getExtractionPath());
+    Assert.assertEquals(
+        Paths.get("/some/extras/extra file"),
+        configurations.getExtraFilesLayerEntries().get(0).getExtractionPath());
   }
 }

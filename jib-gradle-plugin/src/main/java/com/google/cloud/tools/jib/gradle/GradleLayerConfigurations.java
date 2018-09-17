@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import java.io.File;
 import java.io.IOException;
@@ -116,13 +117,21 @@ class GradleLayerConfigurations {
     Collections.sort(classesFiles);
     Collections.sort(extraFiles);
 
+    appRoot = appRoot.endsWith("/") ? appRoot : appRoot + '/';
     return JavaLayerConfigurations.builder()
-        .setAppRoot(appRoot)
-        .setDependencyFiles(dependenciesFiles)
-        .setSnapshotDependencyFiles(snapshotDependenciesFiles)
-        .setResourceFiles(resourcesFiles)
-        .setClassFiles(classesFiles)
-        .setExtraFiles(extraFiles)
+        .setDependencyFiles(
+            dependenciesFiles,
+            appRoot + JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE)
+        .setSnapshotDependencyFiles(
+            snapshotDependenciesFiles,
+            appRoot + JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE)
+        .setResourceFiles(
+            resourcesFiles,
+            appRoot + JavaEntrypointConstructor.DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE)
+        .setClassFiles(
+            classesFiles,
+            appRoot + JavaEntrypointConstructor.DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE)
+        .setExtraFiles(extraFiles, "/")
         .build();
   }
 

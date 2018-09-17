@@ -36,37 +36,24 @@ public class JavaLayerConfigurations {
   /** Represents the different types of layers for a Java application. */
   @VisibleForTesting
   enum LayerType {
-    DEPENDENCIES(
-        "dependencies", JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE, true),
-    SNAPSHOT_DEPENDENCIES(
-        "snapshot dependencies",
-        JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE,
-        true),
-    RESOURCES("resources", JavaEntrypointConstructor.DEFAULT_RESOURCES_PATH_ON_IMAGE, true),
-    CLASSES("classes", JavaEntrypointConstructor.DEFAULT_CLASSES_PATH_ON_IMAGE, true),
+    DEPENDENCIES("dependencies"),
+    SNAPSHOT_DEPENDENCIES("snapshot dependencies"),
+    RESOURCES("resources"),
+    CLASSES("classes"),
     // TODO: remove this once we put files in WAR into the relevant layers (i.e., dependencies,
     // snapshot dependencies, resources, and classes layers). Should copy files in the right
-    EXPLODED_WAR("exploded war", "", true),
-    EXTRA_FILES("extra files", "/", false);
+    EXPLODED_WAR("exploded war"),
+    EXTRA_FILES("extra files");
 
     private final String name;
-    private final Path extractionPath;
-    private final boolean appRootRelative;
 
     /**
      * Initializes with a name for the layer and the layer files' default extraction path root.
      *
      * @param name name to set for the layer; does not affect the contents of the layer
-     * @param extractionPath root directory in the image where the files in the layer will be
-     *     extracted; the final extraction path depends on the value of the {@code appRootRelative}
-     *     parameter
-     * @param appRootRelative if {@code true}, {@code extractionPath} will additionally be relative
-     *     to the app root directory configured when building {@link #JavaLayerConfigurations}
      */
-    LayerType(String name, String extractionPath, boolean appRootRelative) {
+    LayerType(String name) {
       this.name = name;
-      this.extractionPath = Paths.get(extractionPath);
-      this.appRootRelative = appRootRelative;
     }
 
     @VisibleForTesting
@@ -79,75 +66,78 @@ public class JavaLayerConfigurations {
   public static class Builder {
 
     private final Map<LayerType, List<Path>> layerFilesMap = new EnumMap<>(LayerType.class);
-    private String appRoot = DEFAULT_APP_ROOT;
+    private final Map<LayerType, String> extractionPathMap = new EnumMap<>(LayerType.class);
 
     private Builder() {
       for (LayerType layerType : LayerType.values()) {
         layerFilesMap.put(layerType, new ArrayList<>());
+        extractionPathMap.put(layerType, "/");
       }
     }
 
-    public Builder setAppRoot(String appRoot) {
-      this.appRoot = appRoot;
-      return this;
-    }
-
-    public Builder setDependencyFiles(List<Path> dependencyFiles) {
+    public Builder setDependencyFiles(List<Path> dependencyFiles, String extractionPath) {
       layerFilesMap.put(LayerType.DEPENDENCIES, dependencyFiles);
+      extractionPathMap.put(LayerType.DEPENDENCIES, extractionPath);
       return this;
     }
 
-    public Builder setSnapshotDependencyFiles(List<Path> snapshotDependencyFiles) {
+    public Builder setSnapshotDependencyFiles(
+        List<Path> snapshotDependencyFiles, String extractionPath) {
       layerFilesMap.put(LayerType.SNAPSHOT_DEPENDENCIES, snapshotDependencyFiles);
+      extractionPathMap.put(LayerType.SNAPSHOT_DEPENDENCIES, extractionPath);
       return this;
     }
 
-    public Builder setResourceFiles(List<Path> resourceFiles) {
+    public Builder setResourceFiles(List<Path> resourceFiles, String extractionPath) {
       layerFilesMap.put(LayerType.RESOURCES, resourceFiles);
+      extractionPathMap.put(LayerType.RESOURCES, extractionPath);
       return this;
     }
 
-    public Builder setClassFiles(List<Path> classFiles) {
+    public Builder setClassFiles(List<Path> classFiles, String extractionPath) {
       layerFilesMap.put(LayerType.CLASSES, classFiles);
+      extractionPathMap.put(LayerType.CLASSES, extractionPath);
       return this;
     }
 
-    public Builder setExtraFiles(List<Path> extraFiles) {
+    public Builder setExtraFiles(List<Path> extraFiles, String extractionPath) {
       layerFilesMap.put(LayerType.EXTRA_FILES, extraFiles);
+      extractionPathMap.put(LayerType.EXTRA_FILES, extractionPath);
       return this;
     }
 
     // TODO: remove this and put files in WAR into the relevant layers (i.e., dependencies, snapshot
     // dependencies, resources, and classes layers).
-    public Builder setExplodedWarFiles(List<Path> explodedWarFiles) {
+    public Builder setExplodedWarFiles(List<Path> explodedWarFiles, String extractionPath) {
       layerFilesMap.put(LayerType.EXPLODED_WAR, explodedWarFiles);
+      extractionPathMap.put(LayerType.EXPLODED_WAR, extractionPath);
       return this;
     }
 
     public JavaLayerConfigurations build() throws IOException {
-      // Windows filenames cannot have "/", so this also blocks Windows-style path.
-      Preconditions.checkState(
-          appRoot.startsWith("/"), "appRoot should be an absolute path in Unix-style");
-      Path appRootPath = Paths.get(appRoot);
-
       ImmutableMap.Builder<LayerType, LayerConfiguration> layerConfigurationsMap =
           ImmutableMap.builderWithExpectedSize(LayerType.values().length);
       for (LayerType layerType : LayerType.values()) {
+        // Windows filenames cannot have "/", so this also blocks Windows-style path.
+        String extractionPath = Preconditions.checkNotNull(extractionPathMap.get(layerType));
+        Preconditions.checkState(
+            extractionPath.startsWith("/"),
+            "extractionPath should be an absolute path in Unix-style: " + extractionPath);
+
         LayerConfiguration.Builder layerConfigurationBuilder =
             LayerConfiguration.builder().setName(layerType.getName());
 
         // Adds all the layer files recursively.
         List<Path> layerFiles = Preconditions.checkNotNull(layerFilesMap.get(layerType));
         for (Path layerFile : layerFiles) {
-          Path extractTo = layerType.extractionPath.resolve(layerFile.getFileName());
-          Path pathInContainer =
-              layerType.appRootRelative ? appRootPath.resolve(extractTo) : extractTo;
+          Path pathInContainer = Paths.get(extractionPath).resolve(layerFile.getFileName());
           layerConfigurationBuilder.addEntryRecursive(layerFile, pathInContainer);
         }
 
         layerConfigurationsMap.put(layerType, layerConfigurationBuilder.build());
       }
-      return new JavaLayerConfigurations(appRoot, layerConfigurationsMap.build());
+      return new JavaLayerConfigurations(
+          layerConfigurationsMap.build(), ImmutableMap.copyOf(extractionPathMap));
     }
   }
 
@@ -155,29 +145,14 @@ public class JavaLayerConfigurations {
     return new Builder();
   }
 
-  /**
-   * The default app root in the image. For example, if this is set to {@code "/app"}, dependency
-   * JARs will be in {@code "/app/libs"}.
-   */
-  public static final String DEFAULT_APP_ROOT = "/app";
-
   private final ImmutableMap<LayerType, LayerConfiguration> layerConfigurationMap;
-  private final String appRoot;
+  private final ImmutableMap<LayerType, String> defaultExtractionPathMap;
 
   private JavaLayerConfigurations(
-      String appRoot, ImmutableMap<LayerType, LayerConfiguration> layerConfigurationsMap) {
-    this.appRoot = appRoot;
+      ImmutableMap<LayerType, LayerConfiguration> layerConfigurationsMap,
+      ImmutableMap<LayerType, String> defaultExtractionPathMap) {
     layerConfigurationMap = layerConfigurationsMap;
-  }
-
-  /**
-   * Returns the Unix-style, absolute path for the application root in the container image. The path
-   * may or may not end with a forward slash ('/').
-   *
-   * @return Unix-style, absolute path for the application root
-   */
-  public String getAppRoot() {
-    return appRoot;
+    this.defaultExtractionPathMap = defaultExtractionPathMap;
   }
 
   public ImmutableList<LayerConfiguration> getLayerConfigurations() {
@@ -210,7 +185,35 @@ public class JavaLayerConfigurations {
     return getLayerEntries(LayerType.EXPLODED_WAR);
   }
 
+  public String getDependencyDefaultExtractionPath() {
+    return getDefaultExtractionPath(LayerType.DEPENDENCIES);
+  }
+
+  public String getSnapshotDependencyDefaultExtractionPath() {
+    return getDefaultExtractionPath(LayerType.SNAPSHOT_DEPENDENCIES);
+  }
+
+  public String getResourceDefaultExtractionPath() {
+    return getDefaultExtractionPath(LayerType.RESOURCES);
+  }
+
+  public String getClassDefaultExtractionPath() {
+    return getDefaultExtractionPath(LayerType.CLASSES);
+  }
+
+  public String getExtraFilesDefaultExtractionPath() {
+    return getDefaultExtractionPath(LayerType.EXTRA_FILES);
+  }
+
+  public String getExplodedWarDefaultExtractionPath() {
+    return getDefaultExtractionPath(LayerType.EXPLODED_WAR);
+  }
+
   private ImmutableList<LayerEntry> getLayerEntries(LayerType layerType) {
     return Preconditions.checkNotNull(layerConfigurationMap.get(layerType)).getLayerEntries();
+  }
+
+  private String getDefaultExtractionPath(LayerType layerType) {
+    return Preconditions.checkNotNull(defaultExtractionPathMap.get(layerType));
   }
 }

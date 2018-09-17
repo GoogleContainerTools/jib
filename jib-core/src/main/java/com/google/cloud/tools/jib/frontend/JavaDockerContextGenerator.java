@@ -146,30 +146,27 @@ public class JavaDockerContextGenerator {
    * @param javaLayerConfigurations the {@link JavaLayerConfigurations}
    */
   public JavaDockerContextGenerator(JavaLayerConfigurations javaLayerConfigurations) {
-    String appRoot = javaLayerConfigurations.getAppRoot();
-    appRoot = appRoot.endsWith("/") ? appRoot : appRoot + '/';
-
     ImmutableList.Builder<CopyDirective> copyDirectivesBuilder = ImmutableList.builder();
     addIfNotEmpty(
         copyDirectivesBuilder,
         javaLayerConfigurations.getDependencyLayerEntries(),
         DEPENDENCIES_LAYER_DIRECTORY,
-        appRoot + JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE);
+        javaLayerConfigurations.getDependencyDefaultExtractionPath());
     addIfNotEmpty(
         copyDirectivesBuilder,
         javaLayerConfigurations.getSnapshotDependencyLayerEntries(),
         SNAPSHOT_DEPENDENCIES_LAYER_DIRECTORY,
-        appRoot + JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE);
+        javaLayerConfigurations.getSnapshotDependencyDefaultExtractionPath());
     addIfNotEmpty(
         copyDirectivesBuilder,
         javaLayerConfigurations.getResourceLayerEntries(),
         RESOURCES_LAYER_DIRECTORY,
-        appRoot + JavaEntrypointConstructor.DEFAULT_RESOURCES_PATH_ON_IMAGE);
+        javaLayerConfigurations.getResourceDefaultExtractionPath());
     addIfNotEmpty(
         copyDirectivesBuilder,
         javaLayerConfigurations.getClassLayerEntries(),
         CLASSES_LAYER_DIRECTORY,
-        appRoot + JavaEntrypointConstructor.DEFAULT_CLASSES_PATH_ON_IMAGE);
+        javaLayerConfigurations.getClassDefaultExtractionPath());
     // TODO: remove this once we put files in WAR into the relevant layers (i.e., dependencies,
     // snapshot dependencies, resources, and classes layers). Should copy files in the right
     // directories. (For example, "resources" will go into the webapp root.)
@@ -177,12 +174,12 @@ public class JavaDockerContextGenerator {
         copyDirectivesBuilder,
         javaLayerConfigurations.getExplodedWarEntries(),
         EXPLODED_WAR_LAYER_DIRECTORY,
-        appRoot);
+        javaLayerConfigurations.getExplodedWarDefaultExtractionPath());
     addIfNotEmpty(
         copyDirectivesBuilder,
         javaLayerConfigurations.getExtraFilesLayerEntries(),
         EXTRA_FILES_LAYER_DIRECTORY,
-        "/");
+        javaLayerConfigurations.getExtraFilesDefaultExtractionPath());
     copyDirectives = copyDirectivesBuilder.build();
   }
 

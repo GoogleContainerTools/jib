@@ -43,10 +43,10 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class JavaDockerContextGeneratorTest {
 
-  private static final Path EXPECTED_DEPENDENCIES_PATH = Paths.get("/app/libs/");
-  private static final Path EXPECTED_RESOURCES_PATH = Paths.get("/app/resources/");
-  private static final Path EXPECTED_CLASSES_PATH = Paths.get("/app/classes/");
-  private static final Path EXPECTED_EXPLODED_WAR_PATH = Paths.get("/app/");
+  private static final String EXPECTED_DEPENDENCIES_PATH = "/app/libs/";
+  private static final String EXPECTED_RESOURCES_PATH = "/app/resources/";
+  private static final String EXPECTED_CLASSES_PATH = "/app/classes/";
+  private static final String EXPECTED_EXPLODED_WAR_PATH = "/app/";
 
   private static void assertSameFiles(Path directory1, Path directory2) throws IOException {
     ImmutableList<Path> directory1Files =
@@ -98,19 +98,34 @@ public class JavaDockerContextGeneratorTest {
      */
     Files.delete(targetDirectory);
 
-    Mockito.when(mockJavaLayerConfigurations.getAppRoot()).thenReturn("/app");
     Mockito.when(mockJavaLayerConfigurations.getDependencyLayerEntries())
-        .thenReturn(filesToLayerEntries(testDependencies, EXPECTED_DEPENDENCIES_PATH));
+        .thenReturn(filesToLayerEntries(testDependencies, Paths.get(EXPECTED_DEPENDENCIES_PATH)));
     Mockito.when(mockJavaLayerConfigurations.getSnapshotDependencyLayerEntries())
-        .thenReturn(filesToLayerEntries(testSnapshotDependencies, EXPECTED_DEPENDENCIES_PATH));
+        .thenReturn(
+            filesToLayerEntries(testSnapshotDependencies, Paths.get(EXPECTED_DEPENDENCIES_PATH)));
     Mockito.when(mockJavaLayerConfigurations.getResourceLayerEntries())
-        .thenReturn(filesToLayerEntries(testResources, EXPECTED_RESOURCES_PATH));
+        .thenReturn(filesToLayerEntries(testResources, Paths.get(EXPECTED_RESOURCES_PATH)));
     Mockito.when(mockJavaLayerConfigurations.getClassLayerEntries())
-        .thenReturn(filesToLayerEntries(testClasses, EXPECTED_CLASSES_PATH));
+        .thenReturn(filesToLayerEntries(testClasses, Paths.get(EXPECTED_CLASSES_PATH)));
     Mockito.when(mockJavaLayerConfigurations.getExplodedWarEntries())
-        .thenReturn(filesToLayerEntries(testExplodedWarFiles, EXPECTED_EXPLODED_WAR_PATH));
+        .thenReturn(
+            filesToLayerEntries(testExplodedWarFiles, Paths.get(EXPECTED_EXPLODED_WAR_PATH)));
     Mockito.when(mockJavaLayerConfigurations.getExtraFilesLayerEntries())
         .thenReturn(filesToLayerEntries(testExtraFiles, Paths.get("/")));
+    Mockito.when(mockJavaLayerConfigurations.getDependencyLayerEntries())
+        .thenReturn(filesToLayerEntries(testDependencies, Paths.get(EXPECTED_DEPENDENCIES_PATH)));
+
+    Mockito.when(mockJavaLayerConfigurations.getDependencyDefaultExtractionPath())
+        .thenReturn(EXPECTED_DEPENDENCIES_PATH);
+    Mockito.when(mockJavaLayerConfigurations.getSnapshotDependencyDefaultExtractionPath())
+        .thenReturn(EXPECTED_DEPENDENCIES_PATH);
+    Mockito.when(mockJavaLayerConfigurations.getResourceDefaultExtractionPath())
+        .thenReturn(EXPECTED_RESOURCES_PATH);
+    Mockito.when(mockJavaLayerConfigurations.getClassDefaultExtractionPath())
+        .thenReturn(EXPECTED_CLASSES_PATH);
+    Mockito.when(mockJavaLayerConfigurations.getExplodedWarDefaultExtractionPath())
+        .thenReturn(EXPECTED_EXPLODED_WAR_PATH);
+    Mockito.when(mockJavaLayerConfigurations.getExtraFilesDefaultExtractionPath()).thenReturn("/");
 
     new JavaDockerContextGenerator(mockJavaLayerConfigurations)
         .setBaseImage("somebaseimage")
@@ -142,23 +157,41 @@ public class JavaDockerContextGeneratorTest {
             "key3",
             "value3");
 
-    Mockito.when(mockJavaLayerConfigurations.getAppRoot()).thenReturn("/app");
     Mockito.when(mockJavaLayerConfigurations.getDependencyLayerEntries())
         .thenReturn(
-            ImmutableList.of(new LayerEntry(Paths.get("ignored"), EXPECTED_DEPENDENCIES_PATH)));
+            ImmutableList.of(
+                new LayerEntry(Paths.get("ignored"), Paths.get(EXPECTED_DEPENDENCIES_PATH))));
     Mockito.when(mockJavaLayerConfigurations.getSnapshotDependencyLayerEntries())
         .thenReturn(
-            ImmutableList.of(new LayerEntry(Paths.get("ignored"), EXPECTED_DEPENDENCIES_PATH)));
+            ImmutableList.of(
+                new LayerEntry(Paths.get("ignored"), Paths.get(EXPECTED_DEPENDENCIES_PATH))));
     Mockito.when(mockJavaLayerConfigurations.getResourceLayerEntries())
         .thenReturn(
-            ImmutableList.of(new LayerEntry(Paths.get("ignored"), EXPECTED_RESOURCES_PATH)));
+            ImmutableList.of(
+                new LayerEntry(Paths.get("ignored"), Paths.get(EXPECTED_RESOURCES_PATH))));
     Mockito.when(mockJavaLayerConfigurations.getClassLayerEntries())
-        .thenReturn(ImmutableList.of(new LayerEntry(Paths.get("ignored"), EXPECTED_CLASSES_PATH)));
+        .thenReturn(
+            ImmutableList.of(
+                new LayerEntry(Paths.get("ignored"), Paths.get(EXPECTED_CLASSES_PATH))));
     Mockito.when(mockJavaLayerConfigurations.getExplodedWarEntries())
         .thenReturn(
-            ImmutableList.of(new LayerEntry(Paths.get("ignored"), EXPECTED_EXPLODED_WAR_PATH)));
+            ImmutableList.of(
+                new LayerEntry(Paths.get("ignored"), Paths.get(EXPECTED_EXPLODED_WAR_PATH))));
     Mockito.when(mockJavaLayerConfigurations.getExtraFilesLayerEntries())
         .thenReturn(ImmutableList.of(new LayerEntry(Paths.get("ignored"), Paths.get("/"))));
+
+    Mockito.when(mockJavaLayerConfigurations.getDependencyDefaultExtractionPath())
+        .thenReturn(EXPECTED_DEPENDENCIES_PATH);
+    Mockito.when(mockJavaLayerConfigurations.getSnapshotDependencyDefaultExtractionPath())
+        .thenReturn(EXPECTED_DEPENDENCIES_PATH);
+    Mockito.when(mockJavaLayerConfigurations.getResourceDefaultExtractionPath())
+        .thenReturn(EXPECTED_RESOURCES_PATH);
+    Mockito.when(mockJavaLayerConfigurations.getClassDefaultExtractionPath())
+        .thenReturn(EXPECTED_CLASSES_PATH);
+    Mockito.when(mockJavaLayerConfigurations.getExplodedWarDefaultExtractionPath())
+        .thenReturn(EXPECTED_EXPLODED_WAR_PATH);
+    Mockito.when(mockJavaLayerConfigurations.getExtraFilesDefaultExtractionPath()).thenReturn("/");
+
     String dockerfile =
         new JavaDockerContextGenerator(mockJavaLayerConfigurations)
             .setBaseImage(expectedBaseImage)

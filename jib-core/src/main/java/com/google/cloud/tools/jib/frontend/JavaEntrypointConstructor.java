@@ -24,9 +24,9 @@ import java.util.List;
 /** Constructs an image entrypoint for the Java application. */
 public class JavaEntrypointConstructor {
 
-  public static final String DEFAULT_RESOURCES_PATH_ON_IMAGE = "resources/";
-  public static final String DEFAULT_CLASSES_PATH_ON_IMAGE = "classes/";
-  public static final String DEFAULT_DEPENDENCIES_PATH_ON_IMAGE = "libs/";
+  public static final String DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE = "resources/";
+  public static final String DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE = "classes/";
+  public static final String DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE = "libs/";
 
   public static List<String> makeDefaultEntrypoint(
       String appRoot, List<String> jvmFlags, String mainClass) {
@@ -36,9 +36,9 @@ public class JavaEntrypointConstructor {
 
     return makeEntrypoint(
         Arrays.asList(
-            appRoot + DEFAULT_RESOURCES_PATH_ON_IMAGE,
-            appRoot + DEFAULT_CLASSES_PATH_ON_IMAGE,
-            appRoot + DEFAULT_DEPENDENCIES_PATH_ON_IMAGE + "*"),
+            appRoot + DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE,
+            appRoot + DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE,
+            appRoot + DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE + "*"),
         jvmFlags,
         mainClass);
   }
