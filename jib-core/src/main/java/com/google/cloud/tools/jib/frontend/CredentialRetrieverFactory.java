@@ -32,6 +32,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /** Static factories for various {@link CredentialRetriever}s. */
 public class CredentialRetrieverFactory {
@@ -90,7 +91,7 @@ public class CredentialRetrieverFactory {
   public CredentialRetriever known(Credential credential, String credentialSource) {
     return () -> {
       logGotCredentialsFrom(credentialSource);
-      return credential;
+      return Optional.of(credential);
     };
   }
 
@@ -119,12 +120,12 @@ public class CredentialRetrieverFactory {
       logger.info("Checking credentials from " + credentialHelper);
 
       try {
-        return retrieveFromDockerCredentialHelper(credentialHelper);
+        return Optional.of(retrieveFromDockerCredentialHelper(credentialHelper));
 
       } catch (CredentialHelperUnhandledServerUrlException ex) {
         logger.info(
             "No credentials for " + imageReference.getRegistry() + " in " + credentialHelper);
-        return null;
+        return Optional.empty();
 
       } catch (IOException ex) {
         throw new CredentialRetrievalException(ex);
@@ -155,10 +156,11 @@ public class CredentialRetrieverFactory {
     return () -> {
       for (String inferredCredentialHelperSuffix : inferredCredentialHelperSuffixes) {
         try {
-          return retrieveFromDockerCredentialHelper(
-              Paths.get(
-                  DockerCredentialHelper.CREDENTIAL_HELPER_PREFIX
-                      + inferredCredentialHelperSuffix));
+          return Optional.of(
+              retrieveFromDockerCredentialHelper(
+                  Paths.get(
+                      DockerCredentialHelper.CREDENTIAL_HELPER_PREFIX
+                          + inferredCredentialHelperSuffix)));
 
         } catch (CredentialHelperNotFoundException
             | CredentialHelperUnhandledServerUrlException ex) {
@@ -174,7 +176,7 @@ public class CredentialRetrieverFactory {
           throw new CredentialRetrievalException(ex);
         }
       }
-      return null;
+      return Optional.empty();
     };
   }
 
@@ -207,8 +209,8 @@ public class CredentialRetrieverFactory {
       DockerConfigCredentialRetriever dockerConfigCredentialRetriever) {
     return () -> {
       try {
-        Credential dockerConfigCredentials = dockerConfigCredentialRetriever.retrieve();
-        if (dockerConfigCredentials != null) {
+        Optional<Credential> dockerConfigCredentials = dockerConfigCredentialRetriever.retrieve();
+        if (dockerConfigCredentials.isPresent()) {
           logger.info("Using credentials from Docker config for " + imageReference.getRegistry());
           return dockerConfigCredentials;
         }
@@ -216,7 +218,7 @@ public class CredentialRetrieverFactory {
       } catch (IOException ex) {
         logger.info("Unable to parse Docker config");
       }
-      return null;
+      return Optional.empty();
     };
   }
 
