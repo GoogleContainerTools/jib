@@ -62,7 +62,10 @@ public class AbsoluteUnixPath {
     return new AbsoluteUnixPath(pathJoiner.toString());
   }
 
-  /** Unix-style path, in absolute form. Does not end with trailing slash. */
+  /**
+   * Unix-style path, in absolute form. Does not end with trailing slash, except for the file system
+   * root ({@code /}).
+   */
   private final String unixPath;
 
   private AbsoluteUnixPath(String unixPath) {
@@ -76,8 +79,11 @@ public class AbsoluteUnixPath {
    * @return a new {@link AbsoluteUnixPath} representing the resolved path
    */
   public AbsoluteUnixPath resolve(RelativeUnixPath relativeUnixPath) {
-    return AbsoluteUnixPath.fromPath(
-        Paths.get(unixPath).resolve(relativeUnixPath.getRelativePath()));
+    StringJoiner pathJoiner = new StringJoiner("/", unixPath + '/', "");
+    for (String pathComponent : relativeUnixPath.getRelativePathComponents()) {
+      pathJoiner.add(pathComponent);
+    }
+    return AbsoluteUnixPath.get(pathJoiner.toString());
   }
 
   /**

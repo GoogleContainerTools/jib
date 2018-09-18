@@ -44,17 +44,6 @@ public class AbsoluteUnixPathTest {
   }
 
   @Test
-  public void testResolve_absolute() {
-    try {
-      AbsoluteUnixPath.get("/some/path").resolve(RelativeUnixPath.get("/absolute"));
-      Assert.fail();
-
-    } catch (IllegalArgumentException ex) {
-      Assert.assertEquals("Path starts with forward slash (/): /absolute", ex.getMessage());
-    }
-  }
-
-  @Test
   public void testResolve() {
     AbsoluteUnixPath absoluteUnixPath1 = AbsoluteUnixPath.get("/");
     Assert.assertEquals(absoluteUnixPath1, absoluteUnixPath1.resolve(RelativeUnixPath.get("")));
