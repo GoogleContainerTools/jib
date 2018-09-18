@@ -17,8 +17,8 @@
 package com.google.cloud.tools.jib.filesystem;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.StringJoiner;
 import javax.annotation.concurrent.Immutable;
 
@@ -35,13 +35,14 @@ public class AbsoluteUnixPath {
    * Gets a new {@link AbsoluteUnixPath} from a Unix-style path string. The path must begin with a
    * forward slash ({@code /}).
    *
-   * @param path the Unix-style path string in absolute form
+   * @param unixPath the Unix-style path string in absolute form
    * @return a new {@link AbsoluteUnixPath}
    */
-  public static AbsoluteUnixPath get(String path) {
+  public static AbsoluteUnixPath get(String unixPath) {
     Preconditions.checkArgument(
-        path.startsWith("/"), "Path does not start with forward slash (/): " + path);
-    return fromPath(Paths.get(path));
+        unixPath.startsWith("/"), "Path does not start with forward slash (/): " + unixPath);
+
+    return new AbsoluteUnixPath(UnixPathParser.parse(unixPath));
   }
 
   /**
@@ -55,21 +56,31 @@ public class AbsoluteUnixPath {
     Preconditions.checkArgument(
         path.getRoot() != null, "Cannot create AbsoluteUnixPath from non-absolute Path: " + path);
 
-    StringJoiner pathJoiner = new StringJoiner("/", "/", "");
+    ImmutableList.Builder<String> pathComponents =
+        ImmutableList.builderWithExpectedSize(path.getNameCount());
     for (Path pathComponent : path) {
-      pathJoiner.add(pathComponent.getFileName().toString());
+      pathComponents.add(pathComponent.toString());
     }
-    return new AbsoluteUnixPath(pathJoiner.toString());
+    return new AbsoluteUnixPath(pathComponents.build());
   }
+
+  /** Path components after the file system root. This should always match {@link #unixPath}. */
+  private final ImmutableList<String> pathComponents;
 
   /**
    * Unix-style path, in absolute form. Does not end with trailing slash, except for the file system
-   * root ({@code /}).
+   * root ({@code /}). This should always match {@link #pathComponents}.
    */
   private final String unixPath;
 
-  private AbsoluteUnixPath(String unixPath) {
-    this.unixPath = unixPath;
+  private AbsoluteUnixPath(ImmutableList<String> pathComponents) {
+    this.pathComponents = pathComponents;
+
+    StringJoiner pathJoiner = new StringJoiner("/", "/", "");
+    for (String pathComponent : pathComponents) {
+      pathJoiner.add(pathComponent);
+    }
+    unixPath = pathJoiner.toString();
   }
 
   /**
@@ -79,11 +90,12 @@ public class AbsoluteUnixPath {
    * @return a new {@link AbsoluteUnixPath} representing the resolved path
    */
   public AbsoluteUnixPath resolve(RelativeUnixPath relativeUnixPath) {
-    StringJoiner pathJoiner = new StringJoiner("/", unixPath + '/', "");
-    for (String pathComponent : relativeUnixPath.getRelativePathComponents()) {
-      pathJoiner.add(pathComponent);
-    }
-    return AbsoluteUnixPath.get(pathJoiner.toString());
+    ImmutableList.Builder<String> newPathComponents =
+        ImmutableList.builderWithExpectedSize(
+            pathComponents.size() + relativeUnixPath.getRelativePathComponents().size());
+    newPathComponents.addAll(pathComponents);
+    newPathComponents.addAll(relativeUnixPath.getRelativePathComponents());
+    return new AbsoluteUnixPath(newPathComponents.build());
   }
 
   /**

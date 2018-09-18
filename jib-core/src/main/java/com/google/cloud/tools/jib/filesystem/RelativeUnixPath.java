@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.filesystem;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import javax.annotation.concurrent.Immutable;
 
@@ -40,16 +39,7 @@ public class RelativeUnixPath {
     Preconditions.checkArgument(
         !relativePath.startsWith("/"), "Path starts with forward slash (/): " + relativePath);
 
-    ImmutableList.Builder<String> pathComponents = ImmutableList.builder();
-    for (String pathComponent : Splitter.on('/').split(relativePath)) {
-      if (pathComponent.isEmpty()) {
-        // Skips empty components.
-        continue;
-      }
-      pathComponents.add(pathComponent);
-    }
-
-    return new RelativeUnixPath(pathComponents.build());
+    return new RelativeUnixPath(UnixPathParser.parse(relativePath));
   }
 
   private final ImmutableList<String> pathComponents;
