@@ -39,7 +39,7 @@ import java.util.Optional;
  * credentials are valid push credentials for the repository specified via the image reference.
  */
 // TODO: Add tests once JibContainerBuilder#containerize() is added.
-public class RegistryImage {
+public class RegistryImage implements TargetImage {
 
   /**
    * Instantiate with the image reference to push to.
