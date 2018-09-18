@@ -26,7 +26,10 @@ public class JibEventType<E extends JibEvent> {
   /** All event types. Handlers for this will always be called first. */
   public static final JibEventType<JibEvent> ALL = new JibEventType<>(JibEvent.class);
 
-  /** Log message event. */
+  /**
+   * Event with a message to use for logging purposes. Do not attempt to parse for information as
+   * the format can change.
+   */
   public static final JibEventType<LogEvent> LOGGING = new JibEventType<>(LogEvent.class);
 
   /** Timer event for timing various part of Jib's execution. */

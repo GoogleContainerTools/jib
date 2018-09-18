@@ -60,11 +60,32 @@ public class TimerEventEmitterTest {
       }
     }
 
-    TimerEvent.Timer parentTimer = verifyNextTimerEvent(null, State.START, "description", false);
-    verifyNextTimerEvent(null, State.LAP, "description", false);
-    verifyNextTimerEvent(parentTimer, State.START, "child description", false);
-    verifyNextTimerEvent(parentTimer, State.FINISHED, "child description", false);
-    verifyNextTimerEvent(null, State.FINISHED, "description", true);
+    TimerEvent timerEvent = getNextTimerEvent();
+    verifyNoParent(timerEvent);
+    verifyStartState(timerEvent);
+    verifyDescription(timerEvent, "description");
+
+    TimerEvent.Timer parentTimer = timerEvent.getTimer();
+
+    timerEvent = getNextTimerEvent();
+    verifyNoParent(timerEvent);
+    verifyStateFirstLap(timerEvent, State.LAP);
+    verifyDescription(timerEvent, "description");
+
+    timerEvent = getNextTimerEvent();
+    verifyParent(timerEvent, parentTimer);
+    verifyStartState(timerEvent);
+    verifyDescription(timerEvent, "child description");
+
+    timerEvent = getNextTimerEvent();
+    verifyParent(timerEvent, parentTimer);
+    verifyStateFirstLap(timerEvent, State.FINISHED);
+    verifyDescription(timerEvent, "child description");
+
+    timerEvent = getNextTimerEvent();
+    verifyNoParent(timerEvent);
+    verifyStateNotFirstLap(timerEvent, State.FINISHED);
+    verifyDescription(timerEvent, "description");
 
     Assert.assertTrue(timerEventQueue.isEmpty());
   }
@@ -108,5 +129,83 @@ public class TimerEventEmitterTest {
     Assert.assertEquals(expectedDescription, timerEvent.getDescription());
 
     return timerEvent.getTimer();
+  }
+
+  /**
+   * Verifies that the {@code timerEvent}'s timer has no parent.
+   *
+   * @param timerEvent the {@link TimerEvent} to verify
+   */
+  private void verifyNoParent(TimerEvent timerEvent) {
+    Assert.assertFalse(timerEvent.getTimer().getParent().isPresent());
+  }
+
+  /**
+   * Verifies that the {@code timerEvent}'s timer has parent {@code expectedParentTimer}.
+   *
+   * @param timerEvent the {@link TimerEvent} to verify
+   * @param expectedParentTimer the expected parent timer
+   */
+  private void verifyParent(TimerEvent timerEvent, TimerEvent.Timer expectedParentTimer) {
+    Assert.assertTrue(timerEvent.getTimer().getParent().isPresent());
+    Assert.assertSame(expectedParentTimer, timerEvent.getTimer().getParent().get());
+  }
+
+  /**
+   * Verifies that the {@code timerEvent}'s state is {@link State#START}.
+   *
+   * @param timerEvent the {@link TimerEvent} to verify
+   */
+  private void verifyStartState(TimerEvent timerEvent) {
+    Assert.assertEquals(State.START, timerEvent.getState());
+    Assert.assertEquals(Duration.ZERO, timerEvent.getDuration());
+    Assert.assertEquals(Duration.ZERO, timerEvent.getElapsed());
+  }
+
+  /**
+   * Verifies that the {@code timerEvent}'s state is {@code expectedState} and that this is the
+   * first lap for the timer.
+   *
+   * @param timerEvent the {@link TimerEvent} to verify
+   * @param expectedState the expected {@link State}
+   */
+  private void verifyStateFirstLap(TimerEvent timerEvent, State expectedState) {
+    Assert.assertEquals(expectedState, timerEvent.getState());
+    Assert.assertTrue(timerEvent.getDuration().compareTo(Duration.ZERO) > 0);
+    Assert.assertEquals(0, timerEvent.getElapsed().compareTo(timerEvent.getDuration()));
+  }
+
+  /**
+   * Verifies that the {@code timerEvent}'s state is {@code expectedState} and that this is not the
+   * first lap for the timer.
+   *
+   * @param timerEvent the {@link TimerEvent} to verify
+   * @param expectedState the expected {@link State}
+   */
+  private void verifyStateNotFirstLap(TimerEvent timerEvent, State expectedState) {
+    Assert.assertEquals(expectedState, timerEvent.getState());
+    Assert.assertTrue(timerEvent.getDuration().compareTo(Duration.ZERO) > 0);
+    Assert.assertTrue(timerEvent.getElapsed().compareTo(timerEvent.getDuration()) > 0);
+  }
+
+  /**
+   * Verifies that the {@code timerEvent}'s description is {@code expectedDescription}.
+   *
+   * @param timerEvent the {@link TimerEvent} to verify
+   * @param expectedDescription the expected description
+   */
+  private void verifyDescription(TimerEvent timerEvent, String expectedDescription) {
+    Assert.assertEquals(expectedDescription, timerEvent.getDescription());
+  }
+
+  /**
+   * Gets the next {@link TimerEvent} on the {@link #timerEventQueue}.
+   *
+   * @return the next {@link TimerEvent}
+   */
+  private TimerEvent getNextTimerEvent() {
+    TimerEvent timerEvent = timerEventQueue.poll();
+    Assert.assertNotNull(timerEvent);
+    return timerEvent;
   }
 }
