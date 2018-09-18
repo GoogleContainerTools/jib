@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - `container.environment` configuration parameter to configure environment variables ([#890](https://github.com/GoogleContainerTools/jib/issues/890))
+- `jib.to.tags` (list) defines additional tags to push to ([#978](https://github.com/GoogleContainerTools/jib/pull/978))
 
 ### Changed
 
