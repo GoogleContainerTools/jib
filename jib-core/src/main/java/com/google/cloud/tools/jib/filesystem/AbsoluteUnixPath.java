@@ -52,7 +52,7 @@ public class AbsoluteUnixPath {
    * @param path the absolute {@link Path} to convert to an {@link AbsoluteUnixPath}.
    * @return a new {@link AbsoluteUnixPath}
    */
-  private static AbsoluteUnixPath fromPath(Path path) {
+  public static AbsoluteUnixPath fromPath(Path path) {
     Preconditions.checkArgument(
         path.getRoot() != null, "Cannot create AbsoluteUnixPath from non-absolute Path: " + path);
 

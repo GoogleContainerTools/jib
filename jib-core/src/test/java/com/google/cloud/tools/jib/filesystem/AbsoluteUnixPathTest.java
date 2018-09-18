@@ -16,7 +16,9 @@
 
 package com.google.cloud.tools.jib.filesystem;
 
+import java.nio.file.Paths;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 
 /** Test for {@link AbsoluteUnixPath}. */
@@ -32,6 +34,20 @@ public class AbsoluteUnixPathTest {
       Assert.assertEquals(
           "Path does not start with forward slash (/): not/absolute", ex.getMessage());
     }
+  }
+
+  @Test
+  public void testFromPath() {
+    Assert.assertEquals(
+        "/absolute/path", AbsoluteUnixPath.fromPath(Paths.get("/absolute/path")).toString());
+  }
+
+  @Test
+  public void testFromPath_windows() {
+    Assume.assumeTrue(System.getProperty("os.name").startsWith("Windows"));
+
+    Assert.assertEquals(
+        "/absolute/path", AbsoluteUnixPath.fromPath(Paths.get("T:\\absolute\\path")).toString());
   }
 
   @Test
