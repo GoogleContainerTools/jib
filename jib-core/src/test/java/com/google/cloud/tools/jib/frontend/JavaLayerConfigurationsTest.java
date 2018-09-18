@@ -73,12 +73,12 @@ public class JavaLayerConfigurationsTest {
   public void testSetFiles_extractionPaths() throws IOException {
     JavaLayerConfigurations configurations = createFakeConfigurations();
 
-    Assert.assertEquals("/dependency/path", configurations.getDependencyDefaultExtractionPath());
-    Assert.assertEquals("/snapshots", configurations.getSnapshotDependencyDefaultExtractionPath());
-    Assert.assertEquals("/resources/here", configurations.getResourceDefaultExtractionPath());
-    Assert.assertEquals("/classes/go/here", configurations.getClassDefaultExtractionPath());
-    Assert.assertEquals("/for/war", configurations.getExplodedWarDefaultExtractionPath());
-    Assert.assertEquals("/some/extras", configurations.getExtraFilesDefaultExtractionPath());
+    Assert.assertEquals("/dependency/path", configurations.getDependencyExtractionPath());
+    Assert.assertEquals("/snapshots", configurations.getSnapshotDependencyExtractionPath());
+    Assert.assertEquals("/resources/here", configurations.getResourceExtractionPath());
+    Assert.assertEquals("/classes/go/here", configurations.getClassExtractionPath());
+    Assert.assertEquals("/for/war", configurations.getExplodedWarExtractionPath());
+    Assert.assertEquals("/some/extras", configurations.getExtraFilesExtractionPath());
 
     Assert.assertEquals(
         Paths.get("/dependency/path/dependency"),

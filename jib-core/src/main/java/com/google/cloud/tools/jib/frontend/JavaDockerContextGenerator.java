@@ -151,22 +151,22 @@ public class JavaDockerContextGenerator {
         copyDirectivesBuilder,
         javaLayerConfigurations.getDependencyLayerEntries(),
         DEPENDENCIES_LAYER_DIRECTORY,
-        javaLayerConfigurations.getDependencyDefaultExtractionPath());
+        javaLayerConfigurations.getDependencyExtractionPath());
     addIfNotEmpty(
         copyDirectivesBuilder,
         javaLayerConfigurations.getSnapshotDependencyLayerEntries(),
         SNAPSHOT_DEPENDENCIES_LAYER_DIRECTORY,
-        javaLayerConfigurations.getSnapshotDependencyDefaultExtractionPath());
+        javaLayerConfigurations.getSnapshotDependencyExtractionPath());
     addIfNotEmpty(
         copyDirectivesBuilder,
         javaLayerConfigurations.getResourceLayerEntries(),
         RESOURCES_LAYER_DIRECTORY,
-        javaLayerConfigurations.getResourceDefaultExtractionPath());
+        javaLayerConfigurations.getResourceExtractionPath());
     addIfNotEmpty(
         copyDirectivesBuilder,
         javaLayerConfigurations.getClassLayerEntries(),
         CLASSES_LAYER_DIRECTORY,
-        javaLayerConfigurations.getClassDefaultExtractionPath());
+        javaLayerConfigurations.getClassExtractionPath());
     // TODO: remove this once we put files in WAR into the relevant layers (i.e., dependencies,
     // snapshot dependencies, resources, and classes layers). Should copy files in the right
     // directories. (For example, "resources" will go into the webapp root.)
@@ -174,12 +174,12 @@ public class JavaDockerContextGenerator {
         copyDirectivesBuilder,
         javaLayerConfigurations.getExplodedWarEntries(),
         EXPLODED_WAR_LAYER_DIRECTORY,
-        javaLayerConfigurations.getExplodedWarDefaultExtractionPath());
+        javaLayerConfigurations.getExplodedWarExtractionPath());
     addIfNotEmpty(
         copyDirectivesBuilder,
         javaLayerConfigurations.getExtraFilesLayerEntries(),
         EXTRA_FILES_LAYER_DIRECTORY,
-        javaLayerConfigurations.getExtraFilesDefaultExtractionPath());
+        javaLayerConfigurations.getExtraFilesExtractionPath());
     copyDirectives = copyDirectivesBuilder.build();
   }
 
