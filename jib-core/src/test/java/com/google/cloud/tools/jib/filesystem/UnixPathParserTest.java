@@ -20,24 +20,19 @@ import com.google.common.collect.ImmutableList;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** Tests for {@link RelativeUnixPath}. */
-public class RelativeUnixPathTest {
+/** Tests for {@link UnixPathParser}. */
+public class UnixPathParserTest {
 
   @Test
-  public void testGet_absolute() {
-    try {
-      RelativeUnixPath.get("/absolute");
-      Assert.fail();
-
-    } catch (IllegalArgumentException ex) {
-      Assert.assertEquals("Path starts with forward slash (/): /absolute", ex.getMessage());
-    }
-  }
-
-  @Test
-  public void testGet() {
+  public void testParse() {
+    Assert.assertEquals(ImmutableList.of("some", "path"), UnixPathParser.parse("/some/path"));
+    Assert.assertEquals(ImmutableList.of("some", "path"), UnixPathParser.parse("some/path/"));
+    Assert.assertEquals(ImmutableList.of("some", "path"), UnixPathParser.parse("some///path///"));
+    // Windows-style paths are resolved in Unix semantics.
     Assert.assertEquals(
-        ImmutableList.of("some", "relative", "path"),
-        RelativeUnixPath.get("some/relative///path").getRelativePathComponents());
+        ImmutableList.of("\\windows\\path"), UnixPathParser.parse("\\windows\\path"));
+    Assert.assertEquals(ImmutableList.of("T:\\dir"), UnixPathParser.parse("T:\\dir"));
+    Assert.assertEquals(
+        ImmutableList.of("T:\\dir", "real", "path"), UnixPathParser.parse("T:\\dir/real/path"));
   }
 }
