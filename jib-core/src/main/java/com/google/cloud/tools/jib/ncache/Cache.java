@@ -27,6 +27,7 @@ public class Cache {
 
   private final CacheStorage cacheStorage;
 
+  // TODO: Add way to instantiate after #retrieveCacheEntry and #write are implemented.
   private Cache(CacheStorage cacheStorage) {
     this.cacheStorage = cacheStorage;
   }
