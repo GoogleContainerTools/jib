@@ -156,9 +156,9 @@ public class JavaLayerConfigurations {
 
   private JavaLayerConfigurations(
       ImmutableMap<LayerType, LayerConfiguration> layerConfigurationMap,
-      ImmutableMap<LayerType, String> defaultExtractionPathMap) {
+      ImmutableMap<LayerType, String> extractionPathMap) {
     this.layerConfigurationMap = layerConfigurationMap;
-    this.extractionPathMap = defaultExtractionPathMap;
+    this.extractionPathMap = extractionPathMap;
   }
 
   public ImmutableList<LayerConfiguration> getLayerConfigurations() {
