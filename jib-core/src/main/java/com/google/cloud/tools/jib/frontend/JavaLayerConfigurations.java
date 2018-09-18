@@ -48,7 +48,7 @@ public class JavaLayerConfigurations {
     private final String name;
 
     /**
-     * Initializes with a name for the layer and the layer files' default extraction path root.
+     * Initializes with a name for the layer.
      *
      * @param name name to set for the layer; does not affect the contents of the layer
      */
