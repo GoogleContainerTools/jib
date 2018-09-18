@@ -27,6 +27,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,18 +46,20 @@ public class RetrieveRegistryCredentialsStepTest {
   public void testCall_retrieved() throws CredentialRetrievalException {
     BuildConfiguration buildConfiguration =
         makeFakeBuildConfiguration(
-            Arrays.asList(() -> null, () -> new Credential("baseusername", "basepassword")),
             Arrays.asList(
-                () -> new Credential("targetusername", "targetpassword"),
-                () -> new Credential("ignored", "ignored")));
+                Optional::empty,
+                () -> Optional.of(Credential.basic("baseusername", "basepassword"))),
+            Arrays.asList(
+                () -> Optional.of(Credential.basic("targetusername", "targetpassword")),
+                () -> Optional.of(Credential.basic("ignored", "ignored"))));
 
     Assert.assertEquals(
-        new Credential("baseusername", "basepassword"),
+        Credential.basic("baseusername", "basepassword"),
         RetrieveRegistryCredentialsStep.forBaseImage(
                 mockListeningExecutorService, buildConfiguration)
             .call());
     Assert.assertEquals(
-        new Credential("targetusername", "targetpassword"),
+        Credential.basic("targetusername", "targetpassword"),
         RetrieveRegistryCredentialsStep.forTargetImage(
                 mockListeningExecutorService, buildConfiguration)
             .call());
@@ -65,7 +68,8 @@ public class RetrieveRegistryCredentialsStepTest {
   @Test
   public void testCall_none() throws CredentialRetrievalException {
     BuildConfiguration buildConfiguration =
-        makeFakeBuildConfiguration(Arrays.asList(() -> null, () -> null), Collections.emptyList());
+        makeFakeBuildConfiguration(
+            Arrays.asList(Optional::empty, Optional::empty), Collections.emptyList());
     Assert.assertNull(
         RetrieveRegistryCredentialsStep.forBaseImage(
                 mockListeningExecutorService, buildConfiguration)

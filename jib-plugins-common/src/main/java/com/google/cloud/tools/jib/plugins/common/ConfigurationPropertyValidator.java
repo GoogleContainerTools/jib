@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.common.base.Strings;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** Validator for plugin configuration parameters and system properties. */
@@ -36,17 +37,16 @@ public class ConfigurationPropertyValidator {
    * @param passwordProperty the name of the password system property
    * @param auth the configured credentials
    * @return a new {@link Authorization} from the system properties or build configuration, or
-   *     {@code null} if neither is configured.
+   *     {@link Optional#empty} if neither is configured.
    */
-  @Nullable
-  public static Credential getImageCredential(
+  public static Optional<Credential> getImageCredential(
       JibLogger logger, String usernameProperty, String passwordProperty, AuthProperty auth) {
     // System property takes priority over build configuration
     String commandlineUsername = System.getProperty(usernameProperty);
     String commandlinePassword = System.getProperty(passwordProperty);
     if (!Strings.isNullOrEmpty(commandlineUsername)
         && !Strings.isNullOrEmpty(commandlinePassword)) {
-      return new Credential(commandlineUsername, commandlinePassword);
+      return Optional.of(Credential.basic(commandlineUsername, commandlinePassword));
     }
 
     // Warn if a system property is missing
@@ -67,22 +67,22 @@ public class ConfigurationPropertyValidator {
 
     // Check auth configuration next; warn if they aren't both set
     if (Strings.isNullOrEmpty(auth.getUsername()) && Strings.isNullOrEmpty(auth.getPassword())) {
-      return null;
+      return Optional.empty();
     }
     if (Strings.isNullOrEmpty(auth.getUsername())) {
       logger.warn(
           auth.getUsernamePropertyDescriptor()
               + " is missing from build configuration; ignoring auth section.");
-      return null;
+      return Optional.empty();
     }
     if (Strings.isNullOrEmpty(auth.getPassword())) {
       logger.warn(
           auth.getPasswordPropertyDescriptor()
               + " is missing from build configuration; ignoring auth section.");
-      return null;
+      return Optional.empty();
     }
 
-    return new Credential(auth.getUsername(), auth.getPassword());
+    return Optional.of(Credential.basic(auth.getUsername(), auth.getPassword()));
   }
 
   /**

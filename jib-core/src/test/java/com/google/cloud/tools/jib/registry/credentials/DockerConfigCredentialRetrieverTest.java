@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,7 +35,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class DockerConfigCredentialRetrieverTest {
 
-  private static final Credential FAKE_CREDENTIAL = new Credential("username", "password");
+  private static final Credential FAKE_CREDENTIAL = Credential.basic("username", "password");
 
   @Mock private DockerCredentialHelper mockDockerCredentialHelper;
   @Mock private DockerConfig mockDockerConfig;
@@ -54,7 +55,7 @@ public class DockerConfigCredentialRetrieverTest {
     DockerConfigCredentialRetriever dockerConfigCredentialRetriever =
         new DockerConfigCredentialRetriever("some registry", Paths.get("fake/path"));
 
-    Assert.assertNull(dockerConfigCredentialRetriever.retrieve());
+    Assert.assertFalse(dockerConfigCredentialRetriever.retrieve().isPresent());
   }
 
   @Test
@@ -62,10 +63,10 @@ public class DockerConfigCredentialRetrieverTest {
     DockerConfigCredentialRetriever dockerConfigCredentialRetriever =
         new DockerConfigCredentialRetriever("some registry", dockerConfigFile);
 
-    Credential credentials = dockerConfigCredentialRetriever.retrieve();
-    Assert.assertNotNull(credentials);
-    Assert.assertEquals("some", credentials.getUsername());
-    Assert.assertEquals("auth", credentials.getPassword());
+    Optional<Credential> credentials = dockerConfigCredentialRetriever.retrieve();
+    Assert.assertTrue(credentials.isPresent());
+    Assert.assertEquals("some", credentials.get().getUsername());
+    Assert.assertEquals("auth", credentials.get().getPassword());
   }
 
   @Test
@@ -76,7 +77,10 @@ public class DockerConfigCredentialRetrieverTest {
         new DockerConfigCredentialRetriever("just registry", dockerConfigFile);
 
     Assert.assertEquals(
-        FAKE_CREDENTIAL, dockerConfigCredentialRetriever.retrieve(mockDockerConfig));
+        FAKE_CREDENTIAL,
+        dockerConfigCredentialRetriever
+            .retrieve(mockDockerConfig)
+            .orElseThrow(AssertionError::new));
   }
 
   @Test
@@ -87,7 +91,10 @@ public class DockerConfigCredentialRetrieverTest {
         new DockerConfigCredentialRetriever("with.protocol", dockerConfigFile);
 
     Assert.assertEquals(
-        FAKE_CREDENTIAL, dockerConfigCredentialRetriever.retrieve(mockDockerConfig));
+        FAKE_CREDENTIAL,
+        dockerConfigCredentialRetriever
+            .retrieve(mockDockerConfig)
+            .orElseThrow(AssertionError::new));
   }
 
   @Test
@@ -98,7 +105,10 @@ public class DockerConfigCredentialRetrieverTest {
         new DockerConfigCredentialRetriever("another registry", dockerConfigFile);
 
     Assert.assertEquals(
-        FAKE_CREDENTIAL, dockerConfigCredentialRetriever.retrieve(mockDockerConfig));
+        FAKE_CREDENTIAL,
+        dockerConfigCredentialRetriever
+            .retrieve(mockDockerConfig)
+            .orElseThrow(AssertionError::new));
   }
 
   @Test
@@ -106,7 +116,7 @@ public class DockerConfigCredentialRetrieverTest {
     DockerConfigCredentialRetriever dockerConfigCredentialRetriever =
         new DockerConfigCredentialRetriever("unknown registry", dockerConfigFile);
 
-    Assert.assertNull(dockerConfigCredentialRetriever.retrieve());
+    Assert.assertFalse(dockerConfigCredentialRetriever.retrieve().isPresent());
   }
 
   @Test
@@ -117,7 +127,10 @@ public class DockerConfigCredentialRetrieverTest {
         new DockerConfigCredentialRetriever("registry.hub.docker.com", dockerConfigFile);
 
     Assert.assertEquals(
-        FAKE_CREDENTIAL, dockerConfigCredentialRetriever.retrieve(mockDockerConfig));
+        FAKE_CREDENTIAL,
+        dockerConfigCredentialRetriever
+            .retrieve(mockDockerConfig)
+            .orElseThrow(AssertionError::new));
   }
 
   @Test
@@ -128,10 +141,10 @@ public class DockerConfigCredentialRetrieverTest {
     DockerConfigCredentialRetriever dockerConfigCredentialRetriever =
         new DockerConfigCredentialRetriever("index.docker.io", dockerConfigFile);
 
-    Credential credentials = dockerConfigCredentialRetriever.retrieve();
-    Assert.assertNotNull(credentials);
-    Assert.assertEquals("token for", credentials.getUsername());
-    Assert.assertEquals(" index.docker.io/v1/", credentials.getPassword());
+    Optional<Credential> credentials = dockerConfigCredentialRetriever.retrieve();
+    Assert.assertTrue(credentials.isPresent());
+    Assert.assertEquals("token for", credentials.get().getUsername());
+    Assert.assertEquals(" index.docker.io/v1/", credentials.get().getPassword());
   }
 
   @Test
@@ -142,9 +155,9 @@ public class DockerConfigCredentialRetrieverTest {
     DockerConfigCredentialRetriever dockerConfigCredentialRetriever =
         new DockerConfigCredentialRetriever("registry.hub.docker.com", dockerConfigFile);
 
-    Credential credentials = dockerConfigCredentialRetriever.retrieve();
-    Assert.assertNotNull(credentials);
-    Assert.assertEquals("token for", credentials.getUsername());
-    Assert.assertEquals(" index.docker.io/v1/", credentials.getPassword());
+    Optional<Credential> credentials = dockerConfigCredentialRetriever.retrieve();
+    Assert.assertTrue(credentials.isPresent());
+    Assert.assertEquals("token for", credentials.get().getUsername());
+    Assert.assertEquals(" index.docker.io/v1/", credentials.get().getPassword());
   }
 }
