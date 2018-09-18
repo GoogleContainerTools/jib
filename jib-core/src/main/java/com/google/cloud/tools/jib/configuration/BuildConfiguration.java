@@ -241,32 +241,23 @@ public class BuildConfiguration {
    */
   public static Builder builder() {
     // TODO: Remove JibLogger and #builder(JibLogger).
-    return new Builder(new JibLogger() {
-      @Override
-      public void error(CharSequence message) {
+    return new Builder(
+        new JibLogger() {
+          @Override
+          public void error(CharSequence message) {}
 
-      }
+          @Override
+          public void lifecycle(CharSequence message) {}
 
-      @Override
-      public void lifecycle(CharSequence message) {
+          @Override
+          public void warn(CharSequence message) {}
 
-      }
+          @Override
+          public void info(CharSequence message) {}
 
-      @Override
-      public void warn(CharSequence message) {
-
-      }
-
-      @Override
-      public void info(CharSequence message) {
-
-      }
-
-      @Override
-      public void debug(CharSequence message) {
-
-      }
-    });
+          @Override
+          public void debug(CharSequence message) {}
+        });
   }
 
   private final JibLogger buildLogger;

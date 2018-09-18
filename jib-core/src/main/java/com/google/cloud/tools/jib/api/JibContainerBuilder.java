@@ -19,9 +19,9 @@ package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
-import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.configuration.Port;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -299,20 +299,30 @@ public class JibContainerBuilder {
     return this;
   }
 
-  private ContainerConfiguration toContainerConfiguration() {
-    return ContainerConfiguration.builder().setEntrypoint(entrypoint).setProgramArguments(programArguments).setEnvironment(environment).setExposedPorts(ports).setLabels(labels).build();
-  }
-
-  private BuildConfiguration toBuildConfiguration() {
+  @VisibleForTesting
+  BuildConfiguration toBuildConfiguration(TargetImage targetImage) {
     BuildConfiguration.Builder buildConfigurationBuilder = BuildConfiguration.builder();
 
-    buildConfigurationBuilder.setBaseImageConfiguration(toImageConfiguration(baseImage));
+    buildConfigurationBuilder
+        .setBaseImageConfiguration(baseImage.toImageConfiguration())
+        .setTargetImageConfiguration(targetImage.toImageConfiguration())
+        .setContainerConfiguration(toContainerConfiguration())
+        .setLayerConfigurations(layerConfigurations);
 
     // TODO: Allow users to configure this.
     buildConfigurationBuilder.setToolName("jib-core");
+
+    return buildConfigurationBuilder.build();
   }
 
-  private static ImageConfiguration toImageConfiguration(RegistryImage registryImage) {
-    return ImageConfiguration.builder(registryImage.getImageReference()).setCredentialRetrievers(registryImage.getCredentialRetrievers()).build();
+  @VisibleForTesting
+  ContainerConfiguration toContainerConfiguration() {
+    return ContainerConfiguration.builder()
+        .setEntrypoint(entrypoint)
+        .setProgramArguments(programArguments)
+        .setEnvironment(environment)
+        .setExposedPorts(ports)
+        .setLabels(labels)
+        .build();
   }
 }
