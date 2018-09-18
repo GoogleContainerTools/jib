@@ -27,6 +27,7 @@ export JIB_INTEGRATION_TESTING_PROJECT=jib-integration-testing
 if [ "${KOKORO_JOB_CLUSTER}" = "MACOS_EXTERNAL" ]; then
   osascript -e 'quit app "Docker"'
   open -a Docker
+  while ! docker info > /dev/null 2>&1; do sleep 1; done
 fi
 
 (cd github/jib/jib-core; ./gradlew clean build integrationTest --info --stacktrace)
