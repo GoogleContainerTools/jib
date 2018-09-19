@@ -106,16 +106,18 @@ public class DockerContextTask extends DefaultTask implements JibTask {
     jibExtension.handleDeprecatedParameters(gradleJibLogger);
     JibSystemProperties.checkHttpTimeoutProperty();
 
+    String appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(
-            getProject(), gradleJibLogger, jibExtension.getExtraDirectoryPath());
+            getProject(), gradleJibLogger, jibExtension.getExtraDirectoryPath(), appRoot);
     String targetDir = getTargetDir();
 
     List<String> entrypoint = jibExtension.getContainer().getEntrypoint();
     if (entrypoint.isEmpty()) {
       String mainClass = gradleProjectProperties.getMainClass(jibExtension);
       entrypoint =
-          JavaEntrypointConstructor.makeDefaultEntrypoint(jibExtension.getJvmFlags(), mainClass);
+          JavaEntrypointConstructor.makeDefaultEntrypoint(
+              appRoot, jibExtension.getJvmFlags(), mainClass);
     } else if (jibExtension.getMainClass() != null || !jibExtension.getJvmFlags().isEmpty()) {
       gradleJibLogger.warn("mainClass and jvmFlags are ignored when entrypoint is specified");
     }

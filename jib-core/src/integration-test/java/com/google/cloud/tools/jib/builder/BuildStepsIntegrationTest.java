@@ -284,7 +284,7 @@ public class BuildStepsIntegrationTest {
         ContainerConfiguration.builder()
             .setEntrypoint(
                 JavaEntrypointConstructor.makeDefaultEntrypoint(
-                    Collections.emptyList(), "HelloWorld"))
+                    "/app", Collections.emptyList(), "HelloWorld"))
             .setProgramArguments(Collections.singletonList("An argument."))
             .setEnvironment(ImmutableMap.of("env1", "envvalue1", "env2", "envvalue2"))
             .setExposedPorts(

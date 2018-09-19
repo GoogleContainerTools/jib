@@ -26,8 +26,12 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.gradle.api.Project;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.file.AbstractFileCollection;
@@ -74,6 +78,11 @@ public class GradleLayerConfigurationsTest {
         .stream()
         .map(LayerEntry::getSourceFile)
         .collect(ImmutableList.toImmutableList());
+  }
+
+  private static List<String> getExtractionPathFromLayerEntries(List<LayerEntry> layerEntries) {
+    Stream<LayerEntry> stream = layerEntries.stream();
+    return stream.map(LayerEntry::getAbsoluteExtractionPathString).collect(Collectors.toList());
   }
 
   @Mock private Project mockProject;
@@ -137,13 +146,13 @@ public class GradleLayerConfigurationsTest {
             applicationDirectory.resolve("resources/world"));
     ImmutableList<Path> expectedClassesFiles =
         ImmutableList.of(
-            applicationDirectory.resolve("classes").resolve("HelloWorld.class"),
+            applicationDirectory.resolve("classes/HelloWorld.class"),
             applicationDirectory.resolve("classes/some.class"));
     ImmutableList<Path> expectedExtraFiles = ImmutableList.of();
 
     JavaLayerConfigurations javaLayerConfigurations =
         GradleLayerConfigurations.getForProject(
-            mockProject, mockGradleJibLogger, Paths.get("nonexistent/path"));
+            mockProject, mockGradleJibLogger, Paths.get("nonexistent/path"), "/app");
     Assert.assertEquals(
         expectedDependenciesFiles,
         getSourceFilesFromLayerEntries(javaLayerConfigurations.getDependencyLayerEntries()));
@@ -169,7 +178,7 @@ public class GradleLayerConfigurationsTest {
         .thenReturn(new TestFileCollection(ImmutableSet.of(nonexistentFile)));
 
     GradleLayerConfigurations.getForProject(
-        mockProject, mockGradleJibLogger, Paths.get("nonexistent/path"));
+        mockProject, mockGradleJibLogger, Paths.get("nonexistent/path"), "/app");
 
     Mockito.verify(mockGradleJibLogger)
         .info("Adding corresponding output directories of source sets to image");
@@ -184,7 +193,7 @@ public class GradleLayerConfigurationsTest {
 
     JavaLayerConfigurations javaLayerConfigurations =
         GradleLayerConfigurations.getForProject(
-            mockProject, mockGradleJibLogger, extraFilesDirectory);
+            mockProject, mockGradleJibLogger, extraFilesDirectory, "/app");
 
     ImmutableList<Path> expectedExtraFiles =
         ImmutableList.of(
@@ -198,5 +207,36 @@ public class GradleLayerConfigurationsTest {
     Assert.assertEquals(
         expectedExtraFiles,
         getSourceFilesFromLayerEntries(javaLayerConfigurations.getExtraFilesLayerEntries()));
+  }
+
+  @Test
+  public void testGetForProject_nonDefaultAppRoot() throws IOException, URISyntaxException {
+    Path extraFilesDirectory = Paths.get(Resources.getResource("layer").toURI());
+
+    JavaLayerConfigurations configuration =
+        GradleLayerConfigurations.getForProject(
+            mockProject, mockGradleJibLogger, extraFilesDirectory, "/my/app");
+
+    Assert.assertEquals(
+        Arrays.asList(
+            "/my/app/libs/dependency-1.0.0.jar",
+            "/my/app/libs/libraryA.jar",
+            "/my/app/libs/libraryB.jar"),
+        getExtractionPathFromLayerEntries(configuration.getDependencyLayerEntries()));
+    Assert.assertEquals(
+        Arrays.asList("/my/app/libs/dependencyX-1.0.0-SNAPSHOT.jar"),
+        getExtractionPathFromLayerEntries(configuration.getSnapshotDependencyLayerEntries()));
+    Assert.assertEquals(
+        Arrays.asList(
+            "/my/app/resources/resourceA",
+            "/my/app/resources/resourceB",
+            "/my/app/resources/world"),
+        getExtractionPathFromLayerEntries(configuration.getResourceLayerEntries()));
+    Assert.assertEquals(
+        Arrays.asList("/my/app/classes/HelloWorld.class", "/my/app/classes/some.class"),
+        getExtractionPathFromLayerEntries(configuration.getClassLayerEntries()));
+    Assert.assertEquals(
+        Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"),
+        getExtractionPathFromLayerEntries(configuration.getExtraFilesLayerEntries()));
   }
 }

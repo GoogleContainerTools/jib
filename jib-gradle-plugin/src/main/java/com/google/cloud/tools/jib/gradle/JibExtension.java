@@ -58,6 +58,7 @@ import org.gradle.api.tasks.Optional;
  *     args = ['arg1', 'arg2']
  *     exposedPorts = ['1000', '2000-2010', '3000']
  *     format = OCI
+ *     appRoot = "/app";
  *   }
  * }
  * }</pre>

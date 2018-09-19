@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - `container.environment` configuration parameter to configure environment variables ([#890](https://github.com/GoogleContainerTools/jib/issues/890))
+- `container.appRoot` configuration parameter to configure app root in the image ([#984](https://github.com/GoogleContainerTools/jib/pull/984))
 
 ### Changed
 
