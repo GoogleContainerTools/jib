@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.frontend;
 
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -66,41 +67,42 @@ public class JavaLayerConfigurations {
   public static class Builder {
 
     private final Map<LayerType, List<Path>> layerFilesMap = new EnumMap<>(LayerType.class);
-    private final Map<LayerType, String> extractionPathMap = new EnumMap<>(LayerType.class);
+    private final Map<LayerType, AbsoluteUnixPath> extractionPathMap =
+        new EnumMap<>(LayerType.class);
 
     private Builder() {
       for (LayerType layerType : LayerType.values()) {
         layerFilesMap.put(layerType, new ArrayList<>());
-        extractionPathMap.put(layerType, "/");
+        extractionPathMap.put(layerType, AbsoluteUnixPath.get("/"));
       }
     }
 
-    public Builder setDependencyFiles(List<Path> dependencyFiles, String extractionPath) {
+    public Builder setDependencyFiles(List<Path> dependencyFiles, AbsoluteUnixPath extractionPath) {
       layerFilesMap.put(LayerType.DEPENDENCIES, dependencyFiles);
       extractionPathMap.put(LayerType.DEPENDENCIES, extractionPath);
       return this;
     }
 
     public Builder setSnapshotDependencyFiles(
-        List<Path> snapshotDependencyFiles, String extractionPath) {
+        List<Path> snapshotDependencyFiles, AbsoluteUnixPath extractionPath) {
       layerFilesMap.put(LayerType.SNAPSHOT_DEPENDENCIES, snapshotDependencyFiles);
       extractionPathMap.put(LayerType.SNAPSHOT_DEPENDENCIES, extractionPath);
       return this;
     }
 
-    public Builder setResourceFiles(List<Path> resourceFiles, String extractionPath) {
+    public Builder setResourceFiles(List<Path> resourceFiles, AbsoluteUnixPath extractionPath) {
       layerFilesMap.put(LayerType.RESOURCES, resourceFiles);
       extractionPathMap.put(LayerType.RESOURCES, extractionPath);
       return this;
     }
 
-    public Builder setClassFiles(List<Path> classFiles, String extractionPath) {
+    public Builder setClassFiles(List<Path> classFiles, AbsoluteUnixPath extractionPath) {
       layerFilesMap.put(LayerType.CLASSES, classFiles);
       extractionPathMap.put(LayerType.CLASSES, extractionPath);
       return this;
     }
 
-    public Builder setExtraFiles(List<Path> extraFiles, String extractionPath) {
+    public Builder setExtraFiles(List<Path> extraFiles, AbsoluteUnixPath extractionPath) {
       layerFilesMap.put(LayerType.EXTRA_FILES, extraFiles);
       extractionPathMap.put(LayerType.EXTRA_FILES, extractionPath);
       return this;
@@ -108,7 +110,8 @@ public class JavaLayerConfigurations {
 
     // TODO: remove this and put files in WAR into the relevant layers (i.e., dependencies, snapshot
     // dependencies, resources, and classes layers).
-    public Builder setExplodedWarFiles(List<Path> explodedWarFiles, String extractionPath) {
+    public Builder setExplodedWarFiles(
+        List<Path> explodedWarFiles, AbsoluteUnixPath extractionPath) {
       layerFilesMap.put(LayerType.EXPLODED_WAR, explodedWarFiles);
       extractionPathMap.put(LayerType.EXPLODED_WAR, extractionPath);
       return this;
@@ -118,11 +121,8 @@ public class JavaLayerConfigurations {
       ImmutableMap.Builder<LayerType, LayerConfiguration> layerConfigurationsMap =
           ImmutableMap.builderWithExpectedSize(LayerType.values().length);
       for (LayerType layerType : LayerType.values()) {
-        String extractionPath = Preconditions.checkNotNull(extractionPathMap.get(layerType));
-        // Windows filenames cannot have "/", so this also blocks Windows-style path.
-        Preconditions.checkState(
-            extractionPath.startsWith("/"),
-            "extractionPath should be an absolute path in Unix-style: " + extractionPath);
+        AbsoluteUnixPath extractionPath =
+            Preconditions.checkNotNull(extractionPathMap.get(layerType));
 
         LayerConfiguration.Builder layerConfigurationBuilder =
             LayerConfiguration.builder().setName(layerType.getName());
@@ -130,7 +130,8 @@ public class JavaLayerConfigurations {
         // Adds all the layer files recursively.
         List<Path> layerFiles = Preconditions.checkNotNull(layerFilesMap.get(layerType));
         for (Path layerFile : layerFiles) {
-          Path pathInContainer = Paths.get(extractionPath).resolve(layerFile.getFileName());
+          Path pathInContainer =
+              Paths.get(extractionPath.toString()).resolve(layerFile.getFileName());
           layerConfigurationBuilder.addEntryRecursive(layerFile, pathInContainer);
         }
 
@@ -152,11 +153,11 @@ public class JavaLayerConfigurations {
   public static final String DEFAULT_APP_ROOT = "/app";
 
   private final ImmutableMap<LayerType, LayerConfiguration> layerConfigurationMap;
-  private final ImmutableMap<LayerType, String> extractionPathMap;
+  private final ImmutableMap<LayerType, AbsoluteUnixPath> extractionPathMap;
 
   private JavaLayerConfigurations(
       ImmutableMap<LayerType, LayerConfiguration> layerConfigurationMap,
-      ImmutableMap<LayerType, String> extractionPathMap) {
+      ImmutableMap<LayerType, AbsoluteUnixPath> extractionPathMap) {
     this.layerConfigurationMap = layerConfigurationMap;
     this.extractionPathMap = extractionPathMap;
   }
@@ -191,27 +192,27 @@ public class JavaLayerConfigurations {
     return getLayerEntries(LayerType.EXPLODED_WAR);
   }
 
-  public String getDependencyExtractionPath() {
+  public AbsoluteUnixPath getDependencyExtractionPath() {
     return getExtractionPath(LayerType.DEPENDENCIES);
   }
 
-  public String getSnapshotDependencyExtractionPath() {
+  public AbsoluteUnixPath getSnapshotDependencyExtractionPath() {
     return getExtractionPath(LayerType.SNAPSHOT_DEPENDENCIES);
   }
 
-  public String getResourceExtractionPath() {
+  public AbsoluteUnixPath getResourceExtractionPath() {
     return getExtractionPath(LayerType.RESOURCES);
   }
 
-  public String getClassExtractionPath() {
+  public AbsoluteUnixPath getClassExtractionPath() {
     return getExtractionPath(LayerType.CLASSES);
   }
 
-  public String getExtraFilesExtractionPath() {
+  public AbsoluteUnixPath getExtraFilesExtractionPath() {
     return getExtractionPath(LayerType.EXTRA_FILES);
   }
 
-  public String getExplodedWarExtractionPath() {
+  public AbsoluteUnixPath getExplodedWarExtractionPath() {
     return getExtractionPath(LayerType.EXPLODED_WAR);
   }
 
@@ -219,7 +220,7 @@ public class JavaLayerConfigurations {
     return Preconditions.checkNotNull(layerConfigurationMap.get(layerType)).getLayerEntries();
   }
 
-  private String getExtractionPath(LayerType layerType) {
+  private AbsoluteUnixPath getExtractionPath(LayerType layerType) {
     return Preconditions.checkNotNull(extractionPathMap.get(layerType));
   }
 }

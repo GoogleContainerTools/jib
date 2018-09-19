@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.frontend;
 
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -27,8 +28,8 @@ public class JavaEntrypointConstructorTest {
 
   @Test
   public void testMakeEntrypoint() {
-    String expectedResourcesPath = "/app/resources/";
-    String expectedClassesPath = "/app/classes/";
+    String expectedResourcesPath = "/app/resources";
+    String expectedClassesPath = "/app/classes";
     String expectedDependenciesPath = "/app/libs/*";
     List<String> expectedJvmFlags = Arrays.asList("-flag", "anotherFlag");
     String expectedMainClass = "SomeMainClass";
@@ -44,14 +45,14 @@ public class JavaEntrypointConstructorTest {
             "-flag",
             "anotherFlag",
             "-cp",
-            "/app/resources/:/app/classes/:/app/libs/*",
+            "/app/resources:/app/classes:/app/libs/*",
             "SomeMainClass"),
         entrypoint);
 
     // Checks that this is also the default entrypoint.
     Assert.assertEquals(
         JavaEntrypointConstructor.makeDefaultEntrypoint(
-            "/app", expectedJvmFlags, expectedMainClass),
+            AbsoluteUnixPath.get("/app"), expectedJvmFlags, expectedMainClass),
         entrypoint);
   }
 
@@ -59,61 +60,18 @@ public class JavaEntrypointConstructorTest {
   public void testMakeDefaultEntrypoint_classpathString() {
     // Checks that this is also the default entrypoint.
     List<String> entrypoint =
-        JavaEntrypointConstructor.makeDefaultEntrypoint("/app", Collections.emptyList(), "MyMain");
-    Assert.assertEquals("/app/resources/:/app/classes/:/app/libs/*", entrypoint.get(2));
+        JavaEntrypointConstructor.makeDefaultEntrypoint(
+            AbsoluteUnixPath.get("/app"), Collections.emptyList(), "MyMain");
+    Assert.assertEquals("/app/resources:/app/classes:/app/libs/*", entrypoint.get(2));
   }
 
   @Test
   public void testMakeDefaultEntrypoint_classpathStringWithNonDefaultAppRoot() {
     // Checks that this is also the default entrypoint.
     List<String> entrypoint =
-        JavaEntrypointConstructor.makeDefaultEntrypoint("/my/app", Collections.emptyList(), "Main");
-    Assert.assertEquals("/my/app/resources/:/my/app/classes/:/my/app/libs/*", entrypoint.get(2));
-  }
-
-  @Test
-  public void testMakeDefaultEntrypoint_appRootWithTrailingSlash() {
-    // Checks that this is also the default entrypoint.
-    List<String> entrypoint =
         JavaEntrypointConstructor.makeDefaultEntrypoint(
-            "/my/root/", Collections.emptyList(), "SomeMainClass");
-    Assert.assertEquals("/my/root/resources/:/my/root/classes/:/my/root/libs/*", entrypoint.get(2));
-  }
-
-  @Test
-  public void testMakeDefaultEntrypoint_nonAbsoluteAppRoot() {
-    try {
-      JavaEntrypointConstructor.makeDefaultEntrypoint(
-          "relative/path", Collections.emptyList(), "MainClass");
-      Assert.fail();
-    } catch (IllegalArgumentException ex) {
-      Assert.assertEquals(
-          "appRoot should be an absolute path in Unix-style: relative/path", ex.getMessage());
-    }
-  }
-
-  @Test
-  public void testMakeDefaultEntrypoint_windowsAppRootPath() {
-    try {
-      JavaEntrypointConstructor.makeDefaultEntrypoint(
-          "\\windows\\path", Collections.emptyList(), "MyMain");
-      Assert.fail();
-    } catch (IllegalArgumentException ex) {
-      Assert.assertEquals(
-          "appRoot should be an absolute path in Unix-style: \\windows\\path", ex.getMessage());
-    }
-  }
-
-  @Test
-  public void testMakeDefaultEntrypoint_windowsPathWithDriveLetter() {
-    try {
-      JavaEntrypointConstructor.makeDefaultEntrypoint(
-          "D:\\windows\\path", Collections.emptyList(), "MyMain");
-      Assert.fail();
-    } catch (IllegalArgumentException ex) {
-      Assert.assertEquals(
-          "appRoot should be an absolute path in Unix-style: D:\\windows\\path", ex.getMessage());
-    }
+            AbsoluteUnixPath.get("/my/app"), Collections.emptyList(), "Main");
+    Assert.assertEquals("/my/app/resources:/my/app/classes:/my/app/libs/*", entrypoint.get(2));
   }
 
   @Test

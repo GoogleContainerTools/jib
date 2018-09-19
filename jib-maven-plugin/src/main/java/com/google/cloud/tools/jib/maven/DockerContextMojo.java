@@ -16,11 +16,11 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaDockerContextGenerator;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
-import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -69,14 +69,9 @@ public class DockerContextMojo extends JibPluginConfiguration {
       throw new MojoExecutionException(ex.getMessage(), ex);
     }
 
-    if (!ConfigurationPropertyValidator.isAbsoluteUnixPath(getAppRoot())) {
-      throw new MojoExecutionException(
-          "<container><appRoot> (" + getAppRoot() + ") is not an absolute Unix-style path");
-    }
-
     Preconditions.checkNotNull(targetDir);
 
-    String appRoot = PluginConfigurationProcessor.getAppRootChecked(this);
+    AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(this);
     MavenProjectProperties mavenProjectProperties =
         MavenProjectProperties.getForProject(
             getProject(), mavenJibLogger, getExtraDirectory(), appRoot);
@@ -85,7 +80,7 @@ public class DockerContextMojo extends JibPluginConfiguration {
     if (entrypoint.isEmpty()) {
       String mainClass = mavenProjectProperties.getMainClass(this);
       entrypoint =
-          JavaEntrypointConstructor.makeDefaultEntrypoint(getAppRoot(), getJvmFlags(), mainClass);
+          JavaEntrypointConstructor.makeDefaultEntrypoint(appRoot, getJvmFlags(), mainClass);
     } else if (getMainClass() != null || !getJvmFlags().isEmpty()) {
       mavenJibLogger.warn("<mainClass> and <jvmFlags> are ignored when <entrypoint> is specified");
     }

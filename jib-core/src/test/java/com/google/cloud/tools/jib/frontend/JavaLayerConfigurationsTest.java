@@ -1,6 +1,7 @@
 package com.google.cloud.tools.jib.frontend;
 
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -18,13 +19,22 @@ public class JavaLayerConfigurationsTest {
 
   private static JavaLayerConfigurations createFakeConfigurations() throws IOException {
     return JavaLayerConfigurations.builder()
-        .setDependencyFiles(Collections.singletonList(Paths.get("dependency")), "/dependency/path")
+        .setDependencyFiles(
+            Collections.singletonList(Paths.get("dependency")),
+            AbsoluteUnixPath.get("/dependency/path"))
         .setSnapshotDependencyFiles(
-            Collections.singletonList(Paths.get("snapshot dependency")), "/snapshots")
-        .setResourceFiles(Collections.singletonList(Paths.get("resource")), "/resources/here")
-        .setClassFiles(Collections.singletonList(Paths.get("class")), "/classes/go/here")
-        .setExplodedWarFiles(Collections.singletonList(Paths.get("exploded war")), "/for/war")
-        .setExtraFiles(Collections.singletonList(Paths.get("extra file")), "/some/extras")
+            Collections.singletonList(Paths.get("snapshot dependency")),
+            AbsoluteUnixPath.get("/snapshots"))
+        .setResourceFiles(
+            Collections.singletonList(Paths.get("resource")),
+            AbsoluteUnixPath.get("/resources/here"))
+        .setClassFiles(
+            Collections.singletonList(Paths.get("class")), AbsoluteUnixPath.get("/classes/go/here"))
+        .setExplodedWarFiles(
+            Collections.singletonList(Paths.get("exploded war")), AbsoluteUnixPath.get("/for/war"))
+        .setExtraFiles(
+            Collections.singletonList(Paths.get("extra file")),
+            AbsoluteUnixPath.get("/some/extras"))
         .build();
   }
 
@@ -73,12 +83,18 @@ public class JavaLayerConfigurationsTest {
   public void testSetFiles_extractionPaths() throws IOException {
     JavaLayerConfigurations configurations = createFakeConfigurations();
 
-    Assert.assertEquals("/dependency/path", configurations.getDependencyExtractionPath());
-    Assert.assertEquals("/snapshots", configurations.getSnapshotDependencyExtractionPath());
-    Assert.assertEquals("/resources/here", configurations.getResourceExtractionPath());
-    Assert.assertEquals("/classes/go/here", configurations.getClassExtractionPath());
-    Assert.assertEquals("/for/war", configurations.getExplodedWarExtractionPath());
-    Assert.assertEquals("/some/extras", configurations.getExtraFilesExtractionPath());
+    Assert.assertEquals(
+        AbsoluteUnixPath.get("/dependency/path"), configurations.getDependencyExtractionPath());
+    Assert.assertEquals(
+        AbsoluteUnixPath.get("/snapshots"), configurations.getSnapshotDependencyExtractionPath());
+    Assert.assertEquals(
+        AbsoluteUnixPath.get("/resources/here"), configurations.getResourceExtractionPath());
+    Assert.assertEquals(
+        AbsoluteUnixPath.get("/classes/go/here"), configurations.getClassExtractionPath());
+    Assert.assertEquals(
+        AbsoluteUnixPath.get("/for/war"), configurations.getExplodedWarExtractionPath());
+    Assert.assertEquals(
+        AbsoluteUnixPath.get("/some/extras"), configurations.getExtraFilesExtractionPath());
 
     Assert.assertEquals(
         Paths.get("/dependency/path/dependency"),

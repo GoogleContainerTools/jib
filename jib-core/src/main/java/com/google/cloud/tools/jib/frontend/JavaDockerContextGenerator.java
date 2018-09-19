@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.frontend;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -74,10 +75,12 @@ public class JavaDockerContextGenerator {
     private final String directoryInContext;
 
     /** The extraction path in the image. */
-    private final String extractionPath;
+    private final AbsoluteUnixPath extractionPath;
 
     private CopyDirective(
-        ImmutableList<LayerEntry> layerEntries, String directoryInContext, String extractionPath) {
+        ImmutableList<LayerEntry> layerEntries,
+        String directoryInContext,
+        AbsoluteUnixPath extractionPath) {
       this.layerEntries = layerEntries;
       this.directoryInContext = directoryInContext;
       this.extractionPath = extractionPath;
@@ -96,7 +99,7 @@ public class JavaDockerContextGenerator {
       ImmutableList.Builder<CopyDirective> listBuilder,
       ImmutableList<LayerEntry> layerEntries,
       String directoryInContext,
-      String extractionPath) {
+      AbsoluteUnixPath extractionPath) {
     if (layerEntries.isEmpty()) {
       return;
     }
@@ -284,7 +287,8 @@ public class JavaDockerContextGenerator {
         // 'target/jib-docker-context/classes/com/test/HelloWorld.class'.
         Path destination =
             directoryInContext.resolve(
-                Paths.get(copyDirective.extractionPath).relativize(layerEntry.getExtractionPath()));
+                Paths.get(copyDirective.extractionPath.toString())
+                    .relativize(layerEntry.getExtractionPath()));
 
         if (Files.isDirectory(layerEntry.getSourceFile())) {
           Files.createDirectories(destination);

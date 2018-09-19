@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.frontend;
 
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
@@ -116,16 +117,17 @@ public class JavaDockerContextGeneratorTest {
         .thenReturn(filesToLayerEntries(testDependencies, Paths.get(EXPECTED_DEPENDENCIES_PATH)));
 
     Mockito.when(mockJavaLayerConfigurations.getDependencyExtractionPath())
-        .thenReturn(EXPECTED_DEPENDENCIES_PATH);
+        .thenReturn(AbsoluteUnixPath.get(EXPECTED_DEPENDENCIES_PATH));
     Mockito.when(mockJavaLayerConfigurations.getSnapshotDependencyExtractionPath())
-        .thenReturn(EXPECTED_DEPENDENCIES_PATH);
+        .thenReturn(AbsoluteUnixPath.get(EXPECTED_DEPENDENCIES_PATH));
     Mockito.when(mockJavaLayerConfigurations.getResourceExtractionPath())
-        .thenReturn(EXPECTED_RESOURCES_PATH);
+        .thenReturn(AbsoluteUnixPath.get(EXPECTED_RESOURCES_PATH));
     Mockito.when(mockJavaLayerConfigurations.getClassExtractionPath())
-        .thenReturn(EXPECTED_CLASSES_PATH);
+        .thenReturn(AbsoluteUnixPath.get(EXPECTED_CLASSES_PATH));
     Mockito.when(mockJavaLayerConfigurations.getExplodedWarExtractionPath())
-        .thenReturn(EXPECTED_EXPLODED_WAR_PATH);
-    Mockito.when(mockJavaLayerConfigurations.getExtraFilesExtractionPath()).thenReturn("/");
+        .thenReturn(AbsoluteUnixPath.get(EXPECTED_EXPLODED_WAR_PATH));
+    Mockito.when(mockJavaLayerConfigurations.getExtraFilesExtractionPath())
+        .thenReturn(AbsoluteUnixPath.get("/"));
 
     new JavaDockerContextGenerator(mockJavaLayerConfigurations)
         .setBaseImage("somebaseimage")
@@ -175,23 +177,24 @@ public class JavaDockerContextGeneratorTest {
         .thenReturn(ImmutableList.of(new LayerEntry(ignored, Paths.get("/"))));
 
     Mockito.when(mockJavaLayerConfigurations.getDependencyExtractionPath())
-        .thenReturn(EXPECTED_DEPENDENCIES_PATH);
+        .thenReturn(AbsoluteUnixPath.get(EXPECTED_DEPENDENCIES_PATH));
     Mockito.when(mockJavaLayerConfigurations.getSnapshotDependencyExtractionPath())
-        .thenReturn(EXPECTED_DEPENDENCIES_PATH);
+        .thenReturn(AbsoluteUnixPath.get(EXPECTED_DEPENDENCIES_PATH));
     Mockito.when(mockJavaLayerConfigurations.getResourceExtractionPath())
-        .thenReturn(EXPECTED_RESOURCES_PATH);
+        .thenReturn(AbsoluteUnixPath.get(EXPECTED_RESOURCES_PATH));
     Mockito.when(mockJavaLayerConfigurations.getClassExtractionPath())
-        .thenReturn(EXPECTED_CLASSES_PATH);
+        .thenReturn(AbsoluteUnixPath.get(EXPECTED_CLASSES_PATH));
     Mockito.when(mockJavaLayerConfigurations.getExplodedWarExtractionPath())
-        .thenReturn(EXPECTED_EXPLODED_WAR_PATH);
-    Mockito.when(mockJavaLayerConfigurations.getExtraFilesExtractionPath()).thenReturn("/");
+        .thenReturn(AbsoluteUnixPath.get(EXPECTED_EXPLODED_WAR_PATH));
+    Mockito.when(mockJavaLayerConfigurations.getExtraFilesExtractionPath())
+        .thenReturn(AbsoluteUnixPath.get("/"));
 
     String dockerfile =
         new JavaDockerContextGenerator(mockJavaLayerConfigurations)
             .setBaseImage(expectedBaseImage)
             .setEntrypoint(
                 JavaEntrypointConstructor.makeDefaultEntrypoint(
-                    "/app", expectedJvmFlags, expectedMainClass))
+                    AbsoluteUnixPath.get("/app"), expectedJvmFlags, expectedMainClass))
             .setJavaArguments(expectedJavaArguments)
             .setEnvironment(expectedEnv)
             .setExposedPorts(exposedPorts)
