@@ -55,7 +55,7 @@ public class MavenLayerConfigurationsTest {
         .collect(ImmutableList.toImmutableList());
   }
 
-  private static List<String> getExtractionPatFromLayerEntries(List<LayerEntry> layerEntries) {
+  private static List<String> getExtractionPathFromLayerEntries(List<LayerEntry> layerEntries) {
     Stream<LayerEntry> stream = layerEntries.stream();
     return stream.map(LayerEntry::getAbsoluteExtractionPathString).collect(Collectors.toList());
   }
@@ -165,10 +165,11 @@ public class MavenLayerConfigurationsTest {
                 "/my/app/libs/dependency-1.0.0.jar",
                 "/my/app/libs/libraryA.jar",
                 "/my/app/libs/libraryB.jar")),
-        new HashSet<>(getExtractionPatFromLayerEntries(configuration.getDependencyLayerEntries())));
+        new HashSet<>(
+            getExtractionPathFromLayerEntries(configuration.getDependencyLayerEntries())));
     Assert.assertEquals(
         Arrays.asList("/my/app/libs/dependencyX-1.0.0-SNAPSHOT.jar"),
-        getExtractionPatFromLayerEntries(configuration.getSnapshotDependencyLayerEntries()));
+        getExtractionPathFromLayerEntries(configuration.getSnapshotDependencyLayerEntries()));
     Assert.assertEquals(
         Arrays.asList(
             "/my/app/resources/directory",
@@ -176,17 +177,17 @@ public class MavenLayerConfigurationsTest {
             "/my/app/resources/resourceA",
             "/my/app/resources/resourceB",
             "/my/app/resources/world"),
-        getExtractionPatFromLayerEntries(configuration.getResourceLayerEntries()));
+        getExtractionPathFromLayerEntries(configuration.getResourceLayerEntries()));
     Assert.assertEquals(
         Arrays.asList(
             "/my/app/classes/HelloWorld.class",
             "/my/app/classes/package",
             "/my/app/classes/package/some.class",
             "/my/app/classes/some.class"),
-        getExtractionPatFromLayerEntries(configuration.getClassLayerEntries()));
+        getExtractionPathFromLayerEntries(configuration.getClassLayerEntries()));
     Assert.assertEquals(
         Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"),
-        getExtractionPatFromLayerEntries(configuration.getExtraFilesLayerEntries()));
+        getExtractionPathFromLayerEntries(configuration.getExtraFilesLayerEntries()));
   }
 
   private Artifact makeArtifact(Path path) {
