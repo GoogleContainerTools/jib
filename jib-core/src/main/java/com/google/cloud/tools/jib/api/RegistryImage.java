@@ -28,21 +28,22 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Builds to a container registry.
+ * Defines an image on a container registry that can be used as either a source or target image.
  *
- * <p>The registry portion of the image reference determines which registry to push the image to.
- * The repository portion is the namespace to push the image to. The tag is a label to easily
- * identify an image among all the images in the repository. See {@link ImageReference} for more
- * details.
+ * <p>The registry portion of the image reference determines which registry to the image lives (or
+ * should live) on. The repository portion is the namespace within the registry. The tag is a label
+ * to easily identify an image among all the images in the repository. See {@link ImageReference}
+ * for more details.
  *
  * <p>When configuring credentials (via {@link #addCredential} for example), make sure the
- * credentials are valid push credentials for the repository specified via the image reference.
+ * credentials are valid push (for using this as a target image) or pull (for using this as a source
+ * image) credentials for the repository specified via the image reference.
  */
 // TODO: Add tests once JibContainerBuilder#containerize() is added.
-public class RegistryImage implements TargetImage {
+public class RegistryImage implements SourceImage, TargetImage {
 
   /**
-   * Instantiate with the image reference to push to.
+   * Instantiate with the image reference to use.
    *
    * @param imageReference the image reference
    * @return a new {@link RegistryImage}
@@ -52,7 +53,7 @@ public class RegistryImage implements TargetImage {
   }
 
   /**
-   * Instantiate with the image reference to push to.
+   * Instantiate with the image reference to use.
    *
    * @param imageReference the image reference
    * @return a new {@link RegistryImage}
@@ -71,8 +72,8 @@ public class RegistryImage implements TargetImage {
   }
 
   /**
-   * Adds a username-password credential to use to push the image. This is a shorthand for {@code
-   * addCredentialRetriever(() -> Optional.of(Credential.basic(username, password)))}.
+   * Adds a username-password credential to use to push/pull the image. This is a shorthand for
+   * {@code addCredentialRetriever(() -> Optional.of(Credential.basic(username, password)))}.
    *
    * @param username the username
    * @param password the password
@@ -84,9 +85,9 @@ public class RegistryImage implements TargetImage {
   }
 
   /**
-   * Adds {@link CredentialRetriever} to fetch push credentials for the image. Credential retrievers
-   * are attempted in the order in which they are specified until credentials are successfully
-   * retrieved.
+   * Adds {@link CredentialRetriever} to fetch push/pull credentials for the image. Credential
+   * retrievers are attempted in the order in which they are specified until credentials are
+   * successfully retrieved.
    *
    * <p>Example usage:
    *
