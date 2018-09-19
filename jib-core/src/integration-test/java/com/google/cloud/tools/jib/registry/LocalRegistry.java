@@ -157,7 +157,6 @@ public class LocalRegistry extends ExternalResource {
         HttpURLConnection connection = (HttpURLConnection) queryUrl.openConnection();
         int code = connection.getResponseCode();
         if (code == HttpURLConnection.HTTP_OK || code == HttpURLConnection.HTTP_UNAUTHORIZED) {
-          System.out.println("Code: " + code);
           return;
         }
       } catch (IOException ex) {
