@@ -56,14 +56,7 @@ public class LocalRegistry extends ExternalResource {
     ArrayList<String> dockerTokens =
         new ArrayList<>(
             Arrays.asList(
-                "docker",
-                "run",
-                "--rm",
-                "-d",
-                "-p",
-                port + ":5000",
-                "--name",
-                containerName));
+                "docker", "run", "--rm", "-d", "-p", port + ":5000", "--name", containerName));
     if (username != null && password != null) {
       // Generate the htpasswd file to store credentials
       String credentialString =
