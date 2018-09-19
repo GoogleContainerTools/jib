@@ -88,6 +88,7 @@ public class FilesTaskTest {
   private static void verifyFiles(TestProject project, List<Path> files) {
     BuildResult buildResult = project.build(JibPlugin.FILES_TASK_NAME, "-q");
     BuildTask jibTask = buildResult.task(":" + JibPlugin.FILES_TASK_NAME);
+    // :modulename:taskname
     Assert.assertNotNull(jibTask);
     Assert.assertEquals(TaskOutcome.SUCCESS, jibTask.getOutcome());
 

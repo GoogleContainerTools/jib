@@ -13,5 +13,14 @@ repositories {
 jib {
   to {
     image = System.getProperty("_TARGET_IMAGE")
+    maven {
+      url 'https://oss.sonatype.org/content/repositories/snapshots/'
+    }
   }
+}
+
+dependencies {
+  compile project('lib')
+  compile 'org.apache.commons:commons-io:1.3.2'
+  compile 'com.google.guava:guava:HEAD-jre-SNAPSHOT'
 }

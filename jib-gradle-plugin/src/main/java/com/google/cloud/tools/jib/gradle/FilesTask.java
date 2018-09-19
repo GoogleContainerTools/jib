@@ -17,10 +17,11 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.common.base.Preconditions;
-import java.io.File;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.TaskAction;
@@ -66,8 +67,23 @@ public class FilesTask extends DefaultTask {
     }
 
     // Print dependencies
-    for (File dependency : project.getConfigurations().getByName("compile")) {
-      System.out.println(dependency.toPath().toAbsolutePath());
+    for (Configuration configuration : project.getConfigurations()) {
+      for (Dependency dependency : configuration.getDependencies()) {
+        System.out.println(dependency);
+      }
     }
+
+    // TODO:
+    // Find all project dependencies
+    // For all project dependencies,
+    //   Add jar files to set
+    //   Print source
+    //   Find all project dependencies on project dependency
+    //   ...
+    //     ...
+    //
+    // For each dependency file
+    //   if dependency file isn't in project dep file set
+    //     print
   }
 }
