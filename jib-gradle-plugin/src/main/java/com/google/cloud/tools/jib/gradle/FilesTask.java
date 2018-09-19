@@ -67,7 +67,7 @@ public class FilesTask extends DefaultTask {
     }
 
     // Print dependencies
-    for (Configuration configuration : project.getConfigurations()) {
+    for (Configuration configuration : project.getConfigurations().getByName("runtime").getHierarchy()) {
       for (Dependency dependency : configuration.getDependencies()) {
         System.out.println(dependency);
       }
