@@ -39,8 +39,7 @@ public class TimerEventHandlerTest {
     timerEventHandler.accept(
         new TimerEvent(State.START, ROOT_TIMER, Duration.ZERO, Duration.ZERO, "description"));
     timerEventHandler.accept(
-        new TimerEvent(
-            State.LAP, ROOT_TIMER, Duration.ofMillis(10), Duration.ZERO, "description"));
+        new TimerEvent(State.LAP, ROOT_TIMER, Duration.ofMillis(10), Duration.ZERO, "description"));
     timerEventHandler.accept(
         new TimerEvent(
             State.FINISHED, ROOT_TIMER, Duration.ofMillis(100), Duration.ZERO, "description"));
