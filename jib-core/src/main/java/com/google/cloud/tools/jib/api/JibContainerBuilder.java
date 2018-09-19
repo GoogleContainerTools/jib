@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.configuration.Port;
-import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -49,7 +48,7 @@ import javax.annotation.Nullable;
 // TODO: Add tests once containerize() is added.
 public class JibContainerBuilder {
 
-  private final ImageReference baseImageReference;
+  private final SourceImage baseImage;
 
   private List<LayerConfiguration> layerConfigurations = new ArrayList<>();
   private Map<String, String> environment = new HashMap<>();
@@ -59,8 +58,8 @@ public class JibContainerBuilder {
   @Nullable private ImmutableList<String> programArguments;
 
   /** Instantiate with {@link Jib#from}. */
-  JibContainerBuilder(ImageReference baseImageReference) {
-    this.baseImageReference = baseImageReference;
+  JibContainerBuilder(SourceImage baseImage) {
+    this.baseImage = baseImage;
   }
 
   /**
