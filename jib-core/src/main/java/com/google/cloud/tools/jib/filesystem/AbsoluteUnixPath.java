@@ -99,6 +99,42 @@ public class AbsoluteUnixPath {
   }
 
   /**
+   * Resolves this path against another relative path (by the name elements of {@code
+   * relativePath}).
+   *
+   * @param relativePath the relative path to resolve against
+   * @return a new {@link AbsoluteUnixPath} representing the resolved path
+   */
+  // TODO: Add test.
+  public AbsoluteUnixPath resolve(Path relativePath) {
+    Preconditions.checkArgument(
+        relativePath.getRoot() == null, "Cannot resolve against absolute Path: " + relativePath);
+
+    ImmutableList.Builder<String> newPathComponents =
+        ImmutableList.builderWithExpectedSize(pathComponents.size() + relativePath.getNameCount());
+    newPathComponents.addAll(pathComponents);
+    for (Path pathComponent : relativePath) {
+      if (pathComponent.toString().isEmpty()) {
+        // Skips empty components.
+        continue;
+      }
+      newPathComponents.add(pathComponent.toString());
+    }
+    return new AbsoluteUnixPath(newPathComponents.build());
+  }
+
+  /**
+   * Resolves this path against another relative Unix path in string form.
+   *
+   * @param relativeUnixPath the relative path to resolve against
+   * @return a new {@link AbsoluteUnixPath} representing the resolved path
+   */
+  // TODO: Add test.
+  public AbsoluteUnixPath resolve(String relativeUnixPath) {
+    return resolve(RelativeUnixPath.get(relativeUnixPath));
+  }
+
+  /**
    * Returns the string form of the absolute Unix-style path.
    *
    * @return the string form

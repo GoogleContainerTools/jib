@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.configuration;
 
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -50,19 +51,21 @@ public class LayerConfiguration {
      * Adds an entry to the layer. Only adds the single source file to the exact path in the
      * container file system.
      *
-     * <p>For example, {@code addEntry(Paths.get("myfile"), Paths.get("/path/in/container"))} adds a
-     * file {@code myfile} to the container file system at {@code /path/in/container}.
+     * <p>For example, {@code addEntry(Paths.get("myfile"),
+     * AbsoluteUnixPath.get("/path/in/container"))} adds a file {@code myfile} to the container file
+     * system at {@code /path/in/container}.
      *
-     * <p>For example, {@code addEntry(Paths.get("mydirectory"), Paths.get("/path/in/container"))}
-     * adds a directory {@code mydirectory/} to the container file system at {@code
-     * /path/in/container/}. This does <b>not</b> add the contents of {@code mydirectory}.
+     * <p>For example, {@code addEntry(Paths.get("mydirectory"),
+     * AbsoluteUnixPath.get("/path/in/container"))} adds a directory {@code mydirectory/} to the
+     * container file system at {@code /path/in/container/}. This does <b>not</b> add the contents
+     * of {@code mydirectory}.
      *
      * @param sourceFile the source file to add to the layer
      * @param pathInContainer the path in the container file system corresponding to the {@code
-     *     sourceFile} (relative to root {@code /})
+     *     sourceFile}
      * @return this
      */
-    public Builder addEntry(Path sourceFile, Path pathInContainer) {
+    public Builder addEntry(Path sourceFile, AbsoluteUnixPath pathInContainer) {
       layerEntries.add(new LayerEntry(sourceFile, pathInContainer));
       return this;
     }
@@ -72,17 +75,18 @@ public class LayerConfiguration {
      * will be added recursively.
      *
      * <p>For example, {@code addEntryRecursive(Paths.get("mydirectory",
-     * Paths.get("/path/in/container"))} adds {@code mydirectory} to the container file system at
-     * {@code /path/in/container} such that {@code mydirectory/subfile} is found at {@code
+     * AbsoluteUnixPath.get("/path/in/container"))} adds {@code mydirectory} to the container file
+     * system at {@code /path/in/container} such that {@code mydirectory/subfile} is found at {@code
      * /path/in/container/subfile}.
      *
      * @param sourceFile the source file to add to the layer recursively
      * @param pathInContainer the path in the container file system corresponding to the {@code
-     *     sourceFile} (relative to root {@code /})
+     *     sourceFile}
      * @return this
      * @throws IOException if an exception occurred when recursively listing the directory
      */
-    public Builder addEntryRecursive(Path sourceFile, Path pathInContainer) throws IOException {
+    public Builder addEntryRecursive(Path sourceFile, AbsoluteUnixPath pathInContainer)
+        throws IOException {
       if (!Files.isDirectory(sourceFile)) {
         return addEntry(sourceFile, pathInContainer);
       }

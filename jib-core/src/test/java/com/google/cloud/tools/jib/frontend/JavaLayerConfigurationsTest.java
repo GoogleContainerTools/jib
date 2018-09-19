@@ -97,22 +97,22 @@ public class JavaLayerConfigurationsTest {
         AbsoluteUnixPath.get("/some/extras"), configurations.getExtraFilesExtractionPath());
 
     Assert.assertEquals(
-        Paths.get("/dependency/path/dependency"),
+        AbsoluteUnixPath.get("/dependency/path/dependency"),
         configurations.getDependencyLayerEntries().get(0).getExtractionPath());
     Assert.assertEquals(
-        Paths.get("/snapshots/snapshot dependency"),
+        AbsoluteUnixPath.get("/snapshots/snapshot dependency"),
         configurations.getSnapshotDependencyLayerEntries().get(0).getExtractionPath());
     Assert.assertEquals(
-        Paths.get("/resources/here/resource"),
+        AbsoluteUnixPath.get("/resources/here/resource"),
         configurations.getResourceLayerEntries().get(0).getExtractionPath());
     Assert.assertEquals(
-        Paths.get("/classes/go/here/class"),
+        AbsoluteUnixPath.get("/classes/go/here/class"),
         configurations.getClassLayerEntries().get(0).getExtractionPath());
     Assert.assertEquals(
-        Paths.get("/for/war/exploded war"),
+        AbsoluteUnixPath.get("/for/war/exploded war"),
         configurations.getExplodedWarEntries().get(0).getExtractionPath());
     Assert.assertEquals(
-        Paths.get("/some/extras/extra file"),
+        AbsoluteUnixPath.get("/some/extras/extra file"),
         configurations.getExtraFilesLayerEntries().get(0).getExtractionPath());
   }
 }

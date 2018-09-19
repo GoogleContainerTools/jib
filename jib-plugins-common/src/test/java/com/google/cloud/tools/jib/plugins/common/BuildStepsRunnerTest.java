@@ -26,6 +26,7 @@ import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.InsecureRegistryException;
 import com.google.cloud.tools.jib.registry.RegistryCredentialsNotSentException;
@@ -89,13 +90,13 @@ public class BuildStepsRunnerTest {
         .thenReturn(
             ImmutableList.of(
                 LayerConfiguration.builder()
-                    .addEntry(Paths.get("ignored"), Paths.get("ignored"))
+                    .addEntry(Paths.get("ignored"), AbsoluteUnixPath.get("/ignored"))
                     .build(),
                 LayerConfiguration.builder()
-                    .addEntry(Paths.get("ignored"), Paths.get("ignored"))
+                    .addEntry(Paths.get("ignored"), AbsoluteUnixPath.get("/ignored"))
                     .build(),
                 LayerConfiguration.builder()
-                    .addEntry(Paths.get("ignored"), Paths.get("ignored"))
+                    .addEntry(Paths.get("ignored"), AbsoluteUnixPath.get("/ignored"))
                     .build()));
   }
 
