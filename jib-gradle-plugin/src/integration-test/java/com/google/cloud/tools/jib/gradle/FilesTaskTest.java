@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.BuildTask;
 import org.gradle.testkit.runner.TaskOutcome;
@@ -40,6 +41,7 @@ public class FilesTaskTest {
     Path projectRoot = simpleTestProject.getProjectRoot();
     verifyFiles(
         simpleTestProject,
+        null,
         ImmutableList.of(
             projectRoot.resolve("build.gradle"),
             projectRoot.resolve("src/main/java"),
@@ -54,6 +56,7 @@ public class FilesTaskTest {
     Path simpleServiceRoot = projectRoot.resolve("simple-service");
     verifyFiles(
         multiTestProject,
+        "simple-service",
         ImmutableList.of(
             projectRoot.resolve("build.gradle"),
             simpleServiceRoot.resolve("build.gradle"),
@@ -70,24 +73,26 @@ public class FilesTaskTest {
 
     verifyFiles(
         multiTestProject,
+        "complex-service",
         ImmutableList.of(
             projectRoot.resolve("build.gradle"),
-            libRoot.resolve("build.gradle"),
-            libRoot.resolve("src/main/java"),
-            libRoot.resolve("src/main/resources"),
             complexServiceRoot.resolve("build.gradle"),
             complexServiceRoot.resolve("src/main/java"),
             complexServiceRoot.resolve("src/main/resources1"),
             complexServiceRoot.resolve("src/main/resources2"),
             complexServiceRoot.resolve("src/main/other-jib"),
-            Paths.get(System.getProperty("user.home"))
-                .resolve(
-                    ".m2/repository/com/google/guava/guava/HEAD-jre-SNAPSHOT/guava-HEAD-jre-SNAPSHOT.jar")));
+            libRoot.resolve("build.gradle"),
+            libRoot.resolve("src/main/java"),
+            libRoot.resolve("src/main/resources"),
+            Paths.get(System.getProperty("user.home")).resolve("")));
   }
 
-  private static void verifyFiles(TestProject project, List<Path> files) {
+  private static void verifyFiles(
+      TestProject project, @Nullable String moduleName, List<Path> files) {
     BuildResult buildResult = project.build(JibPlugin.FILES_TASK_NAME, "-q");
-    BuildTask jibTask = buildResult.task(":" + JibPlugin.FILES_TASK_NAME);
+    BuildTask jibTask =
+        buildResult.task(
+            ":" + (moduleName == null ? "" : moduleName + ":") + JibPlugin.FILES_TASK_NAME);
     // :modulename:taskname
     Assert.assertNotNull(jibTask);
     Assert.assertEquals(TaskOutcome.SUCCESS, jibTask.getOutcome());

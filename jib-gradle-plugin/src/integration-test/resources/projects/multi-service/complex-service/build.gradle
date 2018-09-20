@@ -8,13 +8,22 @@ targetCompatibility = 1.8
 
 repositories {
   mavenCentral()
+  maven {
+    url 'https://oss.sonatype.org/content/repositories/snapshots/'
+  }
 }
 
 jib {
   to {
     image = System.getProperty("_TARGET_IMAGE")
-    maven {
-      url 'https://oss.sonatype.org/content/repositories/snapshots/'
+  }
+  extraDirectory = file('src/main/other-jib')
+}
+
+sourceSets {
+  main {
+    resources {
+      srcDirs "src/main/extra-resources-1", "src/main/extra-resources-2"
     }
   }
 }
