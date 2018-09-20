@@ -79,16 +79,15 @@ public class ImageLayers<T extends Layer> implements Iterable<T> {
     }
 
     public ImageLayers<T> build() {
-      ImmutableList<T> layers;
-      if (removeDuplicates) {
-        // keep last occurrence of each layer by adding in reverse order,
-        // and then reversing the result
-        Set<T> dedupedButReversed = new LinkedHashSet<T>(Lists.reverse(this.layers));
-        layers = ImmutableList.copyOf(dedupedButReversed).reverse();
-      } else {
-        layers = ImmutableList.copyOf(this.layers);
+      if (!removeDuplicates) {
+        return new ImageLayers<>(ImmutableList.copyOf(layers), layerDigestsBuilder.build());
       }
-      return new ImageLayers<>(layers, layerDigestsBuilder.build());
+
+      // LinkedHashSet maintains the order but keeps the first occurrence. Keep last occurrence by
+      // adding elements in reverse, and then reversing the result
+      Set<T> dedupedButReversed = new LinkedHashSet<T>(Lists.reverse(this.layers));
+      ImmutableList<T> deduped = ImmutableList.copyOf(dedupedButReversed).reverse();
+      return new ImageLayers<>(deduped, layerDigestsBuilder.build());
     }
   }
 
