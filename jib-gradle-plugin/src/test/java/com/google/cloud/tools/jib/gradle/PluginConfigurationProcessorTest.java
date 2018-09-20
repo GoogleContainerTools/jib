@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import java.util.Arrays;
@@ -63,8 +64,7 @@ public class PluginConfigurationProcessorTest {
             mockGradleJibLogger, mockJibExtension, mockProjectProperties);
     ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
     Assert.assertEquals(
-        Arrays.asList(
-            "java", "-cp", "/app/resources/:/app/classes/:/app/libs/*", "java.lang.Object"),
+        Arrays.asList("java", "-cp", "/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
         configuration.getEntrypoint());
     Mockito.verifyZeroInteractions(mockGradleJibLogger);
   }
@@ -128,7 +128,7 @@ public class PluginConfigurationProcessorTest {
     ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
 
     Assert.assertEquals(
-        "/my/app/resources/:/my/app/classes/:/my/app/libs/*", configuration.getEntrypoint().get(2));
+        "/my/app/resources:/my/app/classes:/my/app/libs/*", configuration.getEntrypoint().get(2));
   }
 
   @Test
@@ -136,7 +136,8 @@ public class PluginConfigurationProcessorTest {
     Mockito.doReturn("/some/root").when(mockContainerParameters).getAppRoot();
 
     Assert.assertEquals(
-        "/some/root", PluginConfigurationProcessor.getAppRootChecked(mockJibExtension));
+        AbsoluteUnixPath.get("/some/root"),
+        PluginConfigurationProcessor.getAppRootChecked(mockJibExtension));
   }
 
   @Test
@@ -148,7 +149,7 @@ public class PluginConfigurationProcessorTest {
       Assert.fail();
     } catch (GradleException ex) {
       Assert.assertEquals(
-          "container.appRoot (relative/path) is not an absolute Unix-style path", ex.getMessage());
+          "container.appRoot is not an absolute Unix-style path: relative/path", ex.getMessage());
     }
   }
 
@@ -161,8 +162,7 @@ public class PluginConfigurationProcessorTest {
       Assert.fail();
     } catch (GradleException ex) {
       Assert.assertEquals(
-          "container.appRoot (\\windows\\path) is not an absolute Unix-style path",
-          ex.getMessage());
+          "container.appRoot is not an absolute Unix-style path: \\windows\\path", ex.getMessage());
     }
   }
 
@@ -175,7 +175,7 @@ public class PluginConfigurationProcessorTest {
       Assert.fail();
     } catch (GradleException ex) {
       Assert.assertEquals(
-          "container.appRoot (C:\\windows\\path) is not an absolute Unix-style path",
+          "container.appRoot is not an absolute Unix-style path: C:\\windows\\path",
           ex.getMessage());
     }
   }

@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
@@ -46,14 +47,15 @@ class PluginConfigurationProcessor {
    * @return the app root value
    * @throws MojoExecutionException if the app root is not an absolute path in Unix-style
    */
-  static String getAppRootChecked(JibPluginConfiguration jibPluginConfiguration)
+  static AbsoluteUnixPath getAppRootChecked(JibPluginConfiguration jibPluginConfiguration)
       throws MojoExecutionException {
     String appRoot = jibPluginConfiguration.getAppRoot();
-    if (!ConfigurationPropertyValidator.isAbsoluteUnixPath(appRoot)) {
+    try {
+      return AbsoluteUnixPath.get(appRoot);
+    } catch (IllegalArgumentException ex) {
       throw new MojoExecutionException(
-          "<container><appRoot> (" + appRoot + ") is not an absolute Unix-style path");
+          "<container><appRoot> is not an absolute Unix-style path: " + appRoot);
     }
-    return appRoot;
   }
 
   /**
@@ -126,7 +128,9 @@ class PluginConfigurationProcessor {
       String mainClass = projectProperties.getMainClass(jibPluginConfiguration);
       entrypoint =
           JavaEntrypointConstructor.makeDefaultEntrypoint(
-              jibPluginConfiguration.getAppRoot(), jibPluginConfiguration.getJvmFlags(), mainClass);
+              getAppRootChecked(jibPluginConfiguration),
+              jibPluginConfiguration.getJvmFlags(),
+              mainClass);
     } else if (jibPluginConfiguration.getMainClass() != null
         || !jibPluginConfiguration.getJvmFlags().isEmpty()) {
       logger.warn("<mainClass> and <jvmFlags> are ignored when <entrypoint> is specified");

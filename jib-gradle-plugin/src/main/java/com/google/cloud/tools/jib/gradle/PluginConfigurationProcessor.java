@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
@@ -46,13 +47,13 @@ class PluginConfigurationProcessor {
    * @return the app root value
    * @throws GradleException if the app root is not an absolute path in Unix-style
    */
-  static String getAppRootChecked(JibExtension jibExtension) {
+  static AbsoluteUnixPath getAppRootChecked(JibExtension jibExtension) {
     String appRoot = jibExtension.getContainer().getAppRoot();
-    if (!ConfigurationPropertyValidator.isAbsoluteUnixPath(appRoot)) {
-      throw new GradleException(
-          "container.appRoot (" + appRoot + ") is not an absolute Unix-style path");
+    try {
+      return AbsoluteUnixPath.get(appRoot);
+    } catch (IllegalArgumentException ex) {
+      throw new GradleException("container.appRoot is not an absolute Unix-style path: " + appRoot);
     }
-    return appRoot;
   }
 
   /**
@@ -104,7 +105,7 @@ class PluginConfigurationProcessor {
       String mainClass = projectProperties.getMainClass(jibExtension);
       entrypoint =
           JavaEntrypointConstructor.makeDefaultEntrypoint(
-              jibExtension.getContainer().getAppRoot(), jibExtension.getJvmFlags(), mainClass);
+              getAppRootChecked(jibExtension), jibExtension.getJvmFlags(), mainClass);
     } else if (jibExtension.getMainClass() != null || !jibExtension.getJvmFlags().isEmpty()) {
       logger.warn("mainClass and jvmFlags are ignored when entrypoint is specified");
     }
