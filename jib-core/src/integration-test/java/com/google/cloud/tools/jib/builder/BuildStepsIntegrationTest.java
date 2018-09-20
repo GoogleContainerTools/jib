@@ -139,7 +139,7 @@ public class BuildStepsIntegrationTest {
     localRegistry.pull(imageReference);
     assertDockerInspect(imageReference);
     Assert.assertEquals(
-        "Hello, world. An argument.\n", new Command("docker", "run", imageReference).run());
+        "Hello, world. An argument.\n", new Command("docker", "run", "--rm", imageReference).run());
   }
 
   @Test
@@ -165,19 +165,21 @@ public class BuildStepsIntegrationTest {
     localRegistry.pull(imageReference);
     assertDockerInspect(imageReference);
     Assert.assertEquals(
-        "Hello, world. An argument.\n", new Command("docker", "run", imageReference).run());
+        "Hello, world. An argument.\n", new Command("docker", "run", "--rm", imageReference).run());
 
     String imageReference2 = "localhost:5000/testimage:testtag2";
     localRegistry.pull(imageReference2);
     assertDockerInspect(imageReference2);
     Assert.assertEquals(
-        "Hello, world. An argument.\n", new Command("docker", "run", imageReference2).run());
+        "Hello, world. An argument.\n",
+        new Command("docker", "run", "--rm", imageReference2).run());
 
     String imageReference3 = "localhost:5000/testimage:testtag3";
     localRegistry.pull(imageReference3);
     assertDockerInspect(imageReference3);
     Assert.assertEquals(
-        "Hello, world. An argument.\n", new Command("docker", "run", imageReference3).run());
+        "Hello, world. An argument.\n",
+        new Command("docker", "run", "--rm", imageReference3).run());
   }
 
   @Test
@@ -195,7 +197,7 @@ public class BuildStepsIntegrationTest {
     String imageReference = "localhost:5000/testimage:testtag";
     new Command("docker", "pull", imageReference).run();
     Assert.assertEquals(
-        "Hello, world. An argument.\n", new Command("docker", "run", imageReference).run());
+        "Hello, world. An argument.\n", new Command("docker", "run", "--rm", imageReference).run());
   }
 
   @Test
@@ -216,7 +218,7 @@ public class BuildStepsIntegrationTest {
 
     assertDockerInspect(imageReference);
     Assert.assertEquals(
-        "Hello, world. An argument.\n", new Command("docker", "run", imageReference).run());
+        "Hello, world. An argument.\n", new Command("docker", "run", "--rm", imageReference).run());
   }
 
   @Test
@@ -238,15 +240,15 @@ public class BuildStepsIntegrationTest {
 
     assertDockerInspect(imageReference);
     Assert.assertEquals(
-        "Hello, world. An argument.\n", new Command("docker", "run", imageReference).run());
+        "Hello, world. An argument.\n", new Command("docker", "run", "--rm", imageReference).run());
     assertDockerInspect(imageReference + ":testtag2");
     Assert.assertEquals(
         "Hello, world. An argument.\n",
-        new Command("docker", "run", imageReference + ":testtag2").run());
+        new Command("docker", "run", "--rm", imageReference + ":testtag2").run());
     assertDockerInspect(imageReference + ":testtag3");
     Assert.assertEquals(
         "Hello, world. An argument.\n",
-        new Command("docker", "run", imageReference + ":testtag3").run());
+        new Command("docker", "run", "--rm", imageReference + ":testtag3").run());
   }
 
   @Test
@@ -268,7 +270,7 @@ public class BuildStepsIntegrationTest {
 
     new Command("docker", "load", "--input", outputPath.toString()).run();
     Assert.assertEquals(
-        "Hello, world. An argument.\n", new Command("docker", "run", "testtar").run());
+        "Hello, world. An argument.\n", new Command("docker", "run", "--rm", "testtar").run());
   }
 
   private BuildSteps getBuildSteps(BuildConfiguration buildConfiguration) throws IOException {

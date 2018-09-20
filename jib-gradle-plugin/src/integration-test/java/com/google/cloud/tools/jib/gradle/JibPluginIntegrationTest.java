@@ -65,7 +65,7 @@ public class JibPluginIntegrationTest {
     assertDockerInspect(imageReference);
     String history = new Command("docker", "history", imageReference).run();
     Assert.assertThat(history, CoreMatchers.containsString("jib-gradle-plugin"));
-    return new Command("docker", "run", imageReference).run();
+    return new Command("docker", "run", "--rm", imageReference).run();
   }
 
   private static String buildAndRunComplex(
@@ -88,7 +88,7 @@ public class JibPluginIntegrationTest {
     assertDockerInspect(imageReference);
     String history = new Command("docker", "history", imageReference).run();
     Assert.assertThat(history, CoreMatchers.containsString("jib-gradle-plugin"));
-    return new Command("docker", "run", imageReference).run();
+    return new Command("docker", "run", "--rm", imageReference).run();
   }
 
   private static String buildToDockerDaemonAndRun(TestProject testProject, String imageReference)
@@ -103,7 +103,7 @@ public class JibPluginIntegrationTest {
     assertDockerInspect(imageReference);
     String history = new Command("docker", "history", imageReference).run();
     Assert.assertThat(history, CoreMatchers.containsString("jib-gradle-plugin"));
-    return new Command("docker", "run", imageReference).run();
+    return new Command("docker", "run", "--rm", imageReference).run();
   }
 
   /**
@@ -296,7 +296,8 @@ public class JibPluginIntegrationTest {
 
     new Command("docker", "load", "--input", outputPath).run();
     Assert.assertEquals(
-        "Hello, world. An argument.\nfoo\ncat\n", new Command("docker", "run", targetImage).run());
+        "Hello, world. An argument.\nfoo\ncat\n",
+        new Command("docker", "run", "--rm", targetImage).run());
     assertDockerInspect(targetImage);
     assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
   }
@@ -324,7 +325,8 @@ public class JibPluginIntegrationTest {
 
     assertDockerInspect(imageName);
     Assert.assertEquals(
-        "Hello, world. An argument.\nfoo\ncat\n", new Command("docker", "run", imageName).run());
+        "Hello, world. An argument.\nfoo\ncat\n",
+        new Command("docker", "run", "--rm", imageName).run());
 
     // Checks that generating the Docker context again is skipped.
     BuildTask upToDateJibDockerContextTask =
