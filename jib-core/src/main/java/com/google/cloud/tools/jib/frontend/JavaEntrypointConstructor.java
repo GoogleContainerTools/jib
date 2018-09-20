@@ -16,7 +16,8 @@
 
 package com.google.cloud.tools.jib.frontend;
 
-import com.google.common.base.Preconditions;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.filesystem.RelativeUnixPath;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -24,21 +25,23 @@ import java.util.List;
 /** Constructs an image entrypoint for the Java application. */
 public class JavaEntrypointConstructor {
 
-  public static final String DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE = "resources/";
-  public static final String DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE = "classes/";
-  public static final String DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE = "libs/";
+  public static final RelativeUnixPath DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE =
+      RelativeUnixPath.get("resources");
+  public static final RelativeUnixPath DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE =
+      RelativeUnixPath.get("classes");
+  public static final RelativeUnixPath DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE =
+      RelativeUnixPath.get("libs");
 
   public static List<String> makeDefaultEntrypoint(
-      String appRoot, List<String> jvmFlags, String mainClass) {
-    Preconditions.checkArgument(
-        appRoot.startsWith("/"), "appRoot should be an absolute path in Unix-style: " + appRoot);
-    appRoot = appRoot.endsWith("/") ? appRoot : appRoot + '/';
-
+      AbsoluteUnixPath appRoot, List<String> jvmFlags, String mainClass) {
     return makeEntrypoint(
         Arrays.asList(
-            appRoot + DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE,
-            appRoot + DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE,
-            appRoot + DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE + "*"),
+            appRoot.resolve(DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE).toString(),
+            appRoot.resolve(DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE).toString(),
+            appRoot
+                .resolve(DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE)
+                .resolve(RelativeUnixPath.get("*"))
+                .toString()),
         jvmFlags,
         mainClass);
   }

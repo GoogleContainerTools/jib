@@ -82,7 +82,7 @@ public class DockerContextMojoTest {
     mojo.execute();
 
     Assert.assertEquals(
-        "ENTRYPOINT [\"java\",\"-cp\",\"/app/resources/:/app/classes/:/app/libs/*\",\"MainClass\"]",
+        "ENTRYPOINT [\"java\",\"-cp\",\"/app/resources:/app/classes:/app/libs/*\",\"MainClass\"]",
         getEntrypoint());
   }
 
@@ -92,20 +92,19 @@ public class DockerContextMojoTest {
     mojo.execute();
 
     Assert.assertEquals(
-        "ENTRYPOINT [\"java\",\"-cp\",\"/resources/:/classes/:/libs/*\",\"MainClass\"]",
+        "ENTRYPOINT [\"java\",\"-cp\",\"/resources:/classes:/libs/*\",\"MainClass\"]",
         getEntrypoint());
   }
 
   @Test
   public void testGenerateDockerContext_errorOnNonAbsoluteAppRoot() {
     appRoot = "relative/path";
-
     try {
       mojo.execute();
       Assert.fail();
     } catch (MojoExecutionException ex) {
       Assert.assertEquals(
-          "<container><appRoot> (relative/path) is not an absolute Unix-style path",
+          "<container><appRoot> is not an absolute Unix-style path: relative/path",
           ex.getMessage());
     }
   }
@@ -113,13 +112,12 @@ public class DockerContextMojoTest {
   @Test
   public void testGenerateDockerContext_errorOnWindowsAppRoot() {
     appRoot = "\\windows\\path";
-
     try {
       mojo.execute();
       Assert.fail();
     } catch (MojoExecutionException ex) {
       Assert.assertEquals(
-          "<container><appRoot> (\\windows\\path) is not an absolute Unix-style path",
+          "<container><appRoot> is not an absolute Unix-style path: \\windows\\path",
           ex.getMessage());
     }
   }
@@ -127,13 +125,12 @@ public class DockerContextMojoTest {
   @Test
   public void testGenerateDockerContext_errorOnWindowsAppRootWithDriveLetter() {
     appRoot = "C:\\windows\\path";
-
     try {
       mojo.execute();
       Assert.fail();
     } catch (MojoExecutionException ex) {
       Assert.assertEquals(
-          "<container><appRoot> (C:\\windows\\path) is not an absolute Unix-style path",
+          "<container><appRoot> is not an absolute Unix-style path: C:\\windows\\path",
           ex.getMessage());
     }
   }

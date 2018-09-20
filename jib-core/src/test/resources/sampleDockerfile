@@ -14,5 +14,5 @@ ENV key1="value1" \
 LABEL key1="value" \
     key2="value with\\backslashes\"and\\\\\"\"quotes\"\\" \
     key3="value3"
-ENTRYPOINT ["java","-flag","another\"Flag","-cp","/app/resources/:/app/classes/:/app/libs/*","SomeMainClass"]
+ENTRYPOINT ["java","-flag","another\"Flag","-cp","/app/resources:/app/classes:/app/libs/*","SomeMainClass"]
 CMD ["arg1","arg2"]

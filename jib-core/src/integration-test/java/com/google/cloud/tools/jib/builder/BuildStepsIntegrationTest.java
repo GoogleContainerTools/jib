@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.image.ImageReference;
@@ -286,7 +287,7 @@ public class BuildStepsIntegrationTest {
         ContainerConfiguration.builder()
             .setEntrypoint(
                 JavaEntrypointConstructor.makeDefaultEntrypoint(
-                    "/app", Collections.emptyList(), "HelloWorld"))
+                    AbsoluteUnixPath.get("/app"), Collections.emptyList(), "HelloWorld"))
             .setProgramArguments(Collections.singletonList("An argument."))
             .setEnvironment(ImmutableMap.of("env1", "envvalue1", "env2", "envvalue2"))
             .setExposedPorts(

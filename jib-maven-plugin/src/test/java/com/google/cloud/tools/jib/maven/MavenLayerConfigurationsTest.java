@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
@@ -114,7 +115,7 @@ public class MavenLayerConfigurationsTest {
 
     JavaLayerConfigurations javaLayerConfigurations =
         MavenLayerConfigurations.getForProject(
-            mockMavenProject, Paths.get("nonexistent/path"), "/app");
+            mockMavenProject, Paths.get("nonexistent/path"), AbsoluteUnixPath.get("/app"));
     Assert.assertEquals(
         expectedDependenciesFiles,
         getSourceFilesFromLayerEntries(javaLayerConfigurations.getDependencyLayerEntries()));
@@ -134,8 +135,9 @@ public class MavenLayerConfigurationsTest {
   public void test_extraFiles() throws URISyntaxException, IOException {
     Path extraFilesDirectory = Paths.get(Resources.getResource("layer").toURI());
 
+    AbsoluteUnixPath appRoot = AbsoluteUnixPath.get("/app");
     JavaLayerConfigurations javaLayerConfigurations =
-        MavenLayerConfigurations.getForProject(mockMavenProject, extraFilesDirectory, "/app");
+        MavenLayerConfigurations.getForProject(mockMavenProject, extraFilesDirectory, appRoot);
 
     ImmutableList<Path> expectedExtraFiles =
         ImmutableList.of(
@@ -155,8 +157,9 @@ public class MavenLayerConfigurationsTest {
   public void testGetForProject_nonDefaultAppRoot() throws URISyntaxException, IOException {
     Path extraFilesDirectory = Paths.get(Resources.getResource("layer").toURI());
 
+    AbsoluteUnixPath appRoot = AbsoluteUnixPath.get("/my/app");
     JavaLayerConfigurations configuration =
-        MavenLayerConfigurations.getForProject(mockMavenProject, extraFilesDirectory, "/my/app");
+        MavenLayerConfigurations.getForProject(mockMavenProject, extraFilesDirectory, appRoot);
 
     Assert.assertEquals(
         // on windows, these files may be in a different order, so use Set

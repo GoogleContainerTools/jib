@@ -66,7 +66,7 @@ public class DockerContextTaskTest {
     task.generateDockerContext();
 
     Assert.assertEquals(
-        "ENTRYPOINT [\"java\",\"-cp\",\"/app/resources/:/app/classes/:/app/libs/*\",\"MainClass\"]",
+        "ENTRYPOINT [\"java\",\"-cp\",\"/app/resources:/app/classes:/app/libs/*\",\"MainClass\"]",
         getEntrypoint());
   }
 
@@ -76,7 +76,7 @@ public class DockerContextTaskTest {
     task.generateDockerContext();
 
     Assert.assertEquals(
-        "ENTRYPOINT [\"java\",\"-cp\",\"/resources/:/classes/:/libs/*\",\"MainClass\"]",
+        "ENTRYPOINT [\"java\",\"-cp\",\"/resources:/classes:/libs/*\",\"MainClass\"]",
         getEntrypoint());
   }
 
@@ -89,7 +89,7 @@ public class DockerContextTaskTest {
       Assert.fail();
     } catch (GradleException ex) {
       Assert.assertEquals(
-          "container.appRoot (relative/path) is not an absolute Unix-style path", ex.getMessage());
+          "container.appRoot is not an absolute Unix-style path: relative/path", ex.getMessage());
     }
   }
 
@@ -102,8 +102,7 @@ public class DockerContextTaskTest {
       Assert.fail();
     } catch (GradleException ex) {
       Assert.assertEquals(
-          "container.appRoot (\\windows\\path) is not an absolute Unix-style path",
-          ex.getMessage());
+          "container.appRoot is not an absolute Unix-style path: \\windows\\path", ex.getMessage());
     }
   }
 
@@ -116,7 +115,7 @@ public class DockerContextTaskTest {
       Assert.fail();
     } catch (GradleException ex) {
       Assert.assertEquals(
-          "container.appRoot (C:\\windows\\path) is not an absolute Unix-style path",
+          "container.appRoot is not an absolute Unix-style path: C:\\windows\\path",
           ex.getMessage());
     }
   }

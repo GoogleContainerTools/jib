@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
@@ -150,9 +151,10 @@ public class GradleLayerConfigurationsTest {
             applicationDirectory.resolve("classes/some.class"));
     ImmutableList<Path> expectedExtraFiles = ImmutableList.of();
 
+    AbsoluteUnixPath appRoot = AbsoluteUnixPath.get("/app");
     JavaLayerConfigurations javaLayerConfigurations =
         GradleLayerConfigurations.getForProject(
-            mockProject, mockGradleJibLogger, Paths.get("nonexistent/path"), "/app");
+            mockProject, mockGradleJibLogger, Paths.get("nonexistent/path"), appRoot);
     Assert.assertEquals(
         expectedDependenciesFiles,
         getSourceFilesFromLayerEntries(javaLayerConfigurations.getDependencyLayerEntries()));
@@ -177,8 +179,9 @@ public class GradleLayerConfigurationsTest {
     Mockito.when(mockMainSourceSetOutput.getClassesDirs())
         .thenReturn(new TestFileCollection(ImmutableSet.of(nonexistentFile)));
 
+    AbsoluteUnixPath appRoot = AbsoluteUnixPath.get("/app");
     GradleLayerConfigurations.getForProject(
-        mockProject, mockGradleJibLogger, Paths.get("nonexistent/path"), "/app");
+        mockProject, mockGradleJibLogger, Paths.get("nonexistent/path"), appRoot);
 
     Mockito.verify(mockGradleJibLogger)
         .info("Adding corresponding output directories of source sets to image");
@@ -193,7 +196,7 @@ public class GradleLayerConfigurationsTest {
 
     JavaLayerConfigurations javaLayerConfigurations =
         GradleLayerConfigurations.getForProject(
-            mockProject, mockGradleJibLogger, extraFilesDirectory, "/app");
+            mockProject, mockGradleJibLogger, extraFilesDirectory, AbsoluteUnixPath.get("/app"));
 
     ImmutableList<Path> expectedExtraFiles =
         ImmutableList.of(
@@ -215,7 +218,7 @@ public class GradleLayerConfigurationsTest {
 
     JavaLayerConfigurations configuration =
         GradleLayerConfigurations.getForProject(
-            mockProject, mockGradleJibLogger, extraFilesDirectory, "/my/app");
+            mockProject, mockGradleJibLogger, extraFilesDirectory, AbsoluteUnixPath.get("/my/app"));
 
     Assert.assertEquals(
         Arrays.asList(
