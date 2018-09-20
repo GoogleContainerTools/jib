@@ -337,7 +337,7 @@ public class JavaDockerContextGenerator {
       dockerfile
           .append("\nCOPY ")
           .append(copyDirective.directoryInContext)
-          .append(' ')
+          .append(" ")
           .append(copyDirective.extractionPath)
           .append(hasTrailingSlash ? "" : "/");
     }
