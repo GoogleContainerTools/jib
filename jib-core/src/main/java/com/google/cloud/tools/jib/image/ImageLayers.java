@@ -18,18 +18,23 @@ package com.google.cloud.tools.jib.image;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 import javax.annotation.Nullable;
 
-/** Holds the layers for an image. Makes sure that there are no duplicate layers. */
+/** Holds the layers for an image. */
 public class ImageLayers<T extends Layer> implements Iterable<T> {
 
   public static class Builder<T extends Layer> {
 
-    private final LinkedHashSet<T> layers = new LinkedHashSet<>();
+    private final List<T> layers = new ArrayList<>();
     private final ImmutableSet.Builder<DescriptorDigest> layerDigestsBuilder =
         ImmutableSet.builder();
+    private boolean removeDuplicates = false;
 
     /**
      * Adds a layer. Removes any prior occurrences of the same layer.
@@ -43,11 +48,7 @@ public class ImageLayers<T extends Layer> implements Iterable<T> {
      */
     public Builder<T> add(T layer) throws LayerPropertyNotFoundException {
       layerDigestsBuilder.add(layer.getBlobDescriptor().getDigest());
-
-      // Remove necessary to move layer to the end of the LinkedHashSet.
-      layers.remove(layer);
       layers.add(layer);
-
       return this;
     }
 
@@ -67,8 +68,27 @@ public class ImageLayers<T extends Layer> implements Iterable<T> {
       return this;
     }
 
+    /**
+     * Remove any duplicate layers, keeping the last occurrence of the layer.
+     *
+     * @return this
+     */
+    public Builder<T> removeDuplicates() {
+      removeDuplicates = true;
+      return this;
+    }
+
     public ImageLayers<T> build() {
-      return new ImageLayers<>(ImmutableList.copyOf(layers), layerDigestsBuilder.build());
+      ImmutableList<T> layers;
+      if (removeDuplicates) {
+        // keep last occurrence of each layer by adding in reverse order,
+        // and then reversing the result
+        Set<T> dedupedButReversed = new LinkedHashSet<T>(Lists.reverse(this.layers));
+        layers = ImmutableList.copyOf(dedupedButReversed).reverse();
+      } else {
+        layers = ImmutableList.copyOf(this.layers);
+      }
+      return new ImageLayers<>(layers, layerDigestsBuilder.build());
     }
   }
 
