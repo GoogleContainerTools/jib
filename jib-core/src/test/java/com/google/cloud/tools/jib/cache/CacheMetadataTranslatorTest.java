@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.cache;
 
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.cache.json.CacheMetadataTemplate;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
@@ -45,7 +46,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class CacheMetadataTranslatorTest {
 
   private static final String CLASSES_LAYER_SOURCE_FILE = "/some/source/path";
-  private static final String CLASSES_LAYER_EXTRACTION_PATH = "/some/extraction/path";
+  private static final AbsoluteUnixPath CLASSES_LAYER_EXTRACTION_PATH =
+      AbsoluteUnixPath.get("/some/extraction/path");
   private static final FileTime CLASSES_LAYER_LAST_MODIFIED_TIME =
       FileTime.fromMillis(255073580723571L);
 
@@ -112,7 +114,7 @@ public class CacheMetadataTranslatorTest {
         CLASSES_LAYER_SOURCE_FILE,
         classesLayer.getMetadata().getEntries().get(0).getAbsoluteSourceFileString());
     Assert.assertEquals(
-        CLASSES_LAYER_EXTRACTION_PATH,
+        CLASSES_LAYER_EXTRACTION_PATH.toString(),
         classesLayer.getMetadata().getEntries().get(0).getAbsoluteExtractionPathString());
     Assert.assertEquals(
         CLASSES_LAYER_LAST_MODIFIED_TIME, classesLayer.getMetadata().getLastModifiedTime());
@@ -133,8 +135,7 @@ public class CacheMetadataTranslatorTest {
         LayerMetadata.from(
             ImmutableList.of(
                 new LayerEntry(
-                    Paths.get(CLASSES_LAYER_SOURCE_FILE),
-                    Paths.get(CLASSES_LAYER_EXTRACTION_PATH))),
+                    Paths.get(CLASSES_LAYER_SOURCE_FILE), CLASSES_LAYER_EXTRACTION_PATH)),
             CLASSES_LAYER_LAST_MODIFIED_TIME);
     CachedLayerWithMetadata classesLayer =
         new CachedLayerWithMetadata(classesCachedLayer, classesLayerMetadata);

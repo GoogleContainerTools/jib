@@ -38,10 +38,7 @@ public class JavaEntrypointConstructor {
         Arrays.asList(
             appRoot.resolve(DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE).toString(),
             appRoot.resolve(DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE).toString(),
-            appRoot
-                .resolve(DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE)
-                .resolve(RelativeUnixPath.get("*"))
-                .toString()),
+            appRoot.resolve(DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE).resolve("*").toString()),
         jvmFlags,
         mainClass);
   }
