@@ -1,10 +1,10 @@
 FROM somebaseimage
 
-COPY libs /app/libs
-COPY snapshot-libs /app/libs
-COPY resources /app/resources
-COPY classes /app/classes
-COPY exploded-war /exploded/war
+COPY libs /app/libs/
+COPY snapshot-libs /app/libs/
+COPY resources /app/resources/
+COPY classes /app/classes/
+COPY exploded-war /exploded/war/
 COPY root /
 
 EXPOSE 1000/tcp

@@ -308,11 +308,11 @@ public class JavaDockerContextGenerator {
    * <pre>{@code
    * FROM [base image]
    *
-   * COPY libs [path/to/dependencies]
-   * COPY snapshot-libs [path/to/dependencies]
-   * COPY resources [path/to/resources]
-   * COPY classes [path/to/classes]
-   * COPY root [path/to/classes]
+   * COPY libs [path/to/dependencies/]
+   * COPY snapshot-libs [path/to/dependencies/]
+   * COPY resources [path/to/resources/]
+   * COPY classes [path/to/classes/]
+   * COPY root [path/to/root/]
    *
    * EXPOSE [port]
    * [More EXPOSE instructions, if necessary]
@@ -333,11 +333,13 @@ public class JavaDockerContextGenerator {
     StringBuilder dockerfile = new StringBuilder();
     dockerfile.append("FROM ").append(Preconditions.checkNotNull(baseImage)).append("\n");
     for (CopyDirective copyDirective : copyDirectives) {
+      boolean hasTrailingSlash = copyDirective.extractionPath.toString().endsWith("/");
       dockerfile
           .append("\nCOPY ")
           .append(copyDirective.directoryInContext)
-          .append(" ")
-          .append(copyDirective.extractionPath);
+          .append(' ')
+          .append(copyDirective.extractionPath)
+          .append(hasTrailingSlash ? "" : "/");
     }
 
     dockerfile.append("\n");
