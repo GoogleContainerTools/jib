@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 
 - `<skip>` configuration parameter to skip Jib execution in multi-module projects (also settable via `jib.skip` property) ([#865](https://github.com/GoogleContainerTools/jib/issues/865))
 - `<container><environment>` configuration parameter to configure environment variables ([#890](https://github.com/GoogleContainerTools/jib/issues/890))
+- `container.appRoot` configuration parameter to configure app root in the image ([#984](https://github.com/GoogleContainerTools/jib/pull/984))
 
 ### Changed
 

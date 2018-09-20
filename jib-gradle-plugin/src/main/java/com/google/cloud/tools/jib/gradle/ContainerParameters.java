@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.common.base.Preconditions;
@@ -41,6 +42,7 @@ public class ContainerParameters {
   private ImageFormat format = ImageFormat.Docker;
   private List<String> ports = Collections.emptyList();
   private Map<String, String> labels = Collections.emptyMap();
+  private String appRoot = JavaLayerConfigurations.DEFAULT_APP_ROOT;
 
   @Input
   @Optional
@@ -131,5 +133,15 @@ public class ContainerParameters {
 
   public void setLabels(Map<String, String> labels) {
     this.labels = labels;
+  }
+
+  @Input
+  @Optional
+  public String getAppRoot() {
+    return appRoot;
+  }
+
+  public void setAppRoot(String appRoot) {
+    this.appRoot = appRoot;
   }
 }

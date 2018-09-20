@@ -53,6 +53,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.doReturn(Collections.emptyList()).when(mockJibPluginConfiguration).getJvmFlags();
     Mockito.doReturn(Collections.emptyList()).when(mockJibPluginConfiguration).getArgs();
     Mockito.doReturn(Collections.emptyList()).when(mockJibPluginConfiguration).getExposedPorts();
+    Mockito.doReturn("/app").when(mockJibPluginConfiguration).getAppRoot();
 
     Mockito.doReturn(JavaLayerConfigurations.builder().build())
         .when(mockProjectProperties)
@@ -123,6 +124,69 @@ public class PluginConfigurationProcessorTest {
     Assert.assertEquals(Arrays.asList("custom", "entrypoint"), configuration.getEntrypoint());
     Mockito.verify(mockMavenJibLogger)
         .warn("<mainClass> and <jvmFlags> are ignored when <entrypoint> is specified");
+  }
+
+  @Test
+  public void testEntrypointClasspath_nonDefaultAppRoot() throws MojoExecutionException {
+    Mockito.doReturn("/my/app").when(mockJibPluginConfiguration).getAppRoot();
+
+    PluginConfigurationProcessor processor =
+        PluginConfigurationProcessor.processCommonConfiguration(
+            mockMavenJibLogger, mockJibPluginConfiguration, mockProjectProperties);
+    ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
+
+    Assert.assertEquals(
+        "/my/app/resources/:/my/app/classes/:/my/app/libs/*", configuration.getEntrypoint().get(2));
+  }
+
+  @Test
+  public void testGetAppRootChecked() throws MojoExecutionException {
+    Mockito.doReturn("/some/root").when(mockJibPluginConfiguration).getAppRoot();
+
+    Assert.assertEquals(
+        "/some/root", PluginConfigurationProcessor.getAppRootChecked(mockJibPluginConfiguration));
+  }
+
+  @Test
+  public void testGetAppRootChecked_errorOnNonAbsolutePath() {
+    Mockito.doReturn("relative/path").when(mockJibPluginConfiguration).getAppRoot();
+
+    try {
+      PluginConfigurationProcessor.getAppRootChecked(mockJibPluginConfiguration);
+      Assert.fail();
+    } catch (MojoExecutionException ex) {
+      Assert.assertEquals(
+          "<container><appRoot> (relative/path) is not an absolute Unix-style path",
+          ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testGetAppRootChecked_errorOnWindowsPath() {
+    Mockito.doReturn("\\windows\\path").when(mockJibPluginConfiguration).getAppRoot();
+
+    try {
+      PluginConfigurationProcessor.getAppRootChecked(mockJibPluginConfiguration);
+      Assert.fail();
+    } catch (MojoExecutionException ex) {
+      Assert.assertEquals(
+          "<container><appRoot> (\\windows\\path) is not an absolute Unix-style path",
+          ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testGetAppRootChecked_errorOnWindowsPathWithDriveLetter() {
+    Mockito.doReturn("C:\\windows\\path").when(mockJibPluginConfiguration).getAppRoot();
+
+    try {
+      PluginConfigurationProcessor.getAppRootChecked(mockJibPluginConfiguration);
+      Assert.fail();
+    } catch (MojoExecutionException ex) {
+      Assert.assertEquals(
+          "<container><appRoot> (C:\\windows\\path) is not an absolute Unix-style path",
+          ex.getMessage());
+    }
   }
 
   // TODO should test other behaviours

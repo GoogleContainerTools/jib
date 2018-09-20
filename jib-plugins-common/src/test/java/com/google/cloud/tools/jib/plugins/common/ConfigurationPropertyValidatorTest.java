@@ -139,4 +139,34 @@ public class ConfigurationPropertyValidatorTest {
     } catch (InvalidImageReferenceException ignored) {
     }
   }
+
+  @Test
+  public void testIsAbsoluteUnixPath_emptyString() {
+    Assert.assertFalse(ConfigurationPropertyValidator.isAbsoluteUnixPath(""));
+  }
+
+  @Test
+  public void testIsAbsoluteUnixPath_root() {
+    Assert.assertTrue(ConfigurationPropertyValidator.isAbsoluteUnixPath("/"));
+  }
+
+  @Test
+  public void testIsAbsoluteUnixPath() {
+    Assert.assertTrue(ConfigurationPropertyValidator.isAbsoluteUnixPath("/some/path"));
+  }
+
+  @Test
+  public void testIsAbsoluteUnixPath_nonAbsolute() {
+    Assert.assertFalse(ConfigurationPropertyValidator.isAbsoluteUnixPath("relative/path"));
+  }
+
+  @Test
+  public void testIsAbsoluteUnixPath_windowsPath() {
+    Assert.assertFalse(ConfigurationPropertyValidator.isAbsoluteUnixPath("\\windows\\path"));
+  }
+
+  @Test
+  public void testIsAbsoluteUnixPath_windowsPathWithDriveLetter() {
+    Assert.assertFalse(ConfigurationPropertyValidator.isAbsoluteUnixPath("C:\\windows\\path"));
+  }
 }

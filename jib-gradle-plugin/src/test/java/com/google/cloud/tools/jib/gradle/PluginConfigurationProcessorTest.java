@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import java.util.Arrays;
 import java.util.Collections;
+import org.gradle.api.GradleException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -46,6 +47,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.doReturn(new AuthParameters("mock")).when(mockImageParameters).getAuth();
     Mockito.doReturn(mockContainerParameters).when(mockJibExtension).getContainer();
     Mockito.doReturn(Collections.emptyList()).when(mockContainerParameters).getEntrypoint();
+    Mockito.doReturn("/app").when(mockContainerParameters).getAppRoot();
 
     Mockito.doReturn(JavaLayerConfigurations.builder().build())
         .when(mockProjectProperties)
@@ -114,6 +116,68 @@ public class PluginConfigurationProcessorTest {
     Assert.assertEquals(Arrays.asList("custom", "entrypoint"), configuration.getEntrypoint());
     Mockito.verify(mockGradleJibLogger)
         .warn("mainClass and jvmFlags are ignored when entrypoint is specified");
+  }
+
+  @Test
+  public void testEntrypointClasspath_nonDefaultAppRoot() throws InvalidImageReferenceException {
+    Mockito.doReturn("/my/app").when(mockContainerParameters).getAppRoot();
+
+    PluginConfigurationProcessor processor =
+        PluginConfigurationProcessor.processCommonConfiguration(
+            mockGradleJibLogger, mockJibExtension, mockProjectProperties);
+    ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
+
+    Assert.assertEquals(
+        "/my/app/resources/:/my/app/classes/:/my/app/libs/*", configuration.getEntrypoint().get(2));
+  }
+
+  @Test
+  public void testGetAppRootChecked() {
+    Mockito.doReturn("/some/root").when(mockContainerParameters).getAppRoot();
+
+    Assert.assertEquals(
+        "/some/root", PluginConfigurationProcessor.getAppRootChecked(mockJibExtension));
+  }
+
+  @Test
+  public void testGetAppRootChecked_errorOnNonAbsolutePath() {
+    Mockito.doReturn("relative/path").when(mockContainerParameters).getAppRoot();
+
+    try {
+      PluginConfigurationProcessor.getAppRootChecked(mockJibExtension);
+      Assert.fail();
+    } catch (GradleException ex) {
+      Assert.assertEquals(
+          "container.appRoot (relative/path) is not an absolute Unix-style path", ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testGetAppRootChecked_errorOnWindowsPath() {
+    Mockito.doReturn("\\windows\\path").when(mockContainerParameters).getAppRoot();
+
+    try {
+      PluginConfigurationProcessor.getAppRootChecked(mockJibExtension);
+      Assert.fail();
+    } catch (GradleException ex) {
+      Assert.assertEquals(
+          "container.appRoot (\\windows\\path) is not an absolute Unix-style path",
+          ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testGetAppRootChecked_errorOnWindowsPathWithDriveLetter() {
+    Mockito.doReturn("C:\\windows\\path").when(mockContainerParameters).getAppRoot();
+
+    try {
+      PluginConfigurationProcessor.getAppRootChecked(mockJibExtension);
+      Assert.fail();
+    } catch (GradleException ex) {
+      Assert.assertEquals(
+          "container.appRoot (C:\\windows\\path) is not an absolute Unix-style path",
+          ex.getMessage());
+    }
   }
 
   // TODO should test other behaviours

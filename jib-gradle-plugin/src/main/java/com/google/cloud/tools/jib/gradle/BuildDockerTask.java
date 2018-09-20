@@ -73,9 +73,10 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
     GradleJibLogger gradleJibLogger = new GradleJibLogger(getLogger());
+    String appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(
-            getProject(), gradleJibLogger, jibExtension.getExtraDirectoryPath());
+            getProject(), gradleJibLogger, jibExtension.getExtraDirectoryPath(), appRoot);
 
     GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
         new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);

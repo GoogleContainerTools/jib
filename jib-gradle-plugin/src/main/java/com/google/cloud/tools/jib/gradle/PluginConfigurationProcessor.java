@@ -33,9 +33,27 @@ import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import org.gradle.api.GradleException;
 
 /** Configures and provides builders for the image building tasks. */
 class PluginConfigurationProcessor {
+
+  /**
+   * Gets the value of the {@code container.appRoot} parameter. Throws {@link GradleException} if it
+   * is not an absolute path in Unix-style.
+   *
+   * @param jibExtension the Jib plugin extension
+   * @return the app root value
+   * @throws GradleException if the app root is not an absolute path in Unix-style
+   */
+  static String getAppRootChecked(JibExtension jibExtension) {
+    String appRoot = jibExtension.getContainer().getAppRoot();
+    if (!ConfigurationPropertyValidator.isAbsoluteUnixPath(appRoot)) {
+      throw new GradleException(
+          "container.appRoot (" + appRoot + ") is not an absolute Unix-style path");
+    }
+    return appRoot;
+  }
 
   /**
    * Sets up {@link BuildConfiguration} that is common among the image building tasks. This includes
@@ -85,7 +103,8 @@ class PluginConfigurationProcessor {
     if (entrypoint.isEmpty()) {
       String mainClass = projectProperties.getMainClass(jibExtension);
       entrypoint =
-          JavaEntrypointConstructor.makeDefaultEntrypoint(jibExtension.getJvmFlags(), mainClass);
+          JavaEntrypointConstructor.makeDefaultEntrypoint(
+              jibExtension.getContainer().getAppRoot(), jibExtension.getJvmFlags(), mainClass);
     } else if (jibExtension.getMainClass() != null || !jibExtension.getJvmFlags().isEmpty()) {
       logger.warn("mainClass and jvmFlags are ignored when entrypoint is specified");
     }

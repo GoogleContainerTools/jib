@@ -52,12 +52,13 @@ class GradleProjectProperties implements ProjectProperties {
 
   /** @return a GradleProjectProperties from the given project and logger. */
   static GradleProjectProperties getForProject(
-      Project project, GradleJibLogger gradleJibLogger, Path extraDirectory) {
+      Project project, GradleJibLogger gradleJibLogger, Path extraDirectory, String appRoot) {
     try {
       return new GradleProjectProperties(
           project,
           gradleJibLogger,
-          GradleLayerConfigurations.getForProject(project, gradleJibLogger, extraDirectory));
+          GradleLayerConfigurations.getForProject(
+              project, gradleJibLogger, extraDirectory, appRoot));
 
     } catch (IOException ex) {
       throw new GradleException("Obtaining project build output files failed", ex);

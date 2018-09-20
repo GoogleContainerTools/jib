@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaDockerContextGenerator;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
+import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -46,7 +47,8 @@ public class DockerContextMojo extends JibPluginConfiguration {
       property = "jibTargetDir",
       defaultValue = "${project.build.directory}/jib-docker-context",
       required = true)
-  private String targetDir;
+  @VisibleForTesting
+  String targetDir;
 
   @Override
   public void execute() throws MojoExecutionException {
@@ -67,15 +69,23 @@ public class DockerContextMojo extends JibPluginConfiguration {
       throw new MojoExecutionException(ex.getMessage(), ex);
     }
 
+    if (!ConfigurationPropertyValidator.isAbsoluteUnixPath(getAppRoot())) {
+      throw new MojoExecutionException(
+          "<container><appRoot> (" + getAppRoot() + ") is not an absolute Unix-style path");
+    }
+
     Preconditions.checkNotNull(targetDir);
 
+    String appRoot = PluginConfigurationProcessor.getAppRootChecked(this);
     MavenProjectProperties mavenProjectProperties =
-        MavenProjectProperties.getForProject(getProject(), mavenJibLogger, getExtraDirectory());
+        MavenProjectProperties.getForProject(
+            getProject(), mavenJibLogger, getExtraDirectory(), appRoot);
 
     List<String> entrypoint = getEntrypoint();
     if (entrypoint.isEmpty()) {
       String mainClass = mavenProjectProperties.getMainClass(this);
-      entrypoint = JavaEntrypointConstructor.makeDefaultEntrypoint(getJvmFlags(), mainClass);
+      entrypoint =
+          JavaEntrypointConstructor.makeDefaultEntrypoint(getAppRoot(), getJvmFlags(), mainClass);
     } else if (getMainClass() != null || !getJvmFlags().isEmpty()) {
       mavenJibLogger.warn("<mainClass> and <jvmFlags> are ignored when <entrypoint> is specified");
     }

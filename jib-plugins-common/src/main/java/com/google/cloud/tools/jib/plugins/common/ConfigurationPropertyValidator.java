@@ -22,6 +22,8 @@ import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.common.base.Strings;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Paths;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
@@ -117,6 +119,21 @@ public class ConfigurationPropertyValidator {
     } else {
       return ImageReference.parse(targetImage);
     }
+  }
+
+  /**
+   * Checks if the path string is absolute in Unix-style (using forward slashes).
+   *
+   * @param path path to test
+   * @return {@code true} if absolute in Unix-style; {@code false} otherwise
+   */
+  public static boolean isAbsoluteUnixPath(String path) {
+    try {
+      Paths.get(path);
+    } catch (InvalidPathException ex) {
+      return false;
+    }
+    return path.startsWith("/");
   }
 
   private ConfigurationPropertyValidator() {}

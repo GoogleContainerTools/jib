@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.frontend;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
@@ -49,8 +50,70 @@ public class JavaEntrypointConstructorTest {
 
     // Checks that this is also the default entrypoint.
     Assert.assertEquals(
-        JavaEntrypointConstructor.makeDefaultEntrypoint(expectedJvmFlags, expectedMainClass),
+        JavaEntrypointConstructor.makeDefaultEntrypoint(
+            "/app", expectedJvmFlags, expectedMainClass),
         entrypoint);
+  }
+
+  @Test
+  public void testMakeDefaultEntrypoint_classpathString() {
+    // Checks that this is also the default entrypoint.
+    List<String> entrypoint =
+        JavaEntrypointConstructor.makeDefaultEntrypoint("/app", Collections.emptyList(), "MyMain");
+    Assert.assertEquals("/app/resources/:/app/classes/:/app/libs/*", entrypoint.get(2));
+  }
+
+  @Test
+  public void testMakeDefaultEntrypoint_classpathStringWithNonDefaultAppRoot() {
+    // Checks that this is also the default entrypoint.
+    List<String> entrypoint =
+        JavaEntrypointConstructor.makeDefaultEntrypoint("/my/app", Collections.emptyList(), "Main");
+    Assert.assertEquals("/my/app/resources/:/my/app/classes/:/my/app/libs/*", entrypoint.get(2));
+  }
+
+  @Test
+  public void testMakeDefaultEntrypoint_appRootWithTrailingSlash() {
+    // Checks that this is also the default entrypoint.
+    List<String> entrypoint =
+        JavaEntrypointConstructor.makeDefaultEntrypoint(
+            "/my/root/", Collections.emptyList(), "SomeMainClass");
+    Assert.assertEquals("/my/root/resources/:/my/root/classes/:/my/root/libs/*", entrypoint.get(2));
+  }
+
+  @Test
+  public void testMakeDefaultEntrypoint_nonAbsoluteAppRoot() {
+    try {
+      JavaEntrypointConstructor.makeDefaultEntrypoint(
+          "relative/path", Collections.emptyList(), "MainClass");
+      Assert.fail();
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals(
+          "appRoot should be an absolute path in Unix-style: relative/path", ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testMakeDefaultEntrypoint_windowsAppRootPath() {
+    try {
+      JavaEntrypointConstructor.makeDefaultEntrypoint(
+          "\\windows\\path", Collections.emptyList(), "MyMain");
+      Assert.fail();
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals(
+          "appRoot should be an absolute path in Unix-style: \\windows\\path", ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testMakeDefaultEntrypoint_windowsPathWithDriveLetter() {
+    try {
+      JavaEntrypointConstructor.makeDefaultEntrypoint(
+          "D:\\windows\\path", Collections.emptyList(), "MyMain");
+      Assert.fail();
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals(
+          "appRoot should be an absolute path in Unix-style: D:\\windows\\path", ex.getMessage());
+    }
   }
 
   @Test

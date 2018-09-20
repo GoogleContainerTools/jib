@@ -25,7 +25,8 @@ import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 public class Jib {
 
   /**
-   * Starts building the container from a base image.
+   * Starts building the container from a base image. The base image should be publicly-available.
+   * For a base image that requires credentials, use {@link #from(RegistryImage)}.
    *
    * @param baseImageReference the base image reference
    * @return a new {@link JibContainerBuilder} to continue building the container
@@ -34,17 +35,29 @@ public class Jib {
    */
   public static JibContainerBuilder from(String baseImageReference)
       throws InvalidImageReferenceException {
-    return from(ImageReference.parse(baseImageReference));
+    return from(RegistryImage.named(baseImageReference));
   }
 
   /**
-   * Starts building the container from a base image.
+   * Starts building the container from a base image. The base image should be publicly-available.
+   * For a base image that requires credentials, use {@link #from(RegistryImage)}.
    *
    * @param baseImageReference the base image reference
    * @return a new {@link JibContainerBuilder} to continue building the container
    */
   public static JibContainerBuilder from(ImageReference baseImageReference) {
-    return new JibContainerBuilder(baseImageReference);
+    return new JibContainerBuilder(RegistryImage.named(baseImageReference));
+  }
+
+  /**
+   * Starts building the container from a base image.
+   *
+   * @param registryImage the {@link RegistryImage} that defines base container registry and
+   *     credentials
+   * @return a new {@link JibContainerBuilder} to continue building the container
+   */
+  public static JibContainerBuilder from(RegistryImage registryImage) {
+    return new JibContainerBuilder(registryImage);
   }
 
   private Jib() {}

@@ -89,7 +89,7 @@ Build your container image with:
 gradle jib
 ```
 
-Subsequent builds are much faster than the initial build. 
+Subsequent builds are much faster than the initial build.
 
 *Having trouble? Let us know by [submitting an issue](/../../issues/new), contacting us on [Gitter](https://gitter.im/google/jib), or posting to the [Jib users forum](https://groups.google.com/forum/#!forum/jib-users).*
 
@@ -150,7 +150,7 @@ You can then build your image with Docker:
 
 ```shell
 docker build -t myimage my/docker/context/
-``` 
+```
 
 ## Extended Usage
 
@@ -273,7 +273,7 @@ Some common credential helpers include:
 
 Configure credential helpers to use by specifying them as a `credHelper` for their respective image in the `jib` extension.
 
-*Example configuration:* 
+*Example configuration:*
 ```groovy
 jib {
   from {
@@ -310,7 +310,7 @@ jib {
 }
 ```
 
-These credentials can be stored in `gradle.properties`, retrieved from a command (like `gcloud auth print-access-token`), or read in from a file. 
+These credentials can be stored in `gradle.properties`, retrieved from a command (like `gcloud auth print-access-token`), or read in from a file.
 
 For example, you can use a key file for authentication (for GCR, see [Using a JSON key file](https://cloud.google.com/container-registry/docs/advanced-authentication#using_a_json_key_file)):
 

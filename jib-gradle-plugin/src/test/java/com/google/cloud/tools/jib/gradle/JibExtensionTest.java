@@ -59,11 +59,8 @@ public class JibExtensionTest {
         from -> {
           from.setImage("some image");
           from.setCredHelper("some cred helper");
-          from.auth(
-              auth -> {
-                auth.setUsername("some username");
-                auth.setPassword("some password");
-              });
+          from.auth(auth -> auth.setUsername("some username"));
+          from.auth(auth -> auth.setPassword("some password"));
         });
     Assert.assertEquals("some image", testJibExtension.getFrom().getImage());
     Assert.assertEquals("some cred helper", testJibExtension.getFrom().getCredHelper());
@@ -80,11 +77,8 @@ public class JibExtensionTest {
         to -> {
           to.setImage("some image");
           to.setCredHelper("some cred helper");
-          to.auth(
-              auth -> {
-                auth.setUsername("some username");
-                auth.setPassword("some password");
-              });
+          to.auth(auth -> auth.setUsername("some username"));
+          to.auth(auth -> auth.setPassword("some password"));
         });
     Assert.assertEquals("some image", testJibExtension.getTo().getImage());
     Assert.assertEquals("some cred helper", testJibExtension.getTo().getCredHelper());
@@ -101,6 +95,7 @@ public class JibExtensionTest {
     Assert.assertEquals(V22ManifestTemplate.class, testJibExtension.getContainer().getFormat());
     Assert.assertEquals(Collections.emptyList(), testJibExtension.getContainer().getPorts());
     Assert.assertEquals(Collections.emptyMap(), testJibExtension.getContainer().getLabels());
+    Assert.assertEquals("/app", testJibExtension.getContainer().getAppRoot());
 
     testJibExtension.container(
         container -> {
@@ -112,23 +107,20 @@ public class JibExtensionTest {
           container.setPorts(Arrays.asList("1000", "2000-2010", "3000"));
           container.setLabels(ImmutableMap.of("label1", "value1", "label2", "value2"));
           container.setFormat(ImageFormat.OCI);
+          container.setAppRoot("some invalid appRoot value");
         });
+    ContainerParameters container = testJibExtension.getContainer();
+    Assert.assertEquals(Arrays.asList("foo", "bar", "baz"), container.getEntrypoint());
+    Assert.assertEquals(Arrays.asList("jvmFlag1", "jvmFlag2"), container.getJvmFlags());
     Assert.assertEquals(
-        Arrays.asList("foo", "bar", "baz"), testJibExtension.getContainer().getEntrypoint());
-    Assert.assertEquals(
-        Arrays.asList("jvmFlag1", "jvmFlag2"), testJibExtension.getContainer().getJvmFlags());
-    Assert.assertEquals(
-        ImmutableMap.of("var1", "value1", "var2", "value2"),
-        testJibExtension.getContainer().getEnvironment());
+        ImmutableMap.of("var1", "value1", "var2", "value2"), container.getEnvironment());
     Assert.assertEquals("mainClass", testJibExtension.getContainer().getMainClass());
+    Assert.assertEquals(Arrays.asList("arg1", "arg2", "arg3"), container.getArgs());
+    Assert.assertEquals(Arrays.asList("1000", "2000-2010", "3000"), container.getPorts());
     Assert.assertEquals(
-        Arrays.asList("arg1", "arg2", "arg3"), testJibExtension.getContainer().getArgs());
-    Assert.assertEquals(
-        Arrays.asList("1000", "2000-2010", "3000"), testJibExtension.getContainer().getPorts());
-    Assert.assertEquals(
-        ImmutableMap.of("label1", "value1", "label2", "value2"),
-        testJibExtension.getContainer().getLabels());
-    Assert.assertEquals(OCIManifestTemplate.class, testJibExtension.getContainer().getFormat());
+        ImmutableMap.of("label1", "value1", "label2", "value2"), container.getLabels());
+    Assert.assertEquals(OCIManifestTemplate.class, container.getFormat());
+    Assert.assertEquals("some invalid appRoot value", container.getAppRoot());
   }
 
   @Test
