@@ -63,7 +63,7 @@ public class JibPluginIntegrationTest {
     assertBuildSuccess(buildResult, JibPlugin.BUILD_IMAGE_TASK_NAME, "Built and pushed image as ");
     Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
 
-    return pullAndRun(imageReference);
+    return pullAndRunBuiltImage(imageReference);
   }
 
   private static void buildAndRunAdditionalTag(
@@ -83,8 +83,8 @@ public class JibPluginIntegrationTest {
     Assert.assertThat(
         buildResult.getOutput(), CoreMatchers.containsString(additionalImageReference));
 
-    Assert.assertEquals(expectedOutput, pullAndRun(imageReference));
-    Assert.assertEquals(expectedOutput, pullAndRun(additionalImageReference));
+    Assert.assertEquals(expectedOutput, pullAndRunBuiltImage(imageReference));
+    Assert.assertEquals(expectedOutput, pullAndRunBuiltImage(additionalImageReference));
     assertCreationTimeEpoch(imageReference);
     assertCreationTimeEpoch(additionalImageReference);
   }
@@ -127,7 +127,17 @@ public class JibPluginIntegrationTest {
     return new Command("docker", "run", imageReference).run();
   }
 
-  private static String pullAndRun(String imageReference) throws IOException, InterruptedException {
+  /**
+   * Pulls a built image and attemps to run it. Also verifies the container configuration and
+   * history of the built image.
+   *
+   * @param imageReference the image reference of the built image
+   * @return the container output
+   * @throws IOException if an I/O exceptio occurs
+   * @throws InterruptedException if the process was interrupted
+   */
+  private static String pullAndRunBuiltImage(String imageReference)
+      throws IOException, InterruptedException {
     new Command("docker", "pull", imageReference).run();
     assertDockerInspect(imageReference);
     String history = new Command("docker", "history", imageReference).run();
