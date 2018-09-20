@@ -186,9 +186,7 @@ public class CacheMetadataTest {
         Stream.generate(CacheMetadataTest::mockCachedLayer).limit(2).collect(Collectors.toList());
 
     LayerEntry fakeLayerEntry =
-        new LayerEntry(
-            Paths.get("some/source/file", "some/source/directory"),
-            AbsoluteUnixPath.get("/extraction/path"));
+        new LayerEntry(Paths.get("some/source/file"), AbsoluteUnixPath.get("/extraction/path"));
 
     LayerMetadata fakeSourceFilesLayerMetadata =
         LayerMetadata.from(ImmutableList.of(fakeLayerEntry), FileTime.fromMillis(0));
@@ -219,9 +217,7 @@ public class CacheMetadataTest {
         Stream.generate(CacheMetadataTest::mockCachedLayer).limit(2).collect(Collectors.toList());
 
     LayerEntry fakeLayerEntry =
-        new LayerEntry(
-            Paths.get("some/source/file", "some/source/directory"),
-            AbsoluteUnixPath.get("/extraction/path"));
+        new LayerEntry(Paths.get("some/source/file"), AbsoluteUnixPath.get("/extraction/path"));
 
     LayerMetadata fakeSourceFilesLayerMetadata =
         LayerMetadata.from(ImmutableList.of(fakeLayerEntry), FileTime.fromMillis(0));

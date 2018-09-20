@@ -112,8 +112,7 @@ public class LayerEntry {
   }
 
   /**
-   * Gets the extraction path as an absolute path in Unix form. The path is made absolute first, if
-   * not already absolute.
+   * Gets the extraction path as an absolute path in Unix form.
    *
    * @return the extraction path
    */
