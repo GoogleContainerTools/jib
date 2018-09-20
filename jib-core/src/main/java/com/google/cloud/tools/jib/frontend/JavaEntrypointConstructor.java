@@ -26,11 +26,11 @@ import java.util.List;
 public class JavaEntrypointConstructor {
 
   public static final RelativeUnixPath DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE =
-      RelativeUnixPath.get("resources/");
+      RelativeUnixPath.get("resources");
   public static final RelativeUnixPath DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE =
-      RelativeUnixPath.get("classes/");
+      RelativeUnixPath.get("classes");
   public static final RelativeUnixPath DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE =
-      RelativeUnixPath.get("libs/");
+      RelativeUnixPath.get("libs");
 
   public static List<String> makeDefaultEntrypoint(
       AbsoluteUnixPath appRoot, List<String> jvmFlags, String mainClass) {
@@ -38,7 +38,7 @@ public class JavaEntrypointConstructor {
         Arrays.asList(
             appRoot.resolve(DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE).toString(),
             appRoot.resolve(DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE).toString(),
-            appRoot.resolve(DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE).toString() + "/*"),
+            appRoot.resolve(DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE).resolve("*").toString()),
         jvmFlags,
         mainClass);
   }
