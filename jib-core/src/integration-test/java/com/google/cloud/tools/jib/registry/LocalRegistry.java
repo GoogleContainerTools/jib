@@ -152,7 +152,7 @@ public class LocalRegistry extends ExternalResource {
   private void waitUntilReady() throws InterruptedException, MalformedURLException {
     URL queryUrl = new URL("http://localhost:" + port + "/v2/_catalog");
 
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < 40; i++) {
       try {
         HttpURLConnection connection = (HttpURLConnection) queryUrl.openConnection();
         int code = connection.getResponseCode();
@@ -160,8 +160,8 @@ public class LocalRegistry extends ExternalResource {
           return;
         }
       } catch (IOException ex) {
-        Thread.sleep(1000);
       }
+      Thread.sleep(250);
     }
   }
 }
