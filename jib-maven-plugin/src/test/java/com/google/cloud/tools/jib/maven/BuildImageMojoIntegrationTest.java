@@ -100,7 +100,7 @@ public class BuildImageMojoIntegrationTest {
 
     new Command("docker", "pull", imageReference).run();
     assertDockerInspectParameters(imageReference);
-    return new Command("docker", "run", imageReference).run();
+    return new Command("docker", "run", "--rm", imageReference).run();
   }
 
   private static String buildAndRunComplex(
@@ -125,7 +125,7 @@ public class BuildImageMojoIntegrationTest {
         Instant.parse(
             new Command("docker", "inspect", "-f", "{{.Created}}", imageReference).run().trim());
     Assert.assertTrue(buildTime.isAfter(before) || buildTime.equals(before));
-    return new Command("docker", "run", imageReference).run();
+    return new Command("docker", "run", "--rm", imageReference).run();
   }
 
   private static void assertDockerInspectParameters(String imageReference)

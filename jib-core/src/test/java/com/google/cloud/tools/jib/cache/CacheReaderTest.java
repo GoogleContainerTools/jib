@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.cache;
 
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.ImageLayers;
@@ -98,7 +99,8 @@ public class CacheReaderTest {
           cacheReader.getLayerFile(
               ImmutableList.of(
                   new LayerEntry(
-                      Paths.get("/some/source/path"), Paths.get("some/extraction/path")))));
+                      Paths.get("/some/source/path"),
+                      AbsoluteUnixPath.get("/some/extraction/path")))));
       Assert.assertNull(cacheReader.getLayerFile(ImmutableList.of()));
     }
   }
@@ -146,7 +148,7 @@ public class CacheReaderTest {
                       testSourceFile ->
                           new LayerMetadata.LayerMetadataEntry(
                               testSourceFile.toString(),
-                              Paths.get("some/extraction/path")
+                              AbsoluteUnixPath.get("/some/extraction/path")
                                   .resolve(testSourceFilesPath.relativize(testSourceFile))
                                   .toString()))
                   .collect(ImmutableList.toImmutableList()));
@@ -162,7 +164,7 @@ public class CacheReaderTest {
                   testSourceFile ->
                       new LayerEntry(
                           testSourceFile,
-                          Paths.get("some/extraction/path")
+                          AbsoluteUnixPath.get("/some/extraction/path")
                               .resolve(testSourceFilesPath.relativize(testSourceFile))))
               .collect(ImmutableList.toImmutableList());
 
@@ -186,7 +188,7 @@ public class CacheReaderTest {
                           testSourceFile ->
                               new LayerEntry(
                                   testSourceFile,
-                                  Paths.get("extractionPath")
+                                  AbsoluteUnixPath.get("/another/extraction/path")
                                       .resolve(testSourceFilesPath.relativize(testSourceFile))))
                       .collect(ImmutableList.toImmutableList()))
               .isPresent());
@@ -202,7 +204,7 @@ public class CacheReaderTest {
                           resourceSourceFile ->
                               new LayerEntry(
                                   resourceSourceFile,
-                                  Paths.get("/some/extraction/path")
+                                  AbsoluteUnixPath.get("/some/extraction/path")
                                       .resolve(
                                           resourceSourceFilesPath.relativize(resourceSourceFile))))
                       .collect(ImmutableList.toImmutableList()))

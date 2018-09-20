@@ -73,7 +73,8 @@ public class DockerContextMojoIntegrationTest {
                 + "            }"));
 
     Assert.assertEquals(
-        "Hello, world. An argument.\nfoo\ncat\n", new Command("docker", "run", imageName).run());
+        "Hello, world. An argument.\nfoo\ncat\n",
+        new Command("docker", "run", "--rm", imageName).run());
   }
 
   public void testExecute_skipJibGoal() throws VerificationException, IOException {

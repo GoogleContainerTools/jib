@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.configuration.Port;
-import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -49,7 +49,7 @@ import javax.annotation.Nullable;
 // TODO: Add tests once containerize() is added.
 public class JibContainerBuilder {
 
-  private final ImageReference baseImageReference;
+  private final SourceImage baseImage;
 
   private List<LayerConfiguration> layerConfigurations = new ArrayList<>();
   private Map<String, String> environment = new HashMap<>();
@@ -59,8 +59,8 @@ public class JibContainerBuilder {
   @Nullable private ImmutableList<String> programArguments;
 
   /** Instantiate with {@link Jib#from}. */
-  JibContainerBuilder(ImageReference baseImageReference) {
-    this.baseImageReference = baseImageReference;
+  JibContainerBuilder(SourceImage baseImage) {
+    this.baseImage = baseImage;
   }
 
   /**
@@ -88,11 +88,12 @@ public class JibContainerBuilder {
    *
    * @param files the source files to copy to a new layer in the container
    * @param pathInContainer the path in the container file system corresponding to the {@code
-   *     sourceFile} (relative to root {@code /})
+   *     sourceFile}
    * @return this
    * @throws IOException if an exception occurred when recursively listing any directories
    */
-  public JibContainerBuilder addLayer(List<Path> files, Path pathInContainer) throws IOException {
+  public JibContainerBuilder addLayer(List<Path> files, AbsoluteUnixPath pathInContainer)
+      throws IOException {
     LayerConfiguration.Builder layerConfigurationBuilder = LayerConfiguration.builder();
 
     for (Path file : files) {
