@@ -109,7 +109,7 @@ public class JsonTemplateMapper {
    * @return the template filled with the values parsed from {@code jsonFile}
    * @throws IOException if an error occurred during parsing the JSON
    */
-  public static <T extends ListOfJsonTemplate> List<T> readListOfJson(
+  public static <T extends ListOfJsonTemplate<? extends JsonTemplate>> List<T> readListOfJson(
       String jsonString, Class<T> templateClass) throws IOException {
     return objectMapper.readValue(
         jsonString,
