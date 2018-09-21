@@ -37,15 +37,15 @@ public class PluginConfigurationProcessorTest {
 
   @Mock GradleJibLogger mockGradleJibLogger;
   @Mock JibExtension mockJibExtension;
-  @Mock ImageParameters mockImageParameters;
+  @Mock BaseImageParameters mockBaseImageParameters;
   @Mock ContainerParameters mockContainerParameters;
   @Mock GradleProjectProperties mockProjectProperties;
 
   @Before
   public void setUp() throws Exception {
     Mockito.doReturn("gcr.io/distroless/java").when(mockJibExtension).getBaseImage();
-    Mockito.doReturn(mockImageParameters).when(mockJibExtension).getFrom();
-    Mockito.doReturn(new AuthParameters("mock")).when(mockImageParameters).getAuth();
+    Mockito.doReturn(mockBaseImageParameters).when(mockJibExtension).getFrom();
+    Mockito.doReturn(new AuthParameters("mock")).when(mockBaseImageParameters).getAuth();
     Mockito.doReturn(mockContainerParameters).when(mockJibExtension).getContainer();
     Mockito.doReturn(Collections.emptyList()).when(mockContainerParameters).getEntrypoint();
     Mockito.doReturn("/app").when(mockContainerParameters).getAppRoot();
