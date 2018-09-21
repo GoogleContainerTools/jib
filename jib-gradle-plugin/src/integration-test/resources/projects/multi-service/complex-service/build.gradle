@@ -29,7 +29,7 @@ sourceSets {
 }
 
 dependencies {
-  compile project('lib')
+  compile project(':lib')
   compile 'org.apache.commons:commons-io:1.3.2'
   compile 'com.google.guava:guava:HEAD-jre-SNAPSHOT'
 }

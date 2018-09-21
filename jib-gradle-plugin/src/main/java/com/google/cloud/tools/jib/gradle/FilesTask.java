@@ -33,7 +33,8 @@ import org.gradle.api.tasks.TaskAction;
 /**
  * Print out changing source dependencies on a project.
  *
- * <p>Expected use: "./gradlew _jibSkaffoldFiles -q"
+ * <p>Expected use: {@code ./gradlew _jibSkaffoldFiles -q} or {@code ./gradlew
+ * :<subproject>:_jibSkaffoldFiles -q}
  */
 public class FilesTask extends DefaultTask {
 

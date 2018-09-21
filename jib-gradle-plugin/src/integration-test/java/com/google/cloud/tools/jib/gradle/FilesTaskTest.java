@@ -46,8 +46,7 @@ public class FilesTaskTest {
             projectRoot.resolve("build.gradle"),
             projectRoot.resolve("src/main/java"),
             projectRoot.resolve("src/main/resources"),
-            projectRoot.resolve("src/main/custom-extra-dir"),
-            projectRoot.resolve("libs/dependency-1.0.0.jar")));
+            projectRoot.resolve("src/main/custom-extra-dir")));
   }
 
   @Test
@@ -78,22 +77,24 @@ public class FilesTaskTest {
             projectRoot.resolve("build.gradle"),
             complexServiceRoot.resolve("build.gradle"),
             complexServiceRoot.resolve("src/main/java"),
-            complexServiceRoot.resolve("src/main/resources1"),
-            complexServiceRoot.resolve("src/main/resources2"),
+            complexServiceRoot.resolve("src/main/resources"),
+            complexServiceRoot.resolve("src/main/extra-resources-1"),
+            complexServiceRoot.resolve("src/main/extra-resources-2"),
             complexServiceRoot.resolve("src/main/other-jib"),
             libRoot.resolve("build.gradle"),
             libRoot.resolve("src/main/java"),
             libRoot.resolve("src/main/resources"),
-            Paths.get(System.getProperty("user.home")).resolve("")));
+            Paths.get(System.getProperty("user.home"))
+                .resolve(
+                    ".gradle/caches/modules-2/files-2.1/com.google.guava/guava/HEAD-jre-SNAPSHOT/fc6cc9b34c2173771a38aec49f27258d892ceee9/guava-HEAD-jre-SNAPSHOT.jar")));
   }
 
   private static void verifyFiles(
       TestProject project, @Nullable String moduleName, List<Path> files) {
-    BuildResult buildResult = project.build(JibPlugin.FILES_TASK_NAME, "-q");
-    BuildTask jibTask =
-        buildResult.task(
-            ":" + (moduleName == null ? "" : moduleName + ":") + JibPlugin.FILES_TASK_NAME);
-    // :modulename:taskname
+    String taskName =
+        ":" + (moduleName == null ? "" : moduleName + ":") + JibPlugin.FILES_TASK_NAME;
+    BuildResult buildResult = project.build(taskName, "-q");
+    BuildTask jibTask = buildResult.task(taskName);
     Assert.assertNotNull(jibTask);
     Assert.assertEquals(TaskOutcome.SUCCESS, jibTask.getOutcome());
 
