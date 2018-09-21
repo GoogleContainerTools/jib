@@ -94,6 +94,7 @@ public class FilesTaskTest {
     Assert.assertEquals(expectedResult, result.subList(0, 10));
     Assert.assertThat(
         result.get(result.size() - 1), CoreMatchers.endsWith("guava-HEAD-jre-SNAPSHOT.jar"));
+    Assert.assertEquals(11, result.size());
   }
 
   private static List<String> verifyTaskSuccess(TestProject project, @Nullable String moduleName) {
