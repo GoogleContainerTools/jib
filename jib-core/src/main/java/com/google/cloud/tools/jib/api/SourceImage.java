@@ -14,18 +14,8 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.json;
+package com.google.cloud.tools.jib.api;
+// TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
-import java.util.List;
-
-/**
- * All JSON templates to be used with {@link JsonTemplateMapper} that need to be wrapped in a list
- * must extend this class.
- *
- * <p>Json fields should be private fields and fields that are {@code null} will not be serialized.
- */
-public interface ListOfJsonTemplate<T extends JsonTemplate> extends JsonTemplate {
-
-  /** @return the JsonTemplate wrapped as a list. e.g.: [{"property":"value"}] */
-  List<T> getList();
-}
+/** Represents a source image for Jib to use (for example, as a base image). */
+interface SourceImage {}

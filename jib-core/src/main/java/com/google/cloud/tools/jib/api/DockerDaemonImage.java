@@ -24,7 +24,7 @@ import java.nio.file.Paths;
 
 /** Builds to the Docker daemon. */
 // TODO: Add tests once JibContainerBuilder#containerize() is added.
-public class DockerDaemonImage {
+public class DockerDaemonImage implements TargetImage {
 
   /**
    * Instantiate with the image reference to tag the built image with. This is the name that shows

@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.configuration;
 
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
@@ -36,20 +37,22 @@ public class LayerConfigurationTest {
 
     LayerConfiguration layerConfiguration =
         LayerConfiguration.builder()
-            .addEntryRecursive(testDirectory, Paths.get("/app/layer/"))
-            .addEntryRecursive(testFile, Paths.get("/app/fileA"))
+            .addEntryRecursive(testDirectory, AbsoluteUnixPath.get("/app/layer/"))
+            .addEntryRecursive(testFile, AbsoluteUnixPath.get("/app/fileA"))
             .build();
 
     ImmutableSet<LayerEntry> expectedLayerEntries =
         ImmutableSet.of(
-            new LayerEntry(testDirectory, Paths.get("/app/layer/")),
-            new LayerEntry(testDirectory.resolve("a"), Paths.get("/app/layer/a/")),
-            new LayerEntry(testDirectory.resolve("a/b"), Paths.get("/app/layer/a/b/")),
-            new LayerEntry(testDirectory.resolve("a/b/bar"), Paths.get("/app/layer/a/b/bar/")),
-            new LayerEntry(testDirectory.resolve("c/"), Paths.get("/app/layer/c")),
-            new LayerEntry(testDirectory.resolve("c/cat/"), Paths.get("/app/layer/c/cat")),
-            new LayerEntry(testDirectory.resolve("foo"), Paths.get("/app/layer/foo")),
-            new LayerEntry(testFile, Paths.get("/app/fileA")));
+            new LayerEntry(testDirectory, AbsoluteUnixPath.get("/app/layer/")),
+            new LayerEntry(testDirectory.resolve("a"), AbsoluteUnixPath.get("/app/layer/a/")),
+            new LayerEntry(testDirectory.resolve("a/b"), AbsoluteUnixPath.get("/app/layer/a/b/")),
+            new LayerEntry(
+                testDirectory.resolve("a/b/bar"), AbsoluteUnixPath.get("/app/layer/a/b/bar/")),
+            new LayerEntry(testDirectory.resolve("c/"), AbsoluteUnixPath.get("/app/layer/c")),
+            new LayerEntry(
+                testDirectory.resolve("c/cat/"), AbsoluteUnixPath.get("/app/layer/c/cat")),
+            new LayerEntry(testDirectory.resolve("foo"), AbsoluteUnixPath.get("/app/layer/foo")),
+            new LayerEntry(testFile, AbsoluteUnixPath.get("/app/fileA")));
 
     Assert.assertEquals(
         expectedLayerEntries, ImmutableSet.copyOf(layerConfiguration.getLayerEntries()));

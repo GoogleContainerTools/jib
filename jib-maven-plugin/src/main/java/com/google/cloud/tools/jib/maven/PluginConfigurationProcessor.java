@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
@@ -37,6 +38,25 @@ import org.apache.maven.plugin.MojoExecutionException;
 
 /** Configures and provides builders for the image building goals. */
 class PluginConfigurationProcessor {
+
+  /**
+   * Gets the value of the {@code <container><appRoot>} parameter. Throws {@link
+   * MojoExecutionException} if it is not an absolute path in Unix-style.
+   *
+   * @param jibPluginConfiguration the Jib plugin configuration
+   * @return the app root value
+   * @throws MojoExecutionException if the app root is not an absolute path in Unix-style
+   */
+  static AbsoluteUnixPath getAppRootChecked(JibPluginConfiguration jibPluginConfiguration)
+      throws MojoExecutionException {
+    String appRoot = jibPluginConfiguration.getAppRoot();
+    try {
+      return AbsoluteUnixPath.get(appRoot);
+    } catch (IllegalArgumentException ex) {
+      throw new MojoExecutionException(
+          "<container><appRoot> is not an absolute Unix-style path: " + appRoot);
+    }
+  }
 
   /**
    * Sets up {@link BuildConfiguration} that is common among the image building goals. This includes
@@ -108,7 +128,9 @@ class PluginConfigurationProcessor {
       String mainClass = projectProperties.getMainClass(jibPluginConfiguration);
       entrypoint =
           JavaEntrypointConstructor.makeDefaultEntrypoint(
-              jibPluginConfiguration.getJvmFlags(), mainClass);
+              getAppRootChecked(jibPluginConfiguration),
+              jibPluginConfiguration.getJvmFlags(),
+              mainClass);
     } else if (jibPluginConfiguration.getMainClass() != null
         || !jibPluginConfiguration.getJvmFlags().isEmpty()) {
       logger.warn("<mainClass> and <jvmFlags> are ignored when <entrypoint> is specified");

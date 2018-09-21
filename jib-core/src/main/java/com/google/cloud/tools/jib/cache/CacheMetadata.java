@@ -34,7 +34,7 @@ class CacheMetadata {
   static class Builder {
 
     private final ImageLayers.Builder<CachedLayerWithMetadata> layersBuilder =
-        ImageLayers.builder();
+        ImageLayers.<CachedLayerWithMetadata>builder().removeDuplicates();
 
     private Builder(ImageLayers<CachedLayerWithMetadata> initialLayers) {
       layersBuilder.addAll(initialLayers);

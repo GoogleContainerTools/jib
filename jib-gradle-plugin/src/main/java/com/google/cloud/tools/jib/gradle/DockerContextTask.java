@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaDockerContextGenerator;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
@@ -106,16 +107,18 @@ public class DockerContextTask extends DefaultTask implements JibTask {
     jibExtension.handleDeprecatedParameters(gradleJibLogger);
     JibSystemProperties.checkHttpTimeoutProperty();
 
+    AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(
-            getProject(), getLogger(), jibExtension.getExtraDirectoryPath());
+            getProject(), getLogger(), jibExtension.getExtraDirectoryPath(), appRoot);
     String targetDir = getTargetDir();
 
     List<String> entrypoint = jibExtension.getContainer().getEntrypoint();
     if (entrypoint.isEmpty()) {
       String mainClass = gradleProjectProperties.getMainClass(jibExtension);
       entrypoint =
-          JavaEntrypointConstructor.makeDefaultEntrypoint(jibExtension.getJvmFlags(), mainClass);
+          JavaEntrypointConstructor.makeDefaultEntrypoint(
+              appRoot, jibExtension.getJvmFlags(), mainClass);
     } else if (jibExtension.getMainClass() != null || !jibExtension.getJvmFlags().isEmpty()) {
       gradleJibLogger.warn("mainClass and jvmFlags are ignored when entrypoint is specified");
     }

@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.event.DefaultEventEmitter;
 import com.google.cloud.tools.jib.event.EventEmitter;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEventType;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.MainClassResolver;
@@ -58,14 +59,14 @@ class GradleProjectProperties implements ProjectProperties {
 
   /** @return a GradleProjectProperties from the given project and logger. */
   static GradleProjectProperties getForProject(
-      Project project, Logger logger, Path extraDirectory) {
+      Project project, Logger logger, Path extraDirectory, AbsoluteUnixPath appRoot) {
     try {
       return new GradleProjectProperties(
           project,
           makeEventEmitter(logger),
           // TODO: Remove
           new GradleJibLogger(logger),
-          GradleLayerConfigurations.getForProject(project, logger, extraDirectory));
+          GradleLayerConfigurations.getForProject(project, logger, extraDirectory, appRoot));
 
     } catch (IOException ex) {
       throw new GradleException("Obtaining project build output files failed", ex);

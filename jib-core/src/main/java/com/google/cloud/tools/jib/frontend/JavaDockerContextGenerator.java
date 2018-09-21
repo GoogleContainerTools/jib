@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.frontend;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -74,10 +75,12 @@ public class JavaDockerContextGenerator {
     private final String directoryInContext;
 
     /** The extraction path in the image. */
-    private final String extractionPath;
+    private final AbsoluteUnixPath extractionPath;
 
     private CopyDirective(
-        ImmutableList<LayerEntry> layerEntries, String directoryInContext, String extractionPath) {
+        ImmutableList<LayerEntry> layerEntries,
+        String directoryInContext,
+        AbsoluteUnixPath extractionPath) {
       this.layerEntries = layerEntries;
       this.directoryInContext = directoryInContext;
       this.extractionPath = extractionPath;
@@ -96,7 +99,7 @@ public class JavaDockerContextGenerator {
       ImmutableList.Builder<CopyDirective> listBuilder,
       ImmutableList<LayerEntry> layerEntries,
       String directoryInContext,
-      String extractionPath) {
+      AbsoluteUnixPath extractionPath) {
     if (layerEntries.isEmpty()) {
       return;
     }
@@ -151,22 +154,22 @@ public class JavaDockerContextGenerator {
         copyDirectivesBuilder,
         javaLayerConfigurations.getDependencyLayerEntries(),
         DEPENDENCIES_LAYER_DIRECTORY,
-        JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE);
+        javaLayerConfigurations.getDependencyExtractionPath());
     addIfNotEmpty(
         copyDirectivesBuilder,
         javaLayerConfigurations.getSnapshotDependencyLayerEntries(),
         SNAPSHOT_DEPENDENCIES_LAYER_DIRECTORY,
-        JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE);
+        javaLayerConfigurations.getSnapshotDependencyExtractionPath());
     addIfNotEmpty(
         copyDirectivesBuilder,
         javaLayerConfigurations.getResourceLayerEntries(),
         RESOURCES_LAYER_DIRECTORY,
-        JavaEntrypointConstructor.DEFAULT_RESOURCES_PATH_ON_IMAGE);
+        javaLayerConfigurations.getResourceExtractionPath());
     addIfNotEmpty(
         copyDirectivesBuilder,
         javaLayerConfigurations.getClassLayerEntries(),
         CLASSES_LAYER_DIRECTORY,
-        JavaEntrypointConstructor.DEFAULT_CLASSES_PATH_ON_IMAGE);
+        javaLayerConfigurations.getClassExtractionPath());
     // TODO: remove this once we put files in WAR into the relevant layers (i.e., dependencies,
     // snapshot dependencies, resources, and classes layers). Should copy files in the right
     // directories. (For example, "resources" will go into the webapp root.)
@@ -174,12 +177,12 @@ public class JavaDockerContextGenerator {
         copyDirectivesBuilder,
         javaLayerConfigurations.getExplodedWarEntries(),
         EXPLODED_WAR_LAYER_DIRECTORY,
-        JavaEntrypointConstructor.DEFAULT_JETTY_BASE_ON_IMAGE);
+        javaLayerConfigurations.getExplodedWarExtractionPath());
     addIfNotEmpty(
         copyDirectivesBuilder,
         javaLayerConfigurations.getExtraFilesLayerEntries(),
         EXTRA_FILES_LAYER_DIRECTORY,
-        "/");
+        javaLayerConfigurations.getExtraFilesExtractionPath());
     copyDirectives = copyDirectivesBuilder.build();
   }
 
@@ -282,9 +285,10 @@ public class JavaDockerContextGenerator {
         // 'baseExtractionPath' of '/app/classes', and an 'actualExtractionPath' of
         // '/app/classes/com/test/HelloWorld.class', the resolved destination would be
         // 'target/jib-docker-context/classes/com/test/HelloWorld.class'.
-        Path destination =
-            directoryInContext.resolve(
-                Paths.get(copyDirective.extractionPath).relativize(layerEntry.getExtractionPath()));
+        Path baseExtractionPath = Paths.get(copyDirective.extractionPath.toString());
+        Path relativeEntryPath =
+            baseExtractionPath.relativize(Paths.get(layerEntry.getExtractionPath().toString()));
+        Path destination = directoryInContext.resolve(relativeEntryPath);
 
         if (Files.isDirectory(layerEntry.getSourceFile())) {
           Files.createDirectories(destination);
@@ -305,11 +309,11 @@ public class JavaDockerContextGenerator {
    * <pre>{@code
    * FROM [base image]
    *
-   * COPY libs [path/to/dependencies]
-   * COPY snapshot-libs [path/to/dependencies]
-   * COPY resources [path/to/resources]
-   * COPY classes [path/to/classes]
-   * COPY root [path/to/classes]
+   * COPY libs [path/to/dependencies/]
+   * COPY snapshot-libs [path/to/dependencies/]
+   * COPY resources [path/to/resources/]
+   * COPY classes [path/to/classes/]
+   * COPY root [path/to/root/]
    *
    * EXPOSE [port]
    * [More EXPOSE instructions, if necessary]
@@ -330,11 +334,13 @@ public class JavaDockerContextGenerator {
     StringBuilder dockerfile = new StringBuilder();
     dockerfile.append("FROM ").append(Preconditions.checkNotNull(baseImage)).append("\n");
     for (CopyDirective copyDirective : copyDirectives) {
+      boolean hasTrailingSlash = copyDirective.extractionPath.toString().endsWith("/");
       dockerfile
           .append("\nCOPY ")
           .append(copyDirective.directoryInContext)
           .append(" ")
-          .append(copyDirective.extractionPath);
+          .append(copyDirective.extractionPath)
+          .append(hasTrailingSlash ? "" : "/");
     }
 
     dockerfile.append("\n");
