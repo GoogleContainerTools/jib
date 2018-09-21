@@ -19,13 +19,13 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.BuildTask;
 import org.gradle.testkit.runner.TaskOutcome;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -39,29 +39,35 @@ public class FilesTaskTest {
   @Test
   public void testFilesTask_singleProject() {
     Path projectRoot = simpleTestProject.getProjectRoot();
-    verifyFiles(
-        simpleTestProject,
-        null,
+    List<String> result = verifyTaskSuccess(simpleTestProject, null);
+
+    List<Path> files =
         ImmutableList.of(
             projectRoot.resolve("build.gradle"),
             projectRoot.resolve("src/main/java"),
             projectRoot.resolve("src/main/resources"),
-            projectRoot.resolve("src/main/custom-extra-dir")));
+            projectRoot.resolve("src/main/custom-extra-dir"));
+    List<String> expectedResult =
+        files.stream().map(Path::toAbsolutePath).map(Path::toString).collect(Collectors.toList());
+    Assert.assertEquals(expectedResult, result);
   }
 
   @Test
   public void testFilesTask_multiProjectSimpleService() {
     Path projectRoot = multiTestProject.getProjectRoot();
     Path simpleServiceRoot = projectRoot.resolve("simple-service");
-    verifyFiles(
-        multiTestProject,
-        "simple-service",
+    List<String> result = verifyTaskSuccess(multiTestProject, "simple-service");
+
+    List<Path> files =
         ImmutableList.of(
             projectRoot.resolve("build.gradle"),
             simpleServiceRoot.resolve("build.gradle"),
             simpleServiceRoot.resolve("src/main/java"),
             simpleServiceRoot.resolve("src/main/resources"),
-            simpleServiceRoot.resolve("src/main/jib")));
+            simpleServiceRoot.resolve("src/main/jib"));
+    List<String> expectedResult =
+        files.stream().map(Path::toAbsolutePath).map(Path::toString).collect(Collectors.toList());
+    Assert.assertEquals(expectedResult, result);
   }
 
   @Test
@@ -69,10 +75,9 @@ public class FilesTaskTest {
     Path projectRoot = multiTestProject.getProjectRoot();
     Path complexServiceRoot = projectRoot.resolve("complex-service");
     Path libRoot = projectRoot.resolve("lib");
+    List<String> result = verifyTaskSuccess(multiTestProject, "complex-service");
 
-    verifyFiles(
-        multiTestProject,
-        "complex-service",
+    List<Path> files =
         ImmutableList.of(
             projectRoot.resolve("build.gradle"),
             complexServiceRoot.resolve("build.gradle"),
@@ -83,14 +88,15 @@ public class FilesTaskTest {
             complexServiceRoot.resolve("src/main/other-jib"),
             libRoot.resolve("build.gradle"),
             libRoot.resolve("src/main/java"),
-            libRoot.resolve("src/main/resources"),
-            Paths.get(System.getProperty("user.home"))
-                .resolve(
-                    ".gradle/caches/modules-2/files-2.1/com.google.guava/guava/HEAD-jre-SNAPSHOT/fc6cc9b34c2173771a38aec49f27258d892ceee9/guava-HEAD-jre-SNAPSHOT.jar")));
+            libRoot.resolve("src/main/resources"));
+    List<String> expectedResult =
+        files.stream().map(Path::toAbsolutePath).map(Path::toString).collect(Collectors.toList());
+    Assert.assertEquals(expectedResult, result.subList(0, 10));
+    Assert.assertThat(
+        result.get(result.size() - 1), CoreMatchers.endsWith("guava-HEAD-jre-SNAPSHOT.jar"));
   }
 
-  private static void verifyFiles(
-      TestProject project, @Nullable String moduleName, List<Path> files) {
+  private static List<String> verifyTaskSuccess(TestProject project, @Nullable String moduleName) {
     String taskName =
         ":" + (moduleName == null ? "" : moduleName + ":") + JibPlugin.FILES_TASK_NAME;
     BuildResult buildResult = project.build(taskName, "-q");
@@ -98,12 +104,8 @@ public class FilesTaskTest {
     Assert.assertNotNull(jibTask);
     Assert.assertEquals(TaskOutcome.SUCCESS, jibTask.getOutcome());
 
-    List<String> expectedResult =
-        files.stream().map(Path::toAbsolutePath).map(Path::toString).collect(Collectors.toList());
-    Assert.assertEquals(
-        expectedResult,
-        Splitter.on(System.lineSeparator())
-            .omitEmptyStrings()
-            .splitToList(buildResult.getOutput()));
+    return Splitter.on(System.lineSeparator())
+        .omitEmptyStrings()
+        .splitToList(buildResult.getOutput());
   }
 }
