@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.ncache;
 
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
@@ -32,13 +33,13 @@ import org.junit.Test;
 public class LayerEntriesSelectorTest {
 
   private static final LayerEntry TEST_LAYER_ENTRY_1 =
-      new LayerEntry(Paths.get("source", "file"), Paths.get("extraction", "path"));
+      new LayerEntry(Paths.get("source", "file"), AbsoluteUnixPath.get("/extraction/path"));
   private static final LayerEntry TEST_LAYER_ENTRY_2 =
-      new LayerEntry(Paths.get("source", "file", "two"), Paths.get("extraction", "path"));
+      new LayerEntry(Paths.get("source", "file", "two"), AbsoluteUnixPath.get("/extraction/path"));
   private static final LayerEntry TEST_LAYER_ENTRY_3 =
-      new LayerEntry(Paths.get("source", "gile"), Paths.get("extraction", "path"));
+      new LayerEntry(Paths.get("source", "gile"), AbsoluteUnixPath.get("/extraction/path"));
   private static final LayerEntry TEST_LAYER_ENTRY_4 =
-      new LayerEntry(Paths.get("source", "gile"), Paths.get("extraction", "patha"));
+      new LayerEntry(Paths.get("source", "gile"), AbsoluteUnixPath.get("/extraction/patha"));
 
   private static final ImmutableList<LayerEntry> OUT_OF_ORDER_LAYER_ENTRIES =
       ImmutableList.of(
