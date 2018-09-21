@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryException;
 import com.google.common.util.concurrent.Futures;
@@ -85,15 +86,17 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
 
       // If base and target images are in the same registry, then use mount/from to try mounting the
       // BLOB from the base image repository to the target image repository and possibly avoid
-      // having to push the BLOB. See
-      // https://docs.docker.com/registry/spec/api/#cross-repository-blob-mount for details.
+      // having to push the BLOB. See the following for details.
+      // https://docs.docker.com/registry/spec/api/#cross-repository-blob-mount
       boolean sameRegistry =
           buildConfiguration
               .getBaseImageConfiguration()
               .getImageRegistry()
               .equals(buildConfiguration.getTargetImageConfiguration().getImageRegistry());
       String mountFrom =
-          sameRegistry ? buildConfiguration.getBaseImageConfiguration().getImageRepository() : null;
+          JibSystemProperties.isMountFromEnabled() && sameRegistry
+              ? buildConfiguration.getBaseImageConfiguration().getImageRepository()
+              : null;
       registryClient.pushBlob(blobDescriptor.getDigest(), blob, mountFrom);
 
       return blobDescriptor;
