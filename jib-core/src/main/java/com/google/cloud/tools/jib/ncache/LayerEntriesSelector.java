@@ -40,11 +40,11 @@ import java.util.Objects;
  * [
  *   {
  *     "sourceFile": "source/file/for/layer/entry/1",
- *     "extractionPath": "extraction/path/for/layer/entry/1"
+ *     "extractionPath": "/extraction/path/for/layer/entry/1"
  *   },
  *   {
  *     "sourceFile": "source/file/for/layer/entry/2",
- *     "extractionPath": "extraction/path/for/layer/entry/2"
+ *     "extractionPath": "/extraction/path/for/layer/entry/2"
  *   }
  * ]
  * }</pre>
