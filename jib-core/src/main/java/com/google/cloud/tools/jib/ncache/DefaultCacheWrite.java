@@ -22,7 +22,7 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** A default implementation of {@link CacheWrite}. */
-public class DefaultCacheWrite implements CacheWrite {
+class DefaultCacheWrite implements CacheWrite {
 
   /**
    * Constructs a {@link CacheWrite} with only the layer {@link Blob}.
@@ -30,7 +30,7 @@ public class DefaultCacheWrite implements CacheWrite {
    * @param layerBlob the layer {@link Blob}
    * @return the new {@link CacheWrite}
    */
-  public static CacheWrite layerOnly(Blob layerBlob) {
+  static CacheWrite layerOnly(Blob layerBlob) {
     return new DefaultCacheWrite(layerBlob, null, null);
   }
 
@@ -43,7 +43,7 @@ public class DefaultCacheWrite implements CacheWrite {
    * @param metadataBlob the metadata {@link Blob}
    * @return the new {@link CacheWrite}
    */
-  public static CacheWrite withSelectorAndMetadata(
+  static CacheWrite withSelectorAndMetadata(
       Blob layerBlob, DescriptorDigest selector, Blob metadataBlob) {
     return new DefaultCacheWrite(layerBlob, selector, metadataBlob);
   }

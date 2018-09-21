@@ -21,7 +21,7 @@ import com.google.cloud.tools.jib.image.DescriptorDigest;
 import java.util.Optional;
 
 /** Represents layer data to write to the cache. <b>Implementations must be immutable.</b> */
-public interface CacheWrite {
+interface CacheWrite {
 
   /**
    * Gets the {@link Blob} to write as the layer contents.

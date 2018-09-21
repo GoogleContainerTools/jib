@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.DigestException;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -135,5 +136,47 @@ public class DefaultCacheStorageReaderTest {
               + defaultCacheStorageFiles.getLayerDirectory(layerDigest),
           ex.getMessage());
     }
+  }
+
+  @Test
+  public void testSelect_invalidLayerDigest() throws IOException {
+    DefaultCacheStorageFiles defaultCacheStorageFiles =
+        new DefaultCacheStorageFiles(temporaryFolder.newFolder().toPath());
+
+    DefaultCacheStorageReader defaultCacheStorageReader =
+        new DefaultCacheStorageReader(defaultCacheStorageFiles);
+
+    DescriptorDigest selector = layerDigest1;
+    Path selectorFile = defaultCacheStorageFiles.getSelectorFile(selector);
+    Files.write(selectorFile, Blobs.writeToByteArray(Blobs.from("not a valid layer digest")));
+
+    try {
+      defaultCacheStorageReader.select(selector);
+      Assert.fail("Should have thrown CacheCorruptedException");
+
+    } catch (CacheCorruptedException ex) {
+      Assert.assertEquals(
+          "Expected valid layer digest as contents of selector file `"
+              + selectorFile
+              + "` for selector `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa`, but got: not a valid layer digest",
+          ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testSelect() throws IOException, CacheCorruptedException {
+    DefaultCacheStorageFiles defaultCacheStorageFiles =
+        new DefaultCacheStorageFiles(temporaryFolder.newFolder().toPath());
+
+    DefaultCacheStorageReader defaultCacheStorageReader =
+        new DefaultCacheStorageReader(defaultCacheStorageFiles);
+
+    DescriptorDigest selector = layerDigest1;
+    Path selectorFile = defaultCacheStorageFiles.getSelectorFile(selector);
+    Files.write(selectorFile, Blobs.writeToByteArray(Blobs.from(layerDigest2.getHash())));
+
+    Optional<DescriptorDigest> selectedLayerDigest = defaultCacheStorageReader.select(selector);
+    Assert.assertTrue(selectedLayerDigest.isPresent());
+    Assert.assertEquals(layerDigest2, selectedLayerDigest.get());
   }
 }

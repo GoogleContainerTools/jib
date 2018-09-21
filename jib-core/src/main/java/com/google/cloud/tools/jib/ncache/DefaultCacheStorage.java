@@ -18,8 +18,6 @@ package com.google.cloud.tools.jib.ncache;
 
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import java.io.IOException;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.Set;
@@ -31,7 +29,7 @@ import java.util.Set;
  * <pre>{@code
  * layers/
  *   <layer digest>/
- *     <layer diff ID>.layer
+ *     <layer diff ID>
  *     metadata
  *   ...
  * selectors/
@@ -40,44 +38,22 @@ import java.util.Set;
  * }</pre>
  *
  * Layers entries are stored in their own directories under the {@code layers/} directory. Each
- * layer directory is named by the layer digest. Inside each layer directory, the layer contents is
- * the {@code .layer} file prefixed with the layer diff ID, and the metadata is the {@code metadata}
- * file.
+ * layer directory is named by the layer digest. Inside each layer directory, the layer contents
+ * file is named by the layer diff ID, and the metadata is the {@code metadata} file.
  *
  * <p>Selectors are stored in the {@code selectors/} directory. Each selector file is named by the
  * selector digest. The contents of a selector file is the digest of the layer it selects.
  */
-public class DefaultCacheStorage implements CacheStorage {
+class DefaultCacheStorage implements CacheStorage {
 
   /**
    * Instantiates a {@link CacheStorage} backed by this storage engine.
    *
-   * @param cacheDirectory the directory for this cache. Creates the directory if it does not exist.
+   * @param cacheDirectory the directory for this cache
    * @return a new {@link CacheStorage}
    */
-  public static CacheStorage withDirectory(Path cacheDirectory)
-      throws CacheDirectoryNotOwnedException, IOException {
-    DefaultCacheStorageFiles defaultCacheStorageFiles =
-        new DefaultCacheStorageFiles(cacheDirectory);
-
-    if (Files.exists(cacheDirectory)) {
-      // Ensures ownership of the cache directory by checking for the existence of the ownership
-      // file.
-      if (!Files.exists(defaultCacheStorageFiles.getOwnershipFile())) {
-        throw new CacheDirectoryNotOwnedException(cacheDirectory);
-      }
-
-    } else {
-      // Creates the directory and sets ownership.
-      Files.createDirectories(cacheDirectory);
-      try {
-        Files.createFile(defaultCacheStorageFiles.getOwnershipFile());
-      } catch (FileAlreadyExistsException ex) {
-        // Ignores if the ownership file already exists.
-      }
-    }
-
-    return new DefaultCacheStorage(defaultCacheStorageFiles);
+  static CacheStorage withDirectory(Path cacheDirectory) {
+    return new DefaultCacheStorage(new DefaultCacheStorageFiles(cacheDirectory));
   }
 
   private final DefaultCacheStorageWriter defaultCacheStorageWriter;
@@ -105,8 +81,8 @@ public class DefaultCacheStorage implements CacheStorage {
   }
 
   @Override
-  public Optional<DescriptorDigest> select(DescriptorDigest selector) throws IOException {
-    // TODO: Implement
-    return Optional.empty();
+  public Optional<DescriptorDigest> select(DescriptorDigest selector)
+      throws IOException, CacheCorruptedException {
+    return defaultCacheStorageReader.select(selector);
   }
 }

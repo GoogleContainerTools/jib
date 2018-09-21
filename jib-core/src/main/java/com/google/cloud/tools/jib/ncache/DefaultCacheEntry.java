@@ -23,10 +23,10 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** Default implementation of {@link CacheEntry}. */
-public class DefaultCacheEntry implements CacheEntry {
+class DefaultCacheEntry implements CacheEntry {
 
   /** Builds a {@link CacheEntry}. */
-  public static class Builder {
+  static class Builder {
 
     @Nullable private DescriptorDigest layerDigest;
     @Nullable private DescriptorDigest layerDiffId;
@@ -36,40 +36,40 @@ public class DefaultCacheEntry implements CacheEntry {
 
     private Builder() {}
 
-    public Builder setLayerDigest(DescriptorDigest layerDigest) {
+    Builder setLayerDigest(DescriptorDigest layerDigest) {
       this.layerDigest = layerDigest;
       return this;
     }
 
-    public Builder setLayerDiffId(DescriptorDigest layerDiffId) {
+    Builder setLayerDiffId(DescriptorDigest layerDiffId) {
       this.layerDiffId = layerDiffId;
       return this;
     }
 
-    public Builder setLayerSize(long layerSize) {
+    Builder setLayerSize(long layerSize) {
       this.layerSize = layerSize;
       return this;
     }
 
-    public Builder setLayerBlob(Blob layerBlob) {
+    Builder setLayerBlob(Blob layerBlob) {
       this.layerBlob = layerBlob;
       return this;
     }
 
-    public Builder setMetadataBlob(@Nullable Blob metadataBlob) {
+    Builder setMetadataBlob(@Nullable Blob metadataBlob) {
       this.metadataBlob = metadataBlob;
       return this;
     }
 
-    public boolean hasLayerBlob() {
+    boolean hasLayerBlob() {
       return layerBlob != null;
     }
 
-    public boolean hasMetadataBlob() {
+    boolean hasMetadataBlob() {
       return metadataBlob != null;
     }
 
-    public CacheEntry build() {
+    CacheEntry build() {
       return new DefaultCacheEntry(
           Preconditions.checkNotNull(layerDigest, "layerDigest required"),
           Preconditions.checkNotNull(layerDiffId, "layerDiffId required"),
@@ -84,7 +84,7 @@ public class DefaultCacheEntry implements CacheEntry {
    *
    * @return the new {@link Builder}
    */
-  public static Builder builder() {
+  static Builder builder() {
     return new Builder();
   }
 

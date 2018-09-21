@@ -33,7 +33,7 @@ import java.util.Set;
  *
  * <p><b>Implementations must be thread-safe and should be immutable.</b>
  */
-public interface CacheStorage {
+interface CacheStorage {
 
   /**
    * Saves the {@link CacheWrite}.
@@ -72,5 +72,6 @@ public interface CacheStorage {
    * @return the layer digest selected, or {@link Optional#empty} if none found
    * @throws IOException if an I/O exception occurs
    */
-  Optional<DescriptorDigest> select(DescriptorDigest selector) throws IOException;
+  Optional<DescriptorDigest> select(DescriptorDigest selector)
+      throws IOException, CacheCorruptedException;
 }
