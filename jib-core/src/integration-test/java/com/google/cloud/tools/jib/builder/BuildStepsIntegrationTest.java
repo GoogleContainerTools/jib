@@ -62,7 +62,8 @@ public class BuildStepsIntegrationTest {
    * LayerConfiguration} from those files.
    */
   private static LayerConfiguration makeLayerConfiguration(
-      String resourcePath, Path pathInContainer) throws URISyntaxException, IOException {
+      String resourcePath, AbsoluteUnixPath pathInContainer)
+      throws URISyntaxException, IOException {
     try (Stream<Path> fileStream =
         Files.list(Paths.get(Resources.getResource(resourcePath).toURI()))) {
       LayerConfiguration.Builder layerConfigurationBuilder = LayerConfiguration.builder();
@@ -112,9 +113,10 @@ public class BuildStepsIntegrationTest {
   public void setUp() throws IOException, URISyntaxException {
     fakeLayerConfigurations =
         ImmutableList.of(
-            makeLayerConfiguration("application/dependencies", Paths.get("/app/libs/")),
-            makeLayerConfiguration("application/resources", Paths.get("/app/resources/")),
-            makeLayerConfiguration("application/classes", Paths.get("/app/classes/")));
+            makeLayerConfiguration("application/dependencies", AbsoluteUnixPath.get("/app/libs/")),
+            makeLayerConfiguration(
+                "application/resources", AbsoluteUnixPath.get("/app/resources/")),
+            makeLayerConfiguration("application/classes", AbsoluteUnixPath.get("/app/classes/")));
   }
 
   @Test

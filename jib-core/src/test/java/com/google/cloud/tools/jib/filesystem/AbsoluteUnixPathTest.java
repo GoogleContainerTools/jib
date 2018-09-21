@@ -60,21 +60,45 @@ public class AbsoluteUnixPathTest {
   }
 
   @Test
-  public void testResolve() {
+  public void testResolve_relativeUnixPath() {
     AbsoluteUnixPath absoluteUnixPath1 = AbsoluteUnixPath.get("/");
-    Assert.assertEquals(absoluteUnixPath1, absoluteUnixPath1.resolve(RelativeUnixPath.get("")));
-    Assert.assertEquals(
-        "/file", absoluteUnixPath1.resolve(RelativeUnixPath.get("file")).toString());
-    Assert.assertEquals(
-        "/relative/path",
-        absoluteUnixPath1.resolve(RelativeUnixPath.get("relative/path")).toString());
+    Assert.assertEquals(absoluteUnixPath1, absoluteUnixPath1.resolve(""));
+    Assert.assertEquals("/file", absoluteUnixPath1.resolve("file").toString());
+    Assert.assertEquals("/relative/path", absoluteUnixPath1.resolve("relative/path").toString());
 
     AbsoluteUnixPath absoluteUnixPath2 = AbsoluteUnixPath.get("/some/path");
-    Assert.assertEquals(absoluteUnixPath2, absoluteUnixPath2.resolve(RelativeUnixPath.get("")));
+    Assert.assertEquals(absoluteUnixPath2, absoluteUnixPath2.resolve(""));
+    Assert.assertEquals("/some/path/file", absoluteUnixPath2.resolve("file").toString());
     Assert.assertEquals(
-        "/some/path/file", absoluteUnixPath2.resolve(RelativeUnixPath.get("file")).toString());
+        "/some/path/relative/path", absoluteUnixPath2.resolve("relative/path").toString());
+  }
+
+  @Test
+  public void testResolve_Path_notRelative() {
+    try {
+      AbsoluteUnixPath.get("/").resolve(Paths.get("/not/relative"));
+      Assert.fail();
+
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals(
+          "Cannot resolve against absolute Path: " + Paths.get("/not/relative"), ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testResolve_Path() {
+    AbsoluteUnixPath absoluteUnixPath1 = AbsoluteUnixPath.get("/");
+    Assert.assertEquals(absoluteUnixPath1, absoluteUnixPath1.resolve(Paths.get("")));
+    Assert.assertEquals("/file", absoluteUnixPath1.resolve(Paths.get("file")).toString());
+    Assert.assertEquals(
+        "/relative/path", absoluteUnixPath1.resolve(Paths.get("relative/path")).toString());
+
+    AbsoluteUnixPath absoluteUnixPath2 = AbsoluteUnixPath.get("/some/path");
+    Assert.assertEquals(absoluteUnixPath2, absoluteUnixPath2.resolve(Paths.get("")));
+    Assert.assertEquals(
+        "/some/path/file", absoluteUnixPath2.resolve(Paths.get("file///")).toString());
     Assert.assertEquals(
         "/some/path/relative/path",
-        absoluteUnixPath2.resolve(RelativeUnixPath.get("relative/path")).toString());
+        absoluteUnixPath2.resolve(Paths.get("relative//path/")).toString());
   }
 }

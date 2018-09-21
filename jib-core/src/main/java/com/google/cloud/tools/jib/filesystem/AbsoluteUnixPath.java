@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.filesystem;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.StringJoiner;
 import javax.annotation.concurrent.Immutable;
 
@@ -96,6 +97,30 @@ public class AbsoluteUnixPath {
     newPathComponents.addAll(pathComponents);
     newPathComponents.addAll(relativeUnixPath.getRelativePathComponents());
     return new AbsoluteUnixPath(newPathComponents.build());
+  }
+
+  /**
+   * Resolves this path against another relative path (by the name elements of {@code
+   * relativePath}).
+   *
+   * @param relativePath the relative path to resolve against
+   * @return a new {@link AbsoluteUnixPath} representing the resolved path
+   */
+  public AbsoluteUnixPath resolve(Path relativePath) {
+    Preconditions.checkArgument(
+        relativePath.getRoot() == null, "Cannot resolve against absolute Path: " + relativePath);
+
+    return AbsoluteUnixPath.fromPath(Paths.get(unixPath).resolve(relativePath));
+  }
+
+  /**
+   * Resolves this path against another relative Unix path in string form.
+   *
+   * @param relativeUnixPath the relative path to resolve against
+   * @return a new {@link AbsoluteUnixPath} representing the resolved path
+   */
+  public AbsoluteUnixPath resolve(String relativeUnixPath) {
+    return resolve(RelativeUnixPath.get(relativeUnixPath));
   }
 
   /**

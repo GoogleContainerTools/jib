@@ -286,7 +286,8 @@ public class JavaDockerContextGenerator {
         // '/app/classes/com/test/HelloWorld.class', the resolved destination would be
         // 'target/jib-docker-context/classes/com/test/HelloWorld.class'.
         Path baseExtractionPath = Paths.get(copyDirective.extractionPath.toString());
-        Path relativeEntryPath = baseExtractionPath.relativize(layerEntry.getExtractionPath());
+        Path relativeEntryPath =
+            baseExtractionPath.relativize(Paths.get(layerEntry.getExtractionPath().toString()));
         Path destination = directoryInContext.resolve(relativeEntryPath);
 
         if (Files.isDirectory(layerEntry.getSourceFile())) {

@@ -25,7 +25,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
@@ -130,9 +129,8 @@ public class JavaLayerConfigurations {
         // Adds all the layer files recursively.
         List<Path> layerFiles = Preconditions.checkNotNull(layerFilesMap.get(layerType));
         for (Path layerFile : layerFiles) {
-          Path pathInContainer =
-              Paths.get(extractionPath.toString()).resolve(layerFile.getFileName());
-          layerConfigurationBuilder.addEntryRecursive(layerFile, pathInContainer);
+          layerConfigurationBuilder.addEntryRecursive(
+              layerFile, extractionPath.resolve(layerFile.getFileName()));
         }
 
         layerConfigurationsMap.put(layerType, layerConfigurationBuilder.build());
