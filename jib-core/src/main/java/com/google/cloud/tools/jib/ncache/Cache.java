@@ -20,14 +20,20 @@ import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Optional;
 
 /** Cache for storing data to be shared between Jib executions. */
 public class Cache {
 
+  // TODO: Add test.
+  public static Cache withDirectory(Path cacheDirectory)
+      throws IOException, CacheDirectoryNotOwnedException {
+    return new Cache(DefaultCacheStorage.withDirectory(cacheDirectory));
+  }
+
   private final CacheStorage cacheStorage;
 
-  // TODO: Add way to instantiate after #retrieveCacheEntry and #write are implemented.
   private Cache(CacheStorage cacheStorage) {
     this.cacheStorage = cacheStorage;
   }
@@ -53,13 +59,28 @@ public class Cache {
     return cacheStorage.retrieve(optionalSelectedLayerDigest.get());
   }
 
-  public Optional<CacheEntry> retrieveCacheEntry(DescriptorDigest layerDigest) {
-    // TODO: Implement
-    return Optional.empty();
+  /**
+   * Retrieves the {@link CacheEntry} for the layer with digest {@code layerDigest}.
+   *
+   * @param layerDigest the layer digest
+   * @return the {@link CacheEntry} referenced by the layer digest, or {@link Optional#empty} if not
+   *     found
+   * @throws CacheCorruptedException if the cache was found to be corrupted
+   * @throws IOException if an I/O exception occurs
+   */
+  public Optional<CacheEntry> retrieveCacheEntry(DescriptorDigest layerDigest)
+      throws IOException, CacheCorruptedException {
+    return cacheStorage.retrieve(layerDigest);
   }
 
-  public Optional<CacheEntry> write(CacheWrite cacheWrite) {
-    // TODO: Implement
-    return Optional.empty();
+  /**
+   * Saves the {@link CacheWrite}.
+   *
+   * @param cacheWrite the {@link CacheWrite}
+   * @return the {@link CacheEntry} for the written {@link CacheWrite}
+   * @throws IOException if an I/O exception occurs
+   */
+  public CacheEntry write(CacheWrite cacheWrite) throws IOException {
+    return cacheStorage.write(cacheWrite);
   }
 }

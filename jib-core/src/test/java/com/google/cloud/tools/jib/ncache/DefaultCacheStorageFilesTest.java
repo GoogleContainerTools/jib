@@ -92,6 +92,12 @@ public class DefaultCacheStorageFilesTest {
   }
 
   @Test
+  public void testGetOwnershipFile() {
+    Assert.assertEquals(
+        Paths.get("cache/directory/.jib"), testDefaultCacheStorageFiles.getOwnershipFile());
+  }
+
+  @Test
   public void testGetLayerFile() throws DigestException {
     DescriptorDigest layerDigest =
         DescriptorDigest.fromHash(

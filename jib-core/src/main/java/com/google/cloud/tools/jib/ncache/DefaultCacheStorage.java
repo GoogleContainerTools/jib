@@ -18,6 +18,8 @@ package com.google.cloud.tools.jib.ncache;
 
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.Set;
@@ -50,19 +52,38 @@ public class DefaultCacheStorage implements CacheStorage {
   /**
    * Instantiates a {@link CacheStorage} backed by this storage engine.
    *
-   * @param cacheDirectory the directory for this cache
+   * @param cacheDirectory the directory for this cache. Creates the directory if it does not exist.
    * @return a new {@link CacheStorage}
    */
-  public static CacheStorage withDirectory(Path cacheDirectory) {
-    return new DefaultCacheStorage(cacheDirectory);
+  public static CacheStorage withDirectory(Path cacheDirectory)
+      throws CacheDirectoryNotOwnedException, IOException {
+    DefaultCacheStorageFiles defaultCacheStorageFiles =
+        new DefaultCacheStorageFiles(cacheDirectory);
+
+    if (Files.exists(cacheDirectory)) {
+      // Ensures ownership of the cache directory by checking for the existence of the ownership
+      // file.
+      if (!Files.exists(defaultCacheStorageFiles.getOwnershipFile())) {
+        throw new CacheDirectoryNotOwnedException(cacheDirectory);
+      }
+
+    } else {
+      // Creates the directory and sets ownership.
+      Files.createDirectories(cacheDirectory);
+      try {
+        Files.createFile(defaultCacheStorageFiles.getOwnershipFile());
+      } catch (FileAlreadyExistsException ex) {
+        // Ignores if the ownership file already exists.
+      }
+    }
+
+    return new DefaultCacheStorage(defaultCacheStorageFiles);
   }
 
   private final DefaultCacheStorageWriter defaultCacheStorageWriter;
   private final DefaultCacheStorageReader defaultCacheStorageReader;
 
-  private DefaultCacheStorage(Path cacheDirectory) {
-    DefaultCacheStorageFiles defaultCacheStorageFiles =
-        new DefaultCacheStorageFiles(cacheDirectory);
+  private DefaultCacheStorage(DefaultCacheStorageFiles defaultCacheStorageFiles) {
     this.defaultCacheStorageWriter = new DefaultCacheStorageWriter(defaultCacheStorageFiles);
     this.defaultCacheStorageReader = new DefaultCacheStorageReader(defaultCacheStorageFiles);
   }
