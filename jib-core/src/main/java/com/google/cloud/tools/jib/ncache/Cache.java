@@ -65,6 +65,34 @@ public class Cache {
   }
 
   /**
+   * Saves a cache entry with only a layer {@link Blob}. Use {@link #write(Blob, DescriptorDigest,
+   * Blob)} to include a selector and metadata.
+   *
+   * @param layerBlob the layer {@link Blob}
+   * @return the {@link CacheEntry} for the written {@link CacheWrite}
+   * @throws IOException if an I/O exception occurs
+   */
+  public CacheEntry write(Blob layerBlob) throws IOException {
+    return cacheStorage.write(DefaultCacheWrite.layerOnly(layerBlob));
+  }
+
+  /**
+   * Saves a cache entry with a layer {@link Blob}, an additional selector digest, and a metadata
+   * {@link Blob}. Use {@link #write(Blob)} to save only a layer {@link Blob}.
+   *
+   * @param layerBlob the layer {@link Blob}
+   * @param selector the selector digest
+   * @param metadataBlob the metadata {@link Blob}
+   * @return the {@link CacheEntry} for the written {@link CacheWrite}
+   * @throws IOException if an I/O exception occurs
+   */
+  public CacheEntry write(Blob layerBlob, DescriptorDigest selector, Blob metadataBlob)
+      throws IOException {
+    return cacheStorage.write(
+        DefaultCacheWrite.withSelectorAndMetadata(layerBlob, selector, metadataBlob));
+  }
+
+  /**
    * Retrieves the {@link CacheEntry} that was built from the {@code layerEntries}.
    *
    * @param layerEntries the layer entries to match against
@@ -96,33 +124,5 @@ public class Cache {
   public Optional<CacheEntry> retrieve(DescriptorDigest layerDigest)
       throws IOException, CacheCorruptedException {
     return cacheStorage.retrieve(layerDigest);
-  }
-
-  /**
-   * Saves a cache entry with only a layer {@link Blob}. Use {@link #write(Blob, DescriptorDigest,
-   * Blob)} to include a selector and metadata.
-   *
-   * @param layerBlob the layer {@link Blob}
-   * @return the {@link CacheEntry} for the written {@link CacheWrite}
-   * @throws IOException if an I/O exception occurs
-   */
-  public CacheEntry write(Blob layerBlob) throws IOException {
-    return cacheStorage.write(DefaultCacheWrite.layerOnly(layerBlob));
-  }
-
-  /**
-   * Saves a cache entry with a layer {@link Blob}, an additional selector digest, and a metadata
-   * {@link Blob}. Use {@link #write(Blob)} to save only a layer {@link Blob}.
-   *
-   * @param layerBlob the layer {@link Blob}
-   * @param selector the selector digest
-   * @param metadataBlob the metadata {@link Blob}
-   * @return the {@link CacheEntry} for the written {@link CacheWrite}
-   * @throws IOException if an I/O exception occurs
-   */
-  public CacheEntry write(Blob layerBlob, DescriptorDigest selector, Blob metadataBlob)
-      throws IOException {
-    return cacheStorage.write(
-        DefaultCacheWrite.withSelectorAndMetadata(layerBlob, selector, metadataBlob));
   }
 }

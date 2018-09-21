@@ -148,6 +148,7 @@ public class DefaultCacheStorageReaderTest {
 
     DescriptorDigest selector = layerDigest1;
     Path selectorFile = defaultCacheStorageFiles.getSelectorFile(selector);
+    Files.createDirectories(selectorFile.getParent());
     Files.write(selectorFile, Blobs.writeToByteArray(Blobs.from("not a valid layer digest")));
 
     try {
@@ -173,6 +174,7 @@ public class DefaultCacheStorageReaderTest {
 
     DescriptorDigest selector = layerDigest1;
     Path selectorFile = defaultCacheStorageFiles.getSelectorFile(selector);
+    Files.createDirectories(selectorFile.getParent());
     Files.write(selectorFile, Blobs.writeToByteArray(Blobs.from(layerDigest2.getHash())));
 
     Optional<DescriptorDigest> selectedLayerDigest = defaultCacheStorageReader.select(selector);
