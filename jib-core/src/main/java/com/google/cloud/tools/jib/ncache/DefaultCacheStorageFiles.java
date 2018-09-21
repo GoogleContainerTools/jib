@@ -23,9 +23,6 @@ import java.security.DigestException;
 /** Resolves the files used in the default cache storage engine. */
 class DefaultCacheStorageFiles {
 
-  /** A file to store in the cache to check ownership by Jib. */
-  private static final String OWNERSHIP_FILE_NAME = ".jib";
-
   private static final String LAYERS_DIRECTORY = "layers";
   private static final String METADATA_FILENAME = "metadata";
   private static final String SELECTORS_DIRECTORY = "selectors";
@@ -72,15 +69,6 @@ class DefaultCacheStorageFiles {
 
   DefaultCacheStorageFiles(Path cacheDirectory) {
     this.cacheDirectory = cacheDirectory;
-  }
-
-  /**
-   * Resolves the ownership file (indicates directory is owned by Jib).
-   *
-   * @return the ownership file
-   */
-  Path getOwnershipFile() {
-    return cacheDirectory.resolve(OWNERSHIP_FILE_NAME);
   }
 
   /**
