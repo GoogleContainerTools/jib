@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
+import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
@@ -88,10 +89,11 @@ class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authori
       // If target is colocated with base, request permission for both so as to allow using
       // mount/from
       String[] dependentRepositories = new String[0];
-      if (buildConfiguration
-          .getBaseImageConfiguration()
-          .getImageRegistry()
-          .equals(buildConfiguration.getTargetImageConfiguration().getImageRegistry())) {
+      if (JibSystemProperties.isMountFromEnabled()
+          && buildConfiguration
+              .getBaseImageConfiguration()
+              .getImageRegistry()
+              .equals(buildConfiguration.getTargetImageConfiguration().getImageRegistry())) {
         dependentRepositories =
             new String[] {buildConfiguration.getBaseImageConfiguration().getImageRepository()};
       }

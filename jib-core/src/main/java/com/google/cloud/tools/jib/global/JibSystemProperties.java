@@ -31,6 +31,8 @@ public class JibSystemProperties {
 
   private static final String DISABLE_USER_AGENT = "_JIB_DISABLE_USER_AGENT";
 
+  private static final String USE_MOUNT_FROM = "jib.useMountFrom";
+
   /**
    * Gets the HTTP connection/read timeouts for registry interactions in milliseconds. This is
    * defined by the {@code jib.httpTimeout} system property. The default value is 20000 if the
@@ -96,6 +98,16 @@ public class JibSystemProperties {
     if (parsed < 0) {
       throw new NumberFormatException(HTTP_TIMEOUT + " cannot be negative: " + value);
     }
+  }
+
+  /**
+   * Gets whether or not to use {@code mount/from} when uploading image layers. This is defined by
+   * the {@code jib.useMountFrom} system property.
+   *
+   * @return {@code true} if {@code mount/from} should be used, {@code false} if not
+   */
+  public static boolean isMountFromEnabled() {
+    return Boolean.getBoolean(USE_MOUNT_FROM);
   }
 
   private JibSystemProperties() {}

@@ -106,7 +106,8 @@ public class RegistryAuthenticator {
    * @param buildLogger the build logger used for printing messages
    * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
    * @param repository the image/repository name for access (also known as, namespace)
-   * @param dependentRepositories additional image/repository names required for access
+   * @param dependentRepositories additional image/repository names required for access; always
+   *     requested with {@code pull} scope.
    * @return the new {@link Initializer}
    */
   public static Initializer initializer(
@@ -213,7 +214,6 @@ public class RegistryAuthenticator {
   private final String service;
   private final String repository;
   private final String[] dependentRepositories;
-  // private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   @Nullable private Authorization authorization;
 
   RegistryAuthenticator(
@@ -222,7 +222,6 @@ public class RegistryAuthenticator {
     this.service = service;
     this.repository = repository;
     this.dependentRepositories = dependentRepositories;
-    // this.registryEndpointRequestProperties = registryEndpointRequestProperties;
   }
 
   /**

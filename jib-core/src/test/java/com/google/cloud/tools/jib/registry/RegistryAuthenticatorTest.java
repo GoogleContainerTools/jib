@@ -26,6 +26,9 @@ public class RegistryAuthenticatorTest {
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties =
       new RegistryEndpointRequestProperties("someserver", "someimage");
 
+  private final RegistryEndpointRequestProperties registryEndpointRequestPropertiesWithAdditions =
+      new RegistryEndpointRequestProperties("someserver", "someimage", "adependency");
+
   @Test
   public void testFromAuthenticationMethod_bearer()
       throws MalformedURLException, RegistryAuthenticationFailedException {
@@ -102,6 +105,19 @@ public class RegistryAuthenticatorTest {
 
     Assert.assertEquals(
         new URL("https://somerealm?service=someserver&scope=repository:someimage:scope"),
+        registryAuthenticator.getAuthenticationUrl("scope"));
+  }
+
+  @Test
+  public void testFromAuthenticationMethod_withMountFrom()
+      throws RegistryAuthenticationFailedException, MalformedURLException {
+    RegistryAuthenticator registryAuthenticator =
+        RegistryAuthenticator.fromAuthenticationMethod(
+            "Bearer realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
+            registryEndpointRequestPropertiesWithAdditions);
+    Assert.assertEquals(
+        new URL(
+            "https://somerealm?service=someservice&scope=repository:someimage:scope&scope=repository:adependency:pull"),
         registryAuthenticator.getAuthenticationUrl("scope"));
   }
 }
