@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,6 +26,7 @@ import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.InsecureRegistryException;
 import com.google.cloud.tools.jib.registry.RegistryCredentialsNotSentException;
@@ -81,16 +82,22 @@ public class BuildStepsRunnerTest {
 
   @Before
   public void setUpMocks() {
-    testBuildImageStepsRunner = new BuildStepsRunner(mockBuildSteps);
+    testBuildImageStepsRunner = new BuildStepsRunner(mockBuildSteps, "ignored", "ignored");
 
     Mockito.when(mockBuildSteps.getBuildConfiguration()).thenReturn(mockBuildConfiguration);
     Mockito.when(mockBuildConfiguration.getBuildLogger()).thenReturn(mockBuildLogger);
     Mockito.when(mockBuildConfiguration.getLayerConfigurations())
         .thenReturn(
             ImmutableList.of(
-                LayerConfiguration.builder().addEntry(ImmutableList.of(), "ignored").build(),
-                LayerConfiguration.builder().addEntry(ImmutableList.of(), "ignored").build(),
-                LayerConfiguration.builder().addEntry(ImmutableList.of(), "ignored").build()));
+                LayerConfiguration.builder()
+                    .addEntry(Paths.get("ignored"), AbsoluteUnixPath.get("/ignored"))
+                    .build(),
+                LayerConfiguration.builder()
+                    .addEntry(Paths.get("ignored"), AbsoluteUnixPath.get("/ignored"))
+                    .build(),
+                LayerConfiguration.builder()
+                    .addEntry(Paths.get("ignored"), AbsoluteUnixPath.get("/ignored"))
+                    .build()));
   }
 
   @Test

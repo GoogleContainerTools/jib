@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -65,7 +65,7 @@ public class JibPluginIntegrationTest {
     assertDockerInspect(imageReference);
     String history = new Command("docker", "history", imageReference).run();
     Assert.assertThat(history, CoreMatchers.containsString("jib-gradle-plugin"));
-    return new Command("docker", "run", imageReference).run();
+    return new Command("docker", "run", "--rm", imageReference).run();
   }
 
   private static String buildAndRunComplex(
@@ -88,7 +88,7 @@ public class JibPluginIntegrationTest {
     assertDockerInspect(imageReference);
     String history = new Command("docker", "history", imageReference).run();
     Assert.assertThat(history, CoreMatchers.containsString("jib-gradle-plugin"));
-    return new Command("docker", "run", imageReference).run();
+    return new Command("docker", "run", "--rm", imageReference).run();
   }
 
   private static String buildToDockerDaemonAndRun(TestProject testProject, String imageReference)
@@ -103,7 +103,7 @@ public class JibPluginIntegrationTest {
     assertDockerInspect(imageReference);
     String history = new Command("docker", "history", imageReference).run();
     Assert.assertThat(history, CoreMatchers.containsString("jib-gradle-plugin"));
-    return new Command("docker", "run", imageReference).run();
+    return new Command("docker", "run", "--rm", imageReference).run();
   }
 
   /**
@@ -238,7 +238,7 @@ public class JibPluginIntegrationTest {
     String targetImage = "localhost:6000/compleximage:gradle" + System.nanoTime();
     Instant beforeBuild = Instant.now();
     Assert.assertEquals(
-        "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\n",
+        "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
         buildAndRunComplex(targetImage, "testuser2", "testpassword2", localRegistry2));
     assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
   }
@@ -248,7 +248,7 @@ public class JibPluginIntegrationTest {
     String targetImage = "localhost:5000/compleximage:gradle" + System.nanoTime();
     Instant beforeBuild = Instant.now();
     Assert.assertEquals(
-        "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\n",
+        "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
         buildAndRunComplex(targetImage, "testuser", "testpassword", localRegistry1));
     assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
   }
@@ -296,7 +296,8 @@ public class JibPluginIntegrationTest {
 
     new Command("docker", "load", "--input", outputPath).run();
     Assert.assertEquals(
-        "Hello, world. An argument.\nfoo\ncat\n", new Command("docker", "run", targetImage).run());
+        "Hello, world. An argument.\nfoo\ncat\n",
+        new Command("docker", "run", "--rm", targetImage).run());
     assertDockerInspect(targetImage);
     assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
   }
@@ -324,7 +325,8 @@ public class JibPluginIntegrationTest {
 
     assertDockerInspect(imageName);
     Assert.assertEquals(
-        "Hello, world. An argument.\nfoo\ncat\n", new Command("docker", "run", imageName).run());
+        "Hello, world. An argument.\nfoo\ncat\n",
+        new Command("docker", "run", "--rm", imageName).run());
 
     // Checks that generating the Docker context again is skipped.
     BuildTask upToDateJibDockerContextTask =

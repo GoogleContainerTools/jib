@@ -5,12 +5,23 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- `container.environment` configuration parameter to configure environment variables ([#890](https://github.com/GoogleContainerTools/jib/issues/890))
+- `container.appRoot` configuration parameter to configure app root in the image ([#984](https://github.com/GoogleContainerTools/jib/pull/984))
+
+### Changed
+
+### Fixed
+
+- Keep duplicate layers to match container history ([#1017](https://github.com/GoogleContainerTools/jib/pull/1017))
+
+## 0.9.10
+
+### Added
+
 - `container.labels` configuration parameter for configuring labels ([#751](https://github.com/GoogleContainerTools/jib/issues/751))
 - `container.entrypoint` configuration parameter to set the entrypoint ([#579](https://github.com/GoogleContainerTools/jib/issues/579))
 - `history` to layer metadata ([#875](https://github.com/GoogleContainerTools/jib/issues/875))
 - Propagates working directory from the base image ([#902](https://github.com/GoogleContainerTools/jib/pull/902))
-
-### Changed
 
 ### Fixed
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC. All rights reserved.
+ * Copyright 2017 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.cache;
 
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.ImageLayers;
 import com.google.cloud.tools.jib.image.LayerEntry;
@@ -72,37 +73,46 @@ public class CacheMetadataTest {
 
   @Test
   public void testFilter_doLayerEntriesMatchMetadataEntries_extractionPath() {
-    ImmutableList<LayerEntry> layerEntries =
-        ImmutableList.of(new LayerEntry(ImmutableList.of(), "extractionPath"));
     ImmutableList<LayerMetadata.LayerMetadataEntry> metadataEntries =
         LayerMetadata.from(
-                ImmutableList.of(new LayerEntry(ImmutableList.of(), "anotherExtractionPath")),
+                ImmutableList.of(
+                    new LayerEntry(
+                        Paths.get("anotherSourceFile"),
+                        AbsoluteUnixPath.get("/another/extraction/path"))),
                 FileTime.fromMillis(0))
             .getEntries();
 
     Assert.assertFalse(
         CacheMetadata.LayerFilter.doLayerEntriesMatchMetadataEntries(
-            layerEntries, metadataEntries));
-
+            ImmutableList.of(
+                new LayerEntry(Paths.get("sourceFile"), AbsoluteUnixPath.get("/extraction/path"))),
+            metadataEntries));
     Assert.assertTrue(
         CacheMetadata.LayerFilter.doLayerEntriesMatchMetadataEntries(
-            ImmutableList.of(new LayerEntry(ImmutableList.of(), "anotherExtractionPath")),
+            ImmutableList.of(
+                new LayerEntry(
+                    Paths.get("anotherSourceFile"),
+                    AbsoluteUnixPath.get("/another/extraction/path"))),
             metadataEntries));
   }
 
   @Test
   public void testFilter_doLayerEntriesMatchMetadataEntries_pass() {
     LayerEntry layerEntry1 =
-        new LayerEntry(
-            ImmutableList.of(Paths.get("sourceFile1"), Paths.get("sourceFile2")), "extractionPath");
+        new LayerEntry(Paths.get("sourceFile1"), AbsoluteUnixPath.get("/extraction/path"));
     LayerEntry layerEntry2 =
-        new LayerEntry(
-            ImmutableList.of(Paths.get("sourceFile3"), Paths.get("sourceFile4")),
-            "anotherExtractionPath");
+        new LayerEntry(Paths.get("sourceFile2"), AbsoluteUnixPath.get("/extraction/path"));
+    LayerEntry layerEntry3 =
+        new LayerEntry(Paths.get("sourceFile3"), AbsoluteUnixPath.get("/another/extraction/path"));
+    LayerEntry layerEntry4 =
+        new LayerEntry(Paths.get("sourceFile4"), AbsoluteUnixPath.get("/another/extraction/path"));
 
-    ImmutableList<LayerEntry> layerEntries = ImmutableList.of(layerEntry1, layerEntry2);
+    ImmutableList<LayerEntry> layerEntries =
+        ImmutableList.of(layerEntry1, layerEntry2, layerEntry3, layerEntry4);
     ImmutableList<LayerMetadata.LayerMetadataEntry> metadataEntries =
-        LayerMetadata.from(ImmutableList.of(layerEntry1, layerEntry2), FileTime.fromMillis(0))
+        LayerMetadata.from(
+                ImmutableList.of(layerEntry1, layerEntry2, layerEntry3, layerEntry4),
+                FileTime.fromMillis(0))
             .getEntries();
 
     Assert.assertTrue(
@@ -115,25 +125,27 @@ public class CacheMetadataTest {
     List<CachedLayer> mockLayers =
         Stream.generate(CacheMetadataTest::mockCachedLayer).limit(6).collect(Collectors.toList());
 
-    LayerEntry fakeLayerEntry =
+    LayerEntry fakeLayerEntry1 =
+        new LayerEntry(Paths.get("some/source/file"), AbsoluteUnixPath.get("/extraction/path"));
+    LayerEntry fakeLayerEntry2 =
         new LayerEntry(
-            ImmutableList.of(Paths.get("some/source/file"), Paths.get("some/source/directory")),
-            "extractionPath");
+            Paths.get("some/source/directory"), AbsoluteUnixPath.get("/extraction/path"));
 
     LayerMetadata fakeExpectedSourceFilesClassesLayerMetadata =
-        LayerMetadata.from(ImmutableList.of(fakeLayerEntry), FileTime.fromMillis(0));
+        LayerMetadata.from(
+            ImmutableList.of(fakeLayerEntry1, fakeLayerEntry2), FileTime.fromMillis(0));
     LayerMetadata fakeExpectedSourceFilesResourcesLayerMetadata =
-        LayerMetadata.from(ImmutableList.of(fakeLayerEntry), FileTime.fromMillis(0));
+        LayerMetadata.from(
+            ImmutableList.of(fakeLayerEntry1, fakeLayerEntry2), FileTime.fromMillis(0));
     LayerMetadata fakeOtherSourceFilesLayerMetadata =
         LayerMetadata.from(
             ImmutableList.of(
                 new LayerEntry(
-                    ImmutableList.of(Paths.get("not/the/same/source/file")), "extractionPath")),
+                    Paths.get("not/the/same/source/file"),
+                    AbsoluteUnixPath.get("/extraction/path"))),
             FileTime.fromMillis(0));
     LayerMetadata fakeEmptySourceFilesLayerMetadata =
-        LayerMetadata.from(
-            ImmutableList.of(new LayerEntry(ImmutableList.of(), "extractionPath")),
-            FileTime.fromMillis(0));
+        LayerMetadata.from(ImmutableList.of(), FileTime.fromMillis(0));
 
     List<CachedLayerWithMetadata> cachedLayers =
         Arrays.asList(
@@ -154,7 +166,10 @@ public class CacheMetadataTest {
     CacheMetadata cacheMetadata = cacheMetadataBuilder.build();
 
     ImageLayers<CachedLayerWithMetadata> filteredLayers =
-        cacheMetadata.filterLayers().byLayerEntries(ImmutableList.of(fakeLayerEntry)).filter();
+        cacheMetadata
+            .filterLayers()
+            .byLayerEntries(ImmutableList.of(fakeLayerEntry1, fakeLayerEntry2))
+            .filter();
 
     Assert.assertEquals(3, filteredLayers.size());
     Assert.assertEquals(
@@ -171,9 +186,7 @@ public class CacheMetadataTest {
         Stream.generate(CacheMetadataTest::mockCachedLayer).limit(2).collect(Collectors.toList());
 
     LayerEntry fakeLayerEntry =
-        new LayerEntry(
-            ImmutableList.of(Paths.get("some/source/file", "some/source/directory")),
-            "extractionPath");
+        new LayerEntry(Paths.get("some/source/file"), AbsoluteUnixPath.get("/extraction/path"));
 
     LayerMetadata fakeSourceFilesLayerMetadata =
         LayerMetadata.from(ImmutableList.of(fakeLayerEntry), FileTime.fromMillis(0));
@@ -204,17 +217,12 @@ public class CacheMetadataTest {
         Stream.generate(CacheMetadataTest::mockCachedLayer).limit(2).collect(Collectors.toList());
 
     LayerEntry fakeLayerEntry =
-        new LayerEntry(
-            ImmutableList.of(Paths.get("some/source/file", "some/source/directory")),
-            "extractionPath");
-    LayerEntry fakeLayerEntryWithNoSourceFiles =
-        new LayerEntry(ImmutableList.of(), "extractionPath");
+        new LayerEntry(Paths.get("some/source/file"), AbsoluteUnixPath.get("/extraction/path"));
 
     LayerMetadata fakeSourceFilesLayerMetadata =
         LayerMetadata.from(ImmutableList.of(fakeLayerEntry), FileTime.fromMillis(0));
     LayerMetadata fakeEmptySourceFilesLayerMetadata =
-        LayerMetadata.from(
-            ImmutableList.of(fakeLayerEntryWithNoSourceFiles), FileTime.fromMillis(0));
+        LayerMetadata.from(ImmutableList.of(), FileTime.fromMillis(0));
 
     List<CachedLayerWithMetadata> cachedLayers =
         Arrays.asList(
@@ -228,10 +236,7 @@ public class CacheMetadataTest {
     CacheMetadata cacheMetadata = cacheMetadataBuilder.build();
 
     ImageLayers<CachedLayerWithMetadata> filteredLayers =
-        cacheMetadata
-            .filterLayers()
-            .byLayerEntries(ImmutableList.of(fakeLayerEntryWithNoSourceFiles))
-            .filter();
+        cacheMetadata.filterLayers().byLayerEntries(ImmutableList.of()).filter();
 
     Assert.assertEquals(1, filteredLayers.size());
     Assert.assertEquals(fakeEmptySourceFilesLayerMetadata, filteredLayers.get(0).getMetadata());

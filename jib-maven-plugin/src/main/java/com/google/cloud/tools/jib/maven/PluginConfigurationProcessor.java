@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,25 +21,42 @@ import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
+import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
-import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.base.Preconditions;
 import java.time.Instant;
 import java.util.List;
-import javax.annotation.Nullable;
+import java.util.Optional;
 import org.apache.maven.plugin.MojoExecutionException;
 
 /** Configures and provides builders for the image building goals. */
 class PluginConfigurationProcessor {
 
-  /** {@code User-Agent} header suffix to send to the registry. */
-  private static final String USER_AGENT_SUFFIX = "jib-maven-plugin";
+  /**
+   * Gets the value of the {@code <container><appRoot>} parameter. Throws {@link
+   * MojoExecutionException} if it is not an absolute path in Unix-style.
+   *
+   * @param jibPluginConfiguration the Jib plugin configuration
+   * @return the app root value
+   * @throws MojoExecutionException if the app root is not an absolute path in Unix-style
+   */
+  static AbsoluteUnixPath getAppRootChecked(JibPluginConfiguration jibPluginConfiguration)
+      throws MojoExecutionException {
+    String appRoot = jibPluginConfiguration.getAppRoot();
+    try {
+      return AbsoluteUnixPath.get(appRoot);
+    } catch (IllegalArgumentException ex) {
+      throw new MojoExecutionException(
+          "<container><appRoot> is not an absolute Unix-style path: " + appRoot);
+    }
+  }
 
   /**
    * Sets up {@link BuildConfiguration} that is common among the image building goals. This includes
@@ -59,16 +76,19 @@ class PluginConfigurationProcessor {
       MavenProjectProperties projectProperties)
       throws MojoExecutionException {
     jibPluginConfiguration.handleDeprecatedParameters(logger);
-    ConfigurationPropertyValidator.checkHttpTimeoutProperty(MojoExecutionException::new);
+    try {
+      JibSystemProperties.checkHttpTimeoutProperty();
+    } catch (NumberFormatException ex) {
+      throw new MojoExecutionException(ex.getMessage(), ex);
+    }
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
     MavenJibLogger.disableHttpLogging();
-    RegistryClient.setUserAgentSuffix(USER_AGENT_SUFFIX);
 
     ImageReference baseImage = parseImageReference(jibPluginConfiguration.getBaseImage(), "from");
 
     // Checks Maven settings for registry credentials.
-    if (Boolean.getBoolean("sendCredentialsOverHttp")) {
+    if (JibSystemProperties.isSendCredentialsOverHttpEnabled()) {
       logger.warn(
           "Authentication over HTTP is enabled. It is strongly recommended that you do not enable "
               + "this on a public network!");
@@ -80,21 +100,21 @@ class PluginConfigurationProcessor {
             logger);
     DefaultCredentialRetrievers defaultCredentialRetrievers =
         DefaultCredentialRetrievers.init(CredentialRetrieverFactory.forImage(baseImage, logger));
-    Credential fromCredential =
+    Optional<Credential> optionalFromCredential =
         ConfigurationPropertyValidator.getImageCredential(
             logger,
             "jib.from.auth.username",
             "jib.from.auth.password",
             jibPluginConfiguration.getBaseImageAuth());
-    if (fromCredential == null) {
-      fromCredential = mavenSettingsServerCredentials.retrieve(baseImage.getRegistry());
-      if (fromCredential != null) {
-        defaultCredentialRetrievers.setInferredCredential(
-            fromCredential, MavenSettingsServerCredentials.CREDENTIAL_SOURCE);
-      }
-    } else {
+    if (optionalFromCredential.isPresent()) {
       defaultCredentialRetrievers.setKnownCredential(
-          fromCredential, "jib-maven-plugin <from><auth> configuration");
+          optionalFromCredential.get(), "jib-maven-plugin <from><auth> configuration");
+    } else {
+      optionalFromCredential = mavenSettingsServerCredentials.retrieve(baseImage.getRegistry());
+      optionalFromCredential.ifPresent(
+          fromCredential ->
+              defaultCredentialRetrievers.setInferredCredential(
+                  fromCredential, MavenSettingsServerCredentials.CREDENTIAL_SOURCE));
     }
     defaultCredentialRetrievers.setCredentialHelperSuffix(
         jibPluginConfiguration.getBaseImageCredentialHelperName());
@@ -108,7 +128,9 @@ class PluginConfigurationProcessor {
       String mainClass = projectProperties.getMainClass(jibPluginConfiguration);
       entrypoint =
           JavaEntrypointConstructor.makeDefaultEntrypoint(
-              jibPluginConfiguration.getJvmFlags(), mainClass);
+              getAppRootChecked(jibPluginConfiguration),
+              jibPluginConfiguration.getJvmFlags(),
+              mainClass);
     } else if (jibPluginConfiguration.getMainClass() != null
         || !jibPluginConfiguration.getJvmFlags().isEmpty()) {
       logger.warn("<mainClass> and <jvmFlags> are ignored when <entrypoint> is specified");
@@ -128,7 +150,7 @@ class PluginConfigurationProcessor {
 
     BuildConfiguration.Builder buildConfigurationBuilder =
         BuildConfiguration.builder(logger)
-            .setCreatedBy("jib-maven-plugin")
+            .setToolName(MavenProjectProperties.TOOL_NAME)
             .setAllowInsecureRegistries(jibPluginConfiguration.getAllowInsecureRegistries())
             .setLayerConfigurations(
                 projectProperties.getJavaLayerConfigurations().getLayerConfigurations());
@@ -146,7 +168,7 @@ class PluginConfigurationProcessor {
         baseImageConfiguration,
         containerConfigurationBuilder,
         mavenSettingsServerCredentials,
-        fromCredential);
+        optionalFromCredential.isPresent());
   }
 
   /**
@@ -166,19 +188,19 @@ class PluginConfigurationProcessor {
   private final ImageConfiguration.Builder baseImageConfigurationBuilder;
   private final ContainerConfiguration.Builder containerConfigurationBuilder;
   private final MavenSettingsServerCredentials mavenSettingsServerCredentials;
-  @Nullable private final Credential baseImageCredential;
+  private final boolean isBaseImageCredentialPresent;
 
   private PluginConfigurationProcessor(
       BuildConfiguration.Builder buildConfigurationBuilder,
       ImageConfiguration.Builder baseImageConfigurationBuilder,
       ContainerConfiguration.Builder containerConfigurationBuilder,
       MavenSettingsServerCredentials mavenSettingsServerCredentials,
-      @Nullable Credential baseImageCredential) {
+      boolean isBaseImageCredentialPresent) {
     this.buildConfigurationBuilder = buildConfigurationBuilder;
     this.baseImageConfigurationBuilder = baseImageConfigurationBuilder;
     this.containerConfigurationBuilder = containerConfigurationBuilder;
     this.mavenSettingsServerCredentials = mavenSettingsServerCredentials;
-    this.baseImageCredential = baseImageCredential;
+    this.isBaseImageCredentialPresent = isBaseImageCredentialPresent;
   }
 
   BuildConfiguration.Builder getBuildConfigurationBuilder() {
@@ -197,8 +219,7 @@ class PluginConfigurationProcessor {
     return mavenSettingsServerCredentials;
   }
 
-  @Nullable
-  Credential getBaseImageCredential() {
-    return baseImageCredential;
+  boolean isBaseImageCredentialPresent() {
+    return isBaseImageCredentialPresent;
   }
 }

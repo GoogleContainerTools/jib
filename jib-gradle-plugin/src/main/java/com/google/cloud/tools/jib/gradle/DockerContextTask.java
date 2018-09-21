@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,11 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaDockerContextGenerator;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
-import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
+import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.base.Preconditions;
 import com.google.common.io.InsecureRecursiveDeleteException;
@@ -37,7 +38,7 @@ import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.options.Option;
 
-public class DockerContextTask extends DefaultTask {
+public class DockerContextTask extends DefaultTask implements JibTask {
 
   @Nullable private String targetDir;
   @Nullable private JibExtension jibExtension;
@@ -104,18 +105,20 @@ public class DockerContextTask extends DefaultTask {
 
     GradleJibLogger gradleJibLogger = new GradleJibLogger(getLogger());
     jibExtension.handleDeprecatedParameters(gradleJibLogger);
-    ConfigurationPropertyValidator.checkHttpTimeoutProperty(GradleException::new);
+    JibSystemProperties.checkHttpTimeoutProperty();
 
+    AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(
-            getProject(), gradleJibLogger, jibExtension.getExtraDirectoryPath());
+            getProject(), gradleJibLogger, jibExtension.getExtraDirectoryPath(), appRoot);
     String targetDir = getTargetDir();
 
     List<String> entrypoint = jibExtension.getContainer().getEntrypoint();
     if (entrypoint.isEmpty()) {
       String mainClass = gradleProjectProperties.getMainClass(jibExtension);
       entrypoint =
-          JavaEntrypointConstructor.makeDefaultEntrypoint(jibExtension.getJvmFlags(), mainClass);
+          JavaEntrypointConstructor.makeDefaultEntrypoint(
+              appRoot, jibExtension.getJvmFlags(), mainClass);
     } else if (jibExtension.getMainClass() != null || !jibExtension.getJvmFlags().isEmpty()) {
       gradleJibLogger.warn("mainClass and jvmFlags are ignored when entrypoint is specified");
     }
@@ -153,7 +156,8 @@ public class DockerContextTask extends DefaultTask {
     }
   }
 
-  DockerContextTask setJibExtension(JibExtension jibExtension) {
+  @Override
+  public DockerContextTask setJibExtension(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
     return this;
   }

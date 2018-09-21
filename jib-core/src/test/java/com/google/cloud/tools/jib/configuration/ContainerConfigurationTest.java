@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.configuration;
 
-import com.google.cloud.tools.jib.configuration.Port.Protocol;
 import com.google.common.collect.ImmutableMap;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -49,7 +48,7 @@ public class ContainerConfigurationTest {
     }
 
     // Exposed ports element should not be null.
-    List<Port> badPorts = Arrays.asList(new Port(1000, Protocol.TCP), null);
+    List<Port> badPorts = Arrays.asList(Port.tcp(1000), null);
     try {
       ContainerConfiguration.builder().setExposedPorts(badPorts);
       Assert.fail("The IllegalArgumentException should be thrown.");

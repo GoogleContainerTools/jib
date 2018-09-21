@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.cache.CachedLayerWithMetadata;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -72,7 +73,7 @@ public class StepsRunner {
     this.applicationLayersCache = applicationLayersCache;
 
     ExecutorService executorService =
-        Boolean.getBoolean("jibSerialize")
+        JibSystemProperties.isSerializedExecutionEnabled()
             ? MoreExecutors.newDirectExecutorService()
             : Executors.newCachedThreadPool();
     listeningExecutorService = MoreExecutors.listeningDecorator(executorService);

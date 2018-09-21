@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,11 +17,13 @@
 package com.google.cloud.tools.jib.frontend;
 
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -34,30 +36,29 @@ public class JavaLayerConfigurations {
   /** Represents the different types of layers for a Java application. */
   @VisibleForTesting
   enum LayerType {
-    DEPENDENCIES("dependencies", JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE),
-    SNAPSHOT_DEPENDENCIES(
-        "snapshot dependencies", JavaEntrypointConstructor.DEFAULT_DEPENDENCIES_PATH_ON_IMAGE),
-    RESOURCES("resources", JavaEntrypointConstructor.DEFAULT_RESOURCES_PATH_ON_IMAGE),
-    CLASSES("classes", JavaEntrypointConstructor.DEFAULT_CLASSES_PATH_ON_IMAGE),
-    EXTRA_FILES("extra files", "/");
+    DEPENDENCIES("dependencies"),
+    SNAPSHOT_DEPENDENCIES("snapshot dependencies"),
+    RESOURCES("resources"),
+    CLASSES("classes"),
+    // TODO: remove this once we put files in WAR into the relevant layers (i.e., dependencies,
+    // snapshot dependencies, resources, and classes layers). Should copy files in the right
+    EXPLODED_WAR("exploded war"),
+    EXTRA_FILES("extra files");
 
-    private final String label;
-    private final String extractionPath;
+    private final String name;
 
-    /** Initializes with a label for the layer and the layer files' default extraction path root. */
-    LayerType(String label, String extractionPath) {
-      this.label = label;
-      this.extractionPath = extractionPath;
+    /**
+     * Initializes with a name for the layer.
+     *
+     * @param name name to set for the layer; does not affect the contents of the layer
+     */
+    LayerType(String name) {
+      this.name = name;
     }
 
     @VisibleForTesting
-    String getLabel() {
-      return label;
-    }
-
-    @VisibleForTesting
-    String getExtractionPath() {
-      return extractionPath;
+    String getName() {
+      return name;
     }
   }
 
@@ -65,51 +66,77 @@ public class JavaLayerConfigurations {
   public static class Builder {
 
     private final Map<LayerType, List<Path>> layerFilesMap = new EnumMap<>(LayerType.class);
+    private final Map<LayerType, AbsoluteUnixPath> extractionPathMap =
+        new EnumMap<>(LayerType.class);
 
     private Builder() {
       for (LayerType layerType : LayerType.values()) {
         layerFilesMap.put(layerType, new ArrayList<>());
+        extractionPathMap.put(layerType, AbsoluteUnixPath.get("/"));
       }
     }
 
-    public Builder setDependenciesFiles(List<Path> dependenciesFiles) {
-      layerFilesMap.put(LayerType.DEPENDENCIES, dependenciesFiles);
+    public Builder setDependencyFiles(List<Path> dependencyFiles, AbsoluteUnixPath extractionPath) {
+      layerFilesMap.put(LayerType.DEPENDENCIES, dependencyFiles);
+      extractionPathMap.put(LayerType.DEPENDENCIES, extractionPath);
       return this;
     }
 
-    public Builder setSnapshotDependenciesFiles(List<Path> snapshotDependenciesFiles) {
-      layerFilesMap.put(LayerType.SNAPSHOT_DEPENDENCIES, snapshotDependenciesFiles);
+    public Builder setSnapshotDependencyFiles(
+        List<Path> snapshotDependencyFiles, AbsoluteUnixPath extractionPath) {
+      layerFilesMap.put(LayerType.SNAPSHOT_DEPENDENCIES, snapshotDependencyFiles);
+      extractionPathMap.put(LayerType.SNAPSHOT_DEPENDENCIES, extractionPath);
       return this;
     }
 
-    public Builder setResourcesFiles(List<Path> resourcesFiles) {
-      layerFilesMap.put(LayerType.RESOURCES, resourcesFiles);
+    public Builder setResourceFiles(List<Path> resourceFiles, AbsoluteUnixPath extractionPath) {
+      layerFilesMap.put(LayerType.RESOURCES, resourceFiles);
+      extractionPathMap.put(LayerType.RESOURCES, extractionPath);
       return this;
     }
 
-    public Builder setClassesFiles(List<Path> classesFiles) {
-      layerFilesMap.put(LayerType.CLASSES, classesFiles);
+    public Builder setClassFiles(List<Path> classFiles, AbsoluteUnixPath extractionPath) {
+      layerFilesMap.put(LayerType.CLASSES, classFiles);
+      extractionPathMap.put(LayerType.CLASSES, extractionPath);
       return this;
     }
 
-    public Builder setExtraFiles(List<Path> extraFiles) {
+    public Builder setExtraFiles(List<Path> extraFiles, AbsoluteUnixPath extractionPath) {
       layerFilesMap.put(LayerType.EXTRA_FILES, extraFiles);
+      extractionPathMap.put(LayerType.EXTRA_FILES, extractionPath);
       return this;
     }
 
-    public JavaLayerConfigurations build() {
+    // TODO: remove this and put files in WAR into the relevant layers (i.e., dependencies, snapshot
+    // dependencies, resources, and classes layers).
+    public Builder setExplodedWarFiles(
+        List<Path> explodedWarFiles, AbsoluteUnixPath extractionPath) {
+      layerFilesMap.put(LayerType.EXPLODED_WAR, explodedWarFiles);
+      extractionPathMap.put(LayerType.EXPLODED_WAR, extractionPath);
+      return this;
+    }
+
+    public JavaLayerConfigurations build() throws IOException {
       ImmutableMap.Builder<LayerType, LayerConfiguration> layerConfigurationsMap =
           ImmutableMap.builderWithExpectedSize(LayerType.values().length);
       for (LayerType layerType : LayerType.values()) {
+        AbsoluteUnixPath extractionPath =
+            Preconditions.checkNotNull(extractionPathMap.get(layerType));
+
+        LayerConfiguration.Builder layerConfigurationBuilder =
+            LayerConfiguration.builder().setName(layerType.getName());
+
+        // Adds all the layer files recursively.
         List<Path> layerFiles = Preconditions.checkNotNull(layerFilesMap.get(layerType));
-        layerConfigurationsMap.put(
-            layerType,
-            LayerConfiguration.builder()
-                .addEntry(layerFiles, layerType.getExtractionPath())
-                .setLabel(layerType.getLabel())
-                .build());
+        for (Path layerFile : layerFiles) {
+          layerConfigurationBuilder.addEntryRecursive(
+              layerFile, extractionPath.resolve(layerFile.getFileName()));
+        }
+
+        layerConfigurationsMap.put(layerType, layerConfigurationBuilder.build());
       }
-      return new JavaLayerConfigurations(layerConfigurationsMap.build());
+      return new JavaLayerConfigurations(
+          layerConfigurationsMap.build(), ImmutableMap.copyOf(extractionPathMap));
     }
   }
 
@@ -117,40 +144,81 @@ public class JavaLayerConfigurations {
     return new Builder();
   }
 
+  /**
+   * The default app root in the image. For example, if this is set to {@code "/app"}, dependency
+   * JARs will be in {@code "/app/libs"}.
+   */
+  public static final String DEFAULT_APP_ROOT = "/app";
+
   private final ImmutableMap<LayerType, LayerConfiguration> layerConfigurationMap;
+  private final ImmutableMap<LayerType, AbsoluteUnixPath> extractionPathMap;
 
   private JavaLayerConfigurations(
-      ImmutableMap<LayerType, LayerConfiguration> layerConfigurationsMap) {
-    this.layerConfigurationMap = layerConfigurationsMap;
+      ImmutableMap<LayerType, LayerConfiguration> layerConfigurationMap,
+      ImmutableMap<LayerType, AbsoluteUnixPath> extractionPathMap) {
+    this.layerConfigurationMap = layerConfigurationMap;
+    this.extractionPathMap = extractionPathMap;
   }
 
   public ImmutableList<LayerConfiguration> getLayerConfigurations() {
     return layerConfigurationMap.values().asList();
   }
 
-  public LayerEntry getDependenciesLayerEntry() {
-    return getLayerEntry(LayerType.DEPENDENCIES);
+  public ImmutableList<LayerEntry> getDependencyLayerEntries() {
+    return getLayerEntries(LayerType.DEPENDENCIES);
   }
 
-  public LayerEntry getSnapshotDependenciesLayerEntry() {
-    return getLayerEntry(LayerType.SNAPSHOT_DEPENDENCIES);
+  public ImmutableList<LayerEntry> getSnapshotDependencyLayerEntries() {
+    return getLayerEntries(LayerType.SNAPSHOT_DEPENDENCIES);
   }
 
-  public LayerEntry getResourcesLayerEntry() {
-    return getLayerEntry(LayerType.RESOURCES);
+  public ImmutableList<LayerEntry> getResourceLayerEntries() {
+    return getLayerEntries(LayerType.RESOURCES);
   }
 
-  public LayerEntry getClassesLayerEntry() {
-    return getLayerEntry(LayerType.CLASSES);
+  public ImmutableList<LayerEntry> getClassLayerEntries() {
+    return getLayerEntries(LayerType.CLASSES);
   }
 
-  public LayerEntry getExtraFilesLayerEntry() {
-    return getLayerEntry(LayerType.EXTRA_FILES);
+  public ImmutableList<LayerEntry> getExtraFilesLayerEntries() {
+    return getLayerEntries(LayerType.EXTRA_FILES);
   }
 
-  private LayerEntry getLayerEntry(LayerType layerType) {
-    return Preconditions.checkNotNull(layerConfigurationMap.get(layerType))
-        .getLayerEntries()
-        .get(0);
+  // TODO: remove this once we put files in WAR into the relevant layers (i.e., dependencies,
+  // snapshot dependencies, resources, and classes layers). Should copy files in the right
+  public ImmutableList<LayerEntry> getExplodedWarEntries() {
+    return getLayerEntries(LayerType.EXPLODED_WAR);
+  }
+
+  public AbsoluteUnixPath getDependencyExtractionPath() {
+    return getExtractionPath(LayerType.DEPENDENCIES);
+  }
+
+  public AbsoluteUnixPath getSnapshotDependencyExtractionPath() {
+    return getExtractionPath(LayerType.SNAPSHOT_DEPENDENCIES);
+  }
+
+  public AbsoluteUnixPath getResourceExtractionPath() {
+    return getExtractionPath(LayerType.RESOURCES);
+  }
+
+  public AbsoluteUnixPath getClassExtractionPath() {
+    return getExtractionPath(LayerType.CLASSES);
+  }
+
+  public AbsoluteUnixPath getExtraFilesExtractionPath() {
+    return getExtractionPath(LayerType.EXTRA_FILES);
+  }
+
+  public AbsoluteUnixPath getExplodedWarExtractionPath() {
+    return getExtractionPath(LayerType.EXPLODED_WAR);
+  }
+
+  private ImmutableList<LayerEntry> getLayerEntries(LayerType layerType) {
+    return Preconditions.checkNotNull(layerConfigurationMap.get(layerType)).getLayerEntries();
+  }
+
+  private AbsoluteUnixPath getExtractionPath(LayerType layerType) {
+    return Preconditions.checkNotNull(extractionPathMap.get(layerType));
   }
 }

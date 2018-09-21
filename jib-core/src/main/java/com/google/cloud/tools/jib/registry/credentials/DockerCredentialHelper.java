@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC. All rights reserved.
+ * Copyright 2017 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -119,7 +119,7 @@ public class DockerCredentialHelper {
                 credentialHelper, serverUrl, output);
           }
 
-          return new Credential(dockerCredentials.Username, dockerCredentials.Secret);
+          return Credential.basic(dockerCredentials.Username, dockerCredentials.Secret);
 
         } catch (JsonProcessingException ex) {
           throw new CredentialHelperUnhandledServerUrlException(

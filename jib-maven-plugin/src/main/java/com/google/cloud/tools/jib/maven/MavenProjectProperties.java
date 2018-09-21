@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.JibLogger;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.MainClassResolver;
@@ -32,24 +33,36 @@ import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 
 /** Obtains information about a {@link MavenProject}. */
-class MavenProjectProperties implements ProjectProperties {
+public class MavenProjectProperties implements ProjectProperties {
 
-  private static final String PLUGIN_NAME = "jib-maven-plugin";
+  /** Used for logging during main class inference and analysis of user configuration. */
+  public static final String PLUGIN_NAME = "jib-maven-plugin";
+
+  /** Used to identify this plugin when interacting with the maven system. */
+  public static final String PLUGIN_KEY = "com.google.cloud.tools:" + PLUGIN_NAME;
+
+  /** Used to generate the User-Agent header and history metadata. */
+  static final String TOOL_NAME = "jib-maven-plugin";
+
+  /** Used for logging during main class inference. */
   private static final String JAR_PLUGIN_NAME = "'maven-jar-plugin'";
 
   /**
    * @param project the {@link MavenProject} for the plugin.
-   * @param mavenJibLogger the logger used for printing status messages.
+   * @param logger the logger used for printing status messages.
    * @param extraDirectory path to the directory for the extra files layer
+   * @param appRoot root directory in the image where the app will be placed
    * @return a MavenProjectProperties from the given project and logger.
    * @throws MojoExecutionException if no class files are found in the output directory.
    */
   static MavenProjectProperties getForProject(
-      MavenProject project, MavenJibLogger mavenJibLogger, Path extraDirectory)
+      MavenProject project, MavenJibLogger logger, Path extraDirectory, AbsoluteUnixPath appRoot)
       throws MojoExecutionException {
     try {
       return new MavenProjectProperties(
-          project, mavenJibLogger, MavenLayerConfigurations.getForProject(project, extraDirectory));
+          project,
+          logger,
+          MavenLayerConfigurations.getForProject(project, extraDirectory, appRoot));
     } catch (IOException ex) {
       throw new MojoExecutionException(
           "Obtaining project build output files failed; make sure you have compiled your project "
@@ -122,6 +135,11 @@ class MavenProjectProperties implements ProjectProperties {
   @Override
   public String getJarPluginName() {
     return JAR_PLUGIN_NAME;
+  }
+
+  @Override
+  public boolean isWarProject() {
+    return false; // TODO: to be implemented. For now, assume false.
   }
 
   /**

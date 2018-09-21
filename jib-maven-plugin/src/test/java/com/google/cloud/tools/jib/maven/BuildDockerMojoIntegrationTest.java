@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -42,6 +42,9 @@ public class BuildDockerMojoIntegrationTest {
   public static final TestProject defaultTargetTestProject =
       new TestProject(testPlugin, "default-target");
 
+  @ClassRule
+  public static final TestProject skippedTestProject = new TestProject(testPlugin, "empty");
+
   /**
    * Builds and runs jib:buildDocker on a project at {@code projectRoot} pushing to {@code
    * imageReference}.
@@ -73,7 +76,7 @@ public class BuildDockerMojoIntegrationTest {
                 + "                \"key1\": \"value1\",\n"
                 + "                \"key2\": \"value2\"\n"
                 + "            }"));
-    return new Command("docker", "run", imageReference).run();
+    return new Command("docker", "run", "--rm", imageReference).run();
   }
 
   @Test
@@ -109,5 +112,10 @@ public class BuildDockerMojoIntegrationTest {
         buildToDockerDaemonAndRun(
             defaultTargetTestProject.getProjectRoot(),
             "default-target-name:default-target-version"));
+  }
+
+  @Test
+  public void testExecute_skipJibGoal() throws VerificationException, IOException {
+    SkippedGoalVerifier.verifyGoalIsSkipped(skippedTestProject, BuildDockerMojo.GOAL_NAME);
   }
 }

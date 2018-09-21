@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -58,6 +58,7 @@ import org.gradle.api.tasks.Optional;
  *     args = ['arg1', 'arg2']
  *     exposedPorts = ['1000', '2000-2010', '3000']
  *     format = OCI
+ *     appRoot = "/app";
  *   }
  * }
  * }</pre>
@@ -227,6 +228,12 @@ public class JibExtension {
   @Optional
   List<String> getJvmFlags() {
     return container.getJvmFlags();
+  }
+
+  @Internal
+  @Optional
+  Map<String, String> getEnvironment() {
+    return container.getEnvironment();
   }
 
   // TODO: Make @Internal (deprecated)

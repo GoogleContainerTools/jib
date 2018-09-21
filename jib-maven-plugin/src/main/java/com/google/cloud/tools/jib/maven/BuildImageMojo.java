@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.ImageReference;
@@ -31,6 +32,7 @@ import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import java.util.Arrays;
+import java.util.Optional;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -48,6 +50,10 @@ public class BuildImageMojo extends JibPluginConfiguration {
 
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
+    if (isSkipped()) {
+      getLog().info("Skipping containerization because jib-maven-plugin: skip = true");
+      return;
+    }
     if ("pom".equals(getProject().getPackaging())) {
       getLog().info("Skipping containerization because packaging is 'pom'...");
       return;
@@ -76,8 +82,10 @@ public class BuildImageMojo extends JibPluginConfiguration {
     }
 
     MavenJibLogger mavenJibLogger = new MavenJibLogger(getLog());
+    AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(this);
     MavenProjectProperties mavenProjectProperties =
-        MavenProjectProperties.getForProject(getProject(), mavenJibLogger, getExtraDirectory());
+        MavenProjectProperties.getForProject(
+            getProject(), mavenJibLogger, getExtraDirectory(), appRoot);
 
     PluginConfigurationProcessor pluginConfigurationProcessor =
         PluginConfigurationProcessor.processCommonConfiguration(
@@ -89,21 +97,21 @@ public class BuildImageMojo extends JibPluginConfiguration {
     DefaultCredentialRetrievers defaultCredentialRetrievers =
         DefaultCredentialRetrievers.init(
             CredentialRetrieverFactory.forImage(targetImage, mavenJibLogger));
-    Credential toCredential =
+    Optional<Credential> optionalToCredential =
         ConfigurationPropertyValidator.getImageCredential(
             mavenJibLogger, "jib.to.auth.username", "jib.to.auth.password", getTargetImageAuth());
-    if (toCredential == null) {
-      toCredential =
+    if (optionalToCredential.isPresent()) {
+      defaultCredentialRetrievers.setKnownCredential(
+          optionalToCredential.get(), "jib-maven-plugin <to><auth> configuration");
+    } else {
+      optionalToCredential =
           pluginConfigurationProcessor
               .getMavenSettingsServerCredentials()
               .retrieve(targetImage.getRegistry());
-      if (toCredential != null) {
-        defaultCredentialRetrievers.setInferredCredential(
-            toCredential, MavenSettingsServerCredentials.CREDENTIAL_SOURCE);
-      }
-    } else {
-      defaultCredentialRetrievers.setKnownCredential(
-          toCredential, "jib-maven-plugin <to><auth> configuration");
+      optionalToCredential.ifPresent(
+          toCredential ->
+              defaultCredentialRetrievers.setInferredCredential(
+                  toCredential, MavenSettingsServerCredentials.CREDENTIAL_SOURCE));
     }
     defaultCredentialRetrievers.setCredentialHelperSuffix(getTargetImageCredentialHelperName());
 
@@ -127,9 +135,9 @@ public class BuildImageMojo extends JibPluginConfiguration {
         new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this)
             .setBaseImageReference(buildConfiguration.getBaseImageConfiguration().getImage())
             .setBaseImageHasConfiguredCredentials(
-                pluginConfigurationProcessor.getBaseImageCredential() != null)
+                pluginConfigurationProcessor.isBaseImageCredentialPresent())
             .setTargetImageReference(buildConfiguration.getTargetImageConfiguration().getImage())
-            .setTargetImageHasConfiguredCredentials(toCredential != null)
+            .setTargetImageHasConfiguredCredentials(optionalToCredential.isPresent())
             .build();
 
     try {

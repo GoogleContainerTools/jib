@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.cache.CacheReader;
 import com.google.cloud.tools.jib.cache.CachedLayerWithMetadata;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.ImageLayers;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
@@ -52,16 +53,26 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class BuildAndCacheApplicationLayerStepTest {
 
   // TODO: Consolidate with BuildStepsIntegrationTest.
-  private static final String EXTRACTION_PATH = "/some/extraction/path/";
+  private static final AbsoluteUnixPath EXTRACTION_PATH_ROOT =
+      AbsoluteUnixPath.get("/some/extraction/path/");
 
-  private static final String EXTRA_FILES_LAYER_EXTRACTION_PATH = "/extra";
+  private static final AbsoluteUnixPath EXTRA_FILES_LAYER_EXTRACTION_PATH =
+      AbsoluteUnixPath.get("/extra");
 
-  /** Lists the files in the {@code resourcePath} resources directory. */
-  private static ImmutableList<Path> getFilesList(String resourcePath)
-      throws URISyntaxException, IOException {
+  /**
+   * Lists the files in the {@code resourcePath} resources directory and creates a {@link
+   * LayerConfiguration} with entries from those files.
+   */
+  private static LayerConfiguration makeLayerConfiguration(
+      String resourcePath, AbsoluteUnixPath extractionPath) throws URISyntaxException, IOException {
     try (Stream<Path> fileStream =
         Files.list(Paths.get(Resources.getResource(resourcePath).toURI()))) {
-      return fileStream.collect(ImmutableList.toImmutableList());
+      LayerConfiguration.Builder layerConfigurationBuilder = LayerConfiguration.builder();
+      fileStream.forEach(
+          sourceFile ->
+              layerConfigurationBuilder.addEntry(
+                  sourceFile, extractionPath.resolve(sourceFile.getFileName())));
+      return layerConfigurationBuilder.build();
     }
   }
 
@@ -80,28 +91,22 @@ public class BuildAndCacheApplicationLayerStepTest {
   @Before
   public void setUp() throws IOException, URISyntaxException {
     fakeDependenciesLayerConfiguration =
-        LayerConfiguration.builder()
-            .addEntry(getFilesList("application/dependencies"), EXTRACTION_PATH + "libs/")
-            .build();
+        makeLayerConfiguration("application/dependencies", EXTRACTION_PATH_ROOT.resolve("libs"));
     fakeSnapshotDependenciesLayerConfiguration =
-        LayerConfiguration.builder()
-            .addEntry(getFilesList("application/snapshot-dependencies"), EXTRACTION_PATH + "libs/")
-            .build();
+        makeLayerConfiguration(
+            "application/snapshot-dependencies", EXTRACTION_PATH_ROOT.resolve("libs"));
     fakeResourcesLayerConfiguration =
-        LayerConfiguration.builder()
-            .addEntry(getFilesList("application/resources"), EXTRACTION_PATH + "resources/")
-            .build();
+        makeLayerConfiguration("application/resources", EXTRACTION_PATH_ROOT.resolve("resources"));
     fakeClassesLayerConfiguration =
-        LayerConfiguration.builder()
-            .addEntry(getFilesList("application/classes"), EXTRACTION_PATH + "classes/")
-            .build();
+        makeLayerConfiguration("application/classes", EXTRACTION_PATH_ROOT.resolve("classes"));
     fakeExtraFilesLayerConfiguration =
         LayerConfiguration.builder()
             .addEntry(
-                ImmutableList.of(
-                    Paths.get(Resources.getResource("fileA").toURI()),
-                    Paths.get(Resources.getResource("fileB").toURI())),
-                EXTRA_FILES_LAYER_EXTRACTION_PATH)
+                Paths.get(Resources.getResource("fileA").toURI()),
+                EXTRA_FILES_LAYER_EXTRACTION_PATH.resolve("fileA"))
+            .addEntry(
+                Paths.get(Resources.getResource("fileB").toURI()),
+                EXTRA_FILES_LAYER_EXTRACTION_PATH.resolve("fileB"))
             .build();
     emptyLayerConfiguration = LayerConfiguration.builder().build();
     Mockito.when(mockBuildConfiguration.getBuildLogger()).thenReturn(new TestJibLogger());
@@ -165,21 +170,34 @@ public class BuildAndCacheApplicationLayerStepTest {
     CacheReader cacheReader = new CacheReader(cache);
     Assert.assertEquals(
         applicationLayers.get(0).getBlobDescriptor(),
-        cacheReader.getUpToDateLayerByLayerEntries(dependenciesLayerEntries).getBlobDescriptor());
+        cacheReader
+            .getUpToDateLayerByLayerEntries(dependenciesLayerEntries)
+            .orElseThrow(AssertionError::new)
+            .getBlobDescriptor());
     Assert.assertEquals(
         applicationLayers.get(1).getBlobDescriptor(),
         cacheReader
             .getUpToDateLayerByLayerEntries(snapshotDependenciesLayerEntries)
+            .orElseThrow(AssertionError::new)
             .getBlobDescriptor());
     Assert.assertEquals(
         applicationLayers.get(2).getBlobDescriptor(),
-        cacheReader.getUpToDateLayerByLayerEntries(resourcesLayerEntries).getBlobDescriptor());
+        cacheReader
+            .getUpToDateLayerByLayerEntries(resourcesLayerEntries)
+            .orElseThrow(AssertionError::new)
+            .getBlobDescriptor());
     Assert.assertEquals(
         applicationLayers.get(3).getBlobDescriptor(),
-        cacheReader.getUpToDateLayerByLayerEntries(classesLayerEntries).getBlobDescriptor());
+        cacheReader
+            .getUpToDateLayerByLayerEntries(classesLayerEntries)
+            .orElseThrow(AssertionError::new)
+            .getBlobDescriptor());
     Assert.assertEquals(
         applicationLayers.get(4).getBlobDescriptor(),
-        cacheReader.getUpToDateLayerByLayerEntries(extraFilesLayerEntries).getBlobDescriptor());
+        cacheReader
+            .getUpToDateLayerByLayerEntries(extraFilesLayerEntries)
+            .orElseThrow(AssertionError::new)
+            .getBlobDescriptor());
 
     // Verifies that the cache reader gets the same layers as the newest application layers.
     Assert.assertEquals(
@@ -228,13 +246,22 @@ public class BuildAndCacheApplicationLayerStepTest {
     CacheReader cacheReader = new CacheReader(cache);
     Assert.assertEquals(
         applicationLayers.get(0).getBlobDescriptor(),
-        cacheReader.getUpToDateLayerByLayerEntries(dependenciesLayerEntries).getBlobDescriptor());
+        cacheReader
+            .getUpToDateLayerByLayerEntries(dependenciesLayerEntries)
+            .orElseThrow(AssertionError::new)
+            .getBlobDescriptor());
     Assert.assertEquals(
         applicationLayers.get(1).getBlobDescriptor(),
-        cacheReader.getUpToDateLayerByLayerEntries(resourcesLayerEntries).getBlobDescriptor());
+        cacheReader
+            .getUpToDateLayerByLayerEntries(resourcesLayerEntries)
+            .orElseThrow(AssertionError::new)
+            .getBlobDescriptor());
     Assert.assertEquals(
         applicationLayers.get(2).getBlobDescriptor(),
-        cacheReader.getUpToDateLayerByLayerEntries(classesLayerEntries).getBlobDescriptor());
+        cacheReader
+            .getUpToDateLayerByLayerEntries(classesLayerEntries)
+            .orElseThrow(AssertionError::new)
+            .getBlobDescriptor());
 
     // Verifies that the cache reader gets the same layers as the newest application layers.
     Assert.assertEquals(

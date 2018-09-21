@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -59,6 +59,14 @@ public class DefaultCacheEntry implements CacheEntry {
     public Builder setMetadataBlob(@Nullable Blob metadataBlob) {
       this.metadataBlob = metadataBlob;
       return this;
+    }
+
+    public boolean hasLayerBlob() {
+      return layerBlob != null;
+    }
+
+    public boolean hasMetadataBlob() {
+      return metadataBlob != null;
     }
 
     public CacheEntry build() {

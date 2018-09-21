@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,7 @@ import org.apache.maven.it.util.ResourceExtractor;
 import org.junit.rules.TemporaryFolder;
 
 /** Works with the test Maven projects in the {@code resources/projects} directory. */
-class TestProject extends TemporaryFolder implements Closeable {
+public class TestProject extends TemporaryFolder implements Closeable {
 
   private static final String PROJECTS_PATH_IN_RESOURCES = "/projects/";
 
@@ -36,7 +36,7 @@ class TestProject extends TemporaryFolder implements Closeable {
   private Path projectRoot;
 
   /** Initialize to a specific project directory. */
-  TestProject(TestPlugin testPlugin, String projectDir) {
+  public TestProject(TestPlugin testPlugin, String projectDir) {
     this(testPlugin, projectDir, "pom.xml");
   }
 
@@ -47,8 +47,9 @@ class TestProject extends TemporaryFolder implements Closeable {
     this.pomFilename = pomFilename;
   }
 
-  Path getProjectRoot() {
-    return projectRoot;
+  /** Get the project root resolved as a real path */
+  public Path getProjectRoot() throws IOException {
+    return projectRoot.toRealPath();
   }
 
   @Override

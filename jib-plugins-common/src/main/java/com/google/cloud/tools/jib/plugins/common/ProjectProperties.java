@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -40,4 +40,6 @@ public interface ProjectProperties {
   /** @return the name of the main class configured in a jar plugin, or null if none is found. */
   @Nullable
   String getMainClassFromJar();
+
+  boolean isWarProject();
 }

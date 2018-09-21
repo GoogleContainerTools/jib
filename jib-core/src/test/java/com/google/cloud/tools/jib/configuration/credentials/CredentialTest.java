@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,10 +27,10 @@ public class CredentialTest {
 
   @Test
   public void testCredentialsHash() {
-    Credential credentialA1 = new Credential("username", "password");
-    Credential credentialA2 = new Credential("username", "password");
-    Credential credentialB1 = new Credential("", "");
-    Credential credentialB2 = new Credential("", "");
+    Credential credentialA1 = Credential.basic("username", "password");
+    Credential credentialA2 = Credential.basic("username", "password");
+    Credential credentialB1 = Credential.basic("", "");
+    Credential credentialB2 = Credential.basic("", "");
 
     Assert.assertEquals(credentialA1, credentialA2);
     Assert.assertEquals(credentialB1, credentialB2);

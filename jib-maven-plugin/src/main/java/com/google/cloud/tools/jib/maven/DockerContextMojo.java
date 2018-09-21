@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,11 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaDockerContextGenerator;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
-import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
+import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -46,10 +47,15 @@ public class DockerContextMojo extends JibPluginConfiguration {
       property = "jibTargetDir",
       defaultValue = "${project.build.directory}/jib-docker-context",
       required = true)
-  private String targetDir;
+  @VisibleForTesting
+  String targetDir;
 
   @Override
   public void execute() throws MojoExecutionException {
+    if (isSkipped()) {
+      getLog().info("Skipping containerization because jib-maven-plugin: skip = true");
+      return;
+    }
     if ("pom".equals(getProject().getPackaging())) {
       getLog().info("Skipping containerization because packaging is 'pom'...");
       return;
@@ -57,17 +63,24 @@ public class DockerContextMojo extends JibPluginConfiguration {
 
     MavenJibLogger mavenJibLogger = new MavenJibLogger(getLog());
     handleDeprecatedParameters(mavenJibLogger);
-    ConfigurationPropertyValidator.checkHttpTimeoutProperty(MojoExecutionException::new);
+    try {
+      JibSystemProperties.checkHttpTimeoutProperty();
+    } catch (NumberFormatException ex) {
+      throw new MojoExecutionException(ex.getMessage(), ex);
+    }
 
     Preconditions.checkNotNull(targetDir);
 
+    AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(this);
     MavenProjectProperties mavenProjectProperties =
-        MavenProjectProperties.getForProject(getProject(), mavenJibLogger, getExtraDirectory());
+        MavenProjectProperties.getForProject(
+            getProject(), mavenJibLogger, getExtraDirectory(), appRoot);
 
     List<String> entrypoint = getEntrypoint();
     if (entrypoint.isEmpty()) {
       String mainClass = mavenProjectProperties.getMainClass(this);
-      entrypoint = JavaEntrypointConstructor.makeDefaultEntrypoint(getJvmFlags(), mainClass);
+      entrypoint =
+          JavaEntrypointConstructor.makeDefaultEntrypoint(appRoot, getJvmFlags(), mainClass);
     } else if (getMainClass() != null || !getJvmFlags().isEmpty()) {
       mavenJibLogger.warn("<mainClass> and <jvmFlags> are ignored when <entrypoint> is specified");
     }

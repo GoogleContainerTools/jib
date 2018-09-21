@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,8 +24,8 @@ import java.util.List;
  *
  * <p>Json fields should be private fields and fields that are {@code null} will not be serialized.
  */
-public interface ListOfJsonTemplate extends JsonTemplate {
+public interface ListOfJsonTemplate<T extends JsonTemplate> extends JsonTemplate {
 
   /** @return the JsonTemplate wrapped as a list. e.g.: [{"property":"value"}] */
-  List<JsonTemplate> getList();
+  List<T> getList();
 }

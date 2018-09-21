@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -60,6 +60,9 @@ public class BuildImageMojoIntegrationTest {
   public static final TestProject emptyTestProject = new TestProject(testPlugin, "empty");
 
   @ClassRule
+  public static final TestProject skippedTestProject = new TestProject(testPlugin, "empty");
+
+  @ClassRule
   public static final TestProject defaultTargetTestProject =
       new TestProject(testPlugin, "default-target");
 
@@ -97,7 +100,7 @@ public class BuildImageMojoIntegrationTest {
 
     new Command("docker", "pull", imageReference).run();
     assertDockerInspectParameters(imageReference);
-    return new Command("docker", "run", imageReference).run();
+    return new Command("docker", "run", "--rm", imageReference).run();
   }
 
   private static String buildAndRunComplex(
@@ -122,7 +125,7 @@ public class BuildImageMojoIntegrationTest {
         Instant.parse(
             new Command("docker", "inspect", "-f", "{{.Created}}", imageReference).run().trim());
     Assert.assertTrue(buildTime.isAfter(before) || buildTime.equals(before));
-    return new Command("docker", "run", imageReference).run();
+    return new Command("docker", "run", "--rm", imageReference).run();
   }
 
   private static void assertDockerInspectParameters(String imageReference)
@@ -235,7 +238,7 @@ public class BuildImageMojoIntegrationTest {
   }
 
   @Test
-  public void testExecute_defaultTarget() {
+  public void testExecute_defaultTarget() throws IOException {
     // Test error when 'to' is missing
     try {
       Verifier verifier = new Verifier(defaultTargetTestProject.getProjectRoot().toString());
@@ -258,7 +261,7 @@ public class BuildImageMojoIntegrationTest {
       throws IOException, InterruptedException, VerificationException {
     String targetImage = "localhost:6000/compleximage:maven" + System.nanoTime();
     Assert.assertEquals(
-        "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\n",
+        "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
         buildAndRunComplex(targetImage, "testuser2", "testpassword2", localRegistry2));
   }
 
@@ -267,7 +270,12 @@ public class BuildImageMojoIntegrationTest {
       throws IOException, InterruptedException, VerificationException {
     String targetImage = "localhost:5000/compleximage:maven" + System.nanoTime();
     Assert.assertEquals(
-        "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\n",
+        "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
         buildAndRunComplex(targetImage, "testuser", "testpassword", localRegistry1));
+  }
+
+  @Test
+  public void testExecute_skipJibGoal() throws VerificationException, IOException {
+    SkippedGoalVerifier.verifyGoalIsSkipped(skippedTestProject, BuildImageMojo.GOAL_NAME);
   }
 }

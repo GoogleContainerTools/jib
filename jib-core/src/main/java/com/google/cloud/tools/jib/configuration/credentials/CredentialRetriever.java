@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,7 @@
 package com.google.cloud.tools.jib.configuration.credentials;
 
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
-import javax.annotation.Nullable;
+import java.util.Optional;
 
 /** Retrieves credentials for a registry. */
 @FunctionalInterface
@@ -26,14 +26,13 @@ public interface CredentialRetriever {
   /**
    * Fetches the credentials. <b>Implementations must be thread-safe.</b>
    *
-   * <p>Implementations should return {@code null} if no credentials could be fetched with this
-   * {@link CredentialRetriever} (and so other credential retrieval methods may be tried), or throw
-   * an exception something went wrong when fetching the credentials.
+   * <p>Implementations should return {@link Optional#empty} if no credentials could be fetched with
+   * this {@link CredentialRetriever} (and so other credential retrieval methods may be tried), or
+   * throw an exception something went wrong when fetching the credentials.
    *
-   * @return the fetched credentials or {@code null} if no credentials could be fetched with this
-   *     provider
+   * @return the fetched credentials or {@link Optional#empty} if no credentials could be fetched
+   *     with this provider
    * @throws CredentialRetrievalException if the credential retrieval encountered an exception
    */
-  @Nullable
-  Credential retrieve() throws CredentialRetrievalException;
+  Optional<Credential> retrieve() throws CredentialRetrievalException;
 }

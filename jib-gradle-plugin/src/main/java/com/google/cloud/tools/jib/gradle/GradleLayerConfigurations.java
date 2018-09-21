@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google Inc.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import java.io.File;
 import java.io.IOException;
@@ -43,11 +45,16 @@ class GradleLayerConfigurations {
    * @param project the Gradle {@link Project}
    * @param gradleJibLogger the build logger for providing feedback about the resolution
    * @param extraDirectory path to the directory for the extra files layer
+   * @param appRoot root directory in the image where the app will be placed
    * @return a {@link JavaLayerConfigurations} for the layers for the Gradle {@link Project}
    * @throws IOException if an I/O exception occurred during resolution
    */
   static JavaLayerConfigurations getForProject(
-      Project project, GradleJibLogger gradleJibLogger, Path extraDirectory) throws IOException {
+      Project project,
+      GradleJibLogger gradleJibLogger,
+      Path extraDirectory,
+      AbsoluteUnixPath appRoot)
+      throws IOException {
     JavaPluginConvention javaPluginConvention =
         project.getConvention().getPlugin(JavaPluginConvention.class);
 
@@ -115,11 +122,19 @@ class GradleLayerConfigurations {
     Collections.sort(extraFiles);
 
     return JavaLayerConfigurations.builder()
-        .setDependenciesFiles(dependenciesFiles)
-        .setSnapshotDependenciesFiles(snapshotDependenciesFiles)
-        .setResourcesFiles(resourcesFiles)
-        .setClassesFiles(classesFiles)
-        .setExtraFiles(extraFiles)
+        .setDependencyFiles(
+            dependenciesFiles,
+            appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE))
+        .setSnapshotDependencyFiles(
+            snapshotDependenciesFiles,
+            appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE))
+        .setResourceFiles(
+            resourcesFiles,
+            appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE))
+        .setClassFiles(
+            classesFiles,
+            appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE))
+        .setExtraFiles(extraFiles, AbsoluteUnixPath.get("/"))
         .build();
   }
 

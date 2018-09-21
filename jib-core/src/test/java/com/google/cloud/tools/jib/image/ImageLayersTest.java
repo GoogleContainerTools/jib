@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC. All rights reserved.
+ * Copyright 2017 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -74,12 +74,37 @@ public class ImageLayersTest {
   }
 
   @Test
-  public void testAddLayer_sameAsLastLayer() throws LayerPropertyNotFoundException {
+  public void testAddLayer_maintainDuplicates() throws LayerPropertyNotFoundException {
+    // must maintain duplicate
+    List<Layer> expectedLayers =
+        Arrays.asList(
+            mockCachedLayer,
+            mockReferenceLayer,
+            mockDigestOnlyLayer,
+            mockUnwrittenLayer,
+            mockCachedLayer);
+
+    ImageLayers<Layer> imageLayers =
+        ImageLayers.builder()
+            .add(mockCachedLayer)
+            .add(mockReferenceLayer)
+            .add(mockDigestOnlyLayer)
+            .add(mockUnwrittenLayer)
+            .add(mockCachedLayer)
+            .build();
+
+    Assert.assertEquals(expectedLayers, imageLayers.getLayers());
+  }
+
+  @Test
+  public void testAddLayer_removeDuplicates() throws LayerPropertyNotFoundException {
+    // remove duplicates: last layer should be kept
     List<Layer> expectedLayers =
         Arrays.asList(mockReferenceLayer, mockDigestOnlyLayer, mockUnwrittenLayer, mockCachedLayer);
 
     ImageLayers<Layer> imageLayers =
         ImageLayers.builder()
+            .removeDuplicates()
             .add(mockCachedLayer)
             .add(mockReferenceLayer)
             .add(mockDigestOnlyLayer)

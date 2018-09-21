@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.cache;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.LayerEntry;
@@ -95,7 +96,8 @@ public class CacheWriterTest {
         .thenReturn(
             ImmutableList.of(
                 new LayerEntry(
-                    ImmutableList.of(Paths.get("some/source/file")), "/some/extraction/path")));
+                    Paths.get("/some/source/file"),
+                    AbsoluteUnixPath.get("/some/extraction/path"))));
 
     CachedLayerWithMetadata cachedLayerWithMetadata =
         cacheWriter.writeLayer(mockReproducibleLayerBuilder);
@@ -106,10 +108,10 @@ public class CacheWriterTest {
     Assert.assertNotNull(layerMetadata);
     Assert.assertEquals(1, layerMetadata.getEntries().size());
     Assert.assertEquals(
-        Collections.singletonList(Paths.get("some/source/file").toString()),
-        layerMetadata.getEntries().get(0).getSourceFilesStrings());
+        "/some/source/file", layerMetadata.getEntries().get(0).getAbsoluteSourceFileString());
     Assert.assertEquals(
-        "/some/extraction/path", layerMetadata.getEntries().get(0).getExtractionPath());
+        "/some/extraction/path",
+        layerMetadata.getEntries().get(0).getAbsoluteExtractionPathString());
 
     verifyCachedLayerIsExpected(getExpectedLayer(), cachedLayerWithMetadata);
   }
@@ -124,7 +126,8 @@ public class CacheWriterTest {
     ReproducibleLayerBuilder layerBuilder = Mockito.mock(ReproducibleLayerBuilder.class);
     Mockito.when(layerBuilder.build()).thenReturn(unwrittenLayer);
     LayerEntry layerEntry =
-        new LayerEntry(ImmutableList.of(Paths.get("some/source/file")), "/some/extraction/path");
+        new LayerEntry(
+            Paths.get("some/source/file"), AbsoluteUnixPath.get("/some/extraction/path"));
     Mockito.when(layerBuilder.getLayerEntries()).thenReturn(ImmutableList.of(layerEntry));
 
     cacheWriter.writeLayer(layerBuilder);
@@ -144,8 +147,13 @@ public class CacheWriterTest {
   }
 
   private long getTarGzModifiedTimeInCache() throws IOException {
-    try (Stream<Path> stream = Files.walk(temporaryCacheDirectory.getRoot().toPath())) {
-      return stream.filter(CacheWriterTest::isTarGz).findFirst().get().toFile().lastModified();
+    try (Stream<Path> fileStream = Files.walk(temporaryCacheDirectory.getRoot().toPath())) {
+      return fileStream
+          .filter(CacheWriterTest::isTarGz)
+          .findFirst()
+          .orElseThrow(AssertionError::new)
+          .toFile()
+          .lastModified();
     }
   }
 

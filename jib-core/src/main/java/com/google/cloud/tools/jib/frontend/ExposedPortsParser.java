@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.frontend;
 
 import com.google.cloud.tools.jib.configuration.Port;
-import com.google.cloud.tools.jib.configuration.Port.Protocol;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
@@ -66,7 +65,7 @@ public class ExposedPortsParser {
       if (!Strings.isNullOrEmpty(matcher.group(2))) {
         max = Integer.parseInt(matcher.group(2));
       }
-      Protocol protocol = Protocol.getFromString(matcher.group(3));
+      String protocol = matcher.group(3);
 
       // Error if configured as 'max-min' instead of 'min-max'
       if (min > max) {
@@ -81,7 +80,7 @@ public class ExposedPortsParser {
       }
 
       for (int portNumber = min; portNumber <= max; portNumber++) {
-        result.add(new Port(portNumber, protocol));
+        result.add(Port.parseProtocol(portNumber, protocol));
       }
     }
 

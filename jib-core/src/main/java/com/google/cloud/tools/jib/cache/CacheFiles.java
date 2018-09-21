@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC. All rights reserved.
+ * Copyright 2017 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,7 +23,7 @@ import java.nio.file.Path;
 class CacheFiles {
 
   /** Increment the version prefix when the metadata format changes. */
-  static final String METADATA_FILENAME = "metadata-v2.json";
+  static final String METADATA_FILENAME = "metadata-v3.json";
 
   private static final String LAYER_FILE_EXTENSION = ".tar.gz";
 

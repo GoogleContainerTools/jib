@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,10 +29,13 @@ import javax.annotation.Nullable;
 /** Immutable configuration options for the container. */
 public class ContainerConfiguration {
 
+  /** The default creation time of the container (constant to ensure reproducibility by default). */
+  public static final Instant DEFAULT_CREATION_TIME = Instant.EPOCH;
+
   /** Builder for instantiating a {@link ContainerConfiguration}. */
   public static class Builder {
 
-    private Instant creationTime = Instant.EPOCH;
+    private Instant creationTime = DEFAULT_CREATION_TIME;
     @Nullable private ImmutableList<String> entrypoint;
     @Nullable private ImmutableList<String> programArguments;
     @Nullable private ImmutableMap<String, String> environmentMap;

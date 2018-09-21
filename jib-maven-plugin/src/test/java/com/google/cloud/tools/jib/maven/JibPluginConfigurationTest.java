@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.JibLogger;
+import java.io.File;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import org.junit.Assert;
@@ -58,6 +59,7 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals(
         "<to><auth><password>",
         testPluginConfiguration.getTargetImageAuth().getPasswordPropertyDescriptor());
+    Assert.assertEquals("/app", testPluginConfiguration.getAppRoot());
   }
 
   @Test
@@ -69,7 +71,7 @@ public class JibPluginConfigurationTest {
     testPluginConfiguration.setMainClass("mainClass");
     testPluginConfiguration.setArgs(Arrays.asList("arg1", "arg2", "arg3"));
     testPluginConfiguration.setFormat("OCI");
-    testPluginConfiguration.setExtraDirectory("some/path");
+    testPluginConfiguration.setExtraDirectory(new File("some/path"));
 
     testPluginConfiguration.handleDeprecatedParameters(mockLogger);
 

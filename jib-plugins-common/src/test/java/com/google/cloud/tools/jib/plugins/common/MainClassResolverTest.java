@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,10 +17,13 @@
 package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.cloud.tools.jib.JibLogger;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -41,7 +44,7 @@ public class MainClassResolverTest {
   @Mock private ProjectProperties mockProjectProperties;
   @Mock private JavaLayerConfigurations mockJavaLayerConfigurations;
 
-  private final ImmutableList<Path> fakeClassesPath = ImmutableList.of(Paths.get("a/b/c"));
+  private final Path FAKE_CLASSES_PATH = Paths.get("a/b/c");
 
   @Before
   public void setup() {
@@ -64,8 +67,9 @@ public class MainClassResolverTest {
   @Test
   public void testResolveMainClass_notValid() throws MainClassInferenceException {
     Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("${start-class}");
-    Mockito.when(mockProjectProperties.getJavaLayerConfigurations().getClassesLayerEntry())
-        .thenReturn(new LayerEntry(fakeClassesPath, "ignored"));
+    Mockito.when(mockProjectProperties.getJavaLayerConfigurations().getClassLayerEntries())
+        .thenReturn(
+            ImmutableList.of(new LayerEntry(FAKE_CLASSES_PATH, AbsoluteUnixPath.get("/ignored"))));
     Assert.assertEquals(
         "${start-class}", MainClassResolver.resolveMainClass(null, mockProjectProperties));
     Mockito.verify(mockBuildLogger).warn("'mainClass' is not a valid Java class : ${start-class}");
@@ -73,40 +77,33 @@ public class MainClassResolverTest {
 
   @Test
   public void testResolveMainClass_multipleInferredWithBackup()
-      throws MainClassInferenceException, URISyntaxException {
+      throws MainClassInferenceException, URISyntaxException, IOException {
     Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("${start-class}");
-    Mockito.when(mockProjectProperties.getJavaLayerConfigurations().getClassesLayerEntry())
+    Mockito.when(mockProjectProperties.getJavaLayerConfigurations().getClassLayerEntries())
         .thenReturn(
-            new LayerEntry(
-                ImmutableList.of(
-                    Paths.get(Resources.getResource("class-finder-tests/multiple/multi").toURI()),
-                    Paths.get(
-                        Resources.getResource("class-finder-tests/multiple/HelloWorld.class")
-                            .toURI()),
-                    Paths.get(
-                        Resources.getResource("class-finder-tests/multiple/NotMain.class")
-                            .toURI())),
-                "ignored"));
+            new DirectoryWalker(
+                    Paths.get(Resources.getResource("class-finder-tests/multiple").toURI()))
+                .walk()
+                .stream()
+                .map(path -> new LayerEntry(path, AbsoluteUnixPath.get("/ignored")))
+                .collect(ImmutableList.toImmutableList()));
     Assert.assertEquals(
         "${start-class}", MainClassResolver.resolveMainClass(null, mockProjectProperties));
     Mockito.verify(mockBuildLogger).warn("'mainClass' is not a valid Java class : ${start-class}");
   }
 
   @Test
-  public void testResolveMainClass_multipleInferredWithoutBackup() throws URISyntaxException {
+  public void testResolveMainClass_multipleInferredWithoutBackup()
+      throws URISyntaxException, IOException {
     Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn(null);
-    Mockito.when(mockProjectProperties.getJavaLayerConfigurations().getClassesLayerEntry())
+    Mockito.when(mockProjectProperties.getJavaLayerConfigurations().getClassLayerEntries())
         .thenReturn(
-            new LayerEntry(
-                ImmutableList.of(
-                    Paths.get(Resources.getResource("class-finder-tests/multiple/multi").toURI()),
-                    Paths.get(
-                        Resources.getResource("class-finder-tests/multiple/HelloWorld.class")
-                            .toURI()),
-                    Paths.get(
-                        Resources.getResource("class-finder-tests/multiple/NotMain.class")
-                            .toURI())),
-                "ignored"));
+            new DirectoryWalker(
+                    Paths.get(Resources.getResource("class-finder-tests/multiple").toURI()))
+                .walk()
+                .stream()
+                .map(path -> new LayerEntry(path, AbsoluteUnixPath.get("/ignored")))
+                .collect(ImmutableList.toImmutableList()));
     try {
       MainClassResolver.resolveMainClass(null, mockProjectProperties);
       Assert.fail();
@@ -122,8 +119,10 @@ public class MainClassResolverTest {
   @Test
   public void testResolveMainClass_noneInferredWithBackup() throws MainClassInferenceException {
     Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("${start-class}");
-    Mockito.when(mockProjectProperties.getJavaLayerConfigurations().getClassesLayerEntry())
-        .thenReturn(new LayerEntry(ImmutableList.of(), "ignored"));
+    Mockito.when(mockProjectProperties.getJavaLayerConfigurations().getClassLayerEntries())
+        .thenReturn(
+            ImmutableList.of(
+                new LayerEntry(Paths.get("ignored"), AbsoluteUnixPath.get("/ignored"))));
     Assert.assertEquals(
         "${start-class}", MainClassResolver.resolveMainClass(null, mockProjectProperties));
     Mockito.verify(mockBuildLogger).warn("'mainClass' is not a valid Java class : ${start-class}");
@@ -131,8 +130,10 @@ public class MainClassResolverTest {
 
   @Test
   public void testResolveMainClass_noneInferredWithoutBackup() {
-    Mockito.when(mockJavaLayerConfigurations.getClassesLayerEntry())
-        .thenReturn(new LayerEntry(ImmutableList.of(), "ignored"));
+    Mockito.when(mockJavaLayerConfigurations.getClassLayerEntries())
+        .thenReturn(
+            ImmutableList.of(
+                new LayerEntry(Paths.get("ignored"), AbsoluteUnixPath.get("/ignored"))));
     try {
       MainClassResolver.resolveMainClass(null, mockProjectProperties);
       Assert.fail();

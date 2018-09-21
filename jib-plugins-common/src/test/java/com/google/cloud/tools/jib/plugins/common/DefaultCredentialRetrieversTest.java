@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -40,8 +40,8 @@ public class DefaultCredentialRetrieversTest {
   @Mock private CredentialRetriever mockInferCredentialHelperCredentialRetriever;
   @Mock private CredentialRetriever mockDockerConfigCredentialRetriever;
 
-  private final Credential knownCredential = new Credential("username", "password");
-  private final Credential inferredCredential = new Credential("username2", "password2");
+  private final Credential knownCredential = Credential.basic("username", "password");
+  private final Credential inferredCredential = Credential.basic("username2", "password2");
 
   @Before
   public void setUp() {

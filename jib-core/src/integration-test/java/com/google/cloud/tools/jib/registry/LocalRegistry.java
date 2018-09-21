@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,9 @@ package com.google.cloud.tools.jib.registry;
 
 import com.google.cloud.tools.jib.Command;
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -53,20 +56,14 @@ public class LocalRegistry extends ExternalResource {
     ArrayList<String> dockerTokens =
         new ArrayList<>(
             Arrays.asList(
-                "docker",
-                "run",
-                "-d",
-                "-p",
-                port + ":5000",
-                "--restart=always",
-                "--name",
-                containerName));
+                "docker", "run", "--rm", "-d", "-p", port + ":5000", "--name", containerName));
     if (username != null && password != null) {
       // Generate the htpasswd file to store credentials
       String credentialString =
           new Command(
                   "docker",
                   "run",
+                  "--rm",
                   "--entrypoint",
                   "htpasswd",
                   "registry:2",
@@ -96,6 +93,7 @@ public class LocalRegistry extends ExternalResource {
     }
     dockerTokens.add("registry:2");
     new Command(dockerTokens).run();
+    waitUntilReady();
   }
 
   @Override
@@ -103,7 +101,6 @@ public class LocalRegistry extends ExternalResource {
     try {
       logout();
       new Command("docker", "stop", containerName).run();
-      new Command("docker", "rm", "-v", containerName).run();
 
     } catch (InterruptedException | IOException ex) {
       throw new RuntimeException("Could not stop local registry fully: " + containerName, ex);
@@ -141,13 +138,30 @@ public class LocalRegistry extends ExternalResource {
 
   private void login() throws IOException, InterruptedException {
     if (username != null && password != null) {
-      new Command("docker", "login", "localhost:" + port, "-u", username, "-p", password).run();
+      new Command("docker", "login", "localhost:" + port, "-u", username, "--password-stdin")
+          .run(password.getBytes(StandardCharsets.UTF_8));
     }
   }
 
   private void logout() throws IOException, InterruptedException {
     if (username != null && password != null) {
       new Command("docker", "logout", "localhost:" + port).run();
+    }
+  }
+
+  private void waitUntilReady() throws InterruptedException, MalformedURLException {
+    URL queryUrl = new URL("http://localhost:" + port + "/v2/_catalog");
+
+    for (int i = 0; i < 40; i++) {
+      try {
+        HttpURLConnection connection = (HttpURLConnection) queryUrl.openConnection();
+        int code = connection.getResponseCode();
+        if (code == HttpURLConnection.HTTP_OK || code == HttpURLConnection.HTTP_UNAUTHORIZED) {
+          return;
+        }
+      } catch (IOException ex) {
+      }
+      Thread.sleep(250);
     }
   }
 }

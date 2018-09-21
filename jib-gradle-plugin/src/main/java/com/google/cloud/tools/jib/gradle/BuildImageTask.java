@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
@@ -30,6 +31,7 @@ import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.util.Optional;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -38,7 +40,7 @@ import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.options.Option;
 
 /** Builds a container image. */
-public class BuildImageTask extends DefaultTask {
+public class BuildImageTask extends DefaultTask implements JibTask {
 
   private static final String HELPFUL_SUGGESTIONS_PREFIX = "Build image failed";
 
@@ -71,9 +73,10 @@ public class BuildImageTask extends DefaultTask {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
     GradleJibLogger gradleJibLogger = new GradleJibLogger(getLogger());
+    AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(
-            getProject(), gradleJibLogger, jibExtension.getExtraDirectoryPath());
+            getProject(), gradleJibLogger, jibExtension.getExtraDirectoryPath(), appRoot);
 
     if (Strings.isNullOrEmpty(jibExtension.getTargetImage())) {
       throw new GradleException(
@@ -89,15 +92,15 @@ public class BuildImageTask extends DefaultTask {
     DefaultCredentialRetrievers defaultCredentialRetrievers =
         DefaultCredentialRetrievers.init(
             CredentialRetrieverFactory.forImage(targetImage, gradleJibLogger));
-    Credential toCredential =
+    Optional<Credential> optionalToCredential =
         ConfigurationPropertyValidator.getImageCredential(
             gradleJibLogger,
             "jib.to.auth.username",
             "jib.to.auth.password",
             jibExtension.getTo().getAuth());
-    if (toCredential != null) {
-      defaultCredentialRetrievers.setKnownCredential(toCredential, "jib.to.auth");
-    }
+    optionalToCredential.ifPresent(
+        toCredential ->
+            defaultCredentialRetrievers.setKnownCredential(toCredential, "jib.to.auth"));
     defaultCredentialRetrievers.setCredentialHelperSuffix(jibExtension.getTo().getCredHelper());
 
     ImageConfiguration targetImageConfiguration =
@@ -124,9 +127,9 @@ public class BuildImageTask extends DefaultTask {
         new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension)
             .setBaseImageReference(buildConfiguration.getBaseImageConfiguration().getImage())
             .setBaseImageHasConfiguredCredentials(
-                pluginConfigurationProcessor.getBaseImageCredential() != null)
+                pluginConfigurationProcessor.isBaseImageCredentialPresent())
             .setTargetImageReference(buildConfiguration.getTargetImageConfiguration().getImage())
-            .setTargetImageHasConfiguredCredentials(toCredential != null)
+            .setTargetImageHasConfiguredCredentials(optionalToCredential.isPresent())
             .build();
 
     try {
@@ -137,7 +140,8 @@ public class BuildImageTask extends DefaultTask {
     }
   }
 
-  BuildImageTask setJibExtension(JibExtension jibExtension) {
+  @Override
+  public BuildImageTask setJibExtension(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
     return this;
   }

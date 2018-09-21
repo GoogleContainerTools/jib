@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,7 +28,7 @@ import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.junit.rules.ExternalResource;
 
 /** Sets up the plugin for testing. */
-class TestPlugin extends ExternalResource {
+public class TestPlugin extends ExternalResource {
 
   private String pluginVersion;
 
@@ -42,6 +42,8 @@ class TestPlugin extends ExternalResource {
     Verifier verifier = new Verifier(".", true);
     verifier.setAutoclean(false);
     verifier.addCliOption("-DskipTests");
+    verifier.addCliOption("-Dfmt.skip");
+    verifier.addCliOption("-Dcheckstyle.skip");
     verifier.executeGoal("install");
 
     // Reads the project version.

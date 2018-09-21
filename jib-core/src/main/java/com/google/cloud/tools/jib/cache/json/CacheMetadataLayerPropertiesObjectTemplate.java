@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC. All rights reserved.
+ * Copyright 2017 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,27 +31,28 @@ public class CacheMetadataLayerPropertiesObjectTemplate implements JsonTemplate 
   /** Represents a pair of source files and extraction path. */
   public static class LayerEntryTemplate implements JsonTemplate {
 
-    /** The paths to the source files that the layer was constructed from. */
-    @Nullable private List<String> sourceFiles;
+    /** The path to the source file for this layer entry. */
+    @Nullable private String sourceFile;
 
-    /** The intended path to extract the source files to in the container. */
+    /** The intended path to extract the source file to in the container. */
     @Nullable private String extractionPath;
 
     @Nullable
-    public List<String> getSourceFiles() {
-      return sourceFiles;
+    public String getSourceFileString() {
+      return sourceFile;
     }
 
     @Nullable
-    public String getExtractionPath() {
+    public String getExtractionPathString() {
       return extractionPath;
     }
 
-    public LayerEntryTemplate(List<String> sourceFiles, String extractionPath) {
-      this.sourceFiles = sourceFiles;
-      this.extractionPath = extractionPath;
+    public LayerEntryTemplate(String absoluteSourceFile, String absoluteExtractionPath) {
+      sourceFile = absoluteSourceFile;
+      extractionPath = absoluteExtractionPath;
     }
 
+    /** For Jackson JSON templating. */
     public LayerEntryTemplate() {}
   }
 

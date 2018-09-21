@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,12 +17,13 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.JibLogger;
+import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.io.File;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -79,8 +80,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     }
 
     private void setPropertyDescriptors(String descriptorPrefix) {
-      this.usernameDescriptor = descriptorPrefix + "<username>";
-      this.passwordDescriptor = descriptorPrefix + "<password>";
+      usernameDescriptor = descriptorPrefix + "<username>";
+      passwordDescriptor = descriptorPrefix + "<password>";
     }
   }
 
@@ -122,6 +123,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Parameter private List<String> jvmFlags = Collections.emptyList();
 
+    @Parameter private Map<String, String> environment = Collections.emptyMap();
+
     @Nullable @Parameter private String mainClass;
 
     @Parameter private List<String> args = Collections.emptyList();
@@ -133,6 +136,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     @Parameter private List<String> ports = Collections.emptyList();
 
     @Parameter private Map<String, String> labels = Collections.emptyMap();
+
+    @Parameter private String appRoot = JavaLayerConfigurations.DEFAULT_APP_ROOT;
   }
 
   @Nullable
@@ -152,8 +157,6 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
   @Deprecated @Parameter private List<String> jvmFlags = Collections.emptyList();
 
-  @Nullable @Parameter private Map<String, String> environment;
-
   @Deprecated @Nullable @Parameter private String mainClass;
 
   @Deprecated @Parameter private List<String> args = Collections.emptyList();
@@ -166,9 +169,13 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   @Parameter(defaultValue = "false", required = true)
   private boolean allowInsecureRegistries;
 
+  // this parameter is cloned in FilesMojo
   @Nullable
   @Parameter(defaultValue = "${project.basedir}/src/main/jib", required = true)
-  private String extraDirectory;
+  private File extraDirectory;
+
+  @Parameter(defaultValue = "false", property = "jib.skip")
+  private boolean skip;
 
   @Nullable @Component protected SettingsDecrypter settingsDecrypter;
 
@@ -265,7 +272,7 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
   @Nullable
   Map<String, String> getEnvironment() {
-    return environment;
+    return container.environment;
   }
 
   @Nullable
@@ -285,6 +292,10 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     return container.labels;
   }
 
+  String getAppRoot() {
+    return container.appRoot;
+  }
+
   String getFormat() {
     return Preconditions.checkNotNull(container.format);
   }
@@ -299,7 +310,11 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
   Path getExtraDirectory() {
     // TODO: Should inform user about nonexistent directory if using custom directory.
-    return Paths.get(Preconditions.checkNotNull(extraDirectory));
+    return Preconditions.checkNotNull(extraDirectory).toPath();
+  }
+
+  boolean isSkipped() {
+    return skip;
   }
 
   SettingsDecrypter getSettingsDecrypter() {
@@ -332,7 +347,7 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   }
 
   @VisibleForTesting
-  void setExtraDirectory(String extraDirectory) {
+  void setExtraDirectory(File extraDirectory) {
     this.extraDirectory = extraDirectory;
   }
 }

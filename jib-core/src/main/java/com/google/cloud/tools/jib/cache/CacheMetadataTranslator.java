@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC. All rights reserved.
+ * Copyright 2017 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,12 +21,13 @@ import com.google.cloud.tools.jib.cache.json.CacheMetadataLayerObjectTemplate;
 import com.google.cloud.tools.jib.cache.json.CacheMetadataLayerPropertiesObjectTemplate;
 import com.google.cloud.tools.jib.cache.json.CacheMetadataLayerPropertiesObjectTemplate.LayerEntryTemplate;
 import com.google.cloud.tools.jib.cache.json.CacheMetadataTemplate;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /** Translates {@link CacheMetadata} to and from {@link CacheMetadataTemplate}. */
 public class CacheMetadataTranslator {
@@ -58,19 +59,15 @@ public class CacheMetadataTranslator {
             ImmutableList.builderWithExpectedSize(
                 propertiesObjectTemplate.getLayerEntries().size());
         for (LayerEntryTemplate layerEntryTemplate : propertiesObjectTemplate.getLayerEntries()) {
-          if (layerEntryTemplate.getSourceFiles() == null
-              || layerEntryTemplate.getExtractionPath() == null) {
+          if (layerEntryTemplate.getSourceFileString() == null
+              || layerEntryTemplate.getExtractionPathString() == null) {
             throw new CacheMetadataCorruptedException(
                 "Cannot translate cache metadata layer entry without source files or extraction path");
           }
           layerEntries.add(
               new LayerEntry(
-                  layerEntryTemplate
-                      .getSourceFiles()
-                      .stream()
-                      .map(Paths::get)
-                      .collect(ImmutableList.toImmutableList()),
-                  layerEntryTemplate.getExtractionPath()));
+                  Paths.get(layerEntryTemplate.getSourceFileString()),
+                  AbsoluteUnixPath.get(layerEntryTemplate.getExtractionPathString())));
         }
 
         layerMetadata =
@@ -105,17 +102,15 @@ public class CacheMetadataTranslator {
 
       if (cachedLayerWithMetadata.getMetadata() != null) {
         // Constructs the layer entry templates to add to the layer object template.
-        List<LayerEntryTemplate> layerEntryTemplates =
-            cachedLayerWithMetadata
-                .getMetadata()
-                .getEntries()
-                .stream()
-                .map(
-                    layerMetadataEntry ->
-                        new LayerEntryTemplate(
-                            layerMetadataEntry.getSourceFilesStrings(),
-                            layerMetadataEntry.getExtractionPath()))
-                .collect(Collectors.toList());
+        ImmutableList<LayerMetadata.LayerMetadataEntry> metadataEntries =
+            cachedLayerWithMetadata.getMetadata().getEntries();
+        List<LayerEntryTemplate> layerEntryTemplates = new ArrayList<>(metadataEntries.size());
+        for (LayerMetadata.LayerMetadataEntry metadataEntry : metadataEntries) {
+          layerEntryTemplates.add(
+              new LayerEntryTemplate(
+                  metadataEntry.getAbsoluteSourceFileString(),
+                  metadataEntry.getAbsoluteExtractionPathString()));
+        }
 
         layerObjectTemplate.setProperties(
             new CacheMetadataLayerPropertiesObjectTemplate()

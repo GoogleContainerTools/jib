@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.frontend;
 
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.filesystem.RelativeUnixPath;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -23,18 +25,34 @@ import java.util.List;
 /** Constructs an image entrypoint for the Java application. */
 public class JavaEntrypointConstructor {
 
-  public static final String DEFAULT_RESOURCES_PATH_ON_IMAGE = "/app/resources/";
-  public static final String DEFAULT_CLASSES_PATH_ON_IMAGE = "/app/classes/";
-  public static final String DEFAULT_DEPENDENCIES_PATH_ON_IMAGE = "/app/libs/";
+  public static final RelativeUnixPath DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE =
+      RelativeUnixPath.get("resources");
+  public static final RelativeUnixPath DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE =
+      RelativeUnixPath.get("classes");
+  public static final RelativeUnixPath DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE =
+      RelativeUnixPath.get("libs");
 
-  public static List<String> makeDefaultEntrypoint(List<String> jvmFlags, String mainClass) {
+  public static List<String> makeDefaultEntrypoint(
+      AbsoluteUnixPath appRoot, List<String> jvmFlags, String mainClass) {
     return makeEntrypoint(
         Arrays.asList(
-            DEFAULT_RESOURCES_PATH_ON_IMAGE,
-            DEFAULT_CLASSES_PATH_ON_IMAGE,
-            DEFAULT_DEPENDENCIES_PATH_ON_IMAGE + "*"),
+            appRoot.resolve(DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE).toString(),
+            appRoot.resolve(DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE).toString(),
+            appRoot.resolve(DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE).resolve("*").toString()),
         jvmFlags,
         mainClass);
+  }
+
+  /**
+   * Constructs the container entrypoint for the gcr.io/distroless/jetty base image.
+   *
+   * @return ["java", "-jar", "/jetty/start.jar"]
+   * @see <a href="https://github.com/GoogleContainerTools/distroless/blob/master/java/jetty/BUILD">
+   *     https://github.com/GoogleContainerTools/distroless/blob/master/java/jetty/BUILD</a>
+   */
+  // TODO: inherit CMD and ENTRYPOINT from the base image and remove this.
+  public static List<String> makeDistrolessJettyEntrypoint() {
+    return Arrays.asList("java", "-jar", "/jetty/start.jar");
   }
 
   /**

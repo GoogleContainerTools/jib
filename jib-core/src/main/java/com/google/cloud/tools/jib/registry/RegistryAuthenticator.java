@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC. All rights reserved.
+ * Copyright 2017 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.registry;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.http.Connection;
@@ -87,7 +88,10 @@ public class RegistryAuthenticator {
             .getRegistryAuthenticator();
 
       } catch (MalformedURLException ex) {
-        throw new RegistryAuthenticationFailedException(ex);
+        throw new RegistryAuthenticationFailedException(
+            registryEndpointRequestProperties.getServerUrl(),
+            registryEndpointRequestProperties.getImageName(),
+            ex);
 
       } catch (InsecureRegistryException ex) {
         // Cannot skip certificate validation or use HTTP, so just return null.
@@ -137,13 +141,21 @@ public class RegistryAuthenticator {
 
     // Checks that the authentication method starts with 'bearer ' (case insensitive).
     if (!authenticationMethod.matches("^(?i)(bearer) .*")) {
-      throw newRegistryAuthenticationFailedException(authenticationMethod, "Bearer");
+      throw newRegistryAuthenticationFailedException(
+          registryEndpointRequestProperties.getServerUrl(),
+          registryEndpointRequestProperties.getImageName(),
+          authenticationMethod,
+          "Bearer");
     }
 
     Pattern realmPattern = Pattern.compile("realm=\"(.*?)\"");
     Matcher realmMatcher = realmPattern.matcher(authenticationMethod);
     if (!realmMatcher.find()) {
-      throw newRegistryAuthenticationFailedException(authenticationMethod, "realm");
+      throw newRegistryAuthenticationFailedException(
+          registryEndpointRequestProperties.getServerUrl(),
+          registryEndpointRequestProperties.getImageName(),
+          authenticationMethod,
+          "realm");
     }
     String realm = realmMatcher.group(1);
 
@@ -163,8 +175,10 @@ public class RegistryAuthenticator {
   }
 
   private static RegistryAuthenticationFailedException newRegistryAuthenticationFailedException(
-      String authenticationMethod, String authParam) {
+      String registry, String repository, String authenticationMethod, String authParam) {
     return new RegistryAuthenticationFailedException(
+        registry,
+        repository,
         "'"
             + authParam
             + "' was not found in the 'WWW-Authenticate' header, tried to parse: "
@@ -199,6 +213,7 @@ public class RegistryAuthenticator {
   private final String service;
   private final String repository;
   private final String[] dependentRepositories;
+  // private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   @Nullable private Authorization authorization;
 
   RegistryAuthenticator(
@@ -207,6 +222,7 @@ public class RegistryAuthenticator {
     this.service = service;
     this.repository = repository;
     this.dependentRepositories = dependentRepositories;
+    // this.registryEndpointRequestProperties = registryEndpointRequestProperties;
   }
 
   /**
@@ -267,7 +283,7 @@ public class RegistryAuthenticator {
 
       try (Connection connection = Connection.getConnectionFactory().apply(authenticationUrl)) {
         Request.Builder requestBuilder =
-            Request.builder().setHttpTimeout(Integer.getInteger("jib.httpTimeout"));
+            Request.builder().setHttpTimeout(JibSystemProperties.getHttpTimeout());
         if (authorization != null) {
           requestBuilder.setAuthorization(authorization);
         }
@@ -278,13 +294,15 @@ public class RegistryAuthenticator {
             JsonTemplateMapper.readJson(responseString, AuthenticationResponseTemplate.class);
         if (responseJson.getToken() == null) {
           throw new RegistryAuthenticationFailedException(
+              service,
+              repository,
               "Did not get token in authentication response from " + authenticationUrl);
         }
         return Authorizations.withBearerToken(responseJson.getToken());
       }
 
     } catch (IOException ex) {
-      throw new RegistryAuthenticationFailedException(ex);
+      throw new RegistryAuthenticationFailedException(service, repository, ex);
     }
   }
 }

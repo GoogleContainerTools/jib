@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.docker;
 
 import com.google.cloud.tools.jib.blob.Blob;
+import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.CharStreams;
 import java.io.IOException;
@@ -111,6 +112,32 @@ public class DockerClient {
       }
 
       return output;
+    }
+  }
+
+  /**
+   * Tags the image referenced by {@code originalImageReference} with a new image reference {@code
+   * newImageReference}.
+   *
+   * @param originalImageReference the existing image reference on the Docker daemon
+   * @param newImageReference the new image reference
+   * @see <a
+   *     href="https://docs.docker.com/engine/reference/commandline/tag/">https://docs.docker.com/engine/reference/commandline/tag/</a>
+   * @throws InterruptedException if the 'docker tag' process is interrupted.
+   * @throws IOException if an I/O exception occurs or {@code docker tag} failed
+   */
+  public void tag(ImageReference originalImageReference, ImageReference newImageReference)
+      throws IOException, InterruptedException {
+    // Runs 'docker tag'.
+    Process dockerProcess =
+        docker("tag", originalImageReference.toString(), newImageReference.toString());
+
+    if (dockerProcess.waitFor() != 0) {
+      try (InputStreamReader stderr =
+          new InputStreamReader(dockerProcess.getErrorStream(), StandardCharsets.UTF_8)) {
+        throw new IOException(
+            "'docker tag' command failed with error: " + CharStreams.toString(stderr));
+      }
     }
   }
 

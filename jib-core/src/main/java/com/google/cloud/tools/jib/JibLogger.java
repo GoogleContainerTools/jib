@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib;
 
+/** Logging interface for logging messages during Jib execution. */
 public interface JibLogger {
 
   void error(CharSequence message);
