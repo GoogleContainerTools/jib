@@ -19,9 +19,9 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
+import com.google.cloud.tools.jib.builder.MountFromSupport;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
-import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
@@ -31,6 +31,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
@@ -88,22 +89,14 @@ class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authori
 
       // If target is colocated with base, request permission for both so as to allow using
       // mount/from
-      String[] dependentRepositories = new String[0];
-      if (JibSystemProperties.isMountFromEnabled()
-          && buildConfiguration
-              .getBaseImageConfiguration()
-              .getImageRegistry()
-              .equals(buildConfiguration.getTargetImageConfiguration().getImageRegistry())) {
-        dependentRepositories =
-            new String[] {buildConfiguration.getBaseImageConfiguration().getImageRepository()};
-      }
+      Optional<String> mountFrom = MountFromSupport.getMountFrom(buildConfiguration);
 
       RegistryAuthenticator registryAuthenticator =
           RegistryAuthenticator.initializer(
                   buildConfiguration.getBuildLogger(),
                   buildConfiguration.getTargetImageConfiguration().getImageRegistry(),
                   buildConfiguration.getTargetImageConfiguration().getImageRepository(),
-                  dependentRepositories)
+                  mountFrom.orElse(null))
               .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
               .initialize();
       if (registryAuthenticator == null) {

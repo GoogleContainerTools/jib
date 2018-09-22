@@ -26,13 +26,14 @@ class RegistryEndpointRequestProperties {
   /**
    * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
    * @param imageName the image/repository name (also known as, namespace)
-   * @param dependentImageNames any additional images required for access
+   * @param dependentImageNames any additional images required for access; may be {@code null} or
+   *     empty
    */
   RegistryEndpointRequestProperties(
       String serverUrl, String imageName, String... dependentImageNames) {
     this.serverUrl = serverUrl;
     this.imageName = imageName;
-    this.dependentImageNames = dependentImageNames;
+    this.dependentImageNames = dependentImageNames != null ? dependentImageNames : new String[0];
   }
 
   String getServerUrl() {
@@ -43,6 +44,7 @@ class RegistryEndpointRequestProperties {
     return imageName;
   }
 
+  /** @return dependent image names; never {@code null} */
   String[] getDependentImageNames() {
     return dependentImageNames;
   }

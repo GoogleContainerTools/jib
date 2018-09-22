@@ -107,11 +107,14 @@ public class RegistryAuthenticator {
    * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
    * @param repository the image/repository name for access (also known as, namespace)
    * @param dependentRepositories additional image/repository names required for access; always
-   *     requested with {@code pull} scope.
+   *     requested with {@code pull} scope; may be {@code null} or empty
    * @return the new {@link Initializer}
    */
   public static Initializer initializer(
-      JibLogger buildLogger, String serverUrl, String repository, String... dependentRepositories) {
+      JibLogger buildLogger,
+      String serverUrl,
+      String repository,
+      @Nullable String... dependentRepositories) {
 
     return new Initializer(
         buildLogger,
@@ -123,7 +126,7 @@ public class RegistryAuthenticator {
    * Instantiates from parsing a {@code WWW-Authenticate} header.
    *
    * @param authenticationMethod the {@code WWW-Authenticate} header value
-   * @param registryEndpointRequestProperties registry details
+   * @param registryEndpointRequestProperties the registry request properties
    * @return a new {@link RegistryAuthenticator} for authenticating with the registry service
    * @throws RegistryAuthenticationFailedException if authentication fails
    * @see <a
@@ -168,11 +171,7 @@ public class RegistryAuthenticator {
             ? serviceMatcher.group(1)
             : registryEndpointRequestProperties.getServerUrl();
 
-    return new RegistryAuthenticator(
-        realm,
-        service,
-        registryEndpointRequestProperties.getImageName(),
-        registryEndpointRequestProperties.getDependentImageNames());
+    return new RegistryAuthenticator(realm, service, registryEndpointRequestProperties);
   }
 
   private static RegistryAuthenticationFailedException newRegistryAuthenticationFailedException(
@@ -210,18 +209,16 @@ public class RegistryAuthenticator {
     }
   }
 
-  private final String realm;
-  private final String service;
-  private final String repository;
-  private final String[] dependentRepositories;
+  private final String authenticationUrlBase;
+  private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   @Nullable private Authorization authorization;
 
   RegistryAuthenticator(
-      String realm, String service, String repository, String... dependentRepositories) {
-    this.realm = realm;
-    this.service = service;
-    this.repository = repository;
-    this.dependentRepositories = dependentRepositories;
+      String realm,
+      String service,
+      RegistryEndpointRequestProperties registryEndpointRequestProperties) {
+    authenticationUrlBase = realm + "?service=" + service;
+    this.registryEndpointRequestProperties = registryEndpointRequestProperties;
   }
 
   /**
@@ -257,10 +254,14 @@ public class RegistryAuthenticator {
 
   @VisibleForTesting
   URL getAuthenticationUrl(String scope) throws MalformedURLException {
-    StringBuilder urlBase = new StringBuilder(realm).append("?service=").append(service);
-    urlBase.append("&scope=repository:").append(repository).append(':').append(scope);
+    StringBuilder urlBase = new StringBuilder(authenticationUrlBase);
+    urlBase
+        .append("&scope=repository:")
+        .append(registryEndpointRequestProperties.getImageName())
+        .append(':')
+        .append(scope);
 
-    for (String repository : dependentRepositories) {
+    for (String repository : registryEndpointRequestProperties.getDependentImageNames()) {
       urlBase.append("&scope=repository:").append(repository).append(":pull");
     }
 
@@ -293,15 +294,18 @@ public class RegistryAuthenticator {
             JsonTemplateMapper.readJson(responseString, AuthenticationResponseTemplate.class);
         if (responseJson.getToken() == null) {
           throw new RegistryAuthenticationFailedException(
-              service,
-              repository,
+              registryEndpointRequestProperties.getServerUrl(),
+              registryEndpointRequestProperties.getImageName(),
               "Did not get token in authentication response from " + authenticationUrl);
         }
         return Authorizations.withBearerToken(responseJson.getToken());
       }
 
     } catch (IOException ex) {
-      throw new RegistryAuthenticationFailedException(service, repository, ex);
+      throw new RegistryAuthenticationFailedException(
+          registryEndpointRequestProperties.getServerUrl(),
+          registryEndpointRequestProperties.getImageName(),
+          ex);
     }
   }
 }

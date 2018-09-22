@@ -26,6 +26,7 @@ public class JibSystemPropertiesTest {
   @After
   public void tearDown() {
     System.clearProperty(JibSystemProperties.HTTP_TIMEOUT);
+    System.clearProperty(JibSystemProperties.USE_MOUNT_FROM);
   }
 
   @Test
@@ -54,5 +55,23 @@ public class JibSystemPropertiesTest {
     } catch (NumberFormatException ex) {
       Assert.assertEquals("jib.httpTimeout cannot be negative: -80", ex.getMessage());
     }
+  }
+
+  @Test
+  public void testIsMountFromEnabled_noProperty() {
+    System.clearProperty(JibSystemProperties.USE_MOUNT_FROM);
+    Assert.assertTrue(JibSystemProperties.isMountFromEnabled());
+  }
+
+  @Test
+  public void testIsMountFromEnabled_true() {
+    System.setProperty(JibSystemProperties.USE_MOUNT_FROM, "true");
+    Assert.assertTrue(JibSystemProperties.isMountFromEnabled());
+  }
+
+  @Test
+  public void testIsMountFromEnabled_false() {
+    System.setProperty(JibSystemProperties.USE_MOUNT_FROM, "false");
+    Assert.assertFalse(JibSystemProperties.isMountFromEnabled());
   }
 }

@@ -31,7 +31,7 @@ public class JibSystemProperties {
 
   private static final String DISABLE_USER_AGENT = "_JIB_DISABLE_USER_AGENT";
 
-  private static final String USE_MOUNT_FROM = "jib.useMountFrom";
+  @VisibleForTesting static final String USE_MOUNT_FROM = "jib.useMountFrom";
 
   /**
    * Gets the HTTP connection/read timeouts for registry interactions in milliseconds. This is
@@ -107,7 +107,7 @@ public class JibSystemProperties {
    * @return {@code true} if {@code mount/from} should be used, {@code false} if not
    */
   public static boolean isMountFromEnabled() {
-    return Boolean.getBoolean(USE_MOUNT_FROM);
+    return System.getProperty(USE_MOUNT_FROM) == null || Boolean.getBoolean(USE_MOUNT_FROM);
   }
 
   private JibSystemProperties() {}
