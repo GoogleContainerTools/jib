@@ -132,7 +132,7 @@ public class JsonTemplateMapper {
    * @param template the list of JSON templates to convert
    * @return a {@link Blob} of the JSON string
    */
-  public static Blob toBlob(ListOfJsonTemplate template) {
+  public static Blob toBlob(ListOfJsonTemplate<?> template) {
     return toBlob(template.getList());
   }
 

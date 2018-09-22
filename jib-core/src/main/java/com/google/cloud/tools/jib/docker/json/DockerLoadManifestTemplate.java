@@ -43,7 +43,7 @@ import java.util.List;
  * @see <a href="https://github.com/moby/moby/blob/master/image/tarexport/load.go">Docker load
  *     source</a>
  */
-public class DockerLoadManifestTemplate implements ListOfJsonTemplate {
+public class DockerLoadManifestTemplate implements ListOfJsonTemplate<JsonTemplate> {
 
   private final String config = "config.json";
   private List<String> repoTags = Collections.singletonList(null);
