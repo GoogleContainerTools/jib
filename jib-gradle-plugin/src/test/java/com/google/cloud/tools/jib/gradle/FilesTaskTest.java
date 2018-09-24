@@ -39,6 +39,47 @@ public class FilesTaskTest {
 
   @ClassRule public static final TestProject multiTestProject = new TestProject("multi-service");
 
+  /**
+   * Verifies that the files task succeeded and returns the list of paths it prints out.
+   *
+   * @param project the project to run the task on
+   * @param moduleName the name of the sub-project, or {@code null} if no sub-project
+   * @return the list of paths printed by the task
+   */
+  private static List<Path> verifyTaskSuccess(TestProject project, @Nullable String moduleName) {
+    String taskName =
+        ":" + (moduleName == null ? "" : moduleName + ":") + JibPlugin.FILES_TASK_NAME;
+    BuildResult buildResult = project.build(taskName, "-q");
+    BuildTask jibTask = buildResult.task(taskName);
+    Assert.assertNotNull(jibTask);
+    Assert.assertEquals(TaskOutcome.SUCCESS, jibTask.getOutcome());
+
+    return Splitter.on(System.lineSeparator())
+        .omitEmptyStrings()
+        .splitToList(buildResult.getOutput())
+        .stream()
+        .map(Paths::get)
+        .collect(Collectors.toList());
+  }
+
+  /**
+   * Asserts that two lists contain the same paths. Required to avoid Mac's /var/ vs. /private/var/
+   * symlink issue.
+   *
+   * @param expected the expected list of paths
+   * @param actual the actual list of paths
+   * @throws IOException if checking if two files are the same fails
+   */
+  private static void assertPathListsAreEqual(List<Path> expected, List<Path> actual)
+      throws IOException {
+    Assert.assertEquals(expected.size(), actual.size());
+    for (int index = 0; index < expected.size(); index++) {
+      Assert.assertEquals(
+          expected.get(index).toFile().getCanonicalFile(),
+          actual.get(index).toFile().getCanonicalFile());
+    }
+  }
+
   @Test
   public void testFilesTask_singleProject() throws IOException {
     Path projectRoot = simpleTestProject.getProjectRoot();
@@ -92,46 +133,5 @@ public class FilesTaskTest {
         result.get(result.size() - 1).toString(),
         CoreMatchers.endsWith("guava-HEAD-jre-SNAPSHOT.jar"));
     Assert.assertEquals(12, result.size());
-  }
-
-  /**
-   * Verifies that the files task succeeded and returns the list of paths it prints out.
-   *
-   * @param project the project to run the task on
-   * @param moduleName the name of the sub-project, or {@code null} if no sub-project
-   * @return the list of paths printed by the task
-   */
-  private static List<Path> verifyTaskSuccess(TestProject project, @Nullable String moduleName) {
-    String taskName =
-        ":" + (moduleName == null ? "" : moduleName + ":") + JibPlugin.FILES_TASK_NAME;
-    BuildResult buildResult = project.build(taskName, "-q");
-    BuildTask jibTask = buildResult.task(taskName);
-    Assert.assertNotNull(jibTask);
-    Assert.assertEquals(TaskOutcome.SUCCESS, jibTask.getOutcome());
-
-    return Splitter.on(System.lineSeparator())
-        .omitEmptyStrings()
-        .splitToList(buildResult.getOutput())
-        .stream()
-        .map(Paths::get)
-        .collect(Collectors.toList());
-  }
-
-  /**
-   * Asserts that two lists contain the same paths. Required to avoid Mac's /var/ vs. /private/var/
-   * symlink issue.
-   *
-   * @param expected the expected list of paths
-   * @param actual the actual list of paths
-   * @throws IOException if checking if two files are the same fails
-   */
-  private static void assertPathListsAreEqual(List<Path> expected, List<Path> actual)
-      throws IOException {
-    Assert.assertEquals(expected.size(), actual.size());
-    for (int index = 0; index < expected.size(); index++) {
-      Assert.assertEquals(
-          expected.get(index).toFile().getCanonicalFile(),
-          actual.get(index).toFile().getCanonicalFile());
-    }
   }
 }
