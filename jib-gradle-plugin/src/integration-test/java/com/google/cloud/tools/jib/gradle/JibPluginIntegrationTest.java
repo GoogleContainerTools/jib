@@ -128,12 +128,12 @@ public class JibPluginIntegrationTest {
   }
 
   /**
-   * Pulls a built image and attemps to run it. Also verifies the container configuration and
+   * Pulls a built image and attempts to run it. Also verifies the container configuration and
    * history of the built image.
    *
    * @param imageReference the image reference of the built image
    * @return the container output
-   * @throws IOException if an I/O exceptio occurs
+   * @throws IOException if an I/O exception occurs
    * @throws InterruptedException if the process was interrupted
    */
   private static String pullAndRunBuiltImage(String imageReference)
@@ -243,7 +243,7 @@ public class JibPluginIntegrationTest {
             + IntegrationTestingConfiguration.getGCPProject()
             + "/multitag-image:gradle"
             + System.nanoTime();
-    buildAndRunAdditionalTag(emptyTestProject, targetImage, "gradle-2", "");
+    buildAndRunAdditionalTag(emptyTestProject, targetImage, "gradle-2" + System.nanoTime(), "");
   }
 
   @Test
