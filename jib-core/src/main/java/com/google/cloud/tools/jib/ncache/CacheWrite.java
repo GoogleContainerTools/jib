@@ -19,16 +19,58 @@ package com.google.cloud.tools.jib.ncache;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import java.util.Optional;
+import javax.annotation.Nullable;
+import javax.annotation.concurrent.Immutable;
 
-/** Represents layer data to write to the cache. <b>Implementations must be immutable.</b> */
-interface CacheWrite {
+/**
+ * Represents layer data to write to the cache. <b>Implementation is immutable and thread-safe.</b>
+ */
+@Immutable
+class CacheWrite {
+
+  /**
+   * Constructs a {@link CacheWrite} with only the layer {@link Blob}.
+   *
+   * @param layerBlob the layer {@link Blob}
+   * @return the new {@link CacheWrite}
+   */
+  static CacheWrite layerOnly(Blob layerBlob) {
+    return new CacheWrite(layerBlob, null, null);
+  }
+
+  /**
+   * Constructs a {@link CacheWrite} with a layer {@link Blob}, an additional selector digest, and a
+   * metadata {@link Blob}.
+   *
+   * @param layerBlob the layer {@link Blob}
+   * @param selector the selector digest
+   * @param metadataBlob the metadata {@link Blob}
+   * @return the new {@link CacheWrite}
+   */
+  static CacheWrite withSelectorAndMetadata(
+      Blob layerBlob, DescriptorDigest selector, Blob metadataBlob) {
+    return new CacheWrite(layerBlob, selector, metadataBlob);
+  }
+
+  private final Blob layerBlob;
+  @Nullable private final DescriptorDigest selector;
+  @Nullable private final Blob metadataBlob;
+
+  private CacheWrite(
+      Blob layerBlob, @Nullable DescriptorDigest selector, @Nullable Blob metadataBlob) {
+    this.layerBlob = layerBlob;
+    this.selector = selector;
+    this.metadataBlob = metadataBlob;
+  }
 
   /**
    * Gets the {@link Blob} to write as the layer contents.
    *
    * @return the layer {@link Blob}
    */
-  Blob getLayerBlob();
+  Blob getLayerBlob() {
+    return layerBlob;
+  }
 
   /**
    * Gets the optional selector digest to also reference this layer data. A selector digest may be a
@@ -39,7 +81,9 @@ interface CacheWrite {
    *
    * @return the selector digest
    */
-  Optional<DescriptorDigest> getSelector();
+  Optional<DescriptorDigest> getSelector() {
+    return Optional.ofNullable(selector);
+  }
 
   /**
    * Gets the optional {@link Blob} to write as the arbitrary layer metadata.
@@ -48,5 +92,7 @@ interface CacheWrite {
    *
    * @return the metadata {@link Blob}
    */
-  Optional<Blob> getMetadataBlob();
+  Optional<Blob> getMetadataBlob() {
+    return Optional.ofNullable(metadataBlob);
+  }
 }

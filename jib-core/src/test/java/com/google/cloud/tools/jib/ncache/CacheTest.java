@@ -26,7 +26,7 @@ import com.google.common.io.ByteStreams;
 import com.google.common.io.CountingOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.file.NotDirectoryException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.zip.GZIPInputStream;
@@ -147,8 +147,8 @@ public class CacheTest {
       Cache.withDirectory(file);
       Assert.fail();
 
-    } catch (NotDirectoryException ex) {
-      Assert.assertEquals("The cache can only write to a directory", ex.getMessage());
+    } catch (FileAlreadyExistsException ex) {
+      // pass
     }
   }
 

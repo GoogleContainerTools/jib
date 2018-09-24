@@ -22,7 +22,6 @@ import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.util.Optional;
 import javax.annotation.concurrent.Immutable;
@@ -43,18 +42,10 @@ public class Cache {
    *
    * @param cacheDirectory the directory for the cache. Creates the directory if it does not exist.
    * @return a new {@link Cache}
-   * @throws NotDirectoryException if {@code cacheDirectory} is not a directory
    * @throws IOException if an I/O exception occurs
    */
   public static Cache withDirectory(Path cacheDirectory) throws IOException {
-    if (Files.exists(cacheDirectory)) {
-      if (!Files.isDirectory(cacheDirectory)) {
-        throw new NotDirectoryException("The cache can only write to a directory");
-      }
-    } else {
-      Files.createDirectories(cacheDirectory);
-    }
-
+    Files.createDirectories(cacheDirectory);
     return new Cache(DefaultCacheStorage.withDirectory(cacheDirectory));
   }
 
@@ -73,7 +64,7 @@ public class Cache {
    * @throws IOException if an I/O exception occurs
    */
   public CacheEntry write(Blob layerBlob) throws IOException {
-    return cacheStorage.write(DefaultCacheWrite.layerOnly(layerBlob));
+    return cacheStorage.write(CacheWrite.layerOnly(layerBlob));
   }
 
   /**
@@ -89,7 +80,7 @@ public class Cache {
   public CacheEntry write(Blob layerBlob, DescriptorDigest selector, Blob metadataBlob)
       throws IOException {
     return cacheStorage.write(
-        DefaultCacheWrite.withSelectorAndMetadata(layerBlob, selector, metadataBlob));
+        CacheWrite.withSelectorAndMetadata(layerBlob, selector, metadataBlob));
   }
 
   /**
