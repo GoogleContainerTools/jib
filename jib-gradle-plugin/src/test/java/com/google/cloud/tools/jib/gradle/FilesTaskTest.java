@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -40,26 +41,22 @@ public class FilesTaskTest {
   @Test
   public void testFilesTask_singleProject() {
     Path projectRoot = simpleTestProject.getProjectRoot();
-    List<String> result = verifyTaskSuccess(simpleTestProject, null);
-
-    List<Path> files =
+    List<Path> result = verifyTaskSuccess(simpleTestProject, null);
+    List<Path> expected =
         ImmutableList.of(
             projectRoot.resolve("src/main/custom-extra-dir"),
             projectRoot.resolve("build.gradle"),
             projectRoot.resolve("src/main/java"),
             projectRoot.resolve("src/main/resources"));
-    List<String> expectedResult =
-        files.stream().map(Path::toAbsolutePath).map(Path::toString).collect(Collectors.toList());
-    Assert.assertEquals(expectedResult, result);
+    Assert.assertEquals(expected, result);
   }
 
   @Test
   public void testFilesTask_multiProjectSimpleService() {
     Path projectRoot = multiTestProject.getProjectRoot();
     Path simpleServiceRoot = projectRoot.resolve("simple-service");
-    List<String> result = verifyTaskSuccess(multiTestProject, "simple-service");
-
-    List<Path> files =
+    List<Path> result = verifyTaskSuccess(multiTestProject, "simple-service");
+    List<Path> expected =
         ImmutableList.of(
             projectRoot.resolve("build.gradle"),
             projectRoot.resolve("settings.gradle"),
@@ -67,9 +64,7 @@ public class FilesTaskTest {
             simpleServiceRoot.resolve("build.gradle"),
             simpleServiceRoot.resolve("src/main/java"),
             simpleServiceRoot.resolve("src/main/resources"));
-    List<String> expectedResult =
-        files.stream().map(Path::toAbsolutePath).map(Path::toString).collect(Collectors.toList());
-    Assert.assertEquals(expectedResult, result);
+    Assert.assertEquals(expected, result);
   }
 
   @Test
@@ -77,9 +72,8 @@ public class FilesTaskTest {
     Path projectRoot = multiTestProject.getProjectRoot();
     Path complexServiceRoot = projectRoot.resolve("complex-service");
     Path libRoot = projectRoot.resolve("lib");
-    List<String> result = verifyTaskSuccess(multiTestProject, "complex-service");
-
-    List<Path> files =
+    List<Path> result = verifyTaskSuccess(multiTestProject, "complex-service");
+    List<Path> expected =
         ImmutableList.of(
             projectRoot.resolve("build.gradle"),
             projectRoot.resolve("settings.gradle"),
@@ -92,15 +86,14 @@ public class FilesTaskTest {
             libRoot.resolve("build.gradle"),
             libRoot.resolve("src/main/java"),
             libRoot.resolve("src/main/resources"));
-    List<String> expectedResult =
-        files.stream().map(Path::toAbsolutePath).map(Path::toString).collect(Collectors.toList());
-    Assert.assertEquals(expectedResult, result.subList(0, 11));
+    Assert.assertEquals(expected, result.subList(0, 11));
     Assert.assertThat(
-        result.get(result.size() - 1), CoreMatchers.endsWith("guava-HEAD-jre-SNAPSHOT.jar"));
+        result.get(result.size() - 1).toString(),
+        CoreMatchers.endsWith("guava-HEAD-jre-SNAPSHOT.jar"));
     Assert.assertEquals(12, result.size());
   }
 
-  private static List<String> verifyTaskSuccess(TestProject project, @Nullable String moduleName) {
+  private static List<Path> verifyTaskSuccess(TestProject project, @Nullable String moduleName) {
     String taskName =
         ":" + (moduleName == null ? "" : moduleName + ":") + JibPlugin.FILES_TASK_NAME;
     BuildResult buildResult = project.build(taskName, "-q");
@@ -110,6 +103,9 @@ public class FilesTaskTest {
 
     return Splitter.on(System.lineSeparator())
         .omitEmptyStrings()
-        .splitToList(buildResult.getOutput());
+        .splitToList(buildResult.getOutput())
+        .stream()
+        .map(Paths::get)
+        .collect(Collectors.toList());
   }
 }
