@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -95,6 +94,13 @@ public class FilesTaskTest {
     Assert.assertEquals(12, result.size());
   }
 
+  /**
+   * Verifies that the files task succeeded and returns the list of paths it prints out.
+   *
+   * @param project the project to run the task on
+   * @param moduleName the name of the sub-project, or {@code null} if no sub-project
+   * @return the list of paths printed by the task
+   */
   private static List<Path> verifyTaskSuccess(TestProject project, @Nullable String moduleName) {
     String taskName =
         ":" + (moduleName == null ? "" : moduleName + ":") + JibPlugin.FILES_TASK_NAME;
@@ -111,11 +117,21 @@ public class FilesTaskTest {
         .collect(Collectors.toList());
   }
 
+  /**
+   * Asserts that two lists contain the same paths. Required to avoid Mac's /var/ vs. /private/var/
+   * symlink issue.
+   *
+   * @param expected the expected list of paths
+   * @param actual the actual list of paths
+   * @throws IOException if checking if two files are the same fails
+   */
   private static void assertPathListsAreEqual(List<Path> expected, List<Path> actual)
       throws IOException {
     Assert.assertEquals(expected.size(), actual.size());
     for (int index = 0; index < expected.size(); index++) {
-      Assert.assertTrue(Files.isSameFile(expected.get(index), actual.get(index)));
+      Assert.assertEquals(
+          expected.get(index).toFile().getCanonicalFile(),
+          actual.get(index).toFile().getCanonicalFile());
     }
   }
 }
