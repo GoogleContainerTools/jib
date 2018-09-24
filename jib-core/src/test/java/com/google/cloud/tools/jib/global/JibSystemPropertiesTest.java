@@ -26,7 +26,7 @@ public class JibSystemPropertiesTest {
   @After
   public void tearDown() {
     System.clearProperty(JibSystemProperties.HTTP_TIMEOUT);
-    System.clearProperty(JibSystemProperties.USE_MOUNT_FROM);
+    System.clearProperty(JibSystemProperties.USE_CROSS_REPOSITORY_BLOB_MOUNTS);
   }
 
   @Test
@@ -58,20 +58,26 @@ public class JibSystemPropertiesTest {
   }
 
   @Test
-  public void testIsMountFromEnabled_noProperty() {
-    System.clearProperty(JibSystemProperties.USE_MOUNT_FROM);
-    Assert.assertTrue(JibSystemProperties.isMountFromEnabled());
+  public void testUseCrossRepositoryBlobMountsProperty() {
+    Assert.assertEquals(
+        "jib.useCrossRepositoryBlobMounts", JibSystemProperties.USE_CROSS_REPOSITORY_BLOB_MOUNTS);
   }
 
   @Test
-  public void testIsMountFromEnabled_true() {
-    System.setProperty(JibSystemProperties.USE_MOUNT_FROM, "true");
-    Assert.assertTrue(JibSystemProperties.isMountFromEnabled());
+  public void testUseCrossRepositoryBlobMounts_noProperty() {
+    System.clearProperty(JibSystemProperties.USE_CROSS_REPOSITORY_BLOB_MOUNTS);
+    Assert.assertTrue(JibSystemProperties.useCrossRepositoryBlobMounts());
   }
 
   @Test
-  public void testIsMountFromEnabled_false() {
-    System.setProperty(JibSystemProperties.USE_MOUNT_FROM, "false");
-    Assert.assertFalse(JibSystemProperties.isMountFromEnabled());
+  public void testUseCrossRepositoryBlobMounts_true() {
+    System.setProperty(JibSystemProperties.USE_CROSS_REPOSITORY_BLOB_MOUNTS, "true");
+    Assert.assertTrue(JibSystemProperties.useCrossRepositoryBlobMounts());
+  }
+
+  @Test
+  public void testUseCrossRepositoryBlobMounts_false() {
+    System.setProperty(JibSystemProperties.USE_CROSS_REPOSITORY_BLOB_MOUNTS, "false");
+    Assert.assertFalse(JibSystemProperties.useCrossRepositoryBlobMounts());
   }
 }

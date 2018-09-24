@@ -27,11 +27,13 @@ public class JibSystemProperties {
   @VisibleForTesting
   public static final String SEND_CREDENTIALS_OVER_HTTP = "sendCredentialsOverHttp";
 
+  @VisibleForTesting
+  static final String USE_CROSS_REPOSITORY_BLOB_MOUNTS = "jib.useCrossRepositoryBlobMounts";
+
   private static final String SERIALIZE = "jibSerialize";
 
   private static final String DISABLE_USER_AGENT = "_JIB_DISABLE_USER_AGENT";
 
-  @VisibleForTesting static final String USE_MOUNT_FROM = "jib.useMountFrom";
 
   /**
    * Gets the HTTP connection/read timeouts for registry interactions in milliseconds. This is
@@ -106,8 +108,9 @@ public class JibSystemProperties {
    *
    * @return {@code true} if {@code mount/from} should be used, {@code false} if not
    */
-  public static boolean isMountFromEnabled() {
-    return System.getProperty(USE_MOUNT_FROM) == null || Boolean.getBoolean(USE_MOUNT_FROM);
+  public static boolean useCrossRepositoryBlobMounts() {
+    return System.getProperty(USE_CROSS_REPOSITORY_BLOB_MOUNTS) == null
+        || Boolean.getBoolean(USE_CROSS_REPOSITORY_BLOB_MOUNTS);
   }
 
   private JibSystemProperties() {}

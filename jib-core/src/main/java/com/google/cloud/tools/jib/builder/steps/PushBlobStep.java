@@ -21,7 +21,7 @@ import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
-import com.google.cloud.tools.jib.builder.MountFromSupport;
+import com.google.cloud.tools.jib.builder.CrossRepositoryBlobMountsSupport;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryException;
@@ -90,7 +90,7 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
       // having to push the BLOB. See the following for details:
       // https://docs.docker.com/registry/spec/api/#cross-repository-blob-mount
       // Note: mount/from requires that {@link AuthenticatePushStep} request pull access
-      Optional<String> mountFrom = MountFromSupport.getMountFrom(buildConfiguration);
+      Optional<String> mountFrom = CrossRepositoryBlobMountsSupport.getMountFrom(buildConfiguration);
       registryClient.pushBlob(blobDescriptor.getDigest(), blob, mountFrom.orElse(null));
 
       return blobDescriptor;

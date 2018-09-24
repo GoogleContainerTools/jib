@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
-import com.google.cloud.tools.jib.builder.MountFromSupport;
+import com.google.cloud.tools.jib.builder.CrossRepositoryBlobMountsSupport;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.http.Authorization;
@@ -89,7 +89,7 @@ class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authori
 
       // If target is colocated with base, request permission for both so as to allow using
       // mount/from
-      Optional<String> mountFrom = MountFromSupport.getMountFrom(buildConfiguration);
+      Optional<String> mountFrom = CrossRepositoryBlobMountsSupport.getMountFrom(buildConfiguration);
 
       RegistryAuthenticator registryAuthenticator =
           RegistryAuthenticator.initializer(

@@ -28,9 +28,9 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link MountFromSupport}. */
+/** Tests for {@link CrossRepositoryBlobMountsSupport}. */
 @RunWith(MockitoJUnitRunner.class)
-public class MountFromSupportTest {
+public class CrossRepositoryBlobMountsSupportTest {
 
   @Mock JibLogger logger;
 
@@ -38,7 +38,7 @@ public class MountFromSupportTest {
   public void testSameRegistry() throws InvalidImageReferenceException {
     BuildConfiguration buildConfiguration =
         makeBuildConfiguration("localhost/source", "localhost/destination");
-    Optional<String> result = MountFromSupport.getMountFrom(buildConfiguration);
+    Optional<String> result = CrossRepositoryBlobMountsSupport.getMountFrom(buildConfiguration);
     Assert.assertTrue(result.isPresent());
     Assert.assertEquals("source", result.get());
   }
@@ -47,7 +47,7 @@ public class MountFromSupportTest {
   public void testDifferentRegistry() throws InvalidImageReferenceException {
     BuildConfiguration buildConfiguration =
         makeBuildConfiguration("localhost/base", "gcr.io/target");
-    Optional<String> result = MountFromSupport.getMountFrom(buildConfiguration);
+    Optional<String> result = CrossRepositoryBlobMountsSupport.getMountFrom(buildConfiguration);
     Assert.assertFalse(result.isPresent());
   }
 

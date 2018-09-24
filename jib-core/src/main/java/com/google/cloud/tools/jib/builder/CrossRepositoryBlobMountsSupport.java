@@ -28,7 +28,7 @@ import java.util.Optional;
  * href="https://docs.docker.com/registry/spec/api/#cross-repository-blob-mount">Docker registry
  * specification</a> for details.
  */
-public class MountFromSupport {
+public class CrossRepositoryBlobMountsSupport {
 
   /**
    * Determine the mount location if applicable for the provided build configuration.
@@ -37,7 +37,7 @@ public class MountFromSupport {
    * @return the image name to be mounted or {@code null} if not applicable
    */
   public static Optional<String> getMountFrom(BuildConfiguration buildConfiguration) {
-    if (!JibSystemProperties.isMountFromEnabled()) {
+    if (!JibSystemProperties.useCrossRepositoryBlobMounts()) {
       return Optional.empty();
     }
     boolean sameRegistry =
