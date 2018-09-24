@@ -22,8 +22,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import org.gradle.api.artifacts.Dependency;
-import org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDependency;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.BuildTask;
 import org.gradle.testkit.runner.TaskOutcome;
@@ -32,6 +30,7 @@ import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+/** Tests for {@link FilesTask}. */
 public class FilesTaskTest {
 
   @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
@@ -45,10 +44,10 @@ public class FilesTaskTest {
 
     List<Path> files =
         ImmutableList.of(
+            projectRoot.resolve("src/main/custom-extra-dir"),
             projectRoot.resolve("build.gradle"),
             projectRoot.resolve("src/main/java"),
-            projectRoot.resolve("src/main/resources"),
-            projectRoot.resolve("src/main/custom-extra-dir"));
+            projectRoot.resolve("src/main/resources"));
     List<String> expectedResult =
         files.stream().map(Path::toAbsolutePath).map(Path::toString).collect(Collectors.toList());
     Assert.assertEquals(expectedResult, result);
@@ -63,10 +62,11 @@ public class FilesTaskTest {
     List<Path> files =
         ImmutableList.of(
             projectRoot.resolve("build.gradle"),
+            projectRoot.resolve("settings.gradle"),
+            simpleServiceRoot.resolve("src/main/jib"),
             simpleServiceRoot.resolve("build.gradle"),
             simpleServiceRoot.resolve("src/main/java"),
-            simpleServiceRoot.resolve("src/main/resources"),
-            simpleServiceRoot.resolve("src/main/jib"));
+            simpleServiceRoot.resolve("src/main/resources"));
     List<String> expectedResult =
         files.stream().map(Path::toAbsolutePath).map(Path::toString).collect(Collectors.toList());
     Assert.assertEquals(expectedResult, result);
@@ -82,35 +82,22 @@ public class FilesTaskTest {
     List<Path> files =
         ImmutableList.of(
             projectRoot.resolve("build.gradle"),
+            projectRoot.resolve("settings.gradle"),
+            complexServiceRoot.resolve("src/main/other-jib"),
             complexServiceRoot.resolve("build.gradle"),
             complexServiceRoot.resolve("src/main/java"),
             complexServiceRoot.resolve("src/main/resources"),
             complexServiceRoot.resolve("src/main/extra-resources-1"),
             complexServiceRoot.resolve("src/main/extra-resources-2"),
-            complexServiceRoot.resolve("src/main/other-jib"),
             libRoot.resolve("build.gradle"),
             libRoot.resolve("src/main/java"),
             libRoot.resolve("src/main/resources"));
     List<String> expectedResult =
         files.stream().map(Path::toAbsolutePath).map(Path::toString).collect(Collectors.toList());
-    Assert.assertEquals(expectedResult, result.subList(0, 10));
+    Assert.assertEquals(expectedResult, result.subList(0, 11));
     Assert.assertThat(
         result.get(result.size() - 1), CoreMatchers.endsWith("guava-HEAD-jre-SNAPSHOT.jar"));
-    Assert.assertEquals(11, result.size());
-  }
-
-  @Test
-  public void testPathMatchesDependency() {
-    Dependency nameOnly = new DefaultExternalModuleDependency(null, "testName", null);
-    Assert.assertTrue(FilesTask.pathMatchesDependency(nameOnly, "testPath/testName.jar"));
-    Assert.assertFalse(FilesTask.pathMatchesDependency(nameOnly, "testPath/wrongName.jar"));
-
-    Dependency withVersion = new DefaultExternalModuleDependency(null, "testName", "testVersion");
-    Assert.assertTrue(
-        FilesTask.pathMatchesDependency(withVersion, "testPath/testName-testVersion.jar"));
-    Assert.assertFalse(FilesTask.pathMatchesDependency(withVersion, "testPath/testName.jar"));
-    Assert.assertFalse(
-        FilesTask.pathMatchesDependency(withVersion, "testPath/wrongName-testVersion.jar"));
+    Assert.assertEquals(12, result.size());
   }
 
   private static List<String> verifyTaskSuccess(TestProject project, @Nullable String moduleName) {

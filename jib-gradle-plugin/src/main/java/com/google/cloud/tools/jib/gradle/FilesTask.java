@@ -16,9 +16,10 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -27,6 +28,8 @@ import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.ProjectDependency;
+import org.gradle.api.artifacts.PublishArtifact;
+import org.gradle.api.initialization.Settings;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.TaskAction;
@@ -39,47 +42,15 @@ import org.gradle.api.tasks.TaskAction;
  */
 public class FilesTask extends DefaultTask {
 
-  @Nullable private JibExtension jibExtension;
-
-  public FilesTask setJibExtension(JibExtension jibExtension) {
-    this.jibExtension = jibExtension;
-    return this;
-  }
-
-  @TaskAction
-  public void listFiles() {
-    Project project = getProject();
-
-    // If this is not the root project, be sure to print the root project's build.gradle
-    if (project != project.getRootProject()) {
-      System.out.println(project.getRootProject().getBuildFile());
-    }
-
-    // Print subproject sources
-    Set<Dependency> dependenciesToPrint = new HashSet<>();
-    listFiles(project, dependenciesToPrint);
-
-    // Cross-reference collected dependencies with their jar files
-    Set<File> printedFiles = new HashSet<>();
-    for (Configuration configuration :
-        project.getConfigurations().getByName("runtime").getHierarchy()) {
-      for (File file : configuration) {
-        // Prevent printing the same dependency twice
-        if (printedFiles.contains(file)) {
-          continue;
-        }
-        for (Dependency dependency : dependenciesToPrint) {
-          if (pathMatchesDependency(dependency, file.getAbsolutePath())) {
-            System.out.println(file);
-            printedFiles.add(file);
-          }
-        }
-      }
-    }
-  }
-
-  private void listFiles(Project project, Set<Dependency> dependencyJars) {
-    Preconditions.checkNotNull(jibExtension);
+  /**
+   * Recursive function for printing out a project's artifacts. Calls itself when it encounters a
+   * project dependency.
+   *
+   * @param project the project to list the artifacts for
+   * @param projectDependencyJars the set of jar files associated with each project dependency
+   *     encountered
+   */
+  private static void listFilesForProject(Project project, Set<File> projectDependencyJars) {
     JavaPluginConvention javaConvention =
         project.getConvention().getPlugin(JavaPluginConvention.class);
     SourceSet mainSourceSet = javaConvention.getSourceSets().findByName("main");
@@ -90,48 +61,86 @@ public class FilesTask extends DefaultTask {
     // Print build.gradle
     System.out.println(project.getBuildFile());
 
+    // Print settings.gradle
+    Path settingsFile = project.getProjectDir().toPath().resolve(Settings.DEFAULT_SETTINGS_FILE);
+    if (Files.exists(settingsFile)) {
+      System.out.println(settingsFile);
+    }
+
     // Print sources
     mainSourceSet.getAllJava().getSourceDirectories().forEach(System.out::println);
 
     // Print resources
     mainSourceSet.getResources().getSourceDirectories().forEach(System.out::println);
 
-    // Print extra layer
-    if (project.getPlugins().hasPlugin(JibPlugin.class)) {
-      System.out.println(jibExtension.getExtraDirectoryPath());
-    }
-
     // Iterate over dependencies
     for (Configuration configuration :
         project.getConfigurations().getByName("runtime").getHierarchy()) {
       for (Dependency dependency : configuration.getDependencies()) {
         if (dependency instanceof ProjectDependency) {
-          // If this is a project dependency, find sources files and print those
-          Project dependencyProject = ((ProjectDependency) dependency).getDependencyProject();
-          listFiles(dependencyProject, dependencyJars);
-        } else if (dependency.getVersion() != null
-            && dependency.getVersion().endsWith("SNAPSHOT")) {
-          // Otherwise save for later to print jar file
-          dependencyJars.add(dependency);
+          // If project dependency, find and keep track of jars associated with project dependency
+          ProjectDependency projectDependency = (ProjectDependency) dependency;
+          String configurationName = projectDependency.getTargetConfiguration();
+          if (configurationName == null) {
+            configurationName = "default";
+          }
+          Project dependencyProject = projectDependency.getDependencyProject();
+          for (Configuration targetConfiguration :
+              dependencyProject.getConfigurations().getByName(configurationName).getHierarchy()) {
+            for (PublishArtifact artifact : targetConfiguration.getArtifacts()) {
+              if (projectDependencyJars.contains(artifact.getFile())) {
+                continue;
+              }
+              projectDependencyJars.add(artifact.getFile());
+            }
+          }
+
+          // Find project dependency's sources files and print those
+          listFilesForProject(dependencyProject, projectDependencyJars);
         }
       }
     }
   }
 
-  /**
-   * Returns {@code true} if a path contains the dependency's name/version (if available).
-   *
-   * @param dependency the dependency to match with
-   * @param absolutePath the path to the jar
-   * @return {@code true} if the path contains the dependency's name/version, {@code false} if not
-   */
-  @VisibleForTesting
-  static boolean pathMatchesDependency(Dependency dependency, String absolutePath) {
-    boolean containsName = absolutePath.contains(dependency.getName());
-    if (dependency.getVersion() == null) {
-      return containsName;
-    } else {
-      return containsName && absolutePath.contains(dependency.getVersion());
+  @Nullable private JibExtension jibExtension;
+
+  public FilesTask setJibExtension(JibExtension jibExtension) {
+    this.jibExtension = jibExtension;
+    return this;
+  }
+
+  @TaskAction
+  public void listFilesForProject() {
+    Preconditions.checkNotNull(jibExtension);
+    Project project = getProject();
+
+    // If this is not the root project, be sure to print the root project's build.gradle and
+    // settings.gradle
+    if (project != project.getRootProject()) {
+      System.out.println(project.getRootProject().getBuildFile());
+      Path settingsFiles = project.getRootDir().toPath().resolve(Settings.DEFAULT_SETTINGS_FILE);
+      if (Files.exists(settingsFiles)) {
+        System.out.println(settingsFiles);
+      }
+    }
+
+    // Print extra layer
+    if (project.getPlugins().hasPlugin(JibPlugin.class)) {
+      System.out.println(jibExtension.getExtraDirectoryPath());
+    }
+
+    // Print subproject sources
+    Set<File> skippedJars = new HashSet<>();
+    listFilesForProject(project, skippedJars);
+
+    // Print out dependency jars
+    for (File file : project.getConfigurations().getByName("runtime")) {
+      // Avoid printing non-SNAPSHOT's/duplicates
+      if (skippedJars.contains(file) || !file.toString().contains("SNAPSHOT")) {
+        continue;
+      }
+      System.out.println(file);
+      skippedJars.add(file);
     }
   }
 }
