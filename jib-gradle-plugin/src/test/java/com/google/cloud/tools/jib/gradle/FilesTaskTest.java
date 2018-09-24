@@ -18,6 +18,8 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -39,7 +41,7 @@ public class FilesTaskTest {
   @ClassRule public static final TestProject multiTestProject = new TestProject("multi-service");
 
   @Test
-  public void testFilesTask_singleProject() {
+  public void testFilesTask_singleProject() throws IOException {
     Path projectRoot = simpleTestProject.getProjectRoot();
     List<Path> result = verifyTaskSuccess(simpleTestProject, null);
     List<Path> expected =
@@ -48,11 +50,11 @@ public class FilesTaskTest {
             projectRoot.resolve("build.gradle"),
             projectRoot.resolve("src/main/java"),
             projectRoot.resolve("src/main/resources"));
-    Assert.assertEquals(expected, result);
+    assertPathListsAreEqual(expected, result);
   }
 
   @Test
-  public void testFilesTask_multiProjectSimpleService() {
+  public void testFilesTask_multiProjectSimpleService() throws IOException {
     Path projectRoot = multiTestProject.getProjectRoot();
     Path simpleServiceRoot = projectRoot.resolve("simple-service");
     List<Path> result = verifyTaskSuccess(multiTestProject, "simple-service");
@@ -64,11 +66,11 @@ public class FilesTaskTest {
             simpleServiceRoot.resolve("build.gradle"),
             simpleServiceRoot.resolve("src/main/java"),
             simpleServiceRoot.resolve("src/main/resources"));
-    Assert.assertEquals(expected, result);
+    assertPathListsAreEqual(expected, result);
   }
 
   @Test
-  public void testFilesTask_multiProjectComplexService() {
+  public void testFilesTask_multiProjectComplexService() throws IOException {
     Path projectRoot = multiTestProject.getProjectRoot();
     Path complexServiceRoot = projectRoot.resolve("complex-service");
     Path libRoot = projectRoot.resolve("lib");
@@ -86,7 +88,7 @@ public class FilesTaskTest {
             libRoot.resolve("build.gradle"),
             libRoot.resolve("src/main/java"),
             libRoot.resolve("src/main/resources"));
-    Assert.assertEquals(expected, result.subList(0, 11));
+    assertPathListsAreEqual(expected, result.subList(0, 11));
     Assert.assertThat(
         result.get(result.size() - 1).toString(),
         CoreMatchers.endsWith("guava-HEAD-jre-SNAPSHOT.jar"));
@@ -107,5 +109,13 @@ public class FilesTaskTest {
         .stream()
         .map(Paths::get)
         .collect(Collectors.toList());
+  }
+
+  private static void assertPathListsAreEqual(List<Path> expected, List<Path> actual)
+      throws IOException {
+    Assert.assertEquals(expected.size(), actual.size());
+    for (int index = 0; index < expected.size(); index++) {
+      Assert.assertTrue(Files.isSameFile(expected.get(index), actual.get(index)));
+    }
   }
 }
