@@ -97,7 +97,7 @@ public class TarImage implements TargetImage {
   }
 
   /**
-   * Gets the outfile file to save the tarball archive to.
+   * Gets the output file to save the tarball archive to.
    *
    * @return the output file
    */
