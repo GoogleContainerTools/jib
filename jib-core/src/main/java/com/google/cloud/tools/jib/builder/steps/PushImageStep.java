@@ -96,10 +96,11 @@ class PushImageStep implements AsyncStep<Void>, Callable<Void> {
     return Futures.whenAllSucceed(dependenciesBuilder.build())
         .call(this::afterPushSteps, listeningExecutorService)
         .get()
+        .get()
         .get();
   }
 
-  private ListenableFuture<Void> afterPushSteps() throws ExecutionException {
+  private ListenableFuture<ListenableFuture<Void>> afterPushSteps() throws ExecutionException {
     List<ListenableFuture<?>> dependencies = new ArrayList<>();
     for (AsyncStep<PushBlobStep> pushBlobStepStep : NonBlockingSteps.get(pushBaseImageLayersStep)) {
       dependencies.add(NonBlockingSteps.get(pushBlobStepStep).getFuture());
@@ -114,7 +115,7 @@ class PushImageStep implements AsyncStep<Void>, Callable<Void> {
         .call(this::afterAllPushed, listeningExecutorService);
   }
 
-  private Void afterAllPushed() throws IOException, RegistryException, ExecutionException {
+  private ListenableFuture<Void> afterAllPushed() throws ExecutionException {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       RegistryClient registryClient =
           buildConfiguration
@@ -134,13 +135,15 @@ class PushImageStep implements AsyncStep<Void>, Callable<Void> {
                   NonBlockingSteps.get(NonBlockingSteps.get(pushContainerConfigurationStep))));
 
       // Pushes to all target image tags.
-      // TODO: Parallelize.
+      List<ListenableFuture<Void>> pushAllTagsFutures = new ArrayList<>();
       for (String tag : buildConfiguration.getAllTargetImageTags()) {
-        buildConfiguration.getBuildLogger().info("Tagging with " + tag + "...");
-        registryClient.pushManifest(manifestTemplate, tag);
+        pushAllTagsFutures.add(listeningExecutorService.submit(() -> {
+          buildConfiguration.getBuildLogger().info("Tagging with " + tag + "...");
+          registryClient.pushManifest(manifestTemplate, tag);
+          return null;
+        }));
       }
+      return Futures.whenAllSucceed(pushAllTagsFutures).call(() -> null, listeningExecutorService);
     }
-
-    return null;
   }
 }
