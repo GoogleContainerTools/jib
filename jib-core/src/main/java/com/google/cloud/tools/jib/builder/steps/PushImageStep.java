@@ -23,12 +23,10 @@ import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.cloud.tools.jib.registry.RegistryClient;
-import com.google.cloud.tools.jib.registry.RegistryException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -137,11 +135,13 @@ class PushImageStep implements AsyncStep<Void>, Callable<Void> {
       // Pushes to all target image tags.
       List<ListenableFuture<Void>> pushAllTagsFutures = new ArrayList<>();
       for (String tag : buildConfiguration.getAllTargetImageTags()) {
-        pushAllTagsFutures.add(listeningExecutorService.submit(() -> {
-          buildConfiguration.getBuildLogger().info("Tagging with " + tag + "...");
-          registryClient.pushManifest(manifestTemplate, tag);
-          return null;
-        }));
+        pushAllTagsFutures.add(
+            listeningExecutorService.submit(
+                () -> {
+                  buildConfiguration.getBuildLogger().info("Tagging with " + tag + "...");
+                  registryClient.pushManifest(manifestTemplate, tag);
+                  return null;
+                }));
       }
       return Futures.whenAllSucceed(pushAllTagsFutures).call(() -> null, listeningExecutorService);
     }
