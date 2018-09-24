@@ -73,7 +73,7 @@ class TestProject extends TemporaryFolder implements Closeable {
   protected void before() throws Throwable {
     super.before();
 
-    projectRoot = newFolder().toPath();
+    projectRoot = newFolder().toPath().toAbsolutePath();
     copyProject(testProjectName, projectRoot);
 
     gradleRunner = GradleRunner.create().withProjectDir(projectRoot.toFile()).withPluginClasspath();
