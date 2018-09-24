@@ -18,7 +18,6 @@ package com.test;
 
 import dependency.Greeting;
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -37,25 +36,6 @@ public class HelloWorld {
     Path worldFile = Paths.get(classLoader.getResource("world").toURI());
     String world = new String(Files.readAllBytes(worldFile), StandardCharsets.UTF_8);
 
-    System.out.println(greeting + ", " + world + ". " + (args.length > 0 ? args[0] : ""));
-
-    // Prints the contents of the extra files.
-    if (Files.exists(Paths.get("/foo"))) {
-      System.out.println(new String(Files.readAllBytes(Paths.get("/foo")), StandardCharsets.UTF_8));
-      System.out.println(
-          new String(Files.readAllBytes(Paths.get("/bar/cat")), StandardCharsets.UTF_8));
-    }
-
-    // Prints jvm flags
-    for (String jvmFlag : ManagementFactory.getRuntimeMXBean().getInputArguments()) {
-      System.out.println(jvmFlag);
-    }
-
-    if (System.getenv("env1") != null) {
-      System.out.println(System.getenv("env1"));
-    }
-    if (System.getenv("env2") != null) {
-      System.out.println(System.getenv("env2"));
-    }
+    System.out.println(greeting + ", " + world + ". ");
   }
 }

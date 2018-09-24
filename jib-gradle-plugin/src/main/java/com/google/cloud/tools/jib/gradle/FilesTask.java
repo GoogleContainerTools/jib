@@ -73,12 +73,12 @@ public class FilesTask extends DefaultTask {
     // Print resources
     mainSourceSet.getResources().getSourceDirectories().forEach(System.out::println);
 
-    // Iterate over dependencies
+    // Find project dependencies
     for (Configuration configuration :
         project.getConfigurations().getByName("runtime").getHierarchy()) {
       for (Dependency dependency : configuration.getDependencies()) {
         if (dependency instanceof ProjectDependency) {
-          // If project dependency, find and keep track of jars associated with project dependency
+          // Keep track of project dependency jars
           ProjectDependency projectDependency = (ProjectDependency) dependency;
           String configurationName = projectDependency.getTargetConfiguration();
           if (configurationName == null) {
@@ -88,14 +88,11 @@ public class FilesTask extends DefaultTask {
           for (Configuration targetConfiguration :
               dependencyProject.getConfigurations().getByName(configurationName).getHierarchy()) {
             for (PublishArtifact artifact : targetConfiguration.getArtifacts()) {
-              if (projectDependencyJars.contains(artifact.getFile())) {
-                continue;
-              }
               projectDependencyJars.add(artifact.getFile());
             }
           }
 
-          // Find project dependency's sources files and print those
+          // Print project dependency's build/source/resource files
           listFilesForProject(dependencyProject, projectDependencyJars);
         }
       }
@@ -110,12 +107,11 @@ public class FilesTask extends DefaultTask {
   }
 
   @TaskAction
-  public void listFilesForProject() {
+  public void listFiles() {
     Preconditions.checkNotNull(jibExtension);
     Project project = getProject();
 
-    // If this is not the root project, be sure to print the root project's build.gradle and
-    // settings.gradle
+    // If this is not the root project, print the root project's build.gradle and settings.gradle
     if (project != project.getRootProject()) {
       System.out.println(project.getRootProject().getBuildFile());
       Path settingsFiles = project.getRootDir().toPath().resolve(Settings.DEFAULT_SETTINGS_FILE);
@@ -129,18 +125,16 @@ public class FilesTask extends DefaultTask {
       System.out.println(jibExtension.getExtraDirectoryPath());
     }
 
-    // Print subproject sources
+    // Print sub-project sources
     Set<File> skippedJars = new HashSet<>();
     listFilesForProject(project, skippedJars);
 
-    // Print out dependency jars
+    // Print out SNAPSHOT non-project dependency jars
     for (File file : project.getConfigurations().getByName("runtime")) {
-      // Avoid printing non-SNAPSHOT's/duplicates
-      if (skippedJars.contains(file) || !file.toString().contains("SNAPSHOT")) {
-        continue;
+      if (!skippedJars.contains(file) && file.toString().contains("SNAPSHOT")) {
+        System.out.println(file);
+        skippedJars.add(file);
       }
-      System.out.println(file);
-      skippedJars.add(file);
     }
   }
 }
