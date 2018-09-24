@@ -22,6 +22,8 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.gradle.api.artifacts.Dependency;
+import org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDependency;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.BuildTask;
 import org.gradle.testkit.runner.TaskOutcome;
@@ -95,6 +97,20 @@ public class FilesTaskTest {
     Assert.assertThat(
         result.get(result.size() - 1), CoreMatchers.endsWith("guava-HEAD-jre-SNAPSHOT.jar"));
     Assert.assertEquals(11, result.size());
+  }
+
+  @Test
+  public void testPathMatchesDependency() {
+    Dependency nameOnly = new DefaultExternalModuleDependency(null, "testName", null);
+    Assert.assertTrue(FilesTask.pathMatchesDependency(nameOnly, "testPath/testName.jar"));
+    Assert.assertFalse(FilesTask.pathMatchesDependency(nameOnly, "testPath/wrongName.jar"));
+
+    Dependency withVersion = new DefaultExternalModuleDependency(null, "testName", "testVersion");
+    Assert.assertTrue(
+        FilesTask.pathMatchesDependency(withVersion, "testPath/testName-testVersion.jar"));
+    Assert.assertFalse(FilesTask.pathMatchesDependency(withVersion, "testPath/testName.jar"));
+    Assert.assertFalse(
+        FilesTask.pathMatchesDependency(withVersion, "testPath/wrongName-testVersion.jar"));
   }
 
   private static List<String> verifyTaskSuccess(TestProject project, @Nullable String moduleName) {

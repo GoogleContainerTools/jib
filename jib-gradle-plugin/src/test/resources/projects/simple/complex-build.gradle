@@ -1,0 +1,46 @@
+plugins {
+    id 'java'
+    id 'com.google.cloud.tools.jib'
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile files('libs/dependency-1.0.0.jar')
+}
+
+jib {
+    from {
+        image = 'localhost:5000/distroless/java'
+        auth {
+            username = 'testuser'
+            password = 'testpassword'
+        }
+    }
+    to {
+        image = System.getProperty("_TARGET_IMAGE")
+        auth {
+            username = System.getProperty("_TARGET_USERNAME")
+            password = System.getProperty("_TARGET_PASSWORD")
+        }
+    }
+    container {
+        useCurrentTimestamp = true
+        args = ['An argument.']
+        mainClass = 'com.test.HelloWorld'
+        jvmFlags = ['-Xms512m', '-Xdebug']
+        environment = [env1:'envvalue1', env2:'envvalue2']
+        ports = ['1000/tcp', '2000-2003/udp']
+        labels = [key1:'value1', key2:'value2']
+    }
+    allowInsecureRegistries = true
+    extraDirectory = file('src/main/custom-extra-dir')
+
+    // Does not have tests use user-level cache for base image layers.
+    useOnlyProjectCache = true
+}

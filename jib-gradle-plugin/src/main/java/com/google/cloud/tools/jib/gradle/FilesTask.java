@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.io.File;
 import java.util.HashSet;
@@ -63,12 +64,12 @@ public class FilesTask extends DefaultTask {
     for (Configuration configuration :
         project.getConfigurations().getByName("runtime").getHierarchy()) {
       for (File file : configuration) {
+        // Prevent printing the same dependency twice
         if (printedFiles.contains(file)) {
           continue;
         }
-        String absolutePath = file.getAbsolutePath();
         for (Dependency dependency : dependenciesToPrint) {
-          if (absolutePath.contains(dependency.getName() + "-" + dependency.getVersion())) {
+          if (pathMatchesDependency(dependency, file.getAbsolutePath())) {
             System.out.println(file);
             printedFiles.add(file);
           }
@@ -114,6 +115,23 @@ public class FilesTask extends DefaultTask {
           dependencyJars.add(dependency);
         }
       }
+    }
+  }
+
+  /**
+   * Returns {@code true} if a path contains the dependency's name/version (if available).
+   *
+   * @param dependency the dependency to match with
+   * @param absolutePath the path to the jar
+   * @return {@code true} if the path contains the dependency's name/version, {@code false} if not
+   */
+  @VisibleForTesting
+  static boolean pathMatchesDependency(Dependency dependency, String absolutePath) {
+    boolean containsName = absolutePath.contains(dependency.getName());
+    if (dependency.getVersion() == null) {
+      return containsName;
+    } else {
+      return containsName && absolutePath.contains(dependency.getVersion());
     }
   }
 }
