@@ -156,12 +156,12 @@ public class BuildImageMojoIntegrationTest {
   }
 
   /**
-   * Pulls a built image and attemps to run it. Also verifies the container configuration and
+   * Pulls a built image and attempts to run it. Also verifies the container configuration and
    * history of the built image.
    *
    * @param imageReference the image reference of the built image
    * @return the container output
-   * @throws IOException if an I/O exceptio occurs
+   * @throws IOException if an I/O exception occurs
    * @throws InterruptedException if the process was interrupted
    */
   private static String pullAndRunBuiltImage(String imageReference)
