@@ -86,6 +86,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
               .setBaseImageConfiguration(
                   pluginConfigurationProcessor.getBaseImageConfigurationBuilder().build())
               .setTargetImageConfiguration(ImageConfiguration.builder(targetImage).build())
+              .setAdditionalTargetImageTags(getTargetImageAdditionalTags())
               .setContainerConfiguration(
                   pluginConfigurationProcessor.getContainerConfigurationBuilder().build())
               .build();
