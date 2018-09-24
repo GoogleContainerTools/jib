@@ -243,7 +243,7 @@ public class JibPluginIntegrationTest {
             + IntegrationTestingConfiguration.getGCPProject()
             + "/multitag-image:gradle"
             + System.nanoTime();
-    buildAndRunAdditionalTag(emptyTestProject, targetImage, "gradle-2", "");
+    buildAndRunAdditionalTag(emptyTestProject, targetImage, "gradle-2" + System.nanoTime(), "");
   }
 
   @Test

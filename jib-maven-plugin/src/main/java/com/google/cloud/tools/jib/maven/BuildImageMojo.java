@@ -126,6 +126,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
             .setBaseImageConfiguration(
                 pluginConfigurationProcessor.getBaseImageConfigurationBuilder().build())
             .setTargetImageConfiguration(targetImageConfiguration)
+            .setAdditionalTargetImageTags(getTargetImageAdditionalTags())
             .setContainerConfiguration(
                 pluginConfigurationProcessor.getContainerConfigurationBuilder().build())
             .setTargetFormat(ImageFormat.valueOf(getFormat()).getManifestTemplateClass())
