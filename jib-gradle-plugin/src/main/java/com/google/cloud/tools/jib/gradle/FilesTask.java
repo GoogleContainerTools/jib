@@ -59,19 +59,25 @@ public class FilesTask extends DefaultTask {
     }
 
     // Print build.gradle
-    System.out.println(project.getBuildFile());
+    System.out.println(project.getBuildFile().getAbsolutePath());
 
     // Print settings.gradle
     Path settingsFile = project.getProjectDir().toPath().resolve(Settings.DEFAULT_SETTINGS_FILE);
     if (Files.exists(settingsFile)) {
-      System.out.println(settingsFile);
+      System.out.println(settingsFile.toAbsolutePath());
     }
 
     // Print sources
-    mainSourceSet.getAllJava().getSourceDirectories().forEach(System.out::println);
+    mainSourceSet
+        .getAllJava()
+        .getSourceDirectories()
+        .forEach(sourceDirectory -> System.out.println(sourceDirectory.getAbsolutePath()));
 
     // Print resources
-    mainSourceSet.getResources().getSourceDirectories().forEach(System.out::println);
+    mainSourceSet
+        .getResources()
+        .getSourceDirectories()
+        .forEach(sourceDirectory -> System.out.println(sourceDirectory.getAbsolutePath()));
 
     // Find project dependencies
     for (Configuration configuration :
@@ -113,16 +119,16 @@ public class FilesTask extends DefaultTask {
 
     // If this is not the root project, print the root project's build.gradle and settings.gradle
     if (project != project.getRootProject()) {
-      System.out.println(project.getRootProject().getBuildFile());
+      System.out.println(project.getRootProject().getBuildFile().getAbsolutePath());
       Path settingsFiles = project.getRootDir().toPath().resolve(Settings.DEFAULT_SETTINGS_FILE);
       if (Files.exists(settingsFiles)) {
-        System.out.println(settingsFiles);
+        System.out.println(settingsFiles.toAbsolutePath());
       }
     }
 
     // Print extra layer
     if (project.getPlugins().hasPlugin(JibPlugin.class)) {
-      System.out.println(jibExtension.getExtraDirectoryPath());
+      System.out.println(jibExtension.getExtraDirectoryPath().toAbsolutePath());
     }
 
     // Print sub-project sources
@@ -132,7 +138,7 @@ public class FilesTask extends DefaultTask {
     // Print out SNAPSHOT non-project dependency jars
     for (File file : project.getConfigurations().getByName("runtime")) {
       if (!skippedJars.contains(file) && file.toString().contains("SNAPSHOT")) {
-        System.out.println(file);
+        System.out.println(file.getAbsolutePath());
         skippedJars.add(file);
       }
     }
