@@ -173,7 +173,7 @@ public class RegistryClient {
    * @param registryEndpointRequestProperties properties of registry endpoint requests
    * @return the new {@link Factory}
    */
-  public static Factory factory(
+  static Factory factory(
       JibLogger buildLogger, RegistryEndpointRequestProperties registryEndpointRequestProperties) {
     return new Factory(buildLogger, registryEndpointRequestProperties);
   }
