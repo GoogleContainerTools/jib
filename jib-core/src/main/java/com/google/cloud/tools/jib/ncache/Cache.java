@@ -17,20 +17,22 @@
 package com.google.cloud.tools.jib.ncache;
 
 import com.google.cloud.tools.jib.blob.Blob;
+import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
 import java.util.Optional;
 import javax.annotation.concurrent.Immutable;
 
 /**
  * Cache for storing data to be shared between Jib executions.
  *
- * <p>Uses the default cache storage engine ({@link DefaultCacheStorage}) and layer entries as the
- * selector ({@link LayerEntriesSelector}).
+ * <p>Uses the default cache storage engine ({@link DefaultCacheStorage}), layer entries as the
+ * selector ({@link LayerEntriesSelector}), and last modified time as the metadata.
  *
  * <p>This class is immutable and safe to use across threads.
  */
@@ -56,8 +58,7 @@ public class Cache {
   }
 
   /**
-   * Saves a cache entry with only a layer {@link Blob}. Use {@link #write(Blob, ImmutableList,
-   * Blob)} to include a selector and metadata.
+   * Saves a cache entry with only a layer {@link Blob}. Use {@link #write(Blob, ImmutableList)} to include a selector and metadata.
    *
    * @param layerBlob the layer {@link Blob}
    * @return the {@link CacheEntry} for the written layer
@@ -73,19 +74,18 @@ public class Cache {
    *
    * @param layerBlob the layer {@link Blob}
    * @param layerEntries the layer entries that make up the layer
-   * @param metadataBlob the metadata {@link Blob}
    * @return the {@link CacheEntry} for the written layer and metadata
    * @throws IOException if an I/O exception occurs
    */
-  public CacheEntry write(Blob layerBlob, ImmutableList<LayerEntry> layerEntries, Blob metadataBlob)
+  public CacheEntry write(Blob layerBlob, ImmutableList<LayerEntry> layerEntries)
       throws IOException {
     return cacheStorage.write(
         CacheWrite.withSelectorAndMetadata(
-            layerBlob, LayerEntriesSelector.generateSelector(layerEntries), metadataBlob));
+            layerBlob, LayerEntriesSelector.generateSelector(layerEntries), LastModifiedMetadata.generateMetadata(layerEntries)));
   }
 
   /**
-   * Retrieves the {@link CacheEntry} that was built from the {@code layerEntries}.
+   * Retrieves the {@link CacheEntry} that was built from the {@code layerEntries}. The last modified time of the {@code layerEntries} must match the last modified time as stored by the metadata of the {@link CacheEntry}.
    *
    * @param layerEntries the layer entries to match against
    * @return a {@link CacheEntry} that was built from {@code layerEntries}, if found
@@ -100,7 +100,23 @@ public class Cache {
       return Optional.empty();
     }
 
-    return cacheStorage.retrieve(optionalSelectedLayerDigest.get());
+    Optional<CacheEntry> optionalCacheEntry = cacheStorage.retrieve(optionalSelectedLayerDigest.get());
+    if (!optionalCacheEntry.isPresent()) {
+      return Optional.empty();
+    }
+
+    CacheEntry cacheEntry = optionalCacheEntry.get();
+    if (!cacheEntry.getMetadataBlob().isPresent()) {
+      return Optional.empty();
+    }
+
+    Blob metadataBlob = cacheEntry.getMetadataBlob().get();
+    FileTime cacheEntryLastModifiedTime = FileTime.fromMillis(Long.parseLong(Blobs.writeToString(metadataBlob)));
+    if (!LastModifiedMetadata.getLastModifiedTime(layerEntries).equals(cacheEntryLastModifiedTime)) {
+      return Optional.empty();
+    }
+
+    return Optional.of(cacheEntry);
   }
 
   /**
