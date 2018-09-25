@@ -56,11 +56,11 @@ public class Cache {
   }
 
   /**
-   * Saves a cache entry with only a layer {@link Blob}. Use {@link #write(Blob, DescriptorDigest,
+   * Saves a cache entry with only a layer {@link Blob}. Use {@link #write(Blob, ImmutableList,
    * Blob)} to include a selector and metadata.
    *
    * @param layerBlob the layer {@link Blob}
-   * @return the {@link CacheEntry} for the written {@link CacheWrite}
+   * @return the {@link CacheEntry} for the written layer
    * @throws IOException if an I/O exception occurs
    */
   public CacheEntry write(Blob layerBlob) throws IOException {
@@ -72,15 +72,16 @@ public class Cache {
    * {@link Blob}. Use {@link #write(Blob)} to save only a layer {@link Blob}.
    *
    * @param layerBlob the layer {@link Blob}
-   * @param selector the selector digest
+   * @param layerEntries the layer entries that make up the layer
    * @param metadataBlob the metadata {@link Blob}
-   * @return the {@link CacheEntry} for the written {@link CacheWrite}
+   * @return the {@link CacheEntry} for the written layer and metadata
    * @throws IOException if an I/O exception occurs
    */
-  public CacheEntry write(Blob layerBlob, DescriptorDigest selector, Blob metadataBlob)
+  public CacheEntry write(Blob layerBlob, ImmutableList<LayerEntry> layerEntries, Blob metadataBlob)
       throws IOException {
     return cacheStorage.write(
-        CacheWrite.withSelectorAndMetadata(layerBlob, selector, metadataBlob));
+        CacheWrite.withSelectorAndMetadata(
+            layerBlob, LayerEntriesSelector.generateSelector(layerEntries), metadataBlob));
   }
 
   /**
