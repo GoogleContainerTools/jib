@@ -38,8 +38,7 @@ public class RegistryAuthenticatorIntegrationTest {
         RegistryAuthenticator.initializer(
                 BUILD_LOGGER,
                 dockerHubImageReference.getRegistry(),
-                dockerHubImageReference.getRepository(),
-                null /* mountedImageName */)
+                dockerHubImageReference.getRepository())
             .initialize();
     Assert.assertNotNull(registryAuthenticator);
     Authorization authorization = registryAuthenticator.authenticatePull();

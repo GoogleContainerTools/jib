@@ -148,8 +148,7 @@ class PullBaseImageStep
               RegistryAuthenticator.initializer(
                       buildConfiguration.getBuildLogger(),
                       buildConfiguration.getBaseImageConfiguration().getImageRegistry(),
-                      buildConfiguration.getBaseImageConfiguration().getImageRepository(),
-                      null /* mountedImageName */)
+                      buildConfiguration.getBaseImageConfiguration().getImageRepository())
                   .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
                   .initialize();
           if (registryAuthenticator == null) {

@@ -47,7 +47,9 @@ public class RegistryAuthenticator {
   public static class Initializer {
 
     private final JibLogger buildLogger;
-    private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
+    private final String serverUrl;
+    private final String imageName;
+    @Nullable private String mountedImageName;
     private boolean allowInsecureRegistries = false;
 
     /**
@@ -56,11 +58,22 @@ public class RegistryAuthenticator {
      * @param buildLogger the build logger used for printing messages
      * @param registryEndpointRequestProperties properties of registry endpoint requests
      */
-    private Initializer(
-        JibLogger buildLogger,
-        RegistryEndpointRequestProperties registryEndpointRequestProperties) {
+    private Initializer(JibLogger buildLogger, String serverUrl, String imageName) {
       this.buildLogger = buildLogger;
-      this.registryEndpointRequestProperties = registryEndpointRequestProperties;
+      this.serverUrl = serverUrl;
+      this.imageName = imageName;
+    }
+
+    /**
+     * Set the cross-repository blob mount location.
+     *
+     * @param mountedRepository an optional image/repository name used for establishing
+     *     cross-repository blob mounts; always requested with {@code pull} scope; may be {@code
+     *     null} or empty
+     */
+    public Initializer setMountedImageName(@Nullable String mountedImageName) {
+      this.mountedImageName = mountedImageName;
+      return this;
     }
 
     public Initializer setAllowInsecureRegistries(boolean allowInsecureRegistries) {
@@ -80,6 +93,8 @@ public class RegistryAuthenticator {
     @Nullable
     public RegistryAuthenticator initialize()
         throws RegistryAuthenticationFailedException, IOException, RegistryException {
+      RegistryEndpointRequestProperties registryEndpointRequestProperties =
+          new RegistryEndpointRequestProperties(serverUrl, imageName, mountedImageName);
       try {
         // TODO creating a client to obtain its authenticator seems convoluted
         return RegistryClient.factory(buildLogger, registryEndpointRequestProperties)
@@ -106,20 +121,12 @@ public class RegistryAuthenticator {
    * @param buildLogger the build logger used for printing messages
    * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
    * @param repository the image/repository name for access (also known as, namespace)
-   * @param mountedRepository an optional image/repository name used for establishing
-   *     cross-repository blob mounts; always requested with {@code pull} scope; may be {@code null}
-   *     or empty
    * @return the new {@link Initializer}
    */
   public static Initializer initializer(
-      JibLogger buildLogger,
-      String serverUrl,
-      String repository,
-      @Nullable String mountedRepository) {
+      JibLogger buildLogger, String serverUrl, String repository) {
 
-    return new Initializer(
-        buildLogger,
-        new RegistryEndpointRequestProperties(serverUrl, repository, mountedRepository));
+    return new Initializer(buildLogger, serverUrl, repository);
   }
 
   // TODO: Replace with a WWW-Authenticate header parser.
@@ -262,6 +269,8 @@ public class RegistryAuthenticator {
         .append(':')
         .append(scope);
 
+    // getMountedImageName() is only set when the base and target registries are compatible
+    // (see CrossRepositoryBlobMountsSupport)
     if (registryEndpointRequestProperties.getMountedImageName() != null) {
       urlBuilder
           .append("&scope=repository:")
