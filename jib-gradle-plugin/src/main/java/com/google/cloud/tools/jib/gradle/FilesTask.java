@@ -54,14 +54,14 @@ public class FilesTask extends DefaultTask {
     System.out.println(project.getBuildFile());
 
     // Print settings.gradle
-    Path settingsFiles = projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE);
-    if (Files.exists(settingsFiles)) {
-      System.out.println(settingsFiles);
+    if (project.getGradle().getStartParameter().getSettingsFile() != null) {
+      System.out.println(project.getGradle().getStartParameter().getSettingsFile());
+    } else if (Files.exists(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE))) {
+      System.out.println(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE));
     }
 
     // Print gradle.properties
-    Path propertiesFile = projectPath.resolve("gradle.properties");
-    if (Files.exists(propertiesFile)) {
+    if (Files.exists(projectPath.resolve("gradle.properties"))) {
       System.out.println(projectPath.resolve("gradle.properties"));
     }
   }
@@ -100,18 +100,18 @@ public class FilesTask extends DefaultTask {
    * project dependency.
    *
    * @param project the project to list the artifacts for
-   * @param projectDependencies the set of project dependencies encountered. When a project
+   * @param projectDependenciesResult the set of project dependencies encountered. When a project
    *     dependency is encountered, it is added to this set.
    */
   private static void findProjectDependencies(
-      Project project, Set<ProjectDependency> projectDependencies) {
+      Project project, Set<ProjectDependency> projectDependenciesResult) {
     for (Configuration configuration :
         project.getConfigurations().getByName("runtime").getHierarchy()) {
       for (Dependency dependency : configuration.getDependencies()) {
         if (dependency instanceof ProjectDependency) {
-          projectDependencies.add((ProjectDependency) dependency);
+          projectDependenciesResult.add((ProjectDependency) dependency);
           findProjectDependencies(
-              ((ProjectDependency) dependency).getDependencyProject(), projectDependencies);
+              ((ProjectDependency) dependency).getDependencyProject(), projectDependenciesResult);
         }
       }
     }
