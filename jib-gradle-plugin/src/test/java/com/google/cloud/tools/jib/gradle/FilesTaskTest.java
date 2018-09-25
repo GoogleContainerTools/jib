@@ -84,10 +84,10 @@ public class FilesTaskTest {
     List<Path> result = verifyTaskSuccess(simpleTestProject, null);
     List<Path> expected =
         ImmutableList.of(
-            projectRoot.resolve("src/main/custom-extra-dir"),
             projectRoot.resolve("build.gradle"),
             projectRoot.resolve("src/main/resources"),
-            projectRoot.resolve("src/main/java"));
+            projectRoot.resolve("src/main/java"),
+            projectRoot.resolve("src/main/custom-extra-dir"));
     assertPathListsAreEqual(expected, result);
   }
 
@@ -117,11 +117,11 @@ public class FilesTaskTest {
             projectRoot.resolve("build.gradle"),
             projectRoot.resolve("settings.gradle"),
             projectRoot.resolve("gradle.properties"),
-            complexServiceRoot.resolve("src/main/other-jib"),
             complexServiceRoot.resolve("build.gradle"),
             complexServiceRoot.resolve("src/main/extra-resources-1"),
             complexServiceRoot.resolve("src/main/extra-resources-2"),
             complexServiceRoot.resolve("src/main/java"),
+            complexServiceRoot.resolve("src/main/other-jib"),
             libRoot.resolve("build.gradle"),
             libRoot.resolve("src/main/resources"),
             libRoot.resolve("src/main/java"));

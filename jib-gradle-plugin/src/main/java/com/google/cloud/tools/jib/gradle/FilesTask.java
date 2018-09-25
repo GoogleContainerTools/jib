@@ -67,14 +67,11 @@ public class FilesTask extends DefaultTask {
   }
 
   /**
-   * Recursive function for printing out a project's artifacts. Calls itself when it encounters a
-   * project dependency.
+   * Prints build files, sources, and resources associated with a project.
    *
-   * @param project the project to list the artifacts for
-   * @param projectDependencyJars the set of jar files associated with each project dependency
-   *     encountered
+   * @param project the project
    */
-  private static void listFilesForProject(Project project, Set<File> projectDependencyJars) {
+  private static void printProjectFiles(Project project) {
     JavaPluginConvention javaConvention =
         project.getConvention().getPlugin(JavaPluginConvention.class);
     SourceSet mainSourceSet =
@@ -96,31 +93,25 @@ public class FilesTask extends DefaultTask {
                 System.out.println(sourceDirectory);
               }
             });
+  }
 
-    // Find project dependencies
+  /**
+   * Recursive function for printing out a project's artifacts. Calls itself when it encounters a
+   * project dependency.
+   *
+   * @param project the project to list the artifacts for
+   * @param projectDependencies the set of project dependencies encountered. When a project
+   *     dependency is encountered, it is added to this set.
+   */
+  private static void findProjectDependencies(
+      Project project, Set<ProjectDependency> projectDependencies) {
     for (Configuration configuration :
-        project
-            .getConfigurations()
-            .getByName(mainSourceSet.getRuntimeConfigurationName())
-            .getHierarchy()) {
+        project.getConfigurations().getByName("runtime").getHierarchy()) {
       for (Dependency dependency : configuration.getDependencies()) {
         if (dependency instanceof ProjectDependency) {
-          // Keep track of project dependency jars
-          ProjectDependency projectDependency = (ProjectDependency) dependency;
-          String configurationName = projectDependency.getTargetConfiguration();
-          if (configurationName == null) {
-            configurationName = "default";
-          }
-          Project dependencyProject = projectDependency.getDependencyProject();
-          for (Configuration targetConfiguration :
-              dependencyProject.getConfigurations().getByName(configurationName).getHierarchy()) {
-            for (PublishArtifact artifact : targetConfiguration.getArtifacts()) {
-              projectDependencyJars.add(artifact.getFile());
-            }
-          }
-
-          // Print project dependency's build/source/resource files
-          listFilesForProject(dependencyProject, projectDependencyJars);
+          projectDependencies.add((ProjectDependency) dependency);
+          findProjectDependencies(
+              ((ProjectDependency) dependency).getDependencyProject(), projectDependencies);
         }
       }
     }
@@ -143,20 +134,40 @@ public class FilesTask extends DefaultTask {
       printGradleFiles(project.getRootProject());
     }
 
+    printProjectFiles(project);
+
     // Print extra layer
     if (Files.exists(jibExtension.getExtraDirectoryPath())) {
       System.out.println(jibExtension.getExtraDirectoryPath());
     }
 
-    // Print sub-project sources
-    Set<File> skippedJars = new HashSet<>();
-    listFilesForProject(project, skippedJars);
+    // Find project dependencies
+    Set<ProjectDependency> projectDependencies = new HashSet<>();
+    findProjectDependencies(project, projectDependencies);
 
-    // Print out SNAPSHOT non-project dependency jars
+    Set<File> projectDependencyJars = new HashSet<>();
+    for (ProjectDependency projectDependency : projectDependencies) {
+      printProjectFiles(projectDependency.getDependencyProject());
+
+      // Keep track of project dependency jars for filtering out later
+      String configurationName = projectDependency.getTargetConfiguration();
+      if (configurationName == null) {
+        configurationName = "default";
+      }
+      Project dependencyProject = projectDependency.getDependencyProject();
+      for (Configuration targetConfiguration :
+          dependencyProject.getConfigurations().getByName(configurationName).getHierarchy()) {
+        for (PublishArtifact artifact : targetConfiguration.getArtifacts()) {
+          projectDependencyJars.add(artifact.getFile());
+        }
+      }
+    }
+
+    // Print out SNAPSHOT, non-project dependency jars
     for (File file : project.getConfigurations().getByName("runtime")) {
-      if (!skippedJars.contains(file) && file.toString().contains("SNAPSHOT")) {
+      if (!projectDependencyJars.contains(file) && file.toString().contains("SNAPSHOT")) {
         System.out.println(file);
-        skippedJars.add(file);
+        projectDependencyJars.add(file); // Add to set to avoid printing the same files twice
       }
     }
   }
