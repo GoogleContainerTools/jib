@@ -88,8 +88,7 @@ public class Cache {
    * Retrieves the {@link CacheEntry} that was built from the {@code layerEntries}.
    *
    * @param layerEntries the layer entries to match against
-   * @return a {@link CacheEntry} that was built from {@code layerEntries}, or {@link
-   *     Optional#empty} if none found
+   * @return a {@link CacheEntry} that was built from {@code layerEntries}, if found
    * @throws IOException if an I/O exception occurs
    * @throws CacheCorruptedException if the cache is corrupted
    */
@@ -108,8 +107,7 @@ public class Cache {
    * Retrieves the {@link CacheEntry} for the layer with digest {@code layerDigest}.
    *
    * @param layerDigest the layer digest
-   * @return the {@link CacheEntry} referenced by the layer digest, or {@link Optional#empty} if not
-   *     found
+   * @return the {@link CacheEntry} referenced by the layer digest, if found
    * @throws CacheCorruptedException if the cache was found to be corrupted
    * @throws IOException if an I/O exception occurs
    */
