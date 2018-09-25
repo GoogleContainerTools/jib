@@ -87,7 +87,7 @@ public class LastModifiedMetadataTest {
   @Test
   public void testGenerateMetadata() throws IOException {
     Assert.assertEquals(
-        "2000",
+        Instant.ofEpochMilli(2000).toString(),
         Blobs.writeToString(
             LastModifiedMetadata.generateMetadata(ImmutableList.copyOf(layerEntries))));
   }
