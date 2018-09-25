@@ -17,10 +17,8 @@
 package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.common.base.Preconditions;
 import java.nio.file.Path;
 import java.util.Objects;
-import java.util.StringJoiner;
 
 /**
  * Represents an entry in the layer. A layer consists of many entries that can be converted into tar
@@ -35,23 +33,6 @@ import java.util.StringJoiner;
  * </ul>
  */
 public class LayerEntry {
-
-  /**
-   * Stringifies {@code path} in Unix form. The path must be absolute.
-   *
-   * @param path the path
-   * @return the string form of the absolute path
-   */
-  private static String toUnixPath(Path path) {
-    Preconditions.checkArgument(
-        path.getRoot() != null, "Tried to stringify a non-absolute path: %s", path);
-
-    StringJoiner pathJoiner = new StringJoiner("/", "/", "");
-    for (Path pathComponent : path) {
-      pathJoiner.add(pathComponent.toString());
-    }
-    return pathJoiner.toString();
-  }
 
   private final Path sourceFile;
   private final AbsoluteUnixPath extractionPath;
@@ -108,7 +89,7 @@ public class LayerEntry {
    * @return the source file path
    */
   public String getAbsoluteSourceFileString() {
-    return toUnixPath(sourceFile.toAbsolutePath());
+    return AbsoluteUnixPath.fromPath(sourceFile.toAbsolutePath()).toString();
   }
 
   /**
