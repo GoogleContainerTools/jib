@@ -17,14 +17,13 @@
 package com.google.cloud.tools.jib.tar;
 
 import com.google.cloud.tools.jib.blob.Blob;
+import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.CharStreams;
 import com.google.common.io.Resources;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -100,6 +99,8 @@ public class TarStreamBuilderTest {
   public void testToBlob_multiByte() throws IOException {
     testTarStreamBuilder.addByteEntry("日本語".getBytes(StandardCharsets.UTF_8), "test");
     testTarStreamBuilder.addByteEntry("asdf".getBytes(StandardCharsets.UTF_8), "crepecake");
+    testTarStreamBuilder.addBlobEntry(
+        Blobs.from("jib"), "jib".getBytes(StandardCharsets.UTF_8).length, "jib");
     Blob blob = testTarStreamBuilder.toBlob();
 
     // Writes the BLOB and captures the output.
@@ -116,15 +117,18 @@ public class TarStreamBuilderTest {
     // Verify multi-byte characters are written/read correctly
     TarArchiveEntry headerFile = tarArchiveInputStream.getNextTarEntry();
     Assert.assertEquals("test", headerFile.getName());
-    String fileString =
-        CharStreams.toString(new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
-    Assert.assertEquals("日本語", fileString);
+    Assert.assertEquals(
+        "日本語", new String(ByteStreams.toByteArray(tarArchiveInputStream), StandardCharsets.UTF_8));
 
     headerFile = tarArchiveInputStream.getNextTarEntry();
     Assert.assertEquals("crepecake", headerFile.getName());
-    fileString =
-        CharStreams.toString(new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
-    Assert.assertEquals("asdf", fileString);
+    Assert.assertEquals(
+        "asdf", new String(ByteStreams.toByteArray(tarArchiveInputStream), StandardCharsets.UTF_8));
+
+    headerFile = tarArchiveInputStream.getNextTarEntry();
+    Assert.assertEquals("jib", headerFile.getName());
+    Assert.assertEquals(
+        "jib", new String(ByteStreams.toByteArray(tarArchiveInputStream), StandardCharsets.UTF_8));
 
     Assert.assertNull(tarArchiveInputStream.getNextTarEntry());
   }

@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.configuration;
 
 import com.google.cloud.tools.jib.JibLogger;
-import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.event.EventEmitter;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
@@ -195,6 +194,8 @@ public class BuildConfiguration {
      * Builds a new {@link BuildConfiguration} using the parameters passed into the builder.
      *
      * @return the corresponding build configuration
+     * @throws IOException if an I/O exception occurs
+     * @throws CacheDirectoryCreationException if failed to create the configured cache directories
      */
     public BuildConfiguration build() throws IOException, CacheDirectoryCreationException {
       // Validates the parameters.
@@ -252,11 +253,13 @@ public class BuildConfiguration {
       }
     }
 
+    @Nullable
     @VisibleForTesting
     CacheConfiguration getBaseImageLayersCacheConfiguration() {
       return baseImageLayersCacheConfiguration;
     }
 
+    @Nullable
     @VisibleForTesting
     CacheConfiguration getApplicationLayersCacheConfiguration() {
       return applicationLayersCacheConfiguration;

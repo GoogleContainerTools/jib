@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.configuration;
 
 import com.google.cloud.tools.jib.JibLogger;
-import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
@@ -185,8 +184,14 @@ public class BuildConfigurationTest {
 
     Assert.assertEquals(ImmutableSet.of("targettag"), buildConfiguration.getAllTargetImageTags());
     Assert.assertEquals(V22ManifestTemplate.class, buildConfiguration.getTargetFormat());
-    Assert.assertNull(buildConfigurationBuilder.getApplicationLayersCacheConfiguration());
-    Assert.assertNull(buildConfigurationBuilder.getBaseImageLayersCacheConfiguration());
+    Assert.assertNotNull(buildConfigurationBuilder.getApplicationLayersCacheConfiguration());
+    Assert.assertNotEquals(
+        CacheConfiguration.forDefaultUserLevelCacheDirectory().getCacheDirectory(),
+        buildConfigurationBuilder.getApplicationLayersCacheConfiguration().getCacheDirectory());
+    Assert.assertNotNull(buildConfigurationBuilder.getBaseImageLayersCacheConfiguration());
+    Assert.assertEquals(
+        CacheConfiguration.forDefaultUserLevelCacheDirectory().getCacheDirectory(),
+        buildConfigurationBuilder.getBaseImageLayersCacheConfiguration().getCacheDirectory());
     Assert.assertNull(buildConfiguration.getContainerConfiguration());
     Assert.assertFalse(buildConfiguration.getAllowInsecureRegistries());
     Assert.assertEquals(Collections.emptyList(), buildConfiguration.getLayerConfigurations());

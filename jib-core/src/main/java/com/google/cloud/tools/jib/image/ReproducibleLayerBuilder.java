@@ -31,9 +31,9 @@ import java.util.Set;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 
 /**
- * Builds a reproducible {@link UnwrittenLayer} from files. The reproducibility is implemented by
- * strips out all non-reproducible elements (modification time, group ID, user ID, user name, and
- * group name) from name-sorted tar archive entries.
+ * Builds a reproducible layer {@link Blob} from files. The reproducibility is implemented by strips
+ * out all non-reproducible elements (modification time, group ID, user ID, user name, and group
+ * name) from name-sorted tar archive entries.
  */
 public class ReproducibleLayerBuilder {
 

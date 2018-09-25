@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,19 +14,14 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.cache;
+package com.google.cloud.tools.jib.configuration;
 
-/**
- * Exception thrown when the cache metadata failed to load correctly, indicating that it is probably
- * corrupted.
- */
-public class CacheMetadataCorruptedException extends Exception {
+/** Thrown when a directory to be used as the cache could not be created. */
+public class CacheDirectoryCreationException extends Exception {
 
-  CacheMetadataCorruptedException(Throwable cause) {
-    super(cause);
-  }
+  private static final String MESSAGE = "Could not create cache directory";
 
-  public CacheMetadataCorruptedException(String message) {
-    super(message);
+  public CacheDirectoryCreationException(Throwable cause) {
+    super(MESSAGE, cause);
   }
 }
