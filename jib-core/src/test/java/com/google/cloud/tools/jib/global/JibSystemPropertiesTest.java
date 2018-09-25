@@ -59,8 +59,7 @@ public class JibSystemPropertiesTest {
 
   @Test
   public void testUseCrossRepositoryBlobMountsProperty() {
-    Assert.assertEquals(
-        "jib.useCrossRepositoryBlobMounts", JibSystemProperties.USE_CROSS_REPOSITORY_BLOB_MOUNTS);
+    Assert.assertEquals("jib.useBlobMounts", JibSystemProperties.USE_CROSS_REPOSITORY_BLOB_MOUNTS);
   }
 
   @Test
