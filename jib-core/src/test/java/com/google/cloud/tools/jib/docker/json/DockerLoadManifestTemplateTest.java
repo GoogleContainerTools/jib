@@ -26,10 +26,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** Tests for {@link DockerLoadManifestTemplate}. */
+/** Tests for {@link DockerLoadManifestEntryTemplate}. */
 public class DockerLoadManifestTemplateTest {
 
   @Test
@@ -38,13 +40,14 @@ public class DockerLoadManifestTemplateTest {
     Path jsonFile = Paths.get(Resources.getResource("json/loadmanifest.json").toURI());
     String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
 
-    DockerLoadManifestTemplate template = new DockerLoadManifestTemplate();
+    DockerLoadManifestEntryTemplate template = new DockerLoadManifestEntryTemplate();
     template.setRepoTags(
         ImageReference.of("testregistry", "testrepo", "testtag").toStringWithTag());
     template.addLayerFile("layer1.tar.gz");
     template.addLayerFile("layer2.tar.gz");
     template.addLayerFile("layer3.tar.gz");
 
-    Assert.assertEquals(expectedJson, Blobs.writeToString(JsonTemplateMapper.toBlob(template)));
+    List<DockerLoadManifestEntryTemplate> loadManifest = Collections.singletonList(template);
+    Assert.assertEquals(expectedJson, Blobs.writeToString(JsonTemplateMapper.toBlob(loadManifest)));
   }
 }

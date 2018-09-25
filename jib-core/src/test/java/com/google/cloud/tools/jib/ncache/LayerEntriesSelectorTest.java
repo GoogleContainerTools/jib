@@ -20,7 +20,6 @@ import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
-import com.google.cloud.tools.jib.ncache.LayerEntriesSelector.LayerEntriesTemplate;
 import com.google.cloud.tools.jib.ncache.LayerEntriesSelector.LayerEntryTemplate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
@@ -64,16 +63,16 @@ public class LayerEntriesSelectorTest {
   }
 
   @Test
-  public void testLayerEntriesTemplate_getList() {
+  public void testToSortedJsonTemplates() {
     Assert.assertEquals(
         toLayerEntryTemplates(IN_ORDER_LAYER_ENTRIES),
-        new LayerEntriesTemplate(OUT_OF_ORDER_LAYER_ENTRIES).getList());
+        LayerEntriesSelector.toSortedJsonTemplates(OUT_OF_ORDER_LAYER_ENTRIES));
   }
 
   @Test
   public void testGenerateSelector_empty() throws IOException {
     DescriptorDigest expectedSelector =
-        JsonTemplateMapper.toBlob(new LayerEntriesTemplate(ImmutableList.of()))
+        JsonTemplateMapper.toBlob(ImmutableList.of())
             .writeTo(ByteStreams.nullOutputStream())
             .getDigest();
     Assert.assertEquals(
@@ -83,7 +82,7 @@ public class LayerEntriesSelectorTest {
   @Test
   public void testGenerateSelector() throws IOException {
     DescriptorDigest expectedSelector =
-        JsonTemplateMapper.toBlob(new LayerEntriesTemplate(IN_ORDER_LAYER_ENTRIES))
+        JsonTemplateMapper.toBlob(toLayerEntryTemplates(IN_ORDER_LAYER_ENTRIES))
             .writeTo(ByteStreams.nullOutputStream())
             .getDigest();
     Assert.assertEquals(

@@ -20,7 +20,6 @@ import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
-import com.google.cloud.tools.jib.json.ListOfJsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
@@ -92,30 +91,21 @@ class LayerEntriesSelector {
     }
   }
 
-  /** Serialized form of a list of {@link LayerEntry}s. */
+  /**
+   * Converts a list of {@link LayerEntry}s into a list of {@link LayerEntriesTemplate}. The list is
+   * sorted by source file first, then extraction path (see {@link LayerEntryTemplate#compareTo}).
+   *
+   * @param layerEntries
+   * @return list of {@link LayerEntryTemplate} after sorting
+   */
   @VisibleForTesting
-  static class LayerEntriesTemplate implements ListOfJsonTemplate<LayerEntryTemplate> {
-
-    private final List<LayerEntryTemplate> layerEntryTemplates = new ArrayList<>();
-
-    @Override
-    public List<LayerEntryTemplate> getList() {
-      return layerEntryTemplates;
+  static List<LayerEntryTemplate> toSortedJsonTemplates(List<LayerEntry> layerEntries) {
+    List<LayerEntryTemplate> jsonTemplates = new ArrayList<>();
+    for (LayerEntry entry : layerEntries) {
+      jsonTemplates.add(new LayerEntryTemplate(entry));
     }
-
-    /**
-     * Serializes a list of {@link LayerEntry}s into a new {@link LayerEntriesTemplate}. The list is
-     * sorted by source file first, then extraction path (see {@link LayerEntryTemplate#compareTo}).
-     *
-     * @param layerEntries the list of {@link LayerEntry}s
-     */
-    @VisibleForTesting
-    LayerEntriesTemplate(ImmutableList<LayerEntry> layerEntries) {
-      for (LayerEntry layerEntry : layerEntries) {
-        layerEntryTemplates.add(new LayerEntryTemplate(layerEntry));
-      }
-      Collections.sort(layerEntryTemplates);
-    }
+    Collections.sort(jsonTemplates);
+    return jsonTemplates;
   }
 
   /**
@@ -128,7 +118,7 @@ class LayerEntriesSelector {
    */
   static DescriptorDigest generateSelector(ImmutableList<LayerEntry> layerEntries)
       throws IOException {
-    return JsonTemplateMapper.toBlob(new LayerEntriesTemplate(layerEntries))
+    return JsonTemplateMapper.toBlob(toSortedJsonTemplates(layerEntries))
         .writeTo(ByteStreams.nullOutputStream())
         .getDigest();
   }
