@@ -34,7 +34,6 @@ public class JibSystemProperties {
 
   private static final String DISABLE_USER_AGENT = "_JIB_DISABLE_USER_AGENT";
 
-
   /**
    * Gets the HTTP connection/read timeouts for registry interactions in milliseconds. This is
    * defined by the {@code jib.httpTimeout} system property. The default value is 20000 if the

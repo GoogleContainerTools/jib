@@ -106,19 +106,20 @@ public class RegistryAuthenticator {
    * @param buildLogger the build logger used for printing messages
    * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
    * @param repository the image/repository name for access (also known as, namespace)
-   * @param dependentRepositories additional image/repository names required for access; always
-   *     requested with {@code pull} scope; may be {@code null} or empty
+   * @param mountedRepository an optional image/repository name used for establishing
+   *     cross-repository blob mounts; always requested with {@code pull} scope; may be {@code null}
+   *     or empty
    * @return the new {@link Initializer}
    */
   public static Initializer initializer(
       JibLogger buildLogger,
       String serverUrl,
       String repository,
-      @Nullable String... dependentRepositories) {
+      @Nullable String mountedRepository) {
 
     return new Initializer(
         buildLogger,
-        new RegistryEndpointRequestProperties(serverUrl, repository, dependentRepositories));
+        new RegistryEndpointRequestProperties(serverUrl, repository, mountedRepository));
   }
 
   // TODO: Replace with a WWW-Authenticate header parser.
@@ -254,18 +255,21 @@ public class RegistryAuthenticator {
 
   @VisibleForTesting
   URL getAuthenticationUrl(String scope) throws MalformedURLException {
-    StringBuilder urlBase = new StringBuilder(authenticationUrlBase);
-    urlBase
+    StringBuilder urlBuilder = new StringBuilder(authenticationUrlBase);
+    urlBuilder
         .append("&scope=repository:")
         .append(registryEndpointRequestProperties.getImageName())
         .append(':')
         .append(scope);
 
-    for (String repository : registryEndpointRequestProperties.getDependentImageNames()) {
-      urlBase.append("&scope=repository:").append(repository).append(":pull");
+    if (registryEndpointRequestProperties.getMountedImageName() != null) {
+      urlBuilder
+          .append("&scope=repository:")
+          .append(registryEndpointRequestProperties.getMountedImageName())
+          .append(":pull");
     }
 
-    return new URL(urlBase.toString());
+    return new URL(urlBuilder.toString());
   }
 
   /**

@@ -31,7 +31,8 @@ import java.util.Optional;
 public class CrossRepositoryBlobMountsSupport {
 
   /**
-   * Determine the mount location if applicable for the provided build configuration.
+   * Determine the cross-repository blob mount location if applicable for the provided build
+   * configuration.
    *
    * @param buildConfiguration the build configuration
    * @return the image name to be mounted or {@code null} if not applicable

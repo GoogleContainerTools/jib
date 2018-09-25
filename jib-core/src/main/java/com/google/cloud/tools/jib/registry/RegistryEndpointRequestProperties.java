@@ -16,24 +16,34 @@
 
 package com.google.cloud.tools.jib.registry;
 
+import javax.annotation.Nullable;
+
 /** Properties of registry endpoint requests. */
 class RegistryEndpointRequestProperties {
 
   private final String serverUrl;
   private final String imageName;
-  private final String[] dependentImageNames;
+  @Nullable private final String mountedImageName;
 
   /**
    * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
    * @param imageName the image/repository name (also known as, namespace)
-   * @param dependentImageNames any additional images required for access; may be {@code null} or
-   *     empty
+   */
+  RegistryEndpointRequestProperties(String serverUrl, String imageName) {
+    this(serverUrl, imageName, null);
+  }
+
+  /**
+   * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
+   * @param imageName the image/repository name (also known as, namespace)
+   * @param mountedImageName an optional image for cross repository blob mounts; may be {@code null}
+   *     or empty
    */
   RegistryEndpointRequestProperties(
-      String serverUrl, String imageName, String... dependentImageNames) {
+      String serverUrl, String imageName, @Nullable String mountedImageName) {
     this.serverUrl = serverUrl;
     this.imageName = imageName;
-    this.dependentImageNames = dependentImageNames != null ? dependentImageNames : new String[0];
+    this.mountedImageName = mountedImageName;
   }
 
   String getServerUrl() {
@@ -44,8 +54,9 @@ class RegistryEndpointRequestProperties {
     return imageName;
   }
 
-  /** @return dependent image names; never {@code null} */
-  String[] getDependentImageNames() {
-    return dependentImageNames;
+  /** @return cross-repository blob mount image names; {@code null} if none. */
+  @Nullable
+  String getMountedImageName() {
+    return mountedImageName;
   }
 }

@@ -89,7 +89,8 @@ class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authori
 
       // If target is colocated with base, request permission for both so as to allow using
       // mount/from
-      Optional<String> mountFrom = CrossRepositoryBlobMountsSupport.getMountFrom(buildConfiguration);
+      Optional<String> mountFrom =
+          CrossRepositoryBlobMountsSupport.getMountFrom(buildConfiguration);
 
       RegistryAuthenticator registryAuthenticator =
           RegistryAuthenticator.initializer(

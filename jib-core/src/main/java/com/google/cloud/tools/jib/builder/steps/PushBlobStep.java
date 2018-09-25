@@ -90,7 +90,8 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
       // having to push the BLOB. See the following for details:
       // https://docs.docker.com/registry/spec/api/#cross-repository-blob-mount
       // Note: mount/from requires that {@link AuthenticatePushStep} request pull access
-      Optional<String> mountFrom = CrossRepositoryBlobMountsSupport.getMountFrom(buildConfiguration);
+      Optional<String> mountFrom =
+          CrossRepositoryBlobMountsSupport.getMountFrom(buildConfiguration);
       registryClient.pushBlob(blobDescriptor.getDigest(), blob, mountFrom.orElse(null));
 
       return blobDescriptor;
