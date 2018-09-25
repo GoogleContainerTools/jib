@@ -181,7 +181,8 @@ public class GradleLayerConfigurationsTest {
         .thenReturn(new TestFileCollection(ImmutableSet.of(nonexistentFile)));
 
     AbsoluteUnixPath appRoot = AbsoluteUnixPath.get("/app");
-    GradleLayerConfigurations.getForProject(mockProject, mockLogger, Paths.get("nonexistent/path"), appRoot);
+    GradleLayerConfigurations.getForProject(
+        mockProject, mockLogger, Paths.get("nonexistent/path"), appRoot);
 
     Mockito.verify(mockLogger)
         .info("Adding corresponding output directories of source sets to image");
@@ -194,7 +195,8 @@ public class GradleLayerConfigurationsTest {
     Path extraFilesDirectory = Paths.get(Resources.getResource("layer").toURI());
 
     JavaLayerConfigurations javaLayerConfigurations =
-        GradleLayerConfigurations.getForProject(mockProject, mockLogger, extraFilesDirectory, AbsoluteUnixPath.get("/app"));
+        GradleLayerConfigurations.getForProject(
+            mockProject, mockLogger, extraFilesDirectory, AbsoluteUnixPath.get("/app"));
 
     ImmutableList<Path> expectedExtraFiles =
         ImmutableList.of(
