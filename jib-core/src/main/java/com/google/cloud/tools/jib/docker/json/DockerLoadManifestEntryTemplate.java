@@ -26,7 +26,7 @@ import java.util.List;
  * a tag is missing, it explicitly should use "latest".
  *
  * <p>Note that this is a template for a single Manifest entry, while the entire Docker Manifest
- * should be {@code List<DockerLoadManifestTemplate>}.
+ * should be {@code List<DockerLoadManifestEntryTemplate>}.
  *
  * <p>Example manifest entry JSON:
  *
