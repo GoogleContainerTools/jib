@@ -18,6 +18,8 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
+import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -98,9 +100,34 @@ public class BuildImageMojoIntegrationTest {
 
     verifier.verifyErrorFreeLog();
 
-    new Command("docker", "pull", imageReference).run();
-    assertDockerInspectParameters(imageReference);
-    return new Command("docker", "run", "--rm", imageReference).run();
+    return pullAndRunBuiltImage(imageReference);
+  }
+
+  private static String buildAndRunAdditionalTag(
+      Path projectRoot, String imageReference, String additionalTag)
+      throws VerificationException, InvalidImageReferenceException, IOException,
+          InterruptedException {
+    Verifier verifier = new Verifier(projectRoot.toString());
+    verifier.setSystemProperty("_TARGET_IMAGE", imageReference);
+    verifier.setSystemProperty("_ADDITIONAL_TAG", additionalTag);
+    verifier.setAutoclean(false);
+    verifier.addCliOption("-X");
+    verifier.executeGoals(Arrays.asList("clean", "compile"));
+
+    verifier.executeGoal("jib:" + BuildImageMojo.GOAL_NAME);
+    verifier.verifyErrorFreeLog();
+
+    String additionalImageReference =
+        ImageReference.parse(imageReference).withTag(additionalTag).toString();
+
+    String output = pullAndRunBuiltImage(imageReference);
+    String additionalOutput = pullAndRunBuiltImage(additionalImageReference);
+    Assert.assertEquals(output, additionalOutput);
+
+    assertCreationTimeEpoch(imageReference);
+    assertCreationTimeEpoch(additionalImageReference);
+
+    return output;
   }
 
   private static String buildAndRunComplex(
@@ -125,6 +152,22 @@ public class BuildImageMojoIntegrationTest {
         Instant.parse(
             new Command("docker", "inspect", "-f", "{{.Created}}", imageReference).run().trim());
     Assert.assertTrue(buildTime.isAfter(before) || buildTime.equals(before));
+    return new Command("docker", "run", "--rm", imageReference).run();
+  }
+
+  /**
+   * Pulls a built image and attempts to run it. Also verifies the container configuration and
+   * history of the built image.
+   *
+   * @param imageReference the image reference of the built image
+   * @return the container output
+   * @throws IOException if an I/O exception occurs
+   * @throws InterruptedException if the process was interrupted
+   */
+  private static String pullAndRunBuiltImage(String imageReference)
+      throws IOException, InterruptedException {
+    new Command("docker", "pull", imageReference).run();
+    assertDockerInspectParameters(imageReference);
     return new Command("docker", "run", "--rm", imageReference).run();
   }
 
@@ -165,6 +208,13 @@ public class BuildImageMojoIntegrationTest {
     Assert.fail("Could not find build execution time in logs");
     // Should not reach here.
     return -1;
+  }
+
+  private static void assertCreationTimeEpoch(String imageReference)
+      throws IOException, InterruptedException {
+    Assert.assertEquals(
+        "1970-01-01T00:00:00Z",
+        new Command("docker", "inspect", "-f", "{{.Created}}", imageReference).run().trim());
   }
 
   @Before
@@ -232,9 +282,22 @@ public class BuildImageMojoIntegrationTest {
             + System.nanoTime();
 
     Assert.assertEquals("", buildAndRun(emptyTestProject.getProjectRoot(), targetImage, false));
+    assertCreationTimeEpoch(targetImage);
+  }
+
+  @Test
+  public void testExecute_multipleTags()
+      throws IOException, InterruptedException, InvalidImageReferenceException,
+          VerificationException {
+    String targetImage =
+        "gcr.io/"
+            + IntegrationTestingConfiguration.getGCPProject()
+            + "/multitag-image:maven"
+            + System.nanoTime();
     Assert.assertEquals(
-        "1970-01-01T00:00:00Z",
-        new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim());
+        "",
+        buildAndRunAdditionalTag(
+            emptyTestProject.getProjectRoot(), targetImage, "maven-2" + System.nanoTime()));
   }
 
   @Test

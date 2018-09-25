@@ -100,6 +100,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
             .setBaseImageConfiguration(
                 pluginConfigurationProcessor.getBaseImageConfigurationBuilder().build())
             .setTargetImageConfiguration(ImageConfiguration.builder(targetImage).build())
+            .setAdditionalTargetImageTags(jibExtension.getTo().getTags())
             .setContainerConfiguration(
                 pluginConfigurationProcessor.getContainerConfigurationBuilder().build())
             .build();
