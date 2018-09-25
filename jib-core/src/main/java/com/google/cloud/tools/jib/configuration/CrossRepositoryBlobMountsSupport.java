@@ -20,8 +20,8 @@ import com.google.cloud.tools.jib.global.JibSystemProperties;
 import javax.annotation.Nullable;
 
 /**
- * Examine the {@link BuildConfiguration} to see blob-pushes should request a {@code mount/from}. If
- * base and target images are in the same registry, then use mount/from to try mounting the BLOB
+ * Examine the {@link BuildConfiguration} to see if blob-pushes should request a {@code mount/from}.
+ * If base and target images are in the same registry, then use mount/from to try mounting the BLOB
  * from the base image repository to the target image repository and possibly avoid having to push
  * the BLOB. See the <a
  * href="https://docs.docker.com/registry/spec/api/#cross-repository-blob-mount">Docker registry
@@ -30,7 +30,7 @@ import javax.annotation.Nullable;
 public class CrossRepositoryBlobMountsSupport {
 
   /**
-   * Determine the cross-repository blob mount location if applicable for the provided build
+   * Determine the applicable cross-repository blob mount location for the provided build
    * configuration.
    *
    * @param buildConfiguration the build configuration
