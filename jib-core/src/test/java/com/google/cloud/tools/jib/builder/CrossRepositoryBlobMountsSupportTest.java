@@ -21,7 +21,6 @@ import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
-import java.util.Optional;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -38,17 +37,17 @@ public class CrossRepositoryBlobMountsSupportTest {
   public void testSameRegistry() throws InvalidImageReferenceException {
     BuildConfiguration buildConfiguration =
         makeBuildConfiguration("localhost/source", "localhost/destination");
-    Optional<String> result = CrossRepositoryBlobMountsSupport.getMountFrom(buildConfiguration);
-    Assert.assertTrue(result.isPresent());
-    Assert.assertEquals("source", result.get());
+    String result = CrossRepositoryBlobMountsSupport.getMountFrom(buildConfiguration);
+    Assert.assertNotNull(result);
+    Assert.assertEquals("source", result);
   }
 
   @Test
   public void testDifferentRegistry() throws InvalidImageReferenceException {
     BuildConfiguration buildConfiguration =
         makeBuildConfiguration("localhost/base", "gcr.io/target");
-    Optional<String> result = CrossRepositoryBlobMountsSupport.getMountFrom(buildConfiguration);
-    Assert.assertFalse(result.isPresent());
+    String result = CrossRepositoryBlobMountsSupport.getMountFrom(buildConfiguration);
+    Assert.assertNull(result);
   }
 
   private BuildConfiguration makeBuildConfiguration(

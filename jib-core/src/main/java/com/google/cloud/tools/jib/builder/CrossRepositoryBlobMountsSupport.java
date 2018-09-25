@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
-import java.util.Optional;
+import javax.annotation.Nullable;
 
 /**
  * Examine the {@link BuildConfiguration} to see blob-pushes should request a {@code mount/from}. If
@@ -37,9 +37,10 @@ public class CrossRepositoryBlobMountsSupport {
    * @param buildConfiguration the build configuration
    * @return the image name to be mounted or {@code null} if not applicable
    */
-  public static Optional<String> getMountFrom(BuildConfiguration buildConfiguration) {
+  @Nullable
+  public static String getMountFrom(BuildConfiguration buildConfiguration) {
     if (!JibSystemProperties.useCrossRepositoryBlobMounts()) {
-      return Optional.empty();
+      return null;
     }
     boolean sameRegistry =
         buildConfiguration
@@ -47,8 +48,8 @@ public class CrossRepositoryBlobMountsSupport {
             .getImageRegistry()
             .equals(buildConfiguration.getTargetImageConfiguration().getImageRegistry());
     if (!sameRegistry) {
-      return Optional.empty();
+      return null;
     }
-    return Optional.of(buildConfiguration.getBaseImageConfiguration().getImageRepository());
+    return buildConfiguration.getBaseImageConfiguration().getImageRepository();
   }
 }

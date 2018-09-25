@@ -31,7 +31,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
-import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
@@ -89,15 +88,14 @@ class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authori
 
       // If target is colocated with base, request permission for both so as to allow using
       // mount/from
-      Optional<String> mountFrom =
-          CrossRepositoryBlobMountsSupport.getMountFrom(buildConfiguration);
+      String mountFrom = CrossRepositoryBlobMountsSupport.getMountFrom(buildConfiguration);
 
       RegistryAuthenticator registryAuthenticator =
           RegistryAuthenticator.initializer(
                   buildConfiguration.getBuildLogger(),
                   buildConfiguration.getTargetImageConfiguration().getImageRegistry(),
                   buildConfiguration.getTargetImageConfiguration().getImageRepository(),
-                  mountFrom.orElse(null))
+                  mountFrom)
               .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
               .initialize();
       if (registryAuthenticator == null) {

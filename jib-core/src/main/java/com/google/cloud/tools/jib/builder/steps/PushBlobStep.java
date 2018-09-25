@@ -29,7 +29,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
-import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
@@ -90,9 +89,8 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
       // having to push the BLOB. See the following for details:
       // https://docs.docker.com/registry/spec/api/#cross-repository-blob-mount
       // Note: mount/from requires that {@link AuthenticatePushStep} request pull access
-      Optional<String> mountFrom =
-          CrossRepositoryBlobMountsSupport.getMountFrom(buildConfiguration);
-      registryClient.pushBlob(blobDescriptor.getDigest(), blob, mountFrom.orElse(null));
+      String mountFrom = CrossRepositoryBlobMountsSupport.getMountFrom(buildConfiguration);
+      registryClient.pushBlob(blobDescriptor.getDigest(), blob, mountFrom);
 
       return blobDescriptor;
     }
