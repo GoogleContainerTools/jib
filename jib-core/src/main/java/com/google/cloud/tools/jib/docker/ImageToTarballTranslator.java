@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.docker;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.cache.CachedLayer;
-import com.google.cloud.tools.jib.docker.json.DockerLoadManifestTemplate;
+import com.google.cloud.tools.jib.docker.json.DockerLoadManifestEntryTemplate;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
@@ -51,7 +51,7 @@ public class ImageToTarballTranslator {
 
   public Blob toTarballBlob(ImageReference imageReference) throws IOException {
     TarStreamBuilder tarStreamBuilder = new TarStreamBuilder();
-    DockerLoadManifestTemplate manifestTemplate = new DockerLoadManifestTemplate();
+    DockerLoadManifestEntryTemplate manifestTemplate = new DockerLoadManifestEntryTemplate();
 
     // Adds all the layers to the tarball and manifest.
     for (CachedLayer layer : image.getLayers()) {

@@ -24,9 +24,10 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * Generates a selector based on {@link LayerEntry}s for a layer. Selectors are secondary references
@@ -90,9 +91,21 @@ class LayerEntriesSelector {
     }
   }
 
+  /**
+   * Converts a list of {@link LayerEntry}s into a list of {@link LayerEntriesTemplate}. The list is
+   * sorted by source file first, then extraction path (see {@link LayerEntryTemplate#compareTo}).
+   *
+   * @param layerEntries
+   * @return list of {@link LayerEntryTemplate} after sorting
+   */
   @VisibleForTesting
   static List<LayerEntryTemplate> toSortedJsonTemplates(List<LayerEntry> layerEntries) {
-    return layerEntries.stream().map(LayerEntryTemplate::new).sorted().collect(Collectors.toList());
+    List<LayerEntryTemplate> jsonTemplates = new ArrayList<>();
+    for (LayerEntry entry : layerEntries) {
+      jsonTemplates.add(new LayerEntryTemplate(entry));
+    }
+    Collections.sort(jsonTemplates);
+    return jsonTemplates;
   }
 
   /**

@@ -22,10 +22,13 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * JSON Template for loadable Docker Manifest. The repoTags property requires a tag; i.e. if a tag
- * is missing, it explicitly should use "latest".
+ * JSON Template for a loadable Docker Manifest entry. The repoTags property requires a tag; i.e. if
+ * a tag is missing, it explicitly should use "latest".
  *
- * <p>Example manifest JSON:
+ * <p>Note that this is a template for a single Manifest entry, while the entire Docker Manifest
+ * should be {@code List<DockerLoadManifestTemplate>}.
+ *
+ * <p>Example manifest entry JSON:
  *
  * <pre>{@code
  * {
@@ -42,7 +45,7 @@ import java.util.List;
  * @see <a href="https://github.com/moby/moby/blob/master/image/tarexport/load.go">Docker load
  *     source</a>
  */
-public class DockerLoadManifestTemplate implements JsonTemplate {
+public class DockerLoadManifestEntryTemplate implements JsonTemplate {
 
   private final String config = "config.json";
   private List<String> repoTags = Collections.singletonList(null);
