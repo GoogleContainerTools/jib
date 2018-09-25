@@ -74,9 +74,7 @@ public class FilesTaskTest {
       throws IOException {
     Assert.assertEquals(expected.size(), actual.size());
     for (int index = 0; index < expected.size(); index++) {
-      Assert.assertEquals(
-          expected.get(index).toFile().getCanonicalFile(),
-          actual.get(index).toFile().getCanonicalFile());
+      Assert.assertEquals(expected.get(index).toRealPath(), actual.get(index).toRealPath());
     }
   }
 
@@ -88,9 +86,9 @@ public class FilesTaskTest {
         ImmutableList.of(
             projectRoot.resolve("src/main/custom-extra-dir"),
             projectRoot.resolve("build.gradle"),
-            projectRoot.resolve("src/main/java"),
-            projectRoot.resolve("src/main/resources"));
-    assertPathListsAreEqual(expected, result);
+            projectRoot.resolve("src/main/resources"),
+            projectRoot.resolve("src/main/java"));
+    Assert.assertEquals(expected, result);
   }
 
   @Test
@@ -102,11 +100,12 @@ public class FilesTaskTest {
         ImmutableList.of(
             projectRoot.resolve("build.gradle"),
             projectRoot.resolve("settings.gradle"),
+            projectRoot.resolve("gradle.properties"),
             simpleServiceRoot.resolve("src/main/jib"),
             simpleServiceRoot.resolve("build.gradle"),
-            simpleServiceRoot.resolve("src/main/java"),
-            simpleServiceRoot.resolve("src/main/resources"));
-    assertPathListsAreEqual(expected, result);
+            simpleServiceRoot.resolve("src/main/resources"),
+            simpleServiceRoot.resolve("src/main/java"));
+    Assert.assertEquals(expected, result);
   }
 
   @Test
@@ -119,19 +118,22 @@ public class FilesTaskTest {
         ImmutableList.of(
             projectRoot.resolve("build.gradle"),
             projectRoot.resolve("settings.gradle"),
+            projectRoot.resolve("gradle.properties"),
             complexServiceRoot.resolve("src/main/other-jib"),
             complexServiceRoot.resolve("build.gradle"),
-            complexServiceRoot.resolve("src/main/java"),
             complexServiceRoot.resolve("src/main/resources"),
             complexServiceRoot.resolve("src/main/extra-resources-1"),
             complexServiceRoot.resolve("src/main/extra-resources-2"),
+            complexServiceRoot.resolve("src/main/java"),
             libRoot.resolve("build.gradle"),
-            libRoot.resolve("src/main/java"),
-            libRoot.resolve("src/main/resources"));
-    assertPathListsAreEqual(expected, result.subList(0, 11));
+            libRoot.resolve("src/main/resources"),
+            libRoot.resolve("src/main/java"));
+    Assert.assertEquals(expected, result.subList(0, 12));
+
+    // guava jar is in a temporary-looking directory, so don't do a full match here
     Assert.assertThat(
         result.get(result.size() - 1).toString(),
         CoreMatchers.endsWith("guava-HEAD-jre-SNAPSHOT.jar"));
-    Assert.assertEquals(12, result.size());
+    Assert.assertEquals(13, result.size());
   }
 }

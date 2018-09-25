@@ -43,6 +43,30 @@ import org.gradle.api.tasks.TaskAction;
 public class FilesTask extends DefaultTask {
 
   /**
+   * Prints the locations of a project's build.gradle, settings.gradle, and gradle.properties.
+   *
+   * @param project the project
+   */
+  private static void printGradleFiles(Project project) {
+    Path projectPath = project.getProjectDir().toPath();
+
+    // Print build.gradle
+    System.out.println(project.getBuildFile());
+
+    // Print settings.gradle
+    Path settingsFiles = projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE);
+    if (Files.exists(settingsFiles)) {
+      System.out.println(settingsFiles);
+    }
+
+    // Print gradle.properties
+    Path propertiesFile = projectPath.resolve("gradle.properties");
+    if (Files.exists(propertiesFile)) {
+      System.out.println(projectPath.resolve("gradle.properties"));
+    }
+  }
+
+  /**
    * Recursive function for printing out a project's artifacts. Calls itself when it encounters a
    * project dependency.
    *
@@ -53,29 +77,24 @@ public class FilesTask extends DefaultTask {
   private static void listFilesForProject(Project project, Set<File> projectDependencyJars) {
     JavaPluginConvention javaConvention =
         project.getConvention().getPlugin(JavaPluginConvention.class);
-    SourceSet mainSourceSet = javaConvention.getSourceSets().findByName("main");
+    SourceSet mainSourceSet =
+        javaConvention.getSourceSets().findByName(SourceSet.MAIN_SOURCE_SET_NAME);
     if (mainSourceSet == null) {
       return;
     }
 
-    // Print build.gradle
-    System.out.println(project.getBuildFile());
+    // Print build config, settings, etc.
+    printGradleFiles(project);
 
-    // Print settings.gradle
-    Path settingsFile = project.getProjectDir().toPath().resolve(Settings.DEFAULT_SETTINGS_FILE);
-    if (Files.exists(settingsFile)) {
-      System.out.println(settingsFile);
-    }
-
-    // Print sources
-    mainSourceSet.getAllJava().getSourceDirectories().forEach(System.out::println);
-
-    // Print resources
-    mainSourceSet.getResources().getSourceDirectories().forEach(System.out::println);
+    // Print sources + resources
+    mainSourceSet.getAllSource().getSourceDirectories().forEach(System.out::println);
 
     // Find project dependencies
     for (Configuration configuration :
-        project.getConfigurations().getByName("runtime").getHierarchy()) {
+        project
+            .getConfigurations()
+            .getByName(mainSourceSet.getRuntimeConfigurationName())
+            .getHierarchy()) {
       for (Dependency dependency : configuration.getDependencies()) {
         if (dependency instanceof ProjectDependency) {
           // Keep track of project dependency jars
@@ -113,17 +132,11 @@ public class FilesTask extends DefaultTask {
 
     // If this is not the root project, print the root project's build.gradle and settings.gradle
     if (project != project.getRootProject()) {
-      System.out.println(project.getRootProject().getBuildFile());
-      Path settingsFiles = project.getRootDir().toPath().resolve(Settings.DEFAULT_SETTINGS_FILE);
-      if (Files.exists(settingsFiles)) {
-        System.out.println(settingsFiles);
-      }
+      printGradleFiles(project.getRootProject());
     }
 
     // Print extra layer
-    if (project.getPlugins().hasPlugin(JibPlugin.class)) {
-      System.out.println(jibExtension.getExtraDirectoryPath());
-    }
+    System.out.println(jibExtension.getExtraDirectoryPath());
 
     // Print sub-project sources
     Set<File> skippedJars = new HashSet<>();
