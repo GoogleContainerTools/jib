@@ -16,12 +16,13 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.cloud.tools.jib.JibLogger;
-import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.async.AsyncStep;
+import com.google.cloud.tools.jib.builder.TimerEventEmitter;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
+import com.google.cloud.tools.jib.event.EventEmitter;
+import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -34,14 +35,16 @@ import javax.annotation.Nullable;
 /** Attempts to retrieve registry credentials. */
 class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable<Credential> {
 
-  private static final String DESCRIPTION = "Retrieving registry credentials for %s";
+  private static String makeDescription(String registry) {
+    return "Retrieving registry credentials for " + registry;
+  }
 
   /** Retrieves credentials for the base image. */
   static RetrieveRegistryCredentialsStep forBaseImage(
       ListeningExecutorService listeningExecutorService, BuildConfiguration buildConfiguration) {
     return new RetrieveRegistryCredentialsStep(
         listeningExecutorService,
-        buildConfiguration.getBuildLogger(),
+        buildConfiguration.getEventEmitter(),
         buildConfiguration.getBaseImageConfiguration().getImageRegistry(),
         buildConfiguration.getBaseImageConfiguration().getCredentialRetrievers());
   }
@@ -51,12 +54,12 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
       ListeningExecutorService listeningExecutorService, BuildConfiguration buildConfiguration) {
     return new RetrieveRegistryCredentialsStep(
         listeningExecutorService,
-        buildConfiguration.getBuildLogger(),
+        buildConfiguration.getEventEmitter(),
         buildConfiguration.getTargetImageConfiguration().getImageRegistry(),
         buildConfiguration.getTargetImageConfiguration().getCredentialRetrievers());
   }
 
-  private final JibLogger buildLogger;
+  private final EventEmitter eventEmitter;
   private final String registry;
   private final ImmutableList<CredentialRetriever> credentialRetrievers;
 
@@ -65,10 +68,10 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
   @VisibleForTesting
   RetrieveRegistryCredentialsStep(
       ListeningExecutorService listeningExecutorService,
-      JibLogger buildLogger,
+      EventEmitter eventEmitter,
       String registry,
       ImmutableList<CredentialRetriever> credentialRetrievers) {
-    this.buildLogger = buildLogger;
+    this.eventEmitter = eventEmitter;
     this.registry = registry;
     this.credentialRetrievers = credentialRetrievers;
 
@@ -83,9 +86,10 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
   @Override
   @Nullable
   public Credential call() throws CredentialRetrievalException {
-    buildLogger.lifecycle(String.format(DESCRIPTION, registry) + "...");
+    String description = makeDescription(registry);
+    eventEmitter.emit(LogEvent.lifecycle(description + "..."));
 
-    try (Timer ignored = new Timer(buildLogger, String.format(DESCRIPTION, registry))) {
+    try (TimerEventEmitter ignored = new TimerEventEmitter(eventEmitter, description)) {
       for (CredentialRetriever credentialRetriever : credentialRetrievers) {
         Optional<Credential> optionalCredential = credentialRetriever.retrieve();
         if (optionalCredential.isPresent()) {
@@ -93,11 +97,10 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
         }
       }
 
-      /*
-       * If no credentials found, give an info (not warning because in most cases, the base image is
-       * public and does not need extra credentials) and return null.
-       */
-      buildLogger.info("No credentials could be retrieved for registry " + registry);
+      // If no credentials found, give an info (not warning because in most cases, the base image is
+      // public and does not need extra credentials) and return null.
+      eventEmitter.emit(
+          LogEvent.info("No credentials could be retrieved for registry " + registry));
       return null;
     }
   }

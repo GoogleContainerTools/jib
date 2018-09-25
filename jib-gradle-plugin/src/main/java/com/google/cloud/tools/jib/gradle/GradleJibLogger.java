@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 /** Implementation of {@link JibLogger} for Gradle plugins. */
 // We don't care about the return values of the logging futures.
 @SuppressWarnings("FutureReturnValueIgnored")
+// TODO: Replace use with LogEventHandler.
 class GradleJibLogger implements JibLogger {
 
   /** This executor keeps all log messages in order. */

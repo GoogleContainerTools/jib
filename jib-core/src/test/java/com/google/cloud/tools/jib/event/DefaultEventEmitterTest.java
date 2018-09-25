@@ -22,8 +22,8 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** Tests for {@link EventEmitter}. */
-public class EventEmitterTest {
+/** Tests for {@link DefaultEventEmitter}. */
+public class DefaultEventEmitterTest {
 
   /** Test {@link JibEvent}. */
   private static class TestJibEvent1 implements JibEvent {}
@@ -51,7 +51,7 @@ public class EventEmitterTest {
     TestJibEvent1 testJibEvent1 = new TestJibEvent1();
     TestJibEvent2 testJibEvent2 = new TestJibEvent2();
 
-    EventEmitter eventEmitter = new EventEmitter(eventHandlers);
+    EventEmitter eventEmitter = new DefaultEventEmitter(eventHandlers);
     eventEmitter.emit(testJibEvent1);
     eventEmitter.emit(testJibEvent2);
 

@@ -76,7 +76,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
     AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(
-            getProject(), gradleJibLogger, jibExtension.getExtraDirectoryPath(), appRoot);
+            getProject(), getLogger(), jibExtension.getExtraDirectoryPath(), appRoot);
 
     if (Strings.isNullOrEmpty(jibExtension.getTargetImage())) {
       throw new GradleException(
