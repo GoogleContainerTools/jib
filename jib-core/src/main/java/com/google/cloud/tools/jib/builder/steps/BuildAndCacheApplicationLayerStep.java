@@ -33,8 +33,7 @@ import java.util.Optional;
 import java.util.concurrent.Callable;
 
 /** Builds and caches application layers. */
-class BuildAndCacheApplicationLayerStep
-    implements AsyncStep<CacheEntry>, Callable<CacheEntry> {
+class BuildAndCacheApplicationLayerStep implements AsyncStep<CacheEntry>, Callable<CacheEntry> {
 
   private static final String DESCRIPTION = "Building application layers";
 
@@ -43,8 +42,7 @@ class BuildAndCacheApplicationLayerStep
    * classes layers. Optionally adds an extra layer if configured to do so.
    */
   static ImmutableList<BuildAndCacheApplicationLayerStep> makeList(
-      ListeningExecutorService listeningExecutorService,
-      BuildConfiguration buildConfiguration) {
+      ListeningExecutorService listeningExecutorService, BuildConfiguration buildConfiguration) {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       ImmutableList.Builder<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps =
           ImmutableList.builderWithExpectedSize(buildConfiguration.getLayerConfigurations().size());
@@ -98,7 +96,8 @@ class BuildAndCacheApplicationLayerStep
       Cache cache = buildConfiguration.getApplicationLayersCache();
 
       // Don't build the layer if it exists already.
-      Optional<CacheEntry> optionalCacheEntry = cache.retrieve(layerConfiguration.getLayerEntries());
+      Optional<CacheEntry> optionalCacheEntry =
+          cache.retrieve(layerConfiguration.getLayerEntries());
       if (optionalCacheEntry.isPresent()) {
         return optionalCacheEntry.get();
       }

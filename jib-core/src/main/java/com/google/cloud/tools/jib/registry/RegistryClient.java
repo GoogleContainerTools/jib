@@ -31,7 +31,6 @@ import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.URL;
 import javax.annotation.Nullable;
 
@@ -263,21 +262,24 @@ public class RegistryClient {
   }
 
   /**
-   * Gets the BLOB referenced by {@code blobDigest}. Note that the BLOB is only pulled when it is written out.
+   * Gets the BLOB referenced by {@code blobDigest}. Note that the BLOB is only pulled when it is
+   * written out.
    *
    * @param blobDigest the digest of the BLOB to download
    * @return a {@link Blob} backed by the file at {@code destPath}. The file at {@code destPath}
    *     must exist for {@link Blob} to be valid.
    */
   public Blob pullBlob(DescriptorDigest blobDigest) {
-    return Blobs.from(outputStream -> {
-      try {
-        callRegistryEndpoint(new BlobPuller(registryEndpointRequestProperties, blobDigest, outputStream));
+    return Blobs.from(
+        outputStream -> {
+          try {
+            callRegistryEndpoint(
+                new BlobPuller(registryEndpointRequestProperties, blobDigest, outputStream));
 
-      } catch (RegistryException ex) {
-        throw new IOException(ex);
-      }
-    });
+          } catch (RegistryException ex) {
+            throw new IOException(ex);
+          }
+        });
   }
 
   /**

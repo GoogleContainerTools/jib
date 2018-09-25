@@ -196,10 +196,6 @@ public class BuildStepsRunner {
       buildLogger.lifecycle("");
       buildLogger.lifecycle(successMessage);
 
-    } catch (CacheMetadataCorruptedException cacheMetadataCorruptedException) {
-      throw new BuildStepsExecutionException(
-          helpfulSuggestions.forCacheNeedsClean(), cacheMetadataCorruptedException);
-
     } catch (ExecutionException executionException) {
       Throwable exceptionDuringBuildSteps = executionException.getCause();
 
@@ -248,7 +244,7 @@ public class BuildStepsRunner {
             helpfulSuggestions.none(), executionException.getCause());
       }
 
-    } catch (InterruptedException | IOException | CacheDirectoryCreationException ex) {
+    } catch (InterruptedException ex) {
       // TODO: Add more suggestions for various build failures.
       throw new BuildStepsExecutionException(helpfulSuggestions.none(), ex);
 

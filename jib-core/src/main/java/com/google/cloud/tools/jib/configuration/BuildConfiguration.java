@@ -219,7 +219,8 @@ public class BuildConfiguration {
           }
 
           if (baseImageLayersCacheConfiguration == null) {
-            baseImageLayersCacheConfiguration = CacheConfiguration.forDefaultUserLevelCacheDirectory();
+            baseImageLayersCacheConfiguration =
+                CacheConfiguration.forDefaultUserLevelCacheDirectory();
           }
           if (applicationLayersCacheConfiguration == null) {
             applicationLayersCacheConfiguration = CacheConfiguration.makeTemporary();

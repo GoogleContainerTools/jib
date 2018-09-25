@@ -68,8 +68,7 @@ public class BuildSteps {
    * @param buildConfiguration the configuration parameters for the build
    * @return a new {@link BuildSteps} for building to a Docker daemon
    */
-  public static BuildSteps forBuildToDockerDaemon(
-      BuildConfiguration buildConfiguration) {
+  public static BuildSteps forBuildToDockerDaemon(BuildConfiguration buildConfiguration) {
     return new BuildSteps(
         DESCRIPTION_FOR_DOCKER_DAEMON,
         buildConfiguration,
@@ -91,9 +90,7 @@ public class BuildSteps {
    * @param buildConfiguration the configuration parameters for the build
    * @return a new {@link BuildSteps} for building a tarball
    */
-  public static BuildSteps forBuildToTar(
-      Path outputPath,
-      BuildConfiguration buildConfiguration) {
+  public static BuildSteps forBuildToTar(Path outputPath, BuildConfiguration buildConfiguration) {
     return new BuildSteps(
         DESCRIPTION_FOR_TARBALL,
         buildConfiguration,
@@ -130,8 +127,7 @@ public class BuildSteps {
     return buildConfiguration;
   }
 
-  public void run()
-      throws InterruptedException, ExecutionException {
+  public void run() throws InterruptedException, ExecutionException {
     buildConfiguration.getBuildLogger().lifecycle("");
 
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), description)) {

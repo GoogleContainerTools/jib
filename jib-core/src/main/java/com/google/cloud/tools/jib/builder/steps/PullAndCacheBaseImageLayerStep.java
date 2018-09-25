@@ -25,8 +25,6 @@ import com.google.cloud.tools.jib.ncache.Cache;
 import com.google.cloud.tools.jib.ncache.CacheCorruptedException;
 import com.google.cloud.tools.jib.ncache.CacheEntry;
 import com.google.cloud.tools.jib.registry.RegistryClient;
-import com.google.cloud.tools.jib.registry.RegistryException;
-import com.google.common.io.CountingOutputStream;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;

@@ -46,9 +46,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
@@ -209,8 +207,9 @@ class PullBaseImageStep
         }
 
         String containerConfigurationString =
-            Blobs.writeToString(registryClient.pullBlob(
-                v22ManifestTemplate.getContainerConfiguration().getDigest()));
+            Blobs.writeToString(
+                registryClient.pullBlob(
+                    v22ManifestTemplate.getContainerConfiguration().getDigest()));
 
         ContainerConfigurationTemplate containerConfigurationTemplate =
             JsonTemplateMapper.readJson(

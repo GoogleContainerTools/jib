@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.JibLogger;
+import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
@@ -28,6 +29,7 @@ import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -58,7 +60,8 @@ public class RetrieveRegistryCredentialsStepTest {
   @Mock private JibLogger mockJibLogger;
 
   @Test
-  public void testCall_retrieved() throws CredentialRetrievalException {
+  public void testCall_retrieved()
+      throws CredentialRetrievalException, IOException, CacheDirectoryCreationException {
     BuildConfiguration buildConfiguration =
         makeFakeBuildConfiguration(
             Arrays.asList(
@@ -81,7 +84,8 @@ public class RetrieveRegistryCredentialsStepTest {
   }
 
   @Test
-  public void testCall_none() throws CredentialRetrievalException {
+  public void testCall_none()
+      throws CredentialRetrievalException, IOException, CacheDirectoryCreationException {
     BuildConfiguration buildConfiguration =
         makeFakeBuildConfiguration(
             Arrays.asList(Optional::empty, Optional::empty), Collections.emptyList());
@@ -105,7 +109,7 @@ public class RetrieveRegistryCredentialsStepTest {
   }
 
   @Test
-  public void testCall_exception() {
+  public void testCall_exception() throws IOException, CacheDirectoryCreationException {
     CredentialRetrievalException credentialRetrievalException =
         Mockito.mock(CredentialRetrievalException.class);
     BuildConfiguration buildConfiguration =
@@ -127,7 +131,8 @@ public class RetrieveRegistryCredentialsStepTest {
 
   private BuildConfiguration makeFakeBuildConfiguration(
       List<CredentialRetriever> baseCredentialRetrievers,
-      List<CredentialRetriever> targetCredentialRetrievers) {
+      List<CredentialRetriever> targetCredentialRetrievers)
+      throws IOException, CacheDirectoryCreationException {
     ImageReference baseImage = ImageReference.of("baseregistry", "ignored", null);
     ImageReference targetImage = ImageReference.of("targetregistry", "ignored", null);
     return BuildConfiguration.builder(mockJibLogger)
