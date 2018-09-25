@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
+import java.time.Instant;
 import java.util.Optional;
 import javax.annotation.concurrent.Immutable;
 
@@ -58,7 +59,8 @@ public class Cache {
   }
 
   /**
-   * Saves a cache entry with only a layer {@link Blob}. Use {@link #write(Blob, ImmutableList)} to include a selector and metadata.
+   * Saves a cache entry with only a layer {@link Blob}. Use {@link #write(Blob, ImmutableList)} to
+   * include a selector and metadata.
    *
    * @param layerBlob the layer {@link Blob}
    * @return the {@link CacheEntry} for the written layer
@@ -81,11 +83,15 @@ public class Cache {
       throws IOException {
     return cacheStorage.write(
         CacheWrite.withSelectorAndMetadata(
-            layerBlob, LayerEntriesSelector.generateSelector(layerEntries), LastModifiedMetadata.generateMetadata(layerEntries)));
+            layerBlob,
+            LayerEntriesSelector.generateSelector(layerEntries),
+            LastModifiedMetadata.generateMetadata(layerEntries)));
   }
 
   /**
-   * Retrieves the {@link CacheEntry} that was built from the {@code layerEntries}. The last modified time of the {@code layerEntries} must match the last modified time as stored by the metadata of the {@link CacheEntry}.
+   * Retrieves the {@link CacheEntry} that was built from the {@code layerEntries}. The last
+   * modified time of the {@code layerEntries} must match the last modified time as stored by the
+   * metadata of the {@link CacheEntry}.
    *
    * @param layerEntries the layer entries to match against
    * @return a {@link CacheEntry} that was built from {@code layerEntries}, if found
@@ -100,7 +106,8 @@ public class Cache {
       return Optional.empty();
     }
 
-    Optional<CacheEntry> optionalCacheEntry = cacheStorage.retrieve(optionalSelectedLayerDigest.get());
+    Optional<CacheEntry> optionalCacheEntry =
+        cacheStorage.retrieve(optionalSelectedLayerDigest.get());
     if (!optionalCacheEntry.isPresent()) {
       return Optional.empty();
     }
@@ -111,8 +118,10 @@ public class Cache {
     }
 
     Blob metadataBlob = cacheEntry.getMetadataBlob().get();
-    FileTime cacheEntryLastModifiedTime = FileTime.fromMillis(Long.parseLong(Blobs.writeToString(metadataBlob)));
-    if (!LastModifiedMetadata.getLastModifiedTime(layerEntries).equals(cacheEntryLastModifiedTime)) {
+    FileTime cacheEntryLastModifiedTime =
+        FileTime.from(Instant.parse(Blobs.writeToString(metadataBlob)));
+    if (!LastModifiedMetadata.getLastModifiedTime(layerEntries)
+        .equals(cacheEntryLastModifiedTime)) {
       return Optional.empty();
     }
 

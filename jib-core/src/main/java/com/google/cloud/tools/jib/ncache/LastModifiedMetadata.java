@@ -26,18 +26,21 @@ import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 
 /**
- * Metadata that is the latest last modified time of all the source files in a list of {@link LayerEntry}s.
+ * Metadata that is the latest last modified time of all the source files in a list of {@link
+ * LayerEntry}s.
  */
 class LastModifiedMetadata {
 
   /**
-   * Generates the metadata {@link Blob} for the list of {@link LayerEntry}s. The metadata is the latest last modified time of all the source files in the list of {@link LayerEntry}s in milliseconds.
+   * Generates the metadata {@link Blob} for the list of {@link LayerEntry}s. The metadata is the
+   * latest last modified time of all the source files in the list of {@link LayerEntry}s serialized
+   * using {@link Instant#toString}.
    *
    * @param layerEntries the list of {@link LayerEntry}s
    * @return the generated metadata
    */
   static Blob generateMetadata(ImmutableList<LayerEntry> layerEntries) throws IOException {
-    return Blobs.from(Long.toString(getLastModifiedTime(layerEntries).toMillis()));
+    return Blobs.from(getLastModifiedTime(layerEntries).toInstant().toString());
   }
 
   /**
