@@ -87,7 +87,15 @@ public class FilesTask extends DefaultTask {
     printGradleFiles(project);
 
     // Print sources + resources
-    mainSourceSet.getAllSource().getSourceDirectories().forEach(System.out::println);
+    mainSourceSet
+        .getAllSource()
+        .getSourceDirectories()
+        .forEach(
+            sourceDirectory -> {
+              if (sourceDirectory.exists()) {
+                System.out.println(sourceDirectory);
+              }
+            });
 
     // Find project dependencies
     for (Configuration configuration :
@@ -136,7 +144,9 @@ public class FilesTask extends DefaultTask {
     }
 
     // Print extra layer
-    System.out.println(jibExtension.getExtraDirectoryPath());
+    if (Files.exists(jibExtension.getExtraDirectoryPath())) {
+      System.out.println(jibExtension.getExtraDirectoryPath());
+    }
 
     // Print sub-project sources
     Set<File> skippedJars = new HashSet<>();
