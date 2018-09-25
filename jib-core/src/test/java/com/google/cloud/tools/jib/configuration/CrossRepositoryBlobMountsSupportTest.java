@@ -17,8 +17,6 @@
 package com.google.cloud.tools.jib.configuration;
 
 import com.google.cloud.tools.jib.JibLogger;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import org.junit.Assert;
