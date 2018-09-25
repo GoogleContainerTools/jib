@@ -23,10 +23,24 @@ public class LogEvent implements JibEvent {
 
   /** Log levels, in order of verbosity. */
   public enum Level {
+
+    /** Something went wrong. */
     ERROR,
+
+    /** Something might not work as intended. */
     WARN,
+
+    /** Default. */
     LIFECYCLE,
+
+    /**
+     * Details that can be ignored.
+     *
+     * <p>Use {@link #LIFECYCLE} for progress-indicating messages.
+     */
     INFO,
+
+    /** Useful for debugging. */
     DEBUG
   }
 

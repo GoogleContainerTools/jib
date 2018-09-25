@@ -50,7 +50,7 @@ class LogEventHandler implements Consumer<LogEvent> {
         break;
 
       case WARN:
-        log.warn("warning: " + logEvent.getMessage());
+        log.warn(logEvent.getMessage());
         break;
 
       default:
