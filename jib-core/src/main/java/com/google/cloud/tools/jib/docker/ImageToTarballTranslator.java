@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.tar.TarStreamBuilder;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Collections;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 
 /** Translates an {@link Image} to a tarball that can be loaded into Docker. */
@@ -71,7 +72,8 @@ public class ImageToTarballTranslator {
     // Adds the manifest to tarball.
     manifestTemplate.setRepoTags(imageReference.toStringWithTag());
     tarStreamBuilder.addByteEntry(
-        Blobs.writeToByteArray(JsonTemplateMapper.toBlob(manifestTemplate)),
+        Blobs.writeToByteArray(
+            JsonTemplateMapper.toBlob(Collections.singletonList(manifestTemplate))),
         MANIFEST_JSON_FILE_NAME);
 
     return tarStreamBuilder.toBlob();

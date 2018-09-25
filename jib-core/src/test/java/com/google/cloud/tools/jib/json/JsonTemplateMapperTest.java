@@ -119,4 +119,45 @@ public class JsonTemplateMapperTest {
                     "4945ba5011739b0b98c4a41afe224e417f47c7c99b2ce76830999c9a0861b236"))));
     // ignore testJson.list
   }
+
+  @Test
+  public void testReadListOfJson() throws IOException, URISyntaxException, DigestException {
+    Path jsonFile = Paths.get(Resources.getResource("json/basic_list.json").toURI());
+
+    String jsonString = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
+    List<TestJson> listofJsons = JsonTemplateMapper.readListOfJson(jsonString, TestJson.class);
+    TestJson json1 = listofJsons.get(0);
+    TestJson json2 = listofJsons.get(1);
+
+    DescriptorDigest digest1 =
+        DescriptorDigest.fromDigest(
+            "sha256:91e0cae00b86c289b33fee303a807ae72dd9f0315c16b74e6ab0cdbe9d996c10");
+    DescriptorDigest digest2 =
+        DescriptorDigest.fromDigest(
+            "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad");
+
+    Assert.assertEquals(1, json1.number);
+    Assert.assertEquals(2, json2.number);
+    Assert.assertEquals("text1", json1.text);
+    Assert.assertEquals("text2", json2.text);
+    Assert.assertEquals(digest1, json1.digest);
+    Assert.assertEquals(digest2, json2.digest);
+    Assert.assertEquals(10, json1.innerObject.number);
+    Assert.assertEquals(20, json2.innerObject.number);
+    Assert.assertEquals(2, json1.list.size());
+    Assert.assertTrue(json2.list.isEmpty());
+  }
+
+  @Test
+  public void testToBlob_listOfJson() throws IOException, URISyntaxException, DigestException {
+    Path jsonFile = Paths.get(Resources.getResource("json/basic_list.json").toURI());
+
+    String jsonString = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
+    List<TestJson> listOfJson = JsonTemplateMapper.readListOfJson(jsonString, TestJson.class);
+
+    ByteArrayOutputStream jsonStream = new ByteArrayOutputStream();
+    JsonTemplateMapper.toBlob(listOfJson).writeTo(jsonStream);
+
+    Assert.assertEquals(jsonString, jsonStream.toString());
+  }
 }

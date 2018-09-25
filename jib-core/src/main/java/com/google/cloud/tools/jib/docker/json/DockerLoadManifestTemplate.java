@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.docker.json;
 
 import com.google.cloud.tools.jib.json.JsonTemplate;
-import com.google.cloud.tools.jib.json.ListOfJsonTemplate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -29,7 +28,7 @@ import java.util.List;
  * <p>Example manifest JSON:
  *
  * <pre>{@code
- * [{
+ * {
  *   "Config":"config.json",
  *   "RepoTags":["repository:tag"]
  *   "Layers": [
@@ -37,13 +36,13 @@ import java.util.List;
  *     "ba7c544469e514f1a9a4dec59ab640540d50992b288adbb34a1a63c45bf19a24.tar.gz",
  *     "15705ab016593987662839b40f5a22fd1032996c90808d4a1371eb46974017d5.tar.gz"
  *   ]
- * }]
+ * }
  * }</pre>
  *
  * @see <a href="https://github.com/moby/moby/blob/master/image/tarexport/load.go">Docker load
  *     source</a>
  */
-public class DockerLoadManifestTemplate implements ListOfJsonTemplate<JsonTemplate> {
+public class DockerLoadManifestTemplate implements JsonTemplate {
 
   private final String config = "config.json";
   private List<String> repoTags = Collections.singletonList(null);
@@ -55,10 +54,5 @@ public class DockerLoadManifestTemplate implements ListOfJsonTemplate<JsonTempla
 
   public void addLayerFile(String layer) {
     layers.add(layer);
-  }
-
-  @Override
-  public List<JsonTemplate> getList() {
-    return Collections.singletonList(this);
   }
 }
