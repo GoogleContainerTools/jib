@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.event.DefaultEventEmitter;
 import com.google.cloud.tools.jib.event.EventEmitter;
 import com.google.cloud.tools.jib.event.EventHandlers;
@@ -68,7 +67,6 @@ public class MavenProjectProperties implements ProjectProperties {
       return new MavenProjectProperties(
           project,
           makeEventEmitter(log),
-          new MavenJibLogger(log),
           MavenLayerConfigurations.getForProject(project, extraDirectory, appRoot));
 
     } catch (IOException ex) {
@@ -89,19 +87,15 @@ public class MavenProjectProperties implements ProjectProperties {
 
   private final MavenProject project;
   private final EventEmitter eventEmitter;
-  // TODO: Remove
-  private final MavenJibLogger mavenJibLogger;
   private final JavaLayerConfigurations javaLayerConfigurations;
 
   @VisibleForTesting
   MavenProjectProperties(
       MavenProject project,
       EventEmitter eventEmitter,
-      MavenJibLogger mavenJibLogger,
       JavaLayerConfigurations javaLayerConfigurations) {
     this.project = project;
     this.eventEmitter = eventEmitter;
-    this.mavenJibLogger = mavenJibLogger;
     this.javaLayerConfigurations = javaLayerConfigurations;
   }
 
@@ -113,11 +107,6 @@ public class MavenProjectProperties implements ProjectProperties {
   @Override
   public EventEmitter getEventEmitter() {
     return eventEmitter;
-  }
-
-  @Override
-  public JibLogger getLogger() {
-    return mavenJibLogger;
   }
 
   @Override

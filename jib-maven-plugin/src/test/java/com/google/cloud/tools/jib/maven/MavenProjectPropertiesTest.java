@@ -35,7 +35,6 @@ public class MavenProjectPropertiesTest {
 
   @Mock private MavenProject mockMavenProject;
   @Mock private EventEmitter mockEventEmitter;
-  @Mock private MavenJibLogger mockMavenJibLogger;
   @Mock private JavaLayerConfigurations mockJavaLayerConfigurations;
   @Mock private Plugin mockJarPlugin;
 
@@ -49,8 +48,7 @@ public class MavenProjectPropertiesTest {
   @Before
   public void setup() {
     mavenProjectProperties =
-        new MavenProjectProperties(
-            mockMavenProject, mockEventEmitter, mockMavenJibLogger, mockJavaLayerConfigurations);
+        new MavenProjectProperties(mockMavenProject, mockEventEmitter, mockJavaLayerConfigurations);
     jarPluginConfiguration = new Xpp3Dom("");
     archive = new Xpp3Dom("archive");
     manifest = new Xpp3Dom("manifest");
