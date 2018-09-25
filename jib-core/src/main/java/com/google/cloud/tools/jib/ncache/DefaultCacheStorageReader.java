@@ -67,7 +67,7 @@ class DefaultCacheStorageReader {
    * Retrieves the {@link CacheEntry} for the layer with digest {@code layerDigest}.
    *
    * @param layerDigest the layer digest
-   * @return the {@link CacheEntry} referenced by the layer digest
+   * @return the {@link CacheEntry} referenced by the layer digest, if found
    * @throws CacheCorruptedException if the cache was found to be corrupted
    * @throws IOException if an I/O exception occurs
    */
@@ -116,7 +116,7 @@ class DefaultCacheStorageReader {
    * Retrieves the layer digest selected by the {@code selector}.
    *
    * @param selector the selector
-   * @return the layer digest {@code selector} selects
+   * @return the layer digest {@code selector} selects, if found
    * @throws CacheCorruptedException if the selector file contents was not a valid layer digest
    * @throws IOException if an I/O exception occurs
    */
