@@ -91,10 +91,11 @@ public class BuildImageTask extends DefaultTask implements JibTask {
 
     DefaultCredentialRetrievers defaultCredentialRetrievers =
         DefaultCredentialRetrievers.init(
-            CredentialRetrieverFactory.forImage(targetImage, gradleJibLogger));
+            CredentialRetrieverFactory.forImage(
+                targetImage, gradleProjectProperties.getEventEmitter()));
     Optional<Credential> optionalToCredential =
         ConfigurationPropertyValidator.getImageCredential(
-            gradleJibLogger,
+            gradleProjectProperties.getEventEmitter(),
             "jib.to.auth.username",
             "jib.to.auth.password",
             jibExtension.getTo().getAuth());

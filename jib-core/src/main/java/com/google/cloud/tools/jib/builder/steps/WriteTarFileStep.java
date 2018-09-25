@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.ImageToTarballTranslator;
+import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.filesystem.FileOperations;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.common.collect.ImmutableList;
@@ -92,7 +93,7 @@ public class WriteTarFileStep implements AsyncStep<Void>, Callable<Void> {
     Image<CachedLayer> image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
 
     // Build the image to a tarball
-    buildConfiguration.getBuildLogger().lifecycle("Building image to tar file...");
+    buildConfiguration.getEventEmitter().emit(LogEvent.lifecycle("Building image to tar file..."));
     Files.createDirectories(outputPath.getParent());
     try (OutputStream outputStream =
         new BufferedOutputStream(FileOperations.newLockingOutputStream(outputPath))) {

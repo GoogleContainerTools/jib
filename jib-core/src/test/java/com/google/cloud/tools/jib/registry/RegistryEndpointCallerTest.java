@@ -20,8 +20,11 @@ import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.event.DefaultEventEmitter;
+import com.google.cloud.tools.jib.event.EventEmitter;
+import com.google.cloud.tools.jib.event.EventHandlers;
+import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
@@ -103,7 +106,11 @@ public class RegistryEndpointCallerTest {
     return mockHttpResponse(code307, new HttpHeaders().setLocation(redirectLocation));
   }
 
-  @Mock private JibLogger mockBuildLogger;
+  private StringBuilder logMessages = new StringBuilder();
+  private EventEmitter eventEmitter =
+      new DefaultEventEmitter(
+          new EventHandlers()
+              .add(JibEventType.LOGGING, logEvent -> logMessages.append(logEvent.getMessage())));
   @Mock private Connection mockConnection;
   @Mock private Connection mockInsecureConnection;
   @Mock private Response mockResponse;
@@ -163,9 +170,10 @@ public class RegistryEndpointCallerTest {
     Mockito.verifyNoMoreInteractions(mockConnectionFactory);
     Mockito.verifyNoMoreInteractions(mockInsecureConnectionFactory);
 
-    Mockito.verify(mockBuildLogger)
-        .info(
-            "Cannot verify server at https://apiRouteBase/api. Attempting again with no TLS verification.");
+    Assert.assertThat(
+        logMessages.toString(),
+        CoreMatchers.containsString(
+            "Cannot verify server at https://apiRouteBase/api. Attempting again with no TLS verification."));
   }
 
   @Test
@@ -190,12 +198,14 @@ public class RegistryEndpointCallerTest {
     Mockito.verifyNoMoreInteractions(mockConnectionFactory);
     Mockito.verifyNoMoreInteractions(mockInsecureConnectionFactory);
 
-    Mockito.verify(mockBuildLogger)
-        .info(
-            "Cannot verify server at https://apiRouteBase/api. Attempting again with no TLS verification.");
-    Mockito.verify(mockBuildLogger)
-        .info(
-            "Failed to connect to https://apiRouteBase/api over HTTPS. Attempting again with HTTP: http://apiRouteBase/api");
+    Assert.assertThat(
+        logMessages.toString(),
+        CoreMatchers.containsString(
+            "Cannot verify server at https://apiRouteBase/api. Attempting again with no TLS verification."));
+    Assert.assertThat(
+        logMessages.toString(),
+        CoreMatchers.containsString(
+            "Failed to connect to https://apiRouteBase/api over HTTPS. Attempting again with HTTP: http://apiRouteBase/api"));
   }
 
   @Test
@@ -216,9 +226,10 @@ public class RegistryEndpointCallerTest {
     Mockito.verifyNoMoreInteractions(mockConnectionFactory);
     Mockito.verifyNoMoreInteractions(mockInsecureConnectionFactory);
 
-    Mockito.verify(mockBuildLogger)
-        .info(
-            "Failed to connect to https://apiRouteBase/api over HTTPS. Attempting again with HTTP: http://apiRouteBase/api");
+    Assert.assertThat(
+        logMessages.toString(),
+        CoreMatchers.containsString(
+            "Failed to connect to https://apiRouteBase/api over HTTPS. Attempting again with HTTP: http://apiRouteBase/api"));
   }
 
   @Test
@@ -338,12 +349,14 @@ public class RegistryEndpointCallerTest {
     Mockito.verifyNoMoreInteractions(mockConnectionFactory);
     Mockito.verifyNoMoreInteractions(mockInsecureConnectionFactory);
 
-    Mockito.verify(mockBuildLogger)
-        .info(
-            "Cannot verify server at https://apiRouteBase/api. Attempting again with no TLS verification.");
-    Mockito.verify(mockBuildLogger)
-        .info(
-            "Failed to connect to https://apiRouteBase/api over HTTPS. Attempting again with HTTP: http://apiRouteBase/api");
+    Assert.assertThat(
+        logMessages.toString(),
+        CoreMatchers.containsString(
+            "Cannot verify server at https://apiRouteBase/api. Attempting again with no TLS verification."));
+    Assert.assertThat(
+        logMessages.toString(),
+        CoreMatchers.containsString(
+            "Failed to connect to https://apiRouteBase/api over HTTPS. Attempting again with HTTP: http://apiRouteBase/api"));
   }
 
   @Test
@@ -559,7 +572,7 @@ public class RegistryEndpointCallerTest {
   private RegistryEndpointCaller<String> createRegistryEndpointCaller(
       boolean allowInsecure, int port) throws MalformedURLException {
     return new RegistryEndpointCaller<>(
-        mockBuildLogger,
+        eventEmitter,
         "userAgent",
         (port == -1) ? "apiRouteBase" : ("apiRouteBase:" + port),
         new TestRegistryEndpointProvider(),

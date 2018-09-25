@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.Caches;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.event.events.LogEvent;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.ExecutionException;
@@ -149,7 +150,7 @@ public class BuildSteps {
   public void run()
       throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
           CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
-    buildConfiguration.getBuildLogger().lifecycle("");
+    buildConfiguration.getEventEmitter().emit(LogEvent.lifecycle(""));
 
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), description)) {
       try (Caches caches = cachesInitializer.init()) {
@@ -168,12 +169,13 @@ public class BuildSteps {
     }
 
     if (buildConfiguration.getContainerConfiguration() != null) {
-      buildConfiguration.getBuildLogger().lifecycle("");
+      buildConfiguration.getEventEmitter().emit(LogEvent.lifecycle(""));
       buildConfiguration
-          .getBuildLogger()
-          .lifecycle(
-              "Container entrypoint set to "
-                  + buildConfiguration.getContainerConfiguration().getEntrypoint());
+          .getEventEmitter()
+          .emit(
+              LogEvent.lifecycle(
+                  "Container entrypoint set to "
+                      + buildConfiguration.getContainerConfiguration().getEntrypoint()));
     }
   }
 }

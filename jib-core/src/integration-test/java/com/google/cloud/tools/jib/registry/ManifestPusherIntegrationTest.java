@@ -18,9 +18,9 @@ package com.google.cloud.tools.jib.registry;
 
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.cloud.tools.jib.EmptyJibLogger;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.event.EventEmitter;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
@@ -34,18 +34,18 @@ import org.junit.Test;
 public class ManifestPusherIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
-  private static final EmptyJibLogger BUILD_LOGGER = new EmptyJibLogger();
+  private static final EventEmitter EVENT_EMITTER = jibEvent -> {};
 
   @Test
   public void testPush_missingBlobs() throws IOException, RegistryException, InterruptedException {
     localRegistry.pullAndPushToLocal("busybox", "busybox");
 
     RegistryClient registryClient =
-        RegistryClient.factory(BUILD_LOGGER, "gcr.io", "distroless/java").newRegistryClient();
+        RegistryClient.factory(EVENT_EMITTER, "gcr.io", "distroless/java").newRegistryClient();
     ManifestTemplate manifestTemplate = registryClient.pullManifest("latest");
 
     registryClient =
-        RegistryClient.factory(BUILD_LOGGER, "localhost:5000", "busybox")
+        RegistryClient.factory(EVENT_EMITTER, "localhost:5000", "busybox")
             .setAllowInsecureRegistries(true)
             .newRegistryClient();
     try {
@@ -81,7 +81,7 @@ public class ManifestPusherIntegrationTest {
 
     // Pushes the BLOBs.
     RegistryClient registryClient =
-        RegistryClient.factory(BUILD_LOGGER, "localhost:5000", "testimage")
+        RegistryClient.factory(EVENT_EMITTER, "localhost:5000", "testimage")
             .setAllowInsecureRegistries(true)
             .newRegistryClient();
     Assert.assertFalse(registryClient.pushBlob(testLayerBlobDigest, testLayerBlob, null));

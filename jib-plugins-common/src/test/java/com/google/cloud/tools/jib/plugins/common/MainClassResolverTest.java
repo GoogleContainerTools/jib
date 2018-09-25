@@ -16,7 +16,10 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
-import com.google.cloud.tools.jib.JibLogger;
+import com.google.cloud.tools.jib.event.DefaultEventEmitter;
+import com.google.cloud.tools.jib.event.EventEmitter;
+import com.google.cloud.tools.jib.event.EventHandlers;
+import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
@@ -40,7 +43,12 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class MainClassResolverTest {
 
-  @Mock private JibLogger mockBuildLogger;
+  private StringBuilder logMessages = new StringBuilder();
+  private EventEmitter eventEmitter =
+      new DefaultEventEmitter(
+          new EventHandlers()
+              .add(JibEventType.LOGGING, logEvent -> logMessages.append(logEvent.getMessage())));
+
   @Mock private ProjectProperties mockProjectProperties;
   @Mock private JavaLayerConfigurations mockJavaLayerConfigurations;
 
@@ -48,7 +56,7 @@ public class MainClassResolverTest {
 
   @Before
   public void setup() {
-    Mockito.when(mockProjectProperties.getLogger()).thenReturn(mockBuildLogger);
+    Mockito.when(mockProjectProperties.getEventEmitter()).thenReturn(eventEmitter);
     Mockito.when(mockProjectProperties.getPluginName()).thenReturn("plugin");
     Mockito.when(mockProjectProperties.getJarPluginName()).thenReturn("jar-plugin");
     Mockito.when(mockProjectProperties.getJavaLayerConfigurations())
@@ -72,7 +80,9 @@ public class MainClassResolverTest {
             ImmutableList.of(new LayerEntry(FAKE_CLASSES_PATH, AbsoluteUnixPath.get("/ignored"))));
     Assert.assertEquals(
         "${start-class}", MainClassResolver.resolveMainClass(null, mockProjectProperties));
-    Mockito.verify(mockBuildLogger).warn("'mainClass' is not a valid Java class : ${start-class}");
+    Assert.assertThat(
+        logMessages.toString(),
+        CoreMatchers.containsString("'mainClass' is not a valid Java class : ${start-class}"));
   }
 
   @Test
@@ -89,7 +99,9 @@ public class MainClassResolverTest {
                 .collect(ImmutableList.toImmutableList()));
     Assert.assertEquals(
         "${start-class}", MainClassResolver.resolveMainClass(null, mockProjectProperties));
-    Mockito.verify(mockBuildLogger).warn("'mainClass' is not a valid Java class : ${start-class}");
+    Assert.assertThat(
+        logMessages.toString(),
+        CoreMatchers.containsString("'mainClass' is not a valid Java class : ${start-class}"));
   }
 
   @Test
@@ -125,7 +137,9 @@ public class MainClassResolverTest {
                 new LayerEntry(Paths.get("ignored"), AbsoluteUnixPath.get("/ignored"))));
     Assert.assertEquals(
         "${start-class}", MainClassResolver.resolveMainClass(null, mockProjectProperties));
-    Mockito.verify(mockBuildLogger).warn("'mainClass' is not a valid Java class : ${start-class}");
+    Assert.assertThat(
+        logMessages.toString(),
+        CoreMatchers.containsString("'mainClass' is not a valid Java class : ${start-class}"));
   }
 
   @Test

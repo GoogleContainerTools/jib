@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.cloud.tools.jib.registry.RegistryClient;
@@ -138,7 +139,9 @@ class PushImageStep implements AsyncStep<Void>, Callable<Void> {
         pushAllTagsFutures.add(
             listeningExecutorService.submit(
                 () -> {
-                  buildConfiguration.getBuildLogger().info("Tagging with " + tag + "...");
+                  buildConfiguration
+                      .getEventEmitter()
+                      .emit(LogEvent.info("Tagging with " + tag + "..."));
                   registryClient.pushManifest(manifestTemplate, tag);
                   return null;
                 }));
