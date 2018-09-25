@@ -32,7 +32,7 @@ import javax.annotation.concurrent.Immutable;
  * <p>Uses the default cache storage engine ({@link DefaultCacheStorage}) and layer entries as the
  * selector ({@link LayerEntriesSelector}).
  *
- * <p>Implementation is immutable and thread-safe.
+ * <p>This class is immutable and safe to use across threads.
  */
 @Immutable
 public class Cache {
