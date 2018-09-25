@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package com.google.cloud.tools.jib.builder;
+package com.google.cloud.tools.jib.configuration;
 
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import javax.annotation.Nullable;
 
