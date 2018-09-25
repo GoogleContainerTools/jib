@@ -17,12 +17,16 @@
 package com.google.cloud.tools.jib.configuration;
 
 import com.google.cloud.tools.jib.JibLogger;
+import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.event.EventEmitter;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
+import com.google.cloud.tools.jib.ncache.Cache;
 import com.google.cloud.tools.jib.registry.RegistryClient;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -192,7 +196,7 @@ public class BuildConfiguration {
      *
      * @return the corresponding build configuration
      */
-    public BuildConfiguration build() {
+    public BuildConfiguration build() throws IOException, CacheDirectoryCreationException {
       // Validates the parameters.
       List<String> errorMessages = new ArrayList<>();
       if (baseImageConfiguration == null) {
@@ -214,14 +218,21 @@ public class BuildConfiguration {
                     + "' does not use a specific image digest - build may not be reproducible");
           }
 
+          if (baseImageLayersCacheConfiguration == null) {
+            baseImageLayersCacheConfiguration = CacheConfiguration.forDefaultUserLevelCacheDirectory();
+          }
+          if (applicationLayersCacheConfiguration == null) {
+            applicationLayersCacheConfiguration = CacheConfiguration.makeTemporary();
+          }
+
           return new BuildConfiguration(
               buildLogger,
               baseImageConfiguration,
               targetImageConfiguration,
               additionalTargetImageTags,
               containerConfiguration,
-              applicationLayersCacheConfiguration,
-              baseImageLayersCacheConfiguration,
+              Cache.withDirectory(baseImageLayersCacheConfiguration.getCacheDirectory()),
+              Cache.withDirectory(applicationLayersCacheConfiguration.getCacheDirectory()),
               targetFormat,
               allowInsecureRegistries,
               layerConfigurations,
@@ -238,6 +249,16 @@ public class BuildConfiguration {
           // Should never reach here.
           throw new IllegalStateException();
       }
+    }
+
+    @VisibleForTesting
+    CacheConfiguration getBaseImageLayersCacheConfiguration() {
+      return baseImageLayersCacheConfiguration;
+    }
+
+    @VisibleForTesting
+    CacheConfiguration getApplicationLayersCacheConfiguration() {
+      return applicationLayersCacheConfiguration;
     }
   }
 
@@ -256,8 +277,8 @@ public class BuildConfiguration {
   private final ImageConfiguration targetImageConfiguration;
   private final ImmutableSet<String> additionalTargetImageTags;
   @Nullable private final ContainerConfiguration containerConfiguration;
-  @Nullable private final CacheConfiguration applicationLayersCacheConfiguration;
-  @Nullable private final CacheConfiguration baseImageLayersCacheConfiguration;
+  private final Cache baseImageLayersCache;
+  private final Cache applicationLayersCache;
   private Class<? extends BuildableManifestTemplate> targetFormat;
   private final boolean allowInsecureRegistries;
   private final ImmutableList<LayerConfiguration> layerConfigurations;
@@ -271,8 +292,8 @@ public class BuildConfiguration {
       ImageConfiguration targetImageConfiguration,
       ImmutableSet<String> additionalTargetImageTags,
       @Nullable ContainerConfiguration containerConfiguration,
-      @Nullable CacheConfiguration applicationLayersCacheConfiguration,
-      @Nullable CacheConfiguration baseImageLayersCacheConfiguration,
+      Cache baseImageLayersCache,
+      Cache applicationLayersCache,
       Class<? extends BuildableManifestTemplate> targetFormat,
       boolean allowInsecureRegistries,
       ImmutableList<LayerConfiguration> layerConfigurations,
@@ -283,8 +304,8 @@ public class BuildConfiguration {
     this.targetImageConfiguration = targetImageConfiguration;
     this.additionalTargetImageTags = additionalTargetImageTags;
     this.containerConfiguration = containerConfiguration;
-    this.applicationLayersCacheConfiguration = applicationLayersCacheConfiguration;
-    this.baseImageLayersCacheConfiguration = baseImageLayersCacheConfiguration;
+    this.baseImageLayersCache = baseImageLayersCache;
+    this.applicationLayersCache = applicationLayersCache;
     this.targetFormat = targetFormat;
     this.allowInsecureRegistries = allowInsecureRegistries;
     this.layerConfigurations = layerConfigurations;
@@ -330,23 +351,20 @@ public class BuildConfiguration {
   }
 
   /**
-   * Gets the location of the cache for storing application layers.
+   * Gets the {@link Cache} for base image layers.
    *
-   * @return the application layers {@link CacheConfiguration}, or {@code null} if not set
+   * @return the {@link Cache} for base image layers
    */
-  @Nullable
-  public CacheConfiguration getApplicationLayersCacheConfiguration() {
-    return applicationLayersCacheConfiguration;
+  public Cache getBaseImageLayersCache() {
+    return baseImageLayersCache;
   }
-
   /**
-   * Gets the location of the cache for storing base image layers.
+   * Gets the {@link Cache} for application layers.
    *
-   * @return the base image layers {@link CacheConfiguration}, or {@code null} if not set
+   * @return the {@link Cache} for application layers
    */
-  @Nullable
-  public CacheConfiguration getBaseImageLayersCacheConfiguration() {
-    return baseImageLayersCacheConfiguration;
+  public Cache getApplicationLayersCache() {
+    return applicationLayersCache;
   }
 
   /**

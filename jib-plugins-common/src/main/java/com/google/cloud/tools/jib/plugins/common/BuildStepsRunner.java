@@ -21,11 +21,8 @@ import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.builder.BuildSteps;
 import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
-import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
-import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
-import com.google.cloud.tools.jib.cache.Caches.Initializer;
+import com.google.cloud.tools.jib.ncache.CacheCorruptedException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.LayerEntry;
@@ -83,13 +80,11 @@ public class BuildStepsRunner {
    *
    * @param buildConfiguration the configuration parameters for the build
    * @return a {@link BuildStepsRunner} for building to a registry
-   * @throws CacheDirectoryCreationException if the {@code cacheDirectory} could not be created
    */
-  public static BuildStepsRunner forBuildImage(BuildConfiguration buildConfiguration)
-      throws CacheDirectoryCreationException {
+  public static BuildStepsRunner forBuildImage(BuildConfiguration buildConfiguration) {
     return new BuildStepsRunner(
         BuildSteps.forBuildToDockerRegistry(
-            buildConfiguration, getCacheInitializer(buildConfiguration)),
+            buildConfiguration),
         buildMessageWithTargetImageReferences(
             buildConfiguration, STARTUP_MESSAGE_PREFIX_FOR_DOCKER_REGISTRY, "..."),
         buildMessageWithTargetImageReferences(
@@ -101,13 +96,11 @@ public class BuildStepsRunner {
    *
    * @param buildConfiguration the configuration parameters for the build
    * @return a {@link BuildStepsRunner} for building to a Docker daemon
-   * @throws CacheDirectoryCreationException if the {@code cacheDirectory} could not be created
    */
-  public static BuildStepsRunner forBuildToDockerDaemon(BuildConfiguration buildConfiguration)
-      throws CacheDirectoryCreationException {
+  public static BuildStepsRunner forBuildToDockerDaemon(BuildConfiguration buildConfiguration) {
     return new BuildStepsRunner(
         BuildSteps.forBuildToDockerDaemon(
-            buildConfiguration, getCacheInitializer(buildConfiguration)),
+            buildConfiguration),
         buildMessageWithTargetImageReferences(
             buildConfiguration, STARTUP_MESSAGE_PREFIX_FOR_DOCKER_DAEMON, "..."),
         buildMessageWithTargetImageReferences(
@@ -120,35 +113,13 @@ public class BuildStepsRunner {
    * @param outputPath the path to output the tarball to
    * @param buildConfiguration the configuration parameters for the build
    * @return a {@link BuildStepsRunner} for building a tarball
-   * @throws CacheDirectoryCreationException if the {@code cacheDirectory} could not be created
    */
-  public static BuildStepsRunner forBuildTar(Path outputPath, BuildConfiguration buildConfiguration)
-      throws CacheDirectoryCreationException {
+  public static BuildStepsRunner forBuildTar(Path outputPath, BuildConfiguration buildConfiguration) {
     return new BuildStepsRunner(
         BuildSteps.forBuildToTar(
-            outputPath, buildConfiguration, getCacheInitializer(buildConfiguration)),
+            outputPath, buildConfiguration),
         String.format(STARTUP_MESSAGE_FORMAT_FOR_TARBALL, outputPath.toString()),
         String.format(SUCCESS_MESSAGE_FORMAT_FOR_TARBALL, outputPath.toString()));
-  }
-
-  // TODO: Move this up to somewhere where defaults for cache location are provided and ownership is
-  // checked rather than in Caches.Initializer.
-  private static Initializer getCacheInitializer(BuildConfiguration buildConfiguration)
-      throws CacheDirectoryCreationException {
-    CacheConfiguration applicationLayersCacheConfiguration =
-        buildConfiguration.getApplicationLayersCacheConfiguration() == null
-            ? CacheConfiguration.makeTemporary()
-            : buildConfiguration.getApplicationLayersCacheConfiguration();
-    CacheConfiguration baseImageLayersCacheConfiguration =
-        buildConfiguration.getBaseImageLayersCacheConfiguration() == null
-            ? CacheConfiguration.forDefaultUserLevelCacheDirectory()
-            : buildConfiguration.getBaseImageLayersCacheConfiguration();
-
-    return new Initializer(
-        baseImageLayersCacheConfiguration.getCacheDirectory(),
-        applicationLayersCacheConfiguration.shouldEnsureOwnership(),
-        applicationLayersCacheConfiguration.getCacheDirectory(),
-        applicationLayersCacheConfiguration.shouldEnsureOwnership());
   }
 
   private static void handleRegistryUnauthorizedException(
@@ -281,17 +252,6 @@ public class BuildStepsRunner {
       // TODO: Add more suggestions for various build failures.
       throw new BuildStepsExecutionException(helpfulSuggestions.none(), ex);
 
-    } catch (CacheDirectoryNotOwnedException ex) {
-      String helpfulSuggestion =
-          helpfulSuggestions.forCacheDirectoryNotOwned(ex.getCacheDirectory());
-      CacheConfiguration applicationLayersCacheConfiguration =
-          buildSteps.getBuildConfiguration().getApplicationLayersCacheConfiguration();
-      if (applicationLayersCacheConfiguration != null
-          && ex.getCacheDirectory()
-              .equals(applicationLayersCacheConfiguration.getCacheDirectory())) {
-        helpfulSuggestion = helpfulSuggestions.forCacheNeedsClean();
-      }
-      throw new BuildStepsExecutionException(helpfulSuggestion, ex);
     }
   }
 }

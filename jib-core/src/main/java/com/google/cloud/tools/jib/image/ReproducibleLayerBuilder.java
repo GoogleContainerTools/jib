@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.image;
 
+import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.tar.TarStreamBuilder;
 import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
@@ -88,11 +89,11 @@ public class ReproducibleLayerBuilder {
   }
 
   /**
-   * Builds and returns the layer.
+   * Builds and returns the layer {@link Blob}.
    *
    * @return the new layer
    */
-  public UnwrittenLayer build() {
+  public Blob build() {
     UniqueTarArchiveEntries uniqueTarArchiveEntries = new UniqueTarArchiveEntries();
 
     // Adds all the layer entries as tar entries.
@@ -125,10 +126,6 @@ public class ReproducibleLayerBuilder {
       tarStreamBuilder.addTarArchiveEntry(entry);
     }
 
-    return new UnwrittenLayer(tarStreamBuilder.toBlob());
-  }
-
-  public ImmutableList<LayerEntry> getLayerEntries() {
-    return layerEntries;
+    return tarStreamBuilder.toBlob();
   }
 }

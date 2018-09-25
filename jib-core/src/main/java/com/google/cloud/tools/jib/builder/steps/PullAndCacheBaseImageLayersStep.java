@@ -39,7 +39,6 @@ class PullAndCacheBaseImageLayersStep
   private static final String DESCRIPTION = "Setting up base image caching";
 
   private final BuildConfiguration buildConfiguration;
-  private final Cache cache;
   private final PullBaseImageStep pullBaseImageStep;
 
   private final ListeningExecutorService listeningExecutorService;
@@ -48,11 +47,9 @@ class PullAndCacheBaseImageLayersStep
   PullAndCacheBaseImageLayersStep(
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
-      Cache cache,
       PullBaseImageStep pullBaseImageStep) {
     this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
-    this.cache = cache;
     this.pullBaseImageStep = pullBaseImageStep;
 
     listenableFuture =
@@ -78,7 +75,6 @@ class PullAndCacheBaseImageLayersStep
             new PullAndCacheBaseImageLayerStep(
                 listeningExecutorService,
                 buildConfiguration,
-                cache,
                 layer.getBlobDescriptor().getDigest(),
                 pullBaseImageStepResult.getBaseImageAuthorization()));
       }

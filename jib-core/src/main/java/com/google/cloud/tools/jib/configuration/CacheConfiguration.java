@@ -77,6 +77,7 @@ public class CacheConfiguration {
   }
 
   private final Path cacheDirectory;
+  // TODO: Deprecate
   private final boolean shouldEnsureOwnership;
 
   private CacheConfiguration(Path cacheDirectory, boolean shouldEnsureOwnership) {

@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.cache;
 import java.nio.file.Path;
 
 /** Thrown when a directory to be used as the {@link Cache} could not be created. */
+// TODO: Move to configuration package.
 public class CacheDirectoryCreationException extends Exception {
 
   private static final String MESSAGE = "Could not create cache directory";

@@ -47,8 +47,6 @@ public class StepsRunner {
 
   private final ListeningExecutorService listeningExecutorService;
   private final BuildConfiguration buildConfiguration;
-  private final Cache baseLayersCache;
-  private final Cache applicationLayersCache;
 
   @Nullable private RetrieveRegistryCredentialsStep retrieveTargetRegistryCredentialsStep;
   @Nullable private AuthenticatePushStep authenticatePushStep;
@@ -66,11 +64,8 @@ public class StepsRunner {
   @Nullable private LoadDockerStep loadDockerStep;
   @Nullable private WriteTarFileStep writeTarFileStep;
 
-  public StepsRunner(
-      BuildConfiguration buildConfiguration, Cache baseLayersCache, Cache applicationLayersCache) {
+  public StepsRunner(BuildConfiguration buildConfiguration) {
     this.buildConfiguration = buildConfiguration;
-    this.baseLayersCache = baseLayersCache;
-    this.applicationLayersCache = applicationLayersCache;
 
     ExecutorService executorService =
         JibSystemProperties.isSerializedExecutionEnabled()
@@ -105,7 +100,6 @@ public class StepsRunner {
         new PullAndCacheBaseImageLayersStep(
             listeningExecutorService,
             buildConfiguration,
-            baseLayersCache,
             Preconditions.checkNotNull(pullBaseImageStep));
     return this;
   }
@@ -123,7 +117,7 @@ public class StepsRunner {
   public StepsRunner runBuildAndCacheApplicationLayerSteps() {
     buildAndCacheApplicationLayerSteps =
         BuildAndCacheApplicationLayerStep.makeList(
-            listeningExecutorService, buildConfiguration, applicationLayersCache);
+            listeningExecutorService, buildConfiguration);
     return this;
   }
 
@@ -224,37 +218,5 @@ public class StepsRunner {
 
   public void waitOnWriteTarFileStep() throws ExecutionException, InterruptedException {
     Preconditions.checkNotNull(writeTarFileStep).getFuture().get();
-  }
-
-  /**
-   * @return the layers cached by {@link #pullAndCacheBaseImageLayersStep}
-   * @throws ExecutionException if {@link #pullAndCacheBaseImageLayersStep} threw an exception
-   *     during execution
-   */
-  public List<CachedLayer> getCachedBaseImageLayers() throws ExecutionException {
-    ImmutableList<PullAndCacheBaseImageLayerStep> pullAndCacheBaseImageLayerSteps =
-        NonBlockingSteps.get(Preconditions.checkNotNull(pullAndCacheBaseImageLayersStep));
-
-    List<CachedLayer> cachedLayers = new ArrayList<>(pullAndCacheBaseImageLayerSteps.size());
-    for (PullAndCacheBaseImageLayerStep pullAndCacheBaseImageLayerStep :
-        pullAndCacheBaseImageLayerSteps) {
-      cachedLayers.add(NonBlockingSteps.get(pullAndCacheBaseImageLayerStep));
-    }
-    return cachedLayers;
-  }
-
-  /**
-   * @return the layers cached by {@link #buildAndCacheApplicationLayerSteps}
-   * @throws ExecutionException if {@link #buildAndCacheApplicationLayerSteps} threw an exception
-   *     during execution
-   */
-  public List<CachedLayerWithMetadata> getCachedApplicationLayers() throws ExecutionException {
-    List<CachedLayerWithMetadata> cachedLayersWithMetadata =
-        new ArrayList<>(Preconditions.checkNotNull(buildAndCacheApplicationLayerSteps).size());
-    for (BuildAndCacheApplicationLayerStep buildAndCacheApplicationLayerStep :
-        buildAndCacheApplicationLayerSteps) {
-      cachedLayersWithMetadata.add(NonBlockingSteps.get(buildAndCacheApplicationLayerStep));
-    }
-    return cachedLayersWithMetadata;
   }
 }

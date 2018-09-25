@@ -18,14 +18,13 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.async.AsyncStep;
-import com.google.cloud.tools.jib.cache.Cache;
-import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
-import com.google.cloud.tools.jib.cache.CacheReader;
-import com.google.cloud.tools.jib.cache.CacheWriter;
-import com.google.cloud.tools.jib.cache.CachedLayerWithMetadata;
+import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.image.ReproducibleLayerBuilder;
+import com.google.cloud.tools.jib.ncache.Cache;
+import com.google.cloud.tools.jib.ncache.CacheCorruptedException;
+import com.google.cloud.tools.jib.ncache.CacheEntry;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -35,7 +34,7 @@ import java.util.concurrent.Callable;
 
 /** Builds and caches application layers. */
 class BuildAndCacheApplicationLayerStep
-    implements AsyncStep<CachedLayerWithMetadata>, Callable<CachedLayerWithMetadata> {
+    implements AsyncStep<CacheEntry>, Callable<CacheEntry> {
 
   private static final String DESCRIPTION = "Building application layers";
 
@@ -45,8 +44,7 @@ class BuildAndCacheApplicationLayerStep
    */
   static ImmutableList<BuildAndCacheApplicationLayerStep> makeList(
       ListeningExecutorService listeningExecutorService,
-      BuildConfiguration buildConfiguration,
-      Cache cache) {
+      BuildConfiguration buildConfiguration) {
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
       ImmutableList.Builder<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps =
           ImmutableList.builderWithExpectedSize(buildConfiguration.getLayerConfigurations().size());
@@ -61,8 +59,7 @@ class BuildAndCacheApplicationLayerStep
                 layerConfiguration.getName(),
                 listeningExecutorService,
                 buildConfiguration,
-                layerConfiguration,
-                cache));
+                layerConfiguration));
       }
       return buildAndCacheApplicationLayerSteps.build();
     }
@@ -71,53 +68,49 @@ class BuildAndCacheApplicationLayerStep
   private final String layerType;
   private final BuildConfiguration buildConfiguration;
   private final LayerConfiguration layerConfiguration;
-  private final Cache cache;
 
-  private final ListenableFuture<CachedLayerWithMetadata> listenableFuture;
+  private final ListenableFuture<CacheEntry> listenableFuture;
 
   private BuildAndCacheApplicationLayerStep(
       String layerType,
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
-      LayerConfiguration layerConfiguration,
-      Cache cache) {
+      LayerConfiguration layerConfiguration) {
     this.layerType = layerType;
     this.buildConfiguration = buildConfiguration;
     this.layerConfiguration = layerConfiguration;
-    this.cache = cache;
 
     listenableFuture = listeningExecutorService.submit(this);
   }
 
   @Override
-  public ListenableFuture<CachedLayerWithMetadata> getFuture() {
+  public ListenableFuture<CacheEntry> getFuture() {
     return listenableFuture;
   }
 
   @Override
-  public CachedLayerWithMetadata call() throws IOException, CacheMetadataCorruptedException {
+  public CacheEntry call() throws IOException, CacheCorruptedException {
     String description = "Building " + layerType + " layer";
 
     buildConfiguration.getBuildLogger().lifecycle(description + "...");
 
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), description)) {
+      Cache cache = buildConfiguration.getApplicationLayersCache();
+
       // Don't build the layer if it exists already.
-      Optional<CachedLayerWithMetadata> optionalCachedLayer =
-          new CacheReader(cache)
-              .getUpToDateLayerByLayerEntries(layerConfiguration.getLayerEntries());
-      if (optionalCachedLayer.isPresent()) {
-        return optionalCachedLayer.get();
+      Optional<CacheEntry> optionalCacheEntry = cache.retrieve(layerConfiguration.getLayerEntries());
+      if (optionalCacheEntry.isPresent()) {
+        return optionalCacheEntry.get();
       }
 
-      CachedLayerWithMetadata cachedLayer =
-          new CacheWriter(cache)
-              .writeLayer(new ReproducibleLayerBuilder(layerConfiguration.getLayerEntries()));
+      Blob layerBlob = new ReproducibleLayerBuilder(layerConfiguration.getLayerEntries()).build();
+      CacheEntry cacheEntry = cache.write(layerBlob, layerConfiguration.getLayerEntries());
 
       buildConfiguration
           .getBuildLogger()
-          .debug(description + " built " + cachedLayer.getBlobDescriptor().getDigest());
+          .debug(description + " built " + cacheEntry.getLayerDigest());
 
-      return cachedLayer;
+      return cacheEntry;
     }
   }
 }

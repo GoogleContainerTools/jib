@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.configuration;
 
 import com.google.cloud.tools.jib.JibLogger;
+import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
@@ -27,6 +28,7 @@ import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
@@ -144,10 +146,10 @@ public class BuildConfigurationTest {
     Assert.assertEquals(expectedTargetFormat, buildConfiguration.getTargetFormat());
     Assert.assertEquals(
         expectedApplicationLayersCacheConfiguration,
-        buildConfiguration.getApplicationLayersCacheConfiguration());
+        buildConfigurationBuilder.getApplicationLayersCacheConfiguration());
     Assert.assertEquals(
         expectedBaseImageLayersCacheConfiguration,
-        buildConfiguration.getBaseImageLayersCacheConfiguration());
+        buildConfigurationBuilder.getBaseImageLayersCacheConfiguration());
     Assert.assertTrue(buildConfiguration.getAllowInsecureRegistries());
     Assert.assertEquals(expectedLayerConfigurations, buildConfiguration.getLayerConfigurations());
     Assert.assertEquals(
@@ -156,7 +158,7 @@ public class BuildConfigurationTest {
   }
 
   @Test
-  public void testBuilder_default() {
+  public void testBuilder_default() throws IOException, CacheDirectoryCreationException {
     // These are required and don't have defaults.
     String expectedBaseImageServerUrl = "someserver";
     String expectedBaseImageName = "baseimage";
@@ -175,16 +177,16 @@ public class BuildConfigurationTest {
                 ImageReference.of(
                     expectedTargetServerUrl, expectedTargetImageName, expectedTargetTag))
             .build();
-    BuildConfiguration buildConfiguration =
+    BuildConfiguration.Builder buildConfigurationBuilder =
         BuildConfiguration.builder(Mockito.mock(JibLogger.class))
             .setBaseImageConfiguration(baseImageConfiguration)
-            .setTargetImageConfiguration(targetImageConfiguration)
-            .build();
+            .setTargetImageConfiguration(targetImageConfiguration);
+    BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
 
     Assert.assertEquals(ImmutableSet.of("targettag"), buildConfiguration.getAllTargetImageTags());
     Assert.assertEquals(V22ManifestTemplate.class, buildConfiguration.getTargetFormat());
-    Assert.assertNull(buildConfiguration.getApplicationLayersCacheConfiguration());
-    Assert.assertNull(buildConfiguration.getBaseImageLayersCacheConfiguration());
+    Assert.assertNull(buildConfigurationBuilder.getApplicationLayersCacheConfiguration());
+    Assert.assertNull(buildConfigurationBuilder.getBaseImageLayersCacheConfiguration());
     Assert.assertNull(buildConfiguration.getContainerConfiguration());
     Assert.assertFalse(buildConfiguration.getAllowInsecureRegistries());
     Assert.assertEquals(Collections.emptyList(), buildConfiguration.getLayerConfigurations());
@@ -192,7 +194,7 @@ public class BuildConfigurationTest {
   }
 
   @Test
-  public void testBuilder_missingValues() {
+  public void testBuilder_missingValues() throws IOException, CacheDirectoryCreationException {
     // Target image is missing
     try {
       BuildConfiguration.builder(Mockito.mock(JibLogger.class))

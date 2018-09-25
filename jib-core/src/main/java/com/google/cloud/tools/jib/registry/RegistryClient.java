@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
+import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
@@ -262,20 +263,21 @@ public class RegistryClient {
   }
 
   /**
-   * Downloads the BLOB to a file.
+   * Gets the BLOB referenced by {@code blobDigest}. Note that the BLOB is only pulled when it is written out.
    *
    * @param blobDigest the digest of the BLOB to download
-   * @param destinationOutputStream the {@link OutputStream} to write the BLOB to
    * @return a {@link Blob} backed by the file at {@code destPath}. The file at {@code destPath}
    *     must exist for {@link Blob} to be valid.
-   * @throws IOException if communicating with the endpoint fails
-   * @throws RegistryException if communicating with the endpoint fails
    */
-  public Void pullBlob(DescriptorDigest blobDigest, OutputStream destinationOutputStream)
-      throws RegistryException, IOException {
-    BlobPuller blobPuller =
-        new BlobPuller(registryEndpointRequestProperties, blobDigest, destinationOutputStream);
-    return callRegistryEndpoint(blobPuller);
+  public Blob pullBlob(DescriptorDigest blobDigest) {
+    return Blobs.from(outputStream -> {
+      try {
+        callRegistryEndpoint(new BlobPuller(registryEndpointRequestProperties, blobDigest, outputStream));
+
+      } catch (RegistryException ex) {
+        throw new IOException(ex);
+      }
+    });
   }
 
   /**

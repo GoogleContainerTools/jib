@@ -208,12 +208,9 @@ class PullBaseImageStep
                   + Blobs.writeToString(JsonTemplateMapper.toBlob(v22ManifestTemplate)));
         }
 
-        ByteArrayOutputStream containerConfigurationOutputStream = new ByteArrayOutputStream();
-        registryClient.pullBlob(
-            v22ManifestTemplate.getContainerConfiguration().getDigest(),
-            containerConfigurationOutputStream);
         String containerConfigurationString =
-            new String(containerConfigurationOutputStream.toByteArray(), StandardCharsets.UTF_8);
+            Blobs.writeToString(registryClient.pullBlob(
+                v22ManifestTemplate.getContainerConfiguration().getDigest()));
 
         ContainerConfigurationTemplate containerConfigurationTemplate =
             JsonTemplateMapper.readJson(
