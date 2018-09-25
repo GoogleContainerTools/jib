@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.cloud.tools.jib.JibLogger;
+import com.google.cloud.tools.jib.event.EventEmitter;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import java.nio.file.Path;
 import javax.annotation.Nullable;
@@ -27,6 +28,9 @@ public interface ProjectProperties {
   /** Directory name for the cache. The directory will be relative to the build output directory. */
   String CACHE_DIRECTORY_NAME = "jib-cache";
 
+  EventEmitter getEventEmitter();
+
+  // TODO: Remove
   JibLogger getLogger();
 
   String getPluginName();

@@ -25,15 +25,15 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link DefaultCacheWrite}. */
+/** Tests for {@link CacheWrite}. */
 @RunWith(MockitoJUnitRunner.class)
-public class DefaultCacheWriteTest {
+public class CacheWriteTest {
 
   @Mock private DescriptorDigest mockSelector;
 
   @Test
   public void testLayerOnly() throws IOException {
-    CacheWrite cacheWrite = DefaultCacheWrite.layerOnly(Blobs.from("layerBlob"));
+    CacheWrite cacheWrite = CacheWrite.layerOnly(Blobs.from("layerBlob"));
     Assert.assertEquals("layerBlob", Blobs.writeToString(cacheWrite.getLayerBlob()));
     Assert.assertFalse(cacheWrite.getSelector().isPresent());
     Assert.assertFalse(cacheWrite.getMetadataBlob().isPresent());
@@ -42,7 +42,7 @@ public class DefaultCacheWriteTest {
   @Test
   public void testWithSelectorAndMetadata() throws IOException {
     CacheWrite cacheWrite =
-        DefaultCacheWrite.withSelectorAndMetadata(
+        CacheWrite.withSelectorAndMetadata(
             Blobs.from("layerBlob"), mockSelector, Blobs.from("metadataBlob"));
     Assert.assertEquals("layerBlob", Blobs.writeToString(cacheWrite.getLayerBlob()));
     Assert.assertEquals(mockSelector, cacheWrite.getSelector().orElse(null));
