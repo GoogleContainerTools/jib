@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.ncache;
 
 import com.google.cloud.tools.jib.blob.Blob;
-import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
@@ -25,7 +24,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
-import java.time.Instant;
 import java.util.Optional;
 import javax.annotation.concurrent.Immutable;
 
@@ -85,7 +83,7 @@ public class Cache {
         CacheWrite.withSelectorAndMetadata(
             layerBlob,
             LayerEntriesSelector.generateSelector(layerEntries),
-            LastModifiedMetadata.generateMetadata(layerEntries)));
+            LastModifiedTimeMetadata.generateMetadata(layerEntries)));
   }
 
   /**
@@ -113,15 +111,17 @@ public class Cache {
     }
 
     CacheEntry cacheEntry = optionalCacheEntry.get();
-    if (!cacheEntry.getMetadataBlob().isPresent()) {
+
+    Optional<FileTime> optionalRetrievedLastModifiedTime =
+        LastModifiedTimeMetadata.getLastModifiedTime(cacheEntry);
+    if (!optionalRetrievedLastModifiedTime.isPresent()) {
       return Optional.empty();
     }
 
-    Blob metadataBlob = cacheEntry.getMetadataBlob().get();
-    FileTime cacheEntryLastModifiedTime =
-        FileTime.from(Instant.parse(Blobs.writeToString(metadataBlob)));
-    if (!LastModifiedMetadata.getLastModifiedTime(layerEntries)
-        .equals(cacheEntryLastModifiedTime)) {
+    FileTime retrievedLastModifiedTime = optionalRetrievedLastModifiedTime.get();
+    FileTime expectedLastModifiedTime = LastModifiedTimeMetadata.getLastModifiedTime(layerEntries);
+
+    if (!expectedLastModifiedTime.equals(retrievedLastModifiedTime)) {
       return Optional.empty();
     }
 

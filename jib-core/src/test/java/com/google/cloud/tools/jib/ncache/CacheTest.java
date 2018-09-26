@@ -223,7 +223,7 @@ public class CacheTest {
     verifyIsLayer1(cacheEntry);
     Assert.assertTrue(cacheEntry.getMetadataBlob().isPresent());
     Assert.assertEquals(
-        Blobs.writeToString(LastModifiedMetadata.generateMetadata(layerEntries1)),
+        Blobs.writeToString(LastModifiedTimeMetadata.generateMetadata(layerEntries1)),
         Blobs.writeToString(cacheEntry.getMetadataBlob().get()));
   }
 
@@ -255,7 +255,7 @@ public class CacheTest {
     Assert.assertEquals(layerSize2, cacheEntry.getLayerSize());
     Assert.assertTrue(cacheEntry.getMetadataBlob().isPresent());
     Assert.assertEquals(
-        Blobs.writeToString(LastModifiedMetadata.generateMetadata(layerEntries2)),
+        Blobs.writeToString(LastModifiedTimeMetadata.generateMetadata(layerEntries2)),
         Blobs.writeToString(cacheEntry.getMetadataBlob().get()));
   }
 }
