@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.event;
 
+import com.google.cloud.tools.jib.event.events.LogEvent;
+import com.google.cloud.tools.jib.event.events.TimerEvent;
 import com.google.common.annotations.VisibleForTesting;
 
 /** Holds references to all {@link JibEvent} types. */
@@ -23,6 +25,15 @@ public class JibEventType<E extends JibEvent> {
 
   /** All event types. Handlers for this will always be called first. */
   public static final JibEventType<JibEvent> ALL = new JibEventType<>(JibEvent.class);
+
+  /**
+   * Event with a message to use for logging purposes. Do not attempt to parse for information as
+   * the format can change.
+   */
+  public static final JibEventType<LogEvent> LOGGING = new JibEventType<>(LogEvent.class);
+
+  /** Timer event for timing various part of Jib's execution. */
+  public static final JibEventType<TimerEvent> TIMING = new JibEventType<>(TimerEvent.class);
 
   // TODO: Add entries for all JibEvent types.
 

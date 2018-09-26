@@ -16,11 +16,16 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.JibLogger;
+import com.google.cloud.tools.jib.event.DefaultEventEmitter;
+import com.google.cloud.tools.jib.event.EventEmitter;
+import com.google.cloud.tools.jib.event.EventHandlers;
+import com.google.cloud.tools.jib.event.JibEventType;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.MainClassResolver;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
+import com.google.cloud.tools.jib.plugins.common.TimerEventHandler;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -28,6 +33,7 @@ import java.nio.file.Paths;
 import javax.annotation.Nullable;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 
@@ -48,17 +54,21 @@ public class MavenProjectProperties implements ProjectProperties {
 
   /**
    * @param project the {@link MavenProject} for the plugin.
-   * @param mavenJibLogger the logger used for printing status messages.
+   * @param log the Maven {@link Log} to log messages during Jib execution
    * @param extraDirectory path to the directory for the extra files layer
+   * @param appRoot root directory in the image where the app will be placed
    * @return a MavenProjectProperties from the given project and logger.
    * @throws MojoExecutionException if no class files are found in the output directory.
    */
   static MavenProjectProperties getForProject(
-      MavenProject project, MavenJibLogger mavenJibLogger, Path extraDirectory)
+      MavenProject project, Log log, Path extraDirectory, AbsoluteUnixPath appRoot)
       throws MojoExecutionException {
     try {
       return new MavenProjectProperties(
-          project, mavenJibLogger, MavenLayerConfigurations.getForProject(project, extraDirectory));
+          project,
+          makeEventEmitter(log),
+          MavenLayerConfigurations.getForProject(project, extraDirectory, appRoot));
+
     } catch (IOException ex) {
       throw new MojoExecutionException(
           "Obtaining project build output files failed; make sure you have compiled your project "
@@ -68,17 +78,24 @@ public class MavenProjectProperties implements ProjectProperties {
     }
   }
 
+  private static EventEmitter makeEventEmitter(Log log) {
+    return new DefaultEventEmitter(
+        new EventHandlers()
+            .add(JibEventType.LOGGING, new LogEventHandler(log))
+            .add(JibEventType.TIMING, new TimerEventHandler(log::debug)));
+  }
+
   private final MavenProject project;
-  private final MavenJibLogger mavenJibLogger;
+  private final EventEmitter eventEmitter;
   private final JavaLayerConfigurations javaLayerConfigurations;
 
   @VisibleForTesting
   MavenProjectProperties(
       MavenProject project,
-      MavenJibLogger mavenJibLogger,
+      EventEmitter eventEmitter,
       JavaLayerConfigurations javaLayerConfigurations) {
     this.project = project;
-    this.mavenJibLogger = mavenJibLogger;
+    this.eventEmitter = eventEmitter;
     this.javaLayerConfigurations = javaLayerConfigurations;
   }
 
@@ -88,8 +105,8 @@ public class MavenProjectProperties implements ProjectProperties {
   }
 
   @Override
-  public JibLogger getLogger() {
-    return mavenJibLogger;
+  public EventEmitter getEventEmitter() {
+    return eventEmitter;
   }
 
   @Override

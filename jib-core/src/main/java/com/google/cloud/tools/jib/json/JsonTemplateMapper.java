@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.json;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.CollectionType;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import java.io.IOException;
@@ -103,17 +104,17 @@ public class JsonTemplateMapper {
   /**
    * Deserializes a JSON object list from a JSON string.
    *
-   * @param <T> child type of {@link ListOfJsonTemplate}
+   * @param <T> child type of {@link JsonTemplate}
    * @param jsonString a JSON string
    * @param templateClass the template to deserialize the string to
-   * @return the template filled with the values parsed from {@code jsonFile}
+   * @return the template filled with the values parsed from {@code jsonString}
    * @throws IOException if an error occurred during parsing the JSON
    */
-  public static <T extends ListOfJsonTemplate> List<T> readListOfJson(
+  public static <T extends JsonTemplate> List<T> readListOfJson(
       String jsonString, Class<T> templateClass) throws IOException {
-    return objectMapper.readValue(
-        jsonString,
-        objectMapper.getTypeFactory().constructCollectionType(List.class, templateClass));
+    CollectionType listType =
+        objectMapper.getTypeFactory().constructCollectionType(List.class, templateClass);
+    return objectMapper.readValue(jsonString, listType);
   }
 
   /**
@@ -127,13 +128,13 @@ public class JsonTemplateMapper {
   }
 
   /**
-   * Convert a {@link ListOfJsonTemplate} to a {@link Blob} of the JSON string.
+   * Convert a list of {@link JsonTemplate} to a {@link Blob} of the JSON string.
    *
-   * @param template the list of JSON templates to convert
+   * @param templates the list of JSON templates to convert
    * @return a {@link Blob} of the JSON string
    */
-  public static Blob toBlob(ListOfJsonTemplate template) {
-    return toBlob(template.getList());
+  public static Blob toBlob(List<? extends JsonTemplate> templates) {
+    return toBlob((Object) templates);
   }
 
   private static Blob toBlob(Object template) {

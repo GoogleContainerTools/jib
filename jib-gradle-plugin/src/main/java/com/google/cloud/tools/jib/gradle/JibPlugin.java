@@ -39,6 +39,7 @@ public class JibPlugin implements Plugin<Project> {
   @VisibleForTesting static final String BUILD_TAR_TASK_NAME = "jibBuildTar";
   @VisibleForTesting static final String BUILD_DOCKER_TASK_NAME = "jibDockerBuild";
   @VisibleForTesting static final String DOCKER_CONTEXT_TASK_NAME = "jibExportDockerContext";
+  @VisibleForTesting static final String FILES_TASK_NAME = "_jibSkaffoldFiles";
 
   /**
    * Collects all project dependencies of the style "compile project(':mylib')" for any kind of
@@ -102,6 +103,8 @@ public class JibPlugin implements Plugin<Project> {
             .getTasks()
             .create(BUILD_TAR_TASK_NAME, BuildTarTask.class)
             .setJibExtension(jibExtension);
+    Task filesTask =
+        project.getTasks().create(FILES_TASK_NAME, FilesTask.class).setJibExtension(jibExtension);
 
     project.afterEvaluate(
         projectAfterEvaluation -> {
@@ -112,6 +115,7 @@ public class JibPlugin implements Plugin<Project> {
             dockerContextTask.dependsOn(classesTask);
             buildDockerTask.dependsOn(classesTask);
             buildTarTask.dependsOn(classesTask);
+            filesTask.dependsOn(classesTask);
 
             // Find project dependencies and add a dependency to their assemble task. We make sure
             // to only add the dependency after BasePlugin is evaluated as otherwise the assemble
@@ -129,6 +133,7 @@ public class JibPlugin implements Plugin<Project> {
                         dockerContextTask.dependsOn(assembleTask);
                         buildDockerTask.dependsOn(assembleTask);
                         buildTarTask.dependsOn(assembleTask);
+                        filesTask.dependsOn(assembleTask);
                       });
             }
           } catch (UnknownTaskException ex) {

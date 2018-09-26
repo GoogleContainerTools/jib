@@ -24,3 +24,8 @@ jib {
     // Does not have tests use user-level cache for base image layers.
     useOnlyProjectCache = true
 }
+
+def additionalTag = System.getProperty("_ADDITIONAL_TAG")
+if (additionalTag != null && !additionalTag.isEmpty()) {
+    jib.to.tags = [System.getProperty("_ADDITIONAL_TAG")]
+}

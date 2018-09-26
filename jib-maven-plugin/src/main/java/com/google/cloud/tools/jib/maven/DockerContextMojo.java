@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaDockerContextGenerator;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
@@ -46,7 +47,8 @@ public class DockerContextMojo extends JibPluginConfiguration {
       property = "jibTargetDir",
       defaultValue = "${project.build.directory}/jib-docker-context",
       required = true)
-  private String targetDir;
+  @VisibleForTesting
+  String targetDir;
 
   @Override
   public void execute() throws MojoExecutionException {
@@ -69,13 +71,15 @@ public class DockerContextMojo extends JibPluginConfiguration {
 
     Preconditions.checkNotNull(targetDir);
 
+    AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(this);
     MavenProjectProperties mavenProjectProperties =
-        MavenProjectProperties.getForProject(getProject(), mavenJibLogger, getExtraDirectory());
+        MavenProjectProperties.getForProject(getProject(), getLog(), getExtraDirectory(), appRoot);
 
     List<String> entrypoint = getEntrypoint();
     if (entrypoint.isEmpty()) {
       String mainClass = mavenProjectProperties.getMainClass(this);
-      entrypoint = JavaEntrypointConstructor.makeDefaultEntrypoint(getJvmFlags(), mainClass);
+      entrypoint =
+          JavaEntrypointConstructor.makeDefaultEntrypoint(appRoot, getJvmFlags(), mainClass);
     } else if (getMainClass() != null || !getJvmFlags().isEmpty()) {
       mavenJibLogger.warn("<mainClass> and <jvmFlags> are ignored when <entrypoint> is specified");
     }

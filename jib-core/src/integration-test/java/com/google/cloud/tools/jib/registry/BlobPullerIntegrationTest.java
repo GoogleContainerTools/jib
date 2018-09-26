@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.registry;
 
-import com.google.cloud.tools.jib.EmptyJibLogger;
+import com.google.cloud.tools.jib.event.EventEmitter;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
@@ -36,7 +36,7 @@ import org.mockito.Mockito;
 public class BlobPullerIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
-  private static final EmptyJibLogger BUILD_LOGGER = new EmptyJibLogger();
+  private static final EventEmitter EVENT_EMITTER = jibEvent -> {};
 
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -45,7 +45,7 @@ public class BlobPullerIntegrationTest {
     // Pulls the busybox image.
     localRegistry.pullAndPushToLocal("busybox", "busybox");
     RegistryClient registryClient =
-        RegistryClient.factory(BUILD_LOGGER, "localhost:5000", "busybox")
+        RegistryClient.factory(EVENT_EMITTER, "localhost:5000", "busybox")
             .setAllowInsecureRegistries(true)
             .newRegistryClient();
     V21ManifestTemplate manifestTemplate =
@@ -71,7 +71,7 @@ public class BlobPullerIntegrationTest {
 
     try {
       RegistryClient registryClient =
-          RegistryClient.factory(BUILD_LOGGER, "localhost:5000", "busybox")
+          RegistryClient.factory(EVENT_EMITTER, "localhost:5000", "busybox")
               .setAllowInsecureRegistries(true)
               .newRegistryClient();
       registryClient.pullBlob(nonexistentDigest, Mockito.mock(OutputStream.class));

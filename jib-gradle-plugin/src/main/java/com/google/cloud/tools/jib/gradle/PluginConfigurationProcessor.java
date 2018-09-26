@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
@@ -33,9 +34,27 @@ import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import org.gradle.api.GradleException;
 
 /** Configures and provides builders for the image building tasks. */
 class PluginConfigurationProcessor {
+
+  /**
+   * Gets the value of the {@code container.appRoot} parameter. Throws {@link GradleException} if it
+   * is not an absolute path in Unix-style.
+   *
+   * @param jibExtension the Jib plugin extension
+   * @return the app root value
+   * @throws GradleException if the app root is not an absolute path in Unix-style
+   */
+  static AbsoluteUnixPath getAppRootChecked(JibExtension jibExtension) {
+    String appRoot = jibExtension.getContainer().getAppRoot();
+    try {
+      return AbsoluteUnixPath.get(appRoot);
+    } catch (IllegalArgumentException ex) {
+      throw new GradleException("container.appRoot is not an absolute Unix-style path: " + appRoot);
+    }
+  }
 
   /**
    * Sets up {@link BuildConfiguration} that is common among the image building tasks. This includes
@@ -65,10 +84,11 @@ class PluginConfigurationProcessor {
               + "this on a public network!");
     }
     DefaultCredentialRetrievers defaultCredentialRetrievers =
-        DefaultCredentialRetrievers.init(CredentialRetrieverFactory.forImage(baseImage, logger));
+        DefaultCredentialRetrievers.init(
+            CredentialRetrieverFactory.forImage(baseImage, projectProperties.getEventEmitter()));
     Optional<Credential> optionalFromCredential =
         ConfigurationPropertyValidator.getImageCredential(
-            logger,
+            projectProperties.getEventEmitter(),
             "jib.from.auth.username",
             "jib.from.auth.password",
             jibExtension.getFrom().getAuth());
@@ -85,7 +105,8 @@ class PluginConfigurationProcessor {
     if (entrypoint.isEmpty()) {
       String mainClass = projectProperties.getMainClass(jibExtension);
       entrypoint =
-          JavaEntrypointConstructor.makeDefaultEntrypoint(jibExtension.getJvmFlags(), mainClass);
+          JavaEntrypointConstructor.makeDefaultEntrypoint(
+              getAppRootChecked(jibExtension), jibExtension.getJvmFlags(), mainClass);
     } else if (jibExtension.getMainClass() != null || !jibExtension.getJvmFlags().isEmpty()) {
       logger.warn("mainClass and jvmFlags are ignored when entrypoint is specified");
     }
@@ -105,6 +126,7 @@ class PluginConfigurationProcessor {
     BuildConfiguration.Builder buildConfigurationBuilder =
         BuildConfiguration.builder(logger)
             .setToolName(GradleProjectProperties.TOOL_NAME)
+            .setEventEmitter(projectProperties.getEventEmitter())
             .setAllowInsecureRegistries(jibExtension.getAllowInsecureRegistries())
             .setLayerConfigurations(
                 projectProperties.getJavaLayerConfigurations().getLayerConfigurations());

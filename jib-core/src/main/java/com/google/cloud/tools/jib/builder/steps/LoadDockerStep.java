@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.docker.ImageToTarballTranslator;
+import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.common.collect.ImmutableList;
@@ -90,7 +91,7 @@ class LoadDockerStep implements AsyncStep<Void>, Callable<Void> {
         buildConfiguration.getTargetImageConfiguration().getImage();
 
     // Load the image to docker daemon.
-    buildConfiguration.getBuildLogger().lifecycle("Loading to Docker daemon...");
+    buildConfiguration.getEventEmitter().emit(LogEvent.lifecycle("Loading to Docker daemon..."));
     DockerClient dockerClient = new DockerClient();
     dockerClient.load(new ImageToTarballTranslator(image).toTarballBlob(targetImageReference));
 

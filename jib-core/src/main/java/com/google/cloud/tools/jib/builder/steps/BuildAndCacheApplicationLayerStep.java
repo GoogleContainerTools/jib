@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.cache.CacheWriter;
 import com.google.cloud.tools.jib.cache.CachedLayerWithMetadata;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
+import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.image.ReproducibleLayerBuilder;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -98,7 +99,7 @@ class BuildAndCacheApplicationLayerStep
   public CachedLayerWithMetadata call() throws IOException, CacheMetadataCorruptedException {
     String description = "Building " + layerType + " layer";
 
-    buildConfiguration.getBuildLogger().lifecycle(description + "...");
+    buildConfiguration.getEventEmitter().emit(LogEvent.lifecycle(description + "..."));
 
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), description)) {
       // Don't build the layer if it exists already.
@@ -114,8 +115,10 @@ class BuildAndCacheApplicationLayerStep
               .writeLayer(new ReproducibleLayerBuilder(layerConfiguration.getLayerEntries()));
 
       buildConfiguration
-          .getBuildLogger()
-          .debug(description + " built " + cachedLayer.getBlobDescriptor().getDigest());
+          .getEventEmitter()
+          .emit(
+              LogEvent.debug(
+                  description + " built " + cachedLayer.getBlobDescriptor().getDigest()));
 
       return cachedLayer;
     }

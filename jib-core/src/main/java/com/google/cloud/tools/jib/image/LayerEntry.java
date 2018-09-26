@@ -16,12 +16,9 @@
 
 package com.google.cloud.tools.jib.image;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Objects;
-import java.util.StringJoiner;
 
 /**
  * Represents an entry in the layer. A layer consists of many entries that can be converted into tar
@@ -37,43 +34,26 @@ import java.util.StringJoiner;
  */
 public class LayerEntry {
 
-  /**
-   * Stringifies {@code path} in Unix form. The path must be absolute.
-   *
-   * @param path the path
-   * @return the string form of the absolute path
-   */
-  private static String toUnixPath(Path path) {
-    Preconditions.checkArgument(
-        path.getRoot() != null, "Tried to stringify a non-absolute path: %s", path);
-
-    StringJoiner pathJoiner = new StringJoiner("/", "/", "");
-    for (Path pathComponent : path) {
-      pathJoiner.add(pathComponent.toString());
-    }
-    return pathJoiner.toString();
-  }
-
   private final Path sourceFile;
-  private final Path extractionPath;
+  private final AbsoluteUnixPath extractionPath;
 
   /**
    * Instantiates with a source file and the path to place the source file in the container file
    * system.
    *
    * <p>For example, {@code new LayerEntry(Paths.get("HelloWorld.class"),
-   * Paths.get("/app/classes/HelloWorld.class"))} adds a file {@code HelloWorld.class} to the
-   * container file system at {@code /app/classes/HelloWorld.class}.
+   * AbsoluteUnixPath.get("/app/classes/HelloWorld.class"))} adds a file {@code HelloWorld.class} to
+   * the container file system at {@code /app/classes/HelloWorld.class}.
    *
-   * <p>For example, {@code new LayerEntry(Paths.get("com"), Paths.get("/app/classes/com"))} adds a
-   * directory to the container file system at {@code /app/classes/com}. This does <b>not</b> add
-   * the contents of {@code com/}.
+   * <p>For example, {@code new LayerEntry(Paths.get("com"),
+   * AbsoluteUnixPath.get("/app/classes/com"))} adds a directory to the container file system at
+   * {@code /app/classes/com}. This does <b>not</b> add the contents of {@code com/}.
    *
    * @param sourceFile the source file to add to the layer
    * @param extractionPath the path in the container file system corresponding to the {@code
-   *     sourceFile} (relative to root {@code /})
+   *     sourceFile}
    */
-  public LayerEntry(Path sourceFile, Path extractionPath) {
+  public LayerEntry(Path sourceFile, AbsoluteUnixPath extractionPath) {
     this.sourceFile = sourceFile;
     this.extractionPath = extractionPath;
   }
@@ -95,18 +75,13 @@ public class LayerEntry {
   /**
    * Gets the extraction path.
    *
-   * <p>Do <b>not</b> call {@link Path#toString} on this - use {@link
-   * #getAbsoluteExtractionPathString} instead. This path can be relative or absolute, but {@link
-   * #getAbsoluteExtractionPathString} can only be absolute. Callers should rely on {@link
-   * #getAbsoluteExtractionPathString} for the serialized form since the serialization could change
-   * independently of the path representation.
-   *
    * @return the extraction path
    */
-  public Path getExtractionPath() {
+  public AbsoluteUnixPath getExtractionPath() {
     return extractionPath;
   }
 
+  // TODO: Remove these get...String methods.
   /**
    * Get the source file as an absolute path in Unix form. The path is made absolute first, if not
    * already absolute.
@@ -114,17 +89,16 @@ public class LayerEntry {
    * @return the source file path
    */
   public String getAbsoluteSourceFileString() {
-    return toUnixPath(sourceFile.toAbsolutePath());
+    return AbsoluteUnixPath.fromPath(sourceFile.toAbsolutePath()).toString();
   }
 
   /**
-   * Gets the extraction path as an absolute path in Unix form. The path is made absolute first, if
-   * not already absolute.
+   * Gets the extraction path as an absolute path in Unix form.
    *
    * @return the extraction path
    */
   public String getAbsoluteExtractionPathString() {
-    return toUnixPath(Paths.get("/").resolve(extractionPath));
+    return extractionPath.toString();
   }
 
   @Override
@@ -143,11 +117,5 @@ public class LayerEntry {
   @Override
   public int hashCode() {
     return Objects.hash(sourceFile, extractionPath);
-  }
-
-  @Override
-  @VisibleForTesting
-  public String toString() {
-    return getAbsoluteSourceFileString() + "\t" + getAbsoluteExtractionPathString();
   }
 }

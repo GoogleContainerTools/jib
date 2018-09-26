@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.maven.JibPluginConfiguration.AuthConfiguration;
 import java.util.Arrays;
@@ -53,6 +54,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.doReturn(Collections.emptyList()).when(mockJibPluginConfiguration).getJvmFlags();
     Mockito.doReturn(Collections.emptyList()).when(mockJibPluginConfiguration).getArgs();
     Mockito.doReturn(Collections.emptyList()).when(mockJibPluginConfiguration).getExposedPorts();
+    Mockito.doReturn("/app").when(mockJibPluginConfiguration).getAppRoot();
 
     Mockito.doReturn(JavaLayerConfigurations.builder().build())
         .when(mockProjectProperties)
@@ -70,8 +72,7 @@ public class PluginConfigurationProcessorTest {
             mockMavenJibLogger, mockJibPluginConfiguration, mockProjectProperties);
     ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
     Assert.assertEquals(
-        Arrays.asList(
-            "java", "-cp", "/app/resources/:/app/classes/:/app/libs/*", "java.lang.Object"),
+        Arrays.asList("java", "-cp", "/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
         configuration.getEntrypoint());
     Mockito.verifyZeroInteractions(mockMavenJibLogger);
   }
@@ -123,6 +124,70 @@ public class PluginConfigurationProcessorTest {
     Assert.assertEquals(Arrays.asList("custom", "entrypoint"), configuration.getEntrypoint());
     Mockito.verify(mockMavenJibLogger)
         .warn("<mainClass> and <jvmFlags> are ignored when <entrypoint> is specified");
+  }
+
+  @Test
+  public void testEntrypointClasspath_nonDefaultAppRoot() throws MojoExecutionException {
+    Mockito.doReturn("/my/app").when(mockJibPluginConfiguration).getAppRoot();
+
+    PluginConfigurationProcessor processor =
+        PluginConfigurationProcessor.processCommonConfiguration(
+            mockMavenJibLogger, mockJibPluginConfiguration, mockProjectProperties);
+    ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
+
+    Assert.assertEquals(
+        "/my/app/resources:/my/app/classes:/my/app/libs/*", configuration.getEntrypoint().get(2));
+  }
+
+  @Test
+  public void testGetAppRootChecked() throws MojoExecutionException {
+    Mockito.doReturn("/some/root").when(mockJibPluginConfiguration).getAppRoot();
+
+    Assert.assertEquals(
+        AbsoluteUnixPath.get("/some/root"),
+        PluginConfigurationProcessor.getAppRootChecked(mockJibPluginConfiguration));
+  }
+
+  @Test
+  public void testGetAppRootChecked_errorOnNonAbsolutePath() {
+    Mockito.doReturn("relative/path").when(mockJibPluginConfiguration).getAppRoot();
+
+    try {
+      PluginConfigurationProcessor.getAppRootChecked(mockJibPluginConfiguration);
+      Assert.fail();
+    } catch (MojoExecutionException ex) {
+      Assert.assertEquals(
+          "<container><appRoot> is not an absolute Unix-style path: relative/path",
+          ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testGetAppRootChecked_errorOnWindowsPath() {
+    Mockito.doReturn("\\windows\\path").when(mockJibPluginConfiguration).getAppRoot();
+
+    try {
+      PluginConfigurationProcessor.getAppRootChecked(mockJibPluginConfiguration);
+      Assert.fail();
+    } catch (MojoExecutionException ex) {
+      Assert.assertEquals(
+          "<container><appRoot> is not an absolute Unix-style path: \\windows\\path",
+          ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testGetAppRootChecked_errorOnWindowsPathWithDriveLetter() {
+    Mockito.doReturn("C:\\windows\\path").when(mockJibPluginConfiguration).getAppRoot();
+
+    try {
+      PluginConfigurationProcessor.getAppRootChecked(mockJibPluginConfiguration);
+      Assert.fail();
+    } catch (MojoExecutionException ex) {
+      Assert.assertEquals(
+          "<container><appRoot> is not an absolute Unix-style path: C:\\windows\\path",
+          ex.getMessage());
+    }
   }
 
   // TODO should test other behaviours

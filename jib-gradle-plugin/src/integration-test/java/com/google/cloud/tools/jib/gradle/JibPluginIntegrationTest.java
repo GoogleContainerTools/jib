@@ -18,6 +18,8 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
+import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -61,11 +63,30 @@ public class JibPluginIntegrationTest {
     assertBuildSuccess(buildResult, JibPlugin.BUILD_IMAGE_TASK_NAME, "Built and pushed image as ");
     Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
 
-    new Command("docker", "pull", imageReference).run();
-    assertDockerInspect(imageReference);
-    String history = new Command("docker", "history", imageReference).run();
-    Assert.assertThat(history, CoreMatchers.containsString("jib-gradle-plugin"));
-    return new Command("docker", "run", imageReference).run();
+    return pullAndRunBuiltImage(imageReference);
+  }
+
+  private static void buildAndRunAdditionalTag(
+      TestProject testProject, String imageReference, String additionalTag, String expectedOutput)
+      throws InvalidImageReferenceException, IOException, InterruptedException {
+    BuildResult buildResult =
+        testProject.build(
+            "clean",
+            JibPlugin.BUILD_IMAGE_TASK_NAME,
+            "-D_TARGET_IMAGE=" + imageReference,
+            "-D_ADDITIONAL_TAG=" + additionalTag);
+    assertBuildSuccess(buildResult, JibPlugin.BUILD_IMAGE_TASK_NAME, "Built and pushed image as ");
+    Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
+
+    String additionalImageReference =
+        ImageReference.parse(imageReference).withTag(additionalTag).toString();
+    Assert.assertThat(
+        buildResult.getOutput(), CoreMatchers.containsString(additionalImageReference));
+
+    Assert.assertEquals(expectedOutput, pullAndRunBuiltImage(imageReference));
+    Assert.assertEquals(expectedOutput, pullAndRunBuiltImage(additionalImageReference));
+    assertCreationTimeEpoch(imageReference);
+    assertCreationTimeEpoch(additionalImageReference);
   }
 
   private static String buildAndRunComplex(
@@ -88,7 +109,7 @@ public class JibPluginIntegrationTest {
     assertDockerInspect(imageReference);
     String history = new Command("docker", "history", imageReference).run();
     Assert.assertThat(history, CoreMatchers.containsString("jib-gradle-plugin"));
-    return new Command("docker", "run", imageReference).run();
+    return new Command("docker", "run", "--rm", imageReference).run();
   }
 
   private static String buildToDockerDaemonAndRun(TestProject testProject, String imageReference)
@@ -103,7 +124,26 @@ public class JibPluginIntegrationTest {
     assertDockerInspect(imageReference);
     String history = new Command("docker", "history", imageReference).run();
     Assert.assertThat(history, CoreMatchers.containsString("jib-gradle-plugin"));
-    return new Command("docker", "run", imageReference).run();
+    return new Command("docker", "run", "--rm", imageReference).run();
+  }
+
+  /**
+   * Pulls a built image and attempts to run it. Also verifies the container configuration and
+   * history of the built image.
+   *
+   * @param imageReference the image reference of the built image
+   * @return the container output
+   * @throws IOException if an I/O exception occurs
+   * @throws InterruptedException if the process was interrupted
+   */
+  private static String pullAndRunBuiltImage(String imageReference)
+      throws IOException, InterruptedException {
+    new Command("docker", "pull", imageReference).run();
+    assertDockerInspect(imageReference);
+    String history = new Command("docker", "history", imageReference).run();
+    Assert.assertThat(history, CoreMatchers.containsString("jib-gradle-plugin"));
+
+    return new Command("docker", "run", "--rm", imageReference).run();
   }
 
   /**
@@ -171,6 +211,13 @@ public class JibPluginIntegrationTest {
                 + "            }"));
   }
 
+  private static void assertCreationTimeEpoch(String imageReference)
+      throws IOException, InterruptedException {
+    Assert.assertEquals(
+        "1970-01-01T00:00:00Z",
+        new Command("docker", "inspect", "-f", "{{.Created}}", imageReference).run().trim());
+  }
+
   @Before
   public void setup() throws IOException, InterruptedException {
     // Pull distroless and push to local registry so we can test 'from' credentials
@@ -185,9 +232,18 @@ public class JibPluginIntegrationTest {
             + "/emptyimage:gradle"
             + System.nanoTime();
     Assert.assertEquals("", buildAndRun(emptyTestProject, targetImage));
-    Assert.assertEquals(
-        "1970-01-01T00:00:00Z",
-        new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim());
+    assertCreationTimeEpoch(targetImage);
+  }
+
+  @Test
+  public void testBuild_multipleTags()
+      throws IOException, InterruptedException, InvalidImageReferenceException {
+    String targetImage =
+        "gcr.io/"
+            + IntegrationTestingConfiguration.getGCPProject()
+            + "/multitag-image:gradle"
+            + System.nanoTime();
+    buildAndRunAdditionalTag(emptyTestProject, targetImage, "gradle-2" + System.nanoTime(), "");
   }
 
   @Test
@@ -296,7 +352,8 @@ public class JibPluginIntegrationTest {
 
     new Command("docker", "load", "--input", outputPath).run();
     Assert.assertEquals(
-        "Hello, world. An argument.\nfoo\ncat\n", new Command("docker", "run", targetImage).run());
+        "Hello, world. An argument.\nfoo\ncat\n",
+        new Command("docker", "run", "--rm", targetImage).run());
     assertDockerInspect(targetImage);
     assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
   }
@@ -324,7 +381,8 @@ public class JibPluginIntegrationTest {
 
     assertDockerInspect(imageName);
     Assert.assertEquals(
-        "Hello, world. An argument.\nfoo\ncat\n", new Command("docker", "run", imageName).run());
+        "Hello, world. An argument.\nfoo\ncat\n",
+        new Command("docker", "run", "--rm", imageName).run());
 
     // Checks that generating the Docker context again is skipped.
     BuildTask upToDateJibDockerContextTask =

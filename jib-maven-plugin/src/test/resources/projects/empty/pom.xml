@@ -30,6 +30,7 @@
         <configuration>
           <to>
             <image>${_TARGET_IMAGE}</image>
+            <tags>${_ADDITIONAL_TAG}</tags>
           </to>
           <container>
             <ports>

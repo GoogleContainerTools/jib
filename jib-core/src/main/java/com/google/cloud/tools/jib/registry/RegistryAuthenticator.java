@@ -17,8 +17,8 @@
 package com.google.cloud.tools.jib.registry;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.event.EventEmitter;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
@@ -46,7 +46,7 @@ public class RegistryAuthenticator {
   /** Initializer for {@link RegistryAuthenticator}. */
   public static class Initializer {
 
-    private final JibLogger buildLogger;
+    private final EventEmitter eventEmitter;
     private final String serverUrl;
     private final String repository;
     private boolean allowInsecureRegistries = false;
@@ -54,12 +54,12 @@ public class RegistryAuthenticator {
     /**
      * Instantiates a new initializer for {@link RegistryAuthenticator}.
      *
-     * @param buildLogger the build logger used for printing messages
+     * @param eventEmitter the event emitter used for emitting log events
      * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
      * @param repository the image/repository name (also known as, namespace)
      */
-    private Initializer(JibLogger buildLogger, String serverUrl, String repository) {
-      this.buildLogger = buildLogger;
+    private Initializer(EventEmitter eventEmitter, String serverUrl, String repository) {
+      this.eventEmitter = eventEmitter;
       this.serverUrl = serverUrl;
       this.repository = repository;
     }
@@ -82,7 +82,7 @@ public class RegistryAuthenticator {
     public RegistryAuthenticator initialize()
         throws RegistryAuthenticationFailedException, IOException, RegistryException {
       try {
-        return RegistryClient.factory(buildLogger, serverUrl, repository)
+        return RegistryClient.factory(eventEmitter, serverUrl, repository)
             .setAllowInsecureRegistries(allowInsecureRegistries)
             .newRegistryClient()
             .getRegistryAuthenticator();
@@ -100,14 +100,14 @@ public class RegistryAuthenticator {
   /**
    * Gets a new initializer for {@link RegistryAuthenticator}.
    *
-   * @param buildLogger the build logger used for printing messages
+   * @param eventEmitter the event emitter used for emitting log events
    * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
    * @param repository the image/repository name (also known as, namespace)
    * @return the new {@link Initializer}
    */
   public static Initializer initializer(
-      JibLogger buildLogger, String serverUrl, String repository) {
-    return new Initializer(buildLogger, serverUrl, repository);
+      EventEmitter eventEmitter, String serverUrl, String repository) {
+    return new Initializer(eventEmitter, serverUrl, repository);
   }
 
   // TODO: Replace with a WWW-Authenticate header parser.

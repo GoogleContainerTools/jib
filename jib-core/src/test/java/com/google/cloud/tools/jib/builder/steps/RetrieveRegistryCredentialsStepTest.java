@@ -21,6 +21,8 @@ import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
+import com.google.cloud.tools.jib.event.EventEmitter;
+import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -39,7 +41,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class RetrieveRegistryCredentialsStepTest {
 
+  @Mock private EventEmitter mockEventEmitter;
   @Mock private ListeningExecutorService mockListeningExecutorService;
+  // TODO: Remove once JibLogger is all replaced by EventEmitter.
   @Mock private JibLogger mockJibLogger;
 
   @Test
@@ -74,14 +78,17 @@ public class RetrieveRegistryCredentialsStepTest {
         RetrieveRegistryCredentialsStep.forBaseImage(
                 mockListeningExecutorService, buildConfiguration)
             .call());
-    Mockito.verify(mockJibLogger)
-        .info("No credentials could be retrieved for registry baseregistry");
+
+    Mockito.verify(mockEventEmitter)
+        .emit(LogEvent.info("No credentials could be retrieved for registry baseregistry"));
+
     Assert.assertNull(
         RetrieveRegistryCredentialsStep.forTargetImage(
                 mockListeningExecutorService, buildConfiguration)
             .call());
-    Mockito.verify(mockJibLogger)
-        .info("No credentials could be retrieved for registry targetregistry");
+
+    Mockito.verify(mockEventEmitter)
+        .emit(LogEvent.info("No credentials could be retrieved for registry baseregistry"));
   }
 
   @Test
@@ -111,6 +118,7 @@ public class RetrieveRegistryCredentialsStepTest {
     ImageReference baseImage = ImageReference.of("baseregistry", "ignored", null);
     ImageReference targetImage = ImageReference.of("targetregistry", "ignored", null);
     return BuildConfiguration.builder(mockJibLogger)
+        .setEventEmitter(mockEventEmitter)
         .setBaseImageConfiguration(
             ImageConfiguration.builder(baseImage)
                 .setCredentialRetrievers(baseCredentialRetrievers)

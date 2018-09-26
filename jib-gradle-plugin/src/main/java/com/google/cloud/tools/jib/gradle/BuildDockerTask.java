@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
@@ -73,9 +74,10 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
     GradleJibLogger gradleJibLogger = new GradleJibLogger(getLogger());
+    AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(
-            getProject(), gradleJibLogger, jibExtension.getExtraDirectoryPath());
+            getProject(), getLogger(), jibExtension.getExtraDirectoryPath(), appRoot);
 
     GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
         new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);
@@ -83,7 +85,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
     ImageReference targetImage =
         ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
             jibExtension.getTargetImage(),
-            gradleJibLogger,
+            gradleProjectProperties.getEventEmitter(),
             getProject().getName(),
             getProject().getVersion().toString(),
             gradleHelpfulSuggestionsBuilder.build());
@@ -98,6 +100,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
             .setBaseImageConfiguration(
                 pluginConfigurationProcessor.getBaseImageConfigurationBuilder().build())
             .setTargetImageConfiguration(ImageConfiguration.builder(targetImage).build())
+            .setAdditionalTargetImageTags(jibExtension.getTo().getTags())
             .setContainerConfiguration(
                 pluginConfigurationProcessor.getContainerConfigurationBuilder().build())
             .build();

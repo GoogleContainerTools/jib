@@ -14,22 +14,12 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib;
+package com.lib;
 
-public class EmptyJibLogger implements JibLogger {
+/** Shared Code! */
+public class Lib {
 
-  @Override
-  public void error(CharSequence message) {}
-
-  @Override
-  public void lifecycle(CharSequence message) {}
-
-  @Override
-  public void warn(CharSequence message) {}
-
-  @Override
-  public void info(CharSequence message) {}
-
-  @Override
-  public void debug(CharSequence message) {}
+  public String getThing() {
+    return "thing";
+  }
 }

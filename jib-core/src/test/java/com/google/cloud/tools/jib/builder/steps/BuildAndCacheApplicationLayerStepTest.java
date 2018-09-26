@@ -17,13 +17,14 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
-import com.google.cloud.tools.jib.builder.TestJibLogger;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.CacheReader;
 import com.google.cloud.tools.jib.cache.CachedLayerWithMetadata;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
+import com.google.cloud.tools.jib.event.EventEmitter;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.ImageLayers;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
@@ -52,16 +53,18 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class BuildAndCacheApplicationLayerStepTest {
 
   // TODO: Consolidate with BuildStepsIntegrationTest.
-  private static final Path EXTRACTION_PATH_ROOT = Paths.get("/some/extraction/path/");
+  private static final AbsoluteUnixPath EXTRACTION_PATH_ROOT =
+      AbsoluteUnixPath.get("/some/extraction/path/");
 
-  private static final Path EXTRA_FILES_LAYER_EXTRACTION_PATH = Paths.get("/extra");
+  private static final AbsoluteUnixPath EXTRA_FILES_LAYER_EXTRACTION_PATH =
+      AbsoluteUnixPath.get("/extra");
 
   /**
    * Lists the files in the {@code resourcePath} resources directory and creates a {@link
    * LayerConfiguration} with entries from those files.
    */
-  private static LayerConfiguration makeLayerConfiguration(String resourcePath, Path extractionPath)
-      throws URISyntaxException, IOException {
+  private static LayerConfiguration makeLayerConfiguration(
+      String resourcePath, AbsoluteUnixPath extractionPath) throws URISyntaxException, IOException {
     try (Stream<Path> fileStream =
         Files.list(Paths.get(Resources.getResource(resourcePath).toURI()))) {
       LayerConfiguration.Builder layerConfigurationBuilder = LayerConfiguration.builder();
@@ -76,6 +79,7 @@ public class BuildAndCacheApplicationLayerStepTest {
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Mock private BuildConfiguration mockBuildConfiguration;
+  @Mock private EventEmitter mockEventEmitter;
   private Path temporaryCacheDirectory;
 
   private LayerConfiguration fakeDependenciesLayerConfiguration;
@@ -106,7 +110,7 @@ public class BuildAndCacheApplicationLayerStepTest {
                 EXTRA_FILES_LAYER_EXTRACTION_PATH.resolve("fileB"))
             .build();
     emptyLayerConfiguration = LayerConfiguration.builder().build();
-    Mockito.when(mockBuildConfiguration.getBuildLogger()).thenReturn(new TestJibLogger());
+    Mockito.when(mockBuildConfiguration.getEventEmitter()).thenReturn(mockEventEmitter);
     temporaryCacheDirectory = temporaryFolder.newFolder().toPath();
   }
 

@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.docker;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.cache.CachedLayer;
-import com.google.cloud.tools.jib.docker.json.DockerLoadManifestTemplate;
+import com.google.cloud.tools.jib.docker.json.DockerLoadManifestEntryTemplate;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.tar.TarStreamBuilder;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Collections;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 
 /** Translates an {@link Image} to a tarball that can be loaded into Docker. */
@@ -50,7 +51,7 @@ public class ImageToTarballTranslator {
 
   public Blob toTarballBlob(ImageReference imageReference) throws IOException {
     TarStreamBuilder tarStreamBuilder = new TarStreamBuilder();
-    DockerLoadManifestTemplate manifestTemplate = new DockerLoadManifestTemplate();
+    DockerLoadManifestEntryTemplate manifestTemplate = new DockerLoadManifestEntryTemplate();
 
     // Adds all the layers to the tarball and manifest.
     for (CachedLayer layer : image.getLayers()) {
@@ -71,7 +72,8 @@ public class ImageToTarballTranslator {
     // Adds the manifest to tarball.
     manifestTemplate.setRepoTags(imageReference.toStringWithTag());
     tarStreamBuilder.addByteEntry(
-        Blobs.writeToByteArray(JsonTemplateMapper.toBlob(manifestTemplate)),
+        Blobs.writeToByteArray(
+            JsonTemplateMapper.toBlob(Collections.singletonList(manifestTemplate))),
         MANIFEST_JSON_FILE_NAME);
 
     return tarStreamBuilder.toBlob();

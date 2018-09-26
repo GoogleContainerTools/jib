@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.builder.BuildSteps;
 import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
@@ -27,6 +26,8 @@ import com.google.cloud.tools.jib.cache.Caches.Initializer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
+import com.google.cloud.tools.jib.event.EventEmitter;
+import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.registry.InsecureRegistryException;
@@ -198,28 +199,32 @@ public class BuildStepsRunner {
    */
   public void build(HelpfulSuggestions helpfulSuggestions) throws BuildStepsExecutionException {
     try {
-      // TODO: This logging should be injected via another logging class.
-      JibLogger buildLogger = buildSteps.getBuildConfiguration().getBuildLogger();
+      EventEmitter eventEmitter = buildSteps.getBuildConfiguration().getEventEmitter();
 
-      buildLogger.lifecycle("");
-      buildLogger.lifecycle(startupMessage);
+      eventEmitter.emit(LogEvent.lifecycle(""));
+      eventEmitter.emit(LogEvent.lifecycle(startupMessage));
 
       // Logs the different source files used.
-      buildLogger.info("Containerizing application with the following files:");
+      eventEmitter.emit(LogEvent.info("Containerizing application with the following files:"));
 
       for (LayerConfiguration layerConfiguration :
           buildSteps.getBuildConfiguration().getLayerConfigurations()) {
-        buildLogger.info("\t" + capitalizeFirstLetter(layerConfiguration.getName()) + ":");
+        if (layerConfiguration.getLayerEntries().isEmpty()) {
+          continue;
+        }
+
+        eventEmitter.emit(
+            LogEvent.info("\t" + capitalizeFirstLetter(layerConfiguration.getName()) + ":"));
 
         for (LayerEntry layerEntry : layerConfiguration.getLayerEntries()) {
-          buildLogger.info("\t\t" + layerEntry.getSourceFile());
+          eventEmitter.emit(LogEvent.info("\t\t" + layerEntry.getSourceFile()));
         }
       }
 
       buildSteps.run();
 
-      buildLogger.lifecycle("");
-      buildLogger.lifecycle(successMessage);
+      eventEmitter.emit(LogEvent.lifecycle(""));
+      eventEmitter.emit(LogEvent.lifecycle(successMessage));
 
     } catch (CacheMetadataCorruptedException cacheMetadataCorruptedException) {
       throw new BuildStepsExecutionException(

@@ -17,6 +17,8 @@
 package com.google.cloud.tools.jib.configuration;
 
 import com.google.cloud.tools.jib.JibLogger;
+import com.google.cloud.tools.jib.event.EventEmitter;
+import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.RegistryClient;
@@ -51,6 +53,10 @@ public class BuildConfiguration {
     private ImmutableList<LayerConfiguration> layerConfigurations = ImmutableList.of();
     private Class<? extends BuildableManifestTemplate> targetFormat = DEFAULT_TARGET_FORMAT;
     private String toolName = DEFAULT_TOOL_NAME;
+    private EventEmitter eventEmitter =
+        jibEvent -> {
+          /* No-op EventEmitter. */
+        };
 
     private JibLogger buildLogger;
 
@@ -172,6 +178,17 @@ public class BuildConfiguration {
     }
 
     /**
+     * Sets the {@link EventEmitter} to emit events with.
+     *
+     * @param eventEmitter the {@link EventEmitter}
+     * @return this
+     */
+    public Builder setEventEmitter(EventEmitter eventEmitter) {
+      this.eventEmitter = eventEmitter;
+      return this;
+    }
+
+    /**
      * Builds a new {@link BuildConfiguration} using the parameters passed into the builder.
      *
      * @return the corresponding build configuration
@@ -192,10 +209,11 @@ public class BuildConfiguration {
             throw new IllegalStateException("Required fields should not be null");
           }
           if (baseImageConfiguration.getImage().usesDefaultTag()) {
-            buildLogger.warn(
-                "Base image '"
-                    + baseImageConfiguration.getImage()
-                    + "' does not use a specific image digest - build may not be reproducible");
+            eventEmitter.emit(
+                LogEvent.warn(
+                    "Base image '"
+                        + baseImageConfiguration.getImage()
+                        + "' does not use a specific image digest - build may not be reproducible"));
           }
 
           return new BuildConfiguration(
@@ -209,7 +227,8 @@ public class BuildConfiguration {
               targetFormat,
               allowInsecureRegistries,
               layerConfigurations,
-              toolName);
+              toolName,
+              eventEmitter);
 
         case 1:
           throw new IllegalStateException(errorMessages.get(0));
@@ -245,6 +264,7 @@ public class BuildConfiguration {
   private final boolean allowInsecureRegistries;
   private final ImmutableList<LayerConfiguration> layerConfigurations;
   private final String toolName;
+  private final EventEmitter eventEmitter;
 
   /** Instantiate with {@link #builder}. */
   private BuildConfiguration(
@@ -258,7 +278,8 @@ public class BuildConfiguration {
       Class<? extends BuildableManifestTemplate> targetFormat,
       boolean allowInsecureRegistries,
       ImmutableList<LayerConfiguration> layerConfigurations,
-      String toolName) {
+      String toolName,
+      EventEmitter eventEmitter) {
     this.buildLogger = buildLogger;
     this.baseImageConfiguration = baseImageConfiguration;
     this.targetImageConfiguration = targetImageConfiguration;
@@ -270,6 +291,7 @@ public class BuildConfiguration {
     this.allowInsecureRegistries = allowInsecureRegistries;
     this.layerConfigurations = layerConfigurations;
     this.toolName = toolName;
+    this.eventEmitter = eventEmitter;
   }
 
   public JibLogger getBuildLogger() {
@@ -303,6 +325,10 @@ public class BuildConfiguration {
 
   public String getToolName() {
     return toolName;
+  }
+
+  public EventEmitter getEventEmitter() {
+    return eventEmitter;
   }
 
   /**
@@ -366,7 +392,7 @@ public class BuildConfiguration {
 
   private RegistryClient.Factory newRegistryClientFactory(ImageConfiguration imageConfiguration) {
     return RegistryClient.factory(
-            getBuildLogger(),
+            getEventEmitter(),
             imageConfiguration.getImageRegistry(),
             imageConfiguration.getImageRepository())
         .setAllowInsecureRegistries(getAllowInsecureRegistries())
