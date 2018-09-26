@@ -29,10 +29,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -64,6 +67,10 @@ class DefaultCacheStorageWriter {
    * @throws IOException if an I/O exception occurs
    */
   private static void moveIfDoesNotExist(Path source, Path destination) throws IOException {
+    if (Files.exists(destination)) {
+      return;
+    }
+
     try {
       Files.move(source, destination, StandardCopyOption.ATOMIC_MOVE);
 
@@ -80,6 +87,15 @@ class DefaultCacheStorageWriter {
 
       } catch (FileAlreadyExistsException alsoIgnored) {
         // Same reasoning
+
+      } catch (DirectoryNotEmptyException ex) {
+        // The file system cannot rename directories, so we must resort to copying the directory.
+        Files.createDirectory(destination);
+        try (Stream<Path> sourceFiles = Files.list(source)) {
+          for (Path sourceFile : sourceFiles.collect(Collectors.toList())) {
+            Files.copy(sourceFile, destination.resolve(sourceFile.getFileName()));
+          }
+        }
       }
     }
   }
@@ -125,7 +141,9 @@ class DefaultCacheStorageWriter {
     Files.createDirectories(defaultCacheStorageFiles.getLayersDirectory());
 
     // Creates the temporary directory.
-    try (TemporaryDirectory temporaryDirectory = new TemporaryDirectory()) {
+    Files.createDirectories(defaultCacheStorageFiles.getTemporaryDirectory());
+    try (TemporaryDirectory temporaryDirectory =
+        new TemporaryDirectory(defaultCacheStorageFiles.getTemporaryDirectory())) {
       Path temporaryLayerDirectory = temporaryDirectory.getDirectory();
 
       // Writes the layer file to the temporary directory.
@@ -170,8 +188,11 @@ class DefaultCacheStorageWriter {
     // Creates the layers directory if it doesn't exist.
     Files.createDirectories(defaultCacheStorageFiles.getLayersDirectory());
 
-    // Creates the temporary directory.
-    try (TemporaryDirectory temporaryDirectory = new TemporaryDirectory()) {
+    // Creates the temporary directory. The temporary directory must be in the same FileStore as the
+    // final location for Files.move to work.
+    Files.createDirectories(defaultCacheStorageFiles.getTemporaryDirectory());
+    try (TemporaryDirectory temporaryDirectory =
+        new TemporaryDirectory(defaultCacheStorageFiles.getTemporaryDirectory())) {
       Path temporaryLayerDirectory = temporaryDirectory.getDirectory();
 
       // Writes the layer file to the temporary directory.
