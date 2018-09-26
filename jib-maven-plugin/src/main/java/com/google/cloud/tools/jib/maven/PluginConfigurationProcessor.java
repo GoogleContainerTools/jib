@@ -75,7 +75,6 @@ class PluginConfigurationProcessor {
       JibPluginConfiguration jibPluginConfiguration,
       MavenProjectProperties projectProperties)
       throws MojoExecutionException {
-    jibPluginConfiguration.handleDeprecatedParameters(logger);
     try {
       JibSystemProperties.checkHttpTimeoutProperty();
     } catch (NumberFormatException ex) {

@@ -62,7 +62,6 @@ public class DockerContextMojo extends JibPluginConfiguration {
     }
 
     MavenJibLogger mavenJibLogger = new MavenJibLogger(getLog());
-    handleDeprecatedParameters(mavenJibLogger);
     try {
       JibSystemProperties.checkHttpTimeoutProperty();
     } catch (NumberFormatException ex) {
