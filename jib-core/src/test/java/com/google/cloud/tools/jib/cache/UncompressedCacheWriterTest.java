@@ -48,7 +48,7 @@ import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 
 /** Tests for {@link CacheWriter}. */
-public class CacheWriterTest {
+public class UncompressedCacheWriterTest {
 
   private static boolean isTarGz(Path path) {
     return path.toString().endsWith(".tar.gz");
@@ -142,14 +142,14 @@ public class CacheWriterTest {
 
   private long getTarGzCountInCache() throws IOException {
     try (Stream<Path> stream = Files.walk(temporaryCacheDirectory.getRoot().toPath())) {
-      return stream.filter(CacheWriterTest::isTarGz).count();
+      return stream.filter(UncompressedCacheWriterTest::isTarGz).count();
     }
   }
 
   private long getTarGzModifiedTimeInCache() throws IOException {
     try (Stream<Path> fileStream = Files.walk(temporaryCacheDirectory.getRoot().toPath())) {
       return fileStream
-          .filter(CacheWriterTest::isTarGz)
+          .filter(UncompressedCacheWriterTest::isTarGz)
           .findFirst()
           .orElseThrow(AssertionError::new)
           .toFile()

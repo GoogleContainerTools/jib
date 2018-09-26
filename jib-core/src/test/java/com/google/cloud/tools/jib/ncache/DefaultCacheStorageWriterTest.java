@@ -66,7 +66,7 @@ public class DefaultCacheStorageWriterTest {
   @Test
   public void testWrite_layerOnly() throws IOException {
     Blob layerBlob = Blobs.from("layerBlob");
-    CacheEntry cacheEntry = verifyWrite(CacheWrite.layerOnly(layerBlob), layerBlob);
+    CacheEntry cacheEntry = verifyWrite(UncompressedCacheWrite.layerOnly(layerBlob), layerBlob);
     Assert.assertFalse(cacheEntry.getMetadataBlob().isPresent());
   }
 
@@ -79,7 +79,7 @@ public class DefaultCacheStorageWriterTest {
 
     CacheEntry cacheEntry =
         verifyWrite(
-            CacheWrite.withSelectorAndMetadata(layerBlob, selector, metadataBlob), layerBlob);
+            UncompressedCacheWrite.withSelectorAndMetadata(layerBlob, selector, metadataBlob), layerBlob);
 
     // Verifies cacheEntry is correct.
     Assert.assertTrue(cacheEntry.getMetadataBlob().isPresent());
@@ -95,14 +95,14 @@ public class DefaultCacheStorageWriterTest {
         Files.exists(defaultCacheStorageFiles.getMetadataFile(cacheEntry.getLayerDigest())));
   }
 
-  private CacheEntry verifyWrite(CacheWrite cacheWriteEntry, Blob expectedLayerBlob)
+  private CacheEntry verifyWrite(UncompressedCacheWrite uncompressedCacheWriteEntry, Blob expectedLayerBlob)
       throws IOException {
     BlobDescriptor layerBlobDescriptor = getCompressedBlobDescriptor(expectedLayerBlob);
     DescriptorDigest layerDiffId = getDigest(expectedLayerBlob);
 
     DefaultCacheStorageWriter defaultCacheStorageWriter =
         new DefaultCacheStorageWriter(defaultCacheStorageFiles);
-    CacheEntry cacheEntry = defaultCacheStorageWriter.write(cacheWriteEntry);
+    CacheEntry cacheEntry = defaultCacheStorageWriter.write(uncompressedCacheWriteEntry);
 
     // Verifies cacheEntry is correct.
     Assert.assertEquals(layerBlobDescriptor.getDigest(), cacheEntry.getLayerDigest());

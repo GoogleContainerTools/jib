@@ -25,28 +25,28 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link CacheWrite}. */
+/** Tests for {@link UncompressedCacheWrite}. */
 @RunWith(MockitoJUnitRunner.class)
-public class CacheWriteTest {
+public class UncompressedCacheWriteTest {
 
   @Mock private DescriptorDigest mockSelector;
 
   @Test
   public void testLayerOnly() throws IOException {
-    CacheWrite cacheWrite = CacheWrite.layerOnly(Blobs.from("layerBlob"));
-    Assert.assertEquals("layerBlob", Blobs.writeToString(cacheWrite.getLayerBlob()));
-    Assert.assertFalse(cacheWrite.getSelector().isPresent());
-    Assert.assertFalse(cacheWrite.getMetadataBlob().isPresent());
+    UncompressedCacheWrite uncompressedCacheWrite = UncompressedCacheWrite.layerOnly(Blobs.from("layerBlob"));
+    Assert.assertEquals("layerBlob", Blobs.writeToString(uncompressedCacheWrite.getUncompressedLayerBlob()));
+    Assert.assertFalse(uncompressedCacheWrite.getSelector().isPresent());
+    Assert.assertFalse(uncompressedCacheWrite.getMetadataBlob().isPresent());
   }
 
   @Test
   public void testWithSelectorAndMetadata() throws IOException {
-    CacheWrite cacheWrite =
-        CacheWrite.withSelectorAndMetadata(
+    UncompressedCacheWrite uncompressedCacheWrite =
+        UncompressedCacheWrite.withSelectorAndMetadata(
             Blobs.from("layerBlob"), mockSelector, Blobs.from("metadataBlob"));
-    Assert.assertEquals("layerBlob", Blobs.writeToString(cacheWrite.getLayerBlob()));
-    Assert.assertEquals(mockSelector, cacheWrite.getSelector().orElse(null));
+    Assert.assertEquals("layerBlob", Blobs.writeToString(uncompressedCacheWrite.getUncompressedLayerBlob()));
+    Assert.assertEquals(mockSelector, uncompressedCacheWrite.getSelector().orElse(null));
     Assert.assertEquals(
-        "metadataBlob", Blobs.writeToString(cacheWrite.getMetadataBlob().orElse(null)));
+        "metadataBlob", Blobs.writeToString(uncompressedCacheWrite.getMetadataBlob().orElse(null)));
   }
 }

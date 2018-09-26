@@ -65,7 +65,7 @@ public class Cache {
    * @throws IOException if an I/O exception occurs
    */
   public CacheEntry write(Blob layerBlob) throws IOException {
-    return cacheStorage.write(CacheWrite.layerOnly(layerBlob));
+    return cacheStorage.write(UncompressedCacheWrite.layerOnly(layerBlob));
   }
 
   /**
@@ -80,7 +80,7 @@ public class Cache {
   public CacheEntry write(Blob layerBlob, ImmutableList<LayerEntry> layerEntries)
       throws IOException {
     return cacheStorage.write(
-        CacheWrite.withSelectorAndMetadata(
+        UncompressedCacheWrite.withSelectorAndMetadata(
             layerBlob,
             LayerEntriesSelector.generateSelector(layerEntries),
             LastModifiedTimeMetadata.generateMetadata(layerEntries)));

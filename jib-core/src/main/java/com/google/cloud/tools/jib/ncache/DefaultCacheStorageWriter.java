@@ -85,26 +85,46 @@ class DefaultCacheStorageWriter {
     this.defaultCacheStorageFiles = defaultCacheStorageFiles;
   }
 
+  CacheEntry write(CompressedCacheWrite compressedCacheWrite) throws IOException {
+    // Creates the layers directory if it doesn't exist.
+    Files.createDirectories(defaultCacheStorageFiles.getLayersDirectory());
+
+    // Creates the temporary directory.
+    try (TemporaryDirectory temporaryDirectory = new TemporaryDirectory()) {
+      Path temporaryLayerDirectory = temporaryDirectory.getDirectory();
+
+      // Writes the layer file to the temporary directory.
+      Path temporaryLayerFile = Files.createTempFile(temporaryLayerDirectory, null, null);
+      temporaryLayerFile.toFile().deleteOnExit();
+
+      
+
+      Path layerFile =
+          temporaryLayerDirectory.resolve(defaultCacheStorageFiles.getLayerFilename(layerDiffId));
+      moveIfDoesNotExist(temporaryLayerFile, layerFile);
+    }
+  }
+
   /**
-   * Writes the {@link CacheWrite}.
+   * Writes the {@link UncompressedCacheWrite}.
    *
-   * <p>The {@link CacheWrite} is written out to the cache directory in the form:
+   * <p>The {@link UncompressedCacheWrite} is written out to the cache directory in the form:
    *
    * <ul>
-   *   <li>The {@link CacheWrite#getLayerBlob} and {@link CacheWrite#getMetadataBlob} are written to
+   *   <li>The {@link UncompressedCacheWrite#getUncompressedLayerBlob} and {@link UncompressedCacheWrite#getMetadataBlob} are written to
    *       the layer directory under the layers directory corresponding to the layer blob.
-   *   <li>The {@link CacheWrite#getSelector} is written to the selector file under the selectors
+   *   <li>The {@link UncompressedCacheWrite#getSelector} is written to the selector file under the selectors
    *       directory.
    * </ul>
    *
    * Note that writes that fail to clean up unfinished temporary directories could result in stray
    * directories in the layers directory. Cache reads should ignore these stray directories.
    *
-   * @param cacheWrite the {@link CacheWrite} to write out
+   * @param uncompressedCacheWrite the {@link UncompressedCacheWrite} to write out
    * @return the {@link CacheEntry} representing the written entry
    * @throws IOException if an I/O exception occurs
    */
-  CacheEntry write(CacheWrite cacheWrite) throws IOException {
+  CacheEntry write(UncompressedCacheWrite uncompressedCacheWrite) throws IOException {
     // Creates the layers directory if it doesn't exist.
     Files.createDirectories(defaultCacheStorageFiles.getLayersDirectory());
 
@@ -114,11 +134,11 @@ class DefaultCacheStorageWriter {
 
       // Writes the layer file to the temporary directory.
       WrittenLayer writtenLayer =
-          writeLayerBlobToDirectory(cacheWrite.getLayerBlob(), temporaryLayerDirectory);
+          writeLayerBlobToDirectory(uncompressedCacheWrite.getUncompressedLayerBlob(), temporaryLayerDirectory);
 
       // Writes the metadata to the temporary directory.
-      if (cacheWrite.getMetadataBlob().isPresent()) {
-        writeMetadataBlobToDirectory(cacheWrite.getMetadataBlob().get(), temporaryLayerDirectory);
+      if (uncompressedCacheWrite.getMetadataBlob().isPresent()) {
+        writeMetadataBlobToDirectory(uncompressedCacheWrite.getMetadataBlob().get(), temporaryLayerDirectory);
       }
 
       // Moves the temporary directory to the final location.
@@ -135,14 +155,14 @@ class DefaultCacheStorageWriter {
               .setLayerDiffId(writtenLayer.layerDiffId)
               .setLayerSize(writtenLayer.layerSize)
               .setLayerBlob(Blobs.from(layerFile));
-      if (cacheWrite.getMetadataBlob().isPresent()) {
+      if (uncompressedCacheWrite.getMetadataBlob().isPresent()) {
         Path metadataFile = defaultCacheStorageFiles.getMetadataFile(writtenLayer.layerDigest);
         cacheEntryBuilder.setMetadataBlob(Blobs.from(metadataFile)).build();
       }
 
       // Write the selector file.
-      if (cacheWrite.getSelector().isPresent()) {
-        writeSelector(cacheWrite.getSelector().get(), writtenLayer.layerDigest);
+      if (uncompressedCacheWrite.getSelector().isPresent()) {
+        writeSelector(uncompressedCacheWrite.getSelector().get(), writtenLayer.layerDigest);
       }
 
       return cacheEntryBuilder.build();

@@ -65,8 +65,13 @@ class DefaultCacheStorage implements CacheStorage {
   }
 
   @Override
-  public CacheEntry write(CacheWrite cacheWrite) throws IOException {
-    return defaultCacheStorageWriter.write(cacheWrite);
+  public CacheEntry write(UncompressedCacheWrite uncompressedCacheWrite) throws IOException {
+    return defaultCacheStorageWriter.write(uncompressedCacheWrite);
+  }
+
+  @Override
+  public CacheEntry write(CompressedCacheWrite compressedCacheWrite) throws IOException {
+    return defaultCacheStorageWriter.write(compressedCacheWrite);
   }
 
   @Override
