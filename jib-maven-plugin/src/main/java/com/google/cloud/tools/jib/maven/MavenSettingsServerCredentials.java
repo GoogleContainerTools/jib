@@ -23,6 +23,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.settings.Server;
 import org.apache.maven.settings.Settings;
 import org.apache.maven.settings.building.SettingsProblem;
@@ -57,7 +58,7 @@ class MavenSettingsServerCredentials {
 
   private final Settings settings;
   @Nullable private final SettingsDecrypter settingsDecrypter;
-  private final MavenJibLogger mavenJibLogger;
+  private final Log mavenJibLogger;
 
   /**
    * Create new instance.
@@ -69,7 +70,7 @@ class MavenSettingsServerCredentials {
   MavenSettingsServerCredentials(
       Settings settings,
       @Nullable SettingsDecrypter settingsDecrypter,
-      MavenJibLogger mavenJibLogger) {
+      Log mavenJibLogger) {
     this.settings = settings;
     this.settingsDecrypter = settingsDecrypter;
     this.mavenJibLogger = mavenJibLogger;

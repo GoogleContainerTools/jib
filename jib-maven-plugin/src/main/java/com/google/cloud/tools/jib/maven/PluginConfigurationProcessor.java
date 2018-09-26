@@ -35,6 +35,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.logging.Log;
 
 /** Configures and provides builders for the image building goals. */
 class PluginConfigurationProcessor {
@@ -71,11 +72,10 @@ class PluginConfigurationProcessor {
    * @throws MojoExecutionException if the http timeout system property is misconfigured
    */
   static PluginConfigurationProcessor processCommonConfiguration(
-      MavenJibLogger logger,
+      Log logger,
       JibPluginConfiguration jibPluginConfiguration,
       MavenProjectProperties projectProperties)
       throws MojoExecutionException {
-    jibPluginConfiguration.handleDeprecatedParameters(logger);
     try {
       JibSystemProperties.checkHttpTimeoutProperty();
     } catch (NumberFormatException ex) {
@@ -83,7 +83,9 @@ class PluginConfigurationProcessor {
     }
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
-    MavenJibLogger.disableHttpLogging();
+    System.setProperty(
+        "org.apache.commons.logging.Log", "org.apache.commons.logging.impl.SimpleLog");
+    System.setProperty("org.apache.commons.logging.simplelog.defaultlog", "error");
 
     ImageReference baseImage = parseImageReference(jibPluginConfiguration.getBaseImage(), "from");
 
