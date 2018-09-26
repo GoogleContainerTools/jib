@@ -179,6 +179,7 @@ Property | Type | Default | Description
 `image` | `String` | *Required* | The image reference for the target image. This can also be specified via the `--image` command line option.
 `auth` | [`auth`](#auth-closure) | *None* | Specify credentials directly (alternative to `credHelper`).
 `credHelper` | `String` | *None* | Suffix for the credential helper that can authenticate pulling the base image (following `docker-credential-`).
+`tags` | `List<String>` | *None* | Additional tags to push to.
 
 <a name="auth-closure"></a>`auth` is a closure with the following properties (see [Using Specific Credentials](#using-specific-credentials)):
 
@@ -191,6 +192,7 @@ Property | Type
 
 Property | Type | Default | Description
 --- | --- | --- | ---
+`appRoot` | `String` | `/app` | The root directory on the container where the app's contents are placed. 
 `args` | `List<String>` | *None* | Default main method arguments to run your application with.
 `entrypoint` | `List<String>` | *None* | The command to start the container with (similar to Docker's [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint) instruction). If set, then `jvmFlags` and `mainClass` are ignored.
 `environment` | `Map<String, String>` | *None* | Key-value pairs for setting environment variables on the container (similar to Docker's [ENV](https://docs.docker.com/engine/reference/builder/#env) instruction).
@@ -213,7 +215,7 @@ gradle jib -Djib.httpTimeout=3000
 
 In this configuration, the image:
 * Is built from a base of `openjdk:alpine` (pulled from Docker Hub)
-* Is pushed to `localhost:5000/my-image:built-with-jib`
+* Is pushed to `localhost:5000/my-image:built-with-jib`, `localhost:5000/my-image:tag2`, and `localhost:5000/my-image:latest`
 * Runs by calling `java -Xms512m -Xdebug -Xmy:flag=jib-rules -cp app/libs/*:app/resources:app/classes mypackage.MyApp some args`
 * Exposes port 1000 for tcp (default), and ports 2000, 2001, 2002, and 2003 for udp
 * Has two labels (key1:value1 and key2:value2)
@@ -227,6 +229,7 @@ jib {
   to {
     image = 'localhost:5000/my-image/built-with-jib'
     credHelper = 'osxkeychain'
+    tags = ['tag2', 'latest']
   }
   container {
     jvmFlags = ['-Xms512m', '-Xdebug', '-Xmy:flag=jib-rules']

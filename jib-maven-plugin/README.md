@@ -221,6 +221,7 @@ Property | Type | Default | Description
 `image` | string | *Required* | The image reference for the target image. This can also be specified via the `-Dimage` command line option.
 `auth` | [`auth`](#auth-object) | *None* | Specify credentials directly (alternative to `credHelper`).
 `credHelper` | string | *None* | Suffix for the credential helper that can authenticate pulling the base image (following `docker-credential-`).
+`tags` | list | *None* | Additional tags to push to.
 
 <a name="auth-object"></a>`auth` is an object with the following properties (see [Using Specific Credentials](#using-specific-credentials)):
 
@@ -233,6 +234,7 @@ Property | Type
 
 Property | Type | Default | Description
 --- | --- | --- | ---
+`appRoot` | string | `/app` | The root directory on the container where the app's contents are placed. 
 `args` | list | *None* | Default main method arguments to run your application with.
 `entrypoint` | list | *None* | The command to start the container with (similar to Docker's [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint) instruction). If set, then `jvmFlags` and `mainClass` are ignored.
 `environment` | map | *None* | Key-value pairs for setting environment variables on the container (similar to Docker's [ENV](https://docs.docker.com/engine/reference/builder/#env) instruction).
@@ -255,7 +257,7 @@ mvn compile jib:build -Djib.httpTimeout=3000
 
 In this configuration, the image:
 * Is built from a base of `openjdk:alpine` (pulled from Docker Hub)
-* Is pushed to `localhost:5000/my-image:built-with-jib`
+* Is pushed to `localhost:5000/my-image:built-with-jib`, `localhost:5000/my-image:tag2`, and `localhost:5000/my-image:latest`
 * Runs by calling `java -Xms512m -Xdebug -Xmy:flag=jib-rules -cp app/libs/*:app/resources:app/classes mypackage.MyApp some args`
 * Exposes port 1000 for tcp (default), and ports 2000, 2001, 2002, and 2003 for udp
 * Has two labels (key1:value1 and key2:value2)
@@ -269,6 +271,10 @@ In this configuration, the image:
   <to>
     <image>localhost:5000/my-image:built-with-jib</image>
     <credHelper>osxkeychain</credHelper>
+    <tags>
+      <tag>tag2</tag>
+      <tag>latest</tag>
+    </tags>
   </to>
   <container>
     <jvmFlags>
