@@ -73,12 +73,12 @@ public class TimerEventEmitter implements Closeable {
   /**
    * Captures the time since last lap or creation and emits an {@link State#LAP} {@link TimerEvent}.
    *
-   * @param description the description to use instead of the {@link TimerEventEmitter}'s
+   * @param newDescription the description to use instead of the {@link TimerEventEmitter}'s
    *     description
    */
-  public void lap(String description) {
+  public void lap(String newDescription) {
     eventEmitter.emit(
-        new TimerEvent(State.LAP, timer, timer.lap(), timer.getElapsedTime(), description));
+        new TimerEvent(State.LAP, timer, timer.lap(), timer.getElapsedTime(), newDescription));
   }
 
   /** Laps and emits an {@link State#FINISHED} {@link TimerEvent} upon close. */
