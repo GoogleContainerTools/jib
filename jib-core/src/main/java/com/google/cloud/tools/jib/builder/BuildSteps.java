@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.builder;
 
-import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.builder.steps.StepsRunner;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
@@ -152,7 +151,8 @@ public class BuildSteps {
           CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
     buildConfiguration.getEventEmitter().emit(LogEvent.lifecycle(""));
 
-    try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), description)) {
+    try (TimerEventEmitter ignored =
+        new TimerEventEmitter(buildConfiguration.getEventEmitter(), description)) {
       try (Caches caches = cachesInitializer.init()) {
         Cache baseImageLayersCache = caches.getBaseCache();
         Cache applicationLayersCache = caches.getApplicationCache();

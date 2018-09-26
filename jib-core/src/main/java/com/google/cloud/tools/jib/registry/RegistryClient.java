@@ -16,10 +16,9 @@
 
 package com.google.cloud.tools.jib.registry;
 
-import com.google.cloud.tools.jib.JibLogger;
-import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
+import com.google.cloud.tools.jib.builder.TimerEventEmitter;
 import com.google.cloud.tools.jib.event.EventEmitter;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
@@ -37,32 +36,6 @@ import javax.annotation.Nullable;
 
 /** Interfaces with a registry. */
 public class RegistryClient {
-
-  // TODO: Remove
-  private Timer parentTimer =
-      new Timer(
-          new JibLogger() {
-            @Override
-            public void debug(CharSequence message) {}
-
-            @Override
-            public void info(CharSequence message) {}
-
-            @Override
-            public void warn(CharSequence message) {}
-
-            @Override
-            public void error(CharSequence message) {}
-
-            @Override
-            public void lifecycle(CharSequence message) {}
-          },
-          "NULL TIMER");
-
-  public RegistryClient setTimer(Timer parentTimer) {
-    this.parentTimer = parentTimer;
-    return this;
-  }
 
   /** Factory for creating {@link RegistryClient}s. */
   public static class Factory {
@@ -297,8 +270,9 @@ public class RegistryClient {
     BlobPusher blobPusher =
         new BlobPusher(registryEndpointRequestProperties, blobDigest, blob, sourceRepository);
 
-    try (Timer t = parentTimer.subTimer("pushBlob")) {
-      try (Timer t2 = t.subTimer("pushBlob POST " + blobDigest)) {
+    try (TimerEventEmitter timerEventEmitter = new TimerEventEmitter(eventEmitter, "pushBlob")) {
+      try (TimerEventEmitter timerEventEmitter2 =
+          timerEventEmitter.subTimer("pushBlob POST " + blobDigest)) {
 
         // POST /v2/<name>/blobs/uploads/ OR
         // POST /v2/<name>/blobs/uploads/?mount={blob.digest}&from={sourceRepository}
@@ -308,13 +282,13 @@ public class RegistryClient {
           return true;
         }
 
-        t2.lap("pushBlob PATCH " + blobDigest);
+        timerEventEmitter2.lap("pushBlob PATCH " + blobDigest);
 
         // PATCH <Location> with BLOB
         URL putLocation = callRegistryEndpoint(blobPusher.writer(patchLocation));
         Preconditions.checkNotNull(putLocation);
 
-        t2.lap("pushBlob PUT " + blobDigest);
+        timerEventEmitter2.lap("pushBlob PUT " + blobDigest);
 
         // PUT <Location>?digest={blob.digest}
         callRegistryEndpoint(blobPusher.committer(putLocation));

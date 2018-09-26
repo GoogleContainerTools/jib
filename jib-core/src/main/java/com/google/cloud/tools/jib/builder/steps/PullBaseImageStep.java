@@ -16,10 +16,10 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.builder.TimerEventEmitter;
 import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.BaseImageWithAuthorization;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
@@ -112,7 +112,8 @@ class PullBaseImageStep
                     + buildConfiguration.getBaseImageConfiguration().getImage()
                     + "..."));
 
-    try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
+    try (TimerEventEmitter ignored =
+        new TimerEventEmitter(buildConfiguration.getEventEmitter(), DESCRIPTION)) {
       // First, try with no credentials.
       try {
         return new BaseImageWithAuthorization(pullBaseImage(null), null);
