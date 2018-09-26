@@ -104,7 +104,6 @@ public class DockerContextTask extends DefaultTask implements JibTask {
     Preconditions.checkNotNull(jibExtension);
 
     GradleJibLogger gradleJibLogger = new GradleJibLogger(getLogger());
-    jibExtension.handleDeprecatedParameters(gradleJibLogger);
     JibSystemProperties.checkHttpTimeoutProperty();
 
     AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);

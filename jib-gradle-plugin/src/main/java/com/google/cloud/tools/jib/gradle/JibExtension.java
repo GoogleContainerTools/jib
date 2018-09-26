@@ -16,11 +16,9 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -80,8 +78,6 @@ public class JibExtension {
   private final Property<Boolean> useOnlyProjectCache;
   private final Property<Boolean> allowInsecureRegistries;
   private final Property<Path> extraDirectory;
-
-  // TODO: Deprecated parameters; remove these 4
   private final ListProperty<String> jvmFlags;
   private final Property<String> mainClass;
   private final ListProperty<String> args;
@@ -110,45 +106,6 @@ public class JibExtension {
     useOnlyProjectCache.set(DEFAULT_USE_ONLY_PROJECT_CACHE);
     allowInsecureRegistries.set(DEFAULT_ALLOW_INSECURE_REGISTIRIES);
     extraDirectory.set(resolveDefaultExtraDirectory(project.getProjectDir().toPath()));
-  }
-
-  /**
-   * Warns about deprecated parameters in use.
-   *
-   * @param logger The logger used to print the warnings
-   */
-  void handleDeprecatedParameters(JibLogger logger) {
-    StringBuilder deprecatedParams = new StringBuilder();
-    if (!jvmFlags.get().isEmpty()) {
-      deprecatedParams.append("  jvmFlags -> container.jvmFlags\n");
-      if (container.getJvmFlags().isEmpty()) {
-        container.setJvmFlags(jvmFlags.get());
-      }
-    }
-    if (!Strings.isNullOrEmpty(mainClass.getOrNull())) {
-      deprecatedParams.append("  mainClass -> container.mainClass\n");
-      if (Strings.isNullOrEmpty(container.getMainClass())) {
-        container.setMainClass(mainClass.getOrNull());
-      }
-    }
-    if (!args.get().isEmpty()) {
-      deprecatedParams.append("  args -> container.args\n");
-      if (container.getArgs().isEmpty()) {
-        container.setArgs(args.get());
-      }
-    }
-    if (format.getOrNull() != null) {
-      deprecatedParams.append("  format -> container.format\n");
-      container.setFormat(format.get());
-    }
-
-    if (deprecatedParams.length() > 0) {
-      logger.warn(
-          "There are deprecated parameters used in the build configuration. Please make the "
-              + "following changes to your build.gradle to avoid issues in the future:\n"
-              + deprecatedParams
-              + "You may also wrap the parameters in a container{} block.");
-    }
   }
 
   public void from(Action<? super ImageParameters> action) {
@@ -220,8 +177,7 @@ public class JibExtension {
     return container;
   }
 
-  // TODO: Make @Internal (deprecated)
-  @Input
+  @Internal
   @Optional
   List<String> getJvmFlags() {
     return container.getJvmFlags();
@@ -233,23 +189,20 @@ public class JibExtension {
     return container.getEnvironment();
   }
 
-  // TODO: Make @Internal (deprecated)
-  @Input
+  @Internal
   @Nullable
   @Optional
   String getMainClass() {
     return container.getMainClass();
   }
 
-  // TODO: Make @Internal (deprecated)
-  @Input
+  @Internal
   @Optional
   List<String> getArgs() {
     return container.getArgs();
   }
 
-  // TODO: Make @Internal (deprecated)
-  @Input
+  @Internal
   @Optional
   Class<? extends BuildableManifestTemplate> getFormat() {
     return container.getFormat();
