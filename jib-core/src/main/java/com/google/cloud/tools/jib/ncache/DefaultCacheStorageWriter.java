@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.filesystem.TemporaryDirectory;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.common.io.MoreFiles;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.nio.file.AtomicMoveNotSupportedException;
@@ -30,6 +31,8 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.GZIPOutputStream;
 
 /** Writes to the default cache storage engine. */
@@ -60,7 +63,10 @@ class DefaultCacheStorageWriter {
    * @throws IOException if an I/O exception occurs
    */
   private static void moveIfDoesNotExist(Path source, Path destination) throws IOException {
-    try {
+    if (Files.exists(destination)) {
+      return;
+    }
+
       try {
         Files.move(source, destination, StandardCopyOption.ATOMIC_MOVE);
 
@@ -77,12 +83,18 @@ class DefaultCacheStorageWriter {
 
         } catch (FileAlreadyExistsException alsoIgnored) {
           // Same reasoning
+
+        } catch (DirectoryNotEmptyException ex) {
+          // The file system cannot rename directories, so we must resort to copying the directory.
+          Files.createDirectory(destination);
+          try (Stream<Path> sourceFiles = Files.list(source)) {
+            for (Path sourceFile : sourceFiles.collect(Collectors.toList())) {
+              Files
+                  .copy(sourceFile, destination.resolve(sourceFile.getFileName()));
+            }
+          }
         }
       }
-    } catch (DirectoryNotEmptyException ex) {
-      System.out.println("moving from " + source + " to " + destination);
-      throw ex;
-    }
   }
 
   private final DefaultCacheStorageFiles defaultCacheStorageFiles;
