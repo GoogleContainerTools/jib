@@ -66,7 +66,7 @@ public class Cache {
    * @throws IOException if an I/O exception occurs
    */
   public CacheEntry write(Blob compressedLayerBlob) throws IOException {
-    return cacheStorage.write(new CompressedCacheWrite(compressedLayerBlob));
+    return cacheStorage.write(compressedLayerBlob);
   }
 
   /**

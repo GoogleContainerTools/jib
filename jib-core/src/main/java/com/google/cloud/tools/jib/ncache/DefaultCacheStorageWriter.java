@@ -111,16 +111,16 @@ class DefaultCacheStorageWriter {
   }
 
   /**
-   * Writes the {@link CompressedCacheWrite}.
+   * Writes a compressed layer {@link Blob}.
    *
-   * <p>The {@link CompressedCacheWrite#getCompressedLayerBlob} is written to the layer directory
-   * under the layers directory corresponding to the layer blob.
+   * <p>The {@code compressedLayerBlob} is written to the layer directory under the layers directory
+   * corresponding to the layer blob.
    *
-   * @param compressedCacheWrite the {@link CompressedCacheWrite} to write out
+   * @param compressedLayerBlob the compressed layer {@link Blob} to write out
    * @return the {@link CacheEntry} representing the written entry
    * @throws IOException if an I/O exception occurs
    */
-  CacheEntry write(CompressedCacheWrite compressedCacheWrite) throws IOException {
+  CacheEntry write(Blob compressedLayerBlob) throws IOException {
     // Creates the layers directory if it doesn't exist.
     Files.createDirectories(defaultCacheStorageFiles.getLayersDirectory());
 
@@ -130,8 +130,7 @@ class DefaultCacheStorageWriter {
 
       // Writes the layer file to the temporary directory.
       WrittenLayer writtenLayer =
-          writeCompressedLayerBlobToDirectory(
-              compressedCacheWrite.getCompressedLayerBlob(), temporaryLayerDirectory);
+          writeCompressedLayerBlobToDirectory(compressedLayerBlob, temporaryLayerDirectory);
 
       // Moves the temporary directory to the final location.
       moveIfDoesNotExist(
