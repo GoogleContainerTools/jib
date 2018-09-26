@@ -27,8 +27,13 @@ import java.time.Instant;
 import java.util.Optional;
 
 /**
- * Metadata that is the latest last modified time of all the source files in a list of {@link
- * LayerEntry}s.
+ * Serializes/deserializes metadata storing the latest last modified time of all the source files in
+ * {@link LayerEntry}s for a layer.
+ *
+ * <p>Use {@link #generateMetadata} to serialize the latest last modified time of all the source
+ * files in {@link LayerEntry}s for a layer into a {@link Blob} containing the serialized last
+ * modified time. Use {@link #getLastModifiedTime(CacheEntry)} to deserialize the metadata in a
+ * {@link CacheEntry} into a last modified time.
  */
 class LastModifiedTimeMetadata {
 
