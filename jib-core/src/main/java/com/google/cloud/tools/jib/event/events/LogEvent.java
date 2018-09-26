@@ -17,6 +17,8 @@
 package com.google.cloud.tools.jib.event.events;
 
 import com.google.cloud.tools.jib.event.JibEvent;
+import com.google.common.annotations.VisibleForTesting;
+import java.util.Objects;
 
 /** Log message event. */
 public class LogEvent implements JibEvent {
@@ -88,5 +90,25 @@ public class LogEvent implements JibEvent {
    */
   public String getMessage() {
     return message;
+  }
+
+  @VisibleForTesting
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == this) {
+      return true;
+    }
+    if (!(obj instanceof LogEvent)) {
+      return false;
+    }
+
+    LogEvent other = (LogEvent) obj;
+    return level == other.getLevel() && message.equals(other.getMessage());
+  }
+
+  @VisibleForTesting
+  @Override
+  public int hashCode() {
+    return Objects.hash(level, message);
   }
 }
