@@ -27,8 +27,10 @@ import com.google.common.io.CountingOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.attribute.FileTime;
+import java.time.Instant;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import org.junit.Assert;
@@ -104,35 +106,38 @@ public class CacheTest {
   private DescriptorDigest layerDiffId1;
   private long layerSize1;
   private ImmutableList<LayerEntry> layerEntries1;
-  private Blob metadataBlob1;
 
   private Blob layerBlob2;
   private DescriptorDigest layerDigest2;
   private DescriptorDigest layerDiffId2;
   private long layerSize2;
   private ImmutableList<LayerEntry> layerEntries2;
-  private Blob metadataBlob2;
 
   @Before
   public void setUp() throws IOException {
+    Path directory = temporaryFolder.newFolder().toPath();
+    Files.createDirectory(directory.resolve("source"));
+    Files.createFile(directory.resolve("source/file"));
+    Files.createDirectories(directory.resolve("another/source"));
+    Files.createFile(directory.resolve("another/source/file"));
+
     layerBlob1 = Blobs.from("layerBlob1");
     layerDigest1 = digestOf(compress(layerBlob1));
     layerDiffId1 = digestOf(layerBlob1);
     layerSize1 = sizeOf(compress(layerBlob1));
     layerEntries1 =
         ImmutableList.of(
-            new LayerEntry(Paths.get("source/file"), AbsoluteUnixPath.get("/extraction/path")),
             new LayerEntry(
-                Paths.get("another/source/file"),
+                directory.resolve("source/file"), AbsoluteUnixPath.get("/extraction/path")),
+            new LayerEntry(
+                directory.resolve("another/source/file"),
                 AbsoluteUnixPath.get("/another/extraction/path")));
-    metadataBlob1 = Blobs.from("metadata");
 
     layerBlob2 = Blobs.from("layerBlob2");
     layerDigest2 = digestOf(compress(layerBlob2));
     layerDiffId2 = digestOf(layerBlob2);
     layerSize2 = sizeOf(compress(layerBlob2));
     layerEntries2 = ImmutableList.of();
-    metadataBlob2 = Blobs.from("metadata");
   }
 
   @Test
@@ -159,31 +164,36 @@ public class CacheTest {
   }
 
   @Test
-  public void testWriteWithSelectorAndMetadata_retrieveByLayerDigest()
+  public void testWriteWithLayerEntries_retrieveByLayerDigest()
       throws IOException, CacheCorruptedException {
     Cache cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
 
-    verifyIsLayer1WithMetadata(cache.write(layerBlob1, layerEntries1, metadataBlob1));
+    verifyIsLayer1WithMetadata(cache.write(layerBlob1, layerEntries1));
     verifyIsLayer1WithMetadata(cache.retrieve(layerDigest1).orElseThrow(AssertionError::new));
     Assert.assertFalse(cache.retrieve(layerDigest2).isPresent());
   }
 
   @Test
-  public void testWriteWithSelectorAndMetadata_retrieveByLayerEntries()
+  public void testWriteWithLayerEntries_retrieveByLayerEntries()
       throws IOException, CacheCorruptedException {
     Cache cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
 
-    verifyIsLayer1WithMetadata(cache.write(layerBlob1, layerEntries1, metadataBlob1));
+    verifyIsLayer1WithMetadata(cache.write(layerBlob1, layerEntries1));
     verifyIsLayer1WithMetadata(cache.retrieve(layerEntries1).orElseThrow(AssertionError::new));
     Assert.assertFalse(cache.retrieve(layerDigest2).isPresent());
+
+    // A source file modification results in the cached layer to be out-of-date and not retrieved.
+    Files.setLastModifiedTime(
+        layerEntries1.get(0).getSourceFile(), FileTime.from(Instant.now().plusSeconds(1)));
+    Assert.assertFalse(cache.retrieve(layerEntries1).isPresent());
   }
 
   @Test
   public void testRetrieveWithTwoEntriesInCache() throws IOException, CacheCorruptedException {
     Cache cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
 
-    verifyIsLayer1WithMetadata(cache.write(layerBlob1, layerEntries1, metadataBlob1));
-    verifyIsLayer2WithMetadata(cache.write(layerBlob2, layerEntries2, metadataBlob2));
+    verifyIsLayer1WithMetadata(cache.write(layerBlob1, layerEntries1));
+    verifyIsLayer2WithMetadata(cache.write(layerBlob2, layerEntries2));
     verifyIsLayer1WithMetadata(cache.retrieve(layerDigest1).orElseThrow(AssertionError::new));
     verifyIsLayer2WithMetadata(cache.retrieve(layerDigest2).orElseThrow(AssertionError::new));
     verifyIsLayer1WithMetadata(cache.retrieve(layerEntries1).orElseThrow(AssertionError::new));
@@ -212,7 +222,9 @@ public class CacheTest {
   private void verifyIsLayer1WithMetadata(CacheEntry cacheEntry) throws IOException {
     verifyIsLayer1(cacheEntry);
     Assert.assertTrue(cacheEntry.getMetadataBlob().isPresent());
-    Assert.assertEquals("metadata", Blobs.writeToString(cacheEntry.getMetadataBlob().get()));
+    Assert.assertEquals(
+        Blobs.writeToString(LastModifiedTimeMetadata.generateMetadata(layerEntries1)),
+        Blobs.writeToString(cacheEntry.getMetadataBlob().get()));
   }
 
   /**
@@ -242,6 +254,8 @@ public class CacheTest {
     Assert.assertEquals(layerDiffId2, cacheEntry.getLayerDiffId());
     Assert.assertEquals(layerSize2, cacheEntry.getLayerSize());
     Assert.assertTrue(cacheEntry.getMetadataBlob().isPresent());
-    Assert.assertEquals("metadata", Blobs.writeToString(cacheEntry.getMetadataBlob().get()));
+    Assert.assertEquals(
+        Blobs.writeToString(LastModifiedTimeMetadata.generateMetadata(layerEntries2)),
+        Blobs.writeToString(cacheEntry.getMetadataBlob().get()));
   }
 }
