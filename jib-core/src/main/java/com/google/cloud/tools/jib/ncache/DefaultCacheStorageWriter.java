@@ -22,13 +22,18 @@ import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.filesystem.TemporaryDirectory;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.common.io.ByteStreams;
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 /** Writes to the default cache storage engine. */
@@ -79,12 +84,27 @@ class DefaultCacheStorageWriter {
     }
   }
 
+  // TODO: javadoc
+  private static DescriptorDigest getDiffIdByDecompressingFile(Path compressedFile)
+      throws IOException {
+    try (CountingDigestOutputStream diffIdCaptureOutputStream =
+        new CountingDigestOutputStream(ByteStreams.nullOutputStream())) {
+      try (InputStream fileInputStream =
+              new BufferedInputStream(Files.newInputStream(compressedFile));
+          GZIPInputStream decompressorStream = new GZIPInputStream(fileInputStream)) {
+        ByteStreams.copy(decompressorStream, diffIdCaptureOutputStream);
+      }
+      return diffIdCaptureOutputStream.toBlobDescriptor().getDigest();
+    }
+  }
+
   private final DefaultCacheStorageFiles defaultCacheStorageFiles;
 
   DefaultCacheStorageWriter(DefaultCacheStorageFiles defaultCacheStorageFiles) {
     this.defaultCacheStorageFiles = defaultCacheStorageFiles;
   }
 
+  // TODO: Javadoc
   CacheEntry write(CompressedCacheWrite compressedCacheWrite) throws IOException {
     // Creates the layers directory if it doesn't exist.
     Files.createDirectories(defaultCacheStorageFiles.getLayersDirectory());
@@ -94,14 +114,24 @@ class DefaultCacheStorageWriter {
       Path temporaryLayerDirectory = temporaryDirectory.getDirectory();
 
       // Writes the layer file to the temporary directory.
-      Path temporaryLayerFile = Files.createTempFile(temporaryLayerDirectory, null, null);
-      temporaryLayerFile.toFile().deleteOnExit();
+      WrittenLayer writtenLayer =
+          writeUncompressedLayerBlobToDirectory(
+              compressedCacheWrite.getCompressedLayerBlob(), temporaryLayerDirectory);
 
-      
+      // Moves the temporary directory to the final location.
+      moveIfDoesNotExist(
+          temporaryLayerDirectory,
+          defaultCacheStorageFiles.getLayerDirectory(writtenLayer.layerDigest));
 
+      // Updates cacheEntry with the blob information.
       Path layerFile =
-          temporaryLayerDirectory.resolve(defaultCacheStorageFiles.getLayerFilename(layerDiffId));
-      moveIfDoesNotExist(temporaryLayerFile, layerFile);
+          defaultCacheStorageFiles.getLayerFile(writtenLayer.layerDigest, writtenLayer.layerDiffId);
+      return DefaultCacheEntry.builder()
+          .setLayerDigest(writtenLayer.layerDigest)
+          .setLayerDiffId(writtenLayer.layerDiffId)
+          .setLayerSize(writtenLayer.layerSize)
+          .setLayerBlob(Blobs.from(layerFile))
+          .build();
     }
   }
 
@@ -111,10 +141,11 @@ class DefaultCacheStorageWriter {
    * <p>The {@link UncompressedCacheWrite} is written out to the cache directory in the form:
    *
    * <ul>
-   *   <li>The {@link UncompressedCacheWrite#getUncompressedLayerBlob} and {@link UncompressedCacheWrite#getMetadataBlob} are written to
-   *       the layer directory under the layers directory corresponding to the layer blob.
-   *   <li>The {@link UncompressedCacheWrite#getSelector} is written to the selector file under the selectors
-   *       directory.
+   *   <li>The {@link UncompressedCacheWrite#getUncompressedLayerBlob} and {@link
+   *       UncompressedCacheWrite#getMetadataBlob} are written to the layer directory under the
+   *       layers directory corresponding to the layer blob.
+   *   <li>The {@link UncompressedCacheWrite#getSelector} is written to the selector file under the
+   *       selectors directory.
    * </ul>
    *
    * Note that writes that fail to clean up unfinished temporary directories could result in stray
@@ -134,11 +165,13 @@ class DefaultCacheStorageWriter {
 
       // Writes the layer file to the temporary directory.
       WrittenLayer writtenLayer =
-          writeLayerBlobToDirectory(uncompressedCacheWrite.getUncompressedLayerBlob(), temporaryLayerDirectory);
+          writeUncompressedLayerBlobToDirectory(
+              uncompressedCacheWrite.getUncompressedLayerBlob(), temporaryLayerDirectory);
 
       // Writes the metadata to the temporary directory.
       if (uncompressedCacheWrite.getMetadataBlob().isPresent()) {
-        writeMetadataBlobToDirectory(uncompressedCacheWrite.getMetadataBlob().get(), temporaryLayerDirectory);
+        writeMetadataBlobToDirectory(
+            uncompressedCacheWrite.getMetadataBlob().get(), temporaryLayerDirectory);
       }
 
       // Moves the temporary directory to the final location.
@@ -170,15 +203,45 @@ class DefaultCacheStorageWriter {
   }
 
   /**
-   * Writes the {@code layerBlob} to the {@code layerDirectory}.
+   * Writes a compressed {@code layerBlob} to the {@code layerDirectory}.
    *
-   * @param layerBlob the layer {@link Blob}
+   * @param compressedLayerBlob the compressed layer {@link Blob}
    * @param layerDirectory the directory for the layer
    * @return a {@link WrittenLayer} with the written layer information
    * @throws IOException if an I/O exception occurs
    */
-  private WrittenLayer writeLayerBlobToDirectory(Blob layerBlob, Path layerDirectory)
-      throws IOException {
+  private WrittenLayer writeCompressedLayerBlobToDirectory(
+      Blob compressedLayerBlob, Path layerDirectory) throws IOException {
+    // Writes the layer file to the temporary directory.
+    Path temporaryLayerFile = Files.createTempFile(layerDirectory, null, null);
+    temporaryLayerFile.toFile().deleteOnExit();
+
+    BlobDescriptor layerBlobDescriptor;
+    try (OutputStream fileOutputStream =
+        new BufferedOutputStream(Files.newOutputStream(temporaryLayerFile))) {
+      layerBlobDescriptor = compressedLayerBlob.writeTo(fileOutputStream);
+    }
+
+    // Gets the diff ID.
+    DescriptorDigest layerDiffId = getDiffIdByDecompressingFile(temporaryLayerFile);
+
+    Path layerFile = layerDirectory.resolve(defaultCacheStorageFiles.getLayerFilename(layerDiffId));
+    moveIfDoesNotExist(temporaryLayerFile, layerFile);
+
+    return new WrittenLayer(
+        layerBlobDescriptor.getDigest(), layerDiffId, layerBlobDescriptor.getSize());
+  }
+
+  /**
+   * Writes an uncompressed {@code layerBlob} to the {@code layerDirectory}.
+   *
+   * @param uncompressedLayerBlob the uncompressed layer {@link Blob}
+   * @param layerDirectory the directory for the layer
+   * @return a {@link WrittenLayer} with the written layer information
+   * @throws IOException if an I/O exception occurs
+   */
+  private WrittenLayer writeUncompressedLayerBlobToDirectory(
+      Blob uncompressedLayerBlob, Path layerDirectory) throws IOException {
     Path temporaryLayerFile = Files.createTempFile(layerDirectory, null, null);
     temporaryLayerFile.toFile().deleteOnExit();
 
@@ -189,7 +252,7 @@ class DefaultCacheStorageWriter {
       // diff ID and the bytes outputted from the GZIP compression are captured as the layer's
       // content descriptor.
       GZIPOutputStream compressorStream = new GZIPOutputStream(compressedDigestOutputStream);
-      DescriptorDigest layerDiffId = layerBlob.writeTo(compressorStream).getDigest();
+      DescriptorDigest layerDiffId = uncompressedLayerBlob.writeTo(compressorStream).getDigest();
 
       // The GZIPOutputStream must be closed in order to write out the remaining compressed data.
       compressorStream.close();

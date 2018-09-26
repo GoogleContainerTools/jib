@@ -22,9 +22,10 @@ import java.util.Optional;
 import javax.annotation.concurrent.Immutable;
 
 /**
- * Represents uncompressed layer data to write to the cache, along with an additional selector digest and metadata.
+ * Represents uncompressed layer data to write to the cache, along with an additional selector
+ * digest and metadata.
  *
- * <b>Implementation is immutable and thread-safe.</b>
+ * <p><b>Implementation is immutable and thread-safe.</b>
  */
 @Immutable
 class UncompressedCacheWrite {
@@ -33,8 +34,7 @@ class UncompressedCacheWrite {
   private final DescriptorDigest selector;
   private final Blob metadataBlob;
 
-  UncompressedCacheWrite(
-      Blob uncompressedLayerBlob, DescriptorDigest selector, Blob metadataBlob) {
+  UncompressedCacheWrite(Blob uncompressedLayerBlob, DescriptorDigest selector, Blob metadataBlob) {
     this.uncompressedLayerBlob = uncompressedLayerBlob;
     this.selector = selector;
     this.metadataBlob = metadataBlob;

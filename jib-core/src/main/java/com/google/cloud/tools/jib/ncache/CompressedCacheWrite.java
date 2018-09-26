@@ -22,7 +22,7 @@ import javax.annotation.concurrent.Immutable;
 /**
  * Represents compressed layer data to write to the cache.
  *
- * <b>Implementation is immutable and thread-safe.</b>
+ * <p><b>Implementation is immutable and thread-safe.</b>
  */
 @Immutable
 class CompressedCacheWrite {
