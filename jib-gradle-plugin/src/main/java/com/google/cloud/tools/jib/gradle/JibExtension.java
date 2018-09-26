@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.image.ImageFormat;
-import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.common.base.Preconditions;
 import java.io.File;
 import java.nio.file.Path;
@@ -179,33 +178,8 @@ public class JibExtension {
 
   @Internal
   @Optional
-  List<String> getJvmFlags() {
-    return container.getJvmFlags();
-  }
-
-  @Internal
-  @Optional
   Map<String, String> getEnvironment() {
     return container.getEnvironment();
-  }
-
-  @Internal
-  @Nullable
-  @Optional
-  String getMainClass() {
-    return container.getMainClass();
-  }
-
-  @Internal
-  @Optional
-  List<String> getArgs() {
-    return container.getArgs();
-  }
-
-  @Internal
-  @Optional
-  Class<? extends BuildableManifestTemplate> getFormat() {
-    return container.getFormat();
   }
 
   @Internal
