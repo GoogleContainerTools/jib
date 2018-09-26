@@ -16,12 +16,10 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -159,14 +157,6 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
   @Parameter private ContainerParameters container = new ContainerParameters();
 
-  @Deprecated @Parameter private List<String> jvmFlags = Collections.emptyList();
-
-  @Deprecated @Nullable @Parameter private String mainClass;
-
-  @Deprecated @Parameter private List<String> args = Collections.emptyList();
-
-  @Deprecated @Nullable @Parameter private String format;
-
   @Parameter(defaultValue = "false", required = true)
   private boolean useOnlyProjectCache;
 
@@ -187,44 +177,6 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   JibPluginConfiguration() {
     to.auth.setPropertyDescriptors("<to><auth>");
     from.auth.setPropertyDescriptors("<from><auth>");
-  }
-
-  /**
-   * Warns about deprecated parameters in use.
-   *
-   * @param logger The logger used to print the warnings
-   */
-  void handleDeprecatedParameters(JibLogger logger) {
-    StringBuilder deprecatedParams = new StringBuilder();
-    if (!jvmFlags.isEmpty()) {
-      deprecatedParams.append("  <jvmFlags> -> <container><jvmFlags>\n");
-      if (container.jvmFlags.isEmpty()) {
-        container.jvmFlags = jvmFlags;
-      }
-    }
-    if (!Strings.isNullOrEmpty(mainClass)) {
-      deprecatedParams.append("  <mainClass> -> <container><mainClass>\n");
-      if (Strings.isNullOrEmpty(container.mainClass)) {
-        container.mainClass = mainClass;
-      }
-    }
-    if (!args.isEmpty()) {
-      deprecatedParams.append("  <args> -> <container><args>\n");
-      if (container.args.isEmpty()) {
-        container.args = args;
-      }
-    }
-    if (!Strings.isNullOrEmpty(format)) {
-      deprecatedParams.append("  <format> -> <container><format>\n");
-      container.format = format;
-    }
-
-    if (deprecatedParams.length() > 0) {
-      logger.warn(
-          "There are deprecated parameters used in the build configuration. Please make the "
-              + "following changes to your pom.xml to avoid issues in the future:\n"
-              + deprecatedParams);
-    }
   }
 
   MavenSession getSession() {
@@ -327,26 +279,6 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
   SettingsDecrypter getSettingsDecrypter() {
     return Preconditions.checkNotNull(settingsDecrypter);
-  }
-
-  @VisibleForTesting
-  void setJvmFlags(List<String> jvmFlags) {
-    this.jvmFlags = jvmFlags;
-  }
-
-  @VisibleForTesting
-  void setMainClass(String mainClass) {
-    this.mainClass = mainClass;
-  }
-
-  @VisibleForTesting
-  void setArgs(List<String> args) {
-    this.args = args;
-  }
-
-  @VisibleForTesting
-  void setFormat(String format) {
-    this.format = format;
   }
 
   @VisibleForTesting
