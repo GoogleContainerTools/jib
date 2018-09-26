@@ -150,7 +150,7 @@ class PluginConfigurationProcessor {
     }
 
     BuildConfiguration.Builder buildConfigurationBuilder =
-        BuildConfiguration.builder(logger)
+        BuildConfiguration.builder()
             .setToolName(MavenProjectProperties.TOOL_NAME)
             .setEventEmitter(projectProperties.getEventEmitter())
             .setAllowInsecureRegistries(jibPluginConfiguration.getAllowInsecureRegistries())

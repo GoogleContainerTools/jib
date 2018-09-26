@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
@@ -43,8 +42,6 @@ public class RetrieveRegistryCredentialsStepTest {
 
   @Mock private EventEmitter mockEventEmitter;
   @Mock private ListeningExecutorService mockListeningExecutorService;
-  // TODO: Remove once JibLogger is all replaced by EventEmitter.
-  @Mock private JibLogger mockJibLogger;
 
   @Test
   public void testCall_retrieved() throws CredentialRetrievalException {
@@ -117,7 +114,7 @@ public class RetrieveRegistryCredentialsStepTest {
       List<CredentialRetriever> targetCredentialRetrievers) {
     ImageReference baseImage = ImageReference.of("baseregistry", "ignored", null);
     ImageReference targetImage = ImageReference.of("targetregistry", "ignored", null);
-    return BuildConfiguration.builder(mockJibLogger)
+    return BuildConfiguration.builder()
         .setEventEmitter(mockEventEmitter)
         .setBaseImageConfiguration(
             ImageConfiguration.builder(baseImage)

@@ -124,7 +124,7 @@ class PluginConfigurationProcessor {
     }
 
     BuildConfiguration.Builder buildConfigurationBuilder =
-        BuildConfiguration.builder(logger)
+        BuildConfiguration.builder()
             .setToolName(GradleProjectProperties.TOOL_NAME)
             .setEventEmitter(projectProperties.getEventEmitter())
             .setAllowInsecureRegistries(jibExtension.getAllowInsecureRegistries())
