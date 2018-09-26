@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.image.DescriptorDigest;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -60,22 +61,27 @@ class DefaultCacheStorageWriter {
    */
   private static void moveIfDoesNotExist(Path source, Path destination) throws IOException {
     try {
-      Files.move(source, destination, StandardCopyOption.ATOMIC_MOVE);
-
-    } catch (FileAlreadyExistsException ignored) {
-      // If the file already exists, we skip renaming and use the existing file. This happens if a
-      // new layer happens to have the same content as a previously-cached layer.
-      //
-      // Do not attempt to remove the try-catch block with the idea of checking file existence
-      // before moving; there can be concurrent file moves.
-
-    } catch (AtomicMoveNotSupportedException ignored) {
       try {
-        Files.move(source, destination);
+        Files.move(source, destination, StandardCopyOption.ATOMIC_MOVE);
 
-      } catch (FileAlreadyExistsException alsoIgnored) {
-        // Same reasoning
+      } catch (FileAlreadyExistsException ignored) {
+        // If the file already exists, we skip renaming and use the existing file. This happens if a
+        // new layer happens to have the same content as a previously-cached layer.
+        //
+        // Do not attempt to remove the try-catch block with the idea of checking file existence
+        // before moving; there can be concurrent file moves.
+
+      } catch (AtomicMoveNotSupportedException ignored) {
+        try {
+          Files.move(source, destination);
+
+        } catch (FileAlreadyExistsException alsoIgnored) {
+          // Same reasoning
+        }
       }
+    } catch (DirectoryNotEmptyException ex) {
+      System.out.println("moving from " + source + " to " + destination);
+      throw ex;
     }
   }
 

@@ -52,8 +52,8 @@ public class TemporaryDirectory implements Closeable {
 
   @Override
   public void close() throws IOException {
-    if (Files.exists(temporaryDirectory)) {
-      MoreFiles.deleteRecursively(temporaryDirectory, RecursiveDeleteOption.ALLOW_INSECURE);
-    }
+    // if (Files.exists(temporaryDirectory)) {
+    //   MoreFiles.deleteRecursively(temporaryDirectory, RecursiveDeleteOption.ALLOW_INSECURE);
+    // }
   }
 }
