@@ -44,7 +44,7 @@ public class FilesMojoTest {
   @ClassRule
   public static final TestProject multiTestProject = new TestProject(testPlugin, "multi");
 
-  private void verifyFiles(Path projectRoot, String module, List<Path> files)
+  private static void verifyFiles(Path projectRoot, String module, List<Path> files)
       throws VerificationException, IOException {
 
     Verifier verifier = new Verifier(projectRoot.toString());
