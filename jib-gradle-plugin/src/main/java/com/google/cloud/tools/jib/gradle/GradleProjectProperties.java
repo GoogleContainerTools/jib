@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.event.DefaultEventEmitter;
 import com.google.cloud.tools.jib.event.EventEmitter;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEventType;
+import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
@@ -71,10 +72,13 @@ class GradleProjectProperties implements ProjectProperties {
   }
 
   private static EventEmitter makeEventEmitter(Logger logger) {
+    LogEventHandler logEventHandler = new LogEventHandler(logger);
     return new DefaultEventEmitter(
         new EventHandlers()
-            .add(JibEventType.LOGGING, new LogEventHandler(logger))
-            .add(JibEventType.TIMING, new TimerEventHandler(logger::debug)));
+            .add(JibEventType.LOGGING, logEventHandler)
+            .add(
+                JibEventType.TIMING,
+                new TimerEventHandler(message -> logEventHandler.accept(LogEvent.debug(message)))));
   }
 
   @Nullable
