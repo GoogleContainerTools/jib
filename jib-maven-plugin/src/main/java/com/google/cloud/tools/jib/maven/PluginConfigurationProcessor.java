@@ -99,10 +99,11 @@ class PluginConfigurationProcessor {
             jibPluginConfiguration.getSettingsDecrypter(),
             logger);
     DefaultCredentialRetrievers defaultCredentialRetrievers =
-        DefaultCredentialRetrievers.init(CredentialRetrieverFactory.forImage(baseImage, logger));
+        DefaultCredentialRetrievers.init(
+            CredentialRetrieverFactory.forImage(baseImage, projectProperties.getEventEmitter()));
     Optional<Credential> optionalFromCredential =
         ConfigurationPropertyValidator.getImageCredential(
-            logger,
+            projectProperties.getEventEmitter(),
             "jib.from.auth.username",
             "jib.from.auth.password",
             jibPluginConfiguration.getBaseImageAuth());

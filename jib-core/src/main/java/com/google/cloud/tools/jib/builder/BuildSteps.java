@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.builder;
 import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.builder.steps.StepsRunner;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.event.events.LogEvent;
 import java.nio.file.Path;
 import java.util.concurrent.ExecutionException;
 
@@ -128,19 +129,20 @@ public class BuildSteps {
   }
 
   public void run() throws InterruptedException, ExecutionException {
-    buildConfiguration.getBuildLogger().lifecycle("");
+    buildConfiguration.getEventEmitter().emit(LogEvent.lifecycle(""));
 
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), description)) {
       stepsRunnerConsumer.accept(new StepsRunner(buildConfiguration));
     }
 
     if (buildConfiguration.getContainerConfiguration() != null) {
-      buildConfiguration.getBuildLogger().lifecycle("");
+      buildConfiguration.getEventEmitter().emit(LogEvent.lifecycle(""));
       buildConfiguration
-          .getBuildLogger()
-          .lifecycle(
-              "Container entrypoint set to "
-                  + buildConfiguration.getContainerConfiguration().getEntrypoint());
+          .getEventEmitter()
+          .emit(
+              LogEvent.lifecycle(
+                  "Container entrypoint set to "
+                      + buildConfiguration.getContainerConfiguration().getEntrypoint()));
     }
   }
 }

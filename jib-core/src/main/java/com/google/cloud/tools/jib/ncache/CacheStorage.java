@@ -24,8 +24,8 @@ import java.util.Set;
 /**
  * Interface for queries to a cache storage engine.
  *
- * <p>The cache storage engine stores layer data as {@link CacheWrite}s. These entries are read out
- * as {@link CacheEntry}s. Cache entries can be retrieved by the layer digest.
+ * <p>The cache storage engine stores layer data as {@link UncompressedCacheWrite}s. These entries
+ * are read out as {@link CacheEntry}s. Cache entries can be retrieved by the layer digest.
  *
  * <p>The cache entries can also be queried by an arbitrarily-defined selector (in digest format).
  * The selectors do not need to be unique. An example of a selector could be the digest of the list
@@ -36,13 +36,22 @@ import java.util.Set;
 interface CacheStorage {
 
   /**
-   * Saves the {@link CacheWrite}.
+   * Saves the {@link UncompressedCacheWrite}.
    *
-   * @param cacheWrite the {@link CacheWrite}
-   * @return the {@link CacheEntry} for the written {@link CacheWrite}
+   * @param uncompressedCacheWrite the {@link UncompressedCacheWrite}
+   * @return the {@link CacheEntry} for the written {@link UncompressedCacheWrite}
    * @throws IOException if an I/O exception occurs
    */
-  CacheEntry write(CacheWrite cacheWrite) throws IOException;
+  CacheEntry write(UncompressedCacheWrite uncompressedCacheWrite) throws IOException;
+
+  /**
+   * Saves the {@link CompressedCacheWrite}.
+   *
+   * @param uncompressedCacheWrite the {@link CompressedCacheWrite}
+   * @return the {@link CacheEntry} for the written {@link CompressedCacheWrite}
+   * @throws IOException if an I/O exception occurs
+   */
+  CacheEntry write(CompressedCacheWrite uncompressedCacheWrite) throws IOException;
 
   /**
    * Fetches all the layer digests stored.

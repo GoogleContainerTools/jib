@@ -58,8 +58,8 @@ public interface CacheEntry {
 
   /**
    * Gets the optional metadata blob for the layer. The metadata is in the same format as supplied
-   * when writing to the cache with {@link CacheWrite}. This {@link Blob} should be able to be used
-   * multiple times.
+   * when writing to the cache with {@link UncompressedCacheWrite}. This {@link Blob} should be able
+   * to be used multiple times.
    *
    * @return the metadata {@link Blob}
    */

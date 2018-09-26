@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
+import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.image.ReproducibleLayerBuilder;
 import com.google.cloud.tools.jib.ncache.Cache;
 import com.google.cloud.tools.jib.ncache.CacheCorruptedException;
@@ -90,7 +91,7 @@ class BuildAndCacheApplicationLayerStep implements AsyncStep<CacheEntry>, Callab
   public CacheEntry call() throws IOException, CacheCorruptedException {
     String description = "Building " + layerType + " layer";
 
-    buildConfiguration.getBuildLogger().lifecycle(description + "...");
+    buildConfiguration.getEventEmitter().emit(LogEvent.lifecycle(description + "..."));
 
     try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), description)) {
       Cache cache = buildConfiguration.getApplicationLayersCache();
@@ -106,8 +107,8 @@ class BuildAndCacheApplicationLayerStep implements AsyncStep<CacheEntry>, Callab
       CacheEntry cacheEntry = cache.write(layerBlob, layerConfiguration.getLayerEntries());
 
       buildConfiguration
-          .getBuildLogger()
-          .debug(description + " built " + cacheEntry.getLayerDigest());
+          .getEventEmitter()
+          .emit(LogEvent.debug(description + " built " + cacheEntry.getLayerDigest()));
 
       return cacheEntry;
     }

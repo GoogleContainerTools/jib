@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
@@ -49,7 +48,6 @@ public class BuildImageStepTest {
 
   @Mock private BuildConfiguration mockBuildConfiguration;
   @Mock private ContainerConfiguration mockContainerConfiguration;
-  @Mock private JibLogger mockBuildLogger;
   @Mock private PullBaseImageStep mockPullBaseImageStep;
   @Mock private PullAndCacheBaseImageLayersStep mockPullAndCacheBaseImageLayersStep;
   @Mock private PullAndCacheBaseImageLayerStep mockPullAndCacheBaseImageLayerStep;
@@ -92,7 +90,6 @@ public class BuildImageStepTest {
           }
         };
 
-    Mockito.when(mockBuildConfiguration.getBuildLogger()).thenReturn(mockBuildLogger);
     Mockito.when(mockBuildConfiguration.getContainerConfiguration())
         .thenReturn(mockContainerConfiguration);
     Mockito.when(mockBuildConfiguration.getToolName()).thenReturn("jib");

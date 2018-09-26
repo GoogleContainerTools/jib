@@ -19,9 +19,9 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
-import com.google.cloud.tools.jib.builder.TestJibLogger;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
+import com.google.cloud.tools.jib.event.EventEmitter;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.ImageLayers;
 import com.google.cloud.tools.jib.image.Layer;
@@ -87,6 +87,7 @@ public class BuildAndCacheApplicationLayerStepTest {
   @Mock private BuildConfiguration mockBuildConfiguration;
 
   private Cache cache;
+  @Mock private EventEmitter mockEventEmitter;
 
   private LayerConfiguration fakeDependenciesLayerConfiguration;
   private LayerConfiguration fakeSnapshotDependenciesLayerConfiguration;
@@ -119,7 +120,7 @@ public class BuildAndCacheApplicationLayerStepTest {
 
     cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
 
-    Mockito.when(mockBuildConfiguration.getBuildLogger()).thenReturn(new TestJibLogger());
+    Mockito.when(mockBuildConfiguration.getEventEmitter()).thenReturn(mockEventEmitter);
     Mockito.when(mockBuildConfiguration.getApplicationLayersCache()).thenReturn(cache);
   }
 
