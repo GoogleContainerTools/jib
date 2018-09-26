@@ -29,7 +29,7 @@ import java.util.Set;
  * <pre>{@code
  * layers/
  *   <layer digest>/
- *     <layer diff ID>.layer
+ *     <layer diff ID>
  *     metadata
  *   ...
  * selectors/
@@ -38,14 +38,13 @@ import java.util.Set;
  * }</pre>
  *
  * Layers entries are stored in their own directories under the {@code layers/} directory. Each
- * layer directory is named by the layer digest. Inside each layer directory, the layer contents is
- * the {@code .layer} file prefixed with the layer diff ID, and the metadata is the {@code metadata}
- * file.
+ * layer directory is named by the layer digest. Inside each layer directory, the layer contents
+ * file is named by the layer diff ID, and the metadata is the {@code metadata} file.
  *
  * <p>Selectors are stored in the {@code selectors/} directory. Each selector file is named by the
  * selector digest. The contents of a selector file is the digest of the layer it selects.
  */
-public class DefaultCacheStorage implements CacheStorage {
+class DefaultCacheStorage implements CacheStorage {
 
   /**
    * Instantiates a {@link CacheStorage} backed by this storage engine.
@@ -53,16 +52,14 @@ public class DefaultCacheStorage implements CacheStorage {
    * @param cacheDirectory the directory for this cache
    * @return a new {@link CacheStorage}
    */
-  public static CacheStorage withDirectory(Path cacheDirectory) {
-    return new DefaultCacheStorage(cacheDirectory);
+  static CacheStorage withDirectory(Path cacheDirectory) {
+    return new DefaultCacheStorage(new DefaultCacheStorageFiles(cacheDirectory));
   }
 
   private final DefaultCacheStorageWriter defaultCacheStorageWriter;
   private final DefaultCacheStorageReader defaultCacheStorageReader;
 
-  private DefaultCacheStorage(Path cacheDirectory) {
-    DefaultCacheStorageFiles defaultCacheStorageFiles =
-        new DefaultCacheStorageFiles(cacheDirectory);
+  private DefaultCacheStorage(DefaultCacheStorageFiles defaultCacheStorageFiles) {
     this.defaultCacheStorageWriter = new DefaultCacheStorageWriter(defaultCacheStorageFiles);
     this.defaultCacheStorageReader = new DefaultCacheStorageReader(defaultCacheStorageFiles);
   }
@@ -84,8 +81,8 @@ public class DefaultCacheStorage implements CacheStorage {
   }
 
   @Override
-  public Optional<DescriptorDigest> select(DescriptorDigest selector) throws IOException {
-    // TODO: Implement
-    return Optional.empty();
+  public Optional<DescriptorDigest> select(DescriptorDigest selector)
+      throws IOException, CacheCorruptedException {
+    return defaultCacheStorageReader.select(selector);
   }
 }

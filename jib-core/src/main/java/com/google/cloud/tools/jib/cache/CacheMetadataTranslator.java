@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.cache.json.CacheMetadataLayerObjectTemplate;
 import com.google.cloud.tools.jib.cache.json.CacheMetadataLayerPropertiesObjectTemplate;
 import com.google.cloud.tools.jib.cache.json.CacheMetadataLayerPropertiesObjectTemplate.LayerEntryTemplate;
 import com.google.cloud.tools.jib.cache.json.CacheMetadataTemplate;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
 import java.nio.file.Path;
@@ -66,7 +67,7 @@ public class CacheMetadataTranslator {
           layerEntries.add(
               new LayerEntry(
                   Paths.get(layerEntryTemplate.getSourceFileString()),
-                  Paths.get(layerEntryTemplate.getExtractionPathString())));
+                  AbsoluteUnixPath.get(layerEntryTemplate.getExtractionPathString())));
         }
 
         layerMetadata =

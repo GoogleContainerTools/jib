@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.JibLogger;
+import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -24,8 +25,10 @@ import com.google.common.base.Strings;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
@@ -79,8 +82,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     }
 
     private void setPropertyDescriptors(String descriptorPrefix) {
-      this.usernameDescriptor = descriptorPrefix + "<username>";
-      this.passwordDescriptor = descriptorPrefix + "<password>";
+      usernameDescriptor = descriptorPrefix + "<username>";
+      passwordDescriptor = descriptorPrefix + "<password>";
     }
   }
 
@@ -103,6 +106,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   public static class ToConfiguration {
 
     @Nullable @Parameter private String image;
+
+    @Parameter private List<String> tags = Collections.emptyList();
 
     @Nullable @Parameter private String credHelper;
 
@@ -135,6 +140,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     @Parameter private List<String> ports = Collections.emptyList();
 
     @Parameter private Map<String, String> labels = Collections.emptyMap();
+
+    @Parameter private String appRoot = JavaLayerConfigurations.DEFAULT_APP_ROOT;
   }
 
   @Nullable
@@ -246,6 +253,10 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     return to.image;
   }
 
+  Set<String> getTargetImageAdditionalTags() {
+    return new HashSet<>(to.tags);
+  }
+
   @Nullable
   String getTargetImageCredentialHelperName() {
     return Preconditions.checkNotNull(to).credHelper;
@@ -287,6 +298,10 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
   Map<String, String> getLabels() {
     return container.labels;
+  }
+
+  String getAppRoot() {
+    return container.appRoot;
   }
 
   String getFormat() {

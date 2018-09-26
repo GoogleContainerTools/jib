@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.configuration.Port;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -90,11 +91,12 @@ public class JibContainerBuilder {
    *
    * @param files the source files to copy to a new layer in the container
    * @param pathInContainer the path in the container file system corresponding to the {@code
-   *     sourceFile} (relative to root {@code /})
+   *     sourceFile}
    * @return this
    * @throws IOException if an exception occurred when recursively listing any directories
    */
-  public JibContainerBuilder addLayer(List<Path> files, Path pathInContainer) throws IOException {
+  public JibContainerBuilder addLayer(List<Path> files, AbsoluteUnixPath pathInContainer)
+      throws IOException {
     LayerConfiguration.Builder layerConfigurationBuilder = LayerConfiguration.builder();
 
     for (Path file : files) {

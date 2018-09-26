@@ -20,7 +20,7 @@ import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.cache.CachedLayer;
-import com.google.cloud.tools.jib.docker.json.DockerLoadManifestTemplate;
+import com.google.cloud.tools.jib.docker.json.DockerLoadManifestEntryTemplate;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.ImageReference;
@@ -103,7 +103,7 @@ public class ImageToTarballTranslatorTest {
       String manifestJson =
           CharStreams.toString(
               new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
-      JsonTemplateMapper.readListOfJson(manifestJson, DockerLoadManifestTemplate.class);
+      JsonTemplateMapper.readListOfJson(manifestJson, DockerLoadManifestEntryTemplate.class);
     }
   }
 }

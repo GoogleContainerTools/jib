@@ -66,7 +66,7 @@ public class DefaultCacheStorageWriterTest {
   @Test
   public void testWrite_layerOnly() throws IOException {
     Blob layerBlob = Blobs.from("layerBlob");
-    CacheEntry cacheEntry = verifyWrite(DefaultCacheWrite.layerOnly(layerBlob), layerBlob);
+    CacheEntry cacheEntry = verifyWrite(CacheWrite.layerOnly(layerBlob), layerBlob);
     Assert.assertFalse(cacheEntry.getMetadataBlob().isPresent());
   }
 
@@ -79,8 +79,7 @@ public class DefaultCacheStorageWriterTest {
 
     CacheEntry cacheEntry =
         verifyWrite(
-            DefaultCacheWrite.withSelectorAndMetadata(layerBlob, selector, metadataBlob),
-            layerBlob);
+            CacheWrite.withSelectorAndMetadata(layerBlob, selector, metadataBlob), layerBlob);
 
     // Verifies cacheEntry is correct.
     Assert.assertTrue(cacheEntry.getMetadataBlob().isPresent());

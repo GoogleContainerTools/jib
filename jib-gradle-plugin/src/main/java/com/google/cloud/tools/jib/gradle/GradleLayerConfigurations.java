@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import java.io.File;
 import java.io.IOException;
@@ -28,6 +30,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.gradle.api.Project;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.SourceSet;
 
@@ -41,13 +44,15 @@ class GradleLayerConfigurations {
    * Resolves the source files configuration for a Gradle {@link Project}.
    *
    * @param project the Gradle {@link Project}
-   * @param gradleJibLogger the build logger for providing feedback about the resolution
+   * @param logger the logger for providing feedback about the resolution
    * @param extraDirectory path to the directory for the extra files layer
+   * @param appRoot root directory in the image where the app will be placed
    * @return a {@link JavaLayerConfigurations} for the layers for the Gradle {@link Project}
    * @throws IOException if an I/O exception occurred during resolution
    */
   static JavaLayerConfigurations getForProject(
-      Project project, GradleJibLogger gradleJibLogger, Path extraDirectory) throws IOException {
+      Project project, Logger logger, Path extraDirectory, AbsoluteUnixPath appRoot)
+      throws IOException {
     JavaPluginConvention javaPluginConvention =
         project.getConvention().getPlugin(JavaPluginConvention.class);
 
@@ -61,19 +66,19 @@ class GradleLayerConfigurations {
 
     // Adds each file in each classes output directory to the classes files list.
     FileCollection classesOutputDirectories = mainSourceSet.getOutput().getClassesDirs();
-    gradleJibLogger.info("Adding corresponding output directories of source sets to image");
+    logger.info("Adding corresponding output directories of source sets to image");
     for (File classesOutputDirectory : classesOutputDirectories) {
       if (Files.notExists(classesOutputDirectory.toPath())) {
-        gradleJibLogger.info("\t'" + classesOutputDirectory + "' (not found, skipped)");
+        logger.info("\t'" + classesOutputDirectory + "' (not found, skipped)");
         continue;
       }
-      gradleJibLogger.info("\t'" + classesOutputDirectory + "'");
+      logger.info("\t'" + classesOutputDirectory + "'");
       try (Stream<Path> classFileStream = Files.list(classesOutputDirectory.toPath())) {
         classFileStream.forEach(classesFiles::add);
       }
     }
     if (classesFiles.isEmpty()) {
-      gradleJibLogger.warn("No classes files were found - did you compile your project?");
+      logger.warn("No classes files were found - did you compile your project?");
     }
 
     // Adds each file in the resources output directory to the resources files list.
@@ -115,11 +120,19 @@ class GradleLayerConfigurations {
     Collections.sort(extraFiles);
 
     return JavaLayerConfigurations.builder()
-        .setDependencyFiles(dependenciesFiles)
-        .setSnapshotDependencyFiles(snapshotDependenciesFiles)
-        .setResourceFiles(resourcesFiles)
-        .setClassFiles(classesFiles)
-        .setExtraFiles(extraFiles)
+        .setDependencyFiles(
+            dependenciesFiles,
+            appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE))
+        .setSnapshotDependencyFiles(
+            snapshotDependenciesFiles,
+            appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE))
+        .setResourceFiles(
+            resourcesFiles,
+            appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE))
+        .setClassFiles(
+            classesFiles,
+            appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE))
+        .setExtraFiles(extraFiles, AbsoluteUnixPath.get("/"))
         .build();
   }
 

@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
@@ -72,9 +73,10 @@ public class BuildImageTask extends DefaultTask implements JibTask {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
     GradleJibLogger gradleJibLogger = new GradleJibLogger(getLogger());
+    AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(
-            getProject(), gradleJibLogger, jibExtension.getExtraDirectoryPath());
+            getProject(), getLogger(), jibExtension.getExtraDirectoryPath(), appRoot);
 
     if (Strings.isNullOrEmpty(jibExtension.getTargetImage())) {
       throw new GradleException(
@@ -116,6 +118,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
             .setBaseImageConfiguration(
                 pluginConfigurationProcessor.getBaseImageConfigurationBuilder().build())
             .setTargetImageConfiguration(targetImageConfiguration)
+            .setAdditionalTargetImageTags(jibExtension.getTo().getTags())
             .setContainerConfiguration(
                 pluginConfigurationProcessor.getContainerConfigurationBuilder().build())
             .setTargetFormat(jibExtension.getFormat())

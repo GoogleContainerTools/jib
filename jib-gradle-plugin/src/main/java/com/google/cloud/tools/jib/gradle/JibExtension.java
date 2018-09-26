@@ -58,6 +58,7 @@ import org.gradle.api.tasks.Optional;
  *     args = ['arg1', 'arg2']
  *     exposedPorts = ['1000', '2000-2010', '3000']
  *     format = OCI
+ *     appRoot = "/app";
  *   }
  * }
  * }</pre>
@@ -73,14 +74,12 @@ public class JibExtension {
     return projectDirectory.resolve("src").resolve("main").resolve("jib");
   }
 
-  private final ImageParameters from;
-  private final ImageParameters to;
+  private final BaseImageParameters from;
+  private final TargetImageParameters to;
   private final ContainerParameters container;
   private final Property<Boolean> useOnlyProjectCache;
   private final Property<Boolean> allowInsecureRegistries;
   private final Property<Path> extraDirectory;
-
-  private final Path projectDir;
 
   // TODO: Deprecated parameters; remove these 4
   private final ListProperty<String> jvmFlags;
@@ -89,11 +88,10 @@ public class JibExtension {
   private final Property<ImageFormat> format;
 
   public JibExtension(Project project) {
-    projectDir = project.getProjectDir().toPath();
     ObjectFactory objectFactory = project.getObjects();
 
-    from = objectFactory.newInstance(ImageParameters.class, "jib.from");
-    to = objectFactory.newInstance(ImageParameters.class, "jib.to");
+    from = objectFactory.newInstance(BaseImageParameters.class, "jib.from");
+    to = objectFactory.newInstance(TargetImageParameters.class, "jib.to");
     container = objectFactory.newInstance(ContainerParameters.class);
 
     jvmFlags = objectFactory.listProperty(String.class);
@@ -111,7 +109,7 @@ public class JibExtension {
     args.set(Collections.emptyList());
     useOnlyProjectCache.set(DEFAULT_USE_ONLY_PROJECT_CACHE);
     allowInsecureRegistries.set(DEFAULT_ALLOW_INSECURE_REGISTIRIES);
-    extraDirectory.set(resolveDefaultExtraDirectory(projectDir));
+    extraDirectory.set(resolveDefaultExtraDirectory(project.getProjectDir().toPath()));
   }
 
   /**
@@ -206,13 +204,13 @@ public class JibExtension {
 
   @Nested
   @Optional
-  public ImageParameters getFrom() {
+  public BaseImageParameters getFrom() {
     return from;
   }
 
   @Nested
   @Optional
-  public ImageParameters getTo() {
+  public TargetImageParameters getTo() {
     return to;
   }
 

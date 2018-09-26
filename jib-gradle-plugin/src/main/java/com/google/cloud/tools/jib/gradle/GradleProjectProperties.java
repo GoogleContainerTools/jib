@@ -17,10 +17,16 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.JibLogger;
+import com.google.cloud.tools.jib.event.DefaultEventEmitter;
+import com.google.cloud.tools.jib.event.EventEmitter;
+import com.google.cloud.tools.jib.event.EventHandlers;
+import com.google.cloud.tools.jib.event.JibEventType;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.MainClassResolver;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
+import com.google.cloud.tools.jib.plugins.common.TimerEventHandler;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.File;
 import java.io.IOException;
@@ -34,6 +40,7 @@ import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.WarPluginConvention;
 import org.gradle.api.tasks.bundling.War;
 import org.gradle.jvm.tasks.Jar;
@@ -52,16 +59,25 @@ class GradleProjectProperties implements ProjectProperties {
 
   /** @return a GradleProjectProperties from the given project and logger. */
   static GradleProjectProperties getForProject(
-      Project project, GradleJibLogger gradleJibLogger, Path extraDirectory) {
+      Project project, Logger logger, Path extraDirectory, AbsoluteUnixPath appRoot) {
     try {
       return new GradleProjectProperties(
           project,
-          gradleJibLogger,
-          GradleLayerConfigurations.getForProject(project, gradleJibLogger, extraDirectory));
+          makeEventEmitter(logger),
+          // TODO: Remove
+          new GradleJibLogger(logger),
+          GradleLayerConfigurations.getForProject(project, logger, extraDirectory, appRoot));
 
     } catch (IOException ex) {
       throw new GradleException("Obtaining project build output files failed", ex);
     }
+  }
+
+  private static EventEmitter makeEventEmitter(Logger logger) {
+    return new DefaultEventEmitter(
+        new EventHandlers()
+            .add(JibEventType.LOGGING, new LogEventHandler(logger))
+            .add(JibEventType.TIMING, new TimerEventHandler(logger::debug)));
   }
 
   @Nullable
@@ -75,15 +91,18 @@ class GradleProjectProperties implements ProjectProperties {
   }
 
   private final Project project;
+  private final EventEmitter eventEmitter;
   private final GradleJibLogger gradleJibLogger;
   private final JavaLayerConfigurations javaLayerConfigurations;
 
   @VisibleForTesting
   GradleProjectProperties(
       Project project,
+      EventEmitter eventEmitter,
       GradleJibLogger gradleJibLogger,
       JavaLayerConfigurations javaLayerConfigurations) {
     this.project = project;
+    this.eventEmitter = eventEmitter;
     this.gradleJibLogger = gradleJibLogger;
     this.javaLayerConfigurations = javaLayerConfigurations;
   }
@@ -91,6 +110,11 @@ class GradleProjectProperties implements ProjectProperties {
   @Override
   public JavaLayerConfigurations getJavaLayerConfigurations() {
     return javaLayerConfigurations;
+  }
+
+  @Override
+  public EventEmitter getEventEmitter() {
+    return eventEmitter;
   }
 
   @Override

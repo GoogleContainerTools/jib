@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
@@ -55,8 +56,9 @@ public class BuildTarMojo extends JibPluginConfiguration {
     }
 
     MavenJibLogger mavenJibLogger = new MavenJibLogger(getLog());
+    AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(this);
     MavenProjectProperties mavenProjectProperties =
-        MavenProjectProperties.getForProject(getProject(), mavenJibLogger, getExtraDirectory());
+        MavenProjectProperties.getForProject(getProject(), getLog(), getExtraDirectory(), appRoot);
 
     try {
       MavenHelpfulSuggestionsBuilder mavenHelpfulSuggestionsBuilder =

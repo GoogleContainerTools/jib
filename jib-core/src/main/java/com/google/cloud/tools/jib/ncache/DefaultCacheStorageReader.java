@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.ncache;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.DigestException;
@@ -66,7 +67,7 @@ class DefaultCacheStorageReader {
    * Retrieves the {@link CacheEntry} for the layer with digest {@code layerDigest}.
    *
    * @param layerDigest the layer digest
-   * @return the {@link CacheEntry} referenced by the layer digest
+   * @return the {@link CacheEntry} referenced by the layer digest, if found
    * @throws CacheCorruptedException if the cache was found to be corrupted
    * @throws IOException if an I/O exception occurs
    */
@@ -109,5 +110,36 @@ class DefaultCacheStorageReader {
     }
 
     return Optional.of(cacheEntryBuilder.build());
+  }
+
+  /**
+   * Retrieves the layer digest selected by the {@code selector}.
+   *
+   * @param selector the selector
+   * @return the layer digest {@code selector} selects, if found
+   * @throws CacheCorruptedException if the selector file contents was not a valid layer digest
+   * @throws IOException if an I/O exception occurs
+   */
+  Optional<DescriptorDigest> select(DescriptorDigest selector)
+      throws CacheCorruptedException, IOException {
+    Path selectorFile = defaultCacheStorageFiles.getSelectorFile(selector);
+    if (!Files.exists(selectorFile)) {
+      return Optional.empty();
+    }
+
+    String selectorFileContents =
+        new String(Files.readAllBytes(selectorFile), StandardCharsets.UTF_8);
+    try {
+      return Optional.of(DescriptorDigest.fromHash(selectorFileContents));
+
+    } catch (DigestException ex) {
+      throw new CacheCorruptedException(
+          "Expected valid layer digest as contents of selector file `"
+              + selectorFile
+              + "` for selector `"
+              + selector.getHash()
+              + "`, but got: "
+              + selectorFileContents);
+    }
   }
 }

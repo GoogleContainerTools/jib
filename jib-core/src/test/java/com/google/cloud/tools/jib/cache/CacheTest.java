@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.cache;
 
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.cache.LayerMetadata.LayerMetadataEntry;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
@@ -102,13 +103,15 @@ public class CacheTest {
             "6f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef");
 
     LayerEntry layerEntry1 =
-        new LayerEntry(Paths.get("some", "file"), Paths.get("extractionPath1"));
+        new LayerEntry(Paths.get("some", "file"), AbsoluteUnixPath.get("/extraction/path/1"));
     LayerEntry layerEntry2 =
-        new LayerEntry(Paths.get("some", "other", "file"), Paths.get("extractionPath1"));
+        new LayerEntry(
+            Paths.get("some", "other", "file"), AbsoluteUnixPath.get("/extraction/path/1"));
     LayerEntry layerEntry3 =
-        new LayerEntry(Paths.get("another", "file"), Paths.get("extractionPath2"));
+        new LayerEntry(Paths.get("another", "file"), AbsoluteUnixPath.get("/extraction/path/2"));
     LayerEntry layerEntry4 =
-        new LayerEntry(Paths.get("yet", "another", "file"), Paths.get("extractionPath2"));
+        new LayerEntry(
+            Paths.get("yet", "another", "file"), AbsoluteUnixPath.get("/extraction/path/2"));
 
     LayerMetadata layerMetadata1 =
         LayerMetadata.from(
