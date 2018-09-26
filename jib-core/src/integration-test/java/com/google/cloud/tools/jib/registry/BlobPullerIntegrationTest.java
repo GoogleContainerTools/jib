@@ -67,11 +67,11 @@ public class BlobPullerIntegrationTest {
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
     try {
-    RegistryClient registryClient =
-        RegistryClient.factory(BUILD_LOGGER, "localhost:5000", "busybox")
-            .setAllowInsecureRegistries(true)
-            .newRegistryClient();
-    registryClient.pullBlob(nonexistentDigest).writeTo(ByteStreams.nullOutputStream());
+      RegistryClient registryClient =
+          RegistryClient.factory(BUILD_LOGGER, "localhost:5000", "busybox")
+              .setAllowInsecureRegistries(true)
+              .newRegistryClient();
+      registryClient.pullBlob(nonexistentDigest).writeTo(ByteStreams.nullOutputStream());
       Assert.fail("Trying to pull nonexistent blob should have errored");
 
     } catch (IOException ex) {
