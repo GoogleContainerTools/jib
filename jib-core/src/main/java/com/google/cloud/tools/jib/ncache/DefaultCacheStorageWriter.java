@@ -67,34 +67,34 @@ class DefaultCacheStorageWriter {
       return;
     }
 
+    try {
+      Files.move(source, destination, StandardCopyOption.ATOMIC_MOVE);
+
+    } catch (FileAlreadyExistsException ignored) {
+      // If the file already exists, we skip renaming and use the existing file. This happens if a
+      // new layer happens to have the same content as a previously-cached layer.
+      //
+      // Do not attempt to remove the try-catch block with the idea of checking file existence
+      // before moving; there can be concurrent file moves.
+
+    } catch (AtomicMoveNotSupportedException ignored) {
       try {
-        Files.move(source, destination, StandardCopyOption.ATOMIC_MOVE);
+        Files.move(source, destination);
 
-      } catch (FileAlreadyExistsException ignored) {
-        // If the file already exists, we skip renaming and use the existing file. This happens if a
-        // new layer happens to have the same content as a previously-cached layer.
-        //
-        // Do not attempt to remove the try-catch block with the idea of checking file existence
-        // before moving; there can be concurrent file moves.
+      } catch (FileAlreadyExistsException alsoIgnored) {
+        // Same reasoning
 
-      } catch (AtomicMoveNotSupportedException ignored) {
-        try {
-          Files.move(source, destination);
-
-        } catch (FileAlreadyExistsException alsoIgnored) {
-          // Same reasoning
-
-        } catch (DirectoryNotEmptyException ex) {
-          // The file system cannot rename directories, so we must resort to copying the directory.
-          Files.createDirectory(destination);
-          try (Stream<Path> sourceFiles = Files.list(source)) {
-            for (Path sourceFile : sourceFiles.collect(Collectors.toList())) {
-              Files
-                  .copy(sourceFile, destination.resolve(sourceFile.getFileName()));
-            }
+      } catch (DirectoryNotEmptyException ex) {
+        // The file system cannot rename directories, so we must resort to copying the directory.
+        Files.createDirectory(destination);
+        try (Stream<Path> sourceFiles = Files.list(source)) {
+          for (Path sourceFile : sourceFiles.collect(Collectors.toList())) {
+            Files
+                .copy(sourceFile, destination.resolve(sourceFile.getFileName()));
           }
         }
       }
+    }
   }
 
   private final DefaultCacheStorageFiles defaultCacheStorageFiles;
