@@ -80,8 +80,7 @@ public class BuildStepsRunner {
    */
   public static BuildStepsRunner forBuildImage(BuildConfiguration buildConfiguration) {
     return new BuildStepsRunner(
-        BuildSteps.forBuildToDockerRegistry(
-            buildConfiguration),
+        BuildSteps.forBuildToDockerRegistry(buildConfiguration),
         buildMessageWithTargetImageReferences(
             buildConfiguration, STARTUP_MESSAGE_PREFIX_FOR_DOCKER_REGISTRY, "..."),
         buildMessageWithTargetImageReferences(
@@ -96,8 +95,7 @@ public class BuildStepsRunner {
    */
   public static BuildStepsRunner forBuildToDockerDaemon(BuildConfiguration buildConfiguration) {
     return new BuildStepsRunner(
-        BuildSteps.forBuildToDockerDaemon(
-            buildConfiguration),
+        BuildSteps.forBuildToDockerDaemon(buildConfiguration),
         buildMessageWithTargetImageReferences(
             buildConfiguration, STARTUP_MESSAGE_PREFIX_FOR_DOCKER_DAEMON, "..."),
         buildMessageWithTargetImageReferences(
@@ -111,10 +109,10 @@ public class BuildStepsRunner {
    * @param buildConfiguration the configuration parameters for the build
    * @return a {@link BuildStepsRunner} for building a tarball
    */
-  public static BuildStepsRunner forBuildTar(Path outputPath, BuildConfiguration buildConfiguration) {
+  public static BuildStepsRunner forBuildTar(
+      Path outputPath, BuildConfiguration buildConfiguration) {
     return new BuildStepsRunner(
-        BuildSteps.forBuildToTar(
-            outputPath, buildConfiguration),
+        BuildSteps.forBuildToTar(outputPath, buildConfiguration),
         String.format(STARTUP_MESSAGE_FORMAT_FOR_TARBALL, outputPath.toString()),
         String.format(SUCCESS_MESSAGE_FORMAT_FOR_TARBALL, outputPath.toString()));
   }
@@ -244,7 +242,6 @@ public class BuildStepsRunner {
     } catch (InterruptedException ex) {
       // TODO: Add more suggestions for various build failures.
       throw new BuildStepsExecutionException(helpfulSuggestions.none(), ex);
-
     }
   }
 }

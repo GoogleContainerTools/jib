@@ -28,7 +28,6 @@ import com.google.cloud.tools.jib.registry.InsecureRegistryException;
 import com.google.cloud.tools.jib.registry.RegistryCredentialsNotSentException;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import com.google.common.collect.ImmutableList;
-import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.file.Paths;
 import java.util.concurrent.ExecutionException;
@@ -233,22 +232,6 @@ public class BuildStepsRunnerTest {
     } catch (BuildStepsExecutionException ex) {
       Assert.assertEquals(TEST_HELPFUL_SUGGESTIONS.none(), ex.getMessage());
       Assert.assertEquals(throwable, ex.getCause());
-    }
-  }
-
-  @Test
-  public void testBuildImage_otherException()
-      throws InterruptedException, ExecutionException {
-    IOException ioException = new IOException();
-    Mockito.doThrow(ioException).when(mockBuildSteps).run();
-
-    try {
-      testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
-      Assert.fail("buildImage should have thrown an exception");
-
-    } catch (BuildStepsExecutionException ex) {
-      Assert.assertEquals(TEST_HELPFUL_SUGGESTIONS.none(), ex.getMessage());
-      Assert.assertEquals(ioException, ex.getCause());
     }
   }
 }

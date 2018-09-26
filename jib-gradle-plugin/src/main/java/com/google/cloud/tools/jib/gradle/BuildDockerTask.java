@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
@@ -28,6 +28,7 @@ import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.base.Preconditions;
+import java.io.IOException;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -65,7 +66,9 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
   }
 
   @TaskAction
-  public void buildDocker() throws InvalidImageReferenceException {
+  public void buildDocker()
+      throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
+          BuildStepsExecutionException {
     if (!new DockerClient().isDockerInstalled()) {
       throw new GradleException(
           HelpfulSuggestions.forDockerNotInstalled(HELPFUL_SUGGESTIONS_PREFIX));
@@ -113,13 +116,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
             .setTargetImageReference(buildConfiguration.getTargetImageConfiguration().getImage())
             .build();
 
-    // Uses a directory in the Gradle build cache as the Jib cache.
-    try {
-      BuildStepsRunner.forBuildToDockerDaemon(buildConfiguration).build(helpfulSuggestions);
-
-    } catch (CacheDirectoryCreationException | BuildStepsExecutionException ex) {
-      throw new GradleException(ex.getMessage(), ex.getCause());
-    }
+    BuildStepsRunner.forBuildToDockerDaemon(buildConfiguration).build(helpfulSuggestions);
   }
 
   @Override

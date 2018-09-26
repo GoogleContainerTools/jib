@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.security.DigestException;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -65,19 +66,22 @@ public class BlobPullerIntegrationTest {
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
-    // try {
+    try {
     RegistryClient registryClient =
         RegistryClient.factory(BUILD_LOGGER, "localhost:5000", "busybox")
             .setAllowInsecureRegistries(true)
             .newRegistryClient();
     registryClient.pullBlob(nonexistentDigest).writeTo(ByteStreams.nullOutputStream());
-    //   Assert.fail("Trying to pull nonexistent blob should have errored");
-    //
-    // } catch (RegistryErrorException ex) {
-    //   Assert.assertThat(
-    //       ex.getMessage(),
-    //       CoreMatchers.containsString(
-    //           "pull BLOB for localhost:5000/busybox with digest " + nonexistentDigest));
-    // }
+      Assert.fail("Trying to pull nonexistent blob should have errored");
+
+    } catch (IOException ex) {
+      if (!(ex.getCause() instanceof RegistryErrorException)) {
+        throw ex;
+      }
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.containsString(
+              "pull BLOB for localhost:5000/busybox with digest " + nonexistentDigest));
+    }
   }
 }
