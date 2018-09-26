@@ -32,7 +32,7 @@ public class TemporaryDirectory implements Closeable {
   private final Path temporaryDirectory;
 
   /**
-   * Creates a new temporary directory under {@code parentDirectory}.
+   * Creates a new temporary directory under an existing {@code parentDirectory}.
    *
    * @param parentDirectory the directory to create the temporary directory within
    * @throws IOException if an I/O exception occurs

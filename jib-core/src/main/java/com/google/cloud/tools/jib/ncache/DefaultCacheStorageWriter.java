@@ -89,8 +89,7 @@ class DefaultCacheStorageWriter {
         Files.createDirectory(destination);
         try (Stream<Path> sourceFiles = Files.list(source)) {
           for (Path sourceFile : sourceFiles.collect(Collectors.toList())) {
-            Files
-                .copy(sourceFile, destination.resolve(sourceFile.getFileName()));
+            Files.copy(sourceFile, destination.resolve(sourceFile.getFileName()));
           }
         }
       }
