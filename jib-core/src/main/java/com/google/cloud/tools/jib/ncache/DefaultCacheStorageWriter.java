@@ -133,7 +133,7 @@ class DefaultCacheStorageWriter {
 
       // Writes the layer file to the temporary directory.
       WrittenLayer writtenLayer =
-          writeUncompressedLayerBlobToDirectory(
+          writeCompressedLayerBlobToDirectory(
               compressedCacheWrite.getCompressedLayerBlob(), temporaryLayerDirectory);
 
       // Moves the temporary directory to the final location.
