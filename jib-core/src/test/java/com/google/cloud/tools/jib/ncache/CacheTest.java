@@ -154,17 +154,17 @@ public class CacheTest {
   }
 
   @Test
-  public void testWriteLayerOnly_retrieveByLayerDigest()
+  public void testWriteCompressed_retrieveByLayerDigest()
       throws IOException, CacheCorruptedException {
     Cache cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
 
-    verifyIsLayer1NoMetadata(cache.write(layerBlob1));
+    verifyIsLayer1NoMetadata(cache.write(compress(layerBlob1)));
     verifyIsLayer1NoMetadata(cache.retrieve(layerDigest1).orElseThrow(AssertionError::new));
     Assert.assertFalse(cache.retrieve(layerDigest2).isPresent());
   }
 
   @Test
-  public void testWriteWithLayerEntries_retrieveByLayerDigest()
+  public void testWriteUncompressedWithLayerEntries_retrieveByLayerDigest()
       throws IOException, CacheCorruptedException {
     Cache cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
 
@@ -174,7 +174,7 @@ public class CacheTest {
   }
 
   @Test
-  public void testWriteWithLayerEntries_retrieveByLayerEntries()
+  public void testWriteUncompressedWithLayerEntries_retrieveByLayerEntries()
       throws IOException, CacheCorruptedException {
     Cache cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
 
