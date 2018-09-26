@@ -65,78 +65,118 @@ public class JavaLayerConfigurations {
   /** Builds with each layer's files. */
   public static class Builder {
 
-    private final Map<LayerType, List<Path>> layerFilesMap = new EnumMap<>(LayerType.class);
-    private final Map<LayerType, AbsoluteUnixPath> extractionPathMap =
-        new EnumMap<>(LayerType.class);
+    private static class LayerFile {
+      private Path sourceFile;
+      private AbsoluteUnixPath extractionPath;
+      private boolean recursiveAdd;
+
+      private LayerFile(Path sourceFile, AbsoluteUnixPath extractionPath, boolean recursiveAdd) {
+        this.sourceFile = sourceFile;
+        this.extractionPath = extractionPath;
+        this.recursiveAdd = recursiveAdd;
+      }
+    }
+
+    private final Map<LayerType, List<LayerFile>> layerFilesMap = new EnumMap<>(LayerType.class);
 
     private Builder() {
       for (LayerType layerType : LayerType.values()) {
         layerFilesMap.put(layerType, new ArrayList<>());
-        extractionPathMap.put(layerType, AbsoluteUnixPath.get("/"));
       }
     }
 
-    public Builder setDependencyFiles(List<Path> dependencyFiles, AbsoluteUnixPath extractionPath) {
-      layerFilesMap.put(LayerType.DEPENDENCIES, dependencyFiles);
-      extractionPathMap.put(LayerType.DEPENDENCIES, extractionPath);
+    public Builder addDependencyFile(Path dependencyFile, AbsoluteUnixPath extractionPath) {
+      addLayerFile(LayerType.DEPENDENCIES, dependencyFile, extractionPath, false);
       return this;
     }
 
-    public Builder setSnapshotDependencyFiles(
-        List<Path> snapshotDependencyFiles, AbsoluteUnixPath extractionPath) {
-      layerFilesMap.put(LayerType.SNAPSHOT_DEPENDENCIES, snapshotDependencyFiles);
-      extractionPathMap.put(LayerType.SNAPSHOT_DEPENDENCIES, extractionPath);
+    public Builder addSnapshotDependencyFile(
+        Path snapshotDependencyFile, AbsoluteUnixPath extractionPath) {
+      addLayerFile(LayerType.SNAPSHOT_DEPENDENCIES, snapshotDependencyFile, extractionPath, false);
       return this;
     }
 
-    public Builder setResourceFiles(List<Path> resourceFiles, AbsoluteUnixPath extractionPath) {
-      layerFilesMap.put(LayerType.RESOURCES, resourceFiles);
-      extractionPathMap.put(LayerType.RESOURCES, extractionPath);
+    public Builder addResourceFile(Path resourceFile, AbsoluteUnixPath extractionPath) {
+      addLayerFile(LayerType.RESOURCES, resourceFile, extractionPath, false);
       return this;
     }
 
-    public Builder setClassFiles(List<Path> classFiles, AbsoluteUnixPath extractionPath) {
-      layerFilesMap.put(LayerType.CLASSES, classFiles);
-      extractionPathMap.put(LayerType.CLASSES, extractionPath);
+    public Builder addClassFile(Path classFile, AbsoluteUnixPath extractionPath) {
+      addLayerFile(LayerType.CLASSES, classFile, extractionPath, false);
       return this;
     }
 
-    public Builder setExtraFiles(List<Path> extraFiles, AbsoluteUnixPath extractionPath) {
-      layerFilesMap.put(LayerType.EXTRA_FILES, extraFiles);
-      extractionPathMap.put(LayerType.EXTRA_FILES, extractionPath);
+    public Builder addExtraFile(Path extraFile, AbsoluteUnixPath extractionPath) {
+      addLayerFile(LayerType.EXTRA_FILES, extraFile, extractionPath, false);
       return this;
     }
 
     // TODO: remove this and put files in WAR into the relevant layers (i.e., dependencies, snapshot
     // dependencies, resources, and classes layers).
-    public Builder setExplodedWarFiles(
-        List<Path> explodedWarFiles, AbsoluteUnixPath extractionPath) {
-      layerFilesMap.put(LayerType.EXPLODED_WAR, explodedWarFiles);
-      extractionPathMap.put(LayerType.EXPLODED_WAR, extractionPath);
+    public Builder addExplodedWarFile(Path explodedWarFile, AbsoluteUnixPath extractionPath) {
+      addLayerFile(LayerType.EXPLODED_WAR, explodedWarFile, extractionPath, false);
+      return this;
+    }
+
+    public Builder addDependencyFileRecursive(
+        Path dependencyFile, AbsoluteUnixPath extractionPath) {
+      addLayerFile(LayerType.DEPENDENCIES, dependencyFile, extractionPath, true);
+      return this;
+    }
+
+    public Builder addSnapshotDependencyFileRecursive(
+        Path snapshotDependencyFile, AbsoluteUnixPath extractionPath) {
+      addLayerFile(LayerType.SNAPSHOT_DEPENDENCIES, snapshotDependencyFile, extractionPath, true);
+      return this;
+    }
+
+    public Builder addResourceFileRecursive(Path resourceFile, AbsoluteUnixPath extractionPath) {
+      addLayerFile(LayerType.RESOURCES, resourceFile, extractionPath, true);
+      return this;
+    }
+
+    public Builder addClassFileRecursive(Path classFile, AbsoluteUnixPath extractionPath) {
+      addLayerFile(LayerType.CLASSES, classFile, extractionPath, true);
+      return this;
+    }
+
+    public Builder addExtraFileRecursive(Path extraFile, AbsoluteUnixPath extractionPath) {
+      addLayerFile(LayerType.EXTRA_FILES, extraFile, extractionPath, true);
+      return this;
+    }
+
+    // TODO: remove this and put files in WAR into the relevant layers (i.e., dependencies, snapshot
+    // dependencies, resources, and classes layers).
+    public Builder addExplodedWarFileRecursive(
+        Path explodedWarFile, AbsoluteUnixPath extractionPath) {
+      addLayerFile(LayerType.EXPLODED_WAR, explodedWarFile, extractionPath, true);
       return this;
     }
 
     public JavaLayerConfigurations build() throws IOException {
       ImmutableMap.Builder<LayerType, LayerConfiguration> layerConfigurationsMap =
           ImmutableMap.builderWithExpectedSize(LayerType.values().length);
-      for (LayerType layerType : LayerType.values()) {
-        AbsoluteUnixPath extractionPath =
-            Preconditions.checkNotNull(extractionPathMap.get(layerType));
 
+      for (LayerType layerType : LayerType.values()) {
         LayerConfiguration.Builder layerConfigurationBuilder =
             LayerConfiguration.builder().setName(layerType.getName());
 
-        // Adds all the layer files recursively.
-        List<Path> layerFiles = Preconditions.checkNotNull(layerFilesMap.get(layerType));
-        for (Path layerFile : layerFiles) {
-          layerConfigurationBuilder.addEntryRecursive(
-              layerFile, extractionPath.resolve(layerFile.getFileName()));
+        for (LayerFile file : layerFilesMap.get(layerType)) {
+          if (file.recursiveAdd) {
+            layerConfigurationBuilder.addEntryRecursive(file.sourceFile, file.extractionPath);
+          } else {
+            layerConfigurationBuilder.addEntry(file.sourceFile, file.extractionPath);
+          }
         }
-
         layerConfigurationsMap.put(layerType, layerConfigurationBuilder.build());
       }
-      return new JavaLayerConfigurations(
-          layerConfigurationsMap.build(), ImmutableMap.copyOf(extractionPathMap));
+      return new JavaLayerConfigurations(layerConfigurationsMap.build());
+    }
+
+    private void addLayerFile(
+        LayerType type, Path sourceFile, AbsoluteUnixPath extractionPath, boolean recursiveAdd) {
+      List<LayerFile> filesToAdd = Preconditions.checkNotNull(layerFilesMap.get(type));
+      filesToAdd.add(new LayerFile(sourceFile, extractionPath, recursiveAdd));
     }
   }
 
@@ -151,13 +191,10 @@ public class JavaLayerConfigurations {
   public static final String DEFAULT_APP_ROOT = "/app";
 
   private final ImmutableMap<LayerType, LayerConfiguration> layerConfigurationMap;
-  private final ImmutableMap<LayerType, AbsoluteUnixPath> extractionPathMap;
 
   private JavaLayerConfigurations(
-      ImmutableMap<LayerType, LayerConfiguration> layerConfigurationMap,
-      ImmutableMap<LayerType, AbsoluteUnixPath> extractionPathMap) {
+      ImmutableMap<LayerType, LayerConfiguration> layerConfigurationMap) {
     this.layerConfigurationMap = layerConfigurationMap;
-    this.extractionPathMap = extractionPathMap;
   }
 
   public ImmutableList<LayerConfiguration> getLayerConfigurations() {
@@ -190,35 +227,7 @@ public class JavaLayerConfigurations {
     return getLayerEntries(LayerType.EXPLODED_WAR);
   }
 
-  public AbsoluteUnixPath getDependencyExtractionPath() {
-    return getExtractionPath(LayerType.DEPENDENCIES);
-  }
-
-  public AbsoluteUnixPath getSnapshotDependencyExtractionPath() {
-    return getExtractionPath(LayerType.SNAPSHOT_DEPENDENCIES);
-  }
-
-  public AbsoluteUnixPath getResourceExtractionPath() {
-    return getExtractionPath(LayerType.RESOURCES);
-  }
-
-  public AbsoluteUnixPath getClassExtractionPath() {
-    return getExtractionPath(LayerType.CLASSES);
-  }
-
-  public AbsoluteUnixPath getExtraFilesExtractionPath() {
-    return getExtractionPath(LayerType.EXTRA_FILES);
-  }
-
-  public AbsoluteUnixPath getExplodedWarExtractionPath() {
-    return getExtractionPath(LayerType.EXPLODED_WAR);
-  }
-
   private ImmutableList<LayerEntry> getLayerEntries(LayerType layerType) {
     return Preconditions.checkNotNull(layerConfigurationMap.get(layerType)).getLayerEntries();
-  }
-
-  private AbsoluteUnixPath getExtractionPath(LayerType layerType) {
-    return Preconditions.checkNotNull(extractionPathMap.get(layerType));
   }
 }

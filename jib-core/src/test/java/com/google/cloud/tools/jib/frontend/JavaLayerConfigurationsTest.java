@@ -1,9 +1,12 @@
 package com.google.cloud.tools.jib.frontend;
 
+import com.google.api.client.repackaged.com.google.common.base.Supplier;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.LayerEntry;
+import com.google.common.io.Resources;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -19,22 +22,13 @@ public class JavaLayerConfigurationsTest {
 
   private static JavaLayerConfigurations createFakeConfigurations() throws IOException {
     return JavaLayerConfigurations.builder()
-        .setDependencyFiles(
-            Collections.singletonList(Paths.get("dependency")),
-            AbsoluteUnixPath.get("/dependency/path"))
-        .setSnapshotDependencyFiles(
-            Collections.singletonList(Paths.get("snapshot dependency")),
-            AbsoluteUnixPath.get("/snapshots"))
-        .setResourceFiles(
-            Collections.singletonList(Paths.get("resource")),
-            AbsoluteUnixPath.get("/resources/here"))
-        .setClassFiles(
-            Collections.singletonList(Paths.get("class")), AbsoluteUnixPath.get("/classes/go/here"))
-        .setExplodedWarFiles(
-            Collections.singletonList(Paths.get("exploded war")), AbsoluteUnixPath.get("/for/war"))
-        .setExtraFiles(
-            Collections.singletonList(Paths.get("extra file")),
-            AbsoluteUnixPath.get("/some/extras"))
+        .addDependencyFile(Paths.get("dependency"), AbsoluteUnixPath.get("/dependency/path"))
+        .addSnapshotDependencyFile(
+            Paths.get("snapshot dependency"), AbsoluteUnixPath.get("/snapshots"))
+        .addResourceFile(Paths.get("resource"), AbsoluteUnixPath.get("/resources/here"))
+        .addClassFile(Paths.get("class"), AbsoluteUnixPath.get("/classes/go/here"))
+        .addExplodedWarFile(Paths.get("exploded war"), AbsoluteUnixPath.get("/for/war"))
+        .addExtraFile(Paths.get("extra file"), AbsoluteUnixPath.get("/some/extras"))
         .build();
   }
 
@@ -58,7 +52,7 @@ public class JavaLayerConfigurationsTest {
   }
 
   @Test
-  public void testSetFiles_files() throws IOException {
+  public void testAddFile() throws IOException {
     JavaLayerConfigurations javaLayerConfigurations = createFakeConfigurations();
 
     List<List<Path>> expectedFiles =
@@ -80,39 +74,74 @@ public class JavaLayerConfigurationsTest {
   }
 
   @Test
-  public void testSetFiles_extractionPaths() throws IOException {
-    JavaLayerConfigurations configurations = createFakeConfigurations();
+  public void testAddFileRecursive_directories() throws IOException, URISyntaxException {
+    Path sourceDirectory = Paths.get(Resources.getResource("application").toURI());
+    sourceDirectory.getParent().relativize(sourceDirectory);
+
+    JavaLayerConfigurations configurations =
+        JavaLayerConfigurations.builder()
+            .addDependencyFileRecursive(sourceDirectory, AbsoluteUnixPath.get("/libs/dir"))
+            .addSnapshotDependencyFileRecursive(
+                sourceDirectory, AbsoluteUnixPath.get("/snapshots/target"))
+            .addResourceFileRecursive(sourceDirectory, AbsoluteUnixPath.get("/resources"))
+            .addClassFileRecursive(sourceDirectory, AbsoluteUnixPath.get("/classes/here"))
+            .addExplodedWarFileRecursive(sourceDirectory, AbsoluteUnixPath.get("/exploded-war"))
+            .addExtraFileRecursive(sourceDirectory, AbsoluteUnixPath.get("/extra/files"))
+            .build();
+
+    verifyRecursiveAdd(configurations::getDependencyLayerEntries, sourceDirectory, "/libs/dir");
+    verifyRecursiveAdd(
+        configurations::getSnapshotDependencyLayerEntries, sourceDirectory, "/snapshots/target");
+    verifyRecursiveAdd(configurations::getResourceLayerEntries, sourceDirectory, "/resources");
+    verifyRecursiveAdd(configurations::getClassLayerEntries, sourceDirectory, "/classes/here");
+    verifyRecursiveAdd(configurations::getExplodedWarEntries, sourceDirectory, "/exploded-war");
+    verifyRecursiveAdd(configurations::getExtraFilesLayerEntries, sourceDirectory, "/extra/files");
+  }
+
+  @Test
+  public void testAddFileRecursive_regularFiles() throws IOException, URISyntaxException {
+    Path sourceFile = Paths.get(Resources.getResource("application/resources/world").toURI());
+
+    JavaLayerConfigurations configurations =
+        JavaLayerConfigurations.builder()
+            .addDependencyFileRecursive(sourceFile, AbsoluteUnixPath.get("/libs/file"))
+            .addSnapshotDependencyFileRecursive(
+                sourceFile, AbsoluteUnixPath.get("/snapshots/target/file"))
+            .addResourceFileRecursive(sourceFile, AbsoluteUnixPath.get("/resources-file"))
+            .addClassFileRecursive(sourceFile, AbsoluteUnixPath.get("/classes/file"))
+            .addExplodedWarFileRecursive(sourceFile, AbsoluteUnixPath.get("/exploded-war/file"))
+            .addExtraFileRecursive(sourceFile, AbsoluteUnixPath.get("/some/file"))
+            .build();
 
     Assert.assertEquals(
-        AbsoluteUnixPath.get("/dependency/path"), configurations.getDependencyExtractionPath());
+        Arrays.asList(new LayerEntry(sourceFile, AbsoluteUnixPath.get("/libs/file"))),
+        configurations.getDependencyLayerEntries());
     Assert.assertEquals(
-        AbsoluteUnixPath.get("/snapshots"), configurations.getSnapshotDependencyExtractionPath());
+        Arrays.asList(new LayerEntry(sourceFile, AbsoluteUnixPath.get("/snapshots/target/file"))),
+        configurations.getSnapshotDependencyLayerEntries());
     Assert.assertEquals(
-        AbsoluteUnixPath.get("/resources/here"), configurations.getResourceExtractionPath());
+        Arrays.asList(new LayerEntry(sourceFile, AbsoluteUnixPath.get("/resources-file"))),
+        configurations.getResourceLayerEntries());
     Assert.assertEquals(
-        AbsoluteUnixPath.get("/classes/go/here"), configurations.getClassExtractionPath());
+        Arrays.asList(new LayerEntry(sourceFile, AbsoluteUnixPath.get("/classes/file"))),
+        configurations.getClassLayerEntries());
     Assert.assertEquals(
-        AbsoluteUnixPath.get("/for/war"), configurations.getExplodedWarExtractionPath());
+        Arrays.asList(new LayerEntry(sourceFile, AbsoluteUnixPath.get("/exploded-war/file"))),
+        configurations.getExplodedWarEntries());
     Assert.assertEquals(
-        AbsoluteUnixPath.get("/some/extras"), configurations.getExtraFilesExtractionPath());
+        Arrays.asList(new LayerEntry(sourceFile, AbsoluteUnixPath.get("/some/file"))),
+        configurations.getExtraFilesLayerEntries());
+  }
 
-    Assert.assertEquals(
-        AbsoluteUnixPath.get("/dependency/path/dependency"),
-        configurations.getDependencyLayerEntries().get(0).getExtractionPath());
-    Assert.assertEquals(
-        AbsoluteUnixPath.get("/snapshots/snapshot dependency"),
-        configurations.getSnapshotDependencyLayerEntries().get(0).getExtractionPath());
-    Assert.assertEquals(
-        AbsoluteUnixPath.get("/resources/here/resource"),
-        configurations.getResourceLayerEntries().get(0).getExtractionPath());
-    Assert.assertEquals(
-        AbsoluteUnixPath.get("/classes/go/here/class"),
-        configurations.getClassLayerEntries().get(0).getExtractionPath());
-    Assert.assertEquals(
-        AbsoluteUnixPath.get("/for/war/exploded war"),
-        configurations.getExplodedWarEntries().get(0).getExtractionPath());
-    Assert.assertEquals(
-        AbsoluteUnixPath.get("/some/extras/extra file"),
-        configurations.getExtraFilesLayerEntries().get(0).getExtractionPath());
+  private static void verifyRecursiveAdd(
+      Supplier<List<LayerEntry>> layerEntriesSupplier, Path sourceRoot, String extractionRoot) {
+    Assert.assertEquals(12, layerEntriesSupplier.get().size());
+
+    for (LayerEntry entry : layerEntriesSupplier.get()) {
+      Path relativeSourcePath = sourceRoot.relativize(entry.getSourceFile());
+      AbsoluteUnixPath expectedPath =
+          AbsoluteUnixPath.get(extractionRoot).resolve(relativeSourcePath);
+      Assert.assertEquals(expectedPath, entry.getExtractionPath());
+    }
   }
 }
