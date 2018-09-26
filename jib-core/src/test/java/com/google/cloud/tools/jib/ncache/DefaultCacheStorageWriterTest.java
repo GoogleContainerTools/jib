@@ -76,7 +76,7 @@ public class DefaultCacheStorageWriterTest {
 
     CacheEntry cacheEntry =
         new DefaultCacheStorageWriter(defaultCacheStorageFiles)
-            .write(new CompressedCacheWrite(compress(uncompressedLayerBlob)));
+            .write(compress(uncompressedLayerBlob));
 
     verifyCacheEntry(cacheEntry, uncompressedLayerBlob);
     Assert.assertFalse(cacheEntry.getMetadataBlob().isPresent());

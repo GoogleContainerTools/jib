@@ -100,7 +100,13 @@ class DefaultCacheStorageWriter {
     }
   }
 
-  // TODO: javadoc
+  /**
+   * Decompresses the file to obtain the diff ID.
+   *
+   * @param compressedFile the file containing the compressed contents
+   * @return the digest of the decompressed file
+   * @throws IOException if an I/O exception occurs
+   */
   private static DescriptorDigest getDiffIdByDecompressingFile(Path compressedFile)
       throws IOException {
     try (CountingDigestOutputStream diffIdCaptureOutputStream =
@@ -120,8 +126,17 @@ class DefaultCacheStorageWriter {
     this.defaultCacheStorageFiles = defaultCacheStorageFiles;
   }
 
-  // TODO: Javadoc
-  CacheEntry write(CompressedCacheWrite compressedCacheWrite) throws IOException {
+  /**
+   * Writes a compressed layer {@link Blob}.
+   *
+   * <p>The {@code compressedLayerBlob} is written to the layer directory under the layers directory
+   * corresponding to the layer blob.
+   *
+   * @param compressedLayerBlob the compressed layer {@link Blob} to write out
+   * @return the {@link CacheEntry} representing the written entry
+   * @throws IOException if an I/O exception occurs
+   */
+  CacheEntry write(Blob compressedLayerBlob) throws IOException {
     // Creates the layers directory if it doesn't exist.
     Files.createDirectories(defaultCacheStorageFiles.getLayersDirectory());
 
@@ -133,8 +148,7 @@ class DefaultCacheStorageWriter {
 
       // Writes the layer file to the temporary directory.
       WrittenLayer writtenLayer =
-          writeCompressedLayerBlobToDirectory(
-              compressedCacheWrite.getCompressedLayerBlob(), temporaryLayerDirectory);
+          writeCompressedLayerBlobToDirectory(compressedLayerBlob, temporaryLayerDirectory);
 
       // Moves the temporary directory to the final location.
       moveIfDoesNotExist(
@@ -165,9 +179,6 @@ class DefaultCacheStorageWriter {
    *   <li>The {@link UncompressedCacheWrite#getSelector} is written to the selector file under the
    *       selectors directory.
    * </ul>
-   *
-   * Note that writes that fail to clean up unfinished temporary directories could result in stray
-   * directories in the layers directory. Cache reads should ignore these stray directories.
    *
    * @param uncompressedCacheWrite the {@link UncompressedCacheWrite} to write out
    * @return the {@link CacheEntry} representing the written entry

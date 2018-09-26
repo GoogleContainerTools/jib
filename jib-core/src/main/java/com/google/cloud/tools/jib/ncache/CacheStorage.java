@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.ncache;
 
+import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import java.io.IOException;
 import java.util.Optional;
@@ -45,13 +46,13 @@ interface CacheStorage {
   CacheEntry write(UncompressedCacheWrite uncompressedCacheWrite) throws IOException;
 
   /**
-   * Saves the {@link CompressedCacheWrite}.
+   * Saves a compressed layer {@link Blob}.
    *
-   * @param uncompressedCacheWrite the {@link CompressedCacheWrite}
-   * @return the {@link CacheEntry} for the written {@link CompressedCacheWrite}
+   * @param compressedLayerBlob the compressed layer {@link Blob}
+   * @return the {@link CacheEntry} for the written layer
    * @throws IOException if an I/O exception occurs
    */
-  CacheEntry write(CompressedCacheWrite uncompressedCacheWrite) throws IOException;
+  CacheEntry write(Blob compressedLayerBlob) throws IOException;
 
   /**
    * Fetches all the layer digests stored.

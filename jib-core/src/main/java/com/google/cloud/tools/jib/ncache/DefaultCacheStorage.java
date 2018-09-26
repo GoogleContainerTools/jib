@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.ncache;
 
+import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -70,8 +71,8 @@ class DefaultCacheStorage implements CacheStorage {
   }
 
   @Override
-  public CacheEntry write(CompressedCacheWrite compressedCacheWrite) throws IOException {
-    return defaultCacheStorageWriter.write(compressedCacheWrite);
+  public CacheEntry write(Blob compressedLayerBlob) throws IOException {
+    return defaultCacheStorageWriter.write(compressedLayerBlob);
   }
 
   @Override
