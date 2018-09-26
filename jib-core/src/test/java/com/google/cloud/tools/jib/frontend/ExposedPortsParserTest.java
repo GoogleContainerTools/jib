@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.frontend;
 
-import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.configuration.Port;
 import com.google.common.collect.ImmutableList;
 import java.util.Arrays;
@@ -24,15 +23,9 @@ import java.util.Collections;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link ExposedPortsParser}. */
-@RunWith(MockitoJUnitRunner.class)
 public class ExposedPortsParserTest {
-
-  @Mock private JibLogger mockLogger;
 
   @Test
   public void testParse() {

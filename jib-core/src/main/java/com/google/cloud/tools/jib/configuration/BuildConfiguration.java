@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.configuration;
 
 import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.event.EventEmitter;
+import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.RegistryClient;
@@ -208,10 +209,11 @@ public class BuildConfiguration {
             throw new IllegalStateException("Required fields should not be null");
           }
           if (baseImageConfiguration.getImage().usesDefaultTag()) {
-            buildLogger.warn(
-                "Base image '"
-                    + baseImageConfiguration.getImage()
-                    + "' does not use a specific image digest - build may not be reproducible");
+            eventEmitter.emit(
+                LogEvent.warn(
+                    "Base image '"
+                        + baseImageConfiguration.getImage()
+                        + "' does not use a specific image digest - build may not be reproducible"));
           }
 
           return new BuildConfiguration(
@@ -390,7 +392,7 @@ public class BuildConfiguration {
 
   private RegistryClient.Factory newRegistryClientFactory(ImageConfiguration imageConfiguration) {
     return RegistryClient.factory(
-            getBuildLogger(),
+            getEventEmitter(),
             imageConfiguration.getImageRegistry(),
             imageConfiguration.getImageRepository())
         .setAllowInsecureRegistries(getAllowInsecureRegistries())

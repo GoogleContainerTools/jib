@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.event.DefaultEventEmitter;
 import com.google.cloud.tools.jib.event.EventEmitter;
 import com.google.cloud.tools.jib.event.EventHandlers;
@@ -64,8 +63,6 @@ class GradleProjectProperties implements ProjectProperties {
       return new GradleProjectProperties(
           project,
           makeEventEmitter(logger),
-          // TODO: Remove
-          new GradleJibLogger(logger),
           GradleLayerConfigurations.getForProject(project, logger, extraDirectory, appRoot));
 
     } catch (IOException ex) {
@@ -92,18 +89,13 @@ class GradleProjectProperties implements ProjectProperties {
 
   private final Project project;
   private final EventEmitter eventEmitter;
-  private final GradleJibLogger gradleJibLogger;
   private final JavaLayerConfigurations javaLayerConfigurations;
 
   @VisibleForTesting
   GradleProjectProperties(
-      Project project,
-      EventEmitter eventEmitter,
-      GradleJibLogger gradleJibLogger,
-      JavaLayerConfigurations javaLayerConfigurations) {
+      Project project, EventEmitter eventEmitter, JavaLayerConfigurations javaLayerConfigurations) {
     this.project = project;
     this.eventEmitter = eventEmitter;
-    this.gradleJibLogger = gradleJibLogger;
     this.javaLayerConfigurations = javaLayerConfigurations;
   }
 
@@ -115,11 +107,6 @@ class GradleProjectProperties implements ProjectProperties {
   @Override
   public EventEmitter getEventEmitter() {
     return eventEmitter;
-  }
-
-  @Override
-  public JibLogger getLogger() {
-    return gradleJibLogger;
   }
 
   @Override
