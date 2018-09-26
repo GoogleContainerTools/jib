@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.ncache;
 
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
@@ -35,9 +36,10 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
 
-/** Tests for {@link LastModifiedMetadata}. */
-public class LastModifiedMetadataTest {
+/** Tests for {@link LastModifiedTimeMetadata}. */
+public class LastModifiedTimeMetadataTest {
 
   private static LayerEntry copyFile(Path source, Path destination, FileTime newLastModifiedTime)
       throws IOException {
@@ -72,16 +74,46 @@ public class LastModifiedMetadataTest {
   }
 
   @Test
-  public void testGetLastModifiedTime() throws IOException {
+  public void testGetLastModifiedTime_layerEntries() throws IOException {
     Assert.assertEquals(
         FileTime.fromMillis(2000),
-        LastModifiedMetadata.getLastModifiedTime(ImmutableList.copyOf(layerEntries)));
+        LastModifiedTimeMetadata.getLastModifiedTime(ImmutableList.copyOf(layerEntries)));
   }
 
   @Test
   public void testGetLastModifiedTime_noEntries() throws IOException {
     Assert.assertEquals(
-        FileTime.from(Instant.MIN), LastModifiedMetadata.getLastModifiedTime(ImmutableList.of()));
+        FileTime.from(Instant.MIN),
+        LastModifiedTimeMetadata.getLastModifiedTime(ImmutableList.of()));
+  }
+
+  @Test
+  public void testGetLastModifiedTime_cacheEntry() throws IOException {
+    DescriptorDigest ignored = Mockito.mock(DescriptorDigest.class);
+    CacheEntry cacheEntry =
+        DefaultCacheEntry.builder()
+            .setLayerDigest(ignored)
+            .setLayerDiffId(ignored)
+            .setLayerSize(0)
+            .setLayerBlob(Blobs.from("ignored"))
+            .setMetadataBlob(Blobs.from(Instant.ofEpochMilli(1000).toString()))
+            .build();
+    Assert.assertEquals(
+        FileTime.from(Instant.ofEpochMilli(1000)),
+        LastModifiedTimeMetadata.getLastModifiedTime(cacheEntry).orElseThrow(AssertionError::new));
+  }
+
+  @Test
+  public void testGetLastModifiedTime_cacheEntry_noMetadata() throws IOException {
+    DescriptorDigest ignored = Mockito.mock(DescriptorDigest.class);
+    CacheEntry cacheEntry =
+        DefaultCacheEntry.builder()
+            .setLayerDigest(ignored)
+            .setLayerDiffId(ignored)
+            .setLayerSize(0)
+            .setLayerBlob(Blobs.from("ignored"))
+            .build();
+    Assert.assertFalse(LastModifiedTimeMetadata.getLastModifiedTime(cacheEntry).isPresent());
   }
 
   @Test
@@ -89,6 +121,6 @@ public class LastModifiedMetadataTest {
     Assert.assertEquals(
         Instant.ofEpochMilli(2000).toString(),
         Blobs.writeToString(
-            LastModifiedMetadata.generateMetadata(ImmutableList.copyOf(layerEntries))));
+            LastModifiedTimeMetadata.generateMetadata(ImmutableList.copyOf(layerEntries))));
   }
 }

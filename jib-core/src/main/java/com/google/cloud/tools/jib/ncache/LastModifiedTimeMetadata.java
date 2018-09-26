@@ -24,12 +24,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
+import java.util.Optional;
 
 /**
  * Metadata that is the latest last modified time of all the source files in a list of {@link
  * LayerEntry}s.
  */
-class LastModifiedMetadata {
+class LastModifiedTimeMetadata {
 
   /**
    * Generates the metadata {@link Blob} for the list of {@link LayerEntry}s. The metadata is the
@@ -62,5 +63,21 @@ class LastModifiedMetadata {
     return maxLastModifiedTime;
   }
 
-  private LastModifiedMetadata() {}
+  /**
+   * Gets the last modified time from the metadata of a {@link CacheEntry}.
+   *
+   * @param cacheEntry the {@link CacheEntry}
+   * @return the last modified time, if the metadata is present
+   * @throws IOException if deserialization of the metadata failed
+   */
+  static Optional<FileTime> getLastModifiedTime(CacheEntry cacheEntry) throws IOException {
+    if (!cacheEntry.getMetadataBlob().isPresent()) {
+      return Optional.empty();
+    }
+
+    Blob metadataBlob = cacheEntry.getMetadataBlob().get();
+    return Optional.of(FileTime.from(Instant.parse(Blobs.writeToString(metadataBlob))));
+  }
+
+  private LastModifiedTimeMetadata() {}
 }
