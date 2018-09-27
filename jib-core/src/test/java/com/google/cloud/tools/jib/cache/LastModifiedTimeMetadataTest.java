@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.ncache;
+package com.google.cloud.tools.jib.cache;
 
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
