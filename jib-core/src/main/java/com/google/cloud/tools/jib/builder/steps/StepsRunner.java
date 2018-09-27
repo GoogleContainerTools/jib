@@ -34,7 +34,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import javax.annotation.Nullable;
 
 /**
@@ -75,7 +74,7 @@ public class StepsRunner {
     ExecutorService executorService =
         JibSystemProperties.isSerializedExecutionEnabled()
             ? MoreExecutors.newDirectExecutorService()
-            : Executors.newCachedThreadPool();
+            : buildConfiguration.getExecutorService();
     listeningExecutorService = MoreExecutors.listeningDecorator(executorService);
   }
 

@@ -17,10 +17,14 @@
 package com.google.cloud.tools.jib.api;
 // TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
+import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
+import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
+import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.configuration.Port;
+import com.google.cloud.tools.jib.event.DefaultEventEmitter;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -29,8 +33,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
 /**
@@ -301,15 +307,48 @@ public class JibContainerBuilder {
     return this;
   }
 
+  /**
+   * Builds the container(s).
+   *
+   * @param containerizer the {@link Containerizer} that configures how to containerize
+   * @return the built container(s)
+   * @throws CacheDirectoryCreationException TODO: Remove once new cache mechanism is in place
+   * @throws CacheDirectoryNotOwnedException TODO: Remove once new cache mechanism is in place
+   * @throws InterruptedException TODO: Remove once new cache mechanism is in place
+   * @throws ExecutionException TODO: Remove once new cache mechanism is in place
+   * @throws CacheMetadataCorruptedException TODO: Remove once new cache mechanism is in place
+   * @throws IOException TODO: Remove once new cache mechanism is in place
+   */
+  public JibContainer containerize(Containerizer containerizer)
+      throws CacheDirectoryCreationException, InterruptedException, ExecutionException,
+          CacheDirectoryNotOwnedException, CacheMetadataCorruptedException, IOException {
+    BuildConfiguration buildConfiguration = toBuildConfiguration(containerizer);
+    containerizer.getTargetImage().toBuildSteps(buildConfiguration).run();
+
+    // TODO: Add actual container digests.
+    return new JibContainer(new HashSet<>());
+  }
+
   @VisibleForTesting
-  BuildConfiguration toBuildConfiguration(TargetImage targetImage) {
+  BuildConfiguration toBuildConfiguration(Containerizer containerizer) {
     BuildConfiguration.Builder buildConfigurationBuilder = BuildConfiguration.builder();
 
     buildConfigurationBuilder
         .setBaseImageConfiguration(baseImage.toImageConfiguration())
-        .setTargetImageConfiguration(targetImage.toImageConfiguration())
+        .setTargetImageConfiguration(containerizer.getTargetImage().toImageConfiguration())
         .setContainerConfiguration(toContainerConfiguration())
         .setLayerConfigurations(layerConfigurations);
+
+    // TODO: Add set cache configuration.
+
+    if (containerizer.getExecutorService().isPresent()) {
+      buildConfigurationBuilder.setExecutorService(containerizer.getExecutorService().get());
+    }
+
+    if (containerizer.getEventHandlers().isPresent()) {
+      buildConfigurationBuilder.setEventEmitter(
+          new DefaultEventEmitter(containerizer.getEventHandlers().get()));
+    }
 
     // TODO: Allow users to configure this.
     buildConfigurationBuilder.setToolName("jib-core");
