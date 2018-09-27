@@ -48,7 +48,7 @@ public class TimerEventEmitter implements Closeable {
     this.clock = clock;
     this.timer = new Timer(clock, parentTimer);
 
-    emitTimerEvent(State.START, Duration.ZERO);
+    emitTimerEvent(State.START, Duration.ZERO, description);
   }
 
   /**
@@ -67,7 +67,7 @@ public class TimerEventEmitter implements Closeable {
    * @see #lap(String) for using a different description
    */
   public void lap() {
-    emitTimerEvent(State.LAP, timer.lap());
+    emitTimerEvent(State.LAP, timer.lap(), description);
   }
 
   /**
@@ -77,17 +77,17 @@ public class TimerEventEmitter implements Closeable {
    *     description
    */
   public void lap(String newDescription) {
-    eventEmitter.emit(
-        new TimerEvent(State.LAP, timer, timer.lap(), timer.getElapsedTime(), newDescription));
+    emitTimerEvent(State.LAP, timer.lap(), newDescription);
   }
 
   /** Laps and emits an {@link State#FINISHED} {@link TimerEvent} upon close. */
   @Override
   public void close() {
-    emitTimerEvent(State.FINISHED, timer.lap());
+    emitTimerEvent(State.FINISHED, timer.lap(), description);
   }
 
-  private void emitTimerEvent(State state, Duration duration) {
-    eventEmitter.emit(new TimerEvent(state, timer, duration, timer.getElapsedTime(), description));
+  private void emitTimerEvent(State state, Duration duration, String eventDescription) {
+    eventEmitter.emit(
+        new TimerEvent(state, timer, duration, timer.getElapsedTime(), eventDescription));
   }
 }
