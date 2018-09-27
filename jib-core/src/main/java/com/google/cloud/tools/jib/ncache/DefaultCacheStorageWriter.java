@@ -245,8 +245,7 @@ class DefaultCacheStorageWriter {
   private WrittenLayer writeCompressedLayerBlobToDirectory(
       Blob compressedLayerBlob, Path layerDirectory) throws IOException {
     // Writes the layer file to the temporary directory.
-    Path temporaryLayerFile = Files.createTempFile(layerDirectory, null, null);
-    temporaryLayerFile.toFile().deleteOnExit();
+    Path temporaryLayerFile = defaultCacheStorageFiles.getTemporaryLayerFile(layerDirectory);
 
     BlobDescriptor layerBlobDescriptor;
     try (OutputStream fileOutputStream =
@@ -257,6 +256,7 @@ class DefaultCacheStorageWriter {
     // Gets the diff ID.
     DescriptorDigest layerDiffId = getDiffIdByDecompressingFile(temporaryLayerFile);
 
+    // Renames the temporary layer file to the correct filename.
     Path layerFile = layerDirectory.resolve(defaultCacheStorageFiles.getLayerFilename(layerDiffId));
     moveIfDoesNotExist(temporaryLayerFile, layerFile);
 
@@ -274,8 +274,7 @@ class DefaultCacheStorageWriter {
    */
   private WrittenLayer writeUncompressedLayerBlobToDirectory(
       Blob uncompressedLayerBlob, Path layerDirectory) throws IOException {
-    Path temporaryLayerFile = Files.createTempFile(layerDirectory, null, null);
-    temporaryLayerFile.toFile().deleteOnExit();
+    Path temporaryLayerFile = defaultCacheStorageFiles.getTemporaryLayerFile(layerDirectory);
 
     try (CountingDigestOutputStream compressedDigestOutputStream =
         new CountingDigestOutputStream(
