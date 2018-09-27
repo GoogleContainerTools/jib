@@ -1,5 +1,7 @@
 # Proposal: Improved cache mechanism
 
+Implemented in: **v0.10.0**
+
 The tracking issue is at [#637](https://github.com/GoogleContainerTools/jib/issues/637).
 
 ## TLDR;
