@@ -25,9 +25,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.List;
 import java.util.Map;
 
 /** Builds {@link LayerConfiguration}s for a Java application. */
@@ -65,78 +63,136 @@ public class JavaLayerConfigurations {
   /** Builds with each layer's files. */
   public static class Builder {
 
-    private final Map<LayerType, List<Path>> layerFilesMap = new EnumMap<>(LayerType.class);
-    private final Map<LayerType, AbsoluteUnixPath> extractionPathMap =
+    private final Map<LayerType, LayerConfiguration.Builder> layerBuilders =
         new EnumMap<>(LayerType.class);
 
     private Builder() {
       for (LayerType layerType : LayerType.values()) {
-        layerFilesMap.put(layerType, new ArrayList<>());
-        extractionPathMap.put(layerType, AbsoluteUnixPath.get("/"));
+        layerBuilders.put(layerType, LayerConfiguration.builder());
       }
     }
 
-    public Builder setDependencyFiles(List<Path> dependencyFiles, AbsoluteUnixPath extractionPath) {
-      layerFilesMap.put(LayerType.DEPENDENCIES, dependencyFiles);
-      extractionPathMap.put(LayerType.DEPENDENCIES, extractionPath);
+    /**
+     * Adds a file to the dependency layer. If the source file is a directory, the directory and its
+     * contents will be added recursively. See {@link LayerConfiguration.Builder#addEntryRecursive}
+     * for concrete examples about how the file will be placed in the image.
+     *
+     * @param sourceFile the source file to add to the layer
+     * @param pathInContainer the path in the container file system corresponding to the {@code
+     *     sourceFile}
+     * @return this
+     * @throws IOException if an exception occurred when recursively listing the directory
+     */
+    public Builder addDependencyFile(Path sourceFile, AbsoluteUnixPath pathInContainer)
+        throws IOException {
+      Preconditions.checkNotNull(layerBuilders.get(LayerType.DEPENDENCIES))
+          .addEntryRecursive(sourceFile, pathInContainer);
       return this;
     }
 
-    public Builder setSnapshotDependencyFiles(
-        List<Path> snapshotDependencyFiles, AbsoluteUnixPath extractionPath) {
-      layerFilesMap.put(LayerType.SNAPSHOT_DEPENDENCIES, snapshotDependencyFiles);
-      extractionPathMap.put(LayerType.SNAPSHOT_DEPENDENCIES, extractionPath);
+    /**
+     * Adds a file to the snapshot dependency layer. If the source file is a directory, the
+     * directory and its contents will be added recursively. See {@link
+     * LayerConfiguration.Builder#addEntryRecursive} for concrete examples about how the file will
+     * be placed in the image.
+     *
+     * @param sourceFile the source file to add to the layer
+     * @param pathInContainer the path in the container file system corresponding to the {@code
+     *     sourceFile}
+     * @return this
+     * @throws IOException if an exception occurred when recursively listing the directory
+     */
+    public Builder addSnapshotDependencyFile(Path sourceFile, AbsoluteUnixPath pathInContainer)
+        throws IOException {
+      Preconditions.checkNotNull(layerBuilders.get(LayerType.SNAPSHOT_DEPENDENCIES))
+          .addEntryRecursive(sourceFile, pathInContainer);
       return this;
     }
 
-    public Builder setResourceFiles(List<Path> resourceFiles, AbsoluteUnixPath extractionPath) {
-      layerFilesMap.put(LayerType.RESOURCES, resourceFiles);
-      extractionPathMap.put(LayerType.RESOURCES, extractionPath);
+    /**
+     * Adds a file to the resource layer. If the source file is a directory, the directory and its
+     * contents will be added recursively. See {@link LayerConfiguration.Builder#addEntryRecursive}
+     * for concrete examples about how the file will be placed in the image.
+     *
+     * @param sourceFile the source file to add to the layer
+     * @param pathInContainer the path in the container file system corresponding to the {@code
+     *     sourceFile}
+     * @return this
+     * @throws IOException if an exception occurred when recursively listing the directory
+     */
+    public Builder addResourceFile(Path sourceFile, AbsoluteUnixPath pathInContainer)
+        throws IOException {
+      Preconditions.checkNotNull(layerBuilders.get(LayerType.RESOURCES))
+          .addEntryRecursive(sourceFile, pathInContainer);
       return this;
     }
 
-    public Builder setClassFiles(List<Path> classFiles, AbsoluteUnixPath extractionPath) {
-      layerFilesMap.put(LayerType.CLASSES, classFiles);
-      extractionPathMap.put(LayerType.CLASSES, extractionPath);
+    /**
+     * Adds a file to the classes layer. If the source file is a directory, the directory and its
+     * contents will be added recursively. See {@link LayerConfiguration.Builder#addEntryRecursive}
+     * for concrete examples about how the file will be placed in the image.
+     *
+     * @param sourceFile the source file to add to the layer
+     * @param pathInContainer the path in the container file system corresponding to the {@code
+     *     sourceFile}
+     * @return this
+     * @throws IOException if an exception occurred when recursively listing the directory
+     */
+    public Builder addClassFile(Path sourceFile, AbsoluteUnixPath pathInContainer)
+        throws IOException {
+      Preconditions.checkNotNull(layerBuilders.get(LayerType.CLASSES))
+          .addEntryRecursive(sourceFile, pathInContainer);
       return this;
     }
 
-    public Builder setExtraFiles(List<Path> extraFiles, AbsoluteUnixPath extractionPath) {
-      layerFilesMap.put(LayerType.EXTRA_FILES, extraFiles);
-      extractionPathMap.put(LayerType.EXTRA_FILES, extractionPath);
+    /**
+     * Adds a file to the extra files layer. If the source file is a directory, the directory and
+     * its contents will be added recursively. See {@link
+     * LayerConfiguration.Builder#addEntryRecursive} for concrete examples about how the file will
+     * be placed in the image.
+     *
+     * @param sourceFile the source file to add to the layer
+     * @param pathInContainer the path in the container file system corresponding to the {@code
+     *     sourceFile}
+     * @return this
+     * @throws IOException if an exception occurred when recursively listing the directory
+     */
+    public Builder addExtraFile(Path sourceFile, AbsoluteUnixPath pathInContainer)
+        throws IOException {
+      Preconditions.checkNotNull(layerBuilders.get(LayerType.EXTRA_FILES))
+          .addEntryRecursive(sourceFile, pathInContainer);
       return this;
     }
 
+    /**
+     * Adds a file to the exploded WAR layer. If the source file is a directory, the directory and
+     * its contents will be added recursively. See {@link
+     * LayerConfiguration.Builder#addEntryRecursive} for concrete examples about how the file will
+     * be placed in the image.
+     *
+     * @param sourceFile the source file to add to the layer
+     * @param pathInContainer the path in the container file system corresponding to the {@code
+     *     sourceFile}
+     * @return this
+     * @throws IOException if an exception occurred when recursively listing the directory
+     */
     // TODO: remove this and put files in WAR into the relevant layers (i.e., dependencies, snapshot
     // dependencies, resources, and classes layers).
-    public Builder setExplodedWarFiles(
-        List<Path> explodedWarFiles, AbsoluteUnixPath extractionPath) {
-      layerFilesMap.put(LayerType.EXPLODED_WAR, explodedWarFiles);
-      extractionPathMap.put(LayerType.EXPLODED_WAR, extractionPath);
+    public Builder addExplodedWarFile(Path sourceFile, AbsoluteUnixPath pathInContainer)
+        throws IOException {
+      Preconditions.checkNotNull(layerBuilders.get(LayerType.EXPLODED_WAR))
+          .addEntryRecursive(sourceFile, pathInContainer);
       return this;
     }
 
-    public JavaLayerConfigurations build() throws IOException {
+    public JavaLayerConfigurations build() {
       ImmutableMap.Builder<LayerType, LayerConfiguration> layerConfigurationsMap =
-          ImmutableMap.builderWithExpectedSize(LayerType.values().length);
-      for (LayerType layerType : LayerType.values()) {
-        AbsoluteUnixPath extractionPath =
-            Preconditions.checkNotNull(extractionPathMap.get(layerType));
+          ImmutableMap.builderWithExpectedSize(layerBuilders.size());
 
-        LayerConfiguration.Builder layerConfigurationBuilder =
-            LayerConfiguration.builder().setName(layerType.getName());
-
-        // Adds all the layer files recursively.
-        List<Path> layerFiles = Preconditions.checkNotNull(layerFilesMap.get(layerType));
-        for (Path layerFile : layerFiles) {
-          layerConfigurationBuilder.addEntryRecursive(
-              layerFile, extractionPath.resolve(layerFile.getFileName()));
-        }
-
-        layerConfigurationsMap.put(layerType, layerConfigurationBuilder.build());
-      }
-      return new JavaLayerConfigurations(
-          layerConfigurationsMap.build(), ImmutableMap.copyOf(extractionPathMap));
+      layerBuilders.forEach(
+          (type, builder) ->
+              layerConfigurationsMap.put(type, builder.setName(type.getName()).build()));
+      return new JavaLayerConfigurations(layerConfigurationsMap.build());
     }
   }
 
@@ -151,13 +207,10 @@ public class JavaLayerConfigurations {
   public static final String DEFAULT_APP_ROOT = "/app";
 
   private final ImmutableMap<LayerType, LayerConfiguration> layerConfigurationMap;
-  private final ImmutableMap<LayerType, AbsoluteUnixPath> extractionPathMap;
 
   private JavaLayerConfigurations(
-      ImmutableMap<LayerType, LayerConfiguration> layerConfigurationMap,
-      ImmutableMap<LayerType, AbsoluteUnixPath> extractionPathMap) {
+      ImmutableMap<LayerType, LayerConfiguration> layerConfigurationMap) {
     this.layerConfigurationMap = layerConfigurationMap;
-    this.extractionPathMap = extractionPathMap;
   }
 
   public ImmutableList<LayerConfiguration> getLayerConfigurations() {
@@ -190,35 +243,7 @@ public class JavaLayerConfigurations {
     return getLayerEntries(LayerType.EXPLODED_WAR);
   }
 
-  public AbsoluteUnixPath getDependencyExtractionPath() {
-    return getExtractionPath(LayerType.DEPENDENCIES);
-  }
-
-  public AbsoluteUnixPath getSnapshotDependencyExtractionPath() {
-    return getExtractionPath(LayerType.SNAPSHOT_DEPENDENCIES);
-  }
-
-  public AbsoluteUnixPath getResourceExtractionPath() {
-    return getExtractionPath(LayerType.RESOURCES);
-  }
-
-  public AbsoluteUnixPath getClassExtractionPath() {
-    return getExtractionPath(LayerType.CLASSES);
-  }
-
-  public AbsoluteUnixPath getExtraFilesExtractionPath() {
-    return getExtractionPath(LayerType.EXTRA_FILES);
-  }
-
-  public AbsoluteUnixPath getExplodedWarExtractionPath() {
-    return getExtractionPath(LayerType.EXPLODED_WAR);
-  }
-
   private ImmutableList<LayerEntry> getLayerEntries(LayerType layerType) {
     return Preconditions.checkNotNull(layerConfigurationMap.get(layerType)).getLayerEntries();
-  }
-
-  private AbsoluteUnixPath getExtractionPath(LayerType layerType) {
-    return Preconditions.checkNotNull(extractionPathMap.get(layerType));
   }
 }
