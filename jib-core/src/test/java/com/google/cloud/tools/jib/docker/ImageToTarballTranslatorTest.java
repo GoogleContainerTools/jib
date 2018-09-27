@@ -43,9 +43,17 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link ImageToTarballTranslator}. */
+@RunWith(MockitoJUnitRunner.class)
 public class ImageToTarballTranslatorTest {
+
+  @Mock private Layer mockLayer1;
+  @Mock private Layer mockLayer2;
 
   @Test
   public void testToTarballBlob()
@@ -63,45 +71,15 @@ public class ImageToTarballTranslatorTest {
         DescriptorDigest.fromHash(
             "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc6");
 
-    Image<Layer> testImage =
-        Image.builder()
-            .addLayer(
-                new Layer() {
-
-                  @Override
-                  public Blob getBlob() throws LayerPropertyNotFoundException {
-                    return Blobs.from(fileA);
-                  }
-
-                  @Override
-                  public BlobDescriptor getBlobDescriptor() throws LayerPropertyNotFoundException {
-                    return new BlobDescriptor(fileASize, fakeDigestA);
-                  }
-
-                  @Override
-                  public DescriptorDigest getDiffId() throws LayerPropertyNotFoundException {
-                    return fakeDigestA;
-                  }
-                })
-            .addLayer(
-                new Layer() {
-
-                  @Override
-                  public Blob getBlob() throws LayerPropertyNotFoundException {
-                    return Blobs.from(fileB);
-                  }
-
-                  @Override
-                  public BlobDescriptor getBlobDescriptor() throws LayerPropertyNotFoundException {
-                    return new BlobDescriptor(fileBSize, fakeDigestB);
-                  }
-
-                  @Override
-                  public DescriptorDigest getDiffId() throws LayerPropertyNotFoundException {
-                    return fakeDigestB;
-                  }
-                })
-            .build();
+    Mockito.when(mockLayer1.getBlob()).thenReturn(Blobs.from(fileA));
+    Mockito.when(mockLayer1.getBlobDescriptor())
+        .thenReturn(new BlobDescriptor(fileASize, fakeDigestA));
+    Mockito.when(mockLayer1.getDiffId()).thenReturn(fakeDigestA);
+    Mockito.when(mockLayer2.getBlob()).thenReturn(Blobs.from(fileB));
+    Mockito.when(mockLayer2.getBlobDescriptor())
+        .thenReturn(new BlobDescriptor(fileBSize, fakeDigestB));
+    Mockito.when(mockLayer2.getDiffId()).thenReturn(fakeDigestB);
+    Image<Layer> testImage = Image.builder().addLayer(mockLayer1).addLayer(mockLayer2).build();
 
     Blob tarballBlob =
         new ImageToTarballTranslator(testImage).toTarballBlob(ImageReference.parse("my/image:tag"));

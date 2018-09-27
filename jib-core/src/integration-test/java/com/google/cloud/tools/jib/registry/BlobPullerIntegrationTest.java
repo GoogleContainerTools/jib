@@ -66,11 +66,12 @@ public class BlobPullerIntegrationTest {
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
+    RegistryClient registryClient =
+        RegistryClient.factory(EVENT_EMITTER, "localhost:5000", "busybox")
+            .setAllowInsecureRegistries(true)
+            .newRegistryClient();
+
     try {
-      RegistryClient registryClient =
-          RegistryClient.factory(EVENT_EMITTER, "localhost:5000", "busybox")
-              .setAllowInsecureRegistries(true)
-              .newRegistryClient();
       registryClient.pullBlob(nonexistentDigest).writeTo(ByteStreams.nullOutputStream());
       Assert.fail("Trying to pull nonexistent blob should have errored");
 
