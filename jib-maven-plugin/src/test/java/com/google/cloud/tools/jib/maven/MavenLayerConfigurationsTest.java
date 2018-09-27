@@ -27,11 +27,10 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.model.Build;
 import org.apache.maven.project.MavenProject;
@@ -48,17 +47,22 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class MavenLayerConfigurationsTest {
 
-  private static ImmutableList<Path> getSourceFilesFromLayerEntries(
-      ImmutableList<LayerEntry> layerEntries) {
-    return layerEntries
-        .stream()
-        .map(LayerEntry::getSourceFile)
-        .collect(ImmutableList.toImmutableList());
+  private static <T> void assertLayerEntriesUnordered(
+      List<T> expectedPaths, List<LayerEntry> entries, Function<LayerEntry, T> fieldSelector) {
+    List<T> expected = expectedPaths.stream().sorted().collect(Collectors.toList());
+    List<T> actual = entries.stream().map(fieldSelector).sorted().collect(Collectors.toList());
+    Assert.assertEquals(expected, actual);
   }
 
-  private static List<String> getExtractionPathFromLayerEntries(List<LayerEntry> layerEntries) {
-    Stream<LayerEntry> stream = layerEntries.stream();
-    return stream.map(LayerEntry::getAbsoluteExtractionPathString).collect(Collectors.toList());
+  private static void assertSourcePathsUnordered(
+      List<Path> expectedPaths, List<LayerEntry> entries) {
+    assertLayerEntriesUnordered(expectedPaths, entries, LayerEntry::getSourceFile);
+  }
+
+  private static void assertExtractionPathsUnordered(
+      List<String> expectedPaths, List<LayerEntry> entries) {
+    assertLayerEntriesUnordered(
+        expectedPaths, entries, LayerEntry::getAbsoluteExtractionPathString);
   }
 
   @Rule public TestRepository testRepository = new TestRepository();
@@ -89,12 +93,10 @@ public class MavenLayerConfigurationsTest {
   @Test
   public void test_correctFiles() throws URISyntaxException, IOException {
     ImmutableList<Path> expectedDependenciesFiles =
-        // on windows, these files may be in a different order, so sort
-        ImmutableList.sortedCopyOf(
-            ImmutableList.of(
-                testRepository.artifactPathOnDisk("com.test", "dependency", "1.0.0"),
-                Paths.get("application", "dependencies", "libraryA.jar"),
-                Paths.get("application", "dependencies", "libraryB.jar")));
+        ImmutableList.of(
+            testRepository.artifactPathOnDisk("com.test", "dependency", "1.0.0"),
+            Paths.get("application", "dependencies", "libraryA.jar"),
+            Paths.get("application", "dependencies", "libraryB.jar"));
     ImmutableList<Path> expectedSnapshotDependenciesFiles =
         ImmutableList.of(
             testRepository.artifactPathOnDisk("com.test", "dependencyX", "1.0.0-SNAPSHOT"));
@@ -116,19 +118,15 @@ public class MavenLayerConfigurationsTest {
     JavaLayerConfigurations javaLayerConfigurations =
         MavenLayerConfigurations.getForProject(
             mockMavenProject, Paths.get("nonexistent/path"), AbsoluteUnixPath.get("/app"));
-    Assert.assertEquals(
-        expectedDependenciesFiles,
-        getSourceFilesFromLayerEntries(javaLayerConfigurations.getDependencyLayerEntries()));
-    Assert.assertEquals(
+    assertSourcePathsUnordered(
+        expectedDependenciesFiles, javaLayerConfigurations.getDependencyLayerEntries());
+    assertSourcePathsUnordered(
         expectedSnapshotDependenciesFiles,
-        getSourceFilesFromLayerEntries(
-            javaLayerConfigurations.getSnapshotDependencyLayerEntries()));
-    Assert.assertEquals(
-        expectedResourcesFiles,
-        getSourceFilesFromLayerEntries(javaLayerConfigurations.getResourceLayerEntries()));
-    Assert.assertEquals(
-        expectedClassesFiles,
-        getSourceFilesFromLayerEntries(javaLayerConfigurations.getClassLayerEntries()));
+        javaLayerConfigurations.getSnapshotDependencyLayerEntries());
+    assertSourcePathsUnordered(
+        expectedResourcesFiles, javaLayerConfigurations.getResourceLayerEntries());
+    assertSourcePathsUnordered(
+        expectedClassesFiles, javaLayerConfigurations.getClassLayerEntries());
   }
 
   @Test
@@ -148,9 +146,8 @@ public class MavenLayerConfigurationsTest {
             extraFilesDirectory.resolve("c/cat"),
             extraFilesDirectory.resolve("foo"));
 
-    Assert.assertEquals(
-        expectedExtraFiles,
-        getSourceFilesFromLayerEntries(javaLayerConfigurations.getExtraFilesLayerEntries()));
+    assertSourcePathsUnordered(
+        expectedExtraFiles, javaLayerConfigurations.getExtraFilesLayerEntries());
   }
 
   @Test
@@ -161,36 +158,33 @@ public class MavenLayerConfigurationsTest {
     JavaLayerConfigurations configuration =
         MavenLayerConfigurations.getForProject(mockMavenProject, extraFilesDirectory, appRoot);
 
-    Assert.assertEquals(
-        // on windows, these files may be in a different order, so use Set
-        new HashSet<>(
-            Arrays.asList(
-                "/my/app/libs/dependency-1.0.0.jar",
-                "/my/app/libs/libraryA.jar",
-                "/my/app/libs/libraryB.jar")),
-        new HashSet<>(
-            getExtractionPathFromLayerEntries(configuration.getDependencyLayerEntries())));
-    Assert.assertEquals(
+    assertExtractionPathsUnordered(
+        Arrays.asList(
+            "/my/app/libs/dependency-1.0.0.jar",
+            "/my/app/libs/libraryA.jar",
+            "/my/app/libs/libraryB.jar"),
+        configuration.getDependencyLayerEntries());
+    assertExtractionPathsUnordered(
         Arrays.asList("/my/app/libs/dependencyX-1.0.0-SNAPSHOT.jar"),
-        getExtractionPathFromLayerEntries(configuration.getSnapshotDependencyLayerEntries()));
-    Assert.assertEquals(
+        configuration.getSnapshotDependencyLayerEntries());
+    assertExtractionPathsUnordered(
         Arrays.asList(
             "/my/app/resources/directory",
             "/my/app/resources/directory/somefile",
             "/my/app/resources/resourceA",
             "/my/app/resources/resourceB",
             "/my/app/resources/world"),
-        getExtractionPathFromLayerEntries(configuration.getResourceLayerEntries()));
-    Assert.assertEquals(
+        configuration.getResourceLayerEntries());
+    assertExtractionPathsUnordered(
         Arrays.asList(
             "/my/app/classes/HelloWorld.class",
             "/my/app/classes/package",
             "/my/app/classes/package/some.class",
             "/my/app/classes/some.class"),
-        getExtractionPathFromLayerEntries(configuration.getClassLayerEntries()));
-    Assert.assertEquals(
+        configuration.getClassLayerEntries());
+    assertExtractionPathsUnordered(
         Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"),
-        getExtractionPathFromLayerEntries(configuration.getExtraFilesLayerEntries()));
+        configuration.getExtraFilesLayerEntries());
   }
 
   private Artifact makeArtifact(Path path) {

@@ -31,8 +31,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.gradle.api.Project;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.file.AbstractFileCollection;
@@ -59,8 +59,8 @@ public class GradleLayerConfigurationsTest {
 
     private final Set<File> files;
 
-    private TestFileCollection(Set<File> files) {
-      this.files = files;
+    private TestFileCollection(Set<Path> files) {
+      this.files = files.stream().map(Path::toFile).collect(Collectors.toSet());
     }
 
     @Override
@@ -74,17 +74,22 @@ public class GradleLayerConfigurationsTest {
     }
   }
 
-  private static ImmutableList<Path> getSourceFilesFromLayerEntries(
-      ImmutableList<LayerEntry> layerEntries) {
-    return layerEntries
-        .stream()
-        .map(LayerEntry::getSourceFile)
-        .collect(ImmutableList.toImmutableList());
+  private static <T> void assertLayerEntriesUnordered(
+      List<T> expectedPaths, List<LayerEntry> entries, Function<LayerEntry, T> fieldSelector) {
+    List<T> expected = expectedPaths.stream().sorted().collect(Collectors.toList());
+    List<T> actual = entries.stream().map(fieldSelector).sorted().collect(Collectors.toList());
+    Assert.assertEquals(expected, actual);
   }
 
-  private static List<String> getExtractionPathFromLayerEntries(List<LayerEntry> layerEntries) {
-    Stream<LayerEntry> stream = layerEntries.stream();
-    return stream.map(LayerEntry::getAbsoluteExtractionPathString).collect(Collectors.toList());
+  private static void assertSourcePathsUnordered(
+      List<Path> expectedPaths, List<LayerEntry> entries) {
+    assertLayerEntriesUnordered(expectedPaths, entries, LayerEntry::getSourceFile);
+  }
+
+  private static void assertExtractionPathsUnordered(
+      List<String> expectedPaths, List<LayerEntry> entries) {
+    assertLayerEntriesUnordered(
+        expectedPaths, entries, LayerEntry::getAbsoluteExtractionPathString);
   }
 
   @Mock private Project mockProject;
@@ -97,26 +102,21 @@ public class GradleLayerConfigurationsTest {
 
   @Before
   public void setUp() throws URISyntaxException {
-    Set<File> classesFiles =
-        ImmutableSet.of(Paths.get(Resources.getResource("application/classes").toURI()).toFile());
+    Set<Path> classesFiles =
+        ImmutableSet.of(Paths.get(Resources.getResource("application/classes").toURI()));
     FileCollection classesFileCollection = new TestFileCollection(classesFiles);
-    File resourcesOutputDir =
-        Paths.get(Resources.getResource("application/resources").toURI()).toFile();
+    Path resourcesOutputDir = Paths.get(Resources.getResource("application/resources").toURI());
 
-    Set<File> allFiles = new HashSet<>(classesFiles);
+    Set<Path> allFiles = new HashSet<>(classesFiles);
     allFiles.add(resourcesOutputDir);
+    allFiles.add(Paths.get(Resources.getResource("application/dependencies/libraryB.jar").toURI()));
+    allFiles.add(Paths.get(Resources.getResource("application/dependencies/libraryA.jar").toURI()));
     allFiles.add(
-        Paths.get(Resources.getResource("application/dependencies/libraryB.jar").toURI()).toFile());
-    allFiles.add(
-        Paths.get(Resources.getResource("application/dependencies/libraryA.jar").toURI()).toFile());
-    allFiles.add(
-        Paths.get(Resources.getResource("application/dependencies/dependency-1.0.0.jar").toURI())
-            .toFile());
+        Paths.get(Resources.getResource("application/dependencies/dependency-1.0.0.jar").toURI()));
     allFiles.add(
         Paths.get(
-                Resources.getResource("application/dependencies/dependencyX-1.0.0-SNAPSHOT.jar")
-                    .toURI())
-            .toFile());
+            Resources.getResource("application/dependencies/dependencyX-1.0.0-SNAPSHOT.jar")
+                .toURI()));
     FileCollection runtimeFileCollection = new TestFileCollection(allFiles);
 
     Mockito.when(mockProject.getConvention()).thenReturn(mockConvention);
@@ -126,7 +126,7 @@ public class GradleLayerConfigurationsTest {
     Mockito.when(mockSourceSetContainer.getByName("main")).thenReturn(mockMainSourceSet);
     Mockito.when(mockMainSourceSet.getOutput()).thenReturn(mockMainSourceSetOutput);
     Mockito.when(mockMainSourceSetOutput.getClassesDirs()).thenReturn(classesFileCollection);
-    Mockito.when(mockMainSourceSetOutput.getResourcesDir()).thenReturn(resourcesOutputDir);
+    Mockito.when(mockMainSourceSetOutput.getResourcesDir()).thenReturn(resourcesOutputDir.toFile());
     Mockito.when(mockMainSourceSet.getRuntimeClasspath()).thenReturn(runtimeFileCollection);
   }
 
@@ -143,6 +143,7 @@ public class GradleLayerConfigurationsTest {
             applicationDirectory.resolve("dependencies/dependencyX-1.0.0-SNAPSHOT.jar"));
     ImmutableList<Path> expectedResourcesFiles =
         ImmutableList.of(
+            applicationDirectory.resolve("resources"),
             applicationDirectory.resolve("resources/resourceA"),
             applicationDirectory.resolve("resources/resourceB"),
             applicationDirectory.resolve("resources/world"));
@@ -156,27 +157,22 @@ public class GradleLayerConfigurationsTest {
     JavaLayerConfigurations javaLayerConfigurations =
         GradleLayerConfigurations.getForProject(
             mockProject, mockLogger, Paths.get("nonexistent/path"), appRoot);
-    Assert.assertEquals(
-        expectedDependenciesFiles,
-        getSourceFilesFromLayerEntries(javaLayerConfigurations.getDependencyLayerEntries()));
-    Assert.assertEquals(
+    assertSourcePathsUnordered(
+        expectedDependenciesFiles, javaLayerConfigurations.getDependencyLayerEntries());
+    assertSourcePathsUnordered(
         expectedSnapshotDependenciesFiles,
-        getSourceFilesFromLayerEntries(
-            javaLayerConfigurations.getSnapshotDependencyLayerEntries()));
-    Assert.assertEquals(
-        expectedResourcesFiles,
-        getSourceFilesFromLayerEntries(javaLayerConfigurations.getResourceLayerEntries()));
-    Assert.assertEquals(
-        expectedClassesFiles,
-        getSourceFilesFromLayerEntries(javaLayerConfigurations.getClassLayerEntries()));
-    Assert.assertEquals(
-        expectedExtraFiles,
-        getSourceFilesFromLayerEntries(javaLayerConfigurations.getExtraFilesLayerEntries()));
+        javaLayerConfigurations.getSnapshotDependencyLayerEntries());
+    assertSourcePathsUnordered(
+        expectedResourcesFiles, javaLayerConfigurations.getResourceLayerEntries());
+    assertSourcePathsUnordered(
+        expectedClassesFiles, javaLayerConfigurations.getClassLayerEntries());
+    assertSourcePathsUnordered(
+        expectedExtraFiles, javaLayerConfigurations.getExtraFilesLayerEntries());
   }
 
   @Test
   public void test_noClassesFiles() throws IOException {
-    File nonexistentFile = new File("/nonexistent/file");
+    Path nonexistentFile = Paths.get("/nonexistent/file");
     Mockito.when(mockMainSourceSetOutput.getClassesDirs())
         .thenReturn(new TestFileCollection(ImmutableSet.of(nonexistentFile)));
 
@@ -207,9 +203,8 @@ public class GradleLayerConfigurationsTest {
             extraFilesDirectory.resolve("c/cat"),
             extraFilesDirectory.resolve("foo"));
 
-    Assert.assertEquals(
-        expectedExtraFiles,
-        getSourceFilesFromLayerEntries(javaLayerConfigurations.getExtraFilesLayerEntries()));
+    assertSourcePathsUnordered(
+        expectedExtraFiles, javaLayerConfigurations.getExtraFilesLayerEntries());
   }
 
   @Test
@@ -220,26 +215,27 @@ public class GradleLayerConfigurationsTest {
         GradleLayerConfigurations.getForProject(
             mockProject, mockLogger, extraFilesDirectory, AbsoluteUnixPath.get("/my/app"));
 
-    Assert.assertEquals(
+    assertExtractionPathsUnordered(
         Arrays.asList(
             "/my/app/libs/dependency-1.0.0.jar",
             "/my/app/libs/libraryA.jar",
             "/my/app/libs/libraryB.jar"),
-        getExtractionPathFromLayerEntries(configuration.getDependencyLayerEntries()));
-    Assert.assertEquals(
+        configuration.getDependencyLayerEntries());
+    assertExtractionPathsUnordered(
         Arrays.asList("/my/app/libs/dependencyX-1.0.0-SNAPSHOT.jar"),
-        getExtractionPathFromLayerEntries(configuration.getSnapshotDependencyLayerEntries()));
-    Assert.assertEquals(
+        configuration.getSnapshotDependencyLayerEntries());
+    assertExtractionPathsUnordered(
         Arrays.asList(
+            "/my/app/resources",
             "/my/app/resources/resourceA",
             "/my/app/resources/resourceB",
             "/my/app/resources/world"),
-        getExtractionPathFromLayerEntries(configuration.getResourceLayerEntries()));
-    Assert.assertEquals(
+        configuration.getResourceLayerEntries());
+    assertExtractionPathsUnordered(
         Arrays.asList("/my/app/classes/HelloWorld.class", "/my/app/classes/some.class"),
-        getExtractionPathFromLayerEntries(configuration.getClassLayerEntries()));
-    Assert.assertEquals(
+        configuration.getClassLayerEntries());
+    assertExtractionPathsUnordered(
         Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"),
-        getExtractionPathFromLayerEntries(configuration.getExtraFilesLayerEntries()));
+        configuration.getExtraFilesLayerEntries());
   }
 }

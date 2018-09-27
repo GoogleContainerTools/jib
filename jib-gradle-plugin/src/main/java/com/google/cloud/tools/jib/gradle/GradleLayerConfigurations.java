@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -61,7 +60,6 @@ class GradleLayerConfigurations {
 
     List<Path> dependenciesFiles = new ArrayList<>();
     List<Path> snapshotDependenciesFiles = new ArrayList<>();
-    List<Path> resourcesFiles = new ArrayList<>();
     List<Path> classesFiles = new ArrayList<>();
     List<Path> extraFiles = new ArrayList<>();
 
@@ -82,13 +80,7 @@ class GradleLayerConfigurations {
       logger.warn("No classes files were found - did you compile your project?");
     }
 
-    // Adds each file in the resources output directory to the resources files list.
     Path resourcesOutputDirectory = mainSourceSet.getOutput().getResourcesDir().toPath();
-    if (Files.exists(resourcesOutputDirectory)) {
-      try (Stream<Path> resourceFileStream = Files.list(resourcesOutputDirectory)) {
-        resourceFileStream.forEach(resourcesFiles::add);
-      }
-    }
 
     // Adds all other files to the dependencies files list.
     FileCollection allFiles = mainSourceSet.getRuntimeClasspath();
@@ -113,13 +105,6 @@ class GradleLayerConfigurations {
       }
     }
 
-    // Sorts all files by path for consistent ordering.
-    Collections.sort(dependenciesFiles);
-    Collections.sort(snapshotDependenciesFiles);
-    Collections.sort(resourcesFiles);
-    Collections.sort(classesFiles);
-    Collections.sort(extraFiles);
-
     AbsoluteUnixPath dependenciesExtractionPath =
         appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE);
     AbsoluteUnixPath resourcesExtractionPath =
@@ -135,8 +120,8 @@ class GradleLayerConfigurations {
       layerBuilder.addSnapshotDependencyFile(
           file, dependenciesExtractionPath.resolve(file.getFileName()));
     }
-    for (Path file : resourcesFiles) {
-      layerBuilder.addResourceFile(file, resourcesExtractionPath.resolve(file.getFileName()));
+    if (Files.exists(resourcesOutputDirectory)) {
+      layerBuilder.addResourceFile(resourcesOutputDirectory, resourcesExtractionPath);
     }
     for (Path file : classesFiles) {
       layerBuilder.addClassFile(file, classesExtractionPath.resolve(file.getFileName()));
