@@ -253,6 +253,32 @@ public class BuildConfiguration {
     return new Builder(jibLogger);
   }
 
+  /**
+   * Creates a new {@link Builder} to build a {@link BuildConfiguration}.
+   *
+   * @return a new {@link Builder}
+   */
+  public static Builder builder() {
+    // TODO: Remove JibLogger and #builder(JibLogger).
+    return new Builder(
+        new JibLogger() {
+          @Override
+          public void error(CharSequence message) {}
+
+          @Override
+          public void lifecycle(CharSequence message) {}
+
+          @Override
+          public void warn(CharSequence message) {}
+
+          @Override
+          public void info(CharSequence message) {}
+
+          @Override
+          public void debug(CharSequence message) {}
+        });
+  }
+
   private final JibLogger buildLogger;
   private final ImageConfiguration baseImageConfiguration;
   private final ImageConfiguration targetImageConfiguration;
