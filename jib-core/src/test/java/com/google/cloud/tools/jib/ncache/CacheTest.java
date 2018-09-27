@@ -158,7 +158,7 @@ public class CacheTest {
       throws IOException, CacheCorruptedException {
     Cache cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
 
-    verifyIsLayer1NoMetadata(cache.write(compress(layerBlob1)));
+    verifyIsLayer1NoMetadata(cache.writeCompressedLayer(compress(layerBlob1)));
     verifyIsLayer1NoMetadata(cache.retrieve(layerDigest1).orElseThrow(AssertionError::new));
     Assert.assertFalse(cache.retrieve(layerDigest2).isPresent());
   }
@@ -168,7 +168,7 @@ public class CacheTest {
       throws IOException, CacheCorruptedException {
     Cache cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
 
-    verifyIsLayer1WithMetadata(cache.write(layerBlob1, layerEntries1));
+    verifyIsLayer1WithMetadata(cache.writeUncompressedLayer(layerBlob1, layerEntries1));
     verifyIsLayer1WithMetadata(cache.retrieve(layerDigest1).orElseThrow(AssertionError::new));
     Assert.assertFalse(cache.retrieve(layerDigest2).isPresent());
   }
@@ -178,7 +178,7 @@ public class CacheTest {
       throws IOException, CacheCorruptedException {
     Cache cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
 
-    verifyIsLayer1WithMetadata(cache.write(layerBlob1, layerEntries1));
+    verifyIsLayer1WithMetadata(cache.writeUncompressedLayer(layerBlob1, layerEntries1));
     verifyIsLayer1WithMetadata(cache.retrieve(layerEntries1).orElseThrow(AssertionError::new));
     Assert.assertFalse(cache.retrieve(layerDigest2).isPresent());
 
@@ -192,8 +192,8 @@ public class CacheTest {
   public void testRetrieveWithTwoEntriesInCache() throws IOException, CacheCorruptedException {
     Cache cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
 
-    verifyIsLayer1WithMetadata(cache.write(layerBlob1, layerEntries1));
-    verifyIsLayer2WithMetadata(cache.write(layerBlob2, layerEntries2));
+    verifyIsLayer1WithMetadata(cache.writeUncompressedLayer(layerBlob1, layerEntries1));
+    verifyIsLayer2WithMetadata(cache.writeUncompressedLayer(layerBlob2, layerEntries2));
     verifyIsLayer1WithMetadata(cache.retrieve(layerDigest1).orElseThrow(AssertionError::new));
     verifyIsLayer2WithMetadata(cache.retrieve(layerDigest2).orElseThrow(AssertionError::new));
     verifyIsLayer1WithMetadata(cache.retrieve(layerEntries1).orElseThrow(AssertionError::new));
