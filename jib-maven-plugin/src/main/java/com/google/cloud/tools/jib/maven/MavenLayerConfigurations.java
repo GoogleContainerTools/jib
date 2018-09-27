@@ -26,7 +26,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -99,13 +98,6 @@ class MavenLayerConfigurations {
         throw new IOException("Failed to list directory for extra files: " + extraDirectory, ex);
       }
     }
-
-    // Sort all files by path for consistent ordering.
-    Collections.sort(dependenciesFiles);
-    Collections.sort(snapshotDependenciesFiles);
-    Collections.sort(resourcesFiles);
-    Collections.sort(classesFiles);
-    Collections.sort(extraFiles);
 
     AbsoluteUnixPath dependenciesExtractionPath =
         appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE);
