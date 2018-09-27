@@ -104,6 +104,9 @@ public class DockerContextTask extends DefaultTask implements JibTask {
     Preconditions.checkNotNull(jibExtension);
     JibSystemProperties.checkHttpTimeoutProperty();
 
+    // TODO: Instead of disabling logging, have authentication credentials be provided
+    PluginConfigurationProcessor.disableHttpLogging();
+
     AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(

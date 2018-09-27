@@ -67,6 +67,9 @@ public class DockerContextMojo extends JibPluginConfiguration {
       throw new MojoExecutionException(ex.getMessage(), ex);
     }
 
+    // TODO: Instead of disabling logging, have authentication credentials be provided
+    PluginConfigurationProcessor.disableHttpLogging();
+
     Preconditions.checkNotNull(targetDir);
 
     AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(this);

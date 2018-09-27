@@ -62,6 +62,24 @@ class PluginConfigurationProcessor {
     }
   }
 
+  /** Disables annoying Apache HTTP client logging. */
+  static void disableHttpLogging() {
+    // Disables Apache HTTP client logging.
+    OutputEventListenerBackedLoggerContext context =
+        (OutputEventListenerBackedLoggerContext) LoggerFactory.getILoggerFactory();
+    OutputEventListener defaultOutputEventListener = context.getOutputEventListener();
+    context.setOutputEventListener(
+        event -> {
+          LogEvent logEvent = (LogEvent) event;
+          if (!logEvent.getCategory().contains("org.apache")) {
+            defaultOutputEventListener.onOutput(event);
+          }
+        });
+
+    // Disables Google HTTP client logging.
+    java.util.logging.Logger.getLogger(HttpTransport.class.getName()).setLevel(Level.OFF);
+  }
+
   /**
    * Sets up {@link BuildConfiguration} that is common among the image building tasks. This includes
    * setting up the base image reference/authorization, container configuration, cache
@@ -79,21 +97,7 @@ class PluginConfigurationProcessor {
     JibSystemProperties.checkHttpTimeoutProperty();
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
-    // Disables Apache HTTP client logging.
-    OutputEventListenerBackedLoggerContext context =
-        (OutputEventListenerBackedLoggerContext) LoggerFactory.getILoggerFactory();
-    OutputEventListener defaultOutputEventListener = context.getOutputEventListener();
-    context.setOutputEventListener(
-        event -> {
-          LogEvent logEvent = (LogEvent) event;
-          if (!logEvent.getCategory().contains("org.apache")) {
-            defaultOutputEventListener.onOutput(event);
-          }
-        });
-
-    // Disables Google HTTP client logging.
-    java.util.logging.Logger.getLogger(HttpTransport.class.getName()).setLevel(Level.OFF);
-
+    disableHttpLogging();
     ImageReference baseImage = ImageReference.parse(jibExtension.getBaseImage());
 
     if (JibSystemProperties.isSendCredentialsOverHttpEnabled()) {

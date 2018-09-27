@@ -105,7 +105,7 @@ public class BuildStepsIntegrationTest {
     Assert.assertThat(history, CoreMatchers.containsString("bazel build ..."));
   }
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(BuildStepsIntegrationTest.class);
+  private static final Logger logger = LoggerFactory.getLogger(BuildStepsIntegrationTest.class);
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -134,10 +134,10 @@ public class BuildStepsIntegrationTest {
 
     long lastTime = System.nanoTime();
     buildImageSteps.run();
-    LOGGER.info("Initial build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
+    logger.info("Initial build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
     lastTime = System.nanoTime();
     buildImageSteps.run();
-    LOGGER.info("Secondary build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
+    logger.info("Secondary build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
 
     String imageReference = "localhost:5000/testimage:testtag";
     localRegistry.pull(imageReference);
@@ -160,10 +160,10 @@ public class BuildStepsIntegrationTest {
 
     long lastTime = System.nanoTime();
     buildImageSteps.run();
-    LOGGER.info("Initial build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
+    logger.info("Initial build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
     lastTime = System.nanoTime();
     buildImageSteps.run();
-    LOGGER.info("Secondary build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
+    logger.info("Secondary build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
 
     String imageReference = "localhost:5000/testimage:testtag";
     localRegistry.pull(imageReference);

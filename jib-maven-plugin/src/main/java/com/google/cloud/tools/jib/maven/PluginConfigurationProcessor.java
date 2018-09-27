@@ -59,6 +59,13 @@ class PluginConfigurationProcessor {
     }
   }
 
+  /** Disables annoying Apache HTTP client logging. */
+  static void disableHttpLogging() {
+    System.setProperty(
+        "org.apache.commons.logging.Log", "org.apache.commons.logging.impl.SimpleLog");
+    System.setProperty("org.apache.commons.logging.simplelog.defaultlog", "error");
+  }
+
   /**
    * Sets up {@link BuildConfiguration} that is common among the image building goals. This includes
    * setting up the base image reference/authorization, container configuration, cache
@@ -83,10 +90,7 @@ class PluginConfigurationProcessor {
     }
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
-    System.setProperty(
-        "org.apache.commons.logging.Log", "org.apache.commons.logging.impl.SimpleLog");
-    System.setProperty("org.apache.commons.logging.simplelog.defaultlog", "error");
-
+    disableHttpLogging();
     ImageReference baseImage = parseImageReference(jibPluginConfiguration.getBaseImage(), "from");
 
     // Checks Maven settings for registry credentials.
