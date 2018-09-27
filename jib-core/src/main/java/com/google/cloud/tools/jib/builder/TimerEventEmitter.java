@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.builder;
 
-import com.google.cloud.tools.jib.event.EventEmitter;
+import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.events.TimerEvent;
 import com.google.cloud.tools.jib.event.events.TimerEvent.State;
 import com.google.common.annotations.VisibleForTesting;
@@ -25,12 +25,12 @@ import java.time.Clock;
 import java.time.Duration;
 import javax.annotation.Nullable;
 
-/** Handles {@link Timer}s to emit {@link TimerEvent}s. */
+/** Handles {@link Timer}s to dispatch {@link TimerEvent}s. */
 public class TimerEventEmitter implements Closeable {
 
   private static final Clock DEFAULT_CLOCK = Clock.systemUTC();
 
-  private final EventEmitter eventEmitter;
+  private final EventDispatcher eventDispatcher;
   private final String description;
 
   private final Clock clock;
@@ -39,17 +39,20 @@ public class TimerEventEmitter implements Closeable {
   /**
    * Creates a new {@link TimerEventEmitter}.
    *
-   * @param eventEmitter the {@link EventEmitter} used to emit the {@link TimerEvent}s
+   * @param eventDispatcher the {@link EventDispatcher} used to dispatch the {@link TimerEvent}s
    * @param description the default description for the {@link TimerEvent}s
    */
-  public TimerEventEmitter(EventEmitter eventEmitter, String description) {
-    this(eventEmitter, description, DEFAULT_CLOCK, null);
+  public TimerEventEmitter(EventDispatcher eventDispatcher, String description) {
+    this(eventDispatcher, description, DEFAULT_CLOCK, null);
   }
 
   @VisibleForTesting
   TimerEventEmitter(
-      EventEmitter eventEmitter, String description, Clock clock, @Nullable Timer parentTimer) {
-    this.eventEmitter = eventEmitter;
+      EventDispatcher eventDispatcher,
+      String description,
+      Clock clock,
+      @Nullable Timer parentTimer) {
+    this.eventDispatcher = eventDispatcher;
     this.description = description;
     this.clock = clock;
     this.timer = new Timer(clock, parentTimer);
@@ -64,7 +67,7 @@ public class TimerEventEmitter implements Closeable {
    * @return the new {@link TimerEventEmitter}
    */
   public TimerEventEmitter subTimer(String description) {
-    return new TimerEventEmitter(eventEmitter, description, clock, timer);
+    return new TimerEventEmitter(eventDispatcher, description, clock, timer);
   }
 
   /**
@@ -93,7 +96,7 @@ public class TimerEventEmitter implements Closeable {
   }
 
   private void emitTimerEvent(State state, Duration duration, String eventDescription) {
-    eventEmitter.emit(
+    eventDispatcher.dispatch(
         new TimerEvent(state, timer, duration, timer.getElapsedTime(), eventDescription));
   }
 }

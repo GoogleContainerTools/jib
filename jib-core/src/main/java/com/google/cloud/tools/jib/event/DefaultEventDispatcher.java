@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.event;
 import com.google.common.collect.ImmutableMultimap;
 
 /** Emits {@link JibEvent}s to event handlers. */
-public class DefaultEventEmitter implements EventEmitter {
+public class DefaultEventDispatcher implements EventDispatcher {
 
   /** Maps from {@link JibEvent} class to handlers for that event type. */
   private final ImmutableMultimap<Class<? extends JibEvent>, Handler<? extends JibEvent>> handlers;
@@ -29,17 +29,17 @@ public class DefaultEventEmitter implements EventEmitter {
    *
    * @param eventHandlers the {@link EventHandlers} to get the {@link Handler}s from
    */
-  public DefaultEventEmitter(EventHandlers eventHandlers) {
+  public DefaultEventDispatcher(EventHandlers eventHandlers) {
     handlers = eventHandlers.getHandlers();
   }
 
   /**
    * Emits {@code jibEvent} to all the handlers that can handle it.
    *
-   * @param jibEvent the {@link JibEvent} to emit
+   * @param jibEvent the {@link JibEvent} to dispatch
    */
   @Override
-  public void emit(JibEvent jibEvent) {
+  public void dispatch(JibEvent jibEvent) {
     handlers.get(JibEvent.class).forEach(handler -> handler.handle(jibEvent));
     handlers.get(jibEvent.getClass()).forEach(handler -> handler.handle(jibEvent));
   }

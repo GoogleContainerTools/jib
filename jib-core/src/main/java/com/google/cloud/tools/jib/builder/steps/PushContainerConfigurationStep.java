@@ -78,7 +78,7 @@ class PushContainerConfigurationStep
   private PushBlobStep afterBuildConfigurationFutureFuture()
       throws ExecutionException, IOException {
     try (TimerEventEmitter ignored =
-        new TimerEventEmitter(buildConfiguration.getEventEmitter(), DESCRIPTION)) {
+        new TimerEventEmitter(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
       Image<CachedLayer> image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
       Blob containerConfigurationBlob =
           new ImageToJsonTranslator(image).getContainerConfigurationBlob();

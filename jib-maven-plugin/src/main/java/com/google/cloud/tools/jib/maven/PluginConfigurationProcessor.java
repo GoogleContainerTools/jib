@@ -106,10 +106,10 @@ class PluginConfigurationProcessor {
             logger);
     DefaultCredentialRetrievers defaultCredentialRetrievers =
         DefaultCredentialRetrievers.init(
-            CredentialRetrieverFactory.forImage(baseImage, projectProperties.getEventEmitter()));
+            CredentialRetrieverFactory.forImage(baseImage, projectProperties.getEventDispatcher()));
     Optional<Credential> optionalFromCredential =
         ConfigurationPropertyValidator.getImageCredential(
-            projectProperties.getEventEmitter(),
+            projectProperties.getEventDispatcher(),
             "jib.from.auth.username",
             "jib.from.auth.password",
             jibPluginConfiguration.getBaseImageAuth());
@@ -158,7 +158,7 @@ class PluginConfigurationProcessor {
     BuildConfiguration.Builder buildConfigurationBuilder =
         BuildConfiguration.builder()
             .setToolName(MavenProjectProperties.TOOL_NAME)
-            .setEventEmitter(projectProperties.getEventEmitter())
+            .setEventDispatcher(projectProperties.getEventDispatcher())
             .setAllowInsecureRegistries(jibPluginConfiguration.getAllowInsecureRegistries())
             .setLayerConfigurations(
                 projectProperties.getJavaLayerConfigurations().getLayerConfigurations());

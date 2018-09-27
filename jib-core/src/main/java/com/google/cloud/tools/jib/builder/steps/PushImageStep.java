@@ -116,7 +116,7 @@ class PushImageStep implements AsyncStep<Void>, Callable<Void> {
 
   private ListenableFuture<Void> afterAllPushed() throws ExecutionException {
     try (TimerEventEmitter ignored =
-        new TimerEventEmitter(buildConfiguration.getEventEmitter(), DESCRIPTION)) {
+        new TimerEventEmitter(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
       RegistryClient registryClient =
           buildConfiguration
               .newTargetImageRegistryClientFactory()
@@ -141,8 +141,8 @@ class PushImageStep implements AsyncStep<Void>, Callable<Void> {
             listeningExecutorService.submit(
                 () -> {
                   buildConfiguration
-                      .getEventEmitter()
-                      .emit(LogEvent.info("Tagging with " + tag + "..."));
+                      .getEventDispatcher()
+                      .dispatch(LogEvent.info("Tagging with " + tag + "..."));
                   registryClient.pushManifest(manifestTemplate, tag);
                   return null;
                 }));

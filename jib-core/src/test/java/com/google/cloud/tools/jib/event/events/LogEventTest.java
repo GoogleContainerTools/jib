@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.event.events;
 
-import com.google.cloud.tools.jib.event.DefaultEventEmitter;
-import com.google.cloud.tools.jib.event.EventEmitter;
+import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
+import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.LogEvent.Level;
@@ -33,17 +33,17 @@ public class LogEventTest {
 
   // Note that in actual code, the event handler should NOT perform thread unsafe operations like
   // here.
-  private final EventEmitter eventEmitter =
-      new DefaultEventEmitter(
+  private final EventDispatcher eventDispatcher =
+      new DefaultEventDispatcher(
           new EventHandlers().add(JibEventType.LOGGING, receivedLogEvents::offer));
 
   @Test
   public void testFactories() {
-    eventEmitter.emit(LogEvent.error("error"));
-    eventEmitter.emit(LogEvent.lifecycle("lifecycle"));
-    eventEmitter.emit(LogEvent.warn("warn"));
-    eventEmitter.emit(LogEvent.info("info"));
-    eventEmitter.emit(LogEvent.debug("debug"));
+    eventDispatcher.dispatch(LogEvent.error("error"));
+    eventDispatcher.dispatch(LogEvent.lifecycle("lifecycle"));
+    eventDispatcher.dispatch(LogEvent.warn("warn"));
+    eventDispatcher.dispatch(LogEvent.info("info"));
+    eventDispatcher.dispatch(LogEvent.debug("debug"));
 
     verifyNextLogEvent(Level.ERROR, "error");
     verifyNextLogEvent(Level.LIFECYCLE, "lifecycle");

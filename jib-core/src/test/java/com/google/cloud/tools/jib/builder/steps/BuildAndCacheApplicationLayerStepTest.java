@@ -23,7 +23,7 @@ import com.google.cloud.tools.jib.cache.CacheReader;
 import com.google.cloud.tools.jib.cache.CachedLayerWithMetadata;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
-import com.google.cloud.tools.jib.event.EventEmitter;
+import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.ImageLayers;
 import com.google.cloud.tools.jib.image.LayerEntry;
@@ -79,7 +79,7 @@ public class BuildAndCacheApplicationLayerStepTest {
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Mock private BuildConfiguration mockBuildConfiguration;
-  @Mock private EventEmitter mockEventEmitter;
+  @Mock private EventDispatcher mockEventDispatcher;
   private Path temporaryCacheDirectory;
 
   private LayerConfiguration fakeDependenciesLayerConfiguration;
@@ -110,7 +110,7 @@ public class BuildAndCacheApplicationLayerStepTest {
                 EXTRA_FILES_LAYER_EXTRACTION_PATH.resolve("fileB"))
             .build();
     emptyLayerConfiguration = LayerConfiguration.builder().build();
-    Mockito.when(mockBuildConfiguration.getEventEmitter()).thenReturn(mockEventEmitter);
+    Mockito.when(mockBuildConfiguration.getEventDispatcher()).thenReturn(mockEventDispatcher);
     temporaryCacheDirectory = temporaryFolder.newFolder().toPath();
   }
 

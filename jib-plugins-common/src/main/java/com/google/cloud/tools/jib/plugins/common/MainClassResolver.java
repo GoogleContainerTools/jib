@@ -73,8 +73,8 @@ public class MainClassResolver {
     Preconditions.checkNotNull(mainClass);
     if (!isValidJavaClass(mainClass)) {
       projectProperties
-          .getEventEmitter()
-          .emit(LogEvent.warn("'mainClass' is not a valid Java class : " + mainClass));
+          .getEventDispatcher()
+          .dispatch(LogEvent.warn("'mainClass' is not a valid Java class : " + mainClass));
     }
 
     return mainClass;
@@ -97,8 +97,8 @@ public class MainClassResolver {
   @Nullable
   private static String getMainClassFromJar(ProjectProperties projectProperties) {
     projectProperties
-        .getEventEmitter()
-        .emit(
+        .getEventDispatcher()
+        .dispatch(
             LogEvent.info(
                 "Searching for main class... Add a 'mainClass' configuration to '"
                     + projectProperties.getPluginName()
@@ -109,8 +109,8 @@ public class MainClassResolver {
   private static String findMainClassInClassFiles(ProjectProperties projectProperties)
       throws MainClassInferenceException {
     projectProperties
-        .getEventEmitter()
-        .emit(
+        .getEventDispatcher()
+        .dispatch(
             LogEvent.debug(
                 "Could not find a valid main class specified in "
                     + projectProperties.getJarPluginName()
@@ -125,7 +125,7 @@ public class MainClassResolver {
             .collect(ImmutableList.toImmutableList());
 
     MainClassFinder.Result mainClassFinderResult =
-        new MainClassFinder(classesSourceFiles, projectProperties.getEventEmitter()).find();
+        new MainClassFinder(classesSourceFiles, projectProperties.getEventDispatcher()).find();
 
     switch (mainClassFinderResult.getType()) {
       case MAIN_CLASS_FOUND:

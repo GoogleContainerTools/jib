@@ -69,7 +69,7 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer>, Callable
   public CachedLayer call() throws IOException, RegistryException {
     try (TimerEventEmitter ignored =
         new TimerEventEmitter(
-            buildConfiguration.getEventEmitter(), String.format(DESCRIPTION, layerDigest))) {
+            buildConfiguration.getEventDispatcher(), String.format(DESCRIPTION, layerDigest))) {
       RegistryClient registryClient =
           buildConfiguration
               .newBaseImageRegistryClientFactory()

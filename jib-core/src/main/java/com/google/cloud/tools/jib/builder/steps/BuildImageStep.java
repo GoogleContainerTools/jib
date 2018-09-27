@@ -94,7 +94,7 @@ class BuildImageStep
   private Image<CachedLayer> afterCachedLayersSteps()
       throws ExecutionException, LayerPropertyNotFoundException {
     try (TimerEventEmitter ignored =
-        new TimerEventEmitter(buildConfiguration.getEventEmitter(), DESCRIPTION)) {
+        new TimerEventEmitter(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
       // Constructs the image.
       Image.Builder<CachedLayer> imageBuilder = Image.builder();
       Image<Layer> baseImage = NonBlockingSteps.get(pullBaseImageStep).getBaseImage();

@@ -105,23 +105,23 @@ class PullBaseImageStep
           LayerCountMismatchException, ExecutionException, BadContainerConfigurationFormatException,
           RegistryAuthenticationFailedException {
     buildConfiguration
-        .getEventEmitter()
-        .emit(
+        .getEventDispatcher()
+        .dispatch(
             LogEvent.lifecycle(
                 "Getting base image "
                     + buildConfiguration.getBaseImageConfiguration().getImage()
                     + "..."));
 
     try (TimerEventEmitter ignored =
-        new TimerEventEmitter(buildConfiguration.getEventEmitter(), DESCRIPTION)) {
+        new TimerEventEmitter(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
       // First, try with no credentials.
       try {
         return new BaseImageWithAuthorization(pullBaseImage(null), null);
 
       } catch (RegistryUnauthorizedException ex) {
         buildConfiguration
-            .getEventEmitter()
-            .emit(
+            .getEventDispatcher()
+            .dispatch(
                 LogEvent.lifecycle(
                     "The base image requires auth. Trying again for "
                         + buildConfiguration.getBaseImageConfiguration().getImage()
@@ -150,15 +150,15 @@ class PullBaseImageStep
           // See https://docs.docker.com/registry/spec/auth/token
           RegistryAuthenticator registryAuthenticator =
               RegistryAuthenticator.initializer(
-                      buildConfiguration.getEventEmitter(),
+                      buildConfiguration.getEventDispatcher(),
                       buildConfiguration.getBaseImageConfiguration().getImageRegistry(),
                       buildConfiguration.getBaseImageConfiguration().getImageRepository())
                   .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
                   .initialize();
           if (registryAuthenticator == null) {
             buildConfiguration
-                .getEventEmitter()
-                .emit(
+                .getEventDispatcher()
+                .dispatch(
                     LogEvent.error(
                         "Failed to retrieve authentication challenge for registry that required token authentication"));
             throw registryUnauthorizedException;

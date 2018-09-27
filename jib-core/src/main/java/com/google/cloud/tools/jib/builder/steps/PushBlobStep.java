@@ -68,7 +68,8 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
   @Override
   public BlobDescriptor call() throws IOException, RegistryException, ExecutionException {
     try (TimerEventEmitter ignored =
-        new TimerEventEmitter(buildConfiguration.getEventEmitter(), DESCRIPTION + blobDescriptor)) {
+        new TimerEventEmitter(
+            buildConfiguration.getEventDispatcher(), DESCRIPTION + blobDescriptor)) {
       RegistryClient registryClient =
           buildConfiguration
               .newTargetImageRegistryClientFactory()
@@ -78,8 +79,8 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
       // check if the BLOB is available
       if (registryClient.checkBlob(blobDescriptor.getDigest()) != null) {
         buildConfiguration
-            .getEventEmitter()
-            .emit(LogEvent.info("BLOB : " + blobDescriptor + " already exists on registry"));
+            .getEventDispatcher()
+            .dispatch(LogEvent.info("BLOB : " + blobDescriptor + " already exists on registry"));
         return blobDescriptor;
       }
 

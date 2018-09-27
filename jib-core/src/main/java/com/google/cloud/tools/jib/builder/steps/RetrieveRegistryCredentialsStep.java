@@ -21,7 +21,7 @@ import com.google.cloud.tools.jib.builder.TimerEventEmitter;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
-import com.google.cloud.tools.jib.event.EventEmitter;
+import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import com.google.common.annotations.VisibleForTesting;
@@ -44,7 +44,7 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
       ListeningExecutorService listeningExecutorService, BuildConfiguration buildConfiguration) {
     return new RetrieveRegistryCredentialsStep(
         listeningExecutorService,
-        buildConfiguration.getEventEmitter(),
+        buildConfiguration.getEventDispatcher(),
         buildConfiguration.getBaseImageConfiguration().getImageRegistry(),
         buildConfiguration.getBaseImageConfiguration().getCredentialRetrievers());
   }
@@ -54,12 +54,12 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
       ListeningExecutorService listeningExecutorService, BuildConfiguration buildConfiguration) {
     return new RetrieveRegistryCredentialsStep(
         listeningExecutorService,
-        buildConfiguration.getEventEmitter(),
+        buildConfiguration.getEventDispatcher(),
         buildConfiguration.getTargetImageConfiguration().getImageRegistry(),
         buildConfiguration.getTargetImageConfiguration().getCredentialRetrievers());
   }
 
-  private final EventEmitter eventEmitter;
+  private final EventDispatcher eventDispatcher;
   private final String registry;
   private final ImmutableList<CredentialRetriever> credentialRetrievers;
 
@@ -68,10 +68,10 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
   @VisibleForTesting
   RetrieveRegistryCredentialsStep(
       ListeningExecutorService listeningExecutorService,
-      EventEmitter eventEmitter,
+      EventDispatcher eventDispatcher,
       String registry,
       ImmutableList<CredentialRetriever> credentialRetrievers) {
-    this.eventEmitter = eventEmitter;
+    this.eventDispatcher = eventDispatcher;
     this.registry = registry;
     this.credentialRetrievers = credentialRetrievers;
 
@@ -87,9 +87,9 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
   @Nullable
   public Credential call() throws CredentialRetrievalException {
     String description = makeDescription(registry);
-    eventEmitter.emit(LogEvent.lifecycle(description + "..."));
+    eventDispatcher.dispatch(LogEvent.lifecycle(description + "..."));
 
-    try (TimerEventEmitter ignored = new TimerEventEmitter(eventEmitter, description)) {
+    try (TimerEventEmitter ignored = new TimerEventEmitter(eventDispatcher, description)) {
       for (CredentialRetriever credentialRetriever : credentialRetrievers) {
         Optional<Credential> optionalCredential = credentialRetriever.retrieve();
         if (optionalCredential.isPresent()) {
@@ -99,7 +99,7 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
 
       // If no credentials found, give an info (not warning because in most cases, the base image is
       // public and does not need extra credentials) and return null.
-      eventEmitter.emit(
+      eventDispatcher.dispatch(
           LogEvent.info("No credentials could be retrieved for registry " + registry));
       return null;
     }

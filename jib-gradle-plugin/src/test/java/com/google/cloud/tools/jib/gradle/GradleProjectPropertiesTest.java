@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.event.EventEmitter;
+import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -49,7 +49,7 @@ public class GradleProjectPropertiesTest {
   @Mock private Convention mockConvention;
   @Mock private WarPluginConvention mockWarPluginConvection;
   @Mock private TaskContainer mockTaskContainer;
-  @Mock private EventEmitter mockEventEmitter;
+  @Mock private EventDispatcher mockEventDispatcher;
   @Mock private JavaLayerConfigurations mockJavaLayerConfigurations;
 
   private Manifest manifest;
@@ -67,7 +67,7 @@ public class GradleProjectPropertiesTest {
     Mockito.when(mockJar.getManifest()).thenReturn(manifest);
 
     gradleProjectProperties =
-        new GradleProjectProperties(mockProject, mockEventEmitter, mockJavaLayerConfigurations);
+        new GradleProjectProperties(mockProject, mockEventDispatcher, mockJavaLayerConfigurations);
   }
 
   @Test

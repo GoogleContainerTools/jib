@@ -73,7 +73,7 @@ class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authori
           RegistryException {
     try (TimerEventEmitter ignored =
         new TimerEventEmitter(
-            buildConfiguration.getEventEmitter(),
+            buildConfiguration.getEventDispatcher(),
             String.format(
                 DESCRIPTION,
                 buildConfiguration.getTargetImageConfiguration().getImageRegistry()))) {
@@ -86,7 +86,7 @@ class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authori
 
       RegistryAuthenticator registryAuthenticator =
           RegistryAuthenticator.initializer(
-                  buildConfiguration.getEventEmitter(),
+                  buildConfiguration.getEventDispatcher(),
                   buildConfiguration.getTargetImageConfiguration().getImageRegistry(),
                   buildConfiguration.getTargetImageConfiguration().getImageRepository())
               .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
