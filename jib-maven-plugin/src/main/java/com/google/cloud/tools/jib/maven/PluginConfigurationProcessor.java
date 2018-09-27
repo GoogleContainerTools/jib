@@ -35,6 +35,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.logging.Log;
 
 /** Configures and provides builders for the image building goals. */
 class PluginConfigurationProcessor {
@@ -58,6 +59,13 @@ class PluginConfigurationProcessor {
     }
   }
 
+  /** Disables annoying Apache HTTP client logging. */
+  static void disableHttpLogging() {
+    System.setProperty(
+        "org.apache.commons.logging.Log", "org.apache.commons.logging.impl.SimpleLog");
+    System.setProperty("org.apache.commons.logging.simplelog.defaultlog", "error");
+  }
+
   /**
    * Sets up {@link BuildConfiguration} that is common among the image building goals. This includes
    * setting up the base image reference/authorization, container configuration, cache
@@ -71,7 +79,7 @@ class PluginConfigurationProcessor {
    * @throws MojoExecutionException if the http timeout system property is misconfigured
    */
   static PluginConfigurationProcessor processCommonConfiguration(
-      MavenJibLogger logger,
+      Log logger,
       JibPluginConfiguration jibPluginConfiguration,
       MavenProjectProperties projectProperties)
       throws MojoExecutionException {
@@ -82,8 +90,7 @@ class PluginConfigurationProcessor {
     }
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
-    MavenJibLogger.disableHttpLogging();
-
+    disableHttpLogging();
     ImageReference baseImage = parseImageReference(jibPluginConfiguration.getBaseImage(), "from");
 
     // Checks Maven settings for registry credentials.
@@ -149,7 +156,7 @@ class PluginConfigurationProcessor {
     }
 
     BuildConfiguration.Builder buildConfigurationBuilder =
-        BuildConfiguration.builder(logger)
+        BuildConfiguration.builder()
             .setToolName(MavenProjectProperties.TOOL_NAME)
             .setEventEmitter(projectProperties.getEventEmitter())
             .setAllowInsecureRegistries(jibPluginConfiguration.getAllowInsecureRegistries())

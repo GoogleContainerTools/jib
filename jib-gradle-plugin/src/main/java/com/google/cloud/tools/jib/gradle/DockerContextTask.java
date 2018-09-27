@@ -102,9 +102,10 @@ public class DockerContextTask extends DefaultTask implements JibTask {
   @TaskAction
   public void generateDockerContext() {
     Preconditions.checkNotNull(jibExtension);
-
-    GradleJibLogger gradleJibLogger = new GradleJibLogger(getLogger());
     JibSystemProperties.checkHttpTimeoutProperty();
+
+    // TODO: Instead of disabling logging, have authentication credentials be provided
+    PluginConfigurationProcessor.disableHttpLogging();
 
     AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);
     GradleProjectProperties gradleProjectProperties =
@@ -120,7 +121,7 @@ public class DockerContextTask extends DefaultTask implements JibTask {
               appRoot, jibExtension.getContainer().getJvmFlags(), mainClass);
     } else if (jibExtension.getContainer().getMainClass() != null
         || !jibExtension.getContainer().getJvmFlags().isEmpty()) {
-      gradleJibLogger.warn("mainClass and jvmFlags are ignored when entrypoint is specified");
+      getLogger().warn("mainClass and jvmFlags are ignored when entrypoint is specified");
     }
 
     try {
@@ -136,7 +137,7 @@ public class DockerContextTask extends DefaultTask implements JibTask {
           .setLabels(jibExtension.getLabels())
           .generate(Paths.get(targetDir));
 
-      gradleJibLogger.lifecycle("Created Docker context at " + targetDir);
+      getLogger().lifecycle("Created Docker context at " + targetDir);
 
     } catch (InsecureRecursiveDeleteException ex) {
       throw new GradleException(

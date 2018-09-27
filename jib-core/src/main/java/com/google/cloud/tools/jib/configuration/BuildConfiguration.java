@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.configuration;
 
-import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.event.EventEmitter;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
@@ -58,11 +57,7 @@ public class BuildConfiguration {
           /* No-op EventEmitter. */
         };
 
-    private JibLogger buildLogger;
-
-    private Builder(JibLogger buildLogger) {
-      this.buildLogger = buildLogger;
-    }
+    private Builder() {}
 
     /**
      * Sets the base image configuration.
@@ -217,7 +212,6 @@ public class BuildConfiguration {
           }
 
           return new BuildConfiguration(
-              buildLogger,
               baseImageConfiguration,
               targetImageConfiguration,
               additionalTargetImageTags,
@@ -246,40 +240,12 @@ public class BuildConfiguration {
   /**
    * Creates a new {@link Builder} to build a {@link BuildConfiguration}.
    *
-   * @param jibLogger the logger to log messages during build
-   * @return a new {@link Builder}
-   */
-  public static Builder builder(JibLogger jibLogger) {
-    return new Builder(jibLogger);
-  }
-
-  /**
-   * Creates a new {@link Builder} to build a {@link BuildConfiguration}.
-   *
    * @return a new {@link Builder}
    */
   public static Builder builder() {
-    // TODO: Remove JibLogger and #builder(JibLogger).
-    return new Builder(
-        new JibLogger() {
-          @Override
-          public void error(CharSequence message) {}
-
-          @Override
-          public void lifecycle(CharSequence message) {}
-
-          @Override
-          public void warn(CharSequence message) {}
-
-          @Override
-          public void info(CharSequence message) {}
-
-          @Override
-          public void debug(CharSequence message) {}
-        });
+    return new Builder();
   }
 
-  private final JibLogger buildLogger;
   private final ImageConfiguration baseImageConfiguration;
   private final ImageConfiguration targetImageConfiguration;
   private final ImmutableSet<String> additionalTargetImageTags;
@@ -294,7 +260,6 @@ public class BuildConfiguration {
 
   /** Instantiate with {@link #builder}. */
   private BuildConfiguration(
-      JibLogger buildLogger,
       ImageConfiguration baseImageConfiguration,
       ImageConfiguration targetImageConfiguration,
       ImmutableSet<String> additionalTargetImageTags,
@@ -306,7 +271,6 @@ public class BuildConfiguration {
       ImmutableList<LayerConfiguration> layerConfigurations,
       String toolName,
       EventEmitter eventEmitter) {
-    this.buildLogger = buildLogger;
     this.baseImageConfiguration = baseImageConfiguration;
     this.targetImageConfiguration = targetImageConfiguration;
     this.additionalTargetImageTags = additionalTargetImageTags;
@@ -318,10 +282,6 @@ public class BuildConfiguration {
     this.layerConfigurations = layerConfigurations;
     this.toolName = toolName;
     this.eventEmitter = eventEmitter;
-  }
-
-  public JibLogger getBuildLogger() {
-    return buildLogger;
   }
 
   public ImageConfiguration getBaseImageConfiguration() {

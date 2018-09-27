@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.settings.Settings;
 import org.junit.Assert;
 import org.junit.Before;
@@ -37,11 +38,11 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class PluginConfigurationProcessorTest {
 
-  @Mock MavenJibLogger mockMavenJibLogger;
-  @Mock JibPluginConfiguration mockJibPluginConfiguration;
-  @Mock MavenProjectProperties mockProjectProperties;
-  @Mock MavenSession mockMavenSession;
-  @Mock Settings mockMavenSettings;
+  @Mock private Log mockLog;
+  @Mock private JibPluginConfiguration mockJibPluginConfiguration;
+  @Mock private MavenProjectProperties mockProjectProperties;
+  @Mock private MavenSession mockMavenSession;
+  @Mock private Settings mockMavenSettings;
 
   @Before
   public void setUp() throws Exception {
@@ -69,12 +70,12 @@ public class PluginConfigurationProcessorTest {
   public void testPluginConfigurationProcessor_defaults() throws MojoExecutionException {
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
-            mockMavenJibLogger, mockJibPluginConfiguration, mockProjectProperties);
+            mockLog, mockJibPluginConfiguration, mockProjectProperties);
     ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
     Assert.assertEquals(
         Arrays.asList("java", "-cp", "/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
         configuration.getEntrypoint());
-    Mockito.verifyZeroInteractions(mockMavenJibLogger);
+    Mockito.verifyZeroInteractions(mockLog);
   }
 
   @Test
@@ -85,11 +86,11 @@ public class PluginConfigurationProcessorTest {
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
-            mockMavenJibLogger, mockJibPluginConfiguration, mockProjectProperties);
+            mockLog, mockJibPluginConfiguration, mockProjectProperties);
     ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
 
     Assert.assertEquals(Arrays.asList("custom", "entrypoint"), configuration.getEntrypoint());
-    Mockito.verifyZeroInteractions(mockMavenJibLogger);
+    Mockito.verifyZeroInteractions(mockLog);
   }
 
   @Test
@@ -101,11 +102,11 @@ public class PluginConfigurationProcessorTest {
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
-            mockMavenJibLogger, mockJibPluginConfiguration, mockProjectProperties);
+            mockLog, mockJibPluginConfiguration, mockProjectProperties);
     ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
 
     Assert.assertEquals(Arrays.asList("custom", "entrypoint"), configuration.getEntrypoint());
-    Mockito.verify(mockMavenJibLogger)
+    Mockito.verify(mockLog)
         .warn("<mainClass> and <jvmFlags> are ignored when <entrypoint> is specified");
   }
 
@@ -118,11 +119,11 @@ public class PluginConfigurationProcessorTest {
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
-            mockMavenJibLogger, mockJibPluginConfiguration, mockProjectProperties);
+            mockLog, mockJibPluginConfiguration, mockProjectProperties);
     ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
 
     Assert.assertEquals(Arrays.asList("custom", "entrypoint"), configuration.getEntrypoint());
-    Mockito.verify(mockMavenJibLogger)
+    Mockito.verify(mockLog)
         .warn("<mainClass> and <jvmFlags> are ignored when <entrypoint> is specified");
   }
 
@@ -132,7 +133,7 @@ public class PluginConfigurationProcessorTest {
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
-            mockMavenJibLogger, mockJibPluginConfiguration, mockProjectProperties);
+            mockLog, mockJibPluginConfiguration, mockProjectProperties);
     ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
 
     Assert.assertEquals(

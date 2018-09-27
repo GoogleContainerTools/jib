@@ -23,6 +23,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.settings.Server;
 import org.apache.maven.settings.Settings;
 import org.apache.maven.settings.building.SettingsProblem;
@@ -57,22 +58,20 @@ class MavenSettingsServerCredentials {
 
   private final Settings settings;
   @Nullable private final SettingsDecrypter settingsDecrypter;
-  private final MavenJibLogger mavenJibLogger;
+  private final Log log;
 
   /**
    * Create new instance.
    *
    * @param settings the Maven settings object
    * @param settingsDecrypter the Maven decrypter component
-   * @param mavenJibLogger the Maven build log
+   * @param log the Maven build logger
    */
   MavenSettingsServerCredentials(
-      Settings settings,
-      @Nullable SettingsDecrypter settingsDecrypter,
-      MavenJibLogger mavenJibLogger) {
+      Settings settings, @Nullable SettingsDecrypter settingsDecrypter, Log log) {
     this.settings = settings;
     this.settingsDecrypter = settingsDecrypter;
-    this.mavenJibLogger = mavenJibLogger;
+    this.log = log;
   }
 
   /**
@@ -112,7 +111,7 @@ class MavenSettingsServerCredentials {
         registryServer = result.getServer();
       }
     } else if (isEncrypted(registryServer.getPassword())) {
-      mavenJibLogger.warn(
+      log.warn(
           "Server password for registry "
               + registry
               + " appears to be encrypted, but there is no decrypter available");
