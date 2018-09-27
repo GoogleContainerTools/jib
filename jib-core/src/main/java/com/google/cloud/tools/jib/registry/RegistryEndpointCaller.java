@@ -76,7 +76,7 @@ class RegistryEndpointCaller<T> {
   /**
    * Constructs with parameters for making the request.
    *
-   * @param eventDispatcher the event emitter used for emitting log events
+   * @param eventDispatcher the event dispatcher used for dispatching log events
    * @param userAgent {@code User-Agent} header to send with the request
    * @param apiRouteBase the endpoint's API root, without the protocol
    * @param registryEndpointProvider the {@link RegistryEndpointProvider} to the endpoint

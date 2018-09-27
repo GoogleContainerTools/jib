@@ -26,7 +26,7 @@ import java.time.Duration;
 import javax.annotation.Nullable;
 
 /** Handles {@link Timer}s to dispatch {@link TimerEvent}s. */
-public class TimerEventEmitter implements Closeable {
+public class TimerEventDispatcher implements Closeable {
 
   private static final Clock DEFAULT_CLOCK = Clock.systemUTC();
 
@@ -37,17 +37,17 @@ public class TimerEventEmitter implements Closeable {
   private final Timer timer;
 
   /**
-   * Creates a new {@link TimerEventEmitter}.
+   * Creates a new {@link TimerEventDispatcher}.
    *
    * @param eventDispatcher the {@link EventDispatcher} used to dispatch the {@link TimerEvent}s
    * @param description the default description for the {@link TimerEvent}s
    */
-  public TimerEventEmitter(EventDispatcher eventDispatcher, String description) {
+  public TimerEventDispatcher(EventDispatcher eventDispatcher, String description) {
     this(eventDispatcher, description, DEFAULT_CLOCK, null);
   }
 
   @VisibleForTesting
-  TimerEventEmitter(
+  TimerEventDispatcher(
       EventDispatcher eventDispatcher,
       String description,
       Clock clock,
@@ -57,45 +57,47 @@ public class TimerEventEmitter implements Closeable {
     this.clock = clock;
     this.timer = new Timer(clock, parentTimer);
 
-    emitTimerEvent(State.START, Duration.ZERO, description);
+    dispatchTimerEvent(State.START, Duration.ZERO, description);
   }
 
   /**
-   * Creates a new {@link TimerEventEmitter} with its parent timer as this.
+   * Creates a new {@link TimerEventDispatcher} with its parent timer as this.
    *
    * @param description a new description
-   * @return the new {@link TimerEventEmitter}
+   * @return the new {@link TimerEventDispatcher}
    */
-  public TimerEventEmitter subTimer(String description) {
-    return new TimerEventEmitter(eventDispatcher, description, clock, timer);
+  public TimerEventDispatcher subTimer(String description) {
+    return new TimerEventDispatcher(eventDispatcher, description, clock, timer);
   }
 
   /**
-   * Captures the time since last lap or creation and emits an {@link State#LAP} {@link TimerEvent}.
+   * Captures the time since last lap or creation and dispatches an {@link State#LAP} {@link
+   * TimerEvent}.
    *
    * @see #lap(String) for using a different description
    */
   public void lap() {
-    emitTimerEvent(State.LAP, timer.lap(), description);
+    dispatchTimerEvent(State.LAP, timer.lap(), description);
   }
 
   /**
-   * Captures the time since last lap or creation and emits an {@link State#LAP} {@link TimerEvent}.
+   * Captures the time since last lap or creation and dispatches an {@link State#LAP} {@link
+   * TimerEvent}.
    *
-   * @param newDescription the description to use instead of the {@link TimerEventEmitter}'s
+   * @param newDescription the description to use instead of the {@link TimerEventDispatcher}'s
    *     description
    */
   public void lap(String newDescription) {
-    emitTimerEvent(State.LAP, timer.lap(), newDescription);
+    dispatchTimerEvent(State.LAP, timer.lap(), newDescription);
   }
 
-  /** Laps and emits an {@link State#FINISHED} {@link TimerEvent} upon close. */
+  /** Laps and dispatches a {@link State#FINISHED} {@link TimerEvent} upon close. */
   @Override
   public void close() {
-    emitTimerEvent(State.FINISHED, timer.lap(), description);
+    dispatchTimerEvent(State.FINISHED, timer.lap(), description);
   }
 
-  private void emitTimerEvent(State state, Duration duration, String eventDescription) {
+  private void dispatchTimerEvent(State state, Duration duration, String eventDescription) {
     eventDispatcher.dispatch(
         new TimerEvent(state, timer, duration, timer.getElapsedTime(), eventDescription));
   }

@@ -17,7 +17,7 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.async.AsyncStep;
-import com.google.cloud.tools.jib.builder.TimerEventEmitter;
+import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheReader;
 import com.google.cloud.tools.jib.cache.CacheWriter;
@@ -67,8 +67,8 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer>, Callable
 
   @Override
   public CachedLayer call() throws IOException, RegistryException {
-    try (TimerEventEmitter ignored =
-        new TimerEventEmitter(
+    try (TimerEventDispatcher ignored =
+        new TimerEventDispatcher(
             buildConfiguration.getEventDispatcher(), String.format(DESCRIPTION, layerDigest))) {
       RegistryClient registryClient =
           buildConfiguration

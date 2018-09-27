@@ -113,7 +113,7 @@ public class MainClassFinder {
    * Finds a class with {@code psvm} (see class javadoc) in {@code files}.
    *
    * @param files the files to check
-   * @param eventDispatcher used for emitting log events.
+   * @param eventDispatcher used for dispatching log events.
    */
   public MainClassFinder(ImmutableList<Path> files, EventDispatcher eventDispatcher) {
     this.files = files;

@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.event;
 
 import com.google.common.collect.ImmutableMultimap;
 
-/** Emits {@link JibEvent}s to event handlers. */
+/** Dispatches {@link JibEvent}s to event handlers. */
 public class DefaultEventDispatcher implements EventDispatcher {
 
   /** Maps from {@link JibEvent} class to handlers for that event type. */
@@ -34,7 +34,7 @@ public class DefaultEventDispatcher implements EventDispatcher {
   }
 
   /**
-   * Emits {@code jibEvent} to all the handlers that can handle it.
+   * Dispatches {@code jibEvent} to all the handlers that can handle it.
    *
    * @param jibEvent the {@link JibEvent} to dispatch
    */

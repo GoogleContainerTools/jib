@@ -35,7 +35,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link TimerEventEmitter}. */
+/** Tests for {@link TimerEventDispatcher}. */
 @RunWith(MockitoJUnitRunner.class)
 public class TimerEventDispatcherTest {
 
@@ -50,12 +50,13 @@ public class TimerEventDispatcherTest {
             new EventHandlers().add(JibEventType.TIMING, timerEventQueue::add));
 
     Mockito.when(mockClock.instant()).thenReturn(Instant.EPOCH);
-    try (TimerEventEmitter parentTimerEventEmitter =
-        new TimerEventEmitter(eventDispatcher, "description", mockClock, null)) {
+    try (TimerEventDispatcher parentTimerEventDispatcher =
+        new TimerEventDispatcher(eventDispatcher, "description", mockClock, null)) {
       Mockito.when(mockClock.instant()).thenReturn(Instant.EPOCH.plusMillis(1));
-      parentTimerEventEmitter.lap();
+      parentTimerEventDispatcher.lap();
       Mockito.when(mockClock.instant()).thenReturn(Instant.EPOCH.plusMillis(1).plusNanos(1));
-      try (TimerEventEmitter ignored = parentTimerEventEmitter.subTimer("child description")) {
+      try (TimerEventDispatcher ignored =
+          parentTimerEventDispatcher.subTimer("child description")) {
         Mockito.when(mockClock.instant()).thenReturn(Instant.EPOCH.plusMillis(2));
         // Laps on close.
       }

@@ -20,7 +20,7 @@ import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
-import com.google.cloud.tools.jib.builder.TimerEventEmitter;
+import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
@@ -77,8 +77,8 @@ class PushContainerConfigurationStep
 
   private PushBlobStep afterBuildConfigurationFutureFuture()
       throws ExecutionException, IOException {
-    try (TimerEventEmitter ignored =
-        new TimerEventEmitter(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
+    try (TimerEventDispatcher ignored =
+        new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
       Image<CachedLayer> image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
       Blob containerConfigurationBlob =
           new ImageToJsonTranslator(image).getContainerConfigurationBlob();

@@ -17,7 +17,7 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.async.AsyncStep;
-import com.google.cloud.tools.jib.builder.TimerEventEmitter;
+import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.CacheReader;
@@ -48,8 +48,8 @@ class BuildAndCacheApplicationLayerStep
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
       Cache cache) {
-    try (TimerEventEmitter ignored =
-        new TimerEventEmitter(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
+    try (TimerEventDispatcher ignored =
+        new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
       ImmutableList.Builder<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps =
           ImmutableList.builderWithExpectedSize(buildConfiguration.getLayerConfigurations().size());
       for (LayerConfiguration layerConfiguration : buildConfiguration.getLayerConfigurations()) {
@@ -102,8 +102,8 @@ class BuildAndCacheApplicationLayerStep
 
     buildConfiguration.getEventDispatcher().dispatch(LogEvent.lifecycle(description + "..."));
 
-    try (TimerEventEmitter ignored =
-        new TimerEventEmitter(buildConfiguration.getEventDispatcher(), description)) {
+    try (TimerEventDispatcher ignored =
+        new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), description)) {
       // Don't build the layer if it exists already.
       Optional<CachedLayerWithMetadata> optionalCachedLayer =
           new CacheReader(cache)

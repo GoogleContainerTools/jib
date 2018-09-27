@@ -54,7 +54,7 @@ public class RegistryAuthenticator {
     /**
      * Instantiates a new initializer for {@link RegistryAuthenticator}.
      *
-     * @param eventDispatcher the event emitter used for emitting log events
+     * @param eventDispatcher the event dispatcher used for dispatching log events
      * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
      * @param repository the image/repository name (also known as, namespace)
      */
@@ -100,7 +100,7 @@ public class RegistryAuthenticator {
   /**
    * Gets a new initializer for {@link RegistryAuthenticator}.
    *
-   * @param eventDispatcher the event emitter used for emitting log events
+   * @param eventDispatcher the event dispatcher used for dispatching log events
    * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
    * @param repository the image/repository name (also known as, namespace)
    * @return the new {@link Initializer}

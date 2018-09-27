@@ -31,7 +31,7 @@ public class EventHandlers {
   /**
    * Adds the {@code eventConsumer} to handle the {@link JibEvent} with class {@code eventClass}.
    * The order in which handlers are added is the order in which they are called when the event is
-   * emitted.
+   * dispatched.
    *
    * <p><b>Note: Implementations of {@code eventConsumer} must be thread-safe.</b>
    *

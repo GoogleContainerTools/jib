@@ -151,8 +151,8 @@ public class BuildSteps {
           CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
     buildConfiguration.getEventDispatcher().dispatch(LogEvent.lifecycle(""));
 
-    try (TimerEventEmitter ignored =
-        new TimerEventEmitter(buildConfiguration.getEventDispatcher(), description)) {
+    try (TimerEventDispatcher ignored =
+        new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), description)) {
       try (Caches caches = cachesInitializer.init()) {
         Cache baseImageLayersCache = caches.getBaseCache();
         Cache applicationLayersCache = caches.getApplicationCache();

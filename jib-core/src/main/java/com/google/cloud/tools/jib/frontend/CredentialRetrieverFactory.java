@@ -56,7 +56,7 @@ public class CredentialRetrieverFactory {
    * Creates a new {@link CredentialRetrieverFactory} for an image.
    *
    * @param imageReference the image the credential are for
-   * @param eventDispatcher an event emitter for emitting log events
+   * @param eventDispatcher an event dispatcher for dispatching log events
    * @return a new {@link CredentialRetrieverFactory}
    */
   public static CredentialRetrieverFactory forImage(
