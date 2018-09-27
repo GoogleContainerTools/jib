@@ -44,10 +44,17 @@ public class DefaultCacheStorageWriterTest {
   private static BlobDescriptor getCompressedBlobDescriptor(Blob blob) throws IOException {
     CountingDigestOutputStream compressedDigestOutputStream =
         new CountingDigestOutputStream(ByteStreams.nullOutputStream());
-    try (GZIPOutputStream compressorStream = new GZIPOutputStream(compressedDigestOutputStream)) {
-      blob.writeTo(compressorStream);
-    }
+    compress(blob).writeTo(compressedDigestOutputStream);
     return compressedDigestOutputStream.toBlobDescriptor();
+  }
+
+  private static Blob compress(Blob blob) {
+    return Blobs.from(
+        outputStream -> {
+          try (GZIPOutputStream compressorStream = new GZIPOutputStream(outputStream)) {
+            blob.writeTo(compressorStream);
+          }
+        });
   }
 
   private static Blob decompress(Blob blob) throws IOException {
@@ -64,22 +71,29 @@ public class DefaultCacheStorageWriterTest {
   }
 
   @Test
-  public void testWrite_layerOnly() throws IOException {
-    Blob layerBlob = Blobs.from("layerBlob");
-    CacheEntry cacheEntry = verifyWrite(CacheWrite.layerOnly(layerBlob), layerBlob);
+  public void testWrite_compressed() throws IOException {
+    Blob uncompressedLayerBlob = Blobs.from("uncompressedLayerBlob");
+
+    CacheEntry cacheEntry =
+        new DefaultCacheStorageWriter(defaultCacheStorageFiles)
+            .write(compress(uncompressedLayerBlob));
+
+    verifyCacheEntry(cacheEntry, uncompressedLayerBlob);
     Assert.assertFalse(cacheEntry.getMetadataBlob().isPresent());
   }
 
   @Test
-  public void testWrite_withSelectorAndMetadata() throws IOException {
-    Blob layerBlob = Blobs.from("layerBlob");
-    DescriptorDigest layerDigest = getCompressedBlobDescriptor(layerBlob).getDigest();
+  public void testWrite_uncompressed() throws IOException {
+    Blob uncompressedLayerBlob = Blobs.from("uncompressedLayerBlob");
+    DescriptorDigest layerDigest = getCompressedBlobDescriptor(uncompressedLayerBlob).getDigest();
     DescriptorDigest selector = getDigest(Blobs.from("selector"));
     Blob metadataBlob = Blobs.from("metadata");
 
     CacheEntry cacheEntry =
-        verifyWrite(
-            CacheWrite.withSelectorAndMetadata(layerBlob, selector, metadataBlob), layerBlob);
+        new DefaultCacheStorageWriter(defaultCacheStorageFiles)
+            .write(new UncompressedCacheWrite(uncompressedLayerBlob, selector, metadataBlob));
+
+    verifyCacheEntry(cacheEntry, uncompressedLayerBlob);
 
     // Verifies cacheEntry is correct.
     Assert.assertTrue(cacheEntry.getMetadataBlob().isPresent());
@@ -95,21 +109,17 @@ public class DefaultCacheStorageWriterTest {
         Files.exists(defaultCacheStorageFiles.getMetadataFile(cacheEntry.getLayerDigest())));
   }
 
-  private CacheEntry verifyWrite(CacheWrite cacheWriteEntry, Blob expectedLayerBlob)
+  private void verifyCacheEntry(CacheEntry cacheEntry, Blob uncompressedLayerBlob)
       throws IOException {
-    BlobDescriptor layerBlobDescriptor = getCompressedBlobDescriptor(expectedLayerBlob);
-    DescriptorDigest layerDiffId = getDigest(expectedLayerBlob);
-
-    DefaultCacheStorageWriter defaultCacheStorageWriter =
-        new DefaultCacheStorageWriter(defaultCacheStorageFiles);
-    CacheEntry cacheEntry = defaultCacheStorageWriter.write(cacheWriteEntry);
+    BlobDescriptor layerBlobDescriptor = getCompressedBlobDescriptor(uncompressedLayerBlob);
+    DescriptorDigest layerDiffId = getDigest(uncompressedLayerBlob);
 
     // Verifies cacheEntry is correct.
     Assert.assertEquals(layerBlobDescriptor.getDigest(), cacheEntry.getLayerDigest());
     Assert.assertEquals(layerDiffId, cacheEntry.getLayerDiffId());
     Assert.assertEquals(layerBlobDescriptor.getSize(), cacheEntry.getLayerSize());
     Assert.assertArrayEquals(
-        Blobs.writeToByteArray(expectedLayerBlob),
+        Blobs.writeToByteArray(uncompressedLayerBlob),
         Blobs.writeToByteArray(decompress(cacheEntry.getLayerBlob())));
 
     // Verifies that the files are present.
@@ -117,7 +127,5 @@ public class DefaultCacheStorageWriterTest {
         Files.exists(
             defaultCacheStorageFiles.getLayerFile(
                 cacheEntry.getLayerDigest(), cacheEntry.getLayerDiffId())));
-
-    return cacheEntry;
   }
 }

@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.ncache;
 
+import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import java.io.IOException;
 import java.util.Optional;
@@ -24,8 +25,9 @@ import java.util.Set;
 /**
  * Interface for queries to a cache storage engine.
  *
- * <p>The cache storage engine stores layer data as {@link CacheWrite}s. These entries are read out
- * as {@link CacheEntry}s. Cache entries can be retrieved by the layer digest.
+ * <p>The cache storage engine stores layer data in compressed form, along with optional metadata.
+ * These entries are read out as {@link CacheEntry}s. Cache entries can be retrieved by the layer
+ * digest.
  *
  * <p>The cache entries can also be queried by an arbitrarily-defined selector (in digest format).
  * The selectors do not need to be unique. An example of a selector could be the digest of the list
@@ -36,13 +38,22 @@ import java.util.Set;
 interface CacheStorage {
 
   /**
-   * Saves the {@link CacheWrite}.
+   * Saves the {@link UncompressedCacheWrite}.
    *
-   * @param cacheWrite the {@link CacheWrite}
-   * @return the {@link CacheEntry} for the written {@link CacheWrite}
+   * @param uncompressedCacheWrite the {@link UncompressedCacheWrite}
+   * @return the {@link CacheEntry} for the written {@link UncompressedCacheWrite}
    * @throws IOException if an I/O exception occurs
    */
-  CacheEntry write(CacheWrite cacheWrite) throws IOException;
+  CacheEntry write(UncompressedCacheWrite uncompressedCacheWrite) throws IOException;
+
+  /**
+   * Saves a compressed layer {@link Blob}.
+   *
+   * @param compressedLayerBlob the compressed layer {@link Blob}
+   * @return the {@link CacheEntry} for the written layer
+   * @throws IOException if an I/O exception occurs
+   */
+  CacheEntry write(Blob compressedLayerBlob) throws IOException;
 
   /**
    * Fetches all the layer digests stored.

@@ -27,6 +27,7 @@ class DefaultCacheStorageFiles {
   private static final String METADATA_FILENAME = "metadata";
   private static final String SELECTORS_DIRECTORY = "selectors";
   private static final String TEMPORARY_DIRECTORY = "tmp";
+  private static final String TEMPORARY_LAYER_FILE_NAME = ".tmp.layer";
 
   /**
    * Returns whether or not {@code file} is a layer contents file.
@@ -149,5 +150,17 @@ class DefaultCacheStorageFiles {
    */
   Path getTemporaryDirectory() {
     return cacheDirectory.resolve(TEMPORARY_DIRECTORY);
+  }
+
+  /**
+   * Resolves a file to use as a temporary file to write layer contents to.
+   *
+   * @param layerDirectory the directory in which to resolve the temporary layer file
+   * @return the temporary layer file
+   */
+  Path getTemporaryLayerFile(Path layerDirectory) {
+    Path temporaryLayerFile = layerDirectory.resolve(TEMPORARY_LAYER_FILE_NAME);
+    temporaryLayerFile.toFile().deleteOnExit();
+    return temporaryLayerFile;
   }
 }
