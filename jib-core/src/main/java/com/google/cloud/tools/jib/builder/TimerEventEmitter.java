@@ -36,6 +36,12 @@ public class TimerEventEmitter implements Closeable {
   private final Clock clock;
   private final Timer timer;
 
+  /**
+   * Creates a new {@link TimerEventEmitter}.
+   *
+   * @param eventEmitter the {@link EventEmitter} used to emit the {@link TimerEvent}s
+   * @param description the default description for the {@link TimerEvent}s
+   */
   public TimerEventEmitter(EventEmitter eventEmitter, String description) {
     this(eventEmitter, description, DEFAULT_CLOCK, null);
   }
