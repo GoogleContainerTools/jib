@@ -1,6 +1,5 @@
 package com.google.cloud.tools.jib.frontend;
 
-import com.google.api.client.repackaged.com.google.common.base.Supplier;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.LayerEntry;
@@ -12,7 +11,10 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.Test;
@@ -34,6 +36,37 @@ public class JavaLayerConfigurationsTest {
 
   private static List<Path> layerEntriesToSourceFiles(List<LayerEntry> entries) {
     return entries.stream().map(LayerEntry::getSourceFile).collect(Collectors.toList());
+  }
+
+  private static Set<AbsoluteUnixPath> layerEntriesToExtractionPaths(List<LayerEntry> entries) {
+    return entries.stream().map(LayerEntry::getExtractionPath).collect(Collectors.toSet());
+  }
+
+  private static void verifyRecursiveAdd(
+      Supplier<List<LayerEntry>> layerEntriesSupplier, Path sourceRoot, String extractionRoot) {
+    AbsoluteUnixPath extractionRootPath = AbsoluteUnixPath.get(extractionRoot);
+    List<String> expectedPaths =
+        Arrays.asList(
+            "",
+            "file1",
+            "file2",
+            "sub-directory",
+            "sub-directory/file3",
+            "sub-directory/file4",
+            "sub-directory/leaf",
+            "sub-directory/leaf/file5",
+            "sub-directory/leaf/file6");
+
+    Set<Path> expectedSourcePaths =
+        expectedPaths.stream().map(sourceRoot::resolve).collect(Collectors.toSet());
+    Set<AbsoluteUnixPath> expectedTargetPaths =
+        expectedPaths.stream().map(extractionRootPath::resolve).collect(Collectors.toSet());
+
+    Set<Path> sourcePaths = new HashSet<>(layerEntriesToSourceFiles(layerEntriesSupplier.get()));
+    Assert.assertEquals(expectedSourcePaths, sourcePaths);
+
+    Set<AbsoluteUnixPath> targetPaths = layerEntriesToExtractionPaths(layerEntriesSupplier.get());
+    Assert.assertEquals(expectedTargetPaths, targetPaths);
   }
 
   @Test
@@ -75,8 +108,7 @@ public class JavaLayerConfigurationsTest {
 
   @Test
   public void testAddFileRecursive_directories() throws IOException, URISyntaxException {
-    Path sourceDirectory = Paths.get(Resources.getResource("application").toURI());
-    sourceDirectory.getParent().relativize(sourceDirectory);
+    Path sourceDirectory = Paths.get(Resources.getResource("random-contents").toURI());
 
     JavaLayerConfigurations configurations =
         JavaLayerConfigurations.builder()
@@ -100,7 +132,8 @@ public class JavaLayerConfigurationsTest {
 
   @Test
   public void testAddFileRecursive_regularFiles() throws IOException, URISyntaxException {
-    Path sourceFile = Paths.get(Resources.getResource("application/resources/world").toURI());
+    Path sourceFile =
+        Paths.get(Resources.getResource("random-contents/sub-directory/leaf/file6").toURI());
 
     JavaLayerConfigurations configurations =
         JavaLayerConfigurations.builder()
@@ -133,15 +166,36 @@ public class JavaLayerConfigurationsTest {
         configurations.getExtraFilesLayerEntries());
   }
 
-  private static void verifyRecursiveAdd(
-      Supplier<List<LayerEntry>> layerEntriesSupplier, Path sourceRoot, String extractionRoot) {
-    Assert.assertEquals(12, layerEntriesSupplier.get().size());
+  @Test
+  public void testAddExtraFiles_mixed() throws IOException, URISyntaxException {
+    Path sourceFile = Paths.get(Resources.getResource("random-contents/file2").toURI());
+    Path sourceDirectory =
+        Paths.get(Resources.getResource("random-contents/sub-directory").toURI());
 
-    for (LayerEntry entry : layerEntriesSupplier.get()) {
-      Path relativeSourcePath = sourceRoot.relativize(entry.getSourceFile());
-      AbsoluteUnixPath expectedPath =
-          AbsoluteUnixPath.get(extractionRoot).resolve(relativeSourcePath);
-      Assert.assertEquals(expectedPath, entry.getExtractionPath());
-    }
+    JavaLayerConfigurations configurations =
+        JavaLayerConfigurations.builder()
+            .addExtraFile(sourceFile, AbsoluteUnixPath.get("/non/recursive/file"))
+            .addExtraFile(sourceDirectory, AbsoluteUnixPath.get("/non/recursive/directory"))
+            .addExtraFileRecursive(sourceFile, AbsoluteUnixPath.get("/recursive/file"))
+            .addExtraFileRecursive(sourceDirectory, AbsoluteUnixPath.get("/recursive/directory"))
+            .build();
+
+    List<String> expectedPaths =
+        Arrays.asList(
+            "/non/recursive/file",
+            "/non/recursive/directory",
+            "/recursive/file",
+            "/recursive/directory",
+            "/recursive/directory/file3",
+            "/recursive/directory/file4",
+            "/recursive/directory/leaf",
+            "/recursive/directory/leaf/file5",
+            "/recursive/directory/leaf/file6");
+    Set<AbsoluteUnixPath> expectedTargetPaths =
+        expectedPaths.stream().map(AbsoluteUnixPath::get).collect(Collectors.toSet());
+
+    Set<AbsoluteUnixPath> targetPaths =
+        layerEntriesToExtractionPaths(configurations.getExtraFilesLayerEntries());
+    Assert.assertEquals(expectedTargetPaths, targetPaths);
   }
 }
