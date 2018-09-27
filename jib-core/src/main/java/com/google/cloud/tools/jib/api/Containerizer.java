@@ -88,7 +88,7 @@ public class Containerizer {
   }
 
   /**
-   * Sets the {@link EventHandlers} to handle events emitted during Jib's execution.
+   * Sets the {@link EventHandlers} to handle events dispatched during Jib's execution.
    *
    * @param eventHandlers the {@link EventHandlers}
    * @return this

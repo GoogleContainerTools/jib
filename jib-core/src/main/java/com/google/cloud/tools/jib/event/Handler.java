@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.event;
 import com.google.common.base.Preconditions;
 import java.util.function.Consumer;
 
-/** Handles an emitted {@link JibEvent}. */
+/** Handles a dispatched {@link JibEvent}. */
 class Handler<E extends JibEvent> {
 
   private final Class<E> eventClass;

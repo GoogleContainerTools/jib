@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
-import com.google.cloud.tools.jib.builder.TimerEventEmitter;
+import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.BaseImageWithAuthorization;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
@@ -67,8 +67,8 @@ class PullAndCacheBaseImageLayersStep
   @Override
   public ImmutableList<PullAndCacheBaseImageLayerStep> call()
       throws ExecutionException, LayerPropertyNotFoundException {
-    try (TimerEventEmitter ignored =
-        new TimerEventEmitter(buildConfiguration.getEventEmitter(), DESCRIPTION)) {
+    try (TimerEventDispatcher ignored =
+        new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
       BaseImageWithAuthorization pullBaseImageStepResult = NonBlockingSteps.get(pullBaseImageStep);
       ImmutableList<Layer> baseImageLayers = pullBaseImageStepResult.getBaseImage().getLayers();
 

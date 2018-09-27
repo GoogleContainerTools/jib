@@ -69,7 +69,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       ImageReference targetImage =
           ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
               getTargetImage(),
-              mavenProjectProperties.getEventEmitter(),
+              mavenProjectProperties.getEventDispatcher(),
               getProject().getName(),
               getProject().getVersion(),
               mavenHelpfulSuggestionsBuilder.build());

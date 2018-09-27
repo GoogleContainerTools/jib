@@ -17,7 +17,7 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.async.AsyncStep;
-import com.google.cloud.tools.jib.builder.TimerEventEmitter;
+import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
 import com.google.cloud.tools.jib.cache.CacheReader;
@@ -48,8 +48,8 @@ class BuildAndCacheApplicationLayerStep
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
       Cache cache) {
-    try (TimerEventEmitter ignored =
-        new TimerEventEmitter(buildConfiguration.getEventEmitter(), DESCRIPTION)) {
+    try (TimerEventDispatcher ignored =
+        new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
       ImmutableList.Builder<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps =
           ImmutableList.builderWithExpectedSize(buildConfiguration.getLayerConfigurations().size());
       for (LayerConfiguration layerConfiguration : buildConfiguration.getLayerConfigurations()) {
@@ -100,10 +100,10 @@ class BuildAndCacheApplicationLayerStep
   public CachedLayerWithMetadata call() throws IOException, CacheMetadataCorruptedException {
     String description = "Building " + layerType + " layer";
 
-    buildConfiguration.getEventEmitter().emit(LogEvent.lifecycle(description + "..."));
+    buildConfiguration.getEventDispatcher().dispatch(LogEvent.lifecycle(description + "..."));
 
-    try (TimerEventEmitter ignored =
-        new TimerEventEmitter(buildConfiguration.getEventEmitter(), description)) {
+    try (TimerEventDispatcher ignored =
+        new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), description)) {
       // Don't build the layer if it exists already.
       Optional<CachedLayerWithMetadata> optionalCachedLayer =
           new CacheReader(cache)
@@ -117,8 +117,8 @@ class BuildAndCacheApplicationLayerStep
               .writeLayer(new ReproducibleLayerBuilder(layerConfiguration.getLayerEntries()));
 
       buildConfiguration
-          .getEventEmitter()
-          .emit(
+          .getEventDispatcher()
+          .dispatch(
               LogEvent.debug(
                   description + " built " + cachedLayer.getBlobDescriptor().getDigest()));
 

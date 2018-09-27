@@ -20,7 +20,7 @@ import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
-import com.google.cloud.tools.jib.event.EventEmitter;
+import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
@@ -40,7 +40,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class RetrieveRegistryCredentialsStepTest {
 
-  @Mock private EventEmitter mockEventEmitter;
+  @Mock private EventDispatcher mockEventDispatcher;
   @Mock private ListeningExecutorService mockListeningExecutorService;
 
   @Test
@@ -76,16 +76,16 @@ public class RetrieveRegistryCredentialsStepTest {
                 mockListeningExecutorService, buildConfiguration)
             .call());
 
-    Mockito.verify(mockEventEmitter)
-        .emit(LogEvent.info("No credentials could be retrieved for registry baseregistry"));
+    Mockito.verify(mockEventDispatcher)
+        .dispatch(LogEvent.info("No credentials could be retrieved for registry baseregistry"));
 
     Assert.assertNull(
         RetrieveRegistryCredentialsStep.forTargetImage(
                 mockListeningExecutorService, buildConfiguration)
             .call());
 
-    Mockito.verify(mockEventEmitter)
-        .emit(LogEvent.info("No credentials could be retrieved for registry baseregistry"));
+    Mockito.verify(mockEventDispatcher)
+        .dispatch(LogEvent.info("No credentials could be retrieved for registry baseregistry"));
   }
 
   @Test
@@ -115,7 +115,7 @@ public class RetrieveRegistryCredentialsStepTest {
     ImageReference baseImage = ImageReference.of("baseregistry", "ignored", null);
     ImageReference targetImage = ImageReference.of("targetregistry", "ignored", null);
     return BuildConfiguration.builder()
-        .setEventEmitter(mockEventEmitter)
+        .setEventDispatcher(mockEventDispatcher)
         .setBaseImageConfiguration(
             ImageConfiguration.builder(baseImage)
                 .setCredentialRetrievers(baseCredentialRetrievers)

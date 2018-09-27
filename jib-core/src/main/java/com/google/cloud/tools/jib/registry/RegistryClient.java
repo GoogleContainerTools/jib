@@ -18,8 +18,8 @@ package com.google.cloud.tools.jib.registry;
 
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
-import com.google.cloud.tools.jib.builder.TimerEventEmitter;
-import com.google.cloud.tools.jib.event.EventEmitter;
+import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
+import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
@@ -40,7 +40,7 @@ public class RegistryClient {
   /** Factory for creating {@link RegistryClient}s. */
   public static class Factory {
 
-    private final EventEmitter eventEmitter;
+    private final EventDispatcher eventDispatcher;
     private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
 
     private boolean allowInsecureRegistries = false;
@@ -48,9 +48,9 @@ public class RegistryClient {
     @Nullable private Authorization authorization;
 
     private Factory(
-        EventEmitter eventEmitter,
+        EventDispatcher eventDispatcher,
         RegistryEndpointRequestProperties registryEndpointRequestProperties) {
-      this.eventEmitter = eventEmitter;
+      this.eventDispatcher = eventDispatcher;
       this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     }
 
@@ -95,7 +95,7 @@ public class RegistryClient {
      */
     public RegistryClient newRegistryClient() {
       return new RegistryClient(
-          eventEmitter,
+          eventDispatcher,
           authorization,
           registryEndpointRequestProperties,
           allowInsecureRegistries,
@@ -131,16 +131,18 @@ public class RegistryClient {
   /**
    * Creates a new {@link Factory} for building a {@link RegistryClient}.
    *
-   * @param eventEmitter the event emitter used for emitting log events
+   * @param eventDispatcher the event dispatcher used for dispatching log events
    * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
    * @param imageName the image/repository name (also known as, namespace)
    * @return the new {@link Factory}
    */
-  public static Factory factory(EventEmitter eventEmitter, String serverUrl, String imageName) {
-    return new Factory(eventEmitter, new RegistryEndpointRequestProperties(serverUrl, imageName));
+  public static Factory factory(
+      EventDispatcher eventDispatcher, String serverUrl, String imageName) {
+    return new Factory(
+        eventDispatcher, new RegistryEndpointRequestProperties(serverUrl, imageName));
   }
 
-  private final EventEmitter eventEmitter;
+  private final EventDispatcher eventDispatcher;
   @Nullable private final Authorization authorization;
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   private final boolean allowInsecureRegistries;
@@ -149,18 +151,18 @@ public class RegistryClient {
   /**
    * Instantiate with {@link #factory}.
    *
-   * @param eventEmitter the event emitter used for emitting log events
+   * @param eventDispatcher the event dispatcher used for dispatching log events
    * @param authorization the {@link Authorization} to access the registry/repository
    * @param registryEndpointRequestProperties properties of registry endpoint requests
    * @param allowInsecureRegistries if {@code true}, insecure connections will be allowed
    */
   private RegistryClient(
-      EventEmitter eventEmitter,
+      EventDispatcher eventDispatcher,
       @Nullable Authorization authorization,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
       boolean allowInsecureRegistries,
       String userAgent) {
-    this.eventEmitter = eventEmitter;
+    this.eventDispatcher = eventDispatcher;
     this.authorization = authorization;
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     this.allowInsecureRegistries = allowInsecureRegistries;
@@ -270,9 +272,10 @@ public class RegistryClient {
     BlobPusher blobPusher =
         new BlobPusher(registryEndpointRequestProperties, blobDigest, blob, sourceRepository);
 
-    try (TimerEventEmitter timerEventEmitter = new TimerEventEmitter(eventEmitter, "pushBlob")) {
-      try (TimerEventEmitter timerEventEmitter2 =
-          timerEventEmitter.subTimer("pushBlob POST " + blobDigest)) {
+    try (TimerEventDispatcher timerEventDispatcher =
+        new TimerEventDispatcher(eventDispatcher, "pushBlob")) {
+      try (TimerEventDispatcher timerEventDispatcher2 =
+          timerEventDispatcher.subTimer("pushBlob POST " + blobDigest)) {
 
         // POST /v2/<name>/blobs/uploads/ OR
         // POST /v2/<name>/blobs/uploads/?mount={blob.digest}&from={sourceRepository}
@@ -282,13 +285,13 @@ public class RegistryClient {
           return true;
         }
 
-        timerEventEmitter2.lap("pushBlob PATCH " + blobDigest);
+        timerEventDispatcher2.lap("pushBlob PATCH " + blobDigest);
 
         // PATCH <Location> with BLOB
         URL putLocation = callRegistryEndpoint(blobPusher.writer(patchLocation));
         Preconditions.checkNotNull(putLocation);
 
-        timerEventEmitter2.lap("pushBlob PUT " + blobDigest);
+        timerEventDispatcher2.lap("pushBlob PUT " + blobDigest);
 
         // PUT <Location>?digest={blob.digest}
         callRegistryEndpoint(blobPusher.committer(putLocation));
@@ -320,7 +323,7 @@ public class RegistryClient {
   private <T> T callRegistryEndpoint(RegistryEndpointProvider<T> registryEndpointProvider)
       throws IOException, RegistryException {
     return new RegistryEndpointCaller<>(
-            eventEmitter,
+            eventDispatcher,
             userAgent,
             getApiRouteBase(),
             registryEndpointProvider,

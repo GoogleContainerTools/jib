@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.event.DefaultEventEmitter;
-import com.google.cloud.tools.jib.event.EventEmitter;
+import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
+import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
@@ -66,7 +66,7 @@ public class MavenProjectProperties implements ProjectProperties {
     try {
       return new MavenProjectProperties(
           project,
-          makeEventEmitter(log),
+          makeEventDispatcher(log),
           MavenLayerConfigurations.getForProject(project, extraDirectory, appRoot));
 
     } catch (IOException ex) {
@@ -78,24 +78,24 @@ public class MavenProjectProperties implements ProjectProperties {
     }
   }
 
-  private static EventEmitter makeEventEmitter(Log log) {
-    return new DefaultEventEmitter(
+  private static EventDispatcher makeEventDispatcher(Log log) {
+    return new DefaultEventDispatcher(
         new EventHandlers()
             .add(JibEventType.LOGGING, new LogEventHandler(log))
             .add(JibEventType.TIMING, new TimerEventHandler(log::debug)));
   }
 
   private final MavenProject project;
-  private final EventEmitter eventEmitter;
+  private final EventDispatcher eventDispatcher;
   private final JavaLayerConfigurations javaLayerConfigurations;
 
   @VisibleForTesting
   MavenProjectProperties(
       MavenProject project,
-      EventEmitter eventEmitter,
+      EventDispatcher eventDispatcher,
       JavaLayerConfigurations javaLayerConfigurations) {
     this.project = project;
-    this.eventEmitter = eventEmitter;
+    this.eventDispatcher = eventDispatcher;
     this.javaLayerConfigurations = javaLayerConfigurations;
   }
 
@@ -105,8 +105,8 @@ public class MavenProjectProperties implements ProjectProperties {
   }
 
   @Override
-  public EventEmitter getEventEmitter() {
-    return eventEmitter;
+  public EventDispatcher getEventDispatcher() {
+    return eventDispatcher;
   }
 
   @Override

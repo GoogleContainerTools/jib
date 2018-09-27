@@ -149,10 +149,10 @@ public class BuildSteps {
   public void run()
       throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
           CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
-    buildConfiguration.getEventEmitter().emit(LogEvent.lifecycle(""));
+    buildConfiguration.getEventDispatcher().dispatch(LogEvent.lifecycle(""));
 
-    try (TimerEventEmitter ignored =
-        new TimerEventEmitter(buildConfiguration.getEventEmitter(), description)) {
+    try (TimerEventDispatcher ignored =
+        new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), description)) {
       try (Caches caches = cachesInitializer.init()) {
         Cache baseImageLayersCache = caches.getBaseCache();
         Cache applicationLayersCache = caches.getApplicationCache();
@@ -169,10 +169,10 @@ public class BuildSteps {
     }
 
     if (buildConfiguration.getContainerConfiguration() != null) {
-      buildConfiguration.getEventEmitter().emit(LogEvent.lifecycle(""));
+      buildConfiguration.getEventDispatcher().dispatch(LogEvent.lifecycle(""));
       buildConfiguration
-          .getEventEmitter()
-          .emit(
+          .getEventDispatcher()
+          .dispatch(
               LogEvent.lifecycle(
                   "Container entrypoint set to "
                       + buildConfiguration.getContainerConfiguration().getEntrypoint()));

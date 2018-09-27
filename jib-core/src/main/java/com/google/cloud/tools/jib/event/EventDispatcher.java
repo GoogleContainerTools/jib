@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.event;
 
-/** Emits {@link JibEvent}s. */
-public interface EventEmitter {
+/** Dispatches {@link JibEvent}s. */
+public interface EventDispatcher {
 
-  void emit(JibEvent jibEvent);
+  void dispatch(JibEvent jibEvent);
 }
