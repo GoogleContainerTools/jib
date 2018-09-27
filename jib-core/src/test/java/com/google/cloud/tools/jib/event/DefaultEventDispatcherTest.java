@@ -32,7 +32,7 @@ public class DefaultEventDispatcherTest {
   private static class TestJibEvent2 implements JibEvent {}
 
   @Test
-  public void testEmit() {
+  public void testDispatch() {
     List<String> emissions = new ArrayList<>();
 
     EventHandlers eventHandlers =

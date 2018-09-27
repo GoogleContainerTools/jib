@@ -54,7 +54,7 @@ public class BuildConfiguration {
     private String toolName = DEFAULT_TOOL_NAME;
     private EventDispatcher eventDispatcher =
         jibEvent -> {
-          /* No-op EventEmitter. */
+          /* No-op EventDispatcher. */
         };
 
     private Builder() {}

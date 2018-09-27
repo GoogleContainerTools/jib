@@ -66,7 +66,7 @@ public class MavenProjectProperties implements ProjectProperties {
     try {
       return new MavenProjectProperties(
           project,
-          makeEventEmitter(log),
+          makeEventDispatcher(log),
           MavenLayerConfigurations.getForProject(project, extraDirectory, appRoot));
 
     } catch (IOException ex) {
@@ -78,7 +78,7 @@ public class MavenProjectProperties implements ProjectProperties {
     }
   }
 
-  private static EventDispatcher makeEventEmitter(Log log) {
+  private static EventDispatcher makeEventDispatcher(Log log) {
     return new DefaultEventDispatcher(
         new EventHandlers()
             .add(JibEventType.LOGGING, new LogEventHandler(log))

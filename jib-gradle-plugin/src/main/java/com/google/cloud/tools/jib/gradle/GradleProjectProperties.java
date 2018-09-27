@@ -63,7 +63,7 @@ class GradleProjectProperties implements ProjectProperties {
     try {
       return new GradleProjectProperties(
           project,
-          makeEventEmitter(logger),
+          makeEventDispatcher(logger),
           GradleLayerConfigurations.getForProject(project, logger, extraDirectory, appRoot));
 
     } catch (IOException ex) {
@@ -71,7 +71,7 @@ class GradleProjectProperties implements ProjectProperties {
     }
   }
 
-  private static EventDispatcher makeEventEmitter(Logger logger) {
+  private static EventDispatcher makeEventDispatcher(Logger logger) {
     LogEventHandler logEventHandler = new LogEventHandler(logger);
     return new DefaultEventDispatcher(
         new EventHandlers()
