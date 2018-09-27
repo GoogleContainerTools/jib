@@ -16,9 +16,9 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.blob.Blob;
+import com.google.cloud.tools.jib.builder.TimerEventEmitter;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.event.events.LogEvent;
@@ -44,7 +44,8 @@ class BuildAndCacheApplicationLayerStep implements AsyncStep<CacheEntry>, Callab
    */
   static ImmutableList<BuildAndCacheApplicationLayerStep> makeList(
       ListeningExecutorService listeningExecutorService, BuildConfiguration buildConfiguration) {
-    try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
+    try (TimerEventEmitter ignored =
+        new TimerEventEmitter(buildConfiguration.getEventEmitter(), DESCRIPTION)) {
       ImmutableList.Builder<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps =
           ImmutableList.builderWithExpectedSize(buildConfiguration.getLayerConfigurations().size());
       for (LayerConfiguration layerConfiguration : buildConfiguration.getLayerConfigurations()) {
@@ -93,7 +94,8 @@ class BuildAndCacheApplicationLayerStep implements AsyncStep<CacheEntry>, Callab
 
     buildConfiguration.getEventEmitter().emit(LogEvent.lifecycle(description + "..."));
 
-    try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), description)) {
+    try (TimerEventEmitter ignored =
+        new TimerEventEmitter(buildConfiguration.getEventEmitter(), description)) {
       Cache cache = buildConfiguration.getApplicationLayersCache();
 
       // Don't build the layer if it exists already.
@@ -104,7 +106,8 @@ class BuildAndCacheApplicationLayerStep implements AsyncStep<CacheEntry>, Callab
       }
 
       Blob layerBlob = new ReproducibleLayerBuilder(layerConfiguration.getLayerEntries()).build();
-      CacheEntry cacheEntry = cache.writeUncompressedLayer(layerBlob, layerConfiguration.getLayerEntries());
+      CacheEntry cacheEntry =
+          cache.writeUncompressedLayer(layerBlob, layerConfiguration.getLayerEntries());
 
       buildConfiguration
           .getEventEmitter()

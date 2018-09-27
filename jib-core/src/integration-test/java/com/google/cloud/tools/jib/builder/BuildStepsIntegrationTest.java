@@ -49,6 +49,8 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Integration tests for {@link BuildSteps}. */
 public class BuildStepsIntegrationTest {
@@ -101,7 +103,7 @@ public class BuildStepsIntegrationTest {
     Assert.assertThat(history, CoreMatchers.containsString("bazel build ..."));
   }
 
-  private static final TestJibLogger logger = new TestJibLogger();
+  private static final Logger logger = LoggerFactory.getLogger(BuildStepsIntegrationTest.class);
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -275,7 +277,7 @@ public class BuildStepsIntegrationTest {
             .setLabels(ImmutableMap.of("key1", "value1", "key2", "value2"))
             .build();
     Path cacheDirectory = temporaryFolder.newFolder().toPath();
-    return BuildConfiguration.builder(logger)
+    return BuildConfiguration.builder()
         .setBaseImageConfiguration(baseImageConfiguration)
         .setTargetImageConfiguration(targetImageConfiguration)
         .setContainerConfiguration(containerConfiguration)

@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
@@ -45,8 +44,6 @@ public class RetrieveRegistryCredentialsStepTest {
 
   @Mock private EventEmitter mockEventEmitter;
   @Mock private ListeningExecutorService mockListeningExecutorService;
-  // TODO: Remove once JibLogger is all replaced by EventEmitter.
-  @Mock private JibLogger mockJibLogger;
 
   @Test
   public void testCall_retrieved()
@@ -122,7 +119,7 @@ public class RetrieveRegistryCredentialsStepTest {
       throws IOException, CacheDirectoryCreationException {
     ImageReference baseImage = ImageReference.of("baseregistry", "ignored", null);
     ImageReference targetImage = ImageReference.of("targetregistry", "ignored", null);
-    return BuildConfiguration.builder(mockJibLogger)
+    return BuildConfiguration.builder()
         .setEventEmitter(mockEventEmitter)
         .setBaseImageConfiguration(
             ImageConfiguration.builder(baseImage)

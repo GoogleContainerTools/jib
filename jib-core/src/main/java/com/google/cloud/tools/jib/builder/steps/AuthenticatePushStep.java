@@ -16,9 +16,9 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
+import com.google.cloud.tools.jib.builder.TimerEventEmitter;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.http.Authorization;
@@ -71,9 +71,9 @@ class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authori
   public Authorization call()
       throws ExecutionException, RegistryAuthenticationFailedException, IOException,
           RegistryException {
-    try (Timer ignored =
-        new Timer(
-            buildConfiguration.getBuildLogger(),
+    try (TimerEventEmitter ignored =
+        new TimerEventEmitter(
+            buildConfiguration.getEventEmitter(),
             String.format(
                 DESCRIPTION,
                 buildConfiguration.getTargetImageConfiguration().getImageRegistry()))) {

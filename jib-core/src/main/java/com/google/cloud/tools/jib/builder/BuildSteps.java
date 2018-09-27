@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.builder;
 
-import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.builder.steps.StepsRunner;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.event.events.LogEvent;
@@ -131,7 +130,8 @@ public class BuildSteps {
   public void run() throws InterruptedException, ExecutionException {
     buildConfiguration.getEventEmitter().emit(LogEvent.lifecycle(""));
 
-    try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), description)) {
+    try (TimerEventEmitter ignored =
+        new TimerEventEmitter(buildConfiguration.getEventEmitter(), description)) {
       stepsRunnerConsumer.accept(new StepsRunner(buildConfiguration));
     }
 

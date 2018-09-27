@@ -102,7 +102,6 @@ public class BuildTarTask extends DefaultTask implements JibTask {
           CacheDirectoryCreationException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
-    GradleJibLogger gradleJibLogger = new GradleJibLogger(getLogger());
     AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(
@@ -120,7 +119,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
 
     PluginConfigurationProcessor pluginConfigurationProcessor =
         PluginConfigurationProcessor.processCommonConfiguration(
-            gradleJibLogger, jibExtension, gradleProjectProperties);
+            getLogger(), jibExtension, gradleProjectProperties);
 
     BuildConfiguration buildConfiguration =
         pluginConfigurationProcessor

@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
+import com.google.cloud.tools.jib.event.EventEmitter;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
@@ -46,6 +47,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class BuildImageStepTest {
 
+  @Mock private EventEmitter mockEventEmitter;
   @Mock private BuildConfiguration mockBuildConfiguration;
   @Mock private ContainerConfiguration mockContainerConfiguration;
   @Mock private PullBaseImageStep mockPullBaseImageStep;
@@ -90,6 +92,7 @@ public class BuildImageStepTest {
           }
         };
 
+    Mockito.when(mockBuildConfiguration.getEventEmitter()).thenReturn(mockEventEmitter);
     Mockito.when(mockBuildConfiguration.getContainerConfiguration())
         .thenReturn(mockContainerConfiguration);
     Mockito.when(mockBuildConfiguration.getToolName()).thenReturn("jib");
