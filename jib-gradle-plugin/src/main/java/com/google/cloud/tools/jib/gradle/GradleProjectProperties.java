@@ -151,7 +151,7 @@ class GradleProjectProperties implements ProjectProperties {
    */
   String getMainClass(JibExtension jibExtension) {
     try {
-      return MainClassResolver.resolveMainClass(jibExtension.getMainClass(), this);
+      return MainClassResolver.resolveMainClass(jibExtension.getContainer().getMainClass(), this);
     } catch (MainClassInferenceException ex) {
       throw new GradleException(ex.getMessage(), ex);
     }

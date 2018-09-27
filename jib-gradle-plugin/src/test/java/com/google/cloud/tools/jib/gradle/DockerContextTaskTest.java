@@ -50,7 +50,7 @@ public class DockerContextTaskTest {
     JibExtension jibExtension = Mockito.mock(JibExtension.class);
     Mockito.when(jibExtension.getContainer()).thenReturn(ContainerParameters);
     Mockito.when(jibExtension.getExtraDirectoryPath()).thenReturn(projectRoot.getRoot().toPath());
-    Mockito.when(jibExtension.getMainClass()).thenReturn("MainClass");
+    Mockito.when(jibExtension.getContainer().getMainClass()).thenReturn("MainClass");
     Mockito.when(jibExtension.getBaseImage()).thenReturn("base image");
     Mockito.when(ContainerParameters.getAppRoot()).thenReturn("/app");
 
