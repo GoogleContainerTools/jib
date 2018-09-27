@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
+import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.Builder;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -119,21 +120,31 @@ class GradleLayerConfigurations {
     Collections.sort(classesFiles);
     Collections.sort(extraFiles);
 
-    return JavaLayerConfigurations.builder()
-        .setDependencyFiles(
-            dependenciesFiles,
-            appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE))
-        .setSnapshotDependencyFiles(
-            snapshotDependenciesFiles,
-            appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE))
-        .setResourceFiles(
-            resourcesFiles,
-            appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE))
-        .setClassFiles(
-            classesFiles,
-            appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE))
-        .setExtraFiles(extraFiles, AbsoluteUnixPath.get("/"))
-        .build();
+    AbsoluteUnixPath dependenciesExtractionPath =
+        appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE);
+    AbsoluteUnixPath resourcesExtractionPath =
+        appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE);
+    AbsoluteUnixPath classesExtractionPath =
+        appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE);
+
+    Builder layerBuilder = JavaLayerConfigurations.builder();
+    for (Path file : dependenciesFiles) {
+      layerBuilder.addDependencyFile(file, dependenciesExtractionPath.resolve(file.getFileName()));
+    }
+    for (Path file : snapshotDependenciesFiles) {
+      layerBuilder.addSnapshotDependencyFile(
+          file, dependenciesExtractionPath.resolve(file.getFileName()));
+    }
+    for (Path file : resourcesFiles) {
+      layerBuilder.addResourceFile(file, resourcesExtractionPath.resolve(file.getFileName()));
+    }
+    for (Path file : classesFiles) {
+      layerBuilder.addClassFile(file, classesExtractionPath.resolve(file.getFileName()));
+    }
+    for (Path file : extraFiles) {
+      layerBuilder.addExtraFile(file, AbsoluteUnixPath.get("/").resolve(file.getFileName()));
+    }
+    return layerBuilder.build();
   }
 
   private GradleLayerConfigurations() {}
