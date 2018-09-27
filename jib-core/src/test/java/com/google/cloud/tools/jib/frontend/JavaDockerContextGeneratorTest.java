@@ -64,17 +64,16 @@ public class JavaDockerContextGeneratorTest {
 
   @Mock private JavaLayerConfigurations mockJavaLayerConfigurations;
 
-  private ImmutableList<LayerEntry> filesToLayerEntries(Path directory, String extractionPathRoot)
+  private ImmutableList<LayerEntry> filesToLayerEntries(Path directory, String extractionRootString)
       throws IOException {
+    AbsoluteUnixPath extractionRoot = AbsoluteUnixPath.get(extractionRootString);
     return new DirectoryWalker(directory)
         .walk()
         .stream()
         .map(
             sourceFile ->
                 new LayerEntry(
-                    sourceFile,
-                    AbsoluteUnixPath.get(extractionPathRoot)
-                        .resolve(directory.relativize(sourceFile))))
+                    sourceFile, extractionRoot.resolve(directory.relativize(sourceFile))))
         .collect(ImmutableList.toImmutableList());
   }
 

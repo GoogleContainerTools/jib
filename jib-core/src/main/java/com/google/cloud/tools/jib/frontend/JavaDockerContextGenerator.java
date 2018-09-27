@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.frontend;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -72,9 +73,16 @@ public class JavaDockerContextGenerator {
     /** The directory in the context to put the source files for the layer */
     private final String directoryInContext;
 
-    private CopyDirective(ImmutableList<LayerEntry> layerEntries, String directoryInContext) {
+    /** The extraction path in the image. */
+    private final AbsoluteUnixPath extractionPath;
+
+    private CopyDirective(
+        ImmutableList<LayerEntry> layerEntries,
+        String directoryInContext,
+        AbsoluteUnixPath extractionPath) {
       this.layerEntries = layerEntries;
       this.directoryInContext = directoryInContext;
+      this.extractionPath = extractionPath;
     }
   }
 
@@ -94,7 +102,7 @@ public class JavaDockerContextGenerator {
       return;
     }
 
-    listBuilder.add(new CopyDirective(layerEntries, directoryInContext));
+    listBuilder.add(new CopyDirective(layerEntries, directoryInContext, AbsoluteUnixPath.get("/")));
   }
 
   /**
@@ -287,11 +295,11 @@ public class JavaDockerContextGenerator {
    * <pre>{@code
    * FROM [base image]
    *
-   * COPY libs/ /
-   * COPY snapshot-libs/ /
-   * COPY resources/ /
-   * COPY classes/ /
-   * COPY root/ /
+   * COPY libs /
+   * COPY snapshot-libs /
+   * COPY resources /
+   * COPY classes /
+   * COPY root /
    *
    * EXPOSE [port]
    * [More EXPOSE instructions, if necessary]
@@ -312,7 +320,11 @@ public class JavaDockerContextGenerator {
     StringBuilder dockerfile = new StringBuilder();
     dockerfile.append("FROM ").append(Preconditions.checkNotNull(baseImage)).append("\n");
     for (CopyDirective copyDirective : copyDirectives) {
-      dockerfile.append("\nCOPY ").append(copyDirective.directoryInContext).append("/ /");
+      dockerfile
+          .append("\nCOPY ")
+          .append(copyDirective.directoryInContext)
+          .append(" ")
+          .append(copyDirective.extractionPath);
     }
 
     dockerfile.append("\n");
