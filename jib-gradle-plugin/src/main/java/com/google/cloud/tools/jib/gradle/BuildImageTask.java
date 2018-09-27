@@ -121,7 +121,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
             .setAdditionalTargetImageTags(jibExtension.getTo().getTags())
             .setContainerConfiguration(
                 pluginConfigurationProcessor.getContainerConfigurationBuilder().build())
-            .setTargetFormat(jibExtension.getFormat())
+            .setTargetFormat(jibExtension.getContainer().getFormat())
             .build();
 
     HelpfulSuggestions helpfulSuggestions =

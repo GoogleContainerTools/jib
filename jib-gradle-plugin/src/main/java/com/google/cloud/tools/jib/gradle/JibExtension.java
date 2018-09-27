@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.image.ImageFormat;
-import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.common.base.Preconditions;
 import java.io.File;
 import java.nio.file.Path;
@@ -78,8 +77,6 @@ public class JibExtension {
   private final Property<Boolean> useOnlyProjectCache;
   private final Property<Boolean> allowInsecureRegistries;
   private final Property<Path> extraDirectory;
-
-  // TODO: Deprecated parameters; remove these 4
   private final ListProperty<String> jvmFlags;
   private final Property<String> mainClass;
   private final ListProperty<String> args;
@@ -179,39 +176,10 @@ public class JibExtension {
     return container;
   }
 
-  // TODO: Make @Internal (deprecated)
-  @Input
-  @Optional
-  List<String> getJvmFlags() {
-    return container.getJvmFlags();
-  }
-
   @Internal
   @Optional
   Map<String, String> getEnvironment() {
     return container.getEnvironment();
-  }
-
-  // TODO: Make @Internal (deprecated)
-  @Input
-  @Nullable
-  @Optional
-  String getMainClass() {
-    return container.getMainClass();
-  }
-
-  // TODO: Make @Internal (deprecated)
-  @Input
-  @Optional
-  List<String> getArgs() {
-    return container.getArgs();
-  }
-
-  // TODO: Make @Internal (deprecated)
-  @Input
-  @Optional
-  Class<? extends BuildableManifestTemplate> getFormat() {
-    return container.getFormat();
   }
 
   @Internal

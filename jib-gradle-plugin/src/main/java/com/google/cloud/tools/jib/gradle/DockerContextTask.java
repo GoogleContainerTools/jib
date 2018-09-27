@@ -115,8 +115,9 @@ public class DockerContextTask extends DefaultTask implements JibTask {
       String mainClass = gradleProjectProperties.getMainClass(jibExtension);
       entrypoint =
           JavaEntrypointConstructor.makeDefaultEntrypoint(
-              appRoot, jibExtension.getJvmFlags(), mainClass);
-    } else if (jibExtension.getMainClass() != null || !jibExtension.getJvmFlags().isEmpty()) {
+              appRoot, jibExtension.getContainer().getJvmFlags(), mainClass);
+    } else if (jibExtension.getContainer().getMainClass() != null
+        || !jibExtension.getContainer().getJvmFlags().isEmpty()) {
       getLogger().warn("mainClass and jvmFlags are ignored when entrypoint is specified");
     }
 
@@ -128,7 +129,7 @@ public class DockerContextTask extends DefaultTask implements JibTask {
       new JavaDockerContextGenerator(gradleProjectProperties.getJavaLayerConfigurations())
           .setBaseImage(jibExtension.getBaseImage())
           .setEntrypoint(entrypoint)
-          .setJavaArguments(jibExtension.getArgs())
+          .setJavaArguments(jibExtension.getContainer().getArgs())
           .setExposedPorts(jibExtension.getExposedPorts())
           .setLabels(jibExtension.getLabels())
           .generate(Paths.get(targetDir));

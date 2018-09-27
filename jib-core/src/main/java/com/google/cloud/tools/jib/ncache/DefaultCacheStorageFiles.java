@@ -26,6 +26,7 @@ class DefaultCacheStorageFiles {
   private static final String LAYERS_DIRECTORY = "layers";
   private static final String METADATA_FILENAME = "metadata";
   private static final String SELECTORS_DIRECTORY = "selectors";
+  private static final String TEMPORARY_DIRECTORY = "tmp";
 
   /**
    * Returns whether or not {@code file} is a layer contents file.
@@ -139,5 +140,14 @@ class DefaultCacheStorageFiles {
    */
   Path getLayerDirectory(DescriptorDigest layerDigest) {
     return getLayersDirectory().resolve(layerDigest.getHash());
+  }
+
+  /**
+   * Gets the directory to store temporary files.
+   *
+   * @return the directory for temporary files
+   */
+  Path getTemporaryDirectory() {
+    return cacheDirectory.resolve(TEMPORARY_DIRECTORY);
   }
 }

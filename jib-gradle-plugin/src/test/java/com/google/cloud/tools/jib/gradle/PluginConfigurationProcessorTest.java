@@ -36,11 +36,11 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class PluginConfigurationProcessorTest {
 
-  @Mock Logger mockLogger;
-  @Mock JibExtension mockJibExtension;
-  @Mock BaseImageParameters mockBaseImageParameters;
-  @Mock ContainerParameters mockContainerParameters;
-  @Mock GradleProjectProperties mockProjectProperties;
+  @Mock private Logger mockLogger;
+  @Mock private JibExtension mockJibExtension;
+  @Mock private BaseImageParameters mockBaseImageParameters;
+  @Mock private ContainerParameters mockContainerParameters;
+  @Mock private GradleProjectProperties mockProjectProperties;
 
   @Before
   public void setUp() throws Exception {
@@ -90,7 +90,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.doReturn(Arrays.asList("custom", "entrypoint"))
         .when(mockContainerParameters)
         .getEntrypoint();
-    Mockito.doReturn(Arrays.asList("jvmFlag")).when(mockJibExtension).getJvmFlags();
+    Mockito.doReturn(Arrays.asList("jvmFlag")).when(mockContainerParameters).getJvmFlags();
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
@@ -107,7 +107,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.doReturn(Arrays.asList("custom", "entrypoint"))
         .when(mockContainerParameters)
         .getEntrypoint();
-    Mockito.doReturn("java.util.Object").when(mockJibExtension).getMainClass();
+    Mockito.doReturn("java.util.Object").when(mockContainerParameters).getMainClass();
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(

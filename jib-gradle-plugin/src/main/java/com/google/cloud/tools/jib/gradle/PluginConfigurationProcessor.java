@@ -124,15 +124,18 @@ class PluginConfigurationProcessor {
       String mainClass = projectProperties.getMainClass(jibExtension);
       entrypoint =
           JavaEntrypointConstructor.makeDefaultEntrypoint(
-              getAppRootChecked(jibExtension), jibExtension.getJvmFlags(), mainClass);
-    } else if (jibExtension.getMainClass() != null || !jibExtension.getJvmFlags().isEmpty()) {
+              getAppRootChecked(jibExtension),
+              jibExtension.getContainer().getJvmFlags(),
+              mainClass);
+    } else if (jibExtension.getContainer().getMainClass() != null
+        || !jibExtension.getContainer().getJvmFlags().isEmpty()) {
       logger.warn("mainClass and jvmFlags are ignored when entrypoint is specified");
     }
     ContainerConfiguration.Builder containerConfigurationBuilder =
         ContainerConfiguration.builder()
             .setEntrypoint(entrypoint)
             .setEnvironment(jibExtension.getEnvironment())
-            .setProgramArguments(jibExtension.getArgs())
+            .setProgramArguments(jibExtension.getContainer().getArgs())
             .setExposedPorts(ExposedPortsParser.parse(jibExtension.getExposedPorts()))
             .setLabels(jibExtension.getLabels());
     if (jibExtension.getUseCurrentTimestamp()) {
