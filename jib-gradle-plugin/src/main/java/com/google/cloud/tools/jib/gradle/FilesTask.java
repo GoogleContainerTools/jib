@@ -21,6 +21,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -97,14 +98,14 @@ public class FilesTask extends DefaultTask {
   }
 
   /**
-   * Function for collecting a project's project dependencies.
+   * Collects a project's project dependencies, including all transitive project dependencies.
    *
    * @param project the project to find the project dependencies for
    * @return the set of project dependencies
    */
   private static Set<ProjectDependency> findProjectDependencies(Project project) {
     Set<ProjectDependency> projectDependencies = new HashSet<>();
-    ArrayDeque<Project> projects = new ArrayDeque<>();
+    Deque<Project> projects = new ArrayDeque<>();
     projects.push(project);
 
     while (!projects.isEmpty()) {
