@@ -17,18 +17,15 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.Builder;
 import java.io.IOException;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.function.Predicate;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.project.MavenProject;
 
@@ -46,58 +43,6 @@ class MavenLayerConfigurations {
    */
   static JavaLayerConfigurations getForProject(
       MavenProject project, Path extraDirectory, AbsoluteUnixPath appRoot) throws IOException {
-    Path classesSourceDirectory = Paths.get(project.getBuild().getSourceDirectory());
-    Path classesOutputDirectory = Paths.get(project.getBuild().getOutputDirectory());
-
-    List<Path> dependenciesFiles = new ArrayList<>();
-    List<Path> snapshotDependenciesFiles = new ArrayList<>();
-    List<Path> resourcesFiles = new ArrayList<>();
-    List<Path> classesFiles = new ArrayList<>();
-    List<Path> extraFiles = new ArrayList<>();
-
-    // Gets all the dependencies.
-    for (Artifact artifact : project.getArtifacts()) {
-      if (artifact.isSnapshot()) {
-        snapshotDependenciesFiles.add(artifact.getFile().toPath());
-      } else {
-        dependenciesFiles.add(artifact.getFile().toPath());
-      }
-    }
-
-    // Gets the classes files in the 'classes' output directory. It finds the files that are classes
-    // files by matching them against the .java source files. All other files are deemed resources.
-    try (Stream<Path> classFileStream = Files.list(classesOutputDirectory)) {
-      classFileStream.forEach(
-          classFile -> {
-            /*
-             * Adds classFile to classesFiles if it is a .class file or is a directory that also
-             * exists in the classes source directory; otherwise, adds file to resourcesFiles.
-             */
-            if (Files.isDirectory(classFile)
-                && Files.exists(
-                    classesSourceDirectory.resolve(classesOutputDirectory.relativize(classFile)))) {
-              classesFiles.add(classFile);
-              return;
-            }
-
-            if (FileSystems.getDefault().getPathMatcher("glob:**.class").matches(classFile)) {
-              classesFiles.add(classFile);
-              return;
-            }
-
-            resourcesFiles.add(classFile);
-          });
-    }
-
-    // Adds all the extra files.
-    if (Files.exists(extraDirectory)) {
-      try (Stream<Path> extraFilesLayerDirectoryFiles = Files.list(extraDirectory)) {
-        extraFiles = extraFilesLayerDirectoryFiles.collect(Collectors.toList());
-
-      } catch (IOException ex) {
-        throw new IOException("Failed to list directory for extra files: " + extraDirectory, ex);
-      }
-    }
 
     AbsoluteUnixPath dependenciesExtractionPath =
         appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE);
@@ -107,23 +52,63 @@ class MavenLayerConfigurations {
         appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE);
 
     Builder layerBuilder = JavaLayerConfigurations.builder();
-    for (Path file : dependenciesFiles) {
-      layerBuilder.addDependencyFile(file, dependenciesExtractionPath.resolve(file.getFileName()));
+
+    // Gets all the dependencies.
+    for (Artifact artifact : project.getArtifacts()) {
+      Path artifactPath = artifact.getFile().toPath();
+      if (artifact.isSnapshot()) {
+        layerBuilder.addSnapshotDependencyFile(
+            artifactPath, dependenciesExtractionPath.resolve(artifactPath.getFileName()));
+      } else {
+        layerBuilder.addDependencyFile(
+            artifactPath, dependenciesExtractionPath.resolve(artifactPath.getFileName()));
+      }
     }
-    for (Path file : snapshotDependenciesFiles) {
-      layerBuilder.addSnapshotDependencyFile(
-          file, dependenciesExtractionPath.resolve(file.getFileName()));
+
+    Path classesOutputDirectory = Paths.get(project.getBuild().getOutputDirectory());
+
+    // Gets the classes files in the 'classes' output directory.
+    Predicate<Path> isClassFile = path -> path.toString().endsWith(".class");
+    addFilesToLayer(
+        classesOutputDirectory, isClassFile, classesExtractionPath, layerBuilder::addClassFile);
+
+    // Gets the resources files in the 'classes' output directory.
+    addFilesToLayer(
+        classesOutputDirectory,
+        isClassFile.negate(),
+        resourcesExtractionPath,
+        layerBuilder::addResourceFile);
+
+    // Adds all the extra files.
+    if (Files.exists(extraDirectory)) {
+      AbsoluteUnixPath extractionBase = AbsoluteUnixPath.get("/");
+      addFilesToLayer(extraDirectory, path -> true, extractionBase, layerBuilder::addExtraFile);
     }
-    for (Path file : resourcesFiles) {
-      layerBuilder.addResourceFile(file, resourcesExtractionPath.resolve(file.getFileName()));
-    }
-    for (Path file : classesFiles) {
-      layerBuilder.addClassFile(file, classesExtractionPath.resolve(file.getFileName()));
-    }
-    for (Path file : extraFiles) {
-      layerBuilder.addExtraFile(file, AbsoluteUnixPath.get("/").resolve(file.getFileName()));
-    }
+
     return layerBuilder.build();
+  }
+
+  @FunctionalInterface
+  private static interface FileToLayerAdder {
+
+    void add(Path sourcePath, AbsoluteUnixPath pathInContainer) throws IOException;
+  }
+
+  private static void addFilesToLayer(
+      Path sourceRoot,
+      Predicate<Path> pathFilter,
+      AbsoluteUnixPath basePathInContainer,
+      FileToLayerAdder addFileToLayer)
+      throws IOException {
+    // Filtering out non-empty directories because JavaLayerConfigurations adds files recursively.
+    Predicate<Path> isEmptyDirectory = path -> path.toFile().list().length == 0;
+    Predicate<Path> fileOrEmptyDirectory =
+        path -> !Files.isDirectory(path) || isEmptyDirectory.test(path);
+
+    DirectoryWalker walker =
+        new DirectoryWalker(sourceRoot).filter(pathFilter).filter(fileOrEmptyDirectory);
+    walker.walk(
+        path -> addFileToLayer.add(path, basePathInContainer.resolve(sourceRoot.relativize(path))));
   }
 
   private MavenLayerConfigurations() {}

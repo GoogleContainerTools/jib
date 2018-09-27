@@ -49,7 +49,6 @@ public class DockerContextMojoTest {
     MavenProject project = Mockito.mock(MavenProject.class);
     Build build = Mockito.mock(Build.class);
     Mockito.when(project.getBuild()).thenReturn(build);
-    Mockito.when(build.getSourceDirectory()).thenReturn(projectRoot.newFolder("src").toString());
     Mockito.when(build.getOutputDirectory()).thenReturn(outputFolder.toString());
 
     mojo =

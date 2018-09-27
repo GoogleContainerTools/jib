@@ -65,18 +65,16 @@ public class MavenLayerConfigurationsTest {
         expectedPaths, entries, LayerEntry::getAbsoluteExtractionPathString);
   }
 
-  @Rule public TestRepository testRepository = new TestRepository();
+  @Rule public final TestRepository testRepository = new TestRepository();
 
   @Mock private MavenProject mockMavenProject;
   @Mock private Build mockBuild;
 
   @Before
   public void setUp() throws URISyntaxException {
-    Path sourcePath = Paths.get(Resources.getResource("application/source").toURI());
     Path outputPath = Paths.get(Resources.getResource("application/output").toURI());
 
     Mockito.when(mockMavenProject.getBuild()).thenReturn(mockBuild);
-    Mockito.when(mockBuild.getSourceDirectory()).thenReturn(sourcePath.toString());
     Mockito.when(mockBuild.getOutputDirectory()).thenReturn(outputPath.toString());
 
     Set<Artifact> artifacts =
@@ -103,7 +101,6 @@ public class MavenLayerConfigurationsTest {
     Path applicationDirectory = Paths.get(Resources.getResource("application").toURI());
     ImmutableList<Path> expectedResourcesFiles =
         ImmutableList.of(
-            applicationDirectory.resolve("output/directory"),
             applicationDirectory.resolve("output/directory/somefile"),
             applicationDirectory.resolve("output/resourceA"),
             applicationDirectory.resolve("output/resourceB"),
@@ -111,7 +108,6 @@ public class MavenLayerConfigurationsTest {
     ImmutableList<Path> expectedClassesFiles =
         ImmutableList.of(
             applicationDirectory.resolve("output/HelloWorld.class"),
-            applicationDirectory.resolve("output/package"),
             applicationDirectory.resolve("output/package/some.class"),
             applicationDirectory.resolve("output/some.class"));
 
@@ -139,10 +135,7 @@ public class MavenLayerConfigurationsTest {
 
     ImmutableList<Path> expectedExtraFiles =
         ImmutableList.of(
-            extraFilesDirectory.resolve("a"),
-            extraFilesDirectory.resolve("a/b"),
             extraFilesDirectory.resolve("a/b/bar"),
-            extraFilesDirectory.resolve("c"),
             extraFilesDirectory.resolve("c/cat"),
             extraFilesDirectory.resolve("foo"));
 
@@ -169,7 +162,6 @@ public class MavenLayerConfigurationsTest {
         configuration.getSnapshotDependencyLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
-            "/my/app/resources/directory",
             "/my/app/resources/directory/somefile",
             "/my/app/resources/resourceA",
             "/my/app/resources/resourceB",
@@ -178,13 +170,11 @@ public class MavenLayerConfigurationsTest {
     assertExtractionPathsUnordered(
         Arrays.asList(
             "/my/app/classes/HelloWorld.class",
-            "/my/app/classes/package",
             "/my/app/classes/package/some.class",
             "/my/app/classes/some.class"),
         configuration.getClassLayerEntries());
     assertExtractionPathsUnordered(
-        Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"),
-        configuration.getExtraFilesLayerEntries());
+        Arrays.asList("/a/b/bar", "/c/cat", "/foo"), configuration.getExtraFilesLayerEntries());
   }
 
   private Artifact makeArtifact(Path path) {
