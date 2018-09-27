@@ -320,11 +320,13 @@ public class JavaDockerContextGenerator {
     StringBuilder dockerfile = new StringBuilder();
     dockerfile.append("FROM ").append(Preconditions.checkNotNull(baseImage)).append("\n");
     for (CopyDirective copyDirective : copyDirectives) {
+      boolean hasTrailingSlash = copyDirective.extractionPath.toString().endsWith("/");
       dockerfile
           .append("\nCOPY ")
           .append(copyDirective.directoryInContext)
           .append(" ")
-          .append(copyDirective.extractionPath);
+          .append(copyDirective.extractionPath)
+          .append(hasTrailingSlash ? "" : "/");
     }
 
     dockerfile.append("\n");
