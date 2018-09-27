@@ -102,10 +102,10 @@ public class DockerContextTask extends DefaultTask implements JibTask {
   @TaskAction
   public void generateDockerContext() {
     Preconditions.checkNotNull(jibExtension);
-
-    GradleJibLogger gradleJibLogger = new GradleJibLogger(getLogger());
-    jibExtension.handleDeprecatedParameters(gradleJibLogger);
     JibSystemProperties.checkHttpTimeoutProperty();
+
+    // TODO: Instead of disabling logging, have authentication credentials be provided
+    PluginConfigurationProcessor.disableHttpLogging();
 
     AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);
     GradleProjectProperties gradleProjectProperties =
@@ -118,9 +118,10 @@ public class DockerContextTask extends DefaultTask implements JibTask {
       String mainClass = gradleProjectProperties.getMainClass(jibExtension);
       entrypoint =
           JavaEntrypointConstructor.makeDefaultEntrypoint(
-              appRoot, jibExtension.getJvmFlags(), mainClass);
-    } else if (jibExtension.getMainClass() != null || !jibExtension.getJvmFlags().isEmpty()) {
-      gradleJibLogger.warn("mainClass and jvmFlags are ignored when entrypoint is specified");
+              appRoot, jibExtension.getContainer().getJvmFlags(), mainClass);
+    } else if (jibExtension.getContainer().getMainClass() != null
+        || !jibExtension.getContainer().getJvmFlags().isEmpty()) {
+      getLogger().warn("mainClass and jvmFlags are ignored when entrypoint is specified");
     }
 
     try {
@@ -131,12 +132,12 @@ public class DockerContextTask extends DefaultTask implements JibTask {
       new JavaDockerContextGenerator(gradleProjectProperties.getJavaLayerConfigurations())
           .setBaseImage(jibExtension.getBaseImage())
           .setEntrypoint(entrypoint)
-          .setJavaArguments(jibExtension.getArgs())
+          .setJavaArguments(jibExtension.getContainer().getArgs())
           .setExposedPorts(jibExtension.getExposedPorts())
           .setLabels(jibExtension.getLabels())
           .generate(Paths.get(targetDir));
 
-      gradleJibLogger.lifecycle("Created Docker context at " + targetDir);
+      getLogger().lifecycle("Created Docker context at " + targetDir);
 
     } catch (InsecureRecursiveDeleteException ex) {
       throw new GradleException(

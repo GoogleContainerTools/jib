@@ -178,4 +178,10 @@ public class DefaultCacheStorageFilesTest {
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
         testDefaultCacheStorageFiles.getLayerDirectory(layerDigest));
   }
+
+  @Test
+  public void testGetTemporaryDirectory() {
+    Assert.assertEquals(
+        Paths.get("cache/directory/tmp"), testDefaultCacheStorageFiles.getTemporaryDirectory());
+  }
 }

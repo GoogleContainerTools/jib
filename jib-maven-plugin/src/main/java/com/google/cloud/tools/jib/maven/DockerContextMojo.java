@@ -61,13 +61,14 @@ public class DockerContextMojo extends JibPluginConfiguration {
       return;
     }
 
-    MavenJibLogger mavenJibLogger = new MavenJibLogger(getLog());
-    handleDeprecatedParameters(mavenJibLogger);
     try {
       JibSystemProperties.checkHttpTimeoutProperty();
     } catch (NumberFormatException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex);
     }
+
+    // TODO: Instead of disabling logging, have authentication credentials be provided
+    PluginConfigurationProcessor.disableHttpLogging();
 
     Preconditions.checkNotNull(targetDir);
 
@@ -81,7 +82,7 @@ public class DockerContextMojo extends JibPluginConfiguration {
       entrypoint =
           JavaEntrypointConstructor.makeDefaultEntrypoint(appRoot, getJvmFlags(), mainClass);
     } else if (getMainClass() != null || !getJvmFlags().isEmpty()) {
-      mavenJibLogger.warn("<mainClass> and <jvmFlags> are ignored when <entrypoint> is specified");
+      getLog().warn("<mainClass> and <jvmFlags> are ignored when <entrypoint> is specified");
     }
 
     try {
@@ -97,7 +98,7 @@ public class DockerContextMojo extends JibPluginConfiguration {
           .setLabels(getLabels())
           .generate(Paths.get(targetDir));
 
-      mavenJibLogger.lifecycle("Created Docker context at " + targetDir);
+      getLog().info("Created Docker context at " + targetDir);
 
     } catch (InsecureRecursiveDeleteException ex) {
       throw new MojoExecutionException(

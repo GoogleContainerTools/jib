@@ -16,10 +16,10 @@
 
 package com.google.cloud.tools.jib.registry;
 
-import com.google.cloud.tools.jib.JibLogger;
-import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
+import com.google.cloud.tools.jib.builder.TimerEventEmitter;
+import com.google.cloud.tools.jib.event.EventEmitter;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
@@ -37,36 +37,10 @@ import javax.annotation.Nullable;
 /** Interfaces with a registry. */
 public class RegistryClient {
 
-  // TODO: Remove
-  private Timer parentTimer =
-      new Timer(
-          new JibLogger() {
-            @Override
-            public void debug(CharSequence message) {}
-
-            @Override
-            public void info(CharSequence message) {}
-
-            @Override
-            public void warn(CharSequence message) {}
-
-            @Override
-            public void error(CharSequence message) {}
-
-            @Override
-            public void lifecycle(CharSequence message) {}
-          },
-          "NULL TIMER");
-
-  public RegistryClient setTimer(Timer parentTimer) {
-    this.parentTimer = parentTimer;
-    return this;
-  }
-
   /** Factory for creating {@link RegistryClient}s. */
   public static class Factory {
 
-    private final JibLogger buildLogger;
+    private final EventEmitter eventEmitter;
     private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
 
     private boolean allowInsecureRegistries = false;
@@ -74,9 +48,9 @@ public class RegistryClient {
     @Nullable private Authorization authorization;
 
     private Factory(
-        JibLogger buildLogger,
+        EventEmitter eventEmitter,
         RegistryEndpointRequestProperties registryEndpointRequestProperties) {
-      this.buildLogger = buildLogger;
+      this.eventEmitter = eventEmitter;
       this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     }
 
@@ -121,7 +95,7 @@ public class RegistryClient {
      */
     public RegistryClient newRegistryClient() {
       return new RegistryClient(
-          buildLogger,
+          eventEmitter,
           authorization,
           registryEndpointRequestProperties,
           allowInsecureRegistries,
@@ -157,16 +131,16 @@ public class RegistryClient {
   /**
    * Creates a new {@link Factory} for building a {@link RegistryClient}.
    *
-   * @param buildLogger the build logger used for printing messages
+   * @param eventEmitter the event emitter used for emitting log events
    * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
    * @param imageName the image/repository name (also known as, namespace)
    * @return the new {@link Factory}
    */
-  public static Factory factory(JibLogger buildLogger, String serverUrl, String imageName) {
-    return new Factory(buildLogger, new RegistryEndpointRequestProperties(serverUrl, imageName));
+  public static Factory factory(EventEmitter eventEmitter, String serverUrl, String imageName) {
+    return new Factory(eventEmitter, new RegistryEndpointRequestProperties(serverUrl, imageName));
   }
 
-  private final JibLogger buildLogger;
+  private final EventEmitter eventEmitter;
   @Nullable private final Authorization authorization;
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   private final boolean allowInsecureRegistries;
@@ -175,18 +149,18 @@ public class RegistryClient {
   /**
    * Instantiate with {@link #factory}.
    *
-   * @param buildLogger the build logger used for printing messages
+   * @param eventEmitter the event emitter used for emitting log events
    * @param authorization the {@link Authorization} to access the registry/repository
    * @param registryEndpointRequestProperties properties of registry endpoint requests
    * @param allowInsecureRegistries if {@code true}, insecure connections will be allowed
    */
   private RegistryClient(
-      JibLogger buildLogger,
+      EventEmitter eventEmitter,
       @Nullable Authorization authorization,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
       boolean allowInsecureRegistries,
       String userAgent) {
-    this.buildLogger = buildLogger;
+    this.eventEmitter = eventEmitter;
     this.authorization = authorization;
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     this.allowInsecureRegistries = allowInsecureRegistries;
@@ -296,8 +270,9 @@ public class RegistryClient {
     BlobPusher blobPusher =
         new BlobPusher(registryEndpointRequestProperties, blobDigest, blob, sourceRepository);
 
-    try (Timer t = parentTimer.subTimer("pushBlob")) {
-      try (Timer t2 = t.subTimer("pushBlob POST " + blobDigest)) {
+    try (TimerEventEmitter timerEventEmitter = new TimerEventEmitter(eventEmitter, "pushBlob")) {
+      try (TimerEventEmitter timerEventEmitter2 =
+          timerEventEmitter.subTimer("pushBlob POST " + blobDigest)) {
 
         // POST /v2/<name>/blobs/uploads/ OR
         // POST /v2/<name>/blobs/uploads/?mount={blob.digest}&from={sourceRepository}
@@ -307,13 +282,13 @@ public class RegistryClient {
           return true;
         }
 
-        t2.lap("pushBlob PATCH " + blobDigest);
+        timerEventEmitter2.lap("pushBlob PATCH " + blobDigest);
 
         // PATCH <Location> with BLOB
         URL putLocation = callRegistryEndpoint(blobPusher.writer(patchLocation));
         Preconditions.checkNotNull(putLocation);
 
-        t2.lap("pushBlob PUT " + blobDigest);
+        timerEventEmitter2.lap("pushBlob PUT " + blobDigest);
 
         // PUT <Location>?digest={blob.digest}
         callRegistryEndpoint(blobPusher.committer(putLocation));
@@ -345,7 +320,7 @@ public class RegistryClient {
   private <T> T callRegistryEndpoint(RegistryEndpointProvider<T> registryEndpointProvider)
       throws IOException, RegistryException {
     return new RegistryEndpointCaller<>(
-            buildLogger,
+            eventEmitter,
             userAgent,
             getApiRouteBase(),
             registryEndpointProvider,

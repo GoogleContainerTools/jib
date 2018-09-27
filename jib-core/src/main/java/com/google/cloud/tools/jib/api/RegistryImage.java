@@ -17,13 +17,13 @@
 package com.google.cloud.tools.jib.api;
 // TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
+import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -115,11 +115,15 @@ public class RegistryImage implements SourceImage, TargetImage {
     return this;
   }
 
-  ImageReference getImageReference() {
-    return imageReference;
-  }
-
-  List<CredentialRetriever> getCredentialRetrievers() {
-    return Collections.unmodifiableList(credentialRetrievers);
+  /**
+   * Converts into an {@link ImageConfiguration}. For internal use only.
+   *
+   * @return an {@link ImageConfiguration}
+   */
+  @Override
+  public ImageConfiguration toImageConfiguration() {
+    return ImageConfiguration.builder(imageReference)
+        .setCredentialRetrievers(credentialRetrievers)
+        .build();
   }
 }

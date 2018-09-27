@@ -57,31 +57,33 @@ public class Cache {
   }
 
   /**
-   * Saves a cache entry with only a layer {@link Blob}. Use {@link #write(Blob, ImmutableList)} to
-   * include a selector and metadata.
+   * Saves a cache entry with a compressed layer {@link Blob}. Use {@link
+   * #writeUncompressedLayer(Blob, ImmutableList)} to save a cache entry with an uncompressed layer
+   * {@link Blob} and include a selector and metadata.
    *
-   * @param layerBlob the layer {@link Blob}
+   * @param compressedLayerBlob the compressed layer {@link Blob}
    * @return the {@link CacheEntry} for the written layer
    * @throws IOException if an I/O exception occurs
    */
-  public CacheEntry write(Blob layerBlob) throws IOException {
-    return cacheStorage.write(CacheWrite.layerOnly(layerBlob));
+  public CacheEntry writeCompressedLayer(Blob compressedLayerBlob) throws IOException {
+    return cacheStorage.write(compressedLayerBlob);
   }
 
   /**
-   * Saves a cache entry with a layer {@link Blob}, an additional selector digest, and a metadata
-   * {@link Blob}. Use {@link #write(Blob)} to save only a layer {@link Blob}.
+   * Saves a cache entry with an uncompressed layer {@link Blob}, an additional selector digest, and
+   * a metadata {@link Blob}. Use {@link #writeCompressedLayer(Blob)} to save a compressed layer
+   * {@link Blob}.
    *
-   * @param layerBlob the layer {@link Blob}
+   * @param uncompressedLayerBlob the layer {@link Blob}
    * @param layerEntries the layer entries that make up the layer
    * @return the {@link CacheEntry} for the written layer and metadata
    * @throws IOException if an I/O exception occurs
    */
-  public CacheEntry write(Blob layerBlob, ImmutableList<LayerEntry> layerEntries)
-      throws IOException {
+  public CacheEntry writeUncompressedLayer(
+      Blob uncompressedLayerBlob, ImmutableList<LayerEntry> layerEntries) throws IOException {
     return cacheStorage.write(
-        CacheWrite.withSelectorAndMetadata(
-            layerBlob,
+        new UncompressedCacheWrite(
+            uncompressedLayerBlob,
             LayerEntriesSelector.generateSelector(layerEntries),
             LastModifiedTimeMetadata.generateMetadata(layerEntries)));
   }

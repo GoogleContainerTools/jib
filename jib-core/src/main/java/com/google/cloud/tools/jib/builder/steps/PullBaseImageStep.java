@@ -16,13 +16,14 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.builder.TimerEventEmitter;
 import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.BaseImageWithAuthorization;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
+import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.image.Image;
@@ -104,24 +105,27 @@ class PullBaseImageStep
           LayerCountMismatchException, ExecutionException, BadContainerConfigurationFormatException,
           RegistryAuthenticationFailedException {
     buildConfiguration
-        .getBuildLogger()
-        .lifecycle(
-            "Getting base image "
-                + buildConfiguration.getBaseImageConfiguration().getImage()
-                + "...");
+        .getEventEmitter()
+        .emit(
+            LogEvent.lifecycle(
+                "Getting base image "
+                    + buildConfiguration.getBaseImageConfiguration().getImage()
+                    + "..."));
 
-    try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
+    try (TimerEventEmitter ignored =
+        new TimerEventEmitter(buildConfiguration.getEventEmitter(), DESCRIPTION)) {
       // First, try with no credentials.
       try {
         return new BaseImageWithAuthorization(pullBaseImage(null), null);
 
       } catch (RegistryUnauthorizedException ex) {
         buildConfiguration
-            .getBuildLogger()
-            .lifecycle(
-                "The base image requires auth. Trying again for "
-                    + buildConfiguration.getBaseImageConfiguration().getImage()
-                    + "...");
+            .getEventEmitter()
+            .emit(
+                LogEvent.lifecycle(
+                    "The base image requires auth. Trying again for "
+                        + buildConfiguration.getBaseImageConfiguration().getImage()
+                        + "..."));
 
         // If failed, then, retrieve base registry credentials and try with retrieved credentials.
         // TODO: Refactor the logic in RetrieveRegistryCredentialsStep out to
@@ -146,16 +150,17 @@ class PullBaseImageStep
           // See https://docs.docker.com/registry/spec/auth/token
           RegistryAuthenticator registryAuthenticator =
               RegistryAuthenticator.initializer(
-                      buildConfiguration.getBuildLogger(),
+                      buildConfiguration.getEventEmitter(),
                       buildConfiguration.getBaseImageConfiguration().getImageRegistry(),
                       buildConfiguration.getBaseImageConfiguration().getImageRepository())
                   .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
                   .initialize();
           if (registryAuthenticator == null) {
             buildConfiguration
-                .getBuildLogger()
-                .error(
-                    "Failed to retrieve authentication challenge for registry that required token authentication");
+                .getEventEmitter()
+                .emit(
+                    LogEvent.error(
+                        "Failed to retrieve authentication challenge for registry that required token authentication"));
             throw registryUnauthorizedException;
           }
           registryAuthorization =

@@ -17,11 +17,18 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.event.events.LogEvent;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import org.gradle.api.logging.Logger;
 
 /** Handles {@link LogEvent}s by passing to the Gradle {@link Logger}. */
+// We don't care about the return values of the logging futures.
+@SuppressWarnings("FutureReturnValueIgnored")
 class LogEventHandler implements Consumer<LogEvent> {
+
+  /** This executor keeps all log messages in order. */
+  private static final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
   private final Logger logger;
 
@@ -33,23 +40,23 @@ class LogEventHandler implements Consumer<LogEvent> {
   public void accept(LogEvent logEvent) {
     switch (logEvent.getLevel()) {
       case LIFECYCLE:
-        logger.lifecycle(logEvent.getMessage());
+        executorService.submit(() -> logger.lifecycle(logEvent.getMessage()));
         break;
 
       case DEBUG:
-        logger.debug(logEvent.getMessage());
+        executorService.submit(() -> logger.debug(logEvent.getMessage()));
         break;
 
       case ERROR:
-        logger.error(logEvent.getMessage());
+        executorService.submit(() -> logger.error(logEvent.getMessage()));
         break;
 
       case INFO:
-        logger.info(logEvent.getMessage());
+        executorService.submit(() -> logger.info(logEvent.getMessage()));
         break;
 
       case WARN:
-        logger.warn("warning: " + logEvent.getMessage());
+        executorService.submit(() -> logger.warn("warning: " + logEvent.getMessage()));
         break;
 
       default:

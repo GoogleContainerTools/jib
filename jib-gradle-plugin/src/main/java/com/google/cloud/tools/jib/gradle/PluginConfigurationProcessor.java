@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.JibLogger;
+import com.google.api.client.http.HttpTransport;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
@@ -34,7 +34,13 @@ import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Level;
 import org.gradle.api.GradleException;
+import org.gradle.api.logging.Logger;
+import org.gradle.internal.logging.events.LogEvent;
+import org.gradle.internal.logging.events.OutputEventListener;
+import org.gradle.internal.logging.slf4j.OutputEventListenerBackedLoggerContext;
+import org.slf4j.LoggerFactory;
 
 /** Configures and provides builders for the image building tasks. */
 class PluginConfigurationProcessor {
@@ -56,6 +62,24 @@ class PluginConfigurationProcessor {
     }
   }
 
+  /** Disables annoying Apache HTTP client logging. */
+  static void disableHttpLogging() {
+    // Disables Apache HTTP client logging.
+    OutputEventListenerBackedLoggerContext context =
+        (OutputEventListenerBackedLoggerContext) LoggerFactory.getILoggerFactory();
+    OutputEventListener defaultOutputEventListener = context.getOutputEventListener();
+    context.setOutputEventListener(
+        event -> {
+          LogEvent logEvent = (LogEvent) event;
+          if (!logEvent.getCategory().contains("org.apache")) {
+            defaultOutputEventListener.onOutput(event);
+          }
+        });
+
+    // Disables Google HTTP client logging.
+    java.util.logging.Logger.getLogger(HttpTransport.class.getName()).setLevel(Level.OFF);
+  }
+
   /**
    * Sets up {@link BuildConfiguration} that is common among the image building tasks. This includes
    * setting up the base image reference/authorization, container configuration, cache
@@ -68,14 +92,12 @@ class PluginConfigurationProcessor {
    * @throws InvalidImageReferenceException if parsing the base image configuration fails
    */
   static PluginConfigurationProcessor processCommonConfiguration(
-      JibLogger logger, JibExtension jibExtension, GradleProjectProperties projectProperties)
+      Logger logger, JibExtension jibExtension, GradleProjectProperties projectProperties)
       throws InvalidImageReferenceException, NumberFormatException {
-    jibExtension.handleDeprecatedParameters(logger);
     JibSystemProperties.checkHttpTimeoutProperty();
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
-    GradleJibLogger.disableHttpLogging();
-
+    disableHttpLogging();
     ImageReference baseImage = ImageReference.parse(jibExtension.getBaseImage());
 
     if (JibSystemProperties.isSendCredentialsOverHttpEnabled()) {
@@ -84,10 +106,11 @@ class PluginConfigurationProcessor {
               + "this on a public network!");
     }
     DefaultCredentialRetrievers defaultCredentialRetrievers =
-        DefaultCredentialRetrievers.init(CredentialRetrieverFactory.forImage(baseImage, logger));
+        DefaultCredentialRetrievers.init(
+            CredentialRetrieverFactory.forImage(baseImage, projectProperties.getEventEmitter()));
     Optional<Credential> optionalFromCredential =
         ConfigurationPropertyValidator.getImageCredential(
-            logger,
+            projectProperties.getEventEmitter(),
             "jib.from.auth.username",
             "jib.from.auth.password",
             jibExtension.getFrom().getAuth());
@@ -105,15 +128,18 @@ class PluginConfigurationProcessor {
       String mainClass = projectProperties.getMainClass(jibExtension);
       entrypoint =
           JavaEntrypointConstructor.makeDefaultEntrypoint(
-              getAppRootChecked(jibExtension), jibExtension.getJvmFlags(), mainClass);
-    } else if (jibExtension.getMainClass() != null || !jibExtension.getJvmFlags().isEmpty()) {
+              getAppRootChecked(jibExtension),
+              jibExtension.getContainer().getJvmFlags(),
+              mainClass);
+    } else if (jibExtension.getContainer().getMainClass() != null
+        || !jibExtension.getContainer().getJvmFlags().isEmpty()) {
       logger.warn("mainClass and jvmFlags are ignored when entrypoint is specified");
     }
     ContainerConfiguration.Builder containerConfigurationBuilder =
         ContainerConfiguration.builder()
             .setEntrypoint(entrypoint)
             .setEnvironment(jibExtension.getEnvironment())
-            .setProgramArguments(jibExtension.getArgs())
+            .setProgramArguments(jibExtension.getContainer().getArgs())
             .setExposedPorts(ExposedPortsParser.parse(jibExtension.getExposedPorts()))
             .setLabels(jibExtension.getLabels());
     if (jibExtension.getUseCurrentTimestamp()) {
@@ -123,7 +149,7 @@ class PluginConfigurationProcessor {
     }
 
     BuildConfiguration.Builder buildConfigurationBuilder =
-        BuildConfiguration.builder(logger)
+        BuildConfiguration.builder()
             .setToolName(GradleProjectProperties.TOOL_NAME)
             .setEventEmitter(projectProperties.getEventEmitter())
             .setAllowInsecureRegistries(jibExtension.getAllowInsecureRegistries())

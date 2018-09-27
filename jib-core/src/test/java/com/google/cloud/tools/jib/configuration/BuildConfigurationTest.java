@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.configuration;
 
-import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
@@ -93,7 +92,7 @@ public class BuildConfigurationTest {
             .setLabels(expectedLabels)
             .build();
     BuildConfiguration.Builder buildConfigurationBuilder =
-        BuildConfiguration.builder(Mockito.mock(JibLogger.class))
+        BuildConfiguration.builder()
             .setBaseImageConfiguration(baseImageConfiguration)
             .setTargetImageConfiguration(targetImageConfiguration)
             .setAdditionalTargetImageTags(additionalTargetImageTags)
@@ -176,7 +175,7 @@ public class BuildConfigurationTest {
                     expectedTargetServerUrl, expectedTargetImageName, expectedTargetTag))
             .build();
     BuildConfiguration buildConfiguration =
-        BuildConfiguration.builder(Mockito.mock(JibLogger.class))
+        BuildConfiguration.builder()
             .setBaseImageConfiguration(baseImageConfiguration)
             .setTargetImageConfiguration(targetImageConfiguration)
             .build();
@@ -195,7 +194,7 @@ public class BuildConfigurationTest {
   public void testBuilder_missingValues() {
     // Target image is missing
     try {
-      BuildConfiguration.builder(Mockito.mock(JibLogger.class))
+      BuildConfiguration.builder()
           .setBaseImageConfiguration(
               ImageConfiguration.builder(Mockito.mock(ImageReference.class)).build())
           .build();
@@ -207,7 +206,7 @@ public class BuildConfigurationTest {
 
     // All required fields missing
     try {
-      BuildConfiguration.builder(Mockito.mock(JibLogger.class)).build();
+      BuildConfiguration.builder().build();
       Assert.fail("Build configuration should not be built with missing values");
 
     } catch (IllegalStateException ex) {

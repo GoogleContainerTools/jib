@@ -58,7 +58,6 @@ public class BuildDockerMojo extends JibPluginConfiguration {
           HelpfulSuggestions.forDockerNotInstalled(HELPFUL_SUGGESTIONS_PREFIX));
     }
 
-    MavenJibLogger mavenJibLogger = new MavenJibLogger(getLog());
     AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(this);
     MavenProjectProperties mavenProjectProperties =
         MavenProjectProperties.getForProject(getProject(), getLog(), getExtraDirectory(), appRoot);
@@ -70,14 +69,14 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       ImageReference targetImage =
           ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
               getTargetImage(),
-              mavenJibLogger,
+              mavenProjectProperties.getEventEmitter(),
               getProject().getName(),
               getProject().getVersion(),
               mavenHelpfulSuggestionsBuilder.build());
 
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfiguration(
-              mavenJibLogger, this, mavenProjectProperties);
+              getLog(), this, mavenProjectProperties);
 
       BuildConfiguration buildConfiguration =
           pluginConfigurationProcessor

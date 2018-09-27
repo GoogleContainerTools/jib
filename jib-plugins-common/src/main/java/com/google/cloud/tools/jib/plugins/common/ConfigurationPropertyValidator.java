@@ -16,8 +16,9 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
-import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
+import com.google.cloud.tools.jib.event.EventEmitter;
+import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
@@ -32,7 +33,7 @@ public class ConfigurationPropertyValidator {
    * Gets a {@link Credential} from a username and password. First tries system properties, then
    * tries build configuration, otherwise returns null.
    *
-   * @param logger the {@link JibLogger} used to print warnings messages
+   * @param eventEmitter the {@link EventEmitter} used to emit log events
    * @param usernameProperty the name of the username system property
    * @param passwordProperty the name of the password system property
    * @param auth the configured credentials
@@ -40,7 +41,10 @@ public class ConfigurationPropertyValidator {
    *     {@link Optional#empty} if neither is configured.
    */
   public static Optional<Credential> getImageCredential(
-      JibLogger logger, String usernameProperty, String passwordProperty, AuthProperty auth) {
+      EventEmitter eventEmitter,
+      String usernameProperty,
+      String passwordProperty,
+      AuthProperty auth) {
     // System property takes priority over build configuration
     String commandlineUsername = System.getProperty(usernameProperty);
     String commandlinePassword = System.getProperty(passwordProperty);
@@ -51,18 +55,20 @@ public class ConfigurationPropertyValidator {
 
     // Warn if a system property is missing
     if (!Strings.isNullOrEmpty(commandlinePassword) && Strings.isNullOrEmpty(commandlineUsername)) {
-      logger.warn(
-          passwordProperty
-              + " system property is set, but "
-              + usernameProperty
-              + " is not; attempting other authentication methods.");
+      eventEmitter.emit(
+          LogEvent.warn(
+              passwordProperty
+                  + " system property is set, but "
+                  + usernameProperty
+                  + " is not; attempting other authentication methods."));
     }
     if (!Strings.isNullOrEmpty(commandlineUsername) && Strings.isNullOrEmpty(commandlinePassword)) {
-      logger.warn(
-          usernameProperty
-              + " system property is set, but "
-              + passwordProperty
-              + " is not; attempting other authentication methods.");
+      eventEmitter.emit(
+          LogEvent.warn(
+              usernameProperty
+                  + " system property is set, but "
+                  + passwordProperty
+                  + " is not; attempting other authentication methods."));
     }
 
     // Check auth configuration next; warn if they aren't both set
@@ -70,15 +76,17 @@ public class ConfigurationPropertyValidator {
       return Optional.empty();
     }
     if (Strings.isNullOrEmpty(auth.getUsername())) {
-      logger.warn(
-          auth.getUsernamePropertyDescriptor()
-              + " is missing from build configuration; ignoring auth section.");
+      eventEmitter.emit(
+          LogEvent.warn(
+              auth.getUsernamePropertyDescriptor()
+                  + " is missing from build configuration; ignoring auth section."));
       return Optional.empty();
     }
     if (Strings.isNullOrEmpty(auth.getPassword())) {
-      logger.warn(
-          auth.getPasswordPropertyDescriptor()
-              + " is missing from build configuration; ignoring auth section.");
+      eventEmitter.emit(
+          LogEvent.warn(
+              auth.getPasswordPropertyDescriptor()
+                  + " is missing from build configuration; ignoring auth section."));
       return Optional.empty();
     }
 
@@ -90,7 +98,7 @@ public class ConfigurationPropertyValidator {
    * {@code project-name:project-version} if target image is not configured
    *
    * @param targetImage the configured target image reference
-   * @param logger the {@link JibLogger} used to show messages
+   * @param eventEmitter the {@link EventEmitter} used to emit log events
    * @param projectName the project name, as determined by the plugin
    * @param projectVersion the project version, as determined by the plugin
    * @param helpfulSuggestions used for generating the message notifying the user of the generated
@@ -102,13 +110,14 @@ public class ConfigurationPropertyValidator {
    */
   public static ImageReference getGeneratedTargetDockerTag(
       @Nullable String targetImage,
-      JibLogger logger,
+      EventEmitter eventEmitter,
       String projectName,
       String projectVersion,
       HelpfulSuggestions helpfulSuggestions)
       throws InvalidImageReferenceException {
     if (Strings.isNullOrEmpty(targetImage)) {
-      logger.lifecycle(helpfulSuggestions.forGeneratedTag(projectName, projectVersion));
+      eventEmitter.emit(
+          LogEvent.lifecycle(helpfulSuggestions.forGeneratedTag(projectName, projectVersion)));
 
       // Try to parse generated tag to verify that project name and version are valid (throws an
       // exception if parse fails)

@@ -73,7 +73,6 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
 
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
-    GradleJibLogger gradleJibLogger = new GradleJibLogger(getLogger());
     AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(
@@ -85,14 +84,14 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
     ImageReference targetImage =
         ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
             jibExtension.getTargetImage(),
-            gradleJibLogger,
+            gradleProjectProperties.getEventEmitter(),
             getProject().getName(),
             getProject().getVersion().toString(),
             gradleHelpfulSuggestionsBuilder.build());
 
     PluginConfigurationProcessor pluginConfigurationProcessor =
         PluginConfigurationProcessor.processCommonConfiguration(
-            gradleJibLogger, jibExtension, gradleProjectProperties);
+            getLogger(), jibExtension, gradleProjectProperties);
 
     BuildConfiguration buildConfiguration =
         pluginConfigurationProcessor

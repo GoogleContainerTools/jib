@@ -17,5 +17,10 @@
 package com.google.cloud.tools.jib.api;
 // TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
+import com.google.cloud.tools.jib.configuration.ImageConfiguration;
+
 /** Represents a destination for the Jib-built image. */
-interface TargetImage {}
+interface TargetImage {
+
+  ImageConfiguration toImageConfiguration();
+}

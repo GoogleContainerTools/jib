@@ -16,7 +16,8 @@
 
 package com.google.cloud.tools.jib.frontend;
 
-import com.google.cloud.tools.jib.JibLogger;
+import com.google.cloud.tools.jib.event.EventEmitter;
+import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -106,17 +107,17 @@ public class MainClassFinder {
   }
 
   private final ImmutableList<Path> files;
-  private final JibLogger buildLogger;
+  private final EventEmitter eventEmitter;
 
   /**
    * Finds a class with {@code psvm} (see class javadoc) in {@code files}.
    *
    * @param files the files to check
-   * @param buildLogger used for displaying status messages.
+   * @param eventEmitter used for emitting log events.
    */
-  public MainClassFinder(ImmutableList<Path> files, JibLogger buildLogger) {
+  public MainClassFinder(ImmutableList<Path> files, EventEmitter eventEmitter) {
     this.files = files;
-    this.buildLogger = buildLogger;
+    this.eventEmitter = eventEmitter;
   }
 
   /**
@@ -179,7 +180,7 @@ public class MainClassFinder {
 
       } catch (IOException ex) {
         // Could not read class file.
-        buildLogger.warn("Could not read file: " + file);
+        eventEmitter.emit(LogEvent.warn("Could not read file: " + file));
       }
 
     } catch (NotFoundException ex) {

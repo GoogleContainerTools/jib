@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import java.util.Arrays;
 import java.util.Collections;
 import org.gradle.api.GradleException;
+import org.gradle.api.logging.Logger;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,11 +36,11 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class PluginConfigurationProcessorTest {
 
-  @Mock GradleJibLogger mockGradleJibLogger;
-  @Mock JibExtension mockJibExtension;
-  @Mock BaseImageParameters mockBaseImageParameters;
-  @Mock ContainerParameters mockContainerParameters;
-  @Mock GradleProjectProperties mockProjectProperties;
+  @Mock private Logger mockLogger;
+  @Mock private JibExtension mockJibExtension;
+  @Mock private BaseImageParameters mockBaseImageParameters;
+  @Mock private ContainerParameters mockContainerParameters;
+  @Mock private GradleProjectProperties mockProjectProperties;
 
   @Before
   public void setUp() throws Exception {
@@ -61,12 +62,12 @@ public class PluginConfigurationProcessorTest {
   public void testPluginConfigurationProcessor_defaults() throws InvalidImageReferenceException {
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
-            mockGradleJibLogger, mockJibExtension, mockProjectProperties);
+            mockLogger, mockJibExtension, mockProjectProperties);
     ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
     Assert.assertEquals(
         Arrays.asList("java", "-cp", "/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
         configuration.getEntrypoint());
-    Mockito.verifyZeroInteractions(mockGradleJibLogger);
+    Mockito.verifyZeroInteractions(mockLogger);
   }
 
   @Test
@@ -77,11 +78,11 @@ public class PluginConfigurationProcessorTest {
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
-            mockGradleJibLogger, mockJibExtension, mockProjectProperties);
+            mockLogger, mockJibExtension, mockProjectProperties);
     ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
 
     Assert.assertEquals(Arrays.asList("custom", "entrypoint"), configuration.getEntrypoint());
-    Mockito.verifyZeroInteractions(mockGradleJibLogger);
+    Mockito.verifyZeroInteractions(mockLogger);
   }
 
   @Test
@@ -89,15 +90,15 @@ public class PluginConfigurationProcessorTest {
     Mockito.doReturn(Arrays.asList("custom", "entrypoint"))
         .when(mockContainerParameters)
         .getEntrypoint();
-    Mockito.doReturn(Arrays.asList("jvmFlag")).when(mockJibExtension).getJvmFlags();
+    Mockito.doReturn(Arrays.asList("jvmFlag")).when(mockContainerParameters).getJvmFlags();
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
-            mockGradleJibLogger, mockJibExtension, mockProjectProperties);
+            mockLogger, mockJibExtension, mockProjectProperties);
     ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
 
     Assert.assertEquals(Arrays.asList("custom", "entrypoint"), configuration.getEntrypoint());
-    Mockito.verify(mockGradleJibLogger)
+    Mockito.verify(mockLogger)
         .warn("mainClass and jvmFlags are ignored when entrypoint is specified");
   }
 
@@ -106,15 +107,15 @@ public class PluginConfigurationProcessorTest {
     Mockito.doReturn(Arrays.asList("custom", "entrypoint"))
         .when(mockContainerParameters)
         .getEntrypoint();
-    Mockito.doReturn("java.util.Object").when(mockJibExtension).getMainClass();
+    Mockito.doReturn("java.util.Object").when(mockContainerParameters).getMainClass();
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
-            mockGradleJibLogger, mockJibExtension, mockProjectProperties);
+            mockLogger, mockJibExtension, mockProjectProperties);
     ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
 
     Assert.assertEquals(Arrays.asList("custom", "entrypoint"), configuration.getEntrypoint());
-    Mockito.verify(mockGradleJibLogger)
+    Mockito.verify(mockLogger)
         .warn("mainClass and jvmFlags are ignored when entrypoint is specified");
   }
 
@@ -124,7 +125,7 @@ public class PluginConfigurationProcessorTest {
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
-            mockGradleJibLogger, mockJibExtension, mockProjectProperties);
+            mockLogger, mockJibExtension, mockProjectProperties);
     ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
 
     Assert.assertEquals(

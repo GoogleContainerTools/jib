@@ -72,7 +72,6 @@ public class BuildImageTask extends DefaultTask implements JibTask {
   public void buildImage() throws InvalidImageReferenceException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
-    GradleJibLogger gradleJibLogger = new GradleJibLogger(getLogger());
     AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(
@@ -91,10 +90,11 @@ public class BuildImageTask extends DefaultTask implements JibTask {
 
     DefaultCredentialRetrievers defaultCredentialRetrievers =
         DefaultCredentialRetrievers.init(
-            CredentialRetrieverFactory.forImage(targetImage, gradleJibLogger));
+            CredentialRetrieverFactory.forImage(
+                targetImage, gradleProjectProperties.getEventEmitter()));
     Optional<Credential> optionalToCredential =
         ConfigurationPropertyValidator.getImageCredential(
-            gradleJibLogger,
+            gradleProjectProperties.getEventEmitter(),
             "jib.to.auth.username",
             "jib.to.auth.password",
             jibExtension.getTo().getAuth());
@@ -110,7 +110,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
 
     PluginConfigurationProcessor pluginConfigurationProcessor =
         PluginConfigurationProcessor.processCommonConfiguration(
-            gradleJibLogger, jibExtension, gradleProjectProperties);
+            getLogger(), jibExtension, gradleProjectProperties);
 
     BuildConfiguration buildConfiguration =
         pluginConfigurationProcessor
@@ -121,7 +121,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
             .setAdditionalTargetImageTags(jibExtension.getTo().getTags())
             .setContainerConfiguration(
                 pluginConfigurationProcessor.getContainerConfigurationBuilder().build())
-            .setTargetFormat(jibExtension.getFormat())
+            .setTargetFormat(jibExtension.getContainer().getFormat())
             .build();
 
     HelpfulSuggestions helpfulSuggestions =
