@@ -104,7 +104,7 @@ class BuildAndCacheApplicationLayerStep implements AsyncStep<CacheEntry>, Callab
       }
 
       Blob layerBlob = new ReproducibleLayerBuilder(layerConfiguration.getLayerEntries()).build();
-      CacheEntry cacheEntry = cache.write(layerBlob, layerConfiguration.getLayerEntries());
+      CacheEntry cacheEntry = cache.writeUncompressedLayer(layerBlob, layerConfiguration.getLayerEntries());
 
       buildConfiguration
           .getEventEmitter()
