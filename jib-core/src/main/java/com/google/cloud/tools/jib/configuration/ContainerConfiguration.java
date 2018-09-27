@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.configuration;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -206,5 +207,30 @@ public class ContainerConfiguration {
   @Nullable
   public ImmutableMap<String, String> getLabels() {
     return labels;
+  }
+
+  @Override
+  @VisibleForTesting
+  public boolean equals(Object other) {
+    if (this == other) {
+      return true;
+    }
+    if (!(other instanceof ContainerConfiguration)) {
+      return false;
+    }
+    ContainerConfiguration otherContainerConfiguration = (ContainerConfiguration) other;
+    return creationTime.equals(otherContainerConfiguration.creationTime)
+        && Objects.equals(entrypoint, otherContainerConfiguration.entrypoint)
+        && Objects.equals(programArguments, otherContainerConfiguration.programArguments)
+        && Objects.equals(environmentMap, otherContainerConfiguration.environmentMap)
+        && Objects.equals(exposedPorts, otherContainerConfiguration.exposedPorts)
+        && Objects.equals(labels, otherContainerConfiguration.labels);
+  }
+
+  @Override
+  @VisibleForTesting
+  public int hashCode() {
+    return Objects.hash(
+        creationTime, entrypoint, programArguments, environmentMap, exposedPorts, labels);
   }
 }

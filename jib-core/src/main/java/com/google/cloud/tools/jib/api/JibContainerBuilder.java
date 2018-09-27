@@ -17,9 +17,12 @@
 package com.google.cloud.tools.jib.api;
 // TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
+import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -298,5 +301,30 @@ public class JibContainerBuilder {
     return this;
   }
 
-  // TODO: Add containerize(...).
+  @VisibleForTesting
+  BuildConfiguration toBuildConfiguration(TargetImage targetImage) {
+    BuildConfiguration.Builder buildConfigurationBuilder = BuildConfiguration.builder();
+
+    buildConfigurationBuilder
+        .setBaseImageConfiguration(baseImage.toImageConfiguration())
+        .setTargetImageConfiguration(targetImage.toImageConfiguration())
+        .setContainerConfiguration(toContainerConfiguration())
+        .setLayerConfigurations(layerConfigurations);
+
+    // TODO: Allow users to configure this.
+    buildConfigurationBuilder.setToolName("jib-core");
+
+    return buildConfigurationBuilder.build();
+  }
+
+  @VisibleForTesting
+  ContainerConfiguration toContainerConfiguration() {
+    return ContainerConfiguration.builder()
+        .setEntrypoint(entrypoint)
+        .setProgramArguments(programArguments)
+        .setEnvironment(environment)
+        .setExposedPorts(ports)
+        .setLabels(labels)
+        .build();
+  }
 }
