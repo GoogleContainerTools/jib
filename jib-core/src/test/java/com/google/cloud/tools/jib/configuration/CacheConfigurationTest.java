@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.configuration;
 
-import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import org.junit.Assert;

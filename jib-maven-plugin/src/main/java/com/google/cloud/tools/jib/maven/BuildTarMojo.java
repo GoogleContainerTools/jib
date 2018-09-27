@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.ImageReference;
@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.annotations.VisibleForTesting;
+import java.io.IOException;
 import java.nio.file.Paths;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -99,9 +100,10 @@ public class BuildTarMojo extends JibPluginConfiguration {
           .build(helpfulSuggestions);
       getLog().info("");
 
-    } catch (CacheDirectoryCreationException
-        | BuildStepsExecutionException
-        | InvalidImageReferenceException ex) {
+    } catch (CacheDirectoryCreationException | InvalidImageReferenceException | IOException ex) {
+      throw new MojoExecutionException(ex.getMessage(), ex);
+
+    } catch (BuildStepsExecutionException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex.getCause());
     }
   }

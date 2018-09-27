@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
-import com.google.cloud.tools.jib.cache.CachedLayer;
 import java.util.Arrays;
 import java.util.List;
 import org.hamcrest.CoreMatchers;
@@ -33,10 +32,10 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class ImageLayersTest {
 
-  @Mock private CachedLayer mockCachedLayer;
+  @Mock private Layer mockLayer;
   @Mock private ReferenceLayer mockReferenceLayer;
   @Mock private DigestOnlyLayer mockDigestOnlyLayer;
-  @Mock private UnwrittenLayer mockUnwrittenLayer;
+  @Mock private Layer mockLayer2;
 
   @Before
   public void setUpFakes() throws LayerPropertyNotFoundException {
@@ -44,28 +43,27 @@ public class ImageLayersTest {
     DescriptorDigest mockDescriptorDigest2 = Mockito.mock(DescriptorDigest.class);
     DescriptorDigest mockDescriptorDigest3 = Mockito.mock(DescriptorDigest.class);
 
-    BlobDescriptor cachedLayerBlobDescriptor = new BlobDescriptor(0, mockDescriptorDigest1);
+    BlobDescriptor layerBlobDescriptor = new BlobDescriptor(0, mockDescriptorDigest1);
     BlobDescriptor referenceLayerBlobDescriptor = new BlobDescriptor(0, mockDescriptorDigest2);
     BlobDescriptor referenceNoDiffIdLayerBlobDescriptor =
         new BlobDescriptor(0, mockDescriptorDigest3);
-    // Intentionally the same digest as the mockCachedLayer.
-    BlobDescriptor unwrittenLayerBlobDescriptor = new BlobDescriptor(0, mockDescriptorDigest1);
+    // Intentionally the same digest as the mockLayer.
+    BlobDescriptor anotherBlobDescriptor = new BlobDescriptor(0, mockDescriptorDigest1);
 
-    Mockito.when(mockCachedLayer.getBlobDescriptor()).thenReturn(cachedLayerBlobDescriptor);
+    Mockito.when(mockLayer.getBlobDescriptor()).thenReturn(layerBlobDescriptor);
     Mockito.when(mockReferenceLayer.getBlobDescriptor()).thenReturn(referenceLayerBlobDescriptor);
     Mockito.when(mockDigestOnlyLayer.getBlobDescriptor())
         .thenReturn(referenceNoDiffIdLayerBlobDescriptor);
-    Mockito.when(mockUnwrittenLayer.getBlobDescriptor()).thenReturn(unwrittenLayerBlobDescriptor);
+    Mockito.when(mockLayer2.getBlobDescriptor()).thenReturn(anotherBlobDescriptor);
   }
 
   @Test
   public void testAddLayer_success() throws LayerPropertyNotFoundException {
-    List<Layer> expectedLayers =
-        Arrays.asList(mockCachedLayer, mockReferenceLayer, mockDigestOnlyLayer);
+    List<Layer> expectedLayers = Arrays.asList(mockLayer, mockReferenceLayer, mockDigestOnlyLayer);
 
     ImageLayers<Layer> imageLayers =
         ImageLayers.builder()
-            .add(mockCachedLayer)
+            .add(mockLayer)
             .add(mockReferenceLayer)
             .add(mockDigestOnlyLayer)
             .build();
@@ -77,20 +75,15 @@ public class ImageLayersTest {
   public void testAddLayer_maintainDuplicates() throws LayerPropertyNotFoundException {
     // must maintain duplicate
     List<Layer> expectedLayers =
-        Arrays.asList(
-            mockCachedLayer,
-            mockReferenceLayer,
-            mockDigestOnlyLayer,
-            mockUnwrittenLayer,
-            mockCachedLayer);
+        Arrays.asList(mockLayer, mockReferenceLayer, mockDigestOnlyLayer, mockLayer2, mockLayer);
 
     ImageLayers<Layer> imageLayers =
         ImageLayers.builder()
-            .add(mockCachedLayer)
+            .add(mockLayer)
             .add(mockReferenceLayer)
             .add(mockDigestOnlyLayer)
-            .add(mockUnwrittenLayer)
-            .add(mockCachedLayer)
+            .add(mockLayer2)
+            .add(mockLayer)
             .build();
 
     Assert.assertEquals(expectedLayers, imageLayers.getLayers());
@@ -100,16 +93,16 @@ public class ImageLayersTest {
   public void testAddLayer_removeDuplicates() throws LayerPropertyNotFoundException {
     // remove duplicates: last layer should be kept
     List<Layer> expectedLayers =
-        Arrays.asList(mockReferenceLayer, mockDigestOnlyLayer, mockUnwrittenLayer, mockCachedLayer);
+        Arrays.asList(mockReferenceLayer, mockDigestOnlyLayer, mockLayer2, mockLayer);
 
     ImageLayers<Layer> imageLayers =
         ImageLayers.builder()
             .removeDuplicates()
-            .add(mockCachedLayer)
+            .add(mockLayer)
             .add(mockReferenceLayer)
             .add(mockDigestOnlyLayer)
-            .add(mockUnwrittenLayer)
-            .add(mockCachedLayer)
+            .add(mockLayer2)
+            .add(mockLayer)
             .build();
 
     Assert.assertEquals(expectedLayers, imageLayers.getLayers());

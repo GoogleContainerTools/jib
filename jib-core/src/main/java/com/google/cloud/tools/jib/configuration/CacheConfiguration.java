@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.configuration;
 
-import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.filesystem.UserCacheHome;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
@@ -77,6 +76,7 @@ public class CacheConfiguration {
   }
 
   private final Path cacheDirectory;
+  // TODO: Deprecate
   private final boolean shouldEnsureOwnership;
 
   private CacheConfiguration(Path cacheDirectory, boolean shouldEnsureOwnership) {

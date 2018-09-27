@@ -18,10 +18,10 @@ package com.google.cloud.tools.jib.image.json;
 
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
-import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
+import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -90,14 +90,14 @@ public class ImageToJsonTranslator {
         .collect(ImmutableList.toImmutableList());
   }
 
-  private final Image<CachedLayer> image;
+  private final Image<Layer> image;
 
   /**
    * Instantiate with an {@link Image}.
    *
    * @param image the image to translate.
    */
-  public ImageToJsonTranslator(Image<CachedLayer> image) {
+  public ImageToJsonTranslator(Image<Layer> image) {
     this.image = image;
   }
 
@@ -111,7 +111,7 @@ public class ImageToJsonTranslator {
     ContainerConfigurationTemplate template = new ContainerConfigurationTemplate();
 
     // Adds the layer diff IDs.
-    for (CachedLayer layer : image.getLayers()) {
+    for (Layer layer : image.getLayers()) {
       template.addLayerDiffId(layer.getDiffId());
     }
 
@@ -168,7 +168,7 @@ public class ImageToJsonTranslator {
       template.setContainerConfiguration(containerConfigurationSize, containerConfigurationDigest);
 
       // Adds the layers.
-      for (CachedLayer layer : image.getLayers()) {
+      for (Layer layer : image.getLayers()) {
         template.addLayer(
             layer.getBlobDescriptor().getSize(), layer.getBlobDescriptor().getDigest());
       }

@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.configuration.Port;
@@ -26,6 +27,7 @@ import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import com.google.common.collect.ImmutableMap;
+import java.io.IOException;
 import java.util.Arrays;
 import org.junit.Assert;
 import org.junit.Test;
@@ -91,7 +93,8 @@ public class JibContainerBuilderTest {
 
   @Test
   public void testToBuildConfiguration()
-      throws InvalidImageReferenceException, CredentialRetrievalException {
+      throws InvalidImageReferenceException, CredentialRetrievalException, IOException,
+          CacheDirectoryCreationException {
     RegistryImage baseImage =
         RegistryImage.named("base/image").addCredentialRetriever(mockCredentialRetriever);
     RegistryImage targetImage =

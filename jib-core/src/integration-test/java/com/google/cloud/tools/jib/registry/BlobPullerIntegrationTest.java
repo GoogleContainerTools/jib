@@ -22,7 +22,6 @@ import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.common.io.ByteStreams;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.security.DigestException;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
@@ -30,7 +29,6 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.mockito.Mockito;
 
 /** Integration tests for {@link BlobPuller}. */
 public class BlobPullerIntegrationTest {
@@ -56,28 +54,31 @@ public class BlobPullerIntegrationTest {
     // Pulls a layer BLOB of the busybox image.
     CountingDigestOutputStream layerOutputStream =
         new CountingDigestOutputStream(ByteStreams.nullOutputStream());
-    registryClient.pullBlob(realDigest, layerOutputStream);
+    registryClient.pullBlob(realDigest).writeTo(layerOutputStream);
 
     Assert.assertEquals(realDigest, layerOutputStream.toBlobDescriptor().getDigest());
   }
 
   @Test
-  public void testPull_unknownBlob()
-      throws RegistryException, IOException, DigestException, InterruptedException {
+  public void testPull_unknownBlob() throws IOException, DigestException, InterruptedException {
     localRegistry.pullAndPushToLocal("busybox", "busybox");
     DescriptorDigest nonexistentDigest =
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
+    RegistryClient registryClient =
+        RegistryClient.factory(EVENT_DISPATCHER, "localhost:5000", "busybox")
+            .setAllowInsecureRegistries(true)
+            .newRegistryClient();
+
     try {
-      RegistryClient registryClient =
-          RegistryClient.factory(EVENT_DISPATCHER, "localhost:5000", "busybox")
-              .setAllowInsecureRegistries(true)
-              .newRegistryClient();
-      registryClient.pullBlob(nonexistentDigest, Mockito.mock(OutputStream.class));
+      registryClient.pullBlob(nonexistentDigest).writeTo(ByteStreams.nullOutputStream());
       Assert.fail("Trying to pull nonexistent blob should have errored");
 
-    } catch (RegistryErrorException ex) {
+    } catch (IOException ex) {
+      if (!(ex.getCause() instanceof RegistryErrorException)) {
+        throw ex;
+      }
       Assert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(

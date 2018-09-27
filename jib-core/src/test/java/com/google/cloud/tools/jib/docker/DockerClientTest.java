@@ -155,14 +155,14 @@ public class DockerClientTest {
 
     Mockito.when(mockProcess.getOutputStream()).thenReturn(ByteStreams.nullOutputStream());
     Mockito.when(mockProcess.getInputStream())
-        .thenReturn(new ByteArrayInputStream("failed".getBytes(StandardCharsets.UTF_8)));
+        .thenReturn(new ByteArrayInputStream("ignored".getBytes(StandardCharsets.UTF_8)));
 
     try {
       testDockerClient.load(Blobs.from("jib"));
       Assert.fail("Process should have failed");
 
     } catch (IOException ex) {
-      Assert.assertEquals("'docker load' command failed with output: failed", ex.getMessage());
+      Assert.assertEquals("'docker load' command failed with output: ignored", ex.getMessage());
     }
   }
 
