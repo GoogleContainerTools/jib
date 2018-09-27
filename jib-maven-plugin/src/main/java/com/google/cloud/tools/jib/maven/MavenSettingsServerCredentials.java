@@ -68,9 +68,7 @@ class MavenSettingsServerCredentials {
    * @param mavenJibLogger the Maven build log
    */
   MavenSettingsServerCredentials(
-      Settings settings,
-      @Nullable SettingsDecrypter settingsDecrypter,
-      Log mavenJibLogger) {
+      Settings settings, @Nullable SettingsDecrypter settingsDecrypter, Log mavenJibLogger) {
     this.settings = settings;
     this.settingsDecrypter = settingsDecrypter;
     this.mavenJibLogger = mavenJibLogger;

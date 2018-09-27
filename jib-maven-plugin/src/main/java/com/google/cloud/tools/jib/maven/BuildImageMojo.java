@@ -81,14 +81,13 @@ public class BuildImageMojo extends JibPluginConfiguration {
               "mvn compile jib:build -Dimage=<your image name>"));
     }
 
-    MavenJibLogger mavenJibLogger = new MavenJibLogger(getLog());
     AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(this);
     MavenProjectProperties mavenProjectProperties =
         MavenProjectProperties.getForProject(getProject(), getLog(), getExtraDirectory(), appRoot);
 
     PluginConfigurationProcessor pluginConfigurationProcessor =
         PluginConfigurationProcessor.processCommonConfiguration(
-            mavenJibLogger, this, mavenProjectProperties);
+            getLog(), this, mavenProjectProperties);
 
     ImageReference targetImage =
         PluginConfigurationProcessor.parseImageReference(getTargetImage(), "to");
