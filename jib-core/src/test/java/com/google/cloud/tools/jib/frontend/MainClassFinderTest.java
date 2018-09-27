@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.frontend;
 
-import com.google.cloud.tools.jib.event.EventEmitter;
+import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.frontend.MainClassFinder.Result.Type;
 import com.google.common.io.Resources;
@@ -35,13 +35,13 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class MainClassFinderTest {
 
-  @Mock private EventEmitter mockEventEmitter;
+  @Mock private EventDispatcher mockEventDispatcher;
 
   @Test
   public void testFindMainClass_simple() throws URISyntaxException, IOException {
     Path rootDirectory = Paths.get(Resources.getResource("class-finder-tests/simple").toURI());
     MainClassFinder.Result mainClassFinderResult =
-        new MainClassFinder(new DirectoryWalker(rootDirectory).walk(), mockEventEmitter).find();
+        new MainClassFinder(new DirectoryWalker(rootDirectory).walk(), mockEventDispatcher).find();
     Assert.assertSame(Type.MAIN_CLASS_FOUND, mainClassFinderResult.getType());
     Assert.assertThat(
         mainClassFinderResult.getFoundMainClass(), CoreMatchers.containsString("HelloWorld"));
@@ -52,7 +52,7 @@ public class MainClassFinderTest {
     Path rootDirectory =
         Paths.get(Resources.getResource("class-finder-tests/subdirectories").toURI());
     MainClassFinder.Result mainClassFinderResult =
-        new MainClassFinder(new DirectoryWalker(rootDirectory).walk(), mockEventEmitter).find();
+        new MainClassFinder(new DirectoryWalker(rootDirectory).walk(), mockEventDispatcher).find();
     Assert.assertSame(Type.MAIN_CLASS_FOUND, mainClassFinderResult.getType());
     Assert.assertThat(
         mainClassFinderResult.getFoundMainClass(),
@@ -63,7 +63,7 @@ public class MainClassFinderTest {
   public void testFindMainClass_noClass() throws URISyntaxException, IOException {
     Path rootDirectory = Paths.get(Resources.getResource("class-finder-tests/no-main").toURI());
     MainClassFinder.Result mainClassFinderResult =
-        new MainClassFinder(new DirectoryWalker(rootDirectory).walk(), mockEventEmitter).find();
+        new MainClassFinder(new DirectoryWalker(rootDirectory).walk(), mockEventDispatcher).find();
     Assert.assertEquals(Type.MAIN_CLASS_NOT_FOUND, mainClassFinderResult.getType());
   }
 
@@ -71,7 +71,7 @@ public class MainClassFinderTest {
   public void testFindMainClass_multiple() throws URISyntaxException, IOException {
     Path rootDirectory = Paths.get(Resources.getResource("class-finder-tests/multiple").toURI());
     MainClassFinder.Result mainClassFinderResult =
-        new MainClassFinder(new DirectoryWalker(rootDirectory).walk(), mockEventEmitter).find();
+        new MainClassFinder(new DirectoryWalker(rootDirectory).walk(), mockEventDispatcher).find();
     Assert.assertEquals(
         MainClassFinder.Result.Type.MULTIPLE_MAIN_CLASSES, mainClassFinderResult.getType());
     Assert.assertEquals(2, mainClassFinderResult.getFoundMainClasses().size());
@@ -84,7 +84,7 @@ public class MainClassFinderTest {
   public void testFindMainClass_extension() throws URISyntaxException, IOException {
     Path rootDirectory = Paths.get(Resources.getResource("class-finder-tests/extension").toURI());
     MainClassFinder.Result mainClassFinderResult =
-        new MainClassFinder(new DirectoryWalker(rootDirectory).walk(), mockEventEmitter).find();
+        new MainClassFinder(new DirectoryWalker(rootDirectory).walk(), mockEventDispatcher).find();
     Assert.assertSame(Type.MAIN_CLASS_FOUND, mainClassFinderResult.getType());
     Assert.assertThat(
         mainClassFinderResult.getFoundMainClass(), CoreMatchers.containsString("main.MainClass"));
@@ -95,7 +95,7 @@ public class MainClassFinderTest {
     Path rootDirectory =
         Paths.get(Resources.getResource("class-finder-tests/imported-methods").toURI());
     MainClassFinder.Result mainClassFinderResult =
-        new MainClassFinder(new DirectoryWalker(rootDirectory).walk(), mockEventEmitter).find();
+        new MainClassFinder(new DirectoryWalker(rootDirectory).walk(), mockEventDispatcher).find();
     Assert.assertSame(Type.MAIN_CLASS_FOUND, mainClassFinderResult.getType());
     Assert.assertThat(
         mainClassFinderResult.getFoundMainClass(), CoreMatchers.containsString("main.MainClass"));
@@ -106,7 +106,7 @@ public class MainClassFinderTest {
     Path rootDirectory =
         Paths.get(Resources.getResource("class-finder-tests/external-classes").toURI());
     MainClassFinder.Result mainClassFinderResult =
-        new MainClassFinder(new DirectoryWalker(rootDirectory).walk(), mockEventEmitter).find();
+        new MainClassFinder(new DirectoryWalker(rootDirectory).walk(), mockEventDispatcher).find();
     Assert.assertSame(Type.MAIN_CLASS_FOUND, mainClassFinderResult.getType());
     Assert.assertThat(
         mainClassFinderResult.getFoundMainClass(), CoreMatchers.containsString("main.MainClass"));
@@ -117,7 +117,7 @@ public class MainClassFinderTest {
     Path rootDirectory =
         Paths.get(Resources.getResource("class-finder-tests/inner-classes").toURI());
     MainClassFinder.Result mainClassFinderResult =
-        new MainClassFinder(new DirectoryWalker(rootDirectory).walk(), mockEventEmitter).find();
+        new MainClassFinder(new DirectoryWalker(rootDirectory).walk(), mockEventDispatcher).find();
     Assert.assertSame(Type.MAIN_CLASS_FOUND, mainClassFinderResult.getType());
     Assert.assertThat(
         mainClassFinderResult.getFoundMainClass(),

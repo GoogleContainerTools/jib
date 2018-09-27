@@ -128,18 +128,18 @@ public class BuildSteps {
   }
 
   public void run() throws InterruptedException, ExecutionException {
-    buildConfiguration.getEventEmitter().emit(LogEvent.lifecycle(""));
+    buildConfiguration.getEventDispatcher().dispatch(LogEvent.lifecycle(""));
 
-    try (TimerEventEmitter ignored =
-        new TimerEventEmitter(buildConfiguration.getEventEmitter(), description)) {
+    try (TimerEventDispatcher ignored =
+        new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), description)) {
       stepsRunnerConsumer.accept(new StepsRunner(buildConfiguration));
     }
 
     if (buildConfiguration.getContainerConfiguration() != null) {
-      buildConfiguration.getEventEmitter().emit(LogEvent.lifecycle(""));
+      buildConfiguration.getEventDispatcher().dispatch(LogEvent.lifecycle(""));
       buildConfiguration
-          .getEventEmitter()
-          .emit(
+          .getEventDispatcher()
+          .dispatch(
               LogEvent.lifecycle(
                   "Container entrypoint set to "
                       + buildConfiguration.getContainerConfiguration().getEntrypoint()));

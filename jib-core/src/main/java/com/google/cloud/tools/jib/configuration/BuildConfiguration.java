@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.configuration;
 
-import com.google.cloud.tools.jib.event.EventEmitter;
+import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
@@ -55,9 +55,9 @@ public class BuildConfiguration {
     private ImmutableList<LayerConfiguration> layerConfigurations = ImmutableList.of();
     private Class<? extends BuildableManifestTemplate> targetFormat = DEFAULT_TARGET_FORMAT;
     private String toolName = DEFAULT_TOOL_NAME;
-    private EventEmitter eventEmitter =
+    private EventDispatcher eventDispatcher =
         jibEvent -> {
-          /* No-op EventEmitter. */
+          /* No-op EventDispatcher. */
         };
 
     private Builder() {}
@@ -176,13 +176,13 @@ public class BuildConfiguration {
     }
 
     /**
-     * Sets the {@link EventEmitter} to emit events with.
+     * Sets the {@link EventDispatcher} to dispatch events with.
      *
-     * @param eventEmitter the {@link EventEmitter}
+     * @param eventDispatcher the {@link EventDispatcher}
      * @return this
      */
-    public Builder setEventEmitter(EventEmitter eventEmitter) {
-      this.eventEmitter = eventEmitter;
+    public Builder setEventDispatcher(EventDispatcher eventDispatcher) {
+      this.eventDispatcher = eventDispatcher;
       return this;
     }
 
@@ -209,7 +209,7 @@ public class BuildConfiguration {
             throw new IllegalStateException("Required fields should not be null");
           }
           if (baseImageConfiguration.getImage().usesDefaultTag()) {
-            eventEmitter.emit(
+            eventDispatcher.dispatch(
                 LogEvent.warn(
                     "Base image '"
                         + baseImageConfiguration.getImage()
@@ -235,7 +235,7 @@ public class BuildConfiguration {
               allowInsecureRegistries,
               layerConfigurations,
               toolName,
-              eventEmitter);
+              eventDispatcher);
 
         case 1:
           throw new IllegalStateException(errorMessages.get(0));
@@ -281,7 +281,7 @@ public class BuildConfiguration {
   private final boolean allowInsecureRegistries;
   private final ImmutableList<LayerConfiguration> layerConfigurations;
   private final String toolName;
-  private final EventEmitter eventEmitter;
+  private final EventDispatcher eventDispatcher;
 
   /** Instantiate with {@link #builder}. */
   private BuildConfiguration(
@@ -295,7 +295,7 @@ public class BuildConfiguration {
       boolean allowInsecureRegistries,
       ImmutableList<LayerConfiguration> layerConfigurations,
       String toolName,
-      EventEmitter eventEmitter) {
+      EventDispatcher eventDispatcher) {
     this.baseImageConfiguration = baseImageConfiguration;
     this.targetImageConfiguration = targetImageConfiguration;
     this.additionalTargetImageTags = additionalTargetImageTags;
@@ -306,7 +306,7 @@ public class BuildConfiguration {
     this.allowInsecureRegistries = allowInsecureRegistries;
     this.layerConfigurations = layerConfigurations;
     this.toolName = toolName;
-    this.eventEmitter = eventEmitter;
+    this.eventDispatcher = eventDispatcher;
   }
 
   public ImageConfiguration getBaseImageConfiguration() {
@@ -338,8 +338,8 @@ public class BuildConfiguration {
     return toolName;
   }
 
-  public EventEmitter getEventEmitter() {
-    return eventEmitter;
+  public EventDispatcher getEventDispatcher() {
+    return eventDispatcher;
   }
 
   /**
@@ -400,7 +400,7 @@ public class BuildConfiguration {
 
   private RegistryClient.Factory newRegistryClientFactory(ImageConfiguration imageConfiguration) {
     return RegistryClient.factory(
-            getEventEmitter(),
+            getEventDispatcher(),
             imageConfiguration.getImageRegistry(),
             imageConfiguration.getImageRepository())
         .setAllowInsecureRegistries(getAllowInsecureRegistries())

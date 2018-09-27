@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.builder;
 
-import com.google.cloud.tools.jib.event.DefaultEventEmitter;
-import com.google.cloud.tools.jib.event.EventEmitter;
+import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
+import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.TimerEvent;
@@ -35,9 +35,9 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link TimerEventEmitter}. */
+/** Tests for {@link TimerEventDispatcher}. */
 @RunWith(MockitoJUnitRunner.class)
-public class TimerEventEmitterTest {
+public class TimerEventDispatcherTest {
 
   private final Deque<TimerEvent> timerEventQueue = new ArrayDeque<>();
 
@@ -45,16 +45,18 @@ public class TimerEventEmitterTest {
 
   @Test
   public void testLogging() {
-    EventEmitter eventEmitter =
-        new DefaultEventEmitter(new EventHandlers().add(JibEventType.TIMING, timerEventQueue::add));
+    EventDispatcher eventDispatcher =
+        new DefaultEventDispatcher(
+            new EventHandlers().add(JibEventType.TIMING, timerEventQueue::add));
 
     Mockito.when(mockClock.instant()).thenReturn(Instant.EPOCH);
-    try (TimerEventEmitter parentTimerEventEmitter =
-        new TimerEventEmitter(eventEmitter, "description", mockClock, null)) {
+    try (TimerEventDispatcher parentTimerEventDispatcher =
+        new TimerEventDispatcher(eventDispatcher, "description", mockClock, null)) {
       Mockito.when(mockClock.instant()).thenReturn(Instant.EPOCH.plusMillis(1));
-      parentTimerEventEmitter.lap();
+      parentTimerEventDispatcher.lap();
       Mockito.when(mockClock.instant()).thenReturn(Instant.EPOCH.plusMillis(1).plusNanos(1));
-      try (TimerEventEmitter ignored = parentTimerEventEmitter.subTimer("child description")) {
+      try (TimerEventDispatcher ignored =
+          parentTimerEventDispatcher.subTimer("child description")) {
         Mockito.when(mockClock.instant()).thenReturn(Instant.EPOCH.plusMillis(2));
         // Laps on close.
       }

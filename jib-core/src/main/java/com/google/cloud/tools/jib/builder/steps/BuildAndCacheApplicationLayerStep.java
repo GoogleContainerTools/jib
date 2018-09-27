@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.blob.Blob;
-import com.google.cloud.tools.jib.builder.TimerEventEmitter;
+import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.event.events.LogEvent;
@@ -44,8 +44,8 @@ class BuildAndCacheApplicationLayerStep implements AsyncStep<CacheEntry>, Callab
    */
   static ImmutableList<BuildAndCacheApplicationLayerStep> makeList(
       ListeningExecutorService listeningExecutorService, BuildConfiguration buildConfiguration) {
-    try (TimerEventEmitter ignored =
-        new TimerEventEmitter(buildConfiguration.getEventEmitter(), DESCRIPTION)) {
+    try (TimerEventDispatcher ignored =
+        new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
       ImmutableList.Builder<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps =
           ImmutableList.builderWithExpectedSize(buildConfiguration.getLayerConfigurations().size());
       for (LayerConfiguration layerConfiguration : buildConfiguration.getLayerConfigurations()) {
@@ -92,10 +92,10 @@ class BuildAndCacheApplicationLayerStep implements AsyncStep<CacheEntry>, Callab
   public CacheEntry call() throws IOException, CacheCorruptedException {
     String description = "Building " + layerType + " layer";
 
-    buildConfiguration.getEventEmitter().emit(LogEvent.lifecycle(description + "..."));
+    buildConfiguration.getEventDispatcher().dispatch(LogEvent.lifecycle(description + "..."));
 
-    try (TimerEventEmitter ignored =
-        new TimerEventEmitter(buildConfiguration.getEventEmitter(), description)) {
+    try (TimerEventDispatcher ignored =
+        new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), description)) {
       Cache cache = buildConfiguration.getApplicationLayersCache();
 
       // Don't build the layer if it exists already.
@@ -110,8 +110,8 @@ class BuildAndCacheApplicationLayerStep implements AsyncStep<CacheEntry>, Callab
           cache.writeUncompressedLayer(layerBlob, layerConfiguration.getLayerEntries());
 
       buildConfiguration
-          .getEventEmitter()
-          .emit(LogEvent.debug(description + " built " + cacheEntry.getLayerDigest()));
+          .getEventDispatcher()
+          .dispatch(LogEvent.debug(description + " built " + cacheEntry.getLayerDigest()));
 
       return cacheEntry;
     }

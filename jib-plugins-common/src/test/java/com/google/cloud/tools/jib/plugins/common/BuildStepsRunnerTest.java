@@ -21,7 +21,7 @@ import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.builder.BuildSteps;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
-import com.google.cloud.tools.jib.event.EventEmitter;
+import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.InsecureRegistryException;
@@ -65,7 +65,7 @@ public class BuildStepsRunnerTest {
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Mock private BuildSteps mockBuildSteps;
-  @Mock private EventEmitter mockEventEmitter;
+  @Mock private EventDispatcher mockEventDispatcher;
   @Mock private RegistryUnauthorizedException mockRegistryUnauthorizedException;
   @Mock private RegistryCredentialsNotSentException mockRegistryCredentialsNotSentException;
   @Mock private HttpResponseException mockHttpResponseException;
@@ -79,7 +79,7 @@ public class BuildStepsRunnerTest {
     testBuildImageStepsRunner = new BuildStepsRunner(mockBuildSteps, "ignored", "ignored");
 
     Mockito.when(mockBuildSteps.getBuildConfiguration()).thenReturn(mockBuildConfiguration);
-    Mockito.when(mockBuildConfiguration.getEventEmitter()).thenReturn(mockEventEmitter);
+    Mockito.when(mockBuildConfiguration.getEventDispatcher()).thenReturn(mockEventDispatcher);
     Mockito.when(mockBuildConfiguration.getLayerConfigurations())
         .thenReturn(
             ImmutableList.of(

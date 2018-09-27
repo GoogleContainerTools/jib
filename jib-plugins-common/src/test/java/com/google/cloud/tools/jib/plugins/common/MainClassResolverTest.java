@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
-import com.google.cloud.tools.jib.event.EventEmitter;
+import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
@@ -41,7 +41,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class MainClassResolverTest {
 
-  @Mock private EventEmitter mockEventEmitter;
+  @Mock private EventDispatcher mockEventDispatcher;
   @Mock private ProjectProperties mockProjectProperties;
   @Mock private JavaLayerConfigurations mockJavaLayerConfigurations;
 
@@ -49,7 +49,7 @@ public class MainClassResolverTest {
 
   @Before
   public void setup() {
-    Mockito.when(mockProjectProperties.getEventEmitter()).thenReturn(mockEventEmitter);
+    Mockito.when(mockProjectProperties.getEventDispatcher()).thenReturn(mockEventDispatcher);
     Mockito.when(mockProjectProperties.getPluginName()).thenReturn("plugin");
     Mockito.when(mockProjectProperties.getJarPluginName()).thenReturn("jar-plugin");
     Mockito.when(mockProjectProperties.getJavaLayerConfigurations())
@@ -73,8 +73,8 @@ public class MainClassResolverTest {
             ImmutableList.of(new LayerEntry(FAKE_CLASSES_PATH, AbsoluteUnixPath.get("/ignored"))));
     Assert.assertEquals(
         "${start-class}", MainClassResolver.resolveMainClass(null, mockProjectProperties));
-    Mockito.verify(mockEventEmitter)
-        .emit(LogEvent.warn("'mainClass' is not a valid Java class : ${start-class}"));
+    Mockito.verify(mockEventDispatcher)
+        .dispatch(LogEvent.warn("'mainClass' is not a valid Java class : ${start-class}"));
   }
 
   @Test
@@ -91,8 +91,8 @@ public class MainClassResolverTest {
                 .collect(ImmutableList.toImmutableList()));
     Assert.assertEquals(
         "${start-class}", MainClassResolver.resolveMainClass(null, mockProjectProperties));
-    Mockito.verify(mockEventEmitter)
-        .emit(LogEvent.warn("'mainClass' is not a valid Java class : ${start-class}"));
+    Mockito.verify(mockEventDispatcher)
+        .dispatch(LogEvent.warn("'mainClass' is not a valid Java class : ${start-class}"));
   }
 
   @Test
@@ -128,8 +128,8 @@ public class MainClassResolverTest {
                 new LayerEntry(Paths.get("ignored"), AbsoluteUnixPath.get("/ignored"))));
     Assert.assertEquals(
         "${start-class}", MainClassResolver.resolveMainClass(null, mockProjectProperties));
-    Mockito.verify(mockEventEmitter)
-        .emit(LogEvent.warn("'mainClass' is not a valid Java class : ${start-class}"));
+    Mockito.verify(mockEventDispatcher)
+        .dispatch(LogEvent.warn("'mainClass' is not a valid Java class : ${start-class}"));
   }
 
   @Test

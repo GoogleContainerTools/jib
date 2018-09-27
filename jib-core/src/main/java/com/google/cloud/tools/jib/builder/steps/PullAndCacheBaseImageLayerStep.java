@@ -17,7 +17,7 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.async.AsyncStep;
-import com.google.cloud.tools.jib.builder.TimerEventEmitter;
+import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
@@ -62,9 +62,9 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CacheEntry>, Callable<
 
   @Override
   public CacheEntry call() throws IOException, CacheCorruptedException {
-    try (TimerEventEmitter ignored =
-        new TimerEventEmitter(
-            buildConfiguration.getEventEmitter(), String.format(DESCRIPTION, layerDigest))) {
+    try (TimerEventDispatcher ignored =
+        new TimerEventDispatcher(
+            buildConfiguration.getEventDispatcher(), String.format(DESCRIPTION, layerDigest))) {
       Cache cache = buildConfiguration.getBaseImageLayersCache();
 
       // Checks if the layer already exists in the cache.

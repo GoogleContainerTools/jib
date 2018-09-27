@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
-import com.google.cloud.tools.jib.builder.TimerEventEmitter;
+import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.ncache.CacheEntry;
 import com.google.common.collect.ImmutableList;
@@ -65,8 +65,8 @@ class PushLayersStep
 
   @Override
   public ImmutableList<AsyncStep<PushBlobStep>> call() throws ExecutionException {
-    try (TimerEventEmitter ignored =
-        new TimerEventEmitter(buildConfiguration.getEventEmitter(), DESCRIPTION)) {
+    try (TimerEventDispatcher ignored =
+        new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
       ImmutableList<? extends AsyncStep<? extends CacheEntry>> cacheEntry =
           NonBlockingSteps.get(cacheEntryStep);
 

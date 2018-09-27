@@ -21,7 +21,7 @@ import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.builder.BuildSteps;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
-import com.google.cloud.tools.jib.event.EventEmitter;
+import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.LayerEntry;
@@ -165,13 +165,14 @@ public class BuildStepsRunner {
    */
   public void build(HelpfulSuggestions helpfulSuggestions) throws BuildStepsExecutionException {
     try {
-      EventEmitter eventEmitter = buildSteps.getBuildConfiguration().getEventEmitter();
+      EventDispatcher eventDispatcher = buildSteps.getBuildConfiguration().getEventDispatcher();
 
-      eventEmitter.emit(LogEvent.lifecycle(""));
-      eventEmitter.emit(LogEvent.lifecycle(startupMessage));
+      eventDispatcher.dispatch(LogEvent.lifecycle(""));
+      eventDispatcher.dispatch(LogEvent.lifecycle(startupMessage));
 
       // Logs the different source files used.
-      eventEmitter.emit(LogEvent.info("Containerizing application with the following files:"));
+      eventDispatcher.dispatch(
+          LogEvent.info("Containerizing application with the following files:"));
 
       for (LayerConfiguration layerConfiguration :
           buildSteps.getBuildConfiguration().getLayerConfigurations()) {
@@ -179,18 +180,18 @@ public class BuildStepsRunner {
           continue;
         }
 
-        eventEmitter.emit(
+        eventDispatcher.dispatch(
             LogEvent.info("\t" + capitalizeFirstLetter(layerConfiguration.getName()) + ":"));
 
         for (LayerEntry layerEntry : layerConfiguration.getLayerEntries()) {
-          eventEmitter.emit(LogEvent.info("\t\t" + layerEntry.getSourceFile()));
+          eventDispatcher.dispatch(LogEvent.info("\t\t" + layerEntry.getSourceFile()));
         }
       }
 
       buildSteps.run();
 
-      eventEmitter.emit(LogEvent.lifecycle(""));
-      eventEmitter.emit(LogEvent.lifecycle(successMessage));
+      eventDispatcher.dispatch(LogEvent.lifecycle(""));
+      eventDispatcher.dispatch(LogEvent.lifecycle(successMessage));
 
     } catch (ExecutionException executionException) {
       Throwable exceptionDuringBuildSteps = executionException.getCause();

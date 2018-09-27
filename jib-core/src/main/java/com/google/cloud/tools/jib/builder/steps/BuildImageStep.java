@@ -20,7 +20,7 @@ import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
-import com.google.cloud.tools.jib.builder.TimerEventEmitter;
+import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
@@ -118,8 +118,8 @@ class BuildImageStep
 
   private Image<Layer> afterCacheEntrySteps()
       throws ExecutionException, LayerPropertyNotFoundException {
-    try (TimerEventEmitter ignored =
-        new TimerEventEmitter(buildConfiguration.getEventEmitter(), DESCRIPTION)) {
+    try (TimerEventDispatcher ignored =
+        new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
       // Constructs the image.
       Image.Builder<Layer> imageBuilder = Image.builder();
       Image<Layer> baseImage = NonBlockingSteps.get(pullBaseImageStep).getBaseImage();
