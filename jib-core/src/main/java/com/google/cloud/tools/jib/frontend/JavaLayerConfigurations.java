@@ -66,14 +66,12 @@ public class JavaLayerConfigurations {
   public static class Builder {
 
     private static class LayerFile {
-      private Path sourceFile;
-      private AbsoluteUnixPath pathInContainer;
-      private boolean recursiveAdd;
+      private final Path sourceFile;
+      private final AbsoluteUnixPath pathInContainer;
 
-      private LayerFile(Path sourceFile, AbsoluteUnixPath pathInContainer, boolean recursiveAdd) {
+      private LayerFile(Path sourceFile, AbsoluteUnixPath pathInContainer) {
         this.sourceFile = sourceFile;
         this.pathInContainer = pathInContainer;
-        this.recursiveAdd = recursiveAdd;
       }
     }
 
@@ -86,98 +84,6 @@ public class JavaLayerConfigurations {
     }
 
     /**
-     * Adds a file to the dependency layer. Only adds the single source file to the exact path in
-     * the container file system. See {@link LayerConfiguration.Builder#addEntry} for concrete
-     * examples about how the file will be placed in the image.
-     *
-     * @param sourceFile the source file to add to the layer
-     * @param pathInContainer the path in the container file system corresponding to the {@code
-     *     sourceFile}
-     * @return this
-     */
-    public Builder addDependencyFile(Path sourceFile, AbsoluteUnixPath pathInContainer) {
-      addLayerFile(LayerType.DEPENDENCIES, sourceFile, pathInContainer, false);
-      return this;
-    }
-
-    /**
-     * Adds a file to the snapshot dependencies layer. Only adds the single source file to the exact
-     * path in the container file system. See {@link LayerConfiguration.Builder#addEntry} for
-     * concrete examples about how the file will be placed in the image.
-     *
-     * @param sourceFile the source file to add to the layer
-     * @param pathInContainer the path in the container file system corresponding to the {@code
-     *     sourceFile}
-     * @return this
-     */
-    public Builder addSnapshotDependencyFile(Path sourceFile, AbsoluteUnixPath pathInContainer) {
-      addLayerFile(LayerType.SNAPSHOT_DEPENDENCIES, sourceFile, pathInContainer, false);
-      return this;
-    }
-
-    /**
-     * Adds a file to the resources layer. Only adds the single source file to the exact path in the
-     * container file system. See {@link LayerConfiguration.Builder#addEntry} for concrete examples
-     * about how the file will be placed in the image.
-     *
-     * @param sourceFile the source file to add to the layer
-     * @param pathInContainer the path in the container file system corresponding to the {@code
-     *     sourceFile}
-     * @return this
-     */
-    public Builder addResourceFile(Path sourceFile, AbsoluteUnixPath pathInContainer) {
-      addLayerFile(LayerType.RESOURCES, sourceFile, pathInContainer, false);
-      return this;
-    }
-
-    /**
-     * Adds a file to the classes layer. Only adds the single source file to the exact path in the
-     * container file system. See {@link LayerConfiguration.Builder#addEntry} for concrete examples
-     * about how the file will be placed in the image.
-     *
-     * @param sourceFile the source file to add to the layer
-     * @param pathInContainer the path in the container file system corresponding to the {@code
-     *     sourceFile}
-     * @return this
-     */
-    public Builder addClassFile(Path sourceFile, AbsoluteUnixPath pathInContainer) {
-      addLayerFile(LayerType.CLASSES, sourceFile, pathInContainer, false);
-      return this;
-    }
-
-    /**
-     * Adds a file to the extra files layer. Only adds the single source file to the exact path in
-     * the container file system. See {@link LayerConfiguration.Builder#addEntry} for concrete
-     * examples about how the file will be placed in the image.
-     *
-     * @param sourceFile the source file to add to the layer
-     * @param pathInContainer the path in the container file system corresponding to the {@code
-     *     sourceFile}
-     * @return this
-     */
-    public Builder addExtraFile(Path sourceFile, AbsoluteUnixPath pathInContainer) {
-      addLayerFile(LayerType.EXTRA_FILES, sourceFile, pathInContainer, false);
-      return this;
-    }
-
-    /**
-     * Adds a file to the exploded WAR layer. Only adds the single source file to the exact path in
-     * the container file system. See {@link LayerConfiguration.Builder#addEntry} for concrete
-     * examples about how the file will be placed in the image.
-     *
-     * @param sourceFile the source file to add to the layer
-     * @param pathInContainer the path in the container file system corresponding to the {@code
-     *     sourceFile}
-     * @return this
-     */
-    // TODO: remove this and put files in WAR into the relevant layers (i.e., dependencies, snapshot
-    // dependencies, resources, and classes layers).
-    public Builder addExplodedWarFile(Path sourceFile, AbsoluteUnixPath pathInContainer) {
-      addLayerFile(LayerType.EXPLODED_WAR, sourceFile, pathInContainer, false);
-      return this;
-    }
-
-    /**
      * Adds a file to the dependency layer. If the source file is a directory, the directory and its
      * contents will be added recursively. See {@link LayerConfiguration.Builder#addEntryRecursive}
      * for concrete examples about how the file will be placed in the image.
@@ -187,8 +93,8 @@ public class JavaLayerConfigurations {
      *     sourceFile}
      * @return this
      */
-    public Builder addDependencyFileRecursive(Path sourceFile, AbsoluteUnixPath pathInContainer) {
-      addLayerFile(LayerType.DEPENDENCIES, sourceFile, pathInContainer, true);
+    public Builder addDependencyFile(Path sourceFile, AbsoluteUnixPath pathInContainer) {
+      addLayerFile(LayerType.DEPENDENCIES, sourceFile, pathInContainer);
       return this;
     }
 
@@ -203,9 +109,8 @@ public class JavaLayerConfigurations {
      *     sourceFile}
      * @return this
      */
-    public Builder addSnapshotDependencyFileRecursive(
-        Path sourceFile, AbsoluteUnixPath pathInContainer) {
-      addLayerFile(LayerType.SNAPSHOT_DEPENDENCIES, sourceFile, pathInContainer, true);
+    public Builder addSnapshotDependencyFile(Path sourceFile, AbsoluteUnixPath pathInContainer) {
+      addLayerFile(LayerType.SNAPSHOT_DEPENDENCIES, sourceFile, pathInContainer);
       return this;
     }
 
@@ -219,8 +124,8 @@ public class JavaLayerConfigurations {
      *     sourceFile}
      * @return this
      */
-    public Builder addResourceFileRecursive(Path sourceFile, AbsoluteUnixPath pathInContainer) {
-      addLayerFile(LayerType.RESOURCES, sourceFile, pathInContainer, true);
+    public Builder addResourceFile(Path sourceFile, AbsoluteUnixPath pathInContainer) {
+      addLayerFile(LayerType.RESOURCES, sourceFile, pathInContainer);
       return this;
     }
 
@@ -234,8 +139,8 @@ public class JavaLayerConfigurations {
      *     sourceFile}
      * @return this
      */
-    public Builder addClassFileRecursive(Path sourceFile, AbsoluteUnixPath pathInContainer) {
-      addLayerFile(LayerType.CLASSES, sourceFile, pathInContainer, true);
+    public Builder addClassFile(Path sourceFile, AbsoluteUnixPath pathInContainer) {
+      addLayerFile(LayerType.CLASSES, sourceFile, pathInContainer);
       return this;
     }
 
@@ -250,8 +155,8 @@ public class JavaLayerConfigurations {
      *     sourceFile}
      * @return this
      */
-    public Builder addExtraFileRecursive(Path sourceFile, AbsoluteUnixPath pathInContainer) {
-      addLayerFile(LayerType.EXTRA_FILES, sourceFile, pathInContainer, true);
+    public Builder addExtraFile(Path sourceFile, AbsoluteUnixPath pathInContainer) {
+      addLayerFile(LayerType.EXTRA_FILES, sourceFile, pathInContainer);
       return this;
     }
 
@@ -268,8 +173,8 @@ public class JavaLayerConfigurations {
      */
     // TODO: remove this and put files in WAR into the relevant layers (i.e., dependencies, snapshot
     // dependencies, resources, and classes layers).
-    public Builder addExplodedWarFileRecursive(Path sourceFile, AbsoluteUnixPath pathInContainer) {
-      addLayerFile(LayerType.EXPLODED_WAR, sourceFile, pathInContainer, true);
+    public Builder addExplodedWarFile(Path sourceFile, AbsoluteUnixPath pathInContainer) {
+      addLayerFile(LayerType.EXPLODED_WAR, sourceFile, pathInContainer);
       return this;
     }
 
@@ -282,21 +187,16 @@ public class JavaLayerConfigurations {
             LayerConfiguration.builder().setName(layerType.getName());
 
         for (LayerFile file : layerFilesMap.get(layerType)) {
-          if (file.recursiveAdd) {
-            layerConfigurationBuilder.addEntryRecursive(file.sourceFile, file.pathInContainer);
-          } else {
-            layerConfigurationBuilder.addEntry(file.sourceFile, file.pathInContainer);
-          }
+          layerConfigurationBuilder.addEntryRecursive(file.sourceFile, file.pathInContainer);
         }
         layerConfigurationsMap.put(layerType, layerConfigurationBuilder.build());
       }
       return new JavaLayerConfigurations(layerConfigurationsMap.build());
     }
 
-    private void addLayerFile(
-        LayerType type, Path sourceFile, AbsoluteUnixPath pathInContainer, boolean recursiveAdd) {
+    private void addLayerFile(LayerType type, Path sourceFile, AbsoluteUnixPath pathInContainer) {
       List<LayerFile> filesToAdd = Preconditions.checkNotNull(layerFilesMap.get(type));
-      filesToAdd.add(new LayerFile(sourceFile, pathInContainer, recursiveAdd));
+      filesToAdd.add(new LayerFile(sourceFile, pathInContainer));
     }
   }
 

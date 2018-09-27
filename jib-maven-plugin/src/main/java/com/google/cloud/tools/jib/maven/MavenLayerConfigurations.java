@@ -116,23 +116,20 @@ class MavenLayerConfigurations {
 
     Builder layerBuilder = JavaLayerConfigurations.builder();
     for (Path file : dependenciesFiles) {
-      layerBuilder.addDependencyFileRecursive(
-          file, dependenciesExtractionPath.resolve(file.getFileName()));
+      layerBuilder.addDependencyFile(file, dependenciesExtractionPath.resolve(file.getFileName()));
     }
     for (Path file : snapshotDependenciesFiles) {
-      layerBuilder.addSnapshotDependencyFileRecursive(
+      layerBuilder.addSnapshotDependencyFile(
           file, dependenciesExtractionPath.resolve(file.getFileName()));
     }
     for (Path file : resourcesFiles) {
-      layerBuilder.addResourceFileRecursive(
-          file, resourcesExtractionPath.resolve(file.getFileName()));
+      layerBuilder.addResourceFile(file, resourcesExtractionPath.resolve(file.getFileName()));
     }
     for (Path file : classesFiles) {
-      layerBuilder.addClassFileRecursive(file, classesExtractionPath.resolve(file.getFileName()));
+      layerBuilder.addClassFile(file, classesExtractionPath.resolve(file.getFileName()));
     }
     for (Path file : extraFiles) {
-      layerBuilder.addExtraFileRecursive(
-          file, AbsoluteUnixPath.get("/").resolve(file.getFileName()));
+      layerBuilder.addExtraFile(file, AbsoluteUnixPath.get("/").resolve(file.getFileName()));
     }
     return layerBuilder.build();
   }

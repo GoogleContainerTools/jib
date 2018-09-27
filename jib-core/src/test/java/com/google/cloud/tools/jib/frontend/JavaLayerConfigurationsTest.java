@@ -11,9 +11,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import org.junit.Assert;
@@ -38,8 +36,12 @@ public class JavaLayerConfigurationsTest {
     return entries.stream().map(LayerEntry::getSourceFile).collect(Collectors.toList());
   }
 
-  private static Set<AbsoluteUnixPath> layerEntriesToExtractionPaths(List<LayerEntry> entries) {
-    return entries.stream().map(LayerEntry::getExtractionPath).collect(Collectors.toSet());
+  private static List<AbsoluteUnixPath> layerEntriesToExtractionPaths(List<LayerEntry> entries) {
+    return entries.stream().map(LayerEntry::getExtractionPath).collect(Collectors.toList());
+  }
+
+  private static <T> List<String> toSortedStrings(List<T> paths) {
+    return paths.stream().map(T::toString).sorted().collect(Collectors.toList());
   }
 
   private static void verifyRecursiveAdd(
@@ -57,16 +59,16 @@ public class JavaLayerConfigurationsTest {
             "sub-directory/leaf/file5",
             "sub-directory/leaf/file6");
 
-    Set<Path> expectedSourcePaths =
-        expectedPaths.stream().map(sourceRoot::resolve).collect(Collectors.toSet());
-    Set<AbsoluteUnixPath> expectedTargetPaths =
-        expectedPaths.stream().map(extractionRootPath::resolve).collect(Collectors.toSet());
+    List<Path> expectedSourcePaths =
+        expectedPaths.stream().map(sourceRoot::resolve).collect(Collectors.toList());
+    List<AbsoluteUnixPath> expectedTargetPaths =
+        expectedPaths.stream().map(extractionRootPath::resolve).collect(Collectors.toList());
 
-    Set<Path> sourcePaths = new HashSet<>(layerEntriesToSourceFiles(layerEntriesSupplier.get()));
-    Assert.assertEquals(expectedSourcePaths, sourcePaths);
+    List<Path> sourcePaths = layerEntriesToSourceFiles(layerEntriesSupplier.get());
+    Assert.assertEquals(toSortedStrings(expectedSourcePaths), toSortedStrings(sourcePaths));
 
-    Set<AbsoluteUnixPath> targetPaths = layerEntriesToExtractionPaths(layerEntriesSupplier.get());
-    Assert.assertEquals(expectedTargetPaths, targetPaths);
+    List<AbsoluteUnixPath> targetPaths = layerEntriesToExtractionPaths(layerEntriesSupplier.get());
+    Assert.assertEquals(toSortedStrings(expectedTargetPaths), toSortedStrings(targetPaths));
   }
 
   @Test
@@ -107,18 +109,17 @@ public class JavaLayerConfigurationsTest {
   }
 
   @Test
-  public void testAddFileRecursive_directories() throws IOException, URISyntaxException {
+  public void testAddFile_directories() throws IOException, URISyntaxException {
     Path sourceDirectory = Paths.get(Resources.getResource("random-contents").toURI());
 
     JavaLayerConfigurations configurations =
         JavaLayerConfigurations.builder()
-            .addDependencyFileRecursive(sourceDirectory, AbsoluteUnixPath.get("/libs/dir"))
-            .addSnapshotDependencyFileRecursive(
-                sourceDirectory, AbsoluteUnixPath.get("/snapshots/target"))
-            .addResourceFileRecursive(sourceDirectory, AbsoluteUnixPath.get("/resources"))
-            .addClassFileRecursive(sourceDirectory, AbsoluteUnixPath.get("/classes/here"))
-            .addExplodedWarFileRecursive(sourceDirectory, AbsoluteUnixPath.get("/exploded-war"))
-            .addExtraFileRecursive(sourceDirectory, AbsoluteUnixPath.get("/extra/files"))
+            .addDependencyFile(sourceDirectory, AbsoluteUnixPath.get("/libs/dir"))
+            .addSnapshotDependencyFile(sourceDirectory, AbsoluteUnixPath.get("/snapshots/target"))
+            .addResourceFile(sourceDirectory, AbsoluteUnixPath.get("/resources"))
+            .addClassFile(sourceDirectory, AbsoluteUnixPath.get("/classes/here"))
+            .addExplodedWarFile(sourceDirectory, AbsoluteUnixPath.get("/exploded-war"))
+            .addExtraFile(sourceDirectory, AbsoluteUnixPath.get("/extra/files"))
             .build();
 
     verifyRecursiveAdd(configurations::getDependencyLayerEntries, sourceDirectory, "/libs/dir");
@@ -131,19 +132,18 @@ public class JavaLayerConfigurationsTest {
   }
 
   @Test
-  public void testAddFileRecursive_regularFiles() throws IOException, URISyntaxException {
+  public void testAddFile_regularFiles() throws IOException, URISyntaxException {
     Path sourceFile =
         Paths.get(Resources.getResource("random-contents/sub-directory/leaf/file6").toURI());
 
     JavaLayerConfigurations configurations =
         JavaLayerConfigurations.builder()
-            .addDependencyFileRecursive(sourceFile, AbsoluteUnixPath.get("/libs/file"))
-            .addSnapshotDependencyFileRecursive(
-                sourceFile, AbsoluteUnixPath.get("/snapshots/target/file"))
-            .addResourceFileRecursive(sourceFile, AbsoluteUnixPath.get("/resources-file"))
-            .addClassFileRecursive(sourceFile, AbsoluteUnixPath.get("/classes/file"))
-            .addExplodedWarFileRecursive(sourceFile, AbsoluteUnixPath.get("/exploded-war/file"))
-            .addExtraFileRecursive(sourceFile, AbsoluteUnixPath.get("/some/file"))
+            .addDependencyFile(sourceFile, AbsoluteUnixPath.get("/libs/file"))
+            .addSnapshotDependencyFile(sourceFile, AbsoluteUnixPath.get("/snapshots/target/file"))
+            .addResourceFile(sourceFile, AbsoluteUnixPath.get("/resources-file"))
+            .addClassFile(sourceFile, AbsoluteUnixPath.get("/classes/file"))
+            .addExplodedWarFile(sourceFile, AbsoluteUnixPath.get("/exploded-war/file"))
+            .addExtraFile(sourceFile, AbsoluteUnixPath.get("/some/file"))
             .build();
 
     Assert.assertEquals(
@@ -164,38 +164,5 @@ public class JavaLayerConfigurationsTest {
     Assert.assertEquals(
         Arrays.asList(new LayerEntry(sourceFile, AbsoluteUnixPath.get("/some/file"))),
         configurations.getExtraFilesLayerEntries());
-  }
-
-  @Test
-  public void testAddExtraFiles_mixed() throws IOException, URISyntaxException {
-    Path sourceFile = Paths.get(Resources.getResource("random-contents/file2").toURI());
-    Path sourceDirectory =
-        Paths.get(Resources.getResource("random-contents/sub-directory").toURI());
-
-    JavaLayerConfigurations configurations =
-        JavaLayerConfigurations.builder()
-            .addExtraFile(sourceFile, AbsoluteUnixPath.get("/non/recursive/file"))
-            .addExtraFile(sourceDirectory, AbsoluteUnixPath.get("/non/recursive/directory"))
-            .addExtraFileRecursive(sourceFile, AbsoluteUnixPath.get("/recursive/file"))
-            .addExtraFileRecursive(sourceDirectory, AbsoluteUnixPath.get("/recursive/directory"))
-            .build();
-
-    List<String> expectedPaths =
-        Arrays.asList(
-            "/non/recursive/file",
-            "/non/recursive/directory",
-            "/recursive/file",
-            "/recursive/directory",
-            "/recursive/directory/file3",
-            "/recursive/directory/file4",
-            "/recursive/directory/leaf",
-            "/recursive/directory/leaf/file5",
-            "/recursive/directory/leaf/file6");
-    Set<AbsoluteUnixPath> expectedTargetPaths =
-        expectedPaths.stream().map(AbsoluteUnixPath::get).collect(Collectors.toSet());
-
-    Set<AbsoluteUnixPath> targetPaths =
-        layerEntriesToExtractionPaths(configurations.getExtraFilesLayerEntries());
-    Assert.assertEquals(expectedTargetPaths, targetPaths);
   }
 }
