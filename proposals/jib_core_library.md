@@ -14,8 +14,8 @@ Design for Jib Core as a Java library for building container images.
 - `JibContainerBuilder from(RegistryImage baseImage)`
 
 `JibContainerBuilder` - configures the container to build
-- `JibContainerBuilder layer(List<Path> files, Path pathInContainer)`
-- `JibContainerBuilder layer(LayerConfiguration)`
+- `JibContainerBuilder addLayer(List<Path> files, Path pathInContainer)`
+- `JibContainerBuilder addLayer(LayerConfiguration)`
 - `JibContainerBuilder setLayers(List<LayerConfiguration>/LayerConfiguration...)`
 
 - `JibContainerBuilder setEntrypoint(List<String>/String...)`
