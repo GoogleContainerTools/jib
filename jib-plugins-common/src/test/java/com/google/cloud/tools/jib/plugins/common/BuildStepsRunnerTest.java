@@ -54,7 +54,7 @@ public class BuildStepsRunnerTest {
           false,
           "baseImageCredHelperConfiguration",
           registry -> "baseImageAuthConfiguration " + registry,
-          ImageReference.of("toRegistry", "toRepository", null),
+          ImageReference.of("toRegistry", "torepository", null),
           false,
           "targetImageCredHelperConfiguration",
           registry -> "targetImageAuthConfiguration " + registry,
