@@ -100,14 +100,15 @@ class MavenLayerConfigurations {
       AbsoluteUnixPath basePathInContainer,
       FileToLayerAdder addFileToLayer)
       throws IOException {
-    // Filtering out non-empty directories because JavaLayerConfigurations adds files recursively.
-    Predicate<Path> isEmptyDirectory = path -> path.toFile().list().length == 0;
-    Predicate<Path> fileOrEmptyDirectory =
-        path -> !Files.isDirectory(path) || isEmptyDirectory.test(path);
+    Predicate<Path> isEmptyDirectory =
+        path -> Files.isDirectory(path) && path.toFile().list().length == 0;
+    // Always add empty directories. However, ignore non-empty directories because otherwise
+    // JavaLayerConfigurations will add files recursively.
+    Predicate<Path> shouldAdd =
+        path -> isEmptyDirectory.test(path) || (!Files.isDirectory(path) && pathFilter.test(path));
 
-    DirectoryWalker walker =
-        new DirectoryWalker(sourceRoot).filter(pathFilter).filter(fileOrEmptyDirectory);
-    walker.walk(
+    DirectoryWalker filteredWalker = new DirectoryWalker(sourceRoot).filter(shouldAdd);
+    filteredWalker.walk(
         path -> addFileToLayer.add(path, basePathInContainer.resolve(sourceRoot.relativize(path))));
   }
 
