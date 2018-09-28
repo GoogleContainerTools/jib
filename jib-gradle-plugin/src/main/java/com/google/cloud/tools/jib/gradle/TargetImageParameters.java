@@ -23,10 +23,11 @@ import javax.inject.Inject;
 import org.gradle.api.Action;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.Optional;
 
-/** {@link ImageParameters} that configure the target image. */
-public class TargetImageParameters implements ImageParameters {
+/** Extension object that configures the target image. */
+public class TargetImageParameters {
 
   private final AuthParameters auth;
 
@@ -39,13 +40,12 @@ public class TargetImageParameters implements ImageParameters {
     auth = objectFactory.newInstance(AuthParameters.class, imageDescriptor + ".auth");
   }
 
+  @Input
   @Nullable
-  @Override
   public String getImage() {
     return image;
   }
 
-  @Override
   public void setImage(String image) {
     this.image = image;
   }
@@ -60,23 +60,21 @@ public class TargetImageParameters implements ImageParameters {
     this.tags = tags;
   }
 
+  @Input
   @Nullable
-  @Override
   public String getCredHelper() {
     return credHelper;
   }
 
-  @Override
   public void setCredHelper(String credHelper) {
     this.credHelper = credHelper;
   }
 
-  @Override
+  @Nested
   public AuthParameters getAuth() {
     return auth;
   }
 
-  @Override
   public void auth(Action<? super AuthParameters> action) {
     action.execute(auth);
   }
