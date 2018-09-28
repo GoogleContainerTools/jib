@@ -116,12 +116,9 @@ public class RegistryClient {
         return "";
       }
 
-      String version = ProjectInfo.VERSION;
       StringBuilder userAgentBuilder = new StringBuilder();
       userAgentBuilder.append("jib");
-      if (version != null) {
-        userAgentBuilder.append(" ").append(version);
-      }
+      userAgentBuilder.append(" ").append(ProjectInfo.VERSION);
       if (userAgentSuffix != null) {
         userAgentBuilder.append(" ").append(userAgentSuffix);
       }
