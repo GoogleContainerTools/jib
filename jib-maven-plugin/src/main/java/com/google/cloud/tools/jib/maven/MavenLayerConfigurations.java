@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.Builder;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.function.Predicate;
@@ -107,6 +108,24 @@ class MavenLayerConfigurations {
     return false;
   }
 
+  /**
+   * Adds files to a layer selectively and recursively. {@code sourceRoot} must be a directory.
+   * Non-empty directories will be ignored, while empty directories will always be added. Note that
+   * empty directories will always be added regardless of {@code pathFilter}.
+   *
+   * <p>The contents of {@code sourceRoot} will be placed into {@code basePathInContainer}. For
+   * example, if {@code sourceRoot} is {@code /usr/home}, {@code /usr/home/passwd} exists locally,
+   * and {@code basePathInContainer} is {@code /etc}, then the image will have {@code /etc/passwd}.
+   *
+   * @param sourceRoot root directory whose contents will be copied
+   * @param pathFilter only the files satisfying the filter will be added, unless the files are
+   *     empty directories
+   * @param basePathInContainer directory in the layer into which the source contents
+   * @param addFileToLayer function that should add the file to the layer; the function gets the
+   *     path of the source file (may be directory) and the final destination path in the layer
+   * @throws IOException error while listing directories
+   * @throws NotDirectoryException if {@code sourceRoot} is not a directory
+   */
   @VisibleForTesting
   static void addFilesToLayer(
       Path sourceRoot,

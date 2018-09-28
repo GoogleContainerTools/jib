@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -35,6 +36,7 @@ import java.util.stream.Collectors;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.model.Build;
 import org.apache.maven.project.MavenProject;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -68,7 +70,7 @@ public class MavenLayerConfigurationsTest {
   }
 
   @Rule public final TestRepository testRepository = new TestRepository();
-  @Rule public final TemporaryFolder tempFolder = new TemporaryFolder();
+  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Mock private MavenProject mockMavenProject;
   @Mock private Build mockBuild;
@@ -184,12 +186,14 @@ public class MavenLayerConfigurationsTest {
 
   @Test
   public void testIsEmptyDirectory() throws IOException {
-    Assert.assertTrue(MavenLayerConfigurations.isEmptyDirectory(tempFolder.getRoot().toPath()));
+    Assert.assertTrue(
+        MavenLayerConfigurations.isEmptyDirectory(temporaryFolder.getRoot().toPath()));
   }
 
   @Test
   public void testIsEmptyDirectory_file() throws IOException {
-    Assert.assertFalse(MavenLayerConfigurations.isEmptyDirectory(tempFolder.newFile().toPath()));
+    Assert.assertFalse(
+        MavenLayerConfigurations.isEmptyDirectory(temporaryFolder.newFile().toPath()));
   }
 
   @Test
@@ -199,9 +203,9 @@ public class MavenLayerConfigurationsTest {
 
   @Test
   public void testAddFilesToLayer_file() throws IOException {
-    tempFolder.newFile("file");
+    temporaryFolder.newFile("file");
 
-    Path sourceRoot = tempFolder.getRoot().toPath();
+    Path sourceRoot = temporaryFolder.getRoot().toPath();
     AbsoluteUnixPath basePath = AbsoluteUnixPath.get("/path/in/container");
 
     MavenLayerConfigurations.addFilesToLayer(sourceRoot, path -> true, basePath, fileToLayerAdder);
@@ -211,9 +215,9 @@ public class MavenLayerConfigurationsTest {
 
   @Test
   public void testAddFilesToLayer_emptyDirectory() throws IOException {
-    tempFolder.newFolder("leaf");
+    temporaryFolder.newFolder("leaf");
 
-    Path sourceRoot = tempFolder.getRoot().toPath();
+    Path sourceRoot = temporaryFolder.getRoot().toPath();
     AbsoluteUnixPath basePath = AbsoluteUnixPath.get("/");
 
     MavenLayerConfigurations.addFilesToLayer(sourceRoot, path -> true, basePath, fileToLayerAdder);
@@ -223,9 +227,9 @@ public class MavenLayerConfigurationsTest {
 
   @Test
   public void testAddFilesToLayer_nonEmptyDirectoryIgnored() throws IOException {
-    tempFolder.newFolder("non-empty", "leaf");
+    temporaryFolder.newFolder("non-empty", "leaf");
 
-    Path sourceRoot = tempFolder.getRoot().toPath();
+    Path sourceRoot = temporaryFolder.getRoot().toPath();
     AbsoluteUnixPath basePath = AbsoluteUnixPath.get("/path/in/container");
 
     MavenLayerConfigurations.addFilesToLayer(sourceRoot, path -> true, basePath, fileToLayerAdder);
@@ -236,11 +240,11 @@ public class MavenLayerConfigurationsTest {
 
   @Test
   public void testAddFilesToLayer_filter() throws IOException {
-    tempFolder.newFile("non-target");
-    tempFolder.newFolder("sub");
-    tempFolder.newFile("sub/target");
+    temporaryFolder.newFile("non-target");
+    temporaryFolder.newFolder("sub");
+    temporaryFolder.newFile("sub/target");
 
-    Path sourceRoot = tempFolder.getRoot().toPath();
+    Path sourceRoot = temporaryFolder.getRoot().toPath();
     AbsoluteUnixPath basePath = AbsoluteUnixPath.get("/");
 
     Predicate<Path> nameIsTarget = path -> "target".equals(path.getFileName().toString());
@@ -252,9 +256,9 @@ public class MavenLayerConfigurationsTest {
 
   @Test
   public void testAddFilesToLayer_emptyDirectoryForced() throws IOException {
-    tempFolder.newFolder("sub", "leaf");
+    temporaryFolder.newFolder("sub", "leaf");
 
-    Path sourceRoot = tempFolder.getRoot().toPath();
+    Path sourceRoot = temporaryFolder.getRoot().toPath();
     AbsoluteUnixPath basePath = AbsoluteUnixPath.get("/path/in/container");
 
     MavenLayerConfigurations.addFilesToLayer(sourceRoot, path -> false, basePath, fileToLayerAdder);
@@ -264,17 +268,30 @@ public class MavenLayerConfigurationsTest {
   }
 
   @Test
-  public void testAddFilesToLayer_complex() throws IOException {
-    tempFolder.newFile("A.class");
-    tempFolder.newFile("B.java");
-    tempFolder.newFolder("example", "dir");
-    tempFolder.newFile("example/dir/C.class");
-    tempFolder.newFile("example/C.class");
-    tempFolder.newFolder("test", "resources", "leaf");
-    tempFolder.newFile("test/resources/D.java");
-    tempFolder.newFile("test/D.class");
+  public void testAddFilesToLayer_fileAsSource() throws IOException {
+    Path sourceFile = temporaryFolder.newFile("foo").toPath();
 
-    Path sourceRoot = tempFolder.getRoot().toPath();
+    AbsoluteUnixPath basePath = AbsoluteUnixPath.get("/");
+    try {
+      MavenLayerConfigurations.addFilesToLayer(
+          sourceFile, path -> true, basePath, fileToLayerAdder);
+    } catch (NotDirectoryException ex) {
+      Assert.assertThat(ex.getMessage(), CoreMatchers.containsString("foo is not a directory"));
+    }
+  }
+
+  @Test
+  public void testAddFilesToLayer_complex() throws IOException {
+    temporaryFolder.newFile("A.class");
+    temporaryFolder.newFile("B.java");
+    temporaryFolder.newFolder("example", "dir");
+    temporaryFolder.newFile("example/dir/C.class");
+    temporaryFolder.newFile("example/C.class");
+    temporaryFolder.newFolder("test", "resources", "leaf");
+    temporaryFolder.newFile("test/resources/D.java");
+    temporaryFolder.newFile("test/D.class");
+
+    Path sourceRoot = temporaryFolder.getRoot().toPath();
     AbsoluteUnixPath basePath = AbsoluteUnixPath.get("/base");
 
     Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
