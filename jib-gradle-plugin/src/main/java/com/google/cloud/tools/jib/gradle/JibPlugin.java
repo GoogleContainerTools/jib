@@ -124,6 +124,7 @@ public class JibPlugin implements Plugin<Project> {
 
     project.afterEvaluate(
         projectAfterEvaluation -> {
+          // TODO move this to a seperate place
           try {
             War warTask = GradleProjectProperties.getWarTask(project);
             final Task dependsOnTask;

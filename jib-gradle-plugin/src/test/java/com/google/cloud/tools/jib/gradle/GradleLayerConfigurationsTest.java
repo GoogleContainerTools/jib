@@ -137,12 +137,10 @@ public class GradleLayerConfigurationsTest {
     Mockito.when(mockMainSourceSetOutput.getResourcesDir()).thenReturn(resourcesOutputDir.toFile());
     Mockito.when(mockMainSourceSet.getRuntimeClasspath()).thenReturn(runtimeFileCollection);
     // We can't commit an empty directory in Git, so it's created if it does not exist
-    Path empty_dir =
+    Path emptyDirectory =
         Paths.get(Resources.getResource("webapp").toURI())
             .resolve("jib-exploded-war/WEB-INF/classes/empty_dir");
-    if (Files.notExists(empty_dir)) {
-      Files.createDirectory(empty_dir);
-    }
+    Files.createDirectories(emptyDirectory);
   }
 
   @Test
@@ -319,7 +317,8 @@ public class GradleLayerConfigurationsTest {
             webappDirectory.resolve("jib-exploded-war/WEB-INF/web.xml"));
     ImmutableList<Path> expectedClassesFiles =
         ImmutableList.of(
-            webappDirectory.resolve("jib-exploded-war/WEB-INF/classes/HelloWorld.class"));
+            webappDirectory.resolve("jib-exploded-war/WEB-INF/classes/HelloWorld.class"),
+            webappDirectory.resolve("jib-exploded-war/WEB-INF/classes/package/Other.class"));
 
     assertSourcePathsUnordered(
         expectedDependenciesFiles, configuration.getDependencyLayerEntries());
@@ -347,7 +346,9 @@ public class GradleLayerConfigurationsTest {
             "/my/app/WEB-INF/web.xml"),
         configuration.getResourceLayerEntries());
     assertExtractionPathsUnordered(
-        Arrays.asList("/my/app/WEB-INF/classes/HelloWorld.class"),
+        Arrays.asList(
+            "/my/app/WEB-INF/classes/HelloWorld.class",
+            "/my/app/WEB-INF/classes/package/Other.class"),
         configuration.getClassLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"),
@@ -390,7 +391,9 @@ public class GradleLayerConfigurationsTest {
             "/jetty/webapps/ROOT/WEB-INF/web.xml"),
         configuration.getResourceLayerEntries());
     assertExtractionPathsUnordered(
-        Arrays.asList("/jetty/webapps/ROOT/WEB-INF/classes/HelloWorld.class"),
+        Arrays.asList(
+            "/jetty/webapps/ROOT/WEB-INF/classes/HelloWorld.class",
+            "/jetty/webapps/ROOT/WEB-INF/classes/package/Other.class"),
         configuration.getClassLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"),

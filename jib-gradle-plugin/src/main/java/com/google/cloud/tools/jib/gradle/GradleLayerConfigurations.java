@@ -17,12 +17,12 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.Builder;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -42,24 +42,17 @@ class GradleLayerConfigurations {
   /** Name of the `main` {@link SourceSet} to use as source files. */
   private static final String MAIN_SOURCE_SET_NAME = "main";
 
+  /** The filename suffix for a maven/gradle snapshot dependency */
   private static final String SNAPSHOT = "SNAPSHOT";
+  /** The standard directory name containing libs, classes, web.xml, etc... in a War Project */
   private static final String WEB_INF = "WEB-INF";
+  /** The standard directory name containing libs and snapshot-libs in a War Project */
   private static final String WEB_INF_LIB = WEB_INF + "/lib/";
+  /** The standard directory name containing classes and some resources in a War Project */
   private static final String WEB_INF_CLASSES = WEB_INF + "/classes/";
 
-  static JavaLayerConfigurations getForProject(
-      Project project, Logger logger, Path extraDirectory, AbsoluteUnixPath appRoot)
-      throws IOException {
-    if (GradleProjectProperties.getWarTask(project) != null) {
-      logger.info("WAR project identified, creating WAR image: " + project.getDisplayName());
-      return getForWarProject(project, logger, extraDirectory, appRoot);
-    } else {
-      return getForJarProject(project, logger, extraDirectory, appRoot);
-    }
-  }
-
   /**
-   * Resolves the source files configuration for a Jar Gradle {@link Project}.
+   * Resolves the {@link JavaLayerConfigurations} for a Gradle {@link Project}.
    *
    * @param project the Gradle {@link Project}
    * @param logger the logger for providing feedback about the resolution
@@ -68,7 +61,28 @@ class GradleLayerConfigurations {
    * @return a {@link JavaLayerConfigurations} for the layers for the Gradle {@link Project}
    * @throws IOException if an I/O exception occurred during resolution
    */
-  static JavaLayerConfigurations getForJarProject(
+  static JavaLayerConfigurations getForProject(
+      Project project, Logger logger, Path extraDirectory, AbsoluteUnixPath appRoot)
+      throws IOException {
+    if (GradleProjectProperties.getWarTask(project) != null) {
+      logger.info("WAR project identified, creating WAR image: " + project.getDisplayName());
+      return getForWarProject(project, logger, extraDirectory, appRoot);
+    } else {
+      return getForNonWarProject(project, logger, extraDirectory, appRoot);
+    }
+  }
+
+  /**
+   * Resolves the {@link JavaLayerConfigurations} for a non-war Gradle {@link Project}.
+   *
+   * @param project the Gradle {@link Project}
+   * @param logger the logger for providing feedback about the resolution
+   * @param extraDirectory path to the directory for the extra files layer
+   * @param appRoot root directory in the image where the app will be placed
+   * @return a {@link JavaLayerConfigurations} for the layers for the Gradle {@link Project}
+   * @throws IOException if an I/O exception occurred during resolution
+   */
+  private static JavaLayerConfigurations getForNonWarProject(
       Project project, Logger logger, Path extraDirectory, AbsoluteUnixPath appRoot)
       throws IOException {
     JavaPluginConvention javaPluginConvention =
@@ -151,7 +165,7 @@ class GradleLayerConfigurations {
   }
 
   /**
-   * Resolves the source files configuration for a War Gradle {@link Project}.
+   * Resolves the {@link JavaLayerConfigurations} for a War Gradle {@link Project}.
    *
    * @param project the Gradle {@link Project}
    * @param logger the build logger for providing feedback about the resolution
@@ -160,7 +174,7 @@ class GradleLayerConfigurations {
    * @return a {@link JavaLayerConfigurations} for the layers for the Gradle {@link Project}
    * @throws IOException if an I/O exception occurred during resolution
    */
-  static JavaLayerConfigurations getForWarProject(
+  private static JavaLayerConfigurations getForWarProject(
       Project project, Logger logger, Path extraDirectory, AbsoluteUnixPath appRoot)
       throws IOException {
     List<Path> dependenciesFiles = new ArrayList<>();
@@ -169,7 +183,7 @@ class GradleLayerConfigurations {
     List<Path> resourcesWebInfFiles = new ArrayList<>();
     List<Path> extraFiles = new ArrayList<>();
 
-    Path explodedWarPath = GradleProjectProperties.getExplodedWarDirectory(project).toPath();
+    Path explodedWarPath = GradleProjectProperties.getExplodedWarDirectory(project);
 
     Path libOutputDirectory = explodedWarPath.resolve(WEB_INF_LIB);
     try (Stream<Path> dependencyFileStream = Files.list(libOutputDirectory)) {
@@ -209,17 +223,16 @@ class GradleLayerConfigurations {
     // For "WEB-INF/classes", *.class in class layer, other files and empty directories in resource
     // layer
     Path srcWebInfClasses = explodedWarPath.resolve(WEB_INF_CLASSES);
-    try (Stream<Path> fileStream = Files.walk(srcWebInfClasses)) {
-      fileStream.forEach(
-          path -> {
-            try {
+    new DirectoryWalker(srcWebInfClasses)
+        .walk(
+            path -> {
               if (FileSystems.getDefault().getPathMatcher("glob:**.class").matches(path)) {
                 layerBuilder.addClassFile(
                     path, classesExtractionPath.resolve(srcWebInfClasses.relativize(path)));
 
               } else if (Files.isDirectory(path)) {
-                try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(path)) {
-                  if (!dirStream.iterator().hasNext()) {
+                try (Stream<Path> dirStream = Files.list(path)) {
+                  if (!dirStream.findAny().isPresent()) {
                     // The directory is empty
                     layerBuilder.addResourceFile(
                         path, classesExtractionPath.resolve(srcWebInfClasses.relativize(path)));
@@ -229,11 +242,7 @@ class GradleLayerConfigurations {
                 layerBuilder.addResourceFile(
                     path, classesExtractionPath.resolve(srcWebInfClasses.relativize(path)));
               }
-            } catch (IOException e) {
-              logger.warn("IOException : '" + path + "' not added in class/resource layer", e);
-            }
-          });
-    }
+            });
 
     for (Path file : dependenciesFiles) {
       layerBuilder.addDependencyFile(file, dependenciesExtractionPath.resolve(file.getFileName()));

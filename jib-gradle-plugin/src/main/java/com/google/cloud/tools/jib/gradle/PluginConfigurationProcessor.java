@@ -177,7 +177,12 @@ class PluginConfigurationProcessor {
   static List<String> computeEntrypoint(
       Logger logger, JibExtension jibExtension, GradleProjectProperties projectProperties) {
     List<String> entrypoint = jibExtension.getContainer().getEntrypoint();
-    if (entrypoint.isEmpty()) {
+    if (!entrypoint.isEmpty()) {
+      if (jibExtension.getContainer().getMainClass() != null
+          || !jibExtension.getContainer().getJvmFlags().isEmpty()) {
+        logger.warn("mainClass and jvmFlags are ignored when entrypoint is specified");
+      }
+    } else {
       if (projectProperties.isWarProject()) {
         entrypoint = JavaEntrypointConstructor.makeDistrolessJettyEntrypoint();
       } else {
@@ -188,9 +193,6 @@ class PluginConfigurationProcessor {
                 jibExtension.getContainer().getJvmFlags(),
                 mainClass);
       }
-    } else if (jibExtension.getContainer().getMainClass() != null
-        || !jibExtension.getContainer().getJvmFlags().isEmpty()) {
-      logger.warn("mainClass and jvmFlags are ignored when entrypoint is specified");
     }
     return entrypoint;
   }

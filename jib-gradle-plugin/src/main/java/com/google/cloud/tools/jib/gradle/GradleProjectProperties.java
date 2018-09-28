@@ -91,12 +91,8 @@ class GradleProjectProperties implements ProjectProperties {
     return (War) warPluginConvention.getProject().getTasks().findByName("war");
   }
 
-  static File getExplodedWarDirectory(Project project) {
-    return project
-        .getBuildDir()
-        .toPath()
-        .resolve(ProjectProperties.EXPLODED_WAR_DIRECTORY_NAME)
-        .toFile();
+  static Path getExplodedWarDirectory(Project project) {
+    return project.getBuildDir().toPath().resolve(ProjectProperties.EXPLODED_WAR_DIRECTORY_NAME);
   }
 
   private final Project project;
