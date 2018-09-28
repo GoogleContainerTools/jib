@@ -257,6 +257,16 @@ public class ImageReference {
   }
 
   /**
+   * Returns {@code true} if the {@link ImageReference} uses a SHA-256 digest as its tag; {@code
+   * false} if not.
+   *
+   * @return {@code true} if tag is a SHA-256 digest; {@code false} if not
+   */
+  public boolean isTagDigest() {
+    return tag.matches(DescriptorDigest.DIGEST_REGEX);
+  }
+
+  /**
    * Gets an {@link ImageReference} with the same registry and repository, but a different tag.
    *
    * @param newTag the new tag
@@ -291,7 +301,7 @@ public class ImageReference {
     // Use tag if not the default tag.
     if (!DEFAULT_TAG.equals(tag)) {
       // Append with "@tag" instead of ":tag" if tag is a digest
-      referenceString.append(tag.matches(DescriptorDigest.DIGEST_REGEX) ? '@' : ':').append(tag);
+      referenceString.append(isTagDigest() ? '@' : ':').append(tag);
     }
 
     return referenceString.toString();

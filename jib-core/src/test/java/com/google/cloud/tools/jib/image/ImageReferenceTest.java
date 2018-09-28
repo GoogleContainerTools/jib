@@ -164,6 +164,22 @@ public class ImageReferenceTest {
         ImageReference.of("anotherregistry", "anotherimage", "sometag").toStringWithTag());
   }
 
+  @Test
+  public void testIsTagDigest() throws InvalidImageReferenceException {
+    Assert.assertFalse(ImageReference.of(null, "someimage", null).isTagDigest());
+    Assert.assertFalse(ImageReference.of(null, "someimage", "latest").isTagDigest());
+    Assert.assertTrue(
+        ImageReference.of(
+                null,
+                "someimage",
+                "sha256:b430543bea1d8326e767058bdab3a2482ea45f59d7af5c5c61334cd29ede88a1")
+            .isTagDigest());
+    Assert.assertTrue(
+        ImageReference.parse(
+                "someimage@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+            .isTagDigest());
+  }
+
   private void verifyParse(String registry, String repository, String tagSeparator, String tag)
       throws InvalidImageReferenceException {
     // Gets the expected parsed components.
