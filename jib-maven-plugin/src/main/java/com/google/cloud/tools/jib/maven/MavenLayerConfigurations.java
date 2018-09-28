@@ -91,7 +91,8 @@ class MavenLayerConfigurations {
   }
 
   @FunctionalInterface
-  private static interface FileToLayerAdder {
+  @VisibleForTesting
+  static interface FileToLayerAdder {
 
     void add(Path sourcePath, AbsoluteUnixPath pathInContainer) throws IOException;
   }

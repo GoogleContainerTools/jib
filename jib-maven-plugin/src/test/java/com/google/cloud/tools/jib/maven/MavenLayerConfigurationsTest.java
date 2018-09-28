@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.model.Build;
@@ -38,6 +39,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -66,9 +68,12 @@ public class MavenLayerConfigurationsTest {
   }
 
   @Rule public final TestRepository testRepository = new TestRepository();
+  @Rule public final TemporaryFolder tempFolder = new TemporaryFolder();
 
   @Mock private MavenProject mockMavenProject;
   @Mock private Build mockBuild;
+
+  @Mock private MavenLayerConfigurations.FileToLayerAdder fileToLayerAdder;
 
   @Before
   public void setUp() throws URISyntaxException {
@@ -175,6 +180,117 @@ public class MavenLayerConfigurationsTest {
         configuration.getClassLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList("/a/b/bar", "/c/cat", "/foo"), configuration.getExtraFilesLayerEntries());
+  }
+
+  @Test
+  public void testIsEmptyDirectory() throws IOException {
+    Assert.assertTrue(MavenLayerConfigurations.isEmptyDirectory(tempFolder.getRoot().toPath()));
+  }
+
+  @Test
+  public void testIsEmptyDirectory_file() throws IOException {
+    Assert.assertFalse(MavenLayerConfigurations.isEmptyDirectory(tempFolder.newFile().toPath()));
+  }
+
+  @Test
+  public void testIsEmptyDirectory_nonExistent() throws IOException {
+    Assert.assertFalse(MavenLayerConfigurations.isEmptyDirectory(Paths.get("non/existent")));
+  }
+
+  @Test
+  public void testAddFilesToLayer_file() throws IOException {
+    tempFolder.newFile("file");
+
+    Path sourceRoot = tempFolder.getRoot().toPath();
+    AbsoluteUnixPath basePath = AbsoluteUnixPath.get("/path/in/container");
+
+    MavenLayerConfigurations.addFilesToLayer(sourceRoot, path -> true, basePath, fileToLayerAdder);
+    Mockito.verify(fileToLayerAdder).add(sourceRoot.resolve("file"), basePath.resolve("file"));
+    Mockito.verifyNoMoreInteractions(fileToLayerAdder);
+  }
+
+  @Test
+  public void testAddFilesToLayer_emptyDirectory() throws IOException {
+    tempFolder.newFolder("leaf");
+
+    Path sourceRoot = tempFolder.getRoot().toPath();
+    AbsoluteUnixPath basePath = AbsoluteUnixPath.get("/");
+
+    MavenLayerConfigurations.addFilesToLayer(sourceRoot, path -> true, basePath, fileToLayerAdder);
+    Mockito.verify(fileToLayerAdder).add(sourceRoot.resolve("leaf"), basePath.resolve("leaf"));
+    Mockito.verifyNoMoreInteractions(fileToLayerAdder);
+  }
+
+  @Test
+  public void testAddFilesToLayer_nonEmptyDirectoryIgnored() throws IOException {
+    tempFolder.newFolder("non-empty", "leaf");
+
+    Path sourceRoot = tempFolder.getRoot().toPath();
+    AbsoluteUnixPath basePath = AbsoluteUnixPath.get("/path/in/container");
+
+    MavenLayerConfigurations.addFilesToLayer(sourceRoot, path -> true, basePath, fileToLayerAdder);
+    Mockito.verify(fileToLayerAdder)
+        .add(sourceRoot.resolve("non-empty/leaf"), basePath.resolve("non-empty/leaf"));
+    Mockito.verifyNoMoreInteractions(fileToLayerAdder);
+  }
+
+  @Test
+  public void testAddFilesToLayer_filter() throws IOException {
+    tempFolder.newFile("non-target");
+    tempFolder.newFolder("sub");
+    tempFolder.newFile("sub/target");
+
+    Path sourceRoot = tempFolder.getRoot().toPath();
+    AbsoluteUnixPath basePath = AbsoluteUnixPath.get("/");
+
+    Predicate<Path> nameIsTarget = path -> "target".equals(path.getFileName().toString());
+    MavenLayerConfigurations.addFilesToLayer(sourceRoot, nameIsTarget, basePath, fileToLayerAdder);
+    Mockito.verify(fileToLayerAdder)
+        .add(sourceRoot.resolve("sub/target"), basePath.resolve("sub/target"));
+    Mockito.verifyNoMoreInteractions(fileToLayerAdder);
+  }
+
+  @Test
+  public void testAddFilesToLayer_emptyDirectoryForced() throws IOException {
+    tempFolder.newFolder("sub", "leaf");
+
+    Path sourceRoot = tempFolder.getRoot().toPath();
+    AbsoluteUnixPath basePath = AbsoluteUnixPath.get("/path/in/container");
+
+    MavenLayerConfigurations.addFilesToLayer(sourceRoot, path -> false, basePath, fileToLayerAdder);
+    Mockito.verify(fileToLayerAdder)
+        .add(sourceRoot.resolve("sub/leaf"), basePath.resolve("sub/leaf"));
+    Mockito.verifyNoMoreInteractions(fileToLayerAdder);
+  }
+
+  @Test
+  public void testAddFilesToLayer_complex() throws IOException {
+    tempFolder.newFile("A.class");
+    tempFolder.newFile("B.java");
+    tempFolder.newFolder("example", "dir");
+    tempFolder.newFile("example/dir/C.class");
+    tempFolder.newFile("example/C.class");
+    tempFolder.newFolder("test", "resources", "leaf");
+    tempFolder.newFile("test/resources/D.java");
+    tempFolder.newFile("test/D.class");
+
+    Path sourceRoot = tempFolder.getRoot().toPath();
+    AbsoluteUnixPath basePath = AbsoluteUnixPath.get("/base");
+
+    Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
+
+    MavenLayerConfigurations.addFilesToLayer(sourceRoot, isClassFile, basePath, fileToLayerAdder);
+    Mockito.verify(fileToLayerAdder)
+        .add(sourceRoot.resolve("A.class"), basePath.resolve("A.class"));
+    Mockito.verify(fileToLayerAdder)
+        .add(sourceRoot.resolve("example/dir/C.class"), basePath.resolve("example/dir/C.class"));
+    Mockito.verify(fileToLayerAdder)
+        .add(sourceRoot.resolve("example/C.class"), basePath.resolve("example/C.class"));
+    Mockito.verify(fileToLayerAdder)
+        .add(sourceRoot.resolve("test/resources/leaf"), basePath.resolve("test/resources/leaf"));
+    Mockito.verify(fileToLayerAdder)
+        .add(sourceRoot.resolve("test/D.class"), basePath.resolve("test/D.class"));
+    Mockito.verifyNoMoreInteractions(fileToLayerAdder);
   }
 
   private Artifact makeArtifact(Path path) {
