@@ -121,7 +121,7 @@ public class ImageReferenceTest {
   }
 
   @Test
-  public void testToString() {
+  public void testToString() throws InvalidImageReferenceException {
     Assert.assertEquals("someimage", ImageReference.of(null, "someimage", null).toString());
     Assert.assertEquals("someimage", ImageReference.of("", "someimage", "").toString());
     Assert.assertEquals(
@@ -132,6 +132,19 @@ public class ImageReferenceTest {
     Assert.assertEquals(
         "anotherregistry/anotherimage:sometag",
         ImageReference.of("anotherregistry", "anotherimage", "sometag").toString());
+
+    Assert.assertEquals(
+        "someimage@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        ImageReference.of(
+                null,
+                "someimage",
+                "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+            .toString());
+    Assert.assertEquals(
+        "gcr.io/distroless/java@sha256:b430543bea1d8326e767058bdab3a2482ea45f59d7af5c5c61334cd29ede88a1",
+        ImageReference.parse(
+                "gcr.io/distroless/java@sha256:b430543bea1d8326e767058bdab3a2482ea45f59d7af5c5c61334cd29ede88a1")
+            .toString());
   }
 
   @Test

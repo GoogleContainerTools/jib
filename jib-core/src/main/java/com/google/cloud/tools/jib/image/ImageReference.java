@@ -290,7 +290,8 @@ public class ImageReference {
 
     // Use tag if not the default tag.
     if (!DEFAULT_TAG.equals(tag)) {
-      referenceString.append(':').append(tag);
+      // Append with "@tag" instead of ":tag" if tag is a digest
+      referenceString.append(tag.matches(DescriptorDigest.DIGEST_REGEX) ? '@' : ':').append(tag);
     }
 
     return referenceString.toString();
