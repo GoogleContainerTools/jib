@@ -21,11 +21,13 @@ import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.Builder;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.project.MavenProject;
 
@@ -94,22 +96,33 @@ class MavenLayerConfigurations {
     void add(Path sourcePath, AbsoluteUnixPath pathInContainer) throws IOException;
   }
 
-  private static void addFilesToLayer(
+  @VisibleForTesting
+  static boolean isEmptyDirectory(Path path) throws IOException {
+    if (Files.isDirectory(path)) {
+      try (Stream<Path> stream = Files.list(path)) {
+        return !stream.findAny().isPresent();
+      }
+    }
+    return false;
+  }
+
+  @VisibleForTesting
+  static void addFilesToLayer(
       Path sourceRoot,
       Predicate<Path> pathFilter,
       AbsoluteUnixPath basePathInContainer,
       FileToLayerAdder addFileToLayer)
       throws IOException {
-    Predicate<Path> isEmptyDirectory =
-        path -> Files.isDirectory(path) && path.toFile().list().length == 0;
-    // Always add empty directories. However, ignore non-empty directories because otherwise
-    // JavaLayerConfigurations will add files recursively.
-    Predicate<Path> shouldAdd =
-        path -> isEmptyDirectory.test(path) || (!Files.isDirectory(path) && pathFilter.test(path));
 
-    DirectoryWalker filteredWalker = new DirectoryWalker(sourceRoot).filter(shouldAdd);
-    filteredWalker.walk(
-        path -> addFileToLayer.add(path, basePathInContainer.resolve(sourceRoot.relativize(path))));
+    new DirectoryWalker(sourceRoot)
+        .walk(
+            path -> {
+              // Always add empty directories. However, ignore non-empty directories because
+              // otherwise JavaLayerConfigurations will add files recursively.
+              if (isEmptyDirectory(path) || (!Files.isDirectory(path) && pathFilter.test(path))) {
+                addFileToLayer.add(path, basePathInContainer.resolve(sourceRoot.relativize(path)));
+              }
+            });
   }
 
   private MavenLayerConfigurations() {}
