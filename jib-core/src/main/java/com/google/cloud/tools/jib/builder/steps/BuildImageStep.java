@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.Blob;
@@ -160,6 +161,8 @@ class BuildImageStep
       }
 
       // Add built layers/configuration
+      // Note: ProjectInfo.VERSION may be null in tests
+      String version = ProjectInfo.VERSION == null ? "" : (":" + ProjectInfo.VERSION);
       for (BuildAndCacheApplicationLayerStep buildAndCacheApplicationLayerStep :
           buildAndCacheApplicationLayerSteps) {
         imageBuilder.addLayer(
@@ -168,7 +171,7 @@ class BuildImageStep
             HistoryEntry.builder()
                 .setCreationTimestamp(layerCreationTime)
                 .setAuthor("Jib")
-                .setCreatedBy(buildConfiguration.getToolName())
+                .setCreatedBy(buildConfiguration.getToolName() + version)
                 .build());
       }
       if (containerConfiguration != null) {
