@@ -25,6 +25,7 @@ import com.google.common.io.Resources;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -108,7 +109,7 @@ public class GradleLayerConfigurationsTest {
   @Mock private War war;
 
   @Before
-  public void setUp() throws URISyntaxException {
+  public void setUp() throws URISyntaxException, IOException {
     Set<Path> classesFiles =
         ImmutableSet.of(Paths.get(Resources.getResource("application/classes").toURI()));
     FileCollection classesFileCollection = new TestFileCollection(classesFiles);
@@ -135,6 +136,13 @@ public class GradleLayerConfigurationsTest {
     Mockito.when(mockMainSourceSetOutput.getClassesDirs()).thenReturn(classesFileCollection);
     Mockito.when(mockMainSourceSetOutput.getResourcesDir()).thenReturn(resourcesOutputDir.toFile());
     Mockito.when(mockMainSourceSet.getRuntimeClasspath()).thenReturn(runtimeFileCollection);
+    // We can't commit an empty directory in Git, so it's created if it does not exist
+    Path empty_dir =
+        Paths.get(Resources.getResource("webapp").toURI())
+            .resolve("jib-exploded-war/WEB-INF/classes/empty_dir");
+    if (Files.notExists(empty_dir)) {
+      Files.createDirectory(empty_dir);
+    }
   }
 
   @Test
@@ -306,6 +314,7 @@ public class GradleLayerConfigurationsTest {
             webappDirectory.resolve("jib-exploded-war/META-INF"),
             webappDirectory.resolve("jib-exploded-war/META-INF/context.xml"),
             webappDirectory.resolve("jib-exploded-war/Test.jsp"),
+            webappDirectory.resolve("jib-exploded-war/WEB-INF/classes/empty_dir"),
             webappDirectory.resolve("jib-exploded-war/WEB-INF/classes/package/test.properties"),
             webappDirectory.resolve("jib-exploded-war/WEB-INF/web.xml"));
     ImmutableList<Path> expectedClassesFiles =
@@ -333,6 +342,7 @@ public class GradleLayerConfigurationsTest {
             "/my/app/META-INF",
             "/my/app/META-INF/context.xml",
             "/my/app/Test.jsp",
+            "/my/app/WEB-INF/classes/empty_dir",
             "/my/app/WEB-INF/classes/package/test.properties",
             "/my/app/WEB-INF/web.xml"),
         configuration.getResourceLayerEntries());
@@ -375,6 +385,7 @@ public class GradleLayerConfigurationsTest {
             "/jetty/webapps/ROOT/META-INF",
             "/jetty/webapps/ROOT/META-INF/context.xml",
             "/jetty/webapps/ROOT/Test.jsp",
+            "/jetty/webapps/ROOT/WEB-INF/classes/empty_dir",
             "/jetty/webapps/ROOT/WEB-INF/classes/package/test.properties",
             "/jetty/webapps/ROOT/WEB-INF/web.xml"),
         configuration.getResourceLayerEntries());
