@@ -16,11 +16,11 @@
 
 package com.google.cloud.tools.jib.configuration;
 
+import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
-import com.google.cloud.tools.jib.ncache.Cache;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;

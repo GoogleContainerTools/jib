@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.ncache;
+package com.google.cloud.tools.jib.cache;
 
 /** Thrown if the the cache was found to be corrupted. */
 public class CacheCorruptedException extends Exception {
